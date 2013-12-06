@@ -1,4 +1,4 @@
-package com.blogspot.mydailyjava.bytebuddy.extraction.information;
+package com.blogspot.mydailyjava.bytebuddy.extraction.context;
 
 import org.objectweb.asm.Type;
 

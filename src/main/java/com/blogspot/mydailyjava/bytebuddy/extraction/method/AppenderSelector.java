@@ -1,7 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.extraction.method;
 
-import com.blogspot.mydailyjava.bytebuddy.extraction.information.ClassContext;
-import com.blogspot.mydailyjava.bytebuddy.extraction.information.MethodContext;
+import com.blogspot.mydailyjava.bytebuddy.extraction.context.ClassContext;
+import com.blogspot.mydailyjava.bytebuddy.extraction.context.MethodContext;
 import com.blogspot.mydailyjava.bytebuddy.extraction.method.appender.ByteCodeAppender;
 import com.blogspot.mydailyjava.bytebuddy.interception.method.matching.MethodMatcher;
 

@@ -1,7 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.extraction.method.appender;
 
-import com.blogspot.mydailyjava.bytebuddy.extraction.information.ClassContext;
-import com.blogspot.mydailyjava.bytebuddy.extraction.information.MethodContext;
+import com.blogspot.mydailyjava.bytebuddy.extraction.context.ClassContext;
+import com.blogspot.mydailyjava.bytebuddy.extraction.context.MethodContext;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 

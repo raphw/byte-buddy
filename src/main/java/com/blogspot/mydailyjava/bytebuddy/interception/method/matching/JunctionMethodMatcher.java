@@ -1,7 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.interception.method.matching;
 
-import com.blogspot.mydailyjava.bytebuddy.extraction.information.ClassContext;
-import com.blogspot.mydailyjava.bytebuddy.extraction.information.MethodContext;
+import com.blogspot.mydailyjava.bytebuddy.extraction.context.ClassContext;
+import com.blogspot.mydailyjava.bytebuddy.extraction.context.MethodContext;
 
 public abstract class JunctionMethodMatcher implements MethodMatcher {
 

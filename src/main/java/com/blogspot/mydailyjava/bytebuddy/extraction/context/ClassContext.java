@@ -1,4 +1,4 @@
-package com.blogspot.mydailyjava.bytebuddy.extraction.information;
+package com.blogspot.mydailyjava.bytebuddy.extraction.context;
 
 public class ClassContext {
 
