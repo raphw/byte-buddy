@@ -8,7 +8,7 @@ import org.objectweb.asm.Opcodes;
 
 public class AllMethodArgumentsArray implements CallStackArgument {
 
-    private static String OBJECT_TYPE = "Ljava/Lang/Object;";
+    private static final String OBJECT_TYPE = "Ljava/Lang/Object;";
 
     private static class AutoBoxingArrayFiller implements MethodDescriptorIterator.Visitor {
 
@@ -25,10 +25,16 @@ public class AllMethodArgumentsArray implements CallStackArgument {
         private final MethodVisitor methodVisitor;
 
         private int currentIndex;
+        private Size currentSize;
 
-        private AutoBoxingArrayFiller(MethodVisitor methodVisitor) {
+        private AutoBoxingArrayFiller(MethodVisitor methodVisitor, Size initialSize) {
             this.methodVisitor = methodVisitor;
+            this.currentSize = initialSize;
             this.currentIndex = 0;
+        }
+
+        private Size getCurrentSize() {
+            return currentSize;
         }
 
         @Override
@@ -37,6 +43,7 @@ public class AllMethodArgumentsArray implements CallStackArgument {
             methodVisitor.visitIntInsn(Opcodes.BIPUSH, currentIndex++);
             methodVisitor.visitIntInsn(Opcodes.ALOAD, localVariableIndex + 1);
             methodVisitor.visitInsn(Opcodes.AASTORE);
+            currentSize = currentSize.merge(0, 3);
         }
 
         @Override
@@ -45,6 +52,7 @@ public class AllMethodArgumentsArray implements CallStackArgument {
             methodVisitor.visitIntInsn(Opcodes.BIPUSH, currentIndex++);
             methodVisitor.visitIntInsn(Opcodes.AALOAD, localVariableIndex + 1);
             methodVisitor.visitInsn(Opcodes.AASTORE);
+            currentSize = currentSize.merge(0, 3);
         }
 
         @Override
@@ -54,6 +62,7 @@ public class AllMethodArgumentsArray implements CallStackArgument {
             methodVisitor.visitIntInsn(Opcodes.DLOAD, localVariableIndex + 1);
             methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, DOUBLE_WRAPPER_NAME, VALUE_OF_METHOD_NAME, DOUBLE_WRAPPER_DESCRIPTOR);
             methodVisitor.visitInsn(Opcodes.AASTORE);
+            currentSize = currentSize.merge(0, 4);
         }
 
         @Override
@@ -63,6 +72,7 @@ public class AllMethodArgumentsArray implements CallStackArgument {
             methodVisitor.visitIntInsn(Opcodes.LLOAD, localVariableIndex + 1);
             methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, LONG_WRAPPER_NAME, VALUE_OF_METHOD_NAME, LONG_WRAPPER_DESCRIPTOR);
             methodVisitor.visitInsn(Opcodes.AASTORE);
+            currentSize = currentSize.merge(0, 4);
         }
 
         @Override
@@ -72,6 +82,7 @@ public class AllMethodArgumentsArray implements CallStackArgument {
             methodVisitor.visitIntInsn(Opcodes.FLOAD, localVariableIndex + 1);
             methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, FLOAT_WRAPPER_NAME, VALUE_OF_METHOD_NAME, FLOAT_WRAPPER_DESCRIPTOR);
             methodVisitor.visitInsn(Opcodes.AASTORE);
+            currentSize = currentSize.merge(0, 3);
         }
 
         @Override
@@ -81,6 +92,7 @@ public class AllMethodArgumentsArray implements CallStackArgument {
             methodVisitor.visitIntInsn(Opcodes.ILOAD, localVariableIndex + 1);
             methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, INTEGER_WRAPPER_NAME, VALUE_OF_METHOD_NAME, INTEGER_WRAPPER_DESCRIPTOR);
             methodVisitor.visitInsn(Opcodes.AASTORE);
+            currentSize = currentSize.merge(0, 3);
         }
 
         @Override
@@ -90,6 +102,7 @@ public class AllMethodArgumentsArray implements CallStackArgument {
             methodVisitor.visitIntInsn(Opcodes.ILOAD, localVariableIndex + 1);
             methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, BOOLEAN_WRAPPER_NAME, VALUE_OF_METHOD_NAME, BOOLEAN_WRAPPER_DESCRIPTOR);
             methodVisitor.visitInsn(Opcodes.AASTORE);
+            currentSize = currentSize.merge(0, 3);
         }
 
         @Override
@@ -99,6 +112,7 @@ public class AllMethodArgumentsArray implements CallStackArgument {
             methodVisitor.visitIntInsn(Opcodes.ILOAD, localVariableIndex + 1);
             methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, BYTE_WRAPPER_NAME, VALUE_OF_METHOD_NAME, BYTE_WRAPPER_DESCRIPTOR);
             methodVisitor.visitInsn(Opcodes.AASTORE);
+            currentSize = currentSize.merge(0, 3);
         }
 
         @Override
@@ -108,6 +122,7 @@ public class AllMethodArgumentsArray implements CallStackArgument {
             methodVisitor.visitIntInsn(Opcodes.ILOAD, localVariableIndex + 1);
             methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, CHAR_WRAPPER_NAME, VALUE_OF_METHOD_NAME, CHAR_WRAPPER_DESCRIPTOR);
             methodVisitor.visitInsn(Opcodes.AASTORE);
+            currentSize = currentSize.merge(0, 3);
         }
 
         @Override
@@ -117,6 +132,7 @@ public class AllMethodArgumentsArray implements CallStackArgument {
             methodVisitor.visitIntInsn(Opcodes.ILOAD, localVariableIndex + 1);
             methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, SHORT_WRAPPER_NAME, VALUE_OF_METHOD_NAME, SHORT_WRAPPER_DESCRIPTOR);
             methodVisitor.visitInsn(Opcodes.AASTORE);
+            currentSize = currentSize.merge(0, 3);
         }
     }
 
@@ -132,10 +148,8 @@ public class AllMethodArgumentsArray implements CallStackArgument {
 
     @Override
     public Size load(MethodVisitor methodVisitor, ClassContext classContext, MethodContext methodContext) {
-        int numberOfArguments = methodContext.getType().getArgumentTypes().length;
-        methodVisitor.visitIntInsn(Opcodes.BIPUSH, numberOfArguments);
+        methodVisitor.visitIntInsn(Opcodes.BIPUSH, methodContext.getType().getArgumentTypes().length);
         methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, arrayTypeName);
-        new MethodDescriptorIterator(methodContext.getDescriptor()).apply(new AutoBoxingArrayFiller(methodVisitor));
-        return new Size(1, numberOfArguments == 0 ? 2 : 4);
+        return new MethodDescriptorIterator(methodContext.getDescriptor()).apply(new AutoBoxingArrayFiller(methodVisitor, new Size(1, 1))).getCurrentSize();
     }
 }

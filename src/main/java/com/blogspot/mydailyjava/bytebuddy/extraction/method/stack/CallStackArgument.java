@@ -25,7 +25,12 @@ public interface CallStackArgument {
         }
 
         public Size merge(Size other) {
-            return new Size(finalSize + other.finalSize, Math.max(maximalSize + other.finalSize, other.maximalSize));
+            return merge(other.finalSize, other.maximalSize);
+        }
+
+        public Size merge(int finalSize, int maximalSize) {
+            return new Size(finalSize + finalSize, Math.max(maximalSize + finalSize, maximalSize));
+
         }
     }
 
