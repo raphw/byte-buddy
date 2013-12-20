@@ -9,7 +9,7 @@ import org.objectweb.asm.Opcodes;
 
 public enum PrimitiveWideningAssigner {
 
-    BOOLEAN(LegalTrivialAssignment.INSTANCE,            // to boolean
+    BOOLEAN(new LegalTrivialAssignment(1),              // to boolean
             IllegalAssignment.INSTANCE,                 // to byte
             IllegalAssignment.INSTANCE,                 // to short
             IllegalAssignment.INSTANCE,                 // to character
@@ -19,19 +19,19 @@ public enum PrimitiveWideningAssigner {
             IllegalAssignment.INSTANCE),                // to double
 
     BYTE(IllegalAssignment.INSTANCE,                    // to boolean
-            LegalTrivialAssignment.INSTANCE,            // to byte
-            LegalTrivialAssignment.INSTANCE,            // to short
+            new LegalTrivialAssignment(1),              // to byte
+            new LegalTrivialAssignment(1),              // to short
             IllegalAssignment.INSTANCE,                 // to character
-            LegalTrivialAssignment.INSTANCE,            // to integer
+            new LegalTrivialAssignment(1),              // to integer
             new WideningAssignment(Opcodes.I2L, 2, 2),  // to long
             new WideningAssignment(Opcodes.I2F, 1, 1),  // to float
             new WideningAssignment(Opcodes.I2L, 2, 2)), // to double
 
     SHORT(IllegalAssignment.INSTANCE,                   // to boolean
             IllegalAssignment.INSTANCE,                 // to byte
-            LegalTrivialAssignment.INSTANCE,            // to short
+            new LegalTrivialAssignment(1),              // to short
             IllegalAssignment.INSTANCE,                 // to character
-            LegalTrivialAssignment.INSTANCE,            // to integer
+            new LegalTrivialAssignment(1),              // to integer
             new WideningAssignment(Opcodes.I2L, 2, 2),  // to long
             new WideningAssignment(Opcodes.I2F, 1, 1),  // to float
             new WideningAssignment(Opcodes.I2D, 2, 2)), // to double
@@ -39,8 +39,8 @@ public enum PrimitiveWideningAssigner {
     CHARACTER(IllegalAssignment.INSTANCE,               // to boolean
             IllegalAssignment.INSTANCE,                 // to byte
             IllegalAssignment.INSTANCE,                 // to short
-            LegalTrivialAssignment.INSTANCE,            // to character
-            LegalTrivialAssignment.INSTANCE,            // to integer
+            new LegalTrivialAssignment(1),              // to character
+            new LegalTrivialAssignment(1),              // to integer
             new WideningAssignment(Opcodes.I2L, 2, 2),  // to long
             new WideningAssignment(Opcodes.I2F, 1, 1),  // to float
             new WideningAssignment(Opcodes.I2D, 2, 2)), // to double
@@ -49,7 +49,7 @@ public enum PrimitiveWideningAssigner {
             IllegalAssignment.INSTANCE,                 // to byte
             IllegalAssignment.INSTANCE,                 // to short
             IllegalAssignment.INSTANCE,                 // to character
-            LegalTrivialAssignment.INSTANCE,            // to integer
+            new LegalTrivialAssignment(1),              // to integer
             new WideningAssignment(Opcodes.I2L, 2, 2),  // to long
             new WideningAssignment(Opcodes.I2F, 1, 1),  // to float
             new WideningAssignment(Opcodes.I2D, 2, 2)), // to double
@@ -59,7 +59,7 @@ public enum PrimitiveWideningAssigner {
             IllegalAssignment.INSTANCE,                 // to short
             IllegalAssignment.INSTANCE,                 // to character
             IllegalAssignment.INSTANCE,                 // to integer
-            LegalTrivialAssignment.INSTANCE,            // to long
+            new LegalTrivialAssignment(2),              // to long
             new WideningAssignment(Opcodes.L2F, 1, 2),  // to float
             new WideningAssignment(Opcodes.L2D, 2, 2)), // to double
 
@@ -69,7 +69,7 @@ public enum PrimitiveWideningAssigner {
             IllegalAssignment.INSTANCE,                 // to character
             IllegalAssignment.INSTANCE,                 // to integer
             IllegalAssignment.INSTANCE,                 // to long
-            LegalTrivialAssignment.INSTANCE,            // to float
+            new LegalTrivialAssignment(1),              // to float
             new WideningAssignment(Opcodes.F2L, 2, 2)), // to double
 
     DOUBLE(IllegalAssignment.INSTANCE,                  // to boolean
@@ -79,7 +79,7 @@ public enum PrimitiveWideningAssigner {
             IllegalAssignment.INSTANCE,                 // to integer
             IllegalAssignment.INSTANCE,                 // to long
             IllegalAssignment.INSTANCE,                 // to float
-            LegalTrivialAssignment.INSTANCE);           // to double
+            new LegalTrivialAssignment(2));             // to double
 
     private static class WideningAssignment implements Assignment {
 

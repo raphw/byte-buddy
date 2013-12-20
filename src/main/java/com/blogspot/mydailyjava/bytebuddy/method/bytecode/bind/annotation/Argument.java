@@ -28,7 +28,7 @@ public @interface Argument {
                 return IllegalAssignment.INSTANCE;
             }
             String assignedType = methodContext.getArgumentType().get(argument.value());
-            return MethodArgumentAssignment.of(assignedType).applyTo(argument.value(), assignmentExaminer.assign(assignmentTarget, assignedType));
+            return MethodArgumentAssignment.of(assignedType).assignAt(argument.value(), assignmentExaminer.assign(assignmentTarget, assignedType));
         }
     }
 

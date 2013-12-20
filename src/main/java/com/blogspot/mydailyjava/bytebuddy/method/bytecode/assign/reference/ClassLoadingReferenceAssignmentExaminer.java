@@ -16,8 +16,8 @@ public class ClassLoadingReferenceAssignmentExaminer implements AssignmentExamin
 
     @Override
     public Assignment assign(String superTypeName, Class<?> subType) {
-        if (!isPrimitive(superTypeName) && findClass(superTypeName).isAssignableFrom(subType)) {
-            return LegalTrivialAssignment.INSTANCE;
+        if (!isPrimitive(superTypeName) && !subType.isPrimitive() && findClass(superTypeName).isAssignableFrom(subType)) {
+            return new LegalTrivialAssignment(1);
         } else {
             return IllegalAssignment.INSTANCE;
         }
@@ -25,8 +25,8 @@ public class ClassLoadingReferenceAssignmentExaminer implements AssignmentExamin
 
     @Override
     public Assignment assign(Class<?> superType, String subTypeName) {
-        if (!isPrimitive(subTypeName) && superType.isAssignableFrom(findClass(subTypeName))) {
-            return LegalTrivialAssignment.INSTANCE;
+        if (!superType.isPrimitive() && !isPrimitive(subTypeName) && superType.isAssignableFrom(findClass(subTypeName))) {
+            return new LegalTrivialAssignment(1);
         } else {
             return IllegalAssignment.INSTANCE;
         }

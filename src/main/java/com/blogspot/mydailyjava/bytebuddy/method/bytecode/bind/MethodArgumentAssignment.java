@@ -48,11 +48,11 @@ public enum MethodArgumentAssignment {
     private class ArgumentLoadingAssignment implements Assignment {
 
         private final int variableIndex;
-        private final Assignment assignment;
+        private final Assignment chainedAssignment;
 
-        private ArgumentLoadingAssignment(int variableIndex, Assignment assignment) {
+        private ArgumentLoadingAssignment(int variableIndex, Assignment chainedAssignment) {
             this.variableIndex = variableIndex;
-            this.assignment = assignment;
+            this.chainedAssignment = chainedAssignment;
         }
 
         @Override
@@ -63,12 +63,12 @@ public enum MethodArgumentAssignment {
         @Override
         public Size apply(MethodVisitor methodVisitor) {
             methodVisitor.visitVarInsn(loadOpcode, variableIndex);
-            return assignment.apply(methodVisitor).withMaximum(operandStackSize);
+            return chainedAssignment.apply(methodVisitor).withMaximum(operandStackSize);
         }
     }
 
-    public Assignment applyTo(int variableIndex, Assignment assignment) {
-        return new ArgumentLoadingAssignment(variableIndex, assignment);
+    public Assignment assignAt(int variableIndex, Assignment chainedAssignment) {
+        return new ArgumentLoadingAssignment(variableIndex, chainedAssignment);
     }
 }
 
