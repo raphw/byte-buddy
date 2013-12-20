@@ -1,7 +1,5 @@
-package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assignment;
+package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign;
 
-import com.blogspot.mydailyjava.bytebuddy.context.ClassContext;
-import com.blogspot.mydailyjava.bytebuddy.context.MethodContext;
 import org.objectweb.asm.MethodVisitor;
 
 public enum IllegalAssignment implements Assignment {
@@ -13,7 +11,7 @@ public enum IllegalAssignment implements Assignment {
     }
 
     @Override
-    public Size load(MethodVisitor methodVisitor, ClassContext classContext, MethodContext methodContext) {
+    public Size apply(MethodVisitor methodVisitor) {
         throw new IllegalStateException("It is not possible to apply an illegal assignment as byte code");
     }
 }

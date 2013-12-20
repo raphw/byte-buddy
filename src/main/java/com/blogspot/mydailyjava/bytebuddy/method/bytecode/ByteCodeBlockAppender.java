@@ -6,7 +6,7 @@ import org.objectweb.asm.MethodVisitor;
 
 public interface ByteCodeBlockAppender {
 
-    static final class Size {
+    static class Size {
 
         private final int operandStackSize;
         private final int localVariableSize;

@@ -6,6 +6,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 public final class MethodMatchers {
 
@@ -148,15 +149,15 @@ public final class MethodMatchers {
 
     private static class ReturnTypeMatcher extends JunctionMethodMatcher {
 
-        private final Class<?> returnType;
+        private final String returnType;
 
         public ReturnTypeMatcher(Class<?> returnType) {
-            this.returnType = returnType;
+            this.returnType = Type.getInternalName(returnType);
         }
 
         @Override
         public boolean matches(ClassContext classContext, MethodContext methodContext) {
-            return methodContext.getType().getReturnType().getClassName().equals(returnType.getName());
+            return methodContext.getReturnType().equals(returnType);
         }
     }
 
@@ -174,12 +175,12 @@ public final class MethodMatchers {
 
         @Override
         public boolean matches(ClassContext classContext, MethodContext methodContext) {
-            Type[] argumentType = methodContext.getType().getArgumentTypes();
-            if (this.argumentType.length != argumentType.length) {
+            List<String> argumentTypes = methodContext.getArgumentType();
+            if (this.argumentType.length != argumentTypes.size()) {
                 return false;
             }
             for (int i = 0; i < argumentType.length; i++) {
-                if (!this.argumentType[i].getName().equals(argumentType[i].getClassName())) {
+                if (!Type.getInternalName(argumentType[i]).equals(argumentTypes.get(i))) {
                     return false;
                 }
             }
@@ -224,7 +225,7 @@ public final class MethodMatchers {
 
         @Override
         public boolean matches(ClassContext classContext, MethodContext methodContext) {
-            return Type.getMethodDescriptor(method).equals(methodContext.getType().getDescriptor());
+            return Type.getMethodDescriptor(method).equals(methodContext.getDescriptor());
         }
     }
 

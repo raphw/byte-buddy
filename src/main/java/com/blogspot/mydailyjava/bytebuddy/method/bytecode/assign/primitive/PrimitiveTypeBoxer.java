@@ -1,9 +1,8 @@
-package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assignment.primitive;
+package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.primitive;
 
-import com.blogspot.mydailyjava.bytebuddy.context.ClassContext;
-import com.blogspot.mydailyjava.bytebuddy.context.MethodContext;
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assignment.Assignment;
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assignment.AssignmentExaminer;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assignment;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.AssignmentExaminer;
+import com.blogspot.mydailyjava.bytebuddy.method.utility.TypeSymbol;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -18,32 +17,25 @@ public enum PrimitiveTypeBoxer {
     FLOAT("java/lang/Float", 1, Float.class, float.class, "valueOf", "(F)Ljava/lang/Float;", "floatValue", "()F"),
     DOUBLE("java/lang/Double", 2, Double.class, double.class, "valueOf", "(D)Ljava/lang/Double;", "doubleValue", "()D");
 
-    private static final char BOOLEAN_TYPE = 'Z';
-    private static final char BYTE_TYPE = 'B';
-    private static final char SHORT_TYPE = 'S';
-    private static final char CHARACTER_TYPE = 'C';
-    private static final char INTEGER_TYPE = 'I';
-    private static final char LONG_TYPE = 'J';
-    private static final char FLOAT_TYPE = 'F';
-    private static final char DOUBLE_TYPE = 'D';
+    private static final int REFERENCE_SIZE = 1;
 
     public static PrimitiveTypeBoxer of(String typeName) {
         switch (typeName.charAt(0)) {
-            case BOOLEAN_TYPE:
+            case TypeSymbol.BOOLEAN:
                 return BOOLEAN;
-            case BYTE_TYPE:
+            case TypeSymbol.BYTE:
                 return BYTE;
-            case SHORT_TYPE:
+            case TypeSymbol.SHORT:
                 return SHORT;
-            case CHARACTER_TYPE:
+            case TypeSymbol.CHAR:
                 return CHARACTER;
-            case INTEGER_TYPE:
+            case TypeSymbol.INT:
                 return INTEGER;
-            case LONG_TYPE:
+            case TypeSymbol.LONG:
                 return LONG;
-            case FLOAT_TYPE:
+            case TypeSymbol.FLOAT:
                 return FLOAT;
-            case DOUBLE_TYPE:
+            case TypeSymbol.DOUBLE:
                 return DOUBLE;
             default:
                 throw new IllegalStateException("Not a primitive type: " + typeName);
@@ -109,9 +101,9 @@ public enum PrimitiveTypeBoxer {
         }
 
         @Override
-        public Size load(MethodVisitor methodVisitor, ClassContext classContext, MethodContext methodContext) {
+        public Size apply(MethodVisitor methodVisitor) {
             methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, wrapperTypeName, boxingMethodName, boxingMethodDescriptor);
-            return assignment.load(methodVisitor, classContext, methodContext).consume(1, 1);
+            return assignment.apply(methodVisitor).withMaximum(REFERENCE_SIZE);
         }
     }
 
@@ -129,25 +121,25 @@ public enum PrimitiveTypeBoxer {
         }
 
         @Override
-        public Size load(MethodVisitor methodVisitor, ClassContext classContext, MethodContext methodContext) {
+        public Size apply(MethodVisitor methodVisitor) {
             methodVisitor.visitMethodInsn(Opcodes.INVOKEDYNAMIC, wrapperTypeName, unboxingMethodName, unboxingMethodDescriptor);
-            return assignment.load(methodVisitor, classContext, methodContext).consume(operandStackSize - 1, operandStackSize - 1);
+            return assignment.apply(methodVisitor).withMaximum(operandStackSize);
         }
     }
 
-    public Assignment boxingAssignmentBefore(AssignmentExaminer assignmentExaminer, Class<?> subType) {
+    public Assignment boxAndAssignTo(Class<?> subType, AssignmentExaminer assignmentExaminer) {
         return new BoxingAssignment(assignmentExaminer.assign(wrapperTypeName, subType));
     }
 
-    public Assignment boxingAssignmentBefore(AssignmentExaminer assignmentExaminer, String subTypeName) {
+    public Assignment boxAndAssignTo(String subTypeName, AssignmentExaminer assignmentExaminer) {
         return new BoxingAssignment(assignmentExaminer.assign(wrapperType, subTypeName));
     }
 
-    public Assignment unboxingAssignmentTo(Class<?> subType) {
+    public Assignment unboxAndAssignTo(Class<?> subType) {
         return new UnboxingAssignment(PrimitiveWideningAssigner.of(primitiveType).widenTo(subType));
     }
 
-    public Assignment unboxingAssignmentTo(String subTypeName) {
+    public Assignment unboxAndAssignTo(String subTypeName) {
         return new UnboxingAssignment(PrimitiveWideningAssigner.of(primitiveType).widenTo(subTypeName));
     }
 }

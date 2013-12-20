@@ -3,36 +3,49 @@ package com.blogspot.mydailyjava.bytebuddy.context;
 import org.objectweb.asm.Type;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class MethodContext {
+
+    private static List<String> asInternalNameList(Type[] type) {
+        List<String> internalNames = new ArrayList<String>(type.length);
+        for (Type aType : type) {
+            internalNames.add(aType.getInternalName());
+        }
+        return internalNames;
+    }
+
+    private static String[] asInternalNameArray(Class<?>[] type) {
+        String[] internalNames = new String[type.length];
+        for (int i = 0; i < type.length; i++) {
+            internalNames[i] = Type.getInternalName(type[i]);
+        }
+        return internalNames;
+    }
 
     private final int access;
     private final String name;
     private final String descriptor;
-    private final Type type;
+    private final List<String> argumentType;
+    private final String returnType;
     private final String signature;
-    private final String[] exceptions;
+    private final List<String> exceptions;
 
     public MethodContext(Method method) {
-        access = method.getModifiers();
-        name = method.getName();
-        type = Type.getType(method);
-        descriptor = type.getDescriptor();
-        signature = null;
-        Class<?>[] exceptionType = method.getExceptionTypes();
-        exceptions = new String[method.getExceptionTypes().length];
-        for (int i = 0; i < exceptions.length; i++) {
-            exceptions[i] = Type.getInternalName(exceptionType[i]);
-        }
+        this(method.getModifiers(), method.getName(), Type.getMethodDescriptor(method), "", asInternalNameArray(method.getExceptionTypes()));
     }
 
-    public MethodContext(int access, String name, String desc, String signature, String[] exceptions) {
+    public MethodContext(int access, String name, String desc, String signature, String[] exception) {
         this.access = access;
         this.name = name;
         this.descriptor = desc;
-        this.type = Type.getMethodType(desc);
-        this.signature = signature;
-        this.exceptions = exceptions == null ? new String[0] : exceptions;
+        this.argumentType = asInternalNameList(Type.getArgumentTypes(descriptor));
+        this.returnType = Type.getReturnType(descriptor).getInternalName();
+        this.signature = signature == null ? "" : signature;
+        this.exceptions = exception == null ? Collections.<String>emptyList() : Arrays.asList(exception);
     }
 
     public int getAccess() {
@@ -47,15 +60,19 @@ public class MethodContext {
         return descriptor;
     }
 
-    public Type getType() {
-        return type;
+    public List<String> getArgumentType() {
+        return argumentType;
+    }
+
+    public String getReturnType() {
+        return returnType;
     }
 
     public String getSignature() {
         return signature;
     }
 
-    public String[] getExceptions() {
+    public List<String> getExceptions() {
         return exceptions;
     }
 }

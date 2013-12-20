@@ -1,4 +1,4 @@
-package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assignment;
+package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign;
 
 public interface AssignmentExaminer {
 

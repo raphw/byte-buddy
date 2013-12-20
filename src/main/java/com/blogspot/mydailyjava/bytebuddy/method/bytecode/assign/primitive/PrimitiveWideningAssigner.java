@@ -1,10 +1,9 @@
-package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assignment.primitive;
+package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.primitive;
 
-import com.blogspot.mydailyjava.bytebuddy.context.ClassContext;
-import com.blogspot.mydailyjava.bytebuddy.context.MethodContext;
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assignment.Assignment;
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assignment.IllegalAssignment;
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assignment.LegalTrivialAssignment;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assignment;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.IllegalAssignment;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.LegalTrivialAssignment;
+import com.blogspot.mydailyjava.bytebuddy.method.utility.TypeSymbol;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -99,38 +98,29 @@ public enum PrimitiveWideningAssigner {
         }
 
         @Override
-        public Size load(MethodVisitor methodVisitor, ClassContext classContext, MethodContext methodContext) {
+        public Size apply(MethodVisitor methodVisitor) {
             methodVisitor.visitInsn(conversionInstruction);
             return new Size(finalOperandStackSize, maximalOperandStackSize);
         }
     }
 
-    private static final char BOOLEAN_TYPE = 'Z';
-    private static final char BYTE_TYPE = 'B';
-    private static final char SHORT_TYPE = 'S';
-    private static final char CHARACTER_TYPE = 'C';
-    private static final char INTEGER_TYPE = 'I';
-    private static final char LONG_TYPE = 'J';
-    private static final char FLOAT_TYPE = 'F';
-    private static final char DOUBLE_TYPE = 'D';
-
     public static PrimitiveWideningAssigner of(String typeName) {
         switch (typeName.charAt(0)) {
-            case BOOLEAN_TYPE:
+            case TypeSymbol.BOOLEAN:
                 return BOOLEAN;
-            case BYTE_TYPE:
+            case TypeSymbol.BYTE:
                 return BYTE;
-            case SHORT_TYPE:
+            case TypeSymbol.SHORT:
                 return SHORT;
-            case CHARACTER_TYPE:
+            case TypeSymbol.CHAR:
                 return CHARACTER;
-            case INTEGER_TYPE:
+            case TypeSymbol.INT:
                 return INTEGER;
-            case LONG_TYPE:
+            case TypeSymbol.LONG:
                 return LONG;
-            case FLOAT_TYPE:
+            case TypeSymbol.FLOAT:
                 return FLOAT;
-            case DOUBLE_TYPE:
+            case TypeSymbol.DOUBLE:
                 return DOUBLE;
             default:
                 throw new IllegalStateException("Not a primitive type: " + typeName);
@@ -168,10 +158,10 @@ public enum PrimitiveWideningAssigner {
     private final Assignment toFloatAssignment;
     private final Assignment toDoubleAssignment;
 
-    PrimitiveWideningAssigner(Assignment toBooleanAssignment, Assignment toByteAssignment,
-                              Assignment toShortAssignment, Assignment toCharacterAssignment,
-                              Assignment toIntegerAssignment, Assignment toLongAssignment,
-                              Assignment toFloatAssignment, Assignment toDoubleAssignment) {
+    private PrimitiveWideningAssigner(Assignment toBooleanAssignment, Assignment toByteAssignment,
+                                      Assignment toShortAssignment, Assignment toCharacterAssignment,
+                                      Assignment toIntegerAssignment, Assignment toLongAssignment,
+                                      Assignment toFloatAssignment, Assignment toDoubleAssignment) {
         this.toBooleanAssignment = toBooleanAssignment;
         this.toByteAssignment = toByteAssignment;
         this.toShortAssignment = toShortAssignment;
@@ -206,21 +196,21 @@ public enum PrimitiveWideningAssigner {
 
     public Assignment widenTo(String typeName) {
         switch (typeName.charAt(0)) {
-            case BOOLEAN_TYPE:
+            case TypeSymbol.BOOLEAN:
                 return toBooleanAssignment;
-            case BYTE_TYPE:
+            case TypeSymbol.BYTE:
                 return toByteAssignment;
-            case SHORT_TYPE:
+            case TypeSymbol.SHORT:
                 return toShortAssignment;
-            case CHARACTER_TYPE:
+            case TypeSymbol.CHAR:
                 return toCharacterAssignment;
-            case INTEGER_TYPE:
+            case TypeSymbol.INT:
                 return toIntegerAssignment;
-            case LONG_TYPE:
+            case TypeSymbol.LONG:
                 return toLongAssignment;
-            case FLOAT_TYPE:
+            case TypeSymbol.FLOAT:
                 return toFloatAssignment;
-            case DOUBLE_TYPE:
+            case TypeSymbol.DOUBLE:
                 return toDoubleAssignment;
             default:
                 throw new IllegalStateException("Not a primitive type: " + typeName);

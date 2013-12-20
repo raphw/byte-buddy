@@ -2,10 +2,6 @@ package com.blogspot.mydailyjava.bytebuddy.method.utility;
 
 public class MethodDescriptorIterator {
 
-    private static final char OBJECT = 'L', ARRAY = '[',
-            INT = 'I', BOOLEAN = 'Z', CHAR = 'C', BYTE = 'B', SHORT = 'S', LONG = 'J',
-            DOUBLE = 'D', FLOAT = 'F';
-
     private static final char SEPARATOR_TYPE = ';', METHOD_ARGUMENT_END = ')';
 
     public static interface Visitor {
@@ -41,47 +37,47 @@ public class MethodDescriptorIterator {
         int argumentIndex = 0, cursor = 0;
         while (cursor != argumentTypesInternalForm.length()) {
             switch (argumentTypesInternalForm.charAt(cursor)) {
-                case OBJECT: {
+                case TypeSymbol.REFERENCE: {
                     int nextCursor = endOfObject(argumentTypesInternalForm, argumentIndex);
                     visitor.visitObject(argumentTypesInternalForm.substring(cursor, nextCursor), argumentIndex++);
                     cursor = nextCursor;
                     break;
                 }
-                case ARRAY: {
+                case TypeSymbol.ARRAY: {
                     int nextCursor = endOfArray(argumentTypesInternalForm, argumentIndex);
                     visitor.visitArray(argumentTypesInternalForm.substring(cursor, nextCursor), argumentIndex++);
                     cursor = nextCursor;
                     break;
                 }
-                case DOUBLE:
+                case TypeSymbol.DOUBLE:
                     visitor.visitDouble(argumentIndex += 2);
                     cursor++;
                     break;
-                case LONG:
+                case TypeSymbol.LONG:
                     visitor.visitLong(argumentIndex += 2);
                     cursor++;
                     break;
-                case FLOAT:
+                case TypeSymbol.FLOAT:
                     visitor.visitFloat(argumentIndex++);
                     cursor++;
                     break;
-                case INT:
+                case TypeSymbol.INT:
                     visitor.visitInt(argumentIndex++);
                     cursor++;
                     break;
-                case BOOLEAN:
+                case TypeSymbol.BOOLEAN:
                     visitor.visitBoolean(argumentIndex++);
                     cursor++;
                     break;
-                case BYTE:
+                case TypeSymbol.BYTE:
                     visitor.visitByte(argumentIndex++);
                     cursor++;
                     break;
-                case CHAR:
+                case TypeSymbol.CHAR:
                     visitor.visitChar(argumentIndex++);
                     cursor++;
                     break;
-                case SHORT:
+                case TypeSymbol.SHORT:
                     visitor.visitShort(argumentIndex++);
                     cursor++;
                     break;
@@ -98,9 +94,9 @@ public class MethodDescriptorIterator {
 
     private static int endOfArray(String value, int index) {
         switch (value.charAt(index + 1)) {
-            case OBJECT:
+            case TypeSymbol.REFERENCE:
                 return endOfObject(value, index + 1);
-            case ARRAY:
+            case TypeSymbol.ARRAY:
                 return endOfArray(value, index + 1);
             /*
             case FLOAT:

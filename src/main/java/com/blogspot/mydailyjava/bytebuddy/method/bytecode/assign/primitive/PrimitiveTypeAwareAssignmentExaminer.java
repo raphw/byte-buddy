@@ -1,7 +1,7 @@
-package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assignment.primitive;
+package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.primitive;
 
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assignment.Assignment;
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assignment.AssignmentExaminer;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assignment;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.AssignmentExaminer;
 
 public class PrimitiveTypeAwareAssignmentExaminer implements AssignmentExaminer {
 
@@ -17,9 +17,9 @@ public class PrimitiveTypeAwareAssignmentExaminer implements AssignmentExaminer 
         if (superTypeIsPrimitive && subTypeIsPrimitive) {
             return PrimitiveWideningAssigner.of(superTypeName).widenTo(subType);
         } else if (superTypeIsPrimitive /* && !subTypeIsPrimitive */) {
-            return PrimitiveTypeBoxer.of(superTypeName).boxingAssignmentBefore(referenceTypeDelegate, subType);
+            return PrimitiveTypeBoxer.of(superTypeName).boxAndAssignTo(subType, referenceTypeDelegate);
         } else if (/* !superTypeIsPrimitive && */ subTypeIsPrimitive) {
-            return PrimitiveTypeBoxer.of(superTypeName).unboxingAssignmentTo(subType);
+            return PrimitiveTypeBoxer.of(superTypeName).unboxAndAssignTo(subType);
         } else {
             return referenceTypeDelegate.assign(superTypeName, subType);
         }
@@ -31,9 +31,9 @@ public class PrimitiveTypeAwareAssignmentExaminer implements AssignmentExaminer 
         if (superTypeIsPrimitive && subTypeIsPrimitive) {
             return PrimitiveWideningAssigner.of(superType).widenTo(subTypeName);
         } else if (superTypeIsPrimitive /* && !subTypeIsPrimitive */) {
-            return PrimitiveTypeBoxer.of(superType).boxingAssignmentBefore(referenceTypeDelegate, subTypeName);
+            return PrimitiveTypeBoxer.of(superType).boxAndAssignTo(subTypeName, referenceTypeDelegate);
         } else if (/* !superTypeIsPrimitive && */ subTypeIsPrimitive) {
-            return PrimitiveTypeBoxer.of(superType).unboxingAssignmentTo(subTypeName);
+            return PrimitiveTypeBoxer.of(superType).unboxAndAssignTo(subTypeName);
         } else {
             return referenceTypeDelegate.assign(superType, subTypeName);
         }
