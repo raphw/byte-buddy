@@ -12,30 +12,32 @@ public class PrimitiveTypeAwareAssignmentExaminer implements AssignmentExaminer 
     }
 
     @Override
-    public Assignment assign(String superTypeName, Class<?> subType) {
+    public Assignment assign(String superTypeName, Class<?> subType, boolean considerRuntimeType) {
         boolean superTypeIsPrimitive = isPrimitive(superTypeName), subTypeIsPrimitive = subType.isPrimitive();
         if (superTypeIsPrimitive && subTypeIsPrimitive) {
             return PrimitiveWideningAssigner.of(superTypeName).widenTo(subType);
         } else if (superTypeIsPrimitive /* && !subTypeIsPrimitive */) {
-            return PrimitiveTypeBoxer.of(superTypeName).boxAndAssignTo(subType, referenceTypeDelegate);
+            return PrimitiveTypeBoxer.of(superTypeName).boxAndAssignTo(subType, referenceTypeDelegate, considerRuntimeType);
         } else if (/* !superTypeIsPrimitive && */ subTypeIsPrimitive) {
-            return PrimitiveTypeBoxer.of(superTypeName).unboxAndAssignTo(subType);
+            // TODO: Check super type for unboxing abilities instead of sub type (only relevant for widening).
+            return PrimitiveTypeBoxer.of(subType).unboxAndAssignTo(subType, referenceTypeDelegate);
         } else {
-            return referenceTypeDelegate.assign(superTypeName, subType);
+            return referenceTypeDelegate.assign(superTypeName, subType, considerRuntimeType);
         }
     }
 
     @Override
-    public Assignment assign(Class<?> superType, String subTypeName) {
+    public Assignment assign(Class<?> superType, String subTypeName, boolean considerRuntimeType) {
         boolean superTypeIsPrimitive = superType.isPrimitive(), subTypeIsPrimitive = isPrimitive(subTypeName);
         if (superTypeIsPrimitive && subTypeIsPrimitive) {
             return PrimitiveWideningAssigner.of(superType).widenTo(subTypeName);
         } else if (superTypeIsPrimitive /* && !subTypeIsPrimitive */) {
-            return PrimitiveTypeBoxer.of(superType).boxAndAssignTo(subTypeName, referenceTypeDelegate);
+            return PrimitiveTypeBoxer.of(superType).boxAndAssignTo(subTypeName, referenceTypeDelegate, considerRuntimeType);
         } else if (/* !superTypeIsPrimitive && */ subTypeIsPrimitive) {
-            return PrimitiveTypeBoxer.of(superType).unboxAndAssignTo(subTypeName);
+            // TODO: Check super type for unboxing abilities instead of sub type (only relevant for widening).
+            return PrimitiveTypeBoxer.of(subTypeName).unboxAndAssignTo(subTypeName, referenceTypeDelegate);
         } else {
-            return referenceTypeDelegate.assign(superType, subTypeName);
+            return referenceTypeDelegate.assign(superType, subTypeName, considerRuntimeType);
         }
     }
 

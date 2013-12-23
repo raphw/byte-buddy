@@ -2,7 +2,7 @@ package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.primitive;
 
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assignment;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.AssignmentExaminer;
-import com.blogspot.mydailyjava.bytebuddy.method.utility.TypeSymbol;
+import com.blogspot.mydailyjava.bytebuddy.method.utility.MethodDescriptor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -17,25 +17,23 @@ public enum PrimitiveTypeBoxer {
     FLOAT("java/lang/Float", 1, Float.class, float.class, "valueOf", "(F)Ljava/lang/Float;", "floatValue", "()F"),
     DOUBLE("java/lang/Double", 2, Double.class, double.class, "valueOf", "(D)Ljava/lang/Double;", "doubleValue", "()D");
 
-    private static final int REFERENCE_SIZE = 1;
-
     public static PrimitiveTypeBoxer of(String typeName) {
         switch (typeName.charAt(0)) {
-            case TypeSymbol.BOOLEAN:
+            case MethodDescriptor.BOOLEAN_SYMBOL:
                 return BOOLEAN;
-            case TypeSymbol.BYTE:
+            case MethodDescriptor.BYTE_SYMBOL:
                 return BYTE;
-            case TypeSymbol.SHORT:
+            case MethodDescriptor.SHORT_SYMBOL:
                 return SHORT;
-            case TypeSymbol.CHAR:
+            case MethodDescriptor.CHAR_SYMBOL:
                 return CHARACTER;
-            case TypeSymbol.INT:
+            case MethodDescriptor.INT_SYMBOL:
                 return INTEGER;
-            case TypeSymbol.LONG:
+            case MethodDescriptor.LONG_SYMBOL:
                 return LONG;
-            case TypeSymbol.FLOAT:
+            case MethodDescriptor.FLOAT_SYMBOL:
                 return FLOAT;
-            case TypeSymbol.DOUBLE:
+            case MethodDescriptor.DOUBLE_SYMBOL:
                 return DOUBLE;
             default:
                 throw new IllegalStateException("Not a primitive type: " + typeName);
@@ -103,43 +101,46 @@ public enum PrimitiveTypeBoxer {
         @Override
         public Size apply(MethodVisitor methodVisitor) {
             methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, wrapperTypeName, boxingMethodName, boxingMethodDescriptor);
-            return assignment.apply(methodVisitor).withMaximum(REFERENCE_SIZE);
+            return assignment.apply(methodVisitor).aggregateLeftFirst(operandStackSize - 1);
         }
     }
 
     private class UnboxingAssignment implements Assignment {
 
-        private final Assignment assignment;
+        private final Assignment referenceAssignment;
+        private final Assignment wideningAssignment;
 
-        public UnboxingAssignment(Assignment assignment) {
-            this.assignment = assignment;
+        public UnboxingAssignment(Assignment referenceAssignment, Assignment wideningAssignment) {
+            this.referenceAssignment = referenceAssignment;
+            this.wideningAssignment = wideningAssignment;
         }
 
         @Override
         public boolean isAssignable() {
-            return assignment.isAssignable();
+            return wideningAssignment.isAssignable() && referenceAssignment.isAssignable();
         }
 
         @Override
         public Size apply(MethodVisitor methodVisitor) {
+            Size size = referenceAssignment.apply(methodVisitor);
             methodVisitor.visitMethodInsn(Opcodes.INVOKEDYNAMIC, wrapperTypeName, unboxingMethodName, unboxingMethodDescriptor);
-            return assignment.apply(methodVisitor).withMaximum(operandStackSize);
+            return size.aggregateLeftFirst(wideningAssignment.apply(methodVisitor).aggregateRightFirst(operandStackSize - 1));
         }
     }
 
-    public Assignment boxAndAssignTo(Class<?> subType, AssignmentExaminer assignmentExaminer) {
-        return new BoxingAssignment(assignmentExaminer.assign(wrapperTypeName, subType));
+    public Assignment boxAndAssignTo(Class<?> subType, AssignmentExaminer assignmentExaminer, boolean considerRuntimeType) {
+        return new BoxingAssignment(assignmentExaminer.assign(wrapperTypeName, subType, considerRuntimeType));
     }
 
-    public Assignment boxAndAssignTo(String subTypeName, AssignmentExaminer assignmentExaminer) {
-        return new BoxingAssignment(assignmentExaminer.assign(wrapperType, subTypeName));
+    public Assignment boxAndAssignTo(String subTypeName, AssignmentExaminer assignmentExaminer, boolean considerRuntimeType) {
+        return new BoxingAssignment(assignmentExaminer.assign(wrapperType, subTypeName, considerRuntimeType));
     }
 
-    public Assignment unboxAndAssignTo(Class<?> subType) {
-        return new UnboxingAssignment(PrimitiveWideningAssigner.of(primitiveType).widenTo(subType));
+    public Assignment unboxAndAssignTo(Class<?> superType, AssignmentExaminer assignmentExaminer) {
+        return new UnboxingAssignment(null, PrimitiveWideningAssigner.of(primitiveType).widenTo(superType));
     }
 
-    public Assignment unboxAndAssignTo(String subTypeName) {
-        return new UnboxingAssignment(PrimitiveWideningAssigner.of(primitiveType).widenTo(subTypeName));
+    public Assignment unboxAndAssignTo(String superTypeName, AssignmentExaminer assignmentExaminer) {
+        return new UnboxingAssignment(null, PrimitiveWideningAssigner.of(primitiveType).widenTo(superTypeName));
     }
 }

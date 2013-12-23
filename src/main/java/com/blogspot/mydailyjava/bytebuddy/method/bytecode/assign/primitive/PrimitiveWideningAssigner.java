@@ -3,13 +3,13 @@ package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.primitive;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assignment;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.IllegalAssignment;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.LegalTrivialAssignment;
-import com.blogspot.mydailyjava.bytebuddy.method.utility.TypeSymbol;
+import com.blogspot.mydailyjava.bytebuddy.method.utility.MethodDescriptor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 public enum PrimitiveWideningAssigner {
 
-    BOOLEAN(new LegalTrivialAssignment(1),              // to boolean
+    BOOLEAN(LegalTrivialAssignment.INSTANCE,            // to boolean
             IllegalAssignment.INSTANCE,                 // to byte
             IllegalAssignment.INSTANCE,                 // to short
             IllegalAssignment.INSTANCE,                 // to character
@@ -19,19 +19,19 @@ public enum PrimitiveWideningAssigner {
             IllegalAssignment.INSTANCE),                // to double
 
     BYTE(IllegalAssignment.INSTANCE,                    // to boolean
-            new LegalTrivialAssignment(1),              // to byte
-            new LegalTrivialAssignment(1),              // to short
+            LegalTrivialAssignment.INSTANCE,            // to byte
+            LegalTrivialAssignment.INSTANCE,            // to short
             IllegalAssignment.INSTANCE,                 // to character
-            new LegalTrivialAssignment(1),              // to integer
+            LegalTrivialAssignment.INSTANCE,            // to integer
             new WideningAssignment(Opcodes.I2L, 2, 2),  // to long
             new WideningAssignment(Opcodes.I2F, 1, 1),  // to float
             new WideningAssignment(Opcodes.I2L, 2, 2)), // to double
 
     SHORT(IllegalAssignment.INSTANCE,                   // to boolean
             IllegalAssignment.INSTANCE,                 // to byte
-            new LegalTrivialAssignment(1),              // to short
+            LegalTrivialAssignment.INSTANCE,            // to short
             IllegalAssignment.INSTANCE,                 // to character
-            new LegalTrivialAssignment(1),              // to integer
+            LegalTrivialAssignment.INSTANCE,            // to integer
             new WideningAssignment(Opcodes.I2L, 2, 2),  // to long
             new WideningAssignment(Opcodes.I2F, 1, 1),  // to float
             new WideningAssignment(Opcodes.I2D, 2, 2)), // to double
@@ -39,8 +39,8 @@ public enum PrimitiveWideningAssigner {
     CHARACTER(IllegalAssignment.INSTANCE,               // to boolean
             IllegalAssignment.INSTANCE,                 // to byte
             IllegalAssignment.INSTANCE,                 // to short
-            new LegalTrivialAssignment(1),              // to character
-            new LegalTrivialAssignment(1),              // to integer
+            LegalTrivialAssignment.INSTANCE,            // to character
+            LegalTrivialAssignment.INSTANCE,            // to integer
             new WideningAssignment(Opcodes.I2L, 2, 2),  // to long
             new WideningAssignment(Opcodes.I2F, 1, 1),  // to float
             new WideningAssignment(Opcodes.I2D, 2, 2)), // to double
@@ -49,7 +49,7 @@ public enum PrimitiveWideningAssigner {
             IllegalAssignment.INSTANCE,                 // to byte
             IllegalAssignment.INSTANCE,                 // to short
             IllegalAssignment.INSTANCE,                 // to character
-            new LegalTrivialAssignment(1),              // to integer
+            LegalTrivialAssignment.INSTANCE,            // to integer
             new WideningAssignment(Opcodes.I2L, 2, 2),  // to long
             new WideningAssignment(Opcodes.I2F, 1, 1),  // to float
             new WideningAssignment(Opcodes.I2D, 2, 2)), // to double
@@ -59,7 +59,7 @@ public enum PrimitiveWideningAssigner {
             IllegalAssignment.INSTANCE,                 // to short
             IllegalAssignment.INSTANCE,                 // to character
             IllegalAssignment.INSTANCE,                 // to integer
-            new LegalTrivialAssignment(2),              // to long
+            LegalTrivialAssignment.INSTANCE,            // to long
             new WideningAssignment(Opcodes.L2F, 1, 2),  // to float
             new WideningAssignment(Opcodes.L2D, 2, 2)), // to double
 
@@ -69,7 +69,7 @@ public enum PrimitiveWideningAssigner {
             IllegalAssignment.INSTANCE,                 // to character
             IllegalAssignment.INSTANCE,                 // to integer
             IllegalAssignment.INSTANCE,                 // to long
-            new LegalTrivialAssignment(1),              // to float
+            LegalTrivialAssignment.INSTANCE,            // to float
             new WideningAssignment(Opcodes.F2L, 2, 2)), // to double
 
     DOUBLE(IllegalAssignment.INSTANCE,                  // to boolean
@@ -79,7 +79,7 @@ public enum PrimitiveWideningAssigner {
             IllegalAssignment.INSTANCE,                 // to integer
             IllegalAssignment.INSTANCE,                 // to long
             IllegalAssignment.INSTANCE,                 // to float
-            new LegalTrivialAssignment(2));             // to double
+            LegalTrivialAssignment.INSTANCE);           // to double
 
     private static class WideningAssignment implements Assignment {
 
@@ -106,24 +106,24 @@ public enum PrimitiveWideningAssigner {
 
     public static PrimitiveWideningAssigner of(String typeName) {
         switch (typeName.charAt(0)) {
-            case TypeSymbol.BOOLEAN:
+            case MethodDescriptor.BOOLEAN_SYMBOL:
                 return BOOLEAN;
-            case TypeSymbol.BYTE:
+            case MethodDescriptor.BYTE_SYMBOL:
                 return BYTE;
-            case TypeSymbol.SHORT:
+            case MethodDescriptor.SHORT_SYMBOL:
                 return SHORT;
-            case TypeSymbol.CHAR:
+            case MethodDescriptor.CHAR_SYMBOL:
                 return CHARACTER;
-            case TypeSymbol.INT:
+            case MethodDescriptor.INT_SYMBOL:
                 return INTEGER;
-            case TypeSymbol.LONG:
+            case MethodDescriptor.LONG_SYMBOL:
                 return LONG;
-            case TypeSymbol.FLOAT:
+            case MethodDescriptor.FLOAT_SYMBOL:
                 return FLOAT;
-            case TypeSymbol.DOUBLE:
+            case MethodDescriptor.DOUBLE_SYMBOL:
                 return DOUBLE;
             default:
-                throw new IllegalStateException("Not a primitive type: " + typeName);
+                throw new IllegalArgumentException("Not a primitive type: " + typeName);
         }
     }
 
@@ -145,7 +145,7 @@ public enum PrimitiveWideningAssigner {
         } else if (type == double.class) {
             return DOUBLE;
         } else {
-            throw new IllegalStateException("Not a primitive type: " + type);
+            throw new IllegalArgumentException("Not a primitive type: " + type);
         }
     }
 
@@ -190,30 +190,30 @@ public enum PrimitiveWideningAssigner {
         } else if (type == double.class) {
             return toDoubleAssignment;
         } else {
-            throw new IllegalStateException("Not a primitive type: " + type);
+            throw new IllegalArgumentException("Not a primitive type: " + type);
         }
     }
 
     public Assignment widenTo(String typeName) {
         switch (typeName.charAt(0)) {
-            case TypeSymbol.BOOLEAN:
+            case MethodDescriptor.BOOLEAN_SYMBOL:
                 return toBooleanAssignment;
-            case TypeSymbol.BYTE:
+            case MethodDescriptor.BYTE_SYMBOL:
                 return toByteAssignment;
-            case TypeSymbol.SHORT:
+            case MethodDescriptor.SHORT_SYMBOL:
                 return toShortAssignment;
-            case TypeSymbol.CHAR:
+            case MethodDescriptor.CHAR_SYMBOL:
                 return toCharacterAssignment;
-            case TypeSymbol.INT:
+            case MethodDescriptor.INT_SYMBOL:
                 return toIntegerAssignment;
-            case TypeSymbol.LONG:
+            case MethodDescriptor.LONG_SYMBOL:
                 return toLongAssignment;
-            case TypeSymbol.FLOAT:
+            case MethodDescriptor.FLOAT_SYMBOL:
                 return toFloatAssignment;
-            case TypeSymbol.DOUBLE:
+            case MethodDescriptor.DOUBLE_SYMBOL:
                 return toDoubleAssignment;
             default:
-                throw new IllegalStateException("Not a primitive type: " + typeName);
+                throw new IllegalArgumentException("Not a primitive type: " + typeName);
         }
     }
 }

@@ -1,12 +1,11 @@
 package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.reference;
 
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assignment;
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.AssignmentExaminer;
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.IllegalAssignment;
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.LegalTrivialAssignment;
 import org.objectweb.asm.Type;
 
-public class ClassLoadingReferenceAssignmentExaminer implements AssignmentExaminer {
+public class ClassLoadingReferenceAssignmentExaminer extends AbstractRuntimeTypeAwareAssignmentExaminer {
+
+    private static final int REFERENCE_MEMORY_SIZE = 1;
+    private static final int PRIMITIVE_TYPE_NAME_SIZE = 1;
 
     private final ClassLoader classLoader;
 
@@ -15,33 +14,25 @@ public class ClassLoadingReferenceAssignmentExaminer implements AssignmentExamin
     }
 
     @Override
-    public Assignment assign(String superTypeName, Class<?> subType) {
-        if (!isPrimitive(superTypeName) && !subType.isPrimitive() && findClass(superTypeName).isAssignableFrom(subType)) {
-            return new LegalTrivialAssignment(1);
-        } else {
-            return IllegalAssignment.INSTANCE;
-        }
+    protected boolean isAssignable(String superTypeName, Class<?> subType) {
+        return !isPrimitive(superTypeName) && !subType.isPrimitive() && findClass(superTypeName).isAssignableFrom(subType);
     }
 
     @Override
-    public Assignment assign(Class<?> superType, String subTypeName) {
-        if (!superType.isPrimitive() && !isPrimitive(subTypeName) && superType.isAssignableFrom(findClass(subTypeName))) {
-            return new LegalTrivialAssignment(1);
-        } else {
-            return IllegalAssignment.INSTANCE;
-        }
+    protected boolean isAssignable(Class<?> superType, String subTypeName) {
+        return !superType.isPrimitive() && !isPrimitive(subTypeName) && superType.isAssignableFrom(findClass(subTypeName));
     }
 
     private static boolean isPrimitive(String typeName) {
-        return typeName.length() == 1;
+        return typeName.length() == PRIMITIVE_TYPE_NAME_SIZE;
     }
 
-    protected Class<?> findClass(String internalName) {
+    private Class<?> findClass(String internalName) {
         String className = Type.getObjectType(internalName).getClassName();
         try {
             return Class.forName(className, false, classLoader);
         } catch (ClassNotFoundException e) {
-            throw new IllegalStateException(String.format("Instrumentation target type %s could not be loaded", className), e);
+            throw new IllegalStateException("Could not load class: " + className, e);
         }
     }
 }

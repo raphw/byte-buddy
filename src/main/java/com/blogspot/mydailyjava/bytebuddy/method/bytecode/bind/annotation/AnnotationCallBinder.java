@@ -37,7 +37,8 @@ public class AnnotationCallBinder implements CallBinder {
 
         Class<T> getHandledType();
 
-        Assignment assign(Class<?> assignmentTarget, T argument, ClassContext classContext, MethodContext methodContext);
+        Assignment assign(Class<?> assignmentTarget, T argument, ClassContext classContext,
+                          MethodContext methodContext, boolean considerRuntimeType);
     }
 
     private final ClassContext classContext;

@@ -2,12 +2,13 @@ package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign;
 
 import org.objectweb.asm.MethodVisitor;
 
-public class LegalTrivialAssignment implements Assignment {
+public enum LegalTrivialAssignment implements Assignment {
+    INSTANCE(new Size(0, 0));
 
     private final Size size;
 
-    public LegalTrivialAssignment(int size) {
-        this.size = new Size(size, size);
+    LegalTrivialAssignment(Size size) {
+        this.size = size;
     }
 
     @Override

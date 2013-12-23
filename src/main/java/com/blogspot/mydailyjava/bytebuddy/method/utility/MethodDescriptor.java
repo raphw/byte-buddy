@@ -1,6 +1,18 @@
 package com.blogspot.mydailyjava.bytebuddy.method.utility;
 
-public class MethodDescriptorIterator {
+public class MethodDescriptor {
+
+    public static final char OBJECT_REFERENCE_SYMBOL = 'L';
+    public static final char ARRAY_REFERENCE_SYMBOL = '[';
+    public static final char DOUBLE_SYMBOL = 'D';
+    public static final char LONG_SYMBOL = 'J';
+    public static final char BOOLEAN_SYMBOL = 'Z';
+    public static final char BYTE_SYMBOL = 'B';
+    public static final char SHORT_SYMBOL = 'S';
+    public static final char CHAR_SYMBOL = 'C';
+    public static final char INT_SYMBOL = 'I';
+    public static final char FLOAT_SYMBOL = 'F';
+    public static final char VOID_SYMBOL = 'V';
 
     private static final char SEPARATOR_TYPE = ';', METHOD_ARGUMENT_END = ')';
 
@@ -29,7 +41,7 @@ public class MethodDescriptorIterator {
 
     private final String argumentTypesInternalForm;
 
-    public MethodDescriptorIterator(String methodDescriptor) {
+    public MethodDescriptor(String methodDescriptor) {
         this.argumentTypesInternalForm = methodDescriptor.substring(1, methodDescriptor.lastIndexOf(METHOD_ARGUMENT_END));
     }
 
@@ -37,47 +49,47 @@ public class MethodDescriptorIterator {
         int argumentIndex = 0, cursor = 0;
         while (cursor != argumentTypesInternalForm.length()) {
             switch (argumentTypesInternalForm.charAt(cursor)) {
-                case TypeSymbol.REFERENCE: {
+                case OBJECT_REFERENCE_SYMBOL: {
                     int nextCursor = endOfObject(argumentTypesInternalForm, argumentIndex);
                     visitor.visitObject(argumentTypesInternalForm.substring(cursor, nextCursor), argumentIndex++);
                     cursor = nextCursor;
                     break;
                 }
-                case TypeSymbol.ARRAY: {
+                case ARRAY_REFERENCE_SYMBOL: {
                     int nextCursor = endOfArray(argumentTypesInternalForm, argumentIndex);
                     visitor.visitArray(argumentTypesInternalForm.substring(cursor, nextCursor), argumentIndex++);
                     cursor = nextCursor;
                     break;
                 }
-                case TypeSymbol.DOUBLE:
-                    visitor.visitDouble(argumentIndex += 2);
-                    cursor++;
-                    break;
-                case TypeSymbol.LONG:
-                    visitor.visitLong(argumentIndex += 2);
-                    cursor++;
-                    break;
-                case TypeSymbol.FLOAT:
-                    visitor.visitFloat(argumentIndex++);
-                    cursor++;
-                    break;
-                case TypeSymbol.INT:
+                case INT_SYMBOL:
                     visitor.visitInt(argumentIndex++);
                     cursor++;
                     break;
-                case TypeSymbol.BOOLEAN:
+                case DOUBLE_SYMBOL:
+                    visitor.visitDouble(argumentIndex += 2);
+                    cursor++;
+                    break;
+                case LONG_SYMBOL:
+                    visitor.visitLong(argumentIndex += 2);
+                    cursor++;
+                    break;
+                case BOOLEAN_SYMBOL:
                     visitor.visitBoolean(argumentIndex++);
                     cursor++;
                     break;
-                case TypeSymbol.BYTE:
+                case BYTE_SYMBOL:
                     visitor.visitByte(argumentIndex++);
                     cursor++;
                     break;
-                case TypeSymbol.CHAR:
+                case CHAR_SYMBOL:
                     visitor.visitChar(argumentIndex++);
                     cursor++;
                     break;
-                case TypeSymbol.SHORT:
+                case FLOAT_SYMBOL:
+                    visitor.visitFloat(argumentIndex++);
+                    cursor++;
+                    break;
+                case SHORT_SYMBOL:
                     visitor.visitShort(argumentIndex++);
                     cursor++;
                     break;
@@ -94,19 +106,19 @@ public class MethodDescriptorIterator {
 
     private static int endOfArray(String value, int index) {
         switch (value.charAt(index + 1)) {
-            case TypeSymbol.REFERENCE:
+            case OBJECT_REFERENCE_SYMBOL:
                 return endOfObject(value, index + 1);
-            case TypeSymbol.ARRAY:
+            case ARRAY_REFERENCE_SYMBOL:
                 return endOfArray(value, index + 1);
             /*
-            case FLOAT:
-            case LONG:
-            case DOUBLE:
-            case INT:
-            case BOOLEAN:
-            case CHAR:
-            case SHORT:
-            case BYTE:
+            case FLOAT_SYMBOL:
+            case LONG_SYMBOL:
+            case DOUBLE_SYMBOL:
+            case INT_SYMBOL:
+            case BOOLEAN_SYMBOL:
+            case CHAR_SYMBOL:
+            case SHORT_SYMBOL:
+            case BYTE_SYMBOL:
             */
             default:
                 return index + 1;

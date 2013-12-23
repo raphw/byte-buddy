@@ -175,7 +175,7 @@ public final class MethodMatchers {
 
         @Override
         public boolean matches(ClassContext classContext, MethodContext methodContext) {
-            List<String> argumentTypes = methodContext.getArgumentType();
+            List<String> argumentTypes = methodContext.getArgumentTypes();
             if (this.argumentType.length != argumentTypes.size()) {
                 return false;
             }
