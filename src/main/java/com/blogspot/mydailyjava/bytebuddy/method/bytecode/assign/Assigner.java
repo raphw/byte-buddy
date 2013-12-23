@@ -1,6 +1,6 @@
 package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign;
 
-public interface AssignmentExaminer {
+public interface Assigner {
 
     Assignment assign(String superTypeName, Class<?> subType, boolean considerRuntimeType);
 

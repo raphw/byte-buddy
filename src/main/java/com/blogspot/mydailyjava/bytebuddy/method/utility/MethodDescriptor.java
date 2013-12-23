@@ -94,7 +94,7 @@ public class MethodDescriptor {
                     cursor++;
                     break;
                 default:
-                    throw new AssertionError();
+                    throw new IllegalStateException("Unknown type symbol found: " + argumentTypesInternalForm.charAt(cursor));
             }
         }
         return visitor;

@@ -2,14 +2,14 @@ package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.reference;
 
 import org.objectweb.asm.Type;
 
-public class ClassLoadingReferenceAssignmentExaminer extends AbstractRuntimeTypeAwareAssignmentExaminer {
+public class ClassLoadingReferenceAssigner extends AbstractRuntimeTypeAwareAssigner {
 
     private static final int REFERENCE_MEMORY_SIZE = 1;
     private static final int PRIMITIVE_TYPE_NAME_SIZE = 1;
 
     private final ClassLoader classLoader;
 
-    public ClassLoadingReferenceAssignmentExaminer(ClassLoader classLoader) {
+    public ClassLoadingReferenceAssigner(ClassLoader classLoader) {
         this.classLoader = classLoader;
     }
 

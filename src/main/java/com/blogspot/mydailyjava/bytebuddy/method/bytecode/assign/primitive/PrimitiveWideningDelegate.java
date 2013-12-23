@@ -7,7 +7,7 @@ import com.blogspot.mydailyjava.bytebuddy.method.utility.MethodDescriptor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-public enum PrimitiveWideningAssigner {
+public enum PrimitiveWideningDelegate {
 
     BOOLEAN(LegalTrivialAssignment.INSTANCE,            // to boolean
             IllegalAssignment.INSTANCE,                 // to byte
@@ -104,7 +104,7 @@ public enum PrimitiveWideningAssigner {
         }
     }
 
-    public static PrimitiveWideningAssigner of(String typeName) {
+    public static PrimitiveWideningDelegate forPrimitive(String typeName) {
         switch (typeName.charAt(0)) {
             case MethodDescriptor.BOOLEAN_SYMBOL:
                 return BOOLEAN;
@@ -127,7 +127,7 @@ public enum PrimitiveWideningAssigner {
         }
     }
 
-    public static PrimitiveWideningAssigner of(Class<?> type) {
+    public static PrimitiveWideningDelegate forPrimitive(Class<?> type) {
         if (type == boolean.class) {
             return BOOLEAN;
         } else if (type == byte.class) {
@@ -158,7 +158,7 @@ public enum PrimitiveWideningAssigner {
     private final Assignment toFloatAssignment;
     private final Assignment toDoubleAssignment;
 
-    private PrimitiveWideningAssigner(Assignment toBooleanAssignment, Assignment toByteAssignment,
+    private PrimitiveWideningDelegate(Assignment toBooleanAssignment, Assignment toByteAssignment,
                                       Assignment toShortAssignment, Assignment toCharacterAssignment,
                                       Assignment toIntegerAssignment, Assignment toLongAssignment,
                                       Assignment toFloatAssignment, Assignment toDoubleAssignment) {

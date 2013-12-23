@@ -1,14 +1,14 @@
 package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.reference;
 
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assignment;
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.AssignmentExaminer;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assigner;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.IllegalAssignment;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.LegalTrivialAssignment;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-public abstract class AbstractRuntimeTypeAwareAssignmentExaminer implements AssignmentExaminer {
+public abstract class AbstractRuntimeTypeAwareAssigner implements Assigner {
 
     private static class DownCastAssignment implements Assignment {
 

@@ -16,8 +16,6 @@ public class MethodContext {
         private final List<String> methodArguments;
         private final List<Integer> aggregateStackSize;
 
-        private int currentSize = 0;
-
         private MethodArgumentAnalyzer() {
             this.methodArguments = new ArrayList<String>();
             this.aggregateStackSize = new ArrayList<Integer>();
@@ -34,63 +32,61 @@ public class MethodContext {
         @Override
         public void visitObject(String descriptor, int localVariableIndex) {
             methodArguments.add(descriptor);
-            aggregateStackSize.add(currentSize++);
+            aggregateStackSize.add(localVariableIndex);
         }
 
         @Override
         public void visitArray(String descriptor, int localVariableIndex) {
             methodArguments.add(descriptor);
-            aggregateStackSize.add(currentSize++);
+            aggregateStackSize.add(localVariableIndex);
         }
 
         @Override
         public void visitDouble(int localVariableIndex) {
             methodArguments.add(String.valueOf(MethodDescriptor.DOUBLE_SYMBOL));
-            aggregateStackSize.add(currentSize);
-            currentSize += 2;
+            aggregateStackSize.add(localVariableIndex);
         }
 
         @Override
         public void visitFloat(int localVariableIndex) {
             methodArguments.add(String.valueOf(MethodDescriptor.FLOAT_SYMBOL));
-            aggregateStackSize.add(currentSize++);
+            aggregateStackSize.add(localVariableIndex);
         }
 
         @Override
         public void visitLong(int localVariableIndex) {
             methodArguments.add(String.valueOf(MethodDescriptor.LONG_SYMBOL));
-            aggregateStackSize.add(currentSize);
-            currentSize += 2;
+            aggregateStackSize.add(localVariableIndex);
         }
 
         @Override
         public void visitInt(int localVariableIndex) {
             methodArguments.add(String.valueOf(MethodDescriptor.INT_SYMBOL));
-            aggregateStackSize.add(currentSize++);
+            aggregateStackSize.add(localVariableIndex);
         }
 
         @Override
         public void visitChar(int localVariableIndex) {
             methodArguments.add(String.valueOf(MethodDescriptor.CHAR_SYMBOL));
-            aggregateStackSize.add(currentSize++);
+            aggregateStackSize.add(localVariableIndex);
         }
 
         @Override
         public void visitShort(int localVariableIndex) {
             methodArguments.add(String.valueOf(MethodDescriptor.SHORT_SYMBOL));
-            aggregateStackSize.add(currentSize++);
+            aggregateStackSize.add(localVariableIndex);
         }
 
         @Override
         public void visitByte(int localVariableIndex) {
             methodArguments.add(String.valueOf(MethodDescriptor.BYTE_SYMBOL));
-            aggregateStackSize.add(currentSize++);
+            aggregateStackSize.add(localVariableIndex);
         }
 
         @Override
         public void visitBoolean(int localVariableIndex) {
             methodArguments.add(String.valueOf(MethodDescriptor.BOOLEAN_SYMBOL));
-            aggregateStackSize.add(currentSize++);
+            aggregateStackSize.add(localVariableIndex);
         }
     }
 

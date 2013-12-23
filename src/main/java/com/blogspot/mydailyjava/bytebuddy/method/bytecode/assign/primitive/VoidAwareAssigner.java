@@ -1,14 +1,14 @@
 package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.primitive;
 
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assignment;
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.AssignmentExaminer;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assigner;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.IllegalAssignment;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.LegalTrivialAssignment;
 import com.blogspot.mydailyjava.bytebuddy.method.utility.MethodDescriptor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-public class VoidAwareAssignmentExaminer implements AssignmentExaminer {
+public class VoidAwareAssigner implements Assigner {
 
     private static enum ValueRemovingAssignment implements Assignment {
 
@@ -64,10 +64,10 @@ public class VoidAwareAssignmentExaminer implements AssignmentExaminer {
         }
     }
 
-    private final AssignmentExaminer assignmentExaminer;
+    private final Assigner assigner;
 
-    public VoidAwareAssignmentExaminer(AssignmentExaminer assignmentExaminer) {
-        this.assignmentExaminer = assignmentExaminer;
+    public VoidAwareAssigner(Assigner assigner) {
+        this.assigner = assigner;
     }
 
     @Override
@@ -80,7 +80,7 @@ public class VoidAwareAssignmentExaminer implements AssignmentExaminer {
         } else if (/* !superTypeIsVoid && */ subTypeIsVoid) {
             return ValueRemovingAssignment.of(superTypeName);
         } else {
-            return assignmentExaminer.assign(superTypeName, subType, considerRuntimeType);
+            return assigner.assign(superTypeName, subType, considerRuntimeType);
         }
     }
 
@@ -94,7 +94,7 @@ public class VoidAwareAssignmentExaminer implements AssignmentExaminer {
         } else if (/* !superTypeIsVoid && */ subTypeIsVoid) {
             return ValueRemovingAssignment.of(superType);
         } else {
-            return assignmentExaminer.assign(superType, subTypeName, considerRuntimeType);
+            return assigner.assign(superType, subTypeName, considerRuntimeType);
         }
     }
 

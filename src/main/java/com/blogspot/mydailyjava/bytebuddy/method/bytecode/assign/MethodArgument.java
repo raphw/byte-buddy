@@ -1,20 +1,19 @@
-package com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind;
+package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign;
 
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assignment;
 import com.blogspot.mydailyjava.bytebuddy.method.utility.MethodDescriptor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-public enum MethodArgumentAssignment {
+public enum MethodArgument {
 
-    INTEGER(Opcodes.ILOAD, 1),
-    LONG(Opcodes.LLOAD, 2),
-    FLOAT(Opcodes.FLOAD, 1),
-    DOUBLE(Opcodes.DLOAD, 2),
-    ARRAY_REFERENCE(Opcodes.AALOAD, 1),
-    OBJECT_REFERENCE(Opcodes.ALOAD, 1);
+    INTEGER(Opcodes.ILOAD, 5, 1),
+    LONG(Opcodes.LLOAD, 8, 2),
+    FLOAT(Opcodes.FLOAD, 11, 1),
+    DOUBLE(Opcodes.DLOAD, 14, 2),
+    OBJECT_REFERENCE(Opcodes.ALOAD, 17, 1),
+    ARRAY_REFERENCE(Opcodes.AALOAD, -1, 1);
 
-    public static MethodArgumentAssignment of(String name) {
+    public static MethodArgument forType(String name) {
         switch (name.charAt(0)) {
             case MethodDescriptor.OBJECT_REFERENCE_SYMBOL:
                 return OBJECT_REFERENCE;
@@ -38,10 +37,12 @@ public enum MethodArgumentAssignment {
     }
 
     private final int loadOpcode;
+    private final int loadOpcodeShortcutIndex;
     private final int operandStackSize;
 
-    private MethodArgumentAssignment(int loadOpcode, int operandStackSize) {
+    private MethodArgument(int loadOpcode, int loadOpcodeShortcutIndex, int operandStackSize) {
         this.loadOpcode = loadOpcode;
+        this.loadOpcodeShortcutIndex = loadOpcodeShortcutIndex;
         this.operandStackSize = operandStackSize;
     }
 
@@ -57,12 +58,32 @@ public enum MethodArgumentAssignment {
 
         @Override
         public boolean isAssignable() {
-            return true;
+            return chainedAssignment.isAssignable();
         }
 
         @Override
         public Size apply(MethodVisitor methodVisitor) {
-            methodVisitor.visitVarInsn(loadOpcode, variableIndex);
+            if (loadOpcodeShortcutIndex > -1) {
+                switch (variableIndex) {
+                    case 0:
+                        methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutIndex);
+                        break;
+                    case 1:
+                        methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutIndex + 1);
+                        break;
+                    case 2:
+                        methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutIndex + 2);
+                        break;
+                    case 3:
+                        methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutIndex + 3);
+                        break;
+                    default:
+                        methodVisitor.visitVarInsn(loadOpcode, variableIndex);
+                        break;
+                }
+            } else {
+                methodVisitor.visitVarInsn(loadOpcode, variableIndex);
+            }
             return chainedAssignment.apply(methodVisitor).aggregateLeftFirst(operandStackSize);
         }
     }
