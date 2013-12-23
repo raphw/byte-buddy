@@ -5,8 +5,9 @@ import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assignment;
 import com.blogspot.mydailyjava.bytebuddy.method.utility.MethodDescriptor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
-public enum PrimitiveUnboxingDelegate implements Unboxer {
+public enum PrimitiveUnboxingDelegate implements UnboxingResponsible {
 
     BOOLEAN("java/lang/Boolean", 1, Boolean.class, boolean.class, "valueOf", "(Z)Ljava/lang/Boolean;", "booleanValue", "()Z"),
     BYTE("java/lang/Byte", 1, Byte.class, byte.class, "valueOf", "(B)Ljava/lang/Byte;", "byteValue", "()B"),
@@ -62,7 +63,7 @@ public enum PrimitiveUnboxingDelegate implements Unboxer {
         }
     }
 
-    public static Unboxer forType(String typeName) {
+    public static UnboxingResponsible forType(String typeName) {
         if (BOOLEAN_TYPE_NAME.equals(typeName)) {
             return BOOLEAN;
         } else if (BYTE_TYPE_NAME.equals(typeName)) {
@@ -80,11 +81,11 @@ public enum PrimitiveUnboxingDelegate implements Unboxer {
         } else if (DOUBLE_TYPE_NAME.equals(typeName)) {
             return DOUBLE;
         } else {
-            throw new AssertionError("Not yet implemented");
+            return new ImplicitUnboxingResponsible(typeName);
         }
     }
 
-    public static Unboxer forType(Class<?> type) {
+    public static UnboxingResponsible forType(Class<?> type) {
         if (type == Boolean.class) {
             return BOOLEAN;
         } else if (type == Byte.class) {
@@ -102,7 +103,32 @@ public enum PrimitiveUnboxingDelegate implements Unboxer {
         } else if (type == Double.class) {
             return DOUBLE;
         } else {
-            throw new AssertionError("Not yet implemented");
+            return new ImplicitUnboxingResponsible(type);
+        }
+    }
+
+    private static class ImplicitUnboxingResponsible implements UnboxingResponsible {
+
+        private final String typeName;
+
+        private ImplicitUnboxingResponsible(Class<?> type) {
+            this.typeName = Type.getInternalName(type);
+        }
+
+        private ImplicitUnboxingResponsible(String typeName) {
+            this.typeName = typeName;
+        }
+
+        @Override
+        public Assignment unboxAndAssignTo(Class<?> subType, Assigner assigner, boolean considerRuntimeType) {
+            PrimitiveUnboxingDelegate delegate = PrimitiveUnboxingDelegate.forPrimitive(subType);
+            return delegate.new ImplicitlyTypedUnboxingAssignment(assigner.assign(typeName, delegate.wrapperType, considerRuntimeType));
+        }
+
+        @Override
+        public Assignment unboxAndAssignTo(String subTypeName, Assigner assigner, boolean considerRuntimeType) {
+            PrimitiveUnboxingDelegate delegate = PrimitiveUnboxingDelegate.forPrimitive(subTypeName);
+            return delegate.new ImplicitlyTypedUnboxingAssignment(assigner.assign(typeName, delegate.wrapperType, considerRuntimeType));
         }
     }
 
@@ -199,16 +225,12 @@ public enum PrimitiveUnboxingDelegate implements Unboxer {
     }
 
     @Override
-    public Assignment unboxAndAssignTo(Class<?> superType, Assigner assigner, boolean considerRuntimeType) {
-        // TODO: Change implementation to either:
-        // a) Allow widening if the super type already explicitly is a wrapper type
-        // b) Else, if run time type is to be considered, allow for run time cast to wrapper type of target primitive only! (No widening!)
-        return new ExplicitlyTypedUnboxingAssignment(PrimitiveWideningDelegate.forPrimitive(primitiveType).widenTo(superType));
+    public Assignment unboxAndAssignTo(Class<?> subType, Assigner assigner, boolean considerRuntimeType) {
+        return new ExplicitlyTypedUnboxingAssignment(PrimitiveWideningDelegate.forPrimitive(primitiveType).widenTo(subType));
     }
 
     @Override
-    public Assignment unboxAndAssignTo(String superTypeName, Assigner assigner, boolean considerRuntimeType) {
-        // TODO: See above!
-        return new ExplicitlyTypedUnboxingAssignment(PrimitiveWideningDelegate.forPrimitive(primitiveType).widenTo(superTypeName));
+    public Assignment unboxAndAssignTo(String subTypeName, Assigner assigner, boolean considerRuntimeType) {
+        return new ExplicitlyTypedUnboxingAssignment(PrimitiveWideningDelegate.forPrimitive(primitiveType).widenTo(subTypeName));
     }
 }

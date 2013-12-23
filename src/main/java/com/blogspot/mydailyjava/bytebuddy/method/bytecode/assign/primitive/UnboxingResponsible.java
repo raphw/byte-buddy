@@ -3,7 +3,7 @@ package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.primitive;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assigner;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assignment;
 
-public interface Unboxer {
+public interface UnboxingResponsible {
 
     static final String BOOLEAN_TYPE_NAME = "Ljava/lang/Boolean;";
     static final String BYTE_TYPE_NAME = "Ljava/lang/Byte;";
@@ -14,7 +14,7 @@ public interface Unboxer {
     static final String FLOAT_TYPE_NAME = "Ljava/lang/Float;";
     static final String DOUBLE_TYPE_NAME = "Ljava/lang/Double;";
 
-    Assignment unboxAndAssignTo(Class<?> superType, Assigner assigner, boolean considerRuntimeType);
+    Assignment unboxAndAssignTo(Class<?> subType, Assigner assigner, boolean considerRuntimeType);
 
-    Assignment unboxAndAssignTo(String superTypeName, Assigner assigner, boolean considerRuntimeType);
+    Assignment unboxAndAssignTo(String subTypeName, Assigner assigner, boolean considerRuntimeType);
 }

@@ -19,7 +19,6 @@ public class PrimitiveTypeAwareAssigner implements Assigner {
         } else if (superTypeIsPrimitive /* && !subTypeIsPrimitive */) {
             return PrimitiveUnboxingDelegate.forPrimitive(superTypeName).boxAndAssignTo(subType, referenceTypeDelegate, considerRuntimeType);
         } else if (/* !superTypeIsPrimitive && */ subTypeIsPrimitive) {
-            // TODO: Replace logic as described inside of class.
             return PrimitiveUnboxingDelegate.forType(superTypeName).unboxAndAssignTo(subType, referenceTypeDelegate, considerRuntimeType);
         } else {
             return referenceTypeDelegate.assign(superTypeName, subType, considerRuntimeType);
@@ -34,7 +33,6 @@ public class PrimitiveTypeAwareAssigner implements Assigner {
         } else if (superTypeIsPrimitive /* && !subTypeIsPrimitive */) {
             return PrimitiveUnboxingDelegate.forPrimitive(superType).boxAndAssignTo(subTypeName, referenceTypeDelegate, considerRuntimeType);
         } else if (/* !superTypeIsPrimitive && */ subTypeIsPrimitive) {
-            // TODO: Replace logic as described inside of class.
             return PrimitiveUnboxingDelegate.forType(superType).unboxAndAssignTo(subTypeName, referenceTypeDelegate, considerRuntimeType);
         } else {
             return referenceTypeDelegate.assign(superType, subTypeName, considerRuntimeType);
