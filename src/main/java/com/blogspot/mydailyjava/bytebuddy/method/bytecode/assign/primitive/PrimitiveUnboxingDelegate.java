@@ -1,45 +1,21 @@
 package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.primitive;
 
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.ValueSize;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assigner;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assignment;
-import com.blogspot.mydailyjava.bytebuddy.method.utility.MethodDescriptor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
 
 public enum PrimitiveUnboxingDelegate implements UnboxingResponsible {
 
-    BOOLEAN("java/lang/Boolean", 1, Boolean.class, boolean.class, "valueOf", "(Z)Ljava/lang/Boolean;", "booleanValue", "()Z"),
-    BYTE("java/lang/Byte", 1, Byte.class, byte.class, "valueOf", "(B)Ljava/lang/Byte;", "byteValue", "()B"),
-    SHORT("java/lang/Short", 1, Short.class, short.class, "valueOf", "(S)Ljava/lang/Short;", "shortValue", "()S"),
-    CHARACTER("java/lang/Character", 1, Character.class, char.class, "valueOf", "(C)Ljava/lang/Character;", "charValue", "()C"),
-    INTEGER("java/lang/Integer", 1, Integer.class, int.class, "valueOf", "(I)Ljava/lang/Integer;", "intValue", "()I"),
-    LONG("java/lang/Long", 2, Long.class, long.class, "valueOf", "(J)Ljava/lang/Long;", "longValue", "()J"),
-    FLOAT("java/lang/Float", 1, Float.class, float.class, "valueOf", "(F)Ljava/lang/Float;", "floatValue", "()F"),
-    DOUBLE("java/lang/Double", 2, Double.class, double.class, "valueOf", "(D)Ljava/lang/Double;", "doubleValue", "()D");
-
-    public static PrimitiveUnboxingDelegate forPrimitive(String typeName) {
-        switch (typeName.charAt(0)) {
-            case MethodDescriptor.BOOLEAN_SYMBOL:
-                return BOOLEAN;
-            case MethodDescriptor.BYTE_SYMBOL:
-                return BYTE;
-            case MethodDescriptor.SHORT_SYMBOL:
-                return SHORT;
-            case MethodDescriptor.CHAR_SYMBOL:
-                return CHARACTER;
-            case MethodDescriptor.INT_SYMBOL:
-                return INTEGER;
-            case MethodDescriptor.LONG_SYMBOL:
-                return LONG;
-            case MethodDescriptor.FLOAT_SYMBOL:
-                return FLOAT;
-            case MethodDescriptor.DOUBLE_SYMBOL:
-                return DOUBLE;
-            default:
-                throw new IllegalStateException("Not a primitive type: " + typeName);
-        }
-    }
+    BOOLEAN("java/lang/Boolean", ValueSize.SINGLE, Boolean.class, boolean.class, "valueOf", "(Z)Ljava/lang/Boolean;", "booleanValue", "()Z"),
+    BYTE("java/lang/Byte", ValueSize.SINGLE, Byte.class, byte.class, "valueOf", "(B)Ljava/lang/Byte;", "byteValue", "()B"),
+    SHORT("java/lang/Short", ValueSize.SINGLE, Short.class, short.class, "valueOf", "(S)Ljava/lang/Short;", "shortValue", "()S"),
+    CHARACTER("java/lang/Character", ValueSize.SINGLE, Character.class, char.class, "valueOf", "(C)Ljava/lang/Character;", "charValue", "()C"),
+    INTEGER("java/lang/Integer", ValueSize.SINGLE, Integer.class, int.class, "valueOf", "(I)Ljava/lang/Integer;", "intValue", "()I"),
+    LONG("java/lang/Long", ValueSize.DOUBLE, Long.class, long.class, "valueOf", "(J)Ljava/lang/Long;", "longValue", "()J"),
+    FLOAT("java/lang/Float", ValueSize.SINGLE, Float.class, float.class, "valueOf", "(F)Ljava/lang/Float;", "floatValue", "()F"),
+    DOUBLE("java/lang/Double", ValueSize.DOUBLE, Double.class, double.class, "valueOf", "(D)Ljava/lang/Double;", "doubleValue", "()D");
 
     public static PrimitiveUnboxingDelegate forPrimitive(Class<?> type) {
         if (type == boolean.class) {
@@ -63,29 +39,7 @@ public enum PrimitiveUnboxingDelegate implements UnboxingResponsible {
         }
     }
 
-    public static UnboxingResponsible forType(String typeName) {
-        if (BOOLEAN_TYPE_NAME.equals(typeName)) {
-            return BOOLEAN;
-        } else if (BYTE_TYPE_NAME.equals(typeName)) {
-            return BYTE;
-        } else if (SHORT_TYPE_NAME.equals(typeName)) {
-            return SHORT;
-        } else if (CHARACTER_TYPE_NAME.equals(typeName)) {
-            return CHARACTER;
-        } else if (INTEGER_TYPE_NAME.equals(typeName)) {
-            return INTEGER;
-        } else if (LONG_TYPE_NAME.equals(typeName)) {
-            return LONG;
-        } else if (FLOAT_TYPE_NAME.equals(typeName)) {
-            return FLOAT;
-        } else if (DOUBLE_TYPE_NAME.equals(typeName)) {
-            return DOUBLE;
-        } else {
-            return new ImplicitUnboxingResponsible(typeName);
-        }
-    }
-
-    public static UnboxingResponsible forType(Class<?> type) {
+    public static UnboxingResponsible forNonPrimitive(Class<?> type) {
         if (type == Boolean.class) {
             return BOOLEAN;
         } else if (type == Byte.class) {
@@ -109,31 +63,21 @@ public enum PrimitiveUnboxingDelegate implements UnboxingResponsible {
 
     private static class ImplicitUnboxingResponsible implements UnboxingResponsible {
 
-        private final String typeName;
+        private final Class<?> type;
 
         private ImplicitUnboxingResponsible(Class<?> type) {
-            this.typeName = Type.getInternalName(type);
-        }
-
-        private ImplicitUnboxingResponsible(String typeName) {
-            this.typeName = typeName;
+            this.type = type;
         }
 
         @Override
         public Assignment unboxAndAssignTo(Class<?> subType, Assigner assigner, boolean considerRuntimeType) {
             PrimitiveUnboxingDelegate delegate = PrimitiveUnboxingDelegate.forPrimitive(subType);
-            return delegate.new ImplicitlyTypedUnboxingAssignment(assigner.assign(typeName, delegate.wrapperType, considerRuntimeType));
-        }
-
-        @Override
-        public Assignment unboxAndAssignTo(String subTypeName, Assigner assigner, boolean considerRuntimeType) {
-            PrimitiveUnboxingDelegate delegate = PrimitiveUnboxingDelegate.forPrimitive(subTypeName);
-            return delegate.new ImplicitlyTypedUnboxingAssignment(assigner.assign(typeName, delegate.wrapperType, considerRuntimeType));
+            return delegate.new ImplicitlyTypedUnboxingAssignment(assigner.assign(type, delegate.wrapperType, considerRuntimeType));
         }
     }
 
     private final String wrapperTypeName;
-    private final int operandStackSize;
+    private final ValueSize valueSize;
     private final Class<?> wrapperType;
     private final Class<?> primitiveType;
     private final String boxingMethodName;
@@ -141,12 +85,12 @@ public enum PrimitiveUnboxingDelegate implements UnboxingResponsible {
     private final String unboxingMethodName;
     private final String unboxingMethodDescriptor;
 
-    private PrimitiveUnboxingDelegate(String wrapperTypeName, int operandStackSize,
+    private PrimitiveUnboxingDelegate(String wrapperTypeName, ValueSize valueSize,
                                       Class<?> wrapperType, Class<?> primitiveType,
                                       String boxingMethodName, String boxingMethodDescriptor,
                                       String unboxingMethodName, String unboxingMethodDescriptor) {
         this.wrapperTypeName = wrapperTypeName;
-        this.operandStackSize = operandStackSize;
+        this.valueSize = valueSize;
         this.wrapperType = wrapperType;
         this.primitiveType = primitiveType;
         this.boxingMethodName = boxingMethodName;
@@ -171,7 +115,7 @@ public enum PrimitiveUnboxingDelegate implements UnboxingResponsible {
         @Override
         public Size apply(MethodVisitor methodVisitor) {
             methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, wrapperTypeName, boxingMethodName, boxingMethodDescriptor);
-            return assignment.apply(methodVisitor).aggregateLeftFirst(operandStackSize - 1);
+            return assignment.apply(methodVisitor).aggregateLeftFirst(valueSize.getSize() - 1);
         }
     }
 
@@ -191,7 +135,7 @@ public enum PrimitiveUnboxingDelegate implements UnboxingResponsible {
         @Override
         public Size apply(MethodVisitor methodVisitor) {
             methodVisitor.visitMethodInsn(Opcodes.INVOKEDYNAMIC, wrapperTypeName, unboxingMethodName, unboxingMethodDescriptor);
-            return wideningAssignment.apply(methodVisitor).aggregateRightFirst(operandStackSize - 1);
+            return wideningAssignment.apply(methodVisitor).aggregateRightFirst(valueSize.getSize() - 1);
         }
     }
 
@@ -212,25 +156,16 @@ public enum PrimitiveUnboxingDelegate implements UnboxingResponsible {
         public Size apply(MethodVisitor methodVisitor) {
             Size size = referenceTypeAdjustmentAssignment.apply(methodVisitor);
             methodVisitor.visitMethodInsn(Opcodes.INVOKEDYNAMIC, wrapperTypeName, unboxingMethodName, unboxingMethodDescriptor);
-            return size.aggregateLeftFirst(operandStackSize - 1);
+            return size.aggregateLeftFirst(valueSize.getSize() - 1);
         }
     }
 
     public Assignment boxAndAssignTo(Class<?> subType, Assigner assigner, boolean considerRuntimeType) {
-        return new BoxingAssignment(assigner.assign(wrapperTypeName, subType, considerRuntimeType));
-    }
-
-    public Assignment boxAndAssignTo(String subTypeName, Assigner assigner, boolean considerRuntimeType) {
-        return new BoxingAssignment(assigner.assign(wrapperType, subTypeName, considerRuntimeType));
+        return new BoxingAssignment(assigner.assign(wrapperType, subType, considerRuntimeType));
     }
 
     @Override
     public Assignment unboxAndAssignTo(Class<?> subType, Assigner assigner, boolean considerRuntimeType) {
         return new ExplicitlyTypedUnboxingAssignment(PrimitiveWideningDelegate.forPrimitive(primitiveType).widenTo(subType));
-    }
-
-    @Override
-    public Assignment unboxAndAssignTo(String subTypeName, Assigner assigner, boolean considerRuntimeType) {
-        return new ExplicitlyTypedUnboxingAssignment(PrimitiveWideningDelegate.forPrimitive(primitiveType).widenTo(subTypeName));
     }
 }

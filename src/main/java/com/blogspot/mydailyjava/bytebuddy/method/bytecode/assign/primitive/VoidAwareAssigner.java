@@ -1,10 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.primitive;
 
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assignment;
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assigner;
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.IllegalAssignment;
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.LegalTrivialAssignment;
-import com.blogspot.mydailyjava.bytebuddy.method.utility.MethodDescriptor;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.ValueSize;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.*;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -12,27 +9,8 @@ public class VoidAwareAssigner implements Assigner {
 
     private static enum ValueRemovingAssignment implements Assignment {
 
-        POP_ONE_VALUE(Opcodes.POP, new Size(-1, 0)),
-        POP_TWO_VALUES(Opcodes.POP2, new Size(-2, 0));
-
-        public static ValueRemovingAssignment of(String typeName) {
-            switch (typeName.charAt(0)) {
-                case MethodDescriptor.LONG_SYMBOL:
-                case MethodDescriptor.DOUBLE_SYMBOL:
-                    return POP_TWO_VALUES;
-                case MethodDescriptor.OBJECT_REFERENCE_SYMBOL:
-                case MethodDescriptor.ARRAY_REFERENCE_SYMBOL:
-                case MethodDescriptor.INT_SYMBOL:
-                case MethodDescriptor.BOOLEAN_SYMBOL:
-                case MethodDescriptor.BYTE_SYMBOL:
-                case MethodDescriptor.CHAR_SYMBOL:
-                case MethodDescriptor.FLOAT_SYMBOL:
-                case MethodDescriptor.SHORT_SYMBOL:
-                    return POP_ONE_VALUE;
-                default:
-                    throw new IllegalArgumentException("Cannot pop type from stack: " + typeName);
-            }
-        }
+        POP_ONE_VALUE(Opcodes.POP, new Size(ValueSize.SINGLE.getSize(), ValueSize.NONE.getSize())),
+        POP_TWO_VALUES(Opcodes.POP2, new Size(ValueSize.DOUBLE.getSize(), ValueSize.NONE.getSize()));
 
         public static ValueRemovingAssignment of(Class<?> type) {
             if (type == long.class || type == double.class) {
@@ -64,41 +42,24 @@ public class VoidAwareAssigner implements Assigner {
         }
     }
 
-    private final Assigner assigner;
+    private final Assigner chainedDelegate;
+    private final boolean returnDefaultValue;
 
-    public VoidAwareAssigner(Assigner assigner) {
-        this.assigner = assigner;
+    public VoidAwareAssigner(Assigner chainedDelegate, boolean returnDefaultValue) {
+        this.chainedDelegate = chainedDelegate;
+        this.returnDefaultValue = returnDefaultValue;
     }
 
     @Override
-    public Assignment assign(String superTypeName, Class<?> subType, boolean considerRuntimeType) {
-        boolean superTypeIsVoid = isVoid(superTypeName), subTypeIsVoid = subType == void.class;
-        if (superTypeIsVoid && subTypeIsVoid) {
+    public Assignment assign(Class<?> superType, Class subType, boolean considerRuntimeType) {
+        if (superType == void.class && subType == void.class) {
             return LegalTrivialAssignment.INSTANCE;
-        } else if (superTypeIsVoid /* && !subTypeIsVoid */) {
-            return IllegalAssignment.INSTANCE;
-        } else if (/* !superTypeIsVoid && */ subTypeIsVoid) {
-            return ValueRemovingAssignment.of(superTypeName);
-        } else {
-            return assigner.assign(superTypeName, subType, considerRuntimeType);
-        }
-    }
-
-    @Override
-    public Assignment assign(Class<?> superType, String subTypeName, boolean considerRuntimeType) {
-        boolean superTypeIsVoid = superType == void.class, subTypeIsVoid = isVoid(subTypeName);
-        if (superTypeIsVoid && subTypeIsVoid) {
-            return LegalTrivialAssignment.INSTANCE;
-        } else if (superTypeIsVoid /* && !subTypeIsVoid */) {
-            return IllegalAssignment.INSTANCE;
-        } else if (/* !superTypeIsVoid && */ subTypeIsVoid) {
+        } else if (superType == void.class /* && !(subType == void.class) */) {
+            return returnDefaultValue ? DefaultValue.defaulting(subType) : IllegalAssignment.INSTANCE;
+        } else if (/* !(superType == void.class) && */ subType == void.class) {
             return ValueRemovingAssignment.of(superType);
-        } else {
-            return assigner.assign(superType, subTypeName, considerRuntimeType);
+        } else /* !(superType == void.class) && !(subType == void.class) */ {
+            return chainedDelegate.assign(superType, subType, considerRuntimeType);
         }
-    }
-
-    private static boolean isVoid(String typeName) {
-        return typeName.length() == 1 && typeName.charAt(0) == MethodDescriptor.VOID_SYMBOL;
     }
 }

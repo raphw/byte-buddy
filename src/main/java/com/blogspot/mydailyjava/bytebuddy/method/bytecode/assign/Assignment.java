@@ -6,16 +6,16 @@ public interface Assignment {
 
     static class Size {
 
-        private final int finalSize;
+        private final int size;
         private final int maximalSize;
 
-        public Size(int finalSize, int maximalSize) {
-            this.finalSize = finalSize;
+        public Size(int size, int maximalSize) {
+            this.size = size;
             this.maximalSize = maximalSize;
         }
 
-        public int getFinalSize() {
-            return finalSize;
+        public int getSize() {
+            return size;
         }
 
         public int getMaximalSize() {
@@ -23,31 +23,31 @@ public interface Assignment {
         }
 
         public Size aggregateRightFirst(Size currentSize) {
-            return aggregateRightFirst(currentSize.getFinalSize(), currentSize.getFinalSize());
+            return aggregateRightFirst(currentSize.getSize(), currentSize.getSize());
         }
 
         public Size aggregateRightFirst(int currentSize) {
             return aggregateRightFirst(currentSize, currentSize);
         }
 
-        public Size aggregateRightFirst(int currentFinalSize, int currentMaximalSize) {
-            return aggregate(currentFinalSize, currentMaximalSize, finalSize, maximalSize);
+        public Size aggregateRightFirst(int currentSize, int currentMaximalSize) {
+            return aggregate(currentSize, currentMaximalSize, size, maximalSize);
         }
 
         public Size aggregateLeftFirst(Size sizeChange) {
-            return aggregateLeftFirst(sizeChange.getFinalSize(), sizeChange.getMaximalSize());
+            return aggregateLeftFirst(sizeChange.getSize(), sizeChange.getMaximalSize());
         }
 
         public Size aggregateLeftFirst(int sizeChange) {
             return aggregateLeftFirst(sizeChange, sizeChange);
         }
 
-        public Size aggregateLeftFirst(int finalSizeChange, int interimMaximalSize) {
-            return aggregate(finalSize, maximalSize, finalSizeChange, interimMaximalSize);
+        public Size aggregateLeftFirst(int sizeChange, int interimMaximalSize) {
+            return aggregate(size, maximalSize, sizeChange, interimMaximalSize);
         }
 
-        private static Size aggregate(int baseFinalSize, int baseMaximalSize, int aggregateFinalSize, int aggregateMaximalSize) {
-            return new Size(baseFinalSize + aggregateFinalSize, Math.max(baseFinalSize + aggregateMaximalSize, baseMaximalSize));
+        private static Size aggregate(int baseSize, int baseMaximalSize, int aggregateSize, int aggregateMaximalSize) {
+            return new Size(baseSize + aggregateSize, Math.max(baseSize + aggregateMaximalSize, baseMaximalSize));
         }
     }
 

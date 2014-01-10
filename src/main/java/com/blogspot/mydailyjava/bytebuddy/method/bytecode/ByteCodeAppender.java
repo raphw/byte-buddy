@@ -1,10 +1,10 @@
 package com.blogspot.mydailyjava.bytebuddy.method.bytecode;
 
-import com.blogspot.mydailyjava.bytebuddy.context.ClassContext;
-import com.blogspot.mydailyjava.bytebuddy.context.MethodContext;
 import org.objectweb.asm.MethodVisitor;
 
-public interface ByteCodeBlockAppender {
+import java.lang.reflect.Method;
+
+public interface ByteCodeAppender {
 
     static class Size {
 
@@ -33,5 +33,5 @@ public interface ByteCodeBlockAppender {
         }
     }
 
-    Size apply(MethodVisitor methodVisitor, ClassContext classContext, MethodContext methodContext);
+    Size apply(MethodVisitor methodVisitor, Method method);
 }

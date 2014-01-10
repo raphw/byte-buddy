@@ -1,49 +1,46 @@
 package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign;
 
-import com.blogspot.mydailyjava.bytebuddy.method.utility.MethodDescriptor;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.ValueSize;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 public enum MethodArgument {
 
-    INTEGER(Opcodes.ILOAD, 5, 1),
-    LONG(Opcodes.LLOAD, 8, 2),
-    FLOAT(Opcodes.FLOAD, 11, 1),
-    DOUBLE(Opcodes.DLOAD, 14, 2),
-    OBJECT_REFERENCE(Opcodes.ALOAD, 17, 1),
-    ARRAY_REFERENCE(Opcodes.AALOAD, -1, 1);
+    INTEGER(Opcodes.ILOAD, 5, ValueSize.SINGLE),
+    LONG(Opcodes.LLOAD, 8, ValueSize.DOUBLE),
+    FLOAT(Opcodes.FLOAD, 11, ValueSize.SINGLE),
+    DOUBLE(Opcodes.DLOAD, 14, ValueSize.DOUBLE),
+    OBJECT_REFERENCE(Opcodes.ALOAD, 17, ValueSize.SINGLE),
+    ARRAY_REFERENCE(Opcodes.AALOAD, -1, ValueSize.SINGLE);
 
-    public static MethodArgument forType(String name) {
-        switch (name.charAt(0)) {
-            case MethodDescriptor.OBJECT_REFERENCE_SYMBOL:
-                return OBJECT_REFERENCE;
-            case MethodDescriptor.INT_SYMBOL:
-            case MethodDescriptor.BOOLEAN_SYMBOL:
-            case MethodDescriptor.BYTE_SYMBOL:
-            case MethodDescriptor.CHAR_SYMBOL:
-            case MethodDescriptor.SHORT_SYMBOL:
-                return INTEGER;
-            case MethodDescriptor.ARRAY_REFERENCE_SYMBOL:
-                return ARRAY_REFERENCE;
-            case MethodDescriptor.DOUBLE_SYMBOL:
-                return DOUBLE;
-            case MethodDescriptor.FLOAT_SYMBOL:
-                return FLOAT;
-            case MethodDescriptor.LONG_SYMBOL:
+    public static MethodArgument loading(Class<?> type) {
+        if (type.isPrimitive()) {
+            if (type == long.class) {
                 return LONG;
-            default:
-                throw new IllegalArgumentException("Illegal method argument type: " + name);
+            } else if (type == double.class) {
+                return DOUBLE;
+            } else if (type == float.class) {
+                return FLOAT;
+            } else {
+                return INTEGER;
+            }
+        } else {
+            if (type.isArray()) {
+                return ARRAY_REFERENCE;
+            } else {
+                return OBJECT_REFERENCE;
+            }
         }
     }
 
     private final int loadOpcode;
     private final int loadOpcodeShortcutIndex;
-    private final int operandStackSize;
+    private final ValueSize valueSize;
 
-    private MethodArgument(int loadOpcode, int loadOpcodeShortcutIndex, int operandStackSize) {
+    private MethodArgument(int loadOpcode, int loadOpcodeShortcutIndex, ValueSize valueSize) {
         this.loadOpcode = loadOpcode;
         this.loadOpcodeShortcutIndex = loadOpcodeShortcutIndex;
-        this.operandStackSize = operandStackSize;
+        this.valueSize = valueSize;
     }
 
     private class ArgumentLoadingAssignment implements Assignment {
@@ -84,12 +81,16 @@ public enum MethodArgument {
             } else {
                 methodVisitor.visitVarInsn(loadOpcode, variableIndex);
             }
-            return chainedAssignment.apply(methodVisitor).aggregateLeftFirst(operandStackSize);
+            return chainedAssignment.apply(methodVisitor).aggregateLeftFirst(valueSize.getSize());
         }
     }
 
-    public Assignment assignAt(int variableIndex, Assignment chainedAssignment) {
+    public Assignment loadFromIndex(int variableIndex, Assignment chainedAssignment) {
         return new ArgumentLoadingAssignment(variableIndex, chainedAssignment);
+    }
+
+    public Assignment.Size apply(int variableIndex, MethodVisitor methodVisitor) {
+        return new ArgumentLoadingAssignment(variableIndex, LegalTrivialAssignment.INSTANCE).apply(methodVisitor);
     }
 }
 

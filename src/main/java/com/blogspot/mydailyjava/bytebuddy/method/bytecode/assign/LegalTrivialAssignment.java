@@ -7,7 +7,7 @@ public enum LegalTrivialAssignment implements Assignment {
 
     private final Size size;
 
-    LegalTrivialAssignment(Size size) {
+    private LegalTrivialAssignment(Size size) {
         this.size = size;
     }
 

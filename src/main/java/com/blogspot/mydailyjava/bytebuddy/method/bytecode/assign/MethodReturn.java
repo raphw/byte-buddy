@@ -1,48 +1,42 @@
 package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign;
 
-import com.blogspot.mydailyjava.bytebuddy.method.utility.MethodDescriptor;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.ValueSize;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 public enum MethodReturn {
 
-    INTEGER(Opcodes.IRETURN, -1),
-    DOUBLE(Opcodes.DRETURN, -2),
-    FLOAT(Opcodes.FRETURN, -1),
-    LONG(Opcodes.LRETURN, -2),
-    ANY_REFERENCE(Opcodes.ARETURN, -1),
-    VOID(Opcodes.RETURN, 0);
+    INTEGER(Opcodes.IRETURN, ValueSize.SINGLE),
+    DOUBLE(Opcodes.DRETURN, ValueSize.DOUBLE),
+    FLOAT(Opcodes.FRETURN, ValueSize.SINGLE),
+    LONG(Opcodes.LRETURN, ValueSize.DOUBLE),
+    VOID(Opcodes.RETURN, ValueSize.NONE),
+    ANY_REFERENCE(Opcodes.ARETURN, ValueSize.SINGLE);
 
-    public static MethodReturn forType(String name) {
-        switch (name.charAt(0)) {
-            case MethodDescriptor.OBJECT_REFERENCE_SYMBOL:
-            case MethodDescriptor.ARRAY_REFERENCE_SYMBOL:
-                return ANY_REFERENCE;
-            case MethodDescriptor.INT_SYMBOL:
-            case MethodDescriptor.BOOLEAN_SYMBOL:
-            case MethodDescriptor.BYTE_SYMBOL:
-            case MethodDescriptor.CHAR_SYMBOL:
-            case MethodDescriptor.SHORT_SYMBOL:
-                return INTEGER;
-            case MethodDescriptor.DOUBLE_SYMBOL:
-                return DOUBLE;
-            case MethodDescriptor.FLOAT_SYMBOL:
-                return FLOAT;
-            case MethodDescriptor.LONG_SYMBOL:
+    public static MethodReturn returning(Class<?> type) {
+        if (type.isPrimitive()) {
+            if (type == long.class) {
                 return LONG;
-            case MethodDescriptor.VOID_SYMBOL:
+            } else if (type == double.class) {
+                return DOUBLE;
+            } else if (type == float.class) {
+                return FLOAT;
+            } else if (type == void.class) {
                 return VOID;
-            default:
-                throw new IllegalArgumentException("Illegal method argument type: " + name);
+            } else {
+                return INTEGER;
+            }
+        } else {
+            return ANY_REFERENCE;
         }
     }
 
     private final int returnOpcode;
-    private final int sizeChange;
+    private final ValueSize valueSize;
 
-    private MethodReturn(int returnOpcode, int sizeChange) {
+    private MethodReturn(int returnOpcode, ValueSize valueSize) {
         this.returnOpcode = returnOpcode;
-        this.sizeChange = sizeChange;
+        this.valueSize = valueSize;
     }
 
     private class MethodReturnValueAssignment implements Assignment {
@@ -62,11 +56,15 @@ public enum MethodReturn {
         public Size apply(MethodVisitor methodVisitor) {
             Size size = returnValuePreparationAssignment.apply(methodVisitor);
             methodVisitor.visitInsn(returnOpcode);
-            return size.aggregateLeftFirst(sizeChange);
+            return size.aggregateLeftFirst(-1 * valueSize.getSize());
         }
     }
 
     public Assignment returnAfter(Assignment returnValuePreparationAssignment) {
         return new MethodReturnValueAssignment(returnValuePreparationAssignment);
+    }
+
+    public Assignment.Size apply(MethodVisitor methodVisitor) {
+        return new MethodReturnValueAssignment(LegalTrivialAssignment.INSTANCE).apply(methodVisitor);
     }
 }

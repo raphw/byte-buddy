@@ -1,12 +1,8 @@
 package com.blogspot.mydailyjava.bytebuddy.method.matcher;
 
-import com.blogspot.mydailyjava.bytebuddy.context.ClassContext;
-import com.blogspot.mydailyjava.bytebuddy.context.MethodContext;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
-
 import java.lang.reflect.Method;
-import java.util.List;
+import java.lang.reflect.Modifier;
+import java.util.Arrays;
 
 public final class MethodMatchers {
 
@@ -49,15 +45,19 @@ public final class MethodMatchers {
 
     private static class ClassNameMethodMatcher extends JunctionMethodMatcher {
 
-        private final String declaringClass;
+        private final Class<?> type;
 
-        public ClassNameMethodMatcher(Class<?> declaringClass) {
-            this.declaringClass = Type.getInternalName(declaringClass);
+        public ClassNameMethodMatcher(Class<?> type) {
+            this.type = type;
         }
 
         @Override
-        public boolean matches(ClassContext classContext, MethodContext methodContext) {
-            return classContext.getName().equals(declaringClass);
+        public boolean matches(Method method) {
+            try {
+                return type.getDeclaredMethod(method.getName(), method.getParameterTypes()) != null;
+            } catch (NoSuchMethodException e) {
+                return false;
+            }
         }
     }
 
@@ -76,8 +76,8 @@ public final class MethodMatchers {
         }
 
         @Override
-        public boolean matches(ClassContext classContext, MethodContext methodContext) {
-            return matchMode.matches(methodName, methodContext.getName());
+        public boolean matches(Method method) {
+            return matchMode.matches(methodName, method.getName());
         }
     }
 
@@ -117,26 +117,26 @@ public final class MethodMatchers {
         return new MethodNameMethodMatcher(regex, MatchMode.MATCHES);
     }
 
-    private static class AccessMethodMatcher extends JunctionMethodMatcher {
+    private static class ModifierMethodMatcher extends JunctionMethodMatcher {
 
-        private final int access;
+        private final int modifierMask;
 
-        public AccessMethodMatcher(int access) {
-            this.access = access;
+        public ModifierMethodMatcher(int modifierMask) {
+            this.modifierMask = modifierMask;
         }
 
         @Override
-        public boolean matches(ClassContext classContext, MethodContext methodContext) {
-            return (methodContext.getAccess() & access) != 0;
+        public boolean matches(Method method) {
+            return (method.getModifiers() & modifierMask) != 0;
         }
     }
 
     public static JunctionMethodMatcher isPublic() {
-        return new AccessMethodMatcher(Opcodes.ACC_PUBLIC);
+        return new ModifierMethodMatcher(Modifier.PUBLIC);
     }
 
     public static JunctionMethodMatcher isProtected() {
-        return new AccessMethodMatcher(Opcodes.ACC_PROTECTED);
+        return new ModifierMethodMatcher(Modifier.PROTECTED);
     }
 
     public static JunctionMethodMatcher isPackagePrivate() {
@@ -144,20 +144,40 @@ public final class MethodMatchers {
     }
 
     public static JunctionMethodMatcher isPrivate() {
-        return new AccessMethodMatcher(Opcodes.ACC_PRIVATE);
+        return new ModifierMethodMatcher(Modifier.PRIVATE);
+    }
+
+    public static JunctionMethodMatcher isFinal() {
+        return new ModifierMethodMatcher(Modifier.FINAL);
+    }
+
+    public static JunctionMethodMatcher isStatic() {
+        return new ModifierMethodMatcher(Modifier.STATIC);
+    }
+
+    private static class SyntheticMethodMatcher extends JunctionMethodMatcher {
+
+        @Override
+        public boolean matches(Method method) {
+            return method.isSynthetic();
+        }
+    }
+
+    public static JunctionMethodMatcher isSynthetic() {
+        return new SyntheticMethodMatcher();
     }
 
     private static class ReturnTypeMatcher extends JunctionMethodMatcher {
 
-        private final String returnType;
+        private final Class<?> returnType;
 
         public ReturnTypeMatcher(Class<?> returnType) {
-            this.returnType = Type.getInternalName(returnType);
+            this.returnType = returnType;
         }
 
         @Override
-        public boolean matches(ClassContext classContext, MethodContext methodContext) {
-            return methodContext.getReturnType().equals(returnType);
+        public boolean matches(Method method) {
+            return method.getReturnType() == returnType;
         }
     }
 
@@ -165,31 +185,22 @@ public final class MethodMatchers {
         return new ReturnTypeMatcher(type);
     }
 
-    private static class ArgumentTypeMatcher extends JunctionMethodMatcher {
+    private static class ParameterTypeMatcher extends JunctionMethodMatcher {
 
-        private final Class<?>[] argumentType;
+        private final Class<?>[] parameterType;
 
-        public ArgumentTypeMatcher(Class<?>[] argumentType) {
-            this.argumentType = argumentType;
+        public ParameterTypeMatcher(Class<?>[] parameterType) {
+            this.parameterType = parameterType;
         }
 
         @Override
-        public boolean matches(ClassContext classContext, MethodContext methodContext) {
-            List<String> argumentTypes = methodContext.getArgumentTypes();
-            if (this.argumentType.length != argumentTypes.size()) {
-                return false;
-            }
-            for (int i = 0; i < argumentType.length; i++) {
-                if (!Type.getInternalName(argumentType[i]).equals(argumentTypes.get(i))) {
-                    return false;
-                }
-            }
-            return true;
+        public boolean matches(Method method) {
+            return Arrays.equals(parameterType, method.getParameterTypes());
         }
     }
 
     public static JunctionMethodMatcher takesArguments(Class<?>... types) {
-        return new ArgumentTypeMatcher(types);
+        return new ParameterTypeMatcher(types);
     }
 
     private static class ExceptionMethodMatcher extends JunctionMethodMatcher {
@@ -201,9 +212,9 @@ public final class MethodMatchers {
         }
 
         @Override
-        public boolean matches(ClassContext classContext, MethodContext methodContext) {
-            for (String exceptionName : methodContext.getExceptions()) {
-                if (exceptionName.equals(Type.getInternalName(exceptionType))) {
+        public boolean matches(Method method) {
+            for (Class<?> exceptionType : method.getExceptionTypes()) {
+                if (exceptionType.isAssignableFrom(exceptionType)) {
                     return true;
                 }
             }
@@ -215,22 +226,22 @@ public final class MethodMatchers {
         return new ExceptionMethodMatcher(exceptionType);
     }
 
-    private static class ReflectionMethodMatcher extends JunctionMethodMatcher {
+    private static class EqualityMethodMatcher extends JunctionMethodMatcher {
 
         private final Method method;
 
-        public ReflectionMethodMatcher(Method method) {
+        public EqualityMethodMatcher(Method method) {
             this.method = method;
         }
 
         @Override
-        public boolean matches(ClassContext classContext, MethodContext methodContext) {
-            return Type.getMethodDescriptor(method).equals(methodContext.getDescriptor());
+        public boolean matches(Method method) {
+            return method.equals(this.method);
         }
     }
 
     public static JunctionMethodMatcher is(Method method) {
-        return new ReflectionMethodMatcher(method);
+        return new EqualityMethodMatcher(method);
     }
 
     private static class NegatingMethodMatcher extends JunctionMethodMatcher {
@@ -242,8 +253,8 @@ public final class MethodMatchers {
         }
 
         @Override
-        public boolean matches(ClassContext classContext, MethodContext methodContext) {
-            return !methodMatcher.matches(classContext, methodContext);
+        public boolean matches(Method method) {
+            return !methodMatcher.matches(method);
         }
     }
 
@@ -260,7 +271,7 @@ public final class MethodMatchers {
         }
 
         @Override
-        public boolean matches(ClassContext classContext, MethodContext methodContext) {
+        public boolean matches(Method method) {
             return matches;
         }
     }
