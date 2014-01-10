@@ -20,25 +20,25 @@ public final class MethodMatchers {
         private boolean matches(String left, String right) {
             switch (this) {
                 case EQUALS_FULLY:
-                    return left.equals(right);
+                    return right.equals(left);
                 case EQUALS_FULLY_IGNORE_CASE:
-                    return left.equalsIgnoreCase(right);
+                    return right.equalsIgnoreCase(left);
                 case STARTS_WITH:
-                    return left.startsWith(right);
+                    return right.startsWith(left);
                 case STARTS_WITH_IGNORE_CASE:
-                    return left.toLowerCase().startsWith(right.toLowerCase());
+                    return right.toLowerCase().startsWith(left.toLowerCase());
                 case ENDS_WITH:
-                    return left.endsWith(right);
+                    return right.endsWith(left);
                 case ENDS_WITH_IGNORE_CASE:
-                    return left.toLowerCase().endsWith(right.toLowerCase());
+                    return right.toLowerCase().endsWith(left.toLowerCase());
                 case CONTAINS:
-                    return left.contains(right);
+                    return right.contains(left);
                 case CONTAINS_IGNORE_CASE:
-                    return left.toLowerCase().contains(right.toLowerCase());
+                    return right.toLowerCase().contains(left.toLowerCase());
                 case MATCHES:
-                    return left.matches(right);
+                    return right.matches(left);
                 default:
-                    throw new AssertionError();
+                    throw new AssertionError("Unknown match mode: " + this);
             }
         }
     }
@@ -53,11 +53,7 @@ public final class MethodMatchers {
 
         @Override
         public boolean matches(Method method) {
-            try {
-                return type.getDeclaredMethod(method.getName(), method.getParameterTypes()) != null;
-            } catch (NoSuchMethodException e) {
-                return false;
-            }
+            return method.getDeclaringClass() == type;
         }
     }
 
@@ -85,8 +81,8 @@ public final class MethodMatchers {
         return new MethodNameMethodMatcher(name, MatchMode.EQUALS_FULLY);
     }
 
-    public static JunctionMethodMatcher namedIgnoreCase(String prefix) {
-        return new MethodNameMethodMatcher(prefix, MatchMode.EQUALS_FULLY_IGNORE_CASE);
+    public static JunctionMethodMatcher namedIgnoreCase(String name) {
+        return new MethodNameMethodMatcher(name, MatchMode.EQUALS_FULLY_IGNORE_CASE);
     }
 
     public static JunctionMethodMatcher nameStartsWith(String prefix) {
@@ -214,7 +210,7 @@ public final class MethodMatchers {
         @Override
         public boolean matches(Method method) {
             for (Class<?> exceptionType : method.getExceptionTypes()) {
-                if (exceptionType.isAssignableFrom(exceptionType)) {
+                if (exceptionType.isAssignableFrom(this.exceptionType)) {
                     return true;
                 }
             }
