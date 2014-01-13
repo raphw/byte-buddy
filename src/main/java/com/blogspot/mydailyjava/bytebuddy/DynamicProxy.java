@@ -15,9 +15,7 @@ public interface DynamicProxy {
 
         Builder visibility(ByteBuddy.Visibility visibility);
 
-        Builder manifestation(ByteBuddy.Manifestation manifestation);
-
-        Builder makeFinal(boolean isFinal);
+        Builder manifestation(ByteBuddy.TypeManifestation typeManifestation);
 
         Builder makeSynthetic(boolean synthetic);
 

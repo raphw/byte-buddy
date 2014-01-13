@@ -17,13 +17,22 @@ public class MethodMatchersTest {
 
     private static final String FIN_METHOD_NAME = "fin";
     private static final String STAT_METHOD_NAME = "stat";
-    private static final String COMPARE_TO_METHOD_NAME = "compareTo";
+
+    private static final String GENERIC_INTERFACE_METHOD_NAME = "gen";
 
     private static final String FOO_METHOD_NAME_REGEX = "fo{2}";
     private static final String BAR_METHOD_NAME_REGEX = "b[a]r";
 
+    private static final String JAVA_LANG_PACKAGE = "java.lang";
+
     @SuppressWarnings("unused")
-    private static class TestClassBase implements Comparable<String> {
+    private static interface TestInterface<T> {
+
+        void gen(T o);
+    }
+
+    @SuppressWarnings("unused")
+    private static class TestClassBase implements TestInterface<String> {
 
         public void foo() {
             /* empty */
@@ -50,8 +59,8 @@ public class MethodMatchersTest {
         }
 
         @Override
-        public int compareTo(String o) {
-            return 0;
+        public void gen(String o) {
+            /* empty */
         }
     }
 
@@ -112,8 +121,8 @@ public class MethodMatchersTest {
         testClassBase$fin = TestClassBase.class.getDeclaredMethod(FIN_METHOD_NAME + "1");
         testClassBase$stat = TestClassBase.class.getDeclaredMethod(STAT_METHOD_NAME);
 
-        testClassBase$compareTo$synth = TestClassBase.class.getDeclaredMethod(COMPARE_TO_METHOD_NAME, Object.class);
-        testClassBase$compareTo = TestClassBase.class.getDeclaredMethod(COMPARE_TO_METHOD_NAME, String.class);
+        testClassBase$compareTo$synth = TestClassBase.class.getDeclaredMethod(GENERIC_INTERFACE_METHOD_NAME, Object.class);
+        testClassBase$compareTo = TestClassBase.class.getDeclaredMethod(GENERIC_INTERFACE_METHOD_NAME, String.class);
 
         testClassExtension$foo = TestClassExtension.class.getDeclaredMethod(FOO_METHOD_NAME);
         testClassExtension$bar = TestClassExtension.class.getDeclaredMethod(BAR_METHOD_NAME, Object.class);
@@ -316,6 +325,14 @@ public class MethodMatchersTest {
         assertThat(MethodMatchers.is(testClassBase$foo).matches(testClassExtension$foo), is(false));
         assertThat(MethodMatchers.is(testClassExtension$foo).matches(testClassExtension$foo), is(true));
         assertThat(MethodMatchers.is(testClassExtension$foo).matches(testClassBase$foo), is(false));
+    }
+
+    @Test
+    public void testIsDefinedInPackage() throws Exception{
+        assertThat(MethodMatchers.isDefinedInPackage(MethodMatchersTest.class.getPackage().getName()).matches(testClassBase$foo), is(true));
+        assertThat(MethodMatchers.isDefinedInPackage(MethodMatchersTest.class.getPackage().getName()).matches(testClassExtension$foo), is(true));
+        assertThat(MethodMatchers.isDefinedInPackage(JAVA_LANG_PACKAGE).matches(testClassBase$foo), is(false));
+        assertThat(MethodMatchers.isDefinedInPackage(JAVA_LANG_PACKAGE).matches(testClassExtension$foo), is(false));
     }
 
     @Test

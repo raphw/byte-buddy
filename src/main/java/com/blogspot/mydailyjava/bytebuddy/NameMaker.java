@@ -6,6 +6,9 @@ public interface NameMaker {
 
     static class PrefixingRandom implements NameMaker {
 
+        private static final String JAVA_LANG_PACKAGE = "java.lang.";
+        private static final String BYTE_BUDDY_RENAME_PACKAGE = "com.blogspot.mydailyjava.bytebuddy.renamed.";
+
         private final String prefix;
         private final Random random;
 
@@ -16,7 +19,11 @@ public interface NameMaker {
 
         @Override
         public String getName(Class<?> superClass) {
-            return String.format("%s$$%s$$%d", superClass.getName(), prefix, random.nextInt());
+            String superClassName = superClass.getName();
+            if(superClassName.startsWith(JAVA_LANG_PACKAGE)) {
+                superClassName = BYTE_BUDDY_RENAME_PACKAGE + superClass;
+            }
+            return String.format("%s$$%s$$%d", superClassName, prefix, random.nextInt());
         }
     }
 

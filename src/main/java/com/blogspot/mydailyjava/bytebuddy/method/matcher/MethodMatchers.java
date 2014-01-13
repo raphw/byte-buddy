@@ -53,7 +53,11 @@ public final class MethodMatchers {
 
         @Override
         public boolean matches(Method method) {
-            return method.getDeclaringClass() == type;
+            try {
+                return method.getDeclaringClass() == type || type.getDeclaredMethod(method.getName(), method.getParameterTypes()) != null;
+            } catch (NoSuchMethodException e) {
+                return false;
+            }
         }
     }
 
@@ -238,6 +242,24 @@ public final class MethodMatchers {
 
     public static JunctionMethodMatcher is(Method method) {
         return new EqualityMethodMatcher(method);
+    }
+
+    private static class PackageNameMatcher extends JunctionMethodMatcher {
+
+        private final String packageName;
+
+        private PackageNameMatcher(String packageName) {
+            this.packageName = packageName;
+        }
+
+        @Override
+        public boolean matches(Method method) {
+            return method.getDeclaringClass().getPackage().getName().equals(packageName);
+        }
+    }
+
+    public static JunctionMethodMatcher isDefinedInPackage(String packageName) {
+        return new PackageNameMatcher(packageName);
     }
 
     private static class NegatingMethodMatcher extends JunctionMethodMatcher {

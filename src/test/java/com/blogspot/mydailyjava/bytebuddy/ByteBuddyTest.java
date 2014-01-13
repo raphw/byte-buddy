@@ -8,7 +8,7 @@ public class ByteBuddyTest {
 
     @Test
     public void testSubclass() throws Exception{
-        String text = new ByteBuddy()
+        String text = ByteBuddy.make()
                 .subclass(Object.class)
                 .name("my.Test")
                 .intercept(MethodMatchers.returns(String.class), StubMethodByteCodeAppender.INSTANCE)

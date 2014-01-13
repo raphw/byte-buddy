@@ -7,6 +7,30 @@ import java.util.*;
 
 public class MethodExtractor {
 
+    private static class Extraction {
+
+        private final Set<String> extractedMethodSignatures;
+        private final List<Method> extractedMethods;
+        private final MethodMatcher methodMatcher;
+
+        private Extraction(MethodMatcher methodMatcher) {
+            this.methodMatcher = methodMatcher;
+            extractedMethodSignatures = new HashSet<String>();
+            extractedMethods = new LinkedList<Method>();
+        }
+
+        public void consider(Method method) {
+            String methodSignature = method.getName() + Type.getMethodDescriptor(method);
+            if (extractedMethodSignatures.add(methodSignature) && methodMatcher.matches(method)) {
+                extractedMethods.add(method);
+            }
+        }
+
+        public List<Method> asList() {
+            return new ArrayList<Method>(extractedMethods);
+        }
+    }
+
     public static MethodExtractor matching(MethodMatcher methodMatcher) {
         return new MethodExtractor(methodMatcher);
     }
@@ -17,33 +41,38 @@ public class MethodExtractor {
         this.methodMatcher = methodMatcher;
     }
 
-    public List<Method> extractUniqueMethodsFrom(Class<?> type) {
-        List<Method> extracted = new LinkedList<Method>();
-        Set<String> usedDescriptors = new HashSet<String>();
-        LinkedHashSet<Class<?>> interfaces = new LinkedHashSet<Class<?>>();
+    public List<Method> extractAll(Collection<Class<?>> types) {
+        Extraction extraction = new Extraction(methodMatcher);
+        for (Class<?> type : types) {
+            extractClass(type, extraction);
+        }
+        return extraction.asList();
+    }
+
+    private static void extractClass(Class<?> type, Extraction extraction) {
+        List<Class<?>> interfaces = new LinkedList<Class<?>>();
         do {
-            extractMethodsDeclaredIn(type, usedDescriptors, extracted);
-            collectInterfacesFrom(type, interfaces);
-            type = type.getSuperclass();
-        } while (type != null);
+            extractDeclaredMethods(type, extraction);
+            interfaces.addAll(Arrays.asList(type.getInterfaces()));
+        } while ((type = type.getSuperclass()) != null);
+        extractInterfaces(interfaces, extraction);
+    }
+
+    private static void extractInterfaces(Collection<Class<?>> interfaces, Extraction extraction) {
+        if (interfaces.size() == 0) {
+            return;
+        }
+        List<Class<?>> nestedInterfaces = new LinkedList<Class<?>>();
         for (Class<?> anInterface : interfaces) {
-            extractMethodsDeclaredIn(anInterface, usedDescriptors, extracted);
+            extractDeclaredMethods(anInterface, extraction);
+            nestedInterfaces.addAll(Arrays.asList(anInterface.getInterfaces()));
         }
-        return extracted;
+        extractInterfaces(nestedInterfaces, extraction);
     }
 
-    private static void collectInterfacesFrom(Class<?> type, LinkedHashSet<Class<?>> interfaces) {
-        for (Class<?> anInterface : type.getInterfaces()) {
-            interfaces.add(anInterface);
-            collectInterfacesFrom(anInterface, interfaces);
-        }
-    }
-
-    private void extractMethodsDeclaredIn(Class<?> type, Set<String> usedDescriptors, List<Method> extracted) {
+    private static void extractDeclaredMethods(Class<?> type, Extraction extraction) {
         for (Method method : type.getDeclaredMethods()) {
-            if (methodMatcher.matches(method) && !usedDescriptors.add(Type.getMethodDescriptor(method))) {
-                extracted.add(method);
-            }
+            extraction.consider(method);
         }
     }
 }
