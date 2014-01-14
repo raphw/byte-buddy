@@ -1,6 +1,5 @@
-package com.blogspot.mydailyjava.bytebuddy.type.scaffold;
+package com.blogspot.mydailyjava.bytebuddy.type.instrumentation;
 
-import com.blogspot.mydailyjava.bytebuddy.DynamicProxy;
 import com.blogspot.mydailyjava.bytebuddy.type.loading.ByteArrayClassLoader;
 import com.blogspot.mydailyjava.bytebuddy.type.loading.ClassLoaderByteArrayInjector;
 

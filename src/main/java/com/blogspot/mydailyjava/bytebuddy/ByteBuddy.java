@@ -1,79 +1,26 @@
 package com.blogspot.mydailyjava.bytebuddy;
 
-import com.blogspot.mydailyjava.bytebuddy.type.ModifierContributor;
+import com.blogspot.mydailyjava.bytebuddy.asm.ClassVisitorWrapper;
+import com.blogspot.mydailyjava.bytebuddy.asm.ClassVisitorWrapperChain;
+import com.blogspot.mydailyjava.bytebuddy.type.instrumentation.DynamicProxy;
 import com.blogspot.mydailyjava.bytebuddy.type.scaffold.SubclassDynamicProxyBuilder;
 import org.objectweb.asm.Opcodes;
 
 public class ByteBuddy {
 
-    public static enum Visibility implements ModifierContributor {
-
-        PUBLIC(Opcodes.ACC_PUBLIC),
-        PROTECTED(Opcodes.ACC_PROTECTED),
-        PACKAGE_PRIVATE(0),
-        PRIVATE(Opcodes.ACC_PRIVATE);
-
-        private final int mask;
-
-        private Visibility(int mask) {
-            this.mask = mask;
-        }
-
-        @Override
-        public int getMask() {
-            return mask;
-        }
-    }
-
-    public static enum TypeManifestation implements ModifierContributor {
-
-        CONCRETE(0),
-        FINAL(Opcodes.ACC_FINAL),
-        ABSTRACT(Opcodes.ACC_ABSTRACT),
-        INTERFACE(Opcodes.ACC_INTERFACE);
-
-        private final int mask;
-
-        private TypeManifestation(int mask) {
-            this.mask = mask;
-        }
-
-        public int getMask() {
-            return mask;
-        }
-    }
-
-    public static enum SyntheticState implements ModifierContributor {
-
-        SYNTHETIC(Opcodes.ACC_SYNTHETIC),
-        NON_SYNTHETIC(0);
-
-        public static SyntheticState is(boolean synthetic) {
-            return synthetic ? SYNTHETIC : NON_SYNTHETIC;
-        }
-
-        private final int mask;
-
-        private SyntheticState(int mask) {
-            this.mask = mask;
-        }
-
-        @Override
-        public int getMask() {
-            return mask;
-        }
-    }
-
     public static final String DEFAULT_NAME_PREFIX = "ByteBuddy";
-
     public static final int DEFAULT_CLASS_VERSION = Opcodes.V1_5;
     public static final Visibility DEFAULT_VISIBILITY = Visibility.PUBLIC;
     public static final TypeManifestation DEFAULT_TYPE_MANIFESTATION = TypeManifestation.CONCRETE;
     public static final SyntheticState DEFAULT_SYNTHETIC_STATE = SyntheticState.NON_SYNTHETIC;
 
     public static ByteBuddy make() {
-        return new ByteBuddy(DEFAULT_CLASS_VERSION, DEFAULT_VISIBILITY, DEFAULT_TYPE_MANIFESTATION,
-                DEFAULT_SYNTHETIC_STATE, new NameMaker.PrefixingRandom(DEFAULT_NAME_PREFIX));
+        return new ByteBuddy(DEFAULT_CLASS_VERSION,
+                DEFAULT_VISIBILITY,
+                DEFAULT_TYPE_MANIFESTATION,
+                DEFAULT_SYNTHETIC_STATE,
+                new NameMaker.PrefixingRandom(DEFAULT_NAME_PREFIX),
+                new ClassVisitorWrapperChain());
     }
 
     private final int classVersion;
@@ -81,34 +28,83 @@ public class ByteBuddy {
     private final TypeManifestation typeManifestation;
     private final SyntheticState syntheticState;
     private final NameMaker nameMaker;
+    private final ClassVisitorWrapperChain classVisitorWrapperChain;
 
-    protected ByteBuddy(int classVersion, Visibility visibility, TypeManifestation typeManifestation,
-                        SyntheticState syntheticState, NameMaker nameMaker) {
+    protected ByteBuddy(int classVersion,
+                        Visibility visibility,
+                        TypeManifestation typeManifestation,
+                        SyntheticState syntheticState,
+                        NameMaker nameMaker,
+                        ClassVisitorWrapperChain classVisitorWrapperChain) {
         this.classVersion = classVersion;
         this.visibility = visibility;
         this.typeManifestation = typeManifestation;
         this.syntheticState = syntheticState;
         this.nameMaker = nameMaker;
+        this.classVisitorWrapperChain = classVisitorWrapperChain;
     }
 
     public ByteBuddy withDefaultClassVersion(int classVersion) {
-        return new ByteBuddy(checkClassVersion(classVersion), visibility, typeManifestation, syntheticState, nameMaker);
+        return new ByteBuddy(checkClassVersion(classVersion),
+                visibility,
+                typeManifestation,
+                syntheticState,
+                nameMaker,
+                classVisitorWrapperChain);
     }
 
     public ByteBuddy withDefaultVisibility(Visibility visibility) {
-        return new ByteBuddy(classVersion, checkNotNull(visibility), typeManifestation, syntheticState, nameMaker);
+        return new ByteBuddy(classVersion,
+                checkNotNull(visibility),
+                typeManifestation,
+                syntheticState,
+                nameMaker,
+                classVisitorWrapperChain);
     }
 
     public ByteBuddy withDefaultTypeManifestation(TypeManifestation typeManifestation) {
-        return new ByteBuddy(classVersion, visibility, checkNotNull(typeManifestation), syntheticState, nameMaker);
+        return new ByteBuddy(classVersion,
+                visibility,
+                checkNotNull(typeManifestation),
+                syntheticState,
+                nameMaker,
+                classVisitorWrapperChain);
     }
 
     public ByteBuddy withDefaultSyntheticState(SyntheticState syntheticState) {
-        return new ByteBuddy(classVersion, visibility, typeManifestation, checkNotNull(syntheticState), nameMaker);
+        return new ByteBuddy(classVersion,
+                visibility,
+                typeManifestation,
+                checkNotNull(syntheticState),
+                nameMaker,
+                classVisitorWrapperChain);
     }
 
     public ByteBuddy withNameMaker(NameMaker nameMaker) {
-        return new ByteBuddy(classVersion, visibility, typeManifestation, syntheticState, checkNotNull(nameMaker));
+        return new ByteBuddy(classVersion,
+                visibility,
+                typeManifestation,
+                syntheticState,
+                checkNotNull(nameMaker),
+                classVisitorWrapperChain);
+    }
+
+    public ByteBuddy prependClassVisitorWrapper(ClassVisitorWrapper classVisitorWrapper) {
+        return new ByteBuddy(classVersion,
+                visibility,
+                typeManifestation,
+                syntheticState,
+                checkNotNull(nameMaker),
+                classVisitorWrapperChain.prepend(checkNotNull(classVisitorWrapper)));
+    }
+
+    public ByteBuddy appendClassVisitorWrapper(ClassVisitorWrapper classVisitorWrapper) {
+        return new ByteBuddy(classVersion,
+                visibility,
+                typeManifestation,
+                syntheticState,
+                checkNotNull(nameMaker),
+                classVisitorWrapperChain.append(checkNotNull(classVisitorWrapper)));
     }
 
     public int getClassVersion() {
@@ -129,6 +125,10 @@ public class ByteBuddy {
 
     public NameMaker getNameMaker() {
         return nameMaker;
+    }
+
+    public ClassVisitorWrapperChain getClassVisitorWrapperChain() {
+        return classVisitorWrapperChain;
     }
 
     public DynamicProxy.Builder subclass(Class<?> type) {

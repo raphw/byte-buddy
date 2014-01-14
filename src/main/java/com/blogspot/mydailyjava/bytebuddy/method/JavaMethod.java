@@ -81,6 +81,11 @@ public interface JavaMethod extends AnnotatedElement, Member, GenericDeclaration
         }
 
         @Override
+        public boolean isVarArgs() {
+            return constructor.isVarArgs();
+        }
+
+        @Override
         public boolean isConstructor() {
             return true;
         }
@@ -154,6 +159,22 @@ public interface JavaMethod extends AnnotatedElement, Member, GenericDeclaration
         public String getDescriptor() {
             return org.objectweb.asm.Type.getConstructorDescriptor(constructor);
         }
+
+        @Override
+        public boolean equals(Object o) {
+            return this == o || !(o == null || getClass() != o.getClass())
+                    && constructor.equals(((ForConstructor) o).constructor);
+        }
+
+        @Override
+        public int hashCode() {
+            return constructor.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "JavaMethod.ForConstructor{" + constructor + "}";
+        }
     }
 
     static class ForMethod extends AbstractJavaMethod {
@@ -192,6 +213,11 @@ public interface JavaMethod extends AnnotatedElement, Member, GenericDeclaration
         @Override
         public Class<?>[] getExceptionTypes() {
             return method.getExceptionTypes();
+        }
+
+        @Override
+        public boolean isVarArgs() {
+            return method.isVarArgs();
         }
 
         @Override
@@ -268,6 +294,22 @@ public interface JavaMethod extends AnnotatedElement, Member, GenericDeclaration
         public String getDescriptor() {
             return org.objectweb.asm.Type.getMethodDescriptor(method);
         }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && method.equals(((ForMethod) other).method);
+        }
+
+        @Override
+        public int hashCode() {
+            return method.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "JavaMethod.ForMethod{" + method + "}";
+        }
     }
 
     Class<?> getReturnType();
@@ -281,6 +323,8 @@ public interface JavaMethod extends AnnotatedElement, Member, GenericDeclaration
     Annotation[][] getParameterAnnotations();
 
     Class<?>[] getExceptionTypes();
+
+    boolean isVarArgs();
 
     boolean isConstructor();
 

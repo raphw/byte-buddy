@@ -7,8 +7,6 @@ import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.MethodReturn;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import java.util.Arrays;
-
 public enum  SuperClassDelegation implements ByteCodeAppender {
     INSTANCE;
 
@@ -21,6 +19,6 @@ public enum  SuperClassDelegation implements ByteCodeAppender {
         }
         methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, javaMethod.getDeclaringSuperClassInternalName(), javaMethod.getInternalName(), javaMethod.getDescriptor());
         size = size.aggregateLeftFirst(MethodReturn.returning(javaMethod.getReturnType()).apply(methodVisitor));
-        return new Size(size.getMaximalSize(), TypeSize.sizeOf(Arrays.asList(javaMethod.getParameterTypes())) + 1);
+        return new Size(size.getMaximalSize(), size.getMaximalSize() + 1);
     }
 }

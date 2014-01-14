@@ -1,5 +1,7 @@
-package com.blogspot.mydailyjava.bytebuddy;
+package com.blogspot.mydailyjava.bytebuddy.type.instrumentation;
 
+import com.blogspot.mydailyjava.bytebuddy.TypeManifestation;
+import com.blogspot.mydailyjava.bytebuddy.Visibility;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.ByteCodeAppender;
 import com.blogspot.mydailyjava.bytebuddy.method.matcher.MethodMatcher;
 
@@ -13,9 +15,9 @@ public interface DynamicProxy {
 
         Builder name(String name);
 
-        Builder visibility(ByteBuddy.Visibility visibility);
+        Builder visibility(Visibility visibility);
 
-        Builder manifestation(ByteBuddy.TypeManifestation typeManifestation);
+        Builder manifestation(TypeManifestation typeManifestation);
 
         Builder makeSynthetic(boolean synthetic);
 

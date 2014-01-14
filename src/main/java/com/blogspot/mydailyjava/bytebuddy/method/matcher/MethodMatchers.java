@@ -2,6 +2,7 @@ package com.blogspot.mydailyjava.bytebuddy.method.matcher;
 
 import com.blogspot.mydailyjava.bytebuddy.method.JavaMethod;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
@@ -9,6 +10,7 @@ import java.util.Arrays;
 public final class MethodMatchers {
 
     private static enum MatchMode {
+
         EQUALS_FULLY,
         EQUALS_FULLY_IGNORE_CASE,
         STARTS_WITH,
@@ -157,6 +159,18 @@ public final class MethodMatchers {
         return new ModifierMethodMatcher(Modifier.STATIC);
     }
 
+    private static class VarArgsMethodMatcher extends JunctionMethodMatcher {
+
+        @Override
+        public boolean matches(JavaMethod javaMethod) {
+            return javaMethod.isVarArgs();
+        }
+    }
+
+    public static JunctionMethodMatcher isVarArgs() {
+        return new VarArgsMethodMatcher();
+    }
+
     private static class SyntheticMethodMatcher extends JunctionMethodMatcher {
 
         @Override
@@ -240,11 +254,11 @@ public final class MethodMatchers {
         return new ExceptionMethodMatcher(exceptionType);
     }
 
-    private static class EqualityMethodMatcher extends JunctionMethodMatcher {
+    private static class MethodEqualityMethodMatcher extends JunctionMethodMatcher {
 
         private final Method method;
 
-        public EqualityMethodMatcher(Method method) {
+        public MethodEqualityMethodMatcher(Method method) {
             this.method = method;
         }
 
@@ -255,7 +269,25 @@ public final class MethodMatchers {
     }
 
     public static JunctionMethodMatcher is(Method method) {
-        return new EqualityMethodMatcher(method);
+        return new MethodEqualityMethodMatcher(method);
+    }
+
+    private static class ConstructorEqualityMethodMatcher extends JunctionMethodMatcher {
+
+        private final Constructor<?> constructor;
+
+        public ConstructorEqualityMethodMatcher(Constructor<?> constructor) {
+            this.constructor = constructor;
+        }
+
+        @Override
+        public boolean matches(JavaMethod javaMethod) {
+            return javaMethod.represents(constructor);
+        }
+    }
+
+    public static JunctionMethodMatcher is(Constructor<?> constructor) {
+        return new ConstructorEqualityMethodMatcher(constructor);
     }
 
     private static class PackageNameMatcher extends JunctionMethodMatcher {

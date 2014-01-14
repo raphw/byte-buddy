@@ -1,8 +1,24 @@
 package com.blogspot.mydailyjava.bytebuddy;
 
+import java.util.Collection;
 import java.util.Random;
 
 public interface NameMaker {
+
+    static interface UnnamedType {
+
+        Class<?> getSuperClass();
+
+        Collection<Class<?>> getInterfaces();
+
+        Visibility getVisibility();
+
+        TypeManifestation getTypeManifestation();
+
+        SyntheticState getSyntheticState();
+
+        int getClassVersion();
+    }
 
     static class PrefixingRandom implements NameMaker {
 
@@ -18,10 +34,10 @@ public interface NameMaker {
         }
 
         @Override
-        public String getName(Class<?> superClass) {
-            String superClassName = superClass.getName();
-            if(superClassName.startsWith(JAVA_LANG_PACKAGE)) {
-                superClassName = BYTE_BUDDY_RENAME_PACKAGE + superClass;
+        public String getName(UnnamedType unnamedType) {
+            String superClassName = unnamedType.getSuperClass().getName();
+            if (superClassName.startsWith(JAVA_LANG_PACKAGE)) {
+                superClassName = BYTE_BUDDY_RENAME_PACKAGE + superClassName;
             }
             return String.format("%s$$%s$$%d", superClassName, prefix, random.nextInt());
         }
@@ -36,10 +52,10 @@ public interface NameMaker {
         }
 
         @Override
-        public String getName(Class<?> superClass) {
+        public String getName(UnnamedType UnnamedType) {
             return name;
         }
     }
 
-    String getName(Class<?> superClass);
+    String getName(UnnamedType unnamedType);
 }
