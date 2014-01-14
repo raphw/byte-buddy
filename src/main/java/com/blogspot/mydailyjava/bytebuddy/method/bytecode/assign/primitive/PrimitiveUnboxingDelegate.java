@@ -1,6 +1,6 @@
 package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.primitive;
 
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.ValueSize;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.TypeSize;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assigner;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assignment;
 import org.objectweb.asm.MethodVisitor;
@@ -8,14 +8,14 @@ import org.objectweb.asm.Opcodes;
 
 public enum PrimitiveUnboxingDelegate implements UnboxingResponsible {
 
-    BOOLEAN("java/lang/Boolean", ValueSize.SINGLE, Boolean.class, boolean.class, "valueOf", "(Z)Ljava/lang/Boolean;", "booleanValue", "()Z"),
-    BYTE("java/lang/Byte", ValueSize.SINGLE, Byte.class, byte.class, "valueOf", "(B)Ljava/lang/Byte;", "byteValue", "()B"),
-    SHORT("java/lang/Short", ValueSize.SINGLE, Short.class, short.class, "valueOf", "(S)Ljava/lang/Short;", "shortValue", "()S"),
-    CHARACTER("java/lang/Character", ValueSize.SINGLE, Character.class, char.class, "valueOf", "(C)Ljava/lang/Character;", "charValue", "()C"),
-    INTEGER("java/lang/Integer", ValueSize.SINGLE, Integer.class, int.class, "valueOf", "(I)Ljava/lang/Integer;", "intValue", "()I"),
-    LONG("java/lang/Long", ValueSize.DOUBLE, Long.class, long.class, "valueOf", "(J)Ljava/lang/Long;", "longValue", "()J"),
-    FLOAT("java/lang/Float", ValueSize.SINGLE, Float.class, float.class, "valueOf", "(F)Ljava/lang/Float;", "floatValue", "()F"),
-    DOUBLE("java/lang/Double", ValueSize.DOUBLE, Double.class, double.class, "valueOf", "(D)Ljava/lang/Double;", "doubleValue", "()D");
+    BOOLEAN("java/lang/Boolean", TypeSize.SINGLE, Boolean.class, boolean.class, "valueOf", "(Z)Ljava/lang/Boolean;", "booleanValue", "()Z"),
+    BYTE("java/lang/Byte", TypeSize.SINGLE, Byte.class, byte.class, "valueOf", "(B)Ljava/lang/Byte;", "byteValue", "()B"),
+    SHORT("java/lang/Short", TypeSize.SINGLE, Short.class, short.class, "valueOf", "(S)Ljava/lang/Short;", "shortValue", "()S"),
+    CHARACTER("java/lang/Character", TypeSize.SINGLE, Character.class, char.class, "valueOf", "(C)Ljava/lang/Character;", "charValue", "()C"),
+    INTEGER("java/lang/Integer", TypeSize.SINGLE, Integer.class, int.class, "valueOf", "(I)Ljava/lang/Integer;", "intValue", "()I"),
+    LONG("java/lang/Long", TypeSize.DOUBLE, Long.class, long.class, "valueOf", "(J)Ljava/lang/Long;", "longValue", "()J"),
+    FLOAT("java/lang/Float", TypeSize.SINGLE, Float.class, float.class, "valueOf", "(F)Ljava/lang/Float;", "floatValue", "()F"),
+    DOUBLE("java/lang/Double", TypeSize.DOUBLE, Double.class, double.class, "valueOf", "(D)Ljava/lang/Double;", "doubleValue", "()D");
 
     public static PrimitiveUnboxingDelegate forPrimitive(Class<?> type) {
         if (type == boolean.class) {
@@ -77,7 +77,7 @@ public enum PrimitiveUnboxingDelegate implements UnboxingResponsible {
     }
 
     private final String wrapperTypeName;
-    private final ValueSize valueSize;
+    private final TypeSize typeSize;
     private final Class<?> wrapperType;
     private final Class<?> primitiveType;
     private final String boxingMethodName;
@@ -85,12 +85,12 @@ public enum PrimitiveUnboxingDelegate implements UnboxingResponsible {
     private final String unboxingMethodName;
     private final String unboxingMethodDescriptor;
 
-    private PrimitiveUnboxingDelegate(String wrapperTypeName, ValueSize valueSize,
+    private PrimitiveUnboxingDelegate(String wrapperTypeName, TypeSize typeSize,
                                       Class<?> wrapperType, Class<?> primitiveType,
                                       String boxingMethodName, String boxingMethodDescriptor,
                                       String unboxingMethodName, String unboxingMethodDescriptor) {
         this.wrapperTypeName = wrapperTypeName;
-        this.valueSize = valueSize;
+        this.typeSize = typeSize;
         this.wrapperType = wrapperType;
         this.primitiveType = primitiveType;
         this.boxingMethodName = boxingMethodName;
@@ -115,7 +115,7 @@ public enum PrimitiveUnboxingDelegate implements UnboxingResponsible {
         @Override
         public Size apply(MethodVisitor methodVisitor) {
             methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, wrapperTypeName, boxingMethodName, boxingMethodDescriptor);
-            return assignment.apply(methodVisitor).aggregateLeftFirst(valueSize.getSize() - 1);
+            return assignment.apply(methodVisitor).aggregateLeftFirst(typeSize.getSize() - 1);
         }
     }
 
@@ -135,7 +135,7 @@ public enum PrimitiveUnboxingDelegate implements UnboxingResponsible {
         @Override
         public Size apply(MethodVisitor methodVisitor) {
             methodVisitor.visitMethodInsn(Opcodes.INVOKEDYNAMIC, wrapperTypeName, unboxingMethodName, unboxingMethodDescriptor);
-            return wideningAssignment.apply(methodVisitor).aggregateRightFirst(valueSize.getSize() - 1);
+            return wideningAssignment.apply(methodVisitor).aggregateRightFirst(typeSize.getSize() - 1);
         }
     }
 
@@ -156,7 +156,7 @@ public enum PrimitiveUnboxingDelegate implements UnboxingResponsible {
         public Size apply(MethodVisitor methodVisitor) {
             Size size = referenceTypeAdjustmentAssignment.apply(methodVisitor);
             methodVisitor.visitMethodInsn(Opcodes.INVOKEDYNAMIC, wrapperTypeName, unboxingMethodName, unboxingMethodDescriptor);
-            return size.aggregateLeftFirst(valueSize.getSize() - 1);
+            return size.aggregateLeftFirst(typeSize.getSize() - 1);
         }
     }
 

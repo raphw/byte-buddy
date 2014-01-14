@@ -3,21 +3,22 @@ package com.blogspot.mydailyjava.bytebuddy.type.scaffold;
 import com.blogspot.mydailyjava.bytebuddy.ByteBuddy;
 import com.blogspot.mydailyjava.bytebuddy.DynamicProxy;
 import com.blogspot.mydailyjava.bytebuddy.NameMaker;
+import com.blogspot.mydailyjava.bytebuddy.method.JavaMethod;
 import com.blogspot.mydailyjava.bytebuddy.method.MethodInterception;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.ByteCodeAppender;
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.SuperClassDelegationByteCodeAppender;
 import com.blogspot.mydailyjava.bytebuddy.method.matcher.JunctionMethodMatcher;
-import com.blogspot.mydailyjava.bytebuddy.method.matcher.MethodExtractor;
+import com.blogspot.mydailyjava.bytebuddy.method.matcher.MethodExtraction;
 import com.blogspot.mydailyjava.bytebuddy.method.matcher.MethodMatcher;
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import static com.blogspot.mydailyjava.bytebuddy.method.matcher.MethodMatchers.*;
 
@@ -199,32 +200,18 @@ public class SubclassDynamicProxyBuilder implements DynamicProxy.Builder {
         ClassWriter classWriter = new ClassWriter(ASM_MANUAL_WRITING_OPTIONS);
         String typeName = nameMaker.getName(superClass);
         classWriter.visit(classVersion, makeTypeModifier(), toInternalForm(typeName), null, Type.getInternalName(superClass), makeInternalNameArray(interfaces));
-        applyConstructorDelegation(classWriter);
         applyMethodInterception(classWriter);
         classWriter.visitEnd();
         return new ByteArrayDynamicProxy(typeName, classWriter.toByteArray());
     }
 
-    private void applyConstructorDelegation(ClassWriter classWriter) {
-        for (Constructor<?> constructor : superClass.getDeclaredConstructors()) {
-            if (!Modifier.isPrivate(constructor.getModifiers())) {
-                MethodVisitor methodVisitor = classWriter.visitMethod(constructor.getModifiers(), CONSTRUCTOR_METHOD_NAME,
-                        Type.getConstructorDescriptor(constructor), null, makeInternalNameArray(Arrays.asList(constructor.getExceptionTypes())));
-                methodVisitor.visitCode();
-                ByteCodeAppender.Size size = new SuperClassDelegationByteCodeAppender(superClass).apply(methodVisitor, constructor);
-                methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
-                methodVisitor.visitEnd();
-            }
+    private void applyMethodInterception(ClassVisitor classVisitor) {
+        for (JavaMethod method : MethodExtraction.matching(OVERRIDABLE).extract(superClass).appendInterfaces(interfaces).asList()) {
+            methodInterceptions.lookUp(method).applyTo(classVisitor);
         }
     }
 
-    private void applyMethodInterception(ClassWriter classWriter) {
-        for (Method method : MethodExtractor.matching(OVERRIDABLE).extractAll(merge(superClass, interfaces))) {
-            methodInterceptions.lookUp(method).applyTo(classWriter);
-        }
-    }
-
-    private Collection<Class<?>> merge(Class<?> superClass, List<Class<?>> interfaces) {
+    private static Collection<Class<?>> merge(Class<?> superClass, List<Class<?>> interfaces) {
         List<Class<?>> types = new ArrayList<Class<?>>(interfaces.size() + 1);
         types.add(superClass);
         types.addAll(interfaces);

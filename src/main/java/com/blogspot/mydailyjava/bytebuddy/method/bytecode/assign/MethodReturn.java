@@ -1,17 +1,17 @@
 package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign;
 
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.ValueSize;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.TypeSize;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 public enum MethodReturn {
 
-    INTEGER(Opcodes.IRETURN, ValueSize.SINGLE),
-    DOUBLE(Opcodes.DRETURN, ValueSize.DOUBLE),
-    FLOAT(Opcodes.FRETURN, ValueSize.SINGLE),
-    LONG(Opcodes.LRETURN, ValueSize.DOUBLE),
-    VOID(Opcodes.RETURN, ValueSize.NONE),
-    ANY_REFERENCE(Opcodes.ARETURN, ValueSize.SINGLE);
+    INTEGER(Opcodes.IRETURN, TypeSize.SINGLE),
+    DOUBLE(Opcodes.DRETURN, TypeSize.DOUBLE),
+    FLOAT(Opcodes.FRETURN, TypeSize.SINGLE),
+    LONG(Opcodes.LRETURN, TypeSize.DOUBLE),
+    VOID(Opcodes.RETURN, TypeSize.NONE),
+    ANY_REFERENCE(Opcodes.ARETURN, TypeSize.SINGLE);
 
     public static MethodReturn returning(Class<?> type) {
         if (type.isPrimitive()) {
@@ -32,11 +32,11 @@ public enum MethodReturn {
     }
 
     private final int returnOpcode;
-    private final ValueSize valueSize;
+    private final TypeSize typeSize;
 
-    private MethodReturn(int returnOpcode, ValueSize valueSize) {
+    private MethodReturn(int returnOpcode, TypeSize typeSize) {
         this.returnOpcode = returnOpcode;
-        this.valueSize = valueSize;
+        this.typeSize = typeSize;
     }
 
     private class MethodReturnValueAssignment implements Assignment {
@@ -56,7 +56,7 @@ public enum MethodReturn {
         public Size apply(MethodVisitor methodVisitor) {
             Size size = returnValuePreparationAssignment.apply(methodVisitor);
             methodVisitor.visitInsn(returnOpcode);
-            return size.aggregateLeftFirst(-1 * valueSize.getSize());
+            return size.aggregateLeftFirst(-1 * typeSize.getSize());
         }
     }
 

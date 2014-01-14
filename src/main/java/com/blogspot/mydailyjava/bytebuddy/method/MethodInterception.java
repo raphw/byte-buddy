@@ -1,14 +1,12 @@
 package com.blogspot.mydailyjava.bytebuddy.method;
 
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.ByteCodeAppender;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.SuperClassDelegation;
 import com.blogspot.mydailyjava.bytebuddy.method.matcher.MethodMatcher;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Type;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -29,39 +27,27 @@ public class MethodInterception {
 
             static class ByteCodeWriter implements Handler {
 
-                private final Method method;
+                private final JavaMethod javaMethod;
                 private final ByteCodeAppender byteCodeAppender;
 
-                public ByteCodeWriter(ByteCodeAppender byteCodeAppender, Method method) {
+                public ByteCodeWriter(ByteCodeAppender byteCodeAppender, JavaMethod javaMethod) {
+                    this.javaMethod = javaMethod;
                     this.byteCodeAppender = byteCodeAppender;
-                    this.method = method;
                 }
 
                 @Override
                 public boolean applyTo(ClassVisitor classVisitor) {
                     MethodVisitor methodVisitor = classVisitor.visitMethod(
-                            method.getModifiers(),
-                            method.getName(),
-                            Type.getMethodDescriptor(method),
+                            javaMethod.getModifiers(),
+                            javaMethod.getName(),
+                            javaMethod.getDescriptor(),
                             null,
-                            makeInternalNameArray(Arrays.asList(method.getExceptionTypes())));
+                            javaMethod.getExceptionTypesInternalNames());
                     methodVisitor.visitCode();
-                    ByteCodeAppender.Size size = byteCodeAppender.apply(methodVisitor, method);
+                    ByteCodeAppender.Size size = byteCodeAppender.apply(methodVisitor, javaMethod);
                     methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
                     methodVisitor.visitEnd();
                     return true;
-                }
-
-                private static String[] makeInternalNameArray(List<Class<?>> types) {
-                    if (types.size() == 0) {
-                        return null;
-                    }
-                    String[] internalName = new String[types.size()];
-                    int i = 0;
-                    for (Class<?> type : types) {
-                        internalName[i] = Type.getInternalName(type);
-                    }
-                    return internalName;
                 }
             }
 
@@ -78,10 +64,13 @@ public class MethodInterception {
             this.methodInterceptions = methodInterceptions;
         }
 
-        public Handler lookUp(Method method) {
+        public Handler lookUp(JavaMethod javaMethod) {
+            if(javaMethod.isConstructor()) {
+                return new Handler.ByteCodeWriter(SuperClassDelegation.INSTANCE, javaMethod);
+            }
             for (MethodInterception methodInterception : methodInterceptions) {
-                if (methodInterception.getMethodMatcher().matches(method)) {
-                    return new Handler.ByteCodeWriter(methodInterception.getByteCodeAppender(), method);
+                if (methodInterception.getMethodMatcher().matches(javaMethod)) {
+                    return new Handler.ByteCodeWriter(methodInterception.getByteCodeAppender(), javaMethod);
                 }
             }
             return Handler.NoOp.INSTANCE;

@@ -1,6 +1,6 @@
 package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.reference;
 
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.ValueSize;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.TypeSize;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assigner;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assignment;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.IllegalAssignment;
@@ -13,7 +13,7 @@ public abstract class ReferenceTypeAwareAssigner implements Assigner {
 
     private static class DownCastAssignment implements Assignment {
 
-        private static final Size NULL_SIZE = new Size(ValueSize.NONE.getSize(), ValueSize.NONE.getSize());
+        private static final Size NULL_SIZE = new Size(TypeSize.NONE.getSize(), TypeSize.NONE.getSize());
 
         private final String targetTypeInternalName;
 

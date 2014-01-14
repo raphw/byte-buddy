@@ -1,8 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.method.bytecode;
 
+import com.blogspot.mydailyjava.bytebuddy.method.JavaMethod;
 import org.objectweb.asm.MethodVisitor;
-
-import java.lang.reflect.Method;
 
 public interface ByteCodeAppender {
 
@@ -33,5 +32,5 @@ public interface ByteCodeAppender {
         }
     }
 
-    Size apply(MethodVisitor methodVisitor, Method method);
+    Size apply(MethodVisitor methodVisitor, JavaMethod javaMethod);
 }

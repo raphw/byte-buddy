@@ -1,14 +1,12 @@
 package com.blogspot.mydailyjava.bytebuddy.method.bytecode;
 
-import java.util.List;
-
-public enum ValueSize {
+public enum TypeSize {
 
     NONE(0),
     SINGLE(1),
     DOUBLE(2);
 
-    public static ValueSize of(Class<?> type) {
+    public static TypeSize of(Class<?> type) {
         if (type == void.class) {
             return NONE;
         } else if (type == double.class || type == long.class) {
@@ -18,7 +16,7 @@ public enum ValueSize {
         }
     }
 
-    public static int sizeOf(List<? extends Class<?>> types) {
+    public static int sizeOf(Iterable<? extends Class<?>> types) {
         int size = 0;
         for (Class<?> type : types) {
             size += of(type).getSize();
@@ -28,7 +26,7 @@ public enum ValueSize {
 
     private final int size;
 
-    private ValueSize(int size) {
+    private TypeSize(int size) {
         this.size = size;
     }
 

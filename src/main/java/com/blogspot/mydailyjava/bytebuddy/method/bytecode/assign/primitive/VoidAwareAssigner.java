@@ -1,6 +1,6 @@
 package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.primitive;
 
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.ValueSize;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.TypeSize;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.*;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -9,8 +9,8 @@ public class VoidAwareAssigner implements Assigner {
 
     private static enum ValueRemovingAssignment implements Assignment {
 
-        POP_ONE_VALUE(Opcodes.POP, new Size(ValueSize.SINGLE.getSize(), ValueSize.NONE.getSize())),
-        POP_TWO_VALUES(Opcodes.POP2, new Size(ValueSize.DOUBLE.getSize(), ValueSize.NONE.getSize()));
+        POP_ONE_VALUE(Opcodes.POP, new Size(TypeSize.SINGLE.getSize(), TypeSize.NONE.getSize())),
+        POP_TWO_VALUES(Opcodes.POP2, new Size(TypeSize.DOUBLE.getSize(), TypeSize.NONE.getSize()));
 
         public static ValueRemovingAssignment of(Class<?> type) {
             if (type == long.class || type == double.class) {
@@ -55,7 +55,7 @@ public class VoidAwareAssigner implements Assigner {
         if (superType == void.class && subType == void.class) {
             return LegalTrivialAssignment.INSTANCE;
         } else if (superType == void.class /* && !(subType == void.class) */) {
-            return returnDefaultValue ? DefaultValue.defaulting(subType) : IllegalAssignment.INSTANCE;
+            return returnDefaultValue ? DefaultValue.load(subType) : IllegalAssignment.INSTANCE;
         } else if (/* !(superType == void.class) && */ subType == void.class) {
             return ValueRemovingAssignment.of(superType);
         } else /* !(superType == void.class) && !(subType == void.class) */ {

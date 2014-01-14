@@ -1,17 +1,17 @@
 package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign;
 
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.ValueSize;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.TypeSize;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 public enum MethodArgument {
 
-    INTEGER(Opcodes.ILOAD, 5, ValueSize.SINGLE),
-    LONG(Opcodes.LLOAD, 8, ValueSize.DOUBLE),
-    FLOAT(Opcodes.FLOAD, 11, ValueSize.SINGLE),
-    DOUBLE(Opcodes.DLOAD, 14, ValueSize.DOUBLE),
-    OBJECT_REFERENCE(Opcodes.ALOAD, 17, ValueSize.SINGLE),
-    ARRAY_REFERENCE(Opcodes.AALOAD, -1, ValueSize.SINGLE);
+    INTEGER(Opcodes.ILOAD, 5, TypeSize.SINGLE),
+    LONG(Opcodes.LLOAD, 8, TypeSize.DOUBLE),
+    FLOAT(Opcodes.FLOAD, 11, TypeSize.SINGLE),
+    DOUBLE(Opcodes.DLOAD, 14, TypeSize.DOUBLE),
+    OBJECT_REFERENCE(Opcodes.ALOAD, 17, TypeSize.SINGLE),
+    ARRAY_REFERENCE(Opcodes.AALOAD, -1, TypeSize.SINGLE);
 
     public static MethodArgument loading(Class<?> type) {
         if (type.isPrimitive()) {
@@ -35,12 +35,12 @@ public enum MethodArgument {
 
     private final int loadOpcode;
     private final int loadOpcodeShortcutIndex;
-    private final ValueSize valueSize;
+    private final TypeSize typeSize;
 
-    private MethodArgument(int loadOpcode, int loadOpcodeShortcutIndex, ValueSize valueSize) {
+    private MethodArgument(int loadOpcode, int loadOpcodeShortcutIndex, TypeSize typeSize) {
         this.loadOpcode = loadOpcode;
         this.loadOpcodeShortcutIndex = loadOpcodeShortcutIndex;
-        this.valueSize = valueSize;
+        this.typeSize = typeSize;
     }
 
     private class ArgumentLoadingAssignment implements Assignment {
@@ -81,7 +81,7 @@ public enum MethodArgument {
             } else {
                 methodVisitor.visitVarInsn(loadOpcode, variableIndex);
             }
-            return chainedAssignment.apply(methodVisitor).aggregateLeftFirst(valueSize.getSize());
+            return chainedAssignment.apply(methodVisitor).aggregateLeftFirst(typeSize.getSize());
         }
     }
 

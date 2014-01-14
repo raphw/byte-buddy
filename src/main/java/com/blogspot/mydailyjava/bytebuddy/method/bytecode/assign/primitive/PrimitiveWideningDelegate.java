@@ -1,6 +1,6 @@
 package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.primitive;
 
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.ValueSize;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.TypeSize;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assignment;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.IllegalAssignment;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.LegalTrivialAssignment;
@@ -23,36 +23,36 @@ public enum PrimitiveWideningDelegate {
             LegalTrivialAssignment.INSTANCE,                                                // to short
             IllegalAssignment.INSTANCE,                                                     // to character
             LegalTrivialAssignment.INSTANCE,                                                // to integer
-            new WideningAssignment(Opcodes.I2L, ValueSize.DOUBLE, ValueSize.DOUBLE),        // to long
-            new WideningAssignment(Opcodes.I2F, ValueSize.SINGLE, ValueSize.SINGLE),        // to float
-            new WideningAssignment(Opcodes.I2L, ValueSize.DOUBLE, ValueSize.DOUBLE)),       // to double
+            new WideningAssignment(Opcodes.I2L, TypeSize.DOUBLE, TypeSize.DOUBLE),        // to long
+            new WideningAssignment(Opcodes.I2F, TypeSize.SINGLE, TypeSize.SINGLE),        // to float
+            new WideningAssignment(Opcodes.I2L, TypeSize.DOUBLE, TypeSize.DOUBLE)),       // to double
 
     SHORT(IllegalAssignment.INSTANCE,                                                       // to boolean
             IllegalAssignment.INSTANCE,                                                     // to byte
             LegalTrivialAssignment.INSTANCE,                                                // to short
             IllegalAssignment.INSTANCE,                                                     // to character
             LegalTrivialAssignment.INSTANCE,                                                // to integer
-            new WideningAssignment(Opcodes.I2L, ValueSize.DOUBLE, ValueSize.DOUBLE),        // to long
-            new WideningAssignment(Opcodes.I2F, ValueSize.SINGLE, ValueSize.SINGLE),        // to float
-            new WideningAssignment(Opcodes.I2D, ValueSize.DOUBLE, ValueSize.DOUBLE)),       // to double
+            new WideningAssignment(Opcodes.I2L, TypeSize.DOUBLE, TypeSize.DOUBLE),        // to long
+            new WideningAssignment(Opcodes.I2F, TypeSize.SINGLE, TypeSize.SINGLE),        // to float
+            new WideningAssignment(Opcodes.I2D, TypeSize.DOUBLE, TypeSize.DOUBLE)),       // to double
 
     CHARACTER(IllegalAssignment.INSTANCE,                                                   // to boolean
             IllegalAssignment.INSTANCE,                                                     // to byte
             IllegalAssignment.INSTANCE,                                                     // to short
             LegalTrivialAssignment.INSTANCE,                                                // to character
             LegalTrivialAssignment.INSTANCE,                                                // to integer
-            new WideningAssignment(Opcodes.I2L, ValueSize.DOUBLE, ValueSize.DOUBLE),        // to long
-            new WideningAssignment(Opcodes.I2F, ValueSize.SINGLE, ValueSize.SINGLE),        // to float
-            new WideningAssignment(Opcodes.I2D, ValueSize.DOUBLE, ValueSize.DOUBLE)),       // to double
+            new WideningAssignment(Opcodes.I2L, TypeSize.DOUBLE, TypeSize.DOUBLE),        // to long
+            new WideningAssignment(Opcodes.I2F, TypeSize.SINGLE, TypeSize.SINGLE),        // to float
+            new WideningAssignment(Opcodes.I2D, TypeSize.DOUBLE, TypeSize.DOUBLE)),       // to double
 
     INTEGER(IllegalAssignment.INSTANCE,                                                     // to boolean
             IllegalAssignment.INSTANCE,                                                     // to byte
             IllegalAssignment.INSTANCE,                                                     // to short
             IllegalAssignment.INSTANCE,                                                     // to character
             LegalTrivialAssignment.INSTANCE,                                                // to integer
-            new WideningAssignment(Opcodes.I2L, ValueSize.DOUBLE, ValueSize.DOUBLE),        // to long
-            new WideningAssignment(Opcodes.I2F, ValueSize.SINGLE, ValueSize.SINGLE),        // to float
-            new WideningAssignment(Opcodes.I2D, ValueSize.DOUBLE, ValueSize.DOUBLE)),       // to double
+            new WideningAssignment(Opcodes.I2L, TypeSize.DOUBLE, TypeSize.DOUBLE),        // to long
+            new WideningAssignment(Opcodes.I2F, TypeSize.SINGLE, TypeSize.SINGLE),        // to float
+            new WideningAssignment(Opcodes.I2D, TypeSize.DOUBLE, TypeSize.DOUBLE)),       // to double
 
     LONG(IllegalAssignment.INSTANCE,                                                        // to boolean
             IllegalAssignment.INSTANCE,                                                     // to byte
@@ -60,8 +60,8 @@ public enum PrimitiveWideningDelegate {
             IllegalAssignment.INSTANCE,                                                     // to character
             IllegalAssignment.INSTANCE,                                                     // to integer
             LegalTrivialAssignment.INSTANCE,                                                // to long
-            new WideningAssignment(Opcodes.L2F, ValueSize.SINGLE, ValueSize.DOUBLE),        // to float
-            new WideningAssignment(Opcodes.L2D, ValueSize.DOUBLE, ValueSize.DOUBLE)),       // to double
+            new WideningAssignment(Opcodes.L2F, TypeSize.SINGLE, TypeSize.DOUBLE),        // to float
+            new WideningAssignment(Opcodes.L2D, TypeSize.DOUBLE, TypeSize.DOUBLE)),       // to double
 
     FLOAT(IllegalAssignment.INSTANCE,                                                       // to boolean
             IllegalAssignment.INSTANCE,                                                     // to byte
@@ -70,7 +70,7 @@ public enum PrimitiveWideningDelegate {
             IllegalAssignment.INSTANCE,                                                     // to integer
             IllegalAssignment.INSTANCE,                                                     // to long
             LegalTrivialAssignment.INSTANCE,                                                // to float
-            new WideningAssignment(Opcodes.F2L, ValueSize.DOUBLE, ValueSize.DOUBLE)),       // to double
+            new WideningAssignment(Opcodes.F2L, TypeSize.DOUBLE, TypeSize.DOUBLE)),       // to double
 
     DOUBLE(IllegalAssignment.INSTANCE,                                                      // to boolean
             IllegalAssignment.INSTANCE,                                                     // to byte
@@ -84,9 +84,9 @@ public enum PrimitiveWideningDelegate {
     private static class WideningAssignment implements Assignment {
 
         private final int conversionInstruction;
-        private final ValueSize finalSize, maximalSize;
+        private final TypeSize finalSize, maximalSize;
 
-        public WideningAssignment(int conversionInstruction, ValueSize finalSize, ValueSize maximalSize) {
+        public WideningAssignment(int conversionInstruction, TypeSize finalSize, TypeSize maximalSize) {
             this.conversionInstruction = conversionInstruction;
             this.finalSize = finalSize;
             this.maximalSize = maximalSize;

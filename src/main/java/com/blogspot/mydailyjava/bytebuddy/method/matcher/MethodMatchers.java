@@ -1,5 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.method.matcher;
 
+import com.blogspot.mydailyjava.bytebuddy.method.JavaMethod;
+
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
@@ -52,9 +54,9 @@ public final class MethodMatchers {
         }
 
         @Override
-        public boolean matches(Method method) {
+        public boolean matches(JavaMethod javaMethod) {
             try {
-                return method.getDeclaringClass() == type || type.getDeclaredMethod(method.getName(), method.getParameterTypes()) != null;
+                return javaMethod.getDeclaringClass() == type || type.getDeclaredMethod(javaMethod.getName(), javaMethod.getParameterTypes()) != null;
             } catch (NoSuchMethodException e) {
                 return false;
             }
@@ -76,8 +78,8 @@ public final class MethodMatchers {
         }
 
         @Override
-        public boolean matches(Method method) {
-            return matchMode.matches(methodName, method.getName());
+        public boolean matches(JavaMethod javaMethod) {
+            return matchMode.matches(methodName, javaMethod.getName());
         }
     }
 
@@ -126,8 +128,8 @@ public final class MethodMatchers {
         }
 
         @Override
-        public boolean matches(Method method) {
-            return (method.getModifiers() & modifierMask) != 0;
+        public boolean matches(JavaMethod javaMethod) {
+            return (javaMethod.getModifiers() & modifierMask) != 0;
         }
     }
 
@@ -158,13 +160,25 @@ public final class MethodMatchers {
     private static class SyntheticMethodMatcher extends JunctionMethodMatcher {
 
         @Override
-        public boolean matches(Method method) {
-            return method.isSynthetic();
+        public boolean matches(JavaMethod javaMethod) {
+            return javaMethod.isSynthetic();
         }
     }
 
     public static JunctionMethodMatcher isSynthetic() {
         return new SyntheticMethodMatcher();
+    }
+
+    private static class BridgeMethodMatcher extends JunctionMethodMatcher {
+
+        @Override
+        public boolean matches(JavaMethod javaMethod) {
+            return javaMethod.isBridge();
+        }
+    }
+
+    public static JunctionMethodMatcher isBridge() {
+        return new BridgeMethodMatcher();
     }
 
     private static class ReturnTypeMatcher extends JunctionMethodMatcher {
@@ -176,8 +190,8 @@ public final class MethodMatchers {
         }
 
         @Override
-        public boolean matches(Method method) {
-            return method.getReturnType() == returnType;
+        public boolean matches(JavaMethod javaMethod) {
+            return javaMethod.getReturnType() == returnType;
         }
     }
 
@@ -194,8 +208,8 @@ public final class MethodMatchers {
         }
 
         @Override
-        public boolean matches(Method method) {
-            return Arrays.equals(parameterType, method.getParameterTypes());
+        public boolean matches(JavaMethod javaMethod) {
+            return Arrays.equals(parameterType, javaMethod.getParameterTypes());
         }
     }
 
@@ -212,8 +226,8 @@ public final class MethodMatchers {
         }
 
         @Override
-        public boolean matches(Method method) {
-            for (Class<?> exceptionType : method.getExceptionTypes()) {
+        public boolean matches(JavaMethod javaMethod) {
+            for (Class<?> exceptionType : javaMethod.getExceptionTypes()) {
                 if (exceptionType.isAssignableFrom(this.exceptionType)) {
                     return true;
                 }
@@ -235,8 +249,8 @@ public final class MethodMatchers {
         }
 
         @Override
-        public boolean matches(Method method) {
-            return method.equals(this.method);
+        public boolean matches(JavaMethod javaMethod) {
+            return javaMethod.represents(method);
         }
     }
 
@@ -253,8 +267,8 @@ public final class MethodMatchers {
         }
 
         @Override
-        public boolean matches(Method method) {
-            return method.getDeclaringClass().getPackage().getName().equals(packageName);
+        public boolean matches(JavaMethod javaMethod) {
+            return javaMethod.getDeclaringClass().getPackage().getName().equals(packageName);
         }
     }
 
@@ -271,8 +285,8 @@ public final class MethodMatchers {
         }
 
         @Override
-        public boolean matches(Method method) {
-            return !methodMatcher.matches(method);
+        public boolean matches(JavaMethod javaMethod) {
+            return !methodMatcher.matches(javaMethod);
         }
     }
 
@@ -289,7 +303,7 @@ public final class MethodMatchers {
         }
 
         @Override
-        public boolean matches(Method method) {
+        public boolean matches(JavaMethod javaMethod) {
             return matches;
         }
     }

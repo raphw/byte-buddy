@@ -1,7 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.method.matcher;
 
 
-import java.lang.reflect.Method;
+import com.blogspot.mydailyjava.bytebuddy.method.JavaMethod;
 
 public abstract class JunctionMethodMatcher implements MethodMatcher {
 
@@ -15,8 +15,8 @@ public abstract class JunctionMethodMatcher implements MethodMatcher {
         }
 
         @Override
-        public boolean matches(Method method) {
-            return left.matches(method) && right.matches(method);
+        public boolean matches(JavaMethod javaMethod) {
+            return left.matches(javaMethod) && right.matches(javaMethod);
         }
     }
 
@@ -30,8 +30,8 @@ public abstract class JunctionMethodMatcher implements MethodMatcher {
         }
 
         @Override
-        public boolean matches(Method method) {
-            return left.matches(method) || right.matches(method);
+        public boolean matches(JavaMethod javaMethod) {
+            return left.matches(javaMethod) || right.matches(javaMethod);
         }
     }
 

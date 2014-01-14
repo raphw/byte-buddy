@@ -12,7 +12,7 @@ public enum DefaultValue implements Assignment {
     VOID(-1, new Size(0, 0)),
     ANY_REFERENCE(Opcodes.ACONST_NULL, new Size(0, 1));
 
-    public static DefaultValue defaulting(Class<?> type) {
+    public static DefaultValue load(Class<?> type) {
         if (type.isPrimitive()) {
             if (type == long.class) {
                 return LONG;
