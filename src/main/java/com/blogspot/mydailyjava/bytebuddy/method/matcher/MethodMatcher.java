@@ -1,8 +1,8 @@
 package com.blogspot.mydailyjava.bytebuddy.method.matcher;
 
-import com.blogspot.mydailyjava.bytebuddy.method.JavaMethod;
+import com.blogspot.mydailyjava.bytebuddy.method.MethodDescription;
 
 public interface MethodMatcher {
 
-    boolean matches(JavaMethod javaMethod);
+    boolean matches(MethodDescription methodDescription);
 }

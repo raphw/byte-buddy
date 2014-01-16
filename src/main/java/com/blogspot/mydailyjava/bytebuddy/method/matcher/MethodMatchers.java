@@ -1,6 +1,6 @@
 package com.blogspot.mydailyjava.bytebuddy.method.matcher;
 
-import com.blogspot.mydailyjava.bytebuddy.method.JavaMethod;
+import com.blogspot.mydailyjava.bytebuddy.method.MethodDescription;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -56,9 +56,9 @@ public final class MethodMatchers {
         }
 
         @Override
-        public boolean matches(JavaMethod javaMethod) {
+        public boolean matches(MethodDescription methodDescription) {
             try {
-                return javaMethod.getDeclaringClass() == type || type.getDeclaredMethod(javaMethod.getName(), javaMethod.getParameterTypes()) != null;
+                return methodDescription.getDeclaringClass() == type || type.getDeclaredMethod(methodDescription.getName(), methodDescription.getParameterTypes()) != null;
             } catch (NoSuchMethodException e) {
                 return false;
             }
@@ -80,8 +80,8 @@ public final class MethodMatchers {
         }
 
         @Override
-        public boolean matches(JavaMethod javaMethod) {
-            return matchMode.matches(methodName, javaMethod.getName());
+        public boolean matches(MethodDescription methodDescription) {
+            return matchMode.matches(methodName, methodDescription.getName());
         }
     }
 
@@ -130,8 +130,8 @@ public final class MethodMatchers {
         }
 
         @Override
-        public boolean matches(JavaMethod javaMethod) {
-            return (javaMethod.getModifiers() & modifierMask) != 0;
+        public boolean matches(MethodDescription methodDescription) {
+            return (methodDescription.getModifiers() & modifierMask) != 0;
         }
     }
 
@@ -162,8 +162,8 @@ public final class MethodMatchers {
     private static class VarArgsMethodMatcher extends JunctionMethodMatcher {
 
         @Override
-        public boolean matches(JavaMethod javaMethod) {
-            return javaMethod.isVarArgs();
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.isVarArgs();
         }
     }
 
@@ -174,8 +174,8 @@ public final class MethodMatchers {
     private static class SyntheticMethodMatcher extends JunctionMethodMatcher {
 
         @Override
-        public boolean matches(JavaMethod javaMethod) {
-            return javaMethod.isSynthetic();
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.isSynthetic();
         }
     }
 
@@ -186,8 +186,8 @@ public final class MethodMatchers {
     private static class BridgeMethodMatcher extends JunctionMethodMatcher {
 
         @Override
-        public boolean matches(JavaMethod javaMethod) {
-            return javaMethod.isBridge();
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.isBridge();
         }
     }
 
@@ -204,8 +204,8 @@ public final class MethodMatchers {
         }
 
         @Override
-        public boolean matches(JavaMethod javaMethod) {
-            return javaMethod.getReturnType() == returnType;
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.getReturnType() == returnType;
         }
     }
 
@@ -222,8 +222,8 @@ public final class MethodMatchers {
         }
 
         @Override
-        public boolean matches(JavaMethod javaMethod) {
-            return Arrays.equals(parameterType, javaMethod.getParameterTypes());
+        public boolean matches(MethodDescription methodDescription) {
+            return Arrays.equals(parameterType, methodDescription.getParameterTypes());
         }
     }
 
@@ -240,8 +240,8 @@ public final class MethodMatchers {
         }
 
         @Override
-        public boolean matches(JavaMethod javaMethod) {
-            for (Class<?> exceptionType : javaMethod.getExceptionTypes()) {
+        public boolean matches(MethodDescription methodDescription) {
+            for (Class<?> exceptionType : methodDescription.getExceptionTypes()) {
                 if (exceptionType.isAssignableFrom(this.exceptionType)) {
                     return true;
                 }
@@ -263,8 +263,8 @@ public final class MethodMatchers {
         }
 
         @Override
-        public boolean matches(JavaMethod javaMethod) {
-            return javaMethod.represents(method);
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.represents(method);
         }
     }
 
@@ -281,8 +281,8 @@ public final class MethodMatchers {
         }
 
         @Override
-        public boolean matches(JavaMethod javaMethod) {
-            return javaMethod.represents(constructor);
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.represents(constructor);
         }
     }
 
@@ -299,13 +299,29 @@ public final class MethodMatchers {
         }
 
         @Override
-        public boolean matches(JavaMethod javaMethod) {
-            return javaMethod.getDeclaringClass().getPackage().getName().equals(packageName);
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.getDeclaringClass().getPackage().getName().equals(packageName);
         }
     }
 
     public static JunctionMethodMatcher isDefinedInPackage(String packageName) {
         return new PackageNameMatcher(packageName);
+    }
+
+    private static class DefaultFinalizeMethodMatcher extends JunctionMethodMatcher {
+
+        private static final String FINALIZE_METHOD_NAME = "finalize";
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.getDeclaringClass() == Object.class
+                    && methodDescription.getName().equals(FINALIZE_METHOD_NAME)
+                    && methodDescription.getParameterTypes().length == 0;
+        }
+    }
+
+    public static JunctionMethodMatcher isDefaultFinalize() {
+        return new DefaultFinalizeMethodMatcher();
     }
 
     private static class NegatingMethodMatcher extends JunctionMethodMatcher {
@@ -317,8 +333,8 @@ public final class MethodMatchers {
         }
 
         @Override
-        public boolean matches(JavaMethod javaMethod) {
-            return !methodMatcher.matches(javaMethod);
+        public boolean matches(MethodDescription methodDescription) {
+            return !methodMatcher.matches(methodDescription);
         }
     }
 
@@ -335,7 +351,7 @@ public final class MethodMatchers {
         }
 
         @Override
-        public boolean matches(JavaMethod javaMethod) {
+        public boolean matches(MethodDescription methodDescription) {
             return matches;
         }
     }

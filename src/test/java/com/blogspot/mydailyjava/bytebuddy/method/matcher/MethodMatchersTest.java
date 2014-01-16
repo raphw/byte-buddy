@@ -1,6 +1,6 @@
 package com.blogspot.mydailyjava.bytebuddy.method.matcher;
 
-import com.blogspot.mydailyjava.bytebuddy.method.JavaMethod;
+import com.blogspot.mydailyjava.bytebuddy.method.MethodDescription;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -94,41 +94,41 @@ public class MethodMatchersTest {
         }
     }
 
-    private JavaMethod testClassBase$foo;
-    private JavaMethod testClassBase$bar;
-    private JavaMethod testClassBase$baz;
-    private JavaMethod testClassBase$qux;
-    private JavaMethod testClassBase$fin;
-    private JavaMethod testClassBase$stat;
+    private MethodDescription testClassBase$foo;
+    private MethodDescription testClassBase$bar;
+    private MethodDescription testClassBase$baz;
+    private MethodDescription testClassBase$qux;
+    private MethodDescription testClassBase$fin;
+    private MethodDescription testClassBase$stat;
 
-    private JavaMethod testClassBase$compareTo;
-    private JavaMethod testClassBase$compareTo$synth;
+    private MethodDescription testClassBase$compareTo;
+    private MethodDescription testClassBase$compareTo$synth;
 
-    private JavaMethod testClassExtension$foo;
-    private JavaMethod testClassExtension$bar;
-    private JavaMethod testClassExtension$baz;
-    private JavaMethod testClassExtension$qux;
-    private JavaMethod testClassExtension$fin;
-    private JavaMethod testClassExtension$stat;
+    private MethodDescription testClassExtension$foo;
+    private MethodDescription testClassExtension$bar;
+    private MethodDescription testClassExtension$baz;
+    private MethodDescription testClassExtension$qux;
+    private MethodDescription testClassExtension$fin;
+    private MethodDescription testClassExtension$stat;
 
     @Before
     public void setUp() throws Exception {
-        testClassBase$foo = new JavaMethod.ForMethod(TestClassBase.class.getDeclaredMethod(FOO_METHOD_NAME));
-        testClassBase$bar = new JavaMethod.ForMethod(TestClassBase.class.getDeclaredMethod(BAR_METHOD_NAME, Object.class));
-        testClassBase$baz = new JavaMethod.ForMethod(TestClassBase.class.getDeclaredMethod(BAZ_METHOD_NAME));
-        testClassBase$qux = new JavaMethod.ForMethod(TestClassBase.class.getDeclaredMethod(QUX_METHOD_NAME));
-        testClassBase$fin = new JavaMethod.ForMethod(TestClassBase.class.getDeclaredMethod(FIN_METHOD_NAME + "1"));
-        testClassBase$stat = new JavaMethod.ForMethod(TestClassBase.class.getDeclaredMethod(STAT_METHOD_NAME));
+        testClassBase$foo = new MethodDescription.ForMethod(TestClassBase.class.getDeclaredMethod(FOO_METHOD_NAME));
+        testClassBase$bar = new MethodDescription.ForMethod(TestClassBase.class.getDeclaredMethod(BAR_METHOD_NAME, Object.class));
+        testClassBase$baz = new MethodDescription.ForMethod(TestClassBase.class.getDeclaredMethod(BAZ_METHOD_NAME));
+        testClassBase$qux = new MethodDescription.ForMethod(TestClassBase.class.getDeclaredMethod(QUX_METHOD_NAME));
+        testClassBase$fin = new MethodDescription.ForMethod(TestClassBase.class.getDeclaredMethod(FIN_METHOD_NAME + "1"));
+        testClassBase$stat = new MethodDescription.ForMethod(TestClassBase.class.getDeclaredMethod(STAT_METHOD_NAME));
 
-        testClassBase$compareTo$synth = new JavaMethod.ForMethod(TestClassBase.class.getDeclaredMethod(GENERIC_INTERFACE_METHOD_NAME, Object.class));
-        testClassBase$compareTo = new JavaMethod.ForMethod(TestClassBase.class.getDeclaredMethod(GENERIC_INTERFACE_METHOD_NAME, String.class));
+        testClassBase$compareTo$synth = new MethodDescription.ForMethod(TestClassBase.class.getDeclaredMethod(GENERIC_INTERFACE_METHOD_NAME, Object.class));
+        testClassBase$compareTo = new MethodDescription.ForMethod(TestClassBase.class.getDeclaredMethod(GENERIC_INTERFACE_METHOD_NAME, String.class));
 
-        testClassExtension$foo = new JavaMethod.ForMethod(TestClassExtension.class.getDeclaredMethod(FOO_METHOD_NAME));
-        testClassExtension$bar = new JavaMethod.ForMethod(TestClassExtension.class.getDeclaredMethod(BAR_METHOD_NAME, Object.class));
-        testClassExtension$baz = new JavaMethod.ForMethod(TestClassExtension.class.getDeclaredMethod(BAZ_METHOD_NAME));
-        testClassExtension$qux = new JavaMethod.ForMethod(TestClassExtension.class.getDeclaredMethod(QUX_METHOD_NAME));
-        testClassExtension$fin = new JavaMethod.ForMethod(TestClassExtension.class.getDeclaredMethod(FIN_METHOD_NAME + "2"));
-        testClassExtension$stat = new JavaMethod.ForMethod(TestClassExtension.class.getDeclaredMethod(STAT_METHOD_NAME));
+        testClassExtension$foo = new MethodDescription.ForMethod(TestClassExtension.class.getDeclaredMethod(FOO_METHOD_NAME));
+        testClassExtension$bar = new MethodDescription.ForMethod(TestClassExtension.class.getDeclaredMethod(BAR_METHOD_NAME, Object.class));
+        testClassExtension$baz = new MethodDescription.ForMethod(TestClassExtension.class.getDeclaredMethod(BAZ_METHOD_NAME));
+        testClassExtension$qux = new MethodDescription.ForMethod(TestClassExtension.class.getDeclaredMethod(QUX_METHOD_NAME));
+        testClassExtension$fin = new MethodDescription.ForMethod(TestClassExtension.class.getDeclaredMethod(FIN_METHOD_NAME + "2"));
+        testClassExtension$stat = new MethodDescription.ForMethod(TestClassExtension.class.getDeclaredMethod(STAT_METHOD_NAME));
     }
 
     @Test

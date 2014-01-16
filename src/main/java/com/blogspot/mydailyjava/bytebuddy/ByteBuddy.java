@@ -2,54 +2,62 @@ package com.blogspot.mydailyjava.bytebuddy;
 
 import com.blogspot.mydailyjava.bytebuddy.asm.ClassVisitorWrapper;
 import com.blogspot.mydailyjava.bytebuddy.asm.ClassVisitorWrapperChain;
+import com.blogspot.mydailyjava.bytebuddy.method.matcher.MethodMatcher;
+import com.blogspot.mydailyjava.bytebuddy.method.matcher.MethodMatchers;
 import com.blogspot.mydailyjava.bytebuddy.type.instrumentation.DynamicProxy;
 import com.blogspot.mydailyjava.bytebuddy.type.scaffold.SubclassDynamicProxyBuilder;
 import org.objectweb.asm.Opcodes;
 
 public class ByteBuddy {
 
-    public static final String DEFAULT_NAME_PREFIX = "ByteBuddy";
     public static final int DEFAULT_CLASS_VERSION = Opcodes.V1_5;
     public static final Visibility DEFAULT_VISIBILITY = Visibility.PUBLIC;
     public static final TypeManifestation DEFAULT_TYPE_MANIFESTATION = TypeManifestation.CONCRETE;
+    public static final String DEFAULT_NAME_PREFIX = "ByteBuddy";
     public static final SyntheticState DEFAULT_SYNTHETIC_STATE = SyntheticState.NON_SYNTHETIC;
+    public static final MethodMatcher DEFAULT_IGNORED_METHODS = MethodMatchers.isDefaultFinalize();
 
     public static ByteBuddy make() {
-        return new ByteBuddy(DEFAULT_CLASS_VERSION,
+        return new ByteBuddy(new ClassVersion(DEFAULT_CLASS_VERSION),
                 DEFAULT_VISIBILITY,
                 DEFAULT_TYPE_MANIFESTATION,
                 DEFAULT_SYNTHETIC_STATE,
-                new NameMaker.PrefixingRandom(DEFAULT_NAME_PREFIX),
+                new NamingStrategy.PrefixingRandom(DEFAULT_NAME_PREFIX),
+                DEFAULT_IGNORED_METHODS,
                 new ClassVisitorWrapperChain());
     }
 
-    private final int classVersion;
+    private final ClassVersion classVersion;
     private final Visibility visibility;
     private final TypeManifestation typeManifestation;
     private final SyntheticState syntheticState;
-    private final NameMaker nameMaker;
+    private final NamingStrategy namingStrategy;
+    private final MethodMatcher ignoredMethods;
     private final ClassVisitorWrapperChain classVisitorWrapperChain;
 
-    protected ByteBuddy(int classVersion,
+    protected ByteBuddy(ClassVersion classVersion,
                         Visibility visibility,
                         TypeManifestation typeManifestation,
                         SyntheticState syntheticState,
-                        NameMaker nameMaker,
+                        NamingStrategy namingStrategy,
+                        MethodMatcher ignoredMethods,
                         ClassVisitorWrapperChain classVisitorWrapperChain) {
         this.classVersion = classVersion;
         this.visibility = visibility;
         this.typeManifestation = typeManifestation;
         this.syntheticState = syntheticState;
-        this.nameMaker = nameMaker;
+        this.namingStrategy = namingStrategy;
+        this.ignoredMethods = ignoredMethods;
         this.classVisitorWrapperChain = classVisitorWrapperChain;
     }
 
-    public ByteBuddy withDefaultClassVersion(int classVersion) {
-        return new ByteBuddy(checkClassVersion(classVersion),
+    public ByteBuddy withDefaultClassVersion(int versionNumber) {
+        return new ByteBuddy(new ClassVersion(versionNumber),
                 visibility,
                 typeManifestation,
                 syntheticState,
-                nameMaker,
+                namingStrategy,
+                ignoredMethods,
                 classVisitorWrapperChain);
     }
 
@@ -58,7 +66,8 @@ public class ByteBuddy {
                 checkNotNull(visibility),
                 typeManifestation,
                 syntheticState,
-                nameMaker,
+                namingStrategy,
+                ignoredMethods,
                 classVisitorWrapperChain);
     }
 
@@ -67,7 +76,8 @@ public class ByteBuddy {
                 visibility,
                 checkNotNull(typeManifestation),
                 syntheticState,
-                nameMaker,
+                namingStrategy,
+                ignoredMethods,
                 classVisitorWrapperChain);
     }
 
@@ -76,38 +86,53 @@ public class ByteBuddy {
                 visibility,
                 typeManifestation,
                 checkNotNull(syntheticState),
-                nameMaker,
+                namingStrategy,
+                ignoredMethods,
                 classVisitorWrapperChain);
     }
 
-    public ByteBuddy withNameMaker(NameMaker nameMaker) {
+    public ByteBuddy withNameMaker(NamingStrategy namingStrategy) {
         return new ByteBuddy(classVersion,
                 visibility,
                 typeManifestation,
                 syntheticState,
-                checkNotNull(nameMaker),
+                checkNotNull(namingStrategy),
+                ignoredMethods,
                 classVisitorWrapperChain);
     }
 
-    public ByteBuddy prependClassVisitorWrapper(ClassVisitorWrapper classVisitorWrapper) {
+    public ByteBuddy withDefaultIgnoredMethods(MethodMatcher ignoredMethods) {
         return new ByteBuddy(classVersion,
                 visibility,
                 typeManifestation,
                 syntheticState,
-                checkNotNull(nameMaker),
+                namingStrategy,
+                checkNotNull(ignoredMethods),
+                classVisitorWrapperChain);
+    }
+
+    public ByteBuddy withPrependedClassVisitorWrapper(ClassVisitorWrapper classVisitorWrapper) {
+        return new ByteBuddy(
+                classVersion,
+                visibility,
+                typeManifestation,
+                syntheticState,
+                checkNotNull(namingStrategy),
+                ignoredMethods,
                 classVisitorWrapperChain.prepend(checkNotNull(classVisitorWrapper)));
     }
 
-    public ByteBuddy appendClassVisitorWrapper(ClassVisitorWrapper classVisitorWrapper) {
+    public ByteBuddy withAppendedClassVisitorWrapper(ClassVisitorWrapper classVisitorWrapper) {
         return new ByteBuddy(classVersion,
                 visibility,
                 typeManifestation,
                 syntheticState,
-                checkNotNull(nameMaker),
+                checkNotNull(namingStrategy),
+                ignoredMethods,
                 classVisitorWrapperChain.append(checkNotNull(classVisitorWrapper)));
     }
 
-    public int getClassVersion() {
+    public ClassVersion getClassVersion() {
         return classVersion;
     }
 
@@ -123,8 +148,12 @@ public class ByteBuddy {
         return syntheticState;
     }
 
-    public NameMaker getNameMaker() {
-        return nameMaker;
+    public NamingStrategy getNamingStrategy() {
+        return namingStrategy;
+    }
+
+    public MethodMatcher getIgnoredMethods() {
+        return ignoredMethods;
     }
 
     public ClassVisitorWrapperChain getClassVisitorWrapperChain() {
@@ -140,12 +169,5 @@ public class ByteBuddy {
             throw new NullPointerException();
         }
         return type;
-    }
-
-    private static int checkClassVersion(int classVersion) {
-        if (!(classVersion > 0)) {
-            throw new IllegalArgumentException("Class version " + classVersion + " is not valid");
-        }
-        return classVersion;
     }
 }

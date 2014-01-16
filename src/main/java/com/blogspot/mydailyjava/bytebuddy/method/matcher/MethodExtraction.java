@@ -1,6 +1,6 @@
 package com.blogspot.mydailyjava.bytebuddy.method.matcher;
 
-import com.blogspot.mydailyjava.bytebuddy.method.JavaMethod;
+import com.blogspot.mydailyjava.bytebuddy.method.MethodDescription;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -13,22 +13,22 @@ public class MethodExtraction {
     }
 
     private final MethodMatcher methodMatcher;
-    private final List<JavaMethod> extractedMethods;
+    private final List<MethodDescription> extractedMethods;
     private final Set<String> extractedMethodSignatures;
 
     protected MethodExtraction(MethodMatcher methodMatcher) {
         this.methodMatcher = methodMatcher;
         extractedMethodSignatures = new HashSet<String>();
-        extractedMethods = new LinkedList<JavaMethod>();
+        extractedMethods = new LinkedList<MethodDescription>();
     }
 
-    public MethodExtraction extract(Class<?> clazz) {
+    public MethodExtraction extractFrom(Class<?> clazz) {
         extractDeclaredConstructors(clazz);
         extractClass(clazz);
         return this;
     }
 
-    public MethodExtraction appendInterfaces(Collection<Class<?>> interfaces) {
+    public MethodExtraction appendInterfaceMethods(Collection<Class<?>> interfaces) {
         extractInterfaces(interfaces);
         return this;
     }
@@ -61,23 +61,23 @@ public class MethodExtraction {
 
     private void extractDeclaredMethods(Class<?> type) {
         for (Method method : type.getDeclaredMethods()) {
-            consider(new JavaMethod.ForMethod(method));
+            consider(new MethodDescription.ForMethod(method));
         }
     }
 
     private void extractDeclaredConstructors(Class<?> type) {
         for (Constructor<?> constructor : type.getDeclaredConstructors()) {
-            consider(new JavaMethod.ForConstructor(constructor));
+            consider(new MethodDescription.ForConstructor(constructor));
         }
     }
 
-    private void consider(JavaMethod javaMethod) {
-        if (extractedMethodSignatures.add(javaMethod.getUniqueSignature()) && methodMatcher.matches(javaMethod)) {
-            extractedMethods.add(javaMethod);
+    private void consider(MethodDescription methodDescription) {
+        if (extractedMethodSignatures.add(methodDescription.getUniqueSignature()) && methodMatcher.matches(methodDescription)) {
+            extractedMethods.add(methodDescription);
         }
     }
 
-    public List<JavaMethod> asList() {
-        return new ArrayList<JavaMethod>(extractedMethods);
+    public List<MethodDescription> asList() {
+        return new ArrayList<MethodDescription>(extractedMethods);
     }
 }

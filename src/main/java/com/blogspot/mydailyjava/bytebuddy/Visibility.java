@@ -12,7 +12,7 @@ public enum Visibility implements ModifierContributor {
 
     private final int mask;
 
-    Visibility(int mask) {
+    private Visibility(int mask) {
         this.mask = mask;
     }
 

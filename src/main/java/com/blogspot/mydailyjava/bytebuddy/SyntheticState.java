@@ -14,7 +14,7 @@ public enum SyntheticState implements ModifierContributor {
 
     private final int mask;
 
-    SyntheticState(int mask) {
+    private SyntheticState(int mask) {
         this.mask = mask;
     }
 

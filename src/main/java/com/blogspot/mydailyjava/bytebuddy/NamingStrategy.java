@@ -3,7 +3,7 @@ package com.blogspot.mydailyjava.bytebuddy;
 import java.util.Collection;
 import java.util.Random;
 
-public interface NameMaker {
+public interface NamingStrategy {
 
     static interface UnnamedType {
 
@@ -20,7 +20,7 @@ public interface NameMaker {
         int getClassVersion();
     }
 
-    static class PrefixingRandom implements NameMaker {
+    static class PrefixingRandom implements NamingStrategy {
 
         private static final String JAVA_LANG_PACKAGE = "java.lang.";
         private static final String BYTE_BUDDY_RENAME_PACKAGE = "com.blogspot.mydailyjava.bytebuddy.renamed.";
@@ -39,11 +39,11 @@ public interface NameMaker {
             if (superClassName.startsWith(JAVA_LANG_PACKAGE)) {
                 superClassName = BYTE_BUDDY_RENAME_PACKAGE + superClassName;
             }
-            return String.format("%s$$%s$$%d", superClassName, prefix, random.nextInt());
+            return String.format("%s$$%s$$%d", superClassName, prefix, Math.abs(random.nextInt()));
         }
     }
 
-    static class Fixed implements NameMaker {
+    static class Fixed implements NamingStrategy {
 
         private final String name;
 

@@ -1,11 +1,13 @@
 package com.blogspot.mydailyjava.bytebuddy.method;
 
+import com.blogspot.mydailyjava.bytebuddy.method.matcher.VerboseMethodDescription;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 
-public interface JavaMethod extends AnnotatedElement, Member, GenericDeclaration, ByteCodeMethod {
+public interface MethodDescription extends AnnotatedElement, Member, GenericDeclaration, ByteCodeMethod, VerboseMethodDescription {
 
-    static abstract class AbstractJavaMethod implements JavaMethod {
+    static abstract class AbstractMethodDescription implements MethodDescription {
 
         @Override
         public String[] getExceptionTypesInternalNames() {
@@ -27,6 +29,11 @@ public interface JavaMethod extends AnnotatedElement, Member, GenericDeclaration
             return org.objectweb.asm.Type.getInternalName(getDeclaringClass().getSuperclass());
         }
 
+        @Override
+        public boolean isAbstract() {
+            return Modifier.isAbstract(getModifiers());
+        }
+
         private static String[] makeInternalNameArray(Class<?>[] types) {
             if (types.length == 0) {
                 return null;
@@ -40,7 +47,7 @@ public interface JavaMethod extends AnnotatedElement, Member, GenericDeclaration
         }
     }
 
-    static class ForConstructor extends AbstractJavaMethod {
+    static class ForConstructor extends AbstractMethodDescription {
 
         private static final String DYNAMIC_CONSTRUCTOR_INTERNAL_NAME = "<init>";
 
@@ -173,11 +180,11 @@ public interface JavaMethod extends AnnotatedElement, Member, GenericDeclaration
 
         @Override
         public String toString() {
-            return "JavaMethod.ForConstructor{" + constructor + "}";
+            return "MethodDescription.ForConstructor{" + constructor + "}";
         }
     }
 
-    static class ForMethod extends AbstractJavaMethod {
+    static class ForMethod extends AbstractMethodDescription {
 
         private final Method method;
 
@@ -308,7 +315,7 @@ public interface JavaMethod extends AnnotatedElement, Member, GenericDeclaration
 
         @Override
         public String toString() {
-            return "JavaMethod.ForMethod{" + method + "}";
+            return "MethodDescription.ForMethod{" + method + "}";
         }
     }
 

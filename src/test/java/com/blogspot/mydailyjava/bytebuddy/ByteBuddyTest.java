@@ -1,6 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy;
 
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.SuperClassDelegation;
+import com.blogspot.mydailyjava.DebuggingWrapper;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.StubMethod;
 import com.blogspot.mydailyjava.bytebuddy.method.matcher.MethodMatchers;
 import org.junit.Test;
 
@@ -25,11 +26,11 @@ public class ByteBuddyTest {
     }
 
     @Test
-    public void testSubclass() throws Exception{
+    public void testSubclass() throws Exception {
         Object object = ByteBuddy.make()
+                .withAppendedClassVisitorWrapper(new DebuggingWrapper(System.out))
                 .subclass(Bar.class)
-                .name("my.Test")
-                .intercept(MethodMatchers.returns(String.class), SuperClassDelegation.INSTANCE)
+                .method(MethodMatchers.returns(String.class)).intercept(StubMethod.INSTANCE)
                 .make()
                 .load(getClass().getClassLoader())
                 .newInstance();

@@ -1,17 +1,14 @@
 package com.blogspot.mydailyjava.bytebuddy.type;
 
-import com.blogspot.mydailyjava.bytebuddy.NameMaker;
-import com.blogspot.mydailyjava.bytebuddy.SyntheticState;
-import com.blogspot.mydailyjava.bytebuddy.TypeManifestation;
-import com.blogspot.mydailyjava.bytebuddy.Visibility;
+import com.blogspot.mydailyjava.bytebuddy.*;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import java.util.Collection;
 
-public class TypeDescription implements NameMaker.UnnamedType {
+public class TypeDescription implements NamingStrategy.UnnamedType {
 
-    private final int classVersion;
+    private final ClassVersion classVersion;
 
     private final Class<?> superClass;
     private final Collection<Class<?>> interfaces;
@@ -22,25 +19,25 @@ public class TypeDescription implements NameMaker.UnnamedType {
 
     private final String name;
 
-    public TypeDescription(int classVersion,
+    public TypeDescription(ClassVersion classVersion,
                            Class<?> superClass,
                            Collection<Class<?>> interfaces,
                            Visibility visibility,
                            TypeManifestation typeManifestation,
                            SyntheticState syntheticState,
-                           NameMaker nameMaker) {
+                           NamingStrategy namingStrategy) {
         this.classVersion = classVersion;
         this.superClass = superClass;
         this.interfaces = interfaces;
         this.visibility = visibility;
         this.typeManifestation = typeManifestation;
         this.syntheticState = syntheticState;
-        this.name = nameMaker.getName(this);
+        this.name = namingStrategy.getName(this);
     }
 
     @Override
     public int getClassVersion() {
-        return classVersion;
+        return classVersion.getVersionNumber();
     }
 
     @Override

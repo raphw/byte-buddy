@@ -3,6 +3,7 @@ package com.blogspot.mydailyjava.bytebuddy.method;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.ByteCodeAppender;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.SuperClassDelegation;
 import com.blogspot.mydailyjava.bytebuddy.method.matcher.MethodMatcher;
+import com.blogspot.mydailyjava.bytebuddy.type.TypeDescription;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 
@@ -14,89 +15,129 @@ public class MethodInterception {
 
     public static class Stack {
 
-        public static interface Handler {
-
-            static enum NoOp implements Handler {
-                INSTANCE;
-
-                @Override
-                public boolean applyTo(ClassVisitor classVisitor) {
-                    return false;
-                }
-            }
-
-            static class ByteCodeWriter implements Handler {
-
-                private final JavaMethod javaMethod;
-                private final ByteCodeAppender byteCodeAppender;
-
-                public ByteCodeWriter(ByteCodeAppender byteCodeAppender, JavaMethod javaMethod) {
-                    this.javaMethod = javaMethod;
-                    this.byteCodeAppender = byteCodeAppender;
-                }
-
-                @Override
-                public boolean applyTo(ClassVisitor classVisitor) {
-                    MethodVisitor methodVisitor = classVisitor.visitMethod(
-                            javaMethod.getModifiers(),
-                            javaMethod.getName(),
-                            javaMethod.getDescriptor(),
-                            null,
-                            javaMethod.getExceptionTypesInternalNames());
-                    methodVisitor.visitCode();
-                    ByteCodeAppender.Size size = byteCodeAppender.apply(methodVisitor, javaMethod);
-                    methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
-                    methodVisitor.visitEnd();
-                    return true;
-                }
-            }
-
-            boolean applyTo(ClassVisitor classVisitor);
-        }
-
         private final List<MethodInterception> methodInterceptions;
 
         public Stack() {
             this.methodInterceptions = Collections.emptyList();
         }
 
-        protected Stack(List<MethodInterception> methodInterceptions) {
-            this.methodInterceptions = methodInterceptions;
+        private Stack(List<MethodInterception> methodInterceptions, MethodInterception methodInterception) {
+            List<MethodInterception> joined = new ArrayList<MethodInterception>(methodInterceptions.size() + 1);
+            joined.add(methodInterception);
+            joined.addAll(methodInterceptions);
+            this.methodInterceptions = Collections.unmodifiableList(joined);
         }
 
-        public Handler lookUp(JavaMethod javaMethod) {
-            if(javaMethod.isConstructor()) {
-                return new Handler.ByteCodeWriter(SuperClassDelegation.INSTANCE, javaMethod);
+        public Stack onTop(MethodInterception methodInterception) {
+            return new Stack(methodInterceptions, methodInterception);
+        }
+
+        public Handler handler(TypeDescription typeDescription) {
+            return new Handler(methodInterceptions, typeDescription);
+        }
+    }
+
+    public static class Handler {
+
+        public static interface Delegate {
+
+            boolean handle(ClassVisitor classVisitor);
+        }
+
+        private static class Entry implements MethodMatcher {
+
+            private final MethodMatcher methodMatcher;
+            private final ByteCodeAppender byteCodeAppender;
+
+            private Entry(MethodMatcher methodMatcher, ByteCodeAppender byteCodeAppender) {
+                this.methodMatcher = methodMatcher;
+                this.byteCodeAppender = byteCodeAppender;
             }
+
+            @Override
+            public boolean matches(MethodDescription methodDescription) {
+                return methodMatcher.matches(methodDescription);
+            }
+
+            public ByteCodeAppender getByteCodeAppender() {
+                return byteCodeAppender;
+            }
+        }
+
+        private static class MethodWritingDelegate implements Delegate {
+
+            private final MethodDescription methodDescription;
+            private final ByteCodeAppender byteCodeAppender;
+
+            public MethodWritingDelegate(MethodDescription methodDescription, ByteCodeAppender byteCodeAppender) {
+                this.methodDescription = methodDescription;
+                this.byteCodeAppender = byteCodeAppender;
+            }
+
+            @Override
+            public boolean handle(ClassVisitor classVisitor) {
+                MethodVisitor methodVisitor = classVisitor.visitMethod(methodDescription.getModifiers(),
+                        methodDescription.getInternalName(),
+                        methodDescription.getDescriptor(),
+                        null,
+                        methodDescription.getExceptionTypesInternalNames());
+                methodVisitor.visitCode();
+                ByteCodeAppender.Size size = byteCodeAppender.apply(methodVisitor, methodDescription);
+                methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
+                methodVisitor.visitEnd();
+                return true;
+            }
+        }
+
+        private static enum NoOpDelegate implements Delegate {
+            INSTANCE;
+
+            @Override
+            public boolean handle(ClassVisitor classVisitor) {
+                return false;
+            }
+        }
+
+        private final List<Entry> entries;
+        private final ByteCodeAppender constructorAppender;
+
+        public Handler(List<MethodInterception> methodInterceptions, TypeDescription typeDescription) {
+            List<Entry> entries = new ArrayList<Entry>(methodInterceptions.size());
             for (MethodInterception methodInterception : methodInterceptions) {
-                if (methodInterception.getMethodMatcher().matches(javaMethod)) {
-                    return new Handler.ByteCodeWriter(methodInterception.getByteCodeAppender(), javaMethod);
+                entries.add(new Entry(methodInterception.getMethodMatcher(),
+                        methodInterception.getByteCodeAppenderFactory().make(typeDescription)));
+            }
+            this.entries = Collections.unmodifiableList(entries);
+            constructorAppender = SuperClassDelegation.INSTANCE.make(typeDescription);
+        }
+
+        public Delegate find(MethodDescription methodDescription) {
+            // Until constructor interception is fully supported this serves as a preliminary solution.
+            if(methodDescription.isConstructor()) {
+                return new MethodWritingDelegate(methodDescription, constructorAppender);
+            }
+            for (Entry entry : entries) {
+                if (entry.matches(methodDescription)) {
+                    return new MethodWritingDelegate(methodDescription, entry.getByteCodeAppender());
                 }
             }
-            return Handler.NoOp.INSTANCE;
-        }
-
-        public Stack append(MethodInterception methodInterception) {
-            List<MethodInterception> methodInterceptions = new ArrayList<MethodInterception>(this.methodInterceptions.size() + 1);
-            methodInterceptions.addAll(this.methodInterceptions);
-            methodInterceptions.add(methodInterception);
-            return new Stack(Collections.unmodifiableList(methodInterceptions));
+            return NoOpDelegate.INSTANCE;
         }
     }
 
     private final MethodMatcher methodMatcher;
-    private final ByteCodeAppender byteCodeAppender;
+    private final ByteCodeAppender.Factory byteCodeAppenderFactory;
 
-    public MethodInterception(MethodMatcher methodMatcher, ByteCodeAppender byteCodeAppender) {
+    public MethodInterception(MethodMatcher methodMatcher, ByteCodeAppender.Factory byteCodeAppenderFactory) {
         this.methodMatcher = methodMatcher;
-        this.byteCodeAppender = byteCodeAppender;
+        this.byteCodeAppenderFactory = byteCodeAppenderFactory;
     }
 
     public MethodMatcher getMethodMatcher() {
         return methodMatcher;
     }
 
-    public ByteCodeAppender getByteCodeAppender() {
-        return byteCodeAppender;
+    public ByteCodeAppender.Factory getByteCodeAppenderFactory() {
+        return byteCodeAppenderFactory;
     }
 }

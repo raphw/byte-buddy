@@ -12,7 +12,7 @@ public enum TypeManifestation implements ModifierContributor {
 
     private final int mask;
 
-    TypeManifestation(int mask) {
+    private TypeManifestation(int mask) {
         this.mask = mask;
     }
 

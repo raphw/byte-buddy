@@ -1,9 +1,15 @@
 package com.blogspot.mydailyjava.bytebuddy.method.bytecode;
 
-import com.blogspot.mydailyjava.bytebuddy.method.JavaMethod;
+import com.blogspot.mydailyjava.bytebuddy.method.MethodDescription;
+import com.blogspot.mydailyjava.bytebuddy.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 
 public interface ByteCodeAppender {
+
+    static interface Factory {
+
+        ByteCodeAppender make(TypeDescription typeDescription);
+    }
 
     static class Size {
 
@@ -32,5 +38,5 @@ public interface ByteCodeAppender {
         }
     }
 
-    Size apply(MethodVisitor methodVisitor, JavaMethod javaMethod);
+    Size apply(MethodVisitor methodVisitor, MethodDescription methodDescription);
 }

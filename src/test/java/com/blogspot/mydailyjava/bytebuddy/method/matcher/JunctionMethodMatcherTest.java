@@ -1,6 +1,6 @@
 package com.blogspot.mydailyjava.bytebuddy.method.matcher;
 
-import com.blogspot.mydailyjava.bytebuddy.method.JavaMethod;
+import com.blogspot.mydailyjava.bytebuddy.method.MethodDescription;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -31,16 +31,16 @@ public class JunctionMethodMatcherTest {
     @Test
     public void testAnd() throws Exception {
         assertThat(new JunctionMethodMatcher.Conjunction(MethodMatchers.named(FOO_METHOD_NAME),
-                MethodMatchers.returns(void.class)).matches(new JavaMethod.ForMethod(testClass$foo)), is(true));
+                MethodMatchers.returns(void.class)).matches(new MethodDescription.ForMethod(testClass$foo)), is(true));
         assertThat(new JunctionMethodMatcher.Conjunction(MethodMatchers.named(FOO_METHOD_NAME),
-                MethodMatchers.none()).matches(new JavaMethod.ForMethod(testClass$foo)), is(false));
+                MethodMatchers.none()).matches(new MethodDescription.ForMethod(testClass$foo)), is(false));
     }
 
     @Test
     public void testOr() throws Exception {
         assertThat(new JunctionMethodMatcher.Disjunction(MethodMatchers.named(FOO_METHOD_NAME),
-                MethodMatchers.returns(void.class)).matches(new JavaMethod.ForMethod(testClass$foo)), is(true));
+                MethodMatchers.returns(void.class)).matches(new MethodDescription.ForMethod(testClass$foo)), is(true));
         assertThat(new JunctionMethodMatcher.Disjunction(MethodMatchers.not(MethodMatchers.named(FOO_METHOD_NAME)),
-                MethodMatchers.none()).matches(new JavaMethod.ForMethod(testClass$foo)), is(false));
+                MethodMatchers.none()).matches(new MethodDescription.ForMethod(testClass$foo)), is(false));
     }
 }

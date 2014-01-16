@@ -8,7 +8,7 @@ public class ClassLoaderByteArrayInjector {
     private static Method FIND_LOADED_CLASS_METHOD;
     private static Method LOAD_BYTE_ARRAY_METHOD;
 
-    private static NoSuchMethodException EXCEPTION;
+    private static Exception EXCEPTION;
 
     static {
         try {
@@ -16,7 +16,7 @@ public class ClassLoaderByteArrayInjector {
             FIND_LOADED_CLASS_METHOD.setAccessible(true);
             LOAD_BYTE_ARRAY_METHOD = ClassLoader.class.getDeclaredMethod("defineClass", String.class, byte[].class, int.class, int.class);
             LOAD_BYTE_ARRAY_METHOD.setAccessible(true);
-        } catch (NoSuchMethodException e) {
+        } catch (Exception e) {
             EXCEPTION = e;
         }
     }
@@ -29,7 +29,7 @@ public class ClassLoaderByteArrayInjector {
 
     public Class<?> load(String name, byte[] javaType) {
         if (FIND_LOADED_CLASS_METHOD == null || LOAD_BYTE_ARRAY_METHOD == null) {
-            throw new IllegalStateException("Could not find methods for class loader injection", EXCEPTION);
+            throw new IllegalStateException("Could not initialize class loader injector", EXCEPTION);
         }
         try {
             synchronized (classLoader) {

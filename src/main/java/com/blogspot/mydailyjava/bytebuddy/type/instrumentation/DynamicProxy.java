@@ -9,9 +9,14 @@ public interface DynamicProxy {
 
     static interface Builder {
 
+        static interface LocatedMethodInterception {
+
+            Builder intercept(ByteCodeAppender.Factory byteCodeAppenderFactory);
+        }
+
         Builder implementInterface(Class<?> interfaceType);
 
-        Builder version(int classVersion);
+        Builder classVersion(int classVersion);
 
         Builder name(String name);
 
@@ -21,7 +26,9 @@ public interface DynamicProxy {
 
         Builder makeSynthetic(boolean synthetic);
 
-        Builder intercept(MethodMatcher methodMatcher, ByteCodeAppender byteCodeAppender);
+        Builder ignoredMethods(MethodMatcher ignoredMethods);
+
+        LocatedMethodInterception method(MethodMatcher methodMatcher);
 
         DynamicProxy make();
     }
