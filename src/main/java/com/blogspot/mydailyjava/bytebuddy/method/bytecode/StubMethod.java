@@ -6,8 +6,6 @@ import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.MethodReturn;
 import com.blogspot.mydailyjava.bytebuddy.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 
-import java.util.Arrays;
-
 public enum StubMethod implements ByteCodeAppender.Factory {
     INSTANCE;
 
@@ -20,7 +18,7 @@ public enum StubMethod implements ByteCodeAppender.Factory {
                     DefaultValue.load(methodDescription.getReturnType()).apply(methodVisitor)
                             .aggregate(MethodReturn.returning(methodDescription.getReturnType()).apply(methodVisitor))
                             .getMaximalSize(),
-                    TypeSize.sizeOf(Arrays.asList(methodDescription.getParameterTypes())) + 1);
+                    TypeSize.sizeOf(methodDescription));
         }
     }
 

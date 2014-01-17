@@ -42,11 +42,11 @@ public class VoidAwareAssigner implements Assigner {
         }
     }
 
-    private final Assigner chainedDelegate;
+    private final Assigner nonVoidAwareAssigner;
     private final boolean returnDefaultValue;
 
-    public VoidAwareAssigner(Assigner chainedDelegate, boolean returnDefaultValue) {
-        this.chainedDelegate = chainedDelegate;
+    public VoidAwareAssigner(Assigner nonVoidAwareAssigner, boolean returnDefaultValue) {
+        this.nonVoidAwareAssigner = nonVoidAwareAssigner;
         this.returnDefaultValue = returnDefaultValue;
     }
 
@@ -59,7 +59,7 @@ public class VoidAwareAssigner implements Assigner {
         } else if (/* !(superType == void.class) && */ subType == void.class) {
             return ValueRemovingAssignment.of(superType);
         } else /* !(superType == void.class) && !(subType == void.class) */ {
-            return chainedDelegate.assign(superType, subType, considerRuntimeType);
+            return nonVoidAwareAssigner.assign(superType, subType, considerRuntimeType);
         }
     }
 }

@@ -1,24 +1,16 @@
 package com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind.annotation;
 
+import com.blogspot.mydailyjava.bytebuddy.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assigner;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assignment;
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.IllegalAssignment;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.MethodArgument;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind.MostSpecificTypeResolver;
 
-import java.lang.annotation.*;
-import java.lang.reflect.Method;
+import java.lang.annotation.Annotation;
 
-@Documented
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.PARAMETER)
 public @interface Argument {
 
-    static class Handler implements AnnotationCallBinder.ArgumentHandler<Argument> {
-
-        private final Assigner assigner;
-
-        public Handler(Assigner assigner) {
-            this.assigner = assigner;
-        }
+    static class Binder implements AnnotationDrivenBinder.ArgumentBinder<Argument> {
 
         @Override
         public Class<Argument> getHandledType() {
@@ -26,12 +18,30 @@ public @interface Argument {
         }
 
         @Override
-        public Assignment assign(int parameterIndex, Argument argument, Method sourceMethod, Method targetMethod) {
-            if(sourceMethod.getParameterTypes().length > argument.value()) {
-                return IllegalAssignment.INSTANCE;
+        public IdentifiedBinding<?> bind(Argument sourceArgument,
+                                         int targetParameterIndex,
+                                         MethodDescription source,
+                                         MethodDescription target,
+                                         Assigner assigner) {
+            if (source.getParameterTypes().length < sourceArgument.value()) {
+                return IdentifiedBinding.makeIllegal();
             }
-//            return MethodArgument.loading(targetMethod.getParameterTypes()[parameterIndex]).loadFromIndex(sourceMethod.getParameterTypes()[argument.value()])
-            return null;
+            Class<?> sourceType = source.getParameterTypes()[sourceArgument.value()];
+            Class<?> targetType = target.getParameterTypes()[targetParameterIndex];
+            return IdentifiedBinding.makeIdentified(
+                    new Assignment.Compound(
+                            MethodArgument.forType(sourceType).loadingIndex(sourceArgument.value()),
+                            assigner.assign(sourceType, targetType, isRuntimeType(target, targetParameterIndex))),
+                    new MostSpecificTypeResolver.ParameterIndexToken(targetParameterIndex));
+        }
+
+        private static boolean isRuntimeType(MethodDescription methodDescription, int parameterIndex) {
+            for (Annotation annotation : methodDescription.getParameterAnnotations()[parameterIndex]) {
+                if (annotation.annotationType() == RuntimeType.class) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 

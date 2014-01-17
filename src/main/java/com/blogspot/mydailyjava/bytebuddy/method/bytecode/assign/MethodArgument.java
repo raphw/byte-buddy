@@ -13,7 +13,7 @@ public enum MethodArgument {
     OBJECT_REFERENCE(Opcodes.ALOAD, 17, TypeSize.SINGLE),
     ARRAY_REFERENCE(Opcodes.AALOAD, -1, TypeSize.SINGLE);
 
-    public static MethodArgument loading(Class<?> type) {
+    public static MethodArgument forType(Class<?> type) {
         if (type.isPrimitive()) {
             if (type == long.class) {
                 return LONG;
@@ -83,7 +83,7 @@ public enum MethodArgument {
         }
     }
 
-    public Assignment fromArgumentIndex(int variableIndex) {
+    public Assignment loadingIndex(int variableIndex) {
         return new ArgumentLoadingAssignment(variableIndex);
     }
 }

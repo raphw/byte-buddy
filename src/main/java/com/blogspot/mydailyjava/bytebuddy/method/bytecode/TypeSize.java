@@ -1,5 +1,9 @@
 package com.blogspot.mydailyjava.bytebuddy.method.bytecode;
 
+import com.blogspot.mydailyjava.bytebuddy.method.MethodDescription;
+
+import java.util.Arrays;
+
 public enum TypeSize {
 
     NONE(0),
@@ -14,6 +18,11 @@ public enum TypeSize {
         } else {
             return SINGLE;
         }
+    }
+
+    public static int sizeOf(MethodDescription methodDescription) {
+        int parameterSize = sizeOf(Arrays.asList(methodDescription.getParameterTypes()));
+        return (methodDescription.isStatic() ? 0 : 1) + parameterSize;
     }
 
     public static int sizeOf(Iterable<? extends Class<?>> types) {
