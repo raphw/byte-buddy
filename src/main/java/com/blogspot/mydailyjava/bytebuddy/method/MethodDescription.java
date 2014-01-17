@@ -1,11 +1,9 @@
 package com.blogspot.mydailyjava.bytebuddy.method;
 
-import com.blogspot.mydailyjava.bytebuddy.method.matcher.VerboseMethodDescription;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 
-public interface MethodDescription extends AnnotatedElement, Member, GenericDeclaration, ByteCodeMethod, VerboseMethodDescription {
+public interface MethodDescription extends AnnotatedElement, Member, GenericDeclaration, ByteCodeMethod, MethodModifierReviewable {
 
     static abstract class AbstractMethodDescription implements MethodDescription {
 
@@ -32,6 +30,51 @@ public interface MethodDescription extends AnnotatedElement, Member, GenericDecl
         @Override
         public boolean isAbstract() {
             return Modifier.isAbstract(getModifiers());
+        }
+
+        @Override
+        public boolean isFinal() {
+            return Modifier.isFinal(getModifiers());
+        }
+
+        @Override
+        public boolean isStatic() {
+            return Modifier.isStatic(getModifiers());
+        }
+
+        @Override
+        public boolean isPublic() {
+            return Modifier.isPublic(getModifiers());
+        }
+
+        @Override
+        public boolean isProtected() {
+            return Modifier.isProtected(getModifiers());
+        }
+
+        @Override
+        public boolean isPackagePrivate() {
+            return !isPublic() && !isProtected() && !isPrivate();
+        }
+
+        @Override
+        public boolean isPrivate() {
+            return Modifier.isPrivate(getModifiers());
+        }
+
+        @Override
+        public boolean isNative() {
+            return Modifier.isNative(getModifiers());
+        }
+
+        @Override
+        public boolean isSynchronized() {
+            return Modifier.isSynchronized(getModifiers());
+        }
+
+        @Override
+        public boolean isStrict() {
+            return Modifier.isStrict(getModifiers());
         }
 
         private static String[] makeInternalNameArray(Class<?>[] types) {

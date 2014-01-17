@@ -159,6 +159,18 @@ public final class MethodMatchers {
         return new ModifierMethodMatcher(Modifier.STATIC);
     }
 
+    public static JunctionMethodMatcher isSynchronized() {
+        return new ModifierMethodMatcher(Modifier.SYNCHRONIZED);
+    }
+
+    public static JunctionMethodMatcher isNative() {
+        return new ModifierMethodMatcher(Modifier.NATIVE);
+    }
+
+    public static JunctionMethodMatcher isStrict() {
+        return new ModifierMethodMatcher(Modifier.STRICT);
+    }
+
     private static class VarArgsMethodMatcher extends JunctionMethodMatcher {
 
         @Override
@@ -342,11 +354,11 @@ public final class MethodMatchers {
         return new NegatingMethodMatcher(methodMatcher);
     }
 
-    private static class BooleanMatcher extends JunctionMethodMatcher {
+    private static class BooleanMethodMatcher extends JunctionMethodMatcher {
 
         private final boolean matches;
 
-        private BooleanMatcher(boolean matches) {
+        private BooleanMethodMatcher(boolean matches) {
             this.matches = matches;
         }
 
@@ -357,11 +369,11 @@ public final class MethodMatchers {
     }
 
     public static JunctionMethodMatcher any() {
-        return new BooleanMatcher(true);
+        return new BooleanMethodMatcher(true);
     }
 
     public static JunctionMethodMatcher none() {
-        return new BooleanMatcher(false);
+        return new BooleanMethodMatcher(false);
     }
 
     private MethodMatchers() {
