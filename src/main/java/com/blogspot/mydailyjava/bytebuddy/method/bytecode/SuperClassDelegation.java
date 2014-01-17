@@ -11,7 +11,7 @@ import org.objectweb.asm.Opcodes;
 public enum SuperClassDelegation implements ByteCodeAppender.Factory {
     INSTANCE;
 
-    public static class Appender implements ByteCodeAppender {
+    private static class Appender implements ByteCodeAppender {
 
         private final String superClassInternalName;
 
@@ -24,11 +24,15 @@ public enum SuperClassDelegation implements ByteCodeAppender.Factory {
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
             Assignment.Size size = new Assignment.Size(1, 1);
             for (Class<?> parameterType : methodDescription.getParameterTypes()) {
-                size = size.aggregateLeftFirst(MethodArgument.loading(parameterType).apply(size.getSize(), methodVisitor));
+                size = size.aggregate(MethodArgument.loading(parameterType)
+                        .fromArgumentIndex(size.getSize()).apply(methodVisitor));
             }
-            methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, superClassInternalName, methodDescription.getInternalName(), methodDescription.getDescriptor());
-            size = size.aggregateLeftFirst(MethodReturn.returning(methodDescription.getReturnType()).apply(methodVisitor));
-            return new Size(size.getMaximalSize(), size.getMaximalSize() + 1);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,
+                    superClassInternalName,
+                    methodDescription.getInternalName(),
+                    methodDescription.getDescriptor());
+            size = size.aggregate(MethodReturn.returning(methodDescription.getReturnType()).apply(methodVisitor));
+            return new Size(size.getMaximalSize(), size.getMaximalSize());
         }
     }
 

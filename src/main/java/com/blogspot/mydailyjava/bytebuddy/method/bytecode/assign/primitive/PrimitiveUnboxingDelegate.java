@@ -115,7 +115,7 @@ public enum PrimitiveUnboxingDelegate implements UnboxingResponsible {
         @Override
         public Size apply(MethodVisitor methodVisitor) {
             methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, wrapperTypeName, boxingMethodName, boxingMethodDescriptor);
-            return assignment.apply(methodVisitor).aggregateLeftFirst(typeSize.getSize() - 1);
+            return assignment.apply(methodVisitor).aggregate(typeSize.getSize() - 1, typeSize.getSize() - 1);
         }
     }
 
@@ -135,7 +135,7 @@ public enum PrimitiveUnboxingDelegate implements UnboxingResponsible {
         @Override
         public Size apply(MethodVisitor methodVisitor) {
             methodVisitor.visitMethodInsn(Opcodes.INVOKEDYNAMIC, wrapperTypeName, unboxingMethodName, unboxingMethodDescriptor);
-            return wideningAssignment.apply(methodVisitor).aggregateRightFirst(typeSize.getSize() - 1);
+            return wideningAssignment.apply(methodVisitor).aggregate(typeSize.getSize() - 1, typeSize.getSize() - 1);
         }
     }
 
@@ -156,7 +156,7 @@ public enum PrimitiveUnboxingDelegate implements UnboxingResponsible {
         public Size apply(MethodVisitor methodVisitor) {
             Size size = referenceTypeAdjustmentAssignment.apply(methodVisitor);
             methodVisitor.visitMethodInsn(Opcodes.INVOKEDYNAMIC, wrapperTypeName, unboxingMethodName, unboxingMethodDescriptor);
-            return size.aggregateLeftFirst(typeSize.getSize() - 1);
+            return size.aggregate(typeSize.getSize() - 1, typeSize.getSize() - 1);
         }
     }
 

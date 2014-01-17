@@ -1,7 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy;
 
 import com.blogspot.mydailyjava.DebuggingWrapper;
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.StubMethod;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.SuperClassDelegation;
 import com.blogspot.mydailyjava.bytebuddy.method.matcher.MethodMatchers;
 import org.junit.Test;
 
@@ -30,7 +30,7 @@ public class ByteBuddyTest {
         Object object = ByteBuddy.make()
                 .withAppendedClassVisitorWrapper(new DebuggingWrapper(System.out))
                 .subclass(Bar.class)
-                .method(MethodMatchers.returns(String.class)).intercept(StubMethod.INSTANCE)
+                .method(MethodMatchers.returns(String.class)).intercept(SuperClassDelegation.INSTANCE)
                 .make()
                 .load(getClass().getClassLoader())
                 .newInstance();

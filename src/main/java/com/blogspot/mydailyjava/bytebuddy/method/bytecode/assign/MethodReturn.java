@@ -4,7 +4,7 @@ import com.blogspot.mydailyjava.bytebuddy.method.bytecode.TypeSize;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-public enum MethodReturn {
+public enum MethodReturn implements Assignment {
 
     INTEGER(Opcodes.IRETURN, TypeSize.SINGLE),
     DOUBLE(Opcodes.DRETURN, TypeSize.DOUBLE),
@@ -39,32 +39,14 @@ public enum MethodReturn {
         this.typeSize = typeSize;
     }
 
-    private class MethodReturnValueAssignment implements Assignment {
-
-        private final Assignment returnValuePreparationAssignment;
-
-        private MethodReturnValueAssignment(Assignment returnValuePreparationAssignment) {
-            this.returnValuePreparationAssignment = returnValuePreparationAssignment;
-        }
-
-        @Override
-        public boolean isAssignable() {
-            return returnValuePreparationAssignment.isAssignable();
-        }
-
-        @Override
-        public Size apply(MethodVisitor methodVisitor) {
-            Size size = returnValuePreparationAssignment.apply(methodVisitor);
-            methodVisitor.visitInsn(returnOpcode);
-            return size.aggregateLeftFirst(-1 * typeSize.getSize());
-        }
+    @Override
+    public boolean isAssignable() {
+        return true;
     }
 
-    public Assignment returnAfter(Assignment returnValuePreparationAssignment) {
-        return new MethodReturnValueAssignment(returnValuePreparationAssignment);
-    }
-
-    public Assignment.Size apply(MethodVisitor methodVisitor) {
-        return new MethodReturnValueAssignment(LegalTrivialAssignment.INSTANCE).apply(methodVisitor);
+    @Override
+    public Size apply(MethodVisitor methodVisitor) {
+        methodVisitor.visitInsn(returnOpcode);
+        return new Size(-1 * typeSize.getSize(), 0);
     }
 }

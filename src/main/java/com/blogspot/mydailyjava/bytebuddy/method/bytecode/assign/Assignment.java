@@ -22,32 +22,12 @@ public interface Assignment {
             return maximalSize;
         }
 
-        public Size aggregateRightFirst(Size currentSize) {
-            return aggregateRightFirst(currentSize.getSize(), currentSize.getSize());
+        public Size aggregate(Size other) {
+            return aggregate(other.size, other.maximalSize);
         }
 
-        public Size aggregateRightFirst(int currentSize) {
-            return aggregateRightFirst(currentSize, currentSize);
-        }
-
-        public Size aggregateRightFirst(int currentSize, int currentMaximalSize) {
-            return aggregate(currentSize, currentMaximalSize, size, maximalSize);
-        }
-
-        public Size aggregateLeftFirst(Size sizeChange) {
-            return aggregateLeftFirst(sizeChange.getSize(), sizeChange.getMaximalSize());
-        }
-
-        public Size aggregateLeftFirst(int sizeChange) {
-            return aggregateLeftFirst(sizeChange, sizeChange);
-        }
-
-        public Size aggregateLeftFirst(int sizeChange, int interimMaximalSize) {
-            return aggregate(size, maximalSize, sizeChange, interimMaximalSize);
-        }
-
-        private static Size aggregate(int baseSize, int baseMaximalSize, int aggregateSize, int aggregateMaximalSize) {
-            return new Size(baseSize + aggregateSize, Math.max(baseSize + aggregateMaximalSize, baseMaximalSize));
+        public Size aggregate(int sizeChange, int interimMaximalSize) {
+            return new Size(size + sizeChange, Math.max(maximalSize, size + interimMaximalSize));
         }
     }
 
