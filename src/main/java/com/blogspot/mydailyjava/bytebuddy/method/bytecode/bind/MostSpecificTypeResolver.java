@@ -2,7 +2,8 @@ package com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind;
 
 import com.blogspot.mydailyjava.bytebuddy.method.MethodDescription;
 
-public class MostSpecificTypeResolver implements MethodDelegationBinder.AmbiguityResolver {
+public enum  MostSpecificTypeResolver implements MethodDelegationBinder.AmbiguityResolver {
+    INSTANCE;
 
     public static class ParameterIndexToken {
 
@@ -66,7 +67,7 @@ public class MostSpecificTypeResolver implements MethodDelegationBinder.Ambiguit
 
         public Resolution resolve(PrimitiveTypePrecedence right) {
             if (score - right.score == 0) {
-                return Resolution.NONE;
+                return Resolution.UNKNOWN;
             } else if (score - right.score > 0) {
                 return Resolution.LEFT;
             } else /* score - right.score < 0 */ {
@@ -79,7 +80,7 @@ public class MostSpecificTypeResolver implements MethodDelegationBinder.Ambiguit
     public Resolution resolve(MethodDescription source,
                               MethodDelegationBinder.BoundMethodDelegation left,
                               MethodDelegationBinder.BoundMethodDelegation right) {
-        Resolution resolution = Resolution.NONE;
+        Resolution resolution = Resolution.UNKNOWN;
         int leftExtra = 0, rightExtra = 0;
         for (int sourceParameterIndex = 0;
              sourceParameterIndex < source.getParameterTypes().length;
@@ -100,7 +101,7 @@ public class MostSpecificTypeResolver implements MethodDelegationBinder.Ambiguit
                 rightExtra++;
             }
         }
-        return resolution == Resolution.NONE ? resolveByScore(leftExtra - rightExtra) : resolution;
+        return resolution == Resolution.UNKNOWN ? resolveByScore(leftExtra - rightExtra) : resolution;
     }
 
     private static Resolution resolveRivalBinding(Class<?> sourceParameterType,
@@ -129,7 +130,7 @@ public class MostSpecificTypeResolver implements MethodDelegationBinder.Ambiguit
                 }
             }
         } else {
-            return Resolution.NONE;
+            return Resolution.UNKNOWN;
         }
     }
 

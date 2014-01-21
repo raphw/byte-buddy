@@ -3,7 +3,7 @@ package com.blogspot.mydailyjava.bytebuddy.type.instrumentation;
 import com.blogspot.mydailyjava.bytebuddy.type.loading.ByteArrayClassLoader;
 import com.blogspot.mydailyjava.bytebuddy.type.loading.ClassLoaderByteArrayInjector;
 
-public class ByteArrayDynamicProxy implements DynamicProxy {
+public class ByteArrayDynamicProxy<T> implements DynamicProxy<T> {
 
     private final String typeName;
     private final byte[] javaType;
@@ -19,16 +19,18 @@ public class ByteArrayDynamicProxy implements DynamicProxy {
     }
 
     @Override
-    public Class<?> load(ClassLoader classLoader) {
+    @SuppressWarnings("unchecked")
+    public Class<? extends T> load(ClassLoader classLoader) {
         try {
-            return Class.forName(typeName, false, new ByteArrayClassLoader(classLoader, typeName, javaType));
+            return (Class<? extends T>) Class.forName(typeName, false, new ByteArrayClassLoader(classLoader, typeName, javaType));
         } catch (ClassNotFoundException e) {
             throw new IllegalStateException("Could not load class", e);
         }
     }
 
     @Override
-    public Class<?> loadReflective(ClassLoader classLoader) {
-        return new ClassLoaderByteArrayInjector(classLoader).load(typeName, javaType);
+    @SuppressWarnings("unchecked")
+    public Class<? extends T> loadReflective(ClassLoader classLoader) {
+        return (Class<? extends T>) new ClassLoaderByteArrayInjector(classLoader).load(typeName, javaType);
     }
 }

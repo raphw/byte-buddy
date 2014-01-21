@@ -160,7 +160,7 @@ public class ByteBuddy {
         return classVisitorWrapperChain;
     }
 
-    public DynamicProxy.Builder subclass(Class<?> type) {
+    public <T> DynamicProxy.Builder<T> subclass(Class<? extends T> type) {
         return SubclassDynamicProxyBuilder.of(type, this);
     }
 

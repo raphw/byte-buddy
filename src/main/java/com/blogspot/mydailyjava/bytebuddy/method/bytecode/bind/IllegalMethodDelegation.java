@@ -1,6 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind;
 
 import com.blogspot.mydailyjava.bytebuddy.method.MethodDescription;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.ByteCodeAppender;
 import org.objectweb.asm.MethodVisitor;
 
 public enum IllegalMethodDelegation implements MethodDelegationBinder.BoundMethodDelegation {
@@ -21,9 +22,8 @@ public enum IllegalMethodDelegation implements MethodDelegationBinder.BoundMetho
         throw new IllegalStateException();
     }
 
-
     @Override
-    public Size apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
+    public ByteCodeAppender.Size apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
         throw new IllegalStateException();
     }
 }

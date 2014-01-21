@@ -5,37 +5,37 @@ import com.blogspot.mydailyjava.bytebuddy.Visibility;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.ByteCodeAppender;
 import com.blogspot.mydailyjava.bytebuddy.method.matcher.MethodMatcher;
 
-public interface DynamicProxy {
+public interface DynamicProxy<T> {
 
-    static interface Builder {
+    static interface Builder<T> {
 
-        static interface LocatedMethodInterception {
+        static interface LocatedMethodInterception<T> {
 
-            Builder intercept(ByteCodeAppender.Factory byteCodeAppenderFactory);
+            Builder<T> intercept(ByteCodeAppender.Factory byteCodeAppenderFactory);
         }
 
-        Builder implementInterface(Class<?> interfaceType);
+        Builder<T> implementInterface(Class<?> interfaceType);
 
-        Builder classVersion(int classVersion);
+        Builder<T> classVersion(int classVersion);
 
-        Builder name(String name);
+        Builder<T> name(String name);
 
-        Builder visibility(Visibility visibility);
+        Builder<T> visibility(Visibility visibility);
 
-        Builder manifestation(TypeManifestation typeManifestation);
+        Builder<T> manifestation(TypeManifestation typeManifestation);
 
-        Builder makeSynthetic(boolean synthetic);
+        Builder<T> makeSynthetic(boolean synthetic);
 
-        Builder ignoredMethods(MethodMatcher ignoredMethods);
+        Builder<T> ignoredMethods(MethodMatcher ignoredMethods);
 
-        LocatedMethodInterception method(MethodMatcher methodMatcher);
+        LocatedMethodInterception<T> method(MethodMatcher methodMatcher);
 
-        DynamicProxy make();
+        DynamicProxy<T> make();
     }
 
     byte[] getBytes();
 
-    Class<?> load(ClassLoader classLoader);
+    Class<? extends T> load(ClassLoader classLoader);
 
-    Class<?> loadReflective(ClassLoader classLoader);
+    Class<? extends T> loadReflective(ClassLoader classLoader);
 }

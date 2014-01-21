@@ -9,6 +9,10 @@ public interface Assignment {
         private final int size;
         private final int maximalSize;
 
+        public Size(int size) {
+            this(size, size);
+        }
+
         public Size(int size, int maximalSize) {
             this.size = size;
             this.maximalSize = maximalSize;

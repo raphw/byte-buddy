@@ -1,6 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.method.bytecode;
 
 import com.blogspot.mydailyjava.bytebuddy.method.MethodDescription;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assignment;
 
 import java.util.Arrays;
 
@@ -41,5 +42,9 @@ public enum TypeSize {
 
     public int getSize() {
         return size;
+    }
+
+    public Assignment.Size asAssignmentSize() {
+        return new Assignment.Size(getSize(), getSize());
     }
 }

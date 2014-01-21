@@ -21,25 +21,25 @@ import java.util.List;
 
 import static com.blogspot.mydailyjava.bytebuddy.method.matcher.MethodMatchers.*;
 
-public class SubclassDynamicProxyBuilder implements DynamicProxy.Builder {
+public class SubclassDynamicProxyBuilder<T> implements DynamicProxy.Builder<T> {
 
     private static final int ASM_MANUAL_WRITING_OPTIONS = 0;
     private static final JunctionMethodMatcher OVERRIDABLE = not(isFinal()).and(not(isStatic()).and(not(isPrivate())));
 
-    private static class SubclassLocatedMethodInterception implements LocatedMethodInterception {
+    private static class SubclassLocatedMethodInterception<T> implements LocatedMethodInterception<T> {
 
-        private final SubclassDynamicProxyBuilder subclassDynamicProxyBuilder;
+        private final SubclassDynamicProxyBuilder<T> subclassDynamicProxyBuilder;
         private final MethodMatcher methodMatcher;
 
-        private SubclassLocatedMethodInterception(SubclassDynamicProxyBuilder subclassDynamicProxyBuilder,
+        private SubclassLocatedMethodInterception(SubclassDynamicProxyBuilder<T> subclassDynamicProxyBuilder,
                                                   MethodMatcher methodMatcher) {
             this.subclassDynamicProxyBuilder = subclassDynamicProxyBuilder;
             this.methodMatcher = methodMatcher;
         }
 
         @Override
-        public DynamicProxy.Builder intercept(ByteCodeAppender.Factory byteCodeAppenderFactory) {
-            return new SubclassDynamicProxyBuilder(subclassDynamicProxyBuilder.superClass,
+        public DynamicProxy.Builder<T> intercept(ByteCodeAppender.Factory byteCodeAppenderFactory) {
+            return new SubclassDynamicProxyBuilder<T>(subclassDynamicProxyBuilder.superClass,
                     subclassDynamicProxyBuilder.interfaces,
                     subclassDynamicProxyBuilder.classVersion,
                     subclassDynamicProxyBuilder.namingStrategy,
@@ -53,7 +53,8 @@ public class SubclassDynamicProxyBuilder implements DynamicProxy.Builder {
         }
     }
 
-    public static SubclassDynamicProxyBuilder of(Class<?> type, ByteBuddy byteBuddy) {
+    @SuppressWarnings("unchecked")
+    public static <T> SubclassDynamicProxyBuilder<T> of(Class<? extends T> type, ByteBuddy byteBuddy) {
         if (type.isPrimitive()) {
             throw new IllegalArgumentException("Cannot subclass primitive type " + type);
         } else if (type.isArray()) {
@@ -72,7 +73,7 @@ public class SubclassDynamicProxyBuilder implements DynamicProxy.Builder {
                     byteBuddy.getClassVisitorWrapperChain(),
                     new MethodInterception.Stack());
         } else {
-            return new SubclassDynamicProxyBuilder(type,
+            return new SubclassDynamicProxyBuilder<T>(type,
                     Collections.<Class<?>>emptyList(),
                     byteBuddy.getClassVersion(),
                     byteBuddy.getNamingStrategy(),
@@ -106,7 +107,7 @@ public class SubclassDynamicProxyBuilder implements DynamicProxy.Builder {
         return type;
     }
 
-    private final Class<?> superClass;
+    private final Class<? extends T> superClass;
     private final List<Class<?>> interfaces;
     private final ClassVersion classVersion;
     private final NamingStrategy namingStrategy;
@@ -117,7 +118,7 @@ public class SubclassDynamicProxyBuilder implements DynamicProxy.Builder {
     private final ClassVisitorWrapperChain classVisitorWrapperChain;
     private final MethodInterception.Stack methodInterceptions;
 
-    protected SubclassDynamicProxyBuilder(Class<?> superClass,
+    protected SubclassDynamicProxyBuilder(Class<? extends T> superClass,
                                           List<Class<?>> interfaces,
                                           ClassVersion classVersion,
                                           NamingStrategy namingStrategy,
@@ -140,8 +141,8 @@ public class SubclassDynamicProxyBuilder implements DynamicProxy.Builder {
     }
 
     @Override
-    public DynamicProxy.Builder implementInterface(Class<?> interfaceType) {
-        return new SubclassDynamicProxyBuilder(superClass,
+    public DynamicProxy.Builder<T> implementInterface(Class<?> interfaceType) {
+        return new SubclassDynamicProxyBuilder<T>(superClass,
                 join(interfaces, checkInterface(interfaceType)),
                 classVersion,
                 namingStrategy,
@@ -154,8 +155,8 @@ public class SubclassDynamicProxyBuilder implements DynamicProxy.Builder {
     }
 
     @Override
-    public DynamicProxy.Builder classVersion(int versionNumber) {
-        return new SubclassDynamicProxyBuilder(superClass,
+    public DynamicProxy.Builder<T> classVersion(int versionNumber) {
+        return new SubclassDynamicProxyBuilder<T>(superClass,
                 interfaces,
                 new ClassVersion(versionNumber),
                 namingStrategy,
@@ -168,8 +169,8 @@ public class SubclassDynamicProxyBuilder implements DynamicProxy.Builder {
     }
 
     @Override
-    public DynamicProxy.Builder name(String name) {
-        return new SubclassDynamicProxyBuilder(superClass,
+    public DynamicProxy.Builder<T> name(String name) {
+        return new SubclassDynamicProxyBuilder<T>(superClass,
                 interfaces,
                 classVersion,
                 new NamingStrategy.Fixed(checkNotNull(name)),
@@ -182,8 +183,8 @@ public class SubclassDynamicProxyBuilder implements DynamicProxy.Builder {
     }
 
     @Override
-    public DynamicProxy.Builder visibility(Visibility visibility) {
-        return new SubclassDynamicProxyBuilder(superClass,
+    public DynamicProxy.Builder<T> visibility(Visibility visibility) {
+        return new SubclassDynamicProxyBuilder<T>(superClass,
                 interfaces,
                 classVersion,
                 namingStrategy,
@@ -196,8 +197,8 @@ public class SubclassDynamicProxyBuilder implements DynamicProxy.Builder {
     }
 
     @Override
-    public DynamicProxy.Builder manifestation(TypeManifestation typeManifestation) {
-        return new SubclassDynamicProxyBuilder(superClass,
+    public DynamicProxy.Builder<T> manifestation(TypeManifestation typeManifestation) {
+        return new SubclassDynamicProxyBuilder<T>(superClass,
                 interfaces,
                 classVersion,
                 namingStrategy,
@@ -210,8 +211,8 @@ public class SubclassDynamicProxyBuilder implements DynamicProxy.Builder {
     }
 
     @Override
-    public DynamicProxy.Builder makeSynthetic(boolean synthetic) {
-        return new SubclassDynamicProxyBuilder(superClass,
+    public DynamicProxy.Builder<T> makeSynthetic(boolean synthetic) {
+        return new SubclassDynamicProxyBuilder<T>(superClass,
                 interfaces,
                 classVersion,
                 namingStrategy,
@@ -224,8 +225,8 @@ public class SubclassDynamicProxyBuilder implements DynamicProxy.Builder {
     }
 
     @Override
-    public DynamicProxy.Builder ignoredMethods(MethodMatcher ignoredMethods) {
-        return new SubclassDynamicProxyBuilder(superClass,
+    public DynamicProxy.Builder<T> ignoredMethods(MethodMatcher ignoredMethods) {
+        return new SubclassDynamicProxyBuilder<T>(superClass,
                 interfaces,
                 classVersion,
                 namingStrategy,
@@ -238,12 +239,12 @@ public class SubclassDynamicProxyBuilder implements DynamicProxy.Builder {
     }
 
     @Override
-    public LocatedMethodInterception method(MethodMatcher methodMatcher) {
-        return new SubclassLocatedMethodInterception(this, checkNotNull(methodMatcher));
+    public LocatedMethodInterception<T> method(MethodMatcher methodMatcher) {
+        return new SubclassLocatedMethodInterception<T>(this, checkNotNull(methodMatcher));
     }
 
     @Override
-    public DynamicProxy make() {
+    public DynamicProxy<T> make() {
         ClassWriter classWriter = new ClassWriter(ASM_MANUAL_WRITING_OPTIONS);
         ClassVisitor classVisitor = classVisitorWrapperChain.wrap(classWriter);
         TypeDescription typeDescription = new TypeDescription(classVersion,
@@ -267,6 +268,6 @@ public class SubclassDynamicProxyBuilder implements DynamicProxy.Builder {
             handler.find(method).handle(classVisitor);
         }
         classVisitor.visitEnd();
-        return new ByteArrayDynamicProxy(typeDescription.getName(), classWriter.toByteArray());
+        return new ByteArrayDynamicProxy<T>(typeDescription.getName(), classWriter.toByteArray());
     }
 }

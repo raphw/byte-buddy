@@ -9,7 +9,8 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-public abstract class ReferenceTypeAwareAssigner implements Assigner {
+public enum  ReferenceTypeAwareAssigner implements Assigner {
+    INSTANCE;
 
     private static class DownCastAssignment implements Assignment {
 

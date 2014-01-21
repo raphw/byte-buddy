@@ -1,12 +1,15 @@
 package com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind.annotation;
 
 import com.blogspot.mydailyjava.bytebuddy.method.MethodDescription;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.ByteCodeAppender;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.TypeSize;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assigner;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assignment;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.IllegalAssignment;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.MethodReturn;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind.IllegalMethodDelegation;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind.MethodDelegationBinder;
+import com.blogspot.mydailyjava.bytebuddy.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -58,6 +61,7 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
                                   int targetParameterIndex,
                                   MethodDescription source,
                                   MethodDescription target,
+                                  TypeDescription typeDescription,
                                   Assigner assigner);
     }
 
@@ -79,8 +83,9 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
                 public ArgumentBinder.IdentifiedBinding<?> handle(int targetParameterIndex,
                                                                   MethodDescription source,
                                                                   MethodDescription target,
+                                                                  TypeDescription typeDescription,
                                                                   Assigner assigner) {
-                    return argumentBinder.bind(annotation, targetParameterIndex, source, target, assigner);
+                    return argumentBinder.bind(annotation, targetParameterIndex, source, target, typeDescription, assigner);
                 }
             }
 
@@ -91,6 +96,7 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
                 public ArgumentBinder.IdentifiedBinding<?> handle(int targetParameterIndex,
                                                                   MethodDescription source,
                                                                   MethodDescription target,
+                                                                  TypeDescription typeDescription,
                                                                   Assigner assigner) {
                     return ArgumentBinder.IdentifiedBinding.makeIllegal();
                 }
@@ -99,6 +105,7 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
             ArgumentBinder.IdentifiedBinding<?> handle(int targetParameterIndex,
                                                        MethodDescription source,
                                                        MethodDescription target,
+                                                       TypeDescription typeDescription,
                                                        Assigner assigner);
         }
 
@@ -146,7 +153,7 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
         }
     }
 
-    private static class DelegationBuilder {
+    private static class MethodDelegationBuilder {
 
         private static class Build implements BoundMethodDelegation {
 
@@ -181,17 +188,21 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
             }
 
             @Override
-            public Size apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
+            public ByteCodeAppender.Size apply(MethodVisitor methodVisitor, MethodDescription sourceMethod) {
                 Assignment.Size argumentSize = new Assignment.Size(0, 0);
                 for (Assignment assignment : assignments) {
-                    argumentSize.aggregate(assignment.apply(methodVisitor));
+                    argumentSize = argumentSize.aggregate(assignment.apply(methodVisitor));
                 }
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
                         targetMethodDescription.getDeclaringClassInternalName(),
                         targetMethodDescription.getInternalName(),
                         targetMethodDescription.getDescriptor());
-                Assignment.Size returnSize = returningAssignment.apply(methodVisitor);
-                return new Size(Math.max(argumentSize.getMaximalSize(), returnSize.getMaximalSize()), TypeSize.sizeOf(methodDescription));
+                Assignment.Size returnSize = TypeSize.of(targetMethodDescription.getReturnType()).asAssignmentSize();
+                returnSize = returnSize.aggregate(returningAssignment.apply(methodVisitor));
+                returnSize = returnSize.aggregate(MethodReturn.returning(sourceMethod.getReturnType()).apply(methodVisitor));
+                return new ByteCodeAppender.Size(
+                        Math.max(argumentSize.getMaximalSize(), returnSize.getMaximalSize()),
+                        TypeSize.sizeOf(sourceMethod));
             }
         }
 
@@ -200,7 +211,7 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
         private final List<Assignment> assignments;
         private final Map<Object, Integer> registeredTargetIndices;
 
-        private DelegationBuilder(MethodDescription target, Assignment returningAssignment) {
+        private MethodDelegationBuilder(MethodDescription target, Assignment returningAssignment) {
             this.target = target;
             this.returningAssignment = returningAssignment;
             this.assignments = new ArrayList<Assignment>(target.getParameterTypes().length);
@@ -217,83 +228,45 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
         }
     }
 
-    public static interface AnnotationDefaultHandler {
+    public static interface AnnotationDefaultHandler<T extends Annotation> {
 
-        Iterator<? extends Annotation> makeIterator(MethodDescription source, MethodDescription target);
-    }
+        static enum Empty implements AnnotationDefaultHandler<Annotation> {
+            INSTANCE;
 
-    public static class NextUnboundSourceMethodArgumentHandler implements AnnotationDefaultHandler {
+            private static enum EmptyIterator implements Iterator<Annotation> {
+                INSTANCE;
 
-        private static class DefaultArgument implements Argument {
+                @Override
+                public boolean hasNext() {
+                    return false;
+                }
 
-            private final int parameterIndex;
+                @Override
+                public Annotation next() {
+                    throw new NoSuchElementException();
+                }
 
-            private DefaultArgument(int parameterIndex) {
-                this.parameterIndex = parameterIndex;
-            }
-
-            @Override
-            public int value() {
-                return parameterIndex;
-            }
-
-            @Override
-            public Class<Argument> annotationType() {
-                return Argument.class;
-            }
-        }
-
-        private static class NextArgumentIterator implements Iterator<Argument> {
-
-            private final Iterator<Integer> iterator;
-
-            private NextArgumentIterator(Iterator<Integer> iterator) {
-                this.iterator = iterator;
-            }
-
-            @Override
-            public boolean hasNext() {
-                return iterator.hasNext();
-            }
-
-            @Override
-            public Argument next() {
-                return new DefaultArgument(iterator.next());
-            }
-
-            @Override
-            public void remove() {
-                iterator.remove();
-            }
-        }
-
-        @Override
-        public Iterator<? extends Annotation> makeIterator(MethodDescription source, MethodDescription target) {
-            return new NextArgumentIterator(makeFreeIndexList(source, target));
-        }
-
-        private static Iterator<Integer> makeFreeIndexList(MethodDescription source, MethodDescription target) {
-            LinkedHashSet<Integer> results = new LinkedHashSet<Integer>(source.getParameterTypes().length);
-            for (int sourceIndex = 0; sourceIndex < source.getParameterTypes().length; sourceIndex++) {
-                results.add(sourceIndex);
-            }
-            for (Annotation[] parameterAnnotation : target.getParameterAnnotations()) {
-                for (Annotation aParameterAnnotation : parameterAnnotation) {
-                    if (aParameterAnnotation.annotationType() == Argument.class) {
-                        results.remove(((Argument) aParameterAnnotation).value());
-                    }
+                @Override
+                public void remove() {
+                    throw new NoSuchElementException();
                 }
             }
-            return results.iterator();
+
+            @Override
+            public Iterator<Annotation> makeIterator(MethodDescription source, MethodDescription target) {
+                return EmptyIterator.INSTANCE;
+            }
         }
+
+        Iterator<T> makeIterator(MethodDescription source, MethodDescription target);
     }
 
     private final DelegationProcessor delegationProcessor;
-    private final AnnotationDefaultHandler annotationDefaultHandler;
+    private final AnnotationDefaultHandler<?> annotationDefaultHandler;
     private final Assigner assigner;
 
     public AnnotationDrivenBinder(List<ArgumentBinder<?>> argumentBinders,
-                                  AnnotationDefaultHandler annotationDefaultHandler,
+                                  AnnotationDefaultHandler<?> annotationDefaultHandler,
                                   Assigner assigner) {
         this.delegationProcessor = new DelegationProcessor(argumentBinders);
         this.annotationDefaultHandler = annotationDefaultHandler;
@@ -301,14 +274,14 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
     }
 
     @Override
-    public BoundMethodDelegation bind(MethodDescription source, MethodDescription target) {
+    public BoundMethodDelegation bind(TypeDescription typeDescription, MethodDescription source, MethodDescription target) {
         Assignment returningAssignment = assigner.assign(target.getReturnType(),
                 source.getReturnType(),
                 target.isAnnotationPresent(RuntimeType.class));
         if (!returningAssignment.isAssignable()) {
             return IllegalMethodDelegation.INSTANCE;
         }
-        DelegationBuilder delegationBuilder = new DelegationBuilder(target, returningAssignment);
+        MethodDelegationBuilder methodDelegationBuilder = new MethodDelegationBuilder(target, returningAssignment);
         Iterator<? extends Annotation> defaults = annotationDefaultHandler.makeIterator(source, target);
         for (int targetParameterIndex = 0;
              targetParameterIndex < target.getParameterTypes().length;
@@ -318,11 +291,12 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
                     .handle(targetParameterIndex,
                             source,
                             target,
+                            typeDescription,
                             assigner);
-            if (!identifiedBinding.isValid() || !delegationBuilder.append(identifiedBinding, targetParameterIndex)) {
+            if (!identifiedBinding.isValid() || !methodDelegationBuilder.append(identifiedBinding, targetParameterIndex)) {
                 return IllegalMethodDelegation.INSTANCE;
             }
         }
-        return delegationBuilder.build();
+        return methodDelegationBuilder.build();
     }
 }
