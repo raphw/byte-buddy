@@ -47,26 +47,48 @@ public final class MethodMatchers {
         }
     }
 
-    private static class ClassNameMethodMatcher extends JunctionMethodMatcher {
+    private static class SignatureMethodMatcher extends JunctionMethodMatcher {
 
         private final Class<?> type;
 
-        public ClassNameMethodMatcher(Class<?> type) {
+        public SignatureMethodMatcher(Class<?> type) {
             this.type = type;
         }
 
         @Override
         public boolean matches(MethodDescription methodDescription) {
-            try {
-                return methodDescription.getDeclaringClass() == type || type.getDeclaredMethod(methodDescription.getName(), methodDescription.getParameterTypes()) != null;
-            } catch (NoSuchMethodException e) {
-                return false;
+            if (methodDescription.isStatic()) {
+                return methodDescription.getDeclaringClass() == type;
+            } else {
+                try {
+                    return type.getDeclaredMethod(methodDescription.getName(), methodDescription.getParameterTypes()) != null;
+                } catch (NoSuchMethodException e) {
+                    return false;
+                }
             }
         }
     }
 
-    public static JunctionMethodMatcher declaredIn(Class<?> type) {
-        return new ClassNameMethodMatcher(type);
+    public static JunctionMethodMatcher signatureIsDefinedIn(Class<?> type) {
+        return new SignatureMethodMatcher(type);
+    }
+
+    private static class OverridableMethodMethodMatcher extends JunctionMethodMatcher {
+
+        private final Class<?> type;
+
+        public OverridableMethodMethodMatcher(Class<?> type) {
+            this.type = type;
+        }
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return !methodDescription.isStatic() && methodDescription.getDeclaringClass() == type;
+        }
+    }
+
+    public static JunctionMethodMatcher isOverridableMethodIn(Class<?> type) {
+        return new OverridableMethodMethodMatcher(type);
     }
 
     private static class MethodNameMethodMatcher extends JunctionMethodMatcher {
@@ -300,6 +322,22 @@ public final class MethodMatchers {
 
     public static JunctionMethodMatcher is(Constructor<?> constructor) {
         return new ConstructorEqualityMethodMatcher(constructor);
+    }
+
+    private static class IsMethodMethodMatcher extends JunctionMethodMatcher {
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return !methodDescription.isConstructor();
+        }
+    }
+
+    public static JunctionMethodMatcher isMethod() {
+        return new IsMethodMethodMatcher();
+    }
+
+    public static JunctionMethodMatcher isConstructor() {
+        return not(isMethod());
     }
 
     private static class PackageNameMatcher extends JunctionMethodMatcher {

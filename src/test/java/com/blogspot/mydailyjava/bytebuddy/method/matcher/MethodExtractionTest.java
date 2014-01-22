@@ -78,7 +78,7 @@ public class MethodExtractionTest {
 
     @Test
     public void getInheritedInterfaceExtractionWithMatcher() {
-        MethodExtraction methodExtraction = new MethodExtraction(MethodMatchers.declaredIn(Foo.class));
+        MethodExtraction methodExtraction = new MethodExtraction(MethodMatchers.signatureIsDefinedIn(Foo.class));
         List<MethodDescription> methods = methodExtraction.extractFrom(Object.class).appendInterface(Bar.class).asList();
         assertThat(methods.size(), is(Foo.class.getDeclaredMethods().length));
         assertThat(methods, hasItems(getDeclaredJavaMethods(Foo.class)));

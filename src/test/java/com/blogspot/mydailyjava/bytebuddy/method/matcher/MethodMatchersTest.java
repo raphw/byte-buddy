@@ -16,6 +16,9 @@ public class MethodMatchersTest {
 
     private static final String FIN_METHOD_NAME = "fin";
     private static final String STAT_METHOD_NAME = "stat";
+    private static final String VARARGS_METHOD_NAME = "varargs";
+    private static final String SYNC_METHOD_NAME = "sync";
+    private static final String STRICT_METHOD_NAME = "strict";
 
     private static final String GENERIC_INTERFACE_METHOD_NAME = "gen";
 
@@ -23,6 +26,8 @@ public class MethodMatchersTest {
     private static final String BAR_METHOD_NAME_REGEX = "b[a]r";
 
     private static final String JAVA_LANG_PACKAGE = "java.lang";
+    private static final String HASH_CODE_METHOD_NAME = "hashCode";
+    private static final String FINALIZE_METHOD_NAME = "finalize";
 
     @SuppressWarnings("unused")
     private static interface TestInterface<T> {
@@ -94,6 +99,27 @@ public class MethodMatchersTest {
         }
     }
 
+    @SuppressWarnings("unused")
+    private static class TestModifier {
+
+        public synchronized void sync() {
+            /* empty */
+        }
+
+        public void varargs(Object... o) {
+            /* empty */
+        }
+
+        public strictfp void strict() {
+            /* empty */
+        }
+
+        @Override
+        protected void finalize() throws Throwable {
+            super.finalize();
+        }
+    }
+
     private MethodDescription testClassBase$foo;
     private MethodDescription testClassBase$bar;
     private MethodDescription testClassBase$baz;
@@ -110,6 +136,17 @@ public class MethodMatchersTest {
     private MethodDescription testClassExtension$qux;
     private MethodDescription testClassExtension$fin;
     private MethodDescription testClassExtension$stat;
+
+    private MethodDescription object$hashCode;
+    private MethodDescription object$finalize;
+    private MethodDescription testModifier$finalize;
+
+    private MethodDescription testModifier$sync;
+    private MethodDescription testModifier$varargs;
+    private MethodDescription testModifier$strict;
+
+    private MethodDescription testModifier$constructor;
+    private MethodDescription testClassBase$constructor;
 
     @Before
     public void setUp() throws Exception {
@@ -129,16 +166,39 @@ public class MethodMatchersTest {
         testClassExtension$qux = new MethodDescription.ForMethod(TestClassExtension.class.getDeclaredMethod(QUX_METHOD_NAME));
         testClassExtension$fin = new MethodDescription.ForMethod(TestClassExtension.class.getDeclaredMethod(FIN_METHOD_NAME + "2"));
         testClassExtension$stat = new MethodDescription.ForMethod(TestClassExtension.class.getDeclaredMethod(STAT_METHOD_NAME));
+
+        object$hashCode = new MethodDescription.ForMethod(Object.class.getDeclaredMethod(HASH_CODE_METHOD_NAME));
+        object$finalize = new MethodDescription.ForMethod(Object.class.getDeclaredMethod(FINALIZE_METHOD_NAME));
+        testModifier$finalize = new MethodDescription.ForMethod(TestModifier.class.getDeclaredMethod(FINALIZE_METHOD_NAME));
+
+        testModifier$sync = new MethodDescription.ForMethod(TestModifier.class.getDeclaredMethod(SYNC_METHOD_NAME));
+        testModifier$varargs = new MethodDescription.ForMethod(TestModifier.class.getDeclaredMethod(VARARGS_METHOD_NAME, Object[].class));
+        testModifier$strict = new MethodDescription.ForMethod(TestModifier.class.getDeclaredMethod(STRICT_METHOD_NAME));
+
+        testModifier$constructor = new MethodDescription.ForConstructor(TestModifier.class.getDeclaredConstructor());
+        testClassBase$constructor = new MethodDescription.ForConstructor(TestClassBase.class.getDeclaredConstructor());
     }
 
     @Test
-    public void testDeclaredIn() throws Exception {
-        assertThat(MethodMatchers.declaredIn(Object.class).matches(testClassBase$foo), is(false));
-        assertThat(MethodMatchers.declaredIn(TestClassBase.class).matches(testClassBase$foo), is(true));
-        assertThat(MethodMatchers.declaredIn(TestClassExtension.class).matches(testClassBase$foo), is(false));
-        assertThat(MethodMatchers.declaredIn(Object.class).matches(testClassExtension$foo), is(false));
-        assertThat(MethodMatchers.declaredIn(TestClassBase.class).matches(testClassExtension$foo), is(false));
-        assertThat(MethodMatchers.declaredIn(TestClassExtension.class).matches(testClassExtension$foo), is(true));
+    public void testSignatureIsDefinedIn() throws Exception {
+        assertThat(MethodMatchers.signatureIsDefinedIn(Object.class).matches(testClassBase$foo), is(false));
+        assertThat(MethodMatchers.signatureIsDefinedIn(TestClassBase.class).matches(testClassBase$foo), is(true));
+        assertThat(MethodMatchers.signatureIsDefinedIn(TestClassExtension.class).matches(testClassBase$foo), is(true));
+        assertThat(MethodMatchers.signatureIsDefinedIn(Object.class).matches(testClassExtension$foo), is(false));
+        assertThat(MethodMatchers.signatureIsDefinedIn(TestClassBase.class).matches(testClassExtension$foo), is(true));
+        assertThat(MethodMatchers.signatureIsDefinedIn(TestClassExtension.class).matches(testClassExtension$foo), is(true));
+        assertThat(MethodMatchers.signatureIsDefinedIn(TestClassExtension.class).matches(testClassExtension$stat), is(true));
+    }
+
+    @Test
+    public void testIsOverridableMethodIn() throws Exception {
+        assertThat(MethodMatchers.isOverridableMethodIn(Object.class).matches(testClassBase$foo), is(false));
+        assertThat(MethodMatchers.isOverridableMethodIn(TestClassBase.class).matches(testClassBase$foo), is(true));
+        assertThat(MethodMatchers.isOverridableMethodIn(TestClassExtension.class).matches(testClassBase$foo), is(false));
+        assertThat(MethodMatchers.isOverridableMethodIn(Object.class).matches(testClassExtension$foo), is(false));
+        assertThat(MethodMatchers.isOverridableMethodIn(TestClassBase.class).matches(testClassExtension$foo), is(false));
+        assertThat(MethodMatchers.isOverridableMethodIn(TestClassExtension.class).matches(testClassExtension$foo), is(true));
+        assertThat(MethodMatchers.isOverridableMethodIn(TestClassExtension.class).matches(testClassExtension$stat), is(false));
     }
 
     @Test
@@ -147,7 +207,6 @@ public class MethodMatchersTest {
         assertThat(MethodMatchers.named(FOO_METHOD_NAME).matches(testClassExtension$foo), is(true));
         assertThat(MethodMatchers.named(BAR_METHOD_NAME).matches(testClassBase$foo), is(false));
         assertThat(MethodMatchers.named(BAR_METHOD_NAME).matches(testClassExtension$foo), is(false));
-
     }
 
     @Test
@@ -283,6 +342,34 @@ public class MethodMatchersTest {
     }
 
     @Test
+    public void testIsSynchronized() throws Exception {
+        assertThat(MethodMatchers.isSynchronized().matches(testModifier$strict), is(false));
+        assertThat(MethodMatchers.isSynchronized().matches(testModifier$sync), is(true));
+        assertThat(MethodMatchers.isSynchronized().matches(testModifier$varargs), is(false));
+    }
+
+    @Test
+    public void testIsNative() throws Exception {
+        assertThat(MethodMatchers.isNative().matches(testClassExtension$stat), is(false));
+        assertThat(MethodMatchers.isNative().matches(object$hashCode), is(true));
+    }
+
+    @Test
+    public void testIsStrict() throws Exception {
+        assertThat(MethodMatchers.isStrict().matches(testModifier$strict), is(true));
+        assertThat(MethodMatchers.isStrict().matches(testModifier$sync), is(false));
+        assertThat(MethodMatchers.isStrict().matches(testModifier$varargs), is(false));
+
+    }
+
+    @Test
+    public void testIsVarArgs() throws Exception {
+        assertThat(MethodMatchers.isVarArgs().matches(testModifier$strict), is(false));
+        assertThat(MethodMatchers.isVarArgs().matches(testModifier$sync), is(false));
+        assertThat(MethodMatchers.isVarArgs().matches(testModifier$varargs), is(true));
+    }
+
+    @Test
     public void testIsSynthetic() throws Exception {
         assertThat(MethodMatchers.isSynthetic().matches(testClassBase$compareTo$synth), is(true));
         assertThat(MethodMatchers.isSynthetic().matches(testClassBase$compareTo), is(false));
@@ -325,19 +412,50 @@ public class MethodMatchersTest {
     }
 
     @Test
-    public void testIs() throws Exception {
+    public void testIsGivenMethod() throws Exception {
         assertThat(MethodMatchers.is(TestClassBase.class.getDeclaredMethod(FOO_METHOD_NAME)).matches(testClassBase$foo), is(true));
         assertThat(MethodMatchers.is(TestClassExtension.class.getDeclaredMethod(FOO_METHOD_NAME)).matches(testClassBase$foo), is(false));
         assertThat(MethodMatchers.is(TestClassBase.class.getDeclaredMethod(FOO_METHOD_NAME)).matches(testClassExtension$foo), is(false));
         assertThat(MethodMatchers.is(TestClassExtension.class.getDeclaredMethod(FOO_METHOD_NAME)).matches(testClassExtension$foo), is(true));
+
     }
 
     @Test
-    public void testIsDefinedInPackage() throws Exception{
+    public void testIsGivenConstructor() throws Exception {
+        assertThat(MethodMatchers.is(TestModifier.class.getDeclaredConstructor()).matches(testModifier$constructor), is(true));
+        assertThat(MethodMatchers.is(TestModifier.class.getDeclaredConstructor()).matches(testClassBase$constructor), is(false));
+        assertThat(MethodMatchers.is(TestClassBase.class.getDeclaredConstructor()).matches(testClassBase$foo), is(false));
+    }
+
+    @Test
+    public void testIsMethod() throws Exception {
+        assertThat(MethodMatchers.isMethod().matches(testModifier$constructor), is(false));
+        assertThat(MethodMatchers.isMethod().matches(testClassBase$constructor), is(false));
+        assertThat(MethodMatchers.isMethod().matches(testClassBase$foo), is(true));
+        assertThat(MethodMatchers.isMethod().matches(testClassBase$bar), is(true));
+    }
+
+    @Test
+    public void testIsConstructor() throws Exception {
+        assertThat(MethodMatchers.isConstructor().matches(testModifier$constructor), is(true));
+        assertThat(MethodMatchers.isConstructor().matches(testClassBase$constructor), is(true));
+        assertThat(MethodMatchers.isConstructor().matches(testClassBase$foo), is(false));
+        assertThat(MethodMatchers.isConstructor().matches(testClassBase$bar), is(false));
+    }
+
+    @Test
+    public void testIsDefinedInPackage() throws Exception {
         assertThat(MethodMatchers.isDefinedInPackage(MethodMatchersTest.class.getPackage().getName()).matches(testClassBase$foo), is(true));
         assertThat(MethodMatchers.isDefinedInPackage(MethodMatchersTest.class.getPackage().getName()).matches(testClassExtension$foo), is(true));
         assertThat(MethodMatchers.isDefinedInPackage(JAVA_LANG_PACKAGE).matches(testClassBase$foo), is(false));
         assertThat(MethodMatchers.isDefinedInPackage(JAVA_LANG_PACKAGE).matches(testClassExtension$foo), is(false));
+    }
+
+    @Test
+    public void testIsDefaultFinalize() throws Exception {
+        assertThat(MethodMatchers.isDefaultFinalize().matches(testClassBase$foo), is(false));
+        assertThat(MethodMatchers.isDefaultFinalize().matches(object$finalize), is(true));
+        assertThat(MethodMatchers.isDefaultFinalize().matches(testModifier$finalize), is(false));
     }
 
     @Test
