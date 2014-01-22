@@ -290,7 +290,7 @@ public class PrimitiveWideningDelegateLegalTest {
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
-        verify(methodVisitor).visitInsn(Opcodes.F2L);
+        verify(methodVisitor).visitInsn(Opcodes.F2D);
         verifyNoMoreInteractions(methodVisitor);
     }
 
