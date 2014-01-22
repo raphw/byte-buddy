@@ -51,7 +51,7 @@ public class VoidAwareAssigner implements Assigner {
     }
 
     @Override
-    public Assignment assign(Class<?> superType, Class subType, boolean considerRuntimeType) {
+    public Assignment assign(Class<?> superType, Class<?> subType, boolean considerRuntimeType) {
         if (superType == void.class && subType == void.class) {
             return LegalTrivialAssignment.INSTANCE;
         } else if (superType == void.class /* && !(subType == void.class) */) {

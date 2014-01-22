@@ -9,17 +9,15 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-public enum  ReferenceTypeAwareAssigner implements Assigner {
+public enum ReferenceTypeAwareAssigner implements Assigner {
     INSTANCE;
 
     private static class DownCastAssignment implements Assignment {
 
-        private static final Size NULL_SIZE = new Size(TypeSize.NONE.getSize(), TypeSize.NONE.getSize());
-
         private final String targetTypeInternalName;
 
-        private DownCastAssignment(Class<?> targetTypeInternalName) {
-            this.targetTypeInternalName = Type.getInternalName(targetTypeInternalName);
+        private DownCastAssignment(Class<?> targetType) {
+            this.targetTypeInternalName = Type.getInternalName(targetType);
         }
 
         @Override
@@ -30,16 +28,22 @@ public enum  ReferenceTypeAwareAssigner implements Assigner {
         @Override
         public Size apply(MethodVisitor methodVisitor) {
             methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, targetTypeInternalName);
-            return NULL_SIZE;
+            return TypeSize.NONE.toIncreasingSize();
         }
     }
 
     @Override
-    public Assignment assign(Class<?> superType, Class subType, boolean considerRuntimeType) {
-        if (superType.isAssignableFrom(subType)) {
+    public Assignment assign(Class<?> superType, Class<?> subType, boolean considerRuntimeType) {
+        if (superType.isPrimitive() || subType.isPrimitive()) {
+            if (superType == subType) {
+                return LegalTrivialAssignment.INSTANCE;
+            } else {
+                return IllegalAssignment.INSTANCE;
+            }
+        } else if (superType.isAssignableFrom(subType)) {
             return LegalTrivialAssignment.INSTANCE;
         } else if (considerRuntimeType) {
-            return new DownCastAssignment(subType);
+            return new DownCastAssignment(superType);
         } else {
             return IllegalAssignment.INSTANCE;
         }

@@ -12,7 +12,7 @@ public class PrimitiveTypeAwareAssigner implements Assigner {
     }
 
     @Override
-    public Assignment assign(Class<?> superType, Class subType, boolean considerRuntimeType) {
+    public Assignment assign(Class<?> superType, Class<?> subType, boolean considerRuntimeType) {
         if (superType.isPrimitive() && subType.isPrimitive()) {
             return PrimitiveWideningDelegate.forPrimitive(superType).widenTo(subType);
         } else if (superType.isPrimitive() /* && !subType.isPrimitive() */) {
