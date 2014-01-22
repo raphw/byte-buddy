@@ -35,7 +35,7 @@ public enum PrimitiveBoxingDelegate {
         } else if (type == double.class) {
             return DOUBLE;
         } else {
-            throw new IllegalStateException("Not a primitive type: " + type);
+            throw new IllegalArgumentException("Not a non-void, primitive type: " + type);
         }
     }
 
