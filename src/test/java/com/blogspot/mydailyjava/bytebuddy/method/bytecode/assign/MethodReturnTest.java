@@ -25,7 +25,7 @@ public class MethodReturnTest {
         Assignment assignment = MethodReturn.returning(void.class);
         assertThat(assignment.isAssignable(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
-        assertThat(size.getSize(), is(0));
+        assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
         verify(methodVisitor).visitInsn(Opcodes.RETURN);
         verifyNoMoreInteractions(methodVisitor);
@@ -36,7 +36,7 @@ public class MethodReturnTest {
         Assignment assignment = MethodReturn.returning(Object.class);
         assertThat(assignment.isAssignable(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
-        assertThat(size.getSize(), is(-1));
+        assertThat(size.getSizeImpact(), is(-1));
         assertThat(size.getMaximalSize(), is(0));
         verify(methodVisitor).visitInsn(Opcodes.ARETURN);
         verifyNoMoreInteractions(methodVisitor);
@@ -47,7 +47,7 @@ public class MethodReturnTest {
         Assignment assignment = MethodReturn.returning(long.class);
         assertThat(assignment.isAssignable(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
-        assertThat(size.getSize(), is(-2));
+        assertThat(size.getSizeImpact(), is(-2));
         assertThat(size.getMaximalSize(), is(0));
         verify(methodVisitor).visitInsn(Opcodes.LRETURN);
         verifyNoMoreInteractions(methodVisitor);
@@ -58,7 +58,7 @@ public class MethodReturnTest {
         Assignment assignment = MethodReturn.returning(double.class);
         assertThat(assignment.isAssignable(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
-        assertThat(size.getSize(), is(-2));
+        assertThat(size.getSizeImpact(), is(-2));
         assertThat(size.getMaximalSize(), is(0));
         verify(methodVisitor).visitInsn(Opcodes.DRETURN);
         verifyNoMoreInteractions(methodVisitor);
@@ -69,7 +69,7 @@ public class MethodReturnTest {
         Assignment assignment = MethodReturn.returning(float.class);
         assertThat(assignment.isAssignable(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
-        assertThat(size.getSize(), is(-1));
+        assertThat(size.getSizeImpact(), is(-1));
         assertThat(size.getMaximalSize(), is(0));
         verify(methodVisitor).visitInsn(Opcodes.FRETURN);
         verifyNoMoreInteractions(methodVisitor);
@@ -80,7 +80,7 @@ public class MethodReturnTest {
         Assignment assignment = MethodReturn.returning(int.class);
         assertThat(assignment.isAssignable(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
-        assertThat(size.getSize(), is(-1));
+        assertThat(size.getSizeImpact(), is(-1));
         assertThat(size.getMaximalSize(), is(0));
         verify(methodVisitor).visitInsn(Opcodes.IRETURN);
         verifyNoMoreInteractions(methodVisitor);

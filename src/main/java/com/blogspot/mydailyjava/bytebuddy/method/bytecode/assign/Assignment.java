@@ -6,20 +6,20 @@ public interface Assignment {
 
     static class Size {
 
-        private final int size;
+        private final int sizeImpact;
         private final int maximalSize;
 
         public Size(int size) {
             this(size, size);
         }
 
-        public Size(int size, int maximalSize) {
-            this.size = size;
+        public Size(int sizeImpact, int maximalSize) {
+            this.sizeImpact = sizeImpact;
             this.maximalSize = maximalSize;
         }
 
-        public int getSize() {
-            return size;
+        public int getSizeImpact() {
+            return sizeImpact;
         }
 
         public int getMaximalSize() {
@@ -27,11 +27,11 @@ public interface Assignment {
         }
 
         public Size aggregate(Size other) {
-            return aggregate(other.size, other.maximalSize);
+            return aggregate(other.sizeImpact, other.maximalSize);
         }
 
         public Size aggregate(int sizeChange, int interimMaximalSize) {
-            return new Size(size + sizeChange, Math.max(maximalSize, size + interimMaximalSize));
+            return new Size(sizeImpact + sizeChange, Math.max(maximalSize, sizeImpact + interimMaximalSize));
         }
     }
 

@@ -18,7 +18,7 @@ import static org.mockito.Mockito.*;
 public class MethodArgumentTest {
 
     @Parameterized.Parameters
-    public static Collection<Object[]> data() {
+    public static Collection<Object[]> assignments() {
         return Arrays.asList(new Object[][]{
                 {Object.class, Opcodes.ALOAD, 1},
                 {Object[].class, Opcodes.AALOAD, 1},
@@ -51,7 +51,7 @@ public class MethodArgumentTest {
         Assignment assignment = MethodArgument.forType(type).loadFromIndex(4);
         assertThat(assignment.isAssignable(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
-        assertThat(size.getSize(), is(this.size));
+        assertThat(size.getSizeImpact(), is(this.size));
         assertThat(size.getMaximalSize(), is(this.size));
         verify(methodVisitor).visitVarInsn(opcode, 4);
         verifyNoMoreInteractions(methodVisitor);

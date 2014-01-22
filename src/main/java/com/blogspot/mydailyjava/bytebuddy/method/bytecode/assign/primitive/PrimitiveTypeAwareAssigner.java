@@ -5,10 +5,10 @@ import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assignment;
 
 public class PrimitiveTypeAwareAssigner implements Assigner {
 
-    private final Assigner nonPrimitiveAwareAssigner;
+    private final Assigner referenceTypeAwareAssigner;
 
-    public PrimitiveTypeAwareAssigner(Assigner nonPrimitiveAwareAssigner) {
-        this.nonPrimitiveAwareAssigner = nonPrimitiveAwareAssigner;
+    public PrimitiveTypeAwareAssigner(Assigner referenceTypeAwareAssigner) {
+        this.referenceTypeAwareAssigner = referenceTypeAwareAssigner;
     }
 
     @Override
@@ -16,11 +16,11 @@ public class PrimitiveTypeAwareAssigner implements Assigner {
         if (superType.isPrimitive() && subType.isPrimitive()) {
             return PrimitiveWideningDelegate.forPrimitive(superType).widenTo(subType);
         } else if (superType.isPrimitive() /* && !subType.isPrimitive() */) {
-            return PrimitiveUnboxingDelegate.forPrimitive(superType).boxAndAssignTo(subType, nonPrimitiveAwareAssigner, considerRuntimeType);
+            return PrimitiveBoxingDelegate.forPrimitive(superType).assignBoxedTo(subType, referenceTypeAwareAssigner, considerRuntimeType);
         } else if (/* !superType.isPrimitive() && */ subType.isPrimitive()) {
-            return PrimitiveUnboxingDelegate.forNonPrimitive(superType).unboxAndAssignTo(subType, nonPrimitiveAwareAssigner, considerRuntimeType);
+            return PrimitiveUnboxingDelegate.forReferenceType(superType).assignUnboxedTo(subType, referenceTypeAwareAssigner, considerRuntimeType);
         } else /* !superType.isPrimitive() && !subType.isPrimitive()) */ {
-            return nonPrimitiveAwareAssigner.assign(superType, subType, considerRuntimeType);
+            return referenceTypeAwareAssigner.assign(superType, subType, considerRuntimeType);
         }
     }
 }

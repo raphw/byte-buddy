@@ -25,7 +25,7 @@ public enum SuperClassDelegation implements ByteCodeAppender.Factory {
             Assignment.Size size = new Assignment.Size(1, 1);
             for (Class<?> parameterType : methodDescription.getParameterTypes()) {
                 size = size.aggregate(MethodArgument.forType(parameterType)
-                        .loadFromIndex(size.getSize()).apply(methodVisitor));
+                        .loadFromIndex(size.getSizeImpact()).apply(methodVisitor));
             }
             methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,
                     superClassInternalName,

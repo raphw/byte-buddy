@@ -18,7 +18,7 @@ import static org.mockito.Mockito.*;
 public class MethodArgumentShortcutTest {
 
     @Parameterized.Parameters
-    public static Collection<Object[]> data() {
+    public static Collection<Object[]> shortcutAssignments() {
         return Arrays.asList(new Object[][]{
                 {Object.class, 0, MoreOpcodes.ALOAD_0, 1},
                 {Object.class, 1, MoreOpcodes.ALOAD_1, 1},
@@ -67,7 +67,7 @@ public class MethodArgumentShortcutTest {
         Assignment assignment = MethodArgument.forType(type).loadFromIndex(index);
         assertThat(assignment.isAssignable(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
-        assertThat(size.getSize(), is(this.size));
+        assertThat(size.getSizeImpact(), is(this.size));
         assertThat(size.getMaximalSize(), is(this.size));
         verify(methodVisitor).visitInsn(opcode);
         verifyNoMoreInteractions(methodVisitor);

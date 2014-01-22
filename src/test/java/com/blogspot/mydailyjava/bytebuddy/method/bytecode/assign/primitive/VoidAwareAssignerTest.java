@@ -28,7 +28,7 @@ public class VoidAwareAssignerTest {
         Assignment assignment = voidAware.assign(void.class, void.class, false);
         assertThat(assignment.isAssignable(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
-        assertThat(size.getSize(), is(0));
+        assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
         verifyZeroInteractions(assigner);
         verifyZeroInteractions(methodVisitor);
@@ -48,7 +48,7 @@ public class VoidAwareAssignerTest {
         Assignment assignment = voidAware.assign(void.class, Object.class, false);
         assertThat(assignment.isAssignable(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
-        assertThat(size.getSize(), is(1));
+        assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
         verifyZeroInteractions(assigner);
         verify(methodVisitor).visitInsn(Opcodes.ACONST_NULL);
@@ -69,7 +69,7 @@ public class VoidAwareAssignerTest {
         Assignment assignment = voidAware.assign(void.class, long.class, false);
         assertThat(assignment.isAssignable(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
-        assertThat(size.getSize(), is(2));
+        assertThat(size.getSizeImpact(), is(2));
         assertThat(size.getMaximalSize(), is(2));
         verifyZeroInteractions(assigner);
         verify(methodVisitor).visitInsn(Opcodes.LCONST_0);
@@ -82,7 +82,7 @@ public class VoidAwareAssignerTest {
         Assignment assignment = voidAware.assign(Object.class, void.class, false);
         assertThat(assignment.isAssignable(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
-        assertThat(size.getSize(), is(-1));
+        assertThat(size.getSizeImpact(), is(-1));
         assertThat(size.getMaximalSize(), is(0));
         verifyZeroInteractions(assigner);
         verify(methodVisitor).visitInsn(Opcodes.POP);
@@ -95,7 +95,7 @@ public class VoidAwareAssignerTest {
         Assignment assignment = voidAware.assign(long.class, void.class, false);
         assertThat(assignment.isAssignable(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
-        assertThat(size.getSize(), is(-2));
+        assertThat(size.getSizeImpact(), is(-2));
         assertThat(size.getMaximalSize(), is(0));
         verifyZeroInteractions(assigner);
         verify(methodVisitor).visitInsn(Opcodes.POP2);

@@ -25,7 +25,7 @@ public class ReferenceTypeAwareAssignerTest {
         Assignment assignment = ReferenceTypeAwareAssigner.INSTANCE.assign(Object.class, Object.class, false);
         assertThat(assignment.isAssignable(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
-        assertThat(size.getSize(), is(0));
+        assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
         verifyZeroInteractions(methodVisitor);
     }
@@ -35,7 +35,7 @@ public class ReferenceTypeAwareAssignerTest {
         Assignment assignment = ReferenceTypeAwareAssigner.INSTANCE.assign(Object.class, Integer.class, false);
         assertThat(assignment.isAssignable(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
-        assertThat(size.getSize(), is(0));
+        assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
         verifyZeroInteractions(methodVisitor);
     }
@@ -52,7 +52,7 @@ public class ReferenceTypeAwareAssignerTest {
         Assignment assignment = ReferenceTypeAwareAssigner.INSTANCE.assign(Integer.class, Object.class, true);
         assertThat(assignment.isAssignable(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
-        assertThat(size.getSize(), is(0));
+        assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
         verify(methodVisitor).visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(Integer.class));
         verifyNoMoreInteractions(methodVisitor);
@@ -63,7 +63,7 @@ public class ReferenceTypeAwareAssignerTest {
         Assignment assignment = ReferenceTypeAwareAssigner.INSTANCE.assign(int.class, int.class, false);
         assertThat(assignment.isAssignable(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
-        assertThat(size.getSize(), is(0));
+        assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
         verifyZeroInteractions(methodVisitor);
     }

@@ -23,7 +23,7 @@ public class DefaultValueTest {
         Assignment assignment = DefaultValue.load(void.class);
         assertThat(assignment.isAssignable(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
-        assertThat(size.getSize(), is(0));
+        assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
         verifyZeroInteractions(methodVisitor);
     }
@@ -33,7 +33,7 @@ public class DefaultValueTest {
         Assignment assignment = DefaultValue.load(int.class);
         assertThat(assignment.isAssignable(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
-        assertThat(size.getSize(), is(1));
+        assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
         verify(methodVisitor).visitInsn(Opcodes.ICONST_0);
         verifyNoMoreInteractions(methodVisitor);
@@ -44,7 +44,7 @@ public class DefaultValueTest {
         Assignment assignment = DefaultValue.load(long.class);
         assertThat(assignment.isAssignable(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
-        assertThat(size.getSize(), is(2));
+        assertThat(size.getSizeImpact(), is(2));
         assertThat(size.getMaximalSize(), is(2));
         verify(methodVisitor).visitInsn(Opcodes.LCONST_0);
         verifyNoMoreInteractions(methodVisitor);
@@ -55,7 +55,7 @@ public class DefaultValueTest {
         Assignment assignment = DefaultValue.load(float.class);
         assertThat(assignment.isAssignable(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
-        assertThat(size.getSize(), is(1));
+        assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
         verify(methodVisitor).visitInsn(Opcodes.FCONST_0);
         verifyNoMoreInteractions(methodVisitor);
@@ -66,7 +66,7 @@ public class DefaultValueTest {
         Assignment assignment = DefaultValue.load(double.class);
         assertThat(assignment.isAssignable(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
-        assertThat(size.getSize(), is(2));
+        assertThat(size.getSizeImpact(), is(2));
         assertThat(size.getMaximalSize(), is(2));
         verify(methodVisitor).visitInsn(Opcodes.DCONST_0);
         verifyNoMoreInteractions(methodVisitor);
@@ -77,7 +77,7 @@ public class DefaultValueTest {
         Assignment assignment = DefaultValue.load(Object.class);
         assertThat(assignment.isAssignable(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
-        assertThat(size.getSize(), is(1));
+        assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
         verify(methodVisitor).visitInsn(Opcodes.ACONST_NULL);
         verifyNoMoreInteractions(methodVisitor);
