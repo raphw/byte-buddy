@@ -47,6 +47,6 @@ public enum MethodReturn implements Assignment {
     @Override
     public Size apply(MethodVisitor methodVisitor) {
         methodVisitor.visitInsn(returnOpcode);
-        return new Size(-1 * typeSize.getSize(), 0);
+        return typeSize.toDecreasingSize();
     }
 }

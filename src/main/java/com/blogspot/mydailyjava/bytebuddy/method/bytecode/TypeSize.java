@@ -44,7 +44,11 @@ public enum TypeSize {
         return size;
     }
 
-    public Assignment.Size asAssignmentSize() {
+    public Assignment.Size toIncreasingSize() {
         return new Assignment.Size(getSize(), getSize());
+    }
+
+    public Assignment.Size toDecreasingSize() {
+        return new Assignment.Size(-1 * getSize(), 0);
     }
 }

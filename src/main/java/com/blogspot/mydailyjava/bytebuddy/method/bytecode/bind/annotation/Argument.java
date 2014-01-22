@@ -35,7 +35,7 @@ public @interface Argument {
             Class<?> targetType = target.getParameterTypes()[targetParameterIndex];
             return IdentifiedBinding.makeIdentified(
                     new Assignment.Compound(
-                            MethodArgument.forType(sourceType).loadingIndex(sourceArgument.value() + 1),
+                            MethodArgument.forType(sourceType).loadFromIndex(sourceArgument.value() + 1),
                             assigner.assign(sourceType, targetType, isRuntimeType(target, targetParameterIndex))),
                     new MostSpecificTypeResolver.ParameterIndexToken(targetParameterIndex));
         }

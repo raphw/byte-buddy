@@ -1,16 +1,17 @@
 package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign;
 
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.TypeSize;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 public enum DefaultValue implements Assignment {
 
-    INTEGER(Opcodes.ICONST_0, new Size(0, 1)),
-    LONG(Opcodes.LCONST_0, new Size(0, 2)),
-    FLOAT(Opcodes.FCONST_0, new Size(0, 1)),
-    DOUBLE(Opcodes.DCONST_0, new Size(0, 2)),
-    VOID(-1, new Size(0, 0)),
-    ANY_REFERENCE(Opcodes.ACONST_NULL, new Size(0, 1));
+    INTEGER(Opcodes.ICONST_0, TypeSize.SINGLE.toIncreasingSize()),
+    LONG(Opcodes.LCONST_0, TypeSize.DOUBLE.toIncreasingSize()),
+    FLOAT(Opcodes.FCONST_0, TypeSize.SINGLE.toIncreasingSize()),
+    DOUBLE(Opcodes.DCONST_0, TypeSize.DOUBLE.toIncreasingSize()),
+    VOID(-1, TypeSize.NONE.toIncreasingSize()),
+    ANY_REFERENCE(Opcodes.ACONST_NULL, TypeSize.SINGLE.toIncreasingSize());
 
     public static DefaultValue load(Class<?> type) {
         if (type.isPrimitive()) {

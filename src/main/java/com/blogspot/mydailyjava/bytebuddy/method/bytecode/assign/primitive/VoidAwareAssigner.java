@@ -9,16 +9,16 @@ public class VoidAwareAssigner implements Assigner {
 
     private static enum ValueRemovingAssignment implements Assignment {
 
-        POP_ONE_VALUE(Opcodes.POP, new Size(TypeSize.SINGLE.getSize(), TypeSize.NONE.getSize())),
-        POP_TWO_VALUES(Opcodes.POP2, new Size(TypeSize.DOUBLE.getSize(), TypeSize.NONE.getSize()));
+        POP_ONE_FRAME(Opcodes.POP, TypeSize.SINGLE.toDecreasingSize()),
+        POP_TWO_FRAMES(Opcodes.POP2, TypeSize.DOUBLE.toDecreasingSize());
 
         public static ValueRemovingAssignment of(Class<?> type) {
             if (type == long.class || type == double.class) {
-                return POP_TWO_VALUES;
+                return POP_TWO_FRAMES;
             } else if (type == void.class) {
                 throw new IllegalArgumentException("Cannot pop void type from stack");
             } else {
-                return POP_ONE_VALUE;
+                return POP_ONE_FRAME;
             }
         }
 

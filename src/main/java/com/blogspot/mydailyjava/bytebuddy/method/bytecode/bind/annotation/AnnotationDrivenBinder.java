@@ -197,7 +197,7 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
                         targetMethodDescription.getDeclaringClassInternalName(),
                         targetMethodDescription.getInternalName(),
                         targetMethodDescription.getDescriptor());
-                Assignment.Size returnSize = TypeSize.of(targetMethodDescription.getReturnType()).asAssignmentSize();
+                Assignment.Size returnSize = TypeSize.of(targetMethodDescription.getReturnType()).toIncreasingSize();
                 returnSize = returnSize.aggregate(returningAssignment.apply(methodVisitor));
                 returnSize = returnSize.aggregate(MethodReturn.returning(sourceMethod.getReturnType()).apply(methodVisitor));
                 return new ByteCodeAppender.Size(

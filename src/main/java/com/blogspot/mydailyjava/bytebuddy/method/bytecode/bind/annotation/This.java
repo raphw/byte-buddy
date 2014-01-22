@@ -36,7 +36,7 @@ public @interface This {
             while(!assignment.isAssignable() && interfaces.hasNext()) {
                 assignment = assigner.assign(interfaces.next(), targetType, runtimeType);
             }
-            return IdentifiedBinding.makeAnonymous(MethodArgument.OBJECT_REFERENCE.loadingIndex(0));
+            return IdentifiedBinding.makeAnonymous(MethodArgument.OBJECT_REFERENCE.loadFromIndex(0));
         }
 
         private static boolean isRuntimeType(MethodDescription methodDescription, int parameterIndex) {
