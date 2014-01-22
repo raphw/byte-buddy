@@ -253,12 +253,14 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
             }
 
             @Override
-            public Iterator<Annotation> makeIterator(MethodDescription source, MethodDescription target) {
+            public Iterator<Annotation> makeIterator(TypeDescription typeDescription,
+                                                     MethodDescription source,
+                                                     MethodDescription target) {
                 return EmptyIterator.INSTANCE;
             }
         }
 
-        Iterator<T> makeIterator(MethodDescription source, MethodDescription target);
+        Iterator<T> makeIterator(TypeDescription typeDescription, MethodDescription source, MethodDescription target);
     }
 
     private final DelegationProcessor delegationProcessor;
@@ -282,7 +284,7 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
             return IllegalMethodDelegation.INSTANCE;
         }
         MethodDelegationBuilder methodDelegationBuilder = new MethodDelegationBuilder(target, returningAssignment);
-        Iterator<? extends Annotation> defaults = annotationDefaultHandler.makeIterator(source, target);
+        Iterator<? extends Annotation> defaults = annotationDefaultHandler.makeIterator(typeDescription, source, target);
         for (int targetParameterIndex = 0;
              targetParameterIndex < target.getParameterTypes().length;
              targetParameterIndex++) {

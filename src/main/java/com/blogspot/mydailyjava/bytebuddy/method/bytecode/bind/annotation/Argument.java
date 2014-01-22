@@ -97,7 +97,7 @@ public @interface Argument {
         }
 
         @Override
-        public Iterator<Argument> makeIterator(MethodDescription source, MethodDescription target) {
+        public Iterator<Argument> makeIterator(TypeDescription typeDescription, MethodDescription source, MethodDescription target) {
             return new NextUnboundArgumentIterator(makeFreeIndexList(source, target));
         }
 
