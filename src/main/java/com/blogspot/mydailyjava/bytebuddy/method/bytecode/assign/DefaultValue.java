@@ -6,12 +6,12 @@ import org.objectweb.asm.Opcodes;
 
 public enum DefaultValue implements Assignment {
 
-    INTEGER(Opcodes.ICONST_0, TypeSize.SINGLE.toIncreasingSize()),
-    LONG(Opcodes.LCONST_0, TypeSize.DOUBLE.toIncreasingSize()),
-    FLOAT(Opcodes.FCONST_0, TypeSize.SINGLE.toIncreasingSize()),
-    DOUBLE(Opcodes.DCONST_0, TypeSize.DOUBLE.toIncreasingSize()),
-    VOID(-1, TypeSize.NONE.toIncreasingSize()),
-    ANY_REFERENCE(Opcodes.ACONST_NULL, TypeSize.SINGLE.toIncreasingSize());
+    INTEGER(Opcodes.ICONST_0, TypeSize.SINGLE),
+    LONG(Opcodes.LCONST_0, TypeSize.DOUBLE),
+    FLOAT(Opcodes.FCONST_0, TypeSize.SINGLE),
+    DOUBLE(Opcodes.DCONST_0, TypeSize.DOUBLE),
+    VOID(-1, TypeSize.NONE),
+    ANY_REFERENCE(Opcodes.ACONST_NULL, TypeSize.SINGLE);
 
     public static DefaultValue load(Class<?> type) {
         if (type.isPrimitive()) {
@@ -34,9 +34,9 @@ public enum DefaultValue implements Assignment {
     private final int opcode;
     private final Size size;
 
-    private DefaultValue(int opcode, Size size) {
+    private DefaultValue(int opcode, TypeSize typeSize) {
         this.opcode = opcode;
-        this.size = size;
+        this.size = typeSize.toIncreasingSize();
     }
 
     @Override

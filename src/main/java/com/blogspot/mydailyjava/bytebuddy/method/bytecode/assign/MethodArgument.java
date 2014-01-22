@@ -37,12 +37,12 @@ public enum MethodArgument {
 
     private final int loadOpcode;
     private final int loadOpcodeShortcutIndex;
-    private final TypeSize typeSize;
+    private final Assignment.Size size;
 
     private MethodArgument(int loadOpcode, int loadOpcodeShortcutIndex, TypeSize typeSize) {
         this.loadOpcode = loadOpcode;
         this.loadOpcodeShortcutIndex = loadOpcodeShortcutIndex;
-        this.typeSize = typeSize;
+        this.size = typeSize.toIncreasingSize();
     }
 
     private class ArgumentLoadingAssignment implements Assignment {
@@ -81,7 +81,7 @@ public enum MethodArgument {
             } else {
                 methodVisitor.visitVarInsn(loadOpcode, variableIndex);
             }
-            return new Size(typeSize.getSize(), typeSize.getSize());
+            return size;
         }
     }
 
