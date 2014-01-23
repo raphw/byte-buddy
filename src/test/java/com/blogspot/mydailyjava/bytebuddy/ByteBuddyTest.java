@@ -1,8 +1,13 @@
 package com.blogspot.mydailyjava.bytebuddy;
 
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.SuperClassDelegation;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind.annotation.Argument;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind.annotation.This;
 import org.junit.Test;
+
+import java.util.Arrays;
+
+import static com.blogspot.mydailyjava.bytebuddy.method.matcher.MethodMatchers.named;
 
 public class ByteBuddyTest {
 
@@ -27,9 +32,9 @@ public class ByteBuddyTest {
             return "Interception: " + x;
         }
 
-        public static String intercept(@Argument(0) String x, @Argument(1) int y) {
-            return "Interception: " + x + y;
-        }
+//        public static String intercept(@Argument(0) String x, @Argument(1) int y) {
+//            return "Interception: " + x + y;
+//        }
 
         public static String test(@Argument(0) String x, @Argument(1) int y, @This Bar bar) {
             return "Interception + test: " + x + y + " " + bar.toString();
@@ -38,18 +43,18 @@ public class ByteBuddyTest {
 
     @Test
     public void testSubclass() throws Exception {
-//        Bar object = ByteBuddy.make()
-////                .withAppendedClassVisitorWrapper(new DebuggingWrapper(System.out))
-//                .subclass(Bar.class)
-//                .method(named("hashCode")).intercept(StubMethod.INSTANCE)
-////                .method(returns(String.class).and(takesArguments(String.class, int.class))).intercept(MethodDelegation.to(Delegate.class))
-//                .make()
-//                .load(getClass().getClassLoader())
-//                .newInstance();
-//        System.out.println(Arrays.asList(object.getClass().getDeclaredMethods()));
+        Bar object = ByteBuddy.make()
+//                .withAppendedClassVisitorWrapper(new DebuggingWrapper(System.out))
+                .subclass(Bar.class)
+                .method(named("test")).intercept(SuperClassDelegation.INSTANCE)
+//                .method(returns(String.class).and(takesArguments(String.class, int.class))).intercept(MethodDelegation.to(Delegate.class))
+                .make()
+                .load(getClass().getClassLoader())
+                .newInstance();
+        System.out.println(Arrays.asList(object.getClass().getDeclaredMethods()));
 //        System.out.println(object.getClass());
 //        System.out.println(object.getClass().getSuperclass());
-//        System.out.println(object.test("a", 10));
+        System.out.println(object.test("a", 10));
 
     }
 }

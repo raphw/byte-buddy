@@ -6,9 +6,12 @@ import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assignment;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.MethodArgument;
 import com.blogspot.mydailyjava.bytebuddy.type.TypeDescription;
 
-import java.lang.annotation.Annotation;
+import java.lang.annotation.*;
 import java.util.Iterator;
 
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.PARAMETER, ElementType.METHOD})
 public @interface This {
 
     static enum Binder implements AnnotationDrivenBinder.ArgumentBinder<This> {
@@ -26,26 +29,23 @@ public @interface This {
                                          MethodDescription target,
                                          TypeDescription typeDescription,
                                          Assigner assigner) {
-            if(source.isStatic()) {
+            Class<?> targetType = target.getParameterTypes()[targetParameterIndex];
+            if (targetType.isPrimitive()) {
+                throw new IllegalStateException(String.format("The %d. argument of %s is a primitive type " +
+                        "and can never be bound to an instance", targetParameterIndex, target));
+            } else if(targetType.isArray()) {
+                throw new IllegalStateException(String.format("The %d. argument of %s is an array type " +
+                        "and can never be bound to an instance", targetParameterIndex, target));
+            } else if (source.isStatic()) {
                 return IdentifiedBinding.makeIllegal();
             }
-            Class<?> targetType = target.getParameterTypes()[targetParameterIndex];
-            boolean runtimeType = isRuntimeType(target, targetParameterIndex);
+            boolean runtimeType = RuntimeType.Verifier.check(target, targetParameterIndex);
             Assignment assignment = assigner.assign(typeDescription.getSuperClass(), targetType, runtimeType);
             Iterator<Class<?>> interfaces = typeDescription.getInterfaces().iterator();
-            while(!assignment.isAssignable() && interfaces.hasNext()) {
+            while (!assignment.isAssignable() && interfaces.hasNext()) {
                 assignment = assigner.assign(interfaces.next(), targetType, runtimeType);
             }
-            return IdentifiedBinding.makeAnonymous(MethodArgument.OBJECT_REFERENCE.loadFromIndex(0));
-        }
-
-        private static boolean isRuntimeType(MethodDescription methodDescription, int parameterIndex) {
-            for (Annotation annotation : methodDescription.getParameterAnnotations()[parameterIndex]) {
-                if (annotation.annotationType() == RuntimeType.class) {
-                    return true;
-                }
-            }
-            return false;
+            return IdentifiedBinding.makeAnonymous(new Assignment.Compound(MethodArgument.OBJECT_REFERENCE.loadFromIndex(0), assignment));
         }
     }
 }

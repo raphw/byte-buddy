@@ -7,10 +7,13 @@ import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.MethodArgument;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind.MostSpecificTypeResolver;
 import com.blogspot.mydailyjava.bytebuddy.type.TypeDescription;
 
-import java.lang.annotation.Annotation;
+import java.lang.annotation.*;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.PARAMETER, ElementType.METHOD})
 public @interface Argument {
 
     static enum Binder implements AnnotationDrivenBinder.ArgumentBinder<Argument> {
@@ -22,31 +25,39 @@ public @interface Argument {
         }
 
         @Override
-        public IdentifiedBinding<?> bind(Argument sourceArgument,
+        public IdentifiedBinding<?> bind(Argument sourceParameterIndex,
                                          int targetParameterIndex,
                                          MethodDescription source,
                                          MethodDescription target,
                                          TypeDescription typeDescription,
                                          Assigner assigner) {
-            if (source.getParameterTypes().length < sourceArgument.value()) {
+            if (sourceParameterIndex.value() < 0) {
+                throw new IllegalArgumentException(String.format("Argument annotation on %d's argument of " +
+                        "%s holds negative index", targetParameterIndex, target));
+            } else if (source.getParameterTypes().length <= sourceParameterIndex.value()) {
                 return IdentifiedBinding.makeIllegal();
             }
-            Class<?> sourceType = source.getParameterTypes()[sourceArgument.value()];
-            Class<?> targetType = target.getParameterTypes()[targetParameterIndex];
-            return IdentifiedBinding.makeIdentified(
-                    new Assignment.Compound(
-                            MethodArgument.forType(sourceType).loadFromIndex(sourceArgument.value() + 1),
-                            assigner.assign(sourceType, targetType, isRuntimeType(target, targetParameterIndex))),
-                    new MostSpecificTypeResolver.ParameterIndexToken(targetParameterIndex));
+            return makeBinding(source.getParameterTypes()[sourceParameterIndex.value()],
+                    target.getParameterTypes()[targetParameterIndex],
+                    sourceParameterIndex.value(),
+                    targetParameterIndex,
+                    assigner,
+                    RuntimeType.Verifier.check(target, targetParameterIndex),
+                    source.isStatic() ? 0 : 1);
         }
 
-        private static boolean isRuntimeType(MethodDescription methodDescription, int parameterIndex) {
-            for (Annotation annotation : methodDescription.getParameterAnnotations()[parameterIndex]) {
-                if (annotation.annotationType() == RuntimeType.class) {
-                    return true;
-                }
-            }
-            return false;
+        private static IdentifiedBinding<?> makeBinding(Class<?> sourceType,
+                                                        Class<?> targetType,
+                                                        int sourceParameterIndex,
+                                                        int targetParameterIndex,
+                                                        Assigner assigner,
+                                                        boolean considerRuntimeType,
+                                                        int sourceParameterOffset) {
+            return IdentifiedBinding.makeIdentified(
+                    new Assignment.Compound(
+                            MethodArgument.forType(sourceType).loadFromIndex(sourceParameterIndex + sourceParameterOffset),
+                            assigner.assign(sourceType, targetType, considerRuntimeType)),
+                    new MostSpecificTypeResolver.ParameterIndexToken(targetParameterIndex));
         }
     }
 
@@ -110,6 +121,7 @@ public @interface Argument {
                 for (Annotation aParameterAnnotation : parameterAnnotation) {
                     if (aParameterAnnotation.annotationType() == Argument.class) {
                         results.remove(((Argument) aParameterAnnotation).value());
+                        break;
                     }
                 }
             }
