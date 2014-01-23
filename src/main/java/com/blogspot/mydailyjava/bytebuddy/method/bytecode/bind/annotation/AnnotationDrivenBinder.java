@@ -65,6 +65,41 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
                                   Assigner assigner);
     }
 
+    public static interface AnnotationDefaultHandler<T extends Annotation> {
+
+        static enum Empty implements AnnotationDefaultHandler<Annotation> {
+            INSTANCE;
+
+            private static enum EmptyIterator implements Iterator<Annotation> {
+                INSTANCE;
+
+                @Override
+                public boolean hasNext() {
+                    return false;
+                }
+
+                @Override
+                public Annotation next() {
+                    throw new NoSuchElementException();
+                }
+
+                @Override
+                public void remove() {
+                    throw new NoSuchElementException();
+                }
+            }
+
+            @Override
+            public Iterator<Annotation> makeIterator(TypeDescription typeDescription,
+                                                     MethodDescription source,
+                                                     MethodDescription target) {
+                return EmptyIterator.INSTANCE;
+            }
+        }
+
+        Iterator<T> makeIterator(TypeDescription typeDescription, MethodDescription source, MethodDescription target);
+    }
+
     private static class DelegationProcessor {
 
         private static interface Handler {
@@ -226,41 +261,6 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
         public BoundMethodDelegation build() {
             return new Build(target, returningAssignment, assignments, registeredTargetIndices);
         }
-    }
-
-    public static interface AnnotationDefaultHandler<T extends Annotation> {
-
-        static enum Empty implements AnnotationDefaultHandler<Annotation> {
-            INSTANCE;
-
-            private static enum EmptyIterator implements Iterator<Annotation> {
-                INSTANCE;
-
-                @Override
-                public boolean hasNext() {
-                    return false;
-                }
-
-                @Override
-                public Annotation next() {
-                    throw new NoSuchElementException();
-                }
-
-                @Override
-                public void remove() {
-                    throw new NoSuchElementException();
-                }
-            }
-
-            @Override
-            public Iterator<Annotation> makeIterator(TypeDescription typeDescription,
-                                                     MethodDescription source,
-                                                     MethodDescription target) {
-                return EmptyIterator.INSTANCE;
-            }
-        }
-
-        Iterator<T> makeIterator(TypeDescription typeDescription, MethodDescription source, MethodDescription target);
     }
 
     private final DelegationProcessor delegationProcessor;
