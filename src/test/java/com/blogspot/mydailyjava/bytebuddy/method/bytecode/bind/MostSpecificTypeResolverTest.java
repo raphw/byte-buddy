@@ -210,7 +210,7 @@ public class MostSpecificTypeResolverTest extends AbstractAmbiguityResolverTest 
         when(source.getParameterTypes()).thenReturn(new Class<?>[]{Integer.class, Integer.class});
         when(leftMethod.getParameterTypes()).thenReturn(new Class<?>[]{Integer.class, Integer.class});
         when(left.getBindingIndex(any(MostSpecificTypeResolver.ParameterIndexToken.class))).thenAnswer(new TokenAnswer(new int[][]{{0, 0}, {1, 1}}));
-        when(rightMethod.getParameterTypes()).thenReturn(new Class<?>[]{Integer.class, Integer.class});
+        when(rightMethod.getParameterTypes()).thenReturn(new Class<?>[]{Integer.class, null});
         when(right.getBindingIndex(any(MostSpecificTypeResolver.ParameterIndexToken.class))).thenAnswer(new TokenAnswer(new int[][]{{0, 0}}));
         MethodDelegationBinder.AmbiguityResolver.Resolution resolution = MostSpecificTypeResolver.INSTANCE.resolve(source, left, right);
         assertThat(resolution, is(MethodDelegationBinder.AmbiguityResolver.Resolution.LEFT));
@@ -228,7 +228,7 @@ public class MostSpecificTypeResolverTest extends AbstractAmbiguityResolverTest 
     @Test
     public void testRightMethodDominantByScore() throws Exception {
         when(source.getParameterTypes()).thenReturn(new Class<?>[]{Integer.class, Integer.class});
-        when(leftMethod.getParameterTypes()).thenReturn(new Class<?>[]{Integer.class, Integer.class});
+        when(leftMethod.getParameterTypes()).thenReturn(new Class<?>[]{Integer.class, null});
         when(left.getBindingIndex(any(MostSpecificTypeResolver.ParameterIndexToken.class))).thenAnswer(new TokenAnswer(new int[][]{{0, 0}}));
         when(rightMethod.getParameterTypes()).thenReturn(new Class<?>[]{Integer.class, Integer.class});
         when(right.getBindingIndex(any(MostSpecificTypeResolver.ParameterIndexToken.class))).thenAnswer(new TokenAnswer(new int[][]{{0, 0}, {1, 1}}));
