@@ -33,8 +33,8 @@ public enum  MostSpecificTypeResolver implements MethodDelegationBinder.Ambiguit
         SHORT(2),
         INTEGER(3),
         CHARACTER(4),
-        FLOAT(5),
-        LONG(6),
+        LONG(5),
+        FLOAT(6),
         DOUBLE(7);
 
         public static PrimitiveTypePrecedence forPrimitive(Class<?> type) {
@@ -48,14 +48,14 @@ public enum  MostSpecificTypeResolver implements MethodDelegationBinder.Ambiguit
                 return INTEGER;
             } else if (type == char.class) {
                 return CHARACTER;
-            } else if (type == float.class) {
-                return FLOAT;
             } else if (type == long.class) {
                 return LONG;
+            } else if (type == float.class) {
+                return FLOAT;
             } else if (type == double.class) {
                 return DOUBLE;
             } else {
-                throw new IllegalArgumentException("Not a primitive type " + type);
+                throw new IllegalArgumentException("Not a non-void, primitive type " + type);
             }
         }
 
@@ -69,9 +69,9 @@ public enum  MostSpecificTypeResolver implements MethodDelegationBinder.Ambiguit
             if (score - right.score == 0) {
                 return Resolution.UNKNOWN;
             } else if (score - right.score > 0) {
-                return Resolution.LEFT;
-            } else /* score - right.score < 0 */ {
                 return Resolution.RIGHT;
+            } else /* score - right.score < 0 */ {
+                return Resolution.LEFT;
             }
         }
     }
