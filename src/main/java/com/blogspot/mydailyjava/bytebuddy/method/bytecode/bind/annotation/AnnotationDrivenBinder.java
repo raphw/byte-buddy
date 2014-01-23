@@ -279,7 +279,7 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
     public BoundMethodDelegation bind(TypeDescription typeDescription, MethodDescription source, MethodDescription target) {
         Assignment returningAssignment = assigner.assign(target.getReturnType(),
                 source.getReturnType(),
-                target.isAnnotationPresent(RuntimeType.class));
+                RuntimeType.Verifier.check(target));
         if (!returningAssignment.isAssignable()) {
             return IllegalMethodDelegation.INSTANCE;
         }
