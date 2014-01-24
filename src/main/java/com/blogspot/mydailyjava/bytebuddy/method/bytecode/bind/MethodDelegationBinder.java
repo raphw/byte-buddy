@@ -1,22 +1,90 @@
 package com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind;
 
 import com.blogspot.mydailyjava.bytebuddy.method.MethodDescription;
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.ByteCodeAppender;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.MethodInvocation;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assignment;
 import com.blogspot.mydailyjava.bytebuddy.type.TypeDescription;
+import org.objectweb.asm.MethodVisitor;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public interface MethodDelegationBinder {
 
-    static interface BoundMethodDelegation extends ByteCodeAppender{
+    static interface Binding extends Assignment {
 
-        boolean isBound();
+        static class Builder {
 
-        Integer getBindingIndex(Object identificationToken);
+            private static class Build implements Binding {
 
-        MethodDescription getBindingTarget();
+                private final MethodDescription target;
+                private final Iterable<Assignment> parameterAssignments;
+                private final Map<?, Integer> registeredTargetIndices;
+                private final Assignment returnValueAssignment;
+
+                private Build(MethodDescription target,
+                              Iterable<Assignment> parameterAssignments,
+                              Map<?, Integer> registeredTargetIndices,
+                              Assignment returnValueAssignment) {
+                    this.target = target;
+                    this.parameterAssignments = parameterAssignments;
+                    this.registeredTargetIndices = registeredTargetIndices;
+                    this.returnValueAssignment = returnValueAssignment;
+                }
+
+                @Override
+                public boolean isValid() {
+                    boolean result = returnValueAssignment.isValid();
+                    Iterator<Assignment> assignment = parameterAssignments.iterator();
+                    while (result && assignment.hasNext()) {
+                        result = assignment.next().isValid();
+                    }
+                    return result;
+                }
+
+                @Override
+                public Integer getTargetParameterIndex(Object identificationToken) {
+                    return registeredTargetIndices.get(identificationToken);
+                }
+
+                @Override
+                public MethodDescription getTarget() {
+                    return target;
+                }
+
+                @Override
+                public Size apply(MethodVisitor methodVisitor) {
+                    Size size = new Size(0, 0);
+                    for (Assignment assignment : parameterAssignments) {
+                        size = size.aggregate(assignment.apply(methodVisitor));
+                    }
+                    size = size.aggregate(MethodInvocation.of(target).apply(methodVisitor));
+                    return size.aggregate(returnValueAssignment.apply(methodVisitor));
+                }
+            }
+
+            private final MethodDescription target;
+            private final List<Assignment> parameterAssignments;
+            private final Map<Object, Integer> registeredTargetIndices;
+
+            public Builder(MethodDescription target) {
+                this.target = target;
+                parameterAssignments = new ArrayList<Assignment>(target.getParameterTypes().length);
+                registeredTargetIndices = new LinkedHashMap<Object, Integer>(target.getParameterTypes().length);
+            }
+
+            public boolean append(Assignment assignment, int targetParameterIndex, Object identificationToken) {
+                parameterAssignments.add(assignment);
+                return registeredTargetIndices.put(identificationToken, targetParameterIndex) == null;
+            }
+
+            public Binding build(Assignment returnValueAssignment) {
+                return new Build(target, parameterAssignments, registeredTargetIndices, returnValueAssignment);
+            }
+        }
+
+        Integer getTargetParameterIndex(Object identificationToken);
+
+        MethodDescription getTarget();
     }
 
     static interface AmbiguityResolver {
@@ -63,8 +131,8 @@ public interface MethodDelegationBinder {
 
             @Override
             public Resolution resolve(MethodDescription source,
-                                      BoundMethodDelegation left,
-                                      BoundMethodDelegation right) {
+                                      Binding left,
+                                      Binding right) {
                 Resolution resolution = Resolution.UNKNOWN;
                 Iterator<AmbiguityResolver> iterator = ambiguityResolvers.iterator();
                 while (resolution.isUnresolved() && iterator.hasNext()) {
@@ -74,7 +142,7 @@ public interface MethodDelegationBinder {
             }
         }
 
-        Resolution resolve(MethodDescription source, BoundMethodDelegation left, BoundMethodDelegation right);
+        Resolution resolve(MethodDescription source, Binding left, Binding right);
     }
 
     static class Processor {
@@ -92,37 +160,37 @@ public interface MethodDelegationBinder {
             this.ambiguityResolver = ambiguityResolver;
         }
 
-        public BoundMethodDelegation process(TypeDescription typeDescription,
-                                             MethodDescription source,
-                                             Iterable<? extends MethodDescription> targets) {
-            List<BoundMethodDelegation> possibleDelegations = bind(typeDescription, source, targets);
+        public Binding process(TypeDescription typeDescription,
+                               MethodDescription source,
+                               Iterable<? extends MethodDescription> targets) {
+            List<Binding> possibleDelegations = bind(typeDescription, source, targets);
             if (possibleDelegations.size() == 0) {
                 throw new IllegalArgumentException("No method can be bound to " + source);
             }
             return resolve(source, possibleDelegations);
         }
 
-        private List<BoundMethodDelegation> bind(TypeDescription typeDescription,
-                                                 MethodDescription source,
-                                                 Iterable<? extends MethodDescription> targets) {
-            List<BoundMethodDelegation> possibleDelegations = new LinkedList<BoundMethodDelegation>();
+        private List<Binding> bind(TypeDescription typeDescription,
+                                   MethodDescription source,
+                                   Iterable<? extends MethodDescription> targets) {
+            List<Binding> possibleDelegations = new LinkedList<Binding>();
             for (MethodDescription target : targets) {
-                BoundMethodDelegation boundMethodDelegation = methodDelegationBinder.bind(typeDescription, source, target);
-                if (boundMethodDelegation.isBound()) {
-                    possibleDelegations.add(boundMethodDelegation);
+                Binding binding = methodDelegationBinder.bind(typeDescription, source, target);
+                if (binding.isValid()) {
+                    possibleDelegations.add(binding);
                 }
             }
             return possibleDelegations;
         }
 
-        private BoundMethodDelegation resolve(MethodDescription source,
-                                              List<BoundMethodDelegation> targets) {
+        private Binding resolve(MethodDescription source,
+                                List<Binding> targets) {
             switch (targets.size()) {
                 case 1:
                     return targets.get(ONLY);
                 case 2: {
-                    BoundMethodDelegation left = targets.get(LEFT);
-                    BoundMethodDelegation right = targets.get(RIGHT);
+                    Binding left = targets.get(LEFT);
+                    Binding right = targets.get(RIGHT);
                     switch (ambiguityResolver.resolve(source, left, right)) {
                         case LEFT:
                             return left;
@@ -136,8 +204,8 @@ public interface MethodDelegationBinder {
                     }
                 }
                 default: /* case 3+: */ {
-                    BoundMethodDelegation left = targets.get(LEFT);
-                    BoundMethodDelegation right = targets.get(RIGHT);
+                    Binding left = targets.get(LEFT);
+                    Binding right = targets.get(RIGHT);
                     switch (ambiguityResolver.resolve(source, left, right)) {
                         case LEFT:
                             targets.remove(RIGHT);
@@ -149,7 +217,7 @@ public interface MethodDelegationBinder {
                         case UNKNOWN:
                             targets.remove(RIGHT); // Remove right element first due to index alteration!
                             targets.remove(LEFT);
-                            BoundMethodDelegation subResult = resolve(source, targets);
+                            Binding subResult = resolve(source, targets);
                             switch (ambiguityResolver.resolve(source, left, subResult).merge(ambiguityResolver.resolve(source, right, subResult))) {
                                 case RIGHT:
                                     return subResult;
@@ -168,5 +236,5 @@ public interface MethodDelegationBinder {
         }
     }
 
-    BoundMethodDelegation bind(TypeDescription typeDescription, MethodDescription source, MethodDescription target);
+    Binding bind(TypeDescription typeDescription, MethodDescription source, MethodDescription target);
 }

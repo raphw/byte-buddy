@@ -26,7 +26,7 @@ public class VoidAwareAssignerTest {
     public void testAssignVoidToVoid() throws Exception {
         Assigner voidAware = new VoidAwareAssigner(assigner, false);
         Assignment assignment = voidAware.assign(void.class, void.class, false);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
@@ -38,7 +38,7 @@ public class VoidAwareAssignerTest {
     public void testAssignVoidToReferenceNoDefault() throws Exception {
         Assigner voidAware = new VoidAwareAssigner(assigner, false);
         Assignment assignment = voidAware.assign(void.class, String.class, false);
-        assertThat(assignment.isAssignable(), is(false));
+        assertThat(assignment.isValid(), is(false));
         assignment.apply(methodVisitor);
     }
 
@@ -46,7 +46,7 @@ public class VoidAwareAssignerTest {
     public void testAssignVoidToReferenceDefault() throws Exception {
         Assigner voidAware = new VoidAwareAssigner(assigner, true);
         Assignment assignment = voidAware.assign(void.class, Object.class, false);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
@@ -59,7 +59,7 @@ public class VoidAwareAssignerTest {
     public void testAssignVoidToLongNoDefault() throws Exception {
         Assigner voidAware = new VoidAwareAssigner(assigner, false);
         Assignment assignment = voidAware.assign(void.class, String.class, false);
-        assertThat(assignment.isAssignable(), is(false));
+        assertThat(assignment.isValid(), is(false));
         assignment.apply(methodVisitor);
     }
 
@@ -67,7 +67,7 @@ public class VoidAwareAssignerTest {
     public void testAssignVoidToLongDefault() throws Exception {
         Assigner voidAware = new VoidAwareAssigner(assigner, true);
         Assignment assignment = voidAware.assign(void.class, long.class, false);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(2));
         assertThat(size.getMaximalSize(), is(2));
@@ -80,7 +80,7 @@ public class VoidAwareAssignerTest {
     public void testAssignReferenceToVoid() throws Exception {
         Assigner voidAware = new VoidAwareAssigner(assigner, true);
         Assignment assignment = voidAware.assign(Object.class, void.class, false);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(-1));
         assertThat(size.getMaximalSize(), is(0));
@@ -93,7 +93,7 @@ public class VoidAwareAssignerTest {
     public void testAssignLongToVoid() throws Exception {
         Assigner voidAware = new VoidAwareAssigner(assigner, true);
         Assignment assignment = voidAware.assign(long.class, void.class, false);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(-2));
         assertThat(size.getMaximalSize(), is(0));

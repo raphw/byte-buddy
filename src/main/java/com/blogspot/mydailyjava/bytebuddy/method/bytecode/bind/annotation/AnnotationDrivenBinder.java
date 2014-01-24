@@ -1,17 +1,12 @@
 package com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind.annotation;
 
 import com.blogspot.mydailyjava.bytebuddy.method.MethodDescription;
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.ByteCodeAppender;
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.TypeSize;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assigner;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assignment;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.IllegalAssignment;
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.MethodReturn;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind.IllegalMethodDelegation;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind.MethodDelegationBinder;
 import com.blogspot.mydailyjava.bytebuddy.type.TypeDescription;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
 
 import java.lang.annotation.Annotation;
 import java.util.*;
@@ -51,7 +46,7 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
             }
 
             public boolean isValid() {
-                return assignment.isAssignable();
+                return assignment.isValid();
             }
         }
 
@@ -188,82 +183,6 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
         }
     }
 
-    // TODO: Generic enough to extract from class into general package for possible reuse.
-    private static class MethodDelegationBuilder {
-
-        private static class Build implements BoundMethodDelegation {
-
-            private final MethodDescription targetMethodDescription;
-            private final Assignment returningAssignment;
-            private final List<Assignment> assignments;
-            private final Map<Object, Integer> registeredTargetIndices;
-
-            private Build(MethodDescription targetMethodDescription,
-                          Assignment returningAssignment,
-                          List<Assignment> assignments,
-                          Map<Object, Integer> registeredTargetIndices) {
-                this.targetMethodDescription = targetMethodDescription;
-                this.returningAssignment = returningAssignment;
-                this.assignments = assignments;
-                this.registeredTargetIndices = registeredTargetIndices;
-            }
-
-            @Override
-            public boolean isBound() {
-                return true;
-            }
-
-            @Override
-            public Integer getBindingIndex(Object identificationToken) {
-                return registeredTargetIndices.get(identificationToken);
-            }
-
-            @Override
-            public MethodDescription getBindingTarget() {
-                return targetMethodDescription;
-            }
-
-            @Override
-            public ByteCodeAppender.Size apply(MethodVisitor methodVisitor, MethodDescription sourceMethod) {
-                Assignment.Size argumentSize = new Assignment.Size(0, 0);
-                for (Assignment assignment : assignments) {
-                    argumentSize = argumentSize.aggregate(assignment.apply(methodVisitor));
-                }
-                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
-                        targetMethodDescription.getDeclaringClassInternalName(),
-                        targetMethodDescription.getInternalName(),
-                        targetMethodDescription.getDescriptor());
-                Assignment.Size returnSize = TypeSize.of(targetMethodDescription.getReturnType()).toIncreasingSize();
-                returnSize = returnSize.aggregate(returningAssignment.apply(methodVisitor));
-                returnSize = returnSize.aggregate(MethodReturn.returning(sourceMethod.getReturnType()).apply(methodVisitor));
-                return new ByteCodeAppender.Size(
-                        Math.max(argumentSize.getMaximalSize(), returnSize.getMaximalSize()),
-                        TypeSize.sizeOf(sourceMethod));
-            }
-        }
-
-        private final MethodDescription target;
-        private final Assignment returningAssignment;
-        private final List<Assignment> assignments;
-        private final Map<Object, Integer> registeredTargetIndices;
-
-        private MethodDelegationBuilder(MethodDescription target, Assignment returningAssignment) {
-            this.target = target;
-            this.returningAssignment = returningAssignment;
-            this.assignments = new ArrayList<Assignment>(target.getParameterTypes().length);
-            this.registeredTargetIndices = new LinkedHashMap<Object, Integer>(target.getParameterTypes().length);
-        }
-
-        public boolean append(ArgumentBinder.IdentifiedBinding<?> identifiedBinding, int targetParameterIndex) {
-            assignments.add(identifiedBinding.getAssignment());
-            return registeredTargetIndices.put(identifiedBinding.getIdentificationToken(), targetParameterIndex) == null;
-        }
-
-        public BoundMethodDelegation build() {
-            return new Build(target, returningAssignment, assignments, registeredTargetIndices);
-        }
-    }
-
     private final DelegationProcessor delegationProcessor;
     private final AnnotationDefaultHandler<?> annotationDefaultHandler;
     private final Assigner assigner;
@@ -277,14 +196,14 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
     }
 
     @Override
-    public BoundMethodDelegation bind(TypeDescription typeDescription, MethodDescription source, MethodDescription target) {
+    public Binding bind(TypeDescription typeDescription, MethodDescription source, MethodDescription target) {
         Assignment returningAssignment = assigner.assign(target.getReturnType(),
                 source.getReturnType(),
                 RuntimeType.Verifier.check(target));
-        if (!returningAssignment.isAssignable()) {
+        if (!returningAssignment.isValid()) {
             return IllegalMethodDelegation.INSTANCE;
         }
-        MethodDelegationBuilder methodDelegationBuilder = new MethodDelegationBuilder(target, returningAssignment);
+        Binding.Builder methodDelegationBuilder = new Binding.Builder(target);
         Iterator<? extends Annotation> defaults = annotationDefaultHandler.makeIterator(typeDescription, source, target);
         for (int targetParameterIndex = 0;
              targetParameterIndex < target.getParameterTypes().length;
@@ -296,10 +215,14 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
                             target,
                             typeDescription,
                             assigner);
-            if (!identifiedBinding.isValid() || !methodDelegationBuilder.append(identifiedBinding, targetParameterIndex)) {
+            if (!identifiedBinding.isValid()
+                    || !methodDelegationBuilder.append(
+                    identifiedBinding.getAssignment(),
+                    targetParameterIndex,
+                    identifiedBinding.getIdentificationToken())) {
                 return IllegalMethodDelegation.INSTANCE;
             }
         }
-        return methodDelegationBuilder.build();
+        return methodDelegationBuilder.build(returningAssignment);
     }
 }

@@ -66,8 +66,8 @@ public enum PrimitiveBoxingDelegate {
         }
 
         @Override
-        public boolean isAssignable() {
-            return assignment.isAssignable();
+        public boolean isValid() {
+            return assignment.isValid();
         }
 
         @Override

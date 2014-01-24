@@ -23,7 +23,7 @@ public class ReferenceTypeAwareAssignerTest {
     @Test
     public void testTrivialAssignment() throws Exception {
         Assignment assignment = ReferenceTypeAwareAssigner.INSTANCE.assign(Object.class, Object.class, false);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
@@ -33,7 +33,7 @@ public class ReferenceTypeAwareAssignerTest {
     @Test
     public void testUpcastAssignment() throws Exception {
         Assignment assignment = ReferenceTypeAwareAssigner.INSTANCE.assign(Object.class, Integer.class, false);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
@@ -43,14 +43,14 @@ public class ReferenceTypeAwareAssignerTest {
     @Test(expected = IllegalStateException.class)
     public void testDowncastAssignmentWithoutRuntimeType() throws Exception {
         Assignment assignment = ReferenceTypeAwareAssigner.INSTANCE.assign(Integer.class, Object.class, false);
-        assertThat(assignment.isAssignable(), is(false));
+        assertThat(assignment.isValid(), is(false));
         assignment.apply(methodVisitor);
     }
 
     @Test
     public void testDowncastAssignmentWithRuntimeType() throws Exception {
         Assignment assignment = ReferenceTypeAwareAssigner.INSTANCE.assign(Integer.class, Object.class, true);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
@@ -61,7 +61,7 @@ public class ReferenceTypeAwareAssignerTest {
     @Test
     public void testTrivialPrimitiveAssignment() throws Exception {
         Assignment assignment = ReferenceTypeAwareAssigner.INSTANCE.assign(int.class, int.class, false);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
@@ -71,7 +71,7 @@ public class ReferenceTypeAwareAssignerTest {
     @Test(expected = IllegalStateException.class)
     public void testNonTrivialPrimitiveAssignment() throws Exception {
         Assignment assignment = ReferenceTypeAwareAssigner.INSTANCE.assign(int.class, long.class, false);
-        assertThat(assignment.isAssignable(), is(false));
+        assertThat(assignment.isValid(), is(false));
         assignment.apply(methodVisitor);
     }
 }

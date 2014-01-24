@@ -23,7 +23,7 @@ public class MethodReturnTest {
     @Test
     public void testVoidReturn() throws Exception {
         Assignment assignment = MethodReturn.returning(void.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
@@ -34,7 +34,7 @@ public class MethodReturnTest {
     @Test
     public void testReferenceReturn() throws Exception {
         Assignment assignment = MethodReturn.returning(Object.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(-1));
         assertThat(size.getMaximalSize(), is(0));
@@ -45,7 +45,7 @@ public class MethodReturnTest {
     @Test
     public void testLongReturn() throws Exception {
         Assignment assignment = MethodReturn.returning(long.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(-2));
         assertThat(size.getMaximalSize(), is(0));
@@ -56,7 +56,7 @@ public class MethodReturnTest {
     @Test
     public void testDoubleReturn() throws Exception {
         Assignment assignment = MethodReturn.returning(double.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(-2));
         assertThat(size.getMaximalSize(), is(0));
@@ -67,7 +67,7 @@ public class MethodReturnTest {
     @Test
     public void testFloatReturn() throws Exception {
         Assignment assignment = MethodReturn.returning(float.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(-1));
         assertThat(size.getMaximalSize(), is(0));
@@ -78,7 +78,7 @@ public class MethodReturnTest {
     @Test
     public void testIntReturn() throws Exception {
         Assignment assignment = MethodReturn.returning(int.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(-1));
         assertThat(size.getMaximalSize(), is(0));

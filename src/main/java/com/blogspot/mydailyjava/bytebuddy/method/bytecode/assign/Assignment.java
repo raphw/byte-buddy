@@ -42,8 +42,8 @@ public interface Assignment {
         }
 
         @Override
-        public boolean isAssignable() {
-            return first.isAssignable() && second.isAssignable();
+        public boolean isValid() {
+            return first.isValid() && second.isValid();
         }
 
         @Override
@@ -52,7 +52,7 @@ public interface Assignment {
         }
     }
 
-    boolean isAssignable();
+    boolean isValid();
 
     Size apply(MethodVisitor methodVisitor);
 }

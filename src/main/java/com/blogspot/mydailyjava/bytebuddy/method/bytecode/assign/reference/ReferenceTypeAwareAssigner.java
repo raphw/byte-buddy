@@ -21,7 +21,7 @@ public enum ReferenceTypeAwareAssigner implements Assigner {
         }
 
         @Override
-        public boolean isAssignable() {
+        public boolean isValid() {
             return true;
         }
 

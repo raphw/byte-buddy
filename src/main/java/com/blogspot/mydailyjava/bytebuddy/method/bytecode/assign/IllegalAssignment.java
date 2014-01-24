@@ -6,7 +6,7 @@ public enum IllegalAssignment implements Assignment {
     INSTANCE;
 
     @Override
-    public boolean isAssignable() {
+    public boolean isValid() {
         return false;
     }
 

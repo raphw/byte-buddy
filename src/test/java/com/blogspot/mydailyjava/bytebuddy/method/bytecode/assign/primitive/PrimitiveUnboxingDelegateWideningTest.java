@@ -70,7 +70,7 @@ public class PrimitiveUnboxingDelegateWideningTest {
     @Test
     public void testTrivialBoxing() throws Exception {
         Assignment assignment = PrimitiveUnboxingDelegate.forReferenceType(referenceType).assignUnboxedTo(primitiveType, chainedAssigner, false);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(sizeChange));
         assertThat(size.getMaximalSize(), is(sizeChange));

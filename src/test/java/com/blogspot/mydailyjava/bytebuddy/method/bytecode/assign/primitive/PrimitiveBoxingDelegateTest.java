@@ -67,7 +67,7 @@ public class PrimitiveBoxingDelegateTest {
     @Test
     public void testBoxing() throws Exception {
         Assignment assignment = PrimitiveBoxingDelegate.forPrimitive(primitiveType).assignBoxedTo(Void.class, chainedAssigner, false);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(sizeChange));
         assertThat(size.getMaximalSize(), is(0));

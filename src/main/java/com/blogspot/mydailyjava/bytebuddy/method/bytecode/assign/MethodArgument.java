@@ -54,7 +54,7 @@ public enum MethodArgument {
         }
 
         @Override
-        public boolean isAssignable() {
+        public boolean isValid() {
             return true;
         }
 

@@ -78,16 +78,16 @@ public enum  MostSpecificTypeResolver implements MethodDelegationBinder.Ambiguit
 
     @Override
     public Resolution resolve(MethodDescription source,
-                              MethodDelegationBinder.BoundMethodDelegation left,
-                              MethodDelegationBinder.BoundMethodDelegation right) {
+                              MethodDelegationBinder.Binding left,
+                              MethodDelegationBinder.Binding right) {
         Resolution resolution = Resolution.UNKNOWN;
         int leftExtra = 0, rightExtra = 0;
         for (int sourceParameterIndex = 0;
              sourceParameterIndex < source.getParameterTypes().length;
              sourceParameterIndex++) {
             ParameterIndexToken parameterIndexToken = new ParameterIndexToken(sourceParameterIndex);
-            Integer leftParameterIndex = left.getBindingIndex(parameterIndexToken);
-            Integer rightParameterIndex = right.getBindingIndex(parameterIndexToken);
+            Integer leftParameterIndex = left.getTargetParameterIndex(parameterIndexToken);
+            Integer rightParameterIndex = right.getTargetParameterIndex(parameterIndexToken);
             if (leftParameterIndex != null && rightParameterIndex != null) {
                 resolution = resolution.merge(
                         resolveRivalBinding(source.getParameterTypes()[sourceParameterIndex],
@@ -106,11 +106,11 @@ public enum  MostSpecificTypeResolver implements MethodDelegationBinder.Ambiguit
 
     private static Resolution resolveRivalBinding(Class<?> sourceParameterType,
                                                   int leftParameterIndex,
-                                                  MethodDelegationBinder.BoundMethodDelegation left,
+                                                  MethodDelegationBinder.Binding left,
                                                   int rightParameterIndex,
-                                                  MethodDelegationBinder.BoundMethodDelegation right) {
-        Class<?> leftParameterType = left.getBindingTarget().getParameterTypes()[leftParameterIndex];
-        Class<?> rightParameterType = right.getBindingTarget().getParameterTypes()[rightParameterIndex];
+                                                  MethodDelegationBinder.Binding right) {
+        Class<?> leftParameterType = left.getTarget().getParameterTypes()[leftParameterIndex];
+        Class<?> rightParameterType = right.getTarget().getParameterTypes()[rightParameterIndex];
         if (leftParameterType != rightParameterType) {
             if (leftParameterType.isPrimitive() && rightParameterType.isPrimitive()) {
                 return PrimitiveTypePrecedence.forPrimitive(leftParameterType)

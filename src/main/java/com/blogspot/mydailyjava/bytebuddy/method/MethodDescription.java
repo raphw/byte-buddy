@@ -211,6 +211,11 @@ public interface MethodDescription extends AnnotatedElement, Member, GenericDecl
         }
 
         @Override
+        public boolean isInterfaceMethod() {
+            return getDeclaringClass().isInterface();
+        }
+
+        @Override
         public boolean equals(Object o) {
             return this == o || !(o == null || getClass() != o.getClass())
                     && constructor.equals(((ForConstructor) o).constructor);
@@ -343,6 +348,11 @@ public interface MethodDescription extends AnnotatedElement, Member, GenericDecl
         @Override
         public String getDescriptor() {
             return org.objectweb.asm.Type.getMethodDescriptor(method);
+        }
+
+        @Override
+        public boolean isInterfaceMethod() {
+            return false;
         }
 
         @Override

@@ -77,7 +77,7 @@ public class PrimitiveWideningDelegateIllegalTest {
     @Test(expected = IllegalStateException.class)
     public void testIllegalBoolean() throws Exception {
         Assignment assignment = PrimitiveWideningDelegate.forPrimitive(source).widenTo(target);
-        assertThat(assignment.isAssignable(), is(false));
+        assertThat(assignment.isValid(), is(false));
         assignment.apply(methodVisitor);
     }
 }

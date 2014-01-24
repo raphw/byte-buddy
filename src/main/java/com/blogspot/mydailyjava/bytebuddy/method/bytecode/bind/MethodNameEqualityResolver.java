@@ -7,10 +7,10 @@ public enum MethodNameEqualityResolver implements MethodDelegationBinder.Ambigui
 
     @Override
     public Resolution resolve(MethodDescription source,
-                              MethodDelegationBinder.BoundMethodDelegation left,
-                              MethodDelegationBinder.BoundMethodDelegation right) {
-        boolean leftEquals = left.getBindingTarget().getName().equals(source.getName());
-        boolean rightEquals = right.getBindingTarget().getName().equals(source.getName());
+                              MethodDelegationBinder.Binding left,
+                              MethodDelegationBinder.Binding right) {
+        boolean leftEquals = left.getTarget().getName().equals(source.getName());
+        boolean rightEquals = right.getTarget().getName().equals(source.getName());
         if (leftEquals ^ rightEquals) {
             return leftEquals ? Resolution.LEFT : Resolution.RIGHT;
         } else {

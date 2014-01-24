@@ -9,19 +9,19 @@ import static org.mockito.Mockito.when;
 public abstract class AbstractAmbiguityResolverTest {
 
     protected MethodDescription source;
-    protected MethodDelegationBinder.BoundMethodDelegation left;
+    protected MethodDelegationBinder.Binding left;
     protected MethodDescription leftMethod;
-    protected MethodDelegationBinder.BoundMethodDelegation right;
+    protected MethodDelegationBinder.Binding right;
     protected MethodDescription rightMethod;
 
     @Before
     public void setUp() throws Exception {
         source = mock(MethodDescription.class);
         leftMethod = mock(MethodDescription.class);
-        left = mock(MethodDelegationBinder.BoundMethodDelegation.class);
-        when(left.getBindingTarget()).thenReturn(leftMethod);
-        right = mock(MethodDelegationBinder.BoundMethodDelegation.class);
+        left = mock(MethodDelegationBinder.Binding.class);
+        when(left.getTarget()).thenReturn(leftMethod);
+        right = mock(MethodDelegationBinder.Binding.class);
         rightMethod = mock(MethodDescription.class);
-        when(right.getBindingTarget()).thenReturn(rightMethod);
+        when(right.getTarget()).thenReturn(rightMethod);
     }
 }

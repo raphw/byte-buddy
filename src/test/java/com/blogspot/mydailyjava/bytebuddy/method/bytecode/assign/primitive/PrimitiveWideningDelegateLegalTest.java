@@ -22,7 +22,7 @@ public class PrimitiveWideningDelegateLegalTest {
     @Test
     public void testBooleanToBoolean() throws Exception {
         Assignment assignment = PrimitiveWideningDelegate.forPrimitive(boolean.class).widenTo(boolean.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
@@ -32,7 +32,7 @@ public class PrimitiveWideningDelegateLegalTest {
     @Test
     public void testByteToByte() throws Exception {
         Assignment assignment = PrimitiveWideningDelegate.forPrimitive(byte.class).widenTo(byte.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
@@ -42,7 +42,7 @@ public class PrimitiveWideningDelegateLegalTest {
     @Test
     public void testByteToShort() throws Exception {
         Assignment assignment = PrimitiveWideningDelegate.forPrimitive(byte.class).widenTo(short.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
@@ -52,7 +52,7 @@ public class PrimitiveWideningDelegateLegalTest {
     @Test
     public void testByteToInt() throws Exception {
         Assignment assignment = PrimitiveWideningDelegate.forPrimitive(byte.class).widenTo(int.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
@@ -62,7 +62,7 @@ public class PrimitiveWideningDelegateLegalTest {
     @Test
     public void testByteToLong() throws Exception {
         Assignment assignment = PrimitiveWideningDelegate.forPrimitive(byte.class).widenTo(long.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
@@ -73,7 +73,7 @@ public class PrimitiveWideningDelegateLegalTest {
     @Test
     public void testByteToFloat() throws Exception {
         Assignment assignment = PrimitiveWideningDelegate.forPrimitive(byte.class).widenTo(float.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
@@ -84,7 +84,7 @@ public class PrimitiveWideningDelegateLegalTest {
     @Test
     public void testByteToDouble() throws Exception {
         Assignment assignment = PrimitiveWideningDelegate.forPrimitive(byte.class).widenTo(double.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
@@ -95,7 +95,7 @@ public class PrimitiveWideningDelegateLegalTest {
     @Test
     public void testShortToShort() throws Exception {
         Assignment assignment = PrimitiveWideningDelegate.forPrimitive(short.class).widenTo(short.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
@@ -105,7 +105,7 @@ public class PrimitiveWideningDelegateLegalTest {
     @Test
     public void testShortToInt() throws Exception {
         Assignment assignment = PrimitiveWideningDelegate.forPrimitive(short.class).widenTo(int.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
@@ -115,7 +115,7 @@ public class PrimitiveWideningDelegateLegalTest {
     @Test
     public void testShortToLong() throws Exception {
         Assignment assignment = PrimitiveWideningDelegate.forPrimitive(short.class).widenTo(long.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
@@ -126,7 +126,7 @@ public class PrimitiveWideningDelegateLegalTest {
     @Test
     public void testShortToFloat() throws Exception {
         Assignment assignment = PrimitiveWideningDelegate.forPrimitive(short.class).widenTo(float.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
@@ -137,7 +137,7 @@ public class PrimitiveWideningDelegateLegalTest {
     @Test
     public void testShortToDouble() throws Exception {
         Assignment assignment = PrimitiveWideningDelegate.forPrimitive(short.class).widenTo(double.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
@@ -148,7 +148,7 @@ public class PrimitiveWideningDelegateLegalTest {
     @Test
     public void testCharToInt() throws Exception {
         Assignment assignment = PrimitiveWideningDelegate.forPrimitive(char.class).widenTo(char.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
@@ -158,7 +158,7 @@ public class PrimitiveWideningDelegateLegalTest {
     @Test
     public void testCharToChar() throws Exception {
         Assignment assignment = PrimitiveWideningDelegate.forPrimitive(char.class).widenTo(char.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
@@ -168,7 +168,7 @@ public class PrimitiveWideningDelegateLegalTest {
     @Test
     public void testCharToLong() throws Exception {
         Assignment assignment = PrimitiveWideningDelegate.forPrimitive(char.class).widenTo(long.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
@@ -179,7 +179,7 @@ public class PrimitiveWideningDelegateLegalTest {
     @Test
     public void testCharToFloat() throws Exception {
         Assignment assignment = PrimitiveWideningDelegate.forPrimitive(char.class).widenTo(float.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
@@ -190,7 +190,7 @@ public class PrimitiveWideningDelegateLegalTest {
     @Test
     public void testCharToDouble() throws Exception {
         Assignment assignment = PrimitiveWideningDelegate.forPrimitive(char.class).widenTo(double.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
@@ -201,7 +201,7 @@ public class PrimitiveWideningDelegateLegalTest {
     @Test
     public void testIntToInt() throws Exception {
         Assignment assignment = PrimitiveWideningDelegate.forPrimitive(int.class).widenTo(int.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
@@ -211,7 +211,7 @@ public class PrimitiveWideningDelegateLegalTest {
     @Test
     public void testIntToLong() throws Exception {
         Assignment assignment = PrimitiveWideningDelegate.forPrimitive(int.class).widenTo(long.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
@@ -222,7 +222,7 @@ public class PrimitiveWideningDelegateLegalTest {
     @Test
     public void testIntToFloat() throws Exception {
         Assignment assignment = PrimitiveWideningDelegate.forPrimitive(int.class).widenTo(float.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
@@ -233,7 +233,7 @@ public class PrimitiveWideningDelegateLegalTest {
     @Test
     public void testIntToDouble() throws Exception {
         Assignment assignment = PrimitiveWideningDelegate.forPrimitive(int.class).widenTo(double.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
@@ -244,7 +244,7 @@ public class PrimitiveWideningDelegateLegalTest {
     @Test
     public void testLongToLong() throws Exception {
         Assignment assignment = PrimitiveWideningDelegate.forPrimitive(long.class).widenTo(long.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
@@ -254,7 +254,7 @@ public class PrimitiveWideningDelegateLegalTest {
     @Test
     public void testLongToFloat() throws Exception {
         Assignment assignment = PrimitiveWideningDelegate.forPrimitive(long.class).widenTo(float.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(-1));
         assertThat(size.getMaximalSize(), is(0));
@@ -265,7 +265,7 @@ public class PrimitiveWideningDelegateLegalTest {
     @Test
     public void testLongToDouble() throws Exception {
         Assignment assignment = PrimitiveWideningDelegate.forPrimitive(long.class).widenTo(double.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
@@ -276,7 +276,7 @@ public class PrimitiveWideningDelegateLegalTest {
     @Test
     public void testFloatToFloat() throws Exception {
         Assignment assignment = PrimitiveWideningDelegate.forPrimitive(float.class).widenTo(float.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
@@ -286,7 +286,7 @@ public class PrimitiveWideningDelegateLegalTest {
     @Test
     public void testFloatToDouble() throws Exception {
         Assignment assignment = PrimitiveWideningDelegate.forPrimitive(float.class).widenTo(double.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
@@ -297,7 +297,7 @@ public class PrimitiveWideningDelegateLegalTest {
     @Test
     public void testDoubleToDouble() throws Exception {
         Assignment assignment = PrimitiveWideningDelegate.forPrimitive(double.class).widenTo(double.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));

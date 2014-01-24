@@ -21,4 +21,6 @@ public interface MethodModifierReviewable {
     boolean isSynchronized();
 
     boolean isStrict();
+
+    boolean isInterfaceMethod();
 }

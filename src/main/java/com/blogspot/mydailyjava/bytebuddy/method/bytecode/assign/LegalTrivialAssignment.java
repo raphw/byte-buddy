@@ -12,7 +12,7 @@ public enum LegalTrivialAssignment implements Assignment {
     }
 
     @Override
-    public boolean isAssignable() {
+    public boolean isValid() {
         return true;
     }
 

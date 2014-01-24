@@ -42,7 +42,7 @@ public @interface This {
             boolean runtimeType = RuntimeType.Verifier.check(target, targetParameterIndex);
             Assignment assignment = assigner.assign(typeDescription.getSuperClass(), targetType, runtimeType);
             Iterator<Class<?>> interfaces = typeDescription.getInterfaces().iterator();
-            while (!assignment.isAssignable() && interfaces.hasNext()) {
+            while (!assignment.isValid() && interfaces.hasNext()) {
                 assignment = assigner.assign(interfaces.next(), targetType, runtimeType);
             }
             return IdentifiedBinding.makeAnonymous(new Assignment.Compound(MethodArgument.OBJECT_REFERENCE.loadFromIndex(0), assignment));

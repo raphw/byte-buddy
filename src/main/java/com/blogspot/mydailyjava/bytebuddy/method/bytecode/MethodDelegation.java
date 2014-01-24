@@ -1,6 +1,8 @@
 package com.blogspot.mydailyjava.bytebuddy.method.bytecode;
 
 import com.blogspot.mydailyjava.bytebuddy.method.MethodDescription;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assignment;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.MethodReturn;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.primitive.PrimitiveTypeAwareAssigner;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.primitive.VoidAwareAssigner;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.reference.ReferenceTypeAwareAssigner;
@@ -60,7 +62,9 @@ public class MethodDelegation implements ByteCodeAppender.Factory {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
-            return processor.process(typeDescription, methodDescription, methods).apply(methodVisitor, methodDescription);
+            Assignment.Size size = processor.process(typeDescription, methodDescription, methods).apply(methodVisitor);
+            size = size.aggregate(MethodReturn.returning(methodDescription.getReturnType()).apply(methodVisitor));
+            return new Size(size.getMaximalSize(), TypeSize.sizeOf(methodDescription));
         }
     }
 

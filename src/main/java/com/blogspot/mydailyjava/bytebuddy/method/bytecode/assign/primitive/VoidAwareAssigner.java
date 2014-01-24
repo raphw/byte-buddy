@@ -31,7 +31,7 @@ public class VoidAwareAssigner implements Assigner {
         }
 
         @Override
-        public boolean isAssignable() {
+        public boolean isValid() {
             return true;
         }
 

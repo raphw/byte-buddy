@@ -92,7 +92,7 @@ public enum PrimitiveWideningDelegate {
         }
 
         @Override
-        public boolean isAssignable() {
+        public boolean isValid() {
             return true;
         }
 

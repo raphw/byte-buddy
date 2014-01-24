@@ -68,7 +68,7 @@ public class PrimitiveUnboxingDelegateTest {
     @Test
     public void testTrivialBoxing() throws Exception {
         Assignment assignment = PrimitiveUnboxingDelegate.forReferenceType(referenceType).assignUnboxedTo(primitiveType, chainedAssigner, false);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(sizeChange));
         assertThat(size.getMaximalSize(), is(sizeChange));
@@ -80,7 +80,7 @@ public class PrimitiveUnboxingDelegateTest {
     @Test
     public void testImplicitBoxing() throws Exception {
         Assignment assignment = PrimitiveUnboxingDelegate.forReferenceType(Object.class).assignUnboxedTo(primitiveType, chainedAssigner, true);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(sizeChange));
         assertThat(size.getMaximalSize(), is(sizeChange));

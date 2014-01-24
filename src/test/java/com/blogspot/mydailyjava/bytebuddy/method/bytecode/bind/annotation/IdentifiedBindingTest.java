@@ -17,7 +17,7 @@ public class IdentifiedBindingTest {
     @Before
     public void setUp() throws Exception {
         assignment = mock(Assignment.class);
-        when(assignment.isAssignable()).thenReturn(true);
+        when(assignment.isValid()).thenReturn(true);
     }
 
     @Test
@@ -26,7 +26,7 @@ public class IdentifiedBindingTest {
                 AnnotationDrivenBinder.ArgumentBinder.IdentifiedBinding.makeIllegal();
         assertThat(identifiedBinding.getIdentificationToken(), notNullValue());
         assertThat(identifiedBinding.isValid(), is(false));
-        assertThat(identifiedBinding.getAssignment().isAssignable(), is(false));
+        assertThat(identifiedBinding.getAssignment().isValid(), is(false));
     }
 
     @Test

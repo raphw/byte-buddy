@@ -65,7 +65,7 @@ public class MethodArgumentShortcutTest {
     @Test
     public void testShortCutReference() throws Exception {
         Assignment assignment = MethodArgument.forType(type).loadFromIndex(index);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(this.size));
         assertThat(size.getMaximalSize(), is(this.size));

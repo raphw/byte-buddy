@@ -49,7 +49,7 @@ public class MethodArgumentTest {
     @Test
     public void testObject() throws Exception {
         Assignment assignment = MethodArgument.forType(type).loadFromIndex(4);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(this.size));
         assertThat(size.getMaximalSize(), is(this.size));

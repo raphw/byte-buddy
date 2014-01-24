@@ -21,7 +21,7 @@ public class DefaultValueTest {
     @Test
     public void testVoid() throws Exception {
         Assignment assignment = DefaultValue.load(void.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
@@ -31,7 +31,7 @@ public class DefaultValueTest {
     @Test
     public void testInt() throws Exception {
         Assignment assignment = DefaultValue.load(int.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
@@ -42,7 +42,7 @@ public class DefaultValueTest {
     @Test
     public void testLong() throws Exception {
         Assignment assignment = DefaultValue.load(long.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(2));
         assertThat(size.getMaximalSize(), is(2));
@@ -53,7 +53,7 @@ public class DefaultValueTest {
     @Test
     public void testFloat() throws Exception {
         Assignment assignment = DefaultValue.load(float.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
@@ -64,7 +64,7 @@ public class DefaultValueTest {
     @Test
     public void testDouble() throws Exception {
         Assignment assignment = DefaultValue.load(double.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(2));
         assertThat(size.getMaximalSize(), is(2));
@@ -75,7 +75,7 @@ public class DefaultValueTest {
     @Test
     public void testReference() throws Exception {
         Assignment assignment = DefaultValue.load(Object.class);
-        assertThat(assignment.isAssignable(), is(true));
+        assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
