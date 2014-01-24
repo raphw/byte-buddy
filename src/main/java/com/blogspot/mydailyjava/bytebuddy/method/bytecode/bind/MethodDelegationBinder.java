@@ -92,26 +92,31 @@ public interface MethodDelegationBinder {
             this.ambiguityResolver = ambiguityResolver;
         }
 
-        public BoundMethodDelegation process(TypeDescription typeDescription, MethodDescription source, Iterable<MethodDescription> targets) {
-            List<BoundMethodDelegation> boundMethodDelegations = bind(typeDescription, source, targets);
-            if (boundMethodDelegations.size() == 0) {
+        public BoundMethodDelegation process(TypeDescription typeDescription,
+                                             MethodDescription source,
+                                             Iterable<? extends MethodDescription> targets) {
+            List<BoundMethodDelegation> possibleDelegations = bind(typeDescription, source, targets);
+            if (possibleDelegations.size() == 0) {
                 throw new IllegalArgumentException("No method can be bound to " + source);
             }
-            return resolve(source, boundMethodDelegations);
+            return resolve(source, possibleDelegations);
         }
 
-        private List<BoundMethodDelegation> bind(TypeDescription typeDescription, MethodDescription source, Iterable<MethodDescription> targets) {
-            List<BoundMethodDelegation> delegations = new LinkedList<BoundMethodDelegation>();
+        private List<BoundMethodDelegation> bind(TypeDescription typeDescription,
+                                                 MethodDescription source,
+                                                 Iterable<? extends MethodDescription> targets) {
+            List<BoundMethodDelegation> possibleDelegations = new LinkedList<BoundMethodDelegation>();
             for (MethodDescription target : targets) {
                 BoundMethodDelegation boundMethodDelegation = methodDelegationBinder.bind(typeDescription, source, target);
                 if (boundMethodDelegation.isBound()) {
-                    delegations.add(boundMethodDelegation);
+                    possibleDelegations.add(boundMethodDelegation);
                 }
             }
-            return delegations;
+            return possibleDelegations;
         }
 
-        private BoundMethodDelegation resolve(MethodDescription source, List<BoundMethodDelegation> targets) {
+        private BoundMethodDelegation resolve(MethodDescription source,
+                                              List<BoundMethodDelegation> targets) {
             switch (targets.size()) {
                 case 1:
                     return targets.get(ONLY);
@@ -142,8 +147,8 @@ public interface MethodDelegationBinder {
                             return resolve(source, targets);
                         case AMBIGUOUS:
                         case UNKNOWN:
+                            targets.remove(RIGHT); // Remove right element first due to index alteration!
                             targets.remove(LEFT);
-                            targets.remove(RIGHT);
                             BoundMethodDelegation subResult = resolve(source, targets);
                             switch (ambiguityResolver.resolve(source, left, subResult).merge(ambiguityResolver.resolve(source, right, subResult))) {
                                 case RIGHT:
@@ -151,7 +156,7 @@ public interface MethodDelegationBinder {
                                 case LEFT:
                                 case AMBIGUOUS:
                                 case UNKNOWN:
-                                    throw new IllegalArgumentException("Could not resolve ambiguous delegation to " + left + " or " + right);
+                                    throw new IllegalArgumentException("Could not resolve ambiguous delegation to either " + left + " or " + right);
                                 default:
                                     throw new AssertionError();
                             }

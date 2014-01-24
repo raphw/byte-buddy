@@ -188,6 +188,7 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
         }
     }
 
+    // TODO: Generic enough to extract from class into general package for possible reuse.
     private static class MethodDelegationBuilder {
 
         private static class Build implements BoundMethodDelegation {
