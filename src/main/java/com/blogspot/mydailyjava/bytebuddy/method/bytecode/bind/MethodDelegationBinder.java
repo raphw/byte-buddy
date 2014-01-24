@@ -17,17 +17,17 @@ public interface MethodDelegationBinder {
             private static class Build implements Binding {
 
                 private final MethodDescription target;
-                private final Iterable<Assignment> parameterAssignments;
+                private final List<Assignment> parameterAssignments;
                 private final Map<?, Integer> registeredTargetIndices;
                 private final Assignment returnValueAssignment;
 
                 private Build(MethodDescription target,
-                              Iterable<Assignment> parameterAssignments,
+                              List<Assignment> parameterAssignments,
                               Map<?, Integer> registeredTargetIndices,
                               Assignment returnValueAssignment) {
                     this.target = target;
-                    this.parameterAssignments = parameterAssignments;
-                    this.registeredTargetIndices = registeredTargetIndices;
+                    this.parameterAssignments = new ArrayList<Assignment>(parameterAssignments);
+                    this.registeredTargetIndices = new HashMap<Object, Integer>(registeredTargetIndices);
                     this.returnValueAssignment = returnValueAssignment;
                 }
 
