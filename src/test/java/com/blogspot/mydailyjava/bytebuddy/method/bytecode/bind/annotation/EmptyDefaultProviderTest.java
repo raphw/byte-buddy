@@ -12,14 +12,14 @@ import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
-public class EmptyAnnotationDefaultHandlerTest {
+public class EmptyDefaultProviderTest {
 
     @Test(expected = NoSuchElementException.class)
     public void testEmptyIteration() throws Exception {
         TypeDescription typeDescription = mock(TypeDescription.class);
         MethodDescription left = mock(MethodDescription.class);
         MethodDescription right = mock(MethodDescription.class);
-        Iterator<?> iterator = AnnotationDrivenBinder.AnnotationDefaultHandler.Empty.INSTANCE.makeIterator(typeDescription, left, right);
+        Iterator<?> iterator = AnnotationDrivenBinder.DefaultProvider.Empty.INSTANCE.makeIterator(typeDescription, left, right);
         assertThat(iterator.hasNext(), is(false));
         verifyZeroInteractions(typeDescription);
         verifyZeroInteractions(left);

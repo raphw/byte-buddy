@@ -60,9 +60,9 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
                                   Assigner assigner);
     }
 
-    public static interface AnnotationDefaultHandler<T extends Annotation> {
+    public static interface DefaultProvider<T extends Annotation> {
 
-        static enum Empty implements AnnotationDefaultHandler<Annotation> {
+        static enum Empty implements DefaultProvider<Annotation> {
             INSTANCE;
 
             private static enum EmptyIterator implements Iterator<Annotation> {
@@ -161,7 +161,7 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
                     handler = makeDelegate(argumentBinder, anAnnotation);
                 }
             }
-            if (handler == null) {
+            if (handler == null) { // No handler was found: attempt default.
                 if (defaults.hasNext()) {
                     Annotation defaultAnnotation = defaults.next();
                     ArgumentBinder<?> argumentBinder = argumentBinders.get(defaultAnnotation.annotationType());
@@ -184,14 +184,14 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
     }
 
     private final DelegationProcessor delegationProcessor;
-    private final AnnotationDefaultHandler<?> annotationDefaultHandler;
+    private final DefaultProvider<?> defaultProvider;
     private final Assigner assigner;
 
     public AnnotationDrivenBinder(List<ArgumentBinder<?>> argumentBinders,
-                                  AnnotationDefaultHandler<?> annotationDefaultHandler,
+                                  DefaultProvider<?> defaultProvider,
                                   Assigner assigner) {
         this.delegationProcessor = new DelegationProcessor(argumentBinders);
-        this.annotationDefaultHandler = annotationDefaultHandler;
+        this.defaultProvider = defaultProvider;
         this.assigner = assigner;
     }
 
@@ -204,7 +204,7 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
             return IllegalMethodDelegation.INSTANCE;
         }
         Binding.Builder methodDelegationBuilder = new Binding.Builder(target);
-        Iterator<? extends Annotation> defaults = annotationDefaultHandler.makeIterator(typeDescription, source, target);
+        Iterator<? extends Annotation> defaults = defaultProvider.makeIterator(typeDescription, source, target);
         for (int targetParameterIndex = 0;
              targetParameterIndex < target.getParameterTypes().length;
              targetParameterIndex++) {

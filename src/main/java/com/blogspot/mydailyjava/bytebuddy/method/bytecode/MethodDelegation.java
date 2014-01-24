@@ -33,7 +33,7 @@ public class MethodDelegation implements ByteCodeAppender.Factory {
         return new MethodDelegation(
                 new AnnotationDrivenBinder(
                         Arrays.<AnnotationDrivenBinder.ArgumentBinder<?>>asList(Argument.Binder.INSTANCE, This.Binder.INSTANCE),
-                        Argument.NextUnboundAsDefaultHandler.INSTANCE,
+                        Argument.NextUnboundAsDefaultProvider.INSTANCE,
                         new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE), false)),
                 new MethodDelegationBinder.AmbiguityResolver.Chain(
                         Arrays.<MethodDelegationBinder.AmbiguityResolver>asList(

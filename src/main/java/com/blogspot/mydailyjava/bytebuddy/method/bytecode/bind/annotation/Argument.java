@@ -61,7 +61,7 @@ public @interface Argument {
         }
     }
 
-    static enum NextUnboundAsDefaultHandler implements AnnotationDrivenBinder.AnnotationDefaultHandler {
+    static enum NextUnboundAsDefaultProvider implements AnnotationDrivenBinder.DefaultProvider {
         INSTANCE;
 
         private static class DefaultArgument implements Argument {

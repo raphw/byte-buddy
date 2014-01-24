@@ -29,7 +29,7 @@ public class NextUnboundAsDefaultHandlerTest {
     public void testFullyUnannotated() throws Exception {
         when(source.getParameterTypes()).thenReturn(new Class<?>[] {Void.class, Void.class});
         when(target.getParameterAnnotations()).thenReturn(new Annotation[0][0]);
-        Iterator<Argument> iterator = Argument.NextUnboundAsDefaultHandler.INSTANCE.makeIterator(typeDescription, source, target);
+        Iterator<Argument> iterator = Argument.NextUnboundAsDefaultProvider.INSTANCE.makeIterator(typeDescription, source, target);
         assertThat(iterator.hasNext(), is(true));
         assertThat(iterator.next().value(), is(0));
         assertThat(iterator.hasNext(), is(true));
@@ -44,7 +44,7 @@ public class NextUnboundAsDefaultHandlerTest {
     public void testIteratorRemoval() throws Exception {
         when(source.getParameterTypes()).thenReturn(new Class<?>[] {Void.class, Void.class});
         when(target.getParameterAnnotations()).thenReturn(new Annotation[0][0]);
-        Iterator<Argument> iterator = Argument.NextUnboundAsDefaultHandler.INSTANCE.makeIterator(typeDescription, source, target);
+        Iterator<Argument> iterator = Argument.NextUnboundAsDefaultProvider.INSTANCE.makeIterator(typeDescription, source, target);
         assertThat(iterator.hasNext(), is(true));
         iterator.remove();
         assertThat(iterator.hasNext(), is(true));
@@ -60,7 +60,7 @@ public class NextUnboundAsDefaultHandlerTest {
         doReturn(Argument.class).when(indexZeroArgument).annotationType();
         when(source.getParameterTypes()).thenReturn(new Class<?>[] {Void.class, Void.class});
         when(target.getParameterAnnotations()).thenReturn(new Annotation[][] {{indexZeroArgument}, {}});
-        Iterator<Argument> iterator = Argument.NextUnboundAsDefaultHandler.INSTANCE.makeIterator(typeDescription, source, target);
+        Iterator<Argument> iterator = Argument.NextUnboundAsDefaultProvider.INSTANCE.makeIterator(typeDescription, source, target);
         assertThat(iterator.hasNext(), is(true));
         assertThat(iterator.next().value(), is(1));
         assertThat(iterator.hasNext(), is(false));
@@ -76,7 +76,7 @@ public class NextUnboundAsDefaultHandlerTest {
         doReturn(Argument.class).when(indexOneArgument).annotationType();
         when(source.getParameterTypes()).thenReturn(new Class<?>[] {Void.class, Void.class});
         when(target.getParameterAnnotations()).thenReturn(new Annotation[][] {{indexOneArgument}, {}});
-        Iterator<Argument> iterator = Argument.NextUnboundAsDefaultHandler.INSTANCE.makeIterator(typeDescription, source, target);
+        Iterator<Argument> iterator = Argument.NextUnboundAsDefaultProvider.INSTANCE.makeIterator(typeDescription, source, target);
         assertThat(iterator.hasNext(), is(true));
         assertThat(iterator.next().value(), is(0));
         assertThat(iterator.hasNext(), is(false));
@@ -95,7 +95,7 @@ public class NextUnboundAsDefaultHandlerTest {
         doReturn(Argument.class).when(indexOneArgument).annotationType();
         when(source.getParameterTypes()).thenReturn(new Class<?>[] {Void.class, Void.class});
         when(target.getParameterAnnotations()).thenReturn(new Annotation[][] {{indexOneArgument}, {indexZeroArgument}});
-        Iterator<Argument> iterator = Argument.NextUnboundAsDefaultHandler.INSTANCE.makeIterator(typeDescription, source, target);
+        Iterator<Argument> iterator = Argument.NextUnboundAsDefaultProvider.INSTANCE.makeIterator(typeDescription, source, target);
         assertThat(iterator.hasNext(), is(false));
         verify(source, atLeast(1)).getParameterTypes();
         verify(target, atLeast(1)).getParameterAnnotations();
