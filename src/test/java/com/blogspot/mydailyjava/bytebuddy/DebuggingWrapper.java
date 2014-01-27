@@ -1,4 +1,4 @@
-package com.blogspot.mydailyjava;
+package com.blogspot.mydailyjava.bytebuddy;
 
 import com.blogspot.mydailyjava.bytebuddy.asm.ClassVisitorWrapper;
 import org.objectweb.asm.ClassVisitor;
