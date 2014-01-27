@@ -1,8 +1,6 @@
 package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign;
 
 import com.blogspot.mydailyjava.bytebuddy.method.MethodDescription;
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assignment;
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.MethodInvocation;
 import org.junit.Before;
 import org.junit.Test;
 import org.objectweb.asm.MethodVisitor;
@@ -121,5 +119,35 @@ public class MethodInvocationTest {
         verify(methodDescription, atLeast(1)).getDescriptor();
         verify(methodVisitor).visitMethodInsn(Opcodes.INVOKESTATIC, FOO, BAR, BAZ);
         verifyNoMoreInteractions(methodVisitor);
+    }
+
+    @Test
+    public void testCallMethodInvokeSpecial() throws Exception {
+        when(methodDescription.getParameterTypes()).thenReturn(new Class<?>[] {int.class, long.class});
+        doReturn(void.class).when(methodDescription).getReturnType();
+        when(methodDescription.isStatic()).thenReturn(false);
+        when(methodDescription.isInterfaceMethod()).thenReturn(false);
+        when(methodDescription.getDeclaringClassInternalName()).thenReturn(FOO);
+        when(methodDescription.getInternalName()).thenReturn(BAR);
+        when(methodDescription.getDescriptor()).thenReturn(BAZ);
+        Assignment assignment = MethodInvocation.special(methodDescription);
+        assertThat(assignment.isValid(), is(true));
+        Assignment.Size size = assignment.apply(methodVisitor);
+        assertThat(size.getSizeImpact(), is(-4));
+        assertThat(size.getMaximalSize(), is(0));
+        verify(methodDescription, atLeast(1)).isStatic();
+        verify(methodDescription, atLeast(1)).getParameterTypes();
+        verify(methodDescription, atLeast(1)).getReturnType();
+        verify(methodDescription, atLeast(1)).getInternalName();
+        verify(methodDescription, atLeast(1)).getDeclaringClassInternalName();
+        verify(methodDescription, atLeast(1)).getDescriptor();
+        verify(methodVisitor).visitMethodInsn(Opcodes.INVOKESPECIAL, FOO, BAR, BAZ);
+        verifyNoMoreInteractions(methodVisitor);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCallMethodInvokeSpecialOnStatic() throws Exception {
+        when(methodDescription.isStatic()).thenReturn(true);
+        MethodInvocation.special(methodDescription);
     }
 }

@@ -3,6 +3,7 @@ package com.blogspot.mydailyjava.bytebuddy.method.bytecode;
 import com.blogspot.mydailyjava.bytebuddy.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assignment;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.MethodArgument;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.MethodInvocation;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.MethodReturn;
 import com.blogspot.mydailyjava.bytebuddy.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
@@ -22,17 +23,14 @@ public enum SuperClassDelegation implements ByteCodeAppender.Factory {
         @Override
         public Size apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-            Assignment.Size size = new Assignment.Size(1, 1);
+            Assignment.Size parameterSize = new Assignment.Size(1, 1);
             for (Class<?> parameterType : methodDescription.getParameterTypes()) {
-                size = size.aggregate(MethodArgument.forType(parameterType)
-                        .loadFromIndex(size.getSizeImpact()).apply(methodVisitor));
+                parameterSize = parameterSize.aggregate(MethodArgument.forType(parameterType)
+                        .loadFromIndex(parameterSize.getSizeImpact()).apply(methodVisitor));
             }
-            methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,
-                    superClassInternalName,
-                    methodDescription.getInternalName(),
-                    methodDescription.getDescriptor());
+            Assignment.Size size = parameterSize.aggregate(MethodInvocation.special(methodDescription).apply(methodVisitor));
             size = size.aggregate(MethodReturn.returning(methodDescription.getReturnType()).apply(methodVisitor));
-            return new Size(size.getMaximalSize(), size.getMaximalSize());
+            return new Size(size.getMaximalSize(), parameterSize.getMaximalSize());
         }
     }
 

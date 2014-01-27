@@ -33,8 +33,9 @@ public interface ByteCodeAppender {
             return new Size(Math.max(operandStackSize, other.operandStackSize), Math.max(localVariableSize, other.localVariableSize));
         }
 
-        public Size merge(int operandStackSize, int localVariableSize) {
-            return new Size(Math.max(this.operandStackSize, operandStackSize), Math.max(this.localVariableSize, localVariableSize));
+        @Override
+        public String toString() {
+            return "ByteCodeAppender.Size{operandStackSize=" + operandStackSize + ", localVariableSize=" + localVariableSize + '}';
         }
     }
 

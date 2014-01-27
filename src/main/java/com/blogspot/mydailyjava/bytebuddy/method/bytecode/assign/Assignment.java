@@ -26,8 +26,13 @@ public interface Assignment {
             return aggregate(other.sizeImpact, other.maximalSize);
         }
 
-        public Size aggregate(int sizeChange, int interimMaximalSize) {
+        private Size aggregate(int sizeChange, int interimMaximalSize) {
             return new Size(sizeImpact + sizeChange, Math.max(maximalSize, sizeImpact + interimMaximalSize));
+        }
+
+        @Override
+        public String toString() {
+            return "Assignment.Size{sizeImpact=" + sizeImpact + ", maximalSize=" + maximalSize + '}';
         }
     }
 
@@ -49,6 +54,11 @@ public interface Assignment {
         @Override
         public Size apply(MethodVisitor methodVisitor) {
             return first.apply(methodVisitor).aggregate(second.apply(methodVisitor));
+        }
+
+        @Override
+        public String toString() {
+            return "Assignment.Compound{first=" + first + ", second=" + second + '}';
         }
     }
 

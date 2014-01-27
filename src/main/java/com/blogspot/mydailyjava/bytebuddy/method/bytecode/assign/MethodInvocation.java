@@ -2,7 +2,6 @@ package com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign;
 
 import com.blogspot.mydailyjava.bytebuddy.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.TypeSize;
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.Assignment;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -10,7 +9,8 @@ public enum MethodInvocation {
 
     CONCRETE(Opcodes.INVOKEVIRTUAL),
     INTERFACE(Opcodes.INVOKEINTERFACE),
-    STATIC(Opcodes.INVOKESTATIC);
+    STATIC(Opcodes.INVOKESTATIC),
+    SPECIAL(Opcodes.INVOKESPECIAL);
 
     private class Invocation implements Assignment {
 
@@ -46,6 +46,14 @@ public enum MethodInvocation {
             return INTERFACE.new Invocation(methodDescription);
         } else {
             return CONCRETE.new Invocation(methodDescription);
+        }
+    }
+
+    public static Assignment special(MethodDescription methodDescription) {
+        if (methodDescription.isStatic()) {
+            throw new IllegalArgumentException("Cannot invoke static method via INVOKESPECIAL");
+        } else {
+            return SPECIAL.new Invocation(methodDescription);
         }
     }
 

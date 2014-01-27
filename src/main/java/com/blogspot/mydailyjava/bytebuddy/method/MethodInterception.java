@@ -112,7 +112,7 @@ public class MethodInterception {
         }
 
         public Delegate find(MethodDescription methodDescription) {
-            // Until constructor interception is fully supported this serves as a preliminary solution.
+            // Until constructor interception is fully supported, this serves as a preliminary solution.
             if(methodDescription.isConstructor()) {
                 return new MethodWritingDelegate(methodDescription, constructorAppender);
             }

@@ -23,6 +23,7 @@ import java.util.List;
 public class MethodDelegation implements ByteCodeAppender.Factory {
 
     public static ByteCodeAppender.Factory to(Class<?> type) {
+        // TODO: Refactor to builder pattern in order to allow easy customization!
         if (type.isInterface()) {
             throw new IllegalArgumentException("Cannot delegate to interface " + type);
         } else if (type.isArray()) {
