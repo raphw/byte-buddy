@@ -32,26 +32,22 @@ public @interface AllArguments {
                                          TypeDescription typeDescription,
                                          Assigner assigner) {
             Class<?> targetType = target.getParameterTypes()[targetParameterIndex];
-            if (!targetType.isArray()) {
-                throw new IllegalStateException(String.format("AllArgument annotation on %d's argument of " +
-                        "%s does not point to array type", targetParameterIndex, target));
-            }
-            targetType = targetType.getComponentType();
+            ArrayFactory arrayFactory = ArrayFactory.of(targetType);
             List<Assignment> assignments = new ArrayList<Assignment>(source.getParameterTypes().length);
             int sourceParameterOffset = source.isStatic() ? 0 : 1;
             boolean considerRuntimeType = RuntimeType.Verifier.check(target, targetParameterIndex);
             int index = 0;
             for (Class<?> sourceParameter : source.getParameterTypes()) {
                 Assignment assignment = new Assignment.Compound(
-                        MethodArgument.forType(sourceParameter).loadFromIndex(index + sourceParameterOffset),
-                        assigner.assign(targetType, sourceParameter, considerRuntimeType));
+                        MethodArgument.forType(sourceParameter).loadFromIndex(index++ + sourceParameterOffset),
+                        assigner.assign(sourceParameter, arrayFactory.getComponentType(), considerRuntimeType));
                 if (assignment.isValid()) {
                     assignments.add(assignment);
                 } else {
                     return IdentifiedBinding.makeIllegal();
                 }
             }
-            return IdentifiedBinding.makeAnonymous(new ArrayFactory(targetType).withValues(assignments));
+            return IdentifiedBinding.makeAnonymous(arrayFactory.withValues(assignments));
         }
     }
 }

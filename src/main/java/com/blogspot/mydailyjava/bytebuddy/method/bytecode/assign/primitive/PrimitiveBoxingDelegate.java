@@ -8,13 +8,13 @@ import org.objectweb.asm.Opcodes;
 
 public enum PrimitiveBoxingDelegate {
 
-    BOOLEAN("java/lang/Boolean", TypeSize.NONE, Boolean.class, "valueOf", "(Z)Ljava/lang/Boolean;"),
-    BYTE("java/lang/Byte", TypeSize.NONE, Byte.class, "valueOf", "(B)Ljava/lang/Byte;"),
-    SHORT("java/lang/Short", TypeSize.NONE, Short.class, "valueOf", "(S)Ljava/lang/Short;"),
-    CHARACTER("java/lang/Character", TypeSize.NONE, Character.class, "valueOf", "(C)Ljava/lang/Character;"),
-    INTEGER("java/lang/Integer", TypeSize.NONE, Integer.class, "valueOf", "(I)Ljava/lang/Integer;"),
+    BOOLEAN("java/lang/Boolean", TypeSize.ZERO, Boolean.class, "valueOf", "(Z)Ljava/lang/Boolean;"),
+    BYTE("java/lang/Byte", TypeSize.ZERO, Byte.class, "valueOf", "(B)Ljava/lang/Byte;"),
+    SHORT("java/lang/Short", TypeSize.ZERO, Short.class, "valueOf", "(S)Ljava/lang/Short;"),
+    CHARACTER("java/lang/Character", TypeSize.ZERO, Character.class, "valueOf", "(C)Ljava/lang/Character;"),
+    INTEGER("java/lang/Integer", TypeSize.ZERO, Integer.class, "valueOf", "(I)Ljava/lang/Integer;"),
     LONG("java/lang/Long", TypeSize.SINGLE, Long.class, "valueOf", "(J)Ljava/lang/Long;"),
-    FLOAT("java/lang/Float", TypeSize.NONE, Float.class, "valueOf", "(F)Ljava/lang/Float;"),
+    FLOAT("java/lang/Float", TypeSize.ZERO, Float.class, "valueOf", "(F)Ljava/lang/Float;"),
     DOUBLE("java/lang/Double", TypeSize.SINGLE, Double.class, "valueOf", "(D)Ljava/lang/Double;");
 
     public static PrimitiveBoxingDelegate forPrimitive(Class<?> type) {

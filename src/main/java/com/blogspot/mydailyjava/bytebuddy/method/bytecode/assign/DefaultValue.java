@@ -10,7 +10,7 @@ public enum DefaultValue implements Assignment {
     LONG(Opcodes.LCONST_0, TypeSize.DOUBLE),
     FLOAT(Opcodes.FCONST_0, TypeSize.SINGLE),
     DOUBLE(Opcodes.DCONST_0, TypeSize.DOUBLE),
-    VOID(-1, TypeSize.NONE),
+    VOID(-1, TypeSize.ZERO),
     ANY_REFERENCE(Opcodes.ACONST_NULL, TypeSize.SINGLE);
 
     public static DefaultValue load(Class<?> type) {

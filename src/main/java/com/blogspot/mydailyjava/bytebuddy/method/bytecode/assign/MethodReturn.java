@@ -10,7 +10,7 @@ public enum MethodReturn implements Assignment {
     DOUBLE(Opcodes.DRETURN, TypeSize.DOUBLE),
     FLOAT(Opcodes.FRETURN, TypeSize.SINGLE),
     LONG(Opcodes.LRETURN, TypeSize.DOUBLE),
-    VOID(Opcodes.RETURN, TypeSize.NONE),
+    VOID(Opcodes.RETURN, TypeSize.ZERO),
     ANY_REFERENCE(Opcodes.ARETURN, TypeSize.SINGLE);
 
     public static MethodReturn returning(Class<?> type) {

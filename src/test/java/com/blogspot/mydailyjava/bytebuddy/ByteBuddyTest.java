@@ -1,9 +1,13 @@
 package com.blogspot.mydailyjava.bytebuddy;
 
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.MethodDelegation;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind.annotation.AllArguments;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind.annotation.Argument;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind.annotation.RuntimeType;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind.annotation.This;
 import org.junit.Test;
+
+import java.util.Arrays;
 
 import static com.blogspot.mydailyjava.bytebuddy.method.matcher.MethodMatchers.named;
 
@@ -23,8 +27,8 @@ public class ByteBuddyTest {
             return "Bar: " + x + y;
         }
 
-        public Integer foo(Integer i) {
-            return i;
+        public Integer foo(Object i, int y) {
+            return y;
         }
 
         @Override
@@ -35,17 +39,20 @@ public class ByteBuddyTest {
 
     public static class Delegate {
 
-        public static String test(@Argument(1) int y, @Argument(0) Object x, @This Bar bar) {
-            return "Interception: " + x + y + " " + bar.toString();
+        public static String test(@Argument(1) int y, @Argument(0) Object x, @This Bar bar, @AllArguments Object[] objects) {
+            return "Interception: " + x + y + " " + bar.toString() + Arrays.asList(objects);
         }
 
-        public static int x(int i) {
-            return i * 2;
+        public static int x(@AllArguments @RuntimeType int[] i) {
+            for(int in : i) {
+                System.out.println(in);
+            }
+            return i.length;
         }
     }
 
     @Test
-    public void example() throws Exception {
+    public void demonstratingExampleToBeRemoved() throws Exception {
         Bar object = ByteBuddy.make()
                 .withAppendedClassVisitorWrapper(new DebuggingWrapper(System.out))
                 .subclass(Bar.class)
@@ -55,10 +62,8 @@ public class ByteBuddyTest {
                 .load(getClass().getClassLoader())
                 .newInstance();
         System.out.println(object.test("a", 10));
-        System.out.println(object.foo(10));
-
+        System.out.println(object.foo(10, 3));
     }
-
 
     @Test
     public void testName() throws Exception {

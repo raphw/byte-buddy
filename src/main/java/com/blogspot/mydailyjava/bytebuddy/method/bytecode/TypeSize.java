@@ -7,13 +7,13 @@ import java.util.Arrays;
 
 public enum TypeSize {
 
-    NONE(0),
+    ZERO(0),
     SINGLE(1),
     DOUBLE(2);
 
     public static TypeSize of(Class<?> type) {
         if (type == void.class) {
-            return NONE;
+            return ZERO;
         } else if (type == double.class || type == long.class) {
             return DOUBLE;
         } else {

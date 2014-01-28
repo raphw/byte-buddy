@@ -8,13 +8,13 @@ import org.objectweb.asm.Opcodes;
 
 public enum PrimitiveUnboxingDelegate implements Assignment {
 
-    BOOLEAN("java/lang/Boolean", TypeSize.NONE, Boolean.class, boolean.class, "booleanValue", "()Z"),
-    BYTE("java/lang/Byte", TypeSize.NONE, Byte.class, byte.class, "byteValue", "()B"),
-    SHORT("java/lang/Short", TypeSize.NONE, Short.class, short.class, "shortValue", "()S"),
-    CHARACTER("java/lang/Character", TypeSize.NONE, Character.class, char.class, "charValue", "()C"),
-    INTEGER("java/lang/Integer", TypeSize.NONE, Integer.class, int.class, "intValue", "()I"),
+    BOOLEAN("java/lang/Boolean", TypeSize.ZERO, Boolean.class, boolean.class, "booleanValue", "()Z"),
+    BYTE("java/lang/Byte", TypeSize.ZERO, Byte.class, byte.class, "byteValue", "()B"),
+    SHORT("java/lang/Short", TypeSize.ZERO, Short.class, short.class, "shortValue", "()S"),
+    CHARACTER("java/lang/Character", TypeSize.ZERO, Character.class, char.class, "charValue", "()C"),
+    INTEGER("java/lang/Integer", TypeSize.ZERO, Integer.class, int.class, "intValue", "()I"),
     LONG("java/lang/Long", TypeSize.SINGLE, Long.class, long.class, "longValue", "()J"),
-    FLOAT("java/lang/Float", TypeSize.NONE, Float.class, float.class, "floatValue", "()F"),
+    FLOAT("java/lang/Float", TypeSize.ZERO, Float.class, float.class, "floatValue", "()F"),
     DOUBLE("java/lang/Double", TypeSize.SINGLE, Double.class, double.class, "doubleValue", "()D");
 
     public static interface UnboxingResponsible {

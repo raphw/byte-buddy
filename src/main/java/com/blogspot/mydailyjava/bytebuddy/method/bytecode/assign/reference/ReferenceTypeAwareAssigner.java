@@ -28,7 +28,7 @@ public enum ReferenceTypeAwareAssigner implements Assigner {
         @Override
         public Size apply(MethodVisitor methodVisitor) {
             methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, targetTypeInternalName);
-            return TypeSize.NONE.toIncreasingSize();
+            return TypeSize.ZERO.toIncreasingSize();
         }
     }
 
