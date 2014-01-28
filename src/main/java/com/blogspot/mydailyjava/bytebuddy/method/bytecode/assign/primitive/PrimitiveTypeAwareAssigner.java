@@ -12,15 +12,15 @@ public class PrimitiveTypeAwareAssigner implements Assigner {
     }
 
     @Override
-    public Assignment assign(Class<?> superType, Class<?> subType, boolean considerRuntimeType) {
-        if (superType.isPrimitive() && subType.isPrimitive()) {
-            return PrimitiveWideningDelegate.forPrimitive(superType).widenTo(subType);
-        } else if (superType.isPrimitive() /* && !subType.isPrimitive() */) {
-            return PrimitiveBoxingDelegate.forPrimitive(superType).assignBoxedTo(subType, referenceTypeAwareAssigner, considerRuntimeType);
-        } else if (/* !superType.isPrimitive() && */ subType.isPrimitive()) {
-            return PrimitiveUnboxingDelegate.forReferenceType(superType).assignUnboxedTo(subType, referenceTypeAwareAssigner, considerRuntimeType);
+    public Assignment assign(Class<?> sourceType, Class<?> targetType, boolean considerRuntimeType) {
+        if (sourceType.isPrimitive() && targetType.isPrimitive()) {
+            return PrimitiveWideningDelegate.forPrimitive(sourceType).widenTo(targetType);
+        } else if (sourceType.isPrimitive() /* && !subType.isPrimitive() */) {
+            return PrimitiveBoxingDelegate.forPrimitive(sourceType).assignBoxedTo(targetType, referenceTypeAwareAssigner, considerRuntimeType);
+        } else if (/* !superType.isPrimitive() && */ targetType.isPrimitive()) {
+            return PrimitiveUnboxingDelegate.forReferenceType(sourceType).assignUnboxedTo(targetType, referenceTypeAwareAssigner, considerRuntimeType);
         } else /* !superType.isPrimitive() && !subType.isPrimitive()) */ {
-            return referenceTypeAwareAssigner.assign(superType, subType, considerRuntimeType);
+            return referenceTypeAwareAssigner.assign(sourceType, targetType, considerRuntimeType);
         }
     }
 }

@@ -72,7 +72,7 @@ public class PrimitiveUnboxingDelegateTest {
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(sizeChange));
         assertThat(size.getMaximalSize(), is(sizeChange));
-        verify(methodVisitor).visitMethodInsn(Opcodes.INVOKEDYNAMIC, Type.getInternalName(referenceType), unboxingMethodName, unboxingMethodDescriptor);
+        verify(methodVisitor).visitMethodInsn(Opcodes.INVOKEVIRTUAL, Type.getInternalName(referenceType), unboxingMethodName, unboxingMethodDescriptor);
         verifyNoMoreInteractions(methodVisitor);
         verifyZeroInteractions(chainedAssigner);
     }
@@ -84,7 +84,7 @@ public class PrimitiveUnboxingDelegateTest {
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(sizeChange));
         assertThat(size.getMaximalSize(), is(sizeChange));
-        verify(methodVisitor).visitMethodInsn(Opcodes.INVOKEDYNAMIC, Type.getInternalName(referenceType), unboxingMethodName, unboxingMethodDescriptor);
+        verify(methodVisitor).visitMethodInsn(Opcodes.INVOKEVIRTUAL, Type.getInternalName(referenceType), unboxingMethodName, unboxingMethodDescriptor);
         verifyNoMoreInteractions(methodVisitor);
         verify(chainedAssigner).assign(Object.class, referenceType, true);
         verifyNoMoreInteractions(chainedAssigner);

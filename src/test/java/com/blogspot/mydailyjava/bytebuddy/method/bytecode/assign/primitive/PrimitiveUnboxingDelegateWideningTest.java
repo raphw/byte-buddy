@@ -74,7 +74,7 @@ public class PrimitiveUnboxingDelegateWideningTest {
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(sizeChange));
         assertThat(size.getMaximalSize(), is(sizeChange));
-        verify(methodVisitor).visitMethodInsn(Opcodes.INVOKEDYNAMIC, Type.getInternalName(referenceType), unboxingMethodName, unboxingMethodDescriptor);
+        verify(methodVisitor).visitMethodInsn(Opcodes.INVOKEVIRTUAL, Type.getInternalName(referenceType), unboxingMethodName, unboxingMethodDescriptor);
         verify(methodVisitor).visitInsn(wideningOpcode);
         verifyNoMoreInteractions(methodVisitor);
         verifyZeroInteractions(chainedAssigner);

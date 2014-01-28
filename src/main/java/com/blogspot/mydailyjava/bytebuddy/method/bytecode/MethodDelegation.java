@@ -9,6 +9,7 @@ import com.blogspot.mydailyjava.bytebuddy.method.bytecode.assign.reference.Refer
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind.MethodDelegationBinder;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind.MethodNameEqualityResolver;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind.MostSpecificTypeResolver;
+import com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind.annotation.AllArguments;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind.annotation.AnnotationDrivenBinder;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind.annotation.Argument;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind.annotation.This;
@@ -33,7 +34,10 @@ public class MethodDelegation implements ByteCodeAppender.Factory {
         }
         return new MethodDelegation(
                 new AnnotationDrivenBinder(
-                        Arrays.<AnnotationDrivenBinder.ArgumentBinder<?>>asList(Argument.Binder.INSTANCE, This.Binder.INSTANCE),
+                        Arrays.<AnnotationDrivenBinder.ArgumentBinder<?>>asList(
+                                Argument.Binder.INSTANCE,
+                                This.Binder.INSTANCE,
+                                AllArguments.Binder.INSTANCE),
                         Argument.NextUnboundAsDefaultProvider.INSTANCE,
                         new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE), false)),
                 new MethodDelegationBinder.AmbiguityResolver.Chain(

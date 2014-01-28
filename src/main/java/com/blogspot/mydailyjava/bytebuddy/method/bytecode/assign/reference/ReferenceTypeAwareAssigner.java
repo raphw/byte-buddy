@@ -33,17 +33,17 @@ public enum ReferenceTypeAwareAssigner implements Assigner {
     }
 
     @Override
-    public Assignment assign(Class<?> superType, Class<?> subType, boolean considerRuntimeType) {
-        if (superType.isPrimitive() || subType.isPrimitive()) {
-            if (superType == subType) {
+    public Assignment assign(Class<?> sourceType, Class<?> targetType, boolean considerRuntimeType) {
+        if (sourceType.isPrimitive() || targetType.isPrimitive()) {
+            if (sourceType == targetType) {
                 return LegalTrivialAssignment.INSTANCE;
             } else {
                 return IllegalAssignment.INSTANCE;
             }
-        } else if (superType.isAssignableFrom(subType)) {
+        } else if (targetType.isAssignableFrom(sourceType)) {
             return LegalTrivialAssignment.INSTANCE;
         } else if (considerRuntimeType) {
-            return new DownCastAssignment(superType);
+            return new DownCastAssignment(targetType);
         } else {
             return IllegalAssignment.INSTANCE;
         }

@@ -32,7 +32,7 @@ public class ReferenceTypeAwareAssignerTest {
 
     @Test
     public void testUpcastAssignment() throws Exception {
-        Assignment assignment = ReferenceTypeAwareAssigner.INSTANCE.assign(Object.class, Integer.class, false);
+        Assignment assignment = ReferenceTypeAwareAssigner.INSTANCE.assign(Integer.class, Object.class, false);
         assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
@@ -42,14 +42,14 @@ public class ReferenceTypeAwareAssignerTest {
 
     @Test(expected = IllegalStateException.class)
     public void testDowncastAssignmentWithoutRuntimeType() throws Exception {
-        Assignment assignment = ReferenceTypeAwareAssigner.INSTANCE.assign(Integer.class, Object.class, false);
+        Assignment assignment = ReferenceTypeAwareAssigner.INSTANCE.assign(Object.class, Integer.class, false);
         assertThat(assignment.isValid(), is(false));
         assignment.apply(methodVisitor);
     }
 
     @Test
     public void testDowncastAssignmentWithRuntimeType() throws Exception {
-        Assignment assignment = ReferenceTypeAwareAssigner.INSTANCE.assign(Integer.class, Object.class, true);
+        Assignment assignment = ReferenceTypeAwareAssigner.INSTANCE.assign(Object.class, Integer.class, true);
         assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));

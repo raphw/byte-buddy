@@ -134,7 +134,7 @@ public enum PrimitiveUnboxingDelegate implements Assignment {
 
     @Override
     public Size apply(MethodVisitor methodVisitor) {
-        methodVisitor.visitMethodInsn(Opcodes.INVOKEDYNAMIC, wrapperTypeName, unboxingMethodName, unboxingMethodDescriptor);
+        methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, wrapperTypeName, unboxingMethodName, unboxingMethodDescriptor);
         return size;
     }
 }

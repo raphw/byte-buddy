@@ -51,15 +51,15 @@ public class VoidAwareAssigner implements Assigner {
     }
 
     @Override
-    public Assignment assign(Class<?> superType, Class<?> subType, boolean considerRuntimeType) {
-        if (superType == void.class && subType == void.class) {
+    public Assignment assign(Class<?> sourceType, Class<?> targetType, boolean considerRuntimeType) {
+        if (sourceType == void.class && targetType == void.class) {
             return LegalTrivialAssignment.INSTANCE;
-        } else if (superType == void.class /* && !(subType == void.class) */) {
-            return returnDefaultValue ? DefaultValue.load(subType) : IllegalAssignment.INSTANCE;
-        } else if (/* !(superType == void.class) && */ subType == void.class) {
-            return ValueRemovingAssignment.of(superType);
-        } else /* !(superType == void.class) && !(subType == void.class) */ {
-            return nonVoidAwareAssigner.assign(superType, subType, considerRuntimeType);
+        } else if (sourceType == void.class /* && subType != void.class */) {
+            return returnDefaultValue ? DefaultValue.load(targetType) : IllegalAssignment.INSTANCE;
+        } else if (/* superType != void.class && */ targetType == void.class) {
+            return ValueRemovingAssignment.of(sourceType);
+        } else /* superType != void.class && subType != void.class */ {
+            return nonVoidAwareAssigner.assign(sourceType, targetType, considerRuntimeType);
         }
     }
 }

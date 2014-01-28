@@ -40,7 +40,6 @@ public @interface Argument {
             return makeBinding(source.getParameterTypes()[sourceParameterIndex.value()],
                     target.getParameterTypes()[targetParameterIndex],
                     sourceParameterIndex.value(),
-                    targetParameterIndex,
                     assigner,
                     RuntimeType.Verifier.check(target, targetParameterIndex),
                     source.isStatic() ? 0 : 1);
@@ -49,7 +48,6 @@ public @interface Argument {
         private static IdentifiedBinding<?> makeBinding(Class<?> sourceType,
                                                         Class<?> targetType,
                                                         int sourceParameterIndex,
-                                                        int targetParameterIndex,
                                                         Assigner assigner,
                                                         boolean considerRuntimeType,
                                                         int sourceParameterOffset) {
