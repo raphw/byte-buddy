@@ -11,7 +11,7 @@ import java.util.Iterator;
 
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.PARAMETER, ElementType.METHOD})
+@Target({ElementType.PARAMETER})
 public @interface This {
 
     static enum Binder implements AnnotationDrivenBinder.ArgumentBinder<This> {

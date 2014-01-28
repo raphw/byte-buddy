@@ -95,6 +95,22 @@ public class AnnotationDrivenBinderTest {
     }
 
     @Test
+    public void testDoNotBindAnnotation() throws Exception {
+        IgnoreForBinding ignoreForBinding = mock(IgnoreForBinding.class);
+        doReturn(IgnoreForBinding.class).when(ignoreForBinding).annotationType();
+        when(target.getAnnotations()).thenReturn(new Annotation[] {ignoreForBinding});
+        MethodDelegationBinder methodDelegationBinder = new AnnotationDrivenBinder(
+                Collections.<AnnotationDrivenBinder.ArgumentBinder<?>>emptyList(),
+                defaultProvider,
+                assigner);
+        assertThat(methodDelegationBinder.bind(typeDescription, source, target).isValid(), is(false));
+        verifyZeroInteractions(assigner);
+        verifyZeroInteractions(typeDescription);
+        verifyZeroInteractions(defaultProvider);
+        verifyZeroInteractions(source);
+    }
+
+    @Test
     public void testReturnTypeMismatchNoRuntimeType() throws Exception {
         when(assigner.assign(any(Class.class), any(Class.class), anyBoolean())).thenReturn(IllegalAssignment.INSTANCE);
         doReturn(Object.class).when(source).getReturnType();

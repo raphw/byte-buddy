@@ -13,7 +13,7 @@ import java.util.LinkedHashSet;
 
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.PARAMETER, ElementType.METHOD})
+@Target({ElementType.PARAMETER})
 public @interface Argument {
 
     static enum Binder implements AnnotationDrivenBinder.ArgumentBinder<Argument> {
@@ -57,7 +57,7 @@ public @interface Argument {
                     new Assignment.Compound(
                             MethodArgument.forType(sourceType).loadFromIndex(sourceParameterIndex + sourceParameterOffset),
                             assigner.assign(sourceType, targetType, considerRuntimeType)),
-                    new MostSpecificTypeResolver.ParameterIndexToken(targetParameterIndex));
+                    new MostSpecificTypeResolver.ParameterIndexToken(sourceParameterIndex));
         }
     }
 

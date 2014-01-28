@@ -14,6 +14,7 @@ public class AnnotationVisibilityTest {
     @Test
     public void testRuntimeVisibility() throws Exception {
         testRuntimeVisibilityOf(RuntimeType.class);
+        testRuntimeVisibilityOf(IgnoreForBinding.class);
         testRuntimeVisibilityOf(Argument.class);
         testRuntimeVisibilityOf(This.class);
     }

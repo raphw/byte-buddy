@@ -60,6 +60,11 @@ public interface MethodDelegationBinder {
                     size = size.aggregate(MethodInvocation.of(target).apply(methodVisitor));
                     return size.aggregate(returnValueAssignment.apply(methodVisitor));
                 }
+
+                @Override
+                public String toString() {
+                    return "Binding to " + target + " (" + (isValid() ? "valid" : "invalid") + ')';
+                }
             }
 
             private final MethodDescription target;
@@ -158,6 +163,14 @@ public interface MethodDelegationBinder {
                          AmbiguityResolver ambiguityResolver) {
             this.methodDelegationBinder = methodDelegationBinder;
             this.ambiguityResolver = ambiguityResolver;
+        }
+
+        public MethodDelegationBinder getMethodDelegationBinder() {
+            return methodDelegationBinder;
+        }
+
+        public AmbiguityResolver getAmbiguityResolver() {
+            return ambiguityResolver;
         }
 
         public Binding process(TypeDescription typeDescription,

@@ -13,17 +13,17 @@ import com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind.annotation.Annota
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind.annotation.Argument;
 import com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind.annotation.This;
 import com.blogspot.mydailyjava.bytebuddy.method.matcher.MethodExtraction;
-import com.blogspot.mydailyjava.bytebuddy.method.matcher.MethodMatchers;
 import com.blogspot.mydailyjava.bytebuddy.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 
 import java.util.Arrays;
 import java.util.List;
 
+import static com.blogspot.mydailyjava.bytebuddy.method.matcher.MethodMatchers.*;
+
 public class MethodDelegation implements ByteCodeAppender.Factory {
 
     public static ByteCodeAppender.Factory to(Class<?> type) {
-        // TODO: Refactor to builder pattern in order to allow easy customization!
         if (type.isInterface()) {
             throw new IllegalArgumentException("Cannot delegate to interface " + type);
         } else if (type.isArray()) {
@@ -40,7 +40,7 @@ public class MethodDelegation implements ByteCodeAppender.Factory {
                         Arrays.<MethodDelegationBinder.AmbiguityResolver>asList(
                                 MethodNameEqualityResolver.INSTANCE,
                                 MostSpecificTypeResolver.INSTANCE)),
-                MethodExtraction.matching(MethodMatchers.isStatic()).extractFrom(type).asList());
+                MethodExtraction.matching(isStatic().and(not(signatureIsDefinedIn(Object.class)))).extractFrom(type).asList());
     }
 
     private final MethodDelegationBinder.Processor processor;
@@ -51,6 +51,14 @@ public class MethodDelegation implements ByteCodeAppender.Factory {
                                List<MethodDescription> methods) {
         processor = new MethodDelegationBinder.Processor(methodDelegationBinder, ambiguityResolver);
         this.methods = methods;
+    }
+
+    public MethodDelegation withAmbiguityResolver(MethodDelegationBinder.AmbiguityResolver ambiguityResolver) {
+        return new MethodDelegation(processor.getMethodDelegationBinder(), ambiguityResolver, methods);
+    }
+
+    public MethodDelegation withMethodDelegationBinder(MethodDelegationBinder methodDelegationBinder) {
+        return new MethodDelegation(methodDelegationBinder, processor.getAmbiguityResolver(), methods);
     }
 
     private class AppenderDelegate implements ByteCodeAppender {

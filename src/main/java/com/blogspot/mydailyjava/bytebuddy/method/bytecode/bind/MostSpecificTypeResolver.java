@@ -2,7 +2,7 @@ package com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind;
 
 import com.blogspot.mydailyjava.bytebuddy.method.MethodDescription;
 
-public enum  MostSpecificTypeResolver implements MethodDelegationBinder.AmbiguityResolver {
+public enum MostSpecificTypeResolver implements MethodDelegationBinder.AmbiguityResolver {
     INSTANCE;
 
     public static class ParameterIndexToken {
@@ -23,6 +23,11 @@ public enum  MostSpecificTypeResolver implements MethodDelegationBinder.Ambiguit
         @Override
         public int hashCode() {
             return parameterIndex;
+        }
+
+        @Override
+        public String toString() {
+            return "ParameterIndexToken{" + parameterIndex + '}';
         }
     }
 

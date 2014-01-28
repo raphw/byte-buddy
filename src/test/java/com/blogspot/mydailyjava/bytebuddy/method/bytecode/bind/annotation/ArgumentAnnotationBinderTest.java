@@ -35,7 +35,7 @@ public class ArgumentAnnotationBinderTest extends AbstractAnnotationBinderTest<A
         AnnotationDrivenBinder.ArgumentBinder.IdentifiedBinding<?> identifiedBinding = Argument.Binder.INSTANCE
                 .bind(annotation, targetIndex, source, target, typeDescription, assigner);
         assertThat(identifiedBinding.isValid(), is(true));
-        Object expectedToken = new MostSpecificTypeResolver.ParameterIndexToken(targetIndex);
+        Object expectedToken = new MostSpecificTypeResolver.ParameterIndexToken(sourceIndex);
         assertThat(identifiedBinding.getIdentificationToken(), equalTo(expectedToken));
         assertThat(identifiedBinding.getIdentificationToken().hashCode(), equalTo(expectedToken.hashCode()));
         verify(annotation, atLeast(1)).value();

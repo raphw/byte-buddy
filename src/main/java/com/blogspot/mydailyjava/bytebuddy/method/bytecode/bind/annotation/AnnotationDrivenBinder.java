@@ -197,6 +197,9 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
 
     @Override
     public Binding bind(TypeDescription typeDescription, MethodDescription source, MethodDescription target) {
+        if(IgnoreForBinding.Verifier.check(target)) {
+            return IllegalMethodDelegation.INSTANCE;
+        }
         Assignment returningAssignment = assigner.assign(target.getReturnType(),
                 source.getReturnType(),
                 RuntimeType.Verifier.check(target));
