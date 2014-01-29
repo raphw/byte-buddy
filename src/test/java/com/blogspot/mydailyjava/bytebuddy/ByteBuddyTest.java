@@ -31,6 +31,10 @@ public class ByteBuddyTest {
             return y;
         }
 
+        public void test(String a) {
+
+        }
+
         @Override
         public String toString() {
             return "{Bar}";
@@ -49,20 +53,26 @@ public class ByteBuddyTest {
             }
             return i.length;
         }
+
+        public static void test0(String a) {
+            System.out.println("test0");
+        }
     }
 
     @Test
     public void demonstratingExampleToBeRemoved() throws Exception {
         Bar object = ByteBuddy.make()
-                .withAppendedClassVisitorWrapper(new DebuggingWrapper(System.out))
+//                .withAppendedClassVisitorWrapper(new DebuggingWrapper(System.out))
                 .subclass(Bar.class)
                 .method(named("test")).intercept(MethodDelegation.to(Delegate.class))
                 .method(named("foo")).intercept(MethodDelegation.to(Delegate.class))
+                .method(named("test")).intercept(MethodDelegation.to(Delegate.class))
                 .make()
                 .load(getClass().getClassLoader())
                 .newInstance();
         System.out.println(object.test("a", 10));
         System.out.println(object.foo(10, 3));
+        object.test("");
     }
 
     @Test

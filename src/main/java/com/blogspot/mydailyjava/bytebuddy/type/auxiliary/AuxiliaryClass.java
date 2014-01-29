@@ -7,10 +7,10 @@ public interface AuxiliaryClass {
 
     static interface Named extends Assignment {
 
-        String getName();
+        String getProxyTypeInternalName();
 
         byte[] make();
     }
 
-    Named name(String name, ClassVersion classVersion);
+    Named name(String proxyTypeName, ClassVersion classVersion);
 }

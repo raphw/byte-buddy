@@ -51,4 +51,25 @@ public enum TypeSize {
     public Assignment.Size toDecreasingSize() {
         return new Assignment.Size(-1 * getSize(), 0);
     }
+
+    public TypeSize maximum(TypeSize typeSize) {
+        switch (this) {
+            case ZERO:
+                return typeSize;
+            case SINGLE:
+                switch (typeSize) {
+                    case DOUBLE:
+                        return typeSize;
+                    case SINGLE:
+                    case ZERO:
+                        return this;
+                    default:
+                        throw new AssertionError();
+                }
+            case DOUBLE:
+                return this;
+            default:
+                throw new AssertionError();
+        }
+    }
 }

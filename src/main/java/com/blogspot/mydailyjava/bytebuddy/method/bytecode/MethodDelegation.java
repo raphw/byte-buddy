@@ -44,7 +44,7 @@ public class MethodDelegation implements ByteCodeAppender.Factory {
                         Arrays.<MethodDelegationBinder.AmbiguityResolver>asList(
                                 MethodNameEqualityResolver.INSTANCE,
                                 MostSpecificTypeResolver.INSTANCE)),
-                MethodExtraction.matching(isStatic().and(not(signatureIsDefinedIn(Object.class)))).extractFrom(type).asList());
+                MethodExtraction.matching(isStatic().and(not(signatureIsDefinedIn(Object.class)))).appendUniqueDescriptorsFrom(type).asList());
     }
 
     private final MethodDelegationBinder.Processor processor;

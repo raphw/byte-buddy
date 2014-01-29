@@ -262,8 +262,8 @@ public class SubclassDynamicProxyBuilder<T> implements DynamicProxy.Builder<T> {
                 typeDescription.getInterfacesInternalNames());
         MethodInterception.Handler handler = methodInterceptions.handler(typeDescription);
         for (MethodDescription method : MethodExtraction.matching(OVERRIDABLE.and(not(ignoredMethods)))
-                .extractFrom(superClass)
-                .appendInterfaceMethods(interfaces)
+                .appendUniqueDescriptorsFrom(superClass)
+                .extractUniqueDescriptorsFrom(interfaces)
                 .asList()) {
             handler.find(method).handle(classVisitor);
         }

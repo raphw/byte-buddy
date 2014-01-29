@@ -23,8 +23,18 @@ public interface MethodDescription extends AnnotatedElement, Member, GenericDecl
         }
 
         @Override
+        public String getDeclaringClassTypeDescriptor() {
+            return org.objectweb.asm.Type.getDescriptor(getDeclaringClass());
+        }
+
+        @Override
         public String getDeclaringSuperClassInternalName() {
             return org.objectweb.asm.Type.getInternalName(getDeclaringClass().getSuperclass());
+        }
+
+        @Override
+        public String getDeclaringSuperClassTypeDescriptor() {
+            return org.objectweb.asm.Type.getDescriptor(getDeclaringClass().getSuperclass());
         }
 
         @Override

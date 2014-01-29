@@ -12,5 +12,9 @@ public interface ByteCodeMethod {
 
     String getDeclaringClassInternalName();
 
+    String getDeclaringClassTypeDescriptor();
+
     String getDeclaringSuperClassInternalName();
+
+    String getDeclaringSuperClassTypeDescriptor();
 }
