@@ -15,70 +15,71 @@ public class ArrayFactory {
 
     private static interface ArrayCreator extends Assignment {
 
+        static enum Primitive implements ArrayCreator {
+
+                BOOLEAN(Opcodes.T_BOOLEAN, Opcodes.BASTORE),
+                BYTE(Opcodes.T_BYTE, Opcodes.BASTORE),
+                SHORT(Opcodes.T_SHORT, Opcodes.SASTORE),
+                CHARACTER(Opcodes.T_CHAR, Opcodes.CASTORE),
+                INTEGER(Opcodes.T_INT, Opcodes.IASTORE),
+                LONG(Opcodes.T_LONG, Opcodes.LASTORE),
+                FLOAT(Opcodes.T_FLOAT, Opcodes.FASTORE),
+                DOUBLE(Opcodes.T_DOUBLE, Opcodes.DASTORE);
+
+                private final int creationOpcode;
+                private final int storageOpcode;
+
+                private Primitive(int creationOpcode, int storageOpcode) {
+                    this.creationOpcode = creationOpcode;
+                    this.storageOpcode = storageOpcode;
+                }
+
+                @Override
+                public boolean isValid() {
+                    return true;
+                }
+
+                @Override
+                public Size apply(MethodVisitor methodVisitor) {
+                    methodVisitor.visitIntInsn(Opcodes.NEWARRAY, creationOpcode);
+                    return SIZE;
+                }
+
+                @Override
+                public int getStorageOpcode() {
+                    return storageOpcode;
+                }
+            }
+
+            static class Reference implements ArrayCreator {
+
+                private final String internalTypeName;
+
+                private Reference(Class<?> referenceType) {
+                    this.internalTypeName = Type.getInternalName(referenceType);
+                }
+
+                @Override
+                public boolean isValid() {
+                    return true;
+                }
+
+                @Override
+                public Size apply(MethodVisitor methodVisitor) {
+                    methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, internalTypeName);
+                    return SIZE;
+                }
+
+                @Override
+                public int getStorageOpcode() {
+                    return Opcodes.AASTORE;
+                }
+            }
+
         int getStorageOpcode();
     }
 
-    private static enum PrimitiveArrayCreator implements ArrayCreator {
 
-        BOOLEAN(Opcodes.T_BOOLEAN, Opcodes.BASTORE),
-        BYTE(Opcodes.T_BYTE, Opcodes.BASTORE),
-        SHORT(Opcodes.T_SHORT, Opcodes.SASTORE),
-        CHARACTER(Opcodes.T_CHAR, Opcodes.CASTORE),
-        INTEGER(Opcodes.T_INT, Opcodes.IASTORE),
-        LONG(Opcodes.T_LONG, Opcodes.LASTORE),
-        FLOAT(Opcodes.T_FLOAT, Opcodes.FASTORE),
-        DOUBLE(Opcodes.T_DOUBLE, Opcodes.DASTORE);
-
-        private final int creationOpcode;
-        private final int storageOpcode;
-
-        private PrimitiveArrayCreator(int creationOpcode, int storageOpcode) {
-            this.creationOpcode = creationOpcode;
-            this.storageOpcode = storageOpcode;
-        }
-
-        @Override
-        public boolean isValid() {
-            return true;
-        }
-
-        @Override
-        public Size apply(MethodVisitor methodVisitor) {
-            methodVisitor.visitIntInsn(Opcodes.NEWARRAY, creationOpcode);
-            return SIZE;
-        }
-
-
-        @Override
-        public int getStorageOpcode() {
-            return storageOpcode;
-        }
-    }
-
-    private static class ReferenceTypeArrayCreator implements ArrayCreator {
-
-        private final String internalTypeName;
-
-        private ReferenceTypeArrayCreator(Class<?> referenceType) {
-            this.internalTypeName = Type.getInternalName(referenceType);
-        }
-
-        @Override
-        public boolean isValid() {
-            return true;
-        }
-
-        @Override
-        public Size apply(MethodVisitor methodVisitor) {
-            methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, internalTypeName);
-            return SIZE;
-        }
-
-        @Override
-        public int getStorageOpcode() {
-            return Opcodes.AASTORE;
-        }
-    }
 
     public static ArrayFactory of(Class<?> type) {
         if (!type.isArray()) {
@@ -90,26 +91,26 @@ public class ArrayFactory {
     private static ArrayCreator makeCreatorFor(Class<?> componentType) {
         if (componentType.isPrimitive()) {
             if (componentType == boolean.class) {
-                return PrimitiveArrayCreator.BOOLEAN;
+                return ArrayCreator.Primitive.BOOLEAN;
             } else if (componentType == byte.class) {
-                return PrimitiveArrayCreator.BYTE;
+                return ArrayCreator.Primitive.BYTE;
             } else if (componentType == short.class) {
-                return PrimitiveArrayCreator.SHORT;
+                return ArrayCreator.Primitive.SHORT;
             } else if (componentType == char.class) {
-                return PrimitiveArrayCreator.CHARACTER;
+                return ArrayCreator.Primitive.CHARACTER;
             } else if (componentType == int.class) {
-                return PrimitiveArrayCreator.INTEGER;
+                return ArrayCreator.Primitive.INTEGER;
             } else if (componentType == long.class) {
-                return PrimitiveArrayCreator.LONG;
+                return ArrayCreator.Primitive.LONG;
             } else if (componentType == float.class) {
-                return PrimitiveArrayCreator.FLOAT;
+                return ArrayCreator.Primitive.FLOAT;
             } else if (componentType == double.class) {
-                return PrimitiveArrayCreator.DOUBLE;
+                return ArrayCreator.Primitive.DOUBLE;
             } else {
                 throw new IllegalArgumentException("Cannot create array of type " + componentType);
             }
         } else {
-            return new ReferenceTypeArrayCreator(componentType);
+            return new ArrayCreator.Reference(componentType);
         }
     }
 
