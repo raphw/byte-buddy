@@ -82,8 +82,8 @@ public class AllArgumentsAnnotationBinderTest extends AbstractAnnotationBinderTe
         verifyNoMoreInteractions(assigner);
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void testNegativeAnnotationValue() throws Exception {
+    @Test(expected = IllegalArgumentException.class)
+    public void testNonArrayTypeBinding() throws Exception {
         when(target.getParameterTypes()).thenReturn(new Class<?>[] {Object.class});
         AllArguments.Binder.INSTANCE.bind(annotation, 0, source, target, typeDescription, assigner);
     }

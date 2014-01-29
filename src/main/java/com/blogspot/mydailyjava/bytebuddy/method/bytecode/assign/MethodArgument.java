@@ -62,18 +62,18 @@ public enum MethodArgument {
         public Size apply(MethodVisitor methodVisitor) {
             if (loadOpcodeShortcutIndex > -1) {
                 switch (variableIndex) {
-//                    case 0:
-//                        methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutIndex);
-//                        break;
-//                    case 1:
-//                        methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutIndex + 1);
-//                        break;
-//                    case 2:
-//                        methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutIndex + 2);
-//                        break;
-//                    case 3:
-//                        methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutIndex + 3);
-//                        break;
+                    case 0:
+                        methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutIndex);
+                        break;
+                    case 1:
+                        methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutIndex + 1);
+                        break;
+                    case 2:
+                        methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutIndex + 2);
+                        break;
+                    case 3:
+                        methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutIndex + 3);
+                        break;
                     default:
                         methodVisitor.visitVarInsn(loadOpcode, variableIndex);
                         break;
