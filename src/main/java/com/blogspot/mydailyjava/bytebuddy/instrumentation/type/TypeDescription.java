@@ -3,16 +3,14 @@ package com.blogspot.mydailyjava.bytebuddy.instrumentation.type;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.ByteCodeElement;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.ModifierReviewable;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodList;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.TypeSize;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import org.objectweb.asm.Type;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
 
 public interface TypeDescription extends ByteCodeElement, ModifierReviewable, AnnotatedElement {
 
@@ -172,22 +170,8 @@ public interface TypeDescription extends ByteCodeElement, ModifierReviewable, An
         }
 
         @Override
-        public List<MethodDescription> getDeclaredMethods(MethodMatcher methodMatcher) {
-            int size = type.getDeclaredMethods().length + type.getDeclaredConstructors().length;
-            List<MethodDescription> methodDescriptions = new ArrayList<MethodDescription>(size);
-            for (Method method : type.getDeclaredMethods()) {
-                MethodDescription aMethodDescription = new MethodDescription.ForMethod(method);
-                if (methodMatcher.matches(aMethodDescription)) {
-                    methodDescriptions.add(aMethodDescription);
-                }
-            }
-            for (Constructor<?> constructor : type.getDeclaredConstructors()) {
-                MethodDescription aMethodDescription = new MethodDescription.ForConstructor(constructor);
-                if (methodMatcher.matches(aMethodDescription)) {
-                    methodDescriptions.add(aMethodDescription);
-                }
-            }
-            return methodDescriptions;
+        public MethodList getDeclaredMethods() {
+            return new MethodList.ForLoadedType(type);
         }
 
         @Override
@@ -283,7 +267,7 @@ public interface TypeDescription extends ByteCodeElement, ModifierReviewable, An
 
     boolean isMemberClass();
 
-    List<MethodDescription> getDeclaredMethods(MethodMatcher methodMatcher);
+    MethodList getDeclaredMethods();
 
     String getPackageName();
 

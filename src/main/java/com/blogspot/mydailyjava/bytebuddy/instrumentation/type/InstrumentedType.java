@@ -2,13 +2,11 @@ package com.blogspot.mydailyjava.bytebuddy.instrumentation.type;
 
 import com.blogspot.mydailyjava.bytebuddy.*;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodList;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.TypeSize;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 
 import java.lang.annotation.Annotation;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 public class InstrumentedType extends TypeDescription.AbstractTypeDescription implements TypeDescription, NamingStrategy.UnnamedType {
 
@@ -161,8 +159,8 @@ public class InstrumentedType extends TypeDescription.AbstractTypeDescription im
     }
 
     @Override
-    public List<MethodDescription> getDeclaredMethods(MethodMatcher methodMatcher) {
-        return Collections.emptyList();
+    public MethodList getDeclaredMethods() {
+        return new MethodList.Empty();
     }
 
     @Override
