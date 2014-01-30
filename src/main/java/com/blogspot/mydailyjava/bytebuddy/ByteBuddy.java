@@ -2,10 +2,10 @@ package com.blogspot.mydailyjava.bytebuddy;
 
 import com.blogspot.mydailyjava.bytebuddy.asm.ClassVisitorWrapper;
 import com.blogspot.mydailyjava.bytebuddy.asm.ClassVisitorWrapperChain;
-import com.blogspot.mydailyjava.bytebuddy.method.matcher.MethodMatcher;
-import com.blogspot.mydailyjava.bytebuddy.method.matcher.MethodMatchers;
-import com.blogspot.mydailyjava.bytebuddy.type.instrumentation.DynamicProxy;
-import com.blogspot.mydailyjava.bytebuddy.type.scaffold.SubclassDynamicProxyBuilder;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.instrumentation.DynamicProxy;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.scaffold.SubclassDynamicProxyBuilder;
 import org.objectweb.asm.Opcodes;
 
 public class ByteBuddy {

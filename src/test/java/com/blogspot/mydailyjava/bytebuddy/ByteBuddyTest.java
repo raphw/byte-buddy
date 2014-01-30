@@ -1,15 +1,15 @@
 package com.blogspot.mydailyjava.bytebuddy;
 
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.MethodDelegation;
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind.annotation.AllArguments;
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind.annotation.Argument;
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind.annotation.RuntimeType;
-import com.blogspot.mydailyjava.bytebuddy.method.bytecode.bind.annotation.This;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.MethodDelegation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.AllArguments;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.RuntimeType;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.This;
 import org.junit.Test;
 
 import java.util.Arrays;
 
-import static com.blogspot.mydailyjava.bytebuddy.method.matcher.MethodMatchers.named;
+import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.named;
 
 public class ByteBuddyTest {
 

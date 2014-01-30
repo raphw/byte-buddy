@@ -9,7 +9,7 @@ public interface NamingStrategy {
 
         Class<?> getSuperClass();
 
-        Collection<Class<?>> getInterfaces();
+        Collection<Class<?>> getDeclaredInterfaces();
 
         Visibility getVisibility();
 
