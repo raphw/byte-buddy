@@ -1,7 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.type.scaffold;
 
 import com.blogspot.mydailyjava.bytebuddy.*;
-import com.blogspot.mydailyjava.bytebuddy.asm.ClassVisitorWrapperChain;
+import com.blogspot.mydailyjava.bytebuddy.asm.ClassVisitorWrapper;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodInterception;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
@@ -18,9 +18,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.isConstructor;
-import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.isPrivate;
-import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.not;
+import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
 
 public class SubclassDynamicProxyBuilder<T> implements DynamicProxy.Builder<T> {
 
@@ -115,7 +113,7 @@ public class SubclassDynamicProxyBuilder<T> implements DynamicProxy.Builder<T> {
     private final TypeManifestation typeManifestation;
     private final SyntheticState syntheticState;
     private final MethodMatcher ignoredMethods;
-    private final ClassVisitorWrapperChain classVisitorWrapperChain;
+    private final ClassVisitorWrapper.Chain classVisitorWrapperChain;
     private final MethodInterception.Stack methodInterceptions;
 
     protected SubclassDynamicProxyBuilder(Class<? extends T> superClass,
@@ -126,7 +124,7 @@ public class SubclassDynamicProxyBuilder<T> implements DynamicProxy.Builder<T> {
                                           TypeManifestation typeManifestation,
                                           SyntheticState syntheticState,
                                           MethodMatcher ignoredMethods,
-                                          ClassVisitorWrapperChain classVisitorWrapperChain,
+                                          ClassVisitorWrapper.Chain classVisitorWrapperChain,
                                           MethodInterception.Stack methodInterceptions) {
         this.superClass = superClass;
         this.interfaces = interfaces;

@@ -1,7 +1,6 @@
 package com.blogspot.mydailyjava.bytebuddy;
 
 import com.blogspot.mydailyjava.bytebuddy.asm.ClassVisitorWrapper;
-import com.blogspot.mydailyjava.bytebuddy.asm.ClassVisitorWrapperChain;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.instrumentation.DynamicProxy;
@@ -24,7 +23,7 @@ public class ByteBuddy {
                 DEFAULT_SYNTHETIC_STATE,
                 new NamingStrategy.PrefixingRandom(DEFAULT_NAME_PREFIX),
                 DEFAULT_IGNORED_METHODS,
-                new ClassVisitorWrapperChain());
+                new ClassVisitorWrapper.Chain());
     }
 
     private final ClassVersion classVersion;
@@ -33,7 +32,7 @@ public class ByteBuddy {
     private final SyntheticState syntheticState;
     private final NamingStrategy namingStrategy;
     private final MethodMatcher ignoredMethods;
-    private final ClassVisitorWrapperChain classVisitorWrapperChain;
+    private final ClassVisitorWrapper.Chain classVisitorWrapperChain;
 
     protected ByteBuddy(ClassVersion classVersion,
                         Visibility visibility,
@@ -41,7 +40,7 @@ public class ByteBuddy {
                         SyntheticState syntheticState,
                         NamingStrategy namingStrategy,
                         MethodMatcher ignoredMethods,
-                        ClassVisitorWrapperChain classVisitorWrapperChain) {
+                        ClassVisitorWrapper.Chain classVisitorWrapperChain) {
         this.classVersion = classVersion;
         this.visibility = visibility;
         this.typeManifestation = typeManifestation;
@@ -156,7 +155,7 @@ public class ByteBuddy {
         return ignoredMethods;
     }
 
-    public ClassVisitorWrapperChain getClassVisitorWrapperChain() {
+    public ClassVisitorWrapper.Chain getClassVisitorWrapperChain() {
         return classVisitorWrapperChain;
     }
 
