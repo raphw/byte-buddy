@@ -15,8 +15,7 @@ public class MethodDescriptionForMethodTest {
 
     private static final String HASH_CODE = "hashCode";
     private static final String INT_VALUE = "intValue";
-    private static final String DOUBLE_VALUE = "intValue";
-    private static final String CONSTRUCTOR_INTERNAL_NAME = "<init>";
+    private static final String LONG_BITS_TO_DOUBLE = "longBitsToDouble";
 
     private MethodDescription objectHashCode;
     private MethodDescription integerIntValue;
@@ -26,22 +25,22 @@ public class MethodDescriptionForMethodTest {
     public void setUp() throws Exception {
         objectHashCode = new MethodDescription.ForMethod(Object.class.getDeclaredMethod(HASH_CODE));
         integerIntValue = new MethodDescription.ForMethod(Integer.class.getDeclaredMethod(INT_VALUE));
-        doubleDoubleValue = new MethodDescription.ForMethod(Double.class.getDeclaredMethod(DOUBLE_VALUE));
+        doubleDoubleValue = new MethodDescription.ForMethod(Double.class.getDeclaredMethod(LONG_BITS_TO_DOUBLE, long.class));
     }
 
     @Test
     public void testRepresents() throws Exception {
         assertThat(objectHashCode.represents(Object.class.getDeclaredMethod(HASH_CODE)), is(true));
         assertThat(objectHashCode.represents(Integer.class.getDeclaredMethod(INT_VALUE)), is(false));
-        assertThat(objectHashCode.represents(Double.class.getDeclaredMethod(DOUBLE_VALUE)), is(false));
+        assertThat(objectHashCode.represents(Double.class.getDeclaredMethod(LONG_BITS_TO_DOUBLE, long.class)), is(false));
         assertThat(objectHashCode.represents(Object.class.getDeclaredConstructor()), is(false));
         assertThat(integerIntValue.represents(Object.class.getDeclaredMethod(HASH_CODE)), is(false));
         assertThat(integerIntValue.represents(Integer.class.getDeclaredMethod(INT_VALUE)), is(true));
-        assertThat(integerIntValue.represents(Double.class.getDeclaredMethod(DOUBLE_VALUE)), is(false));
+        assertThat(integerIntValue.represents(Double.class.getDeclaredMethod(LONG_BITS_TO_DOUBLE, long.class)), is(false));
         assertThat(integerIntValue.represents(Object.class.getDeclaredConstructor()), is(false));
         assertThat(doubleDoubleValue.represents(Object.class.getDeclaredMethod(HASH_CODE)), is(false));
         assertThat(doubleDoubleValue.represents(Integer.class.getDeclaredMethod(INT_VALUE)), is(false));
-        assertThat(doubleDoubleValue.represents(Double.class.getDeclaredMethod(DOUBLE_VALUE)), is(true));
+        assertThat(doubleDoubleValue.represents(Double.class.getDeclaredMethod(LONG_BITS_TO_DOUBLE, long.class)), is(true));
         assertThat(doubleDoubleValue.represents(Object.class.getDeclaredConstructor()), is(false));
     }
 
@@ -49,14 +48,14 @@ public class MethodDescriptionForMethodTest {
     public void testGetInternalName() throws Exception {
         assertThat(objectHashCode.getInternalName(), is(HASH_CODE));
         assertThat(integerIntValue.getInternalName(), is(INT_VALUE));
-        assertThat(doubleDoubleValue.getInternalName(), is(DOUBLE_VALUE));
+        assertThat(doubleDoubleValue.getInternalName(), is(LONG_BITS_TO_DOUBLE));
     }
 
     @Test
     public void testGetDescriptor() throws Exception {
         assertThat(objectHashCode.getDescriptor(), is(Type.getMethodDescriptor(Object.class.getDeclaredMethod(HASH_CODE))));
         assertThat(integerIntValue.getDescriptor(), is(Type.getMethodDescriptor(Integer.class.getDeclaredMethod(INT_VALUE))));
-        assertThat(doubleDoubleValue.getDescriptor(), is(Type.getMethodDescriptor(Double.class.getDeclaredMethod(DOUBLE_VALUE))));
+        assertThat(doubleDoubleValue.getDescriptor(), is(Type.getMethodDescriptor(Double.class.getDeclaredMethod(LONG_BITS_TO_DOUBLE, long.class))));
     }
 
     @Test
@@ -67,10 +66,17 @@ public class MethodDescriptionForMethodTest {
     }
 
     @Test
+    public void testStackSize() throws Exception {
+        assertThat(objectHashCode.getStackSize(), is(1));
+        assertThat(integerIntValue.getStackSize(), is(1));
+        assertThat(doubleDoubleValue.getStackSize(), is(2));
+    }
+
+    @Test
     public void testHashCode() throws Exception {
         assertThat(objectHashCode.hashCode(), is(hashCode(Object.class.getMethod(HASH_CODE))));
         assertThat(integerIntValue.hashCode(), is(hashCode(Integer.class.getMethod(INT_VALUE))));
-        assertThat(doubleDoubleValue.hashCode(), is(hashCode(Double.class.getMethod(DOUBLE_VALUE))));
+        assertThat(doubleDoubleValue.hashCode(), is(hashCode(Double.class.getMethod(LONG_BITS_TO_DOUBLE, long.class))));
     }
 
     private static int hashCode(Method method) {
@@ -81,7 +87,7 @@ public class MethodDescriptionForMethodTest {
     public void testEquals() throws Exception {
         assertMethodEquality(objectHashCode, Object.class.getMethod(HASH_CODE));
         assertMethodEquality(integerIntValue, Integer.class.getMethod(INT_VALUE));
-        assertMethodEquality(doubleDoubleValue, Double.class.getMethod(DOUBLE_VALUE));
+        assertMethodEquality(doubleDoubleValue, Double.class.getMethod(LONG_BITS_TO_DOUBLE, long.class));
     }
 
     private static void assertMethodEquality(MethodDescription methodDescription, Method method) {

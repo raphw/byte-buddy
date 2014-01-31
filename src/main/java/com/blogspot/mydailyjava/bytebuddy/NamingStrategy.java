@@ -23,13 +23,19 @@ public interface NamingStrategy {
     static class PrefixingRandom implements NamingStrategy {
 
         private static final String JAVA_LANG_PACKAGE = "java.lang.";
-        private static final String BYTE_BUDDY_RENAME_PACKAGE = "com.blogspot.mydailyjava.bytebuddy.renamed.";
+        private static final String BYTE_BUDDY_RENAME_PACKAGE = "com.blogspot.mydailyjava.bytebuddy.renamed";
 
         private final String prefix;
+        private final String javaLangPackagePrefix;
         private final Random random;
 
         public PrefixingRandom(String prefix) {
+            this(prefix, BYTE_BUDDY_RENAME_PACKAGE);
+        }
+
+        public PrefixingRandom(String prefix, String javaLangPackagePrefix) {
             this.prefix = prefix;
+            this.javaLangPackagePrefix = javaLangPackagePrefix;
             this.random = new Random();
         }
 
@@ -37,7 +43,7 @@ public interface NamingStrategy {
         public String getName(UnnamedType unnamedType) {
             String superClassName = unnamedType.getSuperClass().getName();
             if (superClassName.startsWith(JAVA_LANG_PACKAGE)) {
-                superClassName = BYTE_BUDDY_RENAME_PACKAGE + superClassName;
+                superClassName = javaLangPackagePrefix + "." + superClassName;
             }
             return String.format("%s$$%s$$%d", superClassName, prefix, Math.abs(random.nextInt()));
         }

@@ -388,6 +388,17 @@ public class TypeDescriptionForLoadedTypeTest {
     }
 
     @Test
+    public void testStackSize() throws Exception {
+        assertThat(objectType.getStackSize(), is(TypeSize.SINGLE));
+        assertThat(intType.getStackSize(), is(TypeSize.SINGLE));
+        assertThat(longType.getStackSize(), is(TypeSize.DOUBLE));
+        assertThat(numberType.getStackSize(), is(TypeSize.SINGLE));
+        assertThat(integerType.getStackSize(), is(TypeSize.SINGLE));
+        assertThat(serializableType.getStackSize(), is(TypeSize.SINGLE));
+        assertThat(objectArrayType.getStackSize(), is(TypeSize.SINGLE));
+    }
+
+    @Test
     public void testHashCode() throws Exception {
         assertThat(objectType.hashCode(), is(Object.class.getName().hashCode()));
         assertThat(intType.hashCode(), is(int.class.getName().hashCode()));

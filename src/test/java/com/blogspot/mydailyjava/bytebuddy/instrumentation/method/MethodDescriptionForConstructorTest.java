@@ -65,6 +65,13 @@ public class MethodDescriptionForConstructorTest {
     }
 
     @Test
+    public void testStackSize() throws Exception {
+        assertThat(objectDefaultConstructor.getStackSize(), is(1));
+        assertThat(stringDefaultConstructor.getStackSize(), is(1));
+        assertThat(stringSingleArgConstructor.getStackSize(), is(2));
+    }
+
+    @Test
     public void testHashCode() throws Exception {
         assertThat(objectDefaultConstructor.hashCode(), is(hashCode(Object.class.getDeclaredConstructor())));
         assertThat(stringDefaultConstructor.hashCode(), is(hashCode(String.class.getDeclaredConstructor())));

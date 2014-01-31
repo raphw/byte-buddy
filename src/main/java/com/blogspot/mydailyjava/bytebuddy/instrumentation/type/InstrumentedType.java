@@ -249,17 +249,6 @@ public class InstrumentedType extends TypeDescription.AbstractTypeDescription im
     }
 
     @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && name.equals(((InstrumentedType) other).name);
-    }
-
-    @Override
-    public int hashCode() {
-        return name.hashCode();
-    }
-
-    @Override
     public String toString() {
         return "InstrumentedType{" + name + "}";
     }
