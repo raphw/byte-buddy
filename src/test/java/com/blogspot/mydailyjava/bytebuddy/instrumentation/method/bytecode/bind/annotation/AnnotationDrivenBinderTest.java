@@ -1,6 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.TypeSize;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.Assigner;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.Assignment;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.IllegalAssignment;
@@ -56,9 +57,11 @@ public class AnnotationDrivenBinderTest {
     private AnnotationDrivenBinder.ArgumentBinder<?> firstArgumentBinder, secondArgumentBinder;
     private AnnotationDrivenBinder.DefaultProvider<?> defaultProvider;
     private Assigner assigner;
+    private Assignment assignment;
 
     private InstrumentedType typeDescription;
     private MethodDescription source, target;
+    private TypeDescription sourceTypeDescription, targetTypeDescription;
 
     private FirstPseudoAnnotation firstPseudoAnnotation;
     private SecondPseudoAnnotation secondPseudoAnnotation;
@@ -71,6 +74,9 @@ public class AnnotationDrivenBinderTest {
         secondArgumentBinder = mock(AnnotationDrivenBinder.ArgumentBinder.class);
         defaultProvider = mock(AnnotationDrivenBinder.DefaultProvider.class);
         assigner = mock(Assigner.class);
+        assignment = mock(Assignment.class);
+        when(assignment.apply(any(MethodVisitor.class))).thenReturn(new Assignment.Size(0, 0));
+        when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean())).thenReturn(assignment);
         typeDescription = mock(InstrumentedType.class);
         source = mock(MethodDescription.class);
         target = mock(MethodDescription.class);
@@ -86,6 +92,12 @@ public class AnnotationDrivenBinderTest {
         secondPseudoAnnotation = mock(SecondPseudoAnnotation.class);
         doReturn(SecondPseudoAnnotation.class).when(secondPseudoAnnotation).annotationType();
         methodVisitor = mock(MethodVisitor.class);
+        sourceTypeDescription = mock(TypeDescription.class);
+        when(sourceTypeDescription.getStackSize()).thenReturn(TypeSize.ZERO);
+        targetTypeDescription = mock(TypeDescription.class);
+        when(targetTypeDescription.getStackSize()).thenReturn(TypeSize.ZERO);
+        when(source.getReturnType()).thenReturn(sourceTypeDescription);
+        when(target.getReturnType()).thenReturn(targetTypeDescription);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -116,16 +128,14 @@ public class AnnotationDrivenBinderTest {
 
     @Test
     public void testReturnTypeMismatchNoRuntimeType() throws Exception {
-        when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean())).thenReturn(IllegalAssignment.INSTANCE);
-        when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
-        when(target.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(Void.class));
+        when(assignment.isValid()).thenReturn(false);
         when(target.getAnnotations()).thenReturn(new Annotation[0]);
         MethodDelegationBinder methodDelegationBinder = new AnnotationDrivenBinder(
                 Collections.<AnnotationDrivenBinder.ArgumentBinder<?>>emptyList(),
                 defaultProvider,
                 assigner);
         assertThat(methodDelegationBinder.bind(typeDescription, source, target).isValid(), is(false));
-        verify(assigner).assign(new TypeDescription.ForLoadedType(Void.class), new TypeDescription.ForLoadedType(Object.class), false);
+        verify(assigner).assign(targetTypeDescription, sourceTypeDescription, false);
         verifyNoMoreInteractions(assigner);
         verify(source, atLeast(1)).getReturnType();
         verify(target, atLeast(1)).getReturnType();
@@ -134,9 +144,7 @@ public class AnnotationDrivenBinderTest {
 
     @Test
     public void testReturnTypeMismatchRuntimeType() throws Exception {
-        when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean())).thenReturn(IllegalAssignment.INSTANCE);
-        when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
-        when(target.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(Void.class));
+        when(assignment.isValid()).thenReturn(false);
         RuntimeType runtimeType = mock(RuntimeType.class);
         doReturn(RuntimeType.class).when(runtimeType).annotationType();
         when(target.getAnnotations()).thenReturn(new Annotation[]{runtimeType});
@@ -145,7 +153,7 @@ public class AnnotationDrivenBinderTest {
                 defaultProvider,
                 assigner);
         assertThat(methodDelegationBinder.bind(typeDescription, source, target).isValid(), is(false));
-        verify(assigner).assign(new TypeDescription.ForLoadedType(Void.class), new TypeDescription.ForLoadedType(Object.class), true);
+        verify(assigner).assign(targetTypeDescription, sourceTypeDescription, true);
         verifyNoMoreInteractions(assigner);
         verify(source, atLeast(1)).getReturnType();
         verify(target, atLeast(1)).getReturnType();
@@ -155,10 +163,10 @@ public class AnnotationDrivenBinderTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testBindingByDefaults() throws Exception {
-        when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean())).thenReturn(LegalTrivialAssignment.INSTANCE);
-        when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
-        when(target.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(Void.class));
-        when(target.getParameterTypes()).thenReturn(makeTypeList(int.class, long.class));
+        when(assignment.isValid()).thenReturn(true);
+        TypeList typeList = mock(TypeList.class);
+        when(typeList.size()).thenReturn(2);
+        when(target.getParameterTypes()).thenReturn(typeList);
         when(target.getStackSize()).thenReturn(3);
         when(target.getParameterAnnotations()).thenReturn(new Annotation[2][0]);
         when(target.getAnnotations()).thenReturn(new Annotation[0]);
@@ -172,7 +180,8 @@ public class AnnotationDrivenBinderTest {
                 SecondPseudoAnnotation.class,
                 new Key(BAR),
                 true);
-        Iterator<Annotation> defaultsIterator = prepareDefaultProvider(defaultProvider, Arrays.asList(secondPseudoAnnotation, firstPseudoAnnotation));
+        Iterator<Annotation> defaultsIterator = prepareDefaultProvider(defaultProvider,
+                Arrays.asList(secondPseudoAnnotation, firstPseudoAnnotation));
         MethodDelegationBinder methodDelegationBinder = new AnnotationDrivenBinder(
                 Arrays.<AnnotationDrivenBinder.ArgumentBinder<?>>asList(firstArgumentBinder, secondArgumentBinder),
                 defaultProvider,
@@ -183,7 +192,7 @@ public class AnnotationDrivenBinderTest {
         assertThat(binding.getTargetParameterIndex(new Key(FOO)), is(1));
         assertThat(binding.getTargetParameterIndex(new Key(BAR)), is(0));
         Assignment.Size size = binding.apply(methodVisitor);
-        assertThat(size.getSizeImpact(), is(-2));
+        assertThat(size.getSizeImpact(), is(-3));
         assertThat(size.getMaximalSize(), is(0));
         verify(methodVisitor).visitMethodInsn(Opcodes.INVOKESTATIC, FOO, BAR, BAZ);
         verifyNoMoreInteractions(methodVisitor);
@@ -192,13 +201,23 @@ public class AnnotationDrivenBinderTest {
         verify(target, atLeast(1)).getParameterTypes();
         verify(target, atLeast(1)).getParameterAnnotations();
         verify(target, atLeast(1)).getAnnotations();
-        verify(assigner).assign(new TypeDescription.ForLoadedType(Void.class), new TypeDescription.ForLoadedType(Object.class), false);
+        verify(assigner).assign(targetTypeDescription, sourceTypeDescription, false);
         verifyNoMoreInteractions(assigner);
         verify(firstArgumentBinder, atLeast(1)).getHandledType();
-        verify((AnnotationDrivenBinder.ArgumentBinder) firstArgumentBinder).bind(firstPseudoAnnotation, 1, source, target, typeDescription, assigner);
+        verify((AnnotationDrivenBinder.ArgumentBinder) firstArgumentBinder).bind(firstPseudoAnnotation,
+                1,
+                source,
+                target,
+                typeDescription,
+                assigner);
         verifyNoMoreInteractions(firstArgumentBinder);
         verify(secondArgumentBinder, atLeast(1)).getHandledType();
-        verify((AnnotationDrivenBinder.ArgumentBinder) secondArgumentBinder).bind(secondPseudoAnnotation, 0, source, target, typeDescription, assigner);
+        verify((AnnotationDrivenBinder.ArgumentBinder) secondArgumentBinder).bind(secondPseudoAnnotation,
+                0,
+                source,
+                target,
+                typeDescription,
+                assigner);
         verifyNoMoreInteractions(secondArgumentBinder);
         verify(defaultsIterator, times(2)).hasNext();
         verify(defaultsIterator, times(2)).next();
@@ -214,10 +233,10 @@ public class AnnotationDrivenBinderTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testInsufficientDefaults() throws Exception {
-        when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean())).thenReturn(LegalTrivialAssignment.INSTANCE);
-        when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
-        when(target.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(Void.class));
-        when(target.getParameterTypes()).thenReturn(makeTypeList(int.class, long.class));
+        when(assignment.isValid()).thenReturn(true);
+        TypeList typeList = mock(TypeList.class);
+        when(typeList.size()).thenReturn(2);
+        when(target.getParameterTypes()).thenReturn(typeList);
         when(target.getStackSize()).thenReturn(3);
         when(target.getParameterAnnotations()).thenReturn(new Annotation[2][0]);
         when(target.getAnnotations()).thenReturn(new Annotation[0]);
@@ -231,7 +250,8 @@ public class AnnotationDrivenBinderTest {
                 SecondPseudoAnnotation.class,
                 new Key(BAR),
                 true);
-        Iterator<Annotation> defaultsIterator = prepareDefaultProvider(defaultProvider, Arrays.asList(secondPseudoAnnotation));
+        Iterator<Annotation> defaultsIterator = prepareDefaultProvider(defaultProvider,
+                Arrays.asList(secondPseudoAnnotation));
         MethodDelegationBinder methodDelegationBinder = new AnnotationDrivenBinder(
                 Arrays.<AnnotationDrivenBinder.ArgumentBinder<?>>asList(firstArgumentBinder, secondArgumentBinder),
                 defaultProvider,
@@ -240,12 +260,17 @@ public class AnnotationDrivenBinderTest {
         verify(firstArgumentBinder, atLeast(1)).getHandledType();
         verifyNoMoreInteractions(firstArgumentBinder);
         verify(secondArgumentBinder, atLeast(1)).getHandledType();
-        verify((AnnotationDrivenBinder.ArgumentBinder) secondArgumentBinder).bind(secondPseudoAnnotation, 0, source, target, typeDescription, assigner);
+        verify((AnnotationDrivenBinder.ArgumentBinder) secondArgumentBinder).bind(secondPseudoAnnotation,
+                0,
+                source,
+                target,
+                typeDescription,
+                assigner);
         verifyNoMoreInteractions(secondArgumentBinder);
         verify(defaultsIterator, times(2)).hasNext();
         verify(defaultsIterator, times(1)).next();
         verifyNoMoreInteractions(defaultsIterator);
-        verify(assigner).assign(new TypeDescription.ForLoadedType(Void.class), new TypeDescription.ForLoadedType(Object.class), false);
+        verify(assigner).assign(targetTypeDescription, sourceTypeDescription, false);
         verifyNoMoreInteractions(assigner);
         verifyZeroInteractions(firstBinding);
         verify(secondBinding, atLeast(1)).isValid();
@@ -257,10 +282,10 @@ public class AnnotationDrivenBinderTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testBindingByParameterAnnotations() throws Exception {
-        when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean())).thenReturn(LegalTrivialAssignment.INSTANCE);
-        when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
-        when(target.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(Void.class));
-        when(target.getParameterTypes()).thenReturn(makeTypeList(int.class, long.class));
+        when(assignment.isValid()).thenReturn(true);
+        TypeList typeList = mock(TypeList.class);
+        when(typeList.size()).thenReturn(2);
+        when(target.getParameterTypes()).thenReturn(typeList);
         when(target.getStackSize()).thenReturn(3);
         when(target.getParameterAnnotations()).thenReturn(new Annotation[][]{{secondPseudoAnnotation}, {firstPseudoAnnotation}});
         when(target.getAnnotations()).thenReturn(new Annotation[0]);
@@ -285,7 +310,7 @@ public class AnnotationDrivenBinderTest {
         assertThat(binding.getTargetParameterIndex(new Key(FOO)), is(1));
         assertThat(binding.getTargetParameterIndex(new Key(BAR)), is(0));
         Assignment.Size size = binding.apply(methodVisitor);
-        assertThat(size.getSizeImpact(), is(-2));
+        assertThat(size.getSizeImpact(), is(-3));
         assertThat(size.getMaximalSize(), is(0));
         verify(methodVisitor).visitMethodInsn(Opcodes.INVOKESTATIC, FOO, BAR, BAZ);
         verifyNoMoreInteractions(methodVisitor);
@@ -294,13 +319,23 @@ public class AnnotationDrivenBinderTest {
         verify(target, atLeast(1)).getParameterTypes();
         verify(target, atLeast(1)).getParameterAnnotations();
         verify(target, atLeast(1)).getAnnotations();
-        verify(assigner).assign(new TypeDescription.ForLoadedType(Void.class), new TypeDescription.ForLoadedType(Object.class), false);
+        verify(assigner).assign(targetTypeDescription, sourceTypeDescription, false);
         verifyNoMoreInteractions(assigner);
         verify(firstArgumentBinder, atLeast(1)).getHandledType();
-        verify((AnnotationDrivenBinder.ArgumentBinder) firstArgumentBinder).bind(firstPseudoAnnotation, 1, source, target, typeDescription, assigner);
+        verify((AnnotationDrivenBinder.ArgumentBinder) firstArgumentBinder).bind(firstPseudoAnnotation,
+                1,
+                source,
+                target,
+                typeDescription,
+                assigner);
         verifyNoMoreInteractions(firstArgumentBinder);
         verify(secondArgumentBinder, atLeast(1)).getHandledType();
-        verify((AnnotationDrivenBinder.ArgumentBinder) secondArgumentBinder).bind(secondPseudoAnnotation, 0, source, target, typeDescription, assigner);
+        verify((AnnotationDrivenBinder.ArgumentBinder) secondArgumentBinder).bind(secondPseudoAnnotation,
+                0,
+                source,
+                target,
+                typeDescription,
+                assigner);
         verifyNoMoreInteractions(secondArgumentBinder);
         verifyZeroInteractions(defaultsIterator);
         verify(firstBinding, atLeast(1)).isValid();
@@ -314,10 +349,10 @@ public class AnnotationDrivenBinderTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testBindingByParameterAnnotationsAndDefaults() throws Exception {
-        when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean())).thenReturn(LegalTrivialAssignment.INSTANCE);
-        when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
-        when(target.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(Void.class));
-        when(target.getParameterTypes()).thenReturn(makeTypeList(int.class, long.class));
+        when(assignment.isValid()).thenReturn(true);
+        TypeList typeList = mock(TypeList.class);
+        when(typeList.size()).thenReturn(2);
+        when(target.getParameterTypes()).thenReturn(typeList);
         when(target.getStackSize()).thenReturn(3);
         when(target.getParameterAnnotations()).thenReturn(new Annotation[][]{{}, {firstPseudoAnnotation}});
         when(target.getAnnotations()).thenReturn(new Annotation[0]);
@@ -331,7 +366,8 @@ public class AnnotationDrivenBinderTest {
                 SecondPseudoAnnotation.class,
                 new Key(BAR),
                 true);
-        Iterator<Annotation> defaultsIterator = prepareDefaultProvider(defaultProvider, Collections.singletonList(secondPseudoAnnotation));
+        Iterator<Annotation> defaultsIterator = prepareDefaultProvider(defaultProvider,
+                Collections.singletonList(secondPseudoAnnotation));
         MethodDelegationBinder methodDelegationBinder = new AnnotationDrivenBinder(
                 Arrays.<AnnotationDrivenBinder.ArgumentBinder<?>>asList(firstArgumentBinder, secondArgumentBinder),
                 defaultProvider,
@@ -342,7 +378,7 @@ public class AnnotationDrivenBinderTest {
         assertThat(binding.getTargetParameterIndex(new Key(FOO)), is(1));
         assertThat(binding.getTargetParameterIndex(new Key(BAR)), is(0));
         Assignment.Size size = binding.apply(methodVisitor);
-        assertThat(size.getSizeImpact(), is(-2));
+        assertThat(size.getSizeImpact(), is(-3));
         assertThat(size.getMaximalSize(), is(0));
         verify(methodVisitor).visitMethodInsn(Opcodes.INVOKESTATIC, FOO, BAR, BAZ);
         verifyNoMoreInteractions(methodVisitor);
@@ -351,13 +387,23 @@ public class AnnotationDrivenBinderTest {
         verify(target, atLeast(1)).getParameterTypes();
         verify(target, atLeast(1)).getParameterAnnotations();
         verify(target, atLeast(1)).getAnnotations();
-        verify(assigner).assign(new TypeDescription.ForLoadedType(Void.class), new TypeDescription.ForLoadedType(Object.class), false);
+        verify(assigner).assign(targetTypeDescription, sourceTypeDescription, false);
         verifyNoMoreInteractions(assigner);
         verify(firstArgumentBinder, atLeast(1)).getHandledType();
-        verify((AnnotationDrivenBinder.ArgumentBinder) firstArgumentBinder).bind(firstPseudoAnnotation, 1, source, target, typeDescription, assigner);
+        verify((AnnotationDrivenBinder.ArgumentBinder) firstArgumentBinder).bind(firstPseudoAnnotation,
+                1,
+                source,
+                target,
+                typeDescription,
+                assigner);
         verifyNoMoreInteractions(firstArgumentBinder);
         verify(secondArgumentBinder, atLeast(1)).getHandledType();
-        verify((AnnotationDrivenBinder.ArgumentBinder) secondArgumentBinder).bind(secondPseudoAnnotation, 0, source, target, typeDescription, assigner);
+        verify((AnnotationDrivenBinder.ArgumentBinder) secondArgumentBinder).bind(secondPseudoAnnotation,
+                0,
+                source,
+                target,
+                typeDescription,
+                assigner);
         verifyNoMoreInteractions(secondArgumentBinder);
         verify(defaultsIterator).hasNext();
         verify(defaultsIterator).next();
@@ -407,9 +453,5 @@ public class AnnotationDrivenBinderTest {
         }
         iteratorValueStubbing.thenThrow(NoSuchElementException.class);
         return annotationIterator;
-    }
-
-    private static TypeList makeTypeList(Class<?>... type) {
-        return new TypeList.ForLoadedType(type);
     }
 }

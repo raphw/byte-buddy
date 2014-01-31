@@ -1,6 +1,5 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.LegalTrivialAssignment;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MostSpecificTypeResolver;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
@@ -27,45 +26,32 @@ public class ArgumentAnnotationBinderTest extends AbstractAnnotationBinderTest<A
 
     @Test
     public void testLegalBindingNoRuntimeType() throws Exception {
-        final int sourceIndex = 2, targetIndex = 1;
-        when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean()))
-                .thenReturn(LegalTrivialAssignment.INSTANCE);
-        when(annotation.value()).thenReturn(sourceIndex);
-        TypeList sourceParameters = makeTypeList(null, null, Object.class);
-        when(source.getParameterTypes()).thenReturn(sourceParameters);
-        when(source.isStatic()).thenReturn(false);
-        TypeList targetParameters = makeTypeList(null, Void.class);
-        when(target.getParameterTypes()).thenReturn(targetParameters);
-        when(target.getParameterAnnotations()).thenReturn(new Annotation[targetIndex + 1][0]);
-        AnnotationDrivenBinder.ArgumentBinder.IdentifiedBinding<?> identifiedBinding = Argument.Binder.INSTANCE
-                .bind(annotation, targetIndex, source, target, typeDescription, assigner);
-        assertThat(identifiedBinding.isValid(), is(true));
-        Object expectedToken = new MostSpecificTypeResolver.ParameterIndexToken(sourceIndex);
-        assertThat(identifiedBinding.getIdentificationToken(), equalTo(expectedToken));
-        assertThat(identifiedBinding.getIdentificationToken().hashCode(), equalTo(expectedToken.hashCode()));
-        verify(annotation, atLeast(1)).value();
-        verify(source, atLeast(1)).getParameterTypes();
-        verify(source, atLeast(1)).isStatic();
-        verify(target, atLeast(1)).getParameterTypes();
-        verify(target, atLeast(1)).getParameterAnnotations();
-        verify(assigner).assign(sourceParameters.get(sourceIndex), targetParameters.get(targetIndex), false);
-        verifyNoMoreInteractions(assigner);
+        testLegalBinding(new Annotation[2][0], false);
     }
 
     @Test
     public void testLegalBindingRuntimeType() throws Exception {
-        final int sourceIndex = 2, targetIndex = 1;
-        when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean()))
-                .thenReturn(LegalTrivialAssignment.INSTANCE);
-        when(annotation.value()).thenReturn(sourceIndex);
-        TypeList sourceParameters = makeTypeList(null, null, Object.class);
-        when(source.getParameterTypes()).thenReturn(sourceParameters);
-        when(source.isStatic()).thenReturn(false);
-        TypeList targetParameters = makeTypeList(null, Void.class);
-        when(target.getParameterTypes()).thenReturn(targetParameters);
         RuntimeType runtimeType = mock(RuntimeType.class);
         doReturn(RuntimeType.class).when(runtimeType).annotationType();
-        when(target.getParameterAnnotations()).thenReturn(new Annotation[][]{{}, {runtimeType}});
+        testLegalBinding(new Annotation[][] {{}, {runtimeType}}, true);
+    }
+
+    private void testLegalBinding(Annotation[][] annotations, boolean considerRuntimeType) throws Exception {
+        final int sourceIndex = 2, targetIndex = 1;
+        when(assignment.isValid()).thenReturn(true);
+        when(annotation.value()).thenReturn(sourceIndex);
+        TypeList sourceParameters = mock(TypeList.class);
+        when(sourceParameters.size()).thenReturn(sourceIndex + 1);
+        TypeDescription sourceType = mock(TypeDescription.class);
+        when(sourceParameters.get(sourceIndex)).thenReturn(sourceType);
+        when(source.getParameterTypes()).thenReturn(sourceParameters);
+        when(source.isStatic()).thenReturn(false);
+        TypeList targetParameters = mock(TypeList.class);
+        when(targetParameters.size()).thenReturn(targetIndex + 1);
+        TypeDescription targetType = mock(TypeDescription.class);
+        when(targetParameters.get(targetIndex)).thenReturn(targetType);
+        when(target.getParameterTypes()).thenReturn(targetParameters);
+        when(target.getParameterAnnotations()).thenReturn(annotations);
         AnnotationDrivenBinder.ArgumentBinder.IdentifiedBinding<?> identifiedBinding = Argument.Binder.INSTANCE
                 .bind(annotation, targetIndex, source, target, typeDescription, assigner);
         assertThat(identifiedBinding.isValid(), is(true));
@@ -77,7 +63,7 @@ public class ArgumentAnnotationBinderTest extends AbstractAnnotationBinderTest<A
         verify(source, atLeast(1)).isStatic();
         verify(target, atLeast(1)).getParameterTypes();
         verify(target, atLeast(1)).getParameterAnnotations();
-        verify(assigner).assign(sourceParameters.get(sourceIndex), targetParameters.get(targetIndex), true);
+        verify(assigner).assign(sourceType, targetType, considerRuntimeType);
         verifyNoMoreInteractions(assigner);
     }
 
@@ -85,7 +71,9 @@ public class ArgumentAnnotationBinderTest extends AbstractAnnotationBinderTest<A
     public void testIllegalBinding() throws Exception {
         final int sourceIndex = 0, targetIndex = 0;
         when(annotation.value()).thenReturn(sourceIndex);
-        when(source.getParameterTypes()).thenReturn(makeTypeList());
+        TypeList typeList = mock(TypeList.class);
+        when(typeList.size()).thenReturn(0);
+        when(source.getParameterTypes()).thenReturn(typeList);
         AnnotationDrivenBinder.ArgumentBinder.IdentifiedBinding<?> identifiedBinding = Argument.Binder.INSTANCE
                 .bind(annotation, targetIndex, source, target, typeDescription, assigner);
         assertThat(identifiedBinding.isValid(), is(false));
@@ -98,9 +86,5 @@ public class ArgumentAnnotationBinderTest extends AbstractAnnotationBinderTest<A
     public void testNegativeAnnotationValue() throws Exception {
         when(annotation.value()).thenReturn(-1);
         Argument.Binder.INSTANCE.bind(annotation, 0, source, target, typeDescription, assigner);
-    }
-
-    private static TypeList makeTypeList(Class<?>... type) {
-        return new TypeList.ForLoadedType(type);
     }
 }

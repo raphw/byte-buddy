@@ -16,6 +16,7 @@ public class AnnotationVisibilityTest {
         testRuntimeVisibilityOf(RuntimeType.class);
         testRuntimeVisibilityOf(IgnoreForBinding.class);
         testRuntimeVisibilityOf(Argument.class);
+        testRuntimeVisibilityOf(AllArguments.class);
         testRuntimeVisibilityOf(This.class);
     }
 

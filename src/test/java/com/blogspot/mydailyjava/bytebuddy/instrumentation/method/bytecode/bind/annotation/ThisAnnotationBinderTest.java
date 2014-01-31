@@ -1,9 +1,9 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.IllegalAssignment;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.LegalTrivialAssignment;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.annotation.Annotation;
@@ -26,17 +26,28 @@ public class ThisAnnotationBinderTest extends AbstractAnnotationBinderTest<This>
         assertEquals(This.class, This.Binder.INSTANCE.getHandledType());
     }
 
+    private TypeList typeList;
+    private TypeDescription parameterType;
+
+    @Override
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+        when(assignment.isValid()).thenReturn(true);
+        typeList = mock(TypeList.class);
+        parameterType = mock(TypeDescription.class);
+        when(typeList.get(0)).thenReturn(parameterType);
+    }
+
     @Test
     public void testLegalBinding() throws Exception {
-        final Class<?> instrumentedType = Object.class, targetType = Void.class;
-        when(typeDescription.getSupertype()).thenReturn(new TypeDescription.ForLoadedType(instrumentedType));
-        when(target.getParameterTypes()).thenReturn(new TypeList.ForLoadedType(new Class<?>[]{targetType}));
+        when(assignment.isValid()).thenReturn(true);
+        when(target.getParameterTypes()).thenReturn(typeList);
         when(target.getParameterAnnotations()).thenReturn(new Annotation[1][0]);
-        when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean())).thenReturn(LegalTrivialAssignment.INSTANCE);
         AnnotationDrivenBinder.ArgumentBinder.IdentifiedBinding<?> identifiedBinding = This.Binder.INSTANCE
                 .bind(annotation, 0, source, target, typeDescription, assigner);
         assertThat(identifiedBinding.isValid(), is(true));
-        verify(assigner).assign(typeDescription, new TypeDescription.ForLoadedType(targetType), false);
+        verify(assigner).assign(typeDescription, parameterType, false);
         verifyNoMoreInteractions(assigner);
         verify(target, atLeast(1)).getParameterTypes();
         verify(target, atLeast(1)).getParameterAnnotations();
@@ -44,17 +55,15 @@ public class ThisAnnotationBinderTest extends AbstractAnnotationBinderTest<This>
 
     @Test
     public void testLegalBindingRuntimeType() throws Exception {
-        final Class<?> instrumentedType = Object.class, targetType = Void.class;
-        when(typeDescription.getSupertype()).thenReturn(new TypeDescription.ForLoadedType(instrumentedType));
-        when(target.getParameterTypes()).thenReturn(new TypeList.ForLoadedType(new Class<?>[]{targetType}));
+        when(assignment.isValid()).thenReturn(true);
+        when(target.getParameterTypes()).thenReturn(typeList);
         RuntimeType runtimeType = mock(RuntimeType.class);
         doReturn(RuntimeType.class).when(runtimeType).annotationType();
         when(target.getParameterAnnotations()).thenReturn(new Annotation[][]{{runtimeType}});
-        when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean())).thenReturn(LegalTrivialAssignment.INSTANCE);
         AnnotationDrivenBinder.ArgumentBinder.IdentifiedBinding<?> identifiedBinding = This.Binder.INSTANCE
                 .bind(annotation, 0, source, target, typeDescription, assigner);
         assertThat(identifiedBinding.isValid(), is(true));
-        verify(assigner).assign(typeDescription, new TypeDescription.ForLoadedType(targetType), true);
+        verify(assigner).assign(typeDescription, parameterType, true);
         verifyNoMoreInteractions(assigner);
         verify(target, atLeast(1)).getParameterTypes();
         verify(target, atLeast(1)).getParameterAnnotations();
@@ -62,15 +71,14 @@ public class ThisAnnotationBinderTest extends AbstractAnnotationBinderTest<This>
 
     @Test
     public void testIllegalBinding() throws Exception {
-        final Class<?> instrumentedType = Object.class, targetType = Void.class;
-        when(typeDescription.getSupertype()).thenReturn(new TypeDescription.ForLoadedType(instrumentedType));
-        when(target.getParameterTypes()).thenReturn(new TypeList.ForLoadedType(new Class<?>[]{targetType}));
+        when(assignment.isValid()).thenReturn(false);
+        when(target.getParameterTypes()).thenReturn(typeList);
         when(target.getParameterAnnotations()).thenReturn(new Annotation[1][0]);
         when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean())).thenReturn(IllegalAssignment.INSTANCE);
         AnnotationDrivenBinder.ArgumentBinder.IdentifiedBinding<?> identifiedBinding = This.Binder.INSTANCE
                 .bind(annotation, 0, source, target, typeDescription, assigner);
         assertThat(identifiedBinding.isValid(), is(false));
-        verify(assigner).assign(typeDescription, new TypeDescription.ForLoadedType(targetType), false);
+        verify(assigner).assign(typeDescription, parameterType, false);
         verifyNoMoreInteractions(assigner);
         verify(target, atLeast(1)).getParameterTypes();
         verify(target, atLeast(1)).getParameterAnnotations();
@@ -78,13 +86,15 @@ public class ThisAnnotationBinderTest extends AbstractAnnotationBinderTest<This>
 
     @Test(expected = IllegalStateException.class)
     public void testPrimitiveType() throws Exception {
-        when(target.getParameterTypes()).thenReturn(new TypeList.ForLoadedType(new Class<?>[]{int.class}));
+        when(parameterType.isPrimitive()).thenReturn(true);
+        when(target.getParameterTypes()).thenReturn(typeList);
         This.Binder.INSTANCE.bind(annotation, 0, source, target, typeDescription, assigner);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testArrayType() throws Exception {
-        when(target.getParameterTypes()).thenReturn(new TypeList.ForLoadedType(new Class<?>[]{Object[].class}));
+        when(parameterType.isArray()).thenReturn(true);
+        when(target.getParameterTypes()).thenReturn(typeList);
         This.Binder.INSTANCE.bind(annotation, 0, source, target, typeDescription, assigner);
     }
 }
