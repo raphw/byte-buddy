@@ -12,7 +12,7 @@ import static org.junit.Assert.assertThat;
 public class JunctionMethodMatcherTest {
 
     @SuppressWarnings("unused")
-    public static class TestClass {
+    public static class MatchedClass {
 
         public void foo() {
             /* empty */
@@ -25,7 +25,7 @@ public class JunctionMethodMatcherTest {
 
     @Before
     public void setUp() throws Exception {
-        testClass$foo = TestClass.class.getDeclaredMethod(FOO_METHOD_NAME);
+        testClass$foo = MatchedClass.class.getDeclaredMethod(FOO_METHOD_NAME);
     }
 
     @Test

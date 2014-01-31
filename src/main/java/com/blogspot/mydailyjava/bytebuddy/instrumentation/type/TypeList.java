@@ -32,7 +32,7 @@ public interface TypeList extends List<TypeDescription> {
             for(Class<?> aType : type) {
                 internalNames[i++] = Type.getInternalName(aType);
             }
-            return internalNames;
+            return internalNames.length == 0 ? null : internalNames;
         }
 
         @Override

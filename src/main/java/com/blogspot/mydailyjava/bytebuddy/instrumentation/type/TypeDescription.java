@@ -5,20 +5,56 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.ModifierReviewable;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodList;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.TypeSize;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers;
 import org.objectweb.asm.Type;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
 
 public interface TypeDescription extends ByteCodeElement, ModifierReviewable, AnnotatedElement {
 
     static abstract class AbstractTypeDescription extends AbstractModifierReviewable implements TypeDescription {
 
+        private static class UniqueSignatureFilter implements MethodMatcher {
+
+            private final Set<String> foundSignatures = new HashSet<String>();
+
+            @Override
+            public boolean matches(MethodDescription methodDescription) {
+                return foundSignatures.add(methodDescription.getUniqueSignature());
+            }
+        }
+
         @Override
         public String getInternalName() {
             return getName().replace('.', '/');
+        }
+
+        @Override
+        public MethodList getReachableMethods() {
+            List<MethodDescription> methodDescriptions = new ArrayList<MethodDescription>();
+            MethodMatcher uniqueSignatureFilter = new UniqueSignatureFilter();
+            methodDescriptions.addAll(getDeclaredMethods().filter(uniqueSignatureFilter));
+            MethodMatcher subclassFilter = not(MethodMatchers.isPrivate())
+                    .and(not(MethodMatchers.isPackagePrivate()).or(isDefinedInPackage(getPackageName())))
+                    .and(isMethod())
+                    .and(uniqueSignatureFilter);
+            if (getSupertype() != null) {
+                methodDescriptions.addAll(getSupertype().getReachableMethods().filter(subclassFilter));
+            }
+            for (TypeDescription anInterface : getInterfaces()) {
+                methodDescriptions.addAll(anInterface.getReachableMethods().filter(uniqueSignatureFilter));
+            }
+            return new MethodList.Explicit(methodDescriptions);
         }
 
         @Override
@@ -268,6 +304,8 @@ public interface TypeDescription extends ByteCodeElement, ModifierReviewable, An
     boolean isMemberClass();
 
     MethodList getDeclaredMethods();
+
+    MethodList getReachableMethods();
 
     String getPackageName();
 

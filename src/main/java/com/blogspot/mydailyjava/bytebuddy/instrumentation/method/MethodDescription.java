@@ -1,7 +1,6 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.ModifierReviewable;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.TypeSize;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
 import org.objectweb.asm.Type;
@@ -10,7 +9,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 
 public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, AnnotatedElement {
 
@@ -22,15 +20,20 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, A
         }
 
         @Override
+        public int getStackSize() {
+            return getParameterTypes().getStackSize() + (isStatic() ? 0 : 1);
+        }
+
+        @Override
         public boolean equals(Object other) {
             return other == this || other instanceof MethodDescription
-                    && ((MethodDescription) other).getUniqueSignature().equals(getUniqueSignature())
-                    && ((MethodDescription) other).getDeclaringType().equals(getDeclaringType());
+                    && getUniqueSignature().equals(((MethodDescription) other).getUniqueSignature())
+                    && getDeclaringType().equals(((MethodDescription) other).getDeclaringType());
         }
 
         @Override
         public int hashCode() {
-            return 31 * getUniqueSignature().hashCode() + getDeclaringType().getName().hashCode();
+            return (getDeclaringType().getInternalName() + getUniqueSignature()).hashCode();
         }
     }
 
@@ -98,11 +101,6 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, A
         @Override
         public boolean isDeclaredInInterface() {
             return false;
-        }
-
-        @Override
-        public int getStackSize() {
-            return TypeSize.sizeOf(Arrays.asList(constructor.getParameterTypes())) + 1;
         }
 
         @Override
@@ -271,12 +269,7 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, A
 
         @Override
         public boolean isOverridable() {
-            return !(isFinal() || isPrivate() || getDeclaringType().isFinal());
-        }
-
-        @Override
-        public int getStackSize() {
-            return TypeSize.sizeOf(Arrays.asList(method.getParameterTypes())) + (isStatic() ? 0 : 1);
+            return !(isFinal() || isPrivate() || isStatic() || getDeclaringType().isFinal());
         }
 
         @Override

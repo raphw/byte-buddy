@@ -3,9 +3,22 @@ package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 
-public abstract class JunctionMethodMatcher implements MethodMatcher {
+public interface JunctionMethodMatcher extends MethodMatcher {
 
-    public static class Conjunction extends JunctionMethodMatcher {
+    static abstract class AbstractBase implements JunctionMethodMatcher {
+
+        @Override
+        public JunctionMethodMatcher and(MethodMatcher other) {
+            return new Conjunction(this, other);
+        }
+
+        @Override
+        public JunctionMethodMatcher or(MethodMatcher other) {
+            return new Disjunction(this, other);
+        }
+    }
+
+    static class Conjunction extends AbstractBase {
 
         private final MethodMatcher left, right;
 
@@ -20,7 +33,7 @@ public abstract class JunctionMethodMatcher implements MethodMatcher {
         }
     }
 
-    public static class Disjunction extends JunctionMethodMatcher {
+    static class Disjunction extends AbstractBase {
 
         private final MethodMatcher left, right;
 
@@ -35,11 +48,7 @@ public abstract class JunctionMethodMatcher implements MethodMatcher {
         }
     }
 
-    public JunctionMethodMatcher and(MethodMatcher other) {
-        return new Conjunction(this, other);
-    }
+    JunctionMethodMatcher and(MethodMatcher other);
 
-    public JunctionMethodMatcher or(MethodMatcher other) {
-        return new Disjunction(this, other);
-    }
+    JunctionMethodMatcher or(MethodMatcher other);
 }

@@ -179,28 +179,6 @@ public class MethodMatchersTest {
         testClassBase$constructor = new MethodDescription.ForConstructor(TestClassBase.class.getDeclaredConstructor());
     }
 
-//    @Test
-//    public void testSignatureIsDefinedIn() throws Exception {
-//        assertThat(MethodMatchers.signatureIsDefinedIn(Object.class).matches(testClassBase$foo), is(false));
-//        assertThat(MethodMatchers.signatureIsDefinedIn(TestClassBase.class).matches(testClassBase$foo), is(true));
-//        assertThat(MethodMatchers.signatureIsDefinedIn(TestClassExtension.class).matches(testClassBase$foo), is(true));
-//        assertThat(MethodMatchers.signatureIsDefinedIn(Object.class).matches(testClassExtension$foo), is(false));
-//        assertThat(MethodMatchers.signatureIsDefinedIn(TestClassBase.class).matches(testClassExtension$foo), is(true));
-//        assertThat(MethodMatchers.signatureIsDefinedIn(TestClassExtension.class).matches(testClassExtension$foo), is(true));
-//        assertThat(MethodMatchers.signatureIsDefinedIn(TestClassExtension.class).matches(testClassExtension$stat), is(true));
-//    }
-//
-//    @Test
-//    public void testIsOverridableMethodIn() throws Exception {
-//        assertThat(MethodMatchers.isOverridableMethodIn(Object.class).matches(testClassBase$foo), is(false));
-//        assertThat(MethodMatchers.isOverridableMethodIn(TestClassBase.class).matches(testClassBase$foo), is(true));
-//        assertThat(MethodMatchers.isOverridableMethodIn(TestClassExtension.class).matches(testClassBase$foo), is(false));
-//        assertThat(MethodMatchers.isOverridableMethodIn(Object.class).matches(testClassExtension$foo), is(false));
-//        assertThat(MethodMatchers.isOverridableMethodIn(TestClassBase.class).matches(testClassExtension$foo), is(false));
-//        assertThat(MethodMatchers.isOverridableMethodIn(TestClassExtension.class).matches(testClassExtension$foo), is(true));
-//        assertThat(MethodMatchers.isOverridableMethodIn(TestClassExtension.class).matches(testClassExtension$stat), is(false));
-//    }
-
     @Test
     public void testNamed() throws Exception {
         assertThat(MethodMatchers.named(FOO_METHOD_NAME).matches(testClassBase$foo), is(true));
@@ -449,6 +427,14 @@ public class MethodMatchersTest {
         assertThat(MethodMatchers.isDefinedInPackage(MethodMatchersTest.class.getPackage().getName()).matches(testClassExtension$foo), is(true));
         assertThat(MethodMatchers.isDefinedInPackage(JAVA_LANG_PACKAGE).matches(testClassBase$foo), is(false));
         assertThat(MethodMatchers.isDefinedInPackage(JAVA_LANG_PACKAGE).matches(testClassExtension$foo), is(false));
+    }
+
+    @Test
+    public void testIsOverridable() throws Exception {
+        assertThat(MethodMatchers.isOverridable().matches(testClassBase$foo), is(true));
+        assertThat(MethodMatchers.isOverridable().matches(testClassBase$bar), is(false));
+        assertThat(MethodMatchers.isOverridable().matches(testClassBase$stat), is(false));
+        assertThat(MethodMatchers.isOverridable().matches(testModifier$constructor), is(false));
     }
 
     @Test

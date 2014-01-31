@@ -48,7 +48,7 @@ public final class MethodMatchers {
         }
     }
 
-    private static class MethodNameMethodMatcher extends JunctionMethodMatcher {
+    private static class MethodNameMethodMatcher extends JunctionMethodMatcher.AbstractBase {
 
         private final String methodName;
         private final MatchMode matchMode;
@@ -100,7 +100,7 @@ public final class MethodMatchers {
         return new MethodNameMethodMatcher(regex, MatchMode.MATCHES);
     }
 
-    private static class ModifierMethodMatcher extends JunctionMethodMatcher {
+    private static class ModifierMethodMatcher extends JunctionMethodMatcher.AbstractBase {
 
         private final int modifierMask;
 
@@ -150,7 +150,7 @@ public final class MethodMatchers {
         return new ModifierMethodMatcher(Modifier.STRICT);
     }
 
-    private static class VarArgsMethodMatcher extends JunctionMethodMatcher {
+    private static class VarArgsMethodMatcher extends JunctionMethodMatcher.AbstractBase {
 
         @Override
         public boolean matches(MethodDescription methodDescription) {
@@ -162,7 +162,7 @@ public final class MethodMatchers {
         return new VarArgsMethodMatcher();
     }
 
-    private static class SyntheticMethodMatcher extends JunctionMethodMatcher {
+    private static class SyntheticMethodMatcher extends JunctionMethodMatcher.AbstractBase {
 
         @Override
         public boolean matches(MethodDescription methodDescription) {
@@ -174,7 +174,7 @@ public final class MethodMatchers {
         return new SyntheticMethodMatcher();
     }
 
-    private static class BridgeMethodMatcher extends JunctionMethodMatcher {
+    private static class BridgeMethodMatcher extends JunctionMethodMatcher.AbstractBase {
 
         @Override
         public boolean matches(MethodDescription methodDescription) {
@@ -186,7 +186,7 @@ public final class MethodMatchers {
         return new BridgeMethodMatcher();
     }
 
-    private static class ReturnTypeMatcher extends JunctionMethodMatcher {
+    private static class ReturnTypeMatcher extends JunctionMethodMatcher.AbstractBase {
 
         private final Class<?> returnType;
 
@@ -204,7 +204,7 @@ public final class MethodMatchers {
         return new ReturnTypeMatcher(type);
     }
 
-    private static class ParameterTypeMatcher extends JunctionMethodMatcher {
+    private static class ParameterTypeMatcher extends JunctionMethodMatcher.AbstractBase {
 
         private final Class<?>[] parameterType;
 
@@ -232,7 +232,7 @@ public final class MethodMatchers {
         return new ParameterTypeMatcher(types);
     }
 
-    private static class ExceptionMethodMatcher extends JunctionMethodMatcher {
+    private static class ExceptionMethodMatcher extends JunctionMethodMatcher.AbstractBase {
 
         private final Class<?> exceptionType;
 
@@ -255,7 +255,7 @@ public final class MethodMatchers {
         return new ExceptionMethodMatcher(exceptionType);
     }
 
-    private static class MethodEqualityMethodMatcher extends JunctionMethodMatcher {
+    private static class MethodEqualityMethodMatcher extends JunctionMethodMatcher.AbstractBase {
 
         private final Method method;
 
@@ -273,7 +273,7 @@ public final class MethodMatchers {
         return new MethodEqualityMethodMatcher(method);
     }
 
-    private static class ConstructorEqualityMethodMatcher extends JunctionMethodMatcher {
+    private static class ConstructorEqualityMethodMatcher extends JunctionMethodMatcher.AbstractBase {
 
         private final Constructor<?> constructor;
 
@@ -291,7 +291,7 @@ public final class MethodMatchers {
         return new ConstructorEqualityMethodMatcher(constructor);
     }
 
-    private static class IsMethodMethodMatcher extends JunctionMethodMatcher {
+    private static class IsMethodMethodMatcher extends JunctionMethodMatcher.AbstractBase {
 
         @Override
         public boolean matches(MethodDescription methodDescription) {
@@ -307,7 +307,7 @@ public final class MethodMatchers {
         return not(isMethod());
     }
 
-    private static class PackageNameMatcher extends JunctionMethodMatcher {
+    private static class PackageNameMatcher extends JunctionMethodMatcher.AbstractBase {
 
         private final String packageName;
 
@@ -325,7 +325,19 @@ public final class MethodMatchers {
         return new PackageNameMatcher(packageName);
     }
 
-    private static class DefaultFinalizeMethodMatcher extends JunctionMethodMatcher {
+    private static class OverridableMethodMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.isOverridable();
+        }
+    }
+
+    public static JunctionMethodMatcher isOverridable() {
+        return new OverridableMethodMatcher();
+    }
+
+    private static class DefaultFinalizeMethodMatcher extends JunctionMethodMatcher.AbstractBase {
 
         private static final String FINALIZE_METHOD_NAME = "finalize";
 
@@ -341,7 +353,7 @@ public final class MethodMatchers {
         return new DefaultFinalizeMethodMatcher();
     }
 
-    private static class NegatingMethodMatcher extends JunctionMethodMatcher {
+    private static class NegatingMethodMatcher extends JunctionMethodMatcher.AbstractBase {
 
         private final MethodMatcher methodMatcher;
 
@@ -359,7 +371,7 @@ public final class MethodMatchers {
         return new NegatingMethodMatcher(methodMatcher);
     }
 
-    private static class BooleanMethodMatcher extends JunctionMethodMatcher {
+    private static class BooleanMethodMatcher extends JunctionMethodMatcher.AbstractBase {
 
         private final boolean matches;
 
