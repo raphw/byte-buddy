@@ -38,7 +38,8 @@ public class MethodNameEqualityResolverTest extends AbstractAmbiguityResolverTes
         when(leftMethod.getName()).thenReturn(leftName);
         when(rightMethod.getName()).thenReturn(rightName);
         when(source.getName()).thenReturn(resultName);
-        MethodDelegationBinder.AmbiguityResolver.Resolution resolution = MethodNameEqualityResolver.INSTANCE.resolve(source, left, right);
+        MethodDelegationBinder.AmbiguityResolver.Resolution resolution =
+                MethodNameEqualityResolver.INSTANCE.resolve(source, left, right);
         assertThat(resolution, is(expected));
         verify(left, atLeast(1)).getTarget();
         verify(leftMethod, atLeast(1)).getName();

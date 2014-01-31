@@ -7,8 +7,10 @@ import static org.hamcrest.core.Is.is;
 
 public class MethodBindingAmbiguityResolutionTest {
 
-    private static final MethodDelegationBinder.AmbiguityResolver.Resolution LEFT = MethodDelegationBinder.AmbiguityResolver.Resolution.LEFT;
-    private static final MethodDelegationBinder.AmbiguityResolver.Resolution RIGHT = MethodDelegationBinder.AmbiguityResolver.Resolution.RIGHT;
+    private static final MethodDelegationBinder.AmbiguityResolver.Resolution LEFT =
+            MethodDelegationBinder.AmbiguityResolver.Resolution.LEFT;
+    private static final MethodDelegationBinder.AmbiguityResolver.Resolution RIGHT =
+            MethodDelegationBinder.AmbiguityResolver.Resolution.RIGHT;
 
     @Test
     public void testSelfMerge() throws Exception {

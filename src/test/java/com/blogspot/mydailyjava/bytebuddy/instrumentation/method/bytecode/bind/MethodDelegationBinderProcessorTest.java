@@ -37,9 +37,12 @@ public class MethodDelegationBinderProcessorTest {
         dominantBoundDelegation = mock(MethodDelegationBinder.Binding.class);
         when(dominantBoundDelegation.isValid()).thenReturn(true);
         methodDelegationBinder = mock(MethodDelegationBinder.class);
-        when(methodDelegationBinder.bind(typeDescription, source, bindableTarget)).thenReturn(boundDelegation);
-        when(methodDelegationBinder.bind(typeDescription, source, unbindableTarget)).thenReturn(unboundDelegation);
-        when(methodDelegationBinder.bind(typeDescription, source, dominantBindableTarget)).thenReturn(dominantBoundDelegation);
+        when(methodDelegationBinder.bind(typeDescription, source, bindableTarget))
+                .thenReturn(boundDelegation);
+        when(methodDelegationBinder.bind(typeDescription, source, unbindableTarget))
+                .thenReturn(unboundDelegation);
+        when(methodDelegationBinder.bind(typeDescription, source, dominantBindableTarget))
+                .thenReturn(dominantBoundDelegation);
         ambiguityResolver = mock(MethodDelegationBinder.AmbiguityResolver.class);
         when(ambiguityResolver.resolve(source, dominantBoundDelegation, boundDelegation))
                 .thenReturn(MethodDelegationBinder.AmbiguityResolver.Resolution.LEFT);

@@ -48,7 +48,8 @@ public class MethodBindingBuilderTest {
     @Before
     public void setUp() throws Exception {
         methodDescription = mock(MethodDescription.class);
-        when(methodDescription.getParameterTypes()).thenReturn(new TypeList.ForLoadedType(new Class<?>[0]));
+        TypeList typeList = mock(TypeList.class);
+        when(methodDescription.getParameterTypes()).thenReturn(typeList);
         when(methodDescription.isStatic()).thenReturn(false);
         when(methodDescription.isDeclaredInInterface()).thenReturn(false);
         TypeDescription typeDescription = mock(TypeDescription.class);
