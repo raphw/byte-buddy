@@ -5,10 +5,9 @@ import com.blogspot.mydailyjava.bytebuddy.asm.ClassVisitorWrapperChain;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodInterception;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.JunctionMethodMatcher;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodExtraction;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.instrumentation.ByteArrayDynamicProxy;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.instrumentation.DynamicProxy;
 import org.objectweb.asm.ClassVisitor;
@@ -19,12 +18,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
+import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.isConstructor;
+import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.isPrivate;
+import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.not;
 
 public class SubclassDynamicProxyBuilder<T> implements DynamicProxy.Builder<T> {
 
     private static final int ASM_MANUAL_WRITING_OPTIONS = 0;
-    private static final JunctionMethodMatcher OVERRIDABLE = not(isFinal()).and(not(isStatic()).and(not(isPrivate())));
 
     private static class SubclassLocatedMethodInterception<T> implements LocatedMethodInterception<T> {
 
@@ -243,31 +243,47 @@ public class SubclassDynamicProxyBuilder<T> implements DynamicProxy.Builder<T> {
         return new SubclassLocatedMethodInterception<T>(this, checkNotNull(methodMatcher));
     }
 
+    private static class WritableMethodFilter implements MethodMatcher {
+
+        private final TypeDescription typeDescription;
+
+        private WritableMethodFilter(TypeDescription typeDescription) {
+            this.typeDescription = typeDescription;
+        }
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.isOverridable() || typeDescription.equals(methodDescription.getDeclaringType());
+        }
+    }
+
     @Override
     public DynamicProxy<T> make() {
         ClassWriter classWriter = new ClassWriter(ASM_MANUAL_WRITING_OPTIONS);
         ClassVisitor classVisitor = classVisitorWrapperChain.wrap(classWriter);
-        InstrumentedType typeDescription = new InstrumentedType(classVersion,
+        InstrumentedType instrumentedType = new InstrumentedType(classVersion,
                 superClass,
                 interfaces,
                 visibility,
                 typeManifestation,
                 syntheticState,
                 namingStrategy);
-        classVisitor.visit(typeDescription.getClassVersion(),
-                typeDescription.getModifiers(),
-                typeDescription.getInternalName(),
+        classVisitor.visit(instrumentedType.getClassVersion(),
+                instrumentedType.getModifiers(),
+                instrumentedType.getInternalName(),
                 null,
-                typeDescription.getSupertype().getInternalName(),
-                typeDescription.getInterfaces().toInternalNames());
-        MethodInterception.Handler handler = methodInterceptions.handler(typeDescription);
-        for (MethodDescription method : MethodExtraction.matching(OVERRIDABLE.and(not(ignoredMethods)))
-                .appendUniqueDescriptorsFrom(superClass)
-                .extractUniqueDescriptorsFrom(interfaces)
-                .asList()) {
+                instrumentedType.getSupertype().getInternalName(),
+                instrumentedType.getInterfaces().toInternalNames());
+        MethodInterception.Handler handler = methodInterceptions.handler(instrumentedType);
+        for (MethodDescription method : instrumentedType.getReachableMethods().filter(not(ignoredMethods)
+                .and(new WritableMethodFilter(instrumentedType)))) {
+            handler.find(method).handle(classVisitor);
+        }
+        for(MethodDescription method : instrumentedType.getSupertype().getDeclaredMethods().filter(not(ignoredMethods)
+                .and(isConstructor()).and(not(isPrivate())))) {
             handler.find(method).handle(classVisitor);
         }
         classVisitor.visitEnd();
-        return new ByteArrayDynamicProxy<T>(typeDescription.getName(), classWriter.toByteArray());
+        return new ByteArrayDynamicProxy<T>(instrumentedType.getName(), classWriter.toByteArray());
     }
 }

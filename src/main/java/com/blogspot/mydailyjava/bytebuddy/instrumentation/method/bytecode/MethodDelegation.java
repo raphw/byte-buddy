@@ -1,6 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodList;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.Assignment;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.MethodReturn;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.primitive.PrimitiveTypeAwareAssigner;
@@ -13,12 +14,11 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.a
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.AnnotationDrivenBinder;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.This;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodExtraction;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 
 import java.util.Arrays;
-import java.util.List;
 
 import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
 
@@ -44,15 +44,15 @@ public class MethodDelegation implements ByteCodeAppender.Factory {
                         Arrays.<MethodDelegationBinder.AmbiguityResolver>asList(
                                 MethodNameEqualityResolver.INSTANCE,
                                 MostSpecificTypeResolver.INSTANCE)),
-                MethodExtraction.matching(isStatic().and(not(isPrivate()))).appendUniqueDescriptorsFrom(type).asList());
+                new TypeDescription.ForLoadedType(type).getReachableMethods().filter(isStatic().and(not(isPrivate()))));
     }
 
     private final MethodDelegationBinder.Processor processor;
-    private final List<MethodDescription> methods;
+    private final MethodList methods;
 
     protected MethodDelegation(MethodDelegationBinder methodDelegationBinder,
                                MethodDelegationBinder.AmbiguityResolver ambiguityResolver,
-                               List<MethodDescription> methods) {
+                               MethodList methods) {
         processor = new MethodDelegationBinder.Processor(methodDelegationBinder, ambiguityResolver);
         this.methods = methods;
     }
@@ -63,6 +63,10 @@ public class MethodDelegation implements ByteCodeAppender.Factory {
 
     public MethodDelegation withMethodDelegationBinder(MethodDelegationBinder methodDelegationBinder) {
         return new MethodDelegation(methodDelegationBinder, processor.getAmbiguityResolver(), methods);
+    }
+
+    public MethodDelegation withMethodsMatching(MethodMatcher methodMatcher) {
+        return new MethodDelegation(processor.getMethodDelegationBinder(), processor.getAmbiguityResolver(), methods.filter(methodMatcher));
     }
 
     private class AppenderDelegate implements ByteCodeAppender {
