@@ -56,7 +56,7 @@ public class MethodBindingBuilderTest {
         when(typeDescription.getInternalName()).thenReturn(FOO);
         when(methodDescription.getInternalName()).thenReturn(BAR);
         when(methodDescription.getDescriptor()).thenReturn(BAZ);
-        when(methodDescription.getParameterSize()).thenReturn(0);
+        when(methodDescription.getStackSize()).thenReturn(0);
         TypeDescription returnTpeDescription = mock(TypeDescription.class);
         when(methodDescription.getReturnType()).thenReturn(returnTpeDescription);
         when(returnTpeDescription.getStackSize()).thenReturn(TypeSize.ZERO);

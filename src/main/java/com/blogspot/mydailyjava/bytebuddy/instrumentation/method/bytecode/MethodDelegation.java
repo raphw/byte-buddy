@@ -77,7 +77,7 @@ public class MethodDelegation implements ByteCodeAppender.Factory {
         public Size apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
             Assignment.Size size = processor.process(typeDescription, methodDescription, methods).apply(methodVisitor);
             size = size.aggregate(MethodReturn.returning(methodDescription.getReturnType()).apply(methodVisitor));
-            return new Size(size.getMaximalSize(), methodDescription.getParameterSize());
+            return new Size(size.getMaximalSize(), methodDescription.getStackSize());
         }
     }
 

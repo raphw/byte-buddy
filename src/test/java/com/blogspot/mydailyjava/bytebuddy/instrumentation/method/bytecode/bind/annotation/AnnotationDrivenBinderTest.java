@@ -159,7 +159,7 @@ public class AnnotationDrivenBinderTest {
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
         when(target.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(Void.class));
         when(target.getParameterTypes()).thenReturn(makeTypeList(int.class, long.class));
-        when(target.getParameterSize()).thenReturn(3);
+        when(target.getStackSize()).thenReturn(3);
         when(target.getParameterAnnotations()).thenReturn(new Annotation[2][0]);
         when(target.getAnnotations()).thenReturn(new Annotation[0]);
         AnnotationDrivenBinder.ArgumentBinder.IdentifiedBinding<?> firstBinding = prepareArgumentBinder(
@@ -218,7 +218,7 @@ public class AnnotationDrivenBinderTest {
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
         when(target.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(Void.class));
         when(target.getParameterTypes()).thenReturn(makeTypeList(int.class, long.class));
-        when(target.getParameterSize()).thenReturn(3);
+        when(target.getStackSize()).thenReturn(3);
         when(target.getParameterAnnotations()).thenReturn(new Annotation[2][0]);
         when(target.getAnnotations()).thenReturn(new Annotation[0]);
         AnnotationDrivenBinder.ArgumentBinder.IdentifiedBinding<?> firstBinding = prepareArgumentBinder(
@@ -261,7 +261,7 @@ public class AnnotationDrivenBinderTest {
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
         when(target.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(Void.class));
         when(target.getParameterTypes()).thenReturn(makeTypeList(int.class, long.class));
-        when(target.getParameterSize()).thenReturn(3);
+        when(target.getStackSize()).thenReturn(3);
         when(target.getParameterAnnotations()).thenReturn(new Annotation[][]{{secondPseudoAnnotation}, {firstPseudoAnnotation}});
         when(target.getAnnotations()).thenReturn(new Annotation[0]);
         AnnotationDrivenBinder.ArgumentBinder.IdentifiedBinding<?> firstBinding = prepareArgumentBinder(
@@ -318,7 +318,7 @@ public class AnnotationDrivenBinderTest {
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
         when(target.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(Void.class));
         when(target.getParameterTypes()).thenReturn(makeTypeList(int.class, long.class));
-        when(target.getParameterSize()).thenReturn(3);
+        when(target.getStackSize()).thenReturn(3);
         when(target.getParameterAnnotations()).thenReturn(new Annotation[][]{{}, {firstPseudoAnnotation}});
         when(target.getAnnotations()).thenReturn(new Annotation[0]);
         AnnotationDrivenBinder.ArgumentBinder.IdentifiedBinding<?> firstBinding = prepareArgumentBinder(

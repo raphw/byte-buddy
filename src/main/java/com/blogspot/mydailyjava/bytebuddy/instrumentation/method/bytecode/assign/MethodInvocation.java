@@ -6,7 +6,7 @@ import org.objectweb.asm.Opcodes;
 
 public enum MethodInvocation {
 
-    CONCRETE(Opcodes.INVOKEVIRTUAL),
+    VIRTUAL(Opcodes.INVOKEVIRTUAL),
     INTERFACE(Opcodes.INVOKEINTERFACE),
     STATIC(Opcodes.INVOKESTATIC),
     SPECIAL(Opcodes.INVOKESPECIAL);
@@ -18,7 +18,7 @@ public enum MethodInvocation {
 
         private Invocation(MethodDescription methodDescription) {
             this.methodDescription = methodDescription;
-            int parameterSize = methodDescription.getParameterSize();
+            int parameterSize = methodDescription.getStackSize();
             int returnValueSize = methodDescription.getReturnType().getStackSize().getSize();
             this.size = new Size(returnValueSize - parameterSize, Math.max(0, returnValueSize - parameterSize));
         }
@@ -44,13 +44,13 @@ public enum MethodInvocation {
         } else if (methodDescription.isDeclaredInInterface()) {
             return INTERFACE.new Invocation(methodDescription);
         } else {
-            return CONCRETE.new Invocation(methodDescription);
+            return VIRTUAL.new Invocation(methodDescription);
         }
     }
 
     public static Assignment special(MethodDescription methodDescription) {
-        if (methodDescription.isStatic()) {
-            throw new IllegalArgumentException("Cannot invoke static method via INVOKESPECIAL");
+        if (methodDescription.isStatic() || methodDescription.isDeclaredInInterface()) {
+            throw new IllegalArgumentException("Cannot invoke " + methodDescription + " via INVOKESPECIAL");
         } else {
             return SPECIAL.new Invocation(methodDescription);
         }

@@ -101,7 +101,7 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, A
         }
 
         @Override
-        public int getParameterSize() {
+        public int getStackSize() {
             return TypeSize.sizeOf(Arrays.asList(constructor.getParameterTypes())) + 1;
         }
 
@@ -275,7 +275,7 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, A
         }
 
         @Override
-        public int getParameterSize() {
+        public int getStackSize() {
             return TypeSize.sizeOf(Arrays.asList(method.getParameterTypes())) + (isStatic() ? 0 : 1);
         }
 
@@ -309,5 +309,5 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, A
 
     boolean isDeclaredInInterface();
 
-    int getParameterSize();
+    int getStackSize();
 }

@@ -19,7 +19,7 @@ import static org.mockito.Mockito.*;
 public class MethodArgumentShortcutTest {
 
     @Parameterized.Parameters
-    public static Collection<Object[]> shortcutAssignments() {
+    public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {Object.class, 0, MoreOpcodes.ALOAD_0, 1},
                 {Object.class, 1, MoreOpcodes.ALOAD_1, 1},
@@ -50,7 +50,9 @@ public class MethodArgumentShortcutTest {
     private final int size;
 
     public MethodArgumentShortcutTest(Class<?> type, int index, int opcode, int size) {
-        this.typeDescription = new TypeDescription.ForLoadedType(type);
+        this.typeDescription = mock(TypeDescription.class);
+        when(typeDescription.isPrimitive()).thenReturn(type.isPrimitive());
+        when(typeDescription.represents(type)).thenReturn(true);
         this.index = index;
         this.opcode = opcode;
         this.size = size;

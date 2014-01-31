@@ -1,5 +1,6 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.type;
 
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.TypeSize;
 import org.objectweb.asm.Type;
 
 import java.util.*;
@@ -33,7 +34,14 @@ public interface TypeList extends List<TypeDescription> {
             }
             return internalNames;
         }
+
+        @Override
+        public int getStackSize() {
+            return TypeSize.sizeOf(Arrays.asList(type));
+        }
     }
 
     String[] toInternalNames();
+
+    int getStackSize();
 }

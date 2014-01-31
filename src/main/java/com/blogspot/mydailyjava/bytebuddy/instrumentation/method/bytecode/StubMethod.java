@@ -18,7 +18,7 @@ public enum StubMethod implements ByteCodeAppender.Factory {
                     DefaultValue.load(methodDescription.getReturnType()).apply(methodVisitor)
                             .aggregate(MethodReturn.returning(methodDescription.getReturnType()).apply(methodVisitor))
                             .getMaximalSize(),
-                    methodDescription.getParameterSize());
+                    methodDescription.getStackSize());
         }
     }
 

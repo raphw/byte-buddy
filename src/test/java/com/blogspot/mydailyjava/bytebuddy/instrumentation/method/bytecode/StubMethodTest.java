@@ -215,6 +215,6 @@ public class StubMethodTest {
         assertThat((Integer) instrumented.getMethod(AbstractCallHistoryTraceable.METHOD_NAME).invoke(instance), is(0));
         verifyZeroInteractions(typeDescription);
         verify(spied, atLeast(1)).getReturnType();
-        verify(spied, atLeast(1)).getParameterSize();
+        verify(spied, atLeast(1)).getStackSize();
     }
 }

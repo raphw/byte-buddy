@@ -19,7 +19,7 @@ import static org.mockito.Mockito.*;
 public class MethodArgumentTest {
 
     @Parameterized.Parameters
-    public static Collection<Object[]> assignments() {
+    public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {Object.class, Opcodes.ALOAD, 1},
                 {Object[].class, Opcodes.AALOAD, 1},
@@ -35,7 +35,10 @@ public class MethodArgumentTest {
     private final int size;
 
     public MethodArgumentTest(Class<?> type, int opcode, int size) {
-        this.typeDescription = new TypeDescription.ForLoadedType(type);
+        this.typeDescription = mock(TypeDescription.class);
+        when(typeDescription.isPrimitive()).thenReturn(type.isPrimitive());
+        when(typeDescription.represents(type)).thenReturn(true);
+        when(typeDescription.isArray()).thenReturn(type.isArray());
         this.opcode = opcode;
         this.size = size;
     }

@@ -13,15 +13,19 @@ import static org.mockito.Mockito.*;
 public class DefaultValueTest {
 
     private MethodVisitor methodVisitor;
+    private TypeDescription typeDescription;
 
     @Before
     public void setUp() throws Exception {
         methodVisitor = mock(MethodVisitor.class);
+        typeDescription = mock(TypeDescription.class);
     }
 
     @Test
     public void testVoid() throws Exception {
-        Assignment assignment = DefaultValue.load(new TypeDescription.ForLoadedType(void.class));
+        when(typeDescription.isPrimitive()).thenReturn(true);
+        when(typeDescription.represents(void.class)).thenReturn(true);
+        Assignment assignment = DefaultValue.load(typeDescription);
         assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
@@ -30,19 +34,10 @@ public class DefaultValueTest {
     }
 
     @Test
-    public void testInt() throws Exception {
-        Assignment assignment = DefaultValue.load(new TypeDescription.ForLoadedType(int.class));
-        assertThat(assignment.isValid(), is(true));
-        Assignment.Size size = assignment.apply(methodVisitor);
-        assertThat(size.getSizeImpact(), is(1));
-        assertThat(size.getMaximalSize(), is(1));
-        verify(methodVisitor).visitInsn(Opcodes.ICONST_0);
-        verifyNoMoreInteractions(methodVisitor);
-    }
-
-    @Test
     public void testLong() throws Exception {
-        Assignment assignment = DefaultValue.load(new TypeDescription.ForLoadedType(long.class));
+        when(typeDescription.isPrimitive()).thenReturn(true);
+        when(typeDescription.represents(long.class)).thenReturn(true);
+        Assignment assignment = DefaultValue.load(typeDescription);
         assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(2));
@@ -53,7 +48,9 @@ public class DefaultValueTest {
 
     @Test
     public void testFloat() throws Exception {
-        Assignment assignment = DefaultValue.load(new TypeDescription.ForLoadedType(float.class));
+        when(typeDescription.isPrimitive()).thenReturn(true);
+        when(typeDescription.represents(float.class)).thenReturn(true);
+        Assignment assignment = DefaultValue.load(typeDescription);
         assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(1));
@@ -64,7 +61,9 @@ public class DefaultValueTest {
 
     @Test
     public void testDouble() throws Exception {
-        Assignment assignment = DefaultValue.load(new TypeDescription.ForLoadedType(double.class));
+        when(typeDescription.isPrimitive()).thenReturn(true);
+        when(typeDescription.represents(double.class)).thenReturn(true);
+        Assignment assignment = DefaultValue.load(typeDescription);
         assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(2));
@@ -74,8 +73,20 @@ public class DefaultValueTest {
     }
 
     @Test
+    public void testNotSpecifiedPrimitive() throws Exception {
+        when(typeDescription.isPrimitive()).thenReturn(true);
+        Assignment assignment = DefaultValue.load(typeDescription);
+        assertThat(assignment.isValid(), is(true));
+        Assignment.Size size = assignment.apply(methodVisitor);
+        assertThat(size.getSizeImpact(), is(1));
+        assertThat(size.getMaximalSize(), is(1));
+        verify(methodVisitor).visitInsn(Opcodes.ICONST_0);
+        verifyNoMoreInteractions(methodVisitor);
+    }
+
+    @Test
     public void testReference() throws Exception {
-        Assignment assignment = DefaultValue.load(new TypeDescription.ForLoadedType(Object.class));
+        Assignment assignment = DefaultValue.load(typeDescription);
         assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(1));
