@@ -25,7 +25,7 @@ import static org.mockito.Mockito.*;
 public class PrimitiveUnboxingDelegateDirectTest {
 
     @Parameterized.Parameters
-    public static Collection<Object[]> unboxingAssignments() {
+    public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {boolean.class, Boolean.class, "booleanValue", "()Z", 0},
                 {byte.class, Byte.class, "byteValue", "()B", 0},

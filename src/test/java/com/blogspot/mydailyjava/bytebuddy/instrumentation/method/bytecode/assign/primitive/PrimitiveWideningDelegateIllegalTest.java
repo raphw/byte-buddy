@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 public class PrimitiveWideningDelegateIllegalTest {
 
     @Parameterized.Parameters
-    public static Collection<Object[]> illegalPrimitiveAssignments() {
+    public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {boolean.class, byte.class},
                 {boolean.class, short.class},

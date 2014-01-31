@@ -19,7 +19,7 @@ import static org.mockito.Mockito.*;
 public class MethodReturnTest {
 
     @Parameterized.Parameters
-    public static Collection<Object[]> returns() {
+    public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {void.class, Opcodes.RETURN, 0},
                 {Object.class, Opcodes.ARETURN, 1},

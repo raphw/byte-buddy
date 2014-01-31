@@ -20,7 +20,7 @@ import static org.mockito.Mockito.*;
 public class PrimitiveTypeAwareAssignerUnboxingTest {
 
     @Parameterized.Parameters
-    public static Collection<Object[]> unboxingAssignments() {
+    public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {Boolean.class, boolean.class, true},
                 {Byte.class, byte.class, true},

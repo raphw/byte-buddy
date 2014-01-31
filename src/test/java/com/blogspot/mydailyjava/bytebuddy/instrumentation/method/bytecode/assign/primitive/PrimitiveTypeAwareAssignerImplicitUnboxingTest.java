@@ -21,7 +21,7 @@ import static org.mockito.Mockito.*;
 public class PrimitiveTypeAwareAssignerImplicitUnboxingTest {
 
     @Parameterized.Parameters
-    public static Collection<Object[]> implicitUnboxingAssignments() {
+    public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {Object.class, Boolean.class, boolean.class, true},
                 {Object.class, Byte.class, byte.class, true},

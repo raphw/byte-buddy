@@ -26,7 +26,7 @@ public class PrimitiveBoxingDelegateTest {
     private static final String VALUE_OF = "valueOf";
 
     @Parameterized.Parameters
-    public static Collection<Object[]> boxingAssignments() {
+    public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {boolean.class, Boolean.class, "(Z)Ljava/lang/Boolean;", 0},
                 {byte.class, Byte.class, "(B)Ljava/lang/Byte;", 0},

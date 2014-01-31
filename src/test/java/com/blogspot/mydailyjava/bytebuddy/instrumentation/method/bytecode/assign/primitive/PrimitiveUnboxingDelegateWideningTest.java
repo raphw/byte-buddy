@@ -25,7 +25,7 @@ import static org.mockito.Mockito.*;
 public class PrimitiveUnboxingDelegateWideningTest {
 
     @Parameterized.Parameters
-    public static Collection<Object[]> wideningAssignments() {
+    public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {Short.class, long.class, "shortValue", "()S", Opcodes.I2L, 1, 1},
                 {Short.class, float.class, "shortValue", "()S", Opcodes.I2F, 0, 0},

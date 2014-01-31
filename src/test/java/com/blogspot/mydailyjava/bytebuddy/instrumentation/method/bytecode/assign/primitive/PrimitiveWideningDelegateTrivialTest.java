@@ -19,7 +19,7 @@ import static org.mockito.Mockito.*;
 public class PrimitiveWideningDelegateTrivialTest {
 
     @Parameterized.Parameters
-    public static Collection<Object[]> wideningAssignments() {
+    public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {boolean.class, boolean.class},
                 {byte.class, byte.class},

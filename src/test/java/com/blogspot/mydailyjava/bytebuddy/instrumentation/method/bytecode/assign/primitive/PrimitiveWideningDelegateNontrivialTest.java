@@ -22,7 +22,7 @@ import static org.mockito.Mockito.when;
 public class PrimitiveWideningDelegateNontrivialTest {
 
     @Parameterized.Parameters
-    public static Collection<Object[]> wideningAssignments() {
+    public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {byte.class, long.class, 1, Opcodes.I2L},
                 {byte.class, float.class, 0, Opcodes.I2F},
