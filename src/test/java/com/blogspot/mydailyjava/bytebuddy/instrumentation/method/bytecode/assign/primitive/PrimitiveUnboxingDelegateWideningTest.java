@@ -1,8 +1,8 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.primitive;
 
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.TypeSize;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.Assigner;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.Assignment;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.LegalTrivialAssignment;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,6 +10,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -24,59 +25,76 @@ import static org.mockito.Mockito.*;
 public class PrimitiveUnboxingDelegateWideningTest {
 
     @Parameterized.Parameters
-    public static Collection<Object[]> unboxingAssignments() {
+    public static Collection<Object[]> wideningAssignments() {
         return Arrays.asList(new Object[][]{
-                {long.class, Integer.class, "intValue", "()I", Opcodes.I2L, 1},
-                {double.class, Integer.class, "intValue", "()I", Opcodes.I2D, 1},
-                {float.class, Integer.class, "intValue", "()I", Opcodes.I2F, 0},
-                {long.class, Short.class, "shortValue", "()S", Opcodes.I2L, 1},
-                {double.class, Short.class, "shortValue", "()S", Opcodes.I2D, 1},
-                {float.class, Short.class, "shortValue", "()S", Opcodes.I2F, 0},
+                {Short.class, long.class, "shortValue", "()S", Opcodes.I2L, 1, 1},
+                {Short.class, float.class, "shortValue", "()S", Opcodes.I2F, 0, 0},
+                {Short.class, double.class, "shortValue", "()S", Opcodes.I2D, 1, 1},
+                {Integer.class, long.class, "intValue", "()I", Opcodes.I2L, 1, 1},
+                {Integer.class, float.class, "intValue", "()I", Opcodes.I2F, 0, 0},
+                {Integer.class, double.class, "intValue", "()I", Opcodes.I2D, 1, 1},
+                {Long.class, float.class, "longValue", "()J", Opcodes.L2F, 0, 1},
+                {Long.class, double.class, "longValue", "()J", Opcodes.L2D, 1, 1},
+                {Float.class, double.class, "floatValue", "()F", Opcodes.F2D, 1, 1},
         });
     }
 
-    private final TypeDescription primitiveType;
-    private final TypeDescription referenceType;
+    private final Class<?> primitiveType;
+    private final Class<?> referenceType;
     private final String unboxingMethodName;
     private final String unboxingMethodDescriptor;
     private final int wideningOpcode;
     private final int sizeChange;
+    private final int interimMaximum;
 
-    public PrimitiveUnboxingDelegateWideningTest(Class<?> primitiveType,
-                                                 Class<?> referenceType,
+    public PrimitiveUnboxingDelegateWideningTest(Class<?> referenceType,
+                                                 Class<?> primitiveType,
+
                                                  String unboxingMethodName,
                                                  String unboxingMethodDescriptor,
                                                  int wideningOpcode,
-                                                 int sizeChange) {
-        this.primitiveType = new TypeDescription.ForLoadedType(primitiveType);
-        this.referenceType = new TypeDescription.ForLoadedType(referenceType);
+                                                 int sizeChange,
+                                                 int interimMaximum) {
+        this.primitiveType = primitiveType;
+        this.referenceType = referenceType;
         this.unboxingMethodName = unboxingMethodName;
         this.unboxingMethodDescriptor = unboxingMethodDescriptor;
         this.wideningOpcode = wideningOpcode;
         this.sizeChange = sizeChange;
+        this.interimMaximum = interimMaximum;
     }
 
+    private TypeDescription referenceTypeDescription;
+    private TypeDescription primitiveTypeDescription;
     private Assigner chainedAssigner;
+    private Assignment chainedAssignment;
     private MethodVisitor methodVisitor;
 
     @Before
     public void setUp() throws Exception {
+        referenceTypeDescription = mock(TypeDescription.class);
+        when(referenceTypeDescription.represents(referenceType)).thenReturn(true);
+        primitiveTypeDescription = mock(TypeDescription.class);
+        when(primitiveTypeDescription.isPrimitive()).thenReturn(true);
+        when(primitiveTypeDescription.represents(primitiveType)).thenReturn(true);
         chainedAssigner = mock(Assigner.class);
-        when(chainedAssigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean()))
-                .thenReturn(LegalTrivialAssignment.INSTANCE);
+        chainedAssignment = mock(Assignment.class);
+        when(chainedAssigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean())).thenReturn(chainedAssignment);
+        when(chainedAssignment.isValid()).thenReturn(true);
+        when(chainedAssignment.apply(any(MethodVisitor.class))).thenReturn(TypeSize.ZERO.toIncreasingSize());
         methodVisitor = mock(MethodVisitor.class);
     }
 
     @Test
     public void testTrivialBoxing() throws Exception {
-        Assignment assignment = PrimitiveUnboxingDelegate.forReferenceType(referenceType)
-                .assignUnboxedTo(primitiveType, chainedAssigner, false);
+        Assignment assignment = PrimitiveUnboxingDelegate.forReferenceType(referenceTypeDescription)
+                .assignUnboxedTo(primitiveTypeDescription, chainedAssigner, false);
         assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(sizeChange));
-        assertThat(size.getMaximalSize(), is(sizeChange));
+        assertThat(size.getMaximalSize(), is(interimMaximum));
         verify(methodVisitor).visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-                referenceType.getInternalName(),
+                Type.getInternalName(referenceType),
                 unboxingMethodName,
                 unboxingMethodDescriptor);
         verify(methodVisitor).visitInsn(wideningOpcode);

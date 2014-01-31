@@ -1,8 +1,8 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.primitive;
 
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.TypeSize;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.Assigner;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.Assignment;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.LegalTrivialAssignment;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,42 +39,61 @@ public class PrimitiveBoxingDelegateTest {
         });
     }
 
+    private final Class<?> primitiveType;
     private final TypeDescription primitiveTypeDescription;
     private final TypeDescription referenceTypeDescription;
     private final String boxingMethodDescriptor;
     private final int sizeChange;
 
-    public PrimitiveBoxingDelegateTest(Class<?> primitiveTypeDescription,
+    public PrimitiveBoxingDelegateTest(Class<?> primitiveType,
                                        Class<?> referenceType,
                                        String boxingMethodDescriptor,
                                        int sizeChange) {
-        this.primitiveTypeDescription = new TypeDescription.ForLoadedType(primitiveTypeDescription);
-        this.referenceTypeDescription = new TypeDescription.ForLoadedType(referenceType);
+        this.primitiveType = primitiveType;
+        primitiveTypeDescription = mock(TypeDescription.class);
+        when(primitiveTypeDescription.represents(primitiveType)).thenReturn(true);
+        referenceTypeDescription = new TypeDescription.ForLoadedType(referenceType);
         this.boxingMethodDescriptor = boxingMethodDescriptor;
         this.sizeChange = sizeChange;
     }
 
+    private TypeDescription targetType;
     private Assigner chainedAssigner;
+    private Assignment assignment;
     private MethodVisitor methodVisitor;
 
     @Before
     public void setUp() throws Exception {
+        targetType = mock(TypeDescription.class);
         chainedAssigner = mock(Assigner.class);
-        when(chainedAssigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean())).thenReturn(LegalTrivialAssignment.INSTANCE);
+        assignment = mock(Assignment.class);
+        when(chainedAssigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean())).thenReturn(assignment);
+        when(assignment.isValid()).thenReturn(true);
+        when(assignment.apply(any(MethodVisitor.class))).thenReturn(TypeSize.ZERO.toIncreasingSize());
         methodVisitor = mock(MethodVisitor.class);
     }
 
     @Test
     public void testBoxing() throws Exception {
-        TypeDescription originalType = new TypeDescription.ForLoadedType(Void.class);
-        Assignment assignment = PrimitiveBoxingDelegate.forPrimitive(primitiveTypeDescription).assignBoxedTo(originalType, chainedAssigner, false);
-        assertThat(assignment.isValid(), is(true));
-        Assignment.Size size = assignment.apply(methodVisitor);
+        Assignment boxingAssignment = PrimitiveBoxingDelegate.forPrimitive(primitiveTypeDescription)
+                .assignBoxedTo(targetType, chainedAssigner, false);
+        assertThat(boxingAssignment.isValid(), is(true));
+        Assignment.Size size = boxingAssignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(sizeChange));
         assertThat(size.getMaximalSize(), is(0));
-        verify(chainedAssigner).assign(referenceTypeDescription, originalType, false);
+        verify(primitiveTypeDescription).represents(primitiveType);
+        verify(primitiveTypeDescription, atLeast(0)).represents(any(Class.class));
+        verifyNoMoreInteractions(primitiveTypeDescription);
+        verify(chainedAssigner).assign(referenceTypeDescription, targetType, false);
         verifyNoMoreInteractions(chainedAssigner);
-        verify(methodVisitor).visitMethodInsn(Opcodes.INVOKESTATIC, referenceTypeDescription.getInternalName(), VALUE_OF, boxingMethodDescriptor);
+        verify(methodVisitor).visitMethodInsn(Opcodes.INVOKESTATIC,
+                referenceTypeDescription.getInternalName(),
+                VALUE_OF,
+                boxingMethodDescriptor);
         verifyNoMoreInteractions(methodVisitor);
+        verify(assignment, atLeast(1)).isValid();
+        verify(assignment).apply(methodVisitor);
+        verifyNoMoreInteractions(assignment);
+        verifyZeroInteractions(targetType);
     }
 }

@@ -14,6 +14,7 @@ import java.util.Collection;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @RunWith(Parameterized.class)
 public class PrimitiveWideningDelegateIllegalTest {
@@ -60,12 +61,16 @@ public class PrimitiveWideningDelegateIllegalTest {
         });
     }
 
-    private final TypeDescription source;
-    private final TypeDescription target;
+    private final TypeDescription sourceTypeDescription;
+    private final TypeDescription targetTypeDescription;
 
-    public PrimitiveWideningDelegateIllegalTest(Class<?> source, Class<?> target) {
-        this.source = new TypeDescription.ForLoadedType(source);
-        this.target = new TypeDescription.ForLoadedType(target);
+    public PrimitiveWideningDelegateIllegalTest(Class<?> sourceType, Class<?> targetType) {
+        sourceTypeDescription = mock(TypeDescription.class);
+        when(sourceTypeDescription.isPrimitive()).thenReturn(true);
+        when(sourceTypeDescription.represents(sourceType)).thenReturn(true);
+        targetTypeDescription = mock(TypeDescription.class);
+        when(targetTypeDescription.isPrimitive()).thenReturn(true);
+        when(targetTypeDescription.represents(targetType)).thenReturn(true);
     }
 
     private MethodVisitor methodVisitor;
@@ -77,7 +82,7 @@ public class PrimitiveWideningDelegateIllegalTest {
 
     @Test(expected = IllegalStateException.class)
     public void testIllegalBoolean() throws Exception {
-        Assignment assignment = PrimitiveWideningDelegate.forPrimitive(source).widenTo(target);
+        Assignment assignment = PrimitiveWideningDelegate.forPrimitive(sourceTypeDescription).widenTo(targetTypeDescription);
         assertThat(assignment.isValid(), is(false));
         assignment.apply(methodVisitor);
     }

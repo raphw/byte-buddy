@@ -16,17 +16,23 @@ public class VoidAwareAssignerTest {
 
     private Assigner assigner;
     private MethodVisitor methodVisitor;
+    private TypeDescription sourceTypeDescription;
+    private TypeDescription targetTypeDescription;
 
     @Before
     public void setUp() throws Exception {
         assigner = mock(Assigner.class);
+        sourceTypeDescription = mock(TypeDescription.class);
+        targetTypeDescription = mock(TypeDescription.class);
         methodVisitor = mock(MethodVisitor.class);
     }
 
     @Test
     public void testAssignVoidToVoid() throws Exception {
         Assigner voidAware = new VoidAwareAssigner(assigner, false);
-        Assignment assignment = applyAssignTo(voidAware, void.class, void.class, false);
+        when(sourceTypeDescription.represents(void.class)).thenReturn(true);
+        when(targetTypeDescription.represents(void.class)).thenReturn(true);
+        Assignment assignment = voidAware.assign(sourceTypeDescription, targetTypeDescription, false);
         assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
@@ -38,7 +44,8 @@ public class VoidAwareAssignerTest {
     @Test(expected = IllegalStateException.class)
     public void testAssignVoidToReferenceNoDefault() throws Exception {
         Assigner voidAware = new VoidAwareAssigner(assigner, false);
-        Assignment assignment = applyAssignTo(voidAware, void.class, String.class, false);
+        when(sourceTypeDescription.represents(void.class)).thenReturn(true);
+        Assignment assignment = voidAware.assign(sourceTypeDescription, targetTypeDescription, false);
         assertThat(assignment.isValid(), is(false));
         assignment.apply(methodVisitor);
     }
@@ -46,7 +53,8 @@ public class VoidAwareAssignerTest {
     @Test
     public void testAssignVoidToReferenceDefault() throws Exception {
         Assigner voidAware = new VoidAwareAssigner(assigner, true);
-        Assignment assignment = applyAssignTo(voidAware, void.class, Object.class, false);
+        when(sourceTypeDescription.represents(void.class)).thenReturn(true);
+        Assignment assignment = voidAware.assign(sourceTypeDescription, targetTypeDescription, false);
         assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(1));
@@ -59,7 +67,8 @@ public class VoidAwareAssignerTest {
     @Test(expected = IllegalStateException.class)
     public void testAssignVoidToLongNoDefault() throws Exception {
         Assigner voidAware = new VoidAwareAssigner(assigner, false);
-        Assignment assignment = applyAssignTo(voidAware, void.class, String.class, false);
+        when(sourceTypeDescription.represents(void.class)).thenReturn(true);
+        Assignment assignment = voidAware.assign(sourceTypeDescription, targetTypeDescription, false);
         assertThat(assignment.isValid(), is(false));
         assignment.apply(methodVisitor);
     }
@@ -67,7 +76,10 @@ public class VoidAwareAssignerTest {
     @Test
     public void testAssignVoidToLongDefault() throws Exception {
         Assigner voidAware = new VoidAwareAssigner(assigner, true);
-        Assignment assignment = applyAssignTo(voidAware, void.class, long.class, false);
+        when(sourceTypeDescription.represents(void.class)).thenReturn(true);
+        when(targetTypeDescription.represents(long.class)).thenReturn(true);
+        when(targetTypeDescription.isPrimitive()).thenReturn(true);
+        Assignment assignment = voidAware.assign(sourceTypeDescription, targetTypeDescription, false);
         assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(2));
@@ -80,7 +92,8 @@ public class VoidAwareAssignerTest {
     @Test
     public void testAssignReferenceToVoid() throws Exception {
         Assigner voidAware = new VoidAwareAssigner(assigner, true);
-        Assignment assignment = applyAssignTo(voidAware, Object.class, void.class, false);
+        when(targetTypeDescription.represents(void.class)).thenReturn(true);
+        Assignment assignment = voidAware.assign(sourceTypeDescription, targetTypeDescription, false);
         assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(-1));
@@ -93,7 +106,10 @@ public class VoidAwareAssignerTest {
     @Test
     public void testAssignLongToVoid() throws Exception {
         Assigner voidAware = new VoidAwareAssigner(assigner, true);
-        Assignment assignment = applyAssignTo(voidAware, long.class, void.class, false);
+        when(sourceTypeDescription.represents(long.class)).thenReturn(true);
+        when(sourceTypeDescription.isPrimitive()).thenReturn(true);
+        when(targetTypeDescription.represents(void.class)).thenReturn(true);
+        Assignment assignment = voidAware.assign(sourceTypeDescription, targetTypeDescription, false);
         assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(-2));
@@ -101,14 +117,5 @@ public class VoidAwareAssignerTest {
         verifyZeroInteractions(assigner);
         verify(methodVisitor).visitInsn(Opcodes.POP2);
         verifyNoMoreInteractions(methodVisitor);
-    }
-
-    private static Assignment applyAssignTo(Assigner assigner,
-                                            Class<?> sourceType,
-                                            Class<?> targetType,
-                                            boolean considerRuntimeType) {
-        return assigner.assign(new TypeDescription.ForLoadedType(sourceType),
-                new TypeDescription.ForLoadedType(targetType),
-                considerRuntimeType);
     }
 }

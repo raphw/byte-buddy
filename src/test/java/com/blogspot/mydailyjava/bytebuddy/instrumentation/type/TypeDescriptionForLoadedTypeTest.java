@@ -2,7 +2,6 @@ package com.blogspot.mydailyjava.bytebuddy.instrumentation.type;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.TypeSize;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.asm.Type;
@@ -10,6 +9,8 @@ import org.mockito.asm.Type;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
+import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.isConstructor;
+import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.isMethod;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -366,13 +367,13 @@ public class TypeDescriptionForLoadedTypeTest {
     }
 
     private static void assertMethodEquality(TypeDescription typeDescription, Class<?> type) {
-        assertThat(typeDescription.getDeclaredMethods(MethodMatchers.isMethod()).size(), is(type.getDeclaredMethods().length));
+        assertThat(typeDescription.getDeclaredMethods().filter(isMethod()).size(), is(type.getDeclaredMethods().length));
         for (Method method : type.getDeclaredMethods()) {
-            assertThat(typeDescription.getDeclaredMethods(MethodMatchers.isMethod()), hasItems((MethodDescription) new MethodDescription.ForMethod(method)));
+            assertThat(typeDescription.getDeclaredMethods().filter(isMethod()), hasItems((MethodDescription) new MethodDescription.ForMethod(method)));
         }
-        assertThat(typeDescription.getDeclaredMethods(MethodMatchers.isConstructor()).size(), is(type.getDeclaredConstructors().length));
+        assertThat(typeDescription.getDeclaredMethods().filter(isConstructor()).size(), is(type.getDeclaredConstructors().length));
         for (Constructor<?> constructor : type.getDeclaredConstructors()) {
-            assertThat(typeDescription.getDeclaredMethods(MethodMatchers.isConstructor()), hasItems((MethodDescription) new MethodDescription.ForConstructor(constructor)));
+            assertThat(typeDescription.getDeclaredMethods().filter(isConstructor()), hasItems((MethodDescription) new MethodDescription.ForConstructor(constructor)));
         }
     }
 

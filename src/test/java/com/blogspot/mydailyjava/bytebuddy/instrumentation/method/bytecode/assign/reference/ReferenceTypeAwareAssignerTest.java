@@ -4,9 +4,8 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.asm.Type;
+import org.mockito.asm.Opcodes;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
@@ -14,16 +13,23 @@ import static org.mockito.Mockito.*;
 
 public class ReferenceTypeAwareAssignerTest {
 
+    private static final String FOO = "foo";
+
     private MethodVisitor methodVisitor;
+    private TypeDescription sourceTypeDescription;
+    private TypeDescription targetTypeDescription;
 
     @Before
     public void setUp() throws Exception {
         methodVisitor = mock(MethodVisitor.class);
+        sourceTypeDescription = mock(TypeDescription.class);
+        targetTypeDescription = mock(TypeDescription.class);
     }
 
     @Test
-    public void testTrivialAssignment() throws Exception {
-        Assignment assignment = applyAssignTo(Object.class, Object.class, false);
+    public void testMutualAssignable() throws Exception {
+        configureAssignability(true, true);
+        Assignment assignment = ReferenceTypeAwareAssigner.INSTANCE.assign(sourceTypeDescription, targetTypeDescription, false);
         assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
@@ -32,8 +38,9 @@ public class ReferenceTypeAwareAssignerTest {
     }
 
     @Test
-    public void testUpcastAssignment() throws Exception {
-        Assignment assignment = applyAssignTo(Integer.class, Object.class, false);
+    public void testSourceToTargetAssignable() throws Exception {
+        configureAssignability(true, false);
+        Assignment assignment = ReferenceTypeAwareAssigner.INSTANCE.assign(sourceTypeDescription, targetTypeDescription, false);
         assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
@@ -42,26 +49,30 @@ public class ReferenceTypeAwareAssignerTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testDowncastAssignmentWithoutRuntimeType() throws Exception {
-        Assignment assignment = applyAssignTo(Object.class, Integer.class, false);
+    public void testTargetToSourceAssignable() throws Exception {
+        configureAssignability(false, true);
+        Assignment assignment = ReferenceTypeAwareAssigner.INSTANCE.assign(sourceTypeDescription, targetTypeDescription, false);
         assertThat(assignment.isValid(), is(false));
         assignment.apply(methodVisitor);
     }
 
     @Test
-    public void testDowncastAssignmentWithRuntimeType() throws Exception {
-        Assignment assignment = applyAssignTo(Object.class, Integer.class, true);
+    public void testTargetToSourceAssignableRuntimeType() throws Exception {
+        configureAssignability(false, false);
+        when(targetTypeDescription.getInternalName()).thenReturn(FOO);
+        Assignment assignment = ReferenceTypeAwareAssigner.INSTANCE.assign(sourceTypeDescription, targetTypeDescription, true);
         assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
-        verify(methodVisitor).visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(Integer.class));
+        verify(methodVisitor).visitTypeInsn(Opcodes.CHECKCAST, FOO);
         verifyNoMoreInteractions(methodVisitor);
     }
 
     @Test
-    public void testTrivialPrimitiveAssignment() throws Exception {
-        Assignment assignment = applyAssignTo(int.class, int.class, false);
+    public void testPrimitiveAssignabilityWhenEqual() throws Exception {
+        TypeDescription primitiveType = new TypeDescription.ForLoadedType(int.class); // Cannot mock equals
+        Assignment assignment = ReferenceTypeAwareAssigner.INSTANCE.assign(primitiveType, primitiveType, true);
         assertThat(assignment.isValid(), is(true));
         Assignment.Size size = assignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(0));
@@ -70,17 +81,22 @@ public class ReferenceTypeAwareAssignerTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testNonTrivialPrimitiveAssignment() throws Exception {
-        Assignment assignment = applyAssignTo(int.class, long.class, false);
+    public void testPrimitiveAssignabilityWhenNotEqual() throws Exception {
+        TypeDescription primitiveType = new TypeDescription.ForLoadedType(int.class);
+        TypeDescription otherPrimitiveType = new TypeDescription.ForLoadedType(long.class);
+        Assignment assignment = ReferenceTypeAwareAssigner.INSTANCE.assign(primitiveType, otherPrimitiveType, true);
         assertThat(assignment.isValid(), is(false));
         assignment.apply(methodVisitor);
     }
 
-    private static Assignment applyAssignTo(Class<?> sourceType,
-                                            Class<?> targetType,
-                                            boolean considerRuntimeType) {
-        return ReferenceTypeAwareAssigner.INSTANCE.assign(new TypeDescription.ForLoadedType(sourceType),
-                new TypeDescription.ForLoadedType(targetType),
-                considerRuntimeType);
+    private void configureAssignability(boolean sourceToTarget, boolean targetToSource) {
+        if (sourceToTarget) {
+            when(sourceTypeDescription.isAssignableTo(targetTypeDescription)).thenReturn(true);
+            when(targetTypeDescription.isAssignableFrom(sourceTypeDescription)).thenReturn(true);
+        }
+        if (targetToSource) {
+            when(targetTypeDescription.isAssignableTo(sourceTypeDescription)).thenReturn(true);
+            when(sourceTypeDescription.isAssignableFrom(targetTypeDescription)).thenReturn(true);
+        }
     }
 }

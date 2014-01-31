@@ -17,61 +17,62 @@ import static org.mockito.Mockito.*;
 
 public class ArrayFactoryTest {
 
+    private TypeDescription typeDescription;
     private MethodVisitor methodVisitor;
     private Assignment assignment;
 
     @Before
     public void setUp() throws Exception {
-        methodVisitor = mock(org.objectweb.asm.MethodVisitor.class);
+        typeDescription = mock(TypeDescription.class);
+        methodVisitor = mock(MethodVisitor.class);
         assignment = mock(Assignment.class);
         when(assignment.isValid()).thenReturn(true);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNoArrayType() throws Exception {
-        TypeDescription typeDescription = mock(TypeDescription.class);
         when(typeDescription.isArray()).thenReturn(false);
         ArrayFactory.of(typeDescription);
     }
 
     @Test
     public void testPrimitiveCreationBoolean() throws Exception {
-        testPrimitiveCreation(boolean[].class, Opcodes.T_BOOLEAN, Opcodes.BASTORE);
+        testPrimitiveCreation(boolean.class, Opcodes.T_BOOLEAN, Opcodes.BASTORE);
     }
 
     @Test
     public void testPrimitiveCreationByte() throws Exception {
-        testPrimitiveCreation(byte[].class, Opcodes.T_BYTE, Opcodes.BASTORE);
+        testPrimitiveCreation(byte.class, Opcodes.T_BYTE, Opcodes.BASTORE);
     }
 
     @Test
     public void testPrimitiveCreationShort() throws Exception {
-        testPrimitiveCreation(short[].class, Opcodes.T_SHORT, Opcodes.SASTORE);
+        testPrimitiveCreation(short.class, Opcodes.T_SHORT, Opcodes.SASTORE);
     }
 
     @Test
     public void testPrimitiveCreationChar() throws Exception {
-        testPrimitiveCreation(char[].class, Opcodes.T_CHAR, Opcodes.CASTORE);
+        testPrimitiveCreation(char.class, Opcodes.T_CHAR, Opcodes.CASTORE);
     }
 
     @Test
     public void testPrimitiveCreationInt() throws Exception {
-        testPrimitiveCreation(int[].class, Opcodes.T_INT, Opcodes.IASTORE);
+        testPrimitiveCreation(int.class, Opcodes.T_INT, Opcodes.IASTORE);
     }
 
     @Test
     public void testPrimitiveCreationLong() throws Exception {
-        testPrimitiveCreation(long[].class, Opcodes.T_LONG, Opcodes.LASTORE);
+        testPrimitiveCreation(long.class, Opcodes.T_LONG, Opcodes.LASTORE);
     }
 
     @Test
     public void testPrimitiveCreationFloat() throws Exception {
-        testPrimitiveCreation(float[].class, Opcodes.T_FLOAT, Opcodes.FASTORE);
+        testPrimitiveCreation(float.class, Opcodes.T_FLOAT, Opcodes.FASTORE);
     }
 
     @Test
     public void testPrimitiveCreationDouble() throws Exception {
-        testPrimitiveCreation(double[].class, Opcodes.T_DOUBLE, Opcodes.DASTORE);
+        testPrimitiveCreation(double.class, Opcodes.T_DOUBLE, Opcodes.DASTORE);
     }
 
     private interface ArrayCreationVerifier {
@@ -79,11 +80,11 @@ public class ArrayFactoryTest {
         void verifyCreation();
     }
 
-    private class Primitive implements ArrayCreationVerifier {
+    private class PrimitiveVerifier implements ArrayCreationVerifier {
 
         private final int creationOpcode;
 
-        private Primitive(int creationOpcode) {
+        private PrimitiveVerifier(int creationOpcode) {
             this.creationOpcode = creationOpcode;
         }
 
@@ -93,15 +94,15 @@ public class ArrayFactoryTest {
         }
     }
 
-    private void testPrimitiveCreation(Class<?> type, int creationOpcode, int storageOpcode) throws Exception {
-        testCreation(type, new Primitive(creationOpcode), storageOpcode);
+    private void testPrimitiveCreation(Class<?> componentType, int creationOpcode, int storageOpcode) throws Exception {
+        testCreation(componentType, new PrimitiveVerifier(creationOpcode), storageOpcode);
     }
 
-    private class Reference implements ArrayCreationVerifier {
+    private class ReferenceVerifier implements ArrayCreationVerifier {
 
         private final String typeName;
 
-        private Reference(String typeName) {
+        private ReferenceVerifier(String typeName) {
             this.typeName = typeName;
         }
 
@@ -113,28 +114,27 @@ public class ArrayFactoryTest {
 
     @Test
     public void testReferenceCreation() throws Exception {
-        testReferenceCreation(Object[].class);
+        testReferenceCreation(Object.class);
     }
 
     @Test
     public void testNestedReferenceCreation() throws Exception {
-        testReferenceCreation(Object[][].class);
+        testReferenceCreation(Object[].class);
     }
 
-    private void testReferenceCreation(Class<?> type) throws Exception {
-        testCreation(type, new Reference(Type.getInternalName(type.getComponentType())), Opcodes.AASTORE);
+    private void testReferenceCreation(Class<?> componentType) throws Exception {
+        testCreation(componentType, new ReferenceVerifier(Type.getInternalName(componentType)), Opcodes.AASTORE);
     }
 
-    private void testCreation(Class<?> type, ArrayCreationVerifier arrayCreationVerifier, int storageOpcode) throws Exception {
-        Assignment.Size elementSize = TypeSize.of(type.getComponentType()).toIncreasingSize();
-        when(assignment.apply(any(MethodVisitor.class))).thenReturn(elementSize);
-        ArrayFactory arrayFactory = ArrayFactory.of(new TypeDescription.ForLoadedType(type));
-        Assignment arrayAssignment = arrayFactory.withValues(Arrays.<Assignment>asList(assignment));
+    private void testCreation(Class<?> componentType, ArrayCreationVerifier arrayCreationVerifier, int storageOpcode) throws Exception {
+        prepareMocksFor(componentType);
+        ArrayFactory arrayFactory = ArrayFactory.of(typeDescription);
+        Assignment arrayAssignment = arrayFactory.withValues(Arrays.asList(assignment));
         assertThat(arrayAssignment.isValid(), is(true));
         verify(assignment, atLeast(1)).isValid();
         Assignment.Size size = arrayAssignment.apply(methodVisitor);
         assertThat(size.getSizeImpact(), is(1));
-        assertThat(size.getMaximalSize(), is(3 + elementSize.getSizeImpact()));
+        assertThat(size.getMaximalSize(), is(3 + TypeSize.of(componentType).toIncreasingSize().getSizeImpact()));
         verify(methodVisitor).visitInsn(Opcodes.ICONST_1);
         arrayCreationVerifier.verifyCreation();
         verify(methodVisitor).visitInsn(Opcodes.DUP);
@@ -143,5 +143,16 @@ public class ArrayFactoryTest {
         verify(methodVisitor).visitInsn(storageOpcode);
         verifyNoMoreInteractions(methodVisitor);
         verifyNoMoreInteractions(assignment);
+    }
+
+    private void prepareMocksFor(Class<?> componentType) {
+        when(typeDescription.isArray()).thenReturn(true);
+        TypeDescription componentTypeDescription = mock(TypeDescription.class);
+        when(typeDescription.getComponentType()).thenReturn(componentTypeDescription);
+        when(componentTypeDescription.isPrimitive()).thenReturn(componentType.isPrimitive());
+        when(componentTypeDescription.represents(componentType)).thenReturn(true);
+        when(componentTypeDescription.getInternalName()).thenReturn(Type.getInternalName(componentType));
+        when(componentTypeDescription.getStackSize()).thenReturn(TypeSize.of(componentType));
+        when(assignment.apply(any(MethodVisitor.class))).thenReturn(TypeSize.of(componentType).toIncreasingSize());
     }
 }
