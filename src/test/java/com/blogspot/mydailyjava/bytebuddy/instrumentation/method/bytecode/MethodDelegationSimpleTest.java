@@ -15,9 +15,7 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.*;
 
 public class MethodDelegationSimpleTest {
 
@@ -25,11 +23,11 @@ public class MethodDelegationSimpleTest {
 
     private static final int ARGUMENT_VALUE = 21, MULTIPLICATOR = 2, RESULT = ARGUMENT_VALUE * MULTIPLICATOR;
 
-    private InstrumentedType typeDescription;
+    private InstrumentedType instrumentedType;
 
     @Before
     public void setUp() throws Exception {
-        typeDescription = mock(InstrumentedType.class);
+        instrumentedType = mock(InstrumentedType.class);
         SimpleDelegationTarget.clearStackTraceRecord();
     }
 
@@ -41,7 +39,8 @@ public class MethodDelegationSimpleTest {
             private final StackTraceElement stackTraceElement;
             private final Class<?>[] parameterTypes;
 
-            private ParameterizedStackTraceElement(StackTraceElement stackTraceElement, Class<?>[] parameterTypes) {
+            private ParameterizedStackTraceElement(StackTraceElement stackTraceElement,
+                                                   Class<?>[] parameterTypes) {
                 this.stackTraceElement = stackTraceElement;
                 this.parameterTypes = parameterTypes;
             }
@@ -282,7 +281,9 @@ public class MethodDelegationSimpleTest {
                                       Matcher<?> matcher,
                                       Class<?>[] parameterType,
                                       Object[] parameter) throws Exception {
-        ByteCodeAppenderFactoryTester tester = new ByteCodeAppenderFactoryTester(MethodDelegation.to(targetType), typeDescription, sourceType);
+        ByteCodeAppenderFactoryTester tester = new ByteCodeAppenderFactoryTester(MethodDelegation.to(targetType),
+                instrumentedType,
+                sourceType);
         MethodDescription methodDescription = new MethodDescription.ForMethod(sourceType.getDeclaredMethod(FOO, parameterType));
         MethodDescription spied = spy(methodDescription);
         Class<?> instrumented = tester.applyTo(spied, methodDescription);
@@ -291,6 +292,6 @@ public class MethodDelegationSimpleTest {
         Object instance = instrumented.getDeclaredConstructor().newInstance();
         assertThat(instrumented.getDeclaredMethod(FOO, parameterType).invoke(instance, parameter), (Matcher) matcher);
         SimpleDelegationTarget.assertCallRecord(BAR, parameterType);
-        verifyZeroInteractions(typeDescription);
+        verifyZeroInteractions(instrumentedType);
     }
 }

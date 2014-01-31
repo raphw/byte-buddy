@@ -18,11 +18,11 @@ public class StubMethodTest {
     private static final int NON_DEFAULT_VALUE = 42;
     private static final int DEFAULT_VALUE = 0;
 
-    private InstrumentedType typeDescription;
+    private InstrumentedType instrumentedType;
 
     @Before
     public void setUp() throws Exception {
-        typeDescription = mock(InstrumentedType.class);
+        instrumentedType = mock(InstrumentedType.class);
     }
 
     @SuppressWarnings("unused")
@@ -204,7 +204,7 @@ public class StubMethodTest {
     @SuppressWarnings("unchecked")
     private void testStubbing(Class<?> type, Matcher<?> matcher, Class<?>[] parameterType, Object[] parameter) throws Exception {
         assertThat("Arguments cannot produce valid result", parameterType.length, is(parameter.length));
-        ByteCodeAppenderFactoryTester tester = new ByteCodeAppenderFactoryTester(StubMethod.INSTANCE, typeDescription, type);
+        ByteCodeAppenderFactoryTester tester = new ByteCodeAppenderFactoryTester(StubMethod.INSTANCE, instrumentedType, type);
         MethodDescription methodDescription = new MethodDescription.ForMethod(type.getDeclaredMethod(FOO, parameterType));
         MethodDescription spied = spy(methodDescription);
         Class<?> instrumented = tester.applyTo(spied, methodDescription);
@@ -213,8 +213,8 @@ public class StubMethodTest {
         Object instance = instrumented.getDeclaredConstructor().newInstance();
         assertThat(instrumented.getDeclaredMethod(FOO, parameterType).invoke(instance, parameter), (Matcher) matcher);
         assertThat((Integer) instrumented.getMethod(AbstractCallHistoryTraceable.METHOD_NAME).invoke(instance), is(0));
-        verifyZeroInteractions(typeDescription);
         verify(spied, atLeast(1)).getReturnType();
         verify(spied, atLeast(1)).getStackSize();
+        verifyZeroInteractions(instrumentedType);
     }
 }

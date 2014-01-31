@@ -18,11 +18,11 @@ public class SuperClassDelegationTest {
     private static final String FOO = "foo";
     private static final int NON_DEFAULT_VALUE = 42;
 
-    private InstrumentedType typeDescription;
+    private InstrumentedType instrumentedType;
 
     @Before
     public void setUp() throws Exception {
-        typeDescription = mock(InstrumentedType.class);
+        instrumentedType = mock(InstrumentedType.class);
     }
 
     @SuppressWarnings("unused")
@@ -207,8 +207,8 @@ public class SuperClassDelegationTest {
     @SuppressWarnings("unchecked")
     private void testDelegation(Class<?> type, Matcher<?> matcher, Class<?>[] parameterType, Object[] parameter) throws Exception {
         assertThat("Arguments cannot produce valid result", parameterType.length, is(parameter.length));
-        when(typeDescription.getSupertype()).thenReturn(new TypeDescription.ForLoadedType(type));
-        ByteCodeAppenderFactoryTester tester = new ByteCodeAppenderFactoryTester(SuperClassDelegation.INSTANCE, typeDescription, type);
+        when(instrumentedType.getSupertype()).thenReturn(new TypeDescription.ForLoadedType(type));
+        ByteCodeAppenderFactoryTester tester = new ByteCodeAppenderFactoryTester(SuperClassDelegation.INSTANCE, instrumentedType, type);
         MethodDescription methodDescription = new MethodDescription.ForMethod(type.getDeclaredMethod(FOO, parameterType));
         MethodDescription spied = spy(methodDescription);
         Class<?> instrumented = tester.applyTo(spied, methodDescription);
@@ -217,7 +217,7 @@ public class SuperClassDelegationTest {
         Object instance = instrumented.getDeclaredConstructor().newInstance();
         assertThat(instrumented.getDeclaredMethod(FOO, parameterType).invoke(instance, parameter), (Matcher) matcher);
         assertThat((Integer) instrumented.getMethod(AbstractCallHistoryTraceable.METHOD_NAME).invoke(instance), is(1));
-        verify(typeDescription, atLeast(1)).getSupertype();
-        verifyNoMoreInteractions(typeDescription);
+        verify(instrumentedType, atLeast(1)).getSupertype();
+        verifyNoMoreInteractions(instrumentedType);
     }
 }

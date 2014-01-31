@@ -30,11 +30,11 @@ public class MethodDelegationComplexTest {
         }
     }
 
-    private InstrumentedType typeDescription;
+    private InstrumentedType instrumentedType;
 
     @Before
     public void setUp() throws Exception {
-        typeDescription = new InstrumentedType(new ClassVersion(Opcodes.V1_6),
+        instrumentedType = new InstrumentedType(new ClassVersion(Opcodes.V1_6),
                 Source.class,
                 Collections.<Class<?>>emptySet(),
                 Visibility.PUBLIC,
@@ -121,7 +121,7 @@ public class MethodDelegationComplexTest {
 
     @SuppressWarnings("unchecked")
     private <T> T makeDelegation(Class<T> sourceType, Class<?> targetType, Class<?>[] parameterType) throws Exception {
-        ByteCodeAppenderFactoryTester tester = new ByteCodeAppenderFactoryTester(MethodDelegation.to(targetType), typeDescription, sourceType);
+        ByteCodeAppenderFactoryTester tester = new ByteCodeAppenderFactoryTester(MethodDelegation.to(targetType), instrumentedType, sourceType);
         MethodDescription methodDescription = new MethodDescription.ForMethod(sourceType.getDeclaredMethod(FOO, parameterType));
         MethodDescription spied = spy(methodDescription);
         Class<?> instrumented = tester.applyTo(spied, methodDescription);
