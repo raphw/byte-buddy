@@ -11,6 +11,7 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType0
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.stubbing.OngoingStubbing;
 import org.objectweb.asm.MethodVisitor;
@@ -172,11 +173,6 @@ public class AnnotationDrivenBinderTest {
         verify(source, atLeast(1)).getReturnType();
         verify(target, atLeast(1)).getReturnType();
         verifyZeroInteractions(defaultProvider);
-    }
-
-    @Test
-    public void testNonAssignableMethodInvocation() throws Exception {
-        fail("Implement test");
     }
 
     @Test
@@ -484,5 +480,11 @@ public class AnnotationDrivenBinderTest {
         }
         iteratorValueStubbing.thenThrow(NoSuchElementException.class);
         return annotationIterator;
+    }
+
+    @Test
+    @Ignore("Tests needs some refactoring, wait til API was completed")
+    public void testIllegalMethodInvocation() throws Exception {
+        fail("Implement");
     }
 }
