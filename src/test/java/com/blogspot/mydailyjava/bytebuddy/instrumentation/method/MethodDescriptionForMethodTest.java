@@ -80,7 +80,7 @@ public class MethodDescriptionForMethodTest {
     }
 
     private static int hashCode(Method method) {
-        return (Type.getInternalName(method.getDeclaringClass()) + method.getName() + Type.getMethodDescriptor(method)).hashCode();
+        return (Type.getInternalName(method.getDeclaringClass()) + "." + method.getName() + Type.getMethodDescriptor(method)).hashCode();
     }
 
     @Test

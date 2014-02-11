@@ -1,4 +1,4 @@
-package com.blogspot.mydailyjava.bytebuddy.instrumentation.type.instrumentation;
+package com.blogspot.mydailyjava.bytebuddy.proxy;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.loading.ByteArrayClassLoader;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.loading.ClassLoaderByteArrayInjector;
@@ -20,9 +20,10 @@ public class ByteArrayDynamicProxy<T> implements DynamicProxy<T> {
 
     @Override
     @SuppressWarnings("unchecked")
-    public Class<? extends T> load(ClassLoader classLoader) {
+    public LoadedTypeDynamicProxy<T> load(ClassLoader classLoader) {
         try {
-            return (Class<? extends T>) Class.forName(typeName, false, new ByteArrayClassLoader(classLoader, typeName, javaType));
+            Class<? extends T> type = (Class<? extends T>) Class.forName(typeName, false, new ByteArrayClassLoader(classLoader, typeName, javaType));
+            return new LoadedTypeDynamicProxy<T>(type);
         } catch (ClassNotFoundException e) {
             throw new IllegalStateException("Could not load class", e);
         }
@@ -30,7 +31,8 @@ public class ByteArrayDynamicProxy<T> implements DynamicProxy<T> {
 
     @Override
     @SuppressWarnings("unchecked")
-    public Class<? extends T> loadReflective(ClassLoader classLoader) {
-        return (Class<? extends T>) new ClassLoaderByteArrayInjector(classLoader).load(typeName, javaType);
+    public LoadedTypeDynamicProxy<T> loadReflective(ClassLoader classLoader) {
+        Class<? extends T> type = (Class<? extends T>) new ClassLoaderByteArrayInjector(classLoader).load(typeName, javaType);
+        return new LoadedTypeDynamicProxy<T>(type);
     }
 }

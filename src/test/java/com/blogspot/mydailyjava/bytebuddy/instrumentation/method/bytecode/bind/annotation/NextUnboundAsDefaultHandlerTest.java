@@ -1,7 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType0;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
 import org.junit.Before;
@@ -17,14 +17,14 @@ import static org.mockito.Mockito.*;
 
 public class NextUnboundAsDefaultHandlerTest {
 
-    private InstrumentedType typeDescription;
+    private InstrumentedType0 typeDescription;
     private MethodDescription source;
     private MethodDescription target;
     private TypeList typeList;
 
     @Before
     public void setUp() throws Exception {
-        typeDescription = mock(InstrumentedType.class);
+        typeDescription = mock(InstrumentedType0.class);
         source = mock(MethodDescription.class);
         target = mock(MethodDescription.class);
         typeList = mock(TypeList.class);

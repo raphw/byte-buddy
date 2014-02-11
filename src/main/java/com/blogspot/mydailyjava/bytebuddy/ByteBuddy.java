@@ -3,7 +3,7 @@ package com.blogspot.mydailyjava.bytebuddy;
 import com.blogspot.mydailyjava.bytebuddy.asm.ClassVisitorWrapper;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.instrumentation.DynamicProxy;
+import com.blogspot.mydailyjava.bytebuddy.proxy.DynamicProxy;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.scaffold.SubclassDynamicProxyBuilder;
 import org.objectweb.asm.Opcodes;
 

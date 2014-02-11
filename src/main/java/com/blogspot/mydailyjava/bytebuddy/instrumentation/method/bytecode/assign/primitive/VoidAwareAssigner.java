@@ -63,4 +63,21 @@ public class VoidAwareAssigner implements Assigner {
             return nonVoidAwareAssigner.assign(sourceType, targetType, considerRuntimeType);
         }
     }
+
+    @Override
+    public boolean equals(Object other) {
+        return this == other || !(other == null || getClass() != other.getClass())
+                && returnDefaultValue == ((VoidAwareAssigner) other).returnDefaultValue
+                && nonVoidAwareAssigner.equals(((VoidAwareAssigner) other).nonVoidAwareAssigner);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * nonVoidAwareAssigner.hashCode() + (returnDefaultValue ? 1 : 0);
+    }
+
+    @Override
+    public String toString() {
+        return "VoidAwareAssigner{chained=" + nonVoidAwareAssigner + ", returnDefaultValue=" + returnDefaultValue + '}';
+    }
 }

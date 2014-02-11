@@ -168,5 +168,32 @@ public class ArrayFactory {
     public TypeDescription getComponentType() {
         return componentType;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ArrayFactory that = (ArrayFactory) o;
+        return arrayCreator.equals(that.arrayCreator)
+                && componentType.equals(that.componentType)
+                && sizeDecrease.equals(that.sizeDecrease);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = componentType.hashCode();
+        result = 31 * result + arrayCreator.hashCode();
+        result = 31 * result + sizeDecrease.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "ArrayFactory{" +
+                "componentType=" + componentType +
+                ", arrayCreator=" + arrayCreator +
+                ", sizeDecrease=" + sizeDecrease +
+                '}';
+    }
 }
 

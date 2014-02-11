@@ -2,6 +2,7 @@ package com.blogspot.mydailyjava.bytebuddy.instrumentation.type;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.ByteCodeElement;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.ModifierReviewable;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.field.FieldList;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodList;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.TypeSize;
@@ -20,7 +21,7 @@ import java.util.Set;
 
 import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
 
-public interface TypeDescription extends ByteCodeElement, ModifierReviewable, AnnotatedElement {
+public interface TypeDescription extends ByteCodeElement, DeclaredInType, ModifierReviewable, AnnotatedElement {
 
     static abstract class AbstractTypeDescription extends AbstractModifierReviewable implements TypeDescription {
 
@@ -32,6 +33,11 @@ public interface TypeDescription extends ByteCodeElement, ModifierReviewable, An
             public boolean matches(MethodDescription methodDescription) {
                 return foundSignatures.add(methodDescription.getUniqueSignature());
             }
+        }
+
+        @Override
+        public boolean isInstance(Object object) {
+            return isAssignableFrom(object.getClass());
         }
 
         @Override
@@ -156,7 +162,7 @@ public interface TypeDescription extends ByteCodeElement, ModifierReviewable, An
         }
 
         @Override
-        public TypeDescription getDeclaringClass() {
+        public TypeDescription getDeclaringType() {
             Class<?> declaringType = type.getDeclaringClass();
             return declaringType == null ? null : new TypeDescription.ForLoadedType(declaringType);
         }
@@ -203,6 +209,11 @@ public interface TypeDescription extends ByteCodeElement, ModifierReviewable, An
         @Override
         public boolean isMemberClass() {
             return type.isMemberClass();
+        }
+
+        @Override
+        public FieldList getDeclaredFields() {
+            return new FieldList.ForLoadedField(type.getDeclaredFields());
         }
 
         @Override
@@ -287,8 +298,6 @@ public interface TypeDescription extends ByteCodeElement, ModifierReviewable, An
 
     TypeList getInterfaces();
 
-    TypeDescription getDeclaringClass();
-
     MethodDescription getEnclosingMethod();
 
     TypeDescription getEnclosingClass();
@@ -302,6 +311,8 @@ public interface TypeDescription extends ByteCodeElement, ModifierReviewable, An
     boolean isLocalClass();
 
     boolean isMemberClass();
+
+    FieldList getDeclaredFields();
 
     MethodList getDeclaredMethods();
 

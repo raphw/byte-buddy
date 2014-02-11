@@ -19,13 +19,13 @@ public class InstrumentedTypeTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
-    private InstrumentedType instrumentedType;
+    private InstrumentedType0 instrumentedType;
 
     @Before
     public void setUp() throws Exception {
         NamingStrategy namingStrategy = mock(NamingStrategy.class);
         when(namingStrategy.getName(any(NamingStrategy.UnnamedType.class))).thenReturn(FOO);
-        instrumentedType = new InstrumentedType(new ClassVersion(Opcodes.V1_6),
+        instrumentedType = new InstrumentedType0(new ClassVersion(Opcodes.V1_6),
                 Object.class,
                 Arrays.<Class<?>>asList(Serializable.class),
                 Visibility.PUBLIC,

@@ -51,9 +51,9 @@ public interface MethodList extends List<MethodDescription> {
 
     static class Explicit extends AbstractList<MethodDescription> implements MethodList {
 
-        private final List<MethodDescription> methodDescriptions;
+        private final List<? extends MethodDescription> methodDescriptions;
 
-        public Explicit(List<MethodDescription> methodDescriptions) {
+        public Explicit(List<? extends MethodDescription> methodDescriptions) {
             this.methodDescriptions = Collections.unmodifiableList(methodDescriptions);
         }
 

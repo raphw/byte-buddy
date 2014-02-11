@@ -32,7 +32,7 @@ public @interface Argument {
                                          TypeDescription instrumentedType,
                                          Assigner assigner) {
             if (sourceParameterIndex.value() < 0) {
-                throw new IllegalArgumentException(String.format("Argument annotation on %d's argument of " +
+                throw new IllegalArgumentException(String.format("Argument annotation on %d's argument virtual " +
                         "%s holds negative index", targetParameterIndex, target));
             } else if (source.getParameterTypes().size() <= sourceParameterIndex.value()) {
                 return IdentifiedBinding.makeIllegal();

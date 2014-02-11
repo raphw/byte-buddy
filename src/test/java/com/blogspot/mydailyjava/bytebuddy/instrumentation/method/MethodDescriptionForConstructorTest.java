@@ -79,7 +79,7 @@ public class MethodDescriptionForConstructorTest {
     }
 
     private static int hashCode(Constructor<?> constructor) {
-        return (Type.getInternalName(constructor.getDeclaringClass()) + CONSTRUCTOR_INTERNAL_NAME + Type.getConstructorDescriptor(constructor)).hashCode();
+        return (Type.getInternalName(constructor.getDeclaringClass()) + "." + CONSTRUCTOR_INTERNAL_NAME + Type.getConstructorDescriptor(constructor)).hashCode();
     }
 
     @Test

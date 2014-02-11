@@ -48,7 +48,7 @@ public class ByteBuddyTest {
         }
 
         public static int x(@AllArguments @RuntimeType int[] i) {
-            for(int in : i) {
+            for (int in : i) {
                 System.out.println(in);
             }
             return i.length;
@@ -69,6 +69,7 @@ public class ByteBuddyTest {
                 .method(named("test")).intercept(MethodDelegation.to(Delegate.class))
                 .make()
                 .load(getClass().getClassLoader())
+                .getProxyClass()
                 .newInstance();
         System.out.println(object.test("a", 10));
         System.out.println(object.foo(10, 3));

@@ -1,7 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType0;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -14,7 +14,7 @@ import static org.mockito.Mockito.*;
 
 public class MethodDelegationBinderProcessorTest {
 
-    private InstrumentedType typeDescription;
+    private InstrumentedType0 typeDescription;
     private MethodDescription source;
 
     private MethodDescription bindableTarget, unbindableTarget, dominantBindableTarget;
@@ -25,7 +25,7 @@ public class MethodDelegationBinderProcessorTest {
 
     @Before
     public void setUp() throws Exception {
-        typeDescription = mock(InstrumentedType.class);
+        typeDescription = mock(InstrumentedType0.class);
         source = mock(MethodDescription.class);
         bindableTarget = mock(MethodDescription.class);
         unbindableTarget = mock(MethodDescription.class);

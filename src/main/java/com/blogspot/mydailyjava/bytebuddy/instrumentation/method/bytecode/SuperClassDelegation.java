@@ -14,10 +14,10 @@ public enum SuperClassDelegation implements ByteCodeAppender.Factory {
 
     private static class Appender implements ByteCodeAppender {
 
-        private final String superClassInternalName;
+        private final TypeDescription proxyType;
 
-        private Appender(String superClassInternalName) {
-            this.superClassInternalName = superClassInternalName;
+        private Appender(TypeDescription proxyType) {
+            this.proxyType = proxyType;
         }
 
         @Override
@@ -28,7 +28,8 @@ public enum SuperClassDelegation implements ByteCodeAppender.Factory {
                 parameterSize = parameterSize.aggregate(MethodArgument.forType(parameterType)
                         .loadFromIndex(parameterSize.getSizeImpact()).apply(methodVisitor));
             }
-            Assignment.Size size = parameterSize.aggregate(MethodInvocation.special(methodDescription).apply(methodVisitor));
+            Assignment.Size size = parameterSize.aggregate(MethodInvocation.invoke(methodDescription)
+                    .special(proxyType.getSupertype()).apply(methodVisitor));
             size = size.aggregate(MethodReturn.returning(methodDescription.getReturnType()).apply(methodVisitor));
             return new Size(size.getMaximalSize(), parameterSize.getMaximalSize());
         }
@@ -36,6 +37,6 @@ public enum SuperClassDelegation implements ByteCodeAppender.Factory {
 
     @Override
     public ByteCodeAppender make(TypeDescription typeDescription) {
-        return new Appender(typeDescription.getSupertype().getInternalName());
+        return new Appender(typeDescription);
     }
 }

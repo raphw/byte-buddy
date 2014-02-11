@@ -2,7 +2,7 @@ package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.IgnoreForBinding;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType0;
 import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,11 +23,11 @@ public class MethodDelegationSimpleTest {
 
     private static final int ARGUMENT_VALUE = 21, MULTIPLICATOR = 2, RESULT = ARGUMENT_VALUE * MULTIPLICATOR;
 
-    private InstrumentedType instrumentedType;
+    private InstrumentedType0 instrumentedType;
 
     @Before
     public void setUp() throws Exception {
-        instrumentedType = mock(InstrumentedType.class);
+        instrumentedType = mock(InstrumentedType0.class);
         SimpleDelegationTarget.clearStackTraceRecord();
     }
 

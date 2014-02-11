@@ -186,18 +186,21 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
     private final DelegationProcessor delegationProcessor;
     private final DefaultProvider<?> defaultProvider;
     private final Assigner assigner;
+    private final MethodInvoker methodInvoker;
 
     public AnnotationDrivenBinder(List<ArgumentBinder<?>> argumentBinders,
                                   DefaultProvider<?> defaultProvider,
-                                  Assigner assigner) {
+                                  Assigner assigner,
+                                  MethodInvoker methodInvoker) {
         this.delegationProcessor = new DelegationProcessor(argumentBinders);
         this.defaultProvider = defaultProvider;
         this.assigner = assigner;
+        this.methodInvoker = methodInvoker;
     }
 
     @Override
-    public Binding bind(TypeDescription typeDescription, MethodDescription source, MethodDescription target) {
-        if(IgnoreForBinding.Verifier.check(target)) {
+    public Binding bind(TypeDescription proxyType, MethodDescription source, MethodDescription target) {
+        if (IgnoreForBinding.Verifier.check(target)) {
             return IllegalMethodDelegation.INSTANCE;
         }
         Assignment returningAssignment = assigner.assign(target.getReturnType(),
@@ -206,8 +209,8 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
         if (!returningAssignment.isValid()) {
             return IllegalMethodDelegation.INSTANCE;
         }
-        Binding.Builder methodDelegationBuilder = new Binding.Builder(target);
-        Iterator<? extends Annotation> defaults = defaultProvider.makeIterator(typeDescription, source, target);
+        Binding.Builder methodDelegationBindingBuilder = new Binding.Builder(methodInvoker, target);
+        Iterator<? extends Annotation> defaults = defaultProvider.makeIterator(proxyType, source, target);
         for (int targetParameterIndex = 0;
              targetParameterIndex < target.getParameterTypes().size();
              targetParameterIndex++) {
@@ -216,16 +219,16 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
                     .handle(targetParameterIndex,
                             source,
                             target,
-                            typeDescription,
+                            proxyType,
                             assigner);
             if (!identifiedBinding.isValid()
-                    || !methodDelegationBuilder.append(
+                    || !methodDelegationBindingBuilder.append(
                     identifiedBinding.getAssignment(),
                     targetParameterIndex,
                     identifiedBinding.getIdentificationToken())) {
                 return IllegalMethodDelegation.INSTANCE;
             }
         }
-        return methodDelegationBuilder.build(returningAssignment);
+        return methodDelegationBindingBuilder.build(returningAssignment);
     }
 }

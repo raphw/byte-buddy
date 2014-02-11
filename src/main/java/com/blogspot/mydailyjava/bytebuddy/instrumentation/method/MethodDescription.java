@@ -1,6 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.ModifierReviewable;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.DeclaredInType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
 import org.objectweb.asm.Type;
@@ -10,9 +11,9 @@ import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
-public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, AnnotatedElement {
+public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, DeclaredInType, AnnotatedElement {
 
-    static abstract class AbstractMethodDescription extends ModifierReviewable.AbstractModifierReviewable implements MethodDescription {
+    static abstract class AbstractMethodDescription extends AbstractModifierReviewable implements MethodDescription {
 
         @Override
         public String getUniqueSignature() {
@@ -32,8 +33,33 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, A
         }
 
         @Override
+        public String getDescriptor() {
+            StringBuilder descriptor = new StringBuilder("(");
+            for (TypeDescription parameterType : getParameterTypes()) {
+                descriptor.append(parameterType.getDescriptor());
+            }
+            return descriptor.append(")").append(getReturnType().getDescriptor()).toString();
+        }
+
+        @Override
+        public MethodDescription override(TypeDescription typeDescription) {
+            if(!isOverridable()) {
+                throw new IllegalArgumentException("Cannot override " + this);
+            } else if(!getDeclaringType().isAssignableFrom(typeDescription)) {
+                throw new IllegalArgumentException(typeDescription + " cannot override " + this);
+            } else {
+                return null; // TODO: Write method description wrapper
+            }
+        }
+
+        @Override
+        public boolean isOverridable() {
+            return !(isConstructor() || isFinal() || isPrivate() || isStatic() || getDeclaringType().isFinal());
+        }
+
+        @Override
         public int hashCode() {
-            return (getDeclaringType().getInternalName() + getUniqueSignature()).hashCode();
+            return (getDeclaringType().getInternalName() + "." + getUniqueSignature()).hashCode();
         }
     }
 
@@ -99,11 +125,6 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, A
         }
 
         @Override
-        public boolean isDeclaredInInterface() {
-            return false;
-        }
-
-        @Override
         public String getName() {
             return constructor.getName();
         }
@@ -146,11 +167,6 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, A
         @Override
         public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
             return constructor.isAnnotationPresent(annotationClass);
-        }
-
-        @Override
-        public boolean isOverridable() {
-            return false;
         }
 
         @Override
@@ -218,11 +234,6 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, A
         }
 
         @Override
-        public boolean isDeclaredInInterface() {
-            return method.getDeclaringClass().isInterface();
-        }
-
-        @Override
         public String getName() {
             return method.getName();
         }
@@ -268,17 +279,10 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, A
         }
 
         @Override
-        public boolean isOverridable() {
-            return !(isFinal() || isPrivate() || isStatic() || getDeclaringType().isFinal());
-        }
-
-        @Override
         public String toString() {
             return "MethodDescription.ForMethod{" + method + "}";
         }
     }
-
-    TypeDescription getDeclaringType();
 
     TypeDescription getReturnType();
 
@@ -300,7 +304,7 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, A
 
     boolean isOverridable();
 
-    boolean isDeclaredInInterface();
-
     int getStackSize();
+
+    MethodDescription override(TypeDescription typeDescription);
 }

@@ -3,7 +3,7 @@ package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.Assigner;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.Assignment;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType0;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
 import org.junit.Before;
@@ -26,7 +26,7 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
     protected T annotation;
     protected MethodDescription source;
     protected MethodDescription target;
-    protected InstrumentedType typeDescription;
+    protected InstrumentedType0 typeDescription;
     protected Assigner assigner;
     protected Assignment assignment;
     protected TypeList sourceTypeList;
@@ -37,7 +37,7 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
         annotation = mock(annotationType);
         source = mock(MethodDescription.class);
         target = mock(MethodDescription.class);
-        typeDescription = mock(InstrumentedType.class);
+        typeDescription = mock(InstrumentedType0.class);
         assigner = mock(Assigner.class);
         assignment = mock(Assignment.class);
         sourceTypeList = mock(TypeList.class);

@@ -1,6 +1,6 @@
 package com.blogspot.mydailyjava.bytebuddy;
 
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.ModifierContributor;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.ModifierContributor;
 import org.objectweb.asm.Opcodes;
 
 public enum TypeManifestation implements ModifierContributor {

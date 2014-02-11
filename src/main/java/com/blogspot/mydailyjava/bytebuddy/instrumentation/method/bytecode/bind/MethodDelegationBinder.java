@@ -10,6 +10,20 @@ import java.util.*;
 
 public interface MethodDelegationBinder {
 
+    public static interface MethodInvoker {
+
+        static enum Simple implements MethodInvoker {
+            INSTANCE;
+
+            @Override
+            public Assignment invoke(MethodDescription methodDescription) {
+                return MethodInvocation.invoke(methodDescription);
+            }
+        }
+
+        Assignment invoke(MethodDescription methodDescription);
+    }
+
     static interface Binding extends Assignment {
 
         static class Builder {
@@ -17,15 +31,18 @@ public interface MethodDelegationBinder {
             private static class Build implements Binding {
 
                 private final MethodDescription target;
+                private final Assignment methodInvocation;
                 private final List<Assignment> parameterAssignments;
                 private final Map<?, Integer> registeredTargetIndices;
                 private final Assignment returnValueAssignment;
 
                 private Build(MethodDescription target,
+                              Assignment methodInvocation,
                               List<Assignment> parameterAssignments,
                               Map<?, Integer> registeredTargetIndices,
                               Assignment returnValueAssignment) {
                     this.target = target;
+                    this.methodInvocation = methodInvocation;
                     this.parameterAssignments = new ArrayList<Assignment>(parameterAssignments);
                     this.registeredTargetIndices = new HashMap<Object, Integer>(registeredTargetIndices);
                     this.returnValueAssignment = returnValueAssignment;
@@ -33,7 +50,7 @@ public interface MethodDelegationBinder {
 
                 @Override
                 public boolean isValid() {
-                    boolean result = returnValueAssignment.isValid();
+                    boolean result = returnValueAssignment.isValid() && methodInvocation.isValid();
                     Iterator<Assignment> assignment = parameterAssignments.iterator();
                     while (result && assignment.hasNext()) {
                         result = assignment.next().isValid();
@@ -57,7 +74,7 @@ public interface MethodDelegationBinder {
                     for (Assignment assignment : parameterAssignments) {
                         size = size.aggregate(assignment.apply(methodVisitor));
                     }
-                    size = size.aggregate(MethodInvocation.of(target).apply(methodVisitor));
+                    size = size.aggregate(methodInvocation.apply(methodVisitor));
                     return size.aggregate(returnValueAssignment.apply(methodVisitor));
                 }
 
@@ -67,11 +84,13 @@ public interface MethodDelegationBinder {
                 }
             }
 
+            private final MethodInvoker methodInvoker;
             private final MethodDescription target;
             private final List<Assignment> parameterAssignments;
             private final Map<Object, Integer> registeredTargetIndices;
 
-            public Builder(MethodDescription target) {
+            public Builder(MethodInvoker methodInvoker, MethodDescription target) {
+                this.methodInvoker = methodInvoker;
                 this.target = target;
                 parameterAssignments = new ArrayList<Assignment>(target.getParameterTypes().size());
                 registeredTargetIndices = new LinkedHashMap<Object, Integer>(target.getParameterTypes().size());
@@ -83,7 +102,7 @@ public interface MethodDelegationBinder {
             }
 
             public Binding build(Assignment returnValueAssignment) {
-                return new Build(target, parameterAssignments, registeredTargetIndices, returnValueAssignment);
+                return new Build(target, methodInvoker.invoke(target), parameterAssignments, registeredTargetIndices, returnValueAssignment);
             }
         }
 
@@ -249,5 +268,5 @@ public interface MethodDelegationBinder {
         }
     }
 
-    Binding bind(TypeDescription typeDescription, MethodDescription source, MethodDescription target);
+    Binding bind(TypeDescription proxyType, MethodDescription source, MethodDescription target);
 }

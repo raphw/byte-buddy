@@ -1,7 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType0;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.hamcrest.Matcher;
 import org.junit.Before;
@@ -18,11 +18,11 @@ public class SuperClassDelegationTest {
     private static final String FOO = "foo";
     private static final int NON_DEFAULT_VALUE = 42;
 
-    private InstrumentedType instrumentedType;
+    private InstrumentedType0 instrumentedType;
 
     @Before
     public void setUp() throws Exception {
-        instrumentedType = mock(InstrumentedType.class);
+        instrumentedType = mock(InstrumentedType0.class);
     }
 
     @SuppressWarnings("unused")

@@ -24,4 +24,20 @@ public class PrimitiveTypeAwareAssigner implements Assigner {
             return referenceTypeAwareAssigner.assign(sourceType, targetType, considerRuntimeType);
         }
     }
+
+    @Override
+    public boolean equals(Object other) {
+        return this == other || !(other == null || getClass() != other.getClass())
+                && referenceTypeAwareAssigner.equals(((PrimitiveTypeAwareAssigner) other).referenceTypeAwareAssigner);
+    }
+
+    @Override
+    public int hashCode() {
+        return referenceTypeAwareAssigner.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "PrimitiveTypeAwareAssigner{chained=" + referenceTypeAwareAssigner + '}';
+    }
 }
