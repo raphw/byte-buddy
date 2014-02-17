@@ -13,6 +13,8 @@ import java.lang.reflect.Method;
 
 public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, DeclaredInType, AnnotatedElement {
 
+    static final String CONSTRUCTOR_INTERNAL_NAME = "<init>";
+
     static abstract class AbstractMethodDescription extends AbstractModifierReviewable implements MethodDescription {
 
         @Override
@@ -64,8 +66,6 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
     }
 
     static class ForConstructor extends AbstractMethodDescription {
-
-        private static final String DYNAMIC_CONSTRUCTOR_INTERNAL_NAME = "<init>";
 
         private final Constructor<?> constructor;
 
@@ -141,7 +141,7 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
 
         @Override
         public String getInternalName() {
-            return DYNAMIC_CONSTRUCTOR_INTERNAL_NAME;
+            return CONSTRUCTOR_INTERNAL_NAME;
         }
 
         @Override

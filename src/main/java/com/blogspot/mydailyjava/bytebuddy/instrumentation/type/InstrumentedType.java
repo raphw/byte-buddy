@@ -30,6 +30,13 @@ public interface InstrumentedType extends TypeDescription {
                 this.synthetic = synthetic;
             }
 
+            private FieldToken(FieldDescription fieldDescription) {
+                name = fieldDescription.getName();
+                fieldType = withSubstitutedSelfReference(fieldDescription.getFieldType());
+                modifiers = fieldDescription.getModifiers();
+                synthetic = fieldDescription.isSynthetic();
+            }
+
             @Override
             public TypeDescription getFieldType() {
                 return fieldType;
@@ -83,8 +90,6 @@ public interface InstrumentedType extends TypeDescription {
 
         protected class MethodToken extends MethodDescription.AbstractMethodDescription {
 
-            private static final String CONSTRUCTOR_INTERNAL_NAME = "<init>";
-
             private final String internalName;
             private final TypeDescription returnType;
             private final List<TypeDescription> parameterTypes;
@@ -101,6 +106,17 @@ public interface InstrumentedType extends TypeDescription {
                 this.parameterTypes = new ArrayList<TypeDescription>(parameterTypes);
                 this.modifiers = modifiers;
                 this.synthetic = synthetic;
+            }
+
+            private MethodToken(MethodDescription methodDescription) {
+                this.internalName = methodDescription.getInternalName();
+                this.returnType = withSubstitutedSelfReference(methodDescription.getReturnType());
+                this.parameterTypes = new ArrayList<TypeDescription>(methodDescription.getParameterTypes().size());
+                for (TypeDescription typeDescription : methodDescription.getParameterTypes()) {
+                    parameterTypes.add(withSubstitutedSelfReference(typeDescription));
+                }
+                this.modifiers = methodDescription.getModifiers();
+                this.synthetic = methodDescription.isSynthetic();
             }
 
             @Override
@@ -170,7 +186,7 @@ public interface InstrumentedType extends TypeDescription {
 
             @Override
             public String getName() {
-                return isConstructor() ? getDeclaringType().getName() : getName();
+                return isConstructor() ? getDeclaringType().getName() : getInternalName();
             }
 
             @Override
@@ -194,13 +210,23 @@ public interface InstrumentedType extends TypeDescription {
             }
         }
 
-        protected final List<? extends FieldDescription> fieldDescriptions;
-        protected final List<? extends MethodDescription> methodDescriptions;
+        private TypeDescription withSubstitutedSelfReference(TypeDescription typeDescription) {
+            return typeDescription instanceof InstrumentedType ? this : typeDescription;
+        }
+
+        protected final List<FieldDescription> fieldDescriptions;
+        protected final List<MethodDescription> methodDescriptions;
 
         protected AbstractInstrumentedType(List<? extends FieldDescription> fieldDescriptions,
                                            List<? extends MethodDescription> methodDescriptions) {
-            this.fieldDescriptions = fieldDescriptions;
-            this.methodDescriptions = methodDescriptions;
+            this.fieldDescriptions = new ArrayList<FieldDescription>(fieldDescriptions.size());
+            for (FieldDescription fieldDescription : fieldDescriptions) {
+                this.fieldDescriptions.add(new FieldToken(fieldDescription));
+            }
+            this.methodDescriptions = new ArrayList<MethodDescription>(methodDescriptions.size());
+            for (MethodDescription methodDescription : methodDescriptions) {
+                this.methodDescriptions.add(new MethodToken(methodDescription));
+            }
         }
 
         @Override

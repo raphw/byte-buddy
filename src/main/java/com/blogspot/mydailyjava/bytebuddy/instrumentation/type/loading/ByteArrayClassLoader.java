@@ -1,15 +1,14 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.type.loading;
 
-import java.util.Collections;
 import java.util.Map;
 
 public class ByteArrayClassLoader extends ClassLoader {
 
     private final Map<String, byte[]> typeDefinitions;
 
-    public ByteArrayClassLoader(ClassLoader parent, String typeName, byte[] javaType) {
+    public ByteArrayClassLoader(ClassLoader parent, Map<String, byte[]> typeDefinitions) {
         super(parent);
-        this.typeDefinitions = Collections.singletonMap(typeName, javaType);
+        this.typeDefinitions = typeDefinitions;
     }
 
     @Override

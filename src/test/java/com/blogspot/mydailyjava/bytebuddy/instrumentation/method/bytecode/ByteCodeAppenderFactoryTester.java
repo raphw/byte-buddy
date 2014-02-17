@@ -8,11 +8,11 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+import java.util.Collections;
 import java.util.Random;
 
 public class ByteCodeAppenderFactoryTester {
 
-    private static final String CONSTRUCTOR_INTERNAL_NAME = "<init>";
     private static final String DEFAULT_CONSTRUCTOR_DESCRIPTOR = "()V";
 
     private static final int ASM_MANUAL = 0;
@@ -39,7 +39,7 @@ public class ByteCodeAppenderFactoryTester {
                 toInternalName(typeName),
                 null, Type.getInternalName(superClass), null);
         MethodVisitor defaultConstructor = classWriter.visitMethod(Opcodes.ACC_PUBLIC,
-                CONSTRUCTOR_INTERNAL_NAME,
+                MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
                 DEFAULT_CONSTRUCTOR_DESCRIPTOR,
                 null,
                 null);
@@ -47,7 +47,7 @@ public class ByteCodeAppenderFactoryTester {
         defaultConstructor.visitVarInsn(Opcodes.ALOAD, 0);
         defaultConstructor.visitMethodInsn(Opcodes.INVOKESPECIAL,
                 Type.getInternalName(superClass),
-                CONSTRUCTOR_INTERNAL_NAME,
+                MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
                 DEFAULT_CONSTRUCTOR_DESCRIPTOR);
         defaultConstructor.visitInsn(Opcodes.RETURN);
         defaultConstructor.visitMaxs(1, 1);
@@ -62,7 +62,7 @@ public class ByteCodeAppenderFactoryTester {
         methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
         methodVisitor.visitEnd();
         classWriter.visitEnd();
-        return new ByteArrayClassLoader(getClass().getClassLoader(), typeName, classWriter.toByteArray()).loadClass(typeName);
+        return new ByteArrayClassLoader(getClass().getClassLoader(), Collections.singletonMap(typeName, classWriter.toByteArray())).loadClass(typeName);
     }
 
     private static String toInternalName(String typeName) {

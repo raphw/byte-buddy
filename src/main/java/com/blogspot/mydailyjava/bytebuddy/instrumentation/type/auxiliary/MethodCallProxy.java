@@ -5,13 +5,14 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.StackSize;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.Assigner;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.MethodArgument;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.MethodInvocation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.primitive.PrimitiveTypeAwareAssigner;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.primitive.VoidAwareAssigner;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.reference.ReferenceTypeAwareAssigner;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
+import com.blogspot.mydailyjava.bytebuddy.proxy.DynamicType;
 import org.objectweb.asm.*;
 
 import java.util.Collections;
@@ -19,7 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-public class MethodCallProxy implements AuxiliaryClass {
+public class MethodCallProxy implements AuxiliaryType {
 
     private static final String OBJECT_INTERNAL_NAME = Type.getInternalName(Object.class);
 
@@ -92,16 +93,15 @@ public class MethodCallProxy implements AuxiliaryClass {
         }
     }
 
-    private class Named implements AuxiliaryClass.Named {
+    private class Named implements AuxiliaryType.Named {
 
         private static final int ASM_MANUAL = 0;
         private static final int CONSTRUCTOR_ACCESS = Opcodes.ACC_PUBLIC;
         private static final int FIELD_ACCESS = Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL;
         private static final String FIELD_NAME_PREFIX = "arg";
-        private static final String CONSTRUCTOR_INTERNAL_NAME = "<init>";
         private static final String DEFAULT_CONSTRUCTOR_DESCRIPTOR = "()V";
 
-        private final String proxyTypeInternalName;
+        private final String proxyTypeName;
         private final ClassVersion classVersion;
 
         private final String constructorDescriptor;
@@ -109,8 +109,8 @@ public class MethodCallProxy implements AuxiliaryClass {
 
         private final Assigner assigner;
 
-        private Named(String proxyTypeInternalName, ClassVersion classVersion) {
-            this.proxyTypeInternalName = proxyTypeInternalName;
+        private Named(String proxyTypeName, ClassVersion classVersion) {
+            this.proxyTypeName = proxyTypeName;
             this.classVersion = classVersion;
             int i = 0;
             Map<String, TypeDescription> fields = new LinkedHashMap<String, TypeDescription>(1 + proxiedMethod.getParameterTypes().size());
@@ -129,16 +129,11 @@ public class MethodCallProxy implements AuxiliaryClass {
         }
 
         @Override
-        public String getProxyTypeInternalName() {
-            return proxyTypeInternalName;
-        }
-
-        @Override
-        public byte[] make() {
+        public DynamicType<?> make() {
             ClassWriter classWriter = new ClassWriter(ASM_MANUAL);
             classWriter.visit(classVersion.getVersionNumber(),
                     DEFAULT_TYPE_ACCESS,
-                    proxyTypeInternalName,
+                    proxyTypeName.replace('.', '/'),
                     null,
                     OBJECT_INTERNAL_NAME,
                     Interface.getInternalNames());
@@ -150,7 +145,7 @@ public class MethodCallProxy implements AuxiliaryClass {
                         null).visitEnd();
             }
             MethodVisitor constructor = classWriter.visitMethod(CONSTRUCTOR_ACCESS,
-                    CONSTRUCTOR_INTERNAL_NAME,
+                    MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
                     constructorDescriptor,
                     null,
                     null);
@@ -159,14 +154,14 @@ public class MethodCallProxy implements AuxiliaryClass {
             constructor.visitIntInsn(Opcodes.ALOAD, 0);
             constructor.visitMethodInsn(Opcodes.INVOKESPECIAL,
                     OBJECT_INTERNAL_NAME,
-                    CONSTRUCTOR_INTERNAL_NAME,
+                    MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
                     DEFAULT_CONSTRUCTOR_DESCRIPTOR);
             int currentMaximum = 1;
             for (Map.Entry<String, TypeDescription> field : fields.entrySet()) {
                 constructor.visitIntInsn(Opcodes.ALOAD, 0);
                 MethodArgument.forType(field.getValue()).loadFromIndex(argumentIndex).apply(constructor, null);
                 constructor.visitFieldInsn(Opcodes.PUTFIELD,
-                        proxyTypeInternalName,
+                        proxyTypeName,
                         field.getKey(),
                         field.getValue().getDescriptor());
                 currentMaximum = Math.max(currentMaximum, field.getValue().getStackSize().getSize() + 1);
@@ -176,35 +171,19 @@ public class MethodCallProxy implements AuxiliaryClass {
             constructor.visitMaxs(currentMaximum, proxiedMethod.getStackSize() + 1);
             constructor.visitEnd();
             for (Interface anInterface : Interface.values()) {
-                anInterface.implement(classWriter, proxyTypeInternalName, proxiedMethod, fields, assigner);
+                anInterface.implement(classWriter, proxyTypeName, proxiedMethod, fields, assigner);
             }
             classWriter.visitEnd();
-            return classWriter.toByteArray();
-        }
-
-        @Override
-        public boolean isValid() {
-            return true;
-        }
-
-        @Override
-        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-            StackManipulation.Size size = StackSize.ZERO.toIncreasingSize();
-            for (TypeDescription typeDescription : fields.values()) {
-                size = size.aggregate(MethodArgument.forType(typeDescription).loadFromIndex(size.getSizeImpact()).apply(methodVisitor, instrumentationContext));
-            }
-            methodVisitor.visitTypeInsn(Opcodes.NEW, proxyTypeInternalName);
-            methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,
-                    proxyTypeInternalName,
-                    CONSTRUCTOR_INTERNAL_NAME,
-                    constructorDescriptor);
-            return new Size(1, Math.max(1, size.getMaximalSize()));
+            return new DynamicType.Default.Unloaded<Object>(proxyTypeName,
+                    classWriter.toByteArray(),
+                    Collections.<Instrumentation.ClassLoadingCallback>emptyList(),
+                    Collections.<DynamicType<?>>emptySet());
         }
     }
 
     @Override
     public Named name(String proxyTypeName, ClassVersion classVersion) {
-        return new Named(proxyTypeName.replace('.', '/'), classVersion);
+        return new Named(proxyTypeName, classVersion);
     }
 
     @Override

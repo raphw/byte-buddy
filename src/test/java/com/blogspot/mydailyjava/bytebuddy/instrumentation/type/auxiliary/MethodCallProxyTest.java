@@ -13,6 +13,7 @@ import org.mockito.asm.Opcodes;
 import java.lang.reflect.Constructor;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.Callable;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -91,10 +92,9 @@ public class MethodCallProxyTest {
         MethodDescription proxiedMethod = new MethodDescription.ForMethod
                 (proxiedType.getDeclaredMethod(FOO, proxiedMethodParameters));
         MethodCallProxy methodCallProxy = new MethodCallProxy(proxiedMethod);
-        AuxiliaryClass.Named namedAuxiliaryClass = methodCallProxy.name(proxyName(proxiedType), CLASS_VERSION);
+        AuxiliaryType.Named namedAuxiliaryClass = methodCallProxy.name(proxyName(proxiedType), CLASS_VERSION);
         ClassLoader proxyClassLoader = new ByteArrayClassLoader(getClass().getClassLoader(),
-                proxyName(proxiedType),
-                namedAuxiliaryClass.make());
+                Collections.singletonMap(proxyName(proxiedType), namedAuxiliaryClass.make().getMainTypeByte()));
         Class<?> proxyType = Class.forName(proxyName(proxiedType), false, proxyClassLoader);
         Constructor<?> proxyConstructor = assertProxyType(proxyType, proxiedMethod);
         InvocationCountable invocationCountable = proxiedType.newInstance();

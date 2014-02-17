@@ -1,41 +1,45 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.type;
 
-import com.blogspot.mydailyjava.bytebuddy.*;
+import com.blogspot.mydailyjava.bytebuddy.SyntheticState;
+import com.blogspot.mydailyjava.bytebuddy.TypeManifestation;
+import com.blogspot.mydailyjava.bytebuddy.Visibility;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.field.FieldDescription;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.StackSize;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.scaffold.SubclassLoadedTypeInstrumentation;
 import org.junit.Before;
 import org.junit.Test;
-import org.objectweb.asm.Opcodes;
 
 import java.io.Serializable;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.mockito.Matchers.any;
+import static org.hamcrest.core.IsSame.sameInstance;
 import static org.mockito.Mockito.*;
 
-public class InstrumentedTypeTest {
+public abstract class AbstractInstrumentedTypeTest {
 
-    private static final String FOO = "foo", BAR = "bar";
+    private static final String FOO = "foo", BAR = "bar", QUX = "qux";
+
+    protected abstract InstrumentedType makeInstrumentedType(String name,
+                                                             Class<?> superType,
+                                                             Class<?>[] interfaces,
+                                                             Visibility visibility,
+                                                             TypeManifestation typeManifestation,
+                                                             SyntheticState syntheticState);
 
     private InstrumentedType instrumentedType;
 
     @Before
     public void setUp() throws Exception {
-        NamingStrategy namingStrategy = mock(NamingStrategy.class);
-        when(namingStrategy.getName(any(NamingStrategy.UnnamedType.class))).thenReturn(FOO);
-        SubclassLoadedTypeInstrumentation instrumentedType = new SubclassLoadedTypeInstrumentation(new ClassVersion(Opcodes.V1_6),
+        instrumentedType = makeInstrumentedType(FOO,
                 Object.class,
-                Arrays.<Class<?>>asList(Serializable.class),
+                new Class<?>[]{Serializable.class},
                 Visibility.PUBLIC,
                 TypeManifestation.CONCRETE,
-                SyntheticState.NON_SYNTHETIC,
-                namingStrategy);
-        verify(namingStrategy).getName(instrumentedType);
-        verifyNoMoreInteractions(namingStrategy);
-        this.instrumentedType = instrumentedType;
+                SyntheticState.NON_SYNTHETIC);
     }
 
     @Test
@@ -125,5 +129,56 @@ public class InstrumentedTypeTest {
         assertThat(instrumentedType, equalTo(typeDescription));
         verify(typeDescription).getName();
         verifyNoMoreInteractions(typeDescription);
+    }
+
+    @Test
+    public void testWithField() throws Exception {
+        TypeDescription fieldType = mock(TypeDescription.class);
+        instrumentedType = instrumentedType.withField(QUX, fieldType, Modifier.PUBLIC, false);
+        assertThat(instrumentedType.getDeclaredFields().size(), is(1));
+        FieldDescription fieldDescription = instrumentedType.getDeclaredFields().get(0);
+        assertThat(fieldDescription.getFieldType(), is(fieldType));
+        assertThat(fieldDescription.getModifiers(), is(Modifier.PUBLIC));
+        assertThat(fieldDescription.isSynthetic(), is(false));
+        assertThat(fieldDescription.getName(), is(QUX));
+    }
+
+    @Test
+    public void testWithFieldOfInstrumentedType() throws Exception {
+        instrumentedType = instrumentedType.withField(QUX, instrumentedType, Modifier.PUBLIC, false);
+        assertThat(instrumentedType.getDeclaredFields().size(), is(1));
+        FieldDescription fieldDescription = instrumentedType.getDeclaredFields().get(0);
+        assertThat(fieldDescription.getFieldType(), sameInstance((TypeDescription) instrumentedType));
+        assertThat(fieldDescription.getModifiers(), is(Modifier.PUBLIC));
+        assertThat(fieldDescription.isSynthetic(), is(false));
+        assertThat(fieldDescription.getName(), is(QUX));
+    }
+
+    @Test
+    public void testWithMethod() throws Exception {
+        TypeDescription parameterType = mock(TypeDescription.class);
+        TypeDescription returnType = mock(TypeDescription.class);
+        instrumentedType = instrumentedType.withMethod(QUX, returnType, Arrays.asList(parameterType), Modifier.PUBLIC, false);
+        assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
+        MethodDescription methodDescription = instrumentedType.getDeclaredMethods().get(0);
+        assertThat(methodDescription.getParameterTypes().size(), is(1));
+        assertThat(methodDescription.getParameterTypes().get(0), is(parameterType));
+        assertThat(methodDescription.getReturnType(), is(returnType));
+        assertThat(methodDescription.getModifiers(), is(Modifier.PUBLIC));
+        assertThat(methodDescription.isSynthetic(), is(false));
+        assertThat(methodDescription.getName(), is(QUX));
+    }
+
+    @Test
+    public void testWithMethodOfInstrumentedType() throws Exception {
+        instrumentedType = instrumentedType.withMethod(QUX, instrumentedType, Arrays.asList(instrumentedType), Modifier.PUBLIC, false);
+        assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
+        MethodDescription methodDescription = instrumentedType.getDeclaredMethods().get(0);
+        assertThat(methodDescription.getParameterTypes().size(), is(1));
+        assertThat(methodDescription.getParameterTypes().get(0), sameInstance((TypeDescription) instrumentedType));
+        assertThat(methodDescription.getReturnType(), sameInstance((TypeDescription) instrumentedType));
+        assertThat(methodDescription.getModifiers(), is(Modifier.PUBLIC));
+        assertThat(methodDescription.isSynthetic(), is(false));
+        assertThat(methodDescription.getName(), is(QUX));
     }
 }

@@ -5,6 +5,7 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.a
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.RuntimeType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.This;
+import com.blogspot.mydailyjava.bytebuddy.proxy.DynamicType;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -68,8 +69,8 @@ public class ByteBuddyTest {
                 .method(named("foo")).intercept(MethodDelegation.to(Delegate.class))
                 .method(named("test")).intercept(MethodDelegation.to(Delegate.class))
                 .make()
-                .load(getClass().getClassLoader())
-                .getProxyClass()
+                .load(getClass().getClassLoader(), DynamicType.ClassLoadingStrategy.WRAPPER)
+                .getMainType()
                 .newInstance();
         System.out.println(object.test("a", 10));
         System.out.println(object.foo(10, 3));

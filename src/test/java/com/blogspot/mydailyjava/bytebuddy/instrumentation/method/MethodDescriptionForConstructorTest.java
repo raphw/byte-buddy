@@ -14,7 +14,6 @@ import static org.mockito.Mockito.*;
 public class MethodDescriptionForConstructorTest {
 
     private static final String TO_STRING = "toString";
-    private static final String CONSTRUCTOR_INTERNAL_NAME = "<init>";
 
     private MethodDescription objectDefaultConstructor;
     private MethodDescription stringDefaultConstructor;
@@ -45,9 +44,9 @@ public class MethodDescriptionForConstructorTest {
 
     @Test
     public void testGetInternalName() throws Exception {
-        assertThat(objectDefaultConstructor.getInternalName(), is(CONSTRUCTOR_INTERNAL_NAME));
-        assertThat(stringDefaultConstructor.getInternalName(), is(CONSTRUCTOR_INTERNAL_NAME));
-        assertThat(stringSingleArgConstructor.getInternalName(), is(CONSTRUCTOR_INTERNAL_NAME));
+        assertThat(objectDefaultConstructor.getInternalName(), is(MethodDescription.CONSTRUCTOR_INTERNAL_NAME));
+        assertThat(stringDefaultConstructor.getInternalName(), is(MethodDescription.CONSTRUCTOR_INTERNAL_NAME));
+        assertThat(stringSingleArgConstructor.getInternalName(), is(MethodDescription.CONSTRUCTOR_INTERNAL_NAME));
     }
 
     @Test
@@ -79,7 +78,8 @@ public class MethodDescriptionForConstructorTest {
     }
 
     private static int hashCode(Constructor<?> constructor) {
-        return (Type.getInternalName(constructor.getDeclaringClass()) + "." + CONSTRUCTOR_INTERNAL_NAME + Type.getConstructorDescriptor(constructor)).hashCode();
+        return (Type.getInternalName(constructor.getDeclaringClass()) + "."
+                + MethodDescription.CONSTRUCTOR_INTERNAL_NAME + Type.getConstructorDescriptor(constructor)).hashCode();
     }
 
     @Test
@@ -92,7 +92,7 @@ public class MethodDescriptionForConstructorTest {
     private static void assertConstructorEquality(MethodDescription methodDescription, Constructor<?> constructor) {
         MethodDescription otherMethod = mock(MethodDescription.class);
         TypeDescription otherType = mock(TypeDescription.class);
-        when(otherMethod.getUniqueSignature()).thenReturn(CONSTRUCTOR_INTERNAL_NAME + Type.getConstructorDescriptor(constructor));
+        when(otherMethod.getUniqueSignature()).thenReturn(MethodDescription.CONSTRUCTOR_INTERNAL_NAME + Type.getConstructorDescriptor(constructor));
         when(otherMethod.getDeclaringType()).thenReturn(otherType);
         when(otherType.getName()).thenReturn(constructor.getDeclaringClass().getName());
         assertThat(methodDescription.equals(otherMethod), is(true));
