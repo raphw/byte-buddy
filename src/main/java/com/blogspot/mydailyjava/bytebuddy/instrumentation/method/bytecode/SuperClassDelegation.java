@@ -1,10 +1,11 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode;
 
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.Assignment;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.MethodArgument;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.MethodInvocation;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.MethodReturn;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.MethodArgument;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.MethodInvocation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.MethodReturn;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -21,16 +22,16 @@ public enum SuperClassDelegation implements ByteCodeAppender.Factory {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
+        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext, MethodDescription instrumentedMethod) {
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-            Assignment.Size parameterSize = new Assignment.Size(1, 1);
-            for (TypeDescription parameterType : methodDescription.getParameterTypes()) {
+            StackManipulation.Size parameterSize = new StackManipulation.Size(1, 1);
+            for (TypeDescription parameterType : instrumentedMethod.getParameterTypes()) {
                 parameterSize = parameterSize.aggregate(MethodArgument.forType(parameterType)
-                        .loadFromIndex(parameterSize.getSizeImpact()).apply(methodVisitor));
+                        .loadFromIndex(parameterSize.getSizeImpact()).apply(methodVisitor, instrumentationContext));
             }
-            Assignment.Size size = parameterSize.aggregate(MethodInvocation.invoke(methodDescription)
-                    .special(proxyType.getSupertype()).apply(methodVisitor));
-            size = size.aggregate(MethodReturn.returning(methodDescription.getReturnType()).apply(methodVisitor));
+            StackManipulation.Size size = parameterSize.aggregate(MethodInvocation.invoke(instrumentedMethod)
+                    .special(proxyType.getSupertype()).apply(methodVisitor, instrumentationContext));
+            size = size.aggregate(MethodReturn.returning(instrumentedMethod.getReturnType()).apply(methodVisitor, instrumentationContext));
             return new Size(size.getMaximalSize(), parameterSize.getMaximalSize());
         }
     }

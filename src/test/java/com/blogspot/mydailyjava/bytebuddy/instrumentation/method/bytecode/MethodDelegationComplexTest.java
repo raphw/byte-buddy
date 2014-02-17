@@ -4,7 +4,8 @@ import com.blogspot.mydailyjava.bytebuddy.*;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.This;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType0;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.scaffold.SubclassLoadedTypeInstrumentation;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.asm.Opcodes;
@@ -30,11 +31,11 @@ public class MethodDelegationComplexTest {
         }
     }
 
-    private InstrumentedType0 instrumentedType;
+    private InstrumentedType instrumentedType;
 
     @Before
     public void setUp() throws Exception {
-        instrumentedType = new InstrumentedType0(new ClassVersion(Opcodes.V1_6),
+        instrumentedType = new SubclassLoadedTypeInstrumentation(new ClassVersion(Opcodes.V1_6),
                 Source.class,
                 Collections.<Class<?>>emptySet(),
                 Visibility.PUBLIC,

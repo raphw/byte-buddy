@@ -1,5 +1,6 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode;
 
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
@@ -39,5 +40,5 @@ public interface ByteCodeAppender {
         }
     }
 
-    Size apply(MethodVisitor methodVisitor, MethodDescription methodDescription);
+    Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext, MethodDescription instrumentedMethod);
 }

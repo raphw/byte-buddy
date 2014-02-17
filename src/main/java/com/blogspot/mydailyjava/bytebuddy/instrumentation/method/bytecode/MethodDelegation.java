@@ -1,12 +1,13 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode;
 
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodList;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.Assignment;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.MethodReturn;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.primitive.PrimitiveTypeAwareAssigner;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.primitive.VoidAwareAssigner;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.reference.ReferenceTypeAwareAssigner;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.MethodReturn;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.primitive.PrimitiveTypeAwareAssigner;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.primitive.VoidAwareAssigner;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.reference.ReferenceTypeAwareAssigner;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodNameEqualityResolver;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MostSpecificTypeResolver;
@@ -79,10 +80,10 @@ public class MethodDelegation implements ByteCodeAppender.Factory {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
-            Assignment.Size size = processor.process(typeDescription, methodDescription, methods).apply(methodVisitor);
-            size = size.aggregate(MethodReturn.returning(methodDescription.getReturnType()).apply(methodVisitor));
-            return new Size(size.getMaximalSize(), methodDescription.getStackSize());
+        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext, MethodDescription instrumentedMethod) {
+            StackManipulation.Size size = processor.process(typeDescription, instrumentedMethod, methods).apply(methodVisitor, instrumentationContext);
+            size = size.aggregate(MethodReturn.returning(instrumentedMethod.getReturnType()).apply(methodVisitor, instrumentationContext));
+            return new Size(size.getMaximalSize(), instrumentedMethod.getStackSize());
         }
     }
 

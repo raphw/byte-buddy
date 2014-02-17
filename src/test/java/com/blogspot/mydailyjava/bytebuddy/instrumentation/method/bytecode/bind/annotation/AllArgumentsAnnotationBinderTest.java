@@ -1,6 +1,6 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.TypeSize;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.StackSize;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.junit.Test;
 
@@ -37,7 +37,7 @@ public class AllArgumentsAnnotationBinderTest extends AbstractAnnotationBinderTe
     }
 
     private void testLegalBinding(Annotation[][] targetAnnotations, boolean considerRuntimeType) throws Exception {
-        when(assignment.isValid()).thenReturn(true);
+        when(stackManipulation.isValid()).thenReturn(true);
         TypeDescription firstSourceType = mock(TypeDescription.class);
         TypeDescription secondSourceType = mock(TypeDescription.class);
         when(sourceTypeList.iterator()).thenReturn(Arrays.asList(firstSourceType, secondSourceType).iterator());
@@ -46,12 +46,12 @@ public class AllArgumentsAnnotationBinderTest extends AbstractAnnotationBinderTe
         TypeDescription componentType = mock(TypeDescription.class);
         when(targetType.isArray()).thenReturn(true);
         when(targetType.getComponentType()).thenReturn(componentType);
-        when(componentType.getStackSize()).thenReturn(TypeSize.SINGLE);
+        when(componentType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(targetTypeList.get(1)).thenReturn(targetType);
         when(targetTypeList.size()).thenReturn(2);
         when(target.getParameterAnnotations()).thenReturn(targetAnnotations);
         AnnotationDrivenBinder.ArgumentBinder.IdentifiedBinding<?> identifiedBinding = AllArguments.Binder.INSTANCE
-                .bind(annotation, 1, source, target, typeDescription, assigner);
+                .bind(annotation, 1, source, target, instrumentedType, assigner);
         assertThat(identifiedBinding.isValid(), is(true));
         verify(source, atLeast(1)).getParameterTypes();
         verify(source, atLeast(1)).isStatic();
@@ -64,7 +64,7 @@ public class AllArgumentsAnnotationBinderTest extends AbstractAnnotationBinderTe
 
     @Test
     public void testIllegalBinding() throws Exception {
-        when(assignment.isValid()).thenReturn(false);
+        when(stackManipulation.isValid()).thenReturn(false);
         TypeDescription firstSourceType = mock(TypeDescription.class);
         TypeDescription secondSourceType = mock(TypeDescription.class);
         when(sourceTypeList.iterator()).thenReturn(Arrays.asList(firstSourceType, secondSourceType).iterator());
@@ -73,12 +73,12 @@ public class AllArgumentsAnnotationBinderTest extends AbstractAnnotationBinderTe
         TypeDescription componentType = mock(TypeDescription.class);
         when(targetType.isArray()).thenReturn(true);
         when(targetType.getComponentType()).thenReturn(componentType);
-        when(componentType.getStackSize()).thenReturn(TypeSize.SINGLE);
+        when(componentType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(targetTypeList.get(1)).thenReturn(targetType);
         when(targetTypeList.size()).thenReturn(2);
         when(target.getParameterAnnotations()).thenReturn(new Annotation[2][0]);
         AnnotationDrivenBinder.ArgumentBinder.IdentifiedBinding<?> identifiedBinding = AllArguments.Binder.INSTANCE
-                .bind(annotation, 1, source, target, typeDescription, assigner);
+                .bind(annotation, 1, source, target, instrumentedType, assigner);
         assertThat(identifiedBinding.isValid(), is(false));
         verify(source, atLeast(1)).getParameterTypes();
         verify(source, atLeast(1)).isStatic();
@@ -93,6 +93,6 @@ public class AllArgumentsAnnotationBinderTest extends AbstractAnnotationBinderTe
         TypeDescription targetType = mock(TypeDescription.class);
         when(targetType.isArray()).thenReturn(false);
         when(targetTypeList.get(0)).thenReturn(targetType);
-        AllArguments.Binder.INSTANCE.bind(annotation, 0, source, target, typeDescription, assigner);
+        AllArguments.Binder.INSTANCE.bind(annotation, 0, source, target, instrumentedType, assigner);
     }
 }

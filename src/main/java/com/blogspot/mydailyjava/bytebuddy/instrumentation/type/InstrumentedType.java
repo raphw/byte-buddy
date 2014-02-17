@@ -4,7 +4,7 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.field.FieldDescription
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.field.FieldList;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodList;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.TypeSize;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.StackSize;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -324,8 +324,8 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public TypeSize getStackSize() {
-            return TypeSize.SINGLE;
+        public StackSize getStackSize() {
+            return StackSize.SINGLE;
         }
 
         @Override

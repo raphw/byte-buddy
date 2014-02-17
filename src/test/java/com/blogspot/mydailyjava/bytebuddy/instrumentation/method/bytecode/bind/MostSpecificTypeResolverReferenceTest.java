@@ -3,6 +3,7 @@ package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -11,15 +12,15 @@ import static org.mockito.Mockito.*;
 
 public class MostSpecificTypeResolverReferenceTest extends AbstractMostSpecificTypeResolverTest {
 
+    @Mock
     private TypeDescription weakTargetType;
+    @Mock
     private TypeDescription dominantTargetType;
 
     @Override
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        weakTargetType = mock(TypeDescription.class);
-        dominantTargetType = mock(TypeDescription.class);
         when(weakTargetType.isAssignableFrom(dominantTargetType)).thenReturn(true);
         when(weakTargetType.isAssignableFrom(weakTargetType)).thenReturn(true);
         when(weakTargetType.isAssignableTo(weakTargetType)).thenReturn(true);

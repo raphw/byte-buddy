@@ -1,27 +1,29 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
+import com.blogspot.mydailyjava.bytebuddy.test.MockitoRule;
 import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.TestRule;
+import org.mockito.Mock;
 
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public abstract class AbstractAmbiguityResolverTest {
 
+    @Rule
+    public TestRule mockitoRule = new MockitoRule(this);
+
+    @Mock
     protected MethodDescription source;
-    protected MethodDelegationBinder.Binding left;
-    protected MethodDescription leftMethod;
-    protected MethodDelegationBinder.Binding right;
-    protected MethodDescription rightMethod;
+    @Mock
+    protected MethodDescription leftMethod,rightMethod;
+    @Mock
+    protected MethodDelegationBinder.Binding left, right;
 
     @Before
     public void setUp() throws Exception {
-        source = mock(MethodDescription.class);
-        leftMethod = mock(MethodDescription.class);
-        left = mock(MethodDelegationBinder.Binding.class);
         when(left.getTarget()).thenReturn(leftMethod);
-        right = mock(MethodDelegationBinder.Binding.class);
-        rightMethod = mock(MethodDescription.class);
         when(right.getTarget()).thenReturn(rightMethod);
     }
 }

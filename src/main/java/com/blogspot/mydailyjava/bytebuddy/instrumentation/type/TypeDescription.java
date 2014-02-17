@@ -5,7 +5,7 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.ModifierReviewable;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.field.FieldList;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodList;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.TypeSize;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.StackSize;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers;
 import org.objectweb.asm.Type;
@@ -227,8 +227,8 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
         }
 
         @Override
-        public TypeSize getStackSize() {
-            return TypeSize.of(type);
+        public StackSize getStackSize() {
+            return StackSize.of(type);
         }
 
         @Override
@@ -322,5 +322,5 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
 
     boolean isVisibleTo(TypeDescription typeDescription);
 
-    TypeSize getStackSize();
+    StackSize getStackSize();
 }

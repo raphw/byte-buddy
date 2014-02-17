@@ -1,9 +1,9 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.Assigner;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.Assignment;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.MethodArgument;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.Assigner;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.MethodArgument;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MostSpecificTypeResolver;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 
@@ -52,7 +52,7 @@ public @interface Argument {
                                                         boolean considerRuntimeType,
                                                         int sourceParameterOffset) {
             return IdentifiedBinding.makeIdentified(
-                    new Assignment.Compound(
+                    new StackManipulation.Compound(
                             MethodArgument.forType(sourceType).loadFromIndex(sourceParameterIndex + sourceParameterOffset),
                             assigner.assign(sourceType, targetType, considerRuntimeType)),
                     new MostSpecificTypeResolver.ParameterIndexToken(sourceParameterIndex));

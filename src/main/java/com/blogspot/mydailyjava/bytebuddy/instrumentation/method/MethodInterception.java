@@ -82,7 +82,7 @@ public class MethodInterception {
                         null,
                         methodDescription.getExceptionTypes().toInternalNames());
                 methodVisitor.visitCode();
-                ByteCodeAppender.Size size = byteCodeAppender.apply(methodVisitor, methodDescription);
+                ByteCodeAppender.Size size = byteCodeAppender.apply(methodVisitor, null, methodDescription);
                 methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
                 methodVisitor.visitEnd();
                 return true;

@@ -1,7 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType0;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
 import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,11 +18,11 @@ public class StubMethodTest {
     private static final int NON_DEFAULT_VALUE = 42;
     private static final int DEFAULT_VALUE = 0;
 
-    private InstrumentedType0 instrumentedType;
+    private InstrumentedType instrumentedType;
 
     @Before
     public void setUp() throws Exception {
-        instrumentedType = mock(InstrumentedType0.class);
+        instrumentedType = mock(InstrumentedType.class);
     }
 
     @SuppressWarnings("unused")

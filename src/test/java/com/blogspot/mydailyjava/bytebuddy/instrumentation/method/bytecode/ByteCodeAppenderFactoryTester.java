@@ -1,7 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType0;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.loading.ByteArrayClassLoader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
@@ -23,9 +23,9 @@ public class ByteCodeAppenderFactoryTester {
     private final Random random;
 
     public ByteCodeAppenderFactoryTester(ByteCodeAppender.Factory factory,
-                                         InstrumentedType0 typeDescription,
+                                         TypeDescription instrumentedType,
                                          Class<?> superClass) {
-        appender = factory.make(typeDescription);
+        appender = factory.make(instrumentedType);
         this.superClass = superClass;
         random = new Random();
     }
@@ -58,7 +58,7 @@ public class ByteCodeAppenderFactoryTester {
                 null,
                 null);
         methodVisitor.visitCode();
-        ByteCodeAppender.Size size = appender.apply(methodVisitor, appenderArgument);
+        ByteCodeAppender.Size size = appender.apply(methodVisitor, null, appenderArgument);
         methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
         methodVisitor.visitEnd();
         classWriter.visitEnd();

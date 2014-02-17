@@ -1,9 +1,9 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.Assigner;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.Assignment;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.IllegalAssignment;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.Assigner;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.IllegalStackManipulation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.IllegalMethodDelegation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
@@ -18,27 +18,27 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
         static class IdentifiedBinding<S> {
 
             public static IdentifiedBinding<?> makeIllegal() {
-                return new IdentifiedBinding<Object>(IllegalAssignment.INSTANCE, new Object());
+                return new IdentifiedBinding<Object>(IllegalStackManipulation.INSTANCE, new Object());
             }
 
-            public static IdentifiedBinding<?> makeAnonymous(Assignment assignment) {
-                return new IdentifiedBinding<Object>(assignment, new Object());
+            public static IdentifiedBinding<?> makeAnonymous(StackManipulation stackManipulation) {
+                return new IdentifiedBinding<Object>(stackManipulation, new Object());
             }
 
-            public static <U> IdentifiedBinding<U> makeIdentified(Assignment assignment, U identificationToken) {
-                return new IdentifiedBinding<U>(assignment, identificationToken);
+            public static <U> IdentifiedBinding<U> makeIdentified(StackManipulation stackManipulation, U identificationToken) {
+                return new IdentifiedBinding<U>(stackManipulation, identificationToken);
             }
 
-            private final Assignment assignment;
+            private final StackManipulation stackManipulation;
             private final S identificationToken;
 
-            protected IdentifiedBinding(Assignment assignment, S identificationToken) {
-                this.assignment = assignment;
+            protected IdentifiedBinding(StackManipulation stackManipulation, S identificationToken) {
+                this.stackManipulation = stackManipulation;
                 this.identificationToken = identificationToken;
             }
 
-            public Assignment getAssignment() {
-                return assignment;
+            public StackManipulation getStackManipulation() {
+                return stackManipulation;
             }
 
             public S getIdentificationToken() {
@@ -46,7 +46,7 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
             }
 
             public boolean isValid() {
-                return assignment.isValid();
+                return stackManipulation.isValid();
             }
         }
 
@@ -203,10 +203,10 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
         if (IgnoreForBinding.Verifier.check(target)) {
             return IllegalMethodDelegation.INSTANCE;
         }
-        Assignment returningAssignment = assigner.assign(target.getReturnType(),
+        StackManipulation returningStackManipulation = assigner.assign(target.getReturnType(),
                 source.getReturnType(),
                 RuntimeType.Verifier.check(target));
-        if (!returningAssignment.isValid()) {
+        if (!returningStackManipulation.isValid()) {
             return IllegalMethodDelegation.INSTANCE;
         }
         Binding.Builder methodDelegationBindingBuilder = new Binding.Builder(methodInvoker, target);
@@ -223,12 +223,12 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
                             assigner);
             if (!identifiedBinding.isValid()
                     || !methodDelegationBindingBuilder.append(
-                    identifiedBinding.getAssignment(),
+                    identifiedBinding.getStackManipulation(),
                     targetParameterIndex,
                     identifiedBinding.getIdentificationToken())) {
                 return IllegalMethodDelegation.INSTANCE;
             }
         }
-        return methodDelegationBindingBuilder.build(returningAssignment);
+        return methodDelegationBindingBuilder.build(returningStackManipulation);
     }
 }

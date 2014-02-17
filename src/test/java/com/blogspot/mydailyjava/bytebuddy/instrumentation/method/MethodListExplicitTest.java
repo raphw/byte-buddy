@@ -1,8 +1,12 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher;
+import com.blogspot.mydailyjava.bytebuddy.test.MockitoRule;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
+import org.mockito.Mock;
 
 import java.util.Arrays;
 
@@ -13,14 +17,15 @@ import static org.mockito.Mockito.when;
 
 public class MethodListExplicitTest {
 
-    private MethodDescription firstMethodDescription;
-    private MethodDescription secondMethodDescription;
+    @Rule
+    public TestRule mockitoRule = new MockitoRule(this);
+
+    @Mock
+    private MethodDescription firstMethodDescription, secondMethodDescription;
     private MethodList methodList;
 
     @Before
     public void setUp() throws Exception {
-        firstMethodDescription = mock(MethodDescription.class);
-        secondMethodDescription = mock(MethodDescription.class);
         methodList = new MethodList.Explicit(Arrays.asList(firstMethodDescription, secondMethodDescription));
     }
 

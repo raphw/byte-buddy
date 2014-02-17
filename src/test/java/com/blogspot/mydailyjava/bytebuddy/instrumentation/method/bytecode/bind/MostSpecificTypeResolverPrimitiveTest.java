@@ -5,6 +5,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.mockito.Mock;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -67,7 +68,9 @@ public class MostSpecificTypeResolverPrimitiveTest extends AbstractMostSpecificT
         this.secondType = secondType;
     }
 
+    @Mock
     private TypeDescription firstPrimitive;
+    @Mock
     private TypeDescription secondPrimitive;
 
     @Override
@@ -75,10 +78,8 @@ public class MostSpecificTypeResolverPrimitiveTest extends AbstractMostSpecificT
     public void setUp() throws Exception {
         super.setUp();
         when(sourceType.isPrimitive()).thenReturn(true);
-        firstPrimitive = mock(TypeDescription.class);
         when(firstPrimitive.isPrimitive()).thenReturn(true);
         when(firstPrimitive.represents(int.class)).thenReturn(true);
-        secondPrimitive = mock(TypeDescription.class);
         when(secondPrimitive.isPrimitive()).thenReturn(true);
         when(secondPrimitive.represents(long.class)).thenReturn(true);
     }

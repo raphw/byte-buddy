@@ -6,7 +6,7 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescripti
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodInterception;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType0;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.proxy.ByteArrayDynamicProxy;
 import com.blogspot.mydailyjava.bytebuddy.proxy.DynamicProxy;
@@ -259,14 +259,14 @@ public class SubclassDynamicProxyBuilder<T> implements DynamicProxy.Builder<T> {
     public DynamicProxy<T> make() {
         ClassWriter classWriter = new ClassWriter(ASM_MANUAL_WRITING_OPTIONS);
         ClassVisitor classVisitor = classVisitorWrapperChain.wrap(classWriter);
-        InstrumentedType0 instrumentedType = new InstrumentedType0(classVersion,
+        InstrumentedType instrumentedType = new SubclassLoadedTypeInstrumentation(classVersion,
                 superClass,
                 interfaces,
                 visibility,
                 typeManifestation,
                 syntheticState,
                 namingStrategy);
-        classVisitor.visit(instrumentedType.getClassVersion(),
+        classVisitor.visit(classVersion.getVersionNumber(),
                 instrumentedType.getModifiers(),
                 instrumentedType.getInternalName(),
                 null,

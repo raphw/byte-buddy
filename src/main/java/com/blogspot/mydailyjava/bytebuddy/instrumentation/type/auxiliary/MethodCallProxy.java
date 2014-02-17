@@ -1,15 +1,16 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.type.auxiliary;
 
 import com.blogspot.mydailyjava.bytebuddy.ClassVersion;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.TypeSize;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.Assigner;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.Assignment;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.MethodArgument;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.MethodInvocation;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.primitive.PrimitiveTypeAwareAssigner;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.primitive.VoidAwareAssigner;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.reference.ReferenceTypeAwareAssigner;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.StackSize;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.Assigner;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.MethodArgument;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.MethodInvocation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.primitive.PrimitiveTypeAwareAssigner;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.primitive.VoidAwareAssigner;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.reference.ReferenceTypeAwareAssigner;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.*;
 
@@ -73,7 +74,7 @@ public class MethodCallProxy implements AuxiliaryClass {
                     null,
                     null);
             methodVisitor.visitCode();
-            Assignment.Size size = TypeSize.ZERO.toIncreasingSize();
+            StackManipulation.Size size = StackSize.ZERO.toIncreasingSize();
             for (Map.Entry<String, TypeDescription> field : fields.entrySet()) {
                 methodVisitor.visitIntInsn(Opcodes.ALOAD, 0);
                 methodVisitor.visitFieldInsn(Opcodes.GETFIELD,
@@ -83,10 +84,10 @@ public class MethodCallProxy implements AuxiliaryClass {
                 // Field value will be at least as big as self reference and can be ignored.
                 size = size.aggregate(field.getValue().getStackSize().toIncreasingSize());
             }
-            size.aggregate(MethodInvocation.invoke(proxiedMethod).apply(methodVisitor));
-            size = size.aggregate(assigner.assign(proxiedMethod.getReturnType(), returnTypeDescription, false).apply(methodVisitor));
+            size.aggregate(MethodInvocation.invoke(proxiedMethod).apply(methodVisitor, null));
+            size = size.aggregate(assigner.assign(proxiedMethod.getReturnType(), returnTypeDescription, false).apply(methodVisitor, null));
             methodVisitor.visitInsn(returnOpcode); // Size change will always be decreasing and can therefore be ignored.
-            methodVisitor.visitMaxs(size.getMaximalSize(), TypeSize.SINGLE.getSize());
+            methodVisitor.visitMaxs(size.getMaximalSize(), StackSize.SINGLE.getSize());
             methodVisitor.visitEnd();
         }
     }
@@ -163,7 +164,7 @@ public class MethodCallProxy implements AuxiliaryClass {
             int currentMaximum = 1;
             for (Map.Entry<String, TypeDescription> field : fields.entrySet()) {
                 constructor.visitIntInsn(Opcodes.ALOAD, 0);
-                MethodArgument.forType(field.getValue()).loadFromIndex(argumentIndex).apply(constructor);
+                MethodArgument.forType(field.getValue()).loadFromIndex(argumentIndex).apply(constructor, null);
                 constructor.visitFieldInsn(Opcodes.PUTFIELD,
                         proxyTypeInternalName,
                         field.getKey(),
@@ -187,10 +188,10 @@ public class MethodCallProxy implements AuxiliaryClass {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor) {
-            Assignment.Size size = TypeSize.ZERO.toIncreasingSize();
+        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+            StackManipulation.Size size = StackSize.ZERO.toIncreasingSize();
             for (TypeDescription typeDescription : fields.values()) {
-                size = size.aggregate(MethodArgument.forType(typeDescription).loadFromIndex(size.getSizeImpact()).apply(methodVisitor));
+                size = size.aggregate(MethodArgument.forType(typeDescription).loadFromIndex(size.getSizeImpact()).apply(methodVisitor, instrumentationContext));
             }
             methodVisitor.visitTypeInsn(Opcodes.NEW, proxyTypeInternalName);
             methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,

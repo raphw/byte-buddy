@@ -2,7 +2,7 @@ package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.IgnoreForBinding;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType0;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
 import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,11 +23,11 @@ public class MethodDelegationSimpleTest {
 
     private static final int ARGUMENT_VALUE = 21, MULTIPLICATOR = 2, RESULT = ARGUMENT_VALUE * MULTIPLICATOR;
 
-    private InstrumentedType0 instrumentedType;
+    private InstrumentedType instrumentedType;
 
     @Before
     public void setUp() throws Exception {
-        instrumentedType = mock(InstrumentedType0.class);
+        instrumentedType = mock(InstrumentedType.class);
         SimpleDelegationTarget.clearStackTraceRecord();
     }
 
@@ -276,6 +276,7 @@ public class MethodDelegationSimpleTest {
                 new Object[]{BAR});
     }
 
+    @SuppressWarnings("unchecked")
     private void testDirectDelegation(Class<?> sourceType,
                                       Class<?> targetType,
                                       Matcher<?> matcher,
@@ -290,7 +291,7 @@ public class MethodDelegationSimpleTest {
         assertEquals(sourceType, instrumented.getSuperclass());
         assertThat(instrumented.getDeclaredMethods().length, is(1));
         Object instance = instrumented.getDeclaredConstructor().newInstance();
-        assertThat(instrumented.getDeclaredMethod(FOO, parameterType).invoke(instance, parameter), (Matcher) matcher);
+        assertThat(instrumented.getDeclaredMethod(FOO, parameterType).invoke(instance, parameter), (Matcher<Object>) matcher);
         SimpleDelegationTarget.assertCallRecord(BAR, parameterType);
         verifyZeroInteractions(instrumentedType);
     }

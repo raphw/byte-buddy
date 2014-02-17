@@ -1,9 +1,9 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.Assigner;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.Assignment;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.MethodArgument;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.Assigner;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.MethodArgument;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 
 import java.lang.annotation.*;
@@ -39,8 +39,8 @@ public @interface This {
                 return IdentifiedBinding.makeIllegal();
             }
             boolean runtimeType = RuntimeType.Verifier.check(target, targetParameterIndex);
-            Assignment assignment = assigner.assign(instrumentedType, targetType, runtimeType);
-            return IdentifiedBinding.makeAnonymous(new Assignment.Compound(MethodArgument.OBJECT_REFERENCE.loadFromIndex(0), assignment));
+            StackManipulation stackManipulation = assigner.assign(instrumentedType, targetType, runtimeType);
+            return IdentifiedBinding.makeAnonymous(new StackManipulation.Compound(MethodArgument.OBJECT_REFERENCE.loadFromIndex(0), stackManipulation));
         }
     }
 }

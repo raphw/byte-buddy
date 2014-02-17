@@ -1,8 +1,9 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind;
 
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.Assignment;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.MethodInvocation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.MethodInvocation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 
@@ -16,42 +17,42 @@ public interface MethodDelegationBinder {
             INSTANCE;
 
             @Override
-            public Assignment invoke(MethodDescription methodDescription) {
+            public StackManipulation invoke(MethodDescription methodDescription) {
                 return MethodInvocation.invoke(methodDescription);
             }
         }
 
-        Assignment invoke(MethodDescription methodDescription);
+        StackManipulation invoke(MethodDescription methodDescription);
     }
 
-    static interface Binding extends Assignment {
+    static interface Binding extends StackManipulation {
 
         static class Builder {
 
             private static class Build implements Binding {
 
                 private final MethodDescription target;
-                private final Assignment methodInvocation;
-                private final List<Assignment> parameterAssignments;
+                private final StackManipulation methodInvocation;
+                private final List<StackManipulation> parameterStackManipulations;
                 private final Map<?, Integer> registeredTargetIndices;
-                private final Assignment returnValueAssignment;
+                private final StackManipulation returnValueStackManipulation;
 
                 private Build(MethodDescription target,
-                              Assignment methodInvocation,
-                              List<Assignment> parameterAssignments,
+                              StackManipulation methodInvocation,
+                              List<StackManipulation> parameterStackManipulations,
                               Map<?, Integer> registeredTargetIndices,
-                              Assignment returnValueAssignment) {
+                              StackManipulation returnValueStackManipulation) {
                     this.target = target;
                     this.methodInvocation = methodInvocation;
-                    this.parameterAssignments = new ArrayList<Assignment>(parameterAssignments);
+                    this.parameterStackManipulations = new ArrayList<StackManipulation>(parameterStackManipulations);
                     this.registeredTargetIndices = new HashMap<Object, Integer>(registeredTargetIndices);
-                    this.returnValueAssignment = returnValueAssignment;
+                    this.returnValueStackManipulation = returnValueStackManipulation;
                 }
 
                 @Override
                 public boolean isValid() {
-                    boolean result = returnValueAssignment.isValid() && methodInvocation.isValid();
-                    Iterator<Assignment> assignment = parameterAssignments.iterator();
+                    boolean result = returnValueStackManipulation.isValid() && methodInvocation.isValid();
+                    Iterator<StackManipulation> assignment = parameterStackManipulations.iterator();
                     while (result && assignment.hasNext()) {
                         result = assignment.next().isValid();
                     }
@@ -69,13 +70,13 @@ public interface MethodDelegationBinder {
                 }
 
                 @Override
-                public Size apply(MethodVisitor methodVisitor) {
+                public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
                     Size size = new Size(0, 0);
-                    for (Assignment assignment : parameterAssignments) {
-                        size = size.aggregate(assignment.apply(methodVisitor));
+                    for (StackManipulation stackManipulation : parameterStackManipulations) {
+                        size = size.aggregate(stackManipulation.apply(methodVisitor, instrumentationContext));
                     }
-                    size = size.aggregate(methodInvocation.apply(methodVisitor));
-                    return size.aggregate(returnValueAssignment.apply(methodVisitor));
+                    size = size.aggregate(methodInvocation.apply(methodVisitor, instrumentationContext));
+                    return size.aggregate(returnValueStackManipulation.apply(methodVisitor, instrumentationContext));
                 }
 
                 @Override
@@ -86,23 +87,23 @@ public interface MethodDelegationBinder {
 
             private final MethodInvoker methodInvoker;
             private final MethodDescription target;
-            private final List<Assignment> parameterAssignments;
+            private final List<StackManipulation> parameterStackManipulations;
             private final Map<Object, Integer> registeredTargetIndices;
 
             public Builder(MethodInvoker methodInvoker, MethodDescription target) {
                 this.methodInvoker = methodInvoker;
                 this.target = target;
-                parameterAssignments = new ArrayList<Assignment>(target.getParameterTypes().size());
+                parameterStackManipulations = new ArrayList<StackManipulation>(target.getParameterTypes().size());
                 registeredTargetIndices = new LinkedHashMap<Object, Integer>(target.getParameterTypes().size());
             }
 
-            public boolean append(Assignment assignment, int targetParameterIndex, Object identificationToken) {
-                parameterAssignments.add(assignment);
+            public boolean append(StackManipulation stackManipulation, int targetParameterIndex, Object identificationToken) {
+                parameterStackManipulations.add(stackManipulation);
                 return registeredTargetIndices.put(identificationToken, targetParameterIndex) == null;
             }
 
-            public Binding build(Assignment returnValueAssignment) {
-                return new Build(target, methodInvoker.invoke(target), parameterAssignments, registeredTargetIndices, returnValueAssignment);
+            public Binding build(StackManipulation returnValueStackManipulation) {
+                return new Build(target, methodInvoker.invoke(target), parameterStackManipulations, registeredTargetIndices, returnValueStackManipulation);
             }
         }
 

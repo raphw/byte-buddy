@@ -1,11 +1,15 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType0;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
+import com.blogspot.mydailyjava.bytebuddy.test.MockitoRule;
+import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
+import org.mockito.Mock;
 
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
@@ -17,21 +21,26 @@ import static org.mockito.Mockito.*;
 
 public class NextUnboundAsDefaultHandlerTest {
 
-    private InstrumentedType0 typeDescription;
-    private MethodDescription source;
-    private MethodDescription target;
+    @Rule
+    public TestRule mockitoRule = new MockitoRule(this);
+
+    @Mock
+    private TypeDescription typeDescription;
+    @Mock
+    private MethodDescription source, target;
+    @Mock
     private TypeList typeList;
 
     @Before
     public void setUp() throws Exception {
-        typeDescription = mock(InstrumentedType0.class);
-        source = mock(MethodDescription.class);
-        target = mock(MethodDescription.class);
-        typeList = mock(TypeList.class);
         when(typeList.size()).thenReturn(2);
-        when(typeList.iterator()).thenReturn(
-                Arrays.asList(mock(TypeDescription.class), mock(TypeDescription.class)).iterator());
+        when(typeList.iterator()).thenReturn(Arrays.asList(mock(TypeDescription.class), mock(TypeDescription.class)).iterator());
         when(source.getParameterTypes()).thenReturn(typeList);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        verifyZeroInteractions(typeDescription);
     }
 
     @Test
@@ -47,7 +56,6 @@ public class NextUnboundAsDefaultHandlerTest {
         assertThat(iterator.hasNext(), is(false));
         verify(source, atLeast(1)).getParameterTypes();
         verify(target, atLeast(1)).getParameterAnnotations();
-        verifyZeroInteractions(typeDescription);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -76,7 +84,6 @@ public class NextUnboundAsDefaultHandlerTest {
         assertThat(iterator.hasNext(), is(false));
         verify(source, atLeast(1)).getParameterTypes();
         verify(target, atLeast(1)).getParameterAnnotations();
-        verifyZeroInteractions(typeDescription);
     }
 
     @Test
@@ -92,7 +99,6 @@ public class NextUnboundAsDefaultHandlerTest {
         assertThat(iterator.hasNext(), is(false));
         verify(source, atLeast(1)).getParameterTypes();
         verify(target, atLeast(1)).getParameterAnnotations();
-        verifyZeroInteractions(typeDescription);
     }
 
     @Test
@@ -109,6 +115,5 @@ public class NextUnboundAsDefaultHandlerTest {
         assertThat(iterator.hasNext(), is(false));
         verify(source, atLeast(1)).getParameterTypes();
         verify(target, atLeast(1)).getParameterAnnotations();
-        verifyZeroInteractions(typeDescription);
     }
 }

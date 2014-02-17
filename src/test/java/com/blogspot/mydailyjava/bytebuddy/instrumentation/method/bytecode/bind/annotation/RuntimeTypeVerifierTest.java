@@ -1,8 +1,12 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
+import com.blogspot.mydailyjava.bytebuddy.test.MockitoRule;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
+import org.mockito.Mock;
 
 import java.lang.annotation.Annotation;
 
@@ -12,13 +16,16 @@ import static org.mockito.Mockito.*;
 
 public class RuntimeTypeVerifierTest {
 
+    @Rule
+    public TestRule mockitoRule = new MockitoRule(this);
+
+    @Mock
     private MethodDescription methodDescription;
+    @Mock
     private RuntimeType runtimeType;
 
     @Before
     public void setUp() throws Exception {
-        methodDescription = mock(MethodDescription.class);
-        runtimeType = mock(RuntimeType.class);
         doReturn(RuntimeType.class).when(runtimeType).annotationType();
     }
 

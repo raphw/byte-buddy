@@ -1,7 +1,8 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.type;
 
 import com.blogspot.mydailyjava.bytebuddy.*;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.TypeSize;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.StackSize;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.scaffold.SubclassLoadedTypeInstrumentation;
 import org.junit.Before;
 import org.junit.Test;
 import org.objectweb.asm.Opcodes;
@@ -19,13 +20,13 @@ public class InstrumentedTypeTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
-    private InstrumentedType0 instrumentedType;
+    private InstrumentedType instrumentedType;
 
     @Before
     public void setUp() throws Exception {
         NamingStrategy namingStrategy = mock(NamingStrategy.class);
         when(namingStrategy.getName(any(NamingStrategy.UnnamedType.class))).thenReturn(FOO);
-        instrumentedType = new InstrumentedType0(new ClassVersion(Opcodes.V1_6),
+        SubclassLoadedTypeInstrumentation instrumentedType = new SubclassLoadedTypeInstrumentation(new ClassVersion(Opcodes.V1_6),
                 Object.class,
                 Arrays.<Class<?>>asList(Serializable.class),
                 Visibility.PUBLIC,
@@ -34,6 +35,7 @@ public class InstrumentedTypeTest {
                 namingStrategy);
         verify(namingStrategy).getName(instrumentedType);
         verifyNoMoreInteractions(namingStrategy);
+        this.instrumentedType = instrumentedType;
     }
 
     @Test
@@ -108,7 +110,7 @@ public class InstrumentedTypeTest {
 
     @Test
     public void testGetStackSize() throws Exception {
-        assertThat(instrumentedType.getStackSize(), is(TypeSize.SINGLE));
+        assertThat(instrumentedType.getStackSize(), is(StackSize.SINGLE));
     }
 
     @Test

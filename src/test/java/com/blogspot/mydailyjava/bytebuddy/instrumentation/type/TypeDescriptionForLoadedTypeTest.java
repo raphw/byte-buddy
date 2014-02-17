@@ -1,6 +1,6 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.type;
 
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.TypeSize;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.StackSize;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.asm.Type;
@@ -340,13 +340,13 @@ public class TypeDescriptionForLoadedTypeTest {
 
     @Test
     public void testGetStackSize() throws Exception {
-        assertThat(objectType.getStackSize(), is(TypeSize.SINGLE));
-        assertThat(intType.getStackSize(), is(TypeSize.SINGLE));
-        assertThat(longType.getStackSize(), is(TypeSize.DOUBLE));
-        assertThat(numberType.getStackSize(), is(TypeSize.SINGLE));
-        assertThat(integerType.getStackSize(), is(TypeSize.SINGLE));
-        assertThat(serializableType.getStackSize(), is(TypeSize.SINGLE));
-        assertThat(objectArrayType.getStackSize(), is(TypeSize.SINGLE));
+        assertThat(objectType.getStackSize(), is(StackSize.SINGLE));
+        assertThat(intType.getStackSize(), is(StackSize.SINGLE));
+        assertThat(longType.getStackSize(), is(StackSize.DOUBLE));
+        assertThat(numberType.getStackSize(), is(StackSize.SINGLE));
+        assertThat(integerType.getStackSize(), is(StackSize.SINGLE));
+        assertThat(serializableType.getStackSize(), is(StackSize.SINGLE));
+        assertThat(objectArrayType.getStackSize(), is(StackSize.SINGLE));
     }
 
     @Test
@@ -389,13 +389,13 @@ public class TypeDescriptionForLoadedTypeTest {
 
     @Test
     public void testStackSize() throws Exception {
-        assertThat(objectType.getStackSize(), is(TypeSize.SINGLE));
-        assertThat(intType.getStackSize(), is(TypeSize.SINGLE));
-        assertThat(longType.getStackSize(), is(TypeSize.DOUBLE));
-        assertThat(numberType.getStackSize(), is(TypeSize.SINGLE));
-        assertThat(integerType.getStackSize(), is(TypeSize.SINGLE));
-        assertThat(serializableType.getStackSize(), is(TypeSize.SINGLE));
-        assertThat(objectArrayType.getStackSize(), is(TypeSize.SINGLE));
+        assertThat(objectType.getStackSize(), is(StackSize.SINGLE));
+        assertThat(intType.getStackSize(), is(StackSize.SINGLE));
+        assertThat(longType.getStackSize(), is(StackSize.DOUBLE));
+        assertThat(numberType.getStackSize(), is(StackSize.SINGLE));
+        assertThat(integerType.getStackSize(), is(StackSize.SINGLE));
+        assertThat(serializableType.getStackSize(), is(StackSize.SINGLE));
+        assertThat(objectArrayType.getStackSize(), is(StackSize.SINGLE));
     }
 
     @Test

@@ -7,6 +7,7 @@ import org.hamcrest.CoreMatchers;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.junit.Before;
+import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -16,7 +17,6 @@ import java.util.Map;
 
 import static org.hamcrest.core.AnyOf.anyOf;
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class AbstractMostSpecificTypeResolverTest extends AbstractAmbiguityResolverTest {
@@ -72,23 +72,18 @@ public class AbstractMostSpecificTypeResolverTest extends AbstractAmbiguityResol
         }
     }
 
-    protected TypeList sourceTypeList;
-    protected TypeList leftTypeList;
-    protected TypeList rightTypeList;
-
+    @Mock
+    protected TypeList sourceTypeList, leftTypeList, rightTypeList;
+    @Mock
     protected TypeDescription sourceType;
 
     @Override
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        sourceTypeList = mock(TypeList.class);
         when(source.getParameterTypes()).thenReturn(sourceTypeList);
-        sourceType = mock(TypeDescription.class);
         when(sourceTypeList.get(anyInt())).thenReturn(sourceType);
-        leftTypeList = mock(TypeList.class);
         when(leftMethod.getParameterTypes()).thenReturn(leftTypeList);
-        rightTypeList = mock(TypeList.class);
         when(rightMethod.getParameterTypes()).thenReturn(rightTypeList);
     }
 }

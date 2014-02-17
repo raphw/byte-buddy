@@ -1,9 +1,13 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType0;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
+import com.blogspot.mydailyjava.bytebuddy.test.MockitoRule;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
+import org.mockito.Mock;
 
 import java.util.Arrays;
 import java.util.List;
@@ -14,29 +18,29 @@ import static org.mockito.Mockito.*;
 
 public class MethodDelegationBinderProcessorTest {
 
-    private InstrumentedType0 typeDescription;
+    @Rule
+    public TestRule mockitoRule = new MockitoRule(this);
+
+    @Mock
+    private TypeDescription typeDescription;
+    @Mock
     private MethodDescription source;
 
+    @Mock
     private MethodDescription bindableTarget, unbindableTarget, dominantBindableTarget;
+    @Mock
     private MethodDelegationBinder.Binding boundDelegation, unboundDelegation, dominantBoundDelegation;
 
+    @Mock
     private MethodDelegationBinder methodDelegationBinder;
+    @Mock
     private MethodDelegationBinder.AmbiguityResolver ambiguityResolver;
 
     @Before
     public void setUp() throws Exception {
-        typeDescription = mock(InstrumentedType0.class);
-        source = mock(MethodDescription.class);
-        bindableTarget = mock(MethodDescription.class);
-        unbindableTarget = mock(MethodDescription.class);
-        dominantBindableTarget = mock(MethodDescription.class);
-        boundDelegation = mock(MethodDelegationBinder.Binding.class);
         when(boundDelegation.isValid()).thenReturn(true);
-        unboundDelegation = mock(MethodDelegationBinder.Binding.class);
         when(unboundDelegation.isValid()).thenReturn(false);
-        dominantBoundDelegation = mock(MethodDelegationBinder.Binding.class);
         when(dominantBoundDelegation.isValid()).thenReturn(true);
-        methodDelegationBinder = mock(MethodDelegationBinder.class);
         when(methodDelegationBinder.bind(typeDescription, source, bindableTarget))
                 .thenReturn(boundDelegation);
         when(methodDelegationBinder.bind(typeDescription, source, unbindableTarget))

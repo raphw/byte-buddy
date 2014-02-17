@@ -1,10 +1,11 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.assign.IllegalAssignment;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.IllegalStackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 import java.lang.annotation.Annotation;
 
@@ -26,28 +27,28 @@ public class ThisAnnotationBinderTest extends AbstractAnnotationBinderTest<This>
         assertEquals(This.class, This.Binder.INSTANCE.getHandledType());
     }
 
+    @Mock
     private TypeList typeList;
+    @Mock
     private TypeDescription parameterType;
 
     @Override
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        when(assignment.isValid()).thenReturn(true);
-        typeList = mock(TypeList.class);
-        parameterType = mock(TypeDescription.class);
+        when(stackManipulation.isValid()).thenReturn(true);
         when(typeList.get(0)).thenReturn(parameterType);
     }
 
     @Test
     public void testLegalBinding() throws Exception {
-        when(assignment.isValid()).thenReturn(true);
+        when(stackManipulation.isValid()).thenReturn(true);
         when(target.getParameterTypes()).thenReturn(typeList);
         when(target.getParameterAnnotations()).thenReturn(new Annotation[1][0]);
         AnnotationDrivenBinder.ArgumentBinder.IdentifiedBinding<?> identifiedBinding = This.Binder.INSTANCE
-                .bind(annotation, 0, source, target, typeDescription, assigner);
+                .bind(annotation, 0, source, target, instrumentedType, assigner);
         assertThat(identifiedBinding.isValid(), is(true));
-        verify(assigner).assign(typeDescription, parameterType, false);
+        verify(assigner).assign(instrumentedType, parameterType, false);
         verifyNoMoreInteractions(assigner);
         verify(target, atLeast(1)).getParameterTypes();
         verify(target, atLeast(1)).getParameterAnnotations();
@@ -55,15 +56,15 @@ public class ThisAnnotationBinderTest extends AbstractAnnotationBinderTest<This>
 
     @Test
     public void testLegalBindingRuntimeType() throws Exception {
-        when(assignment.isValid()).thenReturn(true);
+        when(stackManipulation.isValid()).thenReturn(true);
         when(target.getParameterTypes()).thenReturn(typeList);
         RuntimeType runtimeType = mock(RuntimeType.class);
         doReturn(RuntimeType.class).when(runtimeType).annotationType();
         when(target.getParameterAnnotations()).thenReturn(new Annotation[][]{{runtimeType}});
         AnnotationDrivenBinder.ArgumentBinder.IdentifiedBinding<?> identifiedBinding = This.Binder.INSTANCE
-                .bind(annotation, 0, source, target, typeDescription, assigner);
+                .bind(annotation, 0, source, target, instrumentedType, assigner);
         assertThat(identifiedBinding.isValid(), is(true));
-        verify(assigner).assign(typeDescription, parameterType, true);
+        verify(assigner).assign(instrumentedType, parameterType, true);
         verifyNoMoreInteractions(assigner);
         verify(target, atLeast(1)).getParameterTypes();
         verify(target, atLeast(1)).getParameterAnnotations();
@@ -71,14 +72,14 @@ public class ThisAnnotationBinderTest extends AbstractAnnotationBinderTest<This>
 
     @Test
     public void testIllegalBinding() throws Exception {
-        when(assignment.isValid()).thenReturn(false);
+        when(stackManipulation.isValid()).thenReturn(false);
         when(target.getParameterTypes()).thenReturn(typeList);
         when(target.getParameterAnnotations()).thenReturn(new Annotation[1][0]);
-        when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean())).thenReturn(IllegalAssignment.INSTANCE);
+        when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean())).thenReturn(IllegalStackManipulation.INSTANCE);
         AnnotationDrivenBinder.ArgumentBinder.IdentifiedBinding<?> identifiedBinding = This.Binder.INSTANCE
-                .bind(annotation, 0, source, target, typeDescription, assigner);
+                .bind(annotation, 0, source, target, instrumentedType, assigner);
         assertThat(identifiedBinding.isValid(), is(false));
-        verify(assigner).assign(typeDescription, parameterType, false);
+        verify(assigner).assign(instrumentedType, parameterType, false);
         verifyNoMoreInteractions(assigner);
         verify(target, atLeast(1)).getParameterTypes();
         verify(target, atLeast(1)).getParameterAnnotations();
@@ -88,13 +89,13 @@ public class ThisAnnotationBinderTest extends AbstractAnnotationBinderTest<This>
     public void testPrimitiveType() throws Exception {
         when(parameterType.isPrimitive()).thenReturn(true);
         when(target.getParameterTypes()).thenReturn(typeList);
-        This.Binder.INSTANCE.bind(annotation, 0, source, target, typeDescription, assigner);
+        This.Binder.INSTANCE.bind(annotation, 0, source, target, instrumentedType, assigner);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testArrayType() throws Exception {
         when(parameterType.isArray()).thenReturn(true);
         when(target.getParameterTypes()).thenReturn(typeList);
-        This.Binder.INSTANCE.bind(annotation, 0, source, target, typeDescription, assigner);
+        This.Binder.INSTANCE.bind(annotation, 0, source, target, instrumentedType, assigner);
     }
 }

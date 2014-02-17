@@ -1,10 +1,11 @@
 package com.blogspot.mydailyjava.bytebuddy;
 
-import org.junit.Before;
+import com.blogspot.mydailyjava.bytebuddy.test.MockitoRule;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
+import org.mockito.Mock;
 import org.objectweb.asm.MethodVisitor;
-
-import java.util.concurrent.Callable;
 
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -14,12 +15,11 @@ public class NamingStrategyTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
-    private NamingStrategy.UnnamedType unnamedType;
+    @Rule
+    public TestRule mockitoRule = new MockitoRule(this);
 
-    @Before
-    public void setUp() throws Exception {
-        unnamedType = mock(NamingStrategy.UnnamedType.class);
-    }
+    @Mock
+    private NamingStrategy.UnnamedType unnamedType;
 
     @Test
     public void testPrefixingRandomNonConflictingPackage() throws Exception {

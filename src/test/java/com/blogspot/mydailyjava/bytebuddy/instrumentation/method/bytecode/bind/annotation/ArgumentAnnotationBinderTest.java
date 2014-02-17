@@ -38,7 +38,7 @@ public class ArgumentAnnotationBinderTest extends AbstractAnnotationBinderTest<A
 
     private void testLegalBinding(Annotation[][] annotations, boolean considerRuntimeType) throws Exception {
         final int sourceIndex = 2, targetIndex = 1;
-        when(assignment.isValid()).thenReturn(true);
+        when(stackManipulation.isValid()).thenReturn(true);
         when(annotation.value()).thenReturn(sourceIndex);
         TypeList sourceParameters = mock(TypeList.class);
         when(sourceParameters.size()).thenReturn(sourceIndex + 1);
@@ -53,7 +53,7 @@ public class ArgumentAnnotationBinderTest extends AbstractAnnotationBinderTest<A
         when(target.getParameterTypes()).thenReturn(targetParameters);
         when(target.getParameterAnnotations()).thenReturn(annotations);
         AnnotationDrivenBinder.ArgumentBinder.IdentifiedBinding<?> identifiedBinding = Argument.Binder.INSTANCE
-                .bind(annotation, targetIndex, source, target, typeDescription, assigner);
+                .bind(annotation, targetIndex, source, target, instrumentedType, assigner);
         assertThat(identifiedBinding.isValid(), is(true));
         Object expectedToken = new MostSpecificTypeResolver.ParameterIndexToken(sourceIndex);
         assertThat(identifiedBinding.getIdentificationToken(), equalTo(expectedToken));
@@ -75,7 +75,7 @@ public class ArgumentAnnotationBinderTest extends AbstractAnnotationBinderTest<A
         when(typeList.size()).thenReturn(0);
         when(source.getParameterTypes()).thenReturn(typeList);
         AnnotationDrivenBinder.ArgumentBinder.IdentifiedBinding<?> identifiedBinding = Argument.Binder.INSTANCE
-                .bind(annotation, targetIndex, source, target, typeDescription, assigner);
+                .bind(annotation, targetIndex, source, target, instrumentedType, assigner);
         assertThat(identifiedBinding.isValid(), is(false));
         verify(annotation, atLeast(1)).value();
         verify(source, atLeast(1)).getParameterTypes();
@@ -85,6 +85,6 @@ public class ArgumentAnnotationBinderTest extends AbstractAnnotationBinderTest<A
     @Test(expected = IllegalArgumentException.class)
     public void testNegativeAnnotationValue() throws Exception {
         when(annotation.value()).thenReturn(-1);
-        Argument.Binder.INSTANCE.bind(annotation, 0, source, target, typeDescription, assigner);
+        Argument.Binder.INSTANCE.bind(annotation, 0, source, target, instrumentedType, assigner);
     }
 }
