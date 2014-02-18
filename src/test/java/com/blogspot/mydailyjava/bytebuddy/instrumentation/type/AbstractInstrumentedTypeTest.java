@@ -134,6 +134,7 @@ public abstract class AbstractInstrumentedTypeTest {
     @Test
     public void testWithField() throws Exception {
         TypeDescription fieldType = mock(TypeDescription.class);
+        when(fieldType.getInternalName()).thenReturn(BAR);
         instrumentedType = instrumentedType.withField(QUX, fieldType, Modifier.PUBLIC, false);
         assertThat(instrumentedType.getDeclaredFields().size(), is(1));
         FieldDescription fieldDescription = instrumentedType.getDeclaredFields().get(0);
@@ -157,7 +158,9 @@ public abstract class AbstractInstrumentedTypeTest {
     @Test
     public void testWithMethod() throws Exception {
         TypeDescription parameterType = mock(TypeDescription.class);
+        when(parameterType.getInternalName()).thenReturn(BAR);
         TypeDescription returnType = mock(TypeDescription.class);
+        when(returnType.getInternalName()).thenReturn(BAR);
         instrumentedType = instrumentedType.withMethod(QUX, returnType, Arrays.asList(parameterType), Modifier.PUBLIC, false);
         assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
         MethodDescription methodDescription = instrumentedType.getDeclaredMethods().get(0);

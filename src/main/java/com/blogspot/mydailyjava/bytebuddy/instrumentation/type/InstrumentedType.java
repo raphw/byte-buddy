@@ -10,6 +10,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public interface InstrumentedType extends TypeDescription {
@@ -30,9 +31,9 @@ public interface InstrumentedType extends TypeDescription {
                 this.synthetic = synthetic;
             }
 
-            private FieldToken(FieldDescription fieldDescription) {
+            private FieldToken(String typeInternalName, FieldDescription fieldDescription) {
                 name = fieldDescription.getName();
-                fieldType = withSubstitutedSelfReference(fieldDescription.getFieldType());
+                fieldType = withSubstitutedSelfReference(typeInternalName, fieldDescription.getFieldType());
                 modifiers = fieldDescription.getModifiers();
                 synthetic = fieldDescription.isSynthetic();
             }
@@ -108,12 +109,12 @@ public interface InstrumentedType extends TypeDescription {
                 this.synthetic = synthetic;
             }
 
-            private MethodToken(MethodDescription methodDescription) {
+            private MethodToken(String typeInternalName, MethodDescription methodDescription) {
                 this.internalName = methodDescription.getInternalName();
-                this.returnType = withSubstitutedSelfReference(methodDescription.getReturnType());
+                this.returnType = withSubstitutedSelfReference(typeInternalName, methodDescription.getReturnType());
                 this.parameterTypes = new ArrayList<TypeDescription>(methodDescription.getParameterTypes().size());
                 for (TypeDescription typeDescription : methodDescription.getParameterTypes()) {
-                    parameterTypes.add(withSubstitutedSelfReference(typeDescription));
+                    parameterTypes.add(withSubstitutedSelfReference(typeInternalName, typeDescription));
                 }
                 this.modifiers = methodDescription.getModifiers();
                 this.synthetic = methodDescription.isSynthetic();
@@ -210,22 +211,28 @@ public interface InstrumentedType extends TypeDescription {
             }
         }
 
-        private TypeDescription withSubstitutedSelfReference(TypeDescription typeDescription) {
-            return typeDescription instanceof InstrumentedType ? this : typeDescription;
+        private TypeDescription withSubstitutedSelfReference(String instrumentedTypeName, TypeDescription typeDescription) {
+            return typeDescription.getInternalName().equals(instrumentedTypeName) ? this : typeDescription;
         }
 
         protected final List<FieldDescription> fieldDescriptions;
         protected final List<MethodDescription> methodDescriptions;
 
-        protected AbstractInstrumentedType(List<? extends FieldDescription> fieldDescriptions,
+        protected AbstractInstrumentedType() {
+            fieldDescriptions = Collections.emptyList();
+            methodDescriptions = Collections.emptyList();
+        }
+
+        protected AbstractInstrumentedType(String typeInternalName,
+                                           List<? extends FieldDescription> fieldDescriptions,
                                            List<? extends MethodDescription> methodDescriptions) {
             this.fieldDescriptions = new ArrayList<FieldDescription>(fieldDescriptions.size());
             for (FieldDescription fieldDescription : fieldDescriptions) {
-                this.fieldDescriptions.add(new FieldToken(fieldDescription));
+                this.fieldDescriptions.add(new FieldToken(typeInternalName, fieldDescription));
             }
             this.methodDescriptions = new ArrayList<MethodDescription>(methodDescriptions.size());
             for (MethodDescription methodDescription : methodDescriptions) {
-                this.methodDescriptions.add(new MethodToken(methodDescription));
+                this.methodDescriptions.add(new MethodToken(typeInternalName, methodDescription));
             }
         }
 

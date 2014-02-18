@@ -1,4 +1,4 @@
-package com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute;
+package com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.annotation;
 
 import org.objectweb.asm.*;
 
@@ -7,7 +7,23 @@ import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-public interface AnnotationWriter {
+public interface AnnotationAppender {
+
+    static enum Visibility {
+
+        VISIBLE(true),
+        INVISIBLE(false);
+
+        private final boolean visible;
+
+        private Visibility(boolean visible) {
+            this.visible = visible;
+        }
+
+        public boolean isVisible() {
+            return visible;
+        }
+    }
 
     static interface Target {
 
@@ -72,18 +88,20 @@ public interface AnnotationWriter {
         AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible);
     }
 
-    static class Default implements AnnotationWriter {
+    static class Default implements AnnotationAppender {
 
         private static final String ASM_IGNORE_NAME = null;
 
         private final Target target;
+        private final boolean visible;
 
-        public Default(Target target) {
+        public Default(Target target, Visibility visibility) {
             this.target = target;
+            visible = visibility.isVisible();
         }
 
         @Override
-        public AnnotationWriter append(Annotation annotation) {
+        public AnnotationAppender append(Annotation annotation) {
             try {
                 tryAppend(annotation);
                 return this;
@@ -94,9 +112,8 @@ public interface AnnotationWriter {
             }
         }
 
-        private void tryAppend(Annotation annotation)
-                throws InvocationTargetException, IllegalAccessException {
-            handle(target.visit(Type.getDescriptor(annotation.annotationType()), true), annotation);
+        private void tryAppend(Annotation annotation) throws InvocationTargetException, IllegalAccessException {
+            handle(target.visit(Type.getDescriptor(annotation.annotationType()), visible), annotation);
         }
 
         private void handle(AnnotationVisitor annotationVisitor, Annotation annotation)
@@ -121,11 +138,13 @@ public interface AnnotationWriter {
                     apply(arrayVisitor, componentType, ASM_IGNORE_NAME, Array.get(value, index));
                 }
                 arrayVisitor.visitEnd();
+            } else if (valueType == Class.class) {
+                annotationVisitor.visit(name, Type.getType((Class<?>) value));
             } else {
                 annotationVisitor.visit(name, value);
             }
         }
     }
 
-    AnnotationWriter append(Annotation annotation);
+    AnnotationAppender append(Annotation annotation);
 }

@@ -9,7 +9,6 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public class SubclassLoadedTypeInstrumentation
@@ -34,7 +33,6 @@ public class SubclassLoadedTypeInstrumentation
                                              TypeManifestation typeManifestation,
                                              SyntheticState syntheticState,
                                              NamingStrategy namingStrategy) {
-        super(Collections.<FieldDescription>emptyList(), Collections.<MethodDescription>emptyList());
         this.classVersion = classVersion;
         this.superClass = superClass;
         this.interfaces = interfaces;
@@ -53,7 +51,7 @@ public class SubclassLoadedTypeInstrumentation
                                               String name,
                                               List<? extends FieldDescription> fieldDescriptions,
                                               List<? extends MethodDescription> methodDescriptions) {
-        super(fieldDescriptions, methodDescriptions);
+        super(name, fieldDescriptions, methodDescriptions);
         this.classVersion = classVersion;
         this.superClass = superClass;
         this.interfaces = interfaces;
