@@ -2,7 +2,7 @@ package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
-import com.blogspot.mydailyjava.bytebuddy.test.MockitoRule;
+import com.blogspot.mydailyjava.bytebuddy.utility.MockitoRule;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
@@ -31,10 +31,14 @@ public class MethodArgumentTest {
         return Arrays.asList(new Object[][]{
                 {Object.class, Opcodes.ALOAD, 1},
                 {Object[].class, Opcodes.AALOAD, 1},
+                {boolean.class, Opcodes.ILOAD, 1},
+                {byte.class, Opcodes.ILOAD, 1},
+                {short.class, Opcodes.ILOAD, 1},
+                {char.class, Opcodes.ILOAD, 1},
                 {int.class, Opcodes.ILOAD, 1},
                 {long.class, Opcodes.LLOAD, 2},
-                {double.class, Opcodes.DLOAD, 2},
                 {float.class, Opcodes.FLOAD, 1},
+                {double.class, Opcodes.DLOAD, 2},
         });
     }
 
@@ -62,7 +66,7 @@ public class MethodArgumentTest {
     }
 
     @Test
-    public void testObject() throws Exception {
+    public void testLoading() throws Exception {
         StackManipulation stackManipulation = MethodArgument.forType(typeDescription).loadFromIndex(4);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, instrumentationContext);

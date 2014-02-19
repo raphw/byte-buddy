@@ -1,4 +1,4 @@
-package com.blogspot.mydailyjava.bytebuddy.test;
+package com.blogspot.mydailyjava.bytebuddy.utility;
 
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;

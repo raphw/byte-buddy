@@ -1,19 +1,43 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation;
 
+import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 public interface Instrumentation {
 
     static interface Context {
 
-        AuxiliaryType.Named register(AuxiliaryType auxiliaryType);
+        static class Default implements Context {
+
+            private final Map<AuxiliaryType, DynamicType<?>> auxiliaryTypes;
+
+            public Default() {
+                auxiliaryTypes = new HashMap<AuxiliaryType, DynamicType<?>>();
+            }
+
+            @Override
+            public String register(AuxiliaryType auxiliaryType) {
+                DynamicType<?> made = auxiliaryTypes.get(auxiliaryType);
+                if (made == null) {
+                    throw new RuntimeException("Not yet implemented");
+//                    named = auxiliaryType.name();
+//                    auxiliaryTypes.put(auxiliaryType, named);
+//                    return named;
+                }
+                return made.getMainTypeName();
+            }
+        }
+
+        String register(AuxiliaryType auxiliaryType);
     }
 
     static interface ClassLoadingCallback {

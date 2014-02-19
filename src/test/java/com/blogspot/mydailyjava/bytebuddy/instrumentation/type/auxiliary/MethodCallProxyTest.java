@@ -1,10 +1,10 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.type.auxiliary;
 
 import com.blogspot.mydailyjava.bytebuddy.ClassVersion;
+import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
+import com.blogspot.mydailyjava.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.loading.ByteArrayClassLoader;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -22,7 +22,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class)
-@Ignore("under development / evaluation")
 public class MethodCallProxyTest {
 
     private static final ClassVersion CLASS_VERSION = new ClassVersion(Opcodes.V1_6);
@@ -92,9 +91,9 @@ public class MethodCallProxyTest {
         MethodDescription proxiedMethod = new MethodDescription.ForMethod
                 (proxiedType.getDeclaredMethod(FOO, proxiedMethodParameters));
         MethodCallProxy methodCallProxy = new MethodCallProxy(proxiedMethod);
-        AuxiliaryType.Named namedAuxiliaryClass = methodCallProxy.name(proxyName(proxiedType), CLASS_VERSION);
+        DynamicType<?> dynamicType = methodCallProxy.make(proxyName(proxiedType), CLASS_VERSION);
         ClassLoader proxyClassLoader = new ByteArrayClassLoader(getClass().getClassLoader(),
-                Collections.singletonMap(proxyName(proxiedType), namedAuxiliaryClass.make().getMainTypeByte()));
+                Collections.singletonMap(dynamicType.getMainTypeName(), dynamicType.getMainTypeByte()));
         Class<?> proxyType = Class.forName(proxyName(proxiedType), false, proxyClassLoader);
         Constructor<?> proxyConstructor = assertProxyType(proxyType, proxiedMethod);
         InvocationCountable invocationCountable = proxiedType.newInstance();
@@ -103,7 +102,7 @@ public class MethodCallProxyTest {
         if (!proxiedMethod.isStatic()) {
             methodArgument[index++] = invocationCountable;
         }
-        for (Object argument : methodArgument) {
+        for (Object argument : this.methodArgument) {
             methodArgument[index++] = argument;
         }
         Object methodCallProxyInstance = proxyConstructor.newInstance(methodArgument);

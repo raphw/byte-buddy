@@ -1,13 +1,14 @@
-package com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.annotation;
+package com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute;
 
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.annotation.AnnotationAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.ClassVisitor;
 
 import java.lang.annotation.Annotation;
 
-public interface TypeAnnotationAppender {
+public interface TypeAttributeAppender {
 
-    static class ForAnnotation implements TypeAnnotationAppender {
+    static class ForAnnotation implements TypeAttributeAppender {
 
         private final Annotation annotation;
 
@@ -23,7 +24,7 @@ public interface TypeAnnotationAppender {
         }
     }
 
-    static class ForLoadedType implements TypeAnnotationAppender {
+    static class ForLoadedType implements TypeAttributeAppender {
 
         private final TypeDescription typeDescription;
 
@@ -37,7 +38,7 @@ public interface TypeAnnotationAppender {
         }
     }
 
-    static enum ForSuperType implements TypeAnnotationAppender {
+    static enum ForSuperType implements TypeAttributeAppender {
         INSTANCE;
 
         @Override
@@ -46,7 +47,7 @@ public interface TypeAnnotationAppender {
         }
     }
 
-    static enum ForInstrumentedType implements TypeAnnotationAppender {
+    static enum ForInstrumentedType implements TypeAttributeAppender {
         INSTANCE;
 
         @Override
@@ -55,6 +56,22 @@ public interface TypeAnnotationAppender {
                     new AnnotationAppender.Target.OnType(classVisitor), AnnotationAppender.Visibility.VISIBLE);
             for (Annotation annotation : typeDescription.getAnnotations()) {
                 annotationAppender.append(annotation);
+            }
+        }
+    }
+
+    static class Compound implements TypeAttributeAppender {
+
+        private final TypeAttributeAppender[] typeAttributeAppender;
+
+        public Compound(TypeAttributeAppender... typeAttributeAppender) {
+            this.typeAttributeAppender = typeAttributeAppender;
+        }
+
+        @Override
+        public void apply(ClassVisitor classVisitor, TypeDescription typeDescription) {
+            for (TypeAttributeAppender typeAttributeAppender : this.typeAttributeAppender) {
+                typeAttributeAppender.apply(classVisitor, typeDescription);
             }
         }
     }

@@ -3,6 +3,7 @@ package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodList;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.*;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.MethodReturn;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.primitive.PrimitiveTypeAwareAssigner;
@@ -11,10 +12,6 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodNameEqualityResolver;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MostSpecificTypeResolver;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.AllArguments;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.AnnotationDrivenBinder;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.This;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
@@ -38,7 +35,8 @@ public class MethodDelegation implements ByteCodeAppender.Factory {
                         Arrays.<AnnotationDrivenBinder.ArgumentBinder<?>>asList(
                                 Argument.Binder.INSTANCE,
                                 This.Binder.INSTANCE,
-                                AllArguments.Binder.INSTANCE),
+                                AllArguments.Binder.INSTANCE,
+                                SuperCall.Binder.INSTANCE),
                         Argument.NextUnboundAsDefaultProvider.INSTANCE,
                         new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE), false),
                         MethodDelegationBinder.MethodInvoker.Simple.INSTANCE),

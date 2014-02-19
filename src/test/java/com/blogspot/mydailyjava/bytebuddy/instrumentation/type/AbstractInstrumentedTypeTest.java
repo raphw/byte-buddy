@@ -38,7 +38,7 @@ public abstract class AbstractInstrumentedTypeTest {
                 Object.class,
                 new Class<?>[]{Serializable.class},
                 Visibility.PUBLIC,
-                TypeManifestation.CONCRETE,
+                TypeManifestation.PLAIN,
                 SyntheticState.NON_SYNTHETIC);
     }
 
@@ -135,7 +135,7 @@ public abstract class AbstractInstrumentedTypeTest {
     public void testWithField() throws Exception {
         TypeDescription fieldType = mock(TypeDescription.class);
         when(fieldType.getInternalName()).thenReturn(BAR);
-        instrumentedType = instrumentedType.withField(QUX, fieldType, Modifier.PUBLIC, false);
+        instrumentedType = instrumentedType.withField(QUX, fieldType, Modifier.PUBLIC);
         assertThat(instrumentedType.getDeclaredFields().size(), is(1));
         FieldDescription fieldDescription = instrumentedType.getDeclaredFields().get(0);
         assertThat(fieldDescription.getFieldType(), is(fieldType));
@@ -146,7 +146,7 @@ public abstract class AbstractInstrumentedTypeTest {
 
     @Test
     public void testWithFieldOfInstrumentedType() throws Exception {
-        instrumentedType = instrumentedType.withField(QUX, instrumentedType, Modifier.PUBLIC, false);
+        instrumentedType = instrumentedType.withField(QUX, instrumentedType, Modifier.PUBLIC);
         assertThat(instrumentedType.getDeclaredFields().size(), is(1));
         FieldDescription fieldDescription = instrumentedType.getDeclaredFields().get(0);
         assertThat(fieldDescription.getFieldType(), sameInstance((TypeDescription) instrumentedType));
@@ -161,7 +161,7 @@ public abstract class AbstractInstrumentedTypeTest {
         when(parameterType.getInternalName()).thenReturn(BAR);
         TypeDescription returnType = mock(TypeDescription.class);
         when(returnType.getInternalName()).thenReturn(BAR);
-        instrumentedType = instrumentedType.withMethod(QUX, returnType, Arrays.asList(parameterType), Modifier.PUBLIC, false);
+        instrumentedType = instrumentedType.withMethod(QUX, returnType, Arrays.asList(parameterType), Modifier.PUBLIC);
         assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
         MethodDescription methodDescription = instrumentedType.getDeclaredMethods().get(0);
         assertThat(methodDescription.getParameterTypes().size(), is(1));
@@ -174,7 +174,7 @@ public abstract class AbstractInstrumentedTypeTest {
 
     @Test
     public void testWithMethodOfInstrumentedType() throws Exception {
-        instrumentedType = instrumentedType.withMethod(QUX, instrumentedType, Arrays.asList(instrumentedType), Modifier.PUBLIC, false);
+        instrumentedType = instrumentedType.withMethod(QUX, instrumentedType, Arrays.asList(instrumentedType), Modifier.PUBLIC);
         assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
         MethodDescription methodDescription = instrumentedType.getDeclaredMethods().get(0);
         assertThat(methodDescription.getParameterTypes().size(), is(1));

@@ -2,7 +2,7 @@ package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
-import com.blogspot.mydailyjava.bytebuddy.test.MockitoRule;
+import com.blogspot.mydailyjava.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;

@@ -3,6 +3,8 @@ package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import org.objectweb.asm.MethodVisitor;
 
+import java.util.Arrays;
+
 public interface StackManipulation {
 
     static class Size {
@@ -39,27 +41,34 @@ public interface StackManipulation {
 
     static class Compound implements StackManipulation {
 
-        private final StackManipulation first;
-        private final StackManipulation second;
+        private final StackManipulation[] stackManipulation;
 
-        public Compound(StackManipulation first, StackManipulation second) {
-            this.first = first;
-            this.second = second;
+        public Compound(StackManipulation... stackManipulation) {
+            this.stackManipulation = stackManipulation;
         }
 
         @Override
         public boolean isValid() {
-            return first.isValid() && second.isValid();
+            for (StackManipulation stackManipulation : this.stackManipulation) {
+                if (!stackManipulation.isValid()) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-            return first.apply(methodVisitor, instrumentationContext).aggregate(second.apply(methodVisitor, instrumentationContext));
+            Size size = new Size(0, 0);
+            for (StackManipulation stackManipulation : this.stackManipulation) {
+                size = size.aggregate(stackManipulation.apply(methodVisitor, instrumentationContext));
+            }
+            return size;
         }
 
         @Override
         public String toString() {
-            return "StackManipulation.Compound{first=" + first + ", second=" + second + '}';
+            return "StackManipulation.Compound{" + Arrays.asList(stackManipulation) + "}";
         }
     }
 

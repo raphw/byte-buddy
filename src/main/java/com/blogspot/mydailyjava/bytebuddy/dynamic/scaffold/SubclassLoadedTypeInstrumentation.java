@@ -1,4 +1,4 @@
-package com.blogspot.mydailyjava.bytebuddy.instrumentation.type.scaffold;
+package com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold;
 
 import com.blogspot.mydailyjava.bytebuddy.*;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.field.FieldDescription;
@@ -6,7 +6,9 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescripti
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
+import org.objectweb.asm.Opcodes;
 
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -20,53 +22,42 @@ public class SubclassLoadedTypeInstrumentation
     private final Class<?> superClass;
     private final Collection<Class<?>> interfaces;
 
-    private final Visibility visibility;
-    private final TypeManifestation typeManifestation;
-    private final SyntheticState syntheticState;
+    private final int modifiers;
 
     private final String name;
 
     public SubclassLoadedTypeInstrumentation(ClassVersion classVersion,
                                              Class<?> superClass,
                                              Collection<Class<?>> interfaces,
-                                             Visibility visibility,
-                                             TypeManifestation typeManifestation,
-                                             SyntheticState syntheticState,
+                                             int modifiers,
                                              NamingStrategy namingStrategy) {
         this.classVersion = classVersion;
         this.superClass = superClass;
         this.interfaces = interfaces;
-        this.visibility = visibility;
-        this.typeManifestation = typeManifestation;
-        this.syntheticState = syntheticState;
+        this.modifiers = modifiers;
         this.name = namingStrategy.getName(this);
     }
 
-    private SubclassLoadedTypeInstrumentation(ClassVersion classVersion,
-                                              Class<?> superClass,
-                                              Collection<Class<?>> interfaces,
-                                              Visibility visibility,
-                                              TypeManifestation typeManifestation,
-                                              SyntheticState syntheticState,
-                                              String name,
-                                              List<? extends FieldDescription> fieldDescriptions,
-                                              List<? extends MethodDescription> methodDescriptions) {
+    protected SubclassLoadedTypeInstrumentation(ClassVersion classVersion,
+                                                Class<?> superClass,
+                                                Collection<Class<?>> interfaces,
+                                                int modifiers,
+                                                String name,
+                                                List<? extends FieldDescription> fieldDescriptions,
+                                                List<? extends MethodDescription> methodDescriptions) {
         super(name, fieldDescriptions, methodDescriptions);
         this.classVersion = classVersion;
         this.superClass = superClass;
         this.interfaces = interfaces;
-        this.visibility = visibility;
-        this.typeManifestation = typeManifestation;
-        this.syntheticState = syntheticState;
+        this.modifiers = modifiers;
         this.name = name;
     }
 
     @Override
     public InstrumentedType withField(String name,
                                       TypeDescription fieldType,
-                                      int modifiers,
-                                      boolean synthetic) {
-        FieldDescription additionalField = new FieldToken(name, fieldType, modifiers, synthetic);
+                                      int access) {
+        FieldDescription additionalField = new FieldToken(name, fieldType, access);
         if (fieldDescriptions.contains(additionalField)) {
             throw new IllegalArgumentException("Field " + additionalField + " is already defined on " + this);
         }
@@ -75,9 +66,7 @@ public class SubclassLoadedTypeInstrumentation
         return new SubclassLoadedTypeInstrumentation(classVersion,
                 superClass,
                 interfaces,
-                visibility,
-                typeManifestation,
-                syntheticState,
+                access,
                 this.name,
                 fieldDescriptions,
                 methodDescriptions);
@@ -87,20 +76,17 @@ public class SubclassLoadedTypeInstrumentation
     public InstrumentedType withMethod(String internalName,
                                        TypeDescription returnType,
                                        List<? extends TypeDescription> parameterTypes,
-                                       int modifiers,
-                                       boolean synthetic) {
-        MethodDescription additionalMethod = new MethodToken(internalName, returnType, parameterTypes, modifiers, synthetic);
+                                       int access) {
+        MethodDescription additionalMethod = new MethodToken(internalName, returnType, parameterTypes, access);
         if (methodDescriptions.contains(additionalMethod)) {
-            throw new IllegalArgumentException("Method " + additionalMethod + " is alread defined on " + this);
+            throw new IllegalArgumentException("Method " + additionalMethod + " is already defined on " + this);
         }
         List<MethodDescription> methodDescriptions = new ArrayList<MethodDescription>(this.methodDescriptions);
         methodDescriptions.add(additionalMethod);
         return new SubclassLoadedTypeInstrumentation(classVersion,
                 superClass,
                 interfaces,
-                visibility,
-                typeManifestation,
-                syntheticState,
+                access,
                 name,
                 fieldDescriptions,
                 methodDescriptions);
@@ -149,12 +135,7 @@ public class SubclassLoadedTypeInstrumentation
 
     @Override
     public int getModifiers() {
-        return typeManifestation.getMask() | syntheticState.getMask() | visibility.getMask();
-    }
-
-    @Override
-    public boolean isSynthetic() {
-        return syntheticState.isSynthetic();
+        return modifiers;
     }
 
     @Override
@@ -169,17 +150,33 @@ public class SubclassLoadedTypeInstrumentation
 
     @Override
     public Visibility getVisibility() {
-        return visibility;
+        if ((modifiers & Modifier.PUBLIC) != 0) {
+            return Visibility.PUBLIC;
+        } else if ((modifiers & Modifier.PROTECTED) != 0) {
+            return Visibility.PROTECTED;
+        } else if ((modifiers & Modifier.PRIVATE) != 0) {
+            return Visibility.PROTECTED;
+        } else {
+            return Visibility.PACKAGE_PRIVATE;
+        }
     }
 
     @Override
     public TypeManifestation getTypeManifestation() {
-        return typeManifestation;
+        if ((modifiers & Modifier.FINAL) != 0) {
+            return TypeManifestation.FINAL;
+        } else if ((modifiers & Opcodes.ACC_INTERFACE) != 0) {
+            return TypeManifestation.INTERFACE;
+        } else if ((modifiers & Opcodes.ACC_ABSTRACT) != 0) {
+            return TypeManifestation.ABSTRACT;
+        } else {
+            return TypeManifestation.PLAIN;
+        }
     }
 
     @Override
     public SyntheticState getSyntheticState() {
-        return syntheticState;
+        return SyntheticState.is(isSynthetic());
     }
 
     @Override

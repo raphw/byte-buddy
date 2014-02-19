@@ -10,7 +10,7 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
-import com.blogspot.mydailyjava.bytebuddy.test.MockitoRule;
+import com.blogspot.mydailyjava.bytebuddy.utility.MockitoRule;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;

@@ -3,7 +3,7 @@ package com.blogspot.mydailyjava.bytebuddy;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.ModifierContributor;
 import org.objectweb.asm.Opcodes;
 
-public enum SyntheticState implements ModifierContributor {
+public enum SyntheticState implements ModifierContributor.ForType, ModifierContributor.ForMethod, ModifierContributor.ForField {
 
     SYNTHETIC(Opcodes.ACC_SYNTHETIC, true),
     NON_SYNTHETIC(0, false);

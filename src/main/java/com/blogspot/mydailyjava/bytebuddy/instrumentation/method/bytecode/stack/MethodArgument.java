@@ -1,6 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.StackSize;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
@@ -23,7 +24,7 @@ public enum MethodArgument {
                 return DOUBLE;
             } else if (typeDescription.represents(float.class)) {
                 return FLOAT;
-            } else if(typeDescription.represents(void.class)) {
+            } else if (typeDescription.represents(void.class)) {
                 throw new IllegalArgumentException("Argument type cannot be void");
             } else {
                 return INTEGER;
@@ -35,6 +36,23 @@ public enum MethodArgument {
                 return OBJECT_REFERENCE;
             }
         }
+    }
+
+    public static StackManipulation loadParameters(MethodDescription methodDescription) {
+        int stackValues = (methodDescription.isStatic() ? 0 : 1) + methodDescription.getParameterTypes().size();
+        StackManipulation[] stackManipulation = new StackManipulation[stackValues];
+        int parameterIndex = 0, stackIndex;
+        if (!methodDescription.isStatic()) {
+            stackManipulation[parameterIndex++] = forType(methodDescription.getDeclaringType()).loadFromIndex(0);
+            stackIndex = methodDescription.getDeclaringType().getStackSize().getSize();
+        } else {
+            stackIndex = 0;
+        }
+        for (TypeDescription parameterType : methodDescription.getParameterTypes()) {
+            stackManipulation[parameterIndex++] = forType(parameterType).loadFromIndex(stackIndex);
+            stackIndex += parameterType.getStackSize().getSize();
+        }
+        return new StackManipulation.Compound(stackManipulation);
     }
 
     private final int loadOpcode;

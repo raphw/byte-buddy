@@ -1,17 +1,16 @@
 package com.blogspot.mydailyjava.bytebuddy;
 
 import com.blogspot.mydailyjava.bytebuddy.asm.ClassVisitorWrapper;
+import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers;
-import com.blogspot.mydailyjava.bytebuddy.proxy.DynamicType;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.scaffold.SubclassDynamicProxyBuilder;
 import org.objectweb.asm.Opcodes;
 
 public class ByteBuddy {
 
     public static final int DEFAULT_CLASS_VERSION = Opcodes.V1_5;
     public static final Visibility DEFAULT_VISIBILITY = Visibility.PUBLIC;
-    public static final TypeManifestation DEFAULT_TYPE_MANIFESTATION = TypeManifestation.CONCRETE;
+    public static final TypeManifestation DEFAULT_TYPE_MANIFESTATION = TypeManifestation.PLAIN;
     public static final String DEFAULT_NAME_PREFIX = "ByteBuddy";
     public static final SyntheticState DEFAULT_SYNTHETIC_STATE = SyntheticState.NON_SYNTHETIC;
     public static final MethodMatcher DEFAULT_IGNORED_METHODS = MethodMatchers.isDefaultFinalize();
@@ -160,7 +159,8 @@ public class ByteBuddy {
     }
 
     public <T> DynamicType.Builder<T> subclass(Class<? extends T> type) {
-        return SubclassDynamicProxyBuilder.of(type, this);
+//        return SubclassDynamicTypeBuilder.of(type, this);
+        throw new RuntimeException();
     }
 
     private static <T> T checkNotNull(T type) {

@@ -1,6 +1,6 @@
 package com.blogspot.mydailyjava.bytebuddy.asm;
 
-import com.blogspot.mydailyjava.bytebuddy.test.MockitoRule;
+import com.blogspot.mydailyjava.bytebuddy.utility.MockitoRule;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;

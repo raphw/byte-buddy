@@ -1,5 +1,6 @@
-package com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.annotation;
+package com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute;
 
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.annotation.AnnotationAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
@@ -7,14 +8,47 @@ import org.objectweb.asm.MethodVisitor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
-public interface MethodAnnotationAppender {
+public interface MethodAttributeAppender {
 
     static interface Factory {
 
-        MethodAnnotationAppender make(TypeDescription typeDescription);
+        static class Compound implements Factory {
+
+            private final Factory[] factory;
+
+            public Compound(Factory... factory) {
+                this.factory = factory;
+            }
+
+            @Override
+            public MethodAttributeAppender make(TypeDescription typeDescription) {
+                MethodAttributeAppender[] methodAttributeAppender = new MethodAttributeAppender[factory.length];
+                int index = 0;
+                for(Factory factory : this.factory) {
+                    methodAttributeAppender[index++] = factory.make(typeDescription);
+                }
+                return new MethodAttributeAppender.Compound(methodAttributeAppender);
+            }
+        }
+
+        MethodAttributeAppender make(TypeDescription typeDescription);
     }
 
-    static class ForAnnotation implements MethodAnnotationAppender, Factory {
+    static enum NoOp implements MethodAttributeAppender, Factory {
+        INSTANCE;
+
+        @Override
+        public MethodAttributeAppender make(TypeDescription typeDescription) {
+            return this;
+        }
+
+        @Override
+        public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
+            /* do nothing */
+        }
+    }
+
+    static class ForAnnotation implements MethodAttributeAppender, Factory {
 
         private static interface Target {
 
@@ -69,12 +103,12 @@ public interface MethodAnnotationAppender {
         }
 
         @Override
-        public MethodAnnotationAppender make(TypeDescription typeDescription) {
+        public MethodAttributeAppender make(TypeDescription typeDescription) {
             return this;
         }
     }
 
-    static class ForLoadedMethod implements MethodAnnotationAppender, Factory {
+    static class ForLoadedMethod implements MethodAttributeAppender, Factory {
 
         private final MethodDescription methodDescription;
 
@@ -88,12 +122,12 @@ public interface MethodAnnotationAppender {
         }
 
         @Override
-        public MethodAnnotationAppender make(TypeDescription typeDescription) {
+        public MethodAttributeAppender make(TypeDescription typeDescription) {
             return this;
         }
     }
 
-    static enum ForInstrumentedMethod implements MethodAnnotationAppender, Factory {
+    static enum ForInstrumentedMethod implements MethodAttributeAppender, Factory {
         INSTANCE;
 
         @Override
@@ -114,8 +148,24 @@ public interface MethodAnnotationAppender {
         }
 
         @Override
-        public MethodAnnotationAppender make(TypeDescription typeDescription) {
+        public MethodAttributeAppender make(TypeDescription typeDescription) {
             return this;
+        }
+    }
+
+    static class Compound implements MethodAttributeAppender {
+
+        private final MethodAttributeAppender[] methodAttributeAppender;
+
+        public Compound(MethodAttributeAppender... methodAttributeAppender) {
+            this.methodAttributeAppender = methodAttributeAppender;
+        }
+
+        @Override
+        public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
+            for(MethodAttributeAppender methodAttributeAppender : this.methodAttributeAppender) {
+                methodAttributeAppender.apply(methodVisitor, methodDescription);
+            }
         }
     }
 

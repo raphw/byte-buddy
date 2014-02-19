@@ -1,7 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.collection;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
-import com.blogspot.mydailyjava.bytebuddy.test.MockitoRule;
+import com.blogspot.mydailyjava.bytebuddy.utility.MockitoRule;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;

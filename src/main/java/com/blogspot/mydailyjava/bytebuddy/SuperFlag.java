@@ -3,16 +3,14 @@ package com.blogspot.mydailyjava.bytebuddy;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.ModifierContributor;
 import org.objectweb.asm.Opcodes;
 
-public enum Visibility implements ModifierContributor.ForType, ModifierContributor.ForMethod, ModifierContributor.ForField {
+public enum SuperFlag implements ModifierContributor.ForType {
 
-    PUBLIC(Opcodes.ACC_PUBLIC),
-    PROTECTED(Opcodes.ACC_PROTECTED),
-    PACKAGE_PRIVATE(0),
-    PRIVATE(Opcodes.ACC_PRIVATE);
+    DEFINED(Opcodes.ACC_SUPER),
+    UNDEFINED(0);
 
     private final int mask;
 
-    private Visibility(int mask) {
+    private SuperFlag(int mask) {
         this.mask = mask;
     }
 

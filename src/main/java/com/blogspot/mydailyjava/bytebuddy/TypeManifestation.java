@@ -3,9 +3,9 @@ package com.blogspot.mydailyjava.bytebuddy;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.ModifierContributor;
 import org.objectweb.asm.Opcodes;
 
-public enum TypeManifestation implements ModifierContributor {
+public enum TypeManifestation implements ModifierContributor.ForType {
 
-    CONCRETE(0),
+    PLAIN(0),
     FINAL(Opcodes.ACC_FINAL),
     ABSTRACT(Opcodes.ACC_ABSTRACT),
     INTERFACE(Opcodes.ACC_INTERFACE);

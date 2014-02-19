@@ -1,4 +1,4 @@
-package com.blogspot.mydailyjava.bytebuddy.instrumentation.type.loading;
+package com.blogspot.mydailyjava.bytebuddy.dynamic.loading;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

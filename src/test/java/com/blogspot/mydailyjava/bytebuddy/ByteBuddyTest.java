@@ -1,16 +1,13 @@
 package com.blogspot.mydailyjava.bytebuddy;
 
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.MethodDelegation;
+import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.AllArguments;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.RuntimeType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.This;
-import com.blogspot.mydailyjava.bytebuddy.proxy.DynamicType;
 import org.junit.Test;
 
 import java.util.Arrays;
-
-import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.named;
 
 public class ByteBuddyTest {
 
@@ -65,9 +62,9 @@ public class ByteBuddyTest {
         Bar object = ByteBuddy.make()
 //                .withAppendedClassVisitorWrapper(new DebuggingWrapper(System.out))
                 .subclass(Bar.class)
-                .method(named("test")).intercept(MethodDelegation.to(Delegate.class))
-                .method(named("foo")).intercept(MethodDelegation.to(Delegate.class))
-                .method(named("test")).intercept(MethodDelegation.to(Delegate.class))
+//                .method(named("utility")).intercept(MethodDelegation.to(Delegate.class))
+//                .method(named("foo")).intercept(MethodDelegation.to(Delegate.class))
+//                .method(named("utility")).intercept(MethodDelegation.to(Delegate.class))
                 .make()
                 .load(getClass().getClassLoader(), DynamicType.ClassLoadingStrategy.WRAPPER)
                 .getMainType()

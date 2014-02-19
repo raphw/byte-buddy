@@ -1,16 +1,11 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode;
 
-import com.blogspot.mydailyjava.bytebuddy.*;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.This;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.scaffold.SubclassLoadedTypeInstrumentation;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.asm.Opcodes;
-
-import java.util.Collections;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -35,13 +30,13 @@ public class MethodDelegationComplexTest {
 
     @Before
     public void setUp() throws Exception {
-        instrumentedType = new SubclassLoadedTypeInstrumentation(new ClassVersion(Opcodes.V1_6),
-                Source.class,
-                Collections.<Class<?>>emptySet(),
-                Visibility.PUBLIC,
-                TypeManifestation.CONCRETE,
-                SyntheticState.NON_SYNTHETIC,
-                new NamingStrategy.PrefixingRandom("test"));
+//        instrumentedType = new SubclassLoadedTypeInstrumentation(new ClassVersion(Opcodes.V1_6),
+//                Source.class,
+//                Collections.<Class<?>>emptySet(),
+//                Visibility.PUBLIC,
+//                TypeManifestation.PLAIN,
+//                SyntheticState.NON_SYNTHETIC,
+//                new NamingStrategy.PrefixingRandom("utility"));
     }
 
     @SuppressWarnings("unused")

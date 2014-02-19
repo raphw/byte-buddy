@@ -1,6 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.type.auxiliary;
 
 import com.blogspot.mydailyjava.bytebuddy.ClassVersion;
+import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.StackSize;
@@ -12,9 +13,10 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.primitive.VoidAwareAssigner;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.reference.ReferenceTypeAwareAssigner;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
-import com.blogspot.mydailyjava.bytebuddy.proxy.DynamicType;
 import org.objectweb.asm.*;
+import org.objectweb.asm.util.TraceClassVisitor;
 
+import java.io.PrintWriter;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -23,14 +25,47 @@ import java.util.concurrent.Callable;
 public class MethodCallProxy implements AuxiliaryType {
 
     private static final String OBJECT_INTERNAL_NAME = Type.getInternalName(Object.class);
+    private static final int ASM_MANUAL = 0;
+    private static final Object ASM_IGNORE = null;
+    private static final int CONSTRUCTOR_ACCESS = Opcodes.ACC_PUBLIC;
+    private static final int FIELD_ACCESS = Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL;
+    private static final String FIELD_NAME_PREFIX = "arg";
+    private static final String DEFAULT_CONSTRUCTOR_DESCRIPTOR = "()V";
 
-    private final MethodDescription proxiedMethod;
+    public static class AssignableSignatureCall implements StackManipulation {
 
-    public MethodCallProxy(MethodDescription proxiedMethod) {
-        this.proxiedMethod = proxiedMethod;
+        private final MethodDescription proxiedMethod;
+
+        public AssignableSignatureCall(MethodDescription proxiedMethod) {
+            this.proxiedMethod = proxiedMethod;
+        }
+
+        @Override
+        public boolean isValid() {
+            return true;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+            String typeName = instrumentationContext.register(new MethodCallProxy(proxiedMethod));
+            methodVisitor.visitTypeInsn(Opcodes.NEW, typeName);
+            methodVisitor.visitInsn(Opcodes.DUP);
+            Size size = new Size(2, 2);
+            size = size.aggregate(MethodArgument.loadParameters(proxiedMethod).apply(methodVisitor, instrumentationContext));
+            StringBuilder stringBuilder = new StringBuilder("(");
+            if(!proxiedMethod.isStatic()) {
+                stringBuilder.append(proxiedMethod.getDeclaringType().getDescriptor());
+            }
+            for(TypeDescription parameterType : proxiedMethod.getParameterTypes()) {
+                stringBuilder.append(parameterType.getDescriptor());
+            }
+            stringBuilder.append(")V");
+            methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, typeName, MethodDescription.CONSTRUCTOR_INTERNAL_NAME, stringBuilder.toString());
+            return new Size(1, size.getMaximalSize());
+        }
     }
 
-    private enum Interface {
+    private static enum Interface {
 
         RUNNABLE(Runnable.class, "run", "()V", void.class, Opcodes.RETURN),
         CALLABLE(Callable.class, "call", "()Ljava/lang/Object;", Object.class, Opcodes.ARETURN);
@@ -93,97 +128,77 @@ public class MethodCallProxy implements AuxiliaryType {
         }
     }
 
-    private class Named implements AuxiliaryType.Named {
+    private final MethodDescription proxiedMethod;
 
-        private static final int ASM_MANUAL = 0;
-        private static final int CONSTRUCTOR_ACCESS = Opcodes.ACC_PUBLIC;
-        private static final int FIELD_ACCESS = Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL;
-        private static final String FIELD_NAME_PREFIX = "arg";
-        private static final String DEFAULT_CONSTRUCTOR_DESCRIPTOR = "()V";
-
-        private final String proxyTypeName;
-        private final ClassVersion classVersion;
-
-        private final String constructorDescriptor;
-        private final Map<String, TypeDescription> fields;
-
-        private final Assigner assigner;
-
-        private Named(String proxyTypeName, ClassVersion classVersion) {
-            this.proxyTypeName = proxyTypeName;
-            this.classVersion = classVersion;
-            int i = 0;
-            Map<String, TypeDescription> fields = new LinkedHashMap<String, TypeDescription>(1 + proxiedMethod.getParameterTypes().size());
-            StringBuilder constructorDescriptor = new StringBuilder("(");
-            if (!proxiedMethod.isStatic()) {
-                fields.put(FIELD_NAME_PREFIX + i, proxiedMethod.getDeclaringType());
-                constructorDescriptor.append(proxiedMethod.getDeclaringType().getDescriptor());
-            }
-            for (TypeDescription parameterType : proxiedMethod.getParameterTypes()) {
-                fields.put(FIELD_NAME_PREFIX + i, parameterType);
-                constructorDescriptor.append(parameterType.getDescriptor());
-            }
-            this.constructorDescriptor = constructorDescriptor.append(")V").toString();
-            this.fields = Collections.unmodifiableMap(fields);
-            assigner = new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE), true);
-        }
-
-        @Override
-        public DynamicType<?> make() {
-            ClassWriter classWriter = new ClassWriter(ASM_MANUAL);
-            classWriter.visit(classVersion.getVersionNumber(),
-                    DEFAULT_TYPE_ACCESS,
-                    proxyTypeName.replace('.', '/'),
-                    null,
-                    OBJECT_INTERNAL_NAME,
-                    Interface.getInternalNames());
-            for (Map.Entry<String, TypeDescription> field : fields.entrySet()) {
-                classWriter.visitField(FIELD_ACCESS,
-                        field.getKey(),
-                        field.getValue().getDescriptor(),
-                        null,
-                        null).visitEnd();
-            }
-            MethodVisitor constructor = classWriter.visitMethod(CONSTRUCTOR_ACCESS,
-                    MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
-                    constructorDescriptor,
-                    null,
-                    null);
-            constructor.visitCode();
-            int argumentIndex = 1;
-            constructor.visitIntInsn(Opcodes.ALOAD, 0);
-            constructor.visitMethodInsn(Opcodes.INVOKESPECIAL,
-                    OBJECT_INTERNAL_NAME,
-                    MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
-                    DEFAULT_CONSTRUCTOR_DESCRIPTOR);
-            int currentMaximum = 1;
-            for (Map.Entry<String, TypeDescription> field : fields.entrySet()) {
-                constructor.visitIntInsn(Opcodes.ALOAD, 0);
-                MethodArgument.forType(field.getValue()).loadFromIndex(argumentIndex).apply(constructor, null);
-                constructor.visitFieldInsn(Opcodes.PUTFIELD,
-                        proxyTypeName,
-                        field.getKey(),
-                        field.getValue().getDescriptor());
-                currentMaximum = Math.max(currentMaximum, field.getValue().getStackSize().getSize() + 1);
-                argumentIndex += field.getValue().getStackSize().getSize();
-            }
-            constructor.visitInsn(Opcodes.RETURN);
-            constructor.visitMaxs(currentMaximum, proxiedMethod.getStackSize() + 1);
-            constructor.visitEnd();
-            for (Interface anInterface : Interface.values()) {
-                anInterface.implement(classWriter, proxyTypeName, proxiedMethod, fields, assigner);
-            }
-            classWriter.visitEnd();
-            return new DynamicType.Default.Unloaded<Object>(proxyTypeName,
-                    classWriter.toByteArray(),
-                    Collections.<Instrumentation.ClassLoadingCallback>emptyList(),
-                    Collections.<DynamicType<?>>emptySet());
-        }
+    public MethodCallProxy(MethodDescription proxiedMethod) {
+        this.proxiedMethod = proxiedMethod;
     }
 
     @Override
-    public Named name(String proxyTypeName, ClassVersion classVersion) {
-        return new Named(proxyTypeName, classVersion);
+    public DynamicType<?> make(String proxyTypeName, ClassVersion classVersion) {
+        String proxyTypeInternalName = proxyTypeName.replace('.', '/');
+        Map<String, TypeDescription> fields = new LinkedHashMap<String, TypeDescription>(1 + proxiedMethod.getParameterTypes().size());
+        StringBuilder constructorDescriptor = new StringBuilder("(");
+        int i = 0;
+        if (!proxiedMethod.isStatic()) {
+            fields.put(FIELD_NAME_PREFIX + i, proxiedMethod.getDeclaringType());
+            constructorDescriptor.append(proxiedMethod.getDeclaringType().getDescriptor());
+        }
+        for (TypeDescription parameterType : proxiedMethod.getParameterTypes()) {
+            fields.put(FIELD_NAME_PREFIX + i, parameterType);
+            constructorDescriptor.append(parameterType.getDescriptor());
+        }
+        constructorDescriptor.append(")V");
+        Assigner assigner = new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE), true);
+        ClassWriter classWriter = new ClassWriter(ASM_MANUAL);
+        ClassVisitor classVisitor = new TraceClassVisitor(classWriter, new PrintWriter(System.out));
+        classVisitor.visit(classVersion.getVersionNumber(),
+                DEFAULT_TYPE_ACCESS,
+                proxyTypeInternalName,
+                null,
+                OBJECT_INTERNAL_NAME,
+                Interface.getInternalNames());
+        for (Map.Entry<String, TypeDescription> field : fields.entrySet()) {
+            classVisitor.visitField(FIELD_ACCESS,
+                    field.getKey(),
+                    field.getValue().getDescriptor(),
+                    null,
+                    ASM_IGNORE).visitEnd();
+        }
+        MethodVisitor constructor = classVisitor.visitMethod(CONSTRUCTOR_ACCESS,
+                MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
+                constructorDescriptor.toString(),
+                null,
+                null);
+        constructor.visitCode();
+        int argumentIndex = 1;
+        constructor.visitIntInsn(Opcodes.ALOAD, 0);
+        constructor.visitMethodInsn(Opcodes.INVOKESPECIAL,
+                OBJECT_INTERNAL_NAME,
+                MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
+                DEFAULT_CONSTRUCTOR_DESCRIPTOR);
+        int currentMaximum = 1;
+        for (Map.Entry<String, TypeDescription> field : fields.entrySet()) {
+            constructor.visitIntInsn(Opcodes.ALOAD, 0);
+            MethodArgument.forType(field.getValue()).loadFromIndex(argumentIndex).apply(constructor, null);
+            constructor.visitFieldInsn(Opcodes.PUTFIELD,
+                    proxyTypeInternalName,
+                    field.getKey(),
+                    field.getValue().getDescriptor());
+            currentMaximum = Math.max(currentMaximum, field.getValue().getStackSize().getSize() + 1);
+            argumentIndex += field.getValue().getStackSize().getSize();
+        }
+        constructor.visitInsn(Opcodes.RETURN);
+        constructor.visitMaxs(currentMaximum, proxiedMethod.getStackSize() + 1);
+        constructor.visitEnd();
+        for (Interface anInterface : Interface.values()) {
+            anInterface.implement(classVisitor, proxyTypeInternalName, proxiedMethod, fields, assigner);
+        }
+        classVisitor.visitEnd();
+        return new DynamicType.Default.Unloaded<Object>(proxyTypeName,
+                classWriter.toByteArray(),
+                Collections.<Instrumentation.ClassLoadingCallback>emptyList(),
+                Collections.<DynamicType<?>>emptySet());
     }
 
     @Override

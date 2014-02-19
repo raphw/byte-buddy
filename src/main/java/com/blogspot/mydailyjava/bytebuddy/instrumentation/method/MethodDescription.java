@@ -44,17 +44,6 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         }
 
         @Override
-        public MethodDescription override(TypeDescription typeDescription) {
-            if(!isOverridable()) {
-                throw new IllegalArgumentException("Cannot override " + this);
-            } else if(!getDeclaringType().isAssignableFrom(typeDescription)) {
-                throw new IllegalArgumentException(typeDescription + " cannot override " + this);
-            } else {
-                return null; // TODO: Write method description wrapper
-            }
-        }
-
-        @Override
         public boolean isOverridable() {
             return !(isConstructor() || isFinal() || isPrivate() || isStatic() || getDeclaringType().isFinal());
         }
@@ -305,6 +294,4 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
     boolean isOverridable();
 
     int getStackSize();
-
-    MethodDescription override(TypeDescription typeDescription);
 }

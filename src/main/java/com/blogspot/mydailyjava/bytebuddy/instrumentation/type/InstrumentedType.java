@@ -5,15 +5,28 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.field.FieldList;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodList;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.StackSize;
+import org.objectweb.asm.Opcodes;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public interface InstrumentedType extends TypeDescription {
+
+    static final int VISIBILITY_MODIFIER_MASK = Modifier.PUBLIC | Modifier.PROTECTED | Modifier.PRIVATE;
+    static final int GENERAL_MODIFIER_MASK = Opcodes.ACC_SYNTHETIC | Opcodes.ACC_DEPRECATED;
+    static final int TYPE_MODIFIER_MASK = VISIBILITY_MODIFIER_MASK | GENERAL_MODIFIER_MASK
+            | Modifier.ABSTRACT | Modifier.FINAL | Modifier.INTERFACE | Modifier.STRICT | Opcodes.ACC_ANNOTATION
+            | Opcodes.ACC_ENUM | Opcodes.ACC_STRICT | Opcodes.ACC_SUPER;
+    static final int MEMBER_MODIFIER_MASK = VISIBILITY_MODIFIER_MASK | TYPE_MODIFIER_MASK
+            | Modifier.FINAL | Modifier.SYNCHRONIZED;
+    static final int FIELD_MODIFIER_MASK = MEMBER_MODIFIER_MASK | Modifier.TRANSIENT | Modifier.VOLATILE;
+    static final int METHOD_MODIFIER_MASK = MEMBER_MODIFIER_MASK | Modifier.ABSTRACT | Modifier.SYNCHRONIZED
+            | Modifier.NATIVE | Modifier.STRICT | Opcodes.ACC_BRIDGE | Opcodes.ACC_VARARGS;
 
     static abstract class AbstractInstrumentedType extends AbstractTypeDescription implements InstrumentedType {
 
@@ -22,20 +35,17 @@ public interface InstrumentedType extends TypeDescription {
             private final String name;
             private final TypeDescription fieldType;
             private final int modifiers;
-            private final boolean synthetic;
 
-            public FieldToken(String name, TypeDescription fieldType, int modifiers, boolean synthetic) {
+            public FieldToken(String name, TypeDescription fieldType, int modifiers) {
                 this.name = name;
                 this.fieldType = fieldType;
                 this.modifiers = modifiers;
-                this.synthetic = synthetic;
             }
 
             private FieldToken(String typeInternalName, FieldDescription fieldDescription) {
                 name = fieldDescription.getName();
                 fieldType = withSubstitutedSelfReference(typeInternalName, fieldDescription.getFieldType());
                 modifiers = fieldDescription.getModifiers();
-                synthetic = fieldDescription.isSynthetic();
             }
 
             @Override
@@ -82,11 +92,6 @@ public interface InstrumentedType extends TypeDescription {
             public int getModifiers() {
                 return modifiers;
             }
-
-            @Override
-            public boolean isSynthetic() {
-                return synthetic;
-            }
         }
 
         protected class MethodToken extends MethodDescription.AbstractMethodDescription {
@@ -95,29 +100,25 @@ public interface InstrumentedType extends TypeDescription {
             private final TypeDescription returnType;
             private final List<TypeDescription> parameterTypes;
             private final int modifiers;
-            private final boolean synthetic;
 
             public MethodToken(String internalName,
                                TypeDescription returnType,
                                List<? extends TypeDescription> parameterTypes,
-                               int modifiers,
-                               boolean synthetic) {
+                               int modifiers) {
                 this.internalName = internalName;
                 this.returnType = returnType;
                 this.parameterTypes = new ArrayList<TypeDescription>(parameterTypes);
                 this.modifiers = modifiers;
-                this.synthetic = synthetic;
             }
 
             private MethodToken(String typeInternalName, MethodDescription methodDescription) {
-                this.internalName = methodDescription.getInternalName();
-                this.returnType = withSubstitutedSelfReference(typeInternalName, methodDescription.getReturnType());
-                this.parameterTypes = new ArrayList<TypeDescription>(methodDescription.getParameterTypes().size());
+                internalName = methodDescription.getInternalName();
+                returnType = withSubstitutedSelfReference(typeInternalName, methodDescription.getReturnType());
+                parameterTypes = new ArrayList<TypeDescription>(methodDescription.getParameterTypes().size());
                 for (TypeDescription typeDescription : methodDescription.getParameterTypes()) {
                     parameterTypes.add(withSubstitutedSelfReference(typeInternalName, typeDescription));
                 }
-                this.modifiers = methodDescription.getModifiers();
-                this.synthetic = methodDescription.isSynthetic();
+                modifiers = methodDescription.getModifiers();
             }
 
             @Override
@@ -141,18 +142,8 @@ public interface InstrumentedType extends TypeDescription {
             }
 
             @Override
-            public boolean isVarArgs() {
-                return false;
-            }
-
-            @Override
             public boolean isConstructor() {
                 return CONSTRUCTOR_INTERNAL_NAME.equals(internalName);
-            }
-
-            @Override
-            public boolean isBridge() {
-                return false;
             }
 
             @Override
@@ -203,11 +194,6 @@ public interface InstrumentedType extends TypeDescription {
             @Override
             public int getModifiers() {
                 return modifiers;
-            }
-
-            @Override
-            public boolean isSynthetic() {
-                return synthetic;
             }
         }
 
@@ -277,11 +263,6 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public boolean isInterface() {
-            return false;
-        }
-
-        @Override
         public boolean isArray() {
             return false;
         }
@@ -293,11 +274,6 @@ public interface InstrumentedType extends TypeDescription {
 
         @Override
         public boolean isPrimitive() {
-            return false;
-        }
-
-        @Override
-        public boolean isAnnotation() {
             return false;
         }
 
@@ -374,12 +350,10 @@ public interface InstrumentedType extends TypeDescription {
 
     InstrumentedType withField(String name,
                                TypeDescription fieldType,
-                               int modifiers,
-                               boolean synthetic);
+                               int access);
 
     InstrumentedType withMethod(String name,
                                 TypeDescription returnType,
                                 List<? extends TypeDescription> parameterTypes,
-                                int modifiers,
-                                boolean synthetic);
+                                int access);
 }

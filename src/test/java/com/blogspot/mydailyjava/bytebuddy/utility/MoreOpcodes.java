@@ -1,4 +1,4 @@
-package com.blogspot.mydailyjava.bytebuddy.test;
+package com.blogspot.mydailyjava.bytebuddy.utility;
 
 public final class MoreOpcodes {
 
