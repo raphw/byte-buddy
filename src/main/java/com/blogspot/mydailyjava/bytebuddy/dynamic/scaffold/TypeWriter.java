@@ -4,7 +4,6 @@ import com.blogspot.mydailyjava.bytebuddy.ClassFormatVersion;
 import com.blogspot.mydailyjava.bytebuddy.asm.ClassVisitorWrapper;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.field.FieldDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
@@ -138,7 +137,7 @@ public interface TypeWriter<T> {
                             fieldDescription.getDescriptor(),
                             null,
                             null);
-                    compiledFieldRegistry.target(fieldDescription, FieldAttributeAppender.NoOp.INSTANCE)
+                    compiledFieldRegistry.target(fieldDescription)
                             .make(instrumentedType)
                             .apply(fieldVisitor, fieldDescription);
                     fieldVisitor.visitEnd();
@@ -162,19 +161,20 @@ public interface TypeWriter<T> {
             public InMethodPhase<T> write(Iterable<? extends MethodDescription> methodDescriptions,
                                           MethodRegistry.Compiled compiledMethodRegistry) {
                 for (MethodDescription methodDescription : methodDescriptions) {
-                    MethodVisitor methodVisitor = classVisitor.visitMethod(methodDescription.getModifiers(),
-                            methodDescription.getInternalName(),
-                            methodDescription.getDescriptor(),
-                            null,
-                            methodDescription.getExceptionTypes().toInternalNames());
-                    MethodRegistry.Compiled.Entry entry = compiledMethodRegistry.target(methodDescription,
-                            MethodRegistry.Compiled.Entry.ForAbstractMethod.INSTANCE);
-                    entry.getAttributeAppender().apply(methodVisitor, methodDescription);
-                    if (entry.getByteCodeAppender().appendsCode()) {
-                        methodVisitor.visitCode();
-                        entry.getByteCodeAppender().apply(methodVisitor, instrumentationContext, methodDescription);
+                    MethodRegistry.Compiled.Entry entry = compiledMethodRegistry.target(methodDescription);
+                    if (entry.isDefineMethod()) {
+                        MethodVisitor methodVisitor = classVisitor.visitMethod(methodDescription.getModifiers(),
+                                methodDescription.getInternalName(),
+                                methodDescription.getDescriptor(),
+                                null,
+                                methodDescription.getExceptionTypes().toInternalNames());
+                        entry.getAttributeAppender().apply(methodVisitor, methodDescription);
+                        if (entry.getByteCodeAppender().appendsCode()) {
+                            methodVisitor.visitCode();
+                            entry.getByteCodeAppender().apply(methodVisitor, instrumentationContext, methodDescription);
+                        }
+                        methodVisitor.visitEnd();
                     }
-                    methodVisitor.visitEnd();
                 }
                 return this;
             }

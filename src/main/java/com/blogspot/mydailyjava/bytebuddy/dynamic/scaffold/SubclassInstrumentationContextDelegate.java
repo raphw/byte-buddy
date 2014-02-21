@@ -76,6 +76,11 @@ public class SubclassInstrumentationContextDelegate
         }
 
         @Override
+        public boolean isDefineMethod() {
+            return true;
+        }
+
+        @Override
         public boolean appendsCode() {
             return true;
         }
@@ -100,7 +105,7 @@ public class SubclassInstrumentationContextDelegate
     }
 
     @Override
-    public Entry target(MethodDescription methodDescription, Entry fallback) {
+    public Entry target(MethodDescription methodDescription) {
         return new MethodCall(proxyMethodToTargetMethod.get(methodDescription));
     }
 }

@@ -16,17 +16,22 @@ public interface MethodRegistry {
 
         static interface Entry {
 
-            static enum ForAbstractMethod implements Entry {
+            static enum Skip implements Entry {
                 INSTANCE;
 
                 @Override
+                public boolean isDefineMethod() {
+                    return false;
+                }
+
+                @Override
                 public ByteCodeAppender getByteCodeAppender() {
-                    return Instrumentation.ForAbstractMethod.INSTANCE;
+                    throw new IllegalStateException();
                 }
 
                 @Override
                 public MethodAttributeAppender getAttributeAppender() {
-                    return MethodAttributeAppender.NoOp.INSTANCE;
+                    throw new IllegalStateException();
                 }
             }
 
@@ -41,6 +46,11 @@ public interface MethodRegistry {
                 }
 
                 @Override
+                public boolean isDefineMethod() {
+                    return true;
+                }
+
+                @Override
                 public ByteCodeAppender getByteCodeAppender() {
                     return byteCodeAppender;
                 }
@@ -51,12 +61,14 @@ public interface MethodRegistry {
                 }
             }
 
+            boolean isDefineMethod();
+
             ByteCodeAppender getByteCodeAppender();
 
             MethodAttributeAppender getAttributeAppender();
         }
 
-        Entry target(MethodDescription methodDescription, Entry fallback);
+        Entry target(MethodDescription methodDescription);
     }
 
     static interface LatentMethodMatcher {
@@ -97,6 +109,11 @@ public interface MethodRegistry {
                 }
 
                 @Override
+                public boolean isDefineMethod() {
+                    return true;
+                }
+
+                @Override
                 public ByteCodeAppender getByteCodeAppender() {
                     return byteCodeAppender;
                 }
@@ -113,14 +130,15 @@ public interface MethodRegistry {
             }
 
             private final List<Entry> entries;
+            private final MethodRegistry.Compiled.Entry fallback;
 
-            private Compiled(List<Entry> entries) {
+            private Compiled(List<Entry> entries, MethodRegistry.Compiled.Entry fallback) {
                 this.entries = entries;
+                this.fallback = fallback;
             }
 
             @Override
-            public MethodRegistry.Compiled.Entry target(MethodDescription methodDescription,
-                                                        MethodRegistry.Compiled.Entry fallback) {
+            public MethodRegistry.Compiled.Entry target(MethodDescription methodDescription) {
                 for (Entry entry : entries) {
                     if (entry.matches(methodDescription)) {
                         return entry;
@@ -166,7 +184,7 @@ public interface MethodRegistry {
         }
 
         @Override
-        public Compiled compile(InstrumentedType instrumentedType) {
+        public MethodRegistry.Compiled compile(InstrumentedType instrumentedType, MethodRegistry.Compiled.Entry fallback) {
             Map<Instrumentation, Entry> prepared = new HashMap<Instrumentation, Entry>(entries.size());
             for (Entry entry : entries) {
                 if (!prepared.containsKey(entry.instrumentation)) {
@@ -181,7 +199,7 @@ public interface MethodRegistry {
                 MethodAttributeAppender attributeAppender = entry.attributeAppenderFactory.make(instrumentedType);
                 compiledEntries.add(new Compiled.Entry(methodMatcher, byteCodeAppender, attributeAppender));
             }
-            return new Compiled(compiledEntries);
+            return new Compiled(compiledEntries, fallback);
         }
     }
 
@@ -189,5 +207,5 @@ public interface MethodRegistry {
                            Instrumentation instrumentation,
                            MethodAttributeAppender.Factory attributeAppenderFactory);
 
-    Compiled compile(InstrumentedType instrumentedType);
+    Compiled compile(InstrumentedType instrumentedType, Compiled.Entry fallback);
 }

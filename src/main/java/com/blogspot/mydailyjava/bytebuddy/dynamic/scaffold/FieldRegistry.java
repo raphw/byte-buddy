@@ -12,7 +12,7 @@ public interface FieldRegistry {
 
     static interface Compiled {
 
-        FieldAttributeAppender.Factory target(FieldDescription fieldDescription, FieldAttributeAppender.Factory fallback);
+        FieldAttributeAppender.Factory target(FieldDescription fieldDescription);
     }
 
     static interface LatentFieldMatcher {
@@ -20,7 +20,26 @@ public interface FieldRegistry {
         String getFieldName();
     }
 
-    static class Default implements FieldRegistry, Compiled {
+    static class Default implements FieldRegistry {
+
+        private class Compiled implements FieldRegistry.Compiled {
+
+            private final FieldAttributeAppender.Factory fallback;
+
+            private Compiled(FieldAttributeAppender.Factory fallback) {
+                this.fallback = fallback;
+            }
+
+            @Override
+            public FieldAttributeAppender.Factory target(FieldDescription fieldDescription) {
+                FieldAttributeAppender.Factory attributeAppenderFactory = entries.get(fieldDescription.getName());
+                if (attributeAppenderFactory == null) {
+                    return fallback;
+                } else {
+                    return attributeAppenderFactory;
+                }
+            }
+        }
 
         private final Map<String, FieldAttributeAppender.Factory> entries;
 
@@ -40,22 +59,12 @@ public interface FieldRegistry {
         }
 
         @Override
-        public Compiled compile(InstrumentedType instrumentedType) {
-            return this;
-        }
-
-        @Override
-        public FieldAttributeAppender.Factory target(FieldDescription fieldDescription, FieldAttributeAppender.Factory fallback) {
-            FieldAttributeAppender.Factory attributeAppenderFactory = entries.get(fieldDescription.getName());
-            if (attributeAppenderFactory == null) {
-                return fallback;
-            } else {
-                return attributeAppenderFactory;
-            }
+        public Compiled compile(InstrumentedType instrumentedType, FieldAttributeAppender.Factory fallback) {
+            return new Compiled(fallback);
         }
     }
 
     FieldRegistry prepend(LatentFieldMatcher latentFieldMatcher, FieldAttributeAppender.Factory attributeAppenderFactory);
 
-    Compiled compile(InstrumentedType instrumentedType);
+    Compiled compile(InstrumentedType instrumentedType, FieldAttributeAppender.Factory fallback);
 }

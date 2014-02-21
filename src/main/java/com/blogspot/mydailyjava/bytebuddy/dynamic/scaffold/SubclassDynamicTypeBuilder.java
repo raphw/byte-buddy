@@ -327,9 +327,11 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 .build(classVisitorWrapperChain)
                 .attributeType(attributeAppender)
                 .fields()
-                .write(instrumentedType.getDeclaredFields(), fieldRegistry.compile(instrumentedType))
+                .write(instrumentedType.getDeclaredFields(),
+                        fieldRegistry.compile(instrumentedType, FieldAttributeAppender.NoOp.INSTANCE))
                 .methods()
-                .write(instrumentedType.getDeclaredMethods().filter(not(ignoredMethods).and(isOverridable())), methodRegistry.compile(instrumentedType))
+                .write(instrumentedType.getDeclaredMethods().filter(not(ignoredMethods).and(isOverridable())),
+                        methodRegistry.compile(instrumentedType, MethodRegistry.Compiled.Entry.Skip.INSTANCE))
                 .write(contextDelegate.getProxiedMethods(), contextDelegate)
                 .make();
     }
