@@ -5,7 +5,7 @@ import org.objectweb.asm.Opcodes;
 
 public enum SynchronizationState implements ModifierContributor.ForMethod {
 
-    PLAIN(0),
+    PLAIN(EMPTY_MASK),
     SYNCHRONIZED(Opcodes.ACC_SYNCHRONIZED);
 
     private final int mask;

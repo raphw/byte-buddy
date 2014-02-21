@@ -2,6 +2,8 @@ package com.blogspot.mydailyjava.bytebuddy.instrumentation;
 
 public interface ModifierContributor {
 
+    static final int EMPTY_MASK = 0;
+
     static interface ForMethod extends ModifierContributor {
         /* marker interface */
     }

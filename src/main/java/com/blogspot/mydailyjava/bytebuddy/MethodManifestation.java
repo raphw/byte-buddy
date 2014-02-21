@@ -5,7 +5,7 @@ import org.objectweb.asm.Opcodes;
 
 public enum MethodManifestation implements ModifierContributor.ForMethod {
 
-    PLAIN(0),
+    PLAIN(EMPTY_MASK),
     NATIVE(Opcodes.ACC_NATIVE),
     ABSTRACT(Opcodes.ACC_ABSTRACT);
 

@@ -1,8 +1,8 @@
 package com.blogspot.mydailyjava.bytebuddy.dynamic;
 
-public final class InstrumentedType {
+public final class TargetType {
 
-    private InstrumentedType() {
+    private TargetType() {
         throw new AssertionError("This is a place holder type that should not be instantiated");
     }
 }

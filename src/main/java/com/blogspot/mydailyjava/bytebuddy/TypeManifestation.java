@@ -5,10 +5,10 @@ import org.objectweb.asm.Opcodes;
 
 public enum TypeManifestation implements ModifierContributor.ForType {
 
-    PLAIN(0),
+    PLAIN(EMPTY_MASK),
     FINAL(Opcodes.ACC_FINAL),
     ABSTRACT(Opcodes.ACC_ABSTRACT),
-    INTERFACE(Opcodes.ACC_INTERFACE);
+    INTERFACE(Opcodes.ACC_INTERFACE | Opcodes.ACC_INTERFACE);
 
     private final int mask;
 

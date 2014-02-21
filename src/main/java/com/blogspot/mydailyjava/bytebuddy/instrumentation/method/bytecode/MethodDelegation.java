@@ -78,6 +78,11 @@ public class MethodDelegation implements ByteCodeAppender.Factory {
         }
 
         @Override
+        public boolean appendsCode() {
+            return true;
+        }
+
+        @Override
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext, MethodDescription instrumentedMethod) {
             StackManipulation.Size size = processor.process(typeDescription, instrumentedMethod, methods).apply(methodVisitor, instrumentationContext);
             size = size.aggregate(MethodReturn.returning(instrumentedMethod.getReturnType()).apply(methodVisitor, instrumentationContext));

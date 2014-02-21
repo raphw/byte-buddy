@@ -6,6 +6,7 @@ import com.blogspot.mydailyjava.bytebuddy.asm.ClassVisitorWrapper;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.ModifierContributor;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.TypeInitializer;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
@@ -43,7 +44,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                     attributeAppender,
                     ignoredMethods,
                     classVisitorWrapperChain,
-                    instrumentationRegistry,
+                    fieldRegistry.prepend(fieldToken, attributeAppenderFactory),
+                    methodRegistry,
                     join(fieldTokens, fieldToken),
                     methodTokens);
         }
@@ -62,35 +64,40 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     private class SubclassMatchedMethodInterception<T> implements MatchedMethodInterception<T> {
 
-        private final InterceptionRegistry.LatentDecision latentDecision;
+        private final MethodRegistry.LatentMethodMatcher latentMethodMatcher;
         private final List<MethodToken> methodTokens;
 
-        private SubclassMatchedMethodInterception(InterceptionRegistry.LatentDecision latentDecision, List<MethodToken> methodTokens) {
-            this.latentDecision = latentDecision;
+        private SubclassMatchedMethodInterception(MethodRegistry.LatentMethodMatcher latentMethodMatcher, List<MethodToken> methodTokens) {
+            this.latentMethodMatcher = latentMethodMatcher;
             this.methodTokens = methodTokens;
         }
 
         @Override
         public MethodAnnotationTarget<T> intercept(Instrumentation instrumentation) {
             return new SubclassMethodAnnotationTarget<T>(methodTokens,
-                    latentDecision,
+                    latentMethodMatcher,
                     instrumentation,
                     MethodAttributeAppender.NoOp.INSTANCE);
+        }
+
+        @Override
+        public MethodAnnotationTarget<T> withoutCode() {
+            return intercept(Instrumentation.ForAbstractMethod.INSTANCE);
         }
     }
 
     private class SubclassMethodAnnotationTarget<T> extends AbstractDelegatingBuilder<T> implements MethodAnnotationTarget<T> {
 
         private final List<MethodToken> methodTokens;
-        private final InterceptionRegistry.LatentDecision latentDecision;
+        private final MethodRegistry.LatentMethodMatcher latentMethodMatcher;
         private final Instrumentation instrumentation;
         private final MethodAttributeAppender.Factory attributeAppenderFactory;
 
         private SubclassMethodAnnotationTarget(List<MethodToken> methodTokens,
-                                               InterceptionRegistry.LatentDecision latentDecision,
+                                               MethodRegistry.LatentMethodMatcher latentMethodMatcher,
                                                Instrumentation instrumentation,
                                                MethodAttributeAppender.Factory attributeAppenderFactory) {
-            this.latentDecision = latentDecision;
+            this.latentMethodMatcher = latentMethodMatcher;
             this.methodTokens = methodTokens;
             this.instrumentation = instrumentation;
             this.attributeAppenderFactory = attributeAppenderFactory;
@@ -106,7 +113,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                     attributeAppender,
                     ignoredMethods,
                     classVisitorWrapperChain,
-                    instrumentationRegistry.prepend(latentDecision, instrumentation, attributeAppenderFactory),
+                    fieldRegistry,
+                    methodRegistry.prepend(latentMethodMatcher, instrumentation, attributeAppenderFactory),
                     fieldTokens,
                     methodTokens);
         }
@@ -115,7 +123,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         public MethodAnnotationTarget<T> attribute(MethodAttributeAppender.Factory attributeAppenderFactory) {
             return new SubclassMethodAnnotationTarget<T>(
                     methodTokens,
-                    latentDecision,
+                    latentMethodMatcher,
                     instrumentation,
                     new MethodAttributeAppender.Factory.Compound(this.attributeAppenderFactory, attributeAppenderFactory));
         }
@@ -139,7 +147,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     private final TypeAttributeAppender attributeAppender;
     private final MethodMatcher ignoredMethods;
     private final ClassVisitorWrapper.Chain classVisitorWrapperChain;
-    private final InterceptionRegistry instrumentationRegistry;
+    private final FieldRegistry fieldRegistry;
+    private final MethodRegistry methodRegistry;
 
     public SubclassDynamicTypeBuilder(ClassVersion classVersion,
                                       NamingStrategy namingStrategy,
@@ -149,7 +158,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                       TypeAttributeAppender attributeAppender,
                                       MethodMatcher ignoredMethods,
                                       ClassVisitorWrapper.Chain classVisitorWrapperChain,
-                                      InterceptionRegistry instrumentationRegistry,
+                                      FieldRegistry fieldRegistry,
+                                      MethodRegistry methodRegistry,
                                       List<FieldToken> fieldTokens,
                                       List<MethodToken> methodTokens) {
         super(fieldTokens, methodTokens);
@@ -161,7 +171,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         this.attributeAppender = attributeAppender;
         this.ignoredMethods = ignoredMethods;
         this.classVisitorWrapperChain = classVisitorWrapperChain;
-        this.instrumentationRegistry = instrumentationRegistry;
+        this.fieldRegistry = fieldRegistry;
+        this.methodRegistry = methodRegistry;
     }
 
     @Override
@@ -174,7 +185,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 attributeAppender,
                 ignoredMethods,
                 classVisitorWrapperChain,
-                instrumentationRegistry,
+                fieldRegistry,
+                methodRegistry,
                 fieldTokens,
                 methodTokens);
     }
@@ -189,7 +201,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 attributeAppender,
                 ignoredMethods,
                 classVisitorWrapperChain,
-                instrumentationRegistry,
+                fieldRegistry,
+                methodRegistry,
                 fieldTokens,
                 methodTokens);
     }
@@ -204,7 +217,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 attributeAppender,
                 ignoredMethods,
                 classVisitorWrapperChain,
-                instrumentationRegistry,
+                fieldRegistry,
+                methodRegistry,
                 fieldTokens,
                 methodTokens);
     }
@@ -219,7 +233,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 attributeAppender,
                 ignoredMethods,
                 classVisitorWrapperChain,
-                instrumentationRegistry,
+                fieldRegistry,
+                methodRegistry,
                 fieldTokens,
                 methodTokens);
     }
@@ -234,7 +249,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 attributeAppender,
                 new JunctionMethodMatcher.Conjunction(this.ignoredMethods, nonNull(ignoredMethods)),
                 classVisitorWrapperChain,
-                instrumentationRegistry,
+                fieldRegistry,
+                methodRegistry,
                 fieldTokens,
                 methodTokens);
     }
@@ -249,7 +265,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 new TypeAttributeAppender.Compound(this.attributeAppender, nonNull(attributeAppender)),
                 ignoredMethods,
                 classVisitorWrapperChain,
-                instrumentationRegistry,
+                fieldRegistry,
+                methodRegistry,
                 fieldTokens,
                 methodTokens);
     }
@@ -269,7 +286,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 attributeAppender,
                 ignoredMethods,
                 classVisitorWrapperChain.append(nonNull(classVisitorWrapper)),
-                instrumentationRegistry,
+                fieldRegistry,
+                methodRegistry,
                 fieldTokens,
                 methodTokens);
     }
@@ -296,37 +314,31 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public MatchedMethodInterception<T> method(MethodMatcher methodMatcher) {
-        return new SubclassMatchedMethodInterception<T>(new InterceptionRegistry.LatentDecision.Simple(methodMatcher), methodTokens);
+        return new SubclassMatchedMethodInterception<T>(new MethodRegistry.LatentMethodMatcher.Simple(methodMatcher), methodTokens);
     }
 
     @Override
     public DynamicType.Unloaded<T> make() {
         ClassWriter classWriter = new ClassWriter(ASM_MANUAL);
-        ClassVisitor classVisitor = classVisitorWrapperChain.wrap(classWriter);
-        InstrumentedType instrumentedType = new SubclassLoadedTypeInstrumentation(classVersion,
+        InstrumentedType instrumentedType = applyRecoredMembersTo(new SubclassLoadedTypeInstrumentation(classVersion,
                 superType,
                 interfaceTypes,
                 modifiers,
-                namingStrategy);
+                namingStrategy));
+        ClassVisitor classVisitor = classVisitorWrapperChain.wrap(classWriter);
         classVisitor.visit(classVersion.getVersionNumber(),
                 instrumentedType.getModifiers(),
                 instrumentedType.getInternalName(),
                 null,
                 instrumentedType.getSupertype().getInternalName(),
                 instrumentedType.getInterfaces().toInternalNames());
-//        MethodInterception.Handler handler = methodInterceptions.handler(instrumentedType);
-//        for (MethodDescription method : instrumentedType.getReachableMethods().filter(not(ignoredMethods)
-//                .and(new WritableMethodFilter(instrumentedType)))) {
-//            handler.find(method).handle(classVisitor);
-//        }
-//        for (MethodDescription method : instrumentedType.getSupertype().getDeclaredMethods().filter(not(ignoredMethods)
-//                .and(isConstructor()).and(not(isPrivate())))) {
-//            handler.find(method).handle(classVisitor);
-//        }
+        // TODO: Write field and methods to class writer. Add dedicated types and implementations that handle this task.
         classVisitor.visitEnd();
+        // TODO: Add implementation for Instrumentation.Context and handler type that allows extraction.
+        // TODO: Write delegater methods.
         return new DynamicType.Default.Unloaded<T>(instrumentedType.getName(),
                 classWriter.toByteArray(),
-                Collections.<Instrumentation.ClassLoadingCallback>emptyList(),
+                join(Collections.<TypeInitializer>emptyList(), instrumentedType.getInitializer()),
                 Collections.<DynamicType<?>>emptySet());
     }
 }

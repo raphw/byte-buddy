@@ -5,7 +5,7 @@ import org.objectweb.asm.Opcodes;
 
 public enum FieldManifestation implements ModifierContributor.ForField {
 
-    PLAIN(0),
+    PLAIN(EMPTY_MASK),
     FINAL(Opcodes.ACC_FINAL),
     VOLATILE(Opcodes.ACC_VOLATILE);
 

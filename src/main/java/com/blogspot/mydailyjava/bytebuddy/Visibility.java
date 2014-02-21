@@ -6,8 +6,8 @@ import org.objectweb.asm.Opcodes;
 public enum Visibility implements ModifierContributor.ForType, ModifierContributor.ForMethod, ModifierContributor.ForField {
 
     PUBLIC(Opcodes.ACC_PUBLIC),
+    PACKAGE_PRIVATE(EMPTY_MASK),
     PROTECTED(Opcodes.ACC_PROTECTED),
-    PACKAGE_PRIVATE(0),
     PRIVATE(Opcodes.ACC_PRIVATE);
 
     private final int mask;

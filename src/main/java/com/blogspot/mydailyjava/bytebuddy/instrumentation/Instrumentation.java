@@ -1,83 +1,71 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation;
 
-import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
-
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import org.objectweb.asm.MethodVisitor;
 
 public interface Instrumentation {
 
     static interface Context {
 
-        static class Default implements Context {
-
-            private final Map<AuxiliaryType, DynamicType<?>> auxiliaryTypes;
-
-            public Default() {
-                auxiliaryTypes = new HashMap<AuxiliaryType, DynamicType<?>>();
-            }
-
-            @Override
-            public String register(AuxiliaryType auxiliaryType) {
-                DynamicType<?> made = auxiliaryTypes.get(auxiliaryType);
-                if (made == null) {
-                    throw new RuntimeException("Not yet implemented");
-//                    named = auxiliaryType.name();
-//                    auxiliaryTypes.put(auxiliaryType, named);
-//                    return named;
-                }
-                return made.getMainTypeName();
-            }
-        }
-
         String register(AuxiliaryType auxiliaryType);
     }
 
-    static interface ClassLoadingCallback {
+    static enum ForAbstractMethod implements Instrumentation, ByteCodeAppender {
+        INSTANCE;
 
-        static class Compound implements Instrumentation.ClassLoadingCallback {
-
-            public static Instrumentation.ClassLoadingCallback of(List<? extends ClassLoadingCallback> classLoadingCallbacks) {
-                boolean serializable = true;
-                Iterator<? extends ClassLoadingCallback> iterator = classLoadingCallbacks.iterator();
-                while (serializable && iterator.hasNext()) {
-                    serializable = iterator.next() instanceof Serializable;
-                }
-                return serializable ? new SerializableForm(classLoadingCallbacks) : new Compound(classLoadingCallbacks);
-            }
-
-            private static class SerializableForm extends Compound implements Serializable {
-
-                protected SerializableForm(List<? extends Instrumentation.ClassLoadingCallback> classLoadingCallbacks) {
-                    super(classLoadingCallbacks);
-                }
-            }
-
-            private final List<? extends Instrumentation.ClassLoadingCallback> classLoadingCallbacks;
-
-            public Compound(List<? extends Instrumentation.ClassLoadingCallback> classLoadingCallbacks) {
-                this.classLoadingCallbacks = classLoadingCallbacks;
-            }
-
-            @Override
-            public void onLoad(Class<?> type) {
-                for (Instrumentation.ClassLoadingCallback callback : classLoadingCallbacks) {
-                    callback.onLoad(type);
-                }
-            }
+        @Override
+        public InstrumentedType prepare(InstrumentedType instrumentedType) {
+            return instrumentedType;
         }
 
-        void onLoad(Class<?> type);
+        @Override
+        public ByteCodeAppender appender(TypeDescription instrumentedType) {
+            return this;
+        }
+
+        @Override
+        public boolean appendsCode() {
+            return false;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
+            throw new IllegalStateException();
+        }
+    }
+
+    static class Composite implements Instrumentation {
+
+        private final Instrumentation[] instrumentation;
+
+        public Composite(Instrumentation... instrumentation) {
+            this.instrumentation = instrumentation;
+        }
+
+        @Override
+        public InstrumentedType prepare(InstrumentedType instrumentedType) {
+            for (Instrumentation instrumentation : this.instrumentation) {
+                instrumentedType = instrumentation.prepare(instrumentedType);
+            }
+            return instrumentedType;
+        }
+
+        @Override
+        public ByteCodeAppender appender(TypeDescription instrumentedType) {
+            ByteCodeAppender[] byteCodeAppender = new ByteCodeAppender[instrumentation.length];
+            int index = 0;
+            for (Instrumentation instrumentation : this.instrumentation) {
+                byteCodeAppender[index++] = instrumentation.appender(instrumentedType);
+            }
+            return new ByteCodeAppender.Composite(byteCodeAppender);
+        }
     }
 
     InstrumentedType prepare(InstrumentedType instrumentedType);
 
-    ByteCodeAppender appender(TypeDescription instrumentedType, Context context);
+    ByteCodeAppender appender(TypeDescription instrumentedType);
 }

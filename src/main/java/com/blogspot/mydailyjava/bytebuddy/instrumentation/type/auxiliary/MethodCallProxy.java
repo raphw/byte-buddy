@@ -3,6 +3,7 @@ package com.blogspot.mydailyjava.bytebuddy.instrumentation.type.auxiliary;
 import com.blogspot.mydailyjava.bytebuddy.ClassVersion;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.TypeInitializer;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.StackSize;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.Assigner;
@@ -197,7 +198,7 @@ public class MethodCallProxy implements AuxiliaryType {
         classVisitor.visitEnd();
         return new DynamicType.Default.Unloaded<Object>(proxyTypeName,
                 classWriter.toByteArray(),
-                Collections.<Instrumentation.ClassLoadingCallback>emptyList(),
+                Collections.<TypeInitializer>emptyList(),
                 Collections.<DynamicType<?>>emptySet());
     }
 

@@ -6,7 +6,7 @@ import org.objectweb.asm.Opcodes;
 public enum SyntheticState implements ModifierContributor.ForType, ModifierContributor.ForMethod, ModifierContributor.ForField {
 
     SYNTHETIC(Opcodes.ACC_SYNTHETIC, true),
-    NON_SYNTHETIC(0, false);
+    NON_SYNTHETIC(EMPTY_MASK, false);
 
     public static SyntheticState is(boolean synthetic) {
         return synthetic ? SYNTHETIC : NON_SYNTHETIC;

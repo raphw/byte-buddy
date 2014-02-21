@@ -3,14 +3,17 @@ package com.blogspot.mydailyjava.bytebuddy.dynamic;
 import com.blogspot.mydailyjava.bytebuddy.asm.ClassVisitorWrapper;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.loading.ClassLoaderByteArrayInjector;
-import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.InterceptionRegistry;
+import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.FieldRegistry;
+import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.MethodRegistry;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.ModifierContributor;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.TypeInitializer;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.Opcodes;
 
@@ -59,29 +62,22 @@ public interface DynamicType<T> {
 
         static abstract class AbstractBase<T> implements Builder<T> {
 
-            protected static class MethodToken implements InterceptionRegistry.LatentDecision {
+            protected static class MethodToken implements MethodRegistry.LatentMethodMatcher {
 
                 private static class SignatureMatcher implements MethodMatcher {
 
                     private final TypeDescription returnType;
                     private final List<TypeDescription> parameterTypes;
 
-                    private SignatureMatcher(TypeDescription instrumentedType, Class<?> definedType, List<Class<?>> parameterTypes) {
-                        returnType = wrapAndConsiderSubstitution(definedType, instrumentedType);
-                        this.parameterTypes = new ArrayList<TypeDescription>(parameterTypes.size());
-                        for (Class<?> parameterType : parameterTypes) {
-                            this.parameterTypes.add(wrapAndConsiderSubstitution(parameterType, instrumentedType));
-                        }
+                    private SignatureMatcher(TypeDescription returnType, List<TypeDescription> parameterTypes) {
+                        this.returnType = returnType;
+                        this.parameterTypes = parameterTypes;
                     }
 
                     @Override
                     public boolean matches(MethodDescription methodDescription) {
                         return methodDescription.getReturnType().equals(returnType)
                                 && methodDescription.getParameterTypes().equals(parameterTypes);
-                    }
-
-                    private TypeDescription wrapAndConsiderSubstitution(Class<?> type, TypeDescription instrumentedType) {
-                        return type == InstrumentedType.class ? instrumentedType : new TypeDescription.ForLoadedType(type);
                     }
                 }
 
@@ -99,7 +95,20 @@ public interface DynamicType<T> {
 
                 @Override
                 public MethodMatcher manifest(TypeDescription instrumentedType) {
-                    return named(name).and(new SignatureMatcher(instrumentedType, returnType, parameterTypes));
+                    return named(name).and(new SignatureMatcher(resolveReturnType(instrumentedType),
+                            resolveParameterTypes(instrumentedType)));
+                }
+
+                protected TypeDescription resolveReturnType(TypeDescription instrumentedType) {
+                    return wrapAndConsiderSubstitution(returnType, instrumentedType);
+                }
+
+                protected List<TypeDescription> resolveParameterTypes(TypeDescription instrumentedType) {
+                    List<TypeDescription> parameterTypes = new ArrayList<TypeDescription>(this.parameterTypes.size());
+                    for (Class<?> parameterType : this.parameterTypes) {
+                        parameterTypes.add(wrapAndConsiderSubstitution(parameterType, instrumentedType));
+                    }
+                    return parameterTypes;
                 }
 
                 @Override
@@ -130,7 +139,7 @@ public interface DynamicType<T> {
                 }
             }
 
-            protected static class FieldToken {
+            protected static class FieldToken implements FieldRegistry.LatentFieldMatcher {
 
                 protected final String name;
                 protected final Class<?> fieldType;
@@ -140,6 +149,15 @@ public interface DynamicType<T> {
                     this.name = name;
                     this.fieldType = fieldType;
                     this.modifiers = modifiers;
+                }
+
+                protected TypeDescription resolveFieldType(TypeDescription instrumentedType) {
+                    return wrapAndConsiderSubstitution(fieldType, instrumentedType);
+                }
+
+                @Override
+                public String getFieldName() {
+                    return name;
                 }
 
                 @Override
@@ -165,6 +183,10 @@ public interface DynamicType<T> {
                             ", fieldType=" + fieldType +
                             ", modifiers=" + modifiers + '}';
                 }
+            }
+
+            private static TypeDescription wrapAndConsiderSubstitution(Class<?> type, TypeDescription instrumentedType) {
+                return type == TargetType.class ? instrumentedType : new TypeDescription.ForLoadedType(type);
             }
 
             protected static <U> List<U> join(List<U> list, U element) {
@@ -276,11 +298,28 @@ public interface DynamicType<T> {
                 this.fieldTokens = fieldTokens;
                 this.methodTokens = methodTokens;
             }
+
+            protected InstrumentedType applyRecoredMembersTo(InstrumentedType instrumentedType) {
+                for (FieldToken fieldToken : fieldTokens) {
+                    instrumentedType = instrumentedType.withField(fieldToken.name,
+                            fieldToken.resolveFieldType(instrumentedType),
+                            fieldToken.modifiers);
+                }
+                for (MethodToken methodToken : methodTokens) {
+                    instrumentedType = instrumentedType.withMethod(methodToken.name,
+                            methodToken.resolveReturnType(instrumentedType),
+                            methodToken.resolveParameterTypes(instrumentedType),
+                            methodToken.modifiers);
+                }
+                return instrumentedType;
+            }
         }
 
         static interface MatchedMethodInterception<T> {
 
             MethodAnnotationTarget<T> intercept(Instrumentation instrumentation);
+
+            MethodAnnotationTarget<T> withoutCode();
         }
 
         static interface MethodAnnotationTarget<T> extends Builder<T> {
@@ -347,7 +386,7 @@ public interface DynamicType<T> {
 
             public Unloaded(String mainTypeName,
                             byte[] mainTypeByte,
-                            List<? extends Instrumentation.ClassLoadingCallback> classLoadingCallbacks,
+                            List<? extends TypeInitializer> classLoadingCallbacks,
                             Set<? extends DynamicType<?>> helperTypes) {
                 super(mainTypeName, mainTypeByte, classLoadingCallbacks, helperTypes);
             }
@@ -358,13 +397,13 @@ public interface DynamicType<T> {
                 types.put(getMainTypeName(), getMainTypeByte());
                 return new Default.Loaded<T>(mainTypeName,
                         mainTypeByte,
-                        classLoadingCallbacks,
+                        typeInitializers,
                         helperTypes,
                         initialize(classLoadingStrategy.load(classLoader, types)));
             }
 
             private Map<String, Class<?>> initialize(Map<String, Class<?>> types) {
-                for (Map.Entry<String, Instrumentation.ClassLoadingCallback> entry : getTypeInitializers().entrySet()) {
+                for (Map.Entry<String, TypeInitializer> entry : getTypeInitializers().entrySet()) {
                     entry.getValue().onLoad(types.get(entry.getKey()));
                 }
                 return types;
@@ -377,7 +416,7 @@ public interface DynamicType<T> {
 
             public Loaded(String mainTypeName,
                           byte[] mainTypeByte,
-                          List<? extends Instrumentation.ClassLoadingCallback> classLoadingCallbacks,
+                          List<? extends TypeInitializer> classLoadingCallbacks,
                           Set<? extends DynamicType<?>> helperTypes,
                           Map<String, Class<?>> types) {
                 super(mainTypeName, mainTypeByte, classLoadingCallbacks, helperTypes);
@@ -402,16 +441,16 @@ public interface DynamicType<T> {
 
         protected final String mainTypeName;
         protected final byte[] mainTypeByte;
-        protected final List<? extends Instrumentation.ClassLoadingCallback> classLoadingCallbacks;
+        protected final List<? extends TypeInitializer> typeInitializers;
         protected final Set<? extends DynamicType<?>> helperTypes;
 
         public Default(String mainTypeName,
                        byte[] mainTypeByte,
-                       List<? extends Instrumentation.ClassLoadingCallback> classLoadingCallbacks,
+                       List<? extends TypeInitializer> typeInitializers,
                        Set<? extends DynamicType<?>> helperTypes) {
             this.mainTypeName = mainTypeName;
             this.mainTypeByte = mainTypeByte;
-            this.classLoadingCallbacks = classLoadingCallbacks;
+            this.typeInitializers = typeInitializers;
             this.helperTypes = helperTypes;
         }
 
@@ -421,9 +460,9 @@ public interface DynamicType<T> {
         }
 
         @Override
-        public Map<String, Instrumentation.ClassLoadingCallback> getTypeInitializers() {
-            Instrumentation.ClassLoadingCallback classLoadingCallback = Instrumentation.ClassLoadingCallback.Compound.of(classLoadingCallbacks);
-            Map<String, Instrumentation.ClassLoadingCallback> classLoadingCallbacks = new HashMap<String, Instrumentation.ClassLoadingCallback>();
+        public Map<String, TypeInitializer> getTypeInitializers() {
+            TypeInitializer classLoadingCallback = new TypeInitializer.Compound(typeInitializers);
+            Map<String, TypeInitializer> classLoadingCallbacks = new HashMap<String, TypeInitializer>();
             for (DynamicType<?> helperType : helperTypes) {
                 classLoadingCallbacks.putAll(helperType.getTypeInitializers());
             }
@@ -468,7 +507,7 @@ public interface DynamicType<T> {
 
     Map<String, byte[]> getHelperTypesRaw();
 
-    Map<String, Instrumentation.ClassLoadingCallback> getTypeInitializers();
+    Map<String, TypeInitializer> getTypeInitializers();
 
     File saveIn(File folder) throws IOException;
 }

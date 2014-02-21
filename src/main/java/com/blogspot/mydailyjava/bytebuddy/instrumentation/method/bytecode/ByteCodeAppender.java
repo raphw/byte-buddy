@@ -40,5 +40,35 @@ public interface ByteCodeAppender {
         }
     }
 
+    static class Composite implements ByteCodeAppender {
+
+        private final ByteCodeAppender[] byteCodeAppender;
+
+        public Composite(ByteCodeAppender... byteCodeAppender) {
+            this.byteCodeAppender = byteCodeAppender;
+        }
+
+        @Override
+        public boolean appendsCode() {
+            for (ByteCodeAppender byteCodeAppender : this.byteCodeAppender) {
+                if (byteCodeAppender.appendsCode()) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext, MethodDescription instrumentedMethod) {
+            Size size = new Size(0, instrumentedMethod.getStackSize());
+            for (ByteCodeAppender byteCodeAppender : this.byteCodeAppender) {
+                size = size.merge(byteCodeAppender.apply(methodVisitor, instrumentationContext, instrumentedMethod));
+            }
+            return size;
+        }
+    }
+
+    boolean appendsCode();
+
     Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext, MethodDescription instrumentedMethod);
 }

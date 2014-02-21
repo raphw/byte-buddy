@@ -22,6 +22,11 @@ public enum SuperClassDelegation implements ByteCodeAppender.Factory {
         }
 
         @Override
+        public boolean appendsCode() {
+            return true;
+        }
+
+        @Override
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext, MethodDescription instrumentedMethod) {
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
             StackManipulation.Size parameterSize = new StackManipulation.Size(1, 1);

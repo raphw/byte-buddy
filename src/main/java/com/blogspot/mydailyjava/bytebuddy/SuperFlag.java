@@ -6,7 +6,7 @@ import org.objectweb.asm.Opcodes;
 public enum SuperFlag implements ModifierContributor.ForType {
 
     DEFINED(Opcodes.ACC_SUPER),
-    UNDEFINED(0);
+    UNDEFINED(EMPTY_MASK);
 
     private final int mask;
 

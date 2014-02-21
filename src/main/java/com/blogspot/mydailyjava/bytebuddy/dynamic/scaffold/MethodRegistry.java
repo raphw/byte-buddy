@@ -8,12 +8,9 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodM
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-public interface InterceptionRegistry {
+public interface MethodRegistry {
 
     static interface Compiled {
 
@@ -45,12 +42,12 @@ public interface InterceptionRegistry {
             MethodAttributeAppender getAttributeAppender();
         }
 
-        Entry target(MethodDescription methodDescription);
+        Entry target(MethodDescription methodDescription, Entry fallback);
     }
 
-    static interface LatentDecision {
+    static interface LatentMethodMatcher {
 
-        static class Simple implements LatentDecision {
+        static class Simple implements LatentMethodMatcher {
 
             private final MethodMatcher methodMatcher;
 
@@ -67,11 +64,11 @@ public interface InterceptionRegistry {
         MethodMatcher manifest(TypeDescription typeDescription);
     }
 
-    static class Default implements InterceptionRegistry {
+    static class Default implements MethodRegistry {
 
-        private static class Compiled implements InterceptionRegistry.Compiled {
+        private static class Compiled implements MethodRegistry.Compiled {
 
-            private static class Entry implements InterceptionRegistry.Compiled.Entry, MethodMatcher {
+            private static class Entry implements MethodRegistry.Compiled.Entry, MethodMatcher {
 
                 private final MethodMatcher methodMatcher;
                 private final ByteCodeAppender byteCodeAppender;
@@ -108,26 +105,27 @@ public interface InterceptionRegistry {
             }
 
             @Override
-            public Entry target(MethodDescription methodDescription) {
+            public MethodRegistry.Compiled.Entry target(MethodDescription methodDescription,
+                                                        MethodRegistry.Compiled.Entry fallback) {
                 for (Entry entry : entries) {
                     if (entry.matches(methodDescription)) {
                         return entry;
                     }
                 }
-                throw new IllegalArgumentException();
+                return fallback;
             }
         }
 
         private static class Entry {
 
-            private final LatentDecision latentDecision;
+            private final LatentMethodMatcher latentMethodMatcher;
             private final Instrumentation instrumentation;
             private final MethodAttributeAppender.Factory attributeAppenderFactory;
 
-            private Entry(LatentDecision latentDecision,
+            private Entry(LatentMethodMatcher latentMethodMatcher,
                           Instrumentation instrumentation,
                           MethodAttributeAppender.Factory attributeAppenderFactory) {
-                this.latentDecision = latentDecision;
+                this.latentMethodMatcher = latentMethodMatcher;
                 this.instrumentation = instrumentation;
                 this.attributeAppenderFactory = attributeAppenderFactory;
             }
@@ -135,22 +133,26 @@ public interface InterceptionRegistry {
 
         private final List<Entry> entries;
 
+        public Default() {
+            entries = Collections.emptyList();
+        }
+
         private Default(List<Entry> entries) {
             this.entries = entries;
         }
 
         @Override
-        public InterceptionRegistry prepend(LatentDecision latentDecision,
-                                            Instrumentation instrumentation,
-                                            MethodAttributeAppender.Factory attributeAppenderFactory) {
+        public MethodRegistry prepend(LatentMethodMatcher latentMethodMatcher,
+                                      Instrumentation instrumentation,
+                                      MethodAttributeAppender.Factory attributeAppenderFactory) {
             List<Entry> entries = new ArrayList<Entry>(this.entries.size() + 1);
-            entries.add(new Entry(latentDecision, instrumentation, attributeAppenderFactory));
+            entries.add(new Entry(latentMethodMatcher, instrumentation, attributeAppenderFactory));
             entries.addAll(this.entries);
             return new Default(entries);
         }
 
         @Override
-        public Compiled compile(InstrumentedType instrumentedType, Instrumentation.Context context) {
+        public Compiled compile(InstrumentedType instrumentedType) {
             Map<Instrumentation, Entry> prepared = new HashMap<Instrumentation, Entry>(entries.size());
             for (Entry entry : entries) {
                 if (!prepared.containsKey(entry.instrumentation)) {
@@ -158,10 +160,10 @@ public interface InterceptionRegistry {
                     prepared.put(entry.instrumentation, entry);
                 }
             }
-            List<InterceptionRegistry.Default.Compiled.Entry> compiledEntries = new ArrayList<InterceptionRegistry.Default.Compiled.Entry>(prepared.size());
+            List<MethodRegistry.Default.Compiled.Entry> compiledEntries = new ArrayList<MethodRegistry.Default.Compiled.Entry>(prepared.size());
             for (Entry entry : entries) {
-                MethodMatcher methodMatcher = entry.latentDecision.manifest(instrumentedType);
-                ByteCodeAppender byteCodeAppender = prepared.get(entry.instrumentation).instrumentation.appender(instrumentedType, context);
+                MethodMatcher methodMatcher = entry.latentMethodMatcher.manifest(instrumentedType);
+                ByteCodeAppender byteCodeAppender = prepared.get(entry.instrumentation).instrumentation.appender(instrumentedType);
                 MethodAttributeAppender attributeAppender = entry.attributeAppenderFactory.make(instrumentedType);
                 compiledEntries.add(new Compiled.Entry(methodMatcher, byteCodeAppender, attributeAppender));
             }
@@ -169,9 +171,9 @@ public interface InterceptionRegistry {
         }
     }
 
-    InterceptionRegistry prepend(LatentDecision latentDecision,
-                                 Instrumentation instrumentation,
-                                 MethodAttributeAppender.Factory attributeAppenderFactory);
+    MethodRegistry prepend(LatentMethodMatcher latentMethodMatcher,
+                           Instrumentation instrumentation,
+                           MethodAttributeAppender.Factory attributeAppenderFactory);
 
-    Compiled compile(InstrumentedType instrumentedType, Instrumentation.Context context);
+    Compiled compile(InstrumentedType instrumentedType);
 }

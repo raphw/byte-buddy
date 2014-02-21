@@ -14,6 +14,11 @@ public enum StubMethod implements ByteCodeAppender.Factory {
         INSTANCE;
 
         @Override
+        public boolean appendsCode() {
+            return true;
+        }
+
+        @Override
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext, MethodDescription instrumentedMethod) {
             return new Size(
                     DefaultValue.load(instrumentedMethod.getReturnType()).apply(methodVisitor, instrumentationContext)

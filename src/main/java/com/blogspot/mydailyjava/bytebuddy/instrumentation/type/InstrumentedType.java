@@ -1,5 +1,6 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.type;
 
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.TypeInitializer;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.field.FieldDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.field.FieldList;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
@@ -28,7 +29,7 @@ public interface InstrumentedType extends TypeDescription {
     static final int METHOD_MODIFIER_MASK = MEMBER_MODIFIER_MASK | Modifier.ABSTRACT | Modifier.SYNCHRONIZED
             | Modifier.NATIVE | Modifier.STRICT | Opcodes.ACC_BRIDGE | Opcodes.ACC_VARARGS;
 
-    static abstract class AbstractInstrumentedType extends AbstractTypeDescription implements InstrumentedType {
+    static abstract class AbstractBase extends AbstractTypeDescription implements InstrumentedType {
 
         protected class FieldToken extends FieldDescription.AbstractFieldDescription {
 
@@ -85,7 +86,7 @@ public interface InstrumentedType extends TypeDescription {
 
             @Override
             public TypeDescription getDeclaringType() {
-                return AbstractInstrumentedType.this;
+                return AbstractBase.this;
             }
 
             @Override
@@ -188,7 +189,7 @@ public interface InstrumentedType extends TypeDescription {
 
             @Override
             public TypeDescription getDeclaringType() {
-                return AbstractInstrumentedType.this;
+                return AbstractBase.this;
             }
 
             @Override
@@ -201,17 +202,21 @@ public interface InstrumentedType extends TypeDescription {
             return typeDescription.getInternalName().equals(instrumentedTypeName) ? this : typeDescription;
         }
 
+        protected final TypeInitializer typeInitializer;
         protected final List<FieldDescription> fieldDescriptions;
         protected final List<MethodDescription> methodDescriptions;
 
-        protected AbstractInstrumentedType() {
+        protected AbstractBase() {
+            typeInitializer = TypeInitializer.NoOp.INSTANCE;
             fieldDescriptions = Collections.emptyList();
             methodDescriptions = Collections.emptyList();
         }
 
-        protected AbstractInstrumentedType(String typeInternalName,
-                                           List<? extends FieldDescription> fieldDescriptions,
-                                           List<? extends MethodDescription> methodDescriptions) {
+        protected AbstractBase(TypeInitializer typeInitializer,
+                               String typeInternalName,
+                               List<? extends FieldDescription> fieldDescriptions,
+                               List<? extends MethodDescription> methodDescriptions) {
+            this.typeInitializer = typeInitializer;
             this.fieldDescriptions = new ArrayList<FieldDescription>(fieldDescriptions.size());
             for (FieldDescription fieldDescription : fieldDescriptions) {
                 this.fieldDescriptions.add(new FieldToken(typeInternalName, fieldDescription));
@@ -346,14 +351,23 @@ public interface InstrumentedType extends TypeDescription {
         public TypeDescription getDeclaringType() {
             return null;
         }
+
+        @Override
+        public TypeInitializer getInitializer() {
+            return typeInitializer;
+        }
     }
 
     InstrumentedType withField(String name,
                                TypeDescription fieldType,
-                               int access);
+                               int modifiers);
 
     InstrumentedType withMethod(String name,
                                 TypeDescription returnType,
                                 List<? extends TypeDescription> parameterTypes,
-                                int access);
+                                int modifiers);
+
+    InstrumentedType withInitializer(TypeInitializer typeInitializer);
+
+    TypeInitializer getInitializer();
 }
