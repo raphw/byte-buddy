@@ -1,6 +1,5 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.type.auxiliary;
 
-import com.blogspot.mydailyjava.bytebuddy.ClassVersion;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.TypeInitializer;
@@ -54,10 +53,10 @@ public class MethodCallProxy implements AuxiliaryType {
             Size size = new Size(2, 2);
             size = size.aggregate(MethodArgument.loadParameters(proxiedMethod).apply(methodVisitor, instrumentationContext));
             StringBuilder stringBuilder = new StringBuilder("(");
-            if(!proxiedMethod.isStatic()) {
+            if (!proxiedMethod.isStatic()) {
                 stringBuilder.append(proxiedMethod.getDeclaringType().getDescriptor());
             }
-            for(TypeDescription parameterType : proxiedMethod.getParameterTypes()) {
+            for (TypeDescription parameterType : proxiedMethod.getParameterTypes()) {
                 stringBuilder.append(parameterType.getDescriptor());
             }
             stringBuilder.append(")V");
@@ -136,8 +135,9 @@ public class MethodCallProxy implements AuxiliaryType {
     }
 
     @Override
-    public DynamicType<?> make(String proxyTypeName, ClassVersion classVersion) {
-        String proxyTypeInternalName = proxyTypeName.replace('.', '/');
+    public DynamicType<?> make(String auxiliaryTypeName, MethodProxyFactory methodProxyFactory) {
+        String proxyTypeInternalName = auxiliaryTypeName.replace('.', '/');
+        MethodDescription proxiedMethod = methodProxyFactory.requireProxyMethodFor(this.proxiedMethod);
         Map<String, TypeDescription> fields = new LinkedHashMap<String, TypeDescription>(1 + proxiedMethod.getParameterTypes().size());
         StringBuilder constructorDescriptor = new StringBuilder("(");
         int i = 0;
@@ -153,7 +153,7 @@ public class MethodCallProxy implements AuxiliaryType {
         Assigner assigner = new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE), true);
         ClassWriter classWriter = new ClassWriter(ASM_MANUAL);
         ClassVisitor classVisitor = new TraceClassVisitor(classWriter, new PrintWriter(System.out));
-        classVisitor.visit(classVersion.getVersionNumber(),
+        classVisitor.visit(Opcodes.V1_5,
                 DEFAULT_TYPE_ACCESS,
                 proxyTypeInternalName,
                 null,
@@ -196,10 +196,10 @@ public class MethodCallProxy implements AuxiliaryType {
             anInterface.implement(classVisitor, proxyTypeInternalName, proxiedMethod, fields, assigner);
         }
         classVisitor.visitEnd();
-        return new DynamicType.Default.Unloaded<Object>(proxyTypeName,
+        return new DynamicType.Default.Unloaded<Object>(auxiliaryTypeName,
                 classWriter.toByteArray(),
-                Collections.<TypeInitializer>emptyList(),
-                Collections.<DynamicType<?>>emptySet());
+                TypeInitializer.NoOp.INSTANCE,
+                Collections.<DynamicType<?>>emptyList());
     }
 
     @Override

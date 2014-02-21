@@ -16,7 +16,7 @@ public class ByteBuddy {
     public static final MethodMatcher DEFAULT_IGNORED_METHODS = MethodMatchers.isDefaultFinalize();
 
     public static ByteBuddy make() {
-        return new ByteBuddy(new ClassVersion(DEFAULT_CLASS_VERSION),
+        return new ByteBuddy(new ClassFormatVersion(DEFAULT_CLASS_VERSION),
                 DEFAULT_VISIBILITY,
                 DEFAULT_TYPE_MANIFESTATION,
                 DEFAULT_SYNTHETIC_STATE,
@@ -25,7 +25,7 @@ public class ByteBuddy {
                 new ClassVisitorWrapper.Chain());
     }
 
-    private final ClassVersion classVersion;
+    private final ClassFormatVersion classFormatVersion;
     private final Visibility visibility;
     private final TypeManifestation typeManifestation;
     private final SyntheticState syntheticState;
@@ -33,14 +33,14 @@ public class ByteBuddy {
     private final MethodMatcher ignoredMethods;
     private final ClassVisitorWrapper.Chain classVisitorWrapperChain;
 
-    protected ByteBuddy(ClassVersion classVersion,
+    protected ByteBuddy(ClassFormatVersion classFormatVersion,
                         Visibility visibility,
                         TypeManifestation typeManifestation,
                         SyntheticState syntheticState,
                         NamingStrategy namingStrategy,
                         MethodMatcher ignoredMethods,
                         ClassVisitorWrapper.Chain classVisitorWrapperChain) {
-        this.classVersion = classVersion;
+        this.classFormatVersion = classFormatVersion;
         this.visibility = visibility;
         this.typeManifestation = typeManifestation;
         this.syntheticState = syntheticState;
@@ -50,7 +50,7 @@ public class ByteBuddy {
     }
 
     public ByteBuddy withDefaultClassVersion(int versionNumber) {
-        return new ByteBuddy(new ClassVersion(versionNumber),
+        return new ByteBuddy(new ClassFormatVersion(versionNumber),
                 visibility,
                 typeManifestation,
                 syntheticState,
@@ -60,7 +60,7 @@ public class ByteBuddy {
     }
 
     public ByteBuddy withDefaultVisibility(Visibility visibility) {
-        return new ByteBuddy(classVersion,
+        return new ByteBuddy(classFormatVersion,
                 checkNotNull(visibility),
                 typeManifestation,
                 syntheticState,
@@ -70,7 +70,7 @@ public class ByteBuddy {
     }
 
     public ByteBuddy withDefaultTypeManifestation(TypeManifestation typeManifestation) {
-        return new ByteBuddy(classVersion,
+        return new ByteBuddy(classFormatVersion,
                 visibility,
                 checkNotNull(typeManifestation),
                 syntheticState,
@@ -80,7 +80,7 @@ public class ByteBuddy {
     }
 
     public ByteBuddy withDefaultSyntheticState(SyntheticState syntheticState) {
-        return new ByteBuddy(classVersion,
+        return new ByteBuddy(classFormatVersion,
                 visibility,
                 typeManifestation,
                 checkNotNull(syntheticState),
@@ -90,7 +90,7 @@ public class ByteBuddy {
     }
 
     public ByteBuddy withNameMaker(NamingStrategy namingStrategy) {
-        return new ByteBuddy(classVersion,
+        return new ByteBuddy(classFormatVersion,
                 visibility,
                 typeManifestation,
                 syntheticState,
@@ -100,7 +100,7 @@ public class ByteBuddy {
     }
 
     public ByteBuddy withDefaultIgnoredMethods(MethodMatcher ignoredMethods) {
-        return new ByteBuddy(classVersion,
+        return new ByteBuddy(classFormatVersion,
                 visibility,
                 typeManifestation,
                 syntheticState,
@@ -111,7 +111,7 @@ public class ByteBuddy {
 
     public ByteBuddy withPrependedClassVisitorWrapper(ClassVisitorWrapper classVisitorWrapper) {
         return new ByteBuddy(
-                classVersion,
+                classFormatVersion,
                 visibility,
                 typeManifestation,
                 syntheticState,
@@ -121,7 +121,7 @@ public class ByteBuddy {
     }
 
     public ByteBuddy withAppendedClassVisitorWrapper(ClassVisitorWrapper classVisitorWrapper) {
-        return new ByteBuddy(classVersion,
+        return new ByteBuddy(classFormatVersion,
                 visibility,
                 typeManifestation,
                 syntheticState,
@@ -130,8 +130,8 @@ public class ByteBuddy {
                 classVisitorWrapperChain.append(checkNotNull(classVisitorWrapper)));
     }
 
-    public ClassVersion getClassVersion() {
-        return classVersion;
+    public ClassFormatVersion getClassFormatVersion() {
+        return classFormatVersion;
     }
 
     public Visibility getVisibility() {

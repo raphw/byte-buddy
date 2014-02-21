@@ -353,7 +353,7 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public TypeInitializer getInitializer() {
+        public TypeInitializer getTypeInitializer() {
             return typeInitializer;
         }
     }
@@ -369,5 +369,5 @@ public interface InstrumentedType extends TypeDescription {
 
     InstrumentedType withInitializer(TypeInitializer typeInitializer);
 
-    TypeInitializer getInitializer();
+    TypeInitializer getTypeInitializer();
 }

@@ -16,6 +16,20 @@ public interface MethodRegistry {
 
         static interface Entry {
 
+            static enum ForAbstractMethod implements Entry {
+                INSTANCE;
+
+                @Override
+                public ByteCodeAppender getByteCodeAppender() {
+                    return Instrumentation.ForAbstractMethod.INSTANCE;
+                }
+
+                @Override
+                public MethodAttributeAppender getAttributeAppender() {
+                    return MethodAttributeAppender.NoOp.INSTANCE;
+                }
+            }
+
             static class Default implements Entry {
 
                 private final ByteCodeAppender byteCodeAppender;

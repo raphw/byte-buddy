@@ -17,7 +17,7 @@ public interface NamingStrategy {
 
         SyntheticState getSyntheticState();
 
-        int getClassVersion();
+        int getClassFormatVersion();
     }
 
     static class PrefixingRandom implements NamingStrategy {

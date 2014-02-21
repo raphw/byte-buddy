@@ -47,6 +47,15 @@ public interface MethodList extends List<MethodDescription> {
             }
             return new Explicit(result);
         }
+
+        @Override
+        public MethodDescription getOnly() {
+            if (size() == 1) {
+                return get(0);
+            } else {
+                throw new IllegalStateException();
+            }
+        }
     }
 
     static class Explicit extends AbstractList<MethodDescription> implements MethodList {
@@ -77,6 +86,15 @@ public interface MethodList extends List<MethodDescription> {
             }
             return new Explicit(result);
         }
+
+        @Override
+        public MethodDescription getOnly() {
+            if (methodDescriptions.size() == 1) {
+                return methodDescriptions.get(0);
+            } else {
+                throw new IllegalStateException();
+            }
+        }
     }
 
     public class Empty extends AbstractList<MethodDescription> implements MethodList {
@@ -95,7 +113,14 @@ public interface MethodList extends List<MethodDescription> {
         public MethodList filter(MethodMatcher methodMatcher) {
             return this;
         }
+
+        @Override
+        public MethodDescription getOnly() {
+            throw new IllegalStateException();
+        }
     }
 
     MethodList filter(MethodMatcher methodMatcher);
+
+    MethodDescription getOnly();
 }

@@ -18,26 +18,26 @@ public class SubclassLoadedTypeInstrumentation
         extends InstrumentedType.AbstractBase
         implements NamingStrategy.UnnamedType {
 
-    private final ClassVersion classVersion;
+    private final ClassFormatVersion classFormatVersion;
     private final Class<?> superClass;
     private final Collection<Class<?>> interfaces;
     private final int modifiers;
     private final String name;
 
-    public SubclassLoadedTypeInstrumentation(ClassVersion classVersion,
+    public SubclassLoadedTypeInstrumentation(ClassFormatVersion classFormatVersion,
                                              Class<?> superClass,
                                              Collection<Class<?>> interfaces,
                                              int modifiers,
                                              NamingStrategy namingStrategy) {
 
-        this.classVersion = classVersion;
+        this.classFormatVersion = classFormatVersion;
         this.superClass = superClass;
         this.interfaces = interfaces;
         this.modifiers = modifiers;
         this.name = namingStrategy.getName(this);
     }
 
-    protected SubclassLoadedTypeInstrumentation(ClassVersion classVersion,
+    protected SubclassLoadedTypeInstrumentation(ClassFormatVersion classFormatVersion,
                                                 Class<?> superClass,
                                                 Collection<Class<?>> interfaces,
                                                 int modifiers,
@@ -46,7 +46,7 @@ public class SubclassLoadedTypeInstrumentation
                                                 List<? extends MethodDescription> methodDescriptions,
                                                 TypeInitializer typeInitializer) {
         super(typeInitializer, name, fieldDescriptions, methodDescriptions);
-        this.classVersion = classVersion;
+        this.classFormatVersion = classFormatVersion;
         this.superClass = superClass;
         this.interfaces = interfaces;
         this.modifiers = modifiers;
@@ -63,7 +63,7 @@ public class SubclassLoadedTypeInstrumentation
         }
         List<FieldDescription> fieldDescriptions = new ArrayList<FieldDescription>(this.fieldDescriptions);
         fieldDescriptions.add(additionalField);
-        return new SubclassLoadedTypeInstrumentation(classVersion,
+        return new SubclassLoadedTypeInstrumentation(classFormatVersion,
                 superClass,
                 interfaces,
                 modifiers,
@@ -84,7 +84,7 @@ public class SubclassLoadedTypeInstrumentation
         }
         List<MethodDescription> methodDescriptions = new ArrayList<MethodDescription>(this.methodDescriptions);
         methodDescriptions.add(additionalMethod);
-        return new SubclassLoadedTypeInstrumentation(classVersion,
+        return new SubclassLoadedTypeInstrumentation(classFormatVersion,
                 superClass,
                 interfaces,
                 modifiers,
@@ -96,7 +96,7 @@ public class SubclassLoadedTypeInstrumentation
 
     @Override
     public InstrumentedType withInitializer(TypeInitializer typeInitializer) {
-        return new SubclassLoadedTypeInstrumentation(classVersion,
+        return new SubclassLoadedTypeInstrumentation(classFormatVersion,
                 superClass,
                 interfaces,
                 modifiers,
@@ -195,7 +195,7 @@ public class SubclassLoadedTypeInstrumentation
     }
 
     @Override
-    public int getClassVersion() {
-        return classVersion.getVersionNumber();
+    public int getClassFormatVersion() {
+        return classFormatVersion.getVersionNumber();
     }
 }

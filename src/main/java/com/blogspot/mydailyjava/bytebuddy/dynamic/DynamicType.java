@@ -224,8 +224,8 @@ public interface DynamicType<T> {
             protected abstract class AbstractDelegatingBuilder<T> implements Builder<T> {
 
                 @Override
-                public Builder<T> classVersion(int classVersion) {
-                    return materialize().classVersion(classVersion);
+                public Builder<T> classFormatVersion(int versionNumber) {
+                    return materialize().classFormatVersion(versionNumber);
                 }
 
                 @Override
@@ -338,7 +338,7 @@ public interface DynamicType<T> {
             FieldAnnotationTarget<T> annotateField(Annotation annotation);
         }
 
-        Builder<T> classVersion(int classVersion);
+        Builder<T> classFormatVersion(int versionNumber);
 
         Builder<T> implement(Class<?> interfaceType);
 
@@ -372,7 +372,7 @@ public interface DynamicType<T> {
 
         Class<? extends T> getMainType();
 
-        Map<String, Class<?>> getHelperTypes();
+        Map<String, Class<?>> getAuxiliaryTypes();
     }
 
     static interface Unloaded<T> extends DynamicType<T> {
@@ -386,19 +386,19 @@ public interface DynamicType<T> {
 
             public Unloaded(String mainTypeName,
                             byte[] mainTypeByte,
-                            List<? extends TypeInitializer> classLoadingCallbacks,
-                            Set<? extends DynamicType<?>> helperTypes) {
-                super(mainTypeName, mainTypeByte, classLoadingCallbacks, helperTypes);
+                            TypeInitializer typeInitializer,
+                            List<? extends DynamicType<?>> auxiliaryTypes) {
+                super(mainTypeName, mainTypeByte, typeInitializer, auxiliaryTypes);
             }
 
             @Override
             public DynamicType.Loaded<T> load(ClassLoader classLoader, ClassLoadingStrategy classLoadingStrategy) {
-                Map<String, byte[]> types = getHelperTypesRaw();
+                Map<String, byte[]> types = getRawAuxiliaryTypes();
                 types.put(getMainTypeName(), getMainTypeByte());
                 return new Default.Loaded<T>(mainTypeName,
                         mainTypeByte,
-                        typeInitializers,
-                        helperTypes,
+                        typeInitializer,
+                        auxiliaryTypes,
                         initialize(classLoadingStrategy.load(classLoader, types)));
             }
 
@@ -416,10 +416,10 @@ public interface DynamicType<T> {
 
             public Loaded(String mainTypeName,
                           byte[] mainTypeByte,
-                          List<? extends TypeInitializer> classLoadingCallbacks,
-                          Set<? extends DynamicType<?>> helperTypes,
+                          TypeInitializer typeInitializer,
+                          List<? extends DynamicType<?>> auxiliaryTypes,
                           Map<String, Class<?>> types) {
-                super(mainTypeName, mainTypeByte, classLoadingCallbacks, helperTypes);
+                super(mainTypeName, mainTypeByte, typeInitializer, auxiliaryTypes);
                 this.types = types;
             }
 
@@ -430,10 +430,10 @@ public interface DynamicType<T> {
             }
 
             @Override
-            public Map<String, Class<?>> getHelperTypes() {
-                Map<String, Class<?>> helperTypes = new HashMap<String, Class<?>>(types);
+            public Map<String, Class<?>> getAuxiliaryTypes() {
+                Map<String, Class<?>> auxiliaryTypes = new HashMap<String, Class<?>>(types);
                 types.remove(getMainTypeName());
-                return helperTypes;
+                return auxiliaryTypes;
             }
         }
 
@@ -441,17 +441,17 @@ public interface DynamicType<T> {
 
         protected final String mainTypeName;
         protected final byte[] mainTypeByte;
-        protected final List<? extends TypeInitializer> typeInitializers;
-        protected final Set<? extends DynamicType<?>> helperTypes;
+        protected final TypeInitializer typeInitializer;
+        protected final List<? extends DynamicType<?>> auxiliaryTypes;
 
         public Default(String mainTypeName,
                        byte[] mainTypeByte,
-                       List<? extends TypeInitializer> typeInitializers,
-                       Set<? extends DynamicType<?>> helperTypes) {
+                       TypeInitializer typeInitializer,
+                       List<? extends DynamicType<?>> auxiliaryTypes) {
             this.mainTypeName = mainTypeName;
             this.mainTypeByte = mainTypeByte;
-            this.typeInitializers = typeInitializers;
-            this.helperTypes = helperTypes;
+            this.typeInitializer = typeInitializer;
+            this.auxiliaryTypes = auxiliaryTypes;
         }
 
         @Override
@@ -461,12 +461,11 @@ public interface DynamicType<T> {
 
         @Override
         public Map<String, TypeInitializer> getTypeInitializers() {
-            TypeInitializer classLoadingCallback = new TypeInitializer.Compound(typeInitializers);
             Map<String, TypeInitializer> classLoadingCallbacks = new HashMap<String, TypeInitializer>();
-            for (DynamicType<?> helperType : helperTypes) {
-                classLoadingCallbacks.putAll(helperType.getTypeInitializers());
+            for (DynamicType<?> auxiliaryType : auxiliaryTypes) {
+                classLoadingCallbacks.putAll(auxiliaryType.getTypeInitializers());
             }
-            classLoadingCallbacks.put(getMainTypeName(), classLoadingCallback);
+            classLoadingCallbacks.put(getMainTypeName(), typeInitializer);
             return classLoadingCallbacks;
         }
 
@@ -476,13 +475,13 @@ public interface DynamicType<T> {
         }
 
         @Override
-        public Map<String, byte[]> getHelperTypesRaw() {
-            Map<String, byte[]> helperTypeByte = new HashMap<String, byte[]>(helperTypes.size());
-            for (DynamicType<?> helperType : helperTypes) {
-                helperTypeByte.put(helperType.getMainTypeName(), helperType.getMainTypeByte());
-                helperTypeByte.putAll(helperType.getHelperTypesRaw());
+        public Map<String, byte[]> getRawAuxiliaryTypes() {
+            Map<String, byte[]> auxiliaryTypes = new HashMap<String, byte[]>(this.auxiliaryTypes.size());
+            for (DynamicType<?> auxiliaryType : this.auxiliaryTypes) {
+                auxiliaryTypes.put(auxiliaryType.getMainTypeName(), auxiliaryType.getMainTypeByte());
+                auxiliaryTypes.putAll(auxiliaryType.getRawAuxiliaryTypes());
             }
-            return helperTypeByte;
+            return auxiliaryTypes;
         }
 
         @Override
@@ -494,8 +493,8 @@ public interface DynamicType<T> {
             } finally {
                 fileOutputStream.close();
             }
-            for (DynamicType<?> helperType : helperTypes) {
-                helperType.saveIn(folder);
+            for (DynamicType<?> auxiliaryType : auxiliaryTypes) {
+                auxiliaryType.saveIn(folder);
             }
             return target;
         }
@@ -505,7 +504,7 @@ public interface DynamicType<T> {
 
     byte[] getMainTypeByte();
 
-    Map<String, byte[]> getHelperTypesRaw();
+    Map<String, byte[]> getRawAuxiliaryTypes();
 
     Map<String, TypeInitializer> getTypeInitializers();
 

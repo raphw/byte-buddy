@@ -1,10 +1,10 @@
 package com.blogspot.mydailyjava.bytebuddy;
 
-public class ClassVersion {
+public class ClassFormatVersion {
 
     private final int versionNumber;
 
-    public ClassVersion(int versionNumber) {
+    public ClassFormatVersion(int versionNumber) {
         this.versionNumber = validateVersionNumber(versionNumber);
     }
 

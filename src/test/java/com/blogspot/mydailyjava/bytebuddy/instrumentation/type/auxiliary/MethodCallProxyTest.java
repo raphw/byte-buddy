@@ -1,6 +1,6 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.type.auxiliary;
 
-import com.blogspot.mydailyjava.bytebuddy.ClassVersion;
+import com.blogspot.mydailyjava.bytebuddy.ClassFormatVersion;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
@@ -24,7 +24,7 @@ import static org.junit.Assert.assertEquals;
 @RunWith(Parameterized.class)
 public class MethodCallProxyTest {
 
-    private static final ClassVersion CLASS_VERSION = new ClassVersion(Opcodes.V1_6);
+    private static final ClassFormatVersion CLASS_VERSION = new ClassFormatVersion(Opcodes.V1_6);
 
     private static final String RUN_METHOD = "run";
     private static final String CALL_METHOD = "call";
@@ -91,7 +91,7 @@ public class MethodCallProxyTest {
         MethodDescription proxiedMethod = new MethodDescription.ForMethod
                 (proxiedType.getDeclaredMethod(FOO, proxiedMethodParameters));
         MethodCallProxy methodCallProxy = new MethodCallProxy(proxiedMethod);
-        DynamicType<?> dynamicType = methodCallProxy.make(proxyName(proxiedType), CLASS_VERSION);
+        DynamicType<?> dynamicType = methodCallProxy.make(proxyName(proxiedType), null); // TODO
         ClassLoader proxyClassLoader = new ByteArrayClassLoader(getClass().getClassLoader(),
                 Collections.singletonMap(dynamicType.getMainTypeName(), dynamicType.getMainTypeByte()));
         Class<?> proxyType = Class.forName(proxyName(proxiedType), false, proxyClassLoader);

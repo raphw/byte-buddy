@@ -1,28 +1,25 @@
 package com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold;
 
-import com.blogspot.mydailyjava.bytebuddy.ClassVersion;
+import com.blogspot.mydailyjava.bytebuddy.ClassFormatVersion;
 import com.blogspot.mydailyjava.bytebuddy.NamingStrategy;
 import com.blogspot.mydailyjava.bytebuddy.asm.ClassVisitorWrapper;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.ModifierContributor;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.TypeInitializer;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.JunctionMethodMatcher;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.ClassWriter;
 
 import java.lang.annotation.Annotation;
-import java.util.Collections;
 import java.util.List;
 
-public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<T> {
+import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.isOverridable;
+import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.not;
 
-    private static final int ASM_MANUAL = 0;
+public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<T> {
 
     private class SubclassFieldAnnotationTarget<T> extends AbstractDelegatingBuilder<T> implements FieldAnnotationTarget<T> {
 
@@ -36,7 +33,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
         @Override
         protected DynamicType.Builder<T> materialize() {
-            return new SubclassDynamicTypeBuilder<T>(classVersion,
+            return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
                     namingStrategy,
                     superType,
                     interfaceTypes,
@@ -105,7 +102,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
         @Override
         protected DynamicType.Builder<T> materialize() {
-            return new SubclassDynamicTypeBuilder<T>(classVersion,
+            return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
                     namingStrategy,
                     superType,
                     interfaceTypes,
@@ -139,7 +136,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         }
     }
 
-    private final ClassVersion classVersion;
+    private final ClassFormatVersion classFormatVersion;
     private final NamingStrategy namingStrategy;
     private final Class<?> superType;
     private final List<Class<?>> interfaceTypes;
@@ -150,7 +147,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     private final FieldRegistry fieldRegistry;
     private final MethodRegistry methodRegistry;
 
-    public SubclassDynamicTypeBuilder(ClassVersion classVersion,
+    public SubclassDynamicTypeBuilder(ClassFormatVersion classFormatVersion,
                                       NamingStrategy namingStrategy,
                                       Class<?> superType,
                                       List<Class<?>> interfaceTypes,
@@ -163,7 +160,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                       List<FieldToken> fieldTokens,
                                       List<MethodToken> methodTokens) {
         super(fieldTokens, methodTokens);
-        this.classVersion = classVersion;
+        this.classFormatVersion = classFormatVersion;
         this.namingStrategy = namingStrategy;
         this.superType = superType;
         this.interfaceTypes = interfaceTypes;
@@ -176,8 +173,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     }
 
     @Override
-    public DynamicType.Builder<T> classVersion(int classVersion) {
-        return new SubclassDynamicTypeBuilder<T>(new ClassVersion(classVersion),
+    public DynamicType.Builder<T> classFormatVersion(int versionNumber) {
+        return new SubclassDynamicTypeBuilder<T>(new ClassFormatVersion(versionNumber),
                 namingStrategy,
                 superType,
                 interfaceTypes,
@@ -193,7 +190,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public DynamicType.Builder<T> implement(Class<?> interfaceType) {
-        return new SubclassDynamicTypeBuilder<T>(classVersion,
+        return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
                 namingStrategy,
                 superType,
                 join(interfaceTypes, isInterface(nonNull(interfaceType))),
@@ -209,7 +206,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public DynamicType.Builder<T> name(String name) {
-        return new SubclassDynamicTypeBuilder<T>(classVersion,
+        return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
                 new NamingStrategy.Fixed(nonNull(name)),
                 superType,
                 interfaceTypes,
@@ -225,7 +222,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public DynamicType.Builder<T> modifier(ModifierContributor.ForType... modifier) {
-        return new SubclassDynamicTypeBuilder<T>(classVersion,
+        return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
                 namingStrategy,
                 superType,
                 interfaceTypes,
@@ -241,7 +238,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public DynamicType.Builder<T> ignoreMethods(MethodMatcher ignoredMethods) {
-        return new SubclassDynamicTypeBuilder<T>(classVersion,
+        return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
                 namingStrategy,
                 superType,
                 interfaceTypes,
@@ -257,7 +254,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public DynamicType.Builder<T> attribute(TypeAttributeAppender attributeAppender) {
-        return new SubclassDynamicTypeBuilder<T>(classVersion,
+        return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
                 namingStrategy,
                 superType,
                 interfaceTypes,
@@ -278,7 +275,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public DynamicType.Builder<T> classVisitor(ClassVisitorWrapper classVisitorWrapper) {
-        return new SubclassDynamicTypeBuilder<T>(classVersion,
+        return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
                 namingStrategy,
                 superType,
                 interfaceTypes,
@@ -319,26 +316,21 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public DynamicType.Unloaded<T> make() {
-        ClassWriter classWriter = new ClassWriter(ASM_MANUAL);
-        InstrumentedType instrumentedType = applyRecoredMembersTo(new SubclassLoadedTypeInstrumentation(classVersion,
+        InstrumentedType instrumentedType = applyRecoredMembersTo(new SubclassLoadedTypeInstrumentation(classFormatVersion,
                 superType,
                 interfaceTypes,
                 modifiers,
                 namingStrategy));
-        ClassVisitor classVisitor = classVisitorWrapperChain.wrap(classWriter);
-        classVisitor.visit(classVersion.getVersionNumber(),
-                instrumentedType.getModifiers(),
-                instrumentedType.getInternalName(),
-                null,
-                instrumentedType.getSupertype().getInternalName(),
-                instrumentedType.getInterfaces().toInternalNames());
-        // TODO: Write field and methods to class writer. Add dedicated types and implementations that handle this task.
-        classVisitor.visitEnd();
-        // TODO: Add implementation for Instrumentation.Context and handler type that allows extraction.
-        // TODO: Write delegater methods.
-        return new DynamicType.Default.Unloaded<T>(instrumentedType.getName(),
-                classWriter.toByteArray(),
-                join(Collections.<TypeInitializer>emptyList(), instrumentedType.getInitializer()),
-                Collections.<DynamicType<?>>emptySet());
+        SubclassInstrumentationContextDelegate contextDelegate = new SubclassInstrumentationContextDelegate(instrumentedType);
+        Instrumentation.Context instrumentationContext = new Instrumentation.Context.Default(contextDelegate, contextDelegate);
+        return new TypeWriter.Builder<T>(instrumentedType, instrumentationContext, classFormatVersion)
+                .build(classVisitorWrapperChain)
+                .attributeType(attributeAppender)
+                .fields()
+                .write(instrumentedType.getDeclaredFields(), fieldRegistry.compile(instrumentedType))
+                .methods()
+                .write(instrumentedType.getDeclaredMethods().filter(not(ignoredMethods).and(isOverridable())), methodRegistry.compile(instrumentedType))
+                .write(contextDelegate.getProxiedMethods(), contextDelegate)
+                .make();
     }
 }
