@@ -1,5 +1,9 @@
 package com.blogspot.mydailyjava.bytebuddy;
 
+import com.blogspot.mydailyjava.bytebuddy.modifier.SyntheticState;
+import com.blogspot.mydailyjava.bytebuddy.modifier.TypeManifestation;
+import com.blogspot.mydailyjava.bytebuddy.modifier.Visibility;
+
 import java.util.Collection;
 import java.util.Random;
 

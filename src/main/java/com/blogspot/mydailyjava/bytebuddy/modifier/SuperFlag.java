@@ -1,16 +1,16 @@
-package com.blogspot.mydailyjava.bytebuddy;
+package com.blogspot.mydailyjava.bytebuddy.modifier;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.ModifierContributor;
 import org.objectweb.asm.Opcodes;
 
-public enum SynchronizationState implements ModifierContributor.ForMethod {
+public enum SuperFlag implements ModifierContributor.ForType {
 
-    PLAIN(EMPTY_MASK),
-    SYNCHRONIZED(Opcodes.ACC_SYNCHRONIZED);
+    DEFINED(Opcodes.ACC_SUPER),
+    UNDEFINED(EMPTY_MASK);
 
     private final int mask;
 
-    private SynchronizationState(int mask) {
+    private SuperFlag(int mask) {
         this.mask = mask;
     }
 

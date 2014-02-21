@@ -1,4 +1,4 @@
-package com.blogspot.mydailyjava.bytebuddy;
+package com.blogspot.mydailyjava.bytebuddy.modifier;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.ModifierContributor;
 import org.objectweb.asm.Opcodes;

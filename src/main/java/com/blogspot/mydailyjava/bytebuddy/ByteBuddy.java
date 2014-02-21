@@ -4,6 +4,9 @@ import com.blogspot.mydailyjava.bytebuddy.asm.ClassVisitorWrapper;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers;
+import com.blogspot.mydailyjava.bytebuddy.modifier.SyntheticState;
+import com.blogspot.mydailyjava.bytebuddy.modifier.TypeManifestation;
+import com.blogspot.mydailyjava.bytebuddy.modifier.Visibility;
 import org.objectweb.asm.Opcodes;
 
 public class ByteBuddy {

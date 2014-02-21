@@ -1,8 +1,8 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.type;
 
-import com.blogspot.mydailyjava.bytebuddy.SyntheticState;
-import com.blogspot.mydailyjava.bytebuddy.TypeManifestation;
-import com.blogspot.mydailyjava.bytebuddy.Visibility;
+import com.blogspot.mydailyjava.bytebuddy.modifier.SyntheticState;
+import com.blogspot.mydailyjava.bytebuddy.modifier.TypeManifestation;
+import com.blogspot.mydailyjava.bytebuddy.modifier.Visibility;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.field.FieldDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.StackSize;

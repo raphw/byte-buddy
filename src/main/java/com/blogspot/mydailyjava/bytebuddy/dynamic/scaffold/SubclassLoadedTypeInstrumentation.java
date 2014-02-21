@@ -7,6 +7,9 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescripti
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
+import com.blogspot.mydailyjava.bytebuddy.modifier.SyntheticState;
+import com.blogspot.mydailyjava.bytebuddy.modifier.TypeManifestation;
+import com.blogspot.mydailyjava.bytebuddy.modifier.Visibility;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Modifier;
