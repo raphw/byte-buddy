@@ -14,11 +14,46 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 
-import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
 public interface TypeWriter<T> {
 
     static final int ASM_MANUAL_FLAG = 0;
+
+    static class SameThreadCoModifiableIterable<S> implements Iterable<S> {
+
+        private class SameThreadCoModifiableIterator implements Iterator<S> {
+
+            private int index = 0;
+
+            @Override
+            public boolean hasNext() {
+                return index < elements.size();
+            }
+
+            @Override
+            public S next() {
+                return elements.get(index++);
+            }
+
+            @Override
+            public void remove() {
+                throw new IllegalStateException();
+            }
+        }
+
+        private final List<? extends S> elements;
+
+        public SameThreadCoModifiableIterable(List<? extends S> elements) {
+            this.elements = elements;
+        }
+
+        @Override
+        public Iterator<S> iterator() {
+            return new SameThreadCoModifiableIterator();
+        }
+    }
 
     static interface InGeneralPhase<T> extends TypeWriter<T> {
 
@@ -31,7 +66,7 @@ public interface TypeWriter<T> {
 
     static interface InFieldPhase<T> extends TypeWriter<T> {
 
-        InFieldPhase<T> write(Collection<? extends FieldDescription> fieldDescriptions,
+        InFieldPhase<T> write(Iterable<? extends FieldDescription> fieldDescriptions,
                               FieldRegistry.Compiled compiledFieldRegistry);
 
         InMethodPhase<T> methods();
@@ -39,7 +74,7 @@ public interface TypeWriter<T> {
 
     static interface InMethodPhase<T> extends TypeWriter<T> {
 
-        InMethodPhase<T> write(Collection<? extends MethodDescription> methodDescriptions,
+        InMethodPhase<T> write(Iterable<? extends MethodDescription> methodDescriptions,
                                MethodRegistry.Compiled compiledMethodRegistry);
     }
 
@@ -95,7 +130,7 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            public InFieldPhase<T> write(Collection<? extends FieldDescription> fieldDescriptions,
+            public InFieldPhase<T> write(Iterable<? extends FieldDescription> fieldDescriptions,
                                          FieldRegistry.Compiled compiledFieldRegistry) {
                 for (FieldDescription fieldDescription : fieldDescriptions) {
                     FieldVisitor fieldVisitor = classVisitor.visitField(fieldDescription.getModifiers(),
@@ -124,7 +159,7 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            public InMethodPhase<T> write(Collection<? extends MethodDescription> methodDescriptions,
+            public InMethodPhase<T> write(Iterable<? extends MethodDescription> methodDescriptions,
                                           MethodRegistry.Compiled compiledMethodRegistry) {
                 for (MethodDescription methodDescription : methodDescriptions) {
                     MethodVisitor methodVisitor = classVisitor.visitMethod(methodDescription.getModifiers(),

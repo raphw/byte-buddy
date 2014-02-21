@@ -13,10 +13,7 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.auxiliary.Auxilia
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.named;
 
@@ -29,14 +26,16 @@ public class SubclassInstrumentationContextDelegate
     private InstrumentedType instrumentedType;
 
     private final Random random;
-    private final Map<MethodDescription, MethodDescription> proxiedMethods;
-    private final Map<MethodDescription, MethodDescription> proxiedMethodsBidirection;
+    private final List<MethodDescription> proxyMethods;
+    private final Map<MethodDescription, MethodDescription> targetMethodToProxyMethod;
+    private final Map<MethodDescription, MethodDescription> proxyMethodToTargetMethod;
 
     public SubclassInstrumentationContextDelegate(InstrumentedType instrumentedType) {
         this.instrumentedType = instrumentedType;
         this.random = new Random();
-        proxiedMethods = new HashMap<MethodDescription, MethodDescription>();
-        proxiedMethodsBidirection = new HashMap<MethodDescription, MethodDescription>();
+        proxyMethods = new ArrayList<MethodDescription>();
+        targetMethodToProxyMethod = new HashMap<MethodDescription, MethodDescription>();
+        proxyMethodToTargetMethod = new HashMap<MethodDescription, MethodDescription>();
     }
 
     @Override
@@ -52,13 +51,15 @@ public class SubclassInstrumentationContextDelegate
                 targetMethod.getParameterTypes(),
                 (targetMethod.isStatic() ? Opcodes.ACC_STATIC : 0) | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL);
         MethodDescription proxyMethod = instrumentedType.getDeclaredMethods().filter(named(name)).getOnly();
-        proxiedMethods.put(targetMethod, proxyMethod);
-        proxiedMethodsBidirection.put(proxyMethod, targetMethod);
+        if (targetMethodToProxyMethod.put(targetMethod, proxyMethod) != null) {
+            proxyMethodToTargetMethod.put(proxyMethod, targetMethod);
+            proxyMethods.add(proxyMethod);
+        }
         return proxyMethod;
     }
 
-    public Collection<MethodDescription> getProxiedMethods() {
-        return proxiedMethods.values();
+    public Iterable<MethodDescription> getProxiedMethods() {
+        return new TypeWriter.SameThreadCoModifiableIterable<MethodDescription>(proxyMethods);
     }
 
     private class MethodCall implements Entry, ByteCodeAppender {
@@ -100,6 +101,6 @@ public class SubclassInstrumentationContextDelegate
 
     @Override
     public Entry target(MethodDescription methodDescription, Entry fallback) {
-        return new MethodCall(proxiedMethodsBidirection.get(methodDescription));
+        return new MethodCall(proxyMethodToTargetMethod.get(methodDescription));
     }
 }
