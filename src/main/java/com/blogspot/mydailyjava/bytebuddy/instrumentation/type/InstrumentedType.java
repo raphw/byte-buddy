@@ -5,7 +5,7 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.field.FieldDescription
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.field.FieldList;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodList;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.StackSize;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.annotation.Annotation;

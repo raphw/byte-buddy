@@ -1,9 +1,9 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.Assigner;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.MethodArgument;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.member.MethodArgument;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MostSpecificTypeResolver;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 
@@ -59,7 +59,7 @@ public @interface Argument {
         }
     }
 
-    static enum NextUnboundAsDefaultProvider implements AnnotationDrivenBinder.DefaultProvider {
+    static enum NextUnboundAsDefaultsProvider implements AnnotationDrivenBinder.DefaultsProvider {
         INSTANCE;
 
         private static class DefaultArgument implements Argument {

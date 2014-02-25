@@ -1,6 +1,6 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.type;
 
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.StackSize;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import org.objectweb.asm.Type;
 
 import java.util.*;

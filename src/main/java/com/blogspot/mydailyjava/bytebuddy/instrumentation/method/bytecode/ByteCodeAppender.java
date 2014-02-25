@@ -2,15 +2,9 @@ package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 
 public interface ByteCodeAppender {
-
-    static interface Factory {
-
-        ByteCodeAppender make(TypeDescription typeDescription);
-    }
 
     static class Size {
 
@@ -40,11 +34,11 @@ public interface ByteCodeAppender {
         }
     }
 
-    static class Composite implements ByteCodeAppender {
+    static class Compound implements ByteCodeAppender {
 
         private final ByteCodeAppender[] byteCodeAppender;
 
-        public Composite(ByteCodeAppender... byteCodeAppender) {
+        public Compound(ByteCodeAppender... byteCodeAppender) {
             this.byteCodeAppender = byteCodeAppender;
         }
 

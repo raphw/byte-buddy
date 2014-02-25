@@ -5,7 +5,7 @@ import com.blogspot.mydailyjava.bytebuddy.modifier.TypeManifestation;
 import com.blogspot.mydailyjava.bytebuddy.modifier.Visibility;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.field.FieldDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.StackSize;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import org.junit.Before;
 import org.junit.Test;
 

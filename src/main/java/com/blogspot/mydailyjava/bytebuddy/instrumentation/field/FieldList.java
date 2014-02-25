@@ -24,6 +24,16 @@ public interface FieldList extends List<FieldDescription> {
         public int size() {
             return field.length;
         }
+
+        @Override
+        public FieldDescription named(String fieldName) {
+            for (Field field : this.field) {
+                if (field.getName().equals(fieldName)) {
+                    return new FieldDescription.ForLoadedField(field);
+                }
+            }
+            throw new IllegalArgumentException();
+        }
     }
 
     static class Explicit extends AbstractList<FieldDescription> implements FieldList {
@@ -43,6 +53,16 @@ public interface FieldList extends List<FieldDescription> {
         public int size() {
             return fieldDescriptions.size();
         }
+
+        @Override
+        public FieldDescription named(String fieldName) {
+            for (FieldDescription fieldDescription : fieldDescriptions) {
+                if (fieldDescription.getInternalName().equals(fieldName)) {
+                    return fieldDescription;
+                }
+            }
+            throw new IllegalArgumentException();
+        }
     }
 
     static class Empty extends AbstractList<FieldDescription> implements FieldList {
@@ -56,5 +76,12 @@ public interface FieldList extends List<FieldDescription> {
         public int size() {
             return 0;
         }
+
+        @Override
+        public FieldDescription named(String fieldName) {
+            throw new IllegalStateException();
+        }
     }
+
+    FieldDescription named(String fieldName);
 }

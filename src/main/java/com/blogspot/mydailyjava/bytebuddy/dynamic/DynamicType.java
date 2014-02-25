@@ -189,27 +189,6 @@ public interface DynamicType<T> {
                 return type == TargetType.class ? instrumentedType : new TypeDescription.ForLoadedType(type);
             }
 
-            protected static <U> List<U> join(List<U> list, U element) {
-                List<U> result = new ArrayList<U>(list.size() + 1);
-                result.addAll(list);
-                result.add(element);
-                return result;
-            }
-
-            protected static <U> U nonNull(U value) {
-                if (value == null) {
-                    throw new NullPointerException();
-                }
-                return value;
-            }
-
-            protected static Class<?> isInterface(Class<?> type) {
-                if (!type.isInterface()) {
-                    throw new IllegalArgumentException(type + " is not an interface type");
-                }
-                return type;
-            }
-
             protected static int resolveModifiers(int mask, ModifierContributor... modifierContributor) {
                 int modifier = 0;
                 for (ModifierContributor contributor : modifierContributor) {
@@ -276,6 +255,12 @@ public interface DynamicType<T> {
                                                                  List<Class<?>> parameterTypes,
                                                                  ModifierContributor.ForMethod... modifier) {
                     return materialize().defineMethod(name, returnType, parameterTypes, modifier);
+                }
+
+                @Override
+                public MatchedMethodInterception<T> defineConstructor(List<Class<?>> parameterTypes,
+                                                                      ModifierContributor.ForMethod... modifier) {
+                    return materialize().defineConstructor(parameterTypes, modifier);
                 }
 
                 @Override
@@ -362,6 +347,9 @@ public interface DynamicType<T> {
                                                   Class<?> returnType,
                                                   List<Class<?>> parameterTypes,
                                                   ModifierContributor.ForMethod... modifier);
+
+        MatchedMethodInterception<T> defineConstructor(List<Class<?>> parameterTypes,
+                                                       ModifierContributor.ForMethod... modifier);
 
         MatchedMethodInterception<T> method(MethodMatcher methodMatcher);
 

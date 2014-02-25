@@ -56,6 +56,11 @@ public interface MethodList extends List<MethodDescription> {
                 throw new IllegalStateException();
             }
         }
+
+        @Override
+        public MethodList subList(int fromIndex, int toIndex) {
+            return new Explicit(super.subList(fromIndex, toIndex));
+        }
     }
 
     static class Explicit extends AbstractList<MethodDescription> implements MethodList {
@@ -95,6 +100,11 @@ public interface MethodList extends List<MethodDescription> {
                 throw new IllegalStateException();
             }
         }
+
+        @Override
+        public MethodList subList(int fromIndex, int toIndex) {
+            return new Explicit(super.subList(fromIndex, toIndex));
+        }
     }
 
     public class Empty extends AbstractList<MethodDescription> implements MethodList {
@@ -118,9 +128,21 @@ public interface MethodList extends List<MethodDescription> {
         public MethodDescription getOnly() {
             throw new IllegalStateException();
         }
+
+        @Override
+        public MethodList subList(int fromIndex, int toIndex) {
+            if (fromIndex == toIndex && toIndex == 0) {
+                return this;
+            } else {
+                throw new IndexOutOfBoundsException();
+            }
+        }
     }
 
     MethodList filter(MethodMatcher methodMatcher);
+
+    @Override
+    MethodList subList(int fromIndex, int toIndex);
 
     MethodDescription getOnly();
 }

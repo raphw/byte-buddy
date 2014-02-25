@@ -1,6 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.constant.IntegerConstant;
 import com.blogspot.mydailyjava.bytebuddy.utility.MockitoRule;
 import org.junit.After;
 import org.junit.Rule;

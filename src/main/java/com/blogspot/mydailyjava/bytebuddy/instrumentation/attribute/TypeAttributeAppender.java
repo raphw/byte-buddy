@@ -8,6 +8,15 @@ import java.lang.annotation.Annotation;
 
 public interface TypeAttributeAppender {
 
+    static enum NoOp implements TypeAttributeAppender {
+        INSTANCE;
+
+        @Override
+        public void apply(ClassVisitor classVisitor, TypeDescription typeDescription) {
+            /* do nothing */
+        }
+    }
+
     static class ForAnnotation implements TypeAttributeAppender {
 
         private final Annotation annotation;

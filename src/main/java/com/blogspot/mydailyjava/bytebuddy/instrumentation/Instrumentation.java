@@ -89,11 +89,11 @@ public interface Instrumentation {
         }
     }
 
-    static class Composite implements Instrumentation {
+    static class Compound implements Instrumentation {
 
         private final Instrumentation[] instrumentation;
 
-        public Composite(Instrumentation... instrumentation) {
+        public Compound(Instrumentation... instrumentation) {
             this.instrumentation = instrumentation;
         }
 
@@ -112,7 +112,7 @@ public interface Instrumentation {
             for (Instrumentation instrumentation : this.instrumentation) {
                 byteCodeAppender[index++] = instrumentation.appender(instrumentedType);
             }
-            return new ByteCodeAppender.Composite(byteCodeAppender);
+            return new ByteCodeAppender.Compound(byteCodeAppender);
         }
     }
 

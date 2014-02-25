@@ -2,155 +2,75 @@ package com.blogspot.mydailyjava.bytebuddy;
 
 import com.blogspot.mydailyjava.bytebuddy.asm.ClassVisitorWrapper;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
+import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.FieldRegistry;
+import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.MethodRegistry;
+import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
+import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.SubclassDynamicTypeBuilder;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers;
-import com.blogspot.mydailyjava.bytebuddy.modifier.SyntheticState;
-import com.blogspot.mydailyjava.bytebuddy.modifier.TypeManifestation;
-import com.blogspot.mydailyjava.bytebuddy.modifier.Visibility;
 import org.objectweb.asm.Opcodes;
+
+import java.util.Collections;
+import java.util.List;
+
+import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.isDefaultFinalize;
+import static com.blogspot.mydailyjava.bytebuddy.utility.UserInput.*;
 
 public class ByteBuddy {
 
-    public static final int DEFAULT_CLASS_VERSION = Opcodes.V1_5;
-    public static final Visibility DEFAULT_VISIBILITY = Visibility.PUBLIC;
-    public static final TypeManifestation DEFAULT_TYPE_MANIFESTATION = TypeManifestation.PLAIN;
-    public static final String DEFAULT_NAME_PREFIX = "ByteBuddy";
-    public static final SyntheticState DEFAULT_SYNTHETIC_STATE = SyntheticState.NON_SYNTHETIC;
-    public static final MethodMatcher DEFAULT_IGNORED_METHODS = MethodMatchers.isDefaultFinalize();
-
-    public static ByteBuddy make() {
-        return new ByteBuddy(new ClassFormatVersion(DEFAULT_CLASS_VERSION),
-                DEFAULT_VISIBILITY,
-                DEFAULT_TYPE_MANIFESTATION,
-                DEFAULT_SYNTHETIC_STATE,
-                new NamingStrategy.PrefixingRandom(DEFAULT_NAME_PREFIX),
-                DEFAULT_IGNORED_METHODS,
-                new ClassVisitorWrapper.Chain());
-    }
+    private static final String JAVA_VERSION = "java.version";
+    private static final String BYTE_BUDDY_DEFAULT_PREFIX = "ByteBuddy";
 
     private final ClassFormatVersion classFormatVersion;
-    private final Visibility visibility;
-    private final TypeManifestation typeManifestation;
-    private final SyntheticState syntheticState;
     private final NamingStrategy namingStrategy;
+    private final List<Class<?>> interfaceTypes;
     private final MethodMatcher ignoredMethods;
     private final ClassVisitorWrapper.Chain classVisitorWrapperChain;
+    private final MethodRegistry methodRegistry;
+    private final FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory;
+    private final MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory;
+
+    public ByteBuddy() {
+        classFormatVersion = ClassFormatVersion.forJavaVersion(Integer.parseInt(System.getProperty(JAVA_VERSION)));
+        namingStrategy = new NamingStrategy.PrefixingRandom(BYTE_BUDDY_DEFAULT_PREFIX);
+        interfaceTypes = Collections.emptyList();
+        ignoredMethods = isDefaultFinalize();
+        classVisitorWrapperChain = new ClassVisitorWrapper.Chain();
+        methodRegistry = new MethodRegistry.Default();
+        defaultFieldAttributeAppenderFactory = FieldAttributeAppender.NoOp.INSTANCE;
+        defaultMethodAttributeAppenderFactory = MethodAttributeAppender.NoOp.INSTANCE;
+    }
 
     protected ByteBuddy(ClassFormatVersion classFormatVersion,
-                        Visibility visibility,
-                        TypeManifestation typeManifestation,
-                        SyntheticState syntheticState,
                         NamingStrategy namingStrategy,
+                        List<Class<?>> interfaceTypes,
                         MethodMatcher ignoredMethods,
-                        ClassVisitorWrapper.Chain classVisitorWrapperChain) {
+                        ClassVisitorWrapper.Chain classVisitorWrapperChain,
+                        MethodRegistry methodRegistry,
+                        FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
+                        MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
         this.classFormatVersion = classFormatVersion;
-        this.visibility = visibility;
-        this.typeManifestation = typeManifestation;
-        this.syntheticState = syntheticState;
         this.namingStrategy = namingStrategy;
+        this.interfaceTypes = interfaceTypes;
         this.ignoredMethods = ignoredMethods;
         this.classVisitorWrapperChain = classVisitorWrapperChain;
-    }
-
-    public ByteBuddy withDefaultClassVersion(int versionNumber) {
-        return new ByteBuddy(new ClassFormatVersion(versionNumber),
-                visibility,
-                typeManifestation,
-                syntheticState,
-                namingStrategy,
-                ignoredMethods,
-                classVisitorWrapperChain);
-    }
-
-    public ByteBuddy withDefaultVisibility(Visibility visibility) {
-        return new ByteBuddy(classFormatVersion,
-                checkNotNull(visibility),
-                typeManifestation,
-                syntheticState,
-                namingStrategy,
-                ignoredMethods,
-                classVisitorWrapperChain);
-    }
-
-    public ByteBuddy withDefaultTypeManifestation(TypeManifestation typeManifestation) {
-        return new ByteBuddy(classFormatVersion,
-                visibility,
-                checkNotNull(typeManifestation),
-                syntheticState,
-                namingStrategy,
-                ignoredMethods,
-                classVisitorWrapperChain);
-    }
-
-    public ByteBuddy withDefaultSyntheticState(SyntheticState syntheticState) {
-        return new ByteBuddy(classFormatVersion,
-                visibility,
-                typeManifestation,
-                checkNotNull(syntheticState),
-                namingStrategy,
-                ignoredMethods,
-                classVisitorWrapperChain);
-    }
-
-    public ByteBuddy withNameMaker(NamingStrategy namingStrategy) {
-        return new ByteBuddy(classFormatVersion,
-                visibility,
-                typeManifestation,
-                syntheticState,
-                checkNotNull(namingStrategy),
-                ignoredMethods,
-                classVisitorWrapperChain);
-    }
-
-    public ByteBuddy withDefaultIgnoredMethods(MethodMatcher ignoredMethods) {
-        return new ByteBuddy(classFormatVersion,
-                visibility,
-                typeManifestation,
-                syntheticState,
-                namingStrategy,
-                checkNotNull(ignoredMethods),
-                classVisitorWrapperChain);
-    }
-
-    public ByteBuddy withPrependedClassVisitorWrapper(ClassVisitorWrapper classVisitorWrapper) {
-        return new ByteBuddy(
-                classFormatVersion,
-                visibility,
-                typeManifestation,
-                syntheticState,
-                checkNotNull(namingStrategy),
-                ignoredMethods,
-                classVisitorWrapperChain.prepend(checkNotNull(classVisitorWrapper)));
-    }
-
-    public ByteBuddy withAppendedClassVisitorWrapper(ClassVisitorWrapper classVisitorWrapper) {
-        return new ByteBuddy(classFormatVersion,
-                visibility,
-                typeManifestation,
-                syntheticState,
-                checkNotNull(namingStrategy),
-                ignoredMethods,
-                classVisitorWrapperChain.append(checkNotNull(classVisitorWrapper)));
+        this.methodRegistry = methodRegistry;
+        this.defaultFieldAttributeAppenderFactory = defaultFieldAttributeAppenderFactory;
+        this.defaultMethodAttributeAppenderFactory = defaultMethodAttributeAppenderFactory;
     }
 
     public ClassFormatVersion getClassFormatVersion() {
         return classFormatVersion;
     }
 
-    public Visibility getVisibility() {
-        return visibility;
-    }
-
-    public TypeManifestation getTypeManifestation() {
-        return typeManifestation;
-    }
-
-    public SyntheticState getSyntheticState() {
-        return syntheticState;
-    }
-
     public NamingStrategy getNamingStrategy() {
         return namingStrategy;
+    }
+
+    public List<Class<?>> getInterfaceTypes() {
+        return interfaceTypes;
     }
 
     public MethodMatcher getIgnoredMethods() {
@@ -161,15 +81,112 @@ public class ByteBuddy {
         return classVisitorWrapperChain;
     }
 
-    public <T> DynamicType.Builder<T> subclass(Class<? extends T> type) {
-//        return SubclassDynamicTypeBuilder.of(type, this);
-        throw new RuntimeException();
+    public FieldAttributeAppender.Factory getDefaultFieldAttributeAppenderFactory() {
+        return defaultFieldAttributeAppenderFactory;
     }
 
-    private static <T> T checkNotNull(T type) {
-        if (type == null) {
-            throw new NullPointerException();
-        }
-        return type;
+    public MethodAttributeAppender.Factory getDefaultMethodAttributeAppenderFactory() {
+        return defaultMethodAttributeAppenderFactory;
+    }
+
+    public <T> DynamicType.Builder<T> subclass(Class<T> superType) {
+        return subclass(superType, ConstructorStrategy.IMITATE_SUPER_TYPE);
+    }
+
+    public <T> DynamicType.Builder<T> subclass(Class<T> superType, ConstructorStrategy constructorStrategy) {
+        return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
+                namingStrategy,
+                superType,
+                interfaceTypes,
+                Opcodes.ACC_PUBLIC,
+                TypeAttributeAppender.NoOp.INSTANCE,
+                ignoredMethods,
+                classVisitorWrapperChain,
+                new FieldRegistry.Default(),
+                methodRegistry,
+                defaultFieldAttributeAppenderFactory,
+                defaultMethodAttributeAppenderFactory,
+                constructorStrategy);
+    }
+
+    public ByteBuddy withClassFormatVersion(int classFormatVersion) {
+        return new ByteBuddy(new ClassFormatVersion(classFormatVersion),
+                namingStrategy,
+                interfaceTypes,
+                ignoredMethods,
+                classVisitorWrapperChain,
+                methodRegistry,
+                defaultFieldAttributeAppenderFactory,
+                defaultMethodAttributeAppenderFactory);
+    }
+
+    public ByteBuddy withNamingStrategy(NamingStrategy namingStrategy) {
+        return new ByteBuddy(classFormatVersion,
+                nonNull(namingStrategy),
+                interfaceTypes,
+                ignoredMethods,
+                classVisitorWrapperChain,
+                methodRegistry,
+                defaultFieldAttributeAppenderFactory,
+                defaultMethodAttributeAppenderFactory);
+    }
+
+    public ByteBuddy implementInterface(Class<?> type) {
+        return new ByteBuddy(classFormatVersion,
+                namingStrategy,
+                join(interfaceTypes, isInterface(type)),
+                ignoredMethods,
+                classVisitorWrapperChain,
+                methodRegistry,
+                defaultFieldAttributeAppenderFactory,
+                defaultMethodAttributeAppenderFactory);
+    }
+
+    public ByteBuddy ignoreMethods(MethodMatcher ignoredMethods) {
+        return new ByteBuddy(classFormatVersion,
+                namingStrategy,
+                interfaceTypes,
+                nonNull(ignoredMethods),
+                classVisitorWrapperChain,
+                methodRegistry,
+                defaultFieldAttributeAppenderFactory,
+                defaultMethodAttributeAppenderFactory);
+    }
+
+    public ByteBuddy withClassVisitor(ClassVisitorWrapper classVisitorWrapper) {
+        return new ByteBuddy(classFormatVersion,
+                namingStrategy,
+                interfaceTypes,
+                ignoredMethods,
+                classVisitorWrapperChain.append(nonNull(classVisitorWrapper)),
+                methodRegistry,
+                defaultFieldAttributeAppenderFactory,
+                defaultMethodAttributeAppenderFactory);
+    }
+
+    public ByteBuddy withDefaultFieldAttributeAppender(FieldAttributeAppender.Factory attributeAppenderFactory) {
+        return new ByteBuddy(classFormatVersion,
+                namingStrategy,
+                interfaceTypes,
+                ignoredMethods,
+                classVisitorWrapperChain,
+                methodRegistry,
+                nonNull(attributeAppenderFactory),
+                defaultMethodAttributeAppenderFactory);
+    }
+
+    public ByteBuddy withDefaultMethodAttributeAppender(MethodAttributeAppender.Factory attributeAppenderFactory) {
+        return new ByteBuddy(classFormatVersion,
+                namingStrategy,
+                interfaceTypes,
+                ignoredMethods,
+                classVisitorWrapperChain,
+                methodRegistry,
+                defaultFieldAttributeAppenderFactory,
+                nonNull(attributeAppenderFactory));
+    }
+
+    public void intercept(MethodMatcher methodMatcher) {
+        // TODO
     }
 }

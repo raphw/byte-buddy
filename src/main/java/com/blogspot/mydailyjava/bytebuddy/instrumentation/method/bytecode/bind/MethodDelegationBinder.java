@@ -3,7 +3,7 @@ package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.MethodInvocation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 
@@ -19,6 +19,20 @@ public interface MethodDelegationBinder {
             @Override
             public StackManipulation invoke(MethodDescription methodDescription) {
                 return MethodInvocation.invoke(methodDescription);
+            }
+        }
+
+        static class Virtual implements MethodInvoker {
+
+            private final TypeDescription typeDescription;
+
+            public Virtual(TypeDescription typeDescription) {
+                this.typeDescription = typeDescription;
+            }
+
+            @Override
+            public StackManipulation invoke(MethodDescription methodDescription) {
+                return MethodInvocation.invoke(methodDescription).virtual(typeDescription);
             }
         }
 
@@ -148,10 +162,10 @@ public interface MethodDelegationBinder {
 
         static class Chain implements AmbiguityResolver {
 
-            private final Iterable<AmbiguityResolver> ambiguityResolvers;
+            private final AmbiguityResolver[] ambiguityResolver;
 
-            public Chain(Iterable<AmbiguityResolver> ambiguityResolvers) {
-                this.ambiguityResolvers = ambiguityResolvers;
+            public Chain(AmbiguityResolver... ambiguityResolver) {
+                this.ambiguityResolver = ambiguityResolver;
             }
 
             @Override
@@ -159,7 +173,7 @@ public interface MethodDelegationBinder {
                                       Binding left,
                                       Binding right) {
                 Resolution resolution = Resolution.UNKNOWN;
-                Iterator<AmbiguityResolver> iterator = ambiguityResolvers.iterator();
+                Iterator<AmbiguityResolver> iterator = Arrays.asList(ambiguityResolver).iterator();
                 while (resolution.isUnresolved() && iterator.hasNext()) {
                     resolution = iterator.next().resolve(source, left, right);
                 }
@@ -193,22 +207,22 @@ public interface MethodDelegationBinder {
             return ambiguityResolver;
         }
 
-        public Binding process(TypeDescription typeDescription,
+        public Binding process(TypeDescription instrumentedType,
                                MethodDescription source,
                                Iterable<? extends MethodDescription> targets) {
-            List<Binding> possibleDelegations = bind(typeDescription, source, targets);
+            List<Binding> possibleDelegations = bind(instrumentedType, source, targets);
             if (possibleDelegations.size() == 0) {
                 throw new IllegalArgumentException("No method can be bound to " + source);
             }
             return resolve(source, possibleDelegations);
         }
 
-        private List<Binding> bind(TypeDescription typeDescription,
+        private List<Binding> bind(TypeDescription instrumentedType,
                                    MethodDescription source,
                                    Iterable<? extends MethodDescription> targets) {
             List<Binding> possibleDelegations = new LinkedList<Binding>();
             for (MethodDescription target : targets) {
-                Binding binding = methodDelegationBinder.bind(typeDescription, source, target);
+                Binding binding = methodDelegationBinder.bind(instrumentedType, source, target);
                 if (binding.isValid()) {
                     possibleDelegations.add(binding);
                 }
@@ -269,5 +283,5 @@ public interface MethodDelegationBinder {
         }
     }
 
-    Binding bind(TypeDescription proxyType, MethodDescription source, MethodDescription target);
+    Binding bind(TypeDescription instrumentedType, MethodDescription source, MethodDescription target);
 }

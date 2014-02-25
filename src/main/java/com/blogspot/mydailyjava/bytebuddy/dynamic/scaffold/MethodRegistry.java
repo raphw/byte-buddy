@@ -3,12 +3,15 @@ package com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodList;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 
 import java.util.*;
+
+import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.describedBy;
 
 public interface MethodRegistry {
 
@@ -163,6 +166,20 @@ public interface MethodRegistry {
             }
         }
 
+        private static class ListDifferenceMethodMatcher implements MethodMatcher {
+
+            private final MethodList matchedMethods;
+
+            public ListDifferenceMethodMatcher(MethodList beforeMethods, MethodList afterMethods) {
+                matchedMethods = afterMethods.subList(beforeMethods.size(), afterMethods.size());
+            }
+
+            @Override
+            public boolean matches(MethodDescription methodDescription) {
+                return matchedMethods.filter(describedBy(methodDescription)).size() == 1;
+            }
+        }
+
         private final List<Entry> entries;
 
         public Default() {
@@ -171,6 +188,16 @@ public interface MethodRegistry {
 
         private Default(List<Entry> entries) {
             this.entries = entries;
+        }
+
+        @Override
+        public MethodRegistry append(LatentMethodMatcher latentMethodMatcher,
+                                     Instrumentation instrumentation,
+                                     MethodAttributeAppender.Factory attributeAppenderFactory) {
+            List<Entry> entries = new ArrayList<Entry>(this.entries.size() + 1);
+            entries.addAll(this.entries);
+            entries.add(new Entry(latentMethodMatcher, instrumentation, attributeAppenderFactory));
+            return new Default(entries);
         }
 
         @Override
@@ -186,26 +213,43 @@ public interface MethodRegistry {
         @Override
         public MethodRegistry.Compiled compile(InstrumentedType instrumentedType, MethodRegistry.Compiled.Entry fallback) {
             Map<Instrumentation, Entry> prepared = new HashMap<Instrumentation, Entry>(entries.size());
+            LinkedHashMap<Instrumentation, MethodMatcher> instrumentationMethods = new LinkedHashMap<Instrumentation, MethodMatcher>();
             for (Entry entry : entries) {
                 if (!prepared.containsKey(entry.instrumentation)) {
+                    MethodList beforeMethods = instrumentedType.getDeclaredMethods();
                     instrumentedType = entry.instrumentation.prepare(instrumentedType);
                     prepared.put(entry.instrumentation, entry);
+                    if (beforeMethods.size() < instrumentedType.getDeclaredMethods().size()) {
+                        instrumentationMethods.put(entry.instrumentation,
+                                new ListDifferenceMethodMatcher(beforeMethods, instrumentedType.getDeclaredMethods()));
+                    }
                 }
             }
-            List<MethodRegistry.Default.Compiled.Entry> compiledEntries = new ArrayList<MethodRegistry.Default.Compiled.Entry>(prepared.size());
+            List<MethodRegistry.Default.Compiled.Entry> compiledEntries = new LinkedList<Compiled.Entry>();
+            LinkedHashMap<Instrumentation, ByteCodeAppender> byteCodeAppenders = new LinkedHashMap<Instrumentation, ByteCodeAppender>(prepared.size());
             for (Entry entry : entries) {
                 MethodMatcher methodMatcher = entry.latentMethodMatcher.manifest(instrumentedType);
                 ByteCodeAppender byteCodeAppender = prepared.get(entry.instrumentation).instrumentation.appender(instrumentedType);
                 MethodAttributeAppender attributeAppender = entry.attributeAppenderFactory.make(instrumentedType);
                 compiledEntries.add(new Compiled.Entry(methodMatcher, byteCodeAppender, attributeAppender));
+                byteCodeAppenders.put(entry.instrumentation, byteCodeAppender);
             }
-            return new Compiled(compiledEntries, fallback);
+            for (Map.Entry<Instrumentation, MethodMatcher> entry : instrumentationMethods.entrySet()) {
+                compiledEntries.add(0, new Compiled.Entry(entry.getValue(),
+                        byteCodeAppenders.get(entry.getKey()),
+                        MethodAttributeAppender.NoOp.INSTANCE));
+            }
+            return new Compiled(new ArrayList<Compiled.Entry>(compiledEntries), fallback);
         }
     }
 
     MethodRegistry prepend(LatentMethodMatcher latentMethodMatcher,
                            Instrumentation instrumentation,
                            MethodAttributeAppender.Factory attributeAppenderFactory);
+
+    MethodRegistry append(LatentMethodMatcher latentMethodMatcher,
+                          Instrumentation instrumentation,
+                          MethodAttributeAppender.Factory attributeAppenderFactory);
 
     Compiled compile(InstrumentedType instrumentedType, Compiled.Entry fallback);
 }

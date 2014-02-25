@@ -1,7 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.Assigner;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.IllegalStackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.IllegalMethodDelegation;
@@ -60,9 +60,9 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
                                   Assigner assigner);
     }
 
-    public static interface DefaultProvider<T extends Annotation> {
+    public static interface DefaultsProvider<T extends Annotation> {
 
-        static enum Empty implements DefaultProvider<Annotation> {
+        static enum Empty implements DefaultsProvider<Annotation> {
             INSTANCE;
 
             private static enum EmptyIterator implements Iterator<Annotation> {
@@ -184,22 +184,22 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
     }
 
     private final DelegationProcessor delegationProcessor;
-    private final DefaultProvider<?> defaultProvider;
+    private final DefaultsProvider<?> defaultsProvider;
     private final Assigner assigner;
     private final MethodInvoker methodInvoker;
 
     public AnnotationDrivenBinder(List<ArgumentBinder<?>> argumentBinders,
-                                  DefaultProvider<?> defaultProvider,
+                                  DefaultsProvider<?> defaultsProvider,
                                   Assigner assigner,
                                   MethodInvoker methodInvoker) {
         this.delegationProcessor = new DelegationProcessor(argumentBinders);
-        this.defaultProvider = defaultProvider;
+        this.defaultsProvider = defaultsProvider;
         this.assigner = assigner;
         this.methodInvoker = methodInvoker;
     }
 
     @Override
-    public Binding bind(TypeDescription proxyType, MethodDescription source, MethodDescription target) {
+    public Binding bind(TypeDescription instrumentedType, MethodDescription source, MethodDescription target) {
         if (IgnoreForBinding.Verifier.check(target)) {
             return IllegalMethodDelegation.INSTANCE;
         }
@@ -210,7 +210,7 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
             return IllegalMethodDelegation.INSTANCE;
         }
         Binding.Builder methodDelegationBindingBuilder = new Binding.Builder(methodInvoker, target);
-        Iterator<? extends Annotation> defaults = defaultProvider.makeIterator(proxyType, source, target);
+        Iterator<? extends Annotation> defaults = defaultsProvider.makeIterator(instrumentedType, source, target);
         for (int targetParameterIndex = 0;
              targetParameterIndex < target.getParameterTypes().size();
              targetParameterIndex++) {
@@ -219,7 +219,7 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
                     .handle(targetParameterIndex,
                             source,
                             target,
-                            proxyType,
+                            instrumentedType,
                             assigner);
             if (!identifiedBinding.isValid()
                     || !methodDelegationBindingBuilder.append(

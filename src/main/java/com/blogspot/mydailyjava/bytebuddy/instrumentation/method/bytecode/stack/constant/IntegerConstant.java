@@ -1,0 +1,82 @@
+package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.constant;
+
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+
+public enum IntegerConstant implements StackManipulation {
+
+    MINUS_ONE(Opcodes.ICONST_M1),
+    ZERO(Opcodes.ICONST_0),
+    ONE(Opcodes.ICONST_1),
+    TWO(Opcodes.ICONST_2),
+    THREE(Opcodes.ICONST_3),
+    FOUR(Opcodes.ICONST_4),
+    FIVE(Opcodes.ICONST_5);
+
+    private static final Size SIZE = StackSize.SINGLE.toIncreasingSize();
+
+    private static class BiPush implements StackManipulation {
+
+        private final int value;
+
+        private BiPush(int value) {
+            this.value = value;
+        }
+
+        @Override
+        public boolean isValid() {
+            return true;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+            methodVisitor.visitIntInsn(Opcodes.BIPUSH, value);
+            return SIZE;
+        }
+    }
+
+    public static StackManipulation forValue(boolean value) {
+        return value ? ONE : ZERO;
+    }
+
+    public static StackManipulation forValue(int value) {
+        switch (value) {
+            case -1:
+                return MINUS_ONE;
+            case 0:
+                return ZERO;
+            case 1:
+                return ONE;
+            case 2:
+                return TWO;
+            case 3:
+                return THREE;
+            case 4:
+                return FOUR;
+            case 5:
+                return FIVE;
+            default:
+                return new BiPush(value);
+        }
+    }
+
+    private final int opcode;
+
+    private IntegerConstant(int opcode) {
+        this.opcode = opcode;
+    }
+
+    @Override
+    public boolean isValid() {
+        return true;
+    }
+
+    @Override
+    public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+        methodVisitor.visitInsn(opcode);
+        return SIZE;
+    }
+}

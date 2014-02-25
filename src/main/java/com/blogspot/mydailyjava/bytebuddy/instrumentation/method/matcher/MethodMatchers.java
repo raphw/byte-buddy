@@ -393,6 +393,24 @@ public final class MethodMatchers {
         return new BooleanMethodMatcher(false);
     }
 
+    private static class MethodDescriptionMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        private final MethodDescription methodDescription;
+
+        private MethodDescriptionMatcher(MethodDescription methodDescription) {
+            this.methodDescription = methodDescription;
+        }
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.equals(this.methodDescription);
+        }
+    }
+
+    public static JunctionMethodMatcher describedBy(MethodDescription methodDescription) {
+        return new MethodDescriptionMatcher(methodDescription);
+    }
+
     private MethodMatchers() {
         throw new AssertionError();
     }
