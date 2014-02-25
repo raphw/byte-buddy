@@ -11,7 +11,7 @@ public enum DoubleConstant implements StackManipulation {
     ZERO(Opcodes.DCONST_0),
     ONE(Opcodes.DCONST_1);
 
-    private static final StackManipulation.Size SIZE = StackSize.SINGLE.toIncreasingSize();
+    private static final StackManipulation.Size SIZE = StackSize.DOUBLE.toIncreasingSize();
 
     private static class ConstantPool implements StackManipulation {
 

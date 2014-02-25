@@ -59,7 +59,7 @@ public class ByteBuddyTest {
 
     @Test
     public void demonstratingExampleToBeRemoved() throws Exception {
-        Bar object = ByteBuddy.make()
+        Bar object = new ByteBuddy()
 //                .withAppendedClassVisitorWrapper(new DebuggingWrapper(System.out))
                 .subclass(Bar.class)
 //                .method(named("utility")).intercept(MethodDelegation.to(Delegate.class))
