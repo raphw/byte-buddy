@@ -24,7 +24,7 @@ public class NamingStrategyTest {
     @Test
     public void testPrefixingRandomNonConflictingPackage() throws Exception {
         doReturn(MethodVisitor.class).when(unnamedType).getSuperClass();
-        NamingStrategy namingStrategy = new NamingStrategy.PrefixingRandom(FOO);
+        NamingStrategy namingStrategy = new NamingStrategy.SuffixingRandom(FOO);
         assertThat(namingStrategy.getName(unnamedType), startsWith(MethodVisitor.class.getName() + "$$" + FOO + "$$"));
         verify(unnamedType, atLeast(1)).getSuperClass();
         verifyNoMoreInteractions(unnamedType);
@@ -33,7 +33,7 @@ public class NamingStrategyTest {
     @Test
     public void testPrefixingRandomConflictingPackage() throws Exception {
         doReturn(Object.class).when(unnamedType).getSuperClass();
-        NamingStrategy namingStrategy = new NamingStrategy.PrefixingRandom(FOO, BAR);
+        NamingStrategy namingStrategy = new NamingStrategy.SuffixingRandom(FOO, BAR);
         assertThat(namingStrategy.getName(unnamedType), startsWith(BAR + "." + Object.class.getName() + "$$" + FOO + "$$"));
         verify(unnamedType, atLeast(1)).getSuperClass();
         verifyNoMoreInteractions(unnamedType);

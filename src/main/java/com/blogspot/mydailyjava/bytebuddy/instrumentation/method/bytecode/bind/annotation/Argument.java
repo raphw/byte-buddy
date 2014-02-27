@@ -1,22 +1,97 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.member.MethodArgument;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MostSpecificTypeResolver;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 
 import java.lang.annotation.*;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 
+/**
+ * Parameters that are annotated with this annotation will be assigned the value of the parameter of the source method
+ * with the given parameter. For example, if source method {@code foo(String, Integer)} is bound to target method
+ * {@code bar(@Argument(1) Integer)}, the second parameter of {@code foo} will be bound to the first argument of
+ * {@code bar}.
+ *
+ * @see com.blogspot.mydailyjava.bytebuddy.instrumentation.MethodDelegation
+ * @see TargetMethodAnnotationDrivenBinder
+ */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.PARAMETER})
 public @interface Argument {
 
-    static enum Binder implements AnnotationDrivenBinder.ArgumentBinder<Argument> {
+    /**
+     * Determines if a parameter binding should be considered for resolving ambiguous method bindings.
+     *
+     * @see Argument#bindingMechanic()
+     * @see com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MostSpecificTypeResolver
+     */
+    static enum BindingMechanic {
+
+        UNIQUE {
+            @Override
+            protected TargetMethodAnnotationDrivenBinder.ArgumentBinder.ParameterBinding<?> makeBinding(TypeDescription sourceType,
+                                                                                                        TypeDescription targetType,
+                                                                                                        int sourceParameterIndex,
+                                                                                                        Assigner assigner,
+                                                                                                        boolean considerRuntimeType,
+                                                                                                        int parameterOffset) {
+                return TargetMethodAnnotationDrivenBinder.ArgumentBinder.ParameterBinding.makeIdentified(
+                        new StackManipulation.Compound(
+                                MethodVariableAccess.forType(sourceType).loadFromIndex(parameterOffset),
+                                assigner.assign(sourceType, targetType, considerRuntimeType)),
+                        new MostSpecificTypeResolver.ParameterIndexToken(sourceParameterIndex));
+            }
+        },
+        ANONYMOUS {
+            @Override
+            protected TargetMethodAnnotationDrivenBinder.ArgumentBinder.ParameterBinding<?> makeBinding(TypeDescription sourceType,
+                                                                                                        TypeDescription targetType,
+                                                                                                        int sourceParameterIndex,
+                                                                                                        Assigner assigner,
+                                                                                                        boolean considerRuntimeType,
+                                                                                                        int parameterOffset) {
+                return TargetMethodAnnotationDrivenBinder.ArgumentBinder.ParameterBinding.makeAnonymous(
+                        new StackManipulation.Compound(
+                                MethodVariableAccess.forType(sourceType).loadFromIndex(parameterOffset),
+                                assigner.assign(sourceType, targetType, considerRuntimeType)));
+            }
+        };
+
+        /**
+         * Creates the binding that is requrest
+         *
+         * @param sourceType           The source type to be bound.
+         * @param targetType           The target type the {@code sourceType} is to be bound to.
+         * @param sourceParameterIndex The index of the source parameter.
+         * @param assigner             The assigner that is used to perform the assignment.
+         * @param considerRuntimeType  If {@code true}, the assignment is allowed to consider runtime types.
+         * @param parameterOffset      The offset of the source method's parameter.
+         * @return A binding considering the chosen binding mechanic.
+         */
+        protected abstract TargetMethodAnnotationDrivenBinder.ArgumentBinder.ParameterBinding<?> makeBinding(TypeDescription sourceType,
+                                                                                                             TypeDescription targetType,
+                                                                                                             int sourceParameterIndex,
+                                                                                                             Assigner assigner,
+                                                                                                             boolean considerRuntimeType,
+                                                                                                             int parameterOffset);
+    }
+
+    // TODO: Test for the above mechanic option!
+
+    /**
+     * A binder for handling the
+     * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument}
+     * annotation.
+     *
+     * @see TargetMethodAnnotationDrivenBinder
+     */
+    static enum Binder implements TargetMethodAnnotationDrivenBinder.ArgumentBinder<Argument> {
         INSTANCE;
 
         @Override
@@ -25,41 +100,35 @@ public @interface Argument {
         }
 
         @Override
-        public IdentifiedBinding<?> bind(Argument sourceParameterIndex,
-                                         int targetParameterIndex,
-                                         MethodDescription source,
-                                         MethodDescription target,
-                                         TypeDescription instrumentedType,
-                                         Assigner assigner) {
-            if (sourceParameterIndex.value() < 0) {
+        public ParameterBinding<?> bind(Argument argument,
+                                        int targetParameterIndex,
+                                        MethodDescription source,
+                                        MethodDescription target,
+                                        TypeDescription instrumentedType,
+                                        Assigner assigner) {
+            if (argument.value() < 0) {
                 throw new IllegalArgumentException(String.format("Argument annotation on %d's argument virtual " +
                         "%s holds negative index", targetParameterIndex, target));
-            } else if (source.getParameterTypes().size() <= sourceParameterIndex.value()) {
-                return IdentifiedBinding.makeIllegal();
+            } else if (source.getParameterTypes().size() <= argument.value()) {
+                return ParameterBinding.makeIllegal();
             }
-            return makeBinding(source.getParameterTypes().get(sourceParameterIndex.value()),
+            return argument.bindingMechanic().makeBinding(source.getParameterTypes().get(argument.value()),
                     target.getParameterTypes().get(targetParameterIndex),
-                    sourceParameterIndex.value(),
+                    argument.value(),
                     assigner,
                     RuntimeType.Verifier.check(target, targetParameterIndex),
-                    source.isStatic() ? 0 : 1);
-        }
-
-        private static IdentifiedBinding<?> makeBinding(TypeDescription sourceType,
-                                                        TypeDescription targetType,
-                                                        int sourceParameterIndex,
-                                                        Assigner assigner,
-                                                        boolean considerRuntimeType,
-                                                        int sourceParameterOffset) {
-            return IdentifiedBinding.makeIdentified(
-                    new StackManipulation.Compound(
-                            MethodArgument.forType(sourceType).loadFromIndex(sourceParameterIndex + sourceParameterOffset),
-                            assigner.assign(sourceType, targetType, considerRuntimeType)),
-                    new MostSpecificTypeResolver.ParameterIndexToken(sourceParameterIndex));
+                    source.getParameterOffset(argument.value()));
         }
     }
 
-    static enum NextUnboundAsDefaultsProvider implements AnnotationDrivenBinder.DefaultsProvider {
+    /**
+     * If this defaults provider is active, a non-annotated parameter is assumed to be implicitly bound to the next
+     * source method parameter that is not bound by any other target method parameter, i.e. a target method
+     * {@code bar(Object, String)} would be equivalent to a {@code bar(@Argument(0) Object, @Argument(1) String)}.
+     *
+     * @see TargetMethodAnnotationDrivenBinder.DefaultsProvider
+     */
+    static enum NextUnboundAsDefaultsProvider implements TargetMethodAnnotationDrivenBinder.DefaultsProvider {
         INSTANCE;
 
         private static class DefaultArgument implements Argument {
@@ -73,6 +142,11 @@ public @interface Argument {
             @Override
             public int value() {
                 return parameterIndex;
+            }
+
+            @Override
+            public BindingMechanic bindingMechanic() {
+                return BindingMechanic.UNIQUE;
             }
 
             @Override
@@ -127,5 +201,26 @@ public @interface Argument {
         }
     }
 
+    /**
+     * The index of the parameter of the source method that should be bound to this parameter.
+     *
+     * @return The required parameter index.
+     */
     int value();
+
+    /**
+     * Determines if the argument binding is to be considered by a
+     * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MostSpecificTypeResolver}
+     * for resolving ambiguous bindings of two methods. If
+     * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument.BindingMechanic#UNIQUE},
+     * of two bindable target methods such as for example {@code foo(String)} and {@code bar(Object)}, the {@code foo}
+     * method would be considered as dominant over the {@code bar} method because of its more specific argument type. As
+     * a side effect, only one parameter of any target method can be bound to a source method parameter with a given
+     * index unless the {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument.BindingMechanic#ANONYMOUS}
+     * option is used for any other binding.
+     *
+     * @return The binding type that should be applied to this parameter binding.
+     * @see com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MostSpecificTypeResolver
+     */
+    BindingMechanic bindingMechanic() default BindingMechanic.UNIQUE;
 }

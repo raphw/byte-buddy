@@ -1,7 +1,8 @@
-package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack;
+package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.constant;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.constant.DefaultValue;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.utility.MockitoRule;
 import org.junit.After;

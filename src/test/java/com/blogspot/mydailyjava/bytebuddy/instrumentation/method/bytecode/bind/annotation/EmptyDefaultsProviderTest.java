@@ -27,7 +27,7 @@ public class EmptyDefaultsProviderTest {
 
     @Test(expected = NoSuchElementException.class)
     public void testEmptyIteration() throws Exception {
-        Iterator<?> iterator = AnnotationDrivenBinder.DefaultsProvider.Empty.INSTANCE.makeIterator(typeDescription, left, right);
+        Iterator<?> iterator = TargetMethodAnnotationDrivenBinder.DefaultsProvider.Empty.INSTANCE.makeIterator(typeDescription, left, right);
         assertThat(iterator.hasNext(), is(false));
         verifyZeroInteractions(typeDescription);
         verifyZeroInteractions(left);

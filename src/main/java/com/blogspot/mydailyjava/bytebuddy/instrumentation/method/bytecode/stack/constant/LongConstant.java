@@ -1,11 +1,14 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.constant;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+/**
+ * This class is responsible for loading any {@code long} constant onto the operand stack.
+ */
 public enum LongConstant implements StackManipulation {
 
     ZERO(Opcodes.LCONST_0),
@@ -33,6 +36,14 @@ public enum LongConstant implements StackManipulation {
         }
     }
 
+    /**
+     * Creates a stack manipulation for loading a {@code long} value onto the operand stack.
+     * <p/>
+     * This is achieved either by invoking a specific opcode, if any, or by creating a constant pool entry.
+     *
+     * @param value The {@code long} value to load onto the stack.
+     * @return A stack manipulation for loading the given {@code long} value.
+     */
     public static StackManipulation forValue(long value) {
         if (value == 0L) {
             return ZERO;

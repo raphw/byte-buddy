@@ -2,20 +2,36 @@ package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.field.FieldDescription;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+/**
+ * An access representation to a given field.
+ */
 public enum FieldAccess {
 
-    STATIC(Opcodes.PUTSTATIC, Opcodes.GETSTATIC),
-    INSTANCE(Opcodes.PUTFIELD, Opcodes.GETFIELD);
+    STATIC(Opcodes.PUTSTATIC, Opcodes.GETSTATIC, StackSize.ZERO),
+    INSTANCE(Opcodes.PUTFIELD, Opcodes.GETFIELD, StackSize.SINGLE);
 
+    /**
+     * Representation of a field access for which a getter and a putter can be created.
+     */
     public static interface Defined {
 
+        /**
+         * Creates a getter representation for a given field.
+         *
+         * @return A stack manipulation representing the retrieval of a field value.
+         */
         StackManipulation getter();
 
+        /**
+         * Creates a putter representation for a given field.
+         *
+         * @return A stack manipulation representing the setting of a field value.
+         */
         StackManipulation putter();
     }
 
@@ -33,13 +49,13 @@ public enum FieldAccess {
                 methodVisitor.visitFieldInsn(getOpcode(),
                         fieldDescription.getDeclaringType().getInternalName(),
                         fieldDescription.getInternalName(),
-                        fieldDescription.getFieldType().getDescriptor());
+                        fieldDescription.getDescriptor());
                 return resolveSize(fieldDescription.getFieldType().getStackSize());
             }
 
             protected abstract int getOpcode();
 
-            protected abstract Size resolveSize(StackSize stackSize);
+            protected abstract Size resolveSize(StackSize fieldSize);
         }
 
         private class FieldGetInstruction extends AbstractFieldInstruction {
@@ -50,8 +66,9 @@ public enum FieldAccess {
             }
 
             @Override
-            protected Size resolveSize(StackSize stackSize) {
-                return stackSize.toIncreasingSize();
+            protected Size resolveSize(StackSize fieldSize) {
+                int sizeChange = fieldSize.getSize() - targetSizeChange;
+                return new Size(sizeChange, sizeChange);
             }
         }
 
@@ -63,8 +80,8 @@ public enum FieldAccess {
             }
 
             @Override
-            protected Size resolveSize(StackSize stackSize) {
-                return stackSize.toDecreasingSize();
+            protected Size resolveSize(StackSize fieldSize) {
+                return new Size(-1 * (fieldSize.getSize() + targetSizeChange), 0);
             }
         }
 
@@ -85,6 +102,12 @@ public enum FieldAccess {
         }
     }
 
+    /**
+     * Creates a field access representation for a given field.
+     *
+     * @param fieldDescription The field to be accessed.
+     * @return A field access definition for the given field.
+     */
     public static Defined forField(FieldDescription fieldDescription) {
         if (fieldDescription.isStatic()) {
             return STATIC.new AccessDispatcher(fieldDescription);
@@ -95,9 +118,11 @@ public enum FieldAccess {
 
     private final int putterOpcode;
     private final int getterOpcode;
+    private final int targetSizeChange;
 
-    private FieldAccess(int putterOpcode, int getterOpcode) {
+    private FieldAccess(int putterOpcode, int getterOpcode, StackSize targetSizeChange) {
         this.putterOpcode = putterOpcode;
         this.getterOpcode = getterOpcode;
+        this.targetSizeChange = targetSizeChange.getSize();
     }
 }

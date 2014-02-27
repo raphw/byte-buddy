@@ -3,7 +3,7 @@ package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.member.MethodArgument;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 
 import java.lang.annotation.*;
@@ -13,8 +13,10 @@ import java.lang.annotation.*;
 @Target({ElementType.PARAMETER})
 public @interface This {
 
-    static enum Binder implements AnnotationDrivenBinder.ArgumentBinder<This> {
+    static enum Binder implements TargetMethodAnnotationDrivenBinder.ArgumentBinder<This> {
         INSTANCE;
+
+        private static final int THIS_REFERENCE_INDEX = 0;
 
         @Override
         public Class<This> getHandledType() {
@@ -22,7 +24,7 @@ public @interface This {
         }
 
         @Override
-        public IdentifiedBinding<?> bind(This annotation,
+        public ParameterBinding<?> bind(This annotation,
                                          int targetParameterIndex,
                                          MethodDescription source,
                                          MethodDescription target,
@@ -36,11 +38,13 @@ public @interface This {
                 throw new IllegalStateException(String.format("The %d. argument virtual %s is an array type " +
                         "and can never be bound to an instance", targetParameterIndex, target));
             } else if (source.isStatic()) {
-                return IdentifiedBinding.makeIllegal();
+                return ParameterBinding.makeIllegal();
             }
             boolean runtimeType = RuntimeType.Verifier.check(target, targetParameterIndex);
             StackManipulation stackManipulation = assigner.assign(instrumentedType, targetType, runtimeType);
-            return IdentifiedBinding.makeAnonymous(new StackManipulation.Compound(MethodArgument.OBJECT_REFERENCE.loadFromIndex(0), stackManipulation));
+            return ParameterBinding.makeAnonymous(new StackManipulation.Compound(
+                    MethodVariableAccess.OBJECT_REFERENCE.loadFromIndex(THIS_REFERENCE_INDEX),
+                    stackManipulation));
         }
     }
 }

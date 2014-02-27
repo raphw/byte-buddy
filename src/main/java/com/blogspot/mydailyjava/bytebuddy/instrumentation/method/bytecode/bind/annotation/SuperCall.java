@@ -13,7 +13,7 @@ import java.util.concurrent.Callable;
 @Target({ElementType.PARAMETER, ElementType.METHOD})
 public @interface SuperCall {
 
-    static enum Binder implements AnnotationDrivenBinder.ArgumentBinder<SuperCall> {
+    static enum Binder implements TargetMethodAnnotationDrivenBinder.ArgumentBinder<SuperCall> {
         INSTANCE;
 
         @Override
@@ -22,19 +22,19 @@ public @interface SuperCall {
         }
 
         @Override
-        public IdentifiedBinding<?> bind(SuperCall annotation,
+        public ParameterBinding<?> bind(SuperCall annotation,
                                          int targetParameterIndex,
                                          MethodDescription source,
                                          MethodDescription target,
                                          TypeDescription instrumentedType,
                                          Assigner assigner) {
             TypeDescription targetType = target.getParameterTypes().get(targetParameterIndex);
-            if(targetType.represents(Runnable.class) || targetType.represents(Callable.class) || !targetType.represents(Object.class)) {
-                throw new IllegalStateException("A method call proxy can only be assigned to Runnable or Callable types");
-            } else if(target.isAbstract()) {
-                return IdentifiedBinding.makeIllegal();
+            if (targetType.represents(Runnable.class) || targetType.represents(Callable.class) || !targetType.represents(Object.class)) {
+                throw new IllegalStateException("A method call proxy can only be assigned to Runnable or Callable types: " + target);
+            } else if (target.isAbstract()) {
+                return ParameterBinding.makeIllegal();
             } else {
-                return IdentifiedBinding.makeAnonymous(new MethodCallProxy.AssignableSignatureCall(source));
+                return ParameterBinding.makeAnonymous(new MethodCallProxy.AssignableSignatureCall(source));
             }
         }
     }

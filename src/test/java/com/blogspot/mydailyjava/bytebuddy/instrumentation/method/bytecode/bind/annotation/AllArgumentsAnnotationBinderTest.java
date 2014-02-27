@@ -50,9 +50,9 @@ public class AllArgumentsAnnotationBinderTest extends AbstractAnnotationBinderTe
         when(targetTypeList.get(1)).thenReturn(targetType);
         when(targetTypeList.size()).thenReturn(2);
         when(target.getParameterAnnotations()).thenReturn(targetAnnotations);
-        AnnotationDrivenBinder.ArgumentBinder.IdentifiedBinding<?> identifiedBinding = AllArguments.Binder.INSTANCE
+        TargetMethodAnnotationDrivenBinder.ArgumentBinder.ParameterBinding<?> parameterBinding = AllArguments.Binder.INSTANCE
                 .bind(annotation, 1, source, target, instrumentedType, assigner);
-        assertThat(identifiedBinding.isValid(), is(true));
+        assertThat(parameterBinding.isValid(), is(true));
         verify(source, atLeast(1)).getParameterTypes();
         verify(source, atLeast(1)).isStatic();
         verify(target, atLeast(1)).getParameterTypes();
@@ -77,9 +77,9 @@ public class AllArgumentsAnnotationBinderTest extends AbstractAnnotationBinderTe
         when(targetTypeList.get(1)).thenReturn(targetType);
         when(targetTypeList.size()).thenReturn(2);
         when(target.getParameterAnnotations()).thenReturn(new Annotation[2][0]);
-        AnnotationDrivenBinder.ArgumentBinder.IdentifiedBinding<?> identifiedBinding = AllArguments.Binder.INSTANCE
+        TargetMethodAnnotationDrivenBinder.ArgumentBinder.ParameterBinding<?> parameterBinding = AllArguments.Binder.INSTANCE
                 .bind(annotation, 1, source, target, instrumentedType, assigner);
-        assertThat(identifiedBinding.isValid(), is(false));
+        assertThat(parameterBinding.isValid(), is(false));
         verify(source, atLeast(1)).getParameterTypes();
         verify(source, atLeast(1)).isStatic();
         verify(target, atLeast(1)).getParameterTypes();

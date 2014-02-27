@@ -18,11 +18,12 @@ public class AnnotationVisibilityTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {RuntimeType.class},
-                {IgnoreForBinding.class},
-                {Argument.class},
                 {AllArguments.class},
-                {This.class},
+                {Argument.class},
+                {IgnoreForBinding.class},
+                {RuntimeType.class},
+                {SuperCall.class},
+                {This.class}
         });
     }
 

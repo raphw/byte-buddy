@@ -1,7 +1,7 @@
-package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack;
+package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.member;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.member.MethodArgument;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.utility.MoreOpcodes;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.utility.MockitoRule;
@@ -79,7 +79,7 @@ public class MethodArgumentShortcutTest {
 
     @Test
     public void testShortCutReference() throws Exception {
-        StackManipulation stackManipulation = MethodArgument.forType(typeDescription).loadFromIndex(index);
+        StackManipulation stackManipulation = MethodVariableAccess.forType(typeDescription).loadFromIndex(index);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, instrumentationContext);
         assertThat(size.getSizeImpact(), is(this.size));

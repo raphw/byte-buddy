@@ -1,7 +1,7 @@
-package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack;
+package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.member;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.utility.MockitoRule;
 import org.junit.After;

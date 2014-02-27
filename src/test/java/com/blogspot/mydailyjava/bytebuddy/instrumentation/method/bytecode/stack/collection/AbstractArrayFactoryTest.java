@@ -27,7 +27,7 @@ public abstract class AbstractArrayFactoryTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeDescription typeDescription, componentTypeDescription;
+    private TypeDescription componentTypeDescription;
     @Mock
     private MethodVisitor methodVisitor;
     @Mock
@@ -37,8 +37,6 @@ public abstract class AbstractArrayFactoryTest {
 
     @Before
     public void setUp() throws Exception {
-        when(typeDescription.isArray()).thenReturn(true);
-        when(typeDescription.getComponentType()).thenReturn(componentTypeDescription);
         when(stackManipulation.isValid()).thenReturn(true);
     }
 
@@ -49,7 +47,7 @@ public abstract class AbstractArrayFactoryTest {
 
     protected void testCreationUsing(Class<?> componentType, int storageOpcode) throws Exception {
         defineComponentType(componentType);
-        ArrayFactory arrayFactory = ArrayFactory.of(typeDescription);
+        CollectionFactory arrayFactory = ArrayFactory.targeting(componentTypeDescription);
         StackManipulation arrayStackManipulation = arrayFactory.withValues(Arrays.asList(stackManipulation));
         assertThat(arrayStackManipulation.isValid(), is(true));
         verify(stackManipulation, atLeast(1)).isValid();

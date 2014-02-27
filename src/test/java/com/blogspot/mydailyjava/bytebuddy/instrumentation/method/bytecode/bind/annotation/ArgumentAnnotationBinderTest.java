@@ -52,12 +52,12 @@ public class ArgumentAnnotationBinderTest extends AbstractAnnotationBinderTest<A
         when(targetParameters.get(targetIndex)).thenReturn(targetType);
         when(target.getParameterTypes()).thenReturn(targetParameters);
         when(target.getParameterAnnotations()).thenReturn(annotations);
-        AnnotationDrivenBinder.ArgumentBinder.IdentifiedBinding<?> identifiedBinding = Argument.Binder.INSTANCE
+        TargetMethodAnnotationDrivenBinder.ArgumentBinder.ParameterBinding<?> parameterBinding = Argument.Binder.INSTANCE
                 .bind(annotation, targetIndex, source, target, instrumentedType, assigner);
-        assertThat(identifiedBinding.isValid(), is(true));
+        assertThat(parameterBinding.isValid(), is(true));
         Object expectedToken = new MostSpecificTypeResolver.ParameterIndexToken(sourceIndex);
-        assertThat(identifiedBinding.getIdentificationToken(), equalTo(expectedToken));
-        assertThat(identifiedBinding.getIdentificationToken().hashCode(), equalTo(expectedToken.hashCode()));
+        assertThat(parameterBinding.getIdentificationToken(), equalTo(expectedToken));
+        assertThat(parameterBinding.getIdentificationToken().hashCode(), equalTo(expectedToken.hashCode()));
         verify(annotation, atLeast(1)).value();
         verify(source, atLeast(1)).getParameterTypes();
         verify(source, atLeast(1)).isStatic();
@@ -74,9 +74,9 @@ public class ArgumentAnnotationBinderTest extends AbstractAnnotationBinderTest<A
         TypeList typeList = mock(TypeList.class);
         when(typeList.size()).thenReturn(0);
         when(source.getParameterTypes()).thenReturn(typeList);
-        AnnotationDrivenBinder.ArgumentBinder.IdentifiedBinding<?> identifiedBinding = Argument.Binder.INSTANCE
+        TargetMethodAnnotationDrivenBinder.ArgumentBinder.ParameterBinding<?> parameterBinding = Argument.Binder.INSTANCE
                 .bind(annotation, targetIndex, source, target, instrumentedType, assigner);
-        assertThat(identifiedBinding.isValid(), is(false));
+        assertThat(parameterBinding.isValid(), is(false));
         verify(annotation, atLeast(1)).value();
         verify(source, atLeast(1)).getParameterTypes();
         verifyZeroInteractions(assigner);

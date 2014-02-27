@@ -5,7 +5,9 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
-
+/**
+ * This class is responsible for loading any {@code double} constant onto the operand stack.
+ */
 public enum DoubleConstant implements StackManipulation {
 
     ZERO(Opcodes.DCONST_0),
@@ -32,7 +34,14 @@ public enum DoubleConstant implements StackManipulation {
             return SIZE;
         }
     }
-
+    /**
+     * Creates a stack manipulation for loading a {@code double} value onto the operand stack.
+     * <p/>
+     * This is achieved either by invoking a specific opcode, if any, or by creating a constant pool entry.
+     *
+     * @param value The {@code double} value to load onto the stack.
+     * @return A stack manipulation for loading the given {@code double} value.
+     */
     public static StackManipulation forValue(double value) {
         if (value == 0d) {
             return ZERO;
@@ -48,7 +57,6 @@ public enum DoubleConstant implements StackManipulation {
     private DoubleConstant(int opcode) {
         this.opcode = opcode;
     }
-
 
     @Override
     public boolean isValid() {

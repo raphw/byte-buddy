@@ -1,5 +1,6 @@
 package com.blogspot.mydailyjava.bytebuddy.dynamic;
 
+import com.blogspot.mydailyjava.bytebuddy.ClassFormatVersion;
 import com.blogspot.mydailyjava.bytebuddy.asm.ClassVisitorWrapper;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.loading.ClassLoaderByteArrayInjector;
@@ -48,7 +49,7 @@ public interface DynamicType<T> {
                 case INJECTION:
                     ClassLoaderByteArrayInjector classLoaderByteArrayInjector = new ClassLoaderByteArrayInjector(classLoader);
                     for (Map.Entry<String, byte[]> entry : types.entrySet()) {
-                        loadedTypes.put(entry.getKey(), classLoaderByteArrayInjector.load(entry.getKey(), entry.getValue()));
+                        loadedTypes.put(entry.getKey(), classLoaderByteArrayInjector.inject(entry.getKey(), entry.getValue()));
                     }
                     break;
                 default:
@@ -203,8 +204,8 @@ public interface DynamicType<T> {
             protected abstract class AbstractDelegatingBuilder<T> implements Builder<T> {
 
                 @Override
-                public Builder<T> classFormatVersion(int versionNumber) {
-                    return materialize().classFormatVersion(versionNumber);
+                public Builder<T> classFormatVersion(ClassFormatVersion classFormatVersion) {
+                    return materialize().classFormatVersion(classFormatVersion);
                 }
 
                 @Override
@@ -284,7 +285,7 @@ public interface DynamicType<T> {
                 this.methodTokens = methodTokens;
             }
 
-            protected InstrumentedType applyRecoredMembersTo(InstrumentedType instrumentedType) {
+            protected InstrumentedType applyRecordedMembersTo(InstrumentedType instrumentedType) {
                 for (FieldToken fieldToken : fieldTokens) {
                     instrumentedType = instrumentedType.withField(fieldToken.name,
                             fieldToken.resolveFieldType(instrumentedType),
@@ -323,7 +324,7 @@ public interface DynamicType<T> {
             FieldAnnotationTarget<T> annotateField(Annotation annotation);
         }
 
-        Builder<T> classFormatVersion(int versionNumber);
+        Builder<T> classFormatVersion(ClassFormatVersion classFormatVersion);
 
         Builder<T> implement(Class<?> interfaceType);
 

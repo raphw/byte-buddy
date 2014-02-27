@@ -6,6 +6,9 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+/**
+ * Represents a stack manipulation to load a {@code null} pointer onto the operand stack.
+ */
 public enum NullConstant implements StackManipulation {
     INSTANCE;
 

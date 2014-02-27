@@ -6,6 +6,9 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 
+/**
+ * Represents a stack assignment that loads the default value of a given type onto the stack.
+ */
 public enum DefaultValue implements StackManipulation {
 
     INTEGER(IntegerConstant.ZERO),
@@ -15,6 +18,12 @@ public enum DefaultValue implements StackManipulation {
     VOID(LegalTrivialStackManipulation.INSTANCE),
     ANY_REFERENCE(NullConstant.INSTANCE);
 
+    /**
+     * Creates a stack assignment that loads the default value for a given type.
+     *
+     * @param typeDescription The type for which a default value should be loaded onto the operand stack.
+     * @return A stack manipulation loading the default value for the given type.
+     */
     public static StackManipulation load(TypeDescription typeDescription) {
         if (typeDescription.isPrimitive()) {
             if (typeDescription.represents(long.class)) {

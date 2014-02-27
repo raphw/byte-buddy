@@ -1,13 +1,16 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.primitive;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+/**
+ * This delegate is responsible for unboxing a wrapper type to their primitive equivalents.
+ */
 public enum PrimitiveUnboxingDelegate implements StackManipulation {
 
     BOOLEAN("java/lang/Boolean", StackSize.ZERO, Boolean.class, boolean.class, "booleanValue", "()Z"),
@@ -19,9 +22,22 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
     FLOAT("java/lang/Float", StackSize.ZERO, Float.class, float.class, "floatValue", "()F"),
     DOUBLE("java/lang/Double", StackSize.SINGLE, Double.class, double.class, "doubleValue", "()D");
 
+    /**
+     * Implementations represent an unboxing delegate that is able to perform the unboxing operation.
+     */
     public static interface UnboxingResponsible {
 
-        StackManipulation assignUnboxedTo(TypeDescription subType, Assigner assigner, boolean considerRuntimeType);
+        /**
+         * Attempts to unbox the represented type in order to assign the unboxed value to the given target type
+         * while using the assigner that is provided by the method call.
+         *
+         * @param targetType          The type that is the desired outcome of the assignment.
+         * @param assigner            The assigner used to assign the unboxed type to the target type.
+         * @param considerRuntimeType If {@code true}, unsafe castings are allowed for this assignment.
+         * @return A stack manipulation representing this assignment if such an assignment is possible. An illegal
+         * assignment otherwise.
+         */
+        StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, boolean considerRuntimeType);
     }
 
     private static enum ExplicitlyTypedUnboxingResponsible implements UnboxingResponsible {
@@ -42,8 +58,8 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
         }
 
         @Override
-        public StackManipulation assignUnboxedTo(TypeDescription subType, Assigner assigner, boolean considerRuntimeType) {
-            return new Compound(primitiveUnboxingDelegate, PrimitiveWideningDelegate.forPrimitive(primitiveUnboxingDelegate.primitiveType).widenTo(subType));
+        public StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, boolean considerRuntimeType) {
+            return new Compound(primitiveUnboxingDelegate, PrimitiveWideningDelegate.forPrimitive(primitiveUnboxingDelegate.primitiveType).widenTo(targetType));
         }
     }
 
@@ -78,12 +94,26 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
         }
 
         @Override
-        public StackManipulation assignUnboxedTo(TypeDescription subType, Assigner assigner, boolean considerRuntimeType) {
-            PrimitiveUnboxingDelegate primitiveUnboxingDelegate = PrimitiveUnboxingDelegate.forPrimitive(subType);
+        public StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, boolean considerRuntimeType) {
+            PrimitiveUnboxingDelegate primitiveUnboxingDelegate = PrimitiveUnboxingDelegate.forPrimitive(targetType);
             return new Compound(assigner.assign(originalType, primitiveUnboxingDelegate.wrapperType, considerRuntimeType), primitiveUnboxingDelegate);
         }
     }
 
+    /**
+     * Creates an unboxing responsible that is capable of unboxing a wrapper type.
+     * <ol>
+     * <li>If the reference type represents a wrapper type, the wrapper type will simply be unboxed.</li>
+     * <li>If the reference type does not represent a wrapper type, the wrapper type will be inferred by the primitive target
+     * type that is later given to the
+     * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.primitive.PrimitiveUnboxingDelegate.UnboxingResponsible}
+     * in order to then check if the given type is assignable to the inferred wrapper type.</li>
+     * </ol>
+     *
+     * @param typeDescription A non-primitive type.
+     * @return An unboxing responsible capable of performing an unboxing operation while considering a further assignment
+     * of the unboxed value.
+     */
     public static UnboxingResponsible forReferenceType(TypeDescription typeDescription) {
         if (typeDescription.isPrimitive()) {
             throw new IllegalArgumentException("Expected reference type instead of " + typeDescription);

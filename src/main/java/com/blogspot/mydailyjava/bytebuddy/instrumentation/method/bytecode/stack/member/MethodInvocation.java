@@ -7,6 +7,9 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+/**
+ * A builder for a method invocation.
+ */
 public enum MethodInvocation {
 
     VIRTUAL(Opcodes.INVOKEVIRTUAL),
@@ -14,12 +17,35 @@ public enum MethodInvocation {
     STATIC(Opcodes.INVOKESTATIC),
     SPECIAL(Opcodes.INVOKESPECIAL);
 
+    /**
+     * Represents a method invocation where the invocation type (static, virtual, special, interface) is derived
+     * from the
+     */
     public static interface WithImplicitInvocationTargetType extends StackManipulation {
 
-        StackManipulation virtual(TypeDescription typeDescription);
+        /**
+         * Transforms this method invocation into a virtual (or interface) method invocation on the given type. If the
+         * represented method cannot be dispatched on the given invocation target type, an exception is thrown.
+         *
+         * @param invocationTarget The type on which the method is to be invoked virtually on.
+         * @return A stack manipulation representing this method invocation.
+         */
+        StackManipulation virtual(TypeDescription invocationTarget);
 
-        StackManipulation special(TypeDescription typeDescription);
+        /**
+         * Transforms this method invocation into a virtual (or interface) method invocation on the given type. If the
+         * represented method cannot be dispatched on the given invocation target type, an exception is thrown.
+         *
+         * @param invocationTarget The type on which the method is to be invoked specially on.
+         * @return A stack manipulation representing this method invocation.
+         */
+        StackManipulation special(TypeDescription invocationTarget);
 
+        /**
+         * Returns the invocation type that was determined implicitly for the given method.
+         *
+         * @return The method invocation type that was determined implicitly for the given method.
+         */
         MethodInvocation getImplicitInvocationType();
     }
 
@@ -56,32 +82,32 @@ public enum MethodInvocation {
         }
 
         @Override
-        public StackManipulation virtual(TypeDescription typeDescription) {
-            validateNonStaticAndTypeCompatibleCall(typeDescription);
+        public StackManipulation virtual(TypeDescription invocationTarget) {
+            validateNonStaticAndTypeCompatibleCall(invocationTarget);
             if (methodDescription.isPrivate() || methodDescription.isConstructor()) {
-                throw new IllegalArgumentException("Cannot invoke " + typeDescription + " virtually");
+                throw new IllegalArgumentException("Cannot invoke " + invocationTarget + " virtually");
             }
-            if (typeDescription.isInterface()) {
-                return INTERFACE.new Invocation(methodDescription, typeDescription);
+            if (invocationTarget.isInterface()) {
+                return INTERFACE.new Invocation(methodDescription, invocationTarget);
             } else {
-                return VIRTUAL.new Invocation(methodDescription, typeDescription);
+                return VIRTUAL.new Invocation(methodDescription, invocationTarget);
             }
         }
 
         @Override
-        public StackManipulation special(TypeDescription typeDescription) {
-            validateNonStaticAndTypeCompatibleCall(typeDescription);
-            if((methodDescription.isPrivate() || methodDescription.isConstructor())) {
-                if(this.typeDescription.equals(typeDescription)) {
+        public StackManipulation special(TypeDescription invocationTarget) {
+            validateNonStaticAndTypeCompatibleCall(invocationTarget);
+            if ((methodDescription.isPrivate() || methodDescription.isConstructor())) {
+                if (this.typeDescription.equals(invocationTarget)) {
                     return this;
                 } else {
                     throw new IllegalArgumentException("Cannot invoke " + methodDescription + " on any other type");
                 }
             }
-            if (typeDescription.isInterface()) {
+            if (invocationTarget.isInterface()) {
                 throw new IllegalArgumentException("Cannot call INVOKESPECIAL on interface type");
             } else {
-                return SPECIAL.new Invocation(methodDescription, typeDescription);
+                return SPECIAL.new Invocation(methodDescription, invocationTarget);
             }
         }
 
@@ -99,6 +125,12 @@ public enum MethodInvocation {
         }
     }
 
+    /**
+     * Creates a method invocation with an implicitly determined invocation type.
+     *
+     * @param methodDescription The method to be invoked.
+     * @return A stack manipulation with implicitly determined invocation type.
+     */
     public static WithImplicitInvocationTargetType invoke(MethodDescription methodDescription) {
         if (methodDescription.isStatic()) { // Check this property first, private static methods use INVOKESTATIC.
             return STATIC.new Invocation(methodDescription);

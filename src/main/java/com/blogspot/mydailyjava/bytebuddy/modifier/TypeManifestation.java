@@ -3,6 +3,9 @@ package com.blogspot.mydailyjava.bytebuddy.modifier;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.ModifierContributor;
 import org.objectweb.asm.Opcodes;
 
+/**
+ * Describes a type's manifestation, i.e. if a type is final, abstract, an interface or neither.
+ */
 public enum TypeManifestation implements ModifierContributor.ForType {
 
     PLAIN(EMPTY_MASK),
@@ -16,6 +19,7 @@ public enum TypeManifestation implements ModifierContributor.ForType {
         this.mask = mask;
     }
 
+    @Override
     public int getMask() {
         return mask;
     }

@@ -1,15 +1,27 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.primitive;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.IllegalStackManipulation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.LegalTrivialStackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.*;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.constant.DefaultValue;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+/**
+ * This assigner is able to handle the {@code void} type. This means:
+ * <ol>
+ * <li>If a {@code void} type is assigned to the {@code void} it will consider this a trivial operation.</li>
+ * <li>If a {@code void} type is assigned to a non-{@code void} type, it will pop the top value from the stack.</li>
+ * <li>If a non-{@code void} type is assigned to a {@code void} type, it will load the target type's default value
+ * only if this was configured at the assigner's construction.</li>
+ * <li>If two non-{@code void} types are subject of the assignment, it will delegate the assignment to its chained
+ * assigner.</li>
+ * </ol>
+ */
 public class VoidAwareAssigner implements Assigner {
 
     private static enum ValueRemovingStackManipulation implements StackManipulation {
@@ -50,6 +62,14 @@ public class VoidAwareAssigner implements Assigner {
     private final Assigner nonVoidAwareAssigner;
     private final boolean returnDefaultValue;
 
+    /**
+     * Creates a new assigner that is capable of handling void types.
+     *
+     * @param nonVoidAwareAssigner A chained assigner which will be queried by this assigner to handle assignments that
+     *                             do not involve a {@code void} type.
+     * @param returnDefaultValue   Determines if this assigner will load a target type's default value onto the stack if
+     *                             a {@code void} type is assigned to a non-{@code void} type.
+     */
     public VoidAwareAssigner(Assigner nonVoidAwareAssigner, boolean returnDefaultValue) {
         this.nonVoidAwareAssigner = nonVoidAwareAssigner;
         this.returnDefaultValue = returnDefaultValue;

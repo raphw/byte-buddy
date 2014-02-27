@@ -5,6 +5,9 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescripti
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import org.objectweb.asm.MethodVisitor;
 
+/**
+ * Representation of an attempt to delegate to a method that is illegal.
+ */
 public enum IllegalMethodDelegation implements MethodDelegationBinder.Binding {
     INSTANCE;
 
@@ -14,7 +17,7 @@ public enum IllegalMethodDelegation implements MethodDelegationBinder.Binding {
     }
 
     @Override
-    public Integer getTargetParameterIndex(Object identificationToken) {
+    public Integer getTargetParameterIndex(Object parameterBindingToken) {
         throw new IllegalStateException();
     }
 

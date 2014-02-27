@@ -1,6 +1,5 @@
-package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack;
+package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.member;
 
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.member.MethodArgument;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.junit.Test;
 
@@ -14,6 +13,6 @@ public class MethodArgumentVoidTest {
         TypeDescription voidTypeDescription = mock(TypeDescription.class);
         when(voidTypeDescription.isPrimitive()).thenReturn(true);
         when(voidTypeDescription.represents(void.class)).thenReturn(true);
-        MethodArgument.forType(voidTypeDescription);
+        MethodVariableAccess.forType(voidTypeDescription);
     }
 }

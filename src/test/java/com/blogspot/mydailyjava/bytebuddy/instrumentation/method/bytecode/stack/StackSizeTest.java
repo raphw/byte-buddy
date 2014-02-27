@@ -1,4 +1,4 @@
-package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode;
+package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import org.junit.Test;

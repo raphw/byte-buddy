@@ -1,14 +1,18 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.primitive;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.IllegalStackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.LegalTrivialStackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+/**
+ * This delegate is responsible for widening a primitive type to represent a <i>larger</i> primitive type. The
+ * rules for this widening are equivalent to those in the <a href="http://docs.oracle.com/javase/specs/">JLS</a>.
+ */
 public enum PrimitiveWideningDelegate {
 
     BOOLEAN(LegalTrivialStackManipulation.INSTANCE,                                                // to boolean
@@ -105,6 +109,12 @@ public enum PrimitiveWideningDelegate {
         }
     }
 
+    /**
+     * Locates the delegate that is capable of widening the given type into another type.
+     *
+     * @param typeDescription A non-void primitive type that is to be widened into another type.
+     * @return A delegate for the given type.
+     */
     public static PrimitiveWideningDelegate forPrimitive(TypeDescription typeDescription) {
         if (typeDescription.represents(boolean.class)) {
             return BOOLEAN;
@@ -154,6 +164,12 @@ public enum PrimitiveWideningDelegate {
         this.toDoubleStackManipulation = toDoubleStackManipulation;
     }
 
+    /**
+     * Attempts to widen the represented type into another type.
+     *
+     * @param typeDescription A non-void primitive type that is the expected result of the widening operation.
+     * @return A widening instruction or an illegal stack manipulation if such widening is not legitimate.
+     */
     public StackManipulation widenTo(TypeDescription typeDescription) {
         if (typeDescription.represents(boolean.class)) {
             return toBooleanStackManipulation;

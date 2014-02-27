@@ -3,6 +3,9 @@ package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import org.objectweb.asm.MethodVisitor;
 
+/**
+ * An impossible manipulation of the operand stack that must not be applied.
+ */
 public enum IllegalStackManipulation implements StackManipulation {
     INSTANCE;
 
@@ -13,6 +16,6 @@ public enum IllegalStackManipulation implements StackManipulation {
 
     @Override
     public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-        throw new IllegalStateException("It is not possible to apply an illegal assignment as byte code");
+        throw new IllegalStateException("An illegal stack manipulation cannot be applied");
     }
 }

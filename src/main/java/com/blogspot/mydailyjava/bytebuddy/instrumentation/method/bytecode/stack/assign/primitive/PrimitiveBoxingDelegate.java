@@ -1,13 +1,16 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.primitive;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+/**
+ * This delegate is responsible for boxing a primitive types to their wrapper equivalents.
+ */
 public enum PrimitiveBoxingDelegate {
 
     BOOLEAN("java/lang/Boolean", StackSize.ZERO, Boolean.class, "valueOf", "(Z)Ljava/lang/Boolean;"),
@@ -19,6 +22,12 @@ public enum PrimitiveBoxingDelegate {
     FLOAT("java/lang/Float", StackSize.ZERO, Float.class, "valueOf", "(F)Ljava/lang/Float;"),
     DOUBLE("java/lang/Double", StackSize.SINGLE, Double.class, "valueOf", "(D)Ljava/lang/Double;");
 
+    /**
+     * Locates a boxing delegate for a given primitive type.
+     *
+     * @param typeDescription A non-void primitive type.
+     * @return A delegate capable of boxing the given primitve type.
+     */
     public static PrimitiveBoxingDelegate forPrimitive(TypeDescription typeDescription) {
         if (typeDescription.represents(boolean.class)) {
             return BOOLEAN;
@@ -79,7 +88,16 @@ public enum PrimitiveBoxingDelegate {
         }
     }
 
-    public StackManipulation assignBoxedTo(TypeDescription subType, Assigner chainedAssigner, boolean considerRuntimeType) {
-        return new BoxingStackManipulation(chainedAssigner.assign(wrapperType, subType, considerRuntimeType));
+    /**
+     * Creates a stack manipulation that boxes the represented primitive type and applies a chained assignment
+     * to the result of this boxing operation.
+     *
+     * @param targetType          The type that is target of the assignment operation.
+     * @param chainedAssigner     The assigner that is to be used to perform the chained assignment.
+     * @param considerRuntimeType If {@code true}, unsafe cast operations are allowed for performing an assignment.
+     * @return A stack manipulation that represents the described assignment operation.
+     */
+    public StackManipulation assignBoxedTo(TypeDescription targetType, Assigner chainedAssigner, boolean considerRuntimeType) {
+        return new BoxingStackManipulation(chainedAssigner.assign(wrapperType, targetType, considerRuntimeType));
     }
 }

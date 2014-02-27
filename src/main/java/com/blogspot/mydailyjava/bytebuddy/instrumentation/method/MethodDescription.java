@@ -49,6 +49,21 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         }
 
         @Override
+        public int getParameterOffset(int parameterIndex) {
+            int offset = isStatic() ? 0 : 1;
+            int currentIndex = 0;
+            for (TypeDescription parameterType : getParameterTypes()) {
+                if (currentIndex == parameterIndex) {
+                    return offset;
+                } else {
+                    currentIndex++;
+                    offset += parameterType.getStackSize().getSize();
+                }
+            }
+            throw new IllegalArgumentException();
+        }
+
+        @Override
         public int hashCode() {
             return (getDeclaringType().getInternalName() + "." + getUniqueSignature()).hashCode();
         }
@@ -294,4 +309,6 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
     boolean isOverridable();
 
     int getStackSize();
+
+    int getParameterOffset(int parameterIndex);
 }

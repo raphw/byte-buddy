@@ -3,13 +3,45 @@ package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 
+/**
+ * Implementation of an
+ * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.AmbiguityResolver}
+ * that resolves two conflicting bindings by considering most-specific types of target method parameters in the same manner
+ * as the Java compiler resolves bindings of overloaded method.
+ * <p/>
+ * This ambiguity resolver:
+ * <ol>
+ * <li>Checks for each parameter of the source method if a one-to-one parameter binding to both of the target methods exist.</li>
+ * <li>If any of the source method parameters were bound one-to-one to both target methods, the method with the most specific
+ * type is considered as dominant.</li>
+ * <li>If this result is dominant for both the left and the right target method, this resolver will consider the binding as
+ * ambiguous.</li>
+ * <li>If none of the methods is dominant and if the comparison did not result in an ambigous resolution, the method that
+ * consists of the most one-to-one parameter bindings is considered dominant.</li>
+ * </ol>
+ * Primitive types are considered dominant in the same manner as by the Java compiler.
+ * <p/>
+ * For example: If a source method only parameter was successfully bound one-to-one to the only parameters of the target
+ * methods {@code foo(Object)} and {@code bar(String)}, this ambiguity resolver will detect that the {@code String} type
+ * is more specific than the {@code Object} type and determine {@code bar(String)} as the dominant binding.
+ */
 public enum MostSpecificTypeResolver implements MethodDelegationBinder.AmbiguityResolver {
     INSTANCE;
 
+    /**
+     * This token is used to mark a one-to-one binding of a source method parameter to a target method parameter.
+     *
+     * @see com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.Binding#getTargetParameterIndex(Object)
+     */
     public static class ParameterIndexToken {
 
         private final int parameterIndex;
 
+        /**
+         * Create a parameter index token for a given parameter of the source method.
+         *
+         * @param parameterIndex The parameter index of the source method which is mapped to a target method parameter.
+         */
         public ParameterIndexToken(int parameterIndex) {
             this.parameterIndex = parameterIndex;
         }
@@ -18,7 +50,6 @@ public enum MostSpecificTypeResolver implements MethodDelegationBinder.Ambiguity
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
                     && parameterIndex == ((ParameterIndexToken) other).parameterIndex;
-
         }
 
         @Override
@@ -28,7 +59,7 @@ public enum MostSpecificTypeResolver implements MethodDelegationBinder.Ambiguity
 
         @Override
         public String toString() {
-            return "ParameterIndexToken{" + parameterIndex + '}';
+            return "MostSpecificTypeResolver.ParameterIndexToken{" + parameterIndex + '}';
         }
     }
 

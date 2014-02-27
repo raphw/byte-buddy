@@ -4,14 +4,14 @@ import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.TypeInitializer;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.member.MethodArgument;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocation;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.primitive.PrimitiveTypeAwareAssigner;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.primitive.VoidAwareAssigner;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.reference.ReferenceTypeAwareAssigner;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.*;
 import org.objectweb.asm.util.TraceClassVisitor;
@@ -51,7 +51,7 @@ public class MethodCallProxy implements AuxiliaryType {
             methodVisitor.visitTypeInsn(Opcodes.NEW, typeName);
             methodVisitor.visitInsn(Opcodes.DUP);
             Size size = new Size(2, 2);
-            size = size.aggregate(MethodArgument.loadParameters(proxiedMethod).apply(methodVisitor, instrumentationContext));
+            size = size.aggregate(MethodVariableAccess.loadAll(proxiedMethod).apply(methodVisitor, instrumentationContext));
             StringBuilder stringBuilder = new StringBuilder("(");
             if (!proxiedMethod.isStatic()) {
                 stringBuilder.append(proxiedMethod.getDeclaringType().getDescriptor());
@@ -181,7 +181,7 @@ public class MethodCallProxy implements AuxiliaryType {
         int currentMaximum = 1;
         for (Map.Entry<String, TypeDescription> field : fields.entrySet()) {
             constructor.visitIntInsn(Opcodes.ALOAD, 0);
-            MethodArgument.forType(field.getValue()).loadFromIndex(argumentIndex).apply(constructor, null);
+            MethodVariableAccess.forType(field.getValue()).loadFromIndex(argumentIndex).apply(constructor, null);
             constructor.visitFieldInsn(Opcodes.PUTFIELD,
                     proxyTypeInternalName,
                     field.getKey(),

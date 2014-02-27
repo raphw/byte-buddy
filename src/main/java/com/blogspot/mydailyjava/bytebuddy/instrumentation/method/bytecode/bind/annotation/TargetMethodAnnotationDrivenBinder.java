@@ -1,38 +1,38 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.IllegalStackManipulation;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.IllegalMethodDelegation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.IllegalStackManipulation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 
 import java.lang.annotation.Annotation;
 import java.util.*;
 
-public class AnnotationDrivenBinder implements MethodDelegationBinder {
+public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinder {
 
     public static interface ArgumentBinder<T extends Annotation> {
 
-        static class IdentifiedBinding<S> {
+        static class ParameterBinding<S> {
 
-            public static IdentifiedBinding<?> makeIllegal() {
-                return new IdentifiedBinding<Object>(IllegalStackManipulation.INSTANCE, new Object());
+            public static ParameterBinding<?> makeIllegal() {
+                return new ParameterBinding<Object>(IllegalStackManipulation.INSTANCE, new Object());
             }
 
-            public static IdentifiedBinding<?> makeAnonymous(StackManipulation stackManipulation) {
-                return new IdentifiedBinding<Object>(stackManipulation, new Object());
+            public static ParameterBinding<?> makeAnonymous(StackManipulation stackManipulation) {
+                return new ParameterBinding<Object>(stackManipulation, new Object());
             }
 
-            public static <U> IdentifiedBinding<U> makeIdentified(StackManipulation stackManipulation, U identificationToken) {
-                return new IdentifiedBinding<U>(stackManipulation, identificationToken);
+            public static <U> ParameterBinding<U> makeIdentified(StackManipulation stackManipulation, U identificationToken) {
+                return new ParameterBinding<U>(stackManipulation, identificationToken);
             }
 
             private final StackManipulation stackManipulation;
             private final S identificationToken;
 
-            protected IdentifiedBinding(StackManipulation stackManipulation, S identificationToken) {
+            protected ParameterBinding(StackManipulation stackManipulation, S identificationToken) {
                 this.stackManipulation = stackManipulation;
                 this.identificationToken = identificationToken;
             }
@@ -52,12 +52,12 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
 
         Class<T> getHandledType();
 
-        IdentifiedBinding<?> bind(T annotation,
-                                  int targetParameterIndex,
-                                  MethodDescription source,
-                                  MethodDescription target,
-                                  TypeDescription instrumentedType,
-                                  Assigner assigner);
+        ParameterBinding<?> bind(T annotation,
+                                 int targetParameterIndex,
+                                 MethodDescription source,
+                                 MethodDescription target,
+                                 TypeDescription instrumentedType,
+                                 Assigner assigner);
     }
 
     public static interface DefaultsProvider<T extends Annotation> {
@@ -110,11 +110,11 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
                 }
 
                 @Override
-                public ArgumentBinder.IdentifiedBinding<?> handle(int targetParameterIndex,
-                                                                  MethodDescription source,
-                                                                  MethodDescription target,
-                                                                  TypeDescription typeDescription,
-                                                                  Assigner assigner) {
+                public ArgumentBinder.ParameterBinding<?> handle(int targetParameterIndex,
+                                                                 MethodDescription source,
+                                                                 MethodDescription target,
+                                                                 TypeDescription typeDescription,
+                                                                 Assigner assigner) {
                     return argumentBinder.bind(annotation, targetParameterIndex, source, target, typeDescription, assigner);
                 }
             }
@@ -123,20 +123,20 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
                 INSTANCE;
 
                 @Override
-                public ArgumentBinder.IdentifiedBinding<?> handle(int targetParameterIndex,
-                                                                  MethodDescription source,
-                                                                  MethodDescription target,
-                                                                  TypeDescription typeDescription,
-                                                                  Assigner assigner) {
-                    return ArgumentBinder.IdentifiedBinding.makeIllegal();
+                public ArgumentBinder.ParameterBinding<?> handle(int targetParameterIndex,
+                                                                 MethodDescription source,
+                                                                 MethodDescription target,
+                                                                 TypeDescription typeDescription,
+                                                                 Assigner assigner) {
+                    return ArgumentBinder.ParameterBinding.makeIllegal();
                 }
             }
 
-            ArgumentBinder.IdentifiedBinding<?> handle(int targetParameterIndex,
-                                                       MethodDescription source,
-                                                       MethodDescription target,
-                                                       TypeDescription typeDescription,
-                                                       Assigner assigner);
+            ArgumentBinder.ParameterBinding<?> handle(int targetParameterIndex,
+                                                      MethodDescription source,
+                                                      MethodDescription target,
+                                                      TypeDescription typeDescription,
+                                                      Assigner assigner);
         }
 
         private final Map<Class<? extends Annotation>, ArgumentBinder<?>> argumentBinders;
@@ -188,10 +188,10 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
     private final Assigner assigner;
     private final MethodInvoker methodInvoker;
 
-    public AnnotationDrivenBinder(List<ArgumentBinder<?>> argumentBinders,
-                                  DefaultsProvider<?> defaultsProvider,
-                                  Assigner assigner,
-                                  MethodInvoker methodInvoker) {
+    public TargetMethodAnnotationDrivenBinder(List<ArgumentBinder<?>> argumentBinders,
+                                              DefaultsProvider<?> defaultsProvider,
+                                              Assigner assigner,
+                                              MethodInvoker methodInvoker) {
         this.delegationProcessor = new DelegationProcessor(argumentBinders);
         this.defaultsProvider = defaultsProvider;
         this.assigner = assigner;
@@ -214,18 +214,17 @@ public class AnnotationDrivenBinder implements MethodDelegationBinder {
         for (int targetParameterIndex = 0;
              targetParameterIndex < target.getParameterTypes().size();
              targetParameterIndex++) {
-            ArgumentBinder.IdentifiedBinding<?> identifiedBinding = delegationProcessor
+            ArgumentBinder.ParameterBinding<?> parameterBinding = delegationProcessor
                     .handler(target.getParameterAnnotations()[targetParameterIndex], defaults)
                     .handle(targetParameterIndex,
                             source,
                             target,
                             instrumentedType,
                             assigner);
-            if (!identifiedBinding.isValid()
+            if (!parameterBinding.isValid()
                     || !methodDelegationBindingBuilder.append(
-                    identifiedBinding.getStackManipulation(),
-                    targetParameterIndex,
-                    identifiedBinding.getIdentificationToken())) {
+                    parameterBinding.getStackManipulation(),
+                    parameterBinding.getIdentificationToken())) {
                 return IllegalMethodDelegation.INSTANCE;
             }
         }

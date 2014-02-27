@@ -2,8 +2,8 @@ package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.TargetMethodAnnotationDrivenBinder;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.AnnotationDrivenBinder;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
@@ -54,7 +54,7 @@ public class MethodBindingBuilderTest {
     @Mock
     private MethodDescription methodDescription;
     @Mock
-    private AnnotationDrivenBinder.MethodInvoker methodInvoker;
+    private TargetMethodAnnotationDrivenBinder.MethodInvoker methodInvoker;
     @Mock
     private MethodVisitor methodVisitor;
     @Mock(answer = Answers.RETURNS_MOCKS)
@@ -111,8 +111,8 @@ public class MethodBindingBuilderTest {
     public void testIllegalParameterTypeBinding() throws Exception {
         when(methodInvoker.invoke(any(MethodDescription.class))).thenReturn(legalStackManipulation);
         MethodDelegationBinder.Binding.Builder builder = new MethodDelegationBinder.Binding.Builder(methodInvoker, methodDescription);
-        assertThat(builder.append(legalStackManipulation, 0, new Object()), is(true));
-        assertThat(builder.append(illegalStackManipulation, 1, new Object()), is(true));
+        assertThat(builder.append(legalStackManipulation, new Object()), is(true));
+        assertThat(builder.append(illegalStackManipulation, new Object()), is(true));
         MethodDelegationBinder.Binding binding = builder.build(legalStackManipulation);
         assertThat(binding.isValid(), is(false));
         assertThat(binding.getTarget(), is(methodDescription));
@@ -122,8 +122,8 @@ public class MethodBindingBuilderTest {
     public void testLegalParameterTypeBinding() throws Exception {
         when(methodInvoker.invoke(any(MethodDescription.class))).thenReturn(legalStackManipulation);
         MethodDelegationBinder.Binding.Builder builder = new MethodDelegationBinder.Binding.Builder(methodInvoker, methodDescription);
-        assertThat(builder.append(legalStackManipulation, 0, new Object()), is(true));
-        assertThat(builder.append(legalStackManipulation, 1, new Object()), is(true));
+        assertThat(builder.append(legalStackManipulation, new Object()), is(true));
+        assertThat(builder.append(legalStackManipulation, new Object()), is(true));
         MethodDelegationBinder.Binding binding = builder.build(legalStackManipulation);
         assertThat(binding.isValid(), is(true));
         assertThat(binding.getTarget(), is(methodDescription));
@@ -136,11 +136,11 @@ public class MethodBindingBuilderTest {
     public void testUniqueIdentification() throws Exception {
         when(methodInvoker.invoke(any(MethodDescription.class))).thenReturn(legalStackManipulation);
         MethodDelegationBinder.Binding.Builder builder = new MethodDelegationBinder.Binding.Builder(methodInvoker, methodDescription);
-        assertThat(builder.append(legalStackManipulation, 42, new Key(FOO)), is(true));
-        assertThat(builder.append(legalStackManipulation, 12, new Key(BAR)), is(true));
+        assertThat(builder.append(legalStackManipulation, new Key(FOO)), is(true));
+        assertThat(builder.append(legalStackManipulation, new Key(BAR)), is(true));
         MethodDelegationBinder.Binding binding = builder.build(legalStackManipulation);
-        assertThat(binding.getTargetParameterIndex(new Key(FOO)), is(42));
-        assertThat(binding.getTargetParameterIndex(new Key(BAR)), is(12));
+        assertThat(binding.getTargetParameterIndex(new Key(FOO)), is(0));
+        assertThat(binding.getTargetParameterIndex(new Key(BAR)), is(1));
         assertThat(binding.isValid(), is(true));
         assertThat(binding.getTarget(), is(methodDescription));
     }
@@ -149,7 +149,7 @@ public class MethodBindingBuilderTest {
     public void testNonUniqueIdentification() throws Exception {
         when(methodInvoker.invoke(any(MethodDescription.class))).thenReturn(legalStackManipulation);
         MethodDelegationBinder.Binding.Builder builder = new MethodDelegationBinder.Binding.Builder(methodInvoker, methodDescription);
-        assertThat(builder.append(legalStackManipulation, 42, new Key(FOO)), is(true));
-        assertThat(builder.append(legalStackManipulation, 12, new Key(FOO)), is(false));
+        assertThat(builder.append(legalStackManipulation, new Key(FOO)), is(true));
+        assertThat(builder.append(legalStackManipulation, new Key(FOO)), is(false));
     }
 }

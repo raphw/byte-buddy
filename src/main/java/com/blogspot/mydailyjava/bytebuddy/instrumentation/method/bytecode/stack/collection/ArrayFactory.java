@@ -1,8 +1,8 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.collection;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.constant.IntegerConstant;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
@@ -10,86 +10,101 @@ import org.objectweb.asm.Opcodes;
 
 import java.util.List;
 
-public class ArrayFactory {
+public class ArrayFactory implements CollectionFactory {
 
     private static final StackManipulation.Size SIZE = StackSize.ZERO.toDecreasingSize();
 
-    private static interface ArrayCreator extends StackManipulation {
+    /**
+     * An array creator is responsible for providing correct byte code instructions for creating an array
+     * and for storing values into it.
+     */
+    protected static interface ArrayCreator extends StackManipulation {
 
+        /**
+         * An array creator implementation for primitive types.
+         */
         static enum Primitive implements ArrayCreator {
 
-                BOOLEAN(Opcodes.T_BOOLEAN, Opcodes.BASTORE),
-                BYTE(Opcodes.T_BYTE, Opcodes.BASTORE),
-                SHORT(Opcodes.T_SHORT, Opcodes.SASTORE),
-                CHARACTER(Opcodes.T_CHAR, Opcodes.CASTORE),
-                INTEGER(Opcodes.T_INT, Opcodes.IASTORE),
-                LONG(Opcodes.T_LONG, Opcodes.LASTORE),
-                FLOAT(Opcodes.T_FLOAT, Opcodes.FASTORE),
-                DOUBLE(Opcodes.T_DOUBLE, Opcodes.DASTORE);
+            BOOLEAN(Opcodes.T_BOOLEAN, Opcodes.BASTORE),
+            BYTE(Opcodes.T_BYTE, Opcodes.BASTORE),
+            SHORT(Opcodes.T_SHORT, Opcodes.SASTORE),
+            CHARACTER(Opcodes.T_CHAR, Opcodes.CASTORE),
+            INTEGER(Opcodes.T_INT, Opcodes.IASTORE),
+            LONG(Opcodes.T_LONG, Opcodes.LASTORE),
+            FLOAT(Opcodes.T_FLOAT, Opcodes.FASTORE),
+            DOUBLE(Opcodes.T_DOUBLE, Opcodes.DASTORE);
 
-                private final int creationOpcode;
-                private final int storageOpcode;
+            private final int creationOpcode;
+            private final int storageOpcode;
 
-                private Primitive(int creationOpcode, int storageOpcode) {
-                    this.creationOpcode = creationOpcode;
-                    this.storageOpcode = storageOpcode;
-                }
-
-                @Override
-                public boolean isValid() {
-                    return true;
-                }
-
-                @Override
-                public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-                    methodVisitor.visitIntInsn(Opcodes.NEWARRAY, creationOpcode);
-                    return SIZE;
-                }
-
-                @Override
-                public int getStorageOpcode() {
-                    return storageOpcode;
-                }
+            private Primitive(int creationOpcode, int storageOpcode) {
+                this.creationOpcode = creationOpcode;
+                this.storageOpcode = storageOpcode;
             }
 
-            static class Reference implements ArrayCreator {
-
-                private final String internalTypeName;
-
-                private Reference(TypeDescription referenceType) {
-                    this.internalTypeName = referenceType.getInternalName();
-                }
-
-                @Override
-                public boolean isValid() {
-                    return true;
-                }
-
-                @Override
-                public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-                    methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, internalTypeName);
-                    return SIZE;
-                }
-
-                @Override
-                public int getStorageOpcode() {
-                    return Opcodes.AASTORE;
-                }
+            @Override
+            public boolean isValid() {
+                return true;
             }
 
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+                methodVisitor.visitIntInsn(Opcodes.NEWARRAY, creationOpcode);
+                return SIZE;
+            }
+
+            @Override
+            public int getStorageOpcode() {
+                return storageOpcode;
+            }
+        }
+
+        /**
+         * An array creator implementation for reference types.
+         */
+        static class Reference implements ArrayCreator {
+
+            private final String internalTypeName;
+
+            private Reference(TypeDescription referenceType) {
+                this.internalTypeName = referenceType.getInternalName();
+            }
+
+            @Override
+            public boolean isValid() {
+                return true;
+            }
+
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+                methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, internalTypeName);
+                return SIZE;
+            }
+
+            @Override
+            public int getStorageOpcode() {
+                return Opcodes.AASTORE;
+            }
+        }
+
+        /**
+         * The opcode instruction for storing a value of the component type inside an array.
+         * @return The correct storage opcode for the represented type.
+         */
         int getStorageOpcode();
     }
 
-
-
-    public static ArrayFactory of(TypeDescription typeDescription) {
-        if (!typeDescription.isArray()) {
-            throw new IllegalArgumentException("Expected array type instead of " + typeDescription);
-        }
-        return new ArrayFactory(typeDescription.getComponentType(), makeCreatorFor(typeDescription.getComponentType()));
+    /**
+     * Creates a new array factory for a given component type.
+     *
+     * @param componentType The component type of the array that is to be build.
+     * @return A new array factory for the given type.
+     */
+    public static ArrayFactory targeting(TypeDescription componentType) {
+        return new ArrayFactory(componentType, makeArrayCreatorFor(componentType));
     }
 
-    private static ArrayCreator makeCreatorFor(TypeDescription componentType) {
+    private static ArrayCreator makeArrayCreatorFor(TypeDescription componentType) {
         if (componentType.isPrimitive()) {
             if (componentType.represents(boolean.class)) {
                 return ArrayCreator.Primitive.BOOLEAN;
@@ -155,6 +170,15 @@ public class ArrayFactory {
     private final ArrayCreator arrayCreator;
     private final StackManipulation.Size sizeDecrease;
 
+    /**
+     * Creates a new array factory with a given
+     * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.collection.ArrayFactory.ArrayCreator}
+     * without inferring the type from the component type. Normally,
+     * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.collection.ArrayFactory#targeting(com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription)}
+     * should be used.
+     * @param componentType The component type of the array factory.
+     * @param arrayCreator The array creator responsible for providing the correct byte code instructions.
+     */
     protected ArrayFactory(TypeDescription componentType, ArrayCreator arrayCreator) {
         this.componentType = componentType;
         this.arrayCreator = arrayCreator;
@@ -162,10 +186,12 @@ public class ArrayFactory {
         sizeDecrease = StackSize.DOUBLE.toDecreasingSize().aggregate(componentType.getStackSize().toDecreasingSize());
     }
 
+    @Override
     public StackManipulation withValues(List<StackManipulation> stackManipulations) {
         return new ArrayStackManipulation(stackManipulations);
     }
 
+    @Override
     public TypeDescription getComponentType() {
         return componentType;
     }

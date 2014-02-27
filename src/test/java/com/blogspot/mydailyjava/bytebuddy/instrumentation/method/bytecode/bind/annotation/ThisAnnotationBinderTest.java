@@ -45,9 +45,9 @@ public class ThisAnnotationBinderTest extends AbstractAnnotationBinderTest<This>
         when(stackManipulation.isValid()).thenReturn(true);
         when(target.getParameterTypes()).thenReturn(typeList);
         when(target.getParameterAnnotations()).thenReturn(new Annotation[1][0]);
-        AnnotationDrivenBinder.ArgumentBinder.IdentifiedBinding<?> identifiedBinding = This.Binder.INSTANCE
+        TargetMethodAnnotationDrivenBinder.ArgumentBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
                 .bind(annotation, 0, source, target, instrumentedType, assigner);
-        assertThat(identifiedBinding.isValid(), is(true));
+        assertThat(parameterBinding.isValid(), is(true));
         verify(assigner).assign(instrumentedType, parameterType, false);
         verifyNoMoreInteractions(assigner);
         verify(target, atLeast(1)).getParameterTypes();
@@ -61,9 +61,9 @@ public class ThisAnnotationBinderTest extends AbstractAnnotationBinderTest<This>
         RuntimeType runtimeType = mock(RuntimeType.class);
         doReturn(RuntimeType.class).when(runtimeType).annotationType();
         when(target.getParameterAnnotations()).thenReturn(new Annotation[][]{{runtimeType}});
-        AnnotationDrivenBinder.ArgumentBinder.IdentifiedBinding<?> identifiedBinding = This.Binder.INSTANCE
+        TargetMethodAnnotationDrivenBinder.ArgumentBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
                 .bind(annotation, 0, source, target, instrumentedType, assigner);
-        assertThat(identifiedBinding.isValid(), is(true));
+        assertThat(parameterBinding.isValid(), is(true));
         verify(assigner).assign(instrumentedType, parameterType, true);
         verifyNoMoreInteractions(assigner);
         verify(target, atLeast(1)).getParameterTypes();
@@ -76,9 +76,9 @@ public class ThisAnnotationBinderTest extends AbstractAnnotationBinderTest<This>
         when(target.getParameterTypes()).thenReturn(typeList);
         when(target.getParameterAnnotations()).thenReturn(new Annotation[1][0]);
         when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean())).thenReturn(IllegalStackManipulation.INSTANCE);
-        AnnotationDrivenBinder.ArgumentBinder.IdentifiedBinding<?> identifiedBinding = This.Binder.INSTANCE
+        TargetMethodAnnotationDrivenBinder.ArgumentBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
                 .bind(annotation, 0, source, target, instrumentedType, assigner);
-        assertThat(identifiedBinding.isValid(), is(false));
+        assertThat(parameterBinding.isValid(), is(false));
         verify(assigner).assign(instrumentedType, parameterType, false);
         verifyNoMoreInteractions(assigner);
         verify(target, atLeast(1)).getParameterTypes();

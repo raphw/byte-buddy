@@ -1,5 +1,8 @@
 package com.blogspot.mydailyjava.bytebuddy.utility;
 
+/**
+ * A collection targeting opcodes that are not contained within {@link org.objectweb.asm.Opcodes}.
+ */
 public final class MoreOpcodes {
 
     public static final int ILOAD_0 = 26;

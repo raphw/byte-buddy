@@ -4,20 +4,30 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescripti
 
 import java.lang.annotation.*;
 
+/**
+ * Indicates that a given target method should never be considered for binding to a source method.
+ *
+ * @see com.blogspot.mydailyjava.bytebuddy.instrumentation.MethodDelegation
+ * @see TargetMethodAnnotationDrivenBinder
+ */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
 public @interface IgnoreForBinding {
 
+    /**
+     * A non-instantiable type that allows to check if a method should be ignored for binding.
+     */
     static final class Verifier {
 
+        /**
+         * Validates if a method should be ignored for binding.
+         *
+         * @param methodDescription The method to validate.
+         * @return {@code true} if the method should not be considered for binding.
+         */
         public static boolean check(MethodDescription methodDescription) {
-            for (Annotation annotation : methodDescription.getAnnotations()) {
-                if (annotation.annotationType() == IgnoreForBinding.class) {
-                    return true;
-                }
-            }
-            return false;
+            return methodDescription.isAnnotationPresent(IgnoreForBinding.class);
         }
 
         private Verifier() {

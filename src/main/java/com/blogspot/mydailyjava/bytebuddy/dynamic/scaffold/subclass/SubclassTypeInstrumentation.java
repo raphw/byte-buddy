@@ -201,7 +201,7 @@ public class SubclassTypeInstrumentation
     }
 
     @Override
-    public int getClassFormatVersion() {
-        return classFormatVersion.getVersionNumber();
+    public ClassFormatVersion getClassFormatVersion() {
+        return classFormatVersion;
     }
 }

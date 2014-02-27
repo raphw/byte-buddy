@@ -3,6 +3,9 @@ package com.blogspot.mydailyjava.bytebuddy.modifier;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.ModifierContributor;
 import org.objectweb.asm.Opcodes;
 
+/**
+ * Describes a type, fields or methods visibility.
+ */
 public enum Visibility implements ModifierContributor.ForType, ModifierContributor.ForMethod, ModifierContributor.ForField {
 
     PUBLIC(Opcodes.ACC_PUBLIC),

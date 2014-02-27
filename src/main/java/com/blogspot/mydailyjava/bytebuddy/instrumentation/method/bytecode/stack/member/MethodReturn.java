@@ -1,12 +1,15 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.member;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+/**
+ * A stack manipulation returning a value of a given type.
+ */
 public enum MethodReturn implements StackManipulation {
 
     INTEGER(Opcodes.IRETURN, StackSize.SINGLE),
@@ -16,7 +19,13 @@ public enum MethodReturn implements StackManipulation {
     VOID(Opcodes.RETURN, StackSize.ZERO),
     ANY_REFERENCE(Opcodes.ARETURN, StackSize.SINGLE);
 
-    public static MethodReturn returning(TypeDescription typeDescription) {
+    /**
+     * Returns a method return corresponding to a given type.
+     *
+     * @param typeDescription The type to be returned.
+     * @return The stack manipulation representing the method return.
+     */
+    public static StackManipulation returning(TypeDescription typeDescription) {
         if (typeDescription.isPrimitive()) {
             if (typeDescription.represents(long.class)) {
                 return LONG;
@@ -35,11 +44,11 @@ public enum MethodReturn implements StackManipulation {
     }
 
     private final int returnOpcode;
-    private final StackSize stackSize;
+    private final Size size;
 
     private MethodReturn(int returnOpcode, StackSize stackSize) {
         this.returnOpcode = returnOpcode;
-        this.stackSize = stackSize;
+        size = stackSize.toDecreasingSize();
     }
 
     @Override
@@ -50,6 +59,6 @@ public enum MethodReturn implements StackManipulation {
     @Override
     public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
         methodVisitor.visitInsn(returnOpcode);
-        return stackSize.toDecreasingSize();
+        return size;
     }
 }

@@ -10,6 +10,10 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+/**
+ * A simple assigner that is capable of handling the casting of reference types. Primitives can only be assigned to
+ * each other if they represent the same type.
+ */
 public enum ReferenceTypeAwareAssigner implements Assigner {
     INSTANCE;
 

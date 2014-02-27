@@ -8,33 +8,43 @@ import java.lang.reflect.Constructor;
 
 import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.isConstructor;
 
-public enum ConstructorStrategy {
+public interface ConstructorStrategy {
 
-    NO_CONSTRUCTORS,
-    IMITATE_SUPER_TYPE;
+    static enum Default implements ConstructorStrategy {
 
-    protected Constructor<?>[] extractConstructors(Class<?> type) {
-        switch (this) {
-            case NO_CONSTRUCTORS:
-                return new Constructor<?>[0];
-            case IMITATE_SUPER_TYPE:
-                return type.getDeclaredConstructors();
-            default:
-                throw new AssertionError();
+        NO_CONSTRUCTORS,
+        IMITATE_SUPER_TYPE;
+
+        @Override
+        public Constructor<?>[] extractConstructors(Class<?> type) {
+            switch (this) {
+                case NO_CONSTRUCTORS:
+                    return new Constructor<?>[0];
+                case IMITATE_SUPER_TYPE:
+                    return type.getDeclaredConstructors();
+                default:
+                    throw new AssertionError();
+            }
+        }
+
+        @Override
+        public MethodRegistry inject(MethodRegistry methodRegistry,
+                                     MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
+            switch (this) {
+                case NO_CONSTRUCTORS:
+                    return methodRegistry;
+                case IMITATE_SUPER_TYPE:
+                    return methodRegistry.prepend(new MethodRegistry.LatentMethodMatcher.Simple(isConstructor()),
+                            SuperMethodCall.INSTANCE,
+                            defaultMethodAttributeAppenderFactory);
+                default:
+                    throw new AssertionError();
+            }
         }
     }
 
-    protected MethodRegistry inject(MethodRegistry methodRegistry,
-                                    MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
-        switch (this) {
-            case NO_CONSTRUCTORS:
-                return methodRegistry;
-            case IMITATE_SUPER_TYPE:
-                return methodRegistry.prepend(new MethodRegistry.LatentMethodMatcher.Simple(isConstructor()),
-                        SuperMethodCall.INSTANCE,
-                        defaultMethodAttributeAppenderFactory);
-            default:
-                throw new AssertionError();
-        }
-    }
+    Constructor<?>[] extractConstructors(Class<?> type);
+
+    MethodRegistry inject(MethodRegistry methodRegistry,
+                          MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory);
 }

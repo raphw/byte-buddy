@@ -22,7 +22,6 @@ import static com.blogspot.mydailyjava.bytebuddy.utility.UserInput.*;
 
 public class ByteBuddy {
 
-    private static final String JAVA_VERSION = "java.version";
     private static final String BYTE_BUDDY_DEFAULT_PREFIX = "ByteBuddy";
 
     public static class MethodAnnotationTarget extends ByteBuddy {
@@ -123,7 +122,7 @@ public class ByteBuddy {
         }
 
         @Override
-        public ByteBuddy withClassFormatVersion(int classFormatVersion) {
+        public ByteBuddy withClassFormatVersion(ClassFormatVersion classFormatVersion) {
             return materialize().withClassFormatVersion(classFormatVersion);
         }
 
@@ -213,9 +212,14 @@ public class ByteBuddy {
     protected final FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory;
     protected final MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory;
 
+
     public ByteBuddy() {
-        classFormatVersion = ClassFormatVersion.forJavaVersion(Integer.parseInt(System.getProperty(JAVA_VERSION)));
-        namingStrategy = new NamingStrategy.PrefixingRandom(BYTE_BUDDY_DEFAULT_PREFIX);
+        this(ClassFormatVersion.forCurrentJavaVersion());
+    }
+
+    public ByteBuddy(ClassFormatVersion classFormatVersion) {
+        this.classFormatVersion = classFormatVersion;
+        namingStrategy = new NamingStrategy.SuffixingRandom(BYTE_BUDDY_DEFAULT_PREFIX);
         interfaceTypes = Collections.emptyList();
         ignoredMethods = isDefaultFinalize();
         classVisitorWrapperChain = new ClassVisitorWrapper.Chain();
@@ -271,7 +275,7 @@ public class ByteBuddy {
     }
 
     public <T> DynamicType.Builder<T> subclass(Class<T> superType) {
-        return subclass(superType, ConstructorStrategy.IMITATE_SUPER_TYPE);
+        return subclass(superType, ConstructorStrategy.Default.IMITATE_SUPER_TYPE);
     }
 
     public <T> DynamicType.Builder<T> subclass(Class<T> superType, ConstructorStrategy constructorStrategy) {
@@ -279,7 +283,7 @@ public class ByteBuddy {
                 namingStrategy,
                 superType,
                 interfaceTypes,
-                Opcodes.ACC_PUBLIC,
+                Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 ignoredMethods,
                 classVisitorWrapperChain,
@@ -290,8 +294,8 @@ public class ByteBuddy {
                 constructorStrategy);
     }
 
-    public ByteBuddy withClassFormatVersion(int classFormatVersion) {
-        return new ByteBuddy(new ClassFormatVersion(classFormatVersion),
+    public ByteBuddy withClassFormatVersion(ClassFormatVersion classFormatVersion) {
+        return new ByteBuddy(classFormatVersion,
                 namingStrategy,
                 interfaceTypes,
                 ignoredMethods,

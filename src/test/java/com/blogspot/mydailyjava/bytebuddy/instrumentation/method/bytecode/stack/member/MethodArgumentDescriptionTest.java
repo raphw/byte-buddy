@@ -1,8 +1,9 @@
-package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack;
+package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.member;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.member.MethodArgument;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
 import com.blogspot.mydailyjava.bytebuddy.utility.MockitoRule;
@@ -60,7 +61,7 @@ public class MethodArgumentDescriptionTest {
     @Test
     public void testStaticMethod() throws Exception {
         when(methodDescription.isStatic()).thenReturn(true);
-        StackManipulation stackManipulation = MethodArgument.loadParameters(methodDescription);
+        StackManipulation stackManipulation = MethodVariableAccess.loadAll(methodDescription);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, instrumentationContext);
         assertThat(size.getSizeImpact(), is(PARAMETER_STACK_SIZE));
@@ -72,7 +73,7 @@ public class MethodArgumentDescriptionTest {
 
     @Test
     public void testNonStaticMethod() throws Exception {
-        StackManipulation stackManipulation = MethodArgument.loadParameters(methodDescription);
+        StackManipulation stackManipulation = MethodVariableAccess.loadAll(methodDescription);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, instrumentationContext);
         assertThat(size.getSizeImpact(), is(PARAMETER_STACK_SIZE + 1));

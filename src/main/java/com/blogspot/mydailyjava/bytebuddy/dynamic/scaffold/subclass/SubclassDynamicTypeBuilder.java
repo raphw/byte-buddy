@@ -243,8 +243,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     }
 
     @Override
-    public DynamicType.Builder<T> classFormatVersion(int versionNumber) {
-        return new SubclassDynamicTypeBuilder<T>(new ClassFormatVersion(versionNumber),
+    public DynamicType.Builder<T> classFormatVersion(ClassFormatVersion classFormatVersion) {
+        return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
                 namingStrategy,
                 superType,
                 interfaceTypes,
@@ -412,7 +412,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public DynamicType.Unloaded<T> make() {
-        InstrumentedType instrumentedType = applyRecoredMembersTo(new SubclassTypeInstrumentation(classFormatVersion,
+        InstrumentedType instrumentedType = applyRecordedMembersTo(new SubclassTypeInstrumentation(classFormatVersion,
                 superType,
                 interfaceTypes,
                 modifiers,
