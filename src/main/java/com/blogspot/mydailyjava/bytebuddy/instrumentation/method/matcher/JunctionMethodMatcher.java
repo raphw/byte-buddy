@@ -47,6 +47,23 @@ public interface JunctionMethodMatcher extends MethodMatcher {
         public boolean matches(MethodDescription methodDescription) {
             return left.matches(methodDescription) && right.matches(methodDescription);
         }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && left.equals(((Conjunction) other).left)
+                    && right.equals(((Conjunction) other).right);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * left.hashCode() + right.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "MethodMatcher.Conjunction{" + left + " and " + right + '}';
+        }
     }
 
     /**
@@ -71,6 +88,23 @@ public interface JunctionMethodMatcher extends MethodMatcher {
         @Override
         public boolean matches(MethodDescription methodDescription) {
             return left.matches(methodDescription) || right.matches(methodDescription);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && left.equals(((Disjunction) other).left)
+                    && right.equals(((Disjunction) other).right);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * left.hashCode() + right.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "MethodMatcher.Disjunction{" + left + " or " + right + '}';
         }
     }
 

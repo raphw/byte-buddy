@@ -6,12 +6,24 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.*;
 
+/**
+ * Implementations represent a list of method descriptions.
+ */
 public interface MethodList extends List<MethodDescription> {
 
+    /**
+     * A method list implementation that returns all loaded byte code methods (methods and constructors) that
+     * are declared for a given type.
+     */
     static class ForLoadedType extends AbstractList<MethodDescription> implements MethodList {
 
         private final Class<?> type;
 
+        /**
+         * Creates a new list for a loaded type. Method descriptions are created on demand.
+         *
+         * @param type The type of interest.
+         */
         public ForLoadedType(Class<?> type) {
             this.type = type;
         }

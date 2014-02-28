@@ -6,6 +6,7 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -199,6 +200,22 @@ public final class MethodMatchers {
         public boolean matches(MethodDescription methodDescription) {
             return (methodDescription.getModifiers() & modifierMask) != 0;
         }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && modifierMask == ((ModifierMethodMatcher) other).modifierMask;
+        }
+
+        @Override
+        public String toString() {
+            return "ModifierMethodMatcher{modifierMask=" + modifierMask + '}';
+        }
+
+        @Override
+        public int hashCode() {
+            return modifierMask;
+        }
     }
 
     /**
@@ -288,6 +305,21 @@ public final class MethodMatchers {
         public boolean matches(MethodDescription methodDescription) {
             return methodDescription.isVarArgs();
         }
+
+        @Override
+        public boolean equals(Object other) {
+            return other == this || other instanceof VarArgsMethodMatcher;
+        }
+
+        @Override
+        public String toString() {
+            return "VarArgsMethodMatcher";
+        }
+
+        @Override
+        public int hashCode() {
+            return 31;
+        }
     }
 
     /**
@@ -305,6 +337,21 @@ public final class MethodMatchers {
         public boolean matches(MethodDescription methodDescription) {
             return methodDescription.isSynthetic();
         }
+
+        @Override
+        public boolean equals(Object other) {
+            return other == this || other instanceof SyntheticMethodMatcher;
+        }
+
+        @Override
+        public String toString() {
+            return "SyntheticMethodMatcher";
+        }
+
+        @Override
+        public int hashCode() {
+            return 37;
+        }
     }
 
     /**
@@ -321,6 +368,21 @@ public final class MethodMatchers {
         @Override
         public boolean matches(MethodDescription methodDescription) {
             return methodDescription.isBridge();
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return other == this || other instanceof BridgeMethodMatcher;
+        }
+
+        @Override
+        public String toString() {
+            return "BridgeMethodMatcher";
+        }
+
+        @Override
+        public int hashCode() {
+            return 41;
         }
     }
 
@@ -344,6 +406,22 @@ public final class MethodMatchers {
         @Override
         public boolean matches(MethodDescription methodDescription) {
             return methodDescription.getReturnType().represents(returnType);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return this == o || !(o == null || getClass() != o.getClass())
+                    && returnType.equals(((ReturnTypeMatcher) o).returnType);
+        }
+
+        @Override
+        public int hashCode() {
+            return returnType.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "ReturnTypeMatcher{returnType=" + returnType + '}';
         }
     }
 
@@ -379,6 +457,22 @@ public final class MethodMatchers {
             }
             return true;
         }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && Arrays.equals(parameterType, ((ParameterTypeMatcher) other).parameterType);
+        }
+
+        @Override
+        public int hashCode() {
+            return Arrays.hashCode(parameterType);
+        }
+
+        @Override
+        public String toString() {
+            return "ParameterTypeMatcher{parameterType=" + Arrays.toString(parameterType) + '}';
+        }
     }
 
     /**
@@ -408,6 +502,22 @@ public final class MethodMatchers {
             }
             return false;
         }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && exceptionType.equals(((ExceptionMethodMatcher) other).exceptionType);
+        }
+
+        @Override
+        public int hashCode() {
+            return exceptionType.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "ExceptionMethodMatcher{exceptionType=" + exceptionType + '}';
+        }
     }
 
     /**
@@ -431,6 +541,22 @@ public final class MethodMatchers {
         @Override
         public boolean matches(MethodDescription methodDescription) {
             return methodDescription.represents(method);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && method.equals(((MethodEqualityMethodMatcher) other).method);
+        }
+
+        @Override
+        public int hashCode() {
+            return method.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "MethodEqualityMethodMatcher{method=" + method + '}';
         }
     }
 
@@ -456,6 +582,22 @@ public final class MethodMatchers {
         public boolean matches(MethodDescription methodDescription) {
             return methodDescription.represents(constructor);
         }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && constructor.equals(((ConstructorEqualityMethodMatcher) other).constructor);
+        }
+
+        @Override
+        public int hashCode() {
+            return constructor.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "ConstructorEqualityMethodMatcher{constructor=" + constructor + '}';
+        }
     }
 
     /**
@@ -473,6 +615,21 @@ public final class MethodMatchers {
         @Override
         public boolean matches(MethodDescription methodDescription) {
             return !methodDescription.isConstructor();
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return other == this || other instanceof IsMethodMethodMatcher;
+        }
+
+        @Override
+        public String toString() {
+            return "IsMethodMethodMatcher";
+        }
+
+        @Override
+        public int hashCode() {
+            return 47;
         }
     }
 
@@ -523,6 +680,21 @@ public final class MethodMatchers {
         public boolean matches(MethodDescription methodDescription) {
             return methodDescription.isOverridable();
         }
+
+        @Override
+        public boolean equals(Object other) {
+            return other == this || other instanceof OverridableMethodMatcher;
+        }
+
+        @Override
+        public String toString() {
+            return "OverridableMethodMatcher";
+        }
+
+        @Override
+        public int hashCode() {
+            return 51;
+        }
     }
 
     /**
@@ -544,6 +716,21 @@ public final class MethodMatchers {
             return methodDescription.getDeclaringType().represents(Object.class)
                     && methodDescription.getName().equals(FINALIZE_METHOD_NAME)
                     && methodDescription.getParameterTypes().size() == 0;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return other == this || other instanceof DefaultFinalizeMethodMatcher;
+        }
+
+        @Override
+        public String toString() {
+            return "DefaultFinalizeMethodMatcher";
+        }
+
+        @Override
+        public int hashCode() {
+            return 54;
         }
     }
 
@@ -569,6 +756,22 @@ public final class MethodMatchers {
         public boolean matches(MethodDescription methodDescription) {
             return !methodMatcher.matches(methodDescription);
         }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && methodMatcher.equals(((NegatingMethodMatcher) other).methodMatcher);
+        }
+
+        @Override
+        public int hashCode() {
+            return methodMatcher.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "NegatingMethodMatcher{methodMatcher=" + methodMatcher + '}';
+        }
     }
 
     /**
@@ -592,6 +795,22 @@ public final class MethodMatchers {
         @Override
         public boolean matches(MethodDescription methodDescription) {
             return matches;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && matches == ((BooleanMethodMatcher) other).matches;
+        }
+
+        @Override
+        public int hashCode() {
+            return (matches ? 1 : 0);
+        }
+
+        @Override
+        public String toString() {
+            return "BooleanMethodMatcher{matches=" + matches + '}';
         }
     }
 
@@ -624,6 +843,22 @@ public final class MethodMatchers {
         @Override
         public boolean matches(MethodDescription methodDescription) {
             return methodDescription.equals(this.methodDescription);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && methodDescription.equals(((MethodDescriptionMatcher) other).methodDescription);
+        }
+
+        @Override
+        public int hashCode() {
+            return methodDescription.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "MethodDescriptionMatcher{methodDescription=" + methodDescription + '}';
         }
     }
 
