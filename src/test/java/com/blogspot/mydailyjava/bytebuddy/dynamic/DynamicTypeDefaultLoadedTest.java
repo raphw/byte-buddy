@@ -23,6 +23,7 @@ public class DynamicTypeDefaultLoadedTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
     @Mock
     private TypeInitializer mainTypeInitializer, auxiliaryTypeInitializer;
     @Mock
