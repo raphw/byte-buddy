@@ -41,7 +41,7 @@ public interface Instrumentation {
                     dynamicType = auxiliaryType.make(auxiliaryTypeNamingStrategy.name(auxiliaryType), this);
                     auxiliaryTypes.put(auxiliaryType, dynamicType);
                 }
-                return dynamicType.getMainTypeName();
+                return dynamicType.getName();
             }
 
             @Override

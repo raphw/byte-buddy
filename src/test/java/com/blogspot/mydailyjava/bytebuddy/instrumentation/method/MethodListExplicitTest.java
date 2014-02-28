@@ -42,6 +42,11 @@ public class MethodListExplicitTest {
         when(methodMatcher.matches(firstMethodDescription)).thenReturn(true);
         methodList = methodList.filter(methodMatcher);
         assertThat(methodList.size(), is(1));
-        assertThat(methodList.get(0), is(firstMethodDescription));
+        assertThat(methodList.getOnly(), is(firstMethodDescription));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testGetOnly() throws Exception {
+        methodList.getOnly();
     }
 }

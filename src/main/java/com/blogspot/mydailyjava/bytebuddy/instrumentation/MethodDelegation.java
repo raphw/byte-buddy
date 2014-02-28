@@ -95,6 +95,11 @@ public class MethodDelegation implements Instrumentation {
                     throw new IllegalStateException("Cannot set static field " + fieldName + " on " + type, e);
                 }
             }
+
+            @Override
+            public boolean isAlive() {
+                return true;
+            }
         }
 
         InstrumentedType prepare(InstrumentedType instrumentedType);

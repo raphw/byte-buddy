@@ -32,4 +32,9 @@ public class MethodListEmptyTest {
     public void testNoElements() throws Exception {
         methodList.get(0);
     }
+
+    @Test(expected = IllegalStateException.class)
+    public void testOnlyElement() throws Exception {
+        methodList.getOnly();
+    }
 }

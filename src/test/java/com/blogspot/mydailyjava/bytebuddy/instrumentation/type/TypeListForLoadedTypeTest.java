@@ -41,4 +41,9 @@ public class TypeListForLoadedTypeTest {
         assertThat(typeList.isEmpty(), is(true));
         assertThat(typeList.toInternalNames(), nullValue(String[].class));
     }
+
+    @Test
+    public void testStackSize() throws Exception {
+        assertThat(typeList.getStackSize(), is(4));
+    }
 }

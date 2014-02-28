@@ -71,6 +71,11 @@ public class MethodDescriptionForConstructorTest {
     }
 
     @Test
+    public void testGetParameterOffset() throws Exception {
+        assertThat(stringSingleArgConstructor.getParameterOffset(0), is(1));
+    }
+
+    @Test
     public void testHashCode() throws Exception {
         assertThat(objectDefaultConstructor.hashCode(), is(hashCode(Object.class.getDeclaredConstructor())));
         assertThat(stringDefaultConstructor.hashCode(), is(hashCode(String.class.getDeclaredConstructor())));

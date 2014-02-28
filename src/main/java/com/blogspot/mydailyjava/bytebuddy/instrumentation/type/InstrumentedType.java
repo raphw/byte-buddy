@@ -16,27 +16,67 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Implementations of this interface represent an instrumented type that is subject to change. Implementations
+ * should however be immutable and return new instance when their mutator methods are called.
+ */
 public interface InstrumentedType extends TypeDescription {
 
+    /**
+     * A mask for modifiers that represent visibility.
+     */
     static final int VISIBILITY_MODIFIER_MASK = Modifier.PUBLIC | Modifier.PROTECTED | Modifier.PRIVATE;
+
+    /**
+     * A mask for modifiers that are represented by types and members.
+     */
     static final int GENERAL_MODIFIER_MASK = Opcodes.ACC_SYNTHETIC | Opcodes.ACC_DEPRECATED;
+
+    /**
+     * A mask for modifiers that represents types.
+     */
     static final int TYPE_MODIFIER_MASK = VISIBILITY_MODIFIER_MASK | GENERAL_MODIFIER_MASK
             | Modifier.ABSTRACT | Modifier.FINAL | Modifier.INTERFACE | Modifier.STRICT | Opcodes.ACC_ANNOTATION
             | Opcodes.ACC_ENUM | Opcodes.ACC_STRICT | Opcodes.ACC_SUPER;
+
+    /**
+     * A mask for modifiers that represents type members.
+     */
     static final int MEMBER_MODIFIER_MASK = VISIBILITY_MODIFIER_MASK | TYPE_MODIFIER_MASK
             | Modifier.FINAL | Modifier.SYNCHRONIZED;
+
+    /**
+     * A mask for modifiers that represents fields.
+     */
     static final int FIELD_MODIFIER_MASK = MEMBER_MODIFIER_MASK | Modifier.TRANSIENT | Modifier.VOLATILE;
+
+    /**
+     * A mask for modifiers that represents modifiers and constructors.
+     */
     static final int METHOD_MODIFIER_MASK = MEMBER_MODIFIER_MASK | Modifier.ABSTRACT | Modifier.SYNCHRONIZED
             | Modifier.NATIVE | Modifier.STRICT | Opcodes.ACC_BRIDGE | Opcodes.ACC_VARARGS;
 
+    /**
+     * An abstract base implementation of an instrumented type.
+     */
     static abstract class AbstractBase extends AbstractTypeDescription implements InstrumentedType {
 
+        /**
+         * An implementation of a new field for the enclosing instrumented type.
+         */
         protected class FieldToken extends FieldDescription.AbstractFieldDescription {
 
             private final String name;
             private final TypeDescription fieldType;
             private final int modifiers;
 
+            /**
+             * Creates a new field for the enclosing instrumented type.
+             *
+             * @param name      The internalName of the field.
+             * @param fieldType The type description of the field.
+             * @param modifiers The modifiers of the field.
+             */
             public FieldToken(String name, TypeDescription fieldType, int modifiers) {
                 this.name = name;
                 this.fieldType = fieldType;
@@ -95,6 +135,9 @@ public interface InstrumentedType extends TypeDescription {
             }
         }
 
+        /**
+         * An implementation of a new method or constructor for the enclosing instrumented type.
+         */
         protected class MethodToken extends MethodDescription.AbstractMethodDescription {
 
             private final String internalName;
@@ -102,6 +145,14 @@ public interface InstrumentedType extends TypeDescription {
             private final List<TypeDescription> parameterTypes;
             private final int modifiers;
 
+            /**
+             * Creates a new method or constructor for the enclosing instrumented type.
+             *
+             * @param internalName   The internal internalName of the method or constructor.
+             * @param returnType     A description of the return type of this method.
+             * @param parameterTypes A list of descriptions of the parameter types of this method.
+             * @param modifiers      The modifiers of this method.
+             */
             public MethodToken(String internalName,
                                TypeDescription returnType,
                                List<? extends TypeDescription> parameterTypes,
@@ -202,16 +253,40 @@ public interface InstrumentedType extends TypeDescription {
             return typeDescription.getInternalName().equals(instrumentedTypeName) ? this : typeDescription;
         }
 
+        /**
+         * The type initializer for this instrumented type.
+         */
         protected final TypeInitializer typeInitializer;
+
+        /**
+         * A list of field descriptions registered for this instrumented type.
+         */
         protected final List<FieldDescription> fieldDescriptions;
+
+        /**
+         * A list of method descriptions registered for this instrumented type.
+         */
         protected final List<MethodDescription> methodDescriptions;
 
+        /**
+         * Creates a new instrumented type with a no-op type initializer and without registered fields or methods.
+         */
         protected AbstractBase() {
             typeInitializer = TypeInitializer.NoOp.INSTANCE;
             fieldDescriptions = Collections.emptyList();
             methodDescriptions = Collections.emptyList();
         }
 
+        /**
+         * Creates a new instrumented type with the given type initializer and field and methods. All field and method
+         * descriptions will be replaced by new instances where type descriptions with the internalName of this type as given by
+         * {@code typeInternalName} are replaced by references to {@code this}.
+         *
+         * @param typeInitializer    A type initializer for this instrumented type.
+         * @param typeInternalName   The internal internalName of this instrumented type.
+         * @param fieldDescriptions  A list of field descriptions for this instrumented type.
+         * @param methodDescriptions A list of method descriptions for this instrumented type.
+         */
         protected AbstractBase(TypeInitializer typeInitializer,
                                String typeInternalName,
                                List<? extends FieldDescription> fieldDescriptions,
@@ -358,16 +433,46 @@ public interface InstrumentedType extends TypeDescription {
         }
     }
 
+    /**
+     * Creates a new instrumented type that includes a new field.
+     *
+     * @param name      The internalName of the new field.
+     * @param fieldType A description of the type of the new field.
+     * @param modifiers The modifier of the new field.
+     * @return A new instrumented type that is equal to this instrumented type but with the additional field.
+     */
     InstrumentedType withField(String name,
                                TypeDescription fieldType,
                                int modifiers);
 
+    /**
+     * Creates a new instrumented type that includes a new method or constructor.
+     *
+     * @param name           The internalName of the new field.
+     * @param returnType     A description of the return type of the new field.
+     * @param parameterTypes A list of descriptions of the parameter types.
+     * @param modifiers      The modifier of the new field.
+     * @return A new instrumented type that is equal to this instrumented type but with the additional field.
+     */
     InstrumentedType withMethod(String name,
                                 TypeDescription returnType,
                                 List<? extends TypeDescription> parameterTypes,
                                 int modifiers);
 
+    /**
+     * Creates a new instrumented type that includes the given
+     * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.TypeInitializer}.
+     *
+     * @param typeInitializer The type initializer to include.
+     * @return A new instrumented type that is equal to this instrumented type but with the additional type initializer.
+     */
     InstrumentedType withInitializer(TypeInitializer typeInitializer);
 
+    /**
+     * Returns the {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.TypeInitializer}s that were registered
+     * for this instrumented type.
+     *
+     * @return The registered type initializers for this instrumented type.
+     */
     TypeInitializer getTypeInitializer();
 }

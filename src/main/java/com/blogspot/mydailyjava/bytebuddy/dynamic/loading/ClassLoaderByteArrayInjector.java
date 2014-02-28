@@ -43,7 +43,7 @@ public class ClassLoaderByteArrayInjector {
     /**
      * Explicitly loads a {@link java.lang.Class} by using reflection.
      *
-     * @param name       The fully qualified name of the {@link java.lang.Class} to be loaded.
+     * @param name       The fully qualified internalName of the {@link java.lang.Class} to be loaded.
      * @param definition The type's definition.
      * @return The loaded class.
      */

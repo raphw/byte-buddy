@@ -138,6 +138,11 @@ public abstract class FixedValue implements Instrumentation {
                 throw new IllegalStateException("Cannot set static field " + fieldName + " on " + type, e);
             }
         }
+
+        @Override
+        public boolean isAlive() {
+            return true;
+        }
     }
 
     public static AssignerConfigurable value(Object fixedValue) {

@@ -90,95 +90,95 @@ public final class MethodMatchers {
     }
 
     /**
-     * Selects a method by its exact name. For example, {@code name("foo")} will match {@code foo} but not
+     * Selects a method by its exact internalName. For example, {@code internalName("foo")} will match {@code foo} but not
      * {@code bar} or {@code FOO}.
      *
-     * @param name The name to be matched.
-     * @return A method matcher for the specified name.
+     * @param name The internalName to be matched.
+     * @return A method matcher for the specified internalName.
      */
     public static JunctionMethodMatcher named(String name) {
         return new MethodNameMethodMatcher(name, MatchMode.EQUALS_FULLY);
     }
 
     /**
-     * Selects a method by its case insensitive, exact name. For example, {@code namedIgnoreCase("foo")} will match
+     * Selects a method by its case insensitive, exact internalName. For example, {@code namedIgnoreCase("foo")} will match
      * {@code foo} and {@code FOO} but not {@code bar}.
      *
-     * @param name The name to be matched.
-     * @return A method matcher for the specified name.
+     * @param name The internalName to be matched.
+     * @return A method matcher for the specified internalName.
      */
     public static JunctionMethodMatcher namedIgnoreCase(String name) {
         return new MethodNameMethodMatcher(name, MatchMode.EQUALS_FULLY_IGNORE_CASE);
     }
 
     /**
-     * Selects a method by its exact name prefix. For example, {@code nameStartsWith("foo")} will match
+     * Selects a method by its exact internalName prefix. For example, {@code nameStartsWith("foo")} will match
      * {@code foo} and {@code foobar} but not {@code bar} and {@code FOO}.
      *
-     * @param prefix The name prefix to be matched.
-     * @return A method matcher for the specified name.
+     * @param prefix The internalName prefix to be matched.
+     * @return A method matcher for the specified internalName.
      */
     public static JunctionMethodMatcher nameStartsWith(String prefix) {
         return new MethodNameMethodMatcher(prefix, MatchMode.STARTS_WITH);
     }
 
     /**
-     * Selects a method by its case insensitive exact name prefix. For example, {@code nameStartsWithIgnoreCase("foo")}
+     * Selects a method by its case insensitive exact internalName prefix. For example, {@code nameStartsWithIgnoreCase("foo")}
      * will match {@code foo}, {@code foobar} and {@code FOO} but not {@code bar}.
      *
-     * @param prefix The name prefix to be matched.
-     * @return A method matcher for the specified name.
+     * @param prefix The internalName prefix to be matched.
+     * @return A method matcher for the specified internalName.
      */
     public static JunctionMethodMatcher nameStartsWithIgnoreCase(String prefix) {
         return new MethodNameMethodMatcher(prefix, MatchMode.STARTS_WITH_IGNORE_CASE);
     }
 
     /**
-     * Selects a method by its exact name suffix. For example, {@code nameEndsWith("bar")} will match {@code bar} and
+     * Selects a method by its exact internalName suffix. For example, {@code nameEndsWith("bar")} will match {@code bar} and
      * {@code foobar} but not {@code BAR} and {@code foo}.
      *
-     * @param suffix The name suffix to be matched.
-     * @return A method matcher for the specified name.
+     * @param suffix The internalName suffix to be matched.
+     * @return A method matcher for the specified internalName.
      */
     public static JunctionMethodMatcher nameEndsWith(String suffix) {
         return new MethodNameMethodMatcher(suffix, MatchMode.ENDS_WITH);
     }
 
     /**
-     * Selects a method by its case insensitive exact name suffix. For example, {@code nameEndsWithIgnoreCase("bar")}
+     * Selects a method by its case insensitive exact internalName suffix. For example, {@code nameEndsWithIgnoreCase("bar")}
      * will match {@code bar}, {@code foobar} and {@code BAR} but not {@code foo}.
      *
-     * @param suffix The name suffix to be matched.
-     * @return A method matcher for the specified name.
+     * @param suffix The internalName suffix to be matched.
+     * @return A method matcher for the specified internalName.
      */
     public static JunctionMethodMatcher nameEndsWithIgnoreCase(String suffix) {
         return new MethodNameMethodMatcher(suffix, MatchMode.ENDS_WITH_IGNORE_CASE);
     }
 
     /**
-     * Selects a method by its exact name infix. For example, {@code nameContains("a")} will
+     * Selects a method by its exact internalName infix. For example, {@code nameContains("a")} will
      * match {@code bar}, {@code foobar} and {@code BaR} but not {@code foo} and {@code BAR}.
      *
-     * @param infix The name infix to be matched.
-     * @return A method matcher for the specified name.
+     * @param infix The internalName infix to be matched.
+     * @return A method matcher for the specified internalName.
      */
     public static JunctionMethodMatcher nameContains(String infix) {
         return new MethodNameMethodMatcher(infix, MatchMode.CONTAINS);
     }
 
     /**
-     * Selects a method by its case insensitive exact name infix. For example, {@code nameContainsIgnoreCase("a")}
+     * Selects a method by its case insensitive exact internalName infix. For example, {@code nameContainsIgnoreCase("a")}
      * will match {@code bar}, {@code foobar}, {@code BAR} and {@code BAR} but not {@code foo}.
      *
-     * @param infix The name infix to be matched.
-     * @return A method matcher for the specified name.
+     * @param infix The internalName infix to be matched.
+     * @return A method matcher for the specified internalName.
      */
     public static JunctionMethodMatcher nameContainsIgnoreCase(String infix) {
         return new MethodNameMethodMatcher(infix, MatchMode.CONTAINS_IGNORE_CASE);
     }
 
     /**
-     * Selects a method by its name matching a regular expression. For example, {@code matches("f(o){2}.*")} will
+     * Selects a method by its internalName matching a regular expression. For example, {@code matches("f(o){2}.*")} will
      * match {@code foo}, {@code foobar} but not {@code Foo} or {@code bar}.
      *
      * @param regex The regular expression to be matched.

@@ -8,7 +8,7 @@ import java.util.Collection;
 import java.util.Random;
 
 /**
- * A naming strategy for finding a fully qualified name for a Java type.
+ * A naming strategy for finding a fully qualified internalName for a Java type.
  * <p/>
  * Note that subclasses that lie within the same package as their superclass have improved access to overriding
  * package-private methods of their super type.
@@ -64,13 +64,13 @@ public interface NamingStrategy {
     }
 
     /**
-     * A naming strategy that creates a name by concatenating
+     * A naming strategy that creates a internalName by concatenating
      * <ol>
-     * <li>The super classes package and name</li>
+     * <li>The super classes package and internalName</li>
      * <li>A given suffix string</li>
      * <li>A random number</li>
      * </ol>
-     * Between all these elements, a {@code $} sign is included into the name to improve readability.
+     * Between all these elements, a {@code $} sign is included into the internalName to improve readability.
      */
     static class SuffixingRandom implements NamingStrategy {
 
@@ -116,7 +116,7 @@ public interface NamingStrategy {
     }
 
     /**
-     * A naming strategy that applies a fixed name.
+     * A naming strategy that applies a fixed internalName.
      * <p/>
      * This strategy should only be used for one shot type generators since they will otherwise create types that
      * impose naming conflicts.
@@ -128,7 +128,7 @@ public interface NamingStrategy {
         /**
          * Creates an immutable fixed naming strategy.
          *
-         * @param name The name for the created type.
+         * @param name The internalName for the created type.
          */
         public Fixed(String name) {
             this.name = name;
@@ -141,10 +141,10 @@ public interface NamingStrategy {
     }
 
     /**
-     * Generates a fully qualified name for a Java type. The resulting should not lie within the {@code java.lang}
-     * package since such types cannot be loaded using a normal class loader. Also, the name should not yet be taken
-     * by another type since this would cause conflicts in the name space. Therefore, it is recommendable to include
-     * a random sequence within the name.
+     * Generates a fully qualified internalName for a Java type. The resulting should not lie within the {@code java.lang}
+     * package since such types cannot be loaded using a normal class loader. Also, the internalName should not yet be taken
+     * by another type since this would cause conflicts in the internalName space. Therefore, it is recommendable to include
+     * a random sequence within the internalName.
      *
      * @param unnamedType An unnamed type that is to be named.
      * @return A valid identifier for a Java type.

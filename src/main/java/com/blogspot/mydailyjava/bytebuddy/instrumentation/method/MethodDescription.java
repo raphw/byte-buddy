@@ -11,10 +11,20 @@ import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
+/**
+ * Implementations of this interface describe a Java method, i.e. a method or a constructor. Implementations of this
+ * interface must provide meaningful {@code equal(Object)} and {@code hashCode()} implementations.
+ */
 public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, DeclaredInType, AnnotatedElement {
 
+    /**
+     * The internal internalName of a Java constructor.
+     */
     static final String CONSTRUCTOR_INTERNAL_NAME = "<init>";
 
+    /**
+     * An abstract base implementation of a method description.
+     */
     static abstract class AbstractMethodDescription extends AbstractModifierReviewable implements MethodDescription {
 
         @Override
@@ -69,10 +79,18 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         }
     }
 
+    /**
+     * An implementation of a method description for a loaded constructor.
+     */
     static class ForConstructor extends AbstractMethodDescription {
 
         private final Constructor<?> constructor;
 
+        /**
+         * Creates a new immutable method description for a loaded constructor.
+         *
+         * @param constructor The loaded constructor to be represented by this method description.
+         */
         public ForConstructor(Constructor<?> constructor) {
             this.constructor = constructor;
         }
@@ -179,10 +197,18 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         }
     }
 
+    /**
+     * An implementation of a method description for a loaded method.
+     */
     static class ForMethod extends AbstractMethodDescription {
 
         private final Method method;
 
+        /**
+         * Creates a new immutable method description for a loaded method.
+         *
+         * @param method The loaded method to be represented by this method description.
+         */
         public ForMethod(Method method) {
             this.method = method;
         }
@@ -288,27 +314,76 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         }
     }
 
+    /**
+     * Returns a description of the return type of the method described by this instance.
+     *
+     * @return A description of the return type of the method described by this instance.
+     */
     TypeDescription getReturnType();
 
+    /**
+     * Returns a list of type descriptions of the method described by this instance.
+     *
+     * @return A list of type descriptions of the method described by this instance.
+     */
     TypeList getParameterTypes();
 
+    /**
+     * Returns the parameter annotations of the method described by this instance.
+     *
+     * @return The parameter annotations of the method described by this instance.
+     */
     Annotation[][] getParameterAnnotations();
 
+    /**
+     * Returns a description of the exception types of the method described by this instance.
+     *
+     * @return A description of the exception types of the method described by this instance.
+     */
     TypeList getExceptionTypes();
 
-    boolean isVarArgs();
-
+    /**
+     * Specifies if this method description represents a constructor.
+     *
+     * @return {@code true} if this method description represents a constructor.
+     */
     boolean isConstructor();
 
-    boolean isBridge();
-
+    /**
+     * Verifies if a method description represents a given loaded method.
+     *
+     * @return {@code true} if this method description represents the given loaded method.
+     */
     boolean represents(Method method);
 
+    /**
+     * Verifies if a method description represents a given loaded constructor.
+     *
+     * @return {@code true} if this method description represents the given loaded constructor.
+     */
     boolean represents(Constructor<?> constructor);
 
+    /**
+     * Verifies if this method description represents an overridable method.
+     *
+     * @return {@code true} if this method description represents an overridable method.
+     */
     boolean isOverridable();
 
+    /**
+     * Returns the size of the local variable array that is required for this method, i.e. the size of all parameters
+     * if they were loaded on the stack including a reference to {@code this} if this method represented a non-static
+     * method.
+     *
+     * @return The size of this method on the operand stack.
+     */
     int getStackSize();
 
+    /**
+     * Returns the offset of the parameter at {@code parameterIndex} on the described method's local variable array.
+     *
+     * @param parameterIndex The parameter index of interest.
+     * @return The offset of this parameter.
+     */
     int getParameterOffset(int parameterIndex);
 }

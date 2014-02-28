@@ -24,8 +24,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.isOverridable;
-import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.not;
+import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
 import static com.blogspot.mydailyjava.bytebuddy.utility.ByteBuddyCommons.*;
 
 public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<T> {
@@ -407,6 +406,16 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public MatchedMethodInterception<T> method(MethodMatcher methodMatcher) {
+        return invokable(isMethod().and(methodMatcher));
+    }
+
+    @Override
+    public MatchedMethodInterception<T> constructor(MethodMatcher methodMatcher) {
+        return invokable(isConstructor().and(methodMatcher));
+    }
+
+    @Override
+    public MatchedMethodInterception<T> invokable(MethodMatcher methodMatcher) {
         return new SubclassMatchedMethodInterception<T>(new MethodRegistry.LatentMethodMatcher.Simple(methodMatcher), methodTokens);
     }
 

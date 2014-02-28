@@ -21,6 +21,8 @@ import static org.mockito.Mockito.*;
 
 public abstract class AbstractInstrumentedTypeTest {
 
+    // TODO: This sucks.
+
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
     protected abstract InstrumentedType makeInstrumentedType(String name,

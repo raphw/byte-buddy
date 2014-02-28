@@ -10,8 +10,15 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
 
+/**
+ * Implementations of this interface describe a Java field. Implementations of this interface must provide meaningful
+ * {@code equal(Object)} and {@code hashCode()} implementations.
+ */
 public interface FieldDescription extends ModifierReviewable, ByteCodeElement, DeclaredInType, AnnotatedElement {
 
+    /**
+     * An abstract base implementation of a field description.
+     */
     static abstract class AbstractFieldDescription extends AbstractModifierReviewable implements FieldDescription {
 
         @Override
@@ -32,10 +39,18 @@ public interface FieldDescription extends ModifierReviewable, ByteCodeElement, D
         }
     }
 
+    /**
+     * An implementation of a field description for a loaded field.
+     */
     static class ForLoadedField extends AbstractFieldDescription {
 
         private final Field field;
 
+        /**
+         * Creates an immutable field description for a loaded field.
+         *
+         * @param field The represented field.
+         */
         public ForLoadedField(Field field) {
             this.field = field;
         }
@@ -91,5 +106,10 @@ public interface FieldDescription extends ModifierReviewable, ByteCodeElement, D
         }
     }
 
+    /**
+     * Returns a description of the type of this field.
+     *
+     * @return A type description of this field.
+     */
     TypeDescription getFieldType();
 }

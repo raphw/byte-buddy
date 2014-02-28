@@ -93,7 +93,7 @@ public class MethodCallProxyTest {
         MethodCallProxy methodCallProxy = new MethodCallProxy(proxiedMethod);
         DynamicType<?> dynamicType = methodCallProxy.make(proxyName(proxiedType), null); // TODO
         ClassLoader proxyClassLoader = new ByteArrayClassLoader(getClass().getClassLoader(),
-                Collections.singletonMap(dynamicType.getMainTypeName(), dynamicType.getMainTypeByte()));
+                Collections.singletonMap(dynamicType.getName(), dynamicType.getBytes()));
         Class<?> proxyType = Class.forName(proxyName(proxiedType), false, proxyClassLoader);
         Constructor<?> proxyConstructor = assertProxyType(proxyType, proxiedMethod);
         InvocationCountable invocationCountable = proxiedType.newInstance();

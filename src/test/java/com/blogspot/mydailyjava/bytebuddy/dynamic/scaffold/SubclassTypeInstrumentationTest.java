@@ -16,7 +16,7 @@ public class SubclassTypeInstrumentationTest extends AbstractInstrumentedTypeTes
                                                     TypeManifestation typeManifestation,
                                                     SyntheticState syntheticState) {
 //        NamingStrategy namingStrategy = mock(NamingStrategy.class);
-//        when(namingStrategy.getName(any(NamingStrategy.UnnamedType.class))).thenReturn(name);
+//        when(namingStrategy.getName(any(NamingStrategy.UnnamedType.class))).thenReturn(internalName);
 //        SubclassTypeInstrumentation instrumentedType = new SubclassTypeInstrumentation(new ClassVersion(Opcodes.V1_6),
 //                Object.class,
 //                Arrays.<Class<?>>asList(Serializable.class),

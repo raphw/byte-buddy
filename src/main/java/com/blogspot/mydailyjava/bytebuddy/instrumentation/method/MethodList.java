@@ -73,12 +73,25 @@ public interface MethodList extends List<MethodDescription> {
         public MethodList subList(int fromIndex, int toIndex) {
             return new Explicit(super.subList(fromIndex, toIndex));
         }
+
+        @Override
+        public String toString() {
+            return "MethodList.ForLoadedType{type=" + type + '}';
+        }
     }
 
+    /**
+     * A method list that is a wrapper for a given list of method descriptions.
+     */
     static class Explicit extends AbstractList<MethodDescription> implements MethodList {
 
         private final List<? extends MethodDescription> methodDescriptions;
 
+        /**
+         * Creates a new wrapper for a given list of methods.
+         *
+         * @param methodDescriptions The underlying list of methods used for this method list.
+         */
         public Explicit(List<? extends MethodDescription> methodDescriptions) {
             this.methodDescriptions = Collections.unmodifiableList(methodDescriptions);
         }
@@ -117,9 +130,17 @@ public interface MethodList extends List<MethodDescription> {
         public MethodList subList(int fromIndex, int toIndex) {
             return new Explicit(super.subList(fromIndex, toIndex));
         }
+
+        @Override
+        public String toString() {
+            return "MethodList.Explicit{methodDescriptions=" + methodDescriptions + '}';
+        }
     }
 
-    public class Empty extends AbstractList<MethodDescription> implements MethodList {
+    /**
+     * An implementation of an empty method list.
+     */
+    static class Empty extends AbstractList<MethodDescription> implements MethodList {
 
         @Override
         public MethodDescription get(int index) {
@@ -149,12 +170,29 @@ public interface MethodList extends List<MethodDescription> {
                 throw new IndexOutOfBoundsException();
             }
         }
+
+        @Override
+        public String toString() {
+            return "MethodList.Empty";
+        }
     }
 
+    /**
+     * Returns a new list that only includes the methods that are matched by the given method matcher.
+     *
+     * @param methodMatcher A filter applied to this list.
+     * @return a new list where all methods match the given {@code methodMatcher}.
+     */
     MethodList filter(MethodMatcher methodMatcher);
 
     @Override
     MethodList subList(int fromIndex, int toIndex);
 
+    /**
+     * Returns the only element in this method list or throws an exception if there is more than or less than
+     * one element in this list.
+     *
+     * @return the only element of this list.
+     */
     MethodDescription getOnly();
 }

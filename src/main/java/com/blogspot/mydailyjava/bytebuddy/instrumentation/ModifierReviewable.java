@@ -4,6 +4,9 @@ import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Modifier;
 
+/**
+ * Implementations of this interface can be described in terms of a Java modifier.
+ */
 public interface ModifierReviewable {
 
     static abstract class AbstractModifierReviewable implements ModifierReviewable {
@@ -63,38 +66,47 @@ public interface ModifierReviewable {
             return matchesMask(Opcodes.ACC_SYNTHETIC);
         }
 
+        @Override
         public boolean isSuper() {
             return matchesMask(Opcodes.ACC_SUPER);
         }
 
+        @Override
         public boolean isBridge() {
             return matchesMask(Opcodes.ACC_BRIDGE);
         }
 
+        @Override
         public boolean isDeprecated() {
             return matchesMask(Opcodes.ACC_DEPRECATED);
         }
 
+        @Override
         public boolean isAnnotation() {
             return matchesMask(Opcodes.ACC_ANNOTATION);
         }
 
+        @Override
         public boolean isEnum() {
             return matchesMask(Opcodes.ACC_ENUM);
         }
 
+        @Override
         public boolean isInterface() {
             return matchesMask(Opcodes.ACC_INTERFACE);
         }
 
+        @Override
         public boolean isTransient() {
             return matchesMask(Opcodes.ACC_TRANSIENT);
         }
 
+        @Override
         public boolean isVolatile() {
             return matchesMask(Opcodes.ACC_VOLATILE);
         }
 
+        @Override
         public boolean isVarArgs() {
             return matchesMask(Opcodes.ACC_VARARGS);
         }
@@ -104,27 +116,150 @@ public interface ModifierReviewable {
         }
     }
 
+    /**
+     * Specifies if the modifier described by this object is {@code final}.
+     *
+     * @return {@code true} if the modifier described by this object is {@code final}.
+     */
     boolean isFinal();
 
+    /**
+     * Specifies if the modifier described by this object is {@code static}.
+     *
+     * @return {@code true} if the modifier described by this object is {@code static}.
+     */
     boolean isStatic();
 
+    /**
+     * Specifies if the modifier described by this object is {@code public}.
+     *
+     * @return {@code true} if the modifier described by this object is {@code public}.
+     */
     boolean isPublic();
 
+    /**
+     * Specifies if the modifier described by this object is {@code protected}.
+     *
+     * @return {@code true} if the modifier described by this object is {@code protected}.
+     */
     boolean isProtected();
 
+    /**
+     * Specifies if the modifier described by this object is package private.
+     *
+     * @return {@code true} if the modifier described by this object is package private.
+     */
     boolean isPackagePrivate();
 
+    /**
+     * Specifies if the modifier described by this object is {@code private}.
+     *
+     * @return {@code true} if the modifier described by this object is {@code private}.
+     */
     boolean isPrivate();
 
+    /**
+     * Specifies if the modifier described by this object is {@code abstract}.
+     *
+     * @return {@code true} if the modifier described by this object is {@code abstract}.
+     */
     boolean isAbstract();
 
+    /**
+     * Specifies if the modifier described by this object is {@code native}.
+     *
+     * @return {@code true} if the modifier described by this object is {@code native}.
+     */
     boolean isNative();
 
+    /**
+     * Specifies if the modifier described by this object is {@code synchronized}.
+     *
+     * @return {@code true} if the modifier described by this object is {@code synchronized}.
+     */
     boolean isSynchronized();
 
+    /**
+     * Specifies if the modifier described by this object is {@code strictfp}.
+     *
+     * @return {@code true} if the modifier described by this object is {@code strictfp}.
+     */
     boolean isStrict();
 
+    /**
+     * Specifies if the modifier described by this object is synthetic.
+     *
+     * @return {@code true} if the modifier described by this object is synthetic.
+     */
     boolean isSynthetic();
 
+    /**
+     * Specifies if the modifier described by this object reflects the type super flag.
+     *
+     * @return {@code true} if the modifier described by this object reflects the type super flag.
+     */
+    boolean isSuper();
+
+    /**
+     * Specifies if the modifier described by this object represents the bridge flag
+     *
+     * @return {@code true} if the modifier described by this object represents the bridge flag
+     */
+    boolean isBridge();
+
+    /**
+     * Specifies if the modifier described by this object represents the deprecated flag.
+     *
+     * @return {@code true} if the modifier described by this object represents the deprecated flag.
+     */
+    boolean isDeprecated();
+
+    /**
+     * Specifies if the modifier described by this object represents the annotation flag.
+     *
+     * @return {@code true} if the modifier described by this object represents the annotation flag.
+     */
+    boolean isAnnotation();
+
+    /**
+     * Specifies if the modifier described by this object represents the enum flag.
+     *
+     * @return {@code true} if the modifier described by this object represents the enum flag.
+     */
+    boolean isEnum();
+
+    /**
+     * Specifies if the modifier described by this object represents the interface flag.
+     *
+     * @return {@code true} if the modifier described by this object represents the interface flag.
+     */
+    boolean isInterface();
+
+    /**
+     * Specifies if the modifier described by this object represents the transient flag.
+     *
+     * @return {@code true} if the modifier described by this object represents the transient flag.
+     */
+    boolean isTransient();
+
+    /**
+     * Specifies if the modifier described by this object represents the volatile flag.
+     *
+     * @return {@code true} if the modifier described by this object represents the volatile flag.
+     */
+    boolean isVolatile();
+
+    /**
+     * Specifies if the modifier described by this object represents the var args flag.
+     *
+     * @return {@code true} if the modifier described by this object represents the var args flag.
+     */
+    boolean isVarArgs();
+
+    /**
+     * Returns the modifier that is described by this object.
+     *
+     * @return The modifier that is described by this object.
+     */
     int getModifiers();
 }

@@ -1,6 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers;
+import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -35,7 +36,9 @@ public class MethodListForLoadedTypeTest {
         methodList = methodList.filter(MethodMatchers.isMethod());
         assertThat(methodList.size(), is(Object.class.getDeclaredMethods().length));
         for (Method method : Object.class.getDeclaredMethods()) {
-            assertThat(methodList.filter(MethodMatchers.is(method)).size(), is(1));
+            MethodList methodList = this.methodList.filter(MethodMatchers.is(method));
+            assertThat(methodList.size(), is(1));
+            assertThat(methodList.getOnly(), CoreMatchers.<MethodDescription>equalTo(new MethodDescription.ForMethod(method)));
         }
     }
 }

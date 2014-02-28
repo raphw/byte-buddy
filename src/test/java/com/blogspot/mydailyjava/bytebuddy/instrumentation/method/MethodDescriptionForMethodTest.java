@@ -16,16 +16,19 @@ public class MethodDescriptionForMethodTest {
     private static final String HASH_CODE = "hashCode";
     private static final String INT_VALUE = "intValue";
     private static final String LONG_BITS_TO_DOUBLE = "longBitsToDouble";
+    private static final String WAIT = "wait";
 
     private MethodDescription objectHashCode;
     private MethodDescription integerIntValue;
     private MethodDescription doubleDoubleValue;
+    private MethodDescription objectWait;
 
     @Before
     public void setUp() throws Exception {
         objectHashCode = new MethodDescription.ForMethod(Object.class.getDeclaredMethod(HASH_CODE));
         integerIntValue = new MethodDescription.ForMethod(Integer.class.getDeclaredMethod(INT_VALUE));
         doubleDoubleValue = new MethodDescription.ForMethod(Double.class.getDeclaredMethod(LONG_BITS_TO_DOUBLE, long.class));
+        objectWait = new MethodDescription.ForMethod(Object.class.getDeclaredMethod(WAIT, long.class, int.class));
     }
 
     @Test
@@ -70,6 +73,13 @@ public class MethodDescriptionForMethodTest {
         assertThat(objectHashCode.getStackSize(), is(1));
         assertThat(integerIntValue.getStackSize(), is(1));
         assertThat(doubleDoubleValue.getStackSize(), is(2));
+    }
+
+    @Test
+    public void testGetParameterOffset() throws Exception {
+        assertThat(doubleDoubleValue.getParameterOffset(0), is(0));
+        assertThat(objectWait.getParameterOffset(0), is(1));
+        assertThat(objectWait.getParameterOffset(1), is(3));
     }
 
     @Test

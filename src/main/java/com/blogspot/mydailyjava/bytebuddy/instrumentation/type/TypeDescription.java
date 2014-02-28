@@ -21,8 +21,14 @@ import java.util.Set;
 
 import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
 
+/**
+ * Implementations of this interface represent a Java type, i.e. a class or interface.
+ */
 public interface TypeDescription extends ByteCodeElement, DeclaredInType, ModifierReviewable, AnnotatedElement {
 
+    /**
+     * An abstract base implementation of a type description.
+     */
     static abstract class AbstractTypeDescription extends AbstractModifierReviewable implements TypeDescription {
 
         private static class UniqueSignatureFilter implements MethodMatcher {
@@ -83,10 +89,18 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
         }
     }
 
+    /**
+     * A type description implementation that represents a loaded type.
+     */
     static class ForLoadedType extends AbstractTypeDescription {
 
         private final Class<?> type;
 
+        /**
+         * Creates a new immutable type description for a loaded type.
+         *
+         * @param type The type to be represented by this type description.
+         */
         public ForLoadedType(Class<?> type) {
             this.type = type;
         }
@@ -272,38 +286,130 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
         }
     }
 
+    /**
+     * Checks if {@code object} is an instance of the type represented by this instance.
+     *
+     * @param object The object of interest.
+     * @return {@code true} if the object is an instance of the type described by this instance.
+     */
     boolean isInstance(Object object);
 
+    /**
+     * Checks if this type is assignable from the type described by this instance, for example for
+     * {@code class Foo} and {@code class Bar extends Foo}, this method would return {@code true} for
+     * {@code Foo.class.isAssignableFrom(Bar.class)}.
+     *
+     * @param type The type of interest.
+     * @return {@code true} if this type is assignable from {@code type}.
+     */
     boolean isAssignableFrom(Class<?> type);
 
+    /**
+     * Checks if this type is assignable from the type described by this instance, for example for
+     * {@code class Foo} and {@code class Bar extends Foo}, this method would return {@code true} for
+     * {@code Foo.class.isAssignableFrom(Bar.class)}.
+     * <p/>
+     * Implementations of this methods are allowed to delegate to
+     * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription#isAssignableFrom(Class)}
+     *
+     * @param typeDescription The type of interest.
+     * @return {@code true} if this type is assignable from {@code type}.
+     */
     boolean isAssignableFrom(TypeDescription typeDescription);
 
+    /**
+     * Checks if this type is assignable from the type described by this instance, for example for
+     * {@code class Foo} and {@code class Bar extends Foo}, this method would return {@code true} for
+     * {@code Bar.class.isAssignableTo(Foo.class)}.
+     *
+     * @param type The type of interest.
+     * @return {@code true} if this type is assignable to {@code type}.
+     */
     boolean isAssignableTo(Class<?> type);
 
+    /**
+     * Checks if this type is assignable from the type described by this instance, for example for
+     * {@code class Foo} and {@code class Bar extends Foo}, this method would return {@code true} for
+     * {@code Bar.class.isAssignableFrom(Foo.class)}.
+     * <p/>
+     * Implementations of this methods are allowed to delegate to
+     * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription#isAssignableTo(Class)}
+     *
+     * @param typeDescription The type of interest.
+     * @return {@code true} if this type is assignable to {@code type}.
+     */
     boolean isAssignableTo(TypeDescription typeDescription);
 
+    /**
+     * Checks if the type described by this instance represents {@code type}.
+     *
+     * @param type The type of interest.
+     * @return {@code true} if the type described by this instance represents {@code type}.
+     */
     boolean represents(Class<?> type);
 
-    boolean isInterface();
-
+    /**
+     * Checks if the type described by this entity is an array
+     *
+     * @return {@code true} if this type description represents an array.
+     */
     boolean isArray();
 
+    /**
+     * Returns the component type of this type.
+     *
+     * @return The component type of this array or {@code null} if this type description does not represent an array.
+     */
     TypeDescription getComponentType();
 
+    /**
+     * Checks if the type described by this entity is a primitive type.
+     *
+     * @return {@code true} if this type description represents a primitive type.
+     */
     boolean isPrimitive();
 
-    boolean isAnnotation();
-
+    /**
+     * Returns the component type of this type.
+     *
+     * @return The component type of this array or {@code null} if type does not have a super type as for the
+     * {@link java.lang.Object} type.
+     */
     TypeDescription getSupertype();
 
+    /**
+     * Returns a list of interfaces that are implemented by this type.
+     *
+     * @return A list of interfaces that are implemented by this type.
+     */
     TypeList getInterfaces();
 
+    /**
+     * Returns a description of the enclosing method of this type.
+     *
+     * @return A description of the enclosing method of this type or {@code null} if there is no such method.
+     */
     MethodDescription getEnclosingMethod();
 
+    /**
+     * Returns a description of the enclosing type of this type.
+     *
+     * @return A  description of the enclosing type of this type or {@code null} if there is no such type.
+     */
     TypeDescription getEnclosingClass();
 
+    /**
+     * Returns the simple internalName of this type.
+     *
+     * @return The simple internalName of this type.
+     */
     String getSimpleName();
 
+    /**
+     * Returns the canonical internalName of this type.
+     *
+     * @return The canonical internalName of this type.
+     */
     String getCanonicalName();
 
     boolean isAnonymousClass();
@@ -312,15 +418,47 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
 
     boolean isMemberClass();
 
+    /**
+     * Returns a list of fields that are declared by this type.
+     *
+     * @return A list of fields that are declared by this type.
+     */
     FieldList getDeclaredFields();
 
+    /**
+     * Returns a list of methods that are declared by this type.
+     *
+     * @return A list of methods that are declared by this type.
+     */
     MethodList getDeclaredMethods();
 
+    /**
+     * Returns a list of all reachable methods of this type, i.e. a list of all methods with unique signatures that can
+     * be called from within this type.
+     *
+     * @return A list of all reachable methods.
+     */
     MethodList getReachableMethods();
 
+    /**
+     * Returns the package internalName of the type described by this instance.
+     *
+     * @return The package internalName of the type described by this instance.
+     */
     String getPackageName();
 
+    /**
+     * Checks if this type is visible from another type.
+     *
+     * @param typeDescription The type which is checked to be visible from this type.
+     * @return {@code true} if this type is visible for {@code typeDescription}.
+     */
     boolean isVisibleTo(TypeDescription typeDescription);
 
+    /**
+     * Returns the size of the type described by this instance.
+     *
+     * @return The size of the type described by this instance.
+     */
     StackSize getStackSize();
 }
