@@ -2,8 +2,15 @@ package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 
+/**
+ * A {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher} that allows to compose
+ * a method matcher with another one.
+ */
 public interface JunctionMethodMatcher extends MethodMatcher {
 
+    /**
+     * An abstract base implementation of a junction method matcher.
+     */
     static abstract class AbstractBase implements JunctionMethodMatcher {
 
         @Override
@@ -17,10 +24,20 @@ public interface JunctionMethodMatcher extends MethodMatcher {
         }
     }
 
+    /**
+     * A conjunction implementation of a method matcher that returns {@code true} if both method matchers match
+     * a given method.
+     */
     static class Conjunction extends AbstractBase {
 
         private final MethodMatcher left, right;
 
+        /**
+         * Creates a new conjunction method matcher.
+         *
+         * @param left  The first method matcher to combine within this conjunction.
+         * @param right The second method matcher to combine within this conjunction.
+         */
         public Conjunction(MethodMatcher left, MethodMatcher right) {
             this.left = left;
             this.right = right;
@@ -32,10 +49,20 @@ public interface JunctionMethodMatcher extends MethodMatcher {
         }
     }
 
+    /**
+     * A disjunction implementation of a method matcher that returns {@code true} if either of two method matchers
+     * matches a given method.
+     */
     static class Disjunction extends AbstractBase {
 
         private final MethodMatcher left, right;
 
+        /**
+         * Creates a new disjunction method matcher.
+         *
+         * @param left  The first method matcher to combine within this disjunction.
+         * @param right The second method matcher to combine within this disjunction.
+         */
         public Disjunction(MethodMatcher left, MethodMatcher right) {
             this.left = left;
             this.right = right;
@@ -47,7 +74,21 @@ public interface JunctionMethodMatcher extends MethodMatcher {
         }
     }
 
+    /**
+     * Creates a new method matcher that returns {@code true} if both this method matcher and the given
+     * method matcher match a given method description.
+     *
+     * @param other The method matcher to compose with this method matcher.
+     * @return {@code true} if <b>both</b> this or the {@code other} method matcher returns true.
+     */
     JunctionMethodMatcher and(MethodMatcher other);
 
+    /**
+     * Creates a new method matcher that returns {@code true} if either this method matcher or the given
+     * method matcher match a given method description.
+     *
+     * @param other The method matcher to compose with this method matcher.
+     * @return {@code true} if <b>either</b> this or the {@code other} method matcher returns true.
+     */
     JunctionMethodMatcher or(MethodMatcher other);
 }

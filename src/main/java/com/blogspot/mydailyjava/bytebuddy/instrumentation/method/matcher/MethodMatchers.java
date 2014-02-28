@@ -8,6 +8,13 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.List;
 
+/**
+ * A collection of common {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher}
+ * implementations.
+ * <p/>
+ * This class is not meant to be instantiated but is usually imported statically in order to allow for improving
+ * the readability of code.
+ */
 public final class MethodMatchers {
 
     private static enum MatchMode {
@@ -62,40 +69,120 @@ public final class MethodMatchers {
         public boolean matches(MethodDescription methodDescription) {
             return matchMode.matches(methodName, methodDescription.getName());
         }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && matchMode == ((MethodNameMethodMatcher) other).matchMode
+                    && methodName.equals(((MethodNameMethodMatcher) other).methodName);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * methodName.hashCode() + matchMode.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "MethodNameMethodMatcher{methodName='" + methodName + "\', matchMode=" + matchMode + '}';
+        }
     }
 
+    /**
+     * Selects a method by its exact name. For example, {@code name("foo")} will match {@code foo} but not
+     * {@code bar} or {@code FOO}.
+     *
+     * @param name The name to be matched.
+     * @return A method matcher for the specified name.
+     */
     public static JunctionMethodMatcher named(String name) {
         return new MethodNameMethodMatcher(name, MatchMode.EQUALS_FULLY);
     }
 
+    /**
+     * Selects a method by its case insensitive, exact name. For example, {@code namedIgnoreCase("foo")} will match
+     * {@code foo} and {@code FOO} but not {@code bar}.
+     *
+     * @param name The name to be matched.
+     * @return A method matcher for the specified name.
+     */
     public static JunctionMethodMatcher namedIgnoreCase(String name) {
         return new MethodNameMethodMatcher(name, MatchMode.EQUALS_FULLY_IGNORE_CASE);
     }
 
+    /**
+     * Selects a method by its exact name prefix. For example, {@code nameStartsWith("foo")} will match
+     * {@code foo} and {@code foobar} but not {@code bar} and {@code FOO}.
+     *
+     * @param prefix The name prefix to be matched.
+     * @return A method matcher for the specified name.
+     */
     public static JunctionMethodMatcher nameStartsWith(String prefix) {
         return new MethodNameMethodMatcher(prefix, MatchMode.STARTS_WITH);
     }
 
-    public static JunctionMethodMatcher nameStartsWithIgnoreCase(String name) {
-        return new MethodNameMethodMatcher(name, MatchMode.STARTS_WITH_IGNORE_CASE);
+    /**
+     * Selects a method by its case insensitive exact name prefix. For example, {@code nameStartsWithIgnoreCase("foo")}
+     * will match {@code foo}, {@code foobar} and {@code FOO} but not {@code bar}.
+     *
+     * @param prefix The name prefix to be matched.
+     * @return A method matcher for the specified name.
+     */
+    public static JunctionMethodMatcher nameStartsWithIgnoreCase(String prefix) {
+        return new MethodNameMethodMatcher(prefix, MatchMode.STARTS_WITH_IGNORE_CASE);
     }
 
+    /**
+     * Selects a method by its exact name suffix. For example, {@code nameEndsWith("bar")} will match {@code bar} and
+     * {@code foobar} but not {@code BAR} and {@code foo}.
+     *
+     * @param suffix The name suffix to be matched.
+     * @return A method matcher for the specified name.
+     */
     public static JunctionMethodMatcher nameEndsWith(String suffix) {
         return new MethodNameMethodMatcher(suffix, MatchMode.ENDS_WITH);
     }
 
+    /**
+     * Selects a method by its case insensitive exact name suffix. For example, {@code nameEndsWithIgnoreCase("bar")}
+     * will match {@code bar}, {@code foobar} and {@code BAR} but not {@code foo}.
+     *
+     * @param suffix The name suffix to be matched.
+     * @return A method matcher for the specified name.
+     */
     public static JunctionMethodMatcher nameEndsWithIgnoreCase(String suffix) {
         return new MethodNameMethodMatcher(suffix, MatchMode.ENDS_WITH_IGNORE_CASE);
     }
 
-    public static JunctionMethodMatcher nameContains(String contains) {
-        return new MethodNameMethodMatcher(contains, MatchMode.CONTAINS);
+    /**
+     * Selects a method by its exact name infix. For example, {@code nameContains("a")} will
+     * match {@code bar}, {@code foobar} and {@code BaR} but not {@code foo} and {@code BAR}.
+     *
+     * @param infix The name infix to be matched.
+     * @return A method matcher for the specified name.
+     */
+    public static JunctionMethodMatcher nameContains(String infix) {
+        return new MethodNameMethodMatcher(infix, MatchMode.CONTAINS);
     }
 
-    public static JunctionMethodMatcher nameContainsIgnoreCase(String contains) {
-        return new MethodNameMethodMatcher(contains, MatchMode.CONTAINS_IGNORE_CASE);
+    /**
+     * Selects a method by its case insensitive exact name infix. For example, {@code nameContainsIgnoreCase("a")}
+     * will match {@code bar}, {@code foobar}, {@code BAR} and {@code BAR} but not {@code foo}.
+     *
+     * @param infix The name infix to be matched.
+     * @return A method matcher for the specified name.
+     */
+    public static JunctionMethodMatcher nameContainsIgnoreCase(String infix) {
+        return new MethodNameMethodMatcher(infix, MatchMode.CONTAINS_IGNORE_CASE);
     }
 
+    /**
+     * Selects a method by its name matching a regular expression. For example, {@code matches("f(o){2}.*")} will
+     * match {@code foo}, {@code foobar} but not {@code Foo} or {@code bar}.
+     *
+     * @param regex The regular expression to be matched.
+     * @return A method matcher for the specified regular expression.
+     */
     public static JunctionMethodMatcher matches(String regex) {
         return new MethodNameMethodMatcher(regex, MatchMode.MATCHES);
     }
@@ -114,38 +201,83 @@ public final class MethodMatchers {
         }
     }
 
+    /**
+     * Selects a method when it is {@code public}.
+     *
+     * @return A method matcher for the specified regular expression.
+     */
     public static JunctionMethodMatcher isPublic() {
         return new ModifierMethodMatcher(Modifier.PUBLIC);
     }
 
+    /**
+     * Selects a method when it is {@code protected}.
+     *
+     * @return A method matcher for the specified regular expression.
+     */
     public static JunctionMethodMatcher isProtected() {
         return new ModifierMethodMatcher(Modifier.PROTECTED);
     }
 
+    /**
+     * Selects a method when it is package private, i.e. is defined without a explicit modifier for visibility.
+     *
+     * @return A method matcher for the specified regular expression.
+     */
     public static JunctionMethodMatcher isPackagePrivate() {
         return not(isPublic().or(isProtected()).or(isPrivate()));
     }
 
+    /**
+     * Selects a method when it is {@code private}.
+     *
+     * @return A method matcher for the specified regular expression.
+     */
     public static JunctionMethodMatcher isPrivate() {
         return new ModifierMethodMatcher(Modifier.PRIVATE);
     }
 
+    /**
+     * Selects a method when it is {@code final}.
+     *
+     * @return A method matcher for the specified regular expression.
+     */
     public static JunctionMethodMatcher isFinal() {
         return new ModifierMethodMatcher(Modifier.FINAL);
     }
 
+    /**
+     * Selects a method when it is {@code static}.
+     *
+     * @return A method matcher for the specified regular expression.
+     */
     public static JunctionMethodMatcher isStatic() {
         return new ModifierMethodMatcher(Modifier.STATIC);
     }
 
+    /**
+     * Selects a method when it is {@code synchronized}.
+     *
+     * @return A method matcher for the specified regular expression.
+     */
     public static JunctionMethodMatcher isSynchronized() {
         return new ModifierMethodMatcher(Modifier.SYNCHRONIZED);
     }
 
+    /**
+     * Selects a method when it is {@code native}.
+     *
+     * @return A method matcher for the specified regular expression.
+     */
     public static JunctionMethodMatcher isNative() {
         return new ModifierMethodMatcher(Modifier.NATIVE);
     }
 
+    /**
+     * Selects a method when it is {@code strictfp}.
+     *
+     * @return A method matcher for the specified regular expression.
+     */
     public static JunctionMethodMatcher isStrict() {
         return new ModifierMethodMatcher(Modifier.STRICT);
     }
@@ -158,6 +290,11 @@ public final class MethodMatchers {
         }
     }
 
+    /**
+     * Selects a method when it is defined using a var args argument.
+     *
+     * @return A method matcher for the specified regular expression.
+     */
     public static JunctionMethodMatcher isVarArgs() {
         return new VarArgsMethodMatcher();
     }
@@ -170,6 +307,11 @@ public final class MethodMatchers {
         }
     }
 
+    /**
+     * Selects a method when it is {@code synthetic}.
+     *
+     * @return A method matcher for the specified regular expression.
+     */
     public static JunctionMethodMatcher isSynthetic() {
         return new SyntheticMethodMatcher();
     }
@@ -182,6 +324,11 @@ public final class MethodMatchers {
         }
     }
 
+    /**
+     * Selects a method when it is marked as a bridge method
+     *
+     * @return A method matcher for the specified regular expression.
+     */
     public static JunctionMethodMatcher isBridge() {
         return new BridgeMethodMatcher();
     }
@@ -200,6 +347,12 @@ public final class MethodMatchers {
         }
     }
 
+    /**
+     * Selects a method by its return type.
+     *
+     * @param type The return type of the method.
+     * @return A new method matcher that selects methods returning {@code type}.
+     */
     public static JunctionMethodMatcher returns(Class<?> type) {
         return new ReturnTypeMatcher(type);
     }
@@ -215,12 +368,12 @@ public final class MethodMatchers {
         @Override
         public boolean matches(MethodDescription methodDescription) {
             List<TypeDescription> parameterTypes = methodDescription.getParameterTypes();
-            if(parameterTypes.size() != parameterType.length) {
+            if (parameterTypes.size() != parameterType.length) {
                 return false;
             }
             int i = 0;
-            for(TypeDescription typeDescription : parameterTypes) {
-                if(!typeDescription.represents(parameterType[i])) {
+            for (TypeDescription typeDescription : parameterTypes) {
+                if (!typeDescription.represents(parameterType[i])) {
                     return false;
                 }
             }
@@ -228,6 +381,12 @@ public final class MethodMatchers {
         }
     }
 
+    /**
+     * Selects a method by its parameter types in their exact order.
+     *
+     * @param types The parameter types of the method.
+     * @return A new method matcher that selects methods with the exact parameters contained by {@code types}.
+     */
     public static JunctionMethodMatcher takesArguments(Class<?>... types) {
         return new ParameterTypeMatcher(types);
     }
@@ -251,6 +410,12 @@ public final class MethodMatchers {
         }
     }
 
+    /**
+     * Selects a method depending on whether they can throw a specific exception.
+     *
+     * @param exceptionType The exception type to be thrown.
+     * @return A new method matcher that selects methods on whether they can throw {@code exceptionType}.
+     */
     public static JunctionMethodMatcher canThrow(Class<? extends Exception> exceptionType) {
         return new ExceptionMethodMatcher(exceptionType);
     }
@@ -269,6 +434,12 @@ public final class MethodMatchers {
         }
     }
 
+    /**
+     * Selects an exact method.
+     *
+     * @param method The method to match.
+     * @return A method matcher that matches the given method.
+     */
     public static JunctionMethodMatcher is(Method method) {
         return new MethodEqualityMethodMatcher(method);
     }
@@ -287,6 +458,12 @@ public final class MethodMatchers {
         }
     }
 
+    /**
+     * Selects an exact constructor.
+     *
+     * @param constructor The constructor to match.
+     * @return A method matcher that matches the given constructor.
+     */
     public static JunctionMethodMatcher is(Constructor<?> constructor) {
         return new ConstructorEqualityMethodMatcher(constructor);
     }
@@ -299,10 +476,20 @@ public final class MethodMatchers {
         }
     }
 
+    /**
+     * Selects methods that are not constructors.
+     *
+     * @return A new method matcher that matches methods but not constructors.
+     */
     public static JunctionMethodMatcher isMethod() {
         return new IsMethodMethodMatcher();
     }
 
+    /**
+     * Selects methods that are not constructors.
+     *
+     * @return A new method matcher that matches constructors but not methods.
+     */
     public static JunctionMethodMatcher isConstructor() {
         return not(isMethod());
     }
@@ -321,6 +508,11 @@ public final class MethodMatchers {
         }
     }
 
+    /**
+     * Selects methods that are not constructors.
+     *
+     * @return A new method matcher that matches constructors but not methods.
+     */
     public static JunctionMethodMatcher isDefinedInPackage(String packageName) {
         return new PackageNameMatcher(packageName);
     }
@@ -333,6 +525,12 @@ public final class MethodMatchers {
         }
     }
 
+    /**
+     * Selects methods that are overridable, i.e. not constructors, final, private or static or is defined
+     * in a final type.
+     *
+     * @return A new method matcher that matches overridable methods.
+     */
     public static JunctionMethodMatcher isOverridable() {
         return new OverridableMethodMatcher();
     }
@@ -349,6 +547,12 @@ public final class MethodMatchers {
         }
     }
 
+    /**
+     * Only matches the default finalizer method as declared in {@link Object#finalize()} but not methods that
+     * override this method.
+     *
+     * @return A new method matcher that matches the default finalizer.
+     */
     public static JunctionMethodMatcher isDefaultFinalize() {
         return new DefaultFinalizeMethodMatcher();
     }
@@ -367,6 +571,12 @@ public final class MethodMatchers {
         }
     }
 
+    /**
+     * Inverts another method matcher.
+     *
+     * @param methodMatcher The method matcher to be inverted.
+     * @return A method matcher that returns {@code true} if the {@code methodMatcher} returns {@code false}.
+     */
     public static JunctionMethodMatcher not(MethodMatcher methodMatcher) {
         return new NegatingMethodMatcher(methodMatcher);
     }
@@ -385,10 +595,20 @@ public final class MethodMatchers {
         }
     }
 
+    /**
+     * Returns a method matcher that matches any method.
+     *
+     * @return A method matcher that always returns {@code true}.
+     */
     public static JunctionMethodMatcher any() {
         return new BooleanMethodMatcher(true);
     }
 
+    /**
+     * Returns a method matcher that matches no method.
+     *
+     * @return A method matcher that always returns {@code false}.
+     */
     public static JunctionMethodMatcher none() {
         return new BooleanMethodMatcher(false);
     }
@@ -407,6 +627,12 @@ public final class MethodMatchers {
         }
     }
 
+    /**
+     * A method matcher that matches a given method description.
+     *
+     * @param methodDescription The method description to be matched.
+     * @return A method matcher that matches the given method description.
+     */
     public static JunctionMethodMatcher describedBy(MethodDescription methodDescription) {
         return new MethodDescriptionMatcher(methodDescription);
     }
