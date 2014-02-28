@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Random;
 
 import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
-import static com.blogspot.mydailyjava.bytebuddy.utility.UserInput.*;
+import static com.blogspot.mydailyjava.bytebuddy.utility.ByteBuddyCommons.*;
 
 public class MethodDelegation implements Instrumentation {
 
@@ -167,8 +167,8 @@ public class MethodDelegation implements Instrumentation {
                 new TypeDescription.ForLoadedType(delegate.getClass()).getReachableMethods().filter(not(isStatic()).and(not(isPrivate()))));
     }
 
-    private static List<TargetMethodAnnotationDrivenBinder.ArgumentBinder<?>> defaultArgumentBinders() {
-        return Arrays.<TargetMethodAnnotationDrivenBinder.ArgumentBinder<?>>asList(Argument.Binder.INSTANCE,
+    private static List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> defaultArgumentBinders() {
+        return Arrays.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>asList(Argument.Binder.INSTANCE,
                 This.Binder.INSTANCE,
                 AllArguments.Binder.INSTANCE,
                 SuperCall.Binder.INSTANCE);
@@ -190,38 +190,38 @@ public class MethodDelegation implements Instrumentation {
     }
 
     private final InstrumentationDelegate instrumentationDelegate;
-    private final List<TargetMethodAnnotationDrivenBinder.ArgumentBinder<?>> argumentBinders;
+    private final List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders;
     private final TargetMethodAnnotationDrivenBinder.DefaultsProvider<?> defaultsProvider;
     private final MethodDelegationBinder.AmbiguityResolver ambiguityResolver;
     private final Assigner assigner;
     private final MethodList methodList;
 
     protected MethodDelegation(InstrumentationDelegate instrumentationDelegate,
-                               List<TargetMethodAnnotationDrivenBinder.ArgumentBinder<?>> argumentBinders,
+                               List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders,
                                TargetMethodAnnotationDrivenBinder.DefaultsProvider<?> defaultsProvider,
                                MethodDelegationBinder.AmbiguityResolver ambiguityResolver,
                                Assigner assigner,
                                MethodList methodList) {
         this.instrumentationDelegate = instrumentationDelegate;
-        this.argumentBinders = argumentBinders;
+        this.parameterBinders = parameterBinders;
         this.defaultsProvider = defaultsProvider;
         this.ambiguityResolver = ambiguityResolver;
         this.assigner = assigner;
         this.methodList = isNotEmpty(methodList, NO_METHODS_ERROR_MESSAGE);
     }
 
-    public MethodDelegation appendArgumentBinder(TargetMethodAnnotationDrivenBinder.ArgumentBinder<?> argumentBinder) {
+    public MethodDelegation appendArgumentBinder(TargetMethodAnnotationDrivenBinder.ParameterBinder<?> parameterBinder) {
         return new MethodDelegation(instrumentationDelegate,
-                join(argumentBinders, nonNull(argumentBinder)),
+                join(parameterBinders, nonNull(parameterBinder)),
                 defaultsProvider,
                 ambiguityResolver,
                 assigner,
                 methodList);
     }
 
-    public MethodDelegation defineArgumentBinder(TargetMethodAnnotationDrivenBinder.ArgumentBinder<?>... argumentBinder) {
+    public MethodDelegation defineArgumentBinder(TargetMethodAnnotationDrivenBinder.ParameterBinder<?>... parameterBinder) {
         return new MethodDelegation(instrumentationDelegate,
-                Arrays.asList(nonNull(argumentBinder)),
+                Arrays.asList(nonNull(parameterBinder)),
                 defaultsProvider,
                 ambiguityResolver,
                 assigner,
@@ -230,7 +230,7 @@ public class MethodDelegation implements Instrumentation {
 
     public MethodDelegation defaultsProvider(TargetMethodAnnotationDrivenBinder.DefaultsProvider defaultsProvider) {
         return new MethodDelegation(instrumentationDelegate,
-                argumentBinders,
+                parameterBinders,
                 nonNull(defaultsProvider),
                 ambiguityResolver,
                 assigner,
@@ -244,7 +244,7 @@ public class MethodDelegation implements Instrumentation {
 
     public MethodDelegation defineAmbiguityResolver(MethodDelegationBinder.AmbiguityResolver... ambiguityResolver) {
         return new MethodDelegation(instrumentationDelegate,
-                argumentBinders,
+                parameterBinders,
                 defaultsProvider,
                 new MethodDelegationBinder.AmbiguityResolver.Chain(nonNull(ambiguityResolver)),
                 assigner,
@@ -253,7 +253,7 @@ public class MethodDelegation implements Instrumentation {
 
     public MethodDelegation assigner(Assigner assigner) {
         return new MethodDelegation(instrumentationDelegate,
-                argumentBinders,
+                parameterBinders,
                 defaultsProvider,
                 ambiguityResolver,
                 nonNull(assigner),
@@ -262,7 +262,7 @@ public class MethodDelegation implements Instrumentation {
 
     public MethodDelegation filter(MethodMatcher methodMatcher) {
         return new MethodDelegation(instrumentationDelegate,
-                argumentBinders,
+                parameterBinders,
                 defaultsProvider,
                 ambiguityResolver,
                 assigner,
@@ -280,7 +280,7 @@ public class MethodDelegation implements Instrumentation {
                 instrumentedType,
                 methodList,
                 new MethodDelegationBinder.Processor(new TargetMethodAnnotationDrivenBinder(
-                        argumentBinders,
+                        parameterBinders,
                         defaultsProvider,
                         assigner,
                         instrumentationDelegate.getMethodInvoker(instrumentedType)

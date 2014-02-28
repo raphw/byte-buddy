@@ -1,12 +1,15 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MostSpecificTypeResolver;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
 import org.junit.Test;
+import org.mockito.Mock;
 
 import java.lang.annotation.Annotation;
 
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -14,6 +17,11 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 public class ArgumentAnnotationBinderTest extends AbstractAnnotationBinderTest<Argument> {
+
+    @Mock
+    private TypeList sourceParameters, targetParameters;
+    @Mock
+    TypeDescription sourceType, targetType;
 
     public ArgumentAnnotationBinderTest() {
         super(Argument.class);
@@ -25,42 +33,57 @@ public class ArgumentAnnotationBinderTest extends AbstractAnnotationBinderTest<A
     }
 
     @Test
-    public void testLegalBindingNoRuntimeType() throws Exception {
-        testLegalBinding(new Annotation[2][0], false);
+    public void testLegalBindingNoRuntimeTypeUnique() throws Exception {
+        assertBinding(new Annotation[2][0], false, Argument.BindingMechanic.UNIQUE);
     }
 
     @Test
-    public void testLegalBindingRuntimeType() throws Exception {
+    public void testLegalBindingRuntimeTypeUnique() throws Exception {
         RuntimeType runtimeType = mock(RuntimeType.class);
         doReturn(RuntimeType.class).when(runtimeType).annotationType();
-        testLegalBinding(new Annotation[][] {{}, {runtimeType}}, true);
+        assertBinding(new Annotation[][]{{}, {runtimeType}}, true, Argument.BindingMechanic.UNIQUE);
     }
 
-    private void testLegalBinding(Annotation[][] annotations, boolean considerRuntimeType) throws Exception {
+    @Test
+    public void testLegalBindingNoRuntimeTypeAnonymous() throws Exception {
+        assertBinding(new Annotation[2][0], false, Argument.BindingMechanic.ANONYMOUS);
+    }
+
+    @Test
+    public void testLegalBindingRuntimeTypeAnonymous() throws Exception {
+        RuntimeType runtimeType = mock(RuntimeType.class);
+        doReturn(RuntimeType.class).when(runtimeType).annotationType();
+        assertBinding(new Annotation[][]{{}, {runtimeType}}, true, Argument.BindingMechanic.ANONYMOUS);
+    }
+
+    private void assertBinding(Annotation[][] annotations,
+                               boolean considerRuntimeType,
+                               Argument.BindingMechanic bindingMechanic) throws Exception {
         final int sourceIndex = 2, targetIndex = 1;
         when(stackManipulation.isValid()).thenReturn(true);
         when(annotation.value()).thenReturn(sourceIndex);
-        TypeList sourceParameters = mock(TypeList.class);
+        when(annotation.bindingMechanic()).thenReturn(bindingMechanic);
         when(sourceParameters.size()).thenReturn(sourceIndex + 1);
-        TypeDescription sourceType = mock(TypeDescription.class);
         when(sourceParameters.get(sourceIndex)).thenReturn(sourceType);
         when(source.getParameterTypes()).thenReturn(sourceParameters);
         when(source.isStatic()).thenReturn(false);
-        TypeList targetParameters = mock(TypeList.class);
         when(targetParameters.size()).thenReturn(targetIndex + 1);
-        TypeDescription targetType = mock(TypeDescription.class);
         when(targetParameters.get(targetIndex)).thenReturn(targetType);
         when(target.getParameterTypes()).thenReturn(targetParameters);
         when(target.getParameterAnnotations()).thenReturn(annotations);
-        TargetMethodAnnotationDrivenBinder.ArgumentBinder.ParameterBinding<?> parameterBinding = Argument.Binder.INSTANCE
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = Argument.Binder.INSTANCE
                 .bind(annotation, targetIndex, source, target, instrumentedType, assigner);
         assertThat(parameterBinding.isValid(), is(true));
         Object expectedToken = new MostSpecificTypeResolver.ParameterIndexToken(sourceIndex);
-        assertThat(parameterBinding.getIdentificationToken(), equalTo(expectedToken));
-        assertThat(parameterBinding.getIdentificationToken().hashCode(), equalTo(expectedToken.hashCode()));
+        if (bindingMechanic == Argument.BindingMechanic.UNIQUE) {
+            assertThat(parameterBinding.getIdentificationToken(), equalTo(expectedToken));
+            assertThat(parameterBinding.getIdentificationToken().hashCode(), equalTo(expectedToken.hashCode()));
+        } else {
+            assertThat(parameterBinding.getIdentificationToken(), not(equalTo(expectedToken)));
+            assertThat(parameterBinding.getIdentificationToken().hashCode(), not(equalTo(expectedToken.hashCode())));
+        }
         verify(annotation, atLeast(1)).value();
         verify(source, atLeast(1)).getParameterTypes();
-        verify(source, atLeast(1)).isStatic();
         verify(target, atLeast(1)).getParameterTypes();
         verify(target, atLeast(1)).getParameterAnnotations();
         verify(assigner).assign(sourceType, targetType, considerRuntimeType);
@@ -74,7 +97,7 @@ public class ArgumentAnnotationBinderTest extends AbstractAnnotationBinderTest<A
         TypeList typeList = mock(TypeList.class);
         when(typeList.size()).thenReturn(0);
         when(source.getParameterTypes()).thenReturn(typeList);
-        TargetMethodAnnotationDrivenBinder.ArgumentBinder.ParameterBinding<?> parameterBinding = Argument.Binder.INSTANCE
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = Argument.Binder.INSTANCE
                 .bind(annotation, targetIndex, source, target, instrumentedType, assigner);
         assertThat(parameterBinding.isValid(), is(false));
         verify(annotation, atLeast(1)).value();

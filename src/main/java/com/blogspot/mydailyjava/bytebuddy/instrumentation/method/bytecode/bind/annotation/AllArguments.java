@@ -1,6 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.collection.ArrayFactory;
@@ -15,11 +16,15 @@ import java.util.List;
  * Parameters that are annotated with this annotation will be assigned a collection (or an array) containing
  * all arguments of the source method. Currently, this annotation supports the following collection types:
  * <ul>
- *     <li>Array</li>
+ * <li>Array</li>
  * </ul>
+ * <p/>
+ * If the parameters of the source method are not assignable to the collection's component type, the method with
+ * the annotated parameter will not be considered as a possible binding target for the source method.
  *
  * @see com.blogspot.mydailyjava.bytebuddy.instrumentation.MethodDelegation
  * @see TargetMethodAnnotationDrivenBinder
+ * @see com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.RuntimeType
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
@@ -33,7 +38,7 @@ public @interface AllArguments {
      *
      * @see TargetMethodAnnotationDrivenBinder
      */
-    static enum Binder implements TargetMethodAnnotationDrivenBinder.ArgumentBinder<AllArguments> {
+    static enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<AllArguments> {
         INSTANCE;
 
         @Override
@@ -42,12 +47,12 @@ public @interface AllArguments {
         }
 
         @Override
-        public ParameterBinding<?> bind(AllArguments annotation,
-                                         int targetParameterIndex,
-                                         MethodDescription source,
-                                         MethodDescription target,
-                                         TypeDescription instrumentedType,
-                                         Assigner assigner) {
+        public MethodDelegationBinder.ParameterBinding<?> bind(AllArguments annotation,
+                                                               int targetParameterIndex,
+                                                               MethodDescription source,
+                                                               MethodDescription target,
+                                                               TypeDescription instrumentedType,
+                                                               Assigner assigner) {
             TypeDescription targetType = target.getParameterTypes().get(targetParameterIndex);
             if (!targetType.isArray()) {
                 throw new IllegalStateException("Expected an array type for " + targetType);
@@ -64,10 +69,10 @@ public @interface AllArguments {
                     offset += sourceParameter.getStackSize().getSize();
                     stackManipulations.add(stackManipulation);
                 } else {
-                    return ParameterBinding.makeIllegal();
+                    return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
                 }
             }
-            return ParameterBinding.makeAnonymous(arrayFactory.withValues(stackManipulations));
+            return new MethodDelegationBinder.ParameterBinding.Anonymous(arrayFactory.withValues(stackManipulations));
         }
     }
 }

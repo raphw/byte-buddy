@@ -31,7 +31,7 @@ public enum MostSpecificTypeResolver implements MethodDelegationBinder.Ambiguity
     /**
      * This token is used to mark a one-to-one binding of a source method parameter to a target method parameter.
      *
-     * @see com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.Binding#getTargetParameterIndex(Object)
+     * @see com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.MethodBinding#getTargetParameterIndex(Object)
      */
     public static class ParameterIndexToken {
 
@@ -115,8 +115,8 @@ public enum MostSpecificTypeResolver implements MethodDelegationBinder.Ambiguity
 
     @Override
     public Resolution resolve(MethodDescription source,
-                              MethodDelegationBinder.Binding left,
-                              MethodDelegationBinder.Binding right) {
+                              MethodDelegationBinder.MethodBinding left,
+                              MethodDelegationBinder.MethodBinding right) {
         Resolution resolution = Resolution.UNKNOWN;
         int leftExtra = 0, rightExtra = 0;
         for (int sourceParameterIndex = 0;
@@ -143,9 +143,9 @@ public enum MostSpecificTypeResolver implements MethodDelegationBinder.Ambiguity
 
     private static Resolution resolveRivalBinding(TypeDescription sourceParameterType,
                                                   int leftParameterIndex,
-                                                  MethodDelegationBinder.Binding left,
+                                                  MethodDelegationBinder.MethodBinding left,
                                                   int rightParameterIndex,
-                                                  MethodDelegationBinder.Binding right) {
+                                                  MethodDelegationBinder.MethodBinding right) {
         TypeDescription leftParameterType = left.getTarget().getParameterTypes().get(leftParameterIndex);
         TypeDescription rightParameterType = right.getTarget().getParameterTypes().get(rightParameterIndex);
         if (!leftParameterType.equals(rightParameterType)) {

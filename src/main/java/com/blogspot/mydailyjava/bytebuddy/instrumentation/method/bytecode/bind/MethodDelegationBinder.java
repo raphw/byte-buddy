@@ -9,6 +9,15 @@ import org.objectweb.asm.MethodVisitor;
 
 import java.util.*;
 
+/**
+ * A method delegation binder is responsible for creating a method binding for a <i>source method</i> to a
+ * <i>target method</i>. Such a binding allows to implement the source method by calling the target method.
+ * <p/>
+ * Usually, an instrumentation will attempt to bind a specific source method to a set of target method candidates
+ * where all legal bindings are considered for binding. To chose a specific candidate, an
+ * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.AmbiguityResolver}
+ * will be consulted for selecting a <i>best</i> binding.
+ */
 public interface MethodDelegationBinder {
 
     /**
@@ -62,19 +71,178 @@ public interface MethodDelegationBinder {
     }
 
     /**
+     * A binding attempt for a single parameter. Implementations of this type are a suggestion of composing a
+     * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.MethodBinding}
+     * by using a
+     * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.MethodBinding.Builder}.
+     * However, method bindings can also be composed without this type which is merely a suggestion.
+     *
+     * @param <T> The type of the identification token for this parameter binding.
+     */
+    static interface ParameterBinding<T> extends StackManipulation {
+
+        /**
+         * A singleton representation of an illegal binding for a method parameter. An illegal binding usually
+         * suggests that a source method cannot be bound to a specific target method.
+         */
+        static enum Illegal implements ParameterBinding<Void> {
+            INSTANCE;
+
+            @Override
+            public Void getIdentificationToken() {
+                throw new IllegalStateException();
+            }
+
+            @Override
+            public boolean isValid() {
+                return false;
+            }
+
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+                throw new IllegalStateException();
+            }
+        }
+
+        /**
+         * An anonymous binding of a target method parameter.
+         */
+        static class Anonymous implements ParameterBinding<Object> {
+
+            private final Object anonymousToken;
+            private final StackManipulation delegate;
+
+            /**
+             * Creates a new, anonymous parameter binding.
+             *
+             * @param delegate The stack manipulation that is responsible for loading the parameter value for this
+             *                 target method parameter onto the stack.
+             */
+            public Anonymous(StackManipulation delegate) {
+                this.delegate = delegate;
+                anonymousToken = new Object();
+            }
+
+            @Override
+            public Object getIdentificationToken() {
+                return anonymousToken;
+            }
+
+            @Override
+            public boolean isValid() {
+                return delegate.isValid();
+            }
+
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+                return delegate.apply(methodVisitor, instrumentationContext);
+            }
+        }
+
+        /**
+         * A uniquely identifiable parameter binding for a target method. Such bindings are usually later processed by
+         * a {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.AmbiguityResolver}
+         * in order to resolve binding conflicts between several bindable target methods to the same source method.
+         *
+         * @param <T> The type of the identification token.
+         * @see com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.AmbiguityResolver
+         */
+        static class Unique<T> implements ParameterBinding<T> {
+
+            /**
+             * A factory method for creating a unique binding that infers the tokens type.
+             *
+             * @param delegate            The stack manipulation delegate.
+             * @param identificationToken The identification token.
+             * @param <S>                 The type of the identification token.
+             * @return A new instance representing this unique binding.
+             */
+            public static <S> Unique<S> of(StackManipulation delegate, S identificationToken) {
+                return new Unique<S>(delegate, identificationToken);
+            }
+
+            private final StackManipulation delegate;
+            private final T identificationToken;
+
+            /**
+             * Creates a new unique parameter binding representant.
+             *
+             * @param delegate            The stack manipulation that loads the argument for this parameter onto the operand stack.
+             * @param identificationToken The token used for identifying this parameter binding.
+             */
+            public Unique(StackManipulation delegate, T identificationToken) {
+                this.delegate = delegate;
+                this.identificationToken = identificationToken;
+            }
+
+            @Override
+            public T getIdentificationToken() {
+                return identificationToken;
+            }
+
+            @Override
+            public boolean isValid() {
+                return delegate.isValid();
+            }
+
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+                return delegate.apply(methodVisitor, instrumentationContext);
+            }
+        }
+
+        /**
+         * Returns an identification token for
+         *
+         * @return An identification token unique to this binding.
+         */
+        T getIdentificationToken();
+    }
+
+    /**
      * A binding attempt created by a
      * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder}.
      */
-    static interface Binding extends StackManipulation {
+    static interface MethodBinding extends StackManipulation {
+
+        /**
+         * Representation of an attempt to bind a source method to a target method that is not applicable.
+         *
+         * @see com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder
+         */
+        static enum Illegal implements MethodBinding {
+            INSTANCE;
+
+            @Override
+            public Integer getTargetParameterIndex(Object parameterBindingToken) {
+                throw new IllegalStateException();
+            }
+
+            @Override
+            public MethodDescription getTarget() {
+                throw new IllegalStateException();
+            }
+
+
+            @Override
+            public boolean isValid() {
+                return false;
+            }
+
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+                throw new IllegalStateException();
+            }
+        }
 
         /**
          * A mutable builder that allows to compose a
-         * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.Binding}
+         * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.MethodBinding}
          * by adding parameter bindings incrementally.
          */
         static class Builder {
 
-            private static class Build implements Binding {
+            private static class Build implements MethodBinding {
 
                 private final MethodDescription target;
                 private final Map<?, Integer> registeredTargetIndices;
@@ -126,7 +294,7 @@ public interface MethodDelegationBinder {
 
                 @Override
                 public String toString() {
-                    return "Binding to " + target + " (" + (isValid() ? "valid" : "invalid") + ')';
+                    return "MethodBinding to " + target + " (" + (isValid() ? "valid" : "invalid") + ')';
                 }
             }
 
@@ -155,16 +323,13 @@ public interface MethodDelegationBinder {
             /**
              * Appends a stack manipulation for the next parameter of the target method.
              *
-             * @param stackManipulation     The stack manipulation that applies the next parameter's binding.
-             * @param parameterBindingToken The identification token that uniquely identifies this binding. If the binding
-             *                              is anonymous, the token should be represented by for example {@code new Object()}
-             *                              which is itself an anonymous token since it is only equal to itself.
+             * @param parameterBinding A binding representing the next subsequent parameter of the method.
              * @return {@code false} if the {@code parameterBindingToken} was already bound. A conflicting binding should
              * usually abort the attempt of binding a method and this {@code Builder} should be discarded.
              */
-            public boolean append(StackManipulation stackManipulation, Object parameterBindingToken) {
-                parameterStackManipulations.add(stackManipulation);
-                return registeredTargetIndices.put(parameterBindingToken, currentParameterIndex++) == null;
+            public boolean append(ParameterBinding<?> parameterBinding) {
+                parameterStackManipulations.add(parameterBinding);
+                return registeredTargetIndices.put(parameterBinding.getIdentificationToken(), currentParameterIndex++) == null;
             }
 
             /**
@@ -173,7 +338,7 @@ public interface MethodDelegationBinder {
              * @param returnValueStackManipulation A stack manipulation applied to the target method's return value.
              * @return A binding representing the parameter bindings collected by this builder.
              */
-            public Binding build(StackManipulation returnValueStackManipulation) {
+            public MethodBinding build(StackManipulation returnValueStackManipulation) {
                 if (target.getParameterTypes().size() != currentParameterIndex) {
                     throw new IllegalStateException("The number of parameters bound does not equal the target's number of parameters");
                 }
@@ -186,7 +351,7 @@ public interface MethodDelegationBinder {
 
             /**
              * Returns the current parameter index that will be bound on the next call of
-             * {@link Builder#append(com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation, Object)}.
+             * {@link Builder#append(com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.ParameterBinding)}.
              *
              * @return The next index to be bound.
              */
@@ -196,7 +361,7 @@ public interface MethodDelegationBinder {
 
             @Override
             public String toString() {
-                return "MethodDelegationBinder.Binding.Builder{" + "methodInvoker=" + methodInvoker
+                return "MethodDelegationBinder.MethodBinding.Builder{" + "methodInvoker=" + methodInvoker
                         + ", target=" + target
                         + ", parameterStackManipulations=" + parameterStackManipulations +
                         ", registeredTargetIndices=" + registeredTargetIndices + '}';
@@ -299,7 +464,7 @@ public interface MethodDelegationBinder {
             INSTANCE;
 
             @Override
-            public Resolution resolve(MethodDescription source, Binding left, Binding right) {
+            public Resolution resolve(MethodDescription source, MethodBinding left, MethodBinding right) {
                 return Resolution.UNKNOWN;
             }
         }
@@ -323,8 +488,8 @@ public interface MethodDelegationBinder {
 
             @Override
             public Resolution resolve(MethodDescription source,
-                                      Binding left,
-                                      Binding right) {
+                                      MethodBinding left,
+                                      MethodBinding right) {
                 Resolution resolution = Resolution.UNKNOWN;
                 Iterator<AmbiguityResolver> iterator = Arrays.asList(ambiguityResolver).iterator();
                 while (resolution.isUnresolved() && iterator.hasNext()) {
@@ -351,7 +516,7 @@ public interface MethodDelegationBinder {
          * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.AmbiguityResolver.Resolution#RIGHT}
          * indicates a successful binding to the {@code right} binding.
          */
-        Resolution resolve(MethodDescription source, Binding left, Binding right);
+        Resolution resolve(MethodDescription source, MethodBinding left, MethodBinding right);
     }
 
     /**
@@ -407,37 +572,37 @@ public interface MethodDelegationBinder {
          * @param targets          All possible targets for the delegation binding that are to be considered.
          * @return The best binding that was identified. If no such binding can be identified, an exception is thrown.
          */
-        public Binding process(TypeDescription instrumentedType,
-                               MethodDescription source,
-                               Iterable<? extends MethodDescription> targets) {
-            List<Binding> possibleDelegations = bind(instrumentedType, source, targets);
+        public MethodBinding process(TypeDescription instrumentedType,
+                                     MethodDescription source,
+                                     Iterable<? extends MethodDescription> targets) {
+            List<MethodBinding> possibleDelegations = bind(instrumentedType, source, targets);
             if (possibleDelegations.size() == 0) {
                 throw new IllegalArgumentException("No method can be bound to " + source);
             }
             return resolve(source, possibleDelegations);
         }
 
-        private List<Binding> bind(TypeDescription instrumentedType,
-                                   MethodDescription source,
-                                   Iterable<? extends MethodDescription> targets) {
-            List<Binding> possibleDelegations = new LinkedList<Binding>();
+        private List<MethodBinding> bind(TypeDescription instrumentedType,
+                                         MethodDescription source,
+                                         Iterable<? extends MethodDescription> targets) {
+            List<MethodBinding> possibleDelegations = new LinkedList<MethodBinding>();
             for (MethodDescription target : targets) {
-                Binding binding = methodDelegationBinder.bind(instrumentedType, source, target);
-                if (binding.isValid()) {
-                    possibleDelegations.add(binding);
+                MethodBinding methodBinding = methodDelegationBinder.bind(instrumentedType, source, target);
+                if (methodBinding.isValid()) {
+                    possibleDelegations.add(methodBinding);
                 }
             }
             return possibleDelegations;
         }
 
-        private Binding resolve(MethodDescription source,
-                                List<Binding> targets) {
+        private MethodBinding resolve(MethodDescription source,
+                                      List<MethodBinding> targets) {
             switch (targets.size()) {
                 case 1:
                     return targets.get(ONLY);
                 case 2: {
-                    Binding left = targets.get(LEFT);
-                    Binding right = targets.get(RIGHT);
+                    MethodBinding left = targets.get(LEFT);
+                    MethodBinding right = targets.get(RIGHT);
                     switch (ambiguityResolver.resolve(source, left, right)) {
                         case LEFT:
                             return left;
@@ -451,8 +616,8 @@ public interface MethodDelegationBinder {
                     }
                 }
                 default: /* case 3+: */ {
-                    Binding left = targets.get(LEFT);
-                    Binding right = targets.get(RIGHT);
+                    MethodBinding left = targets.get(LEFT);
+                    MethodBinding right = targets.get(RIGHT);
                     switch (ambiguityResolver.resolve(source, left, right)) {
                         case LEFT:
                             targets.remove(RIGHT);
@@ -464,7 +629,7 @@ public interface MethodDelegationBinder {
                         case UNKNOWN:
                             targets.remove(RIGHT); // Remove right element first due to index alteration!
                             targets.remove(LEFT);
-                            Binding subResult = resolve(source, targets);
+                            MethodBinding subResult = resolve(source, targets);
                             switch (ambiguityResolver.resolve(source, left, subResult).merge(ambiguityResolver.resolve(source, right, subResult))) {
                                 case RIGHT:
                                     return subResult;
@@ -498,5 +663,5 @@ public interface MethodDelegationBinder {
      * @param target           The method that is to be invoked as a delegate.
      * @return A binding representing this attempt to bind the {@code source} method to the {@code target} method.
      */
-    Binding bind(TypeDescription instrumentedType, MethodDescription source, MethodDescription target);
+    MethodBinding bind(TypeDescription instrumentedType, MethodDescription source, MethodDescription target);
 }

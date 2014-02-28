@@ -18,7 +18,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.isDefaultFinalize;
-import static com.blogspot.mydailyjava.bytebuddy.utility.UserInput.*;
+import static com.blogspot.mydailyjava.bytebuddy.utility.ByteBuddyCommons.*;
 
 public class ByteBuddy {
 

@@ -5,7 +5,7 @@ import java.util.*;
 /**
  * Represents a collection of common helper functions.
  */
-public final class UserInput {
+public final class ByteBuddyCommons {
 
     private static final Set<String> JAVA_KEYWORDS = Collections.unmodifiableSet(
             new HashSet<String>(Arrays.asList(
@@ -116,7 +116,7 @@ public final class UserInput {
         return collection;
     }
 
-    private UserInput() {
+    private ByteBuddyCommons() {
         throw new AssertionError();
     }
 }

@@ -6,13 +6,13 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.blogspot.mydailyjava.bytebuddy.utility.UserInput.*;
+import static com.blogspot.mydailyjava.bytebuddy.utility.ByteBuddyCommons.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsSame.sameInstance;
 import static org.junit.Assert.assertEquals;
 
-public class UserInputTest {
+public class ByteBuddyCommonsTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 

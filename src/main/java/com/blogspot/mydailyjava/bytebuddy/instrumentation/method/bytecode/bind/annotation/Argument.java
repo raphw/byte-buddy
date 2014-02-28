@@ -1,6 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MostSpecificTypeResolver;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
@@ -16,9 +17,14 @@ import java.util.LinkedHashSet;
  * with the given parameter. For example, if source method {@code foo(String, Integer)} is bound to target method
  * {@code bar(@Argument(1) Integer)}, the second parameter of {@code foo} will be bound to the first argument of
  * {@code bar}.
+ * <p/>
+ * If a source method has less parameters than specified by {@link Argument#value()}, the method carrying this parameter
+ * annotation is excluded from the list of possible binding candidates to this particular source method. The same happens,
+ * if the source method parameter at the specified index is not assignable to the annotated parameter.
  *
  * @see com.blogspot.mydailyjava.bytebuddy.instrumentation.MethodDelegation
  * @see TargetMethodAnnotationDrivenBinder
+ * @see com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.RuntimeType
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
@@ -35,13 +41,13 @@ public @interface Argument {
 
         UNIQUE {
             @Override
-            protected TargetMethodAnnotationDrivenBinder.ArgumentBinder.ParameterBinding<?> makeBinding(TypeDescription sourceType,
-                                                                                                        TypeDescription targetType,
-                                                                                                        int sourceParameterIndex,
-                                                                                                        Assigner assigner,
-                                                                                                        boolean considerRuntimeType,
-                                                                                                        int parameterOffset) {
-                return TargetMethodAnnotationDrivenBinder.ArgumentBinder.ParameterBinding.makeIdentified(
+            protected MethodDelegationBinder.ParameterBinding<?> makeBinding(TypeDescription sourceType,
+                                                                             TypeDescription targetType,
+                                                                             int sourceParameterIndex,
+                                                                             Assigner assigner,
+                                                                             boolean considerRuntimeType,
+                                                                             int parameterOffset) {
+                return MethodDelegationBinder.ParameterBinding.Unique.of(
                         new StackManipulation.Compound(
                                 MethodVariableAccess.forType(sourceType).loadFromIndex(parameterOffset),
                                 assigner.assign(sourceType, targetType, considerRuntimeType)),
@@ -50,13 +56,13 @@ public @interface Argument {
         },
         ANONYMOUS {
             @Override
-            protected TargetMethodAnnotationDrivenBinder.ArgumentBinder.ParameterBinding<?> makeBinding(TypeDescription sourceType,
-                                                                                                        TypeDescription targetType,
-                                                                                                        int sourceParameterIndex,
-                                                                                                        Assigner assigner,
-                                                                                                        boolean considerRuntimeType,
-                                                                                                        int parameterOffset) {
-                return TargetMethodAnnotationDrivenBinder.ArgumentBinder.ParameterBinding.makeAnonymous(
+            protected MethodDelegationBinder.ParameterBinding<?> makeBinding(TypeDescription sourceType,
+                                                                             TypeDescription targetType,
+                                                                             int sourceParameterIndex,
+                                                                             Assigner assigner,
+                                                                             boolean considerRuntimeType,
+                                                                             int parameterOffset) {
+                return new MethodDelegationBinder.ParameterBinding.Anonymous(
                         new StackManipulation.Compound(
                                 MethodVariableAccess.forType(sourceType).loadFromIndex(parameterOffset),
                                 assigner.assign(sourceType, targetType, considerRuntimeType)));
@@ -74,15 +80,13 @@ public @interface Argument {
          * @param parameterOffset      The offset of the source method's parameter.
          * @return A binding considering the chosen binding mechanic.
          */
-        protected abstract TargetMethodAnnotationDrivenBinder.ArgumentBinder.ParameterBinding<?> makeBinding(TypeDescription sourceType,
-                                                                                                             TypeDescription targetType,
-                                                                                                             int sourceParameterIndex,
-                                                                                                             Assigner assigner,
-                                                                                                             boolean considerRuntimeType,
-                                                                                                             int parameterOffset);
+        protected abstract MethodDelegationBinder.ParameterBinding<?> makeBinding(TypeDescription sourceType,
+                                                                                  TypeDescription targetType,
+                                                                                  int sourceParameterIndex,
+                                                                                  Assigner assigner,
+                                                                                  boolean considerRuntimeType,
+                                                                                  int parameterOffset);
     }
-
-    // TODO: Test for the above mechanic option!
 
     /**
      * A binder for handling the
@@ -91,7 +95,7 @@ public @interface Argument {
      *
      * @see TargetMethodAnnotationDrivenBinder
      */
-    static enum Binder implements TargetMethodAnnotationDrivenBinder.ArgumentBinder<Argument> {
+    static enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Argument> {
         INSTANCE;
 
         @Override
@@ -100,17 +104,17 @@ public @interface Argument {
         }
 
         @Override
-        public ParameterBinding<?> bind(Argument argument,
-                                        int targetParameterIndex,
-                                        MethodDescription source,
-                                        MethodDescription target,
-                                        TypeDescription instrumentedType,
-                                        Assigner assigner) {
+        public MethodDelegationBinder.ParameterBinding<?> bind(Argument argument,
+                                                               int targetParameterIndex,
+                                                               MethodDescription source,
+                                                               MethodDescription target,
+                                                               TypeDescription instrumentedType,
+                                                               Assigner assigner) {
             if (argument.value() < 0) {
                 throw new IllegalArgumentException(String.format("Argument annotation on %d's argument virtual " +
                         "%s holds negative index", targetParameterIndex, target));
             } else if (source.getParameterTypes().size() <= argument.value()) {
-                return ParameterBinding.makeIllegal();
+                return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }
             return argument.bindingMechanic().makeBinding(source.getParameterTypes().get(argument.value()),
                     target.getParameterTypes().get(targetParameterIndex),

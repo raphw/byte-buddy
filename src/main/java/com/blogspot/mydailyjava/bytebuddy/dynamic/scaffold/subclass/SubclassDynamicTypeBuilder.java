@@ -26,7 +26,7 @@ import java.util.List;
 
 import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.isOverridable;
 import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.not;
-import static com.blogspot.mydailyjava.bytebuddy.utility.UserInput.*;
+import static com.blogspot.mydailyjava.bytebuddy.utility.ByteBuddyCommons.*;
 
 public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<T> {
 

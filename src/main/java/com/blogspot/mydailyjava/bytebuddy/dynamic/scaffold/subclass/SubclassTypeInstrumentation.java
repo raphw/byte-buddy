@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static com.blogspot.mydailyjava.bytebuddy.utility.UserInput.isValidIdentifier;
+import static com.blogspot.mydailyjava.bytebuddy.utility.ByteBuddyCommons.isValidIdentifier;
 
 public class SubclassTypeInstrumentation
         extends InstrumentedType.AbstractBase

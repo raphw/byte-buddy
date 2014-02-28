@@ -1,5 +1,6 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.IllegalStackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
@@ -45,7 +46,7 @@ public class ThisAnnotationBinderTest extends AbstractAnnotationBinderTest<This>
         when(stackManipulation.isValid()).thenReturn(true);
         when(target.getParameterTypes()).thenReturn(typeList);
         when(target.getParameterAnnotations()).thenReturn(new Annotation[1][0]);
-        TargetMethodAnnotationDrivenBinder.ArgumentBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
                 .bind(annotation, 0, source, target, instrumentedType, assigner);
         assertThat(parameterBinding.isValid(), is(true));
         verify(assigner).assign(instrumentedType, parameterType, false);
@@ -61,7 +62,7 @@ public class ThisAnnotationBinderTest extends AbstractAnnotationBinderTest<This>
         RuntimeType runtimeType = mock(RuntimeType.class);
         doReturn(RuntimeType.class).when(runtimeType).annotationType();
         when(target.getParameterAnnotations()).thenReturn(new Annotation[][]{{runtimeType}});
-        TargetMethodAnnotationDrivenBinder.ArgumentBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
                 .bind(annotation, 0, source, target, instrumentedType, assigner);
         assertThat(parameterBinding.isValid(), is(true));
         verify(assigner).assign(instrumentedType, parameterType, true);
@@ -76,7 +77,7 @@ public class ThisAnnotationBinderTest extends AbstractAnnotationBinderTest<This>
         when(target.getParameterTypes()).thenReturn(typeList);
         when(target.getParameterAnnotations()).thenReturn(new Annotation[1][0]);
         when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean())).thenReturn(IllegalStackManipulation.INSTANCE);
-        TargetMethodAnnotationDrivenBinder.ArgumentBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
                 .bind(annotation, 0, source, target, instrumentedType, assigner);
         assertThat(parameterBinding.isValid(), is(false));
         verify(assigner).assign(instrumentedType, parameterType, false);

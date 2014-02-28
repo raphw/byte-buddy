@@ -29,7 +29,7 @@ public class MethodDelegationBinderProcessorTest {
     @Mock
     private MethodDescription bindableTarget, unbindableTarget, dominantBindableTarget;
     @Mock
-    private MethodDelegationBinder.Binding boundDelegation, unboundDelegation, dominantBoundDelegation;
+    private MethodDelegationBinder.MethodBinding boundDelegation, unboundDelegation, dominantBoundDelegation;
 
     @Mock
     private MethodDelegationBinder methodDelegationBinder;
@@ -67,7 +67,7 @@ public class MethodDelegationBinderProcessorTest {
     public void testOneBindableTarget() throws Exception {
         List<MethodDescription> methodDescriptions = Arrays.asList(unbindableTarget, bindableTarget, unbindableTarget);
         MethodDelegationBinder.Processor processor = new MethodDelegationBinder.Processor(methodDelegationBinder, ambiguityResolver);
-        MethodDelegationBinder.Binding result = processor.process(typeDescription, source, methodDescriptions);
+        MethodDelegationBinder.MethodBinding result = processor.process(typeDescription, source, methodDescriptions);
         assertThat(result, is(boundDelegation));
         verify(methodDelegationBinder, times(1)).bind(typeDescription, source, bindableTarget);
         verify(boundDelegation, atLeast(1)).isValid();
@@ -80,7 +80,7 @@ public class MethodDelegationBinderProcessorTest {
     public void testTwoBindableTargetsWithDominant() throws Exception {
         List<MethodDescription> methodDescriptions = Arrays.asList(unbindableTarget, bindableTarget, dominantBindableTarget);
         MethodDelegationBinder.Processor processor = new MethodDelegationBinder.Processor(methodDelegationBinder, ambiguityResolver);
-        MethodDelegationBinder.Binding result = processor.process(typeDescription, source, methodDescriptions);
+        MethodDelegationBinder.MethodBinding result = processor.process(typeDescription, source, methodDescriptions);
         assertThat(result, is(dominantBoundDelegation));
         verify(methodDelegationBinder, times(1)).bind(typeDescription, source, unbindableTarget);
         verify(unboundDelegation, atLeast(1)).isValid();
@@ -103,7 +103,7 @@ public class MethodDelegationBinderProcessorTest {
     public void testThreeBindableTargetsDominantBindableFirst() throws Exception {
         List<MethodDescription> methodDescriptions = Arrays.asList(dominantBindableTarget, bindableTarget, bindableTarget);
         MethodDelegationBinder.Processor processor = new MethodDelegationBinder.Processor(methodDelegationBinder, ambiguityResolver);
-        MethodDelegationBinder.Binding result = processor.process(typeDescription, source, methodDescriptions);
+        MethodDelegationBinder.MethodBinding result = processor.process(typeDescription, source, methodDescriptions);
         assertThat(result, is(dominantBoundDelegation));
         verify(methodDelegationBinder, times(2)).bind(typeDescription, source, bindableTarget);
         verify(boundDelegation, atLeast(2)).isValid();
@@ -117,7 +117,7 @@ public class MethodDelegationBinderProcessorTest {
     public void testThreeBindableTargetsDominantBindableMid() throws Exception {
         List<MethodDescription> methodDescriptions = Arrays.asList(bindableTarget, dominantBindableTarget, bindableTarget);
         MethodDelegationBinder.Processor processor = new MethodDelegationBinder.Processor(methodDelegationBinder, ambiguityResolver);
-        MethodDelegationBinder.Binding result = processor.process(typeDescription, source, methodDescriptions);
+        MethodDelegationBinder.MethodBinding result = processor.process(typeDescription, source, methodDescriptions);
         assertThat(result, is(dominantBoundDelegation));
         verify(methodDelegationBinder, times(2)).bind(typeDescription, source, bindableTarget);
         verify(boundDelegation, atLeast(2)).isValid();
@@ -132,7 +132,7 @@ public class MethodDelegationBinderProcessorTest {
     public void testThreeBindableTargetsDominantBindableLast() throws Exception {
         List<MethodDescription> methodDescriptions = Arrays.asList(bindableTarget, bindableTarget, dominantBindableTarget);
         MethodDelegationBinder.Processor processor = new MethodDelegationBinder.Processor(methodDelegationBinder, ambiguityResolver);
-        MethodDelegationBinder.Binding result = processor.process(typeDescription, source, methodDescriptions);
+        MethodDelegationBinder.MethodBinding result = processor.process(typeDescription, source, methodDescriptions);
         assertThat(result, is(dominantBoundDelegation));
         verify(methodDelegationBinder, times(2)).bind(typeDescription, source, bindableTarget);
         verify(boundDelegation, atLeast(2)).isValid();

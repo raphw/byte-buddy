@@ -19,7 +19,7 @@ public abstract class AbstractAmbiguityResolverTest {
     @Mock
     protected MethodDescription leftMethod,rightMethod;
     @Mock
-    protected MethodDelegationBinder.Binding left, right;
+    protected MethodDelegationBinder.MethodBinding left, right;
 
     @Before
     public void setUp() throws Exception {

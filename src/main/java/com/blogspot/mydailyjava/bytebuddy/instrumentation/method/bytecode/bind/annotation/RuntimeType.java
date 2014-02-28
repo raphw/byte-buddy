@@ -5,9 +5,13 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescripti
 import java.lang.annotation.*;
 
 /**
- * Parameters that are annotated with this annotation will be assigned while considering the runtime type of the
- * target parameter. The return type of methods that are annotated with this annotation will be assigned considering
- * the runtime type of a
+ * Parameters that are annotated with this annotation will be assigned by also considering the runtime type of the
+ * target parameter. The same is true for a method's return type if a target method is annotated with this annotation.
+ * <p/>
+ * For example, if a source method {@code foo(@RuntimeType Object)} is attempted to be bound to
+ * {@code bar(@RuntimeType String)}, the binding will attempt to cast the argument of {@code foo} to a {@code String}
+ * type before calling {@code bar} with this argument. If this is not possible, a {@link java.lang.ClassCastException}
+ * will be thrown at runtime.
  *
  * @see com.blogspot.mydailyjava.bytebuddy.instrumentation.MethodDelegation
  * @see TargetMethodAnnotationDrivenBinder

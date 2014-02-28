@@ -28,35 +28,41 @@ import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.
 
 public interface DynamicType<T> {
 
-    static enum ClassLoadingStrategy {
+    static interface ClassLoadingStrategy {
 
-        WRAPPER,
-        INJECTION;
+        static enum Default implements ClassLoadingStrategy {
 
-        protected Map<String, Class<?>> load(ClassLoader classLoader, Map<String, byte[]> types) {
-            Map<String, Class<?>> loadedTypes = new HashMap<String, Class<?>>(types.size());
-            switch (this) {
-                case WRAPPER:
-                    classLoader = new ByteArrayClassLoader(classLoader, types);
-                    for (String name : types.keySet()) {
-                        try {
-                            loadedTypes.put(name, classLoader.loadClass(name));
-                        } catch (ClassNotFoundException e) {
-                            throw new RuntimeException("Cannot load class " + name, e);
+            WRAPPER,
+            INJECTION;
+
+            @Override
+            public Map<String, Class<?>> load(ClassLoader classLoader, Map<String, byte[]> types) {
+                Map<String, Class<?>> loadedTypes = new HashMap<String, Class<?>>(types.size());
+                switch (this) {
+                    case WRAPPER:
+                        classLoader = new ByteArrayClassLoader(classLoader, types);
+                        for (String name : types.keySet()) {
+                            try {
+                                loadedTypes.put(name, classLoader.loadClass(name));
+                            } catch (ClassNotFoundException e) {
+                                throw new RuntimeException("Cannot load class " + name, e);
+                            }
                         }
-                    }
-                    break;
-                case INJECTION:
-                    ClassLoaderByteArrayInjector classLoaderByteArrayInjector = new ClassLoaderByteArrayInjector(classLoader);
-                    for (Map.Entry<String, byte[]> entry : types.entrySet()) {
-                        loadedTypes.put(entry.getKey(), classLoaderByteArrayInjector.inject(entry.getKey(), entry.getValue()));
-                    }
-                    break;
-                default:
-                    throw new AssertionError();
+                        break;
+                    case INJECTION:
+                        ClassLoaderByteArrayInjector classLoaderByteArrayInjector = new ClassLoaderByteArrayInjector(classLoader);
+                        for (Map.Entry<String, byte[]> entry : types.entrySet()) {
+                            loadedTypes.put(entry.getKey(), classLoaderByteArrayInjector.inject(entry.getKey(), entry.getValue()));
+                        }
+                        break;
+                    default:
+                        throw new AssertionError();
+                }
+                return loadedTypes;
             }
-            return loadedTypes;
         }
+
+        Map<String, Class<?>> load(ClassLoader classLoader, Map<String, byte[]> types);
     }
 
     static interface Builder<T> {
