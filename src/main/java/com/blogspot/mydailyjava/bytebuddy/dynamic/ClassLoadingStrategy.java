@@ -14,6 +14,19 @@ public interface ClassLoadingStrategy {
 
     /**
      * Default class loading strategies.
+     * <ol>
+     * <li>The {@link com.blogspot.mydailyjava.bytebuddy.dynamic.ClassLoadingStrategy.Default#WRAPPER} strategy
+     * will create a new {@link com.blogspot.mydailyjava.bytebuddy.dynamic.loading.ByteArrayClassLoader} which
+     * has the given class loader as its parent. The byte array class loader is aware of a given number of types
+     * and can natively load the given classes. This allows to load classes with cyclic dependencies since the byte
+     * array class loader is queried on each encountered unknown class. Due to the class loader encapsulation of the
+     * dynamic classes loaded by the byte array class loader, this strategy will lead to the unloading of these
+     * classes once this class loader, its classes or any instances of these classes are not longer reachable.</li>
+     * <li>The {@link com.blogspot.mydailyjava.bytebuddy.dynamic.ClassLoadingStrategy.Default#INJECTION} strategy
+     * will not create a new class loader but inject all types into the given class loader by using reflection.
+     * This prevents the loading of classes with cyclic dependencies but avoids the creation of an additional
+     * class loader.</li>
+     * </ol>
      */
     static enum Default implements ClassLoadingStrategy {
 

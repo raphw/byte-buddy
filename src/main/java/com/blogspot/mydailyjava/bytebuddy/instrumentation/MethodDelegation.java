@@ -185,6 +185,7 @@ public class MethodDelegation implements Instrumentation {
 
     private static MethodDelegationBinder.AmbiguityResolver defaultAmbiguityResolver() {
         return new MethodDelegationBinder.AmbiguityResolver.Chain(
+                BindingPriority.Resolver.INSTANCE,
                 MethodNameEqualityResolver.INSTANCE,
                 MostSpecificTypeResolver.INSTANCE
         );

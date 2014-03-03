@@ -1,13 +1,12 @@
 package com.blogspot.mydailyjava.bytebuddy.dynamic.loading;
 
+import com.blogspot.mydailyjava.bytebuddy.utility.ClassFileExtraction;
 import com.blogspot.mydailyjava.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
 
 import java.util.Map;
 
@@ -33,10 +32,7 @@ public class ByteArrayClassLoaderTest {
 
     @Before
     public void setUp() throws Exception {
-        ClassReader classReader = new ClassReader(Foo.class.getName());
-        ClassWriter classWriter = new ClassWriter(classReader, 0);
-        classReader.accept(classWriter, 0);
-        when(values.get(Foo.class.getName())).thenReturn(classWriter.toByteArray());
+        when(values.get(Foo.class.getName())).thenReturn(ClassFileExtraction.extract(Foo.class));
         classLoader = new ByteArrayClassLoader(null /* null represents the bootstrap class loader */, values);
     }
 

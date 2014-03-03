@@ -1,9 +1,8 @@
 package com.blogspot.mydailyjava.bytebuddy.dynamic.loading;
 
+import com.blogspot.mydailyjava.bytebuddy.utility.ClassFileExtraction;
 import org.junit.Before;
 import org.junit.Test;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
 
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -29,10 +28,7 @@ public class ClassLoaderByteArrayInjectorTest {
 
     @Test
     public void testInjection() throws Exception {
-        ClassReader classReader = new ClassReader(Foo.class.getName());
-        ClassWriter classWriter = new ClassWriter(classReader, 0);
-        classReader.accept(classWriter, 0);
-        classLoaderByteArrayInjector.inject(Foo.class.getName(), classWriter.toByteArray());
+        classLoaderByteArrayInjector.inject(Foo.class.getName(), ClassFileExtraction.extract(Foo.class));
         assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
     }
 }

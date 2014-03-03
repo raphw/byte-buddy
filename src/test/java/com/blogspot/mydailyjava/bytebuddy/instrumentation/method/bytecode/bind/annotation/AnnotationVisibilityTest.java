@@ -20,6 +20,7 @@ public class AnnotationVisibilityTest {
         return Arrays.asList(new Object[][]{
                 {AllArguments.class},
                 {Argument.class},
+                {BindingPriority.class},
                 {IgnoreForBinding.class},
                 {RuntimeType.class},
                 {SuperCall.class},
