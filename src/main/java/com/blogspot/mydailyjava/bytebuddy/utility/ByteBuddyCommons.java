@@ -77,6 +77,21 @@ public final class ByteBuddyCommons {
     }
 
     /**
+     * Creates a list that contains all elements of a given list with an additional prepended element.
+     *
+     * @param list    The list of elements to be appended last.
+     * @param element The additional element.
+     * @param <T>     The list's generic type.
+     * @return An {@link java.util.ArrayList} containing all elements.
+     */
+    public static <T> List<T> join(T element, List<T> list) {
+        List<T> result = new ArrayList<T>(list.size() + 1);
+        result.add(element);
+        result.addAll(list);
+        return result;
+    }
+
+    /**
      * Validates that a string represents a valid Java identifier, i.e. is not a Java keyword and is built up
      * by Java identifier compatible characters.
      *

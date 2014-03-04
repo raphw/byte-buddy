@@ -49,7 +49,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                     attributeAppender,
                     ignoredMethods,
                     classVisitorWrapperChain,
-                    fieldRegistry.prepend(fieldToken, attributeAppenderFactory),
+                    fieldRegistry.include(fieldToken, attributeAppenderFactory),
                     methodRegistry,
                     defaultFieldAttributeAppenderFactory,
                     defaultMethodAttributeAppenderFactory,
@@ -428,6 +428,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 namingStrategy));
         SubclassInstrumentationContextDelegate contextDelegate = new SubclassInstrumentationContextDelegate(instrumentedType);
         Instrumentation.Context instrumentationContext = new Instrumentation.Context.Default(contextDelegate, contextDelegate);
+        MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.compile(instrumentedType, MethodRegistry.Compiled.Entry.Skip.INSTANCE);
+        instrumentedType = compiledMethodRegistry.getInstrumentedType();
         return new TypeWriter.Builder<T>(instrumentedType, instrumentationContext, classFormatVersion)
                 .build(classVisitorWrapperChain)
                 .attributeType(attributeAppender)
@@ -435,8 +437,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 .write(instrumentedType.getDeclaredFields(),
                         fieldRegistry.compile(instrumentedType, FieldAttributeAppender.NoOp.INSTANCE))
                 .methods()
-                .write(instrumentedType.getDeclaredMethods().filter(not(ignoredMethods).and(isOverridable())),
-                        methodRegistry.compile(instrumentedType, MethodRegistry.Compiled.Entry.Skip.INSTANCE))
+                .write(instrumentedType.getDeclaredMethods().filter(not(ignoredMethods).and(isOverridable())), compiledMethodRegistry)
                 .write(contextDelegate.getProxiedMethods(), contextDelegate)
                 .make();
     }

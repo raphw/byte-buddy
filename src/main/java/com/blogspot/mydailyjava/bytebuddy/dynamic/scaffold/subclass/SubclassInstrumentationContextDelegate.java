@@ -6,9 +6,9 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
@@ -21,7 +21,8 @@ import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.
 
 public class SubclassInstrumentationContextDelegate
         implements AuxiliaryType.MethodProxyFactory,
-        Instrumentation.Context.Default.AuxiliaryTypeNamingStrategy, MethodRegistry.Compiled {
+        Instrumentation.Context.Default.AuxiliaryTypeNamingStrategy,
+        MethodRegistry.Compiled {
 
     private static final String PREFIX = "delegate";
 
@@ -64,11 +65,11 @@ public class SubclassInstrumentationContextDelegate
         return new TypeWriter.SameThreadCoModifiableIterable<MethodDescription>(proxyMethods);
     }
 
-    private class MethodCall implements Entry, ByteCodeAppender {
+    private class SameSignatureMethodCall implements Entry, ByteCodeAppender {
 
         private final MethodDescription targetDescription;
 
-        private MethodCall(MethodDescription targetDescription) {
+        private SameSignatureMethodCall(MethodDescription targetDescription) {
             this.targetDescription = targetDescription;
         }
 
@@ -108,6 +109,11 @@ public class SubclassInstrumentationContextDelegate
 
     @Override
     public Entry target(MethodDescription methodDescription) {
-        return new MethodCall(proxyMethodToTargetMethod.get(methodDescription));
+        return new SameSignatureMethodCall(proxyMethodToTargetMethod.get(methodDescription));
+    }
+
+    @Override
+    public InstrumentedType getInstrumentedType() {
+        return instrumentedType;
     }
 }

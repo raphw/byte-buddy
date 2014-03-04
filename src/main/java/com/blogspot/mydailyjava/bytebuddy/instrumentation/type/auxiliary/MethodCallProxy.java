@@ -124,6 +124,11 @@ public class MethodCallProxy implements AuxiliaryType {
                     .apply(methodVisitor, instrumentationContext));
             return new Size(size.getMaximalSize(), instrumentedMethod.getStackSize());
         }
+
+        @Override
+        public InstrumentedType getInstrumentedType() {
+            return null;
+        }
     }
 
     private static class ConstructorDelegate implements MethodMatcher, MethodRegistry.Compiled, ByteCodeAppender {
@@ -165,6 +170,11 @@ public class MethodCallProxy implements AuxiliaryType {
             }
             size = size.aggregate(MethodReturn.VOID.apply(methodVisitor, instrumentationContext));
             return new Size(size.getMaximalSize(), instrumentedMethod.getStackSize());
+        }
+
+        @Override
+        public InstrumentedType getInstrumentedType() {
+            return null;
         }
     }
 

@@ -8,6 +8,7 @@ import org.objectweb.asm.MethodVisitor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 
 /**
  * An appender that writes attributes or annotations to a given ASM {@link org.objectweb.asm.MethodVisitor}.
@@ -45,6 +46,22 @@ public interface MethodAttributeAppender {
                     methodAttributeAppender[index++] = factory.make(typeDescription);
                 }
                 return new MethodAttributeAppender.Compound(methodAttributeAppender);
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && Arrays.equals(factory, ((Compound) other).factory);
+            }
+
+            @Override
+            public int hashCode() {
+                return Arrays.hashCode(factory);
+            }
+
+            @Override
+            public String toString() {
+                return "MethodAttributeAppender.Factory.Compound{" + Arrays.toString(factory) + '}';
             }
         }
 
@@ -107,6 +124,22 @@ public interface MethodAttributeAppender {
                     }
                     return new AnnotationAppender.Target.OnMethodParameter(methodVisitor, parameterIndex);
                 }
+
+                @Override
+                public boolean equals(Object o) {
+                    return this == o || !(o == null || getClass() != o.getClass())
+                            && parameterIndex == ((OnMethodParameter) o).parameterIndex;
+                }
+
+                @Override
+                public int hashCode() {
+                    return parameterIndex;
+                }
+
+                @Override
+                public String toString() {
+                    return "Target.OnMethodParameter{parameterIndex=" + parameterIndex + '}';
+                }
             }
 
             AnnotationAppender.Target make(MethodVisitor methodVisitor, MethodDescription methodDescription);
@@ -147,6 +180,26 @@ public interface MethodAttributeAppender {
         public MethodAttributeAppender make(TypeDescription typeDescription) {
             return this;
         }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && annotation.equals(((ForAnnotation) other).annotation)
+                    && target.equals(((ForAnnotation) other).target);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * annotation.hashCode() + target.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "MethodAttributeAppender.ForAnnotation{" +
+                    "annotation=" + annotation +
+                    ", target=" + target +
+                    '}';
+        }
     }
 
     /**
@@ -181,6 +234,22 @@ public interface MethodAttributeAppender {
         public MethodAttributeAppender make(TypeDescription typeDescription) {
             return this;
         }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && method.equals(((ForLoadedMethod) other).method);
+        }
+
+        @Override
+        public int hashCode() {
+            return method.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "MethodAttributeAppender.ForLoadedMethod{method=" + method + '}';
+        }
     }
 
     /**
@@ -214,6 +283,22 @@ public interface MethodAttributeAppender {
         @Override
         public MethodAttributeAppender make(TypeDescription typeDescription) {
             return this;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && constructor.equals(((ForLoadedConstructor) other).constructor);
+        }
+
+        @Override
+        public int hashCode() {
+            return constructor.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "MethodAttributeAppender.ForLoadedConstructor{constructor=" + constructor + '}';
         }
     }
 
@@ -270,6 +355,22 @@ public interface MethodAttributeAppender {
             for (MethodAttributeAppender methodAttributeAppender : this.methodAttributeAppender) {
                 methodAttributeAppender.apply(methodVisitor, methodDescription);
             }
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && Arrays.equals(methodAttributeAppender, ((Compound) other).methodAttributeAppender);
+        }
+
+        @Override
+        public int hashCode() {
+            return Arrays.hashCode(methodAttributeAppender);
+        }
+
+        @Override
+        public String toString() {
+            return "MethodAttributeAppender.Compound{" + Arrays.toString(methodAttributeAppender) + '}';
         }
     }
 

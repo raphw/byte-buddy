@@ -1,4 +1,4 @@
-package com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold;
+package com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass;
 
 import com.blogspot.mydailyjava.bytebuddy.modifier.SyntheticState;
 import com.blogspot.mydailyjava.bytebuddy.modifier.TypeManifestation;

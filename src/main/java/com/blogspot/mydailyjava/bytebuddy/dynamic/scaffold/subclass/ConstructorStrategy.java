@@ -8,20 +8,38 @@ import java.lang.reflect.Constructor;
 
 import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.isConstructor;
 
+/**
+ * A constructor strategy is responsible for creating bootstrap constructors for a
+ * {@link com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.SubclassDynamicTypeBuilder}.
+ *
+ * @see com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy.Default
+ */
 public interface ConstructorStrategy {
 
+    /**
+     * Default constructor strategies.
+     * <ol>
+     * <li>The {@link com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy.Default#NO_CONSTRUCTORS}
+     * strategy is adding no constructors such that the instrumented type will by default not have any. This is legal by
+     * Java byte code requirements. However, if no constructor is added manually if this strategy is applied, the type
+     * is not constructable without using JVM non-public functionality.</li>
+     * <li>The {@link com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy.Default#IMITATE_SUPER_TYPE}
+     * strategy is adding all constructors of the super type which are making direct calls to their super constructor of
+     * same signature.</li>
+     * </ol>
+     */
     static enum Default implements ConstructorStrategy {
 
         NO_CONSTRUCTORS,
         IMITATE_SUPER_TYPE;
 
         @Override
-        public Constructor<?>[] extractConstructors(Class<?> type) {
+        public Constructor<?>[] extractConstructors(Class<?> superType) {
             switch (this) {
                 case NO_CONSTRUCTORS:
                     return new Constructor<?>[0];
                 case IMITATE_SUPER_TYPE:
-                    return type.getDeclaredConstructors();
+                    return superType.getDeclaredConstructors();
                 default:
                     throw new AssertionError();
             }
@@ -34,7 +52,7 @@ public interface ConstructorStrategy {
                 case NO_CONSTRUCTORS:
                     return methodRegistry;
                 case IMITATE_SUPER_TYPE:
-                    return methodRegistry.prepend(new MethodRegistry.LatentMethodMatcher.Simple(isConstructor()),
+                    return methodRegistry.append(new MethodRegistry.LatentMethodMatcher.Simple(isConstructor()),
                             SuperMethodCall.INSTANCE,
                             defaultMethodAttributeAppenderFactory);
                 default:
@@ -43,8 +61,26 @@ public interface ConstructorStrategy {
         }
     }
 
-    Constructor<?>[] extractConstructors(Class<?> type);
+    /**
+     * Extracts constructors for a given super type.
+     *
+     * @param superType The super type for which constructors are to be extracted.
+     * @return An array of constructors which will be mimicked by the instrumented type of which
+     * the {@code superType} is the direct super type.
+     */
+    Constructor<?>[] extractConstructors(Class<?> superType);
 
+    /**
+     * Returns a method registry that is capable of creating byte code for the constructors that were
+     * provided by the
+     * {@link com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy#extractConstructors(Class)}
+     * method.
+     *
+     * @param methodRegistry                        The original method registry.
+     * @param defaultMethodAttributeAppenderFactory The default method attribute appender factory.
+     * @return A method registry that is capable of providing byte code for the constructors that were added by
+     * this strategy.
+     */
     MethodRegistry inject(MethodRegistry methodRegistry,
                           MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory);
 }

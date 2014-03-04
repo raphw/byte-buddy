@@ -5,6 +5,7 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.ClassVisitor;
 
 import java.lang.annotation.Annotation;
+import java.util.Arrays;
 
 /**
  * An appender that writes attributes or annotations to a given ASM {@link org.objectweb.asm.ClassVisitor}.
@@ -88,6 +89,22 @@ public interface TypeAttributeAppender {
                 annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.RUNTIME);
             }
         }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && type.equals(((ForLoadedType) other).type);
+        }
+
+        @Override
+        public int hashCode() {
+            return type.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "TypeAttributeAppender.ForLoadedType{type=" + type + '}';
+        }
     }
 
     /**
@@ -129,6 +146,22 @@ public interface TypeAttributeAppender {
             for (TypeAttributeAppender typeAttributeAppender : this.typeAttributeAppender) {
                 typeAttributeAppender.apply(classVisitor, typeDescription);
             }
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && Arrays.equals(typeAttributeAppender, ((Compound) other).typeAttributeAppender);
+        }
+
+        @Override
+        public int hashCode() {
+            return Arrays.hashCode(typeAttributeAppender);
+        }
+
+        @Override
+        public String toString() {
+            return "TypeAttributeAppender.Compound{" + Arrays.toString(typeAttributeAppender) + '}';
         }
     }
 

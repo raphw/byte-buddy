@@ -14,6 +14,11 @@ public enum MethodManifestation implements ModifierContributor.ForMethod {
     FINAL(Opcodes.ACC_FINAL),
     FINAL_NATIVE(Opcodes.ACC_FINAL | Opcodes.ACC_NATIVE);
 
+    /**
+     * A mask for checking if a method implementation is not implemented in byte code.
+     */
+    public static final int ABSTRACTION_MASK = Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE;
+
     private final int mask;
 
     private MethodManifestation(int mask) {
