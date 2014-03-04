@@ -22,7 +22,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class)
-public class MethodCallProxyTest {
+public class MethodCallProxy0Test {
 
     private static final ClassFormatVersion CLASS_VERSION = new ClassFormatVersion(Opcodes.V1_6);
 
@@ -78,9 +78,9 @@ public class MethodCallProxyTest {
     private Class<?>[] proxiedMethodParameters;
     private Object[] methodArgument;
 
-    public MethodCallProxyTest(Class<? extends InvocationCountable> proxiedType,
-                               Class<?>[] proxiedMethodParameters,
-                               Object[] methodArgument) {
+    public MethodCallProxy0Test(Class<? extends InvocationCountable> proxiedType,
+                                Class<?>[] proxiedMethodParameters,
+                                Object[] methodArgument) {
         this.proxiedType = proxiedType;
         this.proxiedMethodParameters = proxiedMethodParameters;
         this.methodArgument = methodArgument;
@@ -90,7 +90,7 @@ public class MethodCallProxyTest {
     public void testMethodProxy() throws Exception {
         MethodDescription proxiedMethod = new MethodDescription.ForMethod
                 (proxiedType.getDeclaredMethod(FOO, proxiedMethodParameters));
-        MethodCallProxy methodCallProxy = new MethodCallProxy(proxiedMethod);
+        MethodCallProxy0 methodCallProxy = new MethodCallProxy0(proxiedMethod);
         DynamicType<?> dynamicType = methodCallProxy.make(proxyName(proxiedType), null); // TODO
         ClassLoader proxyClassLoader = new ByteArrayClassLoader(getClass().getClassLoader(),
                 Collections.singletonMap(dynamicType.getName(), dynamicType.getBytes()));

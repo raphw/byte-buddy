@@ -6,16 +6,33 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
+/**
+ * An appender that writes attributes or annotations to a given ASM {@link org.objectweb.asm.MethodVisitor}.
+ */
 public interface MethodAttributeAppender {
 
+    /**
+     * A factory that creates method attribute appenders for a given type.
+     */
     static interface Factory {
 
+        /**
+         * A method attribute appender factory that combines several method attribute appender factories to be
+         * represented as a single factory.
+         */
         static class Compound implements Factory {
 
             private final Factory[] factory;
 
+            /**
+             * Creates a new compound method attribute appender factory.
+             *
+             * @param factory The factories that are to be combined by this compound factory in the order of their
+             *                application.
+             */
             public Compound(Factory... factory) {
                 this.factory = factory;
             }
@@ -24,16 +41,25 @@ public interface MethodAttributeAppender {
             public MethodAttributeAppender make(TypeDescription typeDescription) {
                 MethodAttributeAppender[] methodAttributeAppender = new MethodAttributeAppender[factory.length];
                 int index = 0;
-                for(Factory factory : this.factory) {
+                for (Factory factory : this.factory) {
                     methodAttributeAppender[index++] = factory.make(typeDescription);
                 }
                 return new MethodAttributeAppender.Compound(methodAttributeAppender);
             }
         }
 
+        /**
+         * Returns a method attribute appender that is applicable for a given type description.
+         *
+         * @param typeDescription The type for which a method attribute appender is to be applied for.
+         * @return The method attribute appender which should be applied for the given type.
+         */
         MethodAttributeAppender make(TypeDescription typeDescription);
     }
 
+    /**
+     * A method attribute appender that does not append any attributes.
+     */
     static enum NoOp implements MethodAttributeAppender, Factory {
         INSTANCE;
 
@@ -48,6 +74,10 @@ public interface MethodAttributeAppender {
         }
     }
 
+    /**
+     * Appends an annotation to a method or method parameter. The visibility of the annotation is determined by the
+     * annotation type's {@link java.lang.annotation.RetentionPolicy} annotation.
+     */
     static class ForAnnotation implements MethodAttributeAppender, Factory {
 
         private static interface Target {
@@ -85,11 +115,22 @@ public interface MethodAttributeAppender {
         private final Annotation annotation;
         private final Target target;
 
+        /**
+         * Create a new annotation appender for a method.
+         *
+         * @param annotation The annotation to append to the target method.
+         */
         public ForAnnotation(Annotation annotation) {
             this.annotation = annotation;
             target = Target.OnMethod.INSTANCE;
         }
 
+        /**
+         * Create a new annotation appender for a method parameter.
+         *
+         * @param annotation     The annotation to append to the target method parameter.
+         * @param parameterIndex The index of the target parameter.
+         */
         public ForAnnotation(Annotation annotation, int parameterIndex) {
             this.annotation = annotation;
             target = new Target.OnMethodParameter(parameterIndex);
@@ -97,9 +138,9 @@ public interface MethodAttributeAppender {
 
         @Override
         public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
-            AnnotationAppender appender = new AnnotationAppender.Default(
-                    target.make(methodVisitor, methodDescription), AnnotationAppender.Visibility.VISIBLE);
-            appender.append(annotation);
+            AnnotationAppender appender =
+                    new AnnotationAppender.Default(target.make(methodVisitor, methodDescription));
+            appender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
         }
 
         @Override
@@ -108,17 +149,32 @@ public interface MethodAttributeAppender {
         }
     }
 
+    /**
+     * Implementation of a method attribute appender that writes all annotations of a given loaded method to the
+     * method that is being created. This includes method and parameter annotations. In order to being able to do so,
+     * the target method and the given method must have compatible signatures, i.e. an identical number of method
+     * parameters. Otherwise, an exception is thrown when this attribute appender is applied on a method.
+     */
     static class ForLoadedMethod implements MethodAttributeAppender, Factory {
 
-        private final MethodDescription methodDescription;
+        private final Method method;
 
+        /**
+         * Creates a new attribute appender for a loaded method.
+         *
+         * @param method The method which is read for annotations to write to an instrumented method.
+         */
         public ForLoadedMethod(Method method) {
-            methodDescription = new MethodDescription.ForMethod(method);
+            this.method = method;
         }
 
         @Override
         public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
-            ForInstrumentedMethod.INSTANCE.apply(methodVisitor, this.methodDescription);
+            if (method.getParameterTypes().length > methodDescription.getParameterTypes().size()) {
+                throw new IllegalArgumentException("The constructor " + method + " has more parameters than the " +
+                        "instrumented method " + methodDescription);
+            }
+            ForInstrumentedMethod.INSTANCE.apply(methodVisitor, new MethodDescription.ForMethod(method));
         }
 
         @Override
@@ -127,22 +183,60 @@ public interface MethodAttributeAppender {
         }
     }
 
+    /**
+     * Implementation of a method attribute appender that writes all annotations of a given loaded constructor to the
+     * method that is being created. This includes method and parameter annotations. In order to being able to do so,
+     * the target method and the given constructor must have compatible signatures, i.e. an identical number of method
+     * parameters. Otherwise, an exception is thrown when this attribute appender is applied on a method.
+     */
+    static class ForLoadedConstructor implements MethodAttributeAppender, Factory {
+
+        private final Constructor<?> constructor;
+
+        /**
+         * Creates a new attribute appender for a loaded constructor.
+         *
+         * @param constructor The constructor which is read for annotations to write to an instrumented method.
+         */
+        public ForLoadedConstructor(Constructor<?> constructor) {
+            this.constructor = constructor;
+        }
+
+        @Override
+        public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
+            if (constructor.getParameterTypes().length > methodDescription.getParameterTypes().size()) {
+                throw new IllegalArgumentException("The constructor " + constructor + " has more parameters than the " +
+                        "instrumented method " + methodDescription);
+            }
+            ForInstrumentedMethod.INSTANCE.apply(methodVisitor, new MethodDescription.ForConstructor(constructor));
+        }
+
+        @Override
+        public MethodAttributeAppender make(TypeDescription typeDescription) {
+            return this;
+        }
+    }
+
+    /**
+     * Implementation of a method attribute appender that writes all annotations of the instrumented method to the
+     * method that is being created. This includes method and parameter annotations.
+     */
     static enum ForInstrumentedMethod implements MethodAttributeAppender, Factory {
         INSTANCE;
 
         @Override
         public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
-            AnnotationAppender methodAppender = new AnnotationAppender.Default(
-                    new AnnotationAppender.Target.OnMethod(methodVisitor), AnnotationAppender.Visibility.VISIBLE);
+            AnnotationAppender methodAppender =
+                    new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethod(methodVisitor));
             for (Annotation annotation : methodDescription.getAnnotations()) {
-                methodAppender.append(annotation);
+                methodAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
             }
             int i = 0;
             for (Annotation[] annotations : methodDescription.getParameterAnnotations()) {
-                AnnotationAppender parameterAppender = new AnnotationAppender.Default(
-                        new AnnotationAppender.Target.OnMethodParameter(methodVisitor, i++), AnnotationAppender.Visibility.VISIBLE);
+                AnnotationAppender parameterAppender =
+                        new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethodParameter(methodVisitor, i++));
                 for (Annotation annotation : annotations) {
-                    parameterAppender.append(annotation);
+                    parameterAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
                 }
             }
         }
@@ -153,21 +247,39 @@ public interface MethodAttributeAppender {
         }
     }
 
+    /**
+     * A method attribute appender that combines several method attribute appenders to be represented as a single
+     * method attribute appender.
+     */
     static class Compound implements MethodAttributeAppender {
 
         private final MethodAttributeAppender[] methodAttributeAppender;
 
+        /**
+         * Creates a new compound method attribute appender.
+         *
+         * @param methodAttributeAppender The method attribute appenders that are to be combined by this compound appender
+         *                                in the order of their application.
+         */
         public Compound(MethodAttributeAppender... methodAttributeAppender) {
             this.methodAttributeAppender = methodAttributeAppender;
         }
 
         @Override
         public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
-            for(MethodAttributeAppender methodAttributeAppender : this.methodAttributeAppender) {
+            for (MethodAttributeAppender methodAttributeAppender : this.methodAttributeAppender) {
                 methodAttributeAppender.apply(methodVisitor, methodDescription);
             }
         }
     }
 
+    /**
+     * Applies this attribute appender to a given method visitor.
+     *
+     * @param methodVisitor     The method visitor to which the attributes that are represented by this attribute
+     *                          appender are written to.
+     * @param methodDescription The description of the method for which the given method visitor creates an
+     *                          instrumentation for.
+     */
     void apply(MethodVisitor methodVisitor, MethodDescription methodDescription);
 }

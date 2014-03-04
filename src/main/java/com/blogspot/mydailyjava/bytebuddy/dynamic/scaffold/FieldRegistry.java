@@ -12,6 +12,15 @@ public interface FieldRegistry {
 
     static interface Compiled {
 
+        static enum NoOp implements Compiled {
+            INSTANCE;
+
+            @Override
+            public FieldAttributeAppender.Factory target(FieldDescription fieldDescription) {
+                return FieldAttributeAppender.NoOp.INSTANCE;
+            }
+        }
+
         FieldAttributeAppender.Factory target(FieldDescription fieldDescription);
     }
 

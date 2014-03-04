@@ -33,6 +33,13 @@ public enum FieldAccess {
          * @return A stack manipulation representing the setting of a field value.
          */
         StackManipulation putter();
+
+        /**
+         * Returns the field for which this field access is defined for.
+         *
+         * @return The field for which this field access was defined for.
+         */
+        FieldDescription getDefinedField();
     }
 
     private class AccessDispatcher implements Defined {
@@ -56,6 +63,8 @@ public enum FieldAccess {
             protected abstract int getOpcode();
 
             protected abstract Size resolveSize(StackSize fieldSize);
+
+
         }
 
         private class FieldGetInstruction extends AbstractFieldInstruction {
@@ -99,6 +108,11 @@ public enum FieldAccess {
         @Override
         public StackManipulation putter() {
             return new FieldPutInstruction();
+        }
+
+        @Override
+        public FieldDescription getDefinedField() {
+            return fieldDescription;
         }
     }
 

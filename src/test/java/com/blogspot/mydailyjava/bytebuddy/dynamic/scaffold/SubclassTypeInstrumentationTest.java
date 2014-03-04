@@ -20,7 +20,7 @@ public class SubclassTypeInstrumentationTest extends AbstractInstrumentedTypeTes
 //        SubclassTypeInstrumentation instrumentedType = new SubclassTypeInstrumentation(new ClassVersion(Opcodes.V1_6),
 //                Object.class,
 //                Arrays.<Class<?>>asList(Serializable.class),
-//                Visibility.PUBLIC,
+//                AnnotationVisibility.PUBLIC,
 //                TypeManifestation.PLAIN,
 //                SyntheticState.NON_SYNTHETIC,
 //                namingStrategy);

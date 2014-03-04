@@ -4,7 +4,7 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescripti
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy0;
 
 import java.lang.annotation.*;
 import java.util.concurrent.Callable;
@@ -56,7 +56,7 @@ public @interface SuperCall {
             } else if (target.isAbstract()) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             } else {
-                return new MethodDelegationBinder.ParameterBinding.Anonymous(new MethodCallProxy.AssignableSignatureCall(source));
+                return new MethodDelegationBinder.ParameterBinding.Anonymous(new MethodCallProxy0.AssignableSignatureCall(source));
             }
         }
     }

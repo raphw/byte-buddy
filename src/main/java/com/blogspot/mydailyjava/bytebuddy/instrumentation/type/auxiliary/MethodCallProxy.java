@@ -1,43 +1,56 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.type.auxiliary;
 
+import com.blogspot.mydailyjava.bytebuddy.ClassFormatVersion;
+import com.blogspot.mydailyjava.bytebuddy.NamingStrategy;
+import com.blogspot.mydailyjava.bytebuddy.asm.ClassVisitorWrapper;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
+import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.FieldRegistry;
+import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.MethodRegistry;
+import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.TypeWriter;
+import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.SubclassInstrumentationContextDelegate;
+import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.SubclassTypeInstrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.TypeInitializer;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.ModifierContributor;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.primitive.PrimitiveTypeAwareAssigner;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.primitive.VoidAwareAssigner;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.reference.ReferenceTypeAwareAssigner;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.member.FieldAccess;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
-import org.objectweb.asm.*;
-import org.objectweb.asm.util.TraceClassVisitor;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
-import java.io.PrintWriter;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 public class MethodCallProxy implements AuxiliaryType {
 
-    private static final String OBJECT_INTERNAL_NAME = Type.getInternalName(Object.class);
-    private static final int ASM_MANUAL = 0;
-    private static final Object ASM_IGNORE = null;
-    private static final int CONSTRUCTOR_ACCESS = Opcodes.ACC_PUBLIC;
-    private static final int FIELD_ACCESS = Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL;
     private static final String FIELD_NAME_PREFIX = "arg";
-    private static final String DEFAULT_CONSTRUCTOR_DESCRIPTOR = "()V";
 
-    public static class AssignableSignatureCall implements StackManipulation {
+    public static class CalledFromSameSignatureMethod implements StackManipulation {
 
         private final MethodDescription proxiedMethod;
+        private final Assigner assigner;
 
-        public AssignableSignatureCall(MethodDescription proxiedMethod) {
+        public CalledFromSameSignatureMethod(MethodDescription proxiedMethod) {
+            this(proxiedMethod, new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE), true));
+        }
+
+        public CalledFromSameSignatureMethod(MethodDescription proxiedMethod, Assigner assigner) {
             this.proxiedMethod = proxiedMethod;
+            this.assigner = assigner;
         }
 
         @Override
@@ -47,7 +60,7 @@ public class MethodCallProxy implements AuxiliaryType {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-            String typeName = instrumentationContext.register(new MethodCallProxy(proxiedMethod));
+            String typeName = instrumentationContext.register(new MethodCallProxy(proxiedMethod, assigner));
             methodVisitor.visitTypeInsn(Opcodes.NEW, typeName);
             methodVisitor.visitInsn(Opcodes.DUP);
             Size size = new Size(2, 2);
@@ -65,151 +78,169 @@ public class MethodCallProxy implements AuxiliaryType {
         }
     }
 
-    private static enum Interface {
+    private static class MethodDelegate implements MethodMatcher, MethodRegistry.Compiled, ByteCodeAppender {
 
-        RUNNABLE(Runnable.class, "run", "()V", void.class, Opcodes.RETURN),
-        CALLABLE(Callable.class, "call", "()Ljava/lang/Object;", Object.class, Opcodes.ARETURN);
+        private static final String CALL_METHOD_NAME = "call", RUN_METHOD_NAME = "run";
 
-        private static final int METHOD_ACCESS = Opcodes.ACC_PUBLIC;
+        private final List<FieldAccess.Defined> fieldAccess;
+        private final MethodDescription proxiedMethod;
+        private final Assigner assigner;
 
-        public static String[] getInternalNames() {
-            String[] internalNames = new String[Interface.values().length];
-            int i = 0;
-            for (Interface anInterface : Interface.values()) {
-                internalNames[i++] = anInterface.interfaceInternalName;
-            }
-            return internalNames;
+        private MethodDelegate(List<FieldAccess.Defined> fieldAccess, MethodDescription proxiedMethod, Assigner assigner) {
+            this.fieldAccess = fieldAccess;
+            this.proxiedMethod = proxiedMethod;
+            this.assigner = assigner;
         }
 
-        private final String interfaceInternalName;
-        private final String methodName;
-        private final String methodDescriptor;
-        private final TypeDescription returnTypeDescription;
-        private final int returnOpcode;
-
-        private Interface(Class<?> type,
-                          String methodName,
-                          String methodDescriptor,
-                          Class<?> returnType,
-                          int returnOpcode) {
-            interfaceInternalName = Type.getInternalName(type);
-            this.methodName = methodName;
-            this.methodDescriptor = methodDescriptor;
-            this.returnTypeDescription = new TypeDescription.ForLoadedType(returnType);
-            this.returnOpcode = returnOpcode;
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.getParameterTypes().size() == 0
+                    && (methodDescription.getName().equals(CALL_METHOD_NAME)
+                    && methodDescription.getDeclaringType().getName().equals(Callable.class.getName()))
+                    || (methodDescription.getName().equals(RUN_METHOD_NAME)
+                    && methodDescription.getDeclaringType().getName().equals(Runnable.class.getName()));
         }
 
-        public void implement(ClassVisitor classVisitor,
-                              String proxyTypeInternalName,
-                              MethodDescription proxiedMethod,
-                              Map<String, TypeDescription> fields,
-                              Assigner assigner) {
-            MethodVisitor methodVisitor = classVisitor.visitMethod(METHOD_ACCESS,
-                    methodName,
-                    methodDescriptor,
-                    null,
-                    null);
-            methodVisitor.visitCode();
-            StackManipulation.Size size = StackSize.ZERO.toIncreasingSize();
-            for (Map.Entry<String, TypeDescription> field : fields.entrySet()) {
-                methodVisitor.visitIntInsn(Opcodes.ALOAD, 0);
-                methodVisitor.visitFieldInsn(Opcodes.GETFIELD,
-                        proxyTypeInternalName,
-                        field.getKey(),
-                        field.getValue().getDescriptor());
-                // Field value will be at least as big as self reference and can be ignored.
-                size = size.aggregate(field.getValue().getStackSize().toIncreasingSize());
+        @Override
+        public MethodRegistry.Compiled.Entry target(MethodDescription methodDescription) {
+            return new MethodRegistry.Compiled.Entry.Default(this, MethodAttributeAppender.NoOp.INSTANCE);
+        }
+
+        @Override
+        public boolean appendsCode() {
+            return true;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor,
+                          Instrumentation.Context instrumentationContext,
+                          MethodDescription instrumentedMethod) {
+            StackManipulation.Size size = new StackManipulation.Size(0, 0);
+            for (FieldAccess.Defined fieldAccess : this.fieldAccess) {
+                size = size.aggregate(fieldAccess.getter().apply(methodVisitor, instrumentationContext));
             }
-            size.aggregate(MethodInvocation.invoke(proxiedMethod).apply(methodVisitor, null));
-            size = size.aggregate(assigner.assign(proxiedMethod.getReturnType(), returnTypeDescription, false).apply(methodVisitor, null));
-            methodVisitor.visitInsn(returnOpcode); // Size change will always be decreasing and can therefore be ignored.
-            methodVisitor.visitMaxs(size.getMaximalSize(), StackSize.SINGLE.getSize());
-            methodVisitor.visitEnd();
+            size = size.aggregate(MethodInvocation.invoke(proxiedMethod).apply(methodVisitor, instrumentationContext));
+            size = size.aggregate(assigner.assign(proxiedMethod.getReturnType(), instrumentedMethod.getReturnType(), false)
+                    .apply(methodVisitor, instrumentationContext));
+            return new Size(size.getMaximalSize(), instrumentedMethod.getStackSize());
+        }
+    }
+
+    private static class ConstructorDelegate implements MethodMatcher, MethodRegistry.Compiled, ByteCodeAppender {
+
+        private final List<FieldAccess.Defined> fieldAccess;
+
+        private ConstructorDelegate(List<FieldAccess.Defined> fieldAccess) {
+            this.fieldAccess = fieldAccess;
+        }
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.isConstructor();
+        }
+
+        @Override
+        public Entry target(MethodDescription methodDescription) {
+            return new Entry.Default(this, MethodAttributeAppender.NoOp.INSTANCE);
+        }
+
+        @Override
+        public boolean appendsCode() {
+            return true;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor,
+                          Instrumentation.Context instrumentationContext,
+                          MethodDescription instrumentedMethod) {
+            StackManipulation.Size size = new StackManipulation.Size(0, 0);
+            int offset = 1, index = 0;
+            for (TypeDescription parameterType : instrumentedMethod.getParameterTypes()) {
+                MethodVariableAccess.forType(instrumentedMethod.getDeclaringType()).loadFromIndex(0);
+                MethodVariableAccess.forType(parameterType).loadFromIndex(offset);
+                int parameterSize = parameterType.getStackSize().getSize() + 1;
+                size = size.aggregate(new StackManipulation.Size(parameterSize, parameterSize));
+                size = size.aggregate(fieldAccess.get(index++).putter().apply(methodVisitor, instrumentationContext));
+                offset += parameterType.getStackSize().getSize();
+            }
+            size = size.aggregate(MethodReturn.VOID.apply(methodVisitor, instrumentationContext));
+            return new Size(size.getMaximalSize(), instrumentedMethod.getStackSize());
         }
     }
 
     private final MethodDescription proxiedMethod;
+    private final Assigner assigner;
 
-    public MethodCallProxy(MethodDescription proxiedMethod) {
+    public MethodCallProxy(MethodDescription proxiedMethod, Assigner assigner) {
         this.proxiedMethod = proxiedMethod;
+        this.assigner = assigner;
     }
 
     @Override
     public DynamicType<?> make(String auxiliaryTypeName, MethodProxyFactory methodProxyFactory) {
-        String proxyTypeInternalName = auxiliaryTypeName.replace('.', '/');
         MethodDescription proxiedMethod = methodProxyFactory.requireProxyMethodFor(this.proxiedMethod);
-        Map<String, TypeDescription> fields = new LinkedHashMap<String, TypeDescription>(1 + proxiedMethod.getParameterTypes().size());
-        StringBuilder constructorDescriptor = new StringBuilder("(");
-        int i = 0;
+        int fieldIndex = 0;
+        InstrumentedType proxy = new SubclassTypeInstrumentation(ClassFormatVersion.forCurrentJavaVersion(),
+                Object.class,
+                Arrays.<Class<?>>asList(Runnable.class, Callable.class),
+                Opcodes.ACC_PUBLIC,
+                new NamingStrategy.Fixed(auxiliaryTypeName));
+        List<FieldAccess.Defined> fieldAccess = new LinkedList<FieldAccess.Defined>();
+        List<TypeDescription> fieldTypes = new ArrayList<TypeDescription>();
         if (!proxiedMethod.isStatic()) {
-            fields.put(FIELD_NAME_PREFIX + i, proxiedMethod.getDeclaringType());
-            constructorDescriptor.append(proxiedMethod.getDeclaringType().getDescriptor());
+            proxy = registerFieldFor(proxy, proxiedMethod.getDeclaringType(), fieldIndex++, fieldAccess, fieldTypes);
         }
         for (TypeDescription parameterType : proxiedMethod.getParameterTypes()) {
-            fields.put(FIELD_NAME_PREFIX + i, parameterType);
-            constructorDescriptor.append(parameterType.getDescriptor());
+            proxy = registerFieldFor(proxy, parameterType, fieldIndex++, fieldAccess, fieldTypes);
         }
-        constructorDescriptor.append(")V");
-        Assigner assigner = new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE), true);
-        ClassWriter classWriter = new ClassWriter(ASM_MANUAL);
-        ClassVisitor classVisitor = new TraceClassVisitor(classWriter, new PrintWriter(System.out));
-        classVisitor.visit(Opcodes.V1_5,
-                DEFAULT_TYPE_ACCESS,
-                proxyTypeInternalName,
-                null,
-                OBJECT_INTERNAL_NAME,
-                Interface.getInternalNames());
-        for (Map.Entry<String, TypeDescription> field : fields.entrySet()) {
-            classVisitor.visitField(FIELD_ACCESS,
-                    field.getKey(),
-                    field.getValue().getDescriptor(),
-                    null,
-                    ASM_IGNORE).visitEnd();
-        }
-        MethodVisitor constructor = classVisitor.visitMethod(CONSTRUCTOR_ACCESS,
-                MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
-                constructorDescriptor.toString(),
-                null,
-                null);
-        constructor.visitCode();
-        int argumentIndex = 1;
-        constructor.visitIntInsn(Opcodes.ALOAD, 0);
-        constructor.visitMethodInsn(Opcodes.INVOKESPECIAL,
-                OBJECT_INTERNAL_NAME,
-                MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
-                DEFAULT_CONSTRUCTOR_DESCRIPTOR);
-        int currentMaximum = 1;
-        for (Map.Entry<String, TypeDescription> field : fields.entrySet()) {
-            constructor.visitIntInsn(Opcodes.ALOAD, 0);
-            MethodVariableAccess.forType(field.getValue()).loadFromIndex(argumentIndex).apply(constructor, null);
-            constructor.visitFieldInsn(Opcodes.PUTFIELD,
-                    proxyTypeInternalName,
-                    field.getKey(),
-                    field.getValue().getDescriptor());
-            currentMaximum = Math.max(currentMaximum, field.getValue().getStackSize().getSize() + 1);
-            argumentIndex += field.getValue().getStackSize().getSize();
-        }
-        constructor.visitInsn(Opcodes.RETURN);
-        constructor.visitMaxs(currentMaximum, proxiedMethod.getStackSize() + 1);
-        constructor.visitEnd();
-        for (Interface anInterface : Interface.values()) {
-            anInterface.implement(classVisitor, proxyTypeInternalName, proxiedMethod, fields, assigner);
-        }
-        classVisitor.visitEnd();
-        return new DynamicType.Default.Unloaded<Object>(auxiliaryTypeName,
-                classWriter.toByteArray(),
-                TypeInitializer.NoOp.INSTANCE,
-                Collections.<DynamicType<?>>emptyList());
+        proxy = proxy.withMethod(MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
+                new TypeDescription.ForLoadedType(void.class),
+                fieldTypes,
+                ModifierContributor.EMPTY_MASK);
+        SubclassInstrumentationContextDelegate contextDelegate = new SubclassInstrumentationContextDelegate(proxy);
+        Instrumentation.Context instrumentationContext = new Instrumentation.Context.Default(contextDelegate, contextDelegate);
+        MethodDelegate methodDelegate = new MethodDelegate(fieldAccess, proxiedMethod, assigner);
+        ConstructorDelegate constructorDelegate = new ConstructorDelegate(fieldAccess);
+        return new TypeWriter.Builder<Object>(proxy, instrumentationContext, ClassFormatVersion.forCurrentJavaVersion())
+                .build(new ClassVisitorWrapper.Chain())
+                .fields()
+                .write(proxy.getDeclaredFields(), FieldRegistry.Compiled.NoOp.INSTANCE)
+                .methods()
+                .write(proxy.getDeclaredMethods().filter(methodDelegate), methodDelegate)
+                .write(proxy.getDeclaredMethods().filter(constructorDelegate), constructorDelegate)
+                .write(contextDelegate.getProxiedMethods(), contextDelegate)
+                .make();
+    }
+
+    private static InstrumentedType registerFieldFor(InstrumentedType proxy,
+                                                     TypeDescription fieldType,
+                                                     int fieldIndex,
+                                                     List<FieldAccess.Defined> fieldAccess,
+                                                     List<TypeDescription> fieldTypes) {
+        String fieldName = FIELD_NAME_PREFIX + fieldIndex;
+        proxy = proxy.withField(fieldName, fieldType, Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL);
+        fieldAccess.add(FieldAccess.forField(proxy.getDeclaredFields().named(fieldName)));
+        fieldTypes.add(fieldType);
+        return proxy;
     }
 
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
+                && assigner.equals(((MethodCallProxy) other).assigner)
                 && proxiedMethod.equals(((MethodCallProxy) other).proxiedMethod);
     }
 
     @Override
     public int hashCode() {
-        return proxiedMethod.hashCode();
+        return  31 * proxiedMethod.hashCode() + assigner.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "MethodCallProxy{" +
+                "proxiedMethod=" + proxiedMethod +
+                ", assigner=" + assigner +
+                '}';
     }
 }

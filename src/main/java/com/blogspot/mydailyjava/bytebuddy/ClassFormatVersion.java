@@ -57,7 +57,7 @@ public class ClassFormatVersion {
                 throw new IllegalStateException("This JVM's version string does not seem to be valid: " + versionString);
             }
         }
-        return new ClassFormatVersion(Integer.parseInt(versionString.substring(versionIndex[1] + 1, versionIndex[2])));
+        return ClassFormatVersion.forJavaVersion(Integer.parseInt(versionString.substring(versionIndex[1] + 1, versionIndex[2])));
     }
 
     /**
