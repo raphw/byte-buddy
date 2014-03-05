@@ -27,7 +27,7 @@ import java.util.List;
 import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
 import static com.blogspot.mydailyjava.bytebuddy.utility.ByteBuddyCommons.*;
 
-public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<T> {
+public class LoadedSuperclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<T> {
 
     private class SubclassFieldAnnotationTarget<T> extends AbstractDelegatingBuilder<T> implements FieldAnnotationTarget<T> {
 
@@ -41,7 +41,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
         @Override
         protected DynamicType.Builder<T> materialize() {
-            return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
+            return new LoadedSuperclassDynamicTypeBuilder<T>(classFormatVersion,
                     namingStrategy,
                     superType,
                     interfaceTypes,
@@ -112,7 +112,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
         @Override
         protected DynamicType.Builder<T> materialize() {
-            return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
+            return new LoadedSuperclassDynamicTypeBuilder<T>(classFormatVersion,
                     namingStrategy,
                     superType,
                     interfaceTypes,
@@ -183,19 +183,19 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     private final FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory;
     private final MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory;
 
-    public SubclassDynamicTypeBuilder(ClassFormatVersion classFormatVersion,
-                                      NamingStrategy namingStrategy,
-                                      Class<?> superType,
-                                      List<Class<?>> interfaceTypes,
-                                      int modifiers,
-                                      TypeAttributeAppender attributeAppender,
-                                      MethodMatcher ignoredMethods,
-                                      ClassVisitorWrapper.Chain classVisitorWrapperChain,
-                                      FieldRegistry fieldRegistry,
-                                      MethodRegistry methodRegistry,
-                                      FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
-                                      MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
-                                      ConstructorStrategy constructorStrategy) {
+    public LoadedSuperclassDynamicTypeBuilder(ClassFormatVersion classFormatVersion,
+                                              NamingStrategy namingStrategy,
+                                              Class<?> superType,
+                                              List<Class<?>> interfaceTypes,
+                                              int modifiers,
+                                              TypeAttributeAppender attributeAppender,
+                                              MethodMatcher ignoredMethods,
+                                              ClassVisitorWrapper.Chain classVisitorWrapperChain,
+                                              FieldRegistry fieldRegistry,
+                                              MethodRegistry methodRegistry,
+                                              FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
+                                              MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
+                                              ConstructorStrategy constructorStrategy) {
         super(Collections.<FieldToken>emptyList(),
                 new MethodTokenListForConstructors(constructorStrategy.extractConstructors(superType)));
         this.classFormatVersion = classFormatVersion;
@@ -212,20 +212,20 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         this.methodRegistry = constructorStrategy.inject(methodRegistry, defaultMethodAttributeAppenderFactory);
     }
 
-    protected SubclassDynamicTypeBuilder(ClassFormatVersion classFormatVersion,
-                                         NamingStrategy namingStrategy,
-                                         Class<?> superType,
-                                         List<Class<?>> interfaceTypes,
-                                         int modifiers,
-                                         TypeAttributeAppender attributeAppender,
-                                         MethodMatcher ignoredMethods,
-                                         ClassVisitorWrapper.Chain classVisitorWrapperChain,
-                                         FieldRegistry fieldRegistry,
-                                         MethodRegistry methodRegistry,
-                                         FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
-                                         MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
-                                         List<FieldToken> fieldTokens,
-                                         List<MethodToken> methodTokens) {
+    protected LoadedSuperclassDynamicTypeBuilder(ClassFormatVersion classFormatVersion,
+                                                 NamingStrategy namingStrategy,
+                                                 Class<?> superType,
+                                                 List<Class<?>> interfaceTypes,
+                                                 int modifiers,
+                                                 TypeAttributeAppender attributeAppender,
+                                                 MethodMatcher ignoredMethods,
+                                                 ClassVisitorWrapper.Chain classVisitorWrapperChain,
+                                                 FieldRegistry fieldRegistry,
+                                                 MethodRegistry methodRegistry,
+                                                 FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
+                                                 MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
+                                                 List<FieldToken> fieldTokens,
+                                                 List<MethodToken> methodTokens) {
         super(fieldTokens, methodTokens);
         this.classFormatVersion = classFormatVersion;
         this.namingStrategy = namingStrategy;
@@ -243,7 +243,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public DynamicType.Builder<T> classFormatVersion(ClassFormatVersion classFormatVersion) {
-        return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
+        return new LoadedSuperclassDynamicTypeBuilder<T>(classFormatVersion,
                 namingStrategy,
                 superType,
                 interfaceTypes,
@@ -261,7 +261,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public DynamicType.Builder<T> implement(Class<?> interfaceType) {
-        return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
+        return new LoadedSuperclassDynamicTypeBuilder<T>(classFormatVersion,
                 namingStrategy,
                 superType,
                 join(interfaceTypes, isInterface(interfaceType)),
@@ -279,7 +279,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public DynamicType.Builder<T> name(String name) {
-        return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
+        return new LoadedSuperclassDynamicTypeBuilder<T>(classFormatVersion,
                 new NamingStrategy.Fixed(isValidIdentifier(name)),
                 superType,
                 interfaceTypes,
@@ -297,7 +297,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public DynamicType.Builder<T> modifier(ModifierContributor.ForType... modifier) {
-        return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
+        return new LoadedSuperclassDynamicTypeBuilder<T>(classFormatVersion,
                 namingStrategy,
                 superType,
                 interfaceTypes,
@@ -315,7 +315,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public DynamicType.Builder<T> ignoreMethods(MethodMatcher ignoredMethods) {
-        return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
+        return new LoadedSuperclassDynamicTypeBuilder<T>(classFormatVersion,
                 namingStrategy,
                 superType,
                 interfaceTypes,
@@ -333,7 +333,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public DynamicType.Builder<T> attribute(TypeAttributeAppender attributeAppender) {
-        return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
+        return new LoadedSuperclassDynamicTypeBuilder<T>(classFormatVersion,
                 namingStrategy,
                 superType,
                 interfaceTypes,
@@ -356,7 +356,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public DynamicType.Builder<T> classVisitor(ClassVisitorWrapper classVisitorWrapper) {
-        return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
+        return new LoadedSuperclassDynamicTypeBuilder<T>(classFormatVersion,
                 namingStrategy,
                 superType,
                 interfaceTypes,
@@ -421,7 +421,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public DynamicType.Unloaded<T> make() {
-        InstrumentedType instrumentedType = applyRecordedMembersTo(new SubclassTypeInstrumentation(classFormatVersion,
+        InstrumentedType instrumentedType = applyRecordedMembersTo(new LoadedSuperclassTypeInstrumentation(classFormatVersion,
                 superType,
                 interfaceTypes,
                 modifiers,

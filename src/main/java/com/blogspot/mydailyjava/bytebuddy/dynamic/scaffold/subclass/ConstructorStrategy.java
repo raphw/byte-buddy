@@ -10,7 +10,7 @@ import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.
 
 /**
  * A constructor strategy is responsible for creating bootstrap constructors for a
- * {@link com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.SubclassDynamicTypeBuilder}.
+ * {@link LoadedSuperclassDynamicTypeBuilder}.
  *
  * @see com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy.Default
  */

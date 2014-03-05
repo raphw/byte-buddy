@@ -333,8 +333,41 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
+        public boolean isAssignableFrom(TypeDescription typeDescription) {
+            return isAssignable(this, typeDescription);
+        }
+
+        @Override
         public boolean isAssignableTo(Class<?> type) {
             return isAssignableTo(new ForLoadedType(type));
+        }
+
+        @Override
+        public boolean isAssignableTo(TypeDescription typeDescription) {
+            return isAssignable(typeDescription, this);
+        }
+
+        private static boolean isAssignable(TypeDescription sourceType, TypeDescription targetType) {
+            // Means that '[sourceType] var = ([targetType]) val;' is a valid assignment. This is true, if:
+            // (1) Both types are equal.
+            if (sourceType.equals(targetType)) {
+                return true;
+            }
+            // The sub type has a super type and this super type is assignable to the super type.
+            TypeDescription targetTypeSuperType = targetType.getSupertype();
+            if (targetTypeSuperType != null && targetTypeSuperType.isAssignableTo(sourceType)) {
+                return true;
+            }
+            // (2) If the target type is an interface, any of this type's interfaces might be assignable to it.
+            if (sourceType.isInterface()) {
+                for (TypeDescription interfaceType : targetType.getInterfaces()) {
+                    if (interfaceType.isAssignableTo(sourceType)) {
+                        return true;
+                    }
+                }
+            }
+            // (3) None of these criteria are true, i.e. the types are not assignable.
+            return false;
         }
 
         @Override
@@ -369,7 +402,7 @@ public interface InstrumentedType extends TypeDescription {
 
         @Override
         public String getSimpleName() {
-            return getName().substring(getPackageName().length(), getName().length());
+            return getName().substring(getPackageName().length() + 1, getName().length());
         }
 
         @Override

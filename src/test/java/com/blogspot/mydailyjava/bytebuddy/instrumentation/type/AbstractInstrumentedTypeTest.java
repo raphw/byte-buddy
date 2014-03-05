@@ -1,189 +1,125 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.type;
 
-import com.blogspot.mydailyjava.bytebuddy.modifier.SyntheticState;
-import com.blogspot.mydailyjava.bytebuddy.modifier.TypeManifestation;
-import com.blogspot.mydailyjava.bytebuddy.modifier.Visibility;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.field.FieldDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
-import org.junit.Before;
+import com.blogspot.mydailyjava.bytebuddy.utility.MockitoRule;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
+import org.objectweb.asm.Opcodes;
 
-import java.io.Serializable;
-import java.lang.reflect.Modifier;
 import java.util.Arrays;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.hamcrest.core.IsSame.sameInstance;
 import static org.mockito.Mockito.*;
 
 public abstract class AbstractInstrumentedTypeTest {
 
-    // TODO: This sucks.
-
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
-    protected abstract InstrumentedType makeInstrumentedType(String name,
-                                                             Class<?> superType,
-                                                             Class<?>[] interfaces,
-                                                             Visibility visibility,
-                                                             TypeManifestation typeManifestation,
-                                                             SyntheticState syntheticState);
+    @Rule
+    public TestRule mockitoRule = new MockitoRule(this);
 
-    private InstrumentedType instrumentedType;
-
-    @Before
-    public void setUp() throws Exception {
-        instrumentedType = makeInstrumentedType(FOO,
-                Object.class,
-                new Class<?>[]{Serializable.class},
-                Visibility.PUBLIC,
-                TypeManifestation.PLAIN,
-                SyntheticState.NON_SYNTHETIC);
-    }
-
-    @Test
-    public void testIsAssignableFrom() throws Exception {
-        TypeDescription nameEqualType = mock(TypeDescription.class);
-        when(nameEqualType.getName()).thenReturn(FOO);
-        assertThat(instrumentedType.isAssignableFrom(nameEqualType), is(true));
-        verify(nameEqualType).getName();
-        verifyNoMoreInteractions(nameEqualType);
-        TypeDescription serializableAcceptingType = mock(TypeDescription.class);
-        when(serializableAcceptingType.getName()).thenReturn(BAR);
-        when(serializableAcceptingType.isAssignableTo(Serializable.class)).thenReturn(true);
-        assertThat(instrumentedType.isAssignableFrom(serializableAcceptingType), is(true));
-        verify(serializableAcceptingType).getName();
-        verify(serializableAcceptingType).isAssignableTo(Serializable.class);
-        verifyNoMoreInteractions(serializableAcceptingType);
-        TypeDescription objectAcceptingType = mock(TypeDescription.class);
-        when(objectAcceptingType.getName()).thenReturn(BAR);
-        when(objectAcceptingType.isAssignableTo(Object.class)).thenReturn(true);
-        assertThat(instrumentedType.isAssignableFrom(objectAcceptingType), is(true));
-        verify(objectAcceptingType).getName();
-        verify(objectAcceptingType).isAssignableTo(Serializable.class);
-        verify(objectAcceptingType).isAssignableTo(Object.class);
-        verifyNoMoreInteractions(objectAcceptingType);
-    }
-
-    @Test
-    public void testIsAssignableTo() throws Exception {
-        TypeDescription nameEqualType = mock(TypeDescription.class);
-        when(nameEqualType.getName()).thenReturn(FOO);
-        assertThat(instrumentedType.isAssignableTo(nameEqualType), is(true));
-        verify(nameEqualType).getName();
-        verifyNoMoreInteractions(nameEqualType);
-        TypeDescription serializableAcceptingType = mock(TypeDescription.class);
-        when(serializableAcceptingType.getName()).thenReturn(BAR);
-        when(serializableAcceptingType.isAssignableFrom(Serializable.class)).thenReturn(true);
-        assertThat(instrumentedType.isAssignableTo(serializableAcceptingType), is(true));
-        verify(serializableAcceptingType).getName();
-        verify(serializableAcceptingType).isAssignableFrom(Serializable.class);
-        verifyNoMoreInteractions(serializableAcceptingType);
-        TypeDescription objectAcceptingType = mock(TypeDescription.class);
-        when(objectAcceptingType.getName()).thenReturn(BAR);
-        when(objectAcceptingType.isAssignableFrom(Object.class)).thenReturn(true);
-        assertThat(instrumentedType.isAssignableTo(objectAcceptingType), is(true));
-        verify(objectAcceptingType).getName();
-        verify(objectAcceptingType).isAssignableFrom(Serializable.class);
-        verify(objectAcceptingType).isAssignableFrom(Object.class);
-        verifyNoMoreInteractions(objectAcceptingType);
-    }
-
-    @Test
-    public void testRepresents() throws Exception {
-        assertThat(instrumentedType.represents(Object.class), is(false));
-        assertThat(instrumentedType.represents(Serializable.class), is(false));
-    }
-
-    @Test
-    public void testGetSupertype() throws Exception {
-        assertThat(instrumentedType.getSupertype().getName(), is(Object.class.getName()));
-    }
-
-    @Test
-    public void testGetInterfaces() throws Exception {
-        assertThat(instrumentedType.getInterfaces().size(), is(1));
-        assertThat(instrumentedType.getInterfaces().get(0).getName(), is(Serializable.class.getName()));
-    }
-
-    @Test
-    public void testGetPackageName() throws Exception {
-        assertThat(instrumentedType.getPackageName().length(), is(0));
-    }
-
-    @Test
-    public void testGetStackSize() throws Exception {
-        assertThat(instrumentedType.getStackSize(), is(StackSize.SINGLE));
-    }
-
-    @Test
-    public void testHashCode() throws Exception {
-        assertThat(instrumentedType.hashCode(), is(FOO.hashCode()));
-    }
-
-    @Test
-    public void testEquals() throws Exception {
-        TypeDescription typeDescription = mock(TypeDescription.class);
-        when(typeDescription.getName()).thenReturn(FOO);
-        assertThat(instrumentedType, equalTo(typeDescription));
-        verify(typeDescription).getName();
-        verifyNoMoreInteractions(typeDescription);
-    }
+    protected abstract InstrumentedType makePlainInstrumentedType();
 
     @Test
     public void testWithField() throws Exception {
         TypeDescription fieldType = mock(TypeDescription.class);
-        when(fieldType.getInternalName()).thenReturn(BAR);
-        instrumentedType = instrumentedType.withField(QUX, fieldType, Modifier.PUBLIC);
+        when(fieldType.getInternalName()).thenReturn(FOO);
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.getDeclaredFields().size(), is(0));
+        instrumentedType = instrumentedType.withField(BAR, fieldType, Opcodes.ACC_PUBLIC);
         assertThat(instrumentedType.getDeclaredFields().size(), is(1));
         FieldDescription fieldDescription = instrumentedType.getDeclaredFields().get(0);
         assertThat(fieldDescription.getFieldType(), is(fieldType));
-        assertThat(fieldDescription.getModifiers(), is(Modifier.PUBLIC));
-        assertThat(fieldDescription.isSynthetic(), is(false));
-        assertThat(fieldDescription.getName(), is(QUX));
+        assertThat(fieldDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
+        assertThat(fieldDescription.getName(), is(BAR));
     }
 
     @Test
     public void testWithFieldOfInstrumentedType() throws Exception {
-        instrumentedType = instrumentedType.withField(QUX, instrumentedType, Modifier.PUBLIC);
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.getDeclaredFields().size(), is(0));
+        instrumentedType = instrumentedType.withField(BAR, instrumentedType, Opcodes.ACC_PUBLIC);
         assertThat(instrumentedType.getDeclaredFields().size(), is(1));
         FieldDescription fieldDescription = instrumentedType.getDeclaredFields().get(0);
-        assertThat(fieldDescription.getFieldType(), sameInstance((TypeDescription) instrumentedType));
-        assertThat(fieldDescription.getModifiers(), is(Modifier.PUBLIC));
-        assertThat(fieldDescription.isSynthetic(), is(false));
-        assertThat(fieldDescription.getName(), is(QUX));
+        assertThat(fieldDescription.getFieldType(), is((TypeDescription) instrumentedType));
+        assertThat(fieldDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
+        assertThat(fieldDescription.getName(), is(BAR));
     }
 
     @Test
     public void testWithMethod() throws Exception {
-        TypeDescription parameterType = mock(TypeDescription.class);
-        when(parameterType.getInternalName()).thenReturn(BAR);
         TypeDescription returnType = mock(TypeDescription.class);
-        when(returnType.getInternalName()).thenReturn(BAR);
-        instrumentedType = instrumentedType.withMethod(QUX, returnType, Arrays.asList(parameterType), Modifier.PUBLIC);
+        TypeDescription parameterType = mock(TypeDescription.class);
+        when(returnType.getInternalName()).thenReturn(FOO);
+        when(parameterType.getInternalName()).thenReturn(QUX);
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.getDeclaredFields().size(), is(0));
+        instrumentedType = instrumentedType.withMethod(BAR, returnType, Arrays.asList(parameterType), Opcodes.ACC_PUBLIC);
         assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
         MethodDescription methodDescription = instrumentedType.getDeclaredMethods().get(0);
-        assertThat(methodDescription.getParameterTypes().size(), is(1));
-        assertThat(methodDescription.getParameterTypes().get(0), is(parameterType));
         assertThat(methodDescription.getReturnType(), is(returnType));
-        assertThat(methodDescription.getModifiers(), is(Modifier.PUBLIC));
-        assertThat(methodDescription.isSynthetic(), is(false));
-        assertThat(methodDescription.getName(), is(QUX));
+        assertThat(methodDescription.getParameterTypes().size(), is(1));
+        assertThat(methodDescription.getParameterTypes(), is(Arrays.asList(parameterType)));
+        assertThat(methodDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
+        assertThat(methodDescription.getName(), is(BAR));
     }
 
     @Test
     public void testWithMethodOfInstrumentedType() throws Exception {
-        instrumentedType = instrumentedType.withMethod(QUX, instrumentedType, Arrays.asList(instrumentedType), Modifier.PUBLIC);
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.getDeclaredFields().size(), is(0));
+        instrumentedType = instrumentedType.withMethod(BAR, instrumentedType, Arrays.asList(instrumentedType), Opcodes.ACC_PUBLIC);
         assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
         MethodDescription methodDescription = instrumentedType.getDeclaredMethods().get(0);
+        assertThat(methodDescription.getReturnType(), is((TypeDescription) instrumentedType));
         assertThat(methodDescription.getParameterTypes().size(), is(1));
-        assertThat(methodDescription.getParameterTypes().get(0), sameInstance((TypeDescription) instrumentedType));
-        assertThat(methodDescription.getReturnType(), sameInstance((TypeDescription) instrumentedType));
-        assertThat(methodDescription.getModifiers(), is(Modifier.PUBLIC));
-        assertThat(methodDescription.isSynthetic(), is(false));
-        assertThat(methodDescription.getName(), is(QUX));
+        assertThat(methodDescription.getParameterTypes(), is(Arrays.asList((TypeDescription) instrumentedType)));
+        assertThat(methodDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
+        assertThat(methodDescription.getName(), is(BAR));
     }
+
+    @Test
+    public void testGetStackSize() throws Exception {
+        assertThat(makePlainInstrumentedType().getStackSize(), is(StackSize.SINGLE));
+    }
+
+    @Test
+    public void testHashCode() throws Exception {
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.hashCode(), is(instrumentedType.getName().hashCode()));
+    }
+
+    @Test
+    public void testEquals() throws Exception {
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        TypeDescription other = mock(TypeDescription.class);
+        when(other.getName()).thenReturn(instrumentedType.getName());
+        assertThat(instrumentedType.equals(other), is(true));
+        verify(other, atLeast(1)).getName();
+    }
+
+    @Test
+    public abstract void testIsAssignableFrom();
+
+    @Test
+    public abstract void testIsAssignableTo();
+
+    @Test
+    public abstract void testRepresents();
+
+    @Test
+    public abstract void testSupertype();
+
+    @Test
+    public abstract void testInterfaces();
+
+    @Test
+    public abstract void testPackageName();
+
+    @Test
+    public abstract void testSimpleName();
 }

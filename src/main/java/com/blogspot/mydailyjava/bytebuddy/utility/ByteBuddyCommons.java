@@ -95,25 +95,42 @@ public final class ByteBuddyCommons {
      * Validates that a string represents a valid Java identifier, i.e. is not a Java keyword and is built up
      * by Java identifier compatible characters.
      *
-     * @param methodName The identifier to validate.
+     * @param identifier The identifier to validate.
      * @return The same identifier.
      */
-    public static String isValidIdentifier(String methodName) {
-        if (JAVA_KEYWORDS.contains(nonNull(methodName))) {
-            throw new IllegalArgumentException("Keyword cannot be used as identifier: " + methodName);
+    public static String isValidIdentifier(String identifier) {
+        if (JAVA_KEYWORDS.contains(nonNull(identifier))) {
+            throw new IllegalArgumentException("Keyword cannot be used as Java identifier: " + identifier);
         }
-        if (methodName.isEmpty()) {
-            throw new IllegalArgumentException("An empty string is not a valid identifier");
+        if (identifier.isEmpty()) {
+            throw new IllegalArgumentException("An empty string is not a valid Java identifier");
         }
-        if (!Character.isJavaIdentifierStart(methodName.charAt(0))) {
-            throw new IllegalArgumentException("Not a valid identifier: " + methodName);
+        if (!Character.isJavaIdentifierStart(identifier.charAt(0))) {
+            throw new IllegalArgumentException("Not a valid Java identifier: " + identifier);
         }
-        for (char character : methodName.toCharArray()) {
+        for (char character : identifier.toCharArray()) {
             if (!Character.isJavaIdentifierPart(character)) {
-                throw new IllegalArgumentException("Not a valid identifier: " + methodName);
+                throw new IllegalArgumentException("Not a valid Java identifier: " + identifier);
             }
         }
-        return methodName;
+        return identifier;
+    }
+
+    /**
+     * Validates a Java type name to be valid.
+     *
+     * @param typeName The suggested name.
+     * @return The same name that was given as an argument.
+     */
+    public static String isValidTypeName(String typeName) {
+        String[] segments = nonNull(typeName).split("\\.");
+        if (segments.length == 0) {
+            throw new IllegalArgumentException("An empty string is not a valid Java type name");
+        }
+        for (String segment : segments) {
+            isValidIdentifier(segment);
+        }
+        return typeName;
     }
 
     /**

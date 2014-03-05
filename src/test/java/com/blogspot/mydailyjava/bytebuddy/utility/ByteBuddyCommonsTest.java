@@ -14,7 +14,7 @@ import static org.junit.Assert.assertEquals;
 
 public class ByteBuddyCommonsTest {
 
-    private static final String FOO = "foo", BAR = "bar", QUX = "qux";
+    private static final String FOO = "foo", BAR = "bar", QUX = "qux", FOOBAR = "foo.bar";
 
     @Test
     public void testNonNull() throws Exception {
@@ -70,6 +70,16 @@ public class ByteBuddyCommonsTest {
     @Test(expected = IllegalArgumentException.class)
     public void testIsValidIdentifierThrowsException() throws Exception {
         isValidIdentifier(MethodDescription.CONSTRUCTOR_INTERNAL_NAME);
+    }
+
+    @Test
+    public void testIsValidJavaTypeName() throws Exception {
+        assertThat(isValidTypeName(FOOBAR), is(FOOBAR));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testIsValidJavaTypeNameThrowsException() throws Exception {
+        assertThat(isValidTypeName("." + FOO), is(FOOBAR));
     }
 
     @Test

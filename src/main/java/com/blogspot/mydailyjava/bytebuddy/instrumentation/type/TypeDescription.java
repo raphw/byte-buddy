@@ -412,10 +412,25 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
      */
     String getCanonicalName();
 
+    /**
+     * Checks if this type description represents an anonymous type.
+     *
+     * @return {@code true} if this type description represents an anonymous type.
+     */
     boolean isAnonymousClass();
 
+    /**
+     * Checks if this type description represents a local type.
+     *
+     * @return {@code true} if this type description represents a local type.
+     */
     boolean isLocalClass();
 
+    /**
+     * Checks if this type description represents a member type.
+     *
+     * @return {@code true} if this type description represents a member type.
+     */
     boolean isMemberClass();
 
     /**

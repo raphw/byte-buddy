@@ -19,50 +19,82 @@ import java.util.*;
 
 import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.named;
 
+/**
+ * A delegate class that represents a method proxy factory for an instrumentation where an instrumentation is
+ * conducted by creating a subclass of a given type. This delegate represents a mutable data structure.
+ */
 public class SubclassInstrumentationContextDelegate
         implements AuxiliaryType.MethodProxyFactory,
         Instrumentation.Context.Default.AuxiliaryTypeNamingStrategy,
         MethodRegistry.Compiled {
 
-    private static final String PREFIX = "delegate";
+    private static final String DEFAULT_PREFIX = "delegate";
 
     private InstrumentedType instrumentedType;
 
+    private final String prefix;
     private final Random random;
-    private final List<MethodDescription> proxyMethods;
-    private final Map<MethodDescription, MethodDescription> targetMethodToProxyMethod;
-    private final Map<MethodDescription, MethodDescription> proxyMethodToTargetMethod;
 
+    private final List<MethodDescription> orderedProxyMethods;
+    private final Map<MethodDescription, MethodDescription> knownTargetMethodsToProxyMethod;
+    private final Map<MethodDescription, MethodDescription> registeredProxyMethodToTargetMethod;
+
+    /**
+     * Creates a new delegate with a default prefix.
+     *
+     * @param instrumentedType The instrumented type that is subject of the instrumentation.
+     */
     public SubclassInstrumentationContextDelegate(InstrumentedType instrumentedType) {
+        this(instrumentedType, DEFAULT_PREFIX);
+    }
+
+    /**
+     * Creates a new delegate.
+     *
+     * @param instrumentedType The instrumented type that is subject of the instrumentation.
+     * @param prefix           The prefix to be used for the delegation methods.
+     */
+    public SubclassInstrumentationContextDelegate(InstrumentedType instrumentedType, String prefix) {
+        this.prefix = prefix;
         this.instrumentedType = instrumentedType;
         this.random = new Random();
-        proxyMethods = new ArrayList<MethodDescription>();
-        targetMethodToProxyMethod = new HashMap<MethodDescription, MethodDescription>();
-        proxyMethodToTargetMethod = new HashMap<MethodDescription, MethodDescription>();
+        orderedProxyMethods = new ArrayList<MethodDescription>();
+        knownTargetMethodsToProxyMethod = new HashMap<MethodDescription, MethodDescription>();
+        registeredProxyMethodToTargetMethod = new HashMap<MethodDescription, MethodDescription>();
     }
 
     @Override
     public String name(AuxiliaryType auxiliaryType) {
-        return String.format("%s$%s$%d", instrumentedType.getName(), PREFIX, Math.abs(random.nextInt()));
+        return String.format("%s$%s$%d", instrumentedType.getName(), DEFAULT_PREFIX, Math.abs(random.nextInt()));
     }
 
     @Override
     public MethodDescription requireProxyMethodFor(MethodDescription targetMethod) {
-        String name = String.format("%s$%s$%d", targetMethod.getInternalName(), PREFIX, Math.abs(random.nextInt()));
+        MethodDescription proxyMethod = knownTargetMethodsToProxyMethod.get(targetMethod);
+        if (proxyMethod != null) {
+            return proxyMethod;
+        }
+        String name = String.format("%s$%s$%d", targetMethod.getInternalName(), prefix, Math.abs(random.nextInt()));
         instrumentedType = instrumentedType.withMethod(name,
                 targetMethod.getReturnType(),
                 targetMethod.getParameterTypes(),
                 (targetMethod.isStatic() ? Opcodes.ACC_STATIC : 0) | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL);
-        MethodDescription proxyMethod = instrumentedType.getDeclaredMethods().filter(named(name)).getOnly();
-        if (targetMethodToProxyMethod.put(targetMethod, proxyMethod) != null) {
-            proxyMethodToTargetMethod.put(proxyMethod, targetMethod);
-            proxyMethods.add(proxyMethod);
-        }
+        proxyMethod = instrumentedType.getDeclaredMethods().filter(named(name)).getOnly();
+        knownTargetMethodsToProxyMethod.put(targetMethod, proxyMethod);
+        registeredProxyMethodToTargetMethod.put(proxyMethod, targetMethod);
+        orderedProxyMethods.add(proxyMethod);
         return proxyMethod;
     }
 
+    /**
+     * Returns an iterable containing all proxy methods that were registered with this delegate. The iterable can
+     * safely be co-modified in the same thread in order to allow the registration of additional proxy methods with
+     * this delegate while other proxy are already created for the instrumented type.
+     *
+     * @return An co-modifiable iterable of all proxy method that were registered with this delegate.
+     */
     public Iterable<MethodDescription> getProxiedMethods() {
-        return new TypeWriter.SameThreadCoModifiableIterable<MethodDescription>(proxyMethods);
+        return new TypeWriter.SameThreadCoModifiableIterable<MethodDescription>(orderedProxyMethods);
     }
 
     private class SameSignatureMethodCall implements Entry, ByteCodeAppender {
@@ -70,6 +102,9 @@ public class SubclassInstrumentationContextDelegate
         private final MethodDescription targetDescription;
 
         private SameSignatureMethodCall(MethodDescription targetDescription) {
+            if (targetDescription == null) {
+                throw new IllegalArgumentException("Unknown method: " + targetDescription);
+            }
             this.targetDescription = targetDescription;
         }
 
@@ -109,11 +144,21 @@ public class SubclassInstrumentationContextDelegate
 
     @Override
     public Entry target(MethodDescription methodDescription) {
-        return new SameSignatureMethodCall(proxyMethodToTargetMethod.get(methodDescription));
+        return new SameSignatureMethodCall(registeredProxyMethodToTargetMethod.get(methodDescription));
     }
 
     @Override
     public InstrumentedType getInstrumentedType() {
         return instrumentedType;
+    }
+
+    @Override
+    public String toString() {
+        return "SubclassInstrumentationContextDelegate{" +
+                "instrumentedType=" + instrumentedType +
+                ", prefix='" + prefix + '\'' +
+                ", random=" + random +
+                ", knownTargetMethodsToProxyMethod=" + knownTargetMethodsToProxyMethod +
+                '}';
     }
 }

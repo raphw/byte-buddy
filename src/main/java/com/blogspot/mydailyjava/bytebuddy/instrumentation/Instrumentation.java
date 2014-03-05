@@ -194,6 +194,22 @@ public interface Instrumentation {
             }
             return new ByteCodeAppender.Compound(byteCodeAppender);
         }
+
+        @Override
+        public boolean equals(Object o) {
+            return this == o || !(o == null || getClass() != o.getClass())
+                    && Arrays.equals(instrumentation, ((Compound) o).instrumentation);
+        }
+
+        @Override
+        public int hashCode() {
+            return Arrays.hashCode(instrumentation);
+        }
+
+        @Override
+        public String toString() {
+            return "Compound{" + Arrays.toString(instrumentation) + '}';
+        }
     }
 
     /**

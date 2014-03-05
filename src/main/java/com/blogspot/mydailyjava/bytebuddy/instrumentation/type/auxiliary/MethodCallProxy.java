@@ -7,8 +7,8 @@ import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.FieldRegistry;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.MethodRegistry;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.TypeWriter;
+import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.LoadedSuperclassTypeInstrumentation;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.SubclassInstrumentationContextDelegate;
-import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.SubclassTypeInstrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.ModifierContributor;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
@@ -190,7 +190,7 @@ public class MethodCallProxy implements AuxiliaryType {
     public DynamicType<?> make(String auxiliaryTypeName, MethodProxyFactory methodProxyFactory) {
         MethodDescription proxiedMethod = methodProxyFactory.requireProxyMethodFor(this.proxiedMethod);
         int fieldIndex = 0;
-        InstrumentedType proxy = new SubclassTypeInstrumentation(ClassFormatVersion.forCurrentJavaVersion(),
+        InstrumentedType proxy = new LoadedSuperclassTypeInstrumentation(ClassFormatVersion.forCurrentJavaVersion(),
                 Object.class,
                 Arrays.<Class<?>>asList(Runnable.class, Callable.class),
                 Opcodes.ACC_PUBLIC,
@@ -243,7 +243,7 @@ public class MethodCallProxy implements AuxiliaryType {
 
     @Override
     public int hashCode() {
-        return  31 * proxiedMethod.hashCode() + assigner.hashCode();
+        return 31 * proxiedMethod.hashCode() + assigner.hashCode();
     }
 
     @Override

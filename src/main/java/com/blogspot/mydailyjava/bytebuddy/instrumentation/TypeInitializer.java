@@ -65,7 +65,7 @@ public interface TypeInitializer {
 
         @Override
         public String toString() {
-            return "Compound{typeInitializer=" + Arrays.toString(typeInitializer) + '}';
+            return "TypeInitializer.Compound{typeInitializer=" + Arrays.toString(typeInitializer) + '}';
         }
     }
 

@@ -18,9 +18,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static com.blogspot.mydailyjava.bytebuddy.utility.ByteBuddyCommons.isValidIdentifier;
+import static com.blogspot.mydailyjava.bytebuddy.utility.ByteBuddyCommons.isValidTypeName;
 
-public class SubclassTypeInstrumentation
+/**
+ * Represents a type instrumentation that creates a new type based on a loaded superclass.
+ */
+public class LoadedSuperclassTypeInstrumentation
         extends InstrumentedType.AbstractBase
         implements NamingStrategy.UnnamedType {
 
@@ -30,27 +33,48 @@ public class SubclassTypeInstrumentation
     private final int modifiers;
     private final String name;
 
-    public SubclassTypeInstrumentation(ClassFormatVersion classFormatVersion,
-                                       Class<?> superClass,
-                                       Collection<Class<?>> interfaces,
-                                       int modifiers,
-                                       NamingStrategy namingStrategy) {
+    /**
+     * Creates a new immutable type instrumentation for a loaded superclass.
+     *
+     * @param classFormatVersion The class format version of this instrumentation.
+     * @param superClass         The superclass of this instrumentation.
+     * @param interfaces         A collection of loaded interfaces that are implemented by this instrumented class.
+     * @param modifiers          The modifiers for this instrumentation.
+     * @param namingStrategy     The naming strategy to be applied for this instrumentation.
+     */
+    public LoadedSuperclassTypeInstrumentation(ClassFormatVersion classFormatVersion,
+                                               Class<?> superClass,
+                                               Collection<Class<?>> interfaces,
+                                               int modifiers,
+                                               NamingStrategy namingStrategy) {
 
         this.classFormatVersion = classFormatVersion;
         this.superClass = superClass;
         this.interfaces = interfaces;
         this.modifiers = modifiers;
-        this.name = isValidIdentifier(namingStrategy.getName(this));
+        this.name = isValidTypeName(namingStrategy.getName(this));
     }
 
-    protected SubclassTypeInstrumentation(ClassFormatVersion classFormatVersion,
-                                          Class<?> superClass,
-                                          Collection<Class<?>> interfaces,
-                                          int modifiers,
-                                          String name,
-                                          List<? extends FieldDescription> fieldDescriptions,
-                                          List<? extends MethodDescription> methodDescriptions,
-                                          TypeInitializer typeInitializer) {
+    /**
+     * Creates a new immutable type instrumentation for a loaded superclass.
+     *
+     * @param classFormatVersion The class format version of this instrumentation.
+     * @param superClass         The superclass of this instrumentation.
+     * @param interfaces         A collection of loaded interfaces that are implemented by this instrumented class.
+     * @param modifiers          The modifiers for this instrumentation.
+     * @param name               The name of this instrumented type.
+     * @param fieldDescriptions  A list of field descriptions to be applied for this instrumentation.
+     * @param methodDescriptions A list of method descriptions to be applied for this instrumentation.
+     * @param typeInitializer    A type initializer to be applied for this instrumentation.
+     */
+    protected LoadedSuperclassTypeInstrumentation(ClassFormatVersion classFormatVersion,
+                                                  Class<?> superClass,
+                                                  Collection<Class<?>> interfaces,
+                                                  int modifiers,
+                                                  String name,
+                                                  List<? extends FieldDescription> fieldDescriptions,
+                                                  List<? extends MethodDescription> methodDescriptions,
+                                                  TypeInitializer typeInitializer) {
         super(typeInitializer, name, fieldDescriptions, methodDescriptions);
         this.classFormatVersion = classFormatVersion;
         this.superClass = superClass;
@@ -69,7 +93,7 @@ public class SubclassTypeInstrumentation
         }
         List<FieldDescription> fieldDescriptions = new ArrayList<FieldDescription>(this.fieldDescriptions);
         fieldDescriptions.add(additionalField);
-        return new SubclassTypeInstrumentation(classFormatVersion,
+        return new LoadedSuperclassTypeInstrumentation(classFormatVersion,
                 superClass,
                 interfaces,
                 modifiers,
@@ -90,7 +114,7 @@ public class SubclassTypeInstrumentation
         }
         List<MethodDescription> methodDescriptions = new ArrayList<MethodDescription>(this.methodDescriptions);
         methodDescriptions.add(additionalMethod);
-        return new SubclassTypeInstrumentation(classFormatVersion,
+        return new LoadedSuperclassTypeInstrumentation(classFormatVersion,
                 superClass,
                 interfaces,
                 modifiers,
@@ -102,7 +126,7 @@ public class SubclassTypeInstrumentation
 
     @Override
     public InstrumentedType withInitializer(TypeInitializer typeInitializer) {
-        return new SubclassTypeInstrumentation(classFormatVersion,
+        return new LoadedSuperclassTypeInstrumentation(classFormatVersion,
                 superClass,
                 interfaces,
                 modifiers,
@@ -110,32 +134,6 @@ public class SubclassTypeInstrumentation
                 fieldDescriptions,
                 methodDescriptions,
                 new TypeInitializer.Compound(this.typeInitializer, typeInitializer));
-    }
-
-    @Override
-    public boolean isAssignableFrom(TypeDescription typeDescription) {
-        if (typeDescription.getName().equals(getName())) {
-            return true;
-        }
-        for (Class<?> anInterface : interfaces) {
-            if (typeDescription.isAssignableTo(anInterface)) {
-                return true;
-            }
-        }
-        return typeDescription.isAssignableTo(superClass);
-    }
-
-    @Override
-    public boolean isAssignableTo(TypeDescription typeDescription) {
-        if (typeDescription.getName().equals(getName())) {
-            return true;
-        }
-        for (Class<?> anInterface : interfaces) {
-            if (typeDescription.isAssignableFrom(anInterface)) {
-                return true;
-            }
-        }
-        return typeDescription.isAssignableFrom(superClass);
     }
 
     @Override
@@ -203,5 +201,16 @@ public class SubclassTypeInstrumentation
     @Override
     public ClassFormatVersion getClassFormatVersion() {
         return classFormatVersion;
+    }
+
+    @Override
+    public String toString() {
+        return "LoadedSuperclassTypeInstrumentation{" +
+                "classFormatVersion=" + classFormatVersion +
+                ", superClass=" + superClass +
+                ", interfaces=" + interfaces +
+                ", modifiers=" + modifiers +
+                ", name='" + name + '\'' +
+                '}';
     }
 }
