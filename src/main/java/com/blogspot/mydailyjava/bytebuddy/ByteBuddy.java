@@ -279,9 +279,15 @@ public class ByteBuddy {
     }
 
     public <T> DynamicType.Builder<T> subclass(Class<T> superType, ConstructorStrategy constructorStrategy) {
+        Class<?> actualSuperType = superType;
+        List<Class<?>> interfaceTypes = this.interfaceTypes;
+        if (nonNull(superType).isInterface()) {
+            actualSuperType = Object.class;
+            interfaceTypes = join(superType, interfaceTypes);
+        }
         return new LoadedSuperclassDynamicTypeBuilder<T>(classFormatVersion,
                 namingStrategy,
-                superType,
+                actualSuperType,
                 interfaceTypes,
                 Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER,
                 TypeAttributeAppender.NoOp.INSTANCE,
@@ -291,7 +297,7 @@ public class ByteBuddy {
                 methodRegistry,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
-                constructorStrategy);
+                nonNull(constructorStrategy));
     }
 
     public ByteBuddy withClassFormatVersion(ClassFormatVersion classFormatVersion) {

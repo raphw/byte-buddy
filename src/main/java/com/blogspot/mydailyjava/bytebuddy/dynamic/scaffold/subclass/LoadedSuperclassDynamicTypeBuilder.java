@@ -27,6 +27,11 @@ import java.util.List;
 import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
 import static com.blogspot.mydailyjava.bytebuddy.utility.ByteBuddyCommons.*;
 
+/**
+ * Creates a dynamic type on basis of loaded types where the dynamic type extends the loaded types.
+ *
+ * @param <T> The best known loaded type representing the built dynamic type.
+ */
 public class LoadedSuperclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<T> {
 
     private class SubclassFieldAnnotationTarget<T> extends AbstractDelegatingBuilder<T> implements FieldAnnotationTarget<T> {
@@ -183,6 +188,25 @@ public class LoadedSuperclassDynamicTypeBuilder<T> extends DynamicType.Builder.A
     private final FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory;
     private final MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory;
 
+    /**
+     * Creates a new immutable type builder for a subclassing a loaded class.
+     *
+     * @param classFormatVersion                    The class format version for the created dynamic type.
+     * @param namingStrategy                        The naming strategy for naming the dynamic type.
+     * @param superType                             The loaded super type the dynamic type should extend.
+     * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
+     * @param modifiers                             The modifiers to be represented by the dynamic type.
+     * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
+     * @param ignoredMethods                        A matcher for determining methods that are to be ignored for instrumentation.
+     * @param classVisitorWrapperChain              A chain of ASM class visitors to apply to the writing process.
+     * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
+     * @param methodRegistry                        The method registry to apply to the dynamic type creation.
+     * @param defaultFieldAttributeAppenderFactory  The field attribute appender factory that should be applied by default if
+     *                                              no specific appender was specified for a given field.
+     * @param defaultMethodAttributeAppenderFactory The method attribute appender factory that should be applied by default
+     *                                              if no specific appender was specified for a given method.
+     * @param constructorStrategy                   The strategy for creating constructors when defining this dynamic type.
+     */
     public LoadedSuperclassDynamicTypeBuilder(ClassFormatVersion classFormatVersion,
                                               NamingStrategy namingStrategy,
                                               Class<?> superType,
@@ -212,6 +236,28 @@ public class LoadedSuperclassDynamicTypeBuilder<T> extends DynamicType.Builder.A
         this.methodRegistry = constructorStrategy.inject(methodRegistry, defaultMethodAttributeAppenderFactory);
     }
 
+    /**
+     * Creates a new immutable type builder for a subclassing a loaded class.
+     *
+     * @param classFormatVersion                    The class format version for the created dynamic type.
+     * @param namingStrategy                        The naming strategy for naming the dynamic type.
+     * @param superType                             The loaded super type the dynamic type should extend.
+     * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
+     * @param modifiers                             The modifiers to be represented by the dynamic type.
+     * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
+     * @param ignoredMethods                        A matcher for determining methods that are to be ignored for instrumentation.
+     * @param classVisitorWrapperChain              A chain of ASM class visitors to apply to the writing process.
+     * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
+     * @param methodRegistry                        The method registry to apply to the dynamic type creation.
+     * @param defaultFieldAttributeAppenderFactory  The field attribute appender factory that should be applied by default if
+     *                                              no specific appender was specified for a given field.
+     * @param defaultMethodAttributeAppenderFactory The method attribute appender factory that should be applied by default
+     *                                              if no specific appender was specified for a given method.
+     * @param fieldTokens                           A list of field representations that were added explicitly to this
+     *                                              dynamic type.
+     * @param methodTokens                          A list of method representations that were added explicitly to this
+     *                                              dynamic type.
+     */
     protected LoadedSuperclassDynamicTypeBuilder(ClassFormatVersion classFormatVersion,
                                                  NamingStrategy namingStrategy,
                                                  Class<?> superType,

@@ -1,6 +1,13 @@
 package com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass;
 
+import com.blogspot.mydailyjava.bytebuddy.ClassFormatVersion;
+import com.blogspot.mydailyjava.bytebuddy.asm.ClassVisitorWrapper;
+import com.blogspot.mydailyjava.bytebuddy.dynamic.ClassLoadingStrategy;
+import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.TypeWriter;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.TypeInitializer;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
@@ -10,18 +17,23 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
+import org.mockito.asm.Opcodes;
+import sun.reflect.ReflectionFactory;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.Iterator;
 
+import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsNot.not;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class SubclassInstrumentationContextDelegateTest {
 
-    private static final String FOO = "foo";
+    private static final String FOO = "foo", BAR = "bar", TO_STRING = "toString";
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -54,7 +66,7 @@ public class SubclassInstrumentationContextDelegateTest {
     }
 
     @Test
-    public void testProxyMethod() throws Exception {
+    public void testProxyMethodRegistration() throws Exception {
         MethodDescription firstProxyMethod = delegate.requireProxyMethodFor(firstMethod);
         assertThat(firstProxyMethod.isStatic(), is(false));
         assertThat(firstProxyMethod, not(is(firstMethod)));
@@ -78,6 +90,46 @@ public class SubclassInstrumentationContextDelegateTest {
         assertThat(delegate.target(next).getByteCodeAppender(), notNullValue());
         assertThat(delegate.target(next).isDefineMethod(), is(true));
         assertThat(iterator.hasNext(), is(false));
+    }
+
+    @Test
+    public void testProxyMethodCreation() throws Exception {
+        TypeDescription objectType = new TypeDescription.ForLoadedType(Object.class);
+        when(instrumentedType.getModifiers()).thenReturn(Opcodes.ACC_PUBLIC);
+        TypeInitializer typeInitializer = mock(TypeInitializer.class);
+        when(instrumentedType.getTypeInitializer()).thenReturn(typeInitializer);
+        when(instrumentedType.getName()).thenReturn(BAR);
+        when(instrumentedType.getInternalName()).thenReturn(BAR);
+        when(instrumentedType.getStackSize()).thenReturn(StackSize.SINGLE);
+        when(instrumentedType.getSupertype()).thenReturn(objectType);
+        TypeList interfaceTypes = mock(TypeList.class);
+        when(instrumentedType.getInterfaces()).thenReturn(interfaceTypes);
+        Instrumentation.Context instrumentationContext = mock(Instrumentation.Context.class);
+        MethodDescription proxyMethod = delegate.requireProxyMethodFor(objectType.getDeclaredMethods()
+                .filter(named(TO_STRING)).getOnly());
+        TypeWriter.InGeneralPhase<?> typeWriter = new TypeWriter.Builder<Object>(instrumentedType,
+                instrumentationContext,
+                ClassFormatVersion.forCurrentJavaVersion())
+                .build(new ClassVisitorWrapper.Chain());
+        Class<?> loaded = typeWriter
+                .methods()
+                .write(delegate.getProxiedMethods(), delegate)
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        assertThat(loaded.getName(), is(BAR));
+        assertThat(loaded.getDeclaredFields().length, is(0));
+        assertThat(loaded.getDeclaredMethods().length, is(1));
+        assertThat(loaded.getDeclaredConstructors().length, is(0));
+        Constructor<?> constructor = ReflectionFactory.getReflectionFactory()
+                .newConstructorForSerialization(loaded, Object.class.getDeclaredConstructor());
+        Object instance = constructor.newInstance();
+        Method loadedProxyMethod = loaded.getDeclaredMethods()[0];
+        loadedProxyMethod.setAccessible(true);
+        assertThat((String) loadedProxyMethod.invoke(instance), is(instance.toString()));
+        assertThat(loadedProxyMethod.getName(), is(proxyMethod.getName()));
+        assertThat(loadedProxyMethod.getModifiers(), is(proxyMethod.getModifiers()));
+        verify(instrumentationContext).getRegisteredAuxiliaryTypes();
+        verifyNoMoreInteractions(instrumentationContext);
     }
 
     @Test(expected = IllegalArgumentException.class)
