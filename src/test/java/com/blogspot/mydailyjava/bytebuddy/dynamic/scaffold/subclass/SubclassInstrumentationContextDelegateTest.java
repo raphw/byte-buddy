@@ -67,10 +67,16 @@ public class SubclassInstrumentationContextDelegateTest {
         MethodDescription next = iterator.next();
         assertThat(next, is(firstProxyMethod));
         assertThat(delegate.target(next), notNullValue());
+        assertThat(delegate.target(next).getAttributeAppender(), notNullValue());
+        assertThat(delegate.target(next).getByteCodeAppender(), notNullValue());
+        assertThat(delegate.target(next).isDefineMethod(), is(true));
         assertThat(iterator.hasNext(), is(true));
         next = iterator.next();
         assertThat(next, is(secondProxyMethod));
         assertThat(delegate.target(next), notNullValue());
+        assertThat(delegate.target(next).getAttributeAppender(), notNullValue());
+        assertThat(delegate.target(next).getByteCodeAppender(), notNullValue());
+        assertThat(delegate.target(next).isDefineMethod(), is(true));
         assertThat(iterator.hasNext(), is(false));
     }
 

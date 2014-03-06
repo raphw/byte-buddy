@@ -123,13 +123,12 @@ public class SubclassInstrumentationContextDelegate
         public Size apply(MethodVisitor methodVisitor,
                           Instrumentation.Context instrumentationContext,
                           MethodDescription instrumentedMethod) {
-            StackManipulation.Size size = MethodVariableAccess.loadAll(instrumentedMethod)
-                    .apply(methodVisitor, instrumentationContext);
-            size = size.aggregate(MethodInvocation.invoke(targetDescription)
-                    .special(instrumentedType.getSupertype())
-                    .apply(methodVisitor, instrumentationContext));
-            MethodReturn.returning(instrumentedMethod.getReturnType()).apply(methodVisitor, instrumentationContext);
-            return new Size(size.getMaximalSize(), instrumentedMethod.getStackSize());
+            StackManipulation.Size stackSize = new StackManipulation.Compound(
+                    MethodVariableAccess.loadAll(instrumentedMethod),
+                    MethodInvocation.invoke(targetDescription).special(instrumentedType.getSupertype()),
+                    MethodReturn.returning(instrumentedMethod.getReturnType())
+            ).apply(methodVisitor, instrumentationContext);
+            return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
         }
 
         @Override
