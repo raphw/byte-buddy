@@ -1,6 +1,5 @@
 package com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass;
 
-import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.MethodRegistry;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.TypeWriter;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
@@ -17,8 +16,6 @@ import org.objectweb.asm.Opcodes;
 
 import java.util.*;
 
-import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.named;
-
 /**
  * A delegate class that represents a method proxy factory for an instrumentation where an instrumentation is
  * conducted by creating a subclass of a given type. This delegate represents a mutable data structure.
@@ -26,15 +23,14 @@ import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.
 public class SubclassInstrumentationContextDelegate
         implements AuxiliaryType.MethodProxyFactory,
         Instrumentation.Context.Default.AuxiliaryTypeNamingStrategy,
-        MethodRegistry.Compiled {
+        TypeWriter.MethodPool {
 
     private static final String DEFAULT_PREFIX = "delegate";
-
-    private InstrumentedType instrumentedType;
 
     private final String prefix;
     private final Random random;
 
+    private final InstrumentedType instrumentedType;
     private final List<MethodDescription> orderedProxyMethods;
     private final Map<MethodDescription, MethodDescription> knownTargetMethodsToProxyMethod;
     private final Map<MethodDescription, MethodDescription> registeredProxyMethodToTargetMethod;
@@ -75,11 +71,11 @@ public class SubclassInstrumentationContextDelegate
             return proxyMethod;
         }
         String name = String.format("%s$%s$%d", targetMethod.getInternalName(), prefix, Math.abs(random.nextInt()));
-        instrumentedType = instrumentedType.withMethod(name,
+        proxyMethod = new MethodDescription.Latent(name,
+                instrumentedType,
                 targetMethod.getReturnType(),
                 targetMethod.getParameterTypes(),
                 (targetMethod.isStatic() ? Opcodes.ACC_STATIC : 0) | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL);
-        proxyMethod = instrumentedType.getDeclaredMethods().filter(named(name)).getOnly();
         knownTargetMethodsToProxyMethod.put(targetMethod, proxyMethod);
         registeredProxyMethodToTargetMethod.put(proxyMethod, targetMethod);
         orderedProxyMethods.add(proxyMethod);
@@ -145,11 +141,6 @@ public class SubclassInstrumentationContextDelegate
     @Override
     public Entry target(MethodDescription methodDescription) {
         return new SameSignatureMethodCall(registeredProxyMethodToTargetMethod.get(methodDescription));
-    }
-
-    @Override
-    public InstrumentedType getInstrumentedType() {
-        return instrumentedType;
     }
 
     @Override

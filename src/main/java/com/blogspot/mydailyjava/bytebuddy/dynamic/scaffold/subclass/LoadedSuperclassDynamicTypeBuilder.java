@@ -435,7 +435,7 @@ public class LoadedSuperclassDynamicTypeBuilder<T> extends DynamicType.Builder.A
                 .attributeType(attributeAppender)
                 .fields()
                 .write(instrumentedType.getDeclaredFields(),
-                        fieldRegistry.compile(instrumentedType, FieldAttributeAppender.NoOp.INSTANCE))
+                        fieldRegistry.compile(instrumentedType, TypeWriter.FieldPool.Entry.NoOp.INSTANCE))
                 .methods()
                 .write(instrumentedType.getDeclaredMethods().filter(not(ignoredMethods).and(isOverridable())), compiledMethodRegistry)
                 .write(contextDelegate.getProxiedMethods(), contextDelegate)

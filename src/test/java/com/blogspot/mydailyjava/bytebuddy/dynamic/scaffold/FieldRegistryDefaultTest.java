@@ -24,7 +24,9 @@ public class FieldRegistryDefaultTest {
     @Mock
     private InstrumentedType instrumentedType;
     @Mock
-    private FieldAttributeAppender.Factory distinct, fallback;
+    private FieldAttributeAppender.Factory distinct;
+    @Mock
+    private TypeWriter.FieldPool.Entry fallback;
     @Mock
     private FieldDescription knownField, unknownField;
     @Mock
@@ -51,7 +53,8 @@ public class FieldRegistryDefaultTest {
         assertThat(new FieldRegistry.Default()
                 .include(latentFieldMatcher, distinct)
                 .compile(instrumentedType, fallback)
-                .target(knownField), is(distinct));
+                .target(knownField)
+                .getFieldAppenderFactory(), is(distinct));
         assertThat(new FieldRegistry.Default()
                 .include(latentFieldMatcher, distinct)
                 .compile(instrumentedType, fallback)

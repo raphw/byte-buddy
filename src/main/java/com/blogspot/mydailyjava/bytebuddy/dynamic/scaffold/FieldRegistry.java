@@ -23,31 +23,19 @@ public interface FieldRegistry {
     /**
      * Represents a compiled field registry.
      */
-    static interface Compiled {
+    static interface Compiled extends TypeWriter.FieldPool {
 
         /**
-         * A default implementation of a compiled field registry that simply returns a no-op
-         * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.FieldAttributeAppender}
-         * for any field.
+         * A no-op field registry that does not register annotations for any field.
          */
         static enum NoOp implements Compiled {
             INSTANCE;
 
             @Override
-            public FieldAttributeAppender.Factory target(FieldDescription fieldDescription) {
-                return FieldAttributeAppender.NoOp.INSTANCE;
+            public Entry target(FieldDescription fieldDescription) {
+                return Entry.NoOp.INSTANCE;
             }
         }
-
-        /**
-         * Returns the field attribute appender that matches a given field description or a default field
-         * attribute appender if no appender was registered for the given field.
-         *
-         * @param fieldDescription The field description of interest.
-         * @return The registered field attribute appender for the given field or the default appender if no such
-         * appender was found.
-         */
-        FieldAttributeAppender.Factory target(FieldDescription fieldDescription);
     }
 
     /**
@@ -70,24 +58,24 @@ public interface FieldRegistry {
 
         private class Compiled implements FieldRegistry.Compiled {
 
-            private final FieldAttributeAppender.Factory fallback;
+            private final TypeWriter.FieldPool.Entry fallback;
 
-            private Compiled(FieldAttributeAppender.Factory fallback) {
+            private Compiled(TypeWriter.FieldPool.Entry fallback) {
                 this.fallback = fallback;
             }
 
             @Override
-            public FieldAttributeAppender.Factory target(FieldDescription fieldDescription) {
-                FieldAttributeAppender.Factory attributeAppenderFactory = entries.get(fieldDescription.getInternalName());
-                if (attributeAppenderFactory == null) {
+            public TypeWriter.FieldPool.Entry target(FieldDescription fieldDescription) {
+                TypeWriter.FieldPool.Entry entry = entries.get(fieldDescription.getInternalName());
+                if (entry == null) {
                     return fallback;
                 } else {
-                    return attributeAppenderFactory;
+                    return entry;
                 }
             }
         }
 
-        private final Map<String, FieldAttributeAppender.Factory> entries;
+        private final Map<String, TypeWriter.FieldPool.Entry> entries;
 
         /**
          * Creates a new field registry without any registered fields.
@@ -96,21 +84,22 @@ public interface FieldRegistry {
             entries = Collections.emptyMap();
         }
 
-        private Default(Map<String, FieldAttributeAppender.Factory> entries) {
+        private Default(Map<String, TypeWriter.FieldPool.Entry> entries) {
             this.entries = entries;
         }
 
         @Override
         public FieldRegistry include(LatentFieldMatcher latentFieldMatcher, FieldAttributeAppender.Factory attributeAppenderFactory) {
-            Map<String, FieldAttributeAppender.Factory> entries = new HashMap<String, FieldAttributeAppender.Factory>(this.entries);
-            if (entries.put(latentFieldMatcher.getFieldName(), attributeAppenderFactory) != null) {
+            Map<String, TypeWriter.FieldPool.Entry> entries = new HashMap<String, TypeWriter.FieldPool.Entry>(this.entries);
+            TypeWriter.FieldPool.Entry entry = new TypeWriter.FieldPool.Entry.Simple(attributeAppenderFactory);
+            if (entries.put(latentFieldMatcher.getFieldName(), entry) != null) {
                 throw new IllegalArgumentException("the field name " + latentFieldMatcher.getFieldName() + " is already registered");
             }
             return new Default(entries);
         }
 
         @Override
-        public FieldRegistry.Compiled compile(TypeDescription instrumentedType, FieldAttributeAppender.Factory fallback) {
+        public FieldRegistry.Compiled compile(TypeDescription instrumentedType, TypeWriter.FieldPool.Entry fallback) {
             return new Compiled(fallback);
         }
     }
@@ -133,8 +122,8 @@ public interface FieldRegistry {
      * If a field name is already registered, an exception will be thrown.
      *
      * @param instrumentedType The instrumented type for which this field registry is to be compiled.
-     * @param fallback         The fallback field attribute appender factory that serves as a fallback for unknown fields.
+     * @param fallback         A fallback entry that serves as a fallback for non-registered fields.
      * @return A compiled field registry representing the fields that were registered with this field registry.
      */
-    Compiled compile(TypeDescription instrumentedType, FieldAttributeAppender.Factory fallback);
+    Compiled compile(TypeDescription instrumentedType, TypeWriter.FieldPool.Entry fallback);
 }

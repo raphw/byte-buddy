@@ -22,6 +22,7 @@ public class MethodListExplicitTest {
 
     @Mock
     private MethodDescription firstMethodDescription, secondMethodDescription;
+
     private MethodList methodList;
 
     @Before

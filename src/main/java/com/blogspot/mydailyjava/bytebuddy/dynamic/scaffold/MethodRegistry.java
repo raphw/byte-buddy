@@ -22,115 +22,13 @@ public interface MethodRegistry {
     /**
      * Represents a compiled {@link com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.MethodRegistry}.
      */
-    static interface Compiled {
+    static interface Compiled extends TypeWriter.MethodPool {
 
         /**
-         * An entry of a compiled method registry.
+         * Returns the instrumented type that is the result of the compilation of this method registry.
+         *
+         * @return The instrumented type that is the result of this registry's compilation.
          */
-        static interface Entry {
-
-            /**
-             * A skip entry that instructs to ignore a method.
-             */
-            static enum Skip implements Entry {
-                INSTANCE;
-
-                @Override
-                public boolean isDefineMethod() {
-                    return false;
-                }
-
-                @Override
-                public ByteCodeAppender getByteCodeAppender() {
-                    throw new IllegalStateException();
-                }
-
-                @Override
-                public MethodAttributeAppender getAttributeAppender() {
-                    throw new IllegalStateException();
-                }
-            }
-
-            /**
-             * A default implementation of {@link com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.MethodRegistry.Compiled.Entry}
-             * that is not to be ignored but is represented by a tuple of a byte code appender and a method attribute appender.
-             */
-            static class Default implements Entry {
-
-                private final ByteCodeAppender byteCodeAppender;
-                private final MethodAttributeAppender methodAttributeAppender;
-
-                public Default(ByteCodeAppender byteCodeAppender, MethodAttributeAppender methodAttributeAppender) {
-                    this.byteCodeAppender = byteCodeAppender;
-                    this.methodAttributeAppender = methodAttributeAppender;
-                }
-
-                @Override
-                public boolean isDefineMethod() {
-                    return true;
-                }
-
-                @Override
-                public ByteCodeAppender getByteCodeAppender() {
-                    return byteCodeAppender;
-                }
-
-                @Override
-                public MethodAttributeAppender getAttributeAppender() {
-                    return methodAttributeAppender;
-                }
-
-                @Override
-                public boolean equals(Object o) {
-                    return this == o || !(o == null || getClass() != o.getClass())
-                            && byteCodeAppender.equals(((Default) o).byteCodeAppender)
-                            && methodAttributeAppender.equals(((Default) o).methodAttributeAppender);
-                }
-
-                @Override
-                public int hashCode() {
-                    return 31 * byteCodeAppender.hashCode() + methodAttributeAppender.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "Default{" +
-                            "byteCodeAppender=" + byteCodeAppender +
-                            ", methodAttributeAppender=" + methodAttributeAppender +
-                            '}';
-                }
-            }
-
-            /**
-             * Determines if this entry requires a method to be defined for a given instrumentation.
-             *
-             * @return {@code true} if a method should be defined for a given instrumentation.
-             */
-            boolean isDefineMethod();
-
-            /**
-             * The byte code appender to be used for the instrumentation by this entry. Must not
-             * be called if {@link com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.MethodRegistry.Compiled.Entry#isDefineMethod()}
-             * returns {@code false}.
-             *
-             * @return The byte code appender that is responsible for the instrumentation of a method matched for
-             * this entry.
-             */
-            ByteCodeAppender getByteCodeAppender();
-
-            /**
-             * The method attribute appender that is to be used for the instrumentation by this entry.  Must not
-             * be called if {@link com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.MethodRegistry.Compiled.Entry#isDefineMethod()}
-             * returns {@code false}.
-             *
-             * @return The method attribute appender that is responsible for the instrumentation of a method matched for
-             * this entry.
-             */
-            MethodAttributeAppender getAttributeAppender();
-        }
-
-        Entry target(MethodDescription methodDescription);
-
         InstrumentedType getInstrumentedType();
     }
 
@@ -409,5 +307,5 @@ public interface MethodRegistry {
      * @param fallback         The fallback field attribute appender factory that serves as a fallback for unknown methods.
      * @return A compiled method registry representing the methods that were registered with this method registry.
      */
-    Compiled compile(InstrumentedType instrumentedType, Compiled.Entry fallback);
+    Compiled compile(InstrumentedType instrumentedType, TypeWriter.MethodPool.Entry fallback);
 }

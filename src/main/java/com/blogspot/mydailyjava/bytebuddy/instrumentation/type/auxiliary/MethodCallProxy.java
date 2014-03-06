@@ -103,7 +103,7 @@ public class MethodCallProxy implements AuxiliaryType {
 
         @Override
         public MethodRegistry.Compiled.Entry target(MethodDescription methodDescription) {
-            return new MethodRegistry.Compiled.Entry.Default(this, MethodAttributeAppender.NoOp.INSTANCE);
+            return new Entry.Simple(this, MethodAttributeAppender.NoOp.INSTANCE);
         }
 
         @Override
@@ -146,7 +146,7 @@ public class MethodCallProxy implements AuxiliaryType {
 
         @Override
         public Entry target(MethodDescription methodDescription) {
-            return new Entry.Default(this, MethodAttributeAppender.NoOp.INSTANCE);
+            return new Entry.Simple(this, MethodAttributeAppender.NoOp.INSTANCE);
         }
 
         @Override

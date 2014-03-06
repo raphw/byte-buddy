@@ -10,6 +10,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.List;
 
 /**
  * Implementations of this interface describe a Java method, i.e. a method or a constructor. Implementations of this
@@ -35,13 +36,6 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         @Override
         public int getStackSize() {
             return getParameterTypes().getStackSize() + (isStatic() ? 0 : 1);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return other == this || other instanceof MethodDescription
-                    && getUniqueSignature().equals(((MethodDescription) other).getUniqueSignature())
-                    && getDeclaringType().equals(((MethodDescription) other).getDeclaringType());
         }
 
         @Override
@@ -71,6 +65,13 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
                 }
             }
             throw new IllegalArgumentException();
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return other == this || other instanceof MethodDescription
+                    && getUniqueSignature().equals(((MethodDescription) other).getUniqueSignature())
+                    && getDeclaringType().equals(((MethodDescription) other).getDeclaringType());
         }
 
         @Override
@@ -311,6 +312,126 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         @Override
         public String toString() {
             return "MethodDescription.ForMethod{" + method + "}";
+        }
+    }
+
+    /**
+     * A latent method description describes a method that is not attached to a declaring
+     * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription} but stands for itself.
+     */
+    static class Latent extends AbstractMethodDescription {
+
+        private final String internalName;
+        private final TypeDescription declaringType;
+        private final TypeDescription returnType;
+        private final List<TypeDescription> parameterTypes;
+        private final int modifiers;
+
+        /**
+         * Creates an immutable latent method description.
+         *
+         * @param internalName   The internal name of the method.
+         * @param declaringType  The type that is declaring this method latently.
+         * @param returnType     The return type of this method.
+         * @param parameterTypes The parameter types of this method.
+         * @param modifiers      The modifiers of this method.
+         */
+        public Latent(String internalName,
+                      TypeDescription declaringType,
+                      TypeDescription returnType,
+                      List<TypeDescription> parameterTypes,
+                      int modifiers) {
+            this.internalName = internalName;
+            this.declaringType = declaringType;
+            this.returnType = returnType;
+            this.parameterTypes = parameterTypes;
+            this.modifiers = modifiers;
+        }
+
+        @Override
+        public TypeDescription getReturnType() {
+            return returnType;
+        }
+
+        @Override
+        public TypeList getParameterTypes() {
+            return new TypeList.Explicit(parameterTypes);
+        }
+
+        @Override
+        public Annotation[][] getParameterAnnotations() {
+            return new Annotation[0][0];
+        }
+
+        @Override
+        public TypeList getExceptionTypes() {
+            return new TypeList.Empty();
+        }
+
+        @Override
+        public boolean isConstructor() {
+            return CONSTRUCTOR_INTERNAL_NAME.equals(internalName);
+        }
+
+        @Override
+        public boolean represents(Method method) {
+            return false;
+        }
+
+        @Override
+        public boolean represents(Constructor<?> constructor) {
+            return false;
+        }
+
+        @Override
+        public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
+            return false;
+        }
+
+        @Override
+        public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+            return null;
+        }
+
+        @Override
+        public Annotation[] getAnnotations() {
+            return new Annotation[0];
+        }
+
+        @Override
+        public Annotation[] getDeclaredAnnotations() {
+            return new Annotation[0];
+        }
+
+        @Override
+        public String getName() {
+            return isConstructor() ? getDeclaringType().getName() : internalName;
+        }
+
+        @Override
+        public String getInternalName() {
+            return internalName;
+        }
+
+        @Override
+        public TypeDescription getDeclaringType() {
+            return declaringType;
+        }
+
+        @Override
+        public int getModifiers() {
+            return modifiers;
+        }
+
+        @Override
+        public String toString() {
+            return "MethodDescription.Latent{" +
+                    "internalName='" + internalName + '\'' +
+                    ", declaringType=" + declaringType +
+                    ", returnType=" + returnType +
+                    ", parameterTypes=" + parameterTypes +
+                    ", modifiers=" + modifiers +
+                    '}';
         }
     }
 
