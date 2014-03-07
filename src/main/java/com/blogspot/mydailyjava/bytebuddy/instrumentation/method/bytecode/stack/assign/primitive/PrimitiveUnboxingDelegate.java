@@ -59,7 +59,9 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
 
         @Override
         public StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, boolean considerRuntimeType) {
-            return new Compound(primitiveUnboxingDelegate, PrimitiveWideningDelegate.forPrimitive(primitiveUnboxingDelegate.primitiveType).widenTo(targetType));
+            return new Compound(
+                    primitiveUnboxingDelegate,
+                    PrimitiveWideningDelegate.forPrimitive(primitiveUnboxingDelegate.primitiveType).widenTo(targetType));
         }
     }
 
@@ -96,7 +98,9 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
         @Override
         public StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, boolean considerRuntimeType) {
             PrimitiveUnboxingDelegate primitiveUnboxingDelegate = PrimitiveUnboxingDelegate.forPrimitive(targetType);
-            return new Compound(assigner.assign(originalType, primitiveUnboxingDelegate.wrapperType, considerRuntimeType), primitiveUnboxingDelegate);
+            return new Compound(
+                    assigner.assign(originalType, primitiveUnboxingDelegate.wrapperType, considerRuntimeType),
+                    primitiveUnboxingDelegate);
         }
     }
 

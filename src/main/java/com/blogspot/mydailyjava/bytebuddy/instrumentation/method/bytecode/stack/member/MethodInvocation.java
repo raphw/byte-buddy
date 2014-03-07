@@ -25,7 +25,8 @@ public enum MethodInvocation {
 
         /**
          * Transforms this method invocation into a virtual (or interface) method invocation on the given type. If the
-         * represented method cannot be dispatched on the given invocation target type, an exception is thrown.
+         * represented method cannot be dispatched on the given invocation target type using virtual invocation,
+         * an exception is thrown.
          *
          * @param invocationTarget The type on which the method is to be invoked virtually on.
          * @return A stack manipulation representing this method invocation.
@@ -33,8 +34,8 @@ public enum MethodInvocation {
         StackManipulation virtual(TypeDescription invocationTarget);
 
         /**
-         * Transforms this method invocation into a virtual (or interface) method invocation on the given type. If the
-         * represented method cannot be dispatched on the given invocation target type, an exception is thrown.
+         * Transforms this method invocation into a special invocation on the given type. If the represented method
+         * cannot be dispatched on the given invocation target type using special invocation, an exception is thrown.
          *
          * @param invocationTarget The type on which the method is to be invoked specially on.
          * @return A stack manipulation representing this method invocation.
@@ -101,7 +102,7 @@ public enum MethodInvocation {
                 if (this.typeDescription.equals(invocationTarget)) {
                     return this;
                 } else {
-                    throw new IllegalArgumentException("Cannot invoke " + methodDescription + " on any other type");
+                    throw new IllegalArgumentException("Cannot apply special invocation for " + methodDescription + " on " + invocationTarget);
                 }
             }
             if (invocationTarget.isInterface()) {

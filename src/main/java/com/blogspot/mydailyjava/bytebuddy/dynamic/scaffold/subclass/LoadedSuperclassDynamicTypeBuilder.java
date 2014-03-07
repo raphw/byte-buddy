@@ -483,7 +483,9 @@ public class LoadedSuperclassDynamicTypeBuilder<T> extends DynamicType.Builder.A
                 .write(instrumentedType.getDeclaredFields(),
                         fieldRegistry.compile(instrumentedType, TypeWriter.FieldPool.Entry.NoOp.INSTANCE))
                 .methods()
-                .write(instrumentedType.getDeclaredMethods().filter(not(ignoredMethods).and(isOverridable())), compiledMethodRegistry)
+                .write(instrumentedType.getDeclaredMethods()
+                        .filter(not(ignoredMethods).and(isOverridable().or(isDeclaredBy(instrumentedType)))),
+                        compiledMethodRegistry)
                 .write(contextDelegate.getProxiedMethods(), contextDelegate)
                 .make();
     }

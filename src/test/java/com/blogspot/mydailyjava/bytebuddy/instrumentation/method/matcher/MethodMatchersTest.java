@@ -245,10 +245,10 @@ public class MethodMatchersTest {
 
     @Test
     public void testMatches() throws Exception {
-        assertThat(MethodMatchers.matches(FOO_METHOD_NAME_REGEX).matches(testClassBase$foo), is(true));
-        assertThat(MethodMatchers.matches(FOO_METHOD_NAME_REGEX).matches(testClassExtension$foo), is(true));
-        assertThat(MethodMatchers.matches(BAR_METHOD_NAME_REGEX).matches(testClassBase$foo), is(false));
-        assertThat(MethodMatchers.matches(BAR_METHOD_NAME_REGEX).matches(testClassExtension$foo), is(false));
+        assertThat(MethodMatchers.nameMatches(FOO_METHOD_NAME_REGEX).matches(testClassBase$foo), is(true));
+        assertThat(MethodMatchers.nameMatches(FOO_METHOD_NAME_REGEX).matches(testClassExtension$foo), is(true));
+        assertThat(MethodMatchers.nameMatches(BAR_METHOD_NAME_REGEX).matches(testClassBase$foo), is(false));
+        assertThat(MethodMatchers.nameMatches(BAR_METHOD_NAME_REGEX).matches(testClassExtension$foo), is(false));
     }
 
     @Test
@@ -423,10 +423,10 @@ public class MethodMatchersTest {
 
     @Test
     public void testIsDefinedInPackage() throws Exception {
-        assertThat(MethodMatchers.isDefinedInPackage(MethodMatchersTest.class.getPackage().getName()).matches(testClassBase$foo), is(true));
-        assertThat(MethodMatchers.isDefinedInPackage(MethodMatchersTest.class.getPackage().getName()).matches(testClassExtension$foo), is(true));
-        assertThat(MethodMatchers.isDefinedInPackage(JAVA_LANG_PACKAGE).matches(testClassBase$foo), is(false));
-        assertThat(MethodMatchers.isDefinedInPackage(JAVA_LANG_PACKAGE).matches(testClassExtension$foo), is(false));
+        assertThat(MethodMatchers.isVisibleFromPackage(MethodMatchersTest.class.getPackage().getName()).matches(testClassBase$foo), is(true));
+        assertThat(MethodMatchers.isVisibleFromPackage(MethodMatchersTest.class.getPackage().getName()).matches(testClassExtension$foo), is(true));
+        assertThat(MethodMatchers.isVisibleFromPackage(JAVA_LANG_PACKAGE).matches(testClassBase$foo), is(false));
+        assertThat(MethodMatchers.isVisibleFromPackage(JAVA_LANG_PACKAGE).matches(testClassExtension$foo), is(false));
     }
 
     @Test

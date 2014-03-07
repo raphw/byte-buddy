@@ -57,7 +57,7 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
             MethodMatcher uniqueSignatureFilter = new UniqueSignatureFilter();
             methodDescriptions.addAll(getDeclaredMethods().filter(uniqueSignatureFilter));
             MethodMatcher subclassFilter = not(MethodMatchers.isPrivate())
-                    .and(not(MethodMatchers.isPackagePrivate()).or(isDefinedInPackage(getPackageName())))
+                    .and(not(MethodMatchers.isPackagePrivate()).or(isVisibleFromPackage(getPackageName())))
                     .and(isMethod())
                     .and(uniqueSignatureFilter);
             if (getSupertype() != null) {
