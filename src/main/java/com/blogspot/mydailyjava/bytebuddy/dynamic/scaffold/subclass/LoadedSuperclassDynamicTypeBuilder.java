@@ -467,7 +467,7 @@ public class LoadedSuperclassDynamicTypeBuilder<T> extends DynamicType.Builder.A
 
     @Override
     public DynamicType.Unloaded<T> make() {
-        InstrumentedType instrumentedType = applyRecordedMembersTo(new LoadedSuperclassTypeInstrumentation(classFormatVersion,
+        InstrumentedType instrumentedType = applyRecordedMembersTo(new LoadedSuperclassInstumentedType(classFormatVersion,
                 superType,
                 interfaceTypes,
                 modifiers,

@@ -85,4 +85,20 @@ public class ClassFormatVersion {
         }
         return versionNumber;
     }
+
+    @Override
+    public boolean equals(Object other) {
+        return this == other || !(other == null || getClass() != other.getClass())
+                && versionNumber == ((ClassFormatVersion) other).versionNumber;
+    }
+
+    @Override
+    public int hashCode() {
+        return versionNumber;
+    }
+
+    @Override
+    public String toString() {
+        return "ClassFormatVersion{versionNumber=" + versionNumber + '}';
+    }
 }

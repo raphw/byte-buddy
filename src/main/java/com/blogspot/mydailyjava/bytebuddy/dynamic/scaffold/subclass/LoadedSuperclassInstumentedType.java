@@ -23,7 +23,7 @@ import static com.blogspot.mydailyjava.bytebuddy.utility.ByteBuddyCommons.isVali
 /**
  * Represents a type instrumentation that creates a new type based on a loaded superclass.
  */
-public class LoadedSuperclassTypeInstrumentation
+public class LoadedSuperclassInstumentedType
         extends InstrumentedType.AbstractBase
         implements NamingStrategy.UnnamedType {
 
@@ -42,12 +42,11 @@ public class LoadedSuperclassTypeInstrumentation
      * @param modifiers          The modifiers for this instrumentation.
      * @param namingStrategy     The naming strategy to be applied for this instrumentation.
      */
-    public LoadedSuperclassTypeInstrumentation(ClassFormatVersion classFormatVersion,
-                                               Class<?> superClass,
-                                               Collection<Class<?>> interfaces,
-                                               int modifiers,
-                                               NamingStrategy namingStrategy) {
-
+    public LoadedSuperclassInstumentedType(ClassFormatVersion classFormatVersion,
+                                           Class<?> superClass,
+                                           Collection<Class<?>> interfaces,
+                                           int modifiers,
+                                           NamingStrategy namingStrategy) {
         this.classFormatVersion = classFormatVersion;
         this.superClass = superClass;
         this.interfaces = interfaces;
@@ -67,14 +66,14 @@ public class LoadedSuperclassTypeInstrumentation
      * @param methodDescriptions A list of method descriptions to be applied for this instrumentation.
      * @param typeInitializer    A type initializer to be applied for this instrumentation.
      */
-    protected LoadedSuperclassTypeInstrumentation(ClassFormatVersion classFormatVersion,
-                                                  Class<?> superClass,
-                                                  Collection<Class<?>> interfaces,
-                                                  int modifiers,
-                                                  String name,
-                                                  List<? extends FieldDescription> fieldDescriptions,
-                                                  List<? extends MethodDescription> methodDescriptions,
-                                                  TypeInitializer typeInitializer) {
+    protected LoadedSuperclassInstumentedType(ClassFormatVersion classFormatVersion,
+                                              Class<?> superClass,
+                                              Collection<Class<?>> interfaces,
+                                              int modifiers,
+                                              String name,
+                                              List<? extends FieldDescription> fieldDescriptions,
+                                              List<? extends MethodDescription> methodDescriptions,
+                                              TypeInitializer typeInitializer) {
         super(typeInitializer, name, fieldDescriptions, methodDescriptions);
         this.classFormatVersion = classFormatVersion;
         this.superClass = superClass;
@@ -93,10 +92,10 @@ public class LoadedSuperclassTypeInstrumentation
         }
         List<FieldDescription> fieldDescriptions = new ArrayList<FieldDescription>(this.fieldDescriptions);
         fieldDescriptions.add(additionalField);
-        return new LoadedSuperclassTypeInstrumentation(classFormatVersion,
+        return new LoadedSuperclassInstumentedType(classFormatVersion,
                 superClass,
                 interfaces,
-                modifiers,
+                this.modifiers,
                 this.name,
                 fieldDescriptions,
                 methodDescriptions,
@@ -114,10 +113,10 @@ public class LoadedSuperclassTypeInstrumentation
         }
         List<MethodDescription> methodDescriptions = new ArrayList<MethodDescription>(this.methodDescriptions);
         methodDescriptions.add(additionalMethod);
-        return new LoadedSuperclassTypeInstrumentation(classFormatVersion,
+        return new LoadedSuperclassInstumentedType(classFormatVersion,
                 superClass,
                 interfaces,
-                modifiers,
+                this.modifiers,
                 name,
                 fieldDescriptions,
                 methodDescriptions,
@@ -126,7 +125,7 @@ public class LoadedSuperclassTypeInstrumentation
 
     @Override
     public InstrumentedType withInitializer(TypeInitializer typeInitializer) {
-        return new LoadedSuperclassTypeInstrumentation(classFormatVersion,
+        return new LoadedSuperclassInstumentedType(classFormatVersion,
                 superClass,
                 interfaces,
                 modifiers,
@@ -205,7 +204,7 @@ public class LoadedSuperclassTypeInstrumentation
 
     @Override
     public String toString() {
-        return "LoadedSuperclassTypeInstrumentation{" +
+        return "LoadedSuperclassInstumentedType{" +
                 "classFormatVersion=" + classFormatVersion +
                 ", superClass=" + superClass +
                 ", interfaces=" + interfaces +

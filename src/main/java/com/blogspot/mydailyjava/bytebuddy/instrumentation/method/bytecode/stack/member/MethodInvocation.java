@@ -98,18 +98,16 @@ public enum MethodInvocation {
         @Override
         public StackManipulation special(TypeDescription invocationTarget) {
             validateNonStaticAndTypeCompatibleCall(invocationTarget);
-            if ((methodDescription.isPrivate() || methodDescription.isConstructor())) {
+            if (methodDescription.isAbstract()) {
+                throw new IllegalStateException("Cannot call INVOKESPECIAL on abstract method");
+            } else if ((methodDescription.isPrivate() || methodDescription.isConstructor())) {
                 if (this.typeDescription.equals(invocationTarget)) {
                     return this;
                 } else {
                     throw new IllegalArgumentException("Cannot apply special invocation for " + methodDescription + " on " + invocationTarget);
                 }
             }
-            if (invocationTarget.isInterface()) {
-                throw new IllegalArgumentException("Cannot call INVOKESPECIAL on interface type");
-            } else {
-                return SPECIAL.new Invocation(methodDescription, invocationTarget);
-            }
+            return SPECIAL.new Invocation(methodDescription, invocationTarget);
         }
 
         private void validateNonStaticAndTypeCompatibleCall(TypeDescription typeDescription) {
@@ -133,7 +131,7 @@ public enum MethodInvocation {
      * @return A stack manipulation with implicitly determined invocation type.
      */
     public static WithImplicitInvocationTargetType invoke(MethodDescription methodDescription) {
-        if (methodDescription.isStatic()) { // Check this property first, private static methods use INVOKESTATIC.
+        if (methodDescription.isStatic()) { // Check this property first, private static methods must use INVOKESTATIC.
             return STATIC.new Invocation(methodDescription);
         } else if (methodDescription.isPrivate() || methodDescription.isConstructor()) {
             return SPECIAL.new Invocation(methodDescription);
