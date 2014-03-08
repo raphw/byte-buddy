@@ -19,7 +19,7 @@ A simple example:
 ```java
 new ByteBuddy()
     .subclass(Object.class)
-    .intercept(named("toString"), ConstantValue.("Hello World!"))
+    .intercept(named("toString"), ConstantValue.of("Hello World!"))
     .make().load().getClass().newInstance().toString();
     // Will return 'Hello World'.
 ```
