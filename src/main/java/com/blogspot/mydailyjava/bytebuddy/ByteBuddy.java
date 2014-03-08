@@ -7,11 +7,11 @@ import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.MethodRegistry;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.LoadedSuperclassDynamicTypeBuilder;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.ModifierContributor;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher;
-import org.objectweb.asm.Opcodes;
 
 import java.lang.annotation.Annotation;
 import java.util.Collections;
@@ -23,6 +23,33 @@ import static com.blogspot.mydailyjava.bytebuddy.utility.ByteBuddyCommons.*;
 public class ByteBuddy {
 
     private static final String BYTE_BUDDY_DEFAULT_PREFIX = "ByteBuddy";
+
+    protected static interface Definable<T> {
+
+        static class Undefined<T> implements Definable<T> {
+
+            @Override
+            public T resolve(T defaultValue) {
+                return defaultValue;
+            }
+        }
+
+        static class Defined<T> implements Definable<T> {
+
+            private final T value;
+
+            public Defined(T value) {
+                this.value = value;
+            }
+
+            @Override
+            public T resolve(T defaultValue) {
+                return value;
+            }
+        }
+
+        T resolve(T defaultValue);
+    }
 
     public static class MethodAnnotationTarget extends ByteBuddy {
 
@@ -36,6 +63,8 @@ public class ByteBuddy {
                                          MethodMatcher ignoredMethods,
                                          ClassVisitorWrapper.Chain classVisitorWrapperChain,
                                          MethodRegistry methodRegistry,
+                                         Definable<Integer> modifiers,
+                                         Definable<TypeAttributeAppender> typeAttributeAppender,
                                          FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                                          MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
                                          MethodMatcher methodMatcher,
@@ -47,6 +76,8 @@ public class ByteBuddy {
                     ignoredMethods,
                     classVisitorWrapperChain,
                     methodRegistry,
+                    modifiers,
+                    typeAttributeAppender,
                     defaultFieldAttributeAppenderFactory,
                     defaultMethodAttributeAppenderFactory);
             this.methodMatcher = methodMatcher;
@@ -61,6 +92,8 @@ public class ByteBuddy {
                     ignoredMethods,
                     classVisitorWrapperChain,
                     methodRegistry,
+                    modifiers,
+                    typeAttributeAppender,
                     defaultFieldAttributeAppenderFactory,
                     defaultMethodAttributeAppenderFactory,
                     methodMatcher,
@@ -68,12 +101,12 @@ public class ByteBuddy {
                     new MethodAttributeAppender.Factory.Compound(this.attributeAppenderFactory, attributeAppenderFactory));
         }
 
-        public MethodAnnotationTarget annotateMethod(Annotation annotation) {
+        public MethodAnnotationTarget annotateMethod(Annotation... annotation) {
             return attribute(new MethodAttributeAppender.ForAnnotation(annotation));
         }
 
-        public MethodAnnotationTarget annotateParameter(int parameterIndex, Annotation annotation) {
-            return attribute(new MethodAttributeAppender.ForAnnotation(annotation, parameterIndex));
+        public MethodAnnotationTarget annotateParameter(int parameterIndex, Annotation... annotation) {
+            return attribute(new MethodAttributeAppender.ForAnnotation(parameterIndex, annotation));
         }
 
         @Override
@@ -170,6 +203,8 @@ public class ByteBuddy {
                     methodRegistry.prepend(new MethodRegistry.LatentMethodMatcher.Simple(methodMatcher),
                             instrumentation,
                             attributeAppenderFactory),
+                    modifiers,
+                    typeAttributeAppender,
                     defaultFieldAttributeAppenderFactory,
                     defaultMethodAttributeAppenderFactory);
         }
@@ -191,6 +226,8 @@ public class ByteBuddy {
                     ignoredMethods,
                     classVisitorWrapperChain,
                     methodRegistry,
+                    modifiers,
+                    typeAttributeAppender,
                     defaultFieldAttributeAppenderFactory,
                     defaultMethodAttributeAppenderFactory,
                     methodMatcher,
@@ -209,6 +246,8 @@ public class ByteBuddy {
     protected final MethodMatcher ignoredMethods;
     protected final ClassVisitorWrapper.Chain classVisitorWrapperChain;
     protected final MethodRegistry methodRegistry;
+    protected final Definable<Integer> modifiers;
+    protected final Definable<TypeAttributeAppender> typeAttributeAppender;
     protected final FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory;
     protected final MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory;
 
@@ -218,14 +257,16 @@ public class ByteBuddy {
     }
 
     public ByteBuddy(ClassFormatVersion classFormatVersion) {
-        this.classFormatVersion = classFormatVersion;
-        namingStrategy = new NamingStrategy.SuffixingRandom(BYTE_BUDDY_DEFAULT_PREFIX);
-        interfaceTypes = Collections.emptyList();
-        ignoredMethods = isDefaultFinalize();
-        classVisitorWrapperChain = new ClassVisitorWrapper.Chain();
-        methodRegistry = new MethodRegistry.Default();
-        defaultFieldAttributeAppenderFactory = FieldAttributeAppender.NoOp.INSTANCE;
-        defaultMethodAttributeAppenderFactory = MethodAttributeAppender.NoOp.INSTANCE;
+        this(classFormatVersion,
+                new NamingStrategy.SuffixingRandom(BYTE_BUDDY_DEFAULT_PREFIX),
+                Collections.<Class<?>>emptyList(),
+                isDefaultFinalize(),
+                new ClassVisitorWrapper.Chain(),
+                new MethodRegistry.Default(),
+                new Definable.Undefined<Integer>(),
+                new Definable.Undefined<TypeAttributeAppender>(),
+                FieldAttributeAppender.NoOp.INSTANCE,
+                MethodAttributeAppender.NoOp.INSTANCE);
     }
 
     protected ByteBuddy(ClassFormatVersion classFormatVersion,
@@ -234,6 +275,8 @@ public class ByteBuddy {
                         MethodMatcher ignoredMethods,
                         ClassVisitorWrapper.Chain classVisitorWrapperChain,
                         MethodRegistry methodRegistry,
+                        Definable<Integer> modifiers,
+                        Definable<TypeAttributeAppender> typeAttributeAppender,
                         FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                         MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
         this.classFormatVersion = classFormatVersion;
@@ -242,6 +285,8 @@ public class ByteBuddy {
         this.ignoredMethods = ignoredMethods;
         this.classVisitorWrapperChain = classVisitorWrapperChain;
         this.methodRegistry = methodRegistry;
+        this.modifiers = modifiers;
+        this.typeAttributeAppender = typeAttributeAppender;
         this.defaultFieldAttributeAppenderFactory = defaultFieldAttributeAppenderFactory;
         this.defaultMethodAttributeAppenderFactory = defaultMethodAttributeAppenderFactory;
     }
@@ -289,8 +334,8 @@ public class ByteBuddy {
                 namingStrategy,
                 actualSuperType,
                 interfaceTypes,
-                Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER,
-                TypeAttributeAppender.NoOp.INSTANCE,
+                modifiers.resolve(superType.getModifiers()),
+                typeAttributeAppender.resolve(TypeAttributeAppender.NoOp.INSTANCE),
                 ignoredMethods,
                 classVisitorWrapperChain,
                 new FieldRegistry.Default(),
@@ -307,6 +352,8 @@ public class ByteBuddy {
                 ignoredMethods,
                 classVisitorWrapperChain,
                 methodRegistry,
+                modifiers,
+                typeAttributeAppender,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory);
     }
@@ -318,6 +365,47 @@ public class ByteBuddy {
                 ignoredMethods,
                 classVisitorWrapperChain,
                 methodRegistry,
+                modifiers,
+                typeAttributeAppender,
+                defaultFieldAttributeAppenderFactory,
+                defaultMethodAttributeAppenderFactory);
+    }
+
+    public ByteBuddy modifiers(ModifierContributor.ForType... modifierContributor) {
+        return new ByteBuddy(classFormatVersion,
+                namingStrategy,
+                interfaceTypes,
+                ignoredMethods,
+                classVisitorWrapperChain,
+                methodRegistry,
+                new Definable.Defined<Integer>(resolveModifierContributors(TYPE_MODIFIER_MASK, modifierContributor)),
+                typeAttributeAppender,
+                defaultFieldAttributeAppenderFactory,
+                defaultMethodAttributeAppenderFactory);
+    }
+
+    public ByteBuddy attribute(TypeAttributeAppender typeAttributeAppender) {
+        return new ByteBuddy(classFormatVersion,
+                namingStrategy,
+                interfaceTypes,
+                ignoredMethods,
+                classVisitorWrapperChain,
+                methodRegistry,
+                modifiers,
+                new Definable.Defined<TypeAttributeAppender>(typeAttributeAppender),
+                defaultFieldAttributeAppenderFactory,
+                defaultMethodAttributeAppenderFactory);
+    }
+
+    public ByteBuddy annotateType(Annotation... annotation) {
+        return new ByteBuddy(classFormatVersion,
+                namingStrategy,
+                interfaceTypes,
+                ignoredMethods,
+                classVisitorWrapperChain,
+                methodRegistry,
+                modifiers,
+                new Definable.Defined<TypeAttributeAppender>(new TypeAttributeAppender.ForAnnotation(annotation)),
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory);
     }
@@ -329,6 +417,8 @@ public class ByteBuddy {
                 ignoredMethods,
                 classVisitorWrapperChain,
                 methodRegistry,
+                modifiers,
+                typeAttributeAppender,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory);
     }
@@ -340,6 +430,8 @@ public class ByteBuddy {
                 nonNull(ignoredMethods),
                 classVisitorWrapperChain,
                 methodRegistry,
+                modifiers,
+                typeAttributeAppender,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory);
     }
@@ -351,6 +443,8 @@ public class ByteBuddy {
                 ignoredMethods,
                 classVisitorWrapperChain.append(nonNull(classVisitorWrapper)),
                 methodRegistry,
+                modifiers,
+                typeAttributeAppender,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory);
     }
@@ -362,6 +456,8 @@ public class ByteBuddy {
                 ignoredMethods,
                 classVisitorWrapperChain,
                 methodRegistry,
+                modifiers,
+                typeAttributeAppender,
                 nonNull(attributeAppenderFactory),
                 defaultMethodAttributeAppenderFactory);
     }
@@ -373,6 +469,8 @@ public class ByteBuddy {
                 ignoredMethods,
                 classVisitorWrapperChain,
                 methodRegistry,
+                modifiers,
+                typeAttributeAppender,
                 defaultFieldAttributeAppenderFactory,
                 nonNull(attributeAppenderFactory));
     }

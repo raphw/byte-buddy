@@ -30,14 +30,14 @@ public interface TypeAttributeAppender {
      */
     static class ForAnnotation implements TypeAttributeAppender {
 
-        private final Annotation annotation;
+        private final Annotation[] annotation;
 
         /**
          * Creates a new single annotation attribute appender.
          *
          * @param annotation The annotation to append.
          */
-        public ForAnnotation(Annotation annotation) {
+        public ForAnnotation(Annotation... annotation) {
             this.annotation = annotation;
         }
 
@@ -45,23 +45,25 @@ public interface TypeAttributeAppender {
         public void apply(ClassVisitor classVisitor, TypeDescription typeDescription) {
             AnnotationAppender annotationAppender =
                     new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor));
-            annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
+            for (Annotation annotation : this.annotation) {
+                annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
+            }
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && annotation.equals(((ForAnnotation) other).annotation);
+        public boolean equals(Object o) {
+            return this == o || !(o == null || getClass() != o.getClass())
+                    && Arrays.equals(annotation, ((ForAnnotation) o).annotation);
         }
 
         @Override
         public int hashCode() {
-            return annotation.hashCode();
+            return Arrays.hashCode(annotation);
         }
 
         @Override
         public String toString() {
-            return "TypeAttributeAppender.ForAnnotation{annotation=" + annotation + '}';
+            return "TypeAttributeAppender.ForAnnotation{annotation=" + Arrays.toString(annotation) + '}';
         }
     }
 

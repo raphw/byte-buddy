@@ -6,7 +6,8 @@ package com.blogspot.mydailyjava.bytebuddy.instrumentation;
  * <p/>
  * This allows for a more expressive and type safe alternative of defining a type's or type member's modifiers.
  * However, note that modifier's that apply competing modifiers (such as {@code private} and {@code protected}
- * should not be combined and will result in invalid types.
+ * should not be combined and will result in invalid types. An exception is thrown when built-in modifiers that
+ * cannot be combined are used together.
  */
 public interface ModifierContributor {
 

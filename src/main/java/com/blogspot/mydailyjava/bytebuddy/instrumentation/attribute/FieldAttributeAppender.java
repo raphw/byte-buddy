@@ -96,14 +96,14 @@ public interface FieldAttributeAppender {
      */
     static class ForAnnotation implements FieldAttributeAppender, Factory {
 
-        private final Annotation annotation;
+        private final Annotation[] annotation;
 
         /**
          * Creates a new field annotation appender.
          *
          * @param annotation The annotation to be appended.
          */
-        public ForAnnotation(Annotation annotation) {
+        public ForAnnotation(Annotation... annotation) {
             this.annotation = annotation;
         }
 
@@ -111,7 +111,9 @@ public interface FieldAttributeAppender {
         public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription) {
             AnnotationAppender annotationAppender =
                     new AnnotationAppender.Default(new AnnotationAppender.Target.OnField(fieldVisitor));
-            annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
+            for (Annotation annotation : this.annotation) {
+                annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
+            }
         }
 
         @Override
@@ -120,19 +122,19 @@ public interface FieldAttributeAppender {
         }
 
         @Override
-        public boolean equals(Object o) {
-            return this == o || !(o == null || getClass() != o.getClass())
-                    && annotation.equals(((ForAnnotation) o).annotation);
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && Arrays.equals(annotation, ((ForAnnotation) other).annotation);
         }
 
         @Override
         public int hashCode() {
-            return annotation.hashCode();
+            return Arrays.hashCode(annotation);
         }
 
         @Override
         public String toString() {
-            return "FieldAttributeAppender.ForAnnotation{annotation=" + annotation + '}';
+            return "FieldAttributeAppender.ForAnnotation{annotation=" + Arrays.toString(annotation) + '}';
         }
     }
 

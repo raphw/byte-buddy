@@ -145,7 +145,7 @@ public interface MethodAttributeAppender {
             AnnotationAppender.Target make(MethodVisitor methodVisitor, MethodDescription methodDescription);
         }
 
-        private final Annotation annotation;
+        private final Annotation[] annotation;
         private final Target target;
 
         /**
@@ -153,7 +153,7 @@ public interface MethodAttributeAppender {
          *
          * @param annotation The annotation to append to the target method.
          */
-        public ForAnnotation(Annotation annotation) {
+        public ForAnnotation(Annotation... annotation) {
             this.annotation = annotation;
             target = Target.OnMethod.INSTANCE;
         }
@@ -164,7 +164,7 @@ public interface MethodAttributeAppender {
          * @param annotation     The annotation to append to the target method parameter.
          * @param parameterIndex The index of the target parameter.
          */
-        public ForAnnotation(Annotation annotation, int parameterIndex) {
+        public ForAnnotation(int parameterIndex, Annotation... annotation) {
             this.annotation = annotation;
             target = new Target.OnMethodParameter(parameterIndex);
         }
@@ -173,7 +173,9 @@ public interface MethodAttributeAppender {
         public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
             AnnotationAppender appender =
                     new AnnotationAppender.Default(target.make(methodVisitor, methodDescription));
-            appender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
+            for (Annotation annotation : this.annotation) {
+                appender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
+            }
         }
 
         @Override
@@ -184,19 +186,19 @@ public interface MethodAttributeAppender {
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && annotation.equals(((ForAnnotation) other).annotation)
+                    && Arrays.equals(annotation, ((ForAnnotation) other).annotation)
                     && target.equals(((ForAnnotation) other).target);
         }
 
         @Override
         public int hashCode() {
-            return 31 * annotation.hashCode() + target.hashCode();
+            return 31 * Arrays.hashCode(annotation) + target.hashCode();
         }
 
         @Override
         public String toString() {
             return "MethodAttributeAppender.ForAnnotation{" +
-                    "annotation=" + annotation +
+                    "annotation=" + Arrays.toString(annotation) +
                     ", target=" + target +
                     '}';
         }

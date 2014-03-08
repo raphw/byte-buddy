@@ -43,7 +43,7 @@ public class MethodAttributeAppenderForAnnotationTest extends AbstractMethodAttr
 
     @Test
     public void testAnnotationAppenderForParameterNoRetention() throws Exception {
-        new MethodAttributeAppender.ForAnnotation(new Qux.Instance(), PARAMETER_INDEX).apply(methodVisitor, methodDescription);
+        new MethodAttributeAppender.ForAnnotation(PARAMETER_INDEX, new Qux.Instance()).apply(methodVisitor, methodDescription);
         verifyZeroInteractions(methodVisitor);
         verify(methodDescription).getParameterTypes();
         verifyNoMoreInteractions(methodDescription);
@@ -51,7 +51,7 @@ public class MethodAttributeAppenderForAnnotationTest extends AbstractMethodAttr
 
     @Test
     public void testAnnotationAppenderForParameterRuntimeRetention() throws Exception {
-        new MethodAttributeAppender.ForAnnotation(new Baz.Instance(), PARAMETER_INDEX).apply(methodVisitor, methodDescription);
+        new MethodAttributeAppender.ForAnnotation(PARAMETER_INDEX, new Baz.Instance()).apply(methodVisitor, methodDescription);
         verify(methodVisitor).visitParameterAnnotation(PARAMETER_INDEX, Type.getDescriptor(Baz.class), true);
         verifyNoMoreInteractions(methodVisitor);
         verify(methodDescription).getParameterTypes();
@@ -60,7 +60,7 @@ public class MethodAttributeAppenderForAnnotationTest extends AbstractMethodAttr
 
     @Test
     public void testAnnotationAppenderForParameterByteCodeRetention() throws Exception {
-        new MethodAttributeAppender.ForAnnotation(new QuxBaz.Instance(), PARAMETER_INDEX).apply(methodVisitor, methodDescription);
+        new MethodAttributeAppender.ForAnnotation(PARAMETER_INDEX, new QuxBaz.Instance()).apply(methodVisitor, methodDescription);
         verify(methodVisitor).visitParameterAnnotation(PARAMETER_INDEX, Type.getDescriptor(QuxBaz.class), false);
         verifyNoMoreInteractions(methodVisitor);
         verify(methodDescription).getParameterTypes();
@@ -69,6 +69,6 @@ public class MethodAttributeAppenderForAnnotationTest extends AbstractMethodAttr
 
     @Test(expected = IllegalArgumentException.class)
     public void testAnnotationAppenderNotEnoughParameters() throws Exception {
-        new MethodAttributeAppender.ForAnnotation(new Baz.Instance(), PARAMETER_INDEX + 1).apply(methodVisitor, methodDescription);
+        new MethodAttributeAppender.ForAnnotation(PARAMETER_INDEX + 1, new Baz.Instance()).apply(methodVisitor, methodDescription);
     }
 }

@@ -14,7 +14,6 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescripti
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
-import org.objectweb.asm.Opcodes;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -237,24 +236,6 @@ public interface DynamicType<T> {
             }
 
             /**
-             * Validates a mask against a number of modifier contributors and merges their contributions to a modifier.
-             *
-             * @param mask                The mask to validate against.
-             * @param modifierContributor The modifier contributors to merge
-             * @return The modifier created by these modifiers.
-             */
-            protected static int resolveModifiers(int mask, ModifierContributor... modifierContributor) {
-                int modifier = 0;
-                for (ModifierContributor contributor : modifierContributor) {
-                    modifier |= contributor.getMask();
-                }
-                if ((modifier & ~(mask | Opcodes.ACC_SYNTHETIC)) != 0) {
-                    throw new IllegalArgumentException("Illegal modifiers " + Arrays.asList(modifierContributor));
-                }
-                return modifier;
-            }
-
-            /**
              * A base implementation of a builder that is capable of manifesting a change that was not yet applied to
              * the builder.
              *
@@ -278,8 +259,8 @@ public interface DynamicType<T> {
                 }
 
                 @Override
-                public Builder<T> modifier(ModifierContributor.ForType... modifier) {
-                    return materialize().modifier(modifier);
+                public Builder<T> modifiers(ModifierContributor.ForType... modifier) {
+                    return materialize().modifiers(modifier);
                 }
 
                 @Override
@@ -293,7 +274,7 @@ public interface DynamicType<T> {
                 }
 
                 @Override
-                public Builder<T> annotateType(Annotation annotation) {
+                public Builder<T> annotateType(Annotation... annotation) {
                     return materialize().annotateType(annotation);
                 }
 
@@ -443,7 +424,7 @@ public interface DynamicType<T> {
              * @param annotation The annotation to add to the currently selected methods.
              * @return A builder where the given annotation will be added to the currently selected methods.
              */
-            MethodAnnotationTarget<T> annotateMethod(Annotation annotation);
+            MethodAnnotationTarget<T> annotateMethod(Annotation... annotation);
 
             /**
              * Defines an annotation to be added to a parameter of the currently selected methods.
@@ -455,7 +436,7 @@ public interface DynamicType<T> {
              * @return A builder where the given annotation will be added to a parameter of the currently selected
              * methods.
              */
-            MethodAnnotationTarget<T> annotateParameter(int parameterIndex, Annotation annotation);
+            MethodAnnotationTarget<T> annotateParameter(int parameterIndex, Annotation... annotation);
         }
 
         /**
@@ -483,7 +464,7 @@ public interface DynamicType<T> {
              * @param annotation The annotation to add to the currently selected field.
              * @return A builder where the given annotation will be added to the currently selected field.
              */
-            FieldAnnotationTarget<T> annotateField(Annotation annotation);
+            FieldAnnotationTarget<T> annotateField(Annotation... annotation);
         }
 
         /**
@@ -516,7 +497,7 @@ public interface DynamicType<T> {
          * @param modifier A collection of modifiers to be reflected by the created dynamic type.
          * @return A builder that will create a dynamic type that reflects the given modifiers.
          */
-        Builder<T> modifier(ModifierContributor.ForType... modifier);
+        Builder<T> modifiers(ModifierContributor.ForType... modifier);
 
         /**
          * Adds methods that will be ignored for any interception attempt.
@@ -541,10 +522,10 @@ public interface DynamicType<T> {
          * Note: This annotation will not be visible to
          * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation}s.
          *
-         * @param annotation An annotation to be added to the currently constructed type.
+         * @param annotation The annotations to be added to the currently constructed type.
          * @return A builder that will add the given annotation to the created type.
          */
-        Builder<T> annotateType(Annotation annotation);
+        Builder<T> annotateType(Annotation... annotation);
 
         /**
          * Adds an additional ASM {@link org.objectweb.asm.ClassVisitor} to this builder which will be applied in

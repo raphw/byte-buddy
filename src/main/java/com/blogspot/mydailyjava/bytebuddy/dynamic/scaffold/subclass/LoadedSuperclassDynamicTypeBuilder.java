@@ -69,7 +69,7 @@ public class LoadedSuperclassDynamicTypeBuilder<T> extends DynamicType.Builder.A
         }
 
         @Override
-        public FieldAnnotationTarget<T> annotateField(Annotation annotation) {
+        public FieldAnnotationTarget<T> annotateField(Annotation... annotation) {
             return attribute(new FieldAttributeAppender.ForAnnotation(annotation));
         }
     }
@@ -143,13 +143,13 @@ public class LoadedSuperclassDynamicTypeBuilder<T> extends DynamicType.Builder.A
         }
 
         @Override
-        public MethodAnnotationTarget<T> annotateMethod(Annotation annotation) {
+        public MethodAnnotationTarget<T> annotateMethod(Annotation... annotation) {
             return attribute(new MethodAttributeAppender.ForAnnotation(annotation));
         }
 
         @Override
-        public MethodAnnotationTarget<T> annotateParameter(int parameterIndex, Annotation annotation) {
-            return attribute(new MethodAttributeAppender.ForAnnotation(annotation, parameterIndex));
+        public MethodAnnotationTarget<T> annotateParameter(int parameterIndex, Annotation... annotation) {
+            return attribute(new MethodAttributeAppender.ForAnnotation(parameterIndex, annotation));
         }
     }
 
@@ -342,12 +342,12 @@ public class LoadedSuperclassDynamicTypeBuilder<T> extends DynamicType.Builder.A
     }
 
     @Override
-    public DynamicType.Builder<T> modifier(ModifierContributor.ForType... modifier) {
+    public DynamicType.Builder<T> modifiers(ModifierContributor.ForType... modifier) {
         return new LoadedSuperclassDynamicTypeBuilder<T>(classFormatVersion,
                 namingStrategy,
                 superType,
                 interfaceTypes,
-                resolveModifiers(InstrumentedType.TYPE_MODIFIER_MASK, modifier),
+                resolveModifierContributors(TYPE_MODIFIER_MASK, modifier),
                 attributeAppender,
                 ignoredMethods,
                 classVisitorWrapperChain,
@@ -396,7 +396,7 @@ public class LoadedSuperclassDynamicTypeBuilder<T> extends DynamicType.Builder.A
     }
 
     @Override
-    public DynamicType.Builder<T> annotateType(Annotation annotation) {
+    public DynamicType.Builder<T> annotateType(Annotation... annotation) {
         return attribute(new TypeAttributeAppender.ForAnnotation(annotation));
     }
 
@@ -424,7 +424,7 @@ public class LoadedSuperclassDynamicTypeBuilder<T> extends DynamicType.Builder.A
                                                 ModifierContributor.ForField... modifier) {
         FieldToken fieldToken = new FieldToken(isValidIdentifier(name),
                 nonNull(fieldType),
-                resolveModifiers(InstrumentedType.FIELD_MODIFIER_MASK, nonNull(modifier)));
+                resolveModifierContributors(FIELD_MODIFIER_MASK, nonNull(modifier)));
         return new SubclassFieldAnnotationTarget<T>(fieldToken, defaultFieldAttributeAppenderFactory);
     }
 
@@ -436,7 +436,7 @@ public class LoadedSuperclassDynamicTypeBuilder<T> extends DynamicType.Builder.A
         MethodToken methodToken = new MethodToken(isValidIdentifier(name),
                 nonNull(returnType),
                 nonNull(parameterTypes),
-                resolveModifiers(InstrumentedType.METHOD_MODIFIER_MASK, nonNull(modifier)));
+                resolveModifierContributors(METHOD_MODIFIER_MASK, nonNull(modifier)));
         return new SubclassMatchedMethodInterception<T>(methodToken, join(methodTokens, methodToken));
     }
 
@@ -446,7 +446,7 @@ public class LoadedSuperclassDynamicTypeBuilder<T> extends DynamicType.Builder.A
         MethodToken methodToken = new MethodToken(MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
                 void.class,
                 nonNull(parameterTypes),
-                resolveModifiers(InstrumentedType.METHOD_MODIFIER_MASK, nonNull(modifier)));
+                resolveModifierContributors(METHOD_MODIFIER_MASK, nonNull(modifier)));
         return new SubclassMatchedMethodInterception<T>(methodToken, join(methodTokens, methodToken));
     }
 

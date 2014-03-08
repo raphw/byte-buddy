@@ -1,11 +1,49 @@
 package com.blogspot.mydailyjava.bytebuddy.utility;
 
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.ModifierContributor;
+import org.objectweb.asm.Opcodes;
+
+import java.lang.reflect.Modifier;
 import java.util.*;
 
 /**
  * Represents a collection of common helper functions.
  */
 public final class ByteBuddyCommons {
+
+    /**
+     * A mask for modifiers that represent visibility.
+     */
+    public static final int VISIBILITY_MODIFIER_MASK = Modifier.PUBLIC | Modifier.PROTECTED | Modifier.PRIVATE;
+
+    /**
+     * A mask for modifiers that are represented by types and members.
+     */
+    public static final int GENERAL_MODIFIER_MASK = Opcodes.ACC_SYNTHETIC | Opcodes.ACC_DEPRECATED;
+
+    /**
+     * A mask for modifiers that represents types.
+     */
+    public static final int TYPE_MODIFIER_MASK = VISIBILITY_MODIFIER_MASK | GENERAL_MODIFIER_MASK
+            | Modifier.ABSTRACT | Modifier.FINAL | Modifier.INTERFACE | Modifier.STRICT | Opcodes.ACC_ANNOTATION
+            | Opcodes.ACC_ENUM | Opcodes.ACC_STRICT | Opcodes.ACC_SUPER;
+
+    /**
+     * A mask for modifiers that represents type members.
+     */
+    public static final int MEMBER_MODIFIER_MASK = VISIBILITY_MODIFIER_MASK | TYPE_MODIFIER_MASK
+            | Modifier.FINAL | Modifier.SYNCHRONIZED;
+
+    /**
+     * A mask for modifiers that represents fields.
+     */
+    public static final int FIELD_MODIFIER_MASK = MEMBER_MODIFIER_MASK | Modifier.TRANSIENT | Modifier.VOLATILE;
+
+    /**
+     * A mask for modifiers that represents modifiers and constructors.
+     */
+    public static final int METHOD_MODIFIER_MASK = MEMBER_MODIFIER_MASK | Modifier.ABSTRACT | Modifier.SYNCHRONIZED
+            | Modifier.NATIVE | Modifier.STRICT | Opcodes.ACC_BRIDGE | Opcodes.ACC_VARARGS;
 
     private static final Set<String> JAVA_KEYWORDS = Collections.unmodifiableSet(
             new HashSet<String>(Arrays.asList(
@@ -146,6 +184,28 @@ public final class ByteBuddyCommons {
             throw new IllegalArgumentException(exceptionMessage);
         }
         return collection;
+    }
+
+    /**
+     * Validates a mask against a number of modifier contributors and merges their contributions to a modifier.
+     *
+     * @param mask                The mask to validate against.
+     * @param modifierContributor The modifier contributors to merge
+     * @return The modifier created by these modifiers.
+     */
+    public static int resolveModifierContributors(int mask, ModifierContributor... modifierContributor) {
+        int modifier = 0;
+        Set<Class<?>> modifierContributorTypes = new HashSet<Class<?>>(modifierContributor.length);
+        for (ModifierContributor contributor : modifierContributor) {
+            if (!modifierContributorTypes.add(contributor.getClass())) {
+                throw new IllegalArgumentException(contributor + " is already registered with a different value");
+            }
+            modifier |= contributor.getMask();
+        }
+        if ((modifier & ~(mask | Opcodes.ACC_SYNTHETIC)) != 0) {
+            throw new IllegalArgumentException("Illegal modifiers " + Arrays.asList(modifierContributor));
+        }
+        return modifier;
     }
 
     private ByteBuddyCommons() {

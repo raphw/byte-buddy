@@ -6,12 +6,10 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.field.FieldList;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodList;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
-import org.objectweb.asm.Opcodes;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -21,40 +19,6 @@ import java.util.List;
  * should however be immutable and return new instance when their mutator methods are called.
  */
 public interface InstrumentedType extends TypeDescription {
-
-    /**
-     * A mask for modifiers that represent visibility.
-     */
-    static final int VISIBILITY_MODIFIER_MASK = Modifier.PUBLIC | Modifier.PROTECTED | Modifier.PRIVATE;
-
-    /**
-     * A mask for modifiers that are represented by types and members.
-     */
-    static final int GENERAL_MODIFIER_MASK = Opcodes.ACC_SYNTHETIC | Opcodes.ACC_DEPRECATED;
-
-    /**
-     * A mask for modifiers that represents types.
-     */
-    static final int TYPE_MODIFIER_MASK = VISIBILITY_MODIFIER_MASK | GENERAL_MODIFIER_MASK
-            | Modifier.ABSTRACT | Modifier.FINAL | Modifier.INTERFACE | Modifier.STRICT | Opcodes.ACC_ANNOTATION
-            | Opcodes.ACC_ENUM | Opcodes.ACC_STRICT | Opcodes.ACC_SUPER;
-
-    /**
-     * A mask for modifiers that represents type members.
-     */
-    static final int MEMBER_MODIFIER_MASK = VISIBILITY_MODIFIER_MASK | TYPE_MODIFIER_MASK
-            | Modifier.FINAL | Modifier.SYNCHRONIZED;
-
-    /**
-     * A mask for modifiers that represents fields.
-     */
-    static final int FIELD_MODIFIER_MASK = MEMBER_MODIFIER_MASK | Modifier.TRANSIENT | Modifier.VOLATILE;
-
-    /**
-     * A mask for modifiers that represents modifiers and constructors.
-     */
-    static final int METHOD_MODIFIER_MASK = MEMBER_MODIFIER_MASK | Modifier.ABSTRACT | Modifier.SYNCHRONIZED
-            | Modifier.NATIVE | Modifier.STRICT | Opcodes.ACC_BRIDGE | Opcodes.ACC_VARARGS;
 
     /**
      * An abstract base implementation of an instrumented type.
