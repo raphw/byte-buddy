@@ -13,6 +13,15 @@ import org.objectweb.asm.MethodVisitor;
 
 import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.hasSameSignatureAs;
 
+/**
+ * This instrumentation will create a new method which simply calls its super method. If no such method is defined,
+ * an exception will be thrown. Note that methods that were explicitly defined for an instrumentation are never
+ * considered to have a super method even if there is a method with a compatible signature. Constructors are
+ * considered to have a "super method" if the direct super type defines a constructor with identical signature.
+ * <p/>
+ * Besides implementing constructors, this instrumentation is useful when a method of a super type is not supposed
+ * to be altered but should be equipped with additional annotations.
+ */
 public enum SuperMethodCall implements Instrumentation {
     INSTANCE;
 

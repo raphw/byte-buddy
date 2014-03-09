@@ -151,7 +151,7 @@ public interface MethodAttributeAppender {
         /**
          * Create a new annotation appender for a method.
          *
-         * @param annotation The annotation to append to the target method.
+         * @param annotation The annotations to append to the target method.
          */
         public ForAnnotation(Annotation... annotation) {
             this.annotation = annotation;
@@ -161,8 +161,8 @@ public interface MethodAttributeAppender {
         /**
          * Create a new annotation appender for a method parameter.
          *
-         * @param annotation     The annotation to append to the target method parameter.
          * @param parameterIndex The index of the target parameter.
+         * @param annotation     The annotations to append to the target method parameter.
          */
         public ForAnnotation(int parameterIndex, Annotation... annotation) {
             this.annotation = annotation;

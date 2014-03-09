@@ -35,7 +35,7 @@ public interface TypeAttributeAppender {
         /**
          * Creates a new single annotation attribute appender.
          *
-         * @param annotation The annotation to append.
+         * @param annotation The annotations to append.
          */
         public ForAnnotation(Annotation... annotation) {
             this.annotation = annotation;

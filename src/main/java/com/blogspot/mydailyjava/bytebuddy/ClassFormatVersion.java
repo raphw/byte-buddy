@@ -11,30 +11,70 @@ public class ClassFormatVersion {
     private static final String JAVA_VERSION_PROPERTY = "java.version";
 
     /**
+     * The byte code version of Java 1.
+     */
+    public static final ClassFormatVersion JAVA_V1 = new ClassFormatVersion(Opcodes.V1_1);
+
+    /**
+     * The byte code version of Java 2.
+     */
+    public static final ClassFormatVersion JAVA_V2 = new ClassFormatVersion(Opcodes.V1_2);
+
+    /**
+     * The byte code version of Java 3.
+     */
+    public static final ClassFormatVersion JAVA_V3 = new ClassFormatVersion(Opcodes.V1_3);
+
+    /**
+     * The byte code version of Java 4.
+     */
+    public static final ClassFormatVersion JAVA_V4 = new ClassFormatVersion(Opcodes.V1_4);
+
+    /**
+     * The byte code version of Java 5.
+     */
+    public static final ClassFormatVersion JAVA_V5 = new ClassFormatVersion(Opcodes.V1_5);
+
+    /**
+     * The byte code version of Java 6.
+     */
+    public static final ClassFormatVersion JAVA_V6 = new ClassFormatVersion(Opcodes.V1_6);
+
+    /**
+     * The byte code version of Java 7.
+     */
+    public static final ClassFormatVersion JAVA_V7 = new ClassFormatVersion(Opcodes.V1_7);
+
+    /**
+     * The byte code version of Java 8.
+     */
+    public static final ClassFormatVersion JAVA_V8 = new ClassFormatVersion(Opcodes.V1_7 + 1);
+
+    /**
      * Creates a ClassFormatVersion for a given major release of Java. Currently, all versions reaching from
      * Java 1 to Java 8 are supported.
      *
      * @param javaVersion The Java version.
      * @return A wrapper for the given Java version.
      */
-    public static ClassFormatVersion forJavaVersion(int javaVersion) {
+    public static ClassFormatVersion forKnownJavaVersion(int javaVersion) {
         switch (javaVersion) {
             case 1:
-                return new ClassFormatVersion(Opcodes.V1_1);
+                return JAVA_V1;
             case 2:
-                return new ClassFormatVersion(Opcodes.V1_2);
+                return JAVA_V2;
             case 3:
-                return new ClassFormatVersion(Opcodes.V1_3);
+                return JAVA_V3;
             case 4:
-                return new ClassFormatVersion(Opcodes.V1_4);
+                return JAVA_V4;
             case 5:
-                return new ClassFormatVersion(Opcodes.V1_5);
+                return JAVA_V5;
             case 6:
-                return new ClassFormatVersion(Opcodes.V1_6);
+                return JAVA_V6;
             case 7:
-                return new ClassFormatVersion(Opcodes.V1_7);
+                return JAVA_V7;
             case 8:
-                return new ClassFormatVersion(Opcodes.V1_7 + 1);
+                return JAVA_V8;
             default:
                 throw new IllegalArgumentException("Unknown Java version: " + javaVersion);
         }
@@ -57,7 +97,7 @@ public class ClassFormatVersion {
                 throw new IllegalStateException("This JVM's version string does not seem to be valid: " + versionString);
             }
         }
-        return ClassFormatVersion.forJavaVersion(Integer.parseInt(versionString.substring(versionIndex[1] + 1, versionIndex[2])));
+        return ClassFormatVersion.forKnownJavaVersion(Integer.parseInt(versionString.substring(versionIndex[1] + 1, versionIndex[2])));
     }
 
     /**

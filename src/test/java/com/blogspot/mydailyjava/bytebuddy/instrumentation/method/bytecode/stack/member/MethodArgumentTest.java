@@ -31,7 +31,6 @@ public class MethodArgumentTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {Object.class, Opcodes.ALOAD, 1},
-                {Object[].class, Opcodes.AALOAD, 1},
                 {boolean.class, Opcodes.ILOAD, 1},
                 {byte.class, Opcodes.ILOAD, 1},
                 {short.class, Opcodes.ILOAD, 1},
@@ -51,7 +50,6 @@ public class MethodArgumentTest {
         this.typeDescription = mock(TypeDescription.class);
         when(typeDescription.isPrimitive()).thenReturn(type.isPrimitive());
         when(typeDescription.represents(type)).thenReturn(true);
-        when(typeDescription.isArray()).thenReturn(type.isArray());
         this.opcode = opcode;
         this.size = size;
     }

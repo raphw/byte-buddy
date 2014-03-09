@@ -38,6 +38,6 @@ public class ClassFormatVersionKnownVersionsTest {
 
     @Test
     public void testVersionIsAsExpected() throws Exception {
-        assertThat(ClassFormatVersion.forJavaVersion(javaVersion).getVersionNumber(), is(byteCodeVersion));
+        assertThat(ClassFormatVersion.forKnownJavaVersion(javaVersion).getVersionNumber(), is(byteCodeVersion));
     }
 }

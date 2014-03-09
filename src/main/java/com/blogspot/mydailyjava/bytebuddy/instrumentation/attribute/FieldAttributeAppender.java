@@ -101,7 +101,7 @@ public interface FieldAttributeAppender {
         /**
          * Creates a new field annotation appender.
          *
-         * @param annotation The annotation to be appended.
+         * @param annotation The annotations to be appended to the field.
          */
         public ForAnnotation(Annotation... annotation) {
             this.annotation = annotation;

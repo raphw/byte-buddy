@@ -418,10 +418,10 @@ public interface DynamicType<T> {
             /**
              * Defines an annotation to be added to the currently selected method.
              * <p/>
-             * Note: This annotation will not be visible to
+             * Note: The annotations will not be visible to
              * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation}s.
              *
-             * @param annotation The annotation to add to the currently selected methods.
+             * @param annotation The annotations to add to the currently selected methods.
              * @return A builder where the given annotation will be added to the currently selected methods.
              */
             MethodAnnotationTarget<T> annotateMethod(Annotation... annotation);
@@ -429,10 +429,10 @@ public interface DynamicType<T> {
             /**
              * Defines an annotation to be added to a parameter of the currently selected methods.
              * <p/>
-             * Note: This annotation will not be visible to
+             * Note: The annotations will not be visible to
              * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation}s.
              *
-             * @param annotation The annotation to add to a parameter of the currently selected methods.
+             * @param annotation The annotations to add to a parameter of the currently selected methods.
              * @return A builder where the given annotation will be added to a parameter of the currently selected
              * methods.
              */
@@ -458,10 +458,10 @@ public interface DynamicType<T> {
             /**
              * Defines an annotation to be added to the currently selected field.
              * <p/>
-             * Note: This annotation will not be visible to
+             * Note: The annotations will not be visible to
              * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation}s.
              *
-             * @param annotation The annotation to add to the currently selected field.
+             * @param annotation The annotations to add to the currently selected field.
              * @return A builder where the given annotation will be added to the currently selected field.
              */
             FieldAnnotationTarget<T> annotateField(Annotation... annotation);
@@ -500,7 +500,9 @@ public interface DynamicType<T> {
         Builder<T> modifiers(ModifierContributor.ForType... modifier);
 
         /**
-         * Adds methods that will be ignored for any interception attempt.
+         * Defines a matcher for methods that will be ignored for any interception attempt. Any methods
+         * that were directly declared on an instrumented type will never be ignored, i.e. ignored methods
+         * only represent a filter for methods that are declared in super types that should never be overriden.
          *
          * @param ignoredMethods A method matcher characterizing the methods to be ignored.
          * @return A builder that will always ignore the methods matched by the given method matcher.
@@ -519,7 +521,7 @@ public interface DynamicType<T> {
         /**
          * Adds an annotation to the currently constructed type.
          * <p/>
-         * Note: This annotation will not be visible to
+         * Note: The annotations will not be visible to
          * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation}s.
          *
          * @param annotation The annotations to be added to the currently constructed type.

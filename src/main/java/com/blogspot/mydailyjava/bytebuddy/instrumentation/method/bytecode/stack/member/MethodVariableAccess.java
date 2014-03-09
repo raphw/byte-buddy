@@ -17,8 +17,7 @@ public enum MethodVariableAccess {
     LONG(Opcodes.LLOAD, 8, StackSize.DOUBLE),
     FLOAT(Opcodes.FLOAD, 11, StackSize.SINGLE),
     DOUBLE(Opcodes.DLOAD, 14, StackSize.DOUBLE),
-    OBJECT_REFERENCE(Opcodes.ALOAD, 17, StackSize.SINGLE),
-    ARRAY_REFERENCE(Opcodes.AALOAD, -1, StackSize.SINGLE);
+    REFERENCE(Opcodes.ALOAD, 17, StackSize.SINGLE);
 
     /**
      * Locates the correct accessor for a variable of a given type.
@@ -40,11 +39,7 @@ public enum MethodVariableAccess {
                 return INTEGER;
             }
         } else {
-            if (typeDescription.isArray()) {
-                return ARRAY_REFERENCE;
-            } else {
-                return OBJECT_REFERENCE;
-            }
+            return REFERENCE;
         }
     }
 
@@ -97,26 +92,22 @@ public enum MethodVariableAccess {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-            if (loadOpcodeShortcutIndex > -1) {
-                switch (variableIndex) {
-                    case 0:
-                        methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutIndex);
-                        break;
-                    case 1:
-                        methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutIndex + 1);
-                        break;
-                    case 2:
-                        methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutIndex + 2);
-                        break;
-                    case 3:
-                        methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutIndex + 3);
-                        break;
-                    default:
-                        methodVisitor.visitVarInsn(loadOpcode, variableIndex);
-                        break;
-                }
-            } else {
-                methodVisitor.visitVarInsn(loadOpcode, variableIndex);
+            switch (variableIndex) {
+                case 0:
+                    methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutIndex);
+                    break;
+                case 1:
+                    methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutIndex + 1);
+                    break;
+                case 2:
+                    methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutIndex + 2);
+                    break;
+                case 3:
+                    methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutIndex + 3);
+                    break;
+                default:
+                    methodVisitor.visitVarInsn(loadOpcode, variableIndex);
+                    break;
             }
             return size;
         }

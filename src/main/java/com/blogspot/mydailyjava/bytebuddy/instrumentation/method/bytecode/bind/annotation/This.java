@@ -61,7 +61,7 @@ public @interface This {
             StackManipulation stackManipulation = assigner.assign(instrumentedType, targetType, runtimeType);
             return new MethodDelegationBinder.ParameterBinding.Anonymous(
                     new StackManipulation.Compound(
-                            MethodVariableAccess.OBJECT_REFERENCE.loadFromIndex(THIS_REFERENCE_INDEX),
+                            MethodVariableAccess.REFERENCE.loadFromIndex(THIS_REFERENCE_INDEX),
                             stackManipulation));
         }
     }
