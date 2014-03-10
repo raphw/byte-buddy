@@ -3,14 +3,14 @@ package com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.MethodRegistry;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.SuperMethodCall;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
-
-import java.lang.reflect.Constructor;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodList;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 
 import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.isConstructor;
 
 /**
  * A constructor strategy is responsible for creating bootstrap constructors for a
- * {@link LoadedSuperclassDynamicTypeBuilder}.
+ * {@link SubclassDynamicTypeBuilder}.
  *
  * @see com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy.Default
  */
@@ -34,12 +34,12 @@ public interface ConstructorStrategy {
         IMITATE_SUPER_TYPE;
 
         @Override
-        public Constructor<?>[] extractConstructors(Class<?> superType) {
+        public MethodList extractConstructors(TypeDescription superType) {
             switch (this) {
                 case NO_CONSTRUCTORS:
-                    return new Constructor<?>[0];
+                    return new MethodList.Empty();
                 case IMITATE_SUPER_TYPE:
-                    return superType.getDeclaredConstructors();
+                    return superType.getDeclaredMethods().filter(isConstructor());
                 default:
                     throw new AssertionError();
             }
@@ -68,7 +68,7 @@ public interface ConstructorStrategy {
      * @return An array of constructors which will be mimicked by the instrumented type of which
      * the {@code superType} is the direct super type.
      */
-    Constructor<?>[] extractConstructors(Class<?> superType);
+    MethodList extractConstructors(TypeDescription superType);
 
     /**
      * Returns a method registry that is capable of creating byte code for the constructors that were

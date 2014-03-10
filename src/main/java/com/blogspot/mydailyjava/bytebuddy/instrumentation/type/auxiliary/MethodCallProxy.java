@@ -7,7 +7,7 @@ import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.FieldRegistry;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.MethodRegistry;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.TypeWriter;
-import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.LoadedSuperclassInstumentedType;
+import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.SubclassInstumentedType;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.SubclassInstrumentationContextDelegate;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.ModifierContributor;
@@ -26,6 +26,7 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -190,9 +191,9 @@ public class MethodCallProxy implements AuxiliaryType {
     public DynamicType<?> make(String auxiliaryTypeName, MethodProxyFactory methodProxyFactory) {
         MethodDescription proxiedMethod = methodProxyFactory.requireProxyMethodFor(this.proxiedMethod);
         int fieldIndex = 0;
-        InstrumentedType proxy = new LoadedSuperclassInstumentedType(ClassFormatVersion.forCurrentJavaVersion(),
-                Object.class,
-                Arrays.<Class<?>>asList(Runnable.class, Callable.class),
+        InstrumentedType proxy = new SubclassInstumentedType(ClassFormatVersion.forCurrentJavaVersion(),
+                new TypeDescription.ForLoadedType(Object.class),
+                new TypeList.ForLoadedType(Arrays.<Class<?>>asList(Runnable.class, Callable.class)),
                 Opcodes.ACC_PUBLIC,
                 new NamingStrategy.Fixed(auxiliaryTypeName));
         List<FieldAccess.Defined> fieldAccess = new LinkedList<FieldAccess.Defined>();

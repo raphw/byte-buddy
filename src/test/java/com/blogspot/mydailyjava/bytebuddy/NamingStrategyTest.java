@@ -1,5 +1,6 @@
 package com.blogspot.mydailyjava.bytebuddy;
 
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.utility.MockitoRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -23,7 +24,7 @@ public class NamingStrategyTest {
 
     @Test
     public void testPrefixingRandomNonConflictingPackage() throws Exception {
-        doReturn(MethodVisitor.class).when(unnamedType).getSuperClass();
+        when(unnamedType.getSuperClass()).thenReturn(new TypeDescription.ForLoadedType(MethodVisitor.class));
         NamingStrategy namingStrategy = new NamingStrategy.SuffixingRandom(FOO);
         assertThat(namingStrategy.getName(unnamedType), startsWith(MethodVisitor.class.getName() + "$$" + FOO + "$$"));
         verify(unnamedType, atLeast(1)).getSuperClass();
@@ -32,7 +33,7 @@ public class NamingStrategyTest {
 
     @Test
     public void testPrefixingRandomConflictingPackage() throws Exception {
-        doReturn(Object.class).when(unnamedType).getSuperClass();
+        when(unnamedType.getSuperClass()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
         NamingStrategy namingStrategy = new NamingStrategy.SuffixingRandom(FOO, BAR);
         assertThat(namingStrategy.getName(unnamedType), startsWith(BAR + "." + Object.class.getName() + "$$" + FOO + "$$"));
         verify(unnamedType, atLeast(1)).getSuperClass();

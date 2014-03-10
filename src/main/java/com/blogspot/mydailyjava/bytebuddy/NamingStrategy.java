@@ -1,5 +1,6 @@
 package com.blogspot.mydailyjava.bytebuddy;
 
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.modifier.SyntheticState;
 import com.blogspot.mydailyjava.bytebuddy.modifier.TypeManifestation;
 import com.blogspot.mydailyjava.bytebuddy.modifier.Visibility;
@@ -25,14 +26,14 @@ public interface NamingStrategy {
          *
          * @return The super class of the type to be named.
          */
-        Class<?> getSuperClass();
+        TypeDescription getSuperClass();
 
         /**
          * Returns a collection of this unnamed type's directly implemented interfaces.
          *
          * @return A collection of implemented interfaces.
          */
-        Collection<Class<?>> getDeclaredInterfaces();
+        Collection<TypeDescription> getDeclaredInterfaces();
 
         /**
          * Returns the visibility of this unnamed type.

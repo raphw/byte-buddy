@@ -8,14 +8,15 @@ import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.FieldRegistry;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.MethodRegistry;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
-import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.LoadedSuperclassDynamicTypeBuilder;
+import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.SubclassDynamicTypeBuilder;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
 import org.objectweb.asm.Opcodes;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
@@ -63,11 +64,11 @@ public abstract class AbstractInstrumentationTest {
 
     protected <T> DynamicType.Loaded<T> instrument(Class<T> target, Instrumentation instrumentation) {
         assertThat(target.isInterface(), is(false));
-        return new LoadedSuperclassDynamicTypeBuilder<T>(
+        return new SubclassDynamicTypeBuilder<T>(
                 ClassFormatVersion.forCurrentJavaVersion(),
                 new NamingStrategy.SuffixingRandom(SUFFIX),
-                target,
-                Collections.<Class<?>>emptyList(),
+                new TypeDescription.ForLoadedType(target),
+                new TypeList.Empty(),
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 not(isDeclaredBy(target)).or(isSynthetic()),

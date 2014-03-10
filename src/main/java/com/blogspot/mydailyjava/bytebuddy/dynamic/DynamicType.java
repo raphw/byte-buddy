@@ -14,6 +14,7 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescripti
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -65,6 +66,14 @@ public interface DynamicType<T> {
                         return methodDescription.getReturnType().equals(returnType)
                                 && methodDescription.getParameterTypes().equals(parameterTypes);
                     }
+
+                    @Override
+                    public String toString() {
+                        return "SignatureMatcher{" +
+                                "returnType=" + returnType +
+                                ", parameterTypes=" + parameterTypes +
+                                '}';
+                    }
                 }
 
                 /**
@@ -73,16 +82,16 @@ public interface DynamicType<T> {
                 protected final String internalName;
 
                 /**
-                 * The return type of the method or the {@link com.blogspot.mydailyjava.bytebuddy.dynamic.TargetType}
-                 * placeholder.
+                 * A description of the return type of the method or a type describing the
+                 * {@link com.blogspot.mydailyjava.bytebuddy.dynamic.TargetType} placeholder.
                  */
-                protected final Class<?> returnType;
+                protected final TypeDescription returnType;
 
                 /**
-                 * A list of parameter types for the method which might be represented by the
-                 * or the {@link com.blogspot.mydailyjava.bytebuddy.dynamic.TargetType} placeholder.
+                 * A list of parameter type descriptions for the method which might be represented by the
+                 * {@link com.blogspot.mydailyjava.bytebuddy.dynamic.TargetType} placeholder.
                  */
-                protected final List<Class<?>> parameterTypes;
+                protected final List<TypeDescription> parameterTypes;
 
                 /**
                  * A list of modifiers of the method.
@@ -97,10 +106,13 @@ public interface DynamicType<T> {
                  * @param parameterTypes A list of parameters for the method.
                  * @param modifiers      The modifers of the method.
                  */
-                public MethodToken(String internalName, Class<?> returnType, List<Class<?>> parameterTypes, int modifiers) {
+                public MethodToken(String internalName,
+                                   TypeDescription returnType,
+                                   List<? extends TypeDescription> parameterTypes,
+                                   int modifiers) {
                     this.internalName = internalName;
                     this.returnType = returnType;
-                    this.parameterTypes = Collections.unmodifiableList(new ArrayList<Class<?>>(parameterTypes));
+                    this.parameterTypes = Collections.unmodifiableList(new ArrayList<TypeDescription>(parameterTypes));
                     this.modifiers = modifiers;
                 }
 
@@ -118,7 +130,7 @@ public interface DynamicType<T> {
                  * @return A type description for the actual return type.
                  */
                 protected TypeDescription resolveReturnType(TypeDescription instrumentedType) {
-                    return wrapAndConsiderSubstitution(returnType, instrumentedType);
+                    return considerSubstitution(returnType, instrumentedType);
                 }
 
                 /**
@@ -130,8 +142,8 @@ public interface DynamicType<T> {
                  */
                 protected List<TypeDescription> resolveParameterTypes(TypeDescription instrumentedType) {
                     List<TypeDescription> parameterTypes = new ArrayList<TypeDescription>(this.parameterTypes.size());
-                    for (Class<?> parameterType : this.parameterTypes) {
-                        parameterTypes.add(wrapAndConsiderSubstitution(parameterType, instrumentedType));
+                    for (TypeDescription parameterType : this.parameterTypes) {
+                        parameterTypes.add(considerSubstitution(parameterType, instrumentedType));
                     }
                     return parameterTypes;
                 }
@@ -175,16 +187,24 @@ public interface DynamicType<T> {
                 protected final String name;
 
                 /**
-                 * The field type or the {@link com.blogspot.mydailyjava.bytebuddy.dynamic.TargetType} placeholder.
+                 * A description of the field type or a description of the
+                 * {@link com.blogspot.mydailyjava.bytebuddy.dynamic.TargetType} placeholder.
                  */
-                protected final Class<?> fieldType;
+                protected final TypeDescription fieldType;
 
                 /**
                  * The field modifiers.
                  */
                 protected final int modifiers;
 
-                public FieldToken(String name, Class<?> fieldType, int modifiers) {
+                /**
+                 * Creates a new field token.
+                 *
+                 * @param name      The name of the field.
+                 * @param fieldType A description of the field type.
+                 * @param modifiers The modifers of the field.
+                 */
+                public FieldToken(String name, TypeDescription fieldType, int modifiers) {
                     this.name = name;
                     this.fieldType = fieldType;
                     this.modifiers = modifiers;
@@ -198,7 +218,7 @@ public interface DynamicType<T> {
                  * @return A type description for the actual field type.
                  */
                 protected TypeDescription resolveFieldType(TypeDescription instrumentedType) {
-                    return wrapAndConsiderSubstitution(fieldType, instrumentedType);
+                    return considerSubstitution(fieldType, instrumentedType);
                 }
 
                 @Override
@@ -231,8 +251,8 @@ public interface DynamicType<T> {
                 }
             }
 
-            private static TypeDescription wrapAndConsiderSubstitution(Class<?> type, TypeDescription instrumentedType) {
-                return type == TargetType.class ? instrumentedType : new TypeDescription.ForLoadedType(type);
+            private static TypeDescription considerSubstitution(TypeDescription type, TypeDescription instrumentedType) {
+                return type.represents(TargetType.class) ? instrumentedType : type;
             }
 
             /**
@@ -250,6 +270,11 @@ public interface DynamicType<T> {
 
                 @Override
                 public Builder<T> implement(Class<?> interfaceType) {
+                    return materialize().implement(interfaceType);
+                }
+
+                @Override
+                public Builder<T> implement(TypeDescription interfaceType) {
                     return materialize().implement(interfaceType);
                 }
 
@@ -291,6 +316,11 @@ public interface DynamicType<T> {
                 }
 
                 @Override
+                public FieldAnnotationTarget<T> defineField(String name, TypeDescription fieldTypeDescription, ModifierContributor.ForField... modifier) {
+                    return materialize().defineField(name, fieldTypeDescription, modifier);
+                }
+
+                @Override
                 public MatchedMethodInterception<T> defineMethod(String name,
                                                                  Class<?> returnType,
                                                                  List<Class<?>> parameterTypes,
@@ -299,9 +329,23 @@ public interface DynamicType<T> {
                 }
 
                 @Override
+                public MatchedMethodInterception<T> defineMethod(String name,
+                                                                 TypeDescription returnType,
+                                                                 List<? extends TypeDescription> parameterTypes,
+                                                                 ModifierContributor.ForMethod... modifier) {
+                    return materialize().defineMethod(name, returnType, parameterTypes, modifier);
+                }
+
+                @Override
                 public MatchedMethodInterception<T> defineConstructor(List<Class<?>> parameterTypes,
                                                                       ModifierContributor.ForMethod... modifier) {
                     return materialize().defineConstructor(parameterTypes, modifier);
+                }
+
+                @Override
+                public MatchedMethodInterception<T> defineConstructorDescriptive(List<? extends TypeDescription> parameterTypes,
+                                                                                 ModifierContributor.ForMethod... modifier) {
+                    return materialize().defineConstructorDescriptive(parameterTypes, modifier);
                 }
 
                 @Override
@@ -372,6 +416,35 @@ public interface DynamicType<T> {
                             methodToken.modifiers);
                 }
                 return instrumentedType;
+            }
+
+            @Override
+            public Builder<T> implement(Class<?> interfaceType) {
+                return implement(new TypeDescription.ForLoadedType(interfaceType));
+            }
+
+            @Override
+            public FieldAnnotationTarget<T> defineField(String name,
+                                                        Class<?> fieldType,
+                                                        ModifierContributor.ForField... modifier) {
+                return defineField(name, new TypeDescription.ForLoadedType(fieldType), modifier);
+            }
+
+            @Override
+            public MatchedMethodInterception<T> defineMethod(String name,
+                                                             Class<?> returnType,
+                                                             List<Class<?>> parameterTypes,
+                                                             ModifierContributor.ForMethod... modifier) {
+                return defineMethod(name,
+                        new TypeDescription.ForLoadedType(returnType),
+                        new TypeList.ForLoadedType(parameterTypes),
+                        modifier);
+            }
+
+            @Override
+            public MatchedMethodInterception<T> defineConstructor(List<Class<?>> parameterTypes,
+                                                                  ModifierContributor.ForMethod... modifier) {
+                return null;
             }
         }
 
@@ -484,6 +557,14 @@ public interface DynamicType<T> {
         Builder<T> implement(Class<?> interfaceType);
 
         /**
+         * Adds an interface to be implemented the created type.
+         *
+         * @param interfaceType A description of the interface to implement.
+         * @return A builder which will create a dynamic type that implements the given interface.
+         */
+        Builder<T> implement(TypeDescription interfaceType);
+
+        /**
          * Names the currently created dynamic type by a fixed name.
          *
          * @param name A fully qualified name to give to the created dynamic type.
@@ -552,6 +633,19 @@ public interface DynamicType<T> {
                                              ModifierContributor.ForField... modifier);
 
         /**
+         * Defines a new field for this type.
+         *
+         * @param name                 The name of the method.
+         * @param fieldTypeDescription The type of this field where the current type can be represented by
+         *                             {@link com.blogspot.mydailyjava.bytebuddy.dynamic.TargetType}.
+         * @param modifier             The modifiers for this method.
+         * @return An interception delegate that exclusively matches the new method.
+         */
+        FieldAnnotationTarget<T> defineField(String name,
+                                             TypeDescription fieldTypeDescription,
+                                             ModifierContributor.ForField... modifier);
+
+        /**
          * Defines a new method for this type.
          *
          * @param name           The name of the method.
@@ -568,6 +662,22 @@ public interface DynamicType<T> {
                                                   ModifierContributor.ForMethod... modifier);
 
         /**
+         * Defines a new method for this type.
+         *
+         * @param name           The name of the method.
+         * @param returnType     A description of the return type of the method  where the current type can be
+         *                       represented by {@link com.blogspot.mydailyjava.bytebuddy.dynamic.TargetType}.
+         * @param parameterTypes Descriptions of the parameter types of this method  where the current type can be
+         *                       represented by {@link com.blogspot.mydailyjava.bytebuddy.dynamic.TargetType}.
+         * @param modifier       The modifiers for this method.
+         * @return An interception delegate that exclusively matches the new method.
+         */
+        MatchedMethodInterception<T> defineMethod(String name,
+                                                  TypeDescription returnType,
+                                                  List<? extends TypeDescription> parameterTypes,
+                                                  ModifierContributor.ForMethod... modifier);
+
+        /**
          * Defines a new constructor for this type.
          *
          * @param parameterTypes The parameter types of this constructor  where the current type can be represented by
@@ -577,6 +687,17 @@ public interface DynamicType<T> {
          */
         MatchedMethodInterception<T> defineConstructor(List<Class<?>> parameterTypes,
                                                        ModifierContributor.ForMethod... modifier);
+
+        /**
+         * Defines a new constructor for this type.
+         *
+         * @param parameterTypes The descriptions of the parameter types of this constructor where the current type can be
+         *                       represented by a description of {@link com.blogspot.mydailyjava.bytebuddy.dynamic.TargetType}.
+         * @param modifier       The modifiers for this constructor.
+         * @return An interception delegate that exclusively matches the new constructor.
+         */
+        MatchedMethodInterception<T> defineConstructorDescriptive(List<? extends TypeDescription> parameterTypes,
+                                                                  ModifierContributor.ForMethod... modifier);
 
         /**
          * Selects a set of methods of this type for instrumentation.

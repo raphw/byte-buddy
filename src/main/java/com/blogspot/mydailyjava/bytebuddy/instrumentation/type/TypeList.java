@@ -28,6 +28,9 @@ public interface TypeList extends List<TypeDescription> {
         public ForLoadedType(Class<?>[] type) {
             this.type = type;
         }
+        public ForLoadedType(List<Class<?>> types) {
+            type = types.toArray(new Class<?>[types.size()]);
+        }
 
         @Override
         public TypeDescription get(int index) {

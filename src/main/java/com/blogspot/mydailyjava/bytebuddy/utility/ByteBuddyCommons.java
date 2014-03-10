@@ -1,6 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.utility;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.ModifierContributor;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Modifier;
@@ -75,10 +76,9 @@ public final class ByteBuddyCommons {
      * Validates if a type is an interface.
      *
      * @param type The type to validate.
-     * @param <T>  The {@code Class}'s generic type.
      * @return The input value.
      */
-    public static <T> Class<T> isInterface(Class<T> type) {
+    public static TypeDescription isInterface(TypeDescription type) {
         if (!nonNull(type).isInterface()) {
             throw new IllegalArgumentException(type + " is not an interface");
         }
@@ -89,10 +89,9 @@ public final class ByteBuddyCommons {
      * Validates that a type can be implemented, i.e. is not an array or a primitive.
      *
      * @param type The type to be validated.
-     * @param <T>  The {@code Class}'s generic type.
      * @return The input value.
      */
-    public static <T> Class<T> isImplementable(Class<T> type) {
+    public static TypeDescription isImplementable(TypeDescription type) {
         if (nonNull(type).isArray() || type.isPrimitive()) {
             throw new IllegalArgumentException(type + " cannot be implemented");
         }
@@ -107,7 +106,7 @@ public final class ByteBuddyCommons {
      * @param <T>     The list's generic type.
      * @return An {@link java.util.ArrayList} containing all elements.
      */
-    public static <T> List<T> join(List<T> list, T element) {
+    public static <T> List<T> join(List<? extends T> list, T element) {
         List<T> result = new ArrayList<T>(list.size() + 1);
         result.addAll(list);
         result.add(element);
@@ -122,7 +121,7 @@ public final class ByteBuddyCommons {
      * @param <T>     The list's generic type.
      * @return An {@link java.util.ArrayList} containing all elements.
      */
-    public static <T> List<T> join(T element, List<T> list) {
+    public static <T> List<T> join(T element, List<? extends T> list) {
         List<T> result = new ArrayList<T>(list.size() + 1);
         result.add(element);
         result.addAll(list);

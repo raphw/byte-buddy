@@ -15,7 +15,6 @@ import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import static com.blogspot.mydailyjava.bytebuddy.utility.ByteBuddyCommons.isValidTypeName;
@@ -23,13 +22,13 @@ import static com.blogspot.mydailyjava.bytebuddy.utility.ByteBuddyCommons.isVali
 /**
  * Represents a type instrumentation that creates a new type based on a loaded superclass.
  */
-public class LoadedSuperclassInstumentedType
+public class SubclassInstumentedType
         extends InstrumentedType.AbstractBase
         implements NamingStrategy.UnnamedType {
 
     private final ClassFormatVersion classFormatVersion;
-    private final Class<?> superClass;
-    private final Collection<Class<?>> interfaces;
+    private final TypeDescription superClass;
+    private final List<TypeDescription> interfaces;
     private final int modifiers;
     private final String name;
 
@@ -42,11 +41,11 @@ public class LoadedSuperclassInstumentedType
      * @param modifiers          The modifiers for this instrumentation.
      * @param namingStrategy     The naming strategy to be applied for this instrumentation.
      */
-    public LoadedSuperclassInstumentedType(ClassFormatVersion classFormatVersion,
-                                           Class<?> superClass,
-                                           Collection<Class<?>> interfaces,
-                                           int modifiers,
-                                           NamingStrategy namingStrategy) {
+    public SubclassInstumentedType(ClassFormatVersion classFormatVersion,
+                                   TypeDescription superClass,
+                                   List<TypeDescription> interfaces,
+                                   int modifiers,
+                                   NamingStrategy namingStrategy) {
         this.classFormatVersion = classFormatVersion;
         this.superClass = superClass;
         this.interfaces = interfaces;
@@ -66,14 +65,14 @@ public class LoadedSuperclassInstumentedType
      * @param methodDescriptions A list of method descriptions to be applied for this instrumentation.
      * @param typeInitializer    A type initializer to be applied for this instrumentation.
      */
-    protected LoadedSuperclassInstumentedType(ClassFormatVersion classFormatVersion,
-                                              Class<?> superClass,
-                                              Collection<Class<?>> interfaces,
-                                              int modifiers,
-                                              String name,
-                                              List<? extends FieldDescription> fieldDescriptions,
-                                              List<? extends MethodDescription> methodDescriptions,
-                                              TypeInitializer typeInitializer) {
+    protected SubclassInstumentedType(ClassFormatVersion classFormatVersion,
+                                      TypeDescription superClass,
+                                      List<TypeDescription> interfaces,
+                                      int modifiers,
+                                      String name,
+                                      List<? extends FieldDescription> fieldDescriptions,
+                                      List<? extends MethodDescription> methodDescriptions,
+                                      TypeInitializer typeInitializer) {
         super(typeInitializer, name, fieldDescriptions, methodDescriptions);
         this.classFormatVersion = classFormatVersion;
         this.superClass = superClass;
@@ -92,7 +91,7 @@ public class LoadedSuperclassInstumentedType
         }
         List<FieldDescription> fieldDescriptions = new ArrayList<FieldDescription>(this.fieldDescriptions);
         fieldDescriptions.add(additionalField);
-        return new LoadedSuperclassInstumentedType(classFormatVersion,
+        return new SubclassInstumentedType(classFormatVersion,
                 superClass,
                 interfaces,
                 this.modifiers,
@@ -113,7 +112,7 @@ public class LoadedSuperclassInstumentedType
         }
         List<MethodDescription> methodDescriptions = new ArrayList<MethodDescription>(this.methodDescriptions);
         methodDescriptions.add(additionalMethod);
-        return new LoadedSuperclassInstumentedType(classFormatVersion,
+        return new SubclassInstumentedType(classFormatVersion,
                 superClass,
                 interfaces,
                 this.modifiers,
@@ -125,7 +124,7 @@ public class LoadedSuperclassInstumentedType
 
     @Override
     public InstrumentedType withInitializer(TypeInitializer typeInitializer) {
-        return new LoadedSuperclassInstumentedType(classFormatVersion,
+        return new SubclassInstumentedType(classFormatVersion,
                 superClass,
                 interfaces,
                 modifiers,
@@ -137,12 +136,12 @@ public class LoadedSuperclassInstumentedType
 
     @Override
     public TypeDescription getSupertype() {
-        return new ForLoadedType(superClass);
+        return superClass;
     }
 
     @Override
     public TypeList getInterfaces() {
-        return new TypeList.ForLoadedType(interfaces.toArray(new Class<?>[interfaces.size()]));
+        return new TypeList.Explicit(interfaces);
     }
 
     @Override
@@ -156,12 +155,12 @@ public class LoadedSuperclassInstumentedType
     }
 
     @Override
-    public Class<?> getSuperClass() {
+    public TypeDescription getSuperClass() {
         return superClass;
     }
 
     @Override
-    public Collection<Class<?>> getDeclaredInterfaces() {
+    public List<TypeDescription> getDeclaredInterfaces() {
         return interfaces;
     }
 
@@ -204,7 +203,7 @@ public class LoadedSuperclassInstumentedType
 
     @Override
     public String toString() {
-        return "LoadedSuperclassInstumentedType{" +
+        return "SubclassInstumentedType{" +
                 "classFormatVersion=" + classFormatVersion +
                 ", superClass=" + superClass +
                 ", interfaces=" + interfaces +

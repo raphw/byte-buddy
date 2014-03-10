@@ -14,6 +14,7 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescripti
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
 import com.blogspot.mydailyjava.bytebuddy.modifier.Visibility;
 import com.blogspot.mydailyjava.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
@@ -41,7 +42,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-public class LoadedSuperclassDynamicTypeBuilderTest {
+public class SubclassDynamicTypeBuilderTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
@@ -78,10 +79,10 @@ public class LoadedSuperclassDynamicTypeBuilderTest {
 
     @Test
     public void testPlainSubclass() throws Exception {
-        Class<?> loaded = new LoadedSuperclassDynamicTypeBuilder<Object>(ClassFormatVersion.forCurrentJavaVersion(),
+        Class<?> loaded = new SubclassDynamicTypeBuilder<Object>(ClassFormatVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOO),
-                Object.class,
-                Arrays.<Class<?>>asList(Serializable.class),
+                new TypeDescription.ForLoadedType(Object.class),
+                new TypeList.ForLoadedType(Arrays.<Class<?>>asList(Serializable.class)),
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 none(),
@@ -109,10 +110,10 @@ public class LoadedSuperclassDynamicTypeBuilderTest {
 
     @Test
     public void testSubclassWithDefinedField() throws Exception {
-        Class<?> loaded = new LoadedSuperclassDynamicTypeBuilder<Object>(ClassFormatVersion.forCurrentJavaVersion(),
+        Class<?> loaded = new SubclassDynamicTypeBuilder<Object>(ClassFormatVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOO),
-                Object.class,
-                Arrays.<Class<?>>asList(Serializable.class),
+                new TypeDescription.ForLoadedType(Object.class),
+                new TypeList.ForLoadedType(Arrays.<Class<?>>asList(Serializable.class)),
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 none(),
@@ -146,10 +147,10 @@ public class LoadedSuperclassDynamicTypeBuilderTest {
 
     @Test
     public void testSubclassWithDefinedMethod() throws Exception {
-        Class<?> loaded = new LoadedSuperclassDynamicTypeBuilder<Object>(ClassFormatVersion.forCurrentJavaVersion(),
+        Class<?> loaded = new SubclassDynamicTypeBuilder<Object>(ClassFormatVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOO),
-                Object.class,
-                Arrays.<Class<?>>asList(Serializable.class),
+                new TypeDescription.ForLoadedType(Object.class),
+                new TypeList.ForLoadedType(Arrays.<Class<?>>asList(Serializable.class)),
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 none(),
@@ -190,10 +191,10 @@ public class LoadedSuperclassDynamicTypeBuilderTest {
 
     @Test
     public void testSubclassWithDefinedAbstractMethod() throws Exception {
-        Class<?> loaded = new LoadedSuperclassDynamicTypeBuilder<Object>(ClassFormatVersion.forCurrentJavaVersion(),
+        Class<?> loaded = new SubclassDynamicTypeBuilder<Object>(ClassFormatVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOO),
-                Object.class,
-                Arrays.<Class<?>>asList(Serializable.class),
+                new TypeDescription.ForLoadedType(Object.class),
+                new TypeList.ForLoadedType(Arrays.<Class<?>>asList(Serializable.class)),
                 Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 none(),

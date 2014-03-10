@@ -5,16 +5,17 @@ import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.FieldRegistry;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.MethodRegistry;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
-import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.LoadedSuperclassDynamicTypeBuilder;
+import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.SubclassDynamicTypeBuilder;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.ModifierContributor;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
 
 import java.lang.annotation.Annotation;
-import java.util.Collections;
 import java.util.List;
 
 import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.isDefaultFinalize;
@@ -33,6 +34,16 @@ public class ByteBuddy {
             public T resolve(T defaultValue) {
                 return defaultValue;
             }
+
+            @Override
+            public boolean equals(Object other) {
+                return other != null && other instanceof Undefined;
+            }
+
+            @Override
+            public int hashCode() {
+                return 31;
+            }
         }
 
         static class Defined<T> implements Definable<T> {
@@ -47,6 +58,22 @@ public class ByteBuddy {
             public T resolve(T defaultValue) {
                 return value;
             }
+
+            @Override
+            public boolean equals(Object o) {
+                return this == o || !(o == null || getClass() != o.getClass())
+                        && value.equals(((Defined) o).value);
+            }
+
+            @Override
+            public int hashCode() {
+                return value.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "Defined{value=" + value + '}';
+            }
         }
 
         T resolve(T defaultValue);
@@ -60,7 +87,7 @@ public class ByteBuddy {
 
         protected MethodAnnotationTarget(ClassFormatVersion classFormatVersion,
                                          NamingStrategy namingStrategy,
-                                         List<Class<?>> interfaceTypes,
+                                         List<TypeDescription> interfaceTypes,
                                          MethodMatcher ignoredMethods,
                                          ClassVisitorWrapper.Chain classVisitorWrapperChain,
                                          MethodRegistry methodRegistry,
@@ -121,7 +148,7 @@ public class ByteBuddy {
         }
 
         @Override
-        public List<Class<?>> getInterfaceTypes() {
+        public List<TypeDescription> getInterfaceTypes() {
             return materialize().getInterfaceTypes();
         }
 
@@ -156,6 +183,31 @@ public class ByteBuddy {
         }
 
         @Override
+        public <T> DynamicType.Builder<T> subclass(TypeDescription superType) {
+            return materialize().subclass(superType);
+        }
+
+        @Override
+        public <T> DynamicType.Builder<T> subclass(TypeDescription superType, ConstructorStrategy constructorStrategy) {
+            return materialize().subclass(superType, constructorStrategy);
+        }
+
+        @Override
+        public ByteBuddy modifiers(ModifierContributor.ForType... modifierContributor) {
+            return materialize().modifiers(modifierContributor);
+        }
+
+        @Override
+        public ByteBuddy attribute(TypeAttributeAppender typeAttributeAppender) {
+            return materialize().attribute(typeAttributeAppender);
+        }
+
+        @Override
+        public ByteBuddy annotateType(Annotation... annotation) {
+            return materialize().annotateType(annotation);
+        }
+
+        @Override
         public ByteBuddy withClassFormatVersion(ClassFormatVersion classFormatVersion) {
             return materialize().withClassFormatVersion(classFormatVersion);
         }
@@ -166,8 +218,13 @@ public class ByteBuddy {
         }
 
         @Override
-        public ByteBuddy implementInterface(Class<?> type) {
-            return materialize().implementInterface(type);
+        public ByteBuddy implement(Class<?> type) {
+            return materialize().implement(type);
+        }
+
+        @Override
+        public ByteBuddy implement(TypeDescription type) {
+            return materialize().implement(type);
         }
 
         @Override
@@ -209,6 +266,35 @@ public class ByteBuddy {
                     defaultFieldAttributeAppenderFactory,
                     defaultMethodAttributeAppenderFactory);
         }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            if (!super.equals(other)) return false;
+            MethodAnnotationTarget that = (MethodAnnotationTarget) other;
+            return attributeAppenderFactory.equals(that.attributeAppenderFactory)
+                    && instrumentation.equals(that.instrumentation)
+                    && methodMatcher.equals(that.methodMatcher);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = super.hashCode();
+            result = 31 * result + methodMatcher.hashCode();
+            result = 31 * result + instrumentation.hashCode();
+            result = 31 * result + attributeAppenderFactory.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "MethodAnnotationTarget{" +
+                    "methodMatcher=" + methodMatcher +
+                    ", instrumentation=" + instrumentation +
+                    ", attributeAppenderFactory=" + attributeAppenderFactory +
+                    '}';
+        }
     }
 
     public class MatchedMethodInterception {
@@ -218,7 +304,6 @@ public class ByteBuddy {
         public MatchedMethodInterception(MethodMatcher methodMatcher) {
             this.methodMatcher = methodMatcher;
         }
-
 
         public MethodAnnotationTarget intercept(Instrumentation instrumentation) {
             return new MethodAnnotationTarget(classFormatVersion,
@@ -239,11 +324,19 @@ public class ByteBuddy {
         public MethodAnnotationTarget withoutCode() {
             return intercept(Instrumentation.ForAbstractMethod.INSTANCE);
         }
+
+        @Override
+        public String toString() {
+            return "MatchedMethodInterception{" +
+                    "methodMatcher=" + methodMatcher +
+                    "byteBuddy=" + ByteBuddy.this.toString() +
+                    '}';
+        }
     }
 
     protected final ClassFormatVersion classFormatVersion;
     protected final NamingStrategy namingStrategy;
-    protected final List<Class<?>> interfaceTypes;
+    protected final List<TypeDescription> interfaceTypes;
     protected final MethodMatcher ignoredMethods;
     protected final ClassVisitorWrapper.Chain classVisitorWrapperChain;
     protected final MethodRegistry methodRegistry;
@@ -260,7 +353,7 @@ public class ByteBuddy {
     public ByteBuddy(ClassFormatVersion classFormatVersion) {
         this(classFormatVersion,
                 new NamingStrategy.SuffixingRandom(BYTE_BUDDY_DEFAULT_PREFIX),
-                Collections.<Class<?>>emptyList(),
+                new TypeList.Empty(),
                 isDefaultFinalize().or(isSynthetic()),
                 new ClassVisitorWrapper.Chain(),
                 new MethodRegistry.Default(),
@@ -272,7 +365,7 @@ public class ByteBuddy {
 
     protected ByteBuddy(ClassFormatVersion classFormatVersion,
                         NamingStrategy namingStrategy,
-                        List<Class<?>> interfaceTypes,
+                        List<TypeDescription> interfaceTypes,
                         MethodMatcher ignoredMethods,
                         ClassVisitorWrapper.Chain classVisitorWrapperChain,
                         MethodRegistry methodRegistry,
@@ -300,7 +393,7 @@ public class ByteBuddy {
         return namingStrategy;
     }
 
-    public List<Class<?>> getInterfaceTypes() {
+    public List<TypeDescription> getInterfaceTypes() {
         return interfaceTypes;
     }
 
@@ -325,13 +418,21 @@ public class ByteBuddy {
     }
 
     public <T> DynamicType.Builder<T> subclass(Class<T> superType, ConstructorStrategy constructorStrategy) {
-        Class<?> actualSuperType = superType;
-        List<Class<?>> interfaceTypes = this.interfaceTypes;
+        return subclass(new TypeDescription.ForLoadedType(superType), constructorStrategy);
+    }
+
+    public <T> DynamicType.Builder<T> subclass(TypeDescription superType) {
+        return subclass(superType, ConstructorStrategy.Default.IMITATE_SUPER_TYPE);
+    }
+
+    public <T> DynamicType.Builder<T> subclass(TypeDescription superType, ConstructorStrategy constructorStrategy) {
+        TypeDescription actualSuperType = isImplementable(superType);
+        List<TypeDescription> interfaceTypes = this.interfaceTypes;
         if (nonNull(superType).isInterface()) {
-            actualSuperType = Object.class;
+            actualSuperType = new TypeDescription.ForLoadedType(Object.class);
             interfaceTypes = join(superType, interfaceTypes);
         }
-        return new LoadedSuperclassDynamicTypeBuilder<T>(classFormatVersion,
+        return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
                 namingStrategy,
                 actualSuperType,
                 interfaceTypes,
@@ -411,7 +512,11 @@ public class ByteBuddy {
                 defaultMethodAttributeAppenderFactory);
     }
 
-    public ByteBuddy implementInterface(Class<?> type) {
+    public ByteBuddy implement(Class<?> type) {
+        return implement(new TypeDescription.ForLoadedType(type));
+    }
+
+    public ByteBuddy implement(TypeDescription type) {
         return new ByteBuddy(classFormatVersion,
                 namingStrategy,
                 join(interfaceTypes, isInterface(type)),
@@ -478,5 +583,53 @@ public class ByteBuddy {
 
     public MatchedMethodInterception intercept(MethodMatcher methodMatcher) {
         return new MatchedMethodInterception(methodMatcher);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+        ByteBuddy byteBuddy = (ByteBuddy) other;
+        return classFormatVersion.equals(byteBuddy.classFormatVersion)
+                && classVisitorWrapperChain.equals(byteBuddy.classVisitorWrapperChain)
+                && defaultFieldAttributeAppenderFactory.equals(byteBuddy.defaultFieldAttributeAppenderFactory)
+                && defaultMethodAttributeAppenderFactory.equals(byteBuddy.defaultMethodAttributeAppenderFactory)
+                && ignoredMethods.equals(byteBuddy.ignoredMethods)
+                && interfaceTypes.equals(byteBuddy.interfaceTypes)
+                && methodRegistry.equals(byteBuddy.methodRegistry)
+                && modifiers.equals(byteBuddy.modifiers)
+                && namingStrategy.equals(byteBuddy.namingStrategy)
+                && typeAttributeAppender.equals(byteBuddy.typeAttributeAppender);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = classFormatVersion.hashCode();
+        result = 31 * result + namingStrategy.hashCode();
+        result = 31 * result + interfaceTypes.hashCode();
+        result = 31 * result + ignoredMethods.hashCode();
+        result = 31 * result + classVisitorWrapperChain.hashCode();
+        result = 31 * result + methodRegistry.hashCode();
+        result = 31 * result + modifiers.hashCode();
+        result = 31 * result + typeAttributeAppender.hashCode();
+        result = 31 * result + defaultFieldAttributeAppenderFactory.hashCode();
+        result = 31 * result + defaultMethodAttributeAppenderFactory.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "ByteBuddy{" +
+                "classFormatVersion=" + classFormatVersion +
+                ", namingStrategy=" + namingStrategy +
+                ", interfaceTypes=" + interfaceTypes +
+                ", ignoredMethods=" + ignoredMethods +
+                ", classVisitorWrapperChain=" + classVisitorWrapperChain +
+                ", methodRegistry=" + methodRegistry +
+                ", modifiers=" + modifiers +
+                ", typeAttributeAppender=" + typeAttributeAppender +
+                ", defaultFieldAttributeAppenderFactory=" + defaultFieldAttributeAppenderFactory +
+                ", defaultMethodAttributeAppenderFactory=" + defaultMethodAttributeAppenderFactory +
+                '}';
     }
 }

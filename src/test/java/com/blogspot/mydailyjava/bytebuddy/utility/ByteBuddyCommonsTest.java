@@ -1,6 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.utility;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -10,7 +11,6 @@ import static com.blogspot.mydailyjava.bytebuddy.utility.ByteBuddyCommons.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsSame.sameInstance;
-import static org.junit.Assert.assertEquals;
 
 public class ByteBuddyCommonsTest {
 
@@ -29,32 +29,35 @@ public class ByteBuddyCommonsTest {
 
     @Test
     public void testIsInterface() throws Exception {
-        assertEquals(Runnable.class, isInterface(Runnable.class));
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Runnable.class);
+        assertThat(isInterface(typeDescription), is(typeDescription));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testIsInterfaceThrowsException() throws Exception {
-        isInterface(Object.class);
+        isInterface(new TypeDescription.ForLoadedType(Object.class));
     }
 
     @Test
     public void testClassIsImplementable() throws Exception {
-        assertEquals(Object.class, isImplementable(Object.class));
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Object.class);
+        assertThat(isImplementable(typeDescription), is(typeDescription));
     }
 
     @Test
     public void testInterfaceIsImplementable() throws Exception {
-        assertEquals(Runnable.class, isImplementable(Runnable.class));
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Runnable.class);
+        assertThat(isImplementable(typeDescription), is(typeDescription));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testPrimitiveIsImplementableThrowsException() throws Exception {
-        isImplementable(int.class);
+        isImplementable(new TypeDescription.ForLoadedType(int.class));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testArrayIsImplementableThrowsException() throws Exception {
-        isImplementable(Object[].class);
+        isImplementable(new TypeDescription.ForLoadedType(Object[].class));
     }
 
     @Test
@@ -90,6 +93,6 @@ public class ByteBuddyCommonsTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testIsNotEmptyThrowsException() throws Exception {
-        isNotEmpty(Arrays.asList(), FOO);
+        isNotEmpty(Arrays.<Object>asList(), FOO);
     }
 }
