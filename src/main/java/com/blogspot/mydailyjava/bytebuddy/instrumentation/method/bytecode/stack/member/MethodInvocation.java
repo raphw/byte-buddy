@@ -86,7 +86,7 @@ public enum MethodInvocation {
         public StackManipulation virtual(TypeDescription invocationTarget) {
             validateNonStaticAndTypeCompatibleCall(invocationTarget);
             if (methodDescription.isPrivate() || methodDescription.isConstructor()) {
-                throw new IllegalArgumentException("Cannot invoke " + invocationTarget + " virtually");
+                throw new IllegalArgumentException("Cannot invoke " + methodDescription + " virtually");
             }
             if (invocationTarget.isInterface()) {
                 return INTERFACE.new Invocation(methodDescription, invocationTarget);

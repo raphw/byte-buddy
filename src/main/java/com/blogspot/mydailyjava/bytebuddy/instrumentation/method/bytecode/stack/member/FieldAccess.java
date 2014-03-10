@@ -79,6 +79,11 @@ public enum FieldAccess {
                 int sizeChange = fieldSize.getSize() - targetSizeChange;
                 return new Size(sizeChange, sizeChange);
             }
+
+            @Override
+            public String toString() {
+                return "FieldAccess.AccessDispatcher.FieldGetInstruction{fieldDescription=" + fieldDescription + '}';
+            }
         }
 
         private class FieldPutInstruction extends AbstractFieldInstruction {
@@ -91,6 +96,11 @@ public enum FieldAccess {
             @Override
             protected Size resolveSize(StackSize fieldSize) {
                 return new Size(-1 * (fieldSize.getSize() + targetSizeChange), 0);
+            }
+
+            @Override
+            public String toString() {
+                return "FieldAccess.AccessDispatcher.FieldPutInstruction{fieldDescription=" + fieldDescription + '}';
             }
         }
 
@@ -113,6 +123,22 @@ public enum FieldAccess {
         @Override
         public FieldDescription getDefinedField() {
             return fieldDescription;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && fieldDescription.equals(((AccessDispatcher) other).fieldDescription);
+        }
+
+        @Override
+        public int hashCode() {
+            return fieldDescription.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "FieldAccess.AccessDispatcher{fieldDescription=" + fieldDescription + '}';
         }
     }
 
