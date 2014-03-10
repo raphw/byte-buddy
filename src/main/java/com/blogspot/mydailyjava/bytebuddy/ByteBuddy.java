@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.isDefaultFinalize;
+import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.isSynthetic;
 import static com.blogspot.mydailyjava.bytebuddy.utility.ByteBuddyCommons.*;
 
 public class ByteBuddy {
@@ -260,7 +261,7 @@ public class ByteBuddy {
         this(classFormatVersion,
                 new NamingStrategy.SuffixingRandom(BYTE_BUDDY_DEFAULT_PREFIX),
                 Collections.<Class<?>>emptyList(),
-                isDefaultFinalize(),
+                isDefaultFinalize().or(isSynthetic()),
                 new ClassVisitorWrapper.Chain(),
                 new MethodRegistry.Default(),
                 new Definable.Undefined<Integer>(),

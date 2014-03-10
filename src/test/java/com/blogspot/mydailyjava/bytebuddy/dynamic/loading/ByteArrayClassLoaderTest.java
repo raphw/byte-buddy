@@ -6,14 +6,12 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
-import org.mockito.Mock;
 
+import java.util.Collections;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class ByteArrayClassLoaderTest {
 
@@ -25,21 +23,18 @@ public class ByteArrayClassLoaderTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
-    @Mock
-    private Map<String, byte[]> values;
 
     private ClassLoader classLoader;
 
     @Before
     public void setUp() throws Exception {
-        when(values.get(Foo.class.getName())).thenReturn(ClassFileExtraction.extract(Foo.class));
+        Map<String, byte[]> values = Collections.singletonMap(Foo.class.getName(), ClassFileExtraction.extract(Foo.class));
         classLoader = new ByteArrayClassLoader(null /* null represents the bootstrap class loader */, values);
     }
 
     @Test
     public void testSuccessfulHit() throws Exception {
         assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
-        verify(values).get(Foo.class.getName());
     }
 
     @Test(expected = ClassNotFoundException.class)

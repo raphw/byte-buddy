@@ -18,18 +18,52 @@ import org.objectweb.asm.Opcodes;
 import java.lang.reflect.Field;
 import java.util.Random;
 
+/**
+ * This instrumentation returns a fixed value for a method. Other than the
+ * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.StubMethod} instrumentation, this implementation allows
+ * to determine a specific value which must be assignable to the returning value of any instrumented method. Otherwise,
+ * an exception will be thrown.
+ */
 public abstract class FixedValue implements Instrumentation {
 
+    /**
+     * Represents a fixed value instrumentation that is using a default assigner for attempting to assign
+     * the fixed value to the return type of the instrumented method.
+     */
     public static interface AssignerConfigurable extends Instrumentation {
 
+        /**
+         * Defines an explicit assigner to this fixed value instrumentation.
+         *
+         * @param assigner            The assigner to use for assigning the fixed value to the return type of the
+         *                            instrumented value.
+         * @param considerRuntimeType If {@code true}, the runtime type of the given value will be considered for
+         *                            assigning the return type.
+         * @return A fixed value instrumentation that makes use of the given assigner.
+         */
         Instrumentation withAssigner(Assigner assigner, boolean considerRuntimeType);
     }
 
+    /**
+     * A fixed value instrumentation that represents its fixed value as a value that is written to the instrumented
+     * class's constant pool.
+     */
     protected static class ForPoolValue extends FixedValue implements AssignerConfigurable, ByteCodeAppender {
 
         private final StackManipulation valueLoadInstruction;
         private final TypeDescription loadedType;
 
+        /**
+         * Creates a new constant pool fixed value instrumentation.
+         *
+         * @param valueLoadInstruction The instruction that is responsible for loading the constant pool value onto the
+         *                             operand stack.
+         * @param loadedType           A type description representing the loaded type.
+         * @param assigner             The assigner to use for assigning the fixed value to the return type of the
+         *                             instrumented value.
+         * @param considerRuntimeType  If {@code true}, the runtime type of the given value will be considered for
+         *                             assigning the return type.
+         */
         protected ForPoolValue(StackManipulation valueLoadInstruction,
                                Class<?> loadedType,
                                Assigner assigner,
@@ -70,8 +104,31 @@ public abstract class FixedValue implements Instrumentation {
         public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
             return apply(methodVisitor, instrumentationContext, instrumentedMethod, loadedType, valueLoadInstruction);
         }
+
+        @Override
+        public boolean equals(Object o) {
+            return this == o || !(o == null || getClass() != o.getClass())
+                    && loadedType.equals(((ForPoolValue) o).loadedType)
+                    && valueLoadInstruction.equals(((ForPoolValue) o).valueLoadInstruction);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * valueLoadInstruction.hashCode() + loadedType.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "FixedValue.ForPoolValue{" +
+                    "valueLoadInstruction=" + valueLoadInstruction +
+                    ", loadedType=" + loadedType +
+                    '}';
+        }
     }
 
+    /**
+     * A fixed value instrumentation that represents its fixed value as a static field of the instrumented class.
+     */
     protected static class ForStaticField extends FixedValue implements AssignerConfigurable, TypeInitializer {
 
         private static final Object STATIC_FIELD = null;
@@ -94,12 +151,37 @@ public abstract class FixedValue implements Instrumentation {
             public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
                 return ForStaticField.this.apply(methodVisitor, instrumentationContext, instrumentedMethod, fieldType, fieldGetAccess);
             }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && fieldGetAccess.equals(((StaticFieldByteCodeAppender) other).fieldGetAccess);
+            }
+
+            @Override
+            public int hashCode() {
+                return fieldGetAccess.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "StaticFieldByteCodeAppender{fieldGetAccess=" + fieldGetAccess + '}';
+            }
         }
 
         private final String fieldName;
         private final Object fixedValue;
         private final TypeDescription fieldType;
 
+        /**
+         * Creates a new static field fixed value instrumentation.
+         *
+         * @param fixedValue          The fixed value to be returned.
+         * @param assigner            The assigner to use for assigning the fixed value to the return type of the
+         *                            instrumented value.
+         * @param considerRuntimeType If {@code true}, the runtime type of the given value will be considered for
+         *                            assigning the return type.
+         */
         protected ForStaticField(Object fixedValue, Assigner assigner, boolean considerRuntimeType) {
             this(String.format("%s$%d", PREFIX, Math.abs(new Random().nextInt())), fixedValue, assigner, considerRuntimeType);
         }
@@ -143,14 +225,62 @@ public abstract class FixedValue implements Instrumentation {
         public boolean isAlive() {
             return true;
         }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            ForStaticField that = (ForStaticField) other;
+            return fieldName.equals(that.fieldName)
+                    && fieldType.equals(that.fieldType)
+                    && !(fixedValue != null ? !fixedValue.equals(that.fixedValue) : that.fixedValue != null);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = fieldName.hashCode();
+            result = 31 * result + (fixedValue != null ? fixedValue.hashCode() : 0);
+            result = 31 * result + fieldType.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "FixedValue.ForStaticField{" +
+                    "fieldName='" + fieldName + '\'' +
+                    ", fixedValue=" + fixedValue +
+                    ", fieldType=" + fieldType +
+                    '}';
+        }
     }
 
+    /**
+     * Creates a fixed value instrumentation that returns a fixed value. If the value can be inlined into the created
+     * class, i.e. can be added to the constant pool of a class, no explicit type initialization will be required for
+     * the created dynamic class. Otherwise, a static field will be created in the dynamic type which will be initialized
+     * with the given value. The following Java types can be inlined:
+     * <ul>
+     * <li>The {@link java.lang.String} type.</li>
+     * <li>All primitive types and their wrapper type, i.e. {@link java.lang.Boolean}, {@link java.lang.Byte},
+     * {@link java.lang.Short}, {@link java.lang.Character}, {@link java.lang.Integer}, {@link java.lang.Long},
+     * {@link java.lang.Float} and {@link java.lang.Double}.</li>
+     * <li>A {@code null} reference.</li>
+     * </ul>
+     * <p/>
+     * If possible, the constant pool value is substituted by a byte code instruction that creates the value. (This is
+     * possible for integer types and types that are presented by integers inside the JVM ({@code boolean}, {@code byte},
+     * {@code short}, {@code char}) and for the {@code null} value. Additionally, several common constants of
+     * the {@code float}, {@code double} and {@code long} types can be represented by opcode constants.
+     *
+     * @param fixedValue The fixed value to be returned by methods that are instrumented by this instrumentation.
+     * @return An instrumentation for the given {@code fixedValue}.
+     */
     public static AssignerConfigurable value(Object fixedValue) {
         if (fixedValue == null) {
             return new ForPoolValue(NullConstant.INSTANCE,
                     Object.class,
                     defaultAssigner(),
-                    defaultConsiderRuntimeType());
+                    true);
         }
         Class<?> type = fixedValue.getClass();
         if (type == String.class) {
@@ -203,7 +333,25 @@ public abstract class FixedValue implements Instrumentation {
         }
     }
 
+    /**
+     * Other than {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.FixedValue#value(Object)}, this function
+     * will create a fixed value instrumentation that will always defined a field in the instrumented class. As a result,
+     * object identity will be preserved between the given {@code fixedValue} and the value that is returned by
+     * instrumented methods.
+     * <p/>
+     * As an exception, the {@code null} value is always presented by a constant value and is never stored in a static
+     * field.
+     *
+     * @param fixedValue The fixed value to be returned by methods that are instrumented by this instrumentation.
+     * @return An instrumentation for the given {@code fixedValue}.
+     */
     public static AssignerConfigurable reference(Object fixedValue) {
+        if (fixedValue == null) {
+            return new ForPoolValue(NullConstant.INSTANCE,
+                    Object.class,
+                    defaultAssigner(),
+                    true);
+        }
         return new ForStaticField(fixedValue, defaultAssigner(), defaultConsiderRuntimeType());
     }
 
@@ -218,19 +366,42 @@ public abstract class FixedValue implements Instrumentation {
     private final Assigner assigner;
     private final boolean considerRuntimeType;
 
+    /**
+     * Creates a new fixed value instrumentation.
+     *
+     * @param assigner            The assigner to use for assigning the fixed value to the return type of the instrumented value.
+     * @param considerRuntimeType If {@code true}, the runtime type of the given value will be considered for assigning
+     *                            the return type.
+     */
     protected FixedValue(Assigner assigner, boolean considerRuntimeType) {
         this.assigner = assigner;
         this.considerRuntimeType = considerRuntimeType;
     }
 
+    /**
+     * Blueprint method that for applying the actual instrumentation.
+     *
+     * @param methodVisitor           The method visitor to which the instrumentation is applied to.
+     * @param instrumentationContext  The instrumentation context for the given instrumentation.
+     * @param instrumentedMethod      The instrumented method that is target of the instrumentation.
+     * @param fixedValueType          A description of the type of the fixed value that is loaded by the
+     *                                {@code valueLoadingInstruction}.
+     * @param valueLoadingInstruction A stack manipulation that represents the loading of the fixed value onto the
+     *                                operand stack.
+     * @return A representation of the stack and variable array sized that are required for this instrumentation.
+     */
     protected ByteCodeAppender.Size apply(MethodVisitor methodVisitor,
                                           Context instrumentationContext,
                                           MethodDescription instrumentedMethod,
-                                          TypeDescription loadedValueType,
+                                          TypeDescription fixedValueType,
                                           StackManipulation valueLoadingInstruction) {
+        StackManipulation assignment = assigner.assign(fixedValueType, instrumentedMethod.getReturnType(), considerRuntimeType);
+        if (!assignment.isValid()) {
+            throw new IllegalArgumentException("Cannot return value of type " + fixedValueType + " for " + instrumentedMethod);
+        }
         StackManipulation.Size stackSize = new StackManipulation.Compound(
                 valueLoadingInstruction,
-                assigner.assign(loadedValueType, instrumentedMethod.getReturnType(), considerRuntimeType),
+                assignment,
                 MethodReturn.returning(instrumentedMethod.getReturnType())
         ).apply(methodVisitor, instrumentationContext);
         return new ByteCodeAppender.Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
