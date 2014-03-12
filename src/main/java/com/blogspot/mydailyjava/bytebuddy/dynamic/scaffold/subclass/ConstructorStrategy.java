@@ -6,7 +6,7 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.MethodAttrib
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodList;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 
-import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.isConstructor;
+import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
 
 /**
  * A constructor strategy is responsible for creating bootstrap constructors for a
@@ -17,20 +17,24 @@ import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.
 public interface ConstructorStrategy {
 
     /**
-     * Default constructor strategies.
+     * Default implementations of constructor strategies.
      * <ol>
      * <li>The {@link com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy.Default#NO_CONSTRUCTORS}
      * strategy is adding no constructors such that the instrumented type will by default not have any. This is legal by
      * Java byte code requirements. However, if no constructor is added manually if this strategy is applied, the type
      * is not constructable without using JVM non-public functionality.</li>
+     * <li>The {@link com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy.Default#DEFAULT_CONSTRUCTOR}
+     * strategy is adding a default constructor that calls it's super types default constructor. If no such constructor is defined,
+     * an exception is thrown. Only {@code public} or {@code protected} constructors are considered by this strategy.</li>
      * <li>The {@link com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy.Default#IMITATE_SUPER_TYPE}
      * strategy is adding all constructors of the super type which are making direct calls to their super constructor of
-     * same signature.</li>
+     * same signature. Only {@code public} or {@code protected} constructors are considered by this strategy.</li>
      * </ol>
      */
     static enum Default implements ConstructorStrategy {
 
         NO_CONSTRUCTORS,
+        DEFAULT_CONSTRUCTOR,
         IMITATE_SUPER_TYPE;
 
         @Override
@@ -38,8 +42,16 @@ public interface ConstructorStrategy {
             switch (this) {
                 case NO_CONSTRUCTORS:
                     return new MethodList.Empty();
+                case DEFAULT_CONSTRUCTOR:
+                    MethodList methodList = superType.getDeclaredMethods()
+                            .filter(isConstructor().and(takesArguments()).and(isPublic().or(isProtected())));
+                    if (methodList.size() == 1) {
+                        return methodList;
+                    } else {
+                        throw new IllegalArgumentException(superType + " does not declare a default constructor");
+                    }
                 case IMITATE_SUPER_TYPE:
-                    return superType.getDeclaredMethods().filter(isConstructor());
+                    return superType.getDeclaredMethods().filter(isConstructor().and(isPublic().or(isProtected())));
                 default:
                     throw new AssertionError();
             }
@@ -51,6 +63,7 @@ public interface ConstructorStrategy {
             switch (this) {
                 case NO_CONSTRUCTORS:
                     return methodRegistry;
+                case DEFAULT_CONSTRUCTOR:
                 case IMITATE_SUPER_TYPE:
                     return methodRegistry.append(new MethodRegistry.LatentMethodMatcher.Simple(isConstructor()),
                             SuperMethodCall.INSTANCE,
@@ -73,7 +86,7 @@ public interface ConstructorStrategy {
     /**
      * Returns a method registry that is capable of creating byte code for the constructors that were
      * provided by the
-     * {@link com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy#extractConstructors(Class)}
+     * {@link com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy#extractConstructors(com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription)}
      * method.
      *
      * @param methodRegistry                        The original method registry.

@@ -38,7 +38,7 @@ public interface Instrumentation {
          * A convenience implementation of an instrumentation context that allows for a better composition
          * of the instrumentation context implementation.
          */
-        static class Default implements Context, AuxiliaryType.MethodProxyFactory {
+        static class Default implements Context, AuxiliaryType.MethodAccessorFactory {
 
             /**
              * Representation of a naming strategy for an auxiliary type.
@@ -55,23 +55,23 @@ public interface Instrumentation {
             }
 
             private final AuxiliaryTypeNamingStrategy auxiliaryTypeNamingStrategy;
-            private final AuxiliaryType.MethodProxyFactory methodProxyFactory;
+            private final AuxiliaryType.MethodAccessorFactory methodAccessorFactory;
             private final Map<AuxiliaryType, DynamicType<?>> auxiliaryTypes;
-            private final Map<MethodDescription, MethodDescription> registeredProxyMethods;
+            private final Map<MethodDescription, MethodDescription> registeredAccessorMethods;
 
             /**
              * Creates a new default instrumentation context.
              *
              * @param auxiliaryTypeNamingStrategy The naming strategy for auxiliary types that are registered.
-             * @param methodProxyFactory          A factory for creating method proxies for the currently instrumented
+             * @param methodAccessorFactory          A factory for creating method proxies for the currently instrumented
              *                                    type.
              */
             public Default(AuxiliaryTypeNamingStrategy auxiliaryTypeNamingStrategy,
-                           AuxiliaryType.MethodProxyFactory methodProxyFactory) {
+                           AuxiliaryType.MethodAccessorFactory methodAccessorFactory) {
                 this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
-                this.methodProxyFactory = methodProxyFactory;
+                this.methodAccessorFactory = methodAccessorFactory;
                 auxiliaryTypes = new HashMap<AuxiliaryType, DynamicType<?>>();
-                registeredProxyMethods = new HashMap<MethodDescription, MethodDescription>();
+                registeredAccessorMethods = new HashMap<MethodDescription, MethodDescription>();
             }
 
             @Override
@@ -85,13 +85,13 @@ public interface Instrumentation {
             }
 
             @Override
-            public MethodDescription requireProxyMethodFor(MethodDescription targetMethod) {
-                MethodDescription proxyMethod = registeredProxyMethods.get(targetMethod);
-                if (proxyMethod == null) {
-                    proxyMethod = methodProxyFactory.requireProxyMethodFor(targetMethod);
-                    registeredProxyMethods.put(targetMethod, proxyMethod);
+            public MethodDescription requireAccessorMethodFor(MethodDescription targetMethod) {
+                MethodDescription accessorMethod = registeredAccessorMethods.get(targetMethod);
+                if (accessorMethod == null) {
+                    accessorMethod = methodAccessorFactory.requireAccessorMethodFor(targetMethod);
+                    registeredAccessorMethods.put(targetMethod, accessorMethod);
                 }
-                return proxyMethod;
+                return accessorMethod;
             }
 
             @Override
@@ -103,9 +103,9 @@ public interface Instrumentation {
             public String toString() {
                 return "Default{" +
                         "auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
-                        ", methodProxyFactory=" + methodProxyFactory +
+                        ", methodAccessorFactory=" + methodAccessorFactory +
                         ", auxiliaryTypes=" + auxiliaryTypes +
-                        ", registeredProxyMethods=" + registeredProxyMethods +
+                        ", registeredAccessorMethods=" + registeredAccessorMethods +
                         '}';
             }
         }

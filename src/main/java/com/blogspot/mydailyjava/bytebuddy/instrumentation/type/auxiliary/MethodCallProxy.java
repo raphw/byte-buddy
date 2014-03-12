@@ -188,8 +188,8 @@ public class MethodCallProxy implements AuxiliaryType {
     }
 
     @Override
-    public DynamicType<?> make(String auxiliaryTypeName, MethodProxyFactory methodProxyFactory) {
-        MethodDescription proxiedMethod = methodProxyFactory.requireProxyMethodFor(this.proxiedMethod);
+    public DynamicType<?> make(String auxiliaryTypeName, MethodAccessorFactory methodAccessorFactory) {
+        MethodDescription proxiedMethod = methodAccessorFactory.requireAccessorMethodFor(this.proxiedMethod);
         int fieldIndex = 0;
         InstrumentedType proxy = new SubclassInstumentedType(ClassFormatVersion.forCurrentJavaVersion(),
                 new TypeDescription.ForLoadedType(Object.class),

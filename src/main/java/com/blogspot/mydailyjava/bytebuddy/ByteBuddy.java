@@ -326,11 +326,27 @@ public class ByteBuddy {
         }
 
         @Override
+        public boolean equals(Object o) {
+            return this == o || !(o == null || getClass() != o.getClass())
+                    && getByteBuddy().equals(((MatchedMethodInterception) o).getByteBuddy())
+                    && methodMatcher.equals(((MatchedMethodInterception) o).methodMatcher);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * methodMatcher.hashCode() + getByteBuddy().hashCode();
+        }
+
+        @Override
         public String toString() {
             return "MatchedMethodInterception{" +
                     "methodMatcher=" + methodMatcher +
                     "byteBuddy=" + ByteBuddy.this.toString() +
                     '}';
+        }
+
+        private ByteBuddy getByteBuddy() {
+            return ByteBuddy.this;
         }
     }
 

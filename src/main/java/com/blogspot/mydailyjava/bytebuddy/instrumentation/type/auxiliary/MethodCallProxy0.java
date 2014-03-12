@@ -135,9 +135,9 @@ public class MethodCallProxy0 implements AuxiliaryType {
     }
 
     @Override
-    public DynamicType<?> make(String auxiliaryTypeName, MethodProxyFactory methodProxyFactory) {
+    public DynamicType<?> make(String auxiliaryTypeName, MethodAccessorFactory methodAccessorFactory) {
         String proxyTypeInternalName = auxiliaryTypeName.replace('.', '/');
-        MethodDescription proxiedMethod = methodProxyFactory.requireProxyMethodFor(this.proxiedMethod);
+        MethodDescription proxiedMethod = methodAccessorFactory.requireAccessorMethodFor(this.proxiedMethod);
         Map<String, TypeDescription> fields = new LinkedHashMap<String, TypeDescription>(1 + proxiedMethod.getParameterTypes().size());
         StringBuilder constructorDescriptor = new StringBuilder("(");
         int i = 0;

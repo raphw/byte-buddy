@@ -67,13 +67,13 @@ public class SubclassInstrumentationContextDelegateTest {
 
     @Test
     public void testProxyMethodRegistration() throws Exception {
-        MethodDescription firstProxyMethod = delegate.requireProxyMethodFor(firstMethod);
+        MethodDescription firstProxyMethod = delegate.requireAccessorMethodFor(firstMethod);
         assertThat(firstProxyMethod.isStatic(), is(false));
         assertThat(firstProxyMethod, not(is(firstMethod)));
-        MethodDescription secondProxyMethod = delegate.requireProxyMethodFor(secondMethod);
+        MethodDescription secondProxyMethod = delegate.requireAccessorMethodFor(secondMethod);
         assertThat(secondProxyMethod.isStatic(), is(true));
         assertThat(secondProxyMethod, not(is(secondMethod)));
-        assertThat(delegate.requireProxyMethodFor(firstMethod), is(firstProxyMethod));
+        assertThat(delegate.requireAccessorMethodFor(firstMethod), is(firstProxyMethod));
         Iterator<MethodDescription> iterator = delegate.getProxiedMethods().iterator();
         assertThat(iterator.hasNext(), is(true));
         MethodDescription next = iterator.next();
@@ -105,7 +105,7 @@ public class SubclassInstrumentationContextDelegateTest {
         TypeList interfaceTypes = mock(TypeList.class);
         when(instrumentedType.getInterfaces()).thenReturn(interfaceTypes);
         Instrumentation.Context instrumentationContext = mock(Instrumentation.Context.class);
-        MethodDescription proxyMethod = delegate.requireProxyMethodFor(objectType.getDeclaredMethods()
+        MethodDescription proxyMethod = delegate.requireAccessorMethodFor(objectType.getDeclaredMethods()
                 .filter(named(TO_STRING)).getOnly());
         TypeWriter.InGeneralPhase<?> typeWriter = new TypeWriter.Builder<Object>(instrumentedType,
                 instrumentationContext,

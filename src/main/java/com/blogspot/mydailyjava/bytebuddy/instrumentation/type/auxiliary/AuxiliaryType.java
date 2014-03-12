@@ -21,7 +21,7 @@ public interface AuxiliaryType {
      * call methods of a second type that are usually not accessible for the first type. This strategy is also adapted
      * by the Java compiler that creates accessor methods for example to implement inner classes.
      */
-    static interface MethodProxyFactory {
+    static interface MethodAccessorFactory {
 
         /**
          * Requests a new accessor method for the requested method. If such a method cannot be created, an exception
@@ -30,7 +30,7 @@ public interface AuxiliaryType {
          * @param targetMethod The target method for which an accessor method is required.
          * @return A new accessor method.
          */
-        MethodDescription requireProxyMethodFor(MethodDescription targetMethod);
+        MethodDescription requireAccessorMethodFor(MethodDescription targetMethod);
     }
 
     /**
@@ -38,8 +38,8 @@ public interface AuxiliaryType {
      *
      * @param auxiliaryTypeName  The fully qualified internalName for this auxiliary type. The type should be in the same
      *                           package than the instrumented type this auxiliary type is providing services to.
-     * @param methodProxyFactory A factory for accessor methods.
+     * @param methodAccessorFactory A factory for accessor methods.
      * @return A dynamically created type representing this auxiliary type.
      */
-    DynamicType<?> make(String auxiliaryTypeName, MethodProxyFactory methodProxyFactory);
+    DynamicType<?> make(String auxiliaryTypeName, MethodAccessorFactory methodAccessorFactory);
 }

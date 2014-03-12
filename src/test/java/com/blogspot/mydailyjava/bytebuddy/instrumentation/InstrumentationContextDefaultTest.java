@@ -27,7 +27,7 @@ public class InstrumentationContextDefaultTest {
     @Mock
     private Instrumentation.Context.Default.AuxiliaryTypeNamingStrategy auxiliaryTypeNamingStrategy;
     @Mock
-    private AuxiliaryType.MethodProxyFactory methodProxyFactory;
+    private AuxiliaryType.MethodAccessorFactory methodAccessorFactory;
     @Mock
     private AuxiliaryType firstAuxiliary, secondAuxiliary;
     @Mock
@@ -40,14 +40,14 @@ public class InstrumentationContextDefaultTest {
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        defaultContext = new Instrumentation.Context.Default(auxiliaryTypeNamingStrategy, methodProxyFactory);
-        when(firstAuxiliary.make(any(String.class), any(AuxiliaryType.MethodProxyFactory.class))).thenReturn((DynamicType) firstDynamic);
-        when(secondAuxiliary.make(any(String.class), any(AuxiliaryType.MethodProxyFactory.class))).thenReturn((DynamicType) secondDynamic);
+        defaultContext = new Instrumentation.Context.Default(auxiliaryTypeNamingStrategy, methodAccessorFactory);
+        when(firstAuxiliary.make(any(String.class), any(AuxiliaryType.MethodAccessorFactory.class))).thenReturn((DynamicType) firstDynamic);
+        when(secondAuxiliary.make(any(String.class), any(AuxiliaryType.MethodAccessorFactory.class))).thenReturn((DynamicType) secondDynamic);
         when(firstDynamic.getName()).thenReturn(FOO);
         when(secondDynamic.getName()).thenReturn(BAR);
         when(auxiliaryTypeNamingStrategy.name(any(AuxiliaryType.class))).thenReturn(QUX, BAZ);
-        when(methodProxyFactory.requireProxyMethodFor(firstMethod)).thenReturn(firstProxyMethod);
-        when(methodProxyFactory.requireProxyMethodFor(secondMethod)).thenReturn(secondProxyMethod);
+        when(methodAccessorFactory.requireAccessorMethodFor(firstMethod)).thenReturn(firstProxyMethod);
+        when(methodAccessorFactory.requireAccessorMethodFor(secondMethod)).thenReturn(secondProxyMethod);
     }
 
     @Test
@@ -64,7 +64,7 @@ public class InstrumentationContextDefaultTest {
         verify(auxiliaryTypeNamingStrategy).name(firstAuxiliary);
         verify(auxiliaryTypeNamingStrategy).name(secondAuxiliary);
         verifyNoMoreInteractions(auxiliaryTypeNamingStrategy);
-        verifyZeroInteractions(methodProxyFactory);
+        verifyZeroInteractions(methodAccessorFactory);
     }
 
     @Test
@@ -77,17 +77,17 @@ public class InstrumentationContextDefaultTest {
         verifyNoMoreInteractions(firstAuxiliary);
         verify(auxiliaryTypeNamingStrategy).name(firstAuxiliary);
         verifyNoMoreInteractions(auxiliaryTypeNamingStrategy);
-        verifyZeroInteractions(methodProxyFactory);
+        verifyZeroInteractions(methodAccessorFactory);
     }
 
     @Test
     public void testMethodProxyFactory() throws Exception {
-        assertThat(defaultContext.requireProxyMethodFor(firstMethod), is(firstProxyMethod));
-        assertThat(defaultContext.requireProxyMethodFor(secondMethod), is(secondProxyMethod));
-        assertThat(defaultContext.requireProxyMethodFor(firstMethod), is(firstProxyMethod));
-        verify(methodProxyFactory).requireProxyMethodFor(firstMethod);
-        verify(methodProxyFactory).requireProxyMethodFor(secondMethod);
-        verifyNoMoreInteractions(methodProxyFactory);
+        assertThat(defaultContext.requireAccessorMethodFor(firstMethod), is(firstProxyMethod));
+        assertThat(defaultContext.requireAccessorMethodFor(secondMethod), is(secondProxyMethod));
+        assertThat(defaultContext.requireAccessorMethodFor(firstMethod), is(firstProxyMethod));
+        verify(methodAccessorFactory).requireAccessorMethodFor(firstMethod);
+        verify(methodAccessorFactory).requireAccessorMethodFor(secondMethod);
+        verifyNoMoreInteractions(methodAccessorFactory);
         verifyZeroInteractions(auxiliaryTypeNamingStrategy);
     }
 }

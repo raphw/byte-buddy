@@ -17,11 +17,11 @@ import org.objectweb.asm.Opcodes;
 import java.util.*;
 
 /**
- * A delegate class that represents a method proxy factory for an instrumentation where an instrumentation is
+ * A delegate class that represents a method accessor factory for an instrumentation where an instrumentation is
  * conducted by creating a subclass of a given type. This delegate represents a mutable data structure.
  */
 public class SubclassInstrumentationContextDelegate
-        implements AuxiliaryType.MethodProxyFactory,
+        implements AuxiliaryType.MethodAccessorFactory,
         Instrumentation.Context.Default.AuxiliaryTypeNamingStrategy,
         TypeWriter.MethodPool {
 
@@ -31,9 +31,9 @@ public class SubclassInstrumentationContextDelegate
     private final Random random;
 
     private final InstrumentedType instrumentedType;
-    private final List<MethodDescription> orderedProxyMethods;
-    private final Map<MethodDescription, MethodDescription> knownTargetMethodsToProxyMethod;
-    private final Map<MethodDescription, MethodDescription> registeredProxyMethodToTargetMethod;
+    private final List<MethodDescription> orderedAccessorMethods;
+    private final Map<MethodDescription, MethodDescription> knownTargetMethodsToAccessorMethod;
+    private final Map<MethodDescription, MethodDescription> registeredAccessorMethodToTargetMethod;
 
     /**
      * Creates a new delegate with a default prefix.
@@ -54,9 +54,9 @@ public class SubclassInstrumentationContextDelegate
         this.prefix = prefix;
         this.instrumentedType = instrumentedType;
         this.random = new Random();
-        orderedProxyMethods = new ArrayList<MethodDescription>();
-        knownTargetMethodsToProxyMethod = new HashMap<MethodDescription, MethodDescription>();
-        registeredProxyMethodToTargetMethod = new HashMap<MethodDescription, MethodDescription>();
+        orderedAccessorMethods = new ArrayList<MethodDescription>();
+        knownTargetMethodsToAccessorMethod = new HashMap<MethodDescription, MethodDescription>();
+        registeredAccessorMethodToTargetMethod = new HashMap<MethodDescription, MethodDescription>();
     }
 
     @Override
@@ -65,32 +65,32 @@ public class SubclassInstrumentationContextDelegate
     }
 
     @Override
-    public MethodDescription requireProxyMethodFor(MethodDescription targetMethod) {
-        MethodDescription proxyMethod = knownTargetMethodsToProxyMethod.get(targetMethod);
-        if (proxyMethod != null) {
-            return proxyMethod;
+    public MethodDescription requireAccessorMethodFor(MethodDescription targetMethod) {
+        MethodDescription accessorMethod = knownTargetMethodsToAccessorMethod.get(targetMethod);
+        if (accessorMethod != null) {
+            return accessorMethod;
         }
         String name = String.format("%s$%s$%d", targetMethod.getInternalName(), prefix, Math.abs(random.nextInt()));
-        proxyMethod = new MethodDescription.Latent(name,
+        accessorMethod = new MethodDescription.Latent(name,
                 instrumentedType,
                 targetMethod.getReturnType(),
                 targetMethod.getParameterTypes(),
                 (targetMethod.isStatic() ? Opcodes.ACC_STATIC : 0) | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL);
-        knownTargetMethodsToProxyMethod.put(targetMethod, proxyMethod);
-        registeredProxyMethodToTargetMethod.put(proxyMethod, targetMethod);
-        orderedProxyMethods.add(proxyMethod);
-        return proxyMethod;
+        knownTargetMethodsToAccessorMethod.put(targetMethod, accessorMethod);
+        registeredAccessorMethodToTargetMethod.put(accessorMethod, targetMethod);
+        orderedAccessorMethods.add(accessorMethod);
+        return accessorMethod;
     }
 
     /**
-     * Returns an iterable containing all proxy methods that were registered with this delegate. The iterable can
-     * safely be co-modified in the same thread in order to allow the registration of additional proxy methods with
-     * this delegate while other proxy are already created for the instrumented type.
+     * Returns an iterable containing all accessor methods that were registered with this delegate. The iterable can
+     * safely be co-modified in the same thread in order to allow the registration of additional accessor methods with
+     * this delegate while other accessors are already created for the instrumented type.
      *
-     * @return An co-modifiable iterable of all proxy method that were registered with this delegate.
+     * @return An co-modifiable iterable of all accessors method that were registered with this delegate.
      */
     public Iterable<MethodDescription> getProxiedMethods() {
-        return new TypeWriter.SameThreadCoModifiableIterable<MethodDescription>(orderedProxyMethods);
+        return new TypeWriter.SameThreadCoModifiableIterable<MethodDescription>(orderedAccessorMethods);
     }
 
     private class SameSignatureMethodCall implements Entry, ByteCodeAppender {
@@ -139,7 +139,7 @@ public class SubclassInstrumentationContextDelegate
 
     @Override
     public Entry target(MethodDescription methodDescription) {
-        return new SameSignatureMethodCall(registeredProxyMethodToTargetMethod.get(methodDescription));
+        return new SameSignatureMethodCall(registeredAccessorMethodToTargetMethod.get(methodDescription));
     }
 
     @Override
@@ -148,7 +148,7 @@ public class SubclassInstrumentationContextDelegate
                 "instrumentedType=" + instrumentedType +
                 ", prefix='" + prefix + '\'' +
                 ", random=" + random +
-                ", knownTargetMethodsToProxyMethod=" + knownTargetMethodsToProxyMethod +
+                ", knownTargetMethodsToAccessorMethod=" + knownTargetMethodsToAccessorMethod +
                 '}';
     }
 }

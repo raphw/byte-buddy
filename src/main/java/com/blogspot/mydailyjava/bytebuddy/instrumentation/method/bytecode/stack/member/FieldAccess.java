@@ -81,8 +81,23 @@ public enum FieldAccess {
             }
 
             @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && getAccessDispatcher().equals(((FieldGetInstruction) other).getAccessDispatcher());
+            }
+
+            @Override
+            public int hashCode() {
+                return getAccessDispatcher().hashCode() + 7;
+            }
+
+            @Override
             public String toString() {
                 return "FieldAccess.AccessDispatcher.FieldGetInstruction{fieldDescription=" + fieldDescription + '}';
+            }
+
+            private AccessDispatcher getAccessDispatcher() {
+                return AccessDispatcher.this;
             }
         }
 
@@ -99,8 +114,23 @@ public enum FieldAccess {
             }
 
             @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && getAccessDispatcher().equals(((FieldPutInstruction) other).getAccessDispatcher());
+            }
+
+            @Override
+            public int hashCode() {
+                return getAccessDispatcher().hashCode() + 14;
+            }
+
+            @Override
             public String toString() {
                 return "FieldAccess.AccessDispatcher.FieldPutInstruction{fieldDescription=" + fieldDescription + '}';
+            }
+
+            private AccessDispatcher getAccessDispatcher() {
+                return AccessDispatcher.this;
             }
         }
 
