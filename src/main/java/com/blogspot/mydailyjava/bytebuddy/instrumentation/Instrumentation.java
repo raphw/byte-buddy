@@ -1,5 +1,6 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation;
 
+import com.blogspot.mydailyjava.bytebuddy.ClassFormatVersion;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
@@ -54,6 +55,7 @@ public interface Instrumentation {
                 String name(AuxiliaryType auxiliaryType);
             }
 
+            private final ClassFormatVersion classFormatVersion;
             private final AuxiliaryTypeNamingStrategy auxiliaryTypeNamingStrategy;
             private final AuxiliaryType.MethodAccessorFactory methodAccessorFactory;
             private final Map<AuxiliaryType, DynamicType<?>> auxiliaryTypes;
@@ -62,12 +64,15 @@ public interface Instrumentation {
             /**
              * Creates a new default instrumentation context.
              *
+             * @param classFormatVersion          The class format version for auxiliary types.
              * @param auxiliaryTypeNamingStrategy The naming strategy for auxiliary types that are registered.
-             * @param methodAccessorFactory          A factory for creating method proxies for the currently instrumented
+             * @param methodAccessorFactory       A factory for creating method proxies for the currently instrumented
              *                                    type.
              */
-            public Default(AuxiliaryTypeNamingStrategy auxiliaryTypeNamingStrategy,
+            public Default(ClassFormatVersion classFormatVersion,
+                           AuxiliaryTypeNamingStrategy auxiliaryTypeNamingStrategy,
                            AuxiliaryType.MethodAccessorFactory methodAccessorFactory) {
+                this.classFormatVersion = classFormatVersion;
                 this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
                 this.methodAccessorFactory = methodAccessorFactory;
                 auxiliaryTypes = new HashMap<AuxiliaryType, DynamicType<?>>();
@@ -78,7 +83,7 @@ public interface Instrumentation {
             public String register(AuxiliaryType auxiliaryType) {
                 DynamicType<?> dynamicType = auxiliaryTypes.get(auxiliaryType);
                 if (dynamicType == null) {
-                    dynamicType = auxiliaryType.make(auxiliaryTypeNamingStrategy.name(auxiliaryType), this);
+                    dynamicType = auxiliaryType.make(auxiliaryTypeNamingStrategy.name(auxiliaryType), classFormatVersion, this);
                     auxiliaryTypes.put(auxiliaryType, dynamicType);
                 }
                 return dynamicType.getName();
@@ -102,7 +107,8 @@ public interface Instrumentation {
             @Override
             public String toString() {
                 return "Default{" +
-                        "auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
+                        "classFormatVersion=" + classFormatVersion +
+                        ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
                         ", methodAccessorFactory=" + methodAccessorFactory +
                         ", auxiliaryTypes=" + auxiliaryTypes +
                         ", registeredAccessorMethods=" + registeredAccessorMethods +

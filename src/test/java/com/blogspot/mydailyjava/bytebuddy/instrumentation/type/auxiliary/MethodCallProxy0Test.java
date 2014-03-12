@@ -91,7 +91,7 @@ public class MethodCallProxy0Test {
         MethodDescription proxiedMethod = new MethodDescription.ForMethod
                 (proxiedType.getDeclaredMethod(FOO, proxiedMethodParameters));
         MethodCallProxy0 methodCallProxy = new MethodCallProxy0(proxiedMethod);
-        DynamicType<?> dynamicType = methodCallProxy.make(proxyName(proxiedType), null); // TODO
+        DynamicType<?> dynamicType = methodCallProxy.make(proxyName(proxiedType), null, null); // TODO
         ClassLoader proxyClassLoader = new ByteArrayClassLoader(getClass().getClassLoader(),
                 Collections.singletonMap(dynamicType.getName(), dynamicType.getBytes()));
         Class<?> proxyType = Class.forName(proxyName(proxiedType), false, proxyClassLoader);

@@ -1,5 +1,6 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.type.auxiliary;
 
+import com.blogspot.mydailyjava.bytebuddy.ClassFormatVersion;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import org.objectweb.asm.Opcodes;
@@ -36,10 +37,13 @@ public interface AuxiliaryType {
     /**
      * Creates a new auxiliary type.
      *
-     * @param auxiliaryTypeName  The fully qualified internalName for this auxiliary type. The type should be in the same
-     *                           package than the instrumented type this auxiliary type is providing services to.
+     * @param auxiliaryTypeName     The fully qualified internalName for this auxiliary type. The type should be in the same
+     *                              package than the instrumented type this auxiliary type is providing services to.
+     * @param classFormatVersion    The class format version the auxiliary class should be written in.
      * @param methodAccessorFactory A factory for accessor methods.
      * @return A dynamically created type representing this auxiliary type.
      */
-    DynamicType<?> make(String auxiliaryTypeName, MethodAccessorFactory methodAccessorFactory);
+    DynamicType<?> make(String auxiliaryTypeName,
+                        ClassFormatVersion classFormatVersion,
+                        MethodAccessorFactory methodAccessorFactory);
 }

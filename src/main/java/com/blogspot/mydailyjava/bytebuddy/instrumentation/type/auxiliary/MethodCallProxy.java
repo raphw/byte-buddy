@@ -188,7 +188,7 @@ public class MethodCallProxy implements AuxiliaryType {
     }
 
     @Override
-    public DynamicType<?> make(String auxiliaryTypeName, MethodAccessorFactory methodAccessorFactory) {
+    public DynamicType<?> make(String auxiliaryTypeName, ClassFormatVersion classFormatVersion, MethodAccessorFactory methodAccessorFactory) {
         MethodDescription proxiedMethod = methodAccessorFactory.requireAccessorMethodFor(this.proxiedMethod);
         int fieldIndex = 0;
         InstrumentedType proxy = new SubclassInstumentedType(ClassFormatVersion.forCurrentJavaVersion(),
@@ -209,7 +209,7 @@ public class MethodCallProxy implements AuxiliaryType {
                 fieldTypes,
                 ModifierContributor.EMPTY_MASK);
         SubclassInstrumentationContextDelegate contextDelegate = new SubclassInstrumentationContextDelegate(proxy);
-        Instrumentation.Context instrumentationContext = new Instrumentation.Context.Default(contextDelegate, contextDelegate);
+        Instrumentation.Context instrumentationContext = new Instrumentation.Context.Default(classFormatVersion, contextDelegate, contextDelegate);
         MethodDelegate methodDelegate = new MethodDelegate(fieldAccess, proxiedMethod, assigner);
         ConstructorDelegate constructorDelegate = new ConstructorDelegate(fieldAccess);
         return new TypeWriter.Builder<Object>(proxy, instrumentationContext, ClassFormatVersion.forCurrentJavaVersion())

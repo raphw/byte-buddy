@@ -1,5 +1,6 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.type.auxiliary;
 
+import com.blogspot.mydailyjava.bytebuddy.ClassFormatVersion;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.TypeInitializer;
@@ -135,7 +136,7 @@ public class MethodCallProxy0 implements AuxiliaryType {
     }
 
     @Override
-    public DynamicType<?> make(String auxiliaryTypeName, MethodAccessorFactory methodAccessorFactory) {
+    public DynamicType<?> make(String auxiliaryTypeName, ClassFormatVersion classFormatVersion, MethodAccessorFactory methodAccessorFactory) {
         String proxyTypeInternalName = auxiliaryTypeName.replace('.', '/');
         MethodDescription proxiedMethod = methodAccessorFactory.requireAccessorMethodFor(this.proxiedMethod);
         Map<String, TypeDescription> fields = new LinkedHashMap<String, TypeDescription>(1 + proxiedMethod.getParameterTypes().size());

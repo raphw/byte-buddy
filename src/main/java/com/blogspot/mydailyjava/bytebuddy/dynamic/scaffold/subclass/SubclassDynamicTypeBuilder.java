@@ -473,7 +473,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 modifiers,
                 namingStrategy));
         SubclassInstrumentationContextDelegate contextDelegate = new SubclassInstrumentationContextDelegate(instrumentedType);
-        Instrumentation.Context instrumentationContext = new Instrumentation.Context.Default(contextDelegate, contextDelegate);
+        Instrumentation.Context instrumentationContext = new Instrumentation.Context.Default(classFormatVersion, contextDelegate, contextDelegate);
         MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.compile(instrumentedType, MethodRegistry.Compiled.Entry.Skip.INSTANCE);
         instrumentedType = compiledMethodRegistry.getInstrumentedType();
         return new TypeWriter.Builder<T>(instrumentedType, instrumentationContext, classFormatVersion)
