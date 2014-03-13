@@ -10,7 +10,9 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.field.FieldDescription
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.field.FieldList;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.Duplication;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.TypeCreation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.primitive.PrimitiveTypeAwareAssigner;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.primitive.VoidAwareAssigner;
@@ -47,10 +49,23 @@ import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.
  */
 public class MethodCallProxy implements AuxiliaryType {
 
+    /**
+     * A stack manipulation that creates a {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy}
+     * for a given method an pushes such an object onto the call stack. For this purpose, all arguments of the proxied method
+     * are loaded onto the stack what is only possible if this instance is used from a method with an identical signature such
+     * as the target method itself.
+     */
     public static class AssignableSignatureCall implements StackManipulation {
 
         private final MethodDescription targetMethod;
 
+        /**
+         * Creates an operand stack assignment that creates a
+         * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy} for the
+         * {@code targetMethod} and pushes this proxy object onto the stack.
+         *
+         * @param targetMethod The target method for which the proxy should be created.
+         */
         public AssignableSignatureCall(MethodDescription targetMethod) {
             this.targetMethod = targetMethod;
         }
@@ -63,7 +78,28 @@ public class MethodCallProxy implements AuxiliaryType {
         @Override
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
             TypeDescription auxiliaryType = instrumentationContext.register(new MethodCallProxy(targetMethod));
-            return null; // TODO: Implement.
+            return new Compound(
+                    TypeCreation.forType(auxiliaryType),
+                    Duplication.SINGLE,
+                    MethodVariableAccess.loadAll(targetMethod),
+                    MethodInvocation.invoke(auxiliaryType.getDeclaredMethods().filter(isConstructor()).getOnly())
+            ).apply(methodVisitor, instrumentationContext);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && targetMethod.equals(((AssignableSignatureCall) other).targetMethod);
+        }
+
+        @Override
+        public int hashCode() {
+            return targetMethod.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "AssignableSignatureCall{targetMethod=" + targetMethod + '}';
         }
     }
 
@@ -216,8 +252,8 @@ public class MethodCallProxy implements AuxiliaryType {
 
     @Override
     public DynamicType make(String auxiliaryTypeName,
-                               ClassFormatVersion classFormatVersion,
-                               MethodAccessorFactory methodAccessorFactory) {
+                            ClassFormatVersion classFormatVersion,
+                            MethodAccessorFactory methodAccessorFactory) {
         MethodDescription accessorMethod = methodAccessorFactory.requireAccessorMethodFor(targetMethod);
         LinkedHashMap<String, TypeDescription> parameterFields = extractFields(accessorMethod);
         DynamicType.Builder<?> builder = new ByteBuddy(classFormatVersion)

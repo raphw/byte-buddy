@@ -51,7 +51,7 @@ public @interface SuperCall {
                                                                TypeDescription instrumentedType,
                                                                Assigner assigner) {
             TypeDescription targetType = target.getParameterTypes().get(targetParameterIndex);
-            if (targetType.represents(Runnable.class) || targetType.represents(Callable.class) || !targetType.represents(Object.class)) {
+            if (!targetType.represents(Runnable.class) && !targetType.represents(Callable.class) && !targetType.represents(Object.class)) {
                 throw new IllegalStateException("A method call proxy can only be assigned to Runnable or Callable types: " + target);
             } else if (target.isAbstract()) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
