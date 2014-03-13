@@ -3,6 +3,7 @@ package com.blogspot.mydailyjava.bytebuddy.dynamic;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.TypeInitializer;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.utility.MockitoRule;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -11,11 +12,14 @@ import org.mockito.Mock;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Random;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsEqual.equalTo;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class DynamicTypeDefaultTest {
@@ -30,42 +34,44 @@ public class DynamicTypeDefaultTest {
     @Mock
     private DynamicType auxiliaryType;
     @Mock
-    private TypeDescription typeDescription;
+    private TypeDescription typeDescription, auxiliaryTypeDescription;
 
     private DynamicType dynamicType;
 
-    private byte[] typeByte, auxiliaryTypeByte;
+    private byte[] binaryRepresentation, auxiliaryTypeBinaryRepresentation;
 
-    // TODO: Restore
 
-//    @Before
-//    public void setUp() throws Exception {
-//        binaryRepresentation = new byte[]{0, 1, 2};
-//        auxiliaryTypeByte = new byte[]{4, 5, 6};
-//        dynamicType = new DynamicType.Default<Object>(typeDescription,
-//                binaryRepresentation,
-//                mainTypeInitializer,
-//                Collections.<DynamicType<?>>singletonList(auxiliaryType));
-//        when(auxiliaryType.getDescription()).thenReturn(typeDescription);
-//        when(auxiliaryType.getBytes()).thenReturn(auxiliaryTypeByte);
-//        when(auxiliaryType.getTypeInitializers()).thenReturn(Collections.singletonMap(BAR, auxiliaryTypeInitializer));
-//        when(auxiliaryType.getRawAuxiliaryTypes()).thenReturn(Collections.<String, byte[]>emptyMap());
-//    }
-//
-//    @Test
-//    public void testByteArray() throws Exception {
-//        assertThat(dynamicType.getBytes(), is(binaryRepresentation));
-//    }
-//
-//    @Test
-//    public void testName() throws Exception {
-//        assertThat(dynamicType.getDescription(), is(FOO));
-//    }
+    @Before
+    public void setUp() throws Exception {
+        binaryRepresentation = new byte[]{0, 1, 2};
+        auxiliaryTypeBinaryRepresentation = new byte[]{4, 5, 6};
+        dynamicType = new DynamicType.Default(typeDescription,
+                binaryRepresentation,
+                mainTypeInitializer,
+                Collections.singletonList(auxiliaryType));
+        when(typeDescription.getName()).thenReturn(FOO);
+        when(auxiliaryType.saveIn(any(File.class))).thenReturn(Collections.<TypeDescription, File>emptyMap());
+        when(auxiliaryTypeDescription.getName()).thenReturn(BAR);
+        when(auxiliaryType.getDescription()).thenReturn(auxiliaryTypeDescription);
+        when(auxiliaryType.getBytes()).thenReturn(auxiliaryTypeBinaryRepresentation);
+        when(auxiliaryType.getTypeInitializers()).thenReturn(Collections.singletonMap(auxiliaryTypeDescription, auxiliaryTypeInitializer));
+        when(auxiliaryType.getRawAuxiliaryTypes()).thenReturn(Collections.<TypeDescription, byte[]>emptyMap());
+    }
+
+    @Test
+    public void testByteArray() throws Exception {
+        assertThat(dynamicType.getBytes(), is(binaryRepresentation));
+    }
+
+    @Test
+    public void testName() throws Exception {
+        assertThat(dynamicType.getDescription(), is(typeDescription));
+    }
 
     @Test
     public void testRawAuxiliaryTypes() throws Exception {
         assertThat(dynamicType.getRawAuxiliaryTypes().size(), is(1));
-        assertThat(dynamicType.getRawAuxiliaryTypes().get(BAR), is(auxiliaryTypeByte));
+        assertThat(dynamicType.getRawAuxiliaryTypes().get(auxiliaryTypeDescription), is(auxiliaryTypeBinaryRepresentation));
     }
 
     @Test
@@ -88,35 +94,34 @@ public class DynamicTypeDefaultTest {
     @Test
     public void testTypeInitializers() throws Exception {
         assertThat(dynamicType.getTypeInitializers().size(), is(2));
-        assertThat(dynamicType.getTypeInitializers().get(FOO), is(mainTypeInitializer));
-        assertThat(dynamicType.getTypeInitializers().get(BAR), is(auxiliaryTypeInitializer));
+        assertThat(dynamicType.getTypeInitializers().get(typeDescription), is(mainTypeInitializer));
+        assertThat(dynamicType.getTypeInitializers().get(auxiliaryTypeDescription), is(auxiliaryTypeInitializer));
     }
 
-    // TODO: Restore.
 
-//    @Test
-//    public void testFileSaving() throws Exception {
-//        File folder = makeTemporaryFolder();
-//        try {
-//            File mainFile = dynamicType.saveIn(folder);
-//            assertThat(mainFile, equalTo(new File(folder, FOO + DOT_CLASS)));
-//            assertThat(folder.list().length, is(1));
-//            assertEqualsAndDelete(mainFile, typeByte);
-//        } finally {
-//            assertThat(folder.delete(), is(true));
-//        }
-//        verify(auxiliaryType).saveIn(folder);
-//    }
+    @Test
+    public void testFileSaving() throws Exception {
+        File folder = makeTemporaryFolder();
+        try {
+            Map<TypeDescription, File> files = dynamicType.saveIn(folder);
+            assertThat(files.size(), is(1));
+            assertFile(files.get(typeDescription), binaryRepresentation);
+        } finally {
+            assertThat(folder.delete(), is(true));
+        }
+        verify(auxiliaryType).saveIn(folder);
+    }
 
-    private static void assertEqualsAndDelete(File file, byte[] binaryRepresentation) throws IOException {
-        assertThat(file.isFile(), is(true));
+    private static void assertFile(File file, byte[] binaryRepresentation) throws IOException {
         FileInputStream fileInputStream = new FileInputStream(file);
         try {
             byte[] buffer = new byte[binaryRepresentation.length + 1];
             assertThat(fileInputStream.read(buffer), is(binaryRepresentation.length));
-            for (int index = 0; index < binaryRepresentation.length; index++) {
-                assertThat(buffer[index], equalTo(binaryRepresentation[index]));
+            int index = 0;
+            for (byte b : binaryRepresentation) {
+                assertThat(buffer[index++], is(b));
             }
+            assertThat(buffer[index], is((byte) 0));
         } finally {
             fileInputStream.close();
         }

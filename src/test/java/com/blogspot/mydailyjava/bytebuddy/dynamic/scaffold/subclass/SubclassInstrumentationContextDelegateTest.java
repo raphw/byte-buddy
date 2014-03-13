@@ -58,6 +58,7 @@ public class SubclassInstrumentationContextDelegateTest {
         when(secondMethod.getReturnType()).thenReturn(secondMethodReturnType);
         when(secondMethod.getParameterTypes()).thenReturn(secondMethodParameters);
         when(secondMethod.isStatic()).thenReturn(true);
+        when(instrumentedType.detach()).thenReturn(instrumentedType);
     }
 
     @Test

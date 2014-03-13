@@ -27,13 +27,17 @@ import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.
 
 /**
  * A dynamic type that is created at runtime, usually the result of an instrumentation.
+ * <p/>
+ * Note that the {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription}s might differ
+ * for the unloaded and loaded versions with regards to annotations.
  */
 public interface DynamicType {
 
     /**
      * A builder for a dynamic type. Implementations of builders are usually immutable.
      *
-     * @param <T> The most specific known type of the dynamic type, usually the type itself, an interface or the direct super class.
+     * @param <T> The most specific known loaded type that is implemented by the created dynamic type, usually the
+     *            type itself, an interface or the direct super class.
      */
     static interface Builder<T> {
 
@@ -743,7 +747,8 @@ public interface DynamicType {
     /**
      * A dynamic type that has been loaded into the running instance of the Java virtual machine.
      *
-     * @param <T> The most specific known type of the dynamic type, usually the type itself, an interface or the direct super class.
+     * @param <T> The most specific known loaded type that is implemented by this dynamic type, usually the
+     *            type itself, an interface or the direct super class.
      */
     static interface Loaded<T> extends DynamicType {
 
@@ -765,7 +770,8 @@ public interface DynamicType {
     /**
      * A dynamic type that has not yet been loaded into the running instance of the Java virtual machine.
      *
-     * @param <T> The most specific known type of the dynamic type, usually the type itself, an interface or the direct super class.
+     * @param <T> The most specific known loaded type that is implemented by this dynamic type, usually the
+     *            type itself, an interface or the direct super class.
      */
     static interface Unloaded<T> extends DynamicType {
 
@@ -787,7 +793,8 @@ public interface DynamicType {
         /**
          * Creates a new unloaded representation of a dynamic type.
          *
-         * @param <T> The most specific known type of the dynamic type, usually the type itself, an interface or the direct super class.
+         * @param <T> The most specific known loaded type that is implemented by this dynamic type, usually the
+         *            type itself, an interface or the direct super class.
          */
         public static class Unloaded<T> extends Default implements DynamicType.Unloaded<T> {
 
@@ -795,9 +802,9 @@ public interface DynamicType {
              * Creates a new unloaded representation of a dynamic type.
              *
              * @param typeDescription A description of this dynamic type.
-             * @param typeByte        The byte containing the binary representation of this dynamic type.
+             * @param typeByte        An array of byte of the binary representation of this dynamic type.
              * @param typeInitializer The type initializer of this dynamic type.
-             * @param auxiliaryTypes  The auxiliary type required for this dynamic type.
+             * @param auxiliaryTypes  The auxiliary types that are required for this dynamic type.
              */
             public Unloaded(TypeDescription typeDescription,
                             byte[] typeByte,
@@ -817,15 +824,12 @@ public interface DynamicType {
                         initialize(classLoadingStrategy.load(classLoader, types)));
             }
 
-            private Map<TypeDescription, Class<?>> initialize(Collection<Class<?>> uninitialized) {
+            private Map<TypeDescription, Class<?>> initialize(Map<TypeDescription, Class<?>> uninitialized) {
                 Map<TypeDescription, TypeInitializer> typeInitializers = getTypeInitializers();
-                Map<TypeDescription, Class<?>> loadedTypes = new HashMap<TypeDescription, Class<?>>(uninitialized.size());
-                for (Class<?> type : uninitialized) {
-                    TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
-                    typeInitializers.get(typeDescription).onLoad(type);
-                    loadedTypes.put(typeDescription, type);
+                for (Map.Entry<TypeDescription, Class<?>> entry : uninitialized.entrySet()) {
+                    typeInitializers.get(entry.getKey()).onLoad(entry.getValue());
                 }
-                return loadedTypes;
+                return new HashMap<TypeDescription, Class<?>>(uninitialized);
             }
 
             @Override
@@ -842,9 +846,10 @@ public interface DynamicType {
         /**
          * Creates a new loaded representation of a dynamic type.
          *
-         * @param <T> The most specific known type of the dynamic type, usually the type itself, an interface or the direct super class.
+         * @param <T> The most specific known loaded type that is implemented by this dynamic type, usually the
+         *            type itself, an interface or the direct super class.
          */
-        public static class Loaded<T> extends Default implements DynamicType.Loaded<T> {
+        protected static class Loaded<T> extends Default implements DynamicType.Loaded<T> {
 
             private final Map<TypeDescription, Class<?>> loadedTypes;
 
@@ -852,16 +857,16 @@ public interface DynamicType {
              * Creates a new loaded representation of a dynamic type.
              *
              * @param typeDescription A description of this dynamic type.
-             * @param typeByte        The byte containing the binary representation of this dynamic type.
+             * @param typeByte        An array of byte of the binary representation of this dynamic type.
              * @param typeInitializer The type initializer of this dynamic type.
-             * @param auxiliaryTypes  The auxiliary type required for this dynamic type.
-             * @param loadedTypes     A map of loaded types equivalent to this dynamic type.
+             * @param auxiliaryTypes  The auxiliary types that are required for this dynamic type.
+             * @param loadedTypes     A map of loaded types for this dynamic type and all its auxiliary types.
              */
-            public Loaded(TypeDescription typeDescription,
-                          byte[] typeByte,
-                          TypeInitializer typeInitializer,
-                          List<? extends DynamicType> auxiliaryTypes,
-                          Map<TypeDescription, Class<?>> loadedTypes) {
+            protected Loaded(TypeDescription typeDescription,
+                             byte[] typeByte,
+                             TypeInitializer typeInitializer,
+                             List<? extends DynamicType> auxiliaryTypes,
+                             Map<TypeDescription, Class<?>> loadedTypes) {
                 super(typeDescription, typeByte, typeInitializer, auxiliaryTypes);
                 this.loadedTypes = loadedTypes;
             }
@@ -976,7 +981,7 @@ public interface DynamicType {
             File target = new File(folder, typeDescription.getName().replace('.', File.separatorChar) + CLASS_FILE_EXTENSION);
             FileOutputStream fileOutputStream = new FileOutputStream(target);
             try {
-                fileOutputStream.write(getBytes());
+                fileOutputStream.write(binaryRepresentation);
             } finally {
                 fileOutputStream.close();
             }
@@ -999,9 +1004,9 @@ public interface DynamicType {
     }
 
     /**
-     * Returns the fully qualified internalName of this dynamic type.
+     * Returns a description of this dynamic type.
      *
-     * @return The fully qualified internalName of this dynamic type.
+     * @return A description of this dynamic type.
      */
     TypeDescription getDescription();
 
@@ -1013,16 +1018,16 @@ public interface DynamicType {
     byte[] getBytes();
 
     /**
-     * A map of all auxiliary types required additionally to the main type.
+     * Returns a map of all auxiliary types that are required additionally to the main type.
      *
-     * @return A map of all auxiliary types by their fully qualified names to their binary representation.
+     * @return A map of all auxiliary types by their descriptions to their binary representation.
      */
     Map<TypeDescription, byte[]> getRawAuxiliaryTypes();
 
     /**
-     * Returns a map of all type initializers for the main type and all type initializers, if any.
+     * Returns a map of all type initializers for the main type and all auxiliary types, if any.
      *
-     * @return A mapping of all types' fully qualified names to their type initializers.
+     * @return A mapping of all types' descriptions to their type initializers.
      */
     Map<TypeDescription, TypeInitializer> getTypeInitializers();
 
@@ -1039,7 +1044,7 @@ public interface DynamicType {
      * for saving compiled Java classes.
      *
      * @param folder The target folder for saving this dynamic type and its auxiliary types, if any.
-     * @return The saved file representing this dynamic type.
+     * @return A map of type descriptions pointing to files with their stored binary representations in {@code folder}.
      * @throws IOException If the file operation throws an exception.
      */
     Map<TypeDescription, File> saveIn(File folder) throws IOException;
