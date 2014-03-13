@@ -1,6 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation;
 
 import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
+import com.blogspot.mydailyjava.bytebuddy.utility.CallTraceable;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -43,7 +44,7 @@ public class FixedValueReferenceTest extends AbstractInstrumentationTest {
     }
 
     private void assertType(DynamicType.Loaded<Foo> loaded) throws Exception{
-        assertThat(loaded.getAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
         Foo instance = loaded.getLoaded().newInstance();

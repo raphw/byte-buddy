@@ -135,6 +135,17 @@ public class SubclassInstumentedType
     }
 
     @Override
+    public TypeDescription detach() {
+        return new SubclassInstumentedType(classFormatVersion,
+                superClass,
+                interfaces,
+                modifiers,
+                name, fieldDescriptions,
+                methodDescriptions,
+                TypeInitializer.NoOp.INSTANCE);
+    }
+
+    @Override
     public TypeDescription getSupertype() {
         return superClass;
     }

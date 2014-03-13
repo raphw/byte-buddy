@@ -1,6 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation;
 
 import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
+import com.blogspot.mydailyjava.bytebuddy.utility.CallTraceable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -15,7 +16,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.mockito.Mockito.mock;
 
 @RunWith(Parameterized.class)
-public class FixedValueConstantPoolTypesTest<T extends AbstractInstrumentationTest.CallTraceable>
+public class FixedValueConstantPoolTypesTest<T extends CallTraceable>
         extends AbstractInstrumentationTest {
 
     private static final String FOO = "foo", BAR = "bar";
@@ -208,7 +209,7 @@ public class FixedValueConstantPoolTypesTest<T extends AbstractInstrumentationTe
     @Test
     public void testConstantPool() throws Exception {
         DynamicType.Loaded<T> loaded = instrument(helperClass, FixedValue.value(fixedValue));
-        assertThat(loaded.getAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(2));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
         T instance = loaded.getLoaded().newInstance();
@@ -222,7 +223,7 @@ public class FixedValueConstantPoolTypesTest<T extends AbstractInstrumentationTe
     @Test
     public void testStaticField() throws Exception {
         DynamicType.Loaded<T> loaded = instrument(helperClass, FixedValue.reference(fixedValue));
-        assertThat(loaded.getAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(2));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(fixedValue == null ? 0 : 1));
         T instance = loaded.getLoaded().newInstance();

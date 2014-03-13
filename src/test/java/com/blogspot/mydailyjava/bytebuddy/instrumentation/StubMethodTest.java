@@ -1,6 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation;
 
 import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
+import com.blogspot.mydailyjava.bytebuddy.utility.CallTraceable;
 import org.hamcrest.Matcher;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -143,7 +144,7 @@ public class StubMethodTest extends AbstractInstrumentationTest {
     @SuppressWarnings("unchecked")
     public void testInstrumentedMethod() throws Exception {
         DynamicType.Loaded<Foo> loaded = instrument(Foo.class, StubMethod.INSTANCE);
-        assertThat(loaded.getAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(11));
         Foo instance = loaded.getLoaded().newInstance();
         assertNotEquals(Foo.class, instance.getClass());

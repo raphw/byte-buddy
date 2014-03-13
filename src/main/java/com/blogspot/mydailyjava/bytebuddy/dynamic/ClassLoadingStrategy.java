@@ -2,9 +2,11 @@ package com.blogspot.mydailyjava.bytebuddy.dynamic;
 
 import com.blogspot.mydailyjava.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.loading.ClassLoaderByteArrayInjector;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -34,23 +36,23 @@ public interface ClassLoadingStrategy {
         INJECTION;
 
         @Override
-        public Map<String, Class<?>> load(ClassLoader classLoader, LinkedHashMap<String, byte[]> types) {
-            Map<String, Class<?>> loadedTypes = new HashMap<String, Class<?>>(types.size());
+        public Collection<Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+            List<Class<?>> loadedTypes = new ArrayList<Class<?>>(types.size());
             switch (this) {
                 case WRAPPER:
-                    classLoader = new ByteArrayClassLoader(classLoader, types);
-                    for (String name : types.keySet()) {
+                    classLoader = new ByteArrayClassLoader(types, classLoader);
+                    for (TypeDescription typeDescription : types.keySet()) {
                         try {
-                            loadedTypes.put(name, classLoader.loadClass(name));
+                            loadedTypes.add(classLoader.loadClass(typeDescription.getName()));
                         } catch (ClassNotFoundException e) {
-                            throw new RuntimeException("Cannot load class " + name, e);
+                            throw new RuntimeException("Cannot load class " + typeDescription, e);
                         }
                     }
                     break;
                 case INJECTION:
                     ClassLoaderByteArrayInjector classLoaderByteArrayInjector = new ClassLoaderByteArrayInjector(classLoader);
-                    for (Map.Entry<String, byte[]> entry : types.entrySet()) {
-                        loadedTypes.put(entry.getKey(), classLoaderByteArrayInjector.inject(entry.getKey(), entry.getValue()));
+                    for (Map.Entry<TypeDescription, byte[]> entry : types.entrySet()) {
+                        loadedTypes.add(classLoaderByteArrayInjector.inject(entry.getKey().getName(), entry.getValue()));
                     }
                     break;
                 default:
@@ -64,9 +66,10 @@ public interface ClassLoadingStrategy {
      * Loads a given collection of dynamically created types.
      *
      * @param classLoader The class loader to used for loading the classes.
-     * @param types       Byte array representations of the types to be loaded mapped by their fully qualified internalName in
-     *                    the order they should be loaded.
-     * @return Loaded classes mapped by their fully qualified internalName.
+     * @param types       Byte array representations of the types to be loaded mapped by their descriptions,
+     *                    where an iteration order defines an order in which they are supposed to be loaded,
+     *                    if relevant.
+     * @return A collection of the loaded classes.
      */
-    Map<String, Class<?>> load(ClassLoader classLoader, LinkedHashMap<String, byte[]> types);
+    Collection<Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types);
 }

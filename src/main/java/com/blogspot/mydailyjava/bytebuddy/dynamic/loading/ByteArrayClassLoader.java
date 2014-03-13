@@ -1,5 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.dynamic.loading;
 
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,6 +21,20 @@ public class ByteArrayClassLoader extends ClassLoader {
     public ByteArrayClassLoader(ClassLoader parent, Map<String, byte[]> typeDefinitions) {
         super(parent);
         this.typeDefinitions = new HashMap<String, byte[]>(typeDefinitions);
+    }
+
+    /**
+     * Creates a new class loader for a given definition of classes.
+     *
+     * @param typeDefinitions A map of type descriptions to their {@code byte} definitions.
+     * @param parent          The {@link java.lang.ClassLoader} that is the parent of this class loader.
+     */
+    public ByteArrayClassLoader(Map<TypeDescription, byte[]> typeDefinitions, ClassLoader parent) {
+        super(parent);
+        this.typeDefinitions = new HashMap<String, byte[]>(typeDefinitions.size());
+        for (Map.Entry<TypeDescription, byte[]> entry : typeDefinitions.entrySet()) {
+            this.typeDefinitions.put(entry.getKey().getName(), entry.getValue());
+        }
     }
 
     @Override

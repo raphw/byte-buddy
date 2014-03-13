@@ -153,6 +153,43 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         }
     }
 
+    private class SubclassOptionalMatchedMethodInterception<T> extends AbstractDelegatingBuilder<T> implements OptionalMatchedMethodInterception<T> {
+
+        private TypeDescription interfaceType;
+
+        private SubclassOptionalMatchedMethodInterception(TypeDescription interfaceType) {
+            this.interfaceType = interfaceType;
+        }
+
+        @Override
+        public MethodAnnotationTarget<T> intercept(Instrumentation instrumentation) {
+            return materialize().method(isDeclaredBy(interfaceType)).intercept(instrumentation);
+        }
+
+        @Override
+        public MethodAnnotationTarget<T> withoutCode() {
+            return materialize().method(isDeclaredBy(interfaceType)).withoutCode();
+        }
+
+        @Override
+        protected DynamicType.Builder<T> materialize() {
+            return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
+                    namingStrategy,
+                    superType,
+                    join(interfaceTypes, isInterface(interfaceType)),
+                    modifiers,
+                    attributeAppender,
+                    ignoredMethods,
+                    classVisitorWrapperChain,
+                    fieldRegistry,
+                    methodRegistry,
+                    defaultFieldAttributeAppenderFactory,
+                    defaultMethodAttributeAppenderFactory,
+                    fieldTokens,
+                    methodTokens);
+        }
+    }
+
     private static class MethodTokenListForConstructors extends AbstractList<MethodToken> {
 
         private final List<? extends MethodDescription> constructor;
@@ -306,27 +343,14 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     }
 
     @Override
-    public DynamicType.Builder<T> implement(TypeDescription interfaceType) {
-        return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
-                namingStrategy,
-                superType,
-                join(interfaceTypes, isInterface(interfaceType)),
-                modifiers,
-                attributeAppender,
-                ignoredMethods,
-                classVisitorWrapperChain,
-                fieldRegistry,
-                methodRegistry,
-                defaultFieldAttributeAppenderFactory,
-                defaultMethodAttributeAppenderFactory,
-                fieldTokens,
-                methodTokens);
+    public OptionalMatchedMethodInterception<T> implement(TypeDescription interfaceType) {
+        return new SubclassOptionalMatchedMethodInterception<T>(isInterface(interfaceType));
     }
 
     @Override
     public DynamicType.Builder<T> name(String name) {
         return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
-                new NamingStrategy.Fixed(isValidIdentifier(name)),
+                new NamingStrategy.Fixed(isValidTypeName(name)),
                 superType,
                 interfaceTypes,
                 modifiers,

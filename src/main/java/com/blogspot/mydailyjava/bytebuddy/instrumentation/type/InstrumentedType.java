@@ -533,4 +533,13 @@ public interface InstrumentedType extends TypeDescription {
      * @return The registered type initializers for this instrumented type.
      */
     TypeInitializer getTypeInitializer();
+
+    /**
+     * Creates a <i>compressed</i> version of this instrumented type which only needs to fulfil the
+     * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription} interface. This allows
+     * for a potential compression of the representation of {@code this} instrumented type.
+     *
+     * @return A (potentially) compressed version of {@code this} instrumented type.
+     */
+    TypeDescription detach();
 }

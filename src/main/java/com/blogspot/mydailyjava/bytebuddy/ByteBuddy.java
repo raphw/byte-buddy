@@ -24,6 +24,9 @@ import static com.blogspot.mydailyjava.bytebuddy.utility.ByteBuddyCommons.*;
 
 public class ByteBuddy {
 
+    // TODO: create abstract delegation instead of using "extends ByteBuddy"
+    // TODO: Allow optional method interception also for the defaults.
+
     private static final String BYTE_BUDDY_DEFAULT_PREFIX = "ByteBuddy";
 
     protected static interface Definable<T> {

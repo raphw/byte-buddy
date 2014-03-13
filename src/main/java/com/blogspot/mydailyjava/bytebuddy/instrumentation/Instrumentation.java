@@ -58,7 +58,7 @@ public interface Instrumentation {
             private final ClassFormatVersion classFormatVersion;
             private final AuxiliaryTypeNamingStrategy auxiliaryTypeNamingStrategy;
             private final AuxiliaryType.MethodAccessorFactory methodAccessorFactory;
-            private final Map<AuxiliaryType, DynamicType<?>> auxiliaryTypes;
+            private final Map<AuxiliaryType, DynamicType> auxiliaryTypes;
             private final Map<MethodDescription, MethodDescription> registeredAccessorMethods;
 
             /**
@@ -75,18 +75,18 @@ public interface Instrumentation {
                 this.classFormatVersion = classFormatVersion;
                 this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
                 this.methodAccessorFactory = methodAccessorFactory;
-                auxiliaryTypes = new HashMap<AuxiliaryType, DynamicType<?>>();
+                auxiliaryTypes = new HashMap<AuxiliaryType, DynamicType>();
                 registeredAccessorMethods = new HashMap<MethodDescription, MethodDescription>();
             }
 
             @Override
-            public String register(AuxiliaryType auxiliaryType) {
-                DynamicType<?> dynamicType = auxiliaryTypes.get(auxiliaryType);
+            public TypeDescription register(AuxiliaryType auxiliaryType) {
+                DynamicType dynamicType = auxiliaryTypes.get(auxiliaryType);
                 if (dynamicType == null) {
                     dynamicType = auxiliaryType.make(auxiliaryTypeNamingStrategy.name(auxiliaryType), classFormatVersion, this);
                     auxiliaryTypes.put(auxiliaryType, dynamicType);
                 }
-                return dynamicType.getName();
+                return dynamicType.getDescription();
             }
 
             @Override
@@ -100,8 +100,8 @@ public interface Instrumentation {
             }
 
             @Override
-            public List<DynamicType<?>> getRegisteredAuxiliaryTypes() {
-                return Collections.unmodifiableList(new ArrayList<DynamicType<?>>(auxiliaryTypes.values()));
+            public List<DynamicType> getRegisteredAuxiliaryTypes() {
+                return Collections.unmodifiableList(new ArrayList<DynamicType>(auxiliaryTypes.values()));
             }
 
             @Override
@@ -121,16 +121,16 @@ public interface Instrumentation {
          * creation of this type even if this type is not effectively used for the current instrumentation.
          *
          * @param auxiliaryType The auxiliary type that is required for the current instrumentation.
-         * @return The fully qualified name of this auxiliary type.
+         * @return A description of the registered auxiliary type.
          */
-        String register(AuxiliaryType auxiliaryType);
+        TypeDescription register(AuxiliaryType auxiliaryType);
 
         /**
          * Returns a list of auxiliary types that are currently registered for the instrumentation for this context.
          *
          * @return A list containing all auxiliary types currently registered.
          */
-        List<DynamicType<?>> getRegisteredAuxiliaryTypes();
+        List<DynamicType> getRegisteredAuxiliaryTypes();
     }
 
     /**

@@ -64,7 +64,7 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
                     offset += parameterType.getStackSize().getSize();
                 }
             }
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException(this + " does not have a parameter of index " + parameterIndex);
         }
 
         @Override

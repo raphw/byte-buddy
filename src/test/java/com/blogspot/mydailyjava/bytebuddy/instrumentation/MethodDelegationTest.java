@@ -1,6 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation;
 
 import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
+import com.blogspot.mydailyjava.bytebuddy.utility.CallTraceable;
 import org.hamcrest.Matcher;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -10,14 +11,12 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.isDeclaredBy;
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertNotEquals;
 
 @RunWith(Parameterized.class)
-public class MethodDelegationTest<T extends AbstractInstrumentationTest.CallTraceable>
+public class MethodDelegationTest<T extends CallTraceable>
         extends AbstractInstrumentationTest {
 
     private static final String FOO = "foo", BAR = "bar";
@@ -266,7 +265,7 @@ public class MethodDelegationTest<T extends AbstractInstrumentationTest.CallTrac
     @SuppressWarnings("unchecked")
     public void testStaticBinding() throws Exception {
         DynamicType.Loaded<T> loaded = instrument(sourceType, MethodDelegation.to(targetType));
-        assertThat(loaded.getAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
         T instance = loaded.getLoaded().newInstance();
@@ -280,7 +279,7 @@ public class MethodDelegationTest<T extends AbstractInstrumentationTest.CallTrac
     @SuppressWarnings("unchecked")
     public void testInstanceBinding() throws Exception {
         DynamicType.Loaded<T> loaded = instrument(sourceType, MethodDelegation.to(targetType.newInstance()).filter(isDeclaredBy(targetType)));
-        assertThat(loaded.getAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
         T instance = loaded.getLoaded().newInstance();

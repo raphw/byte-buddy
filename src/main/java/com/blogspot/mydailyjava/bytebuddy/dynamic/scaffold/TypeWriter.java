@@ -368,7 +368,7 @@ public interface TypeWriter<T> {
             @Override
             public DynamicType.Unloaded<T> make() {
                 classVisitor.visitEnd();
-                return new DynamicType.Default.Unloaded<T>(instrumentedType.getName(),
+                return new DynamicType.Default.Unloaded<T>(instrumentedType.detach(),
                         classWriter.toByteArray(),
                         instrumentedType.getTypeInitializer(),
                         instrumentationContext.getRegisteredAuxiliaryTypes());
