@@ -50,6 +50,16 @@ import static com.blogspot.mydailyjava.bytebuddy.utility.ByteBuddyCommons.*;
  * <li>{@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.This}: A parameter
  * of {@code Qux#baz} that is annotated with {@code This} will be assigned the instance that is instrumented for
  * a non-static method.</li>
+ * <li>{@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.SuperCall}: A parameter
+ * of {@code Qux#baz} that is annotated with {@code SuperCall} will be assigned an instance of a type implementing both
+ * {@link java.lang.Runnable} and {@link java.util.concurrent.Callable} which will return the instrumented method on the
+ * invocation of either interface's method. The call is made using the original arguments of the method invocation.
+ * The return value is only returned for the {@link java.util.concurrent.Callable#call()} method which additionally
+ * requires to catch any unchecked exceptions that might be thrown by the original method's implementation.</li>
+ * <li>{@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.Origin}: A parameter of
+ * {@code Qux#baz} that is annotated with {@code Origin} is assigned a reference to either a {@link java.lang.reflect.Method}
+ * or a {@link java.lang.Class} instance. A {@code Method}-typed parameter is assigned a reference to the original method that
+ * is overriden. A {@code Class}-typed parameter is assigned the type of the caller.</li>
  * </ul>
  * If a method is not annotated with any of the above methods, it will be treated as if it was annotated
  * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument} using the next
@@ -336,6 +346,7 @@ public class MethodDelegation implements Instrumentation {
     private static List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> defaultArgumentBinders() {
         return Arrays.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>asList(Argument.Binder.INSTANCE,
                 AllArguments.Binder.INSTANCE,
+                Origin.Binder.INSTANCE,
                 This.Binder.INSTANCE,
                 SuperCall.Binder.INSTANCE);
     }
