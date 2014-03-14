@@ -25,7 +25,6 @@ import org.objectweb.asm.Opcodes;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 
 import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
 import static com.blogspot.mydailyjava.bytebuddy.utility.ByteBuddyCommons.*;
@@ -145,12 +144,23 @@ public class MethodDelegation implements Instrumentation {
 
             /**
              * Creates a new instrumentation to an instance that is stored in a {@code static} field.
+             * The field name will be created randomly.
              *
              * @param delegate The actual delegation target.
              */
             public ForStaticFieldInstance(Object delegate) {
+                this(delegate, String.format("%s$%d", PREFIX, delegate.hashCode()));
+            }
+
+            /**
+             * Creates a new instrumentation to an instance that is stored in a {@code static} field.
+             *
+             * @param delegate  The actual delegation target.
+             * @param fieldName The name of the field for storing the delegate instance.
+             */
+            public ForStaticFieldInstance(Object delegate, String fieldName) {
                 this.delegate = delegate;
-                fieldName = String.format("%s$%d", PREFIX, Math.abs(new Random().nextInt()));
+                this.fieldName = fieldName;
             }
 
             @Override
@@ -334,6 +344,30 @@ public class MethodDelegation implements Instrumentation {
             throw new NullPointerException();
         }
         return new MethodDelegation(new InstrumentationDelegate.ForStaticFieldInstance(delegate),
+                defaultArgumentBinders(),
+                defaultDefaultsProvider(),
+                defaultAmbiguityResolver(),
+                defaultAssigner(),
+                new TypeDescription.ForLoadedType(delegate.getClass())
+                        .getReachableMethods()
+                        .filter(not(isStatic().or(isPrivate()).or(isConstructor()))));
+    }
+
+    /**
+     * Creates an instrumentation where only instance methods of the given object are considered as binding targets.
+     * This method will never bind to constructors but will consider methods that are defined in super types. Note
+     * that this includes methods that were defined by the {@link java.lang.Object} class.
+     *
+     * @param delegate  A delegate instance which will be injected by a type initializer and to which all intercepted
+     *                  method calls are delegated to.
+     * @param fieldName The name of the field for storing the delegate instance.
+     * @return A method delegation instrumentation to the given {@code static} methods.
+     */
+    public static MethodDelegation to(Object delegate, String fieldName) {
+        if (delegate == null) {
+            throw new NullPointerException();
+        }
+        return new MethodDelegation(new InstrumentationDelegate.ForStaticFieldInstance(delegate, fieldName),
                 defaultArgumentBinders(),
                 defaultDefaultsProvider(),
                 defaultAmbiguityResolver(),

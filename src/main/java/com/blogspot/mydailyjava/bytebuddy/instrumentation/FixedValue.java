@@ -16,7 +16,6 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Field;
-import java.util.Random;
 
 /**
  * This instrumentation returns a fixed value for a method. Other than the
@@ -171,10 +170,12 @@ public abstract class FixedValue implements Instrumentation {
 
         private final String fieldName;
         private final Object fixedValue;
+
         private final TypeDescription fieldType;
 
         /**
-         * Creates a new static field fixed value instrumentation.
+         * Creates a new static field fixed value instrumentation with a random name for the field containing the fixed
+         * value.
          *
          * @param fixedValue          The fixed value to be returned.
          * @param assigner            The assigner to use for assigning the fixed value to the return type of the
@@ -183,14 +184,24 @@ public abstract class FixedValue implements Instrumentation {
          *                            assigning the return type.
          */
         protected ForStaticField(Object fixedValue, Assigner assigner, boolean considerRuntimeType) {
-            this(String.format("%s$%d", PREFIX, Math.abs(new Random().nextInt())), fixedValue, assigner, considerRuntimeType);
+            this(String.format("%s$%d", PREFIX, Math.abs(fixedValue.hashCode())), fixedValue, assigner, considerRuntimeType);
         }
 
-        private ForStaticField(String fieldName, Object fixedValue, Assigner assigner, boolean considerRuntimeType) {
+        /**
+         * Creates a new static field fixed value instrumentation.
+         *
+         * @param fieldName           The name of the field for storing the fixed value.
+         * @param fixedValue          The fixed value to be returned.
+         * @param assigner            The assigner to use for assigning the fixed value to the return type of the
+         *                            instrumented value.
+         * @param considerRuntimeType If {@code true}, the runtime type of the given value will be considered for
+         *                            assigning the return type.
+         */
+        protected ForStaticField(String fieldName, Object fixedValue, Assigner assigner, boolean considerRuntimeType) {
             super(assigner, considerRuntimeType);
             this.fieldName = fieldName;
             this.fixedValue = fixedValue;
-            fieldType = new TypeDescription.ForLoadedType(fixedValue == null ? Object.class : fixedValue.getClass());
+            fieldType = new TypeDescription.ForLoadedType(fixedValue.getClass());
         }
 
         @Override
@@ -228,20 +239,14 @@ public abstract class FixedValue implements Instrumentation {
 
         @Override
         public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            ForStaticField that = (ForStaticField) other;
-            return fieldName.equals(that.fieldName)
-                    && fieldType.equals(that.fieldType)
-                    && !(fixedValue != null ? !fixedValue.equals(that.fixedValue) : that.fixedValue != null);
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && fieldName.equals(((ForStaticField) other).fieldName)
+                    && fixedValue.equals(((ForStaticField) other).fixedValue);
         }
 
         @Override
         public int hashCode() {
-            int result = fieldName.hashCode();
-            result = 31 * result + (fixedValue != null ? fixedValue.hashCode() : 0);
-            result = 31 * result + fieldType.hashCode();
-            return result;
+            return 31 * fieldName.hashCode() + fixedValue.hashCode();
         }
 
         @Override
@@ -249,7 +254,6 @@ public abstract class FixedValue implements Instrumentation {
             return "FixedValue.ForStaticField{" +
                     "fieldName='" + fieldName + '\'' +
                     ", fixedValue=" + fixedValue +
-                    ", fieldType=" + fieldType +
                     '}';
         }
     }
@@ -353,6 +357,24 @@ public abstract class FixedValue implements Instrumentation {
                     true);
         }
         return new ForStaticField(fixedValue, defaultAssigner(), defaultConsiderRuntimeType());
+    }
+
+    /**
+     * Other than {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.FixedValue#value(Object)}, this function
+     * will create a fixed value instrumentation that will always defined a field in the instrumented class. As a result,
+     * object identity will be preserved between the given {@code fixedValue} and the value that is returned by
+     * instrumented methods. The field name can be explicitly determined.
+     * <p/>
+     * As an exception, the {@code null} value cannot be used for this instrumentation but will cause an exception.
+     *
+     * @param fixedValue The fixed value to be returned by methods that are instrumented by this instrumentation.
+     * @return An instrumentation for the given {@code fixedValue}.
+     */
+    public static AssignerConfigurable reference(Object fixedValue, String fieldName) {
+        if (fixedValue == null) {
+            throw new IllegalArgumentException("The fixed value must not be null");
+        }
+        return new ForStaticField(fieldName, fixedValue, defaultAssigner(), defaultConsiderRuntimeType());
     }
 
     private static Assigner defaultAssigner() {
