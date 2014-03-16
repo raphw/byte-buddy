@@ -58,11 +58,15 @@ public @interface This {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }
             boolean runtimeType = RuntimeType.Verifier.check(target, targetParameterIndex);
-            StackManipulation stackManipulation = assigner.assign(instrumentedType, targetType, runtimeType);
-            return new MethodDelegationBinder.ParameterBinding.Anonymous(
-                    new StackManipulation.Compound(
-                            MethodVariableAccess.REFERENCE.loadFromIndex(THIS_REFERENCE_INDEX),
-                            stackManipulation));
+            StackManipulation thisAssignment = assigner.assign(instrumentedType, targetType, runtimeType);
+            if (thisAssignment.isValid()) {
+                return new MethodDelegationBinder.ParameterBinding.Anonymous(
+                        new StackManipulation.Compound(
+                                MethodVariableAccess.REFERENCE.loadFromIndex(THIS_REFERENCE_INDEX),
+                                thisAssignment));
+            } else {
+                return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
+            }
         }
     }
 }

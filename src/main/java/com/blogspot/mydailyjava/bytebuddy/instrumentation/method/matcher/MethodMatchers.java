@@ -8,6 +8,8 @@ import org.objectweb.asm.Opcodes;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * A collection of common {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher}
@@ -127,6 +129,10 @@ public final class MethodMatchers {
             this.parameterType = new TypeList.ForLoadedType(parameterType);
         }
 
+        private ParameterTypeMatcher(List<? extends TypeDescription> parameterTypes) {
+            parameterType = new TypeList.Explicit(parameterTypes);
+        }
+
         @Override
         public boolean matches(MethodDescription methodDescription) {
             return methodDescription.getParameterTypes().equals(parameterType);
@@ -146,6 +152,36 @@ public final class MethodMatchers {
         @Override
         public String toString() {
             return "ParameterTypeMatcher{parameterType=" + parameterType + '}';
+        }
+    }
+
+    private static class ParameterCountMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        private final int numberOfParameters;
+
+        private ParameterCountMatcher(int numberOfParameters) {
+            this.numberOfParameters = numberOfParameters;
+        }
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.getParameterTypes().size() == numberOfParameters;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && numberOfParameters == ((ParameterCountMatcher) other).numberOfParameters;
+        }
+
+        @Override
+        public int hashCode() {
+            return numberOfParameters;
+        }
+
+        @Override
+        public String toString() {
+            return "ParameterCountMatcher{numberOfParameters=" + numberOfParameters + '}';
         }
     }
 
@@ -760,6 +796,18 @@ public final class MethodMatchers {
         return new ParameterTypeMatcher(types);
     }
 
+    public static JunctionMethodMatcher takesArguments(TypeDescription... types) {
+        return new ParameterTypeMatcher(Arrays.asList(types));
+    }
+
+    public static JunctionMethodMatcher takesArguments(List<? extends TypeDescription> types) {
+        return new ParameterTypeMatcher(types);
+    }
+
+    public static JunctionMethodMatcher takesArguments(int number) {
+        return new ParameterCountMatcher(number);
+    }
+
     /**
      * Selects a method depending on whether they can throw a specific exception.
      *
@@ -866,8 +914,12 @@ public final class MethodMatchers {
      *
      * @return A new method matcher that matches the default finalizer.
      */
-    public static JunctionMethodMatcher isDefaultFinalize() {
+    public static JunctionMethodMatcher isDefaultFinalizer() {
         return new DefaultFinalizeMethodMatcher();
+    }
+
+    public static JunctionMethodMatcher isFinalizer() {
+        return named("finalize").and(takesArguments(0)).and(returns(void.class));
     }
 
     /**

@@ -124,7 +124,7 @@ public class SubclassInstrumentationContextDelegate
                           Instrumentation.Context instrumentationContext,
                           MethodDescription instrumentedMethod) {
             StackManipulation.Size stackSize = new StackManipulation.Compound(
-                    MethodVariableAccess.loadAll(instrumentedMethod),
+                    MethodVariableAccess.loadThisAndArguments(instrumentedMethod),
                     MethodInvocation.invoke(targetDescription).special(instrumentedType.getSupertype()),
                     MethodReturn.returning(instrumentedMethod.getReturnType())
             ).apply(methodVisitor, instrumentationContext);

@@ -72,7 +72,7 @@ public class DefaultValueTest {
 
     @Test
     public void testDefaultValue() throws Exception {
-        StackManipulation stackManipulation = DefaultValue.load(typeDescription);
+        StackManipulation stackManipulation = DefaultValue.of(typeDescription);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, instrumentationContext);
         assertThat(size.getSizeImpact(), is(StackSize.of(type).getSize()));

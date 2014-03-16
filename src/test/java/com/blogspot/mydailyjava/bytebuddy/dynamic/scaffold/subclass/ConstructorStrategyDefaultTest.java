@@ -67,7 +67,7 @@ public class ConstructorStrategyDefaultTest {
     @Test
     public void testDefaultConstructorStrategy() throws Exception {
         assertThat(ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.extractConstructors(stringType),
-                is(stringType.getDeclaredMethods().filter(isConstructor().and(takesArguments()).and(isProtected().or(isPublic())))));
+                is(stringType.getDeclaredMethods().filter(isConstructor().and(takesArguments(0)).and(isProtected().or(isPublic())))));
         assertThat(ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.inject(methodRegistry, methodAttributeAppenderFactory), is(methodRegistry));
         verify(methodRegistry).append(any(MethodRegistry.LatentMethodMatcher.class), any(Instrumentation.class), eq(methodAttributeAppenderFactory));
         verifyNoMoreInteractions(methodRegistry);

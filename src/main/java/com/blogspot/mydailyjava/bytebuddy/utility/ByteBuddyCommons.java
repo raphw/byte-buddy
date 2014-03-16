@@ -33,7 +33,7 @@ public final class ByteBuddyCommons {
      * A mask for modifiers that represents type members.
      */
     public static final int MEMBER_MODIFIER_MASK = VISIBILITY_MODIFIER_MASK | TYPE_MODIFIER_MASK
-            | Modifier.FINAL | Modifier.SYNCHRONIZED;
+            | Modifier.FINAL | Modifier.SYNCHRONIZED | Modifier.STATIC;
 
     /**
      * A mask for modifiers that represents fields.

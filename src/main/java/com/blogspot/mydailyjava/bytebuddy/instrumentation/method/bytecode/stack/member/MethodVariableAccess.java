@@ -50,12 +50,28 @@ public enum MethodVariableAccess {
      * @param methodDescription The method for which all parameters and an instance reference, if any, is to be loaded.
      * @return A stack manipulation representing the loading of all parameters including a reference to the instance if any.
      */
-    public static StackManipulation loadAll(MethodDescription methodDescription) {
+    public static StackManipulation loadThisAndArguments(MethodDescription methodDescription) {
         int stackValues = (methodDescription.isStatic() ? 0 : 1) + methodDescription.getParameterTypes().size();
         StackManipulation[] stackManipulation = new StackManipulation[stackValues];
         int parameterIndex = 0, stackIndex;
         if (!methodDescription.isStatic()) {
             stackManipulation[parameterIndex++] = forType(methodDescription.getDeclaringType()).loadFromIndex(0);
+            stackIndex = methodDescription.getDeclaringType().getStackSize().getSize();
+        } else {
+            stackIndex = 0;
+        }
+        for (TypeDescription parameterType : methodDescription.getParameterTypes()) {
+            stackManipulation[parameterIndex++] = forType(parameterType).loadFromIndex(stackIndex);
+            stackIndex += parameterType.getStackSize().getSize();
+        }
+        return new StackManipulation.Compound(stackManipulation);
+    }
+
+    public static StackManipulation loadArguments(MethodDescription methodDescription) {
+        int stackValues = methodDescription.getParameterTypes().size();
+        StackManipulation[] stackManipulation = new StackManipulation[stackValues];
+        int parameterIndex = 0, stackIndex;
+        if (!methodDescription.isStatic()) {
             stackIndex = methodDescription.getDeclaringType().getStackSize().getSize();
         } else {
             stackIndex = 0;

@@ -44,7 +44,7 @@ public interface ConstructorStrategy {
                     return new MethodList.Empty();
                 case DEFAULT_CONSTRUCTOR:
                     MethodList methodList = superType.getDeclaredMethods()
-                            .filter(isConstructor().and(takesArguments()).and(isPublic().or(isProtected())));
+                            .filter(isConstructor().and(takesArguments(0)).and(isPublic().or(isProtected())));
                     if (methodList.size() == 1) {
                         return methodList;
                     } else {

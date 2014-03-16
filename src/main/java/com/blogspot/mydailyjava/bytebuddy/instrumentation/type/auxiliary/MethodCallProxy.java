@@ -24,7 +24,6 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
-import com.blogspot.mydailyjava.bytebuddy.modifier.SyntheticState;
 import com.blogspot.mydailyjava.bytebuddy.modifier.Visibility;
 import org.objectweb.asm.MethodVisitor;
 
@@ -81,7 +80,7 @@ public class MethodCallProxy implements AuxiliaryType {
             return new Compound(
                     TypeCreation.forType(auxiliaryType),
                     Duplication.SINGLE,
-                    MethodVariableAccess.loadAll(targetMethod),
+                    MethodVariableAccess.loadThisAndArguments(targetMethod),
                     MethodInvocation.invoke(auxiliaryType.getDeclaredMethods().filter(isConstructor()).getOnly())
             ).apply(methodVisitor, instrumentationContext);
         }
@@ -260,7 +259,6 @@ public class MethodCallProxy implements AuxiliaryType {
                 .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
                 .name(auxiliaryTypeName)
                 .modifiers(DEFAULT_TYPE_MODIFIER.toArray(new ModifierContributor.ForType[DEFAULT_TYPE_MODIFIER.size()]))
-                .modifiers(Visibility.PACKAGE_PRIVATE, SyntheticState.SYNTHETIC)
                 .implement(Runnable.class).intercept(new MethodCall(accessorMethod, assigner))
                 .implement(Callable.class).intercept(new MethodCall(accessorMethod, assigner))
                 .defineConstructorDescriptive(new ArrayList<TypeDescription>(parameterFields.values()))

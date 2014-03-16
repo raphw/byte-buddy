@@ -54,7 +54,7 @@ public enum SuperMethodCall implements Instrumentation {
                 targetMethod = instrumentedMethod;
             }
             StackManipulation.Size stackSize = new StackManipulation.Compound(
-                    MethodVariableAccess.loadAll(instrumentedMethod),
+                    MethodVariableAccess.loadThisAndArguments(instrumentedMethod),
                     MethodInvocation.invoke(targetMethod).special(targetType),
                     MethodReturn.returning(instrumentedMethod.getReturnType())
             ).apply(methodVisitor, instrumentationContext);

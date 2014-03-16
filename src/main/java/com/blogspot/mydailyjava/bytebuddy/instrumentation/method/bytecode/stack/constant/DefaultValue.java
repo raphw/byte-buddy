@@ -24,7 +24,7 @@ public enum DefaultValue implements StackManipulation {
      * @param typeDescription The type for which a default value should be loaded onto the operand stack.
      * @return A stack manipulation loading the default value for the given type.
      */
-    public static StackManipulation load(TypeDescription typeDescription) {
+    public static StackManipulation of(TypeDescription typeDescription) {
         if (typeDescription.isPrimitive()) {
             if (typeDescription.represents(long.class)) {
                 return LONG;

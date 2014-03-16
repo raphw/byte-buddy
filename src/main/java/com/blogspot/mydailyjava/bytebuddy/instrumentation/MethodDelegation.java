@@ -382,6 +382,7 @@ public class MethodDelegation implements Instrumentation {
                 AllArguments.Binder.INSTANCE,
                 Origin.Binder.INSTANCE,
                 This.Binder.INSTANCE,
+                Super.Binder.INSTANCE,
                 SuperCall.Binder.INSTANCE);
     }
 

@@ -43,7 +43,7 @@ public enum StubMethod implements Instrumentation, ByteCodeAppender {
                       Context instrumentationContext,
                       MethodDescription instrumentedMethod) {
         StackManipulation.Size stackSize = new StackManipulation.Compound(
-                DefaultValue.load(instrumentedMethod.getReturnType()),
+                DefaultValue.of(instrumentedMethod.getReturnType()),
                 MethodReturn.returning(instrumentedMethod.getReturnType())
         ).apply(methodVisitor, instrumentationContext);
         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());

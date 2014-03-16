@@ -80,7 +80,7 @@ public class VoidAwareAssigner implements Assigner {
         if (sourceType.represents(void.class) && targetType.represents(void.class)) {
             return LegalTrivialStackManipulation.INSTANCE;
         } else if (sourceType.represents(void.class) /* && subType != void.class */) {
-            return returnDefaultValue ? DefaultValue.load(targetType) : IllegalStackManipulation.INSTANCE;
+            return returnDefaultValue ? DefaultValue.of(targetType) : IllegalStackManipulation.INSTANCE;
         } else if (/* superType != void.class && */ targetType.represents(void.class)) {
             return ValueRemovingStackManipulation.of(sourceType);
         } else /* superType != void.class && subType != void.class */ {

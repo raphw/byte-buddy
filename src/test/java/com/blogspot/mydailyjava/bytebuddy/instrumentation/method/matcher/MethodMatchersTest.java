@@ -439,9 +439,9 @@ public class MethodMatchersTest {
 
     @Test
     public void testIsDefaultFinalize() throws Exception {
-        assertThat(MethodMatchers.isDefaultFinalize().matches(testClassBase$foo), is(false));
-        assertThat(MethodMatchers.isDefaultFinalize().matches(object$finalize), is(true));
-        assertThat(MethodMatchers.isDefaultFinalize().matches(testModifier$finalize), is(false));
+        assertThat(MethodMatchers.isDefaultFinalizer().matches(testClassBase$foo), is(false));
+        assertThat(MethodMatchers.isDefaultFinalizer().matches(object$finalize), is(true));
+        assertThat(MethodMatchers.isDefaultFinalizer().matches(testModifier$finalize), is(false));
     }
 
     @Test
