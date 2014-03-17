@@ -28,12 +28,14 @@ public class SubclassInstrumentationContextDelegate
     private static final String DEFAULT_PREFIX = "delegate";
 
     private final String prefix;
+
     private final Random random;
+    private final BridgeMethodResolver bridgeMethodResolver;
 
     private final InstrumentedType instrumentedType;
     private final List<MethodDescription> orderedAccessorMethods;
     private final Map<MethodDescription, MethodDescription> knownTargetMethodsToAccessorMethod;
-    private final Map<MethodDescription, MethodDescription> registeredAccessorMethodToTargetMethod;
+    private final Map<MethodDescription, StackManipulation> registeredAccessorMethodToTargetMethodCall;
 
     /**
      * Creates a new delegate with a default prefix.
@@ -53,10 +55,11 @@ public class SubclassInstrumentationContextDelegate
     public SubclassInstrumentationContextDelegate(InstrumentedType instrumentedType, String prefix) {
         this.prefix = prefix;
         this.instrumentedType = instrumentedType;
-        this.random = new Random();
+        random = new Random();
+        bridgeMethodResolver = new BridgeMethodResolver.Default(instrumentedType.getReachableMethods());
         orderedAccessorMethods = new ArrayList<MethodDescription>();
         knownTargetMethodsToAccessorMethod = new HashMap<MethodDescription, MethodDescription>();
-        registeredAccessorMethodToTargetMethod = new HashMap<MethodDescription, MethodDescription>();
+        registeredAccessorMethodToTargetMethodCall = new HashMap<MethodDescription, StackManipulation>();
     }
 
     @Override
@@ -77,7 +80,9 @@ public class SubclassInstrumentationContextDelegate
                 targetMethod.getParameterTypes(),
                 (targetMethod.isStatic() ? Opcodes.ACC_STATIC : 0) | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL);
         knownTargetMethodsToAccessorMethod.put(targetMethod, accessorMethod);
-        registeredAccessorMethodToTargetMethod.put(accessorMethod, targetMethod);
+        registeredAccessorMethodToTargetMethodCall.put(accessorMethod,
+                MethodInvocation.invoke(bridgeMethodResolver.resolveCallTo(targetMethod))
+                        .special(instrumentedType.getSupertype()));
         orderedAccessorMethods.add(accessorMethod);
         return accessorMethod;
     }
@@ -95,13 +100,10 @@ public class SubclassInstrumentationContextDelegate
 
     private class SameSignatureMethodCall implements Entry, ByteCodeAppender {
 
-        private final MethodDescription targetDescription;
+        private final StackManipulation targetMethodCall;
 
-        private SameSignatureMethodCall(MethodDescription targetDescription) {
-            if (targetDescription == null) {
-                throw new IllegalArgumentException("Unknown method: " + targetDescription);
-            }
-            this.targetDescription = targetDescription;
+        private SameSignatureMethodCall(StackManipulation targetMethodCall) {
+            this.targetMethodCall = targetMethodCall;
         }
 
         @Override
@@ -125,7 +127,7 @@ public class SubclassInstrumentationContextDelegate
                           MethodDescription instrumentedMethod) {
             StackManipulation.Size stackSize = new StackManipulation.Compound(
                     MethodVariableAccess.loadThisAndArguments(instrumentedMethod),
-                    MethodInvocation.invoke(targetDescription).special(instrumentedType.getSupertype()),
+                    targetMethodCall,
                     MethodReturn.returning(instrumentedMethod.getReturnType())
             ).apply(methodVisitor, instrumentationContext);
             return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
@@ -139,7 +141,11 @@ public class SubclassInstrumentationContextDelegate
 
     @Override
     public Entry target(MethodDescription methodDescription) {
-        return new SameSignatureMethodCall(registeredAccessorMethodToTargetMethod.get(methodDescription));
+        StackManipulation targetMethodCall = registeredAccessorMethodToTargetMethodCall.get(methodDescription);
+        if (targetMethodCall == null) {
+            throw new IllegalArgumentException("Unknown method: " + methodDescription);
+        }
+        return new SameSignatureMethodCall(targetMethodCall);
     }
 
     @Override

@@ -27,7 +27,7 @@ public class ByteBuddyTest {
 
     public static class Qux {
 
-        public static String baz(@Super Xyz foo) {
+        public static String baz(@Super Foo foo) {
             return foo.bar().toString();
         }
     }
@@ -39,5 +39,10 @@ public class ByteBuddyTest {
                 .make().load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded().newInstance();
         System.out.println(foo.bar());
+        Foo foo2 = new ByteBuddy().subclass(Foo.class, ConstructorStrategy.Default.IMITATE_SUPER_TYPE)
+                .method(isDeclaredBy(Foo.class)).intercept(MethodDelegation.to(Qux.class))
+                .make().load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded().newInstance();
+        System.out.println(foo2.bar());
     }
 }

@@ -960,6 +960,11 @@ public final class MethodMatchers {
         return new MethodDescriptionMatcher(methodDescription);
     }
 
+    public static JunctionMethodMatcher javaSignatureCompatibleTo(MethodDescription methodDescription) {
+        return (methodDescription.isConstructor() ? isConstructor() : named(methodDescription.getName()))
+                .and(takesArguments(methodDescription.getParameterTypes()));
+    }
+
     private MethodMatchers() {
         throw new AssertionError();
     }
