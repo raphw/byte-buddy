@@ -222,7 +222,8 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         if (IgnoreForBinding.Verifier.check(target)) {
             return MethodBinding.Illegal.INSTANCE;
         }
-        StackManipulation returningStackManipulation = assigner.assign(target.getReturnType(),
+        StackManipulation returningStackManipulation = assigner.assign(
+                target.isConstructor() ? target.getDeclaringType() : target.getReturnType(),
                 source.getReturnType(),
                 RuntimeType.Verifier.check(target));
         if (!returningStackManipulation.isValid()) {

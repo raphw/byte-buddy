@@ -160,6 +160,24 @@ public class TypeProxy implements AuxiliaryType {
 
         private class Appender implements ByteCodeAppender {
 
+            public static final String REFLECTION_FACTORY_INTERNAL_NAME = "sun/reflect/ReflectionFactory";
+            public static final String GET_REFLECTION_FACTORY_METHOD_NAME = "getReflectionFactory";
+            public static final String GET_REFLECTION_FACTORY_METHOD_DESCRIPTOR = "()Lsun/reflect/ReflectionFactory;";
+            public static final String NEW_CONSTRUCTOR_FOR_SERIALIZATION_METHOD_NAME = "newConstructorForSerialization";
+            public static final String NEW_CONSTRUCTOR_FOR_SERIALIZATION_METHOD_DESCRIPTOR =
+                    "(Ljava/lang/Class;Ljava/lang/reflect/Constructor;)Ljava/lang/reflect/Constructor;";
+
+            public static final String JAVA_LANG_OBJECT_DESCRIPTOR = "Ljava/lang/Object;";
+            public static final String JAVA_LANG_OBJECT_INTERNAL_NAME = "java/lang/Object";
+            public static final String JAVA_LANG_CONSTRUCTOR_INTERNAL_NAME = "java/lang/reflect/Constructor";
+            public static final String NEW_INSTANCE_METHOD_NAME = "newInstance";
+            public static final String NEW_INSTANCE_METHOD_DESCRIPTOR = "([Ljava/lang/Object;)Ljava/lang/Object;";
+
+            public static final String JAVA_LANG_CLASS_INTERNAL_NAME = "java/lang/Class";
+            public static final String GET_DECLARED_CONSTRUCTOR_METHOD_NAME = "getDeclaredConstructor";
+            public static final String GET_DECLARED_CONSTRUCTOR_METHOD_DESCRIPTOR =
+                    "([Ljava/lang/Class;)Ljava/lang/reflect/Constructor;";
+
             private final TypeDescription instrumentedType;
 
             private Appender(TypeDescription instrumentedType) {
@@ -174,25 +192,26 @@ public class TypeProxy implements AuxiliaryType {
             @Override
             public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
-                        "sun/reflect/ReflectionFactory",
-                        "getReflectionFactory",
-                        "()Lsun/reflect/ReflectionFactory;");
+                        REFLECTION_FACTORY_INTERNAL_NAME,
+                        GET_REFLECTION_FACTORY_METHOD_NAME,
+                        GET_REFLECTION_FACTORY_METHOD_DESCRIPTOR);
                 methodVisitor.visitLdcInsn(Type.getType(instrumentedType.getDescriptor()));
-                methodVisitor.visitLdcInsn(Type.getType("Ljava/lang/Object;"));
+                methodVisitor.visitLdcInsn(Type.getType(JAVA_LANG_OBJECT_DESCRIPTOR));
                 methodVisitor.visitInsn(Opcodes.ICONST_0);
-                methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Class");
-                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Class",
-                        "getDeclaredConstructor",
-                        "([Ljava/lang/Class;)Ljava/lang/reflect/Constructor;");
+                methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, JAVA_LANG_CLASS_INTERNAL_NAME);
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-                        "sun/reflect/ReflectionFactory",
-                        "newConstructorForSerialization",
-                        "(Ljava/lang/Class;Ljava/lang/reflect/Constructor;)Ljava/lang/reflect/Constructor;");
+                        JAVA_LANG_CLASS_INTERNAL_NAME,
+                        GET_DECLARED_CONSTRUCTOR_METHOD_NAME,
+                        GET_DECLARED_CONSTRUCTOR_METHOD_DESCRIPTOR);
+                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
+                        REFLECTION_FACTORY_INTERNAL_NAME,
+                        NEW_CONSTRUCTOR_FOR_SERIALIZATION_METHOD_NAME,
+                        NEW_CONSTRUCTOR_FOR_SERIALIZATION_METHOD_DESCRIPTOR);
                 methodVisitor.visitInsn(Opcodes.ICONST_0);
-                methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Object");
-                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Constructor",
-                        "newInstance",
-                        "([Ljava/lang/Object;)Ljava/lang/Object;");
+                methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, JAVA_LANG_OBJECT_INTERNAL_NAME);
+                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, JAVA_LANG_CONSTRUCTOR_INTERNAL_NAME,
+                        NEW_INSTANCE_METHOD_NAME,
+                        NEW_INSTANCE_METHOD_DESCRIPTOR);
                 methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, instrumentedType.getInternalName());
                 methodVisitor.visitInsn(Opcodes.ARETURN);
                 return new Size(4, 0);

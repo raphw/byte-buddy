@@ -1,6 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy;
 
 import com.blogspot.mydailyjava.bytebuddy.dynamic.ClassLoadingStrategy;
+import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.MethodDelegation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.Super;
 import org.junit.Test;
@@ -11,27 +12,32 @@ public class ByteBuddyTest {
 
     public static class Foo {
 
-        public Foo(String s) {
-            System.out.println("Constructor: " + s);
-        }
-
-        public void fooBase() {
-            System.out.println("foo base");
+        public Object bar() {
+            return "abc";
         }
     }
 
-    public static class Bar {
+    public static class Xyz extends Foo {
 
-        public static void bar(@Super(strategy = Super.Instantiation.CONSTRUCTOR, constructorArguments = {String.class}) Foo foo) {
-            System.out.println("bar interception");
-            foo.fooBase();
+        @Override
+        public String bar() {
+            return "bcd";
+        }
+    }
+
+    public static class Qux {
+
+        public static String baz(@Super Xyz foo) {
+            return foo.bar().toString();
         }
     }
 
     @Test
     public void testName() throws Exception {
-        new ByteBuddy().subclass(Foo.class).method(isDeclaredBy(Foo.class)).intercept(MethodDelegation.to(Bar.class)).make()
-                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded().getDeclaredConstructor(String.class).newInstance("hello").fooBase();
+        Foo foo = new ByteBuddy().subclass(Xyz.class, ConstructorStrategy.Default.IMITATE_SUPER_TYPE)
+                .method(isDeclaredBy(Xyz.class)).intercept(MethodDelegation.to(Qux.class))
+                .make().load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded().newInstance();
+        System.out.println(foo.bar());
     }
 }

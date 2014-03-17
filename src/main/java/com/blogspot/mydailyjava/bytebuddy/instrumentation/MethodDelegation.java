@@ -8,14 +8,17 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.M
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MostSpecificTypeResolver;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.ParameterLengthResolver;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.*;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.Duplication;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.LegalTrivialStackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.TypeCreation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.primitive.PrimitiveTypeAwareAssigner;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.primitive.VoidAwareAssigner;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.reference.ReferenceTypeAwareAssigner;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.member.FieldAccess;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
@@ -211,10 +214,83 @@ public class MethodDelegation implements Instrumentation {
 
             @Override
             public String toString() {
-                return "ForStaticFieldInstance{" +
+                return "MethodDelegation.InstrumentationDelegate.ForStaticFieldInstance{" +
                         "fieldName='" + fieldName + '\'' +
                         ", delegate=" + delegate +
                         '}';
+            }
+        }
+
+        static class ForInstanceField implements InstrumentationDelegate {
+
+            private final String fieldName;
+            private final TypeDescription fieldType;
+
+            public ForInstanceField(TypeDescription fieldType, String fieldName) {
+                this.fieldType = fieldType;
+                this.fieldName = fieldName;
+            }
+
+            @Override
+            public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                return instrumentedType.withField(fieldName, fieldType, Opcodes.ACC_PUBLIC);
+            }
+
+            @Override
+            public StackManipulation getPreparingStackAssignment(TypeDescription instrumentedType) {
+                return new StackManipulation.Compound(MethodVariableAccess.forType(instrumentedType).loadFromIndex(0),
+                        FieldAccess.forField(instrumentedType.getDeclaredFields().named(fieldName)).getter());
+            }
+
+            @Override
+            public MethodDelegationBinder.MethodInvoker getMethodInvoker(TypeDescription instrumentedType) {
+                return new MethodDelegationBinder.MethodInvoker.Virtual(fieldType);
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && fieldName.equals(((ForInstanceField) other).fieldName)
+                        && fieldType.equals(((ForInstanceField) other).fieldType);
+            }
+
+            @Override
+            public int hashCode() {
+                return 31 * fieldName.hashCode() + fieldType.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "MethodDelegation.InstrumentationDelegate.ForInstanceField{" +
+                        "fieldName='" + fieldName + '\'' +
+                        ", fieldType=" + fieldType +
+                        '}';
+            }
+        }
+
+        static class ForConstruction implements InstrumentationDelegate {
+
+            private final TypeDescription typeDescription;
+
+            public ForConstruction(TypeDescription typeDescription) {
+                this.typeDescription = typeDescription;
+            }
+
+            @Override
+            public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                return instrumentedType;
+            }
+
+            @Override
+            public StackManipulation getPreparingStackAssignment(TypeDescription instrumentedType) {
+                return new StackManipulation.Compound(
+                        TypeCreation.forType(typeDescription),
+                        Duplication.SINGLE);
+            }
+
+            @Override
+            public MethodDelegationBinder.MethodInvoker getMethodInvoker(TypeDescription instrumentedType) {
+                return MethodDelegationBinder.MethodInvoker.Simple.INSTANCE;
             }
         }
 
@@ -375,6 +451,28 @@ public class MethodDelegation implements Instrumentation {
                 new TypeDescription.ForLoadedType(delegate.getClass())
                         .getReachableMethods()
                         .filter(not(isStatic().or(isPrivate()).or(isConstructor()))));
+    }
+
+    public static MethodDelegation field(Class<?> type, String fieldName) {
+        return new MethodDelegation(new InstrumentationDelegate.ForInstanceField(new TypeDescription.ForLoadedType(type), fieldName),
+                defaultArgumentBinders(),
+                defaultDefaultsProvider(),
+                defaultAmbiguityResolver(),
+                defaultAssigner(),
+                new TypeDescription.ForLoadedType(type)
+                        .getReachableMethods()
+                        .filter(not(isStatic().or(isPrivate()).or(isConstructor()))));
+    }
+
+    public static MethodDelegation construct(Class<?> type) {
+        return new MethodDelegation(new InstrumentationDelegate.ForConstruction(new TypeDescription.ForLoadedType(type)),
+                defaultArgumentBinders(),
+                defaultDefaultsProvider(),
+                defaultAmbiguityResolver(),
+                defaultAssigner(),
+                new TypeDescription.ForLoadedType(type)
+                        .getDeclaredMethods()
+                        .filter(isConstructor()));
     }
 
     private static List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> defaultArgumentBinders() {
