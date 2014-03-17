@@ -15,10 +15,14 @@ import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsCollectionContaining.hasItem;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class DynamicTypeDefaultLoadedTest {
+
+    private static final Class<?> MAIN_TYPE = Void.class, AUXILIARY_TYPE = Object.class;
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -26,34 +30,30 @@ public class DynamicTypeDefaultLoadedTest {
     @Mock
     private TypeInitializer mainTypeInitializer, auxiliaryTypeInitializer;
     @Mock
-    private DynamicType auxiliaryType;
-    @Mock
-    private TypeDescription typeDescription, auxiliaryTypeDescription;
+    private TypeDescription mainTypeDescription, auxiliaryTypeDescription;
 
     private DynamicType.Loaded<?> dynamicType;
 
     @Before
     public void setUp() throws Exception {
-        byte[] binaryRepresentation = new byte[]{0, 1, 2};
-        byte[] auxiliaryTypeByte = new byte[]{4, 5, 6};
         Map<TypeDescription, Class<?>> loadedTypes = new HashMap<TypeDescription, Class<?>>();
-        loadedTypes.put(typeDescription, Void.class);
-        loadedTypes.put(auxiliaryTypeDescription, Object.class);
-        dynamicType = new DynamicType.Default.Loaded<Object>(typeDescription,
-                binaryRepresentation,
+        loadedTypes.put(mainTypeDescription, MAIN_TYPE);
+        loadedTypes.put(auxiliaryTypeDescription, AUXILIARY_TYPE);
+        DynamicType auxiliaryType = mock(DynamicType.class);
+        dynamicType = new DynamicType.Default.Loaded<Object>(mainTypeDescription,
+                new byte[0],
                 mainTypeInitializer,
                 Collections.singletonList(auxiliaryType),
                 loadedTypes);
-        when(auxiliaryType.getDescription()).thenReturn(typeDescription);
-        when(auxiliaryType.getBytes()).thenReturn(auxiliaryTypeByte);
-        when(auxiliaryType.getTypeInitializers()).thenReturn(Collections.singletonMap(auxiliaryTypeDescription, auxiliaryTypeInitializer));
-        when(auxiliaryType.getRawAuxiliaryTypes()).thenReturn(Collections.<TypeDescription, byte[]>emptyMap());
+        when(auxiliaryType.getDescription()).thenReturn(mainTypeDescription);
     }
 
     @Test
-    public void testTypes() throws Exception {
-        assertEquals(Void.class, dynamicType.getLoaded());
+    public void testLoadedTypeDescription() throws Exception {
+        assertEquals(MAIN_TYPE, dynamicType.getLoaded());
+        assertThat(dynamicType.getDescription(), is(mainTypeDescription));
         assertThat(dynamicType.getLoadedAuxiliaryTypes().size(), is(1));
-        assertEquals(Object.class, dynamicType.getLoadedAuxiliaryTypes().get(auxiliaryTypeDescription));
+        assertThat(dynamicType.getLoadedAuxiliaryTypes().keySet(), hasItem(auxiliaryTypeDescription));
+        assertEquals(AUXILIARY_TYPE, dynamicType.getLoadedAuxiliaryTypes().get(auxiliaryTypeDescription));
     }
 }

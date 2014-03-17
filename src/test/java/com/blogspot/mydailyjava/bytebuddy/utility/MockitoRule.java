@@ -23,6 +23,7 @@ public class MockitoRule implements TestRule {
             @Override
             public void evaluate() throws Throwable {
                 MockitoAnnotations.initMocks(target);
+                MockedDescription.inject(target);
                 base.evaluate();
             }
         };

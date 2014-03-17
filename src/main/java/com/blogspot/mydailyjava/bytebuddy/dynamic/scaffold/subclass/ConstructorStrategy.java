@@ -25,7 +25,8 @@ public interface ConstructorStrategy {
      * is not constructable without using JVM non-public functionality.</li>
      * <li>The {@link com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy.Default#DEFAULT_CONSTRUCTOR}
      * strategy is adding a default constructor that calls it's super types default constructor. If no such constructor is defined,
-     * an exception is thrown. Only {@code public} or {@code protected} constructors are considered by this strategy.</li>
+     * an {@link IllegalArgumentException} is thrown. Only {@code public} or {@code protected} constructors are considered
+     * by this strategy.</li>
      * <li>The {@link com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy.Default#IMITATE_SUPER_TYPE}
      * strategy is adding all constructors of the super type which are making direct calls to their super constructor of
      * same signature. Only {@code public} or {@code protected} constructors are considered by this strategy.</li>
@@ -75,11 +76,12 @@ public interface ConstructorStrategy {
     }
 
     /**
-     * Extracts constructors for a given super type.
+     * Extracts constructors for a given super type. The extracted constructor signatures will then be imitated by the
+     * created dynamic type.
      *
-     * @param superType The super type for which constructors are to be extracted.
-     * @return An array of constructors which will be mimicked by the instrumented type of which
-     * the {@code superType} is the direct super type.
+     * @param superType The super type from which constructors are to be extracted.
+     * @return A list of constructor descriptions which will be mimicked by the instrumented type of which
+     * the {@code superType} is the direct super type of the instrumented type.
      */
     MethodList extractConstructors(TypeDescription superType);
 
@@ -87,7 +89,7 @@ public interface ConstructorStrategy {
      * Returns a method registry that is capable of creating byte code for the constructors that were
      * provided by the
      * {@link com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy#extractConstructors(com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription)}
-     * method.
+     * method of this instance.
      *
      * @param methodRegistry                        The original method registry.
      * @param defaultMethodAttributeAppenderFactory The default method attribute appender factory.

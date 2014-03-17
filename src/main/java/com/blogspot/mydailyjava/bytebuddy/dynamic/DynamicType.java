@@ -26,15 +26,17 @@ import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.
 import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.named;
 
 /**
- * A dynamic type that is created at runtime, usually the result of an instrumentation.
+ * A dynamic type that is created at runtime, usually as the result of applying a
+ * {@link com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType.Builder} or as the result of an
+ * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType}.
  * <p/>
- * Note that the {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription}s might differ
- * for the unloaded and loaded versions with regards to annotations.
+ * Note that the {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription}s will represent their
+ * unloaded forms and therefore differ from the loaded types, especially with regards to annotations.
  */
 public interface DynamicType {
 
     /**
-     * A builder for a dynamic type. Implementations of builders are usually immutable.
+     * A builder for defining a dynamic type. Implementations of such builders are usually immutable.
      *
      * @param <T> The most specific known loaded type that is implemented by the created dynamic type, usually the
      *            type itself, an interface or the direct super class.
@@ -45,7 +47,8 @@ public interface DynamicType {
          * An abstract base implementation for a dynamic type builder. For representing the built type, the
          * {@link com.blogspot.mydailyjava.bytebuddy.dynamic.TargetType} class can be used as a placeholder.
          *
-         * @param <T> The most specific known type of the dynamic type, usually the type itself, an interface or the direct super class.
+         * @param <T> The most specific known loaded type that is implemented by the created dynamic type, usually the
+         *            type itself, an interface or the direct super class.
          */
         static abstract class AbstractBase<T> implements Builder<T> {
 
@@ -262,7 +265,8 @@ public interface DynamicType {
              * A base implementation of a builder that is capable of manifesting a change that was not yet applied to
              * the builder.
              *
-             * @param <T> The most specific known type of the dynamic type, usually the type itself, an interface or the direct super class.
+             * @param <T> The most specific known loaded type that is implemented by the created dynamic type, usually the
+             *            type itself, an interface or the direct super class.
              */
             protected abstract class AbstractDelegatingBuilder<T> implements Builder<T> {
 
@@ -380,12 +384,12 @@ public interface DynamicType {
             }
 
             /**
-             * This builders currently registered field tokens.
+             * This builder's currently registered field tokens.
              */
             protected final List<FieldToken> fieldTokens;
 
             /**
-             * This builders currently registered method tokens.
+             * This builder's currently registered method tokens.
              */
             protected final List<MethodToken> methodTokens;
 
@@ -454,7 +458,8 @@ public interface DynamicType {
         /**
          * Defines an instrumentation for a method that was added to this instrumentation or a method selection.
          *
-         * @param <T> The most specific known type of the dynamic type, usually the type itself, an interface or the direct super class.
+         * @param <T> The most specific known loaded type that is implemented by the created dynamic type, usually the
+         *            type itself, an interface or the direct super class.
          */
         static interface MatchedMethodInterception<T> {
 
@@ -475,10 +480,11 @@ public interface DynamicType {
         }
 
         /**
-         * An optional matched method interception allows to define an interception without requiring
-         * to do so.
+         * An optional matched method interception allows to define an interception without requiring the definition
+         * of an implementation.
          *
-         * @param <T> The most specific known type of the dynamic type, usually the type itself, an interface or the direct super class.
+         * @param <T> The most specific known loaded type that is implemented by the created dynamic type, usually the
+         *            type itself, an interface or the direct super class.
          */
         static interface OptionalMatchedMethodInterception<T> extends MatchedMethodInterception<T>, Builder<T> {
             /* This interface is merely a combinator of the matched method interception and the builder interfaces. */
@@ -488,7 +494,8 @@ public interface DynamicType {
          * A builder to which a method was just added or an interception for existing methods was specified such that
          * attribute changes can be applied to these methods.
          *
-         * @param <T> The most specific known type of the dynamic type, usually the type itself, an interface or the direct super class.
+         * @param <T> The most specific known loaded type that is implemented by the created dynamic type, usually the
+         *            type itself, an interface or the direct super class.
          */
         static interface MethodAnnotationTarget<T> extends Builder<T> {
 
@@ -502,7 +509,7 @@ public interface DynamicType {
             MethodAnnotationTarget<T> attribute(MethodAttributeAppender.Factory attributeAppenderFactory);
 
             /**
-             * Defines an annotation to be added to the currently selected method.
+             * Defines annotations to be added to the currently selected method.
              * <p/>
              * Note: The annotations will not be visible to
              * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation}s.
@@ -513,7 +520,7 @@ public interface DynamicType {
             MethodAnnotationTarget<T> annotateMethod(Annotation... annotation);
 
             /**
-             * Defines an annotation to be added to a parameter of the currently selected methods.
+             * Defines annotations to be added to a parameter of the currently selected methods.
              * <p/>
              * Note: The annotations will not be visible to
              * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation}s.
@@ -542,7 +549,7 @@ public interface DynamicType {
             FieldAnnotationTarget<T> attribute(FieldAttributeAppender.Factory attributeAppenderFactory);
 
             /**
-             * Defines an annotation to be added to the currently selected field.
+             * Defines annotations to be added to the currently selected field.
              * <p/>
              * Note: The annotations will not be visible to
              * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation}s.
@@ -613,7 +620,7 @@ public interface DynamicType {
         Builder<T> attribute(TypeAttributeAppender attributeAppender);
 
         /**
-         * Adds an annotation to the currently constructed type.
+         * Adds annotations to the currently constructed type.
          * <p/>
          * Note: The annotations will not be visible to
          * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation}s.
@@ -768,7 +775,7 @@ public interface DynamicType {
     }
 
     /**
-     * A dynamic type that has not yet been loaded into the running instance of the Java virtual machine.
+     * A dynamic type that has not yet been loaded by a given {@link java.lang.ClassLoader}.
      *
      * @param <T> The most specific known loaded type that is implemented by this dynamic type, usually the
      *            type itself, an interface or the direct super class.
@@ -778,9 +785,10 @@ public interface DynamicType {
         /**
          * Attempts to load this dynamic type including all of its auxiliary types, if any.
          *
-         * @param classLoader          The class loader to use for this class laoding.
+         * @param classLoader          The class loader to use for this class loading.
          * @param classLoadingStrategy The class loader strategy which should be used for this class loading.
          * @return This dynamic type in its loaded state.
+         * @see com.blogspot.mydailyjava.bytebuddy.dynamic.ClassLoadingStrategy.Default
          */
         Loaded<T> load(ClassLoader classLoader, ClassLoadingStrategy classLoadingStrategy);
     }
@@ -791,7 +799,7 @@ public interface DynamicType {
     static class Default implements DynamicType {
 
         /**
-         * Creates a new unloaded representation of a dynamic type.
+         * A default implementation of an unloaded dynamic type.
          *
          * @param <T> The most specific known loaded type that is implemented by this dynamic type, usually the
          *            type itself, an interface or the direct super class.
@@ -844,7 +852,7 @@ public interface DynamicType {
         }
 
         /**
-         * Creates a new loaded representation of a dynamic type.
+         * A default implementation of a loaded dynamic type.
          *
          * @param <T> The most specific known loaded type that is implemented by this dynamic type, usually the
          *            type itself, an interface or the direct super class.
@@ -854,7 +862,7 @@ public interface DynamicType {
             private final Map<TypeDescription, Class<?>> loadedTypes;
 
             /**
-             * Creates a new loaded representation of a dynamic type.
+             * Creates a new representation of a loaded dynamic type.
              *
              * @param typeDescription A description of this dynamic type.
              * @param typeByte        An array of byte of the binary representation of this dynamic type.
@@ -961,7 +969,7 @@ public interface DynamicType {
         }
 
         @Override
-        public byte[] getBytes() {
+        public byte[] getByte() {
             return binaryRepresentation;
         }
 
@@ -969,7 +977,7 @@ public interface DynamicType {
         public Map<TypeDescription, byte[]> getRawAuxiliaryTypes() {
             Map<TypeDescription, byte[]> auxiliaryTypes = new HashMap<TypeDescription, byte[]>();
             for (DynamicType auxiliaryType : this.auxiliaryTypes) {
-                auxiliaryTypes.put(auxiliaryType.getDescription(), auxiliaryType.getBytes());
+                auxiliaryTypes.put(auxiliaryType.getDescription(), auxiliaryType.getByte());
                 auxiliaryTypes.putAll(auxiliaryType.getRawAuxiliaryTypes());
             }
             return auxiliaryTypes;
@@ -1011,14 +1019,15 @@ public interface DynamicType {
     TypeDescription getDescription();
 
     /**
-     * Returns the bytes representing this dynamic type.
+     * Returns a byte array representing this dynamic type. This byte array might be reused by this dynamic type and
+     * should therefore not be altered.
      *
      * @return A byte array of the type's binary representation.
      */
-    byte[] getBytes();
+    byte[] getByte();
 
     /**
-     * Returns a map of all auxiliary types that are required additionally to the main type.
+     * Returns a map of all auxiliary types that are required for making use of the main type.
      *
      * @return A map of all auxiliary types by their descriptions to their binary representation.
      */
@@ -1033,7 +1042,9 @@ public interface DynamicType {
 
     /**
      * Checks if a dynamic type requires some form of explicit type initialization, either for itself or for one
-     * of its auxiliary types, if any.
+     * of its auxiliary types, if any. This is the case when this dynamic type was defined to delegate method calls
+     * to a specific instance which is stored in a field of the created type. If this class serialized, it could not
+     * be used without its type initializers since the field value represents a specific runtime context.
      *
      * @return {@code true} if this type requires explicit type initialization.
      */
@@ -1041,11 +1052,13 @@ public interface DynamicType {
 
     /**
      * Saves a dynamic type in a given folder using the Java class file format while respecting the naming conventions
-     * for saving compiled Java classes.
+     * for saving compiled Java classes. All auxiliary types, if any, are saved in the same directory. The resulting
+     * folder structure will resemble the structure that is required for Java runtimes, i.e. each folder representing
+     * a segment of the package name.
      *
-     * @param folder The target folder for saving this dynamic type and its auxiliary types, if any.
-     * @return A map of type descriptions pointing to files with their stored binary representations in {@code folder}.
-     * @throws IOException If the file operation throws an exception.
+     * @param folder The base target folder for storing this dynamic type and its auxiliary types, if any.
+     * @return A map of type descriptions pointing to files with their stored binary representations within {@code folder}.
+     * @throws IOException Thrown if the underlying file operations cause an {@code IOException}.
      */
     Map<TypeDescription, File> saveIn(File folder) throws IOException;
 }

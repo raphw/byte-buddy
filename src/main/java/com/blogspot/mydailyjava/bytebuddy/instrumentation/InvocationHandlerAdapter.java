@@ -46,7 +46,7 @@ public class InvocationHandlerAdapter implements Instrumentation, TypeInitialize
             StackManipulation.Size stackSize = new StackManipulation.Compound(
                     FieldAccess.forField(instrumentedType.getDeclaredFields().named(fieldName)).getter(),
                     MethodVariableAccess.forType(objectType).loadFromIndex(0),
-                    new MethodConstant(instrumentedMethod),
+                    MethodConstant.forMethod(instrumentedMethod),
                     ArrayFactory.targeting(objectType).withValues(argumentValuesOf(instrumentedMethod)),
                     MethodInvocation.invoke(invocationHandlerType.getDeclaredMethods().getOnly()),
                     assigner.assign(objectType, instrumentedMethod.getReturnType(), true),

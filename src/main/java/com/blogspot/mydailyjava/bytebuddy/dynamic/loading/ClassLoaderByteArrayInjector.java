@@ -6,10 +6,11 @@ import java.lang.reflect.Method;
 /**
  * An injector that loads classes by reflectively invoking non-public methods on a given {@link java.lang.ClassLoader}.
  * <p/>
- * Note that the injector is only able to load classes in a linear fashion. Thus, classes that refer to other classes
+ * Note that the injector is only able to load classes in a linear manner. Thus, classes that refer to other classes
  * which are not yet loaded cannot be injected but will result in a {@link java.lang.NoClassDefFoundError}. This becomes
- * a problem when unloaded classes refer to each other using cyclic references. This injector cannot be applied to the
- * bootstrap class loader which is usually represented by {@code null} and therefore cannot be accessed by reflection.
+ * a problem when classes refer to each other using cyclic references. This injector can further not be applied to the
+ * bootstrap class loader which is usually represented by a {@code null} value and can therefore not be accessed by
+ * reflection.
  */
 public class ClassLoaderByteArrayInjector {
 
@@ -34,20 +35,20 @@ public class ClassLoaderByteArrayInjector {
     /**
      * Creates a new injector for the given {@link java.lang.ClassLoader}.
      *
-     * @param classLoader The {@link java.lang.ClassLoader} into which new class definitions are injected.
+     * @param classLoader The {@link java.lang.ClassLoader} into which new class definitions are to be injected.
      */
     public ClassLoaderByteArrayInjector(ClassLoader classLoader) {
         this.classLoader = classLoader;
     }
 
     /**
-     * Explicitly loads a {@link java.lang.Class} by using reflection.
+     * Explicitly loads a {@link java.lang.Class} by reflective access into the represented class loader.
      *
-     * @param name       The fully qualified internalName of the {@link java.lang.Class} to be loaded.
-     * @param definition The type's definition.
-     * @return The loaded class.
+     * @param name                 The fully qualified name of the {@link java.lang.Class} to be loaded.
+     * @param binaryRepresentation The type's binary representation.
+     * @return The loaded class that is a result of the class loading attempt.
      */
-    public Class<?> inject(String name, byte[] definition) {
+    public Class<?> inject(String name, byte[] binaryRepresentation) {
         if (FIND_LOADED_CLASS_METHOD == null || LOAD_BYTE_ARRAY_METHOD == null) {
             throw new IllegalStateException("Could not initialize class loader injector", EXCEPTION);
         }
@@ -57,7 +58,11 @@ public class ClassLoaderByteArrayInjector {
                 if (type != null) {
                     return type;
                 } else {
-                    return (Class<?>) LOAD_BYTE_ARRAY_METHOD.invoke(classLoader, name, definition, 0, definition.length);
+                    return (Class<?>) LOAD_BYTE_ARRAY_METHOD.invoke(classLoader,
+                            name,
+                            binaryRepresentation,
+                            0,
+                            binaryRepresentation.length);
                 }
             }
         } catch (IllegalAccessException e) {

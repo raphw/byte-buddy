@@ -37,7 +37,6 @@ public class DynamicTypeDefaultTest {
     private TypeDescription typeDescription, auxiliaryTypeDescription;
 
     private DynamicType dynamicType;
-
     private byte[] binaryRepresentation, auxiliaryTypeBinaryRepresentation;
 
 
@@ -53,14 +52,14 @@ public class DynamicTypeDefaultTest {
         when(auxiliaryType.saveIn(any(File.class))).thenReturn(Collections.<TypeDescription, File>emptyMap());
         when(auxiliaryTypeDescription.getName()).thenReturn(BAR);
         when(auxiliaryType.getDescription()).thenReturn(auxiliaryTypeDescription);
-        when(auxiliaryType.getBytes()).thenReturn(auxiliaryTypeBinaryRepresentation);
+        when(auxiliaryType.getByte()).thenReturn(auxiliaryTypeBinaryRepresentation);
         when(auxiliaryType.getTypeInitializers()).thenReturn(Collections.singletonMap(auxiliaryTypeDescription, auxiliaryTypeInitializer));
         when(auxiliaryType.getRawAuxiliaryTypes()).thenReturn(Collections.<TypeDescription, byte[]>emptyMap());
     }
 
     @Test
     public void testByteArray() throws Exception {
-        assertThat(dynamicType.getBytes(), is(binaryRepresentation));
+        assertThat(dynamicType.getByte(), is(binaryRepresentation));
     }
 
     @Test

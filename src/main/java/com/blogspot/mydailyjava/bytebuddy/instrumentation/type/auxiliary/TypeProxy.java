@@ -76,6 +76,36 @@ public class TypeProxy implements AuxiliaryType {
                     FieldAccess.forField(proxyType.getDeclaredFields().named(INSTANCE_FIELD)).putter()
             ).apply(methodVisitor, instrumentationContext);
         }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            ByConstructor that = (ByConstructor) other;
+            return ignoreFinalizer == that.ignoreFinalizer
+                    && constructorParameters.equals(that.constructorParameters)
+                    && instrumentedType.equals(that.instrumentedType)
+                    && proxiedType.equals(that.proxiedType);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = proxiedType.hashCode();
+            result = 31 * result + instrumentedType.hashCode();
+            result = 31 * result + constructorParameters.hashCode();
+            result = 31 * result + (ignoreFinalizer ? 1 : 0);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "TypeProxy.ByConstructor{" +
+                    "proxiedType=" + proxiedType +
+                    ", instrumentedType=" + instrumentedType +
+                    ", constructorParameters=" + constructorParameters +
+                    ", ignoreFinalizer=" + ignoreFinalizer +
+                    '}';
+        }
     }
 
     public static class ByReflectionFactory implements StackManipulation {
@@ -105,6 +135,33 @@ public class TypeProxy implements AuxiliaryType {
                     MethodVariableAccess.forType(instrumentedType).loadFromIndex(0),
                     FieldAccess.forField(proxyType.getDeclaredFields().named(INSTANCE_FIELD)).putter()
             ).apply(methodVisitor, instrumentationContext);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            ByReflectionFactory that = (ByReflectionFactory) other;
+            return ignoreFinalizer == that.ignoreFinalizer
+                    && instrumentedType.equals(that.instrumentedType)
+                    && proxiedType.equals(that.proxiedType);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = proxiedType.hashCode();
+            result = 31 * result + instrumentedType.hashCode();
+            result = 31 * result + (ignoreFinalizer ? 1 : 0);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "TypeProxy.ByReflectionFactory{" +
+                    "proxiedType=" + proxiedType +
+                    ", instrumentedType=" + instrumentedType +
+                    ", ignoreFinalizer=" + ignoreFinalizer +
+                    '}';
         }
     }
 
@@ -153,6 +210,22 @@ public class TypeProxy implements AuxiliaryType {
         @Override
         public ByteCodeAppender appender(TypeDescription instrumentedType) {
             return new Appender(instrumentedType);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && methodAccessorFactory.equals(((MethodCall) other).methodAccessorFactory);
+        }
+
+        @Override
+        public int hashCode() {
+            return methodAccessorFactory.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "MethodCall{methodAccessorFactory=" + methodAccessorFactory + '}';
         }
     }
 
@@ -227,6 +300,16 @@ public class TypeProxy implements AuxiliaryType {
         public ByteCodeAppender appender(TypeDescription instrumentedType) {
             return new Appender(instrumentedType);
         }
+
+        @Override
+        public boolean equals(Object obj) {
+            return obj != null && obj.getClass() == getClass();
+        }
+
+        @Override
+        public int hashCode() {
+            return 31;
+        }
     }
 
     private final TypeDescription proxiedType;
@@ -252,5 +335,32 @@ public class TypeProxy implements AuxiliaryType {
                 .defineMethod(REFLECTION_METHOD, TargetType.DESCRIPTION, Collections.<TypeDescription>emptyList(), Ownership.STATIC)
                 .intercept(new SilentConstruction())
                 .make();
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+        TypeProxy typeProxy = (TypeProxy) other;
+        return ignoreFinalizer == typeProxy.ignoreFinalizer
+                && instrumentedType.equals(typeProxy.instrumentedType)
+                && proxiedType.equals(typeProxy.proxiedType);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = proxiedType.hashCode();
+        result = 31 * result + instrumentedType.hashCode();
+        result = 31 * result + (ignoreFinalizer ? 1 : 0);
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "TypeProxy{" +
+                "proxiedType=" + proxiedType +
+                ", instrumentedType=" + instrumentedType +
+                ", ignoreFinalizer=" + ignoreFinalizer +
+                '}';
     }
 }

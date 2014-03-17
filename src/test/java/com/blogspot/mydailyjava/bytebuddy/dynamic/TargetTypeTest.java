@@ -20,4 +20,9 @@ public class TargetTypeTest {
         assertThat(TargetType.class.getDeclaredConstructors().length, is(1));
         assertThat(Modifier.isPrivate(TargetType.class.getDeclaredConstructor().getModifiers()), is(true));
     }
+
+    @Test
+    public void testDescription() throws Exception {
+        assertThat(TargetType.DESCRIPTION.represents(TargetType.class), is(true));
+    }
 }

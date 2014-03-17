@@ -23,6 +23,8 @@ import static org.mockito.Mockito.when;
 
 public class DynamicTypeDefaultUnloadedTest {
 
+    private static final Class<?> MAIN_TYPE = Void.class, AUXILIARY_TYPE = Object.class;
+
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
 
@@ -52,30 +54,30 @@ public class DynamicTypeDefaultUnloadedTest {
                 mainTypeInitializer,
                 Collections.singletonList(auxiliaryType));
         Map<TypeDescription, Class<?>> loadedTypes = new HashMap<TypeDescription, Class<?>>();
-        loadedTypes.put(typeDescription, Void.class);
-        loadedTypes.put(auxiliaryTypeDescription, Object.class);
+        loadedTypes.put(typeDescription, MAIN_TYPE);
+        loadedTypes.put(auxiliaryTypeDescription, AUXILIARY_TYPE);
         when(classLoadingStrategy.load(any(ClassLoader.class), any(LinkedHashMap.class))).thenReturn(loadedTypes);
         when(auxiliaryType.getDescription()).thenReturn(auxiliaryTypeDescription);
-        when(auxiliaryType.getBytes()).thenReturn(auxiliaryTypeByte);
+        when(auxiliaryType.getByte()).thenReturn(auxiliaryTypeByte);
         when(auxiliaryType.getTypeInitializers()).thenReturn(Collections.singletonMap(auxiliaryTypeDescription, auxiliaryTypeInitializer));
         when(auxiliaryType.getRawAuxiliaryTypes()).thenReturn(Collections.<TypeDescription, byte[]>emptyMap());
     }
 
     @Test
-    public void testBasicData() throws Exception {
+    public void testQueries() throws Exception {
         DynamicType.Loaded<?> loaded = unloaded.load(classLoader, classLoadingStrategy);
         assertThat(loaded.getDescription(), is(typeDescription));
-        assertThat(loaded.getBytes(), is(binaryRepresentation));
+        assertThat(loaded.getByte(), is(binaryRepresentation));
         assertThat(loaded.getRawAuxiliaryTypes(), is(Collections.singletonMap(auxiliaryTypeDescription, auxiliaryTypeByte)));
     }
 
     @Test
-    public void testLoad() throws Exception {
+    public void testTypeLoading() throws Exception {
         DynamicType.Loaded<?> loaded = unloaded.load(classLoader, classLoadingStrategy);
-        assertEquals(Void.class, loaded.getLoaded());
+        assertEquals(MAIN_TYPE, loaded.getLoaded());
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(1));
-        assertEquals(Object.class, loaded.getLoadedAuxiliaryTypes().get(auxiliaryTypeDescription));
-        verify(mainTypeInitializer).onLoad(Void.class);
-        verify(auxiliaryTypeInitializer).onLoad(Object.class);
+        assertEquals(AUXILIARY_TYPE, loaded.getLoadedAuxiliaryTypes().get(auxiliaryTypeDescription));
+        verify(mainTypeInitializer).onLoad(MAIN_TYPE);
+        verify(auxiliaryTypeInitializer).onLoad(AUXILIARY_TYPE);
     }
 }

@@ -22,7 +22,9 @@ public class AnnotationVisibilityTest {
                 {Argument.class},
                 {BindingPriority.class},
                 {IgnoreForBinding.class},
+                {Origin.class},
                 {RuntimeType.class},
+                {Super.class},
                 {SuperCall.class},
                 {This.class}
         });

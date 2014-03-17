@@ -76,7 +76,8 @@ public class ThisAnnotationBinderTest extends AbstractAnnotationBinderTest<This>
         when(stackManipulation.isValid()).thenReturn(false);
         when(target.getParameterTypes()).thenReturn(typeList);
         when(target.getParameterAnnotations()).thenReturn(new Annotation[1][0]);
-        when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean())).thenReturn(IllegalStackManipulation.INSTANCE);
+        when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean()))
+                .thenReturn(IllegalStackManipulation.INSTANCE);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
                 .bind(annotation, 0, source, target, instrumentedType, assigner);
         assertThat(parameterBinding.isValid(), is(false));

@@ -10,11 +10,31 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import java.lang.annotation.*;
 import java.lang.reflect.Method;
 
+/**
+ * The origin annotation provides some meta information about the source method that is bound to this method where
+ * the binding is dependant of the parameter's type:
+ * <ol>
+ * <li>If the annotated parameter is of type {@link java.lang.reflect.Method}, the parameter is assigned a reference
+ * to the method it intercepts.</li>
+ * <li>If the annotated parameter is of type {@link java.lang.Class}, the parameter is assigned a reference of the
+ * type of the instrumented type.</li>
+ * </ol>
+ * Any other parameter type will cause an {@link java.lang.IllegalStateException}.
+ *
+ * @see com.blogspot.mydailyjava.bytebuddy.instrumentation.MethodDelegation
+ * @see TargetMethodAnnotationDrivenBinder
+ */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.PARAMETER})
 public @interface Origin {
 
+    /**
+     * A binder for binding parameters that are annotated with
+     * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.Origin}.
+     *
+     * @see TargetMethodAnnotationDrivenBinder
+     */
     static enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Origin> {
         INSTANCE;
 
@@ -34,7 +54,7 @@ public @interface Origin {
             if (parameterType.represents(Class.class)) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(new ClassConstant(instrumentedType));
             } else if (parameterType.represents(Method.class)) {
-                return new MethodDelegationBinder.ParameterBinding.Anonymous(new MethodConstant(source));
+                return new MethodDelegationBinder.ParameterBinding.Anonymous(MethodConstant.forMethod(source));
             } else {
                 throw new IllegalStateException("The " + target + " method's " + targetParameterIndex +
                         " is annotated with a Origin annotation with an argument not representing a Class" +

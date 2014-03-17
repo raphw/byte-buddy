@@ -7,7 +7,9 @@ import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.TypeWriter;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.TypeInitializer;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodList;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
@@ -22,6 +24,7 @@ import sun.reflect.ReflectionFactory;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Iterator;
 
 import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.named;
@@ -43,22 +46,32 @@ public class SubclassInstrumentationContextDelegateTest {
     @Mock
     private MethodDescription firstMethod, secondMethod;
     @Mock
-    private TypeDescription firstMethodReturnType, secondMethodReturnType;
+    private TypeDescription firstMethodReturnType, secondMethodReturnType, superType;
     @Mock
     private TypeList firstMethodParameters, secondMethodParameters;
+    @Mock
+    private MethodList methodList;
 
     private SubclassInstrumentationContextDelegate delegate;
 
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        delegate = new SubclassInstrumentationContextDelegate(instrumentedType, FOO);
         when(firstMethod.getReturnType()).thenReturn(firstMethodReturnType);
         when(firstMethod.getParameterTypes()).thenReturn(firstMethodParameters);
+        when(firstMethod.getDeclaringType()).thenReturn(superType);
+        when(firstMethodReturnType.getStackSize()).thenReturn(StackSize.ZERO);
         when(secondMethod.getReturnType()).thenReturn(secondMethodReturnType);
         when(secondMethod.getParameterTypes()).thenReturn(secondMethodParameters);
-        when(secondMethod.isStatic()).thenReturn(true);
+        when(secondMethod.getDeclaringType()).thenReturn(superType);
+        when(superType.isAssignableFrom(superType)).thenReturn(true);
+        when(secondMethodReturnType.getStackSize()).thenReturn(StackSize.ZERO);
         when(instrumentedType.detach()).thenReturn(instrumentedType);
+        when(instrumentedType.getReachableMethods()).thenReturn(methodList);
+        when(instrumentedType.getSupertype()).thenReturn(superType);
+        when(methodList.filter(any(MethodMatcher.class))).thenReturn(methodList);
+        when(methodList.iterator()).thenReturn(Arrays.<MethodDescription>asList().iterator());
+        delegate = new SubclassInstrumentationContextDelegate(instrumentedType, FOO);
     }
 
     @Test
@@ -72,7 +85,6 @@ public class SubclassInstrumentationContextDelegateTest {
         assertThat(firstProxyMethod.isStatic(), is(false));
         assertThat(firstProxyMethod, not(is(firstMethod)));
         MethodDescription secondProxyMethod = delegate.requireAccessorMethodFor(secondMethod);
-        assertThat(secondProxyMethod.isStatic(), is(true));
         assertThat(secondProxyMethod, not(is(secondMethod)));
         assertThat(delegate.requireAccessorMethodFor(firstMethod), is(firstProxyMethod));
         Iterator<MethodDescription> iterator = delegate.getProxiedMethods().iterator();

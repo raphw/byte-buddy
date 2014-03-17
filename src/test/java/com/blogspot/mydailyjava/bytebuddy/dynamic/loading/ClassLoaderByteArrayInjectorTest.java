@@ -17,7 +17,6 @@ public class ClassLoaderByteArrayInjectorTest {
     }
 
     private ClassLoader classLoader;
-
     private ClassLoaderByteArrayInjector classLoaderByteArrayInjector;
 
     @Before

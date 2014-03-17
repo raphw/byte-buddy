@@ -1,11 +1,8 @@
 package com.blogspot.mydailyjava.bytebuddy.dynamic.loading;
 
 import com.blogspot.mydailyjava.bytebuddy.utility.ClassFileExtraction;
-import com.blogspot.mydailyjava.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
 
 import java.util.Collections;
 import java.util.Map;
@@ -20,9 +17,6 @@ public class ByteArrayClassLoaderTest {
     private static class Foo {
         /* Note: Foo is know to the system class loader but not to the bootstrap class loader */
     }
-
-    @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
 
     private ClassLoader classLoader;
 
