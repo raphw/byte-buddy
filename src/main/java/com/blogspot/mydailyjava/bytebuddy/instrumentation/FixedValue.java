@@ -105,15 +105,16 @@ public abstract class FixedValue implements Instrumentation {
         }
 
         @Override
-        public boolean equals(Object o) {
-            return this == o || !(o == null || getClass() != o.getClass())
-                    && loadedType.equals(((ForPoolValue) o).loadedType)
-                    && valueLoadInstruction.equals(((ForPoolValue) o).valueLoadInstruction);
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && loadedType.equals(((ForPoolValue) other).loadedType)
+                    && valueLoadInstruction.equals(((ForPoolValue) other).valueLoadInstruction)
+                    && super.equals(other);
         }
 
         @Override
         public int hashCode() {
-            return 31 * valueLoadInstruction.hashCode() + loadedType.hashCode();
+            return 31 * 31 * super.hashCode() + 31 * valueLoadInstruction.hashCode() + loadedType.hashCode();
         }
 
         @Override
@@ -121,6 +122,8 @@ public abstract class FixedValue implements Instrumentation {
             return "FixedValue.ForPoolValue{" +
                     "valueLoadInstruction=" + valueLoadInstruction +
                     ", loadedType=" + loadedType +
+                    ", assigner=" + assigner +
+                    ", considerRuntimeType=" + considerRuntimeType +
                     '}';
         }
     }
@@ -241,12 +244,13 @@ public abstract class FixedValue implements Instrumentation {
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
                     && fieldName.equals(((ForStaticField) other).fieldName)
-                    && fixedValue.equals(((ForStaticField) other).fixedValue);
+                    && fixedValue.equals(((ForStaticField) other).fixedValue)
+                    && super.equals(other);
         }
 
         @Override
         public int hashCode() {
-            return 31 * fieldName.hashCode() + fixedValue.hashCode();
+            return 31 * 31 * super.hashCode() + 31 * fieldName.hashCode() + fixedValue.hashCode();
         }
 
         @Override
@@ -254,6 +258,8 @@ public abstract class FixedValue implements Instrumentation {
             return "FixedValue.ForStaticField{" +
                     "fieldName='" + fieldName + '\'' +
                     ", fixedValue=" + fixedValue +
+                    ", assigner=" + assigner +
+                    ", considerRuntimeType=" + considerRuntimeType +
                     '}';
         }
     }
@@ -385,8 +391,15 @@ public abstract class FixedValue implements Instrumentation {
         return false;
     }
 
-    private final Assigner assigner;
-    private final boolean considerRuntimeType;
+    /**
+     * The assigner that is used for assigning the fixed value to a method's return type.
+     */
+    protected final Assigner assigner;
+
+    /**
+     * Determines if the runtime type of a fixed value should be considered for the assignment to a return type.
+     */
+    protected final boolean considerRuntimeType;
 
     /**
      * Creates a new fixed value instrumentation.
@@ -427,5 +440,18 @@ public abstract class FixedValue implements Instrumentation {
                 MethodReturn.returning(instrumentedMethod.getReturnType())
         ).apply(methodVisitor, instrumentationContext);
         return new ByteCodeAppender.Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+        FixedValue that = (FixedValue) other;
+        return considerRuntimeType == that.considerRuntimeType && assigner.equals(that.assigner);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * assigner.hashCode() + (considerRuntimeType ? 1 : 0);
     }
 }

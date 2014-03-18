@@ -232,7 +232,6 @@ public class MethodDelegationConstructionTest<T extends CallTraceable>
         private final Void value = null;
     }
 
-    @SuppressWarnings("unused")
     public static class StringSource extends CallTraceable {
 
         public StringTarget foo(String s) {
