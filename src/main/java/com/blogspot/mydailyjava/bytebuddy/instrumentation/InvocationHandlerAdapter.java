@@ -25,6 +25,9 @@ import java.lang.reflect.InvocationHandler;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.blogspot.mydailyjava.bytebuddy.utility.ByteBuddyCommons.isValidIdentifier;
+import static com.blogspot.mydailyjava.bytebuddy.utility.ByteBuddyCommons.nonNull;
+
 /**
  * An adapter for adapting an {@link java.lang.reflect.InvocationHandler}. The adapter allows the invocation handler
  * to also intercept method calls to non-interface methods.
@@ -53,7 +56,7 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
      * @return An instrumentation that delegates all method interceptions to the given invocation handler.
      */
     public static Instrumentation of(InvocationHandler invocationHandler, String fieldName) {
-        return new ForStaticDelegation(invocationHandler, fieldName);
+        return new ForStaticDelegation(nonNull(invocationHandler), isValidIdentifier(fieldName));
     }
 
     /**
@@ -66,7 +69,7 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
      * @return An instrumentation that delegates all method interceptions to an instance field of the given name.
      */
     public static Instrumentation of(String fieldName) {
-        return new ForInstanceDelegation(fieldName);
+        return new ForInstanceDelegation(isValidIdentifier(fieldName));
     }
 
     private static class ForStaticDelegation extends InvocationHandlerAdapter implements TypeInitializer {

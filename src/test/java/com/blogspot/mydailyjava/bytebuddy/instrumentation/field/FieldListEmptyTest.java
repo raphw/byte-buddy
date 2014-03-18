@@ -29,7 +29,7 @@ public class FieldListEmptyTest {
         assertThat(fieldList.size(), is(0));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testNamed() throws Exception {
         fieldList.named(FOO);
     }

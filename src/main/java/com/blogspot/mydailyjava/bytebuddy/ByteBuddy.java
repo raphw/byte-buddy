@@ -445,6 +445,9 @@ public class ByteBuddy {
     }
 
     public <T> DynamicType.Builder<T> subclass(TypeDescription superType, ConstructorStrategy constructorStrategy) {
+        if (superType.isFinal()) {
+            throw new IllegalArgumentException("Cannot subclass a final type");
+        }
         TypeDescription actualSuperType = isImplementable(superType);
         List<TypeDescription> interfaceTypes = this.interfaceTypes;
         if (nonNull(superType).isInterface()) {

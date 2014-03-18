@@ -426,7 +426,7 @@ public class MethodDelegation implements Instrumentation {
      */
     public static MethodDelegation to(Class<?> type) {
         if (type == null) {
-            throw new NullPointerException();
+            throw new NullPointerException("Type must not be null");
         } else if (type.isInterface()) {
             throw new IllegalArgumentException("Cannot delegate to interface " + type);
         } else if (type.isArray()) {
@@ -452,10 +452,7 @@ public class MethodDelegation implements Instrumentation {
      * @return A method delegation instrumentation to the given {@code static} methods.
      */
     public static MethodDelegation to(Object delegate) {
-        if (delegate == null) {
-            throw new NullPointerException();
-        }
-        return new MethodDelegation(new InstrumentationDelegate.ForStaticFieldInstance(delegate),
+        return new MethodDelegation(new InstrumentationDelegate.ForStaticFieldInstance(nonNull(delegate)),
                 defaultArgumentBinders(),
                 defaultDefaultsProvider(),
                 defaultAmbiguityResolver(),
@@ -476,10 +473,8 @@ public class MethodDelegation implements Instrumentation {
      * @return A method delegation instrumentation to the given {@code static} methods.
      */
     public static MethodDelegation to(Object delegate, String fieldName) {
-        if (delegate == null) {
-            throw new NullPointerException();
-        }
-        return new MethodDelegation(new InstrumentationDelegate.ForStaticFieldInstance(delegate, fieldName),
+        return new MethodDelegation(
+                new InstrumentationDelegate.ForStaticFieldInstance(nonNull(delegate), isValidIdentifier(fieldName)),
                 defaultArgumentBinders(),
                 defaultDefaultsProvider(),
                 defaultAmbiguityResolver(),
@@ -503,7 +498,8 @@ public class MethodDelegation implements Instrumentation {
      * @return A method delegation that intercepts method calls by delegating to method calls on the given instance.
      */
     public static MethodDelegation instanceField(Class<?> type, String fieldName) {
-        return new MethodDelegation(new InstrumentationDelegate.ForInstanceField(new TypeDescription.ForLoadedType(type), fieldName),
+        return new MethodDelegation(
+                new InstrumentationDelegate.ForInstanceField(new TypeDescription.ForLoadedType(nonNull(type)), isValidIdentifier(fieldName)),
                 defaultArgumentBinders(),
                 defaultDefaultsProvider(),
                 defaultAmbiguityResolver(),

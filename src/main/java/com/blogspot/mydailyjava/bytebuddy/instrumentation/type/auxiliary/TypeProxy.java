@@ -30,11 +30,25 @@ import java.util.List;
 
 import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
 
+/**
+ * A type proxy creates accessor methods for all overridable methods of a given type by subclassing the given type and
+ * delegating all method calls to accessor methods of the instrumented type it was created for.
+ */
 public class TypeProxy implements AuxiliaryType {
 
+    /**
+     * The name of the {@code static} method that is added to this auxiliary type for creating instances by using the
+     * Oracle JDK's {@link sun.reflect.ReflectionFactory}.
+     */
     public static final String REFLECTION_METHOD = "make";
+
     private static final String INSTANCE_FIELD = "target";
 
+    /**
+     * Loads a type proxy onto the operand stack which is created by calling one of its constructors. When this
+     * stack manipulation is applied, an instance of the instrumented type must lie on top of the operand stack.
+     * All constructor parameters will be assigned their default values when this stack operation is applied.
+     */
     public static class ByConstructor implements StackManipulation {
 
         private final TypeDescription proxiedType;
@@ -42,6 +56,14 @@ public class TypeProxy implements AuxiliaryType {
         private final List<TypeDescription> constructorParameters;
         private final boolean ignoreFinalizer;
 
+        /**
+         * Creates a new stack operation for creating a type proxy by calling one of its constructors.
+         *
+         * @param proxiedType           The type for the type proxy to subclass or implement.
+         * @param instrumentedType      The instrumented type which is the target of the method calls of the {@code proxiedType}.
+         * @param constructorParameters The parameter types of the constructor that should be called.
+         * @param ignoreFinalizer       {@code true} if any finalizers should be ignored for the delegation.
+         */
         public ByConstructor(TypeDescription proxiedType,
                              TypeDescription instrumentedType,
                              List<TypeDescription> constructorParameters,
@@ -108,12 +130,25 @@ public class TypeProxy implements AuxiliaryType {
         }
     }
 
+    /**
+     * Loads a type proxy onto the operand stack which is created by constructing a serialization constructor using
+     * the Oracle JDK's {@link sun.reflect.ReflectionFactory#newConstructorForSerialization(Class, java.lang.reflect.Constructor)}
+     * method which might not be available in any Java runtime. When this stack manipulation is applied, an instance of
+     * the instrumented type must lie on top of the operand stack.
+     */
     public static class ByReflectionFactory implements StackManipulation {
 
         private final TypeDescription proxiedType;
         private final TypeDescription instrumentedType;
         private final boolean ignoreFinalizer;
 
+        /**
+         * Creates a new stack operation for reflectively creating a type proxy for the given arguments.
+         *
+         * @param proxiedType      The type for the type proxy to subclass or implement.
+         * @param instrumentedType The instrumented type which is the target of the method calls of the {@code proxiedType}.
+         * @param ignoreFinalizer  {@code true} {@code true} if any finalizer methods should be ignored for proxying.
+         */
         public ByReflectionFactory(TypeDescription proxiedType, TypeDescription instrumentedType, boolean ignoreFinalizer) {
             this.proxiedType = proxiedType;
             this.instrumentedType = instrumentedType;
@@ -194,6 +229,30 @@ public class TypeProxy implements AuxiliaryType {
                 ).apply(methodVisitor, instrumentationContext);
                 return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
             }
+
+            private MethodCall getMethodCall() {
+                return MethodCall.this;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && fieldLoadingInstruction.equals(((Appender) other).fieldLoadingInstruction)
+                        && MethodCall.this.equals(((Appender) other).getMethodCall());
+            }
+
+            @Override
+            public int hashCode() {
+                return 31 * MethodCall.this.hashCode() + fieldLoadingInstruction.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "Appender{" +
+                        "methodCall=" + MethodCall.this +
+                        "fieldLoadingInstruction=" + fieldLoadingInstruction +
+                        '}';
+            }
         }
 
         private final MethodAccessorFactory methodAccessorFactory;
@@ -212,20 +271,28 @@ public class TypeProxy implements AuxiliaryType {
             return new Appender(instrumentedType);
         }
 
+        private TypeProxy getTypeProxy() {
+            return TypeProxy.this;
+        }
+
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && methodAccessorFactory.equals(((MethodCall) other).methodAccessorFactory);
+                    && methodAccessorFactory.equals(((MethodCall) other).methodAccessorFactory)
+                    && TypeProxy.this.equals(((MethodCall) other).getTypeProxy());
         }
 
         @Override
         public int hashCode() {
-            return methodAccessorFactory.hashCode();
+            return 31 * TypeProxy.this.hashCode() + methodAccessorFactory.hashCode();
         }
 
         @Override
         public String toString() {
-            return "MethodCall{methodAccessorFactory=" + methodAccessorFactory + '}';
+            return "TypeProxy.MethodCall{" +
+                    "typeProxy=" + TypeProxy.this +
+                    "methodAccessorFactory=" + methodAccessorFactory +
+                    '}';
         }
     }
 
@@ -289,6 +356,30 @@ public class TypeProxy implements AuxiliaryType {
                 methodVisitor.visitInsn(Opcodes.ARETURN);
                 return new Size(4, 0);
             }
+
+            private SilentConstruction getSilentConstruction() {
+                return SilentConstruction.this;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && instrumentedType.equals(((Appender) other).instrumentedType)
+                        && SilentConstruction.this.equals(((Appender) other).getSilentConstruction());
+            }
+
+            @Override
+            public int hashCode() {
+                return 31 * SilentConstruction.this.hashCode() + instrumentedType.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "TypeProxy.SilentConstruction.Appender{" +
+                        "silentConstruction=" + SilentConstruction.this +
+                        "instrumentedType=" + instrumentedType +
+                        '}';
+            }
         }
 
         @Override
@@ -301,14 +392,24 @@ public class TypeProxy implements AuxiliaryType {
             return new Appender(instrumentedType);
         }
 
+        private TypeProxy getTypeProxy() {
+            return TypeProxy.this;
+        }
+
         @Override
-        public boolean equals(Object obj) {
-            return obj != null && obj.getClass() == getClass();
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && TypeProxy.this.equals(((SilentConstruction) other).getTypeProxy());
         }
 
         @Override
         public int hashCode() {
-            return 31;
+            return TypeProxy.this.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "TypeProxy.SilentConstruction{typeProxy=" + TypeProxy.this + "}";
         }
     }
 
@@ -316,6 +417,14 @@ public class TypeProxy implements AuxiliaryType {
     private final TypeDescription instrumentedType;
     private final boolean ignoreFinalizer;
 
+    /**
+     * Creates a new type proxy.
+     *
+     * @param proxiedType      The type this proxy should implement which can either be a non-final class or an interface.
+     * @param instrumentedType The type on which all accessor methods are invoked, i.e. the type for which this type proxy
+     *                         is a proxy for.
+     * @param ignoreFinalizer  {@code true} if any finalizer methods should be ignored for proxying.
+     */
     public TypeProxy(TypeDescription proxiedType, TypeDescription instrumentedType, boolean ignoreFinalizer) {
         this.proxiedType = proxiedType;
         this.instrumentedType = instrumentedType;

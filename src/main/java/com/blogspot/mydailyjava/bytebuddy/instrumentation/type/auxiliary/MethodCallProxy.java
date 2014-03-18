@@ -98,7 +98,7 @@ public class MethodCallProxy implements AuxiliaryType {
 
         @Override
         public String toString() {
-            return "AssignableSignatureCall{targetMethod=" + targetMethod + '}';
+            return "MethodCallProxy.AssignableSignatureCall{targetMethod=" + targetMethod + '}';
         }
     }
 
@@ -135,6 +135,30 @@ public class MethodCallProxy implements AuxiliaryType {
                         MethodReturn.returning(instrumentedMethod.getReturnType())
                 ).apply(methodVisitor, instrumentationContext);
                 return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
+            }
+
+            private MethodCall getMethodCall() {
+                return MethodCall.this;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && instrumentedType.equals(((Appender) other).instrumentedType)
+                        && MethodCall.this.equals(((Appender) other).getMethodCall());
+            }
+
+            @Override
+            public int hashCode() {
+                return 31 * MethodCall.this.hashCode() + instrumentedType.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "Appender{" +
+                        "methodCall=" + MethodCall.this +
+                        ", instrumentedType=" + instrumentedType +
+                        '}';
             }
         }
 
@@ -210,6 +234,30 @@ public class MethodCallProxy implements AuxiliaryType {
                 ).apply(methodVisitor, instrumentationContext);
                 return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
             }
+
+            private ConstructorCall getConstructorCall() {
+                return ConstructorCall.this;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && instrumentedType.equals(((Appender) other).instrumentedType)
+                        && ConstructorCall.this.equals(((Appender) other).getConstructorCall());
+            }
+
+            @Override
+            public int hashCode() {
+                return instrumentedType.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "Appender{" +
+                        "constructorCall=" + ConstructorCall.this +
+                        ", instrumentedType=" + instrumentedType +
+                        '}';
+            }
         }
 
         @Override
@@ -220,6 +268,16 @@ public class MethodCallProxy implements AuxiliaryType {
         @Override
         public ByteCodeAppender appender(TypeDescription instrumentedType) {
             return new Appender(instrumentedType);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return other != null && other.getClass() == getClass();
+        }
+
+        @Override
+        public int hashCode() {
+            return 31;
         }
     }
 

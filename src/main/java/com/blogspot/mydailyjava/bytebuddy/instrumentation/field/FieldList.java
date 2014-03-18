@@ -43,7 +43,7 @@ public interface FieldList extends List<FieldDescription> {
                     return new FieldDescription.ForLoadedField(field);
                 }
             }
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Expected to find a field " + fieldName);
         }
     }
 
@@ -80,7 +80,7 @@ public interface FieldList extends List<FieldDescription> {
                     return fieldDescription;
                 }
             }
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Expected to find a field " + fieldName);
         }
     }
 
@@ -101,7 +101,7 @@ public interface FieldList extends List<FieldDescription> {
 
         @Override
         public FieldDescription named(String fieldName) {
-            throw new IllegalStateException();
+            throw new IllegalArgumentException("Expected to find a field " + fieldName + " but found none");
         }
     }
 

@@ -65,7 +65,7 @@ public interface MethodList extends List<MethodDescription> {
             if (size() == 1) {
                 return get(0);
             } else {
-                throw new IllegalStateException();
+                throw new IllegalStateException("Expected to find exactly one method but found " + type.getDeclaredMethods().length);
             }
         }
 
@@ -122,7 +122,7 @@ public interface MethodList extends List<MethodDescription> {
             if (methodDescriptions.size() == 1) {
                 return methodDescriptions.get(0);
             } else {
-                throw new IllegalStateException();
+                throw new IllegalStateException("Expected to find exactly one method but found " + methodDescriptions.size());
             }
         }
 
@@ -159,7 +159,7 @@ public interface MethodList extends List<MethodDescription> {
 
         @Override
         public MethodDescription getOnly() {
-            throw new IllegalStateException();
+            throw new IllegalStateException("Expected to find exactly one method but found none");
         }
 
         @Override

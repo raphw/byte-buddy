@@ -5,6 +5,8 @@ import org.objectweb.asm.Opcodes;
 
 /**
  * Describes the manifestation of a method, i.e. if a method is final, abstract or native.
+ * Note that an {@code abstract} method must never be static and can only be declared for an
+ * {@code abstract} type.
  */
 public enum MethodManifestation implements ModifierContributor.ForMethod {
 
