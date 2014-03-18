@@ -6,12 +6,13 @@ import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNot.not;
 import static org.mockito.Mockito.*;
 
 public class AmbiguityResolverChainTest extends AbstractAmbiguityResolverTest {
 
     @Mock
-    private MethodDelegationBinder.AmbiguityResolver first, second;
+    private MethodDelegationBinder.AmbiguityResolver first, second, third;
 
     private MethodDelegationBinder.AmbiguityResolver chain;
 
@@ -40,5 +41,17 @@ public class AmbiguityResolverChainTest extends AbstractAmbiguityResolverTest {
         verifyNoMoreInteractions(first);
         verify(second).resolve(source, left, right);
         verifyNoMoreInteractions(second);
+    }
+
+    @Test
+    public void testEqualsHashCode() throws Exception {
+        MethodDelegationBinder.AmbiguityResolver firstChain = MethodDelegationBinder.AmbiguityResolver.Chain
+                .of(MethodDelegationBinder.AmbiguityResolver.Chain.of(first, second), third);
+        MethodDelegationBinder.AmbiguityResolver secondChain = MethodDelegationBinder.AmbiguityResolver.Chain
+                .of(first, second, third);
+        assertThat(firstChain.hashCode(), is(secondChain.hashCode()));
+        assertThat(firstChain, is(secondChain));
+        assertThat(firstChain.hashCode(), not(is(chain.hashCode())));
+        assertThat(firstChain, not(is(chain)));
     }
 }

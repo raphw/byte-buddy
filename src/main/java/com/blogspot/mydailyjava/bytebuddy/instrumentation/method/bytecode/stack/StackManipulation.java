@@ -118,6 +118,17 @@ public interface StackManipulation {
         }
 
         @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && Arrays.equals(stackManipulation, ((Compound) other).stackManipulation);
+        }
+
+        @Override
+        public int hashCode() {
+            return Arrays.hashCode(stackManipulation);
+        }
+
+        @Override
         public String toString() {
             return "StackManipulation.Compound{" + Arrays.asList(stackManipulation) + "}";
         }

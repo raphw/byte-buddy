@@ -221,11 +221,21 @@ public class MethodDelegation implements Instrumentation {
             }
         }
 
+        /**
+         * An instrumentation applied on an instance field.
+         */
         static class ForInstanceField implements InstrumentationDelegate {
 
             private final String fieldName;
             private final TypeDescription fieldType;
 
+            /**
+             * Creates a new instance field instrumentation delegate.
+             *
+             * @param fieldType A description of the type that is the target of the instrumentation and thus also the
+             *                  field type.
+             * @param fieldName The name of the field.
+             */
             public ForInstanceField(TypeDescription fieldType, String fieldName) {
                 this.fieldType = fieldType;
                 this.fieldName = fieldName;
@@ -268,10 +278,18 @@ public class MethodDelegation implements Instrumentation {
             }
         }
 
+        /**
+         * An instrumentation that creates new instances of a given type.
+         */
         static class ForConstruction implements InstrumentationDelegate {
 
             private final TypeDescription typeDescription;
 
+            /**
+             * Creates a new constructor instrumentation.
+             *
+             * @param typeDescription The type to be constructed.
+             */
             public ForConstruction(TypeDescription typeDescription) {
                 this.typeDescription = typeDescription;
             }
@@ -291,6 +309,24 @@ public class MethodDelegation implements Instrumentation {
             @Override
             public MethodDelegationBinder.MethodInvoker getMethodInvoker(TypeDescription instrumentedType) {
                 return MethodDelegationBinder.MethodInvoker.Simple.INSTANCE;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && typeDescription.equals(((ForConstruction) other).typeDescription);
+            }
+
+            @Override
+            public int hashCode() {
+                return typeDescription.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "MethodDelegation.InstrumentationDelegate.ForConstruction{" +
+                        "typeDescription=" + typeDescription +
+                        '}';
             }
         }
 
@@ -453,7 +489,20 @@ public class MethodDelegation implements Instrumentation {
                         .filter(not(isStatic().or(isPrivate()).or(isConstructor()))));
     }
 
-    public static MethodDelegation field(Class<?> type, String fieldName) {
+    /**
+     * Creates an instrumentation where method calls are delegated to an instance that is manually stored in a field
+     * {@code fieldName} that is defined for the instrumented type. The field belongs to any instance of the instrumented
+     * type and must be set manually by the user of the instrumented class. Note that this prevents interception of
+     * method calls within the constructor of the instrumented class which will instead result in a
+     * {@link java.lang.NullPointerException}.
+     * <p/>
+     * The field is typically accessed by reflection or by defining an accessor on the instrumented type.
+     *
+     * @param type      The type of the delegate and the field.
+     * @param fieldName The name of the field.
+     * @return A method delegation that intercepts method calls by delegating to method calls on the given instance.
+     */
+    public static MethodDelegation instanceField(Class<?> type, String fieldName) {
         return new MethodDelegation(new InstrumentationDelegate.ForInstanceField(new TypeDescription.ForLoadedType(type), fieldName),
                 defaultArgumentBinders(),
                 defaultDefaultsProvider(),
@@ -464,6 +513,13 @@ public class MethodDelegation implements Instrumentation {
                         .filter(not(isStatic().or(isPrivate()).or(isConstructor()))));
     }
 
+    /**
+     * Creates an instrumentation where method calls are delegated to constructor calls on the given type. As a result,
+     * the return values of all instrumented methods must be assignable to
+     *
+     * @param type The type that should be constructed by the instrumented methods.
+     * @return An instrumentation that creates instances of the given type as its result.
+     */
     public static MethodDelegation construct(Class<?> type) {
         return new MethodDelegation(new InstrumentationDelegate.ForConstruction(new TypeDescription.ForLoadedType(type)),
                 defaultArgumentBinders(),
@@ -489,7 +545,7 @@ public class MethodDelegation implements Instrumentation {
     }
 
     private static MethodDelegationBinder.AmbiguityResolver defaultAmbiguityResolver() {
-        return new MethodDelegationBinder.AmbiguityResolver.Chain(
+        return MethodDelegationBinder.AmbiguityResolver.Chain.of(
                 BindingPriority.Resolver.INSTANCE,
                 MethodNameEqualityResolver.INSTANCE,
                 MostSpecificTypeResolver.INSTANCE,
@@ -585,8 +641,8 @@ public class MethodDelegation implements Instrumentation {
      * @return A method delegation instrumentation that makes use of the given ambiguity resolver.
      */
     public MethodDelegation appendAmbiguityResolver(MethodDelegationBinder.AmbiguityResolver ambiguityResolver) {
-        return defineAmbiguityResolver(new MethodDelegationBinder.AmbiguityResolver.Chain(
-                this.ambiguityResolver, nonNull(ambiguityResolver)));
+        return defineAmbiguityResolver(MethodDelegationBinder.AmbiguityResolver.Chain
+                .of(this.ambiguityResolver, nonNull(ambiguityResolver)));
     }
 
     /**
@@ -599,7 +655,7 @@ public class MethodDelegation implements Instrumentation {
         return new MethodDelegation(instrumentationDelegate,
                 parameterBinders,
                 defaultsProvider,
-                new MethodDelegationBinder.AmbiguityResolver.Chain(nonNull(ambiguityResolver)),
+                MethodDelegationBinder.AmbiguityResolver.Chain.of(nonNull(ambiguityResolver)),
                 assigner,
                 methodList);
     }

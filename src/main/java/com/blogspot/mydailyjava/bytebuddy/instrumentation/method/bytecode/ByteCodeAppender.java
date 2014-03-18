@@ -119,6 +119,17 @@ public interface ByteCodeAppender {
         }
 
         @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && Arrays.equals(byteCodeAppender, ((Compound) other).byteCodeAppender);
+        }
+
+        @Override
+        public int hashCode() {
+            return Arrays.hashCode(byteCodeAppender);
+        }
+
+        @Override
         public String toString() {
             return "ByteCodeAppender.Compound{" + Arrays.toString(byteCodeAppender) + '}';
         }

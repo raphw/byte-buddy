@@ -8,18 +8,15 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.isDeclaredBy;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
 @RunWith(Parameterized.class)
-public class MethodDelegationTest<T extends CallTraceable>
+public class MethodDelegationConstructionTest<T extends CallTraceable>
         extends AbstractInstrumentationTest {
 
     private static final String FOO = "foo", BAR = "bar", FIELD_NAME = "qux";
@@ -43,149 +40,177 @@ public class MethodDelegationTest<T extends CallTraceable>
 
     public static class BooleanSource extends CallTraceable {
 
-        public boolean foo(boolean b) {
+        @SuppressWarnings("unused")
+        public BooleanTarget foo(boolean b) {
             register(FOO);
-            return b;
+            return null;
         }
     }
 
     public static class BooleanTarget {
 
-        public boolean qux(boolean b) {
-            return bar(b);
-        }
+        @SuppressWarnings("unused")
+        private final boolean value;
 
-        public static boolean bar(boolean b) {
-            return !b;
+        public BooleanTarget(boolean value) {
+            this.value = !value;
         }
     }
 
     public static class ByteSource extends CallTraceable {
 
-        public byte foo(byte b) {
+        @SuppressWarnings("unused")
+        public ByteTarget foo(byte b) {
             register(FOO);
-            return b;
+            return null;
         }
     }
 
     public static class ByteTarget {
 
-        public byte qux(byte b) {
-            return bar(b);
+        @SuppressWarnings("unused")
+        private final byte value;
+
+        public ByteTarget(byte b) {
+            value = bar(b);
         }
 
-        public static byte bar(byte b) {
+        private static byte bar(byte b) {
             return (byte) (b * BYTE_MULTIPLICATOR);
         }
     }
 
     public static class ShortSource extends CallTraceable {
 
-        public short foo(short s) {
+        @SuppressWarnings("unused")
+        public ShortTarget foo(short s) {
             register(FOO);
-            return s;
+            return null;
         }
     }
 
     public static class ShortTarget {
 
-        public short qux(short s) {
-            return bar(s);
+        @SuppressWarnings("unused")
+        private final short value;
+
+        public ShortTarget(short s) {
+            this.value = bar(s);
         }
 
-        public static short bar(short s) {
+        private static short bar(short s) {
             return (short) (s * SHORT_MULTIPLICATOR);
         }
     }
 
     public static class CharSource extends CallTraceable {
 
-        public char foo(char s) {
+        @SuppressWarnings("unused")
+        public CharTarget foo(char s) {
             register(FOO);
-            return s;
+            return null;
         }
     }
 
     public static class CharTarget {
 
-        public char qux(char c) {
-            return bar(c);
+        @SuppressWarnings("unused")
+        private final char value;
+
+        public CharTarget(char c) {
+            this.value = bar(c);
         }
 
-        public static char bar(char c) {
+        private static char bar(char c) {
             return (char) (c * CHAR_MULTIPLICATOR);
         }
     }
 
     public static class IntSource extends CallTraceable {
 
-        public int foo(int i) {
+        @SuppressWarnings("unused")
+        public IntTarget foo(int i) {
             register(FOO);
-            return i;
+            return null;
         }
     }
 
     public static class IntTarget {
 
-        public int qux(int i) {
-            return bar(i);
+        @SuppressWarnings("unused")
+        private final int value;
+
+        public IntTarget(int i) {
+            this.value = bar(i);
         }
 
-        public static int bar(int i) {
+        private static int bar(int i) {
             return i * INT_MULTIPLICATOR;
         }
     }
 
     public static class LongSource extends CallTraceable {
 
-        public long foo(long l) {
+        @SuppressWarnings("unused")
+        public LongTarget foo(long l) {
             register(FOO);
-            return l;
+            return null;
         }
     }
 
     public static class LongTarget {
 
-        public long qux(long l) {
-            return bar(l);
+        @SuppressWarnings("unused")
+        private final long value;
+
+        public LongTarget(long l) {
+            this.value = bar(l);
         }
 
-        public static long bar(long l) {
+        private static long bar(long l) {
             return l * LONG_MULTIPLICATOR;
         }
     }
 
     public static class FloatSource extends CallTraceable {
 
-        public float foo(float f) {
+        @SuppressWarnings("unused")
+        public FloatTarget foo(float f) {
             register(FOO);
-            return f;
+            return null;
         }
     }
 
     public static class FloatTarget {
 
-        public float qux(float f) {
-            return bar(f);
+        @SuppressWarnings("unused")
+        private final float value;
+
+        public FloatTarget(float f) {
+            this.value = bar(f);
         }
 
-        public static float bar(float f) {
+        private static float bar(float f) {
             return f * FLOAT_MULTIPLICATOR;
         }
     }
 
     public static class DoubleSource extends CallTraceable {
 
-        public double foo(double d) {
+        @SuppressWarnings("unused")
+        public DoubleTarget foo(double d) {
             register(FOO);
-            return d;
+            return null;
         }
     }
 
     public static class DoubleTarget {
+        @SuppressWarnings("unused")
 
-        public double qux(double d) {
-            return bar(d);
+        private final double value;
+
+        public DoubleTarget(double d) {
+            this.value = bar(d);
         }
 
         public static double bar(double d) {
@@ -195,34 +220,34 @@ public class MethodDelegationTest<T extends CallTraceable>
 
     public static class VoidSource extends CallTraceable {
 
-        public void foo() {
+        public VoidTarget foo() {
             register(FOO);
+            return null;
         }
     }
 
     public static class VoidTarget {
 
-        public void qux() {
-            bar();
-        }
-
-        public static void bar() {
-            /* empty */
-        }
+        @SuppressWarnings("unused")
+        private final Void value = null;
     }
 
+    @SuppressWarnings("unused")
     public static class StringSource extends CallTraceable {
 
-        public String foo(String s) {
+        public StringTarget foo(String s) {
             register(FOO);
-            return s;
+            return null;
         }
     }
 
     public static class StringTarget {
 
-        public String qux(String s) {
-            return bar(s);
+        @SuppressWarnings("unused")
+        private final String value;
+
+        public StringTarget(String s) {
+            this.value = bar(s);
         }
 
         public static String bar(String s) {
@@ -252,7 +277,7 @@ public class MethodDelegationTest<T extends CallTraceable>
     private final Object[] arguments;
     private final Matcher<?> matcher;
 
-    public MethodDelegationTest(Class<T> sourceType,
+    public MethodDelegationConstructionTest(Class<T> sourceType,
                                 Class<?> targetType,
                                 Class<?>[] parameterTypes,
                                 Object[] arguments,
@@ -266,48 +291,19 @@ public class MethodDelegationTest<T extends CallTraceable>
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testStaticMethodBinding() throws Exception {
-        DynamicType.Loaded<T> loaded = instrument(sourceType, MethodDelegation.to(targetType));
+    public void testConstruction() throws Exception {
+        DynamicType.Loaded<T> loaded = instrument(sourceType, MethodDelegation.construct(targetType));
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
         T instance = loaded.getLoaded().newInstance();
         assertNotEquals(sourceType, instance.getClass());
         assertThat(instance, instanceOf(sourceType));
-        assertThat(loaded.getLoaded().getDeclaredMethod(FOO, parameterTypes).invoke(instance, arguments), (Matcher) matcher);
-        instance.assertZeroCalls();
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    public void testStaticFieldBinding() throws Exception {
-        DynamicType.Loaded<T> loaded = instrument(sourceType, MethodDelegation.to(targetType.newInstance()).filter(isDeclaredBy(targetType)));
-        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
-        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
-        assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
-        T instance = loaded.getLoaded().newInstance();
-        assertNotEquals(sourceType, instance.getClass());
-        assertThat(instance, instanceOf(sourceType));
-        assertThat(loaded.getLoaded().getDeclaredMethod(FOO, parameterTypes).invoke(instance, arguments), (Matcher) matcher);
-        instance.assertZeroCalls();
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    public void testInstanceFieldBinding() throws Exception {
-        DynamicType.Loaded<T> loaded = instrument(sourceType, MethodDelegation.instanceField(targetType, FIELD_NAME).filter(isDeclaredBy(targetType)));
-        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
-        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
-        assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
-        T instance = loaded.getLoaded().newInstance();
-        Field field = loaded.getLoaded().getDeclaredField(FIELD_NAME);
-        assertThat(field.getModifiers(), is(Modifier.PUBLIC));
-        assertEquals(targetType, field.getType());
+        Object value = loaded.getLoaded().getDeclaredMethod(FOO, parameterTypes).invoke(instance, arguments);
+        assertThat(value, instanceOf(targetType));
+        Field field = targetType.getDeclaredField("value");
         field.setAccessible(true);
-        field.set(instance, targetType.newInstance());
-        assertNotEquals(sourceType, instance.getClass());
-        assertThat(instance, instanceOf(sourceType));
-        assertThat(loaded.getLoaded().getDeclaredMethod(FOO, parameterTypes).invoke(instance, arguments), (Matcher) matcher);
+        assertThat(field.get(value), (Matcher) matcher);
         instance.assertZeroCalls();
     }
 }

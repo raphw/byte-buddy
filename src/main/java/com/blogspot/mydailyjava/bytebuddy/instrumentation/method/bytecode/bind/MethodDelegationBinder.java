@@ -475,15 +475,41 @@ public interface MethodDelegationBinder {
          */
         static class Chain implements AmbiguityResolver {
 
-            private final AmbiguityResolver[] ambiguityResolver;
+            /**
+             * Chains a given number of ambiguity resolvers.
+             *
+             * @param ambiguityResolver The ambiguity resolvers to chain in the order of their application.
+             * @return A chained ambiguity resolver representing the given ambiguity resolvers.
+             */
+            public static AmbiguityResolver of(AmbiguityResolver... ambiguityResolver) {
+                if (ambiguityResolver.length == 1) {
+                    return ambiguityResolver[0];
+                } else {
+                    return new Chain(ambiguityResolver);
+                }
+            }
+
+            private final List<AmbiguityResolver> ambiguityResolvers;
 
             /**
              * Creates an immutable chain of ambiguity resolvers.
              *
              * @param ambiguityResolver The ambiguity resolvers to chain in the order of their application.
              */
-            public Chain(AmbiguityResolver... ambiguityResolver) {
-                this.ambiguityResolver = ambiguityResolver;
+            protected Chain(AmbiguityResolver... ambiguityResolver) {
+                ambiguityResolvers = unchained(Arrays.asList(ambiguityResolver));
+            }
+
+            private static List<AmbiguityResolver> unchained(List<AmbiguityResolver> chained) {
+                List<AmbiguityResolver> ambiguityResolvers = new ArrayList<AmbiguityResolver>();
+                for (AmbiguityResolver ambiguityResolver : chained) {
+                    if (ambiguityResolver instanceof Chain) {
+                        ambiguityResolvers.addAll(unchained(((Chain) ambiguityResolver).ambiguityResolvers));
+                    } else {
+                        ambiguityResolvers.add(ambiguityResolver);
+                    }
+                }
+                return ambiguityResolvers;
             }
 
             @Override
@@ -491,7 +517,7 @@ public interface MethodDelegationBinder {
                                       MethodBinding left,
                                       MethodBinding right) {
                 Resolution resolution = Resolution.UNKNOWN;
-                Iterator<AmbiguityResolver> iterator = Arrays.asList(ambiguityResolver).iterator();
+                Iterator<AmbiguityResolver> iterator = ambiguityResolvers.iterator();
                 while (resolution.isUnresolved() && iterator.hasNext()) {
                     resolution = iterator.next().resolve(source, left, right);
                 }
@@ -499,8 +525,19 @@ public interface MethodDelegationBinder {
             }
 
             @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && ambiguityResolvers.equals(((Chain) other).ambiguityResolvers);
+            }
+
+            @Override
+            public int hashCode() {
+                return ambiguityResolvers.hashCode();
+            }
+
+            @Override
             public String toString() {
-                return "AmbiguityResolver.Chain{" + Arrays.toString(ambiguityResolver) + '}';
+                return "AmbiguityResolver.Chain{ambiguityResolvers=" + ambiguityResolvers + '}';
             }
         }
 

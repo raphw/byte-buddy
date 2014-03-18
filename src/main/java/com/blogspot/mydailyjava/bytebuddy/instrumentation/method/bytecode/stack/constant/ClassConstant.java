@@ -7,10 +7,17 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
+/**
+ * Represents a constant representing a loaded Java {@link java.lang.Class}.
+ */
 public class ClassConstant implements StackManipulation {
 
     private final TypeDescription typeDescription;
 
+    /**
+     * Creates a stack manipulation that represents loading a class constant onto the stack.
+     * @param typeDescription A description of the class to load onto the stack.
+     */
     public ClassConstant(TypeDescription typeDescription) {
         this.typeDescription = typeDescription;
     }
