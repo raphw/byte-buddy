@@ -73,7 +73,7 @@ public interface AuxiliaryType {
 
                 @Override
                 public MethodDescription resolveCallTo(MethodDescription methodDescription) {
-                    MethodList relevant = availableMethods.filter(javaSignatureCompatibleTo(methodDescription));
+                    MethodList relevant = availableMethods.filter(hasSameJavaCompilerSignatureAs(methodDescription));
                     for (MethodDescription alternative : relevant) {
                         if (methodDescription.getReturnType().isAssignableFrom(alternative.getReturnType())) {
                             methodDescription = alternative;

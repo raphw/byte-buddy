@@ -41,7 +41,7 @@ public class AbstractMethodCallProxyTest {
                 ClassFormatVersion.forCurrentJavaVersion(),
                 methodAccessorFactory);
         DynamicType.Unloaded<?> unloaded = (DynamicType.Unloaded<?>) dynamicType;
-        Class<?> auxiliaryType = unloaded.load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        Class<?> auxiliaryType = unloaded.load(getClass().getClassLoader(), ClassLoadingStrategy.Default.INJECTION).getLoaded();
         assertThat(auxiliaryType.getName(), is(auxiliaryTypeName));
         verify(methodAccessorFactory).requireAccessorMethodFor(targetMethod);
         verifyNoMoreInteractions(methodAccessorFactory);

@@ -17,19 +17,19 @@ import java.util.Random;
 public interface NamingStrategy {
 
     /**
-     * An description of a type which should be named.
+     * An description of a type which is to be named.
      */
     static interface UnnamedType {
 
         /**
          * Returns this unnamed type's super class.
          *
-         * @return The super class of the type to be named.
+         * @return A description of the super class of the type to be named.
          */
         TypeDescription getSuperClass();
 
         /**
-         * Returns a collection of this unnamed type's directly implemented interfaces.
+         * Returns a collection of descriptions of this unnamed type's directly implemented interfaces.
          *
          * @return A collection of implemented interfaces.
          */

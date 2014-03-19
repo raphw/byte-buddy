@@ -11,7 +11,7 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 
 import java.util.*;
 
-import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.describedBy;
+import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.is;
 import static com.blogspot.mydailyjava.bytebuddy.utility.ByteBuddyCommons.join;
 
 /**
@@ -183,7 +183,7 @@ public interface MethodRegistry {
 
             @Override
             public boolean matches(MethodDescription methodDescription) {
-                return matchedMethods.filter(describedBy(methodDescription)).size() == 1;
+                return matchedMethods.filter(is(methodDescription)).size() == 1;
             }
 
             @Override

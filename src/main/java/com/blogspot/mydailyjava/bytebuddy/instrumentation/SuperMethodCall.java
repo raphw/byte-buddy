@@ -11,7 +11,7 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 
-import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.hasSameSignatureAs;
+import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.hasSameByteCodeSignatureAs;
 
 /**
  * This instrumentation will create a new method which simply calls its super method. If no such method is defined,
@@ -45,7 +45,7 @@ public enum SuperMethodCall implements Instrumentation {
                           MethodDescription instrumentedMethod) {
             MethodDescription targetMethod;
             if (instrumentedMethod.isConstructor()) {
-                MethodList methodList = targetType.getDeclaredMethods().filter(hasSameSignatureAs(instrumentedMethod));
+                MethodList methodList = targetType.getDeclaredMethods().filter(hasSameByteCodeSignatureAs(instrumentedMethod));
                 if (methodList.size() == 0) {
                     throw new IllegalArgumentException("There is no super constructor resembling " + instrumentedMethod);
                 }

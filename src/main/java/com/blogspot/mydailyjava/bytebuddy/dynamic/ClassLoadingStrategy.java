@@ -24,7 +24,9 @@ public interface ClassLoadingStrategy {
      * <li>The {@link com.blogspot.mydailyjava.bytebuddy.dynamic.ClassLoadingStrategy.Default#INJECTION} strategy
      * will not create a new class loader but inject all classes into the given {@link java.lang.ClassLoader} by
      * reflective access. This prevents the loading of classes with cyclic dependencies but avoids the creation of
-     * an additional class loader. This strategy is implemented using a
+     * an additional class loader. The advantage of this strategy is that the loaded classes will have package-private
+     * access to other classes within their package of the class loader into which they are injected what is not
+     * permitted when the wrapper class loader is used. This strategy is implemented using a
      * {@link com.blogspot.mydailyjava.bytebuddy.dynamic.loading.ClassLoaderByteArrayInjector}.</li>
      * </ol>
      */

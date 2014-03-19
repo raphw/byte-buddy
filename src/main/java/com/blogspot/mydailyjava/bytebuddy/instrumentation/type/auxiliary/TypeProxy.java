@@ -42,7 +42,10 @@ public class TypeProxy implements AuxiliaryType {
      */
     public static final String REFLECTION_METHOD = "make";
 
-    private static final String INSTANCE_FIELD = "target";
+    /**
+     * The name of the field that stores the delegation instance.
+     */
+    public static final String INSTANCE_FIELD = "target";
 
     /**
      * Loads a type proxy onto the operand stack which is created by calling one of its constructors. When this
@@ -435,12 +438,13 @@ public class TypeProxy implements AuxiliaryType {
     public DynamicType make(String auxiliaryTypeName,
                             ClassFormatVersion classFormatVersion,
                             MethodAccessorFactory methodAccessorFactory) {
-        MethodMatcher methodMatcher = ignoreFinalizer ? not(isFinalizer()) : any();
+        MethodMatcher finalizerMatcher = ignoreFinalizer ? not(isFinalizer()) : any();
         return new ByteBuddy(classFormatVersion)
                 .subclass(proxiedType, ConstructorStrategy.Default.IMITATE_SUPER_TYPE)
                 .name(auxiliaryTypeName)
                 .modifiers(DEFAULT_TYPE_MODIFIER.toArray(new ModifierContributor.ForType[DEFAULT_TYPE_MODIFIER.size()]))
-                .method(methodMatcher).intercept(new MethodCall(methodAccessorFactory))
+                .method(finalizerMatcher)
+                .intercept(new MethodCall(methodAccessorFactory))
                 .defineMethod(REFLECTION_METHOD, TargetType.DESCRIPTION, Collections.<TypeDescription>emptyList(), Ownership.STATIC)
                 .intercept(new SilentConstruction())
                 .make();

@@ -1,6 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.RuntimeType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
 import org.objectweb.asm.Opcodes;
@@ -189,8 +190,8 @@ public final class MethodMatchers {
 
         private final TypeDescription returnType;
 
-        public ReturnTypeMatcher(Class<?> returnType) {
-            this.returnType = new TypeDescription.ForLoadedType(returnType);
+        public ReturnTypeMatcher(TypeDescription returnType) {
+            this.returnType = returnType;
         }
 
         @Override
@@ -219,8 +220,8 @@ public final class MethodMatchers {
 
         private final TypeDescription exceptionType;
 
-        public ExceptionMethodMatcher(Class<?> exceptionType) {
-            this.exceptionType = new TypeDescription.ForLoadedType(exceptionType);
+        public ExceptionMethodMatcher(TypeDescription exceptionType) {
+            this.exceptionType = exceptionType;
         }
 
         @Override
@@ -783,6 +784,16 @@ public final class MethodMatchers {
      * @return A new method matcher that selects methods returning {@code type}.
      */
     public static JunctionMethodMatcher returns(Class<?> type) {
+        return new ReturnTypeMatcher(new TypeDescription.ForLoadedType(type));
+    }
+
+    /**
+     * Selects a method by its return type.
+     *
+     * @param type A description of the return type of the method.
+     * @return A new method matcher that selects methods returning {@code type}.
+     */
+    public static JunctionMethodMatcher returns(TypeDescription type) {
         return new ReturnTypeMatcher(type);
     }
 
@@ -796,26 +807,66 @@ public final class MethodMatchers {
         return new ParameterTypeMatcher(types);
     }
 
+    /**
+     * Selects a method by its parameter types in their exact order.
+     *
+     * @param types The parameter types of the method.
+     * @return A new method matcher that selects methods with the exact parameters contained by {@code types}.
+     */
     public static JunctionMethodMatcher takesArguments(TypeDescription... types) {
         return new ParameterTypeMatcher(Arrays.asList(types));
     }
 
+    /**
+     * Selects a method by its parameter types in their exact order.
+     *
+     * @param types A list of parameter types of the method. The list will not be copied.
+     * @return A new method matcher that selects methods with the exact parameters contained by {@code types}.
+     */
     public static JunctionMethodMatcher takesArguments(List<? extends TypeDescription> types) {
         return new ParameterTypeMatcher(types);
     }
 
+    /**
+     * Selects a method by the number of its parameters.
+     *
+     * @param number The number of parameters of any matching method.
+     * @return A method matcher that matches methods with {@code number} parameters.
+     */
     public static JunctionMethodMatcher takesArguments(int number) {
         return new ParameterCountMatcher(number);
     }
 
     /**
-     * Selects a method depending on whether they can throw a specific exception.
+     * Selects a method depending on whether they can throw a specific exception. Exceptions that subclass
+     * {@link java.lang.Error} or {@link java.lang.RuntimeException} can always be thrown.
      *
      * @param exceptionType The exception type to be thrown.
      * @return A new method matcher that selects methods on whether they can throw {@code exceptionType}.
      */
     public static JunctionMethodMatcher canThrow(Class<? extends Throwable> exceptionType) {
-        return new ExceptionMethodMatcher(exceptionType);
+        if (RuntimeException.class.isAssignableFrom(exceptionType) || Error.class.isAssignableFrom(exceptionType)) {
+            return new BooleanMethodMatcher(true);
+        }
+        return new ExceptionMethodMatcher(new TypeDescription.ForLoadedType(exceptionType));
+    }
+
+    /**
+     * Selects a method depending on whether they can throw a specific exception. Exceptions that subclass
+     * {@link java.lang.Error} or {@link java.lang.RuntimeException} can always be thrown.
+     *
+     * @param exceptionType The exception type to be thrown.
+     * @return A new method matcher that selects methods on whether they can throw {@code exceptionType}.
+     */
+    public static JunctionMethodMatcher canThrow(TypeDescription exceptionType) {
+        if (exceptionType.isAssignableTo(Throwable.class)) {
+            if (exceptionType.isAssignableTo(RuntimeType.class) || exceptionType.isAssignableTo(Error.class)) {
+                return new BooleanMethodMatcher(true);
+            }
+            return new ExceptionMethodMatcher(exceptionType);
+        } else {
+            throw new IllegalArgumentException(exceptionType + " is not an exception type");
+        }
     }
 
     /**
@@ -836,6 +887,16 @@ public final class MethodMatchers {
      */
     public static JunctionMethodMatcher is(Constructor<?> constructor) {
         return new ConstructorEqualityMethodMatcher(constructor);
+    }
+
+    /**
+     * A method matcher that matches a given method description.
+     *
+     * @param methodDescription The method description to be matched.
+     * @return A method matcher that matches the given method description.
+     */
+    public static JunctionMethodMatcher is(MethodDescription methodDescription) {
+        return new MethodDescriptionMatcher(methodDescription);
     }
 
     /**
@@ -888,14 +949,91 @@ public final class MethodMatchers {
     }
 
     /**
+     * Matches methods that represent a Java bean setter, i.e. have signature that resembles
+     * {@code void set...(T type)}.
+     *
+     * @return A matcher that matches any Java bean setter.
+     */
+    public static JunctionMethodMatcher isSetter() {
+        return takesArguments(1).and(nameStartsWith("set")).and(returns(void.class));
+    }
+
+    /**
+     * Matches methods that represent a Java bean setter, i.e. have signature that resembles
+     * {@code void set...(T type)} where {@code T} represents {@code type}.
+     *
+     * @param type The type of the setter.
+     * @return A matcher that matches any Java bean setter.
+     */
+    public static JunctionMethodMatcher isSetter(Class<?> type) {
+        return isSetter(new TypeDescription.ForLoadedType(type));
+    }
+
+    /**
+     * Matches methods that represent a Java bean setter, i.e. have signature that resembles
+     * {@code void set...(T type)} where {@code T} represents {@code type}.
+     *
+     * @param type The type of the setter.
+     * @return A matcher that matches any Java bean setter.
+     */
+    public static JunctionMethodMatcher isSetter(TypeDescription type) {
+        return isSetter().and(takesArguments(type));
+    }
+
+    /**
+     * Matches methods that represent a Java bean getter, i.e. have signature that resembles
+     * {@code T is...()} or {@code T get...()}.
+     *
+     * @return A matcher that matches any Java bean getter.
+     */
+    public static JunctionMethodMatcher isGetter() {
+        return takesArguments(0).and(not(returns(void.class))).and(nameStartsWith("get")
+                .or(nameStartsWith("is").and(returns(boolean.class).or(returns(Boolean.class)))));
+    }
+
+    /**
+     * Matches methods that represent a Java bean getter, i.e. have signature that resembles
+     * {@code T is...()} or {@code T get...()} where {@code T} represents {@code type}.
+     *
+     * @param type The type of the getter.
+     * @return A matcher that matches any Java bean getter.
+     */
+    public static JunctionMethodMatcher isGetter(Class<?> type) {
+        return isGetter(new TypeDescription.ForLoadedType(type));
+    }
+
+    /**
+     * Matches methods that represent a Java bean getter, i.e. have signature that resembles
+     * {@code T is...()} or {@code T get...()} where {@code T} represents {@code type}.
+     *
+     * @param type The type of the getter.
+     * @return A matcher that matches any Java bean getter.
+     */
+    public static JunctionMethodMatcher isGetter(TypeDescription type) {
+        return isGetter().and(returns(type));
+    }
+
+    /**
      * Selects methods with identical signature to the given method description where the return type
      * is considered to be part of the signature.
      *
      * @param methodDescription The method to match against.
      * @return A method matcher selecting methods with the same signature as {@code methodDescription}.
      */
-    public static JunctionMethodMatcher hasSameSignatureAs(MethodDescription methodDescription) {
+    public static JunctionMethodMatcher hasSameByteCodeSignatureAs(MethodDescription methodDescription) {
         return new MethodSignatureMethodMatcher(methodDescription);
+    }
+
+    /**
+     * Checks if a method has a Java compiler equal signature to another method which includes the name of the method
+     * and the exact types and order of its parameters. The return type is not considered for equality.
+     *
+     * @param methodDescription A description of the method signature to be matched against.
+     * @return A matcher that selects methods with a compatible Java compiler signature.
+     */
+    public static JunctionMethodMatcher hasSameJavaCompilerSignatureAs(MethodDescription methodDescription) {
+        return (methodDescription.isConstructor() ? isConstructor() : named(methodDescription.getName()))
+                .and(takesArguments(methodDescription.getParameterTypes()));
     }
 
     /**
@@ -918,6 +1056,11 @@ public final class MethodMatchers {
         return new DefaultFinalizeMethodMatcher();
     }
 
+    /**
+     * Matches a method for being a finalizer method which is declared by any class.
+     *
+     * @return A matcher that selects any finalizer method.
+     */
     public static JunctionMethodMatcher isFinalizer() {
         return named("finalize").and(takesArguments(0)).and(returns(void.class));
     }
@@ -948,21 +1091,6 @@ public final class MethodMatchers {
      */
     public static JunctionMethodMatcher none() {
         return new BooleanMethodMatcher(false);
-    }
-
-    /**
-     * A method matcher that matches a given method description.
-     *
-     * @param methodDescription The method description to be matched.
-     * @return A method matcher that matches the given method description.
-     */
-    public static JunctionMethodMatcher describedBy(MethodDescription methodDescription) {
-        return new MethodDescriptionMatcher(methodDescription);
-    }
-
-    public static JunctionMethodMatcher javaSignatureCompatibleTo(MethodDescription methodDescription) {
-        return (methodDescription.isConstructor() ? isConstructor() : named(methodDescription.getName()))
-                .and(takesArguments(methodDescription.getParameterTypes()));
     }
 
     private MethodMatchers() {

@@ -93,7 +93,9 @@ public final class ByteBuddyCommons {
      */
     public static TypeDescription isImplementable(TypeDescription type) {
         if (nonNull(type).isArray() || type.isPrimitive()) {
-            throw new IllegalArgumentException(type + " cannot be implemented");
+            throw new IllegalArgumentException(type + " is not implementable");
+        } else if(type.isFinal()) {
+            throw new IllegalArgumentException("Cannot implement a final class such as " + type);
         }
         return type;
     }
