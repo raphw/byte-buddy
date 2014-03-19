@@ -1,6 +1,5 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack;
 
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;

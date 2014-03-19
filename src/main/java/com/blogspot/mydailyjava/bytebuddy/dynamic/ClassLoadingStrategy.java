@@ -4,7 +4,8 @@ import com.blogspot.mydailyjava.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.loading.ClassLoaderByteArrayInjector;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * A strategy for loading a collection of types.

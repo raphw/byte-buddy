@@ -6,9 +6,7 @@ import org.mockito.asm.Type;
 
 import java.lang.reflect.Field;
 
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.*;
 
 public class FieldAttributeAppenderForLoadedFieldTest extends AbstractFieldAttributeAppenderTest {
 

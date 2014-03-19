@@ -1,11 +1,11 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.reference;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.IllegalStackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.LegalTrivialStackManipulation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;

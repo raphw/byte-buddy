@@ -3,9 +3,7 @@ package com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute;
 import org.junit.Test;
 import org.mockito.asm.Type;
 
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.*;
 
 public class TypeAttributeAppenderForLoadedTypeTest extends AbstractTypeAttributeAppenderTest {
 
