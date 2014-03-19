@@ -1,8 +1,8 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.collection;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.utility.MockitoRule;
 import org.junit.After;
@@ -18,7 +18,6 @@ import java.util.Arrays;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 public abstract class AbstractArrayFactoryTest {

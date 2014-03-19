@@ -44,11 +44,11 @@ public class MostSpecificTypeResolverPrimitiveTest extends AbstractMostSpecificT
                 {short.class, float.class},
                 {short.class, double.class},
 
-                {char.class, int.class},
                 {char.class, long.class},
                 {char.class, float.class},
                 {char.class, double.class},
 
+                {int.class, char.class},
                 {int.class, long.class},
                 {int.class, float.class},
                 {int.class, double.class},
@@ -79,9 +79,9 @@ public class MostSpecificTypeResolverPrimitiveTest extends AbstractMostSpecificT
         super.setUp();
         when(sourceType.isPrimitive()).thenReturn(true);
         when(firstPrimitive.isPrimitive()).thenReturn(true);
-        when(firstPrimitive.represents(int.class)).thenReturn(true);
+        when(firstPrimitive.represents(firstType)).thenReturn(true);
         when(secondPrimitive.isPrimitive()).thenReturn(true);
-        when(secondPrimitive.represents(long.class)).thenReturn(true);
+        when(secondPrimitive.represents(secondType)).thenReturn(true);
     }
 
     @Test

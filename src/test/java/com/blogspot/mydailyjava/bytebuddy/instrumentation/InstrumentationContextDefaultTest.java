@@ -47,9 +47,9 @@ public class InstrumentationContextDefaultTest {
     public void setUp() throws Exception {
         defaultContext = new Instrumentation.Context.Default(classFormatVersion, auxiliaryTypeNamingStrategy, methodAccessorFactory);
         when(firstAuxiliary.make(any(String.class), any(ClassFormatVersion.class), any(AuxiliaryType.MethodAccessorFactory.class)))
-                .thenReturn((DynamicType) firstDynamic);
+                .thenReturn(firstDynamic);
         when(secondAuxiliary.make(any(String.class), any(ClassFormatVersion.class), any(AuxiliaryType.MethodAccessorFactory.class)))
-                .thenReturn((DynamicType) secondDynamic);
+                .thenReturn(secondDynamic);
         when(firstDynamic.getDescription()).thenReturn(firstDescription);
         when(secondDynamic.getDescription()).thenReturn(secondDescription);
         when(auxiliaryTypeNamingStrategy.name(any(AuxiliaryType.class))).thenReturn(FOO, BAR);

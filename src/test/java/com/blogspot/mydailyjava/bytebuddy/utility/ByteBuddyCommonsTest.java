@@ -109,7 +109,7 @@ public class ByteBuddyCommonsTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testIsNotEmptyThrowsException() throws Exception {
-        isNotEmpty(Arrays.<Object>asList(), FOO);
+        isNotEmpty(Arrays.asList(), FOO);
     }
 
     @Test
