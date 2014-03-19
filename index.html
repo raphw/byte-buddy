@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="overflow-x:hidden;">
     <head>
         <meta http-equiv="content-type" content="text/html; charset=UTF-8"> 
         <title>ByteBuddy - the byte code ghost</title>
@@ -26,6 +26,15 @@
         <!-- CSS code from Bootply.com editor -->
         
         <style type="text/css">
+        
+@media (max-width: 767px){
+    body {
+        padding-right: 0px;
+        padding-left: 0px;
+    }
+ }
+ 
+        
             body {
 	padding-top:50px;
 }
@@ -43,6 +52,17 @@
 #masthead .well {
 	margin-top:8%;
 }
+
+
+
+@media only screen and (max-device-width: 768px) {
+/* Styles */
+
+h2 {font-size:15pt;padding-bottom:8px;margin-bottom:8px;}
+}
+
+
+
 
 @media screen and (min-width: 768px) {
 	#masthead h1 {
@@ -95,11 +115,14 @@
     </div>
     <nav class="collapse navbar-collapse" role="navigation">
       <ul class="nav navbar-nav">
-        <li class="active">
-          <a href="#sec">Get Started</a>
+            <li class="active">
+          <a href="index.html">Hello</a>
+        </li>
+        <li >
+          <a href="get_started.html">Get Started</a>
         </li>
         <li>
-          <a href="#sec1">Cook Book</a>
+          <a href="cookbook.html">Cook Book</a>
         </li>
         <li>
           <a href="#sec2">Development</a>
@@ -116,7 +139,7 @@
 <!-- Begin Body -->
 <div class="container">
 	<div  class="row buddy" style="margin-top:50px;">
-  			<div class="col-md-3 col-xs-6" id="leftCol">
+  			<div class="col-md-3 col-xs-7" id="leftCol">
               
               	<ul class="nav nav-stacked affix" id="sidebar">
                   <li><a href="#sec0">Hello</a></li>
@@ -129,7 +152,7 @@
  
  
      </div>
-             		<div class="visible-sm visible-xs col-xs-6 col-sm-6">
+             		<div style="position:absolute;right:0px;"class="visible-sm visible-xs col-xs-7 col-sm-6">
       		
       		<img src="images/logo-bg.png" style="width:100%;"  alt="buddy-single">
       		
@@ -177,15 +200,14 @@ aliquet a, egestas non tellus.
       		</div>
       		
  <div class="row">
-      		<div style="padding-left:0;" class="col-md-offset-4 col-xs-8 col-md-8 col-sm-8">
+      		<div  class="col-md-offset-4 col-xs-8 col-md-8 col-sm-8">
       		
-      		<h2 id="sec1" >LLook, what I can do for you</h2>
+      		<h2 id="sec1" >Look, <br>what I can do for you</h2>
               
             </div>  
             
-        <div class="col-xs-4 col-sm-4 visible-sm visible-xs" style="height:200px;padding-right:0;">
-        
-        <img style="float:right;width:70%;" src="images/buddy-code.png" alt="buddy-code">
+<div style="position:absolute;right:0px;margin-right:-15px;margin-top:-100px;"class="visible-sm visible-xs col-xs-7 col-sm-6">        
+        <img style="width:100%;" src="images/buddy-code.png" alt="buddy-code">
         
         
         </div>
@@ -256,9 +278,9 @@ public class SampleLoader extends ClassLoader {
               <h2 id="sec2">Get me, <br>I'm Open Source.</h2>
               
               </div>
-                      <div class="col-xs-4 col-sm-4 visible-sm visible-xs" style="padding-right:0;">
+                      <div style=""class="visible-sm visible-xs col-xs-4 col-sm-6">
 
-              <img style="width:50%;" src="images/buddy-download.png"  alt="logo-orange">
+              <img style="width:100%;float:right;" src="images/buddy-download.png"  alt="logo-orange">
               </div>
               
               </div>
@@ -297,7 +319,7 @@ Read the cookbook introduction, Enjoy!</dd>
               <div class="container">
               <div class="row footer-row">
               <div class="col-md-4">
-              <img style="margin:10px;margin-top:30px;float:none;" src="images/logo-orange.png" width="350"  alt="logo-orange">
+             <!-- <img style="margin:10px;margin-top:30px;float:none;width:100%;" src="images/logo-orange.png"  alt="logo-orange">-->
               </div>
               <div class=" col-md-4"> 
               	<h2 id="sec3">You need support?</h2>
@@ -320,7 +342,7 @@ Read the cookbook introduction, Enjoy!</dd>
               	</div>
               	
               	<div class="col-md-3"> 
-              	<h2 style="opacity:0;">.</h2>
+              	<h2 class="hidden-xs hidden-sm" style="opacity:0;">.</h2>
               	              	<dl>
   <dt>Development and support</dt>
   <dd>If you have any questions on how to use ByteBuddy, or have ideas for future development, please get in touch via the mailing list.
@@ -364,9 +386,7 @@ Read the cookbook introduction, Enjoy!</dd>
         $(document).ready(function() {
         
             $('#sidebar').affix({
-      offset: {
-        top: 235
-      }
+
 });
 
 var $body   = $(document.body);

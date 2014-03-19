@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="en" style="overflow-x:hidden;">
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8"> 
+        <title>ByteBuddy - the byte code ghost</title>
+        <meta name="generator" content="Bootply" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+                <link rel="icon" href="images/favicon.png" type="image/png">
+        <link href="css/bootstrap.min.css" rel="stylesheet">
+        <link href="css/style-vinc-custom.css" rel="stylesheet">
+<link href='http://fonts.googleapis.com/css?family=Bevan' rel='stylesheet' type='text/css'>
+        
+        <!--[if lt IE 9]>
+          <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+
+
+
+
+
+
+
+
+
+
+        <!-- CSS code from Bootply.com editor -->
+        
+        <style type="text/css">
+        
+@media (max-width: 767px){
+    body {
+        padding-right: 0px;
+        padding-left: 0px;
+    }
+ }
+ 
+        
+            body {
+	padding-top:50px;
+}
+
+#masthead {
+	min-height:250px;
+}
+
+#masthead h1 {
+	font-size: 30px;
+	line-height: 1;
+  	padding-top:20px;
+}
+
+#masthead .well {
+	margin-top:8%;
+}
+
+
+
+@media only screen and (max-device-width: 768px) {
+/* Styles */
+
+h2 {font-size:15pt;padding-bottom:8px;margin-bottom:8px;}
+}
+
+
+
+
+@media screen and (min-width: 768px) {
+	#masthead h1 {
+		font-size: 50px;
+	}
+}
+
+.navbar-bright {
+	background-color:#111155;
+    color:#fff;
+}
+
+.affix-top,.affix{
+	position: static;
+}
+
+@media (min-width: 979px) {
+  #sidebar.affix-top {
+    position: static;
+  	margin-top:100px;
+  	width:228px;
+  }
+  
+  #sidebar.affix {
+    position: fixed;
+    top:200px;
+    width:228px;
+  }
+}
+
+
+        </style>
+    </head>
+    
+    <!-- HTML code from Bootply.com editor -->
+    
+    <body  >
+        
+        
+<header class="navbar navbar-default navbar-fixed-top" role="banner">
+  <div class="container">
+    <div class="navbar-header">
+      <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+  <a href="/" class="navbar-brand"><img src="images/logo-text.png" width="132" alt="logo-text"></a>
+    </div>
+    <nav class="collapse navbar-collapse" role="navigation">
+      <ul class="nav navbar-nav">
+              <li>
+          <a href="index.html">Hello</a>
+        </li>
+        <li class="active">
+          <a href="get_started.html">Get Started</a>
+        </li>
+        <li>
+          <a href="#sec1">Cook Book</a>
+        </li>
+        <li>
+          <a href="#sec2">Development</a>
+        </li>
+        <li>
+          <a href="#sec3">Java Docs</a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+
+<!-- Begin Body -->
+<div class="container">
+	<div  class="row buddy" style="margin-top:50px;">
+  			<div class="col-sm-offset-2 col-md-offset-0 col-lg-offset-0 col-md-4 col-lg-4  col-xs-12 col-sm-8" id="leftCol">
+        
+<h1>
+Getting Started<br>with ByteBuddy</h1>
+
+<h4 style="margin-top:0px;">
+
+Rafael Winterhalter
+
+      </h4>        	<ul class="nav nav-stacked affix" style="margin-top:20px;" id="sidebar">
+                  <li><a href="#read">1. Reading and writing bytecode</a></li>
+                  <li><a href="#pool">2. ClassPool</a></li>
+                  <li><a href="#load">3. Class loader</a></li>
+                  <li><a href="#intro">4. Introspection and customization</a></li>
+                  <li><a href="#intro">5. Bytecode level API</a></li>
+                  <li><a href="#generics">6. Generics</a></li>
+                  <li><a href="#varargs">7. Varargs</a></li>
+                  <li><a href="#j2me">8. J2ME</a></li>
+                  <li><a href="#boxing">9. Boxing/Unboxing</a></li>
+                  <li><a href="#debug">10. Debug</a></li>
+                  
+              	</ul>
+            
+
+ 
+ 
+     </div>
+
+         <div class="col-md-4 col-xs-6 " style="z-index:-2;position:absolute;right:0px;top:10px;padding-right:0;">
+        
+        <img style="width:100%;" src="images/buddy-code.png" alt="buddy-code">
+        
+        
+        </div>
+<div class="col-md-8 col-xs-12" style="padding-top:130px;">
+
+
+
+
+<h2 id="read">1. Reading and writing bytecode</h2>
+
+<p>Javassist is a class library for dealing with Java bytecode.
+Java bytecode is stored in a binary file called a class file.
+Each class file contains one Java class or interface.
+
+</p><p>The class <code>Javassist.CtClass</code> is an absatract
+representation of a class file.  A <code>CtClass</code> (compile-time
+class) object is a handle for dealing with a class file.  The
+following program is a very simple example:
+
+</p><ul><pre>ClassPool pool = ClassPool.getDefault();
+CtClass cc = pool.get("test.Rectangle");
+cc.setSuperclass(pool.get("test.Point"));
+cc.writeFile();
+</pre></ul>
+
+<p>This program first obtains a <code>ClassPool</code> object, which
+controls bytecode modification with Javassist.  The
+<code>ClassPool</code> object is a container of <code>CtClass</code>
+object representing a class file.  It reads a class file on demand for
+constructing a <code>CtClass</code> object and records the
+constructed object for responding later accesses.
+
+To modify the definition of a class, the users must first obtain
+from a <code>ClassPool</code> object
+a reference to a <code>CtClass</code> object representing that class.
+<code>get()</code> in <code>ClassPool</code> is used for this purpose.
+In the case of the program shown above, the
+<code>CtClass</code> object representing a class
+<code>test.Rectangle</code> is obtained from the
+<code>ClassPool</code> object and it is assigned to a variable
+<code>cc</code>.
+The <code>ClassPool</code> object returned by <code>getDfault()</code>
+searches the default system search path.
+
+</p><p>From the implementation viewpoint, <code>ClassPool</code> is a hash
+table of <code>CtClass</code> objects, which uses the class names as
+keys.  <code>get()</code> in <code>ClassPool</code> searches this hash
+table to find a <code>CtClass</code> object associated with the
+specified key.  If such a <code>CtClass</code> object is not found,
+<code>get()</code> reads a class file to construct a new
+<code>CtClass</code> object, which is recorded in the hash table and
+then returned as the resulting value of <code>get()</code>.
+
+</p><p>The <code>CtClass</code> object obtained from a <code>ClassPool</code>
+object can be modified
+(details of how to modify
+a <code>CtClass</code> will be presented later).
+In the example above, it is modified so that the superclass of
+<code>test.Rectangle</code> is changed into a class
+<code>test.Point</code>.  This change is reflected on the original
+class file when <code>writeFile()</code> in <code>CtClass()</code> is
+finally called.
+
+</p><p><code>writeFile()</code> translates the <code>CtClass</code> object
+into a class file and writes it on a local disk.
+Javassist also provides a method for directly obtaining the
+modified bytecode.  To obtain the bytecode, call <code>toBytecode()</code>:
+
+</p><ul><pre>byte[] b = cc.toBytecode();
+</pre></ul>
+
+<p>You can directly load the <code>CtClass</code> as well:
+
+</p><ul><pre>Class clazz = cc.toClass();
+</pre></ul>
+
+<p><code>toClass()</code> requests the context class loader for the current
+thread to load the class file represented by the <code>CtClass</code>.  It
+returns a <code>java.lang.Class</code> object representing the loaded class.
+For more details, please see <a href="#toclass">this section below</a>.
+
+</p><h4>Defining a new class</h4>
+
+<p>To define a new class from scratch, <code>makeClass()</code>
+must be called on a <code>ClassPool</code>.
+
+</p><ul><pre>ClassPool pool = ClassPool.getDefault();
+CtClass cc = pool.makeClass("Point");
+</pre></ul>
+
+<p>This program defines a class <code>Point</code>
+including no members.
+Member methods of <code>Point</code> can be created with
+factory methods declared in <code>CtNewMethod</code> and
+appended to <code>Point</code> with <code>addMethod()</code>
+in <code>CtClass</code>.
+
+</p><p><<code>makeClass()</code> cannot create a new interface;
+<code>makeInterface()</code> in <code>ClassPool</code> can do.
+Member methods in an interface can be created with
+<code>abstractMethod()</code> in <code>CtNewMethod</code>.
+Note that an interface method is an abstract method.
+
+</p><h4>Frozen classes</h4>
+
+<p>If a <code>CtClass</code> object is converted into a class file by
+<code>writeFile()</code>, <code>toClass()</code>, or
+<code>toBytecode()</code>, Javassist freezes that <code>CtClass</code>
+object.  Further modifications of that <code>CtClass</code> object are
+not permitted.  This is for warning the developers when they attempt
+to modify a class file that has been already loaded since the JVM does
+not allow reloading a class.
+
+</p><p>A frozen <code>CtClass</code> can be defrost so that
+modifications of the class definition will be permitted.  For example,
+
+</p><ul><pre>CtClasss cc = ...;
+    :
+cc.writeFile();
+cc.defrost();
+cc.setSuperclass(...);    // OK since the class is not frozen.
+</pre></ul>
+
+<p>After <code>defrost()</code> is called, the <code>CtClass</code>
+object can be modified again.
+
+</p><p>If <code>ClassPool.doPruning</code> is set to <code>true</code>,
+then Javassist prunes the data structure contained
+in a <code>CtClass</code> object
+when Javassist freezes that object.
+To reduce memory
+consumption, pruning discards unnecessary attributes
+(<code>attribute_info</code> structures) in that object.
+For example, <code>Code_attribute</code> structures (method bodies)
+are discarded.
+Thus, after a
+<code>CtClass</code> object is pruned, the bytecode of a method is not
+accessible except method names, signatures, and annotations.
+The pruned <code>CtClass</code> object cannot be defrost again.
+The default value of <code>ClassPool.doPruning</code> is <code>false</code>.
+
+</p><p>To disallow pruning a particular <code>CtClass</code>,
+<code>stopPruning()</code> must be called on that object in advance:
+
+</p><ul><pre>CtClasss cc = ...;
+cc.stopPruning(true);
+    :
+cc.writeFile();                             // convert to a class file.
+// cc is not pruned.
+</pre></ul>
+
+<p>The <code>CtClass</code> object <code>cc</code> is not pruned.
+Thus it can be defrost after <code>writeFile()</code> is called.
+
+</p><ul><b>Note:</b>
+While debugging, you might want to temporarily stop pruning and freezing
+and write a modified class file to a disk drive.
+<code>debugWriteFile()</code> is a convenient method
+for that purpose.  It stops pruning, writes a class file, defrosts it,
+and turns pruning on again (if it was initially on).
+</ul>
+
+
+
+<h4>Class search path</h4>
+
+<p>The default <code>ClassPool</code> returned
+by a static method <code>ClassPool.getDefault()</code>
+searches the same path that the underlying JVM (Java virtual machine) has.
+<em>If a program is running on a web application server such as JBoss and Tomcat,
+the <code>ClassPool</code> object may not be able to find user classes</em>
+since such a web application server uses multiple class loaders as well as
+the system class loader.  In that case, an additional class path must be
+registered to the <code>ClassPool</code>.  Suppose that <code>pool</code>
+refers to a <code>ClassPool</code> object:
+
+</p><ul><pre>pool.insertClassPath(new ClassClassPath(this.getClass()));
+</pre></ul>
+
+<p>
+This statement registers the class path that was used for loading
+the class of the object that <code>this</code> refers to.
+You can use any <code>Class</code> object as an argument instead of
+<code>this.getClass()</code>.  The class path used for loading the
+class represented by that <code>Class</code> object is registered.
+
+</p><p>
+You can register a directory name as the class search path.
+For example, the following code adds a directory
+<code>/usr/local/javalib</code>
+to the search path:
+
+</p><ul><pre>ClassPool pool = ClassPool.getDefault();
+pool.insertClassPath("/usr/local/javalib");
+</pre></ul>
+
+<p>The search path that the users can add is not only a directory but also
+a URL:
+
+</p><ul><pre>ClassPool pool = ClassPool.getDefault();
+ClassPath cp = new URLClassPath("www.javassist.org", 80, "/java/", "org.javassist.");
+pool.insertClassPath(cp);
+</pre></ul>
+
+<p>This program adds "http://www.javassist.org:80/java/" to the class search
+path.  This URL is used only for searching classes belonging to a
+package <code>org.javassist</code>.  For example, to load a class
+<code>org.javassist.test.Main</code>, its class file will be obtained from:
+
+</p><ul><pre>http://www.javassist.org:80/java/org/javassist/test/Main.class
+</pre></ul>
+
+<p>Furthermore, you can directly give a byte array
+to a <code>ClassPool</code> object
+and construct a <code>CtClass</code> object from that array.  To do this,
+use <code>ByteArrayClassPath</code>.  For example,
+
+</p><ul><pre>ClassPool cp = ClassPool.getDefault();
+byte[] b = <em>a byte array</em>;
+String name = <em>class name</em>;
+cp.insertClassPath(new ByteArrayClassPath(name, b));
+CtClass cc = cp.get(name);
+</pre></ul>
+
+<p>The obtained <code>CtClass</code> object represents
+a class defined by the class file specified by <code>b</code>.
+The <code>ClassPool</code> reads a class file from the given
+<code>ByteArrayClassPath</code> if <code>get()</code> is called
+and the class name given to <code>get()</code> is equal to
+one specified by <code>name</code>.
+
+</p><p>If you do not know the fully-qualified name of the class, then you
+can use <code>makeClass()</code> in <code>ClassPool</code>:
+
+</p><ul><pre>ClassPool cp = ClassPool.getDefault();
+InputStream ins = <em>an input stream for reading a class file</em>;
+CtClass cc = cp.makeClass(ins);
+</pre></ul>
+
+<p><code>makeClass()</code> returns the <code>CtClass</code> object
+constructed from the given input stream.  You can use
+<code>makeClass()</code> for eagerly feeding class files to 
+the <code>ClassPool</code> object.  This might improve performance
+if the search path includes a large jar file.  Since 
+a <code>ClassPool</code> object reads a class file on demand,
+it might repeatedly search the whole jar file for every class file.
+<code>makeClass()</code> can be used for optimizing this search.
+The <code>CtClass</code> constructed by <code>makeClass()</code>
+is kept in the <code>ClassPool</code> object and the class file is never
+read again.
+
+</p><p>The users can extend the class search path.  They can define a new
+class implementing <code>ClassPath</code> interface and give an
+instance of that class to <code>insertClassPath()</code> in
+<code>ClassPool</code>.  This allows a non-standard resource to be
+included in the search path.
+
+</p><p><br>
+
+</p><h2 id="pool">2. ClassPool</h2>
+
+<p>
+A <code>ClassPool</code> object is a container of <code>CtClass</code>
+objects.  Once a <code>CtClass</code> object is created, it is
+recorded in a <code>ClassPool</code> for ever.  This is because a
+compiler may need to access the <code>CtClass</code> object later when
+it compiles source code that refers to the class represented by that
+<code>CtClass</code>.
+
+</p><p>
+For example, suppose that a new method <code>getter()</code> is added
+to a <code>CtClass</code> object representing <code>Point</code>
+class.  Later, the program attempts to compile source code including a
+method call to <code>getter()</code> in <code>Point</code> and use the
+compiled code as the body of a method, which will be added to another
+class <code>Line</code>.  If the <code>CtClass</code> object representing
+<code>Point</code> is lost, the compiler cannot compile the method call
+to <code>getter()</code>.  Note that the original class definition does
+not include <code>getter()</code>.  Therefore, to correctly compile
+such a method call, the <code>ClassPool</code>
+must contain all the instances of <code>CtClass</code> all the time of
+program execution.
+
+
+</p><h4><a name="avoidmemory">Avoid out of memory</a></h4>
+<p>
+This specification of <code>ClassPool</code> may cause huge memory
+consumption if the number of <code>CtClass</code> objects becomes
+amazingly large (this rarely happens since Javassist tries to reduce
+memory consumption in <a href="#frozenclasses">various ways</a>).
+To avoid this problem, you
+can explicitly remove an unnecessary <code>CtClass</code> object from
+the <code>ClassPool</code>.  If you call <code>detach()</code> on a
+<code>CtClass</code> object, then that <code>CtClass</code> object is
+removed from the <code>ClassPool</code>.  For example,
+
+</p><ul><pre>CtClass cc = ... ;
+cc.writeFile();
+cc.detach();
+</pre></ul>
+
+<p>You must not call any method on that
+<code>CtClass</code> object after <code>detach()</code> is called.
+However, you can call <code>get()</code> on <code>ClassPool</code>
+to make a new instance of <code>CtClass</code> representing
+the same class.  If you call <code>get()</code>, the <code>ClassPool</code>
+reads a class file again and newly creates a <code>CtClass</code>
+object, which is returned by <code>get()</code>.
+
+</p><p>
+Another idea is to occasionally replace a <code>ClassPool</code> with
+a new one and discard the old one.  If an old <code>ClassPool</code>
+is garbage collected, the <code>CtClass</code> objects included in
+that <code>ClassPool</code> are also garbage collected.
+To create a new instance of <code>ClassPool</code>, execute the following
+code snippet:
+
+</p><ul><pre>ClassPool cp = new ClassPool(true);
+// if needed, append an extra search path by appendClassPath()
+</pre></ul>
+
+<p>This creates a <code>ClassPool</code> object that behaves as the
+default <code>ClassPool</code> returned by
+<code>ClassPool.getDefault()</code> does.
+Note that <code>ClassPool.getDefault()</code> is a singleton factory method
+provided for convenience.  It creates a <code>ClassPool</code> object in
+the same way shown above although it keeps a single instance of
+<code>ClassPool</code> and reuses it.
+A <code>ClassPool</code> object returned by <code>getDefault()</code>
+does not have a special role.  <code>getDefault()</code> is a convenience
+method.
+
+</p><p>Note that <code>new ClassPool(true)</code> is a convenient constructor,
+which constructs a <code>ClassPool</code> object and appends the system
+search path to it.  Calling that constructor is
+equivalent to the following code:
+
+</p><ul><pre>ClassPool cp = new ClassPool();
+cp.appendSystemPath();  // or append another path by appendClassPath()
+</pre></ul>
+
+<h4>Cascaded ClassPools</h4>
+
+<p>
+<em>If a program is running on a web application server,</em>
+creating multiple instances of <code>ClassPool</code> might be necessary;
+an instance of <code>ClassPool</code> should be created
+for each class loader (i.e. container).
+The program should create a <code>ClassPool</code> object by not calling
+<code>getDefault()</code> but a constructor of <code>ClassPool</code>.
+
+</p><p>
+Multiple <code>ClassPool</code> objects can be cascaded like
+<code>java.lang.ClassLoader</code>.  For example,
+
+</p><ul><pre>ClassPool parent = ClassPool.getDefault();
+ClassPool child = new ClassPool(parent);
+child.insertClassPath("./classes");
+</pre></ul>
+
+<p>
+If <code>child.get()</code> is called, the child <code>ClassPool</code>
+first delegates to the parent <code>ClassPool</code>.  If the parent
+<code>ClassPool</code> fails to find a class file, then the child
+<code>ClassPool</code> attempts to find a class file
+under the <code>./classes</code> directory.
+
+</p><p>
+If <code>child.childFirstLookup</code> is true, the child
+<code>ClassPool</code> attempts to find a class file before delegating
+to the parent <code>ClassPool</code>.  For example,
+
+</p><ul><pre>ClassPool parent = ClassPool.getDefault();
+ClassPool child = new ClassPool(parent);
+child.appendSystemPath();         // the same class path as the default one.
+child.childFirstLookup = true;    // changes the behavior of the child.
+</pre></ul>
+
+<h4>Changing a class name for defining a new class</h4>
+
+<p>A new class can be defined as a copy of an existing class.
+The program below does that:
+
+</p><ul><pre>ClassPool pool = ClassPool.getDefault();
+CtClass cc = pool.get("Point");
+cc.setName("Pair");
+</pre></ul>
+
+<p>This program first obtains the <code>CtClass</code> object for
+class <code>Point</code>.  Then it calls <code>setName()</code> to
+give a new name <code>Pair</code> to that <code>CtClass</code> object.
+After this call, all occurrences of the class name in the class
+definition represented by that <code>CtClass</code> object are changed
+from <code>Point</code> to <code>Pair</code>.  The other part of the
+class definition does not change.
+
+</p><p>Note that <code>setName()</code> in <code>CtClass</code> changes a
+record in the <code>ClassPool</code> object.  From the implementation
+viewpoint, a <code>ClassPool</code> object is a hash table of
+<code>CtClass</code> objects.  <code>setName()</code> changes
+the key associated to the <code>CtClass</code> object in the hash
+table.  The key is changed from the original class name to the new
+class name.
+
+</p><p>Therefore, if <code>get("Point")</code> is later called on the
+<code>ClassPool</code> object again, then it never returns the
+<code>CtClass</code> object that the variable <code>cc</code> refers to.
+The <code>ClassPool</code> object reads
+a class file
+<code>Point.class</code> again and it constructs a new <code>CtClass</code>
+object for class <code>Point</code>.
+This is because the <code>CtClass</code> object associated with the name
+<code>Point</code> does not exist any more.
+See the followings:
+
+</p><ul><pre>ClassPool pool = ClassPool.getDefault();
+CtClass cc = pool.get("Point");
+CtClass cc1 = pool.get("Point");   // cc1 is identical to cc.
+cc.setName("Pair");
+CtClass cc2 = pool.get("Pair");    // cc2 is identical to cc.
+CtClass cc3 = pool.get("Point");   // cc3 is not identical to cc.
+</pre></ul>
+
+<p><code>cc1</code> and <code>cc2</code> refer to the same instance of
+<code>CtClass</code> that <code>cc</code> does whereas
+<code>cc3</code> does not.  Note that, after
+<code>cc.setName("Pair")</code> is executed, the <code>CtClass</code>
+object that <code>cc</code> and <code>cc1</code> refer to represents
+the <code>Pair</code> class.
+
+</p><p>The <code>ClassPool</code> object is used to maintain one-to-one
+mapping between classes and <code>CtClass</code> objects.  Javassist
+never allows two distinct <code>CtClass</code> objects to represent
+the same class unless two independent <code>ClassPool</code> are created.
+This is a significant feature for consistent program
+transformation.
+
+</p><p>To create another copy of the default instance of
+<code>ClassPool</code>, which is returned by
+<code>ClassPool.getDefault()</code>, execute the following code
+snippet (this code was already <a href="#avoidmemory">shown above</a>):
+
+</p><ul><pre>ClassPool cp = new ClassPool(true);
+</pre></ul>
+
+<p>If you have two <code>ClassPool</code> objects, then you can
+obtain, from each <code>ClassPool</code>, a distinct
+<code>CtClass</code> object representing the same class file.  You can
+differently modify these <code>CtClass</code> objects to generate
+different versions of the class.
+
+</p><h4>Renaming a frozen class for defining a new class</h4>
+
+<p>Once a <code>CtClass</code> object is converted into a class file
+by <code>writeFile()</code> or <code>toBytecode()</code>, Javassist
+rejects further modifications of that <code>CtClass</code> object.
+Hence, after the <code>CtClass</code> object representing <code>Point</code>
+class is converted into a class file, you cannot define <code>Pair</code>
+class as a copy of <code>Point</code> since executing <code>setName()</code>
+on <code>Point</code> is rejected.
+The following code snippet is wrong:
+
+</p><ul><pre>ClassPool pool = ClassPool.getDefault();
+CtClass cc = pool.get("Point");
+cc.writeFile();
+cc.setName("Pair");    // wrong since writeFile() has been called.
+</pre></ul>
+
+<p>To avoid this restriction, you should call <code>getAndRename()</code>
+in <code>ClassPool</code>.  For example,
+
+</p><ul><pre>ClassPool pool = ClassPool.getDefault();
+CtClass cc = pool.get("Point");
+cc.writeFile();
+CtClass cc2 = pool.getAndRename("Point", "Pair");
+</pre></ul>
+
+<p>If <code>getAndRename()</code> is called, the <code>ClassPool</code>
+first reads <code>Point.class</code> for creating a new <code>CtClass</code>
+object representing <code>Point</code> class.  However, it renames that
+<code>CtClass</code> object from <code>Point</code> to <code>Pair</code> before
+it records that <code>CtClass</code> object in a hash table.
+Thus <code>getAndRename()</code>
+can be executed after <code>writeFile()</code> or <code>toBytecode()</code>
+is called on the the <code>CtClass</code> object representing <code>Point</code>
+class.
+
+</p><p><br>
+
+
+</p><h2><a name="load">3. Class loader</a></h2>
+
+<p>If what classes must be modified is known in advance,
+the easiest way for modifying the classes is as follows:
+
+</p><ul><li>1. Get a <code>CtClass</code> object by calling
+        <code>ClassPool.get()</code>,
+    </li><li>2. Modify it, and
+    </li><li>3. Call <code>writeFile()</code> or <code>toBytecode()</code>
+           on that <code>CtClass</code> object to obtain a modified class file.
+</li></ul>
+
+<p>If whether a class is modified or not is determined at load time,
+the users must make Javassist collaborate with a class loader.
+Javassist can be used with a class loader so that bytecode can be
+modified at load time.  The users of Javassist can define their own
+version of class loader but they can also use a class loader provided
+by Javassist.
+
+
+</p></a><p><a name="load"><br>
+
+</a><a name="toclass">
+</a></p><h3><a name="toclass">3.1 The <code>toClass</code> method in <code>CtClass</code></a></h3><a name="toclass">
+</a>
+
+<p>The <code>CtClass</code> provides a convenience method
+<code>toClass()</code>, which requests the context class loader for
+the current thread to load the class represented by the <code>CtClass</code>
+object.  To call this method, the caller must have appropriate permission;
+otherwise, a <code>SecurityException</code> may be thrown.
+
+</p><p>The following program shows how to use <code>toClass()</code>:
+
+</p><ul><pre>public class Hello {
+    public void say() {
+        System.out.println("Hello");
+    }
+}
+
+public class Test {
+    public static void main(String[] args) throws Exception {
+        ClassPool cp = ClassPool.getDefault();
+        CtClass cc = cp.get("Hello");
+        CtMethod m = cc.getDeclaredMethod("say");
+        m.insertBefore("{ System.out.println(\"Hello.say():\"); }");
+        Class c = cc.toClass();
+        Hello h = (Hello)c.newInstance();
+        h.say();
+    }
+}
+</pre></ul>
+
+<p><code>Test.main()</code> inserts a call to <code>println()</code>
+in the method body of <code>say()</code> in <code>Hello</code>.  Then
+it constructs an instance of the modified <code>Hello</code> class
+and calls <code>say()</code> on that instance.
+
+</p><p>Note that the program above depends on the fact that the
+<code>Hello</code> class is never loaded before <code>toClass()</code>
+is invoked.  If not, the JVM would load the original
+<code>Hello</code> class before <code>toClass()</code> requests to
+load the modified <code>Hello</code> class.  Hence loading the
+modified <code>Hello</code> class would be failed
+(<code>LinkageError</code> is thrown).  For example, if
+<code>main()</code> in <code>Test</code> is something like this:
+
+</p><ul><pre>public static void main(String[] args) throws Exception {
+    Hello orig = new Hello();
+    ClassPool cp = ClassPool.getDefault();
+    CtClass cc = cp.get("Hello");
+        :
+}
+</pre></ul>
+
+<p>then the original <code>Hello</code> class is loaded at the first
+line of <code>main</code> and the call to <code>toClass()</code>
+throws an exception since the class loader cannot load two different
+versions of the <code>Hello</code> class at the same time.
+
+</p><p><em>If the program is running on some application server such as
+JBoss and Tomcat,</em> the context class loader used by
+<code>toClass()</code> might be inappropriate.  In this case, you
+would see an unexpected <code>ClassCastException</code>.  To avoid
+this exception, you must explicitly give an appropriate class loader
+to <code>toClass()</code>.  For example, if <code>bean</code> is your
+session bean object, then the following code:
+
+</p><ul><pre>CtClass cc = ...;
+Class c = cc.toClass(bean.getClass().getClassLoader());
+</pre></ul>
+
+<p>would work.  You should give <code>toClass()</code> the class loader
+that has loaded your program (in the above example, the class of
+the <code>bean</code> object).
+
+</p><p><code>toClass()</code> is provided for convenience.  If you need
+more complex functionality, you should write your own class loader.
+
+</p><p><br>
+
+</p><h3>3.2 Class loading in Java</h3>
+
+<p>In Java, multiple class loaders can coexist and
+each class loader creates its own name space.
+Different class loaders can load different class files with the
+same class name.  The loaded two classes are regarded as different
+ones.  This feature enables us to run multiple application programs
+on a single JVM even if these programs include different classes
+with the same name.
+
+</p><ul>
+<b>Note:</b> The JVM does not allow dynamically reloading a class.
+Once a class loader loads a class, it cannot reload a modified
+version of that class during runtime.  Thus, you cannot alter
+the definition of a class after the JVM loads it.
+However, the JPDA (Java Platform Debugger Architecture) provides
+limited ability for reloading a class.
+See <a href="#hotswap">Section 3.6</a>.
+</ul>
+
+<p>If the same class file is loaded by two distinct class loaders,
+the JVM makes two distinct classes with the same name and definition.
+The two classes are regarded as different ones.
+Since the two classes are not identical, an instance of one class is
+not assignable to a variable of the other class.  The cast operation
+between the two classes fails
+and throws a <em><code>ClassCastException</code></em>.
+
+</p><p>For example, the following code snippet throws an exception:
+
+</p><ul><pre>MyClassLoader myLoader = new MyClassLoader();
+Class clazz = myLoader.loadClass("Box");
+Object obj = clazz.newInstance();
+Box b = (Box)obj;    // this always throws ClassCastException.
+</pre></ul>
+
+<p>
+The <code>Box</code> class is loaded by two class loaders.
+Suppose that a class loader CL loads a class including this code snippet.
+Since this code snippet refers to <code>MyClassLoader</code>,
+<code>Class</code>, <code>Object</code>, and <code>Box</code>,
+CL also loads these classes (unless it delegates to another class loader).
+Hence the type of the variable <code>b</code> is the <code>Box</code>
+class loaded by CL.
+On the other hand, <code>myLoader</code> also loads the <code>Box</code>
+class.  The object <code>obj</code> is an instance of
+the <code>Box</code> class loaded by <code>myLoader</code>.
+Therefore, the last statement always throws a
+<code>ClassCastException</code> since the class of <code>obj</code> is
+a different verison of the <code>Box</code> class from one used as the
+type of the variable <code>b</code>.
+
+</p><p>Multiple class loaders form a tree structure.
+Each class loader except the bootstrap loader has a
+parent class loader, which has normally loaded the class of that child
+class loader.  Since the request to load a class can be delegated along this
+hierarchy of class loaders, a class may be loaded by a class loader that
+you do not request the class loading.
+Therefore, the class loader that has been requested to load a class C
+may be different from the loader that actually loads the class C.
+For distinction, we call the former loader <em>the initiator of C</em>
+and we call the latter loader <em>the real loader of C</em>.
+
+</p><p>
+Furthermore, if a class loader CL requested to load a class C
+(the initiator of C) delegates
+to the parent class loader PL, then the class loader CL is never requested
+to load any classes referred to in the definition of the class C.
+CL is not the initiator of those classes.
+Instead, the parent class loader PL becomes their initiators
+and it is requested to load them.
+<em>The classes that the definition of a class C referes to are loaded by
+the real loader of C.</em>
+
+</p><p>To understand this behavior, let's consider the following example.
+
+</p><ul><pre>public class Point {    // loaded by PL
+    private int x, y;
+    public int getX() { return x; }
+        :
+}
+
+public class Box {      // the initiator is L but the real loader is PL
+    private Point upperLeft, size;
+    public int getBaseX() { return upperLeft.x; }
+        :
+}
+
+public class Window {    // loaded by a class loader L
+    private Box box;
+    public int getBaseX() { return box.getBaseX(); }
+}</pre></ul>
+
+<p>Suppose that a class <code>Window</code> is loaded by a class loader L.
+Both the initiator and the real loader of <code>Window</code> are L.
+Since the definition of <code>Window</code> refers to <code>Box</code>,
+the JVM will request L to load <code>Box</code>.
+Here, suppose that L delegates this task to the parent class loader PL.
+The initiator of <code>Box</code> is L but the real loader is PL.
+In this case, the initiator of <code>Point</code> is not L but PL
+since it is the same as the real loader of <code>Box</code>.
+Thus L is never requested to load <code>Point</code>.
+
+</p><p>Next, let's consider a slightly modified example.
+
+</p><ul><pre>public class Point {
+    private int x, y;
+    public int getX() { return x; }
+        :
+}
+
+public class Box {      // the initiator is L but the real loader is PL
+    private Point upperLeft, size;
+    public Point getSize() { return size; }
+        :
+}
+
+public class Window {    // loaded by a class loader L
+    private Box box;
+    public boolean widthIs(int w) {
+        Point p = box.getSize();
+        return w == p.getX();
+    }
+}</pre></ul>
+
+<p>Now, the definition of <code>Window</code> also refers to
+<code>Point</code>.  In this case, the class loader L must
+also delegate to PL if it is requested to load <code>Point</code>.
+<em>You must avoid having two class loaders doubly load the same
+class.</em>  One of the two loaders must delegate to
+the other.
+
+</p><p>
+If L does not delegate to PL when <code>Point</code>
+is loaded, <code>widthIs()</code> would throw a ClassCastException.
+Since the real loader of <code>Box</code> is PL,
+<code>Point</code> referred to in <code>Box</code> is also loaded by PL.
+Therefore, the resulting value of <code>getSize()</code>
+is an instance of <code>Point</code> loaded by PL
+whereas the type of the variable <code>p</code> in <code>widthIs()</code>
+is <code>Point</code> loaded by L.
+The JVM regards them as distinct types and thus it throws an exception
+because of type mismatch.
+
+</p><p>This behavior is somewhat inconvenient but necessary.
+If the following statement:
+
+</p><ul><pre>Point p = box.getSize();
+</pre></ul>
+
+<p>did not throw an exception,
+then the programmer of <code>Window</code> could break the encapsulation
+of <code>Point</code> objects.
+For example, the field <code>x</code>
+is private in <code>Point</code> loaded by PL.
+However, the <code>Window</code> class could
+directly access the value of <code>x</code>
+if L loads <code>Point</code> with the following definition:
+
+</p><ul><pre>public class Point {
+    public int x, y;    // not private
+    public int getX() { return x; }
+        :
+}
+</pre></ul>
+
+<p>
+For more details of class loaders in Java, the following paper would
+be helpful:
+
+</p><ul>Sheng Liang and Gilad Bracha,
+"Dynamic Class Loading in the Java Virtual Machine",
+<br><i>ACM OOPSLA'98</i>, pp.36-44, 1998.</ul>
+
+<p><br>
+
+</p><h3>3.3 Using <code>javassist.Loader</code></h3>
+
+<p>Javassist provides a class loader
+<code>javassist.Loader</code>.  This class loader uses a
+<code>javassist.ClassPool</code> object for reading a class file.
+
+</p><p>For example, <code>javassist.Loader</code> can be used for loading
+a particular class modified with Javassist.
+
+</p><ul><pre>import javassist.*;
+import test.Rectangle;
+
+public class Main {
+  public static void main(String[] args) throws Throwable {
+     ClassPool pool = ClassPool.getDefault();
+     Loader cl = new Loader(pool);
+
+     CtClass ct = pool.get("test.Rectangle");
+     ct.setSuperclass(pool.get("test.Point"));
+
+     Class c = cl.loadClass("test.Rectangle");
+     Object rect = c.newInstance();
+         :
+  }
+}
+</pre></ul>
+
+<p>This program modifies a class <code>test.Rectangle</code>.  The
+superclass of <code>test.Rectangle</code> is set to a
+<code>test.Point</code> class.  Then this program loads the modified
+class, and creates a new instance of the
+<code>test.Rectangle</code> class.
+
+</p><p>If the users want to modify a class on demand when it is loaded,
+the users can add an event listener to a <code>javassist.Loader</code>.
+The added event listener is
+notified when the class loader loads a class.
+The event-listener class must implement the following interface:
+
+</p><ul><pre>public interface Translator {
+    public void start(ClassPool pool)
+        throws NotFoundException, CannotCompileException;
+    public void onLoad(ClassPool pool, String classname)
+        throws NotFoundException, CannotCompileException;
+}</pre></ul>
+
+<p>The method <code>start()</code> is called when this event listener
+is added to a <code>javassist.Loader</code> object by
+<code>addTranslator()</code> in <code>javassist.Loader</code>.  The
+method <code>onLoad()</code> is called before
+<code>javassist.Loader</code> loads a class.  <code>onLoad()</code>
+can modify the definition of the loaded class.
+
+</p><p>For example, the following event listener changes all classes
+to public classes just before they are loaded.
+
+</p><ul><pre>public class MyTranslator implements Translator {
+    void start(ClassPool pool)
+        throws NotFoundException, CannotCompileException {}
+    void onLoad(ClassPool pool, String classname)
+        throws NotFoundException, CannotCompileException
+    {
+        CtClass cc = pool.get(classname);
+        cc.setModifiers(Modifier.PUBLIC);
+    }
+}</pre></ul>
+
+<p>Note that <code>onLoad()</code> does not have to call
+<code>toBytecode()</code> or <code>writeFile()</code> since
+<code>javassist.Loader</code> calls these methods to obtain a class
+file.
+
+</p><p>To run an application class <code>MyApp</code> with a
+<code>MyTranslator</code> object, write a main class as following:
+
+</p><ul><pre>import javassist.*;
+
+public class Main2 {
+  public static void main(String[] args) throws Throwable {
+     Translator t = new MyTranslator();
+     ClassPool pool = ClassPool.getDefault();
+     Loader cl = new Loader();
+     cl.addTranslator(pool, t);
+     cl.run("MyApp", args);
+  }
+}
+</pre></ul>
+
+<p>To run this program, do:
+
+</p><ul><pre>% java Main2 <i>arg1</i> <i>arg2</i>...
+</pre></ul>
+
+<p>The class <code>MyApp</code> and the other application classes
+are translated by <code>MyTranslator</code>.
+
+</p><p>Note that <em>application</em> classes like <code>MyApp</code> cannot
+access the <em>loader</em> classes such as <code>Main2</code>,
+<code>MyTranslator</code>, and <code>ClassPool</code> because they
+are loaded by different loaders.  The application classes are loaded
+by <code>javassist.Loader</code> whereas the loader classes such as
+<code>Main2</code> are by the default Java class loader.
+
+</p><p><code>javassist.Loader</code> searches for classes in a different
+order from <code>java.lang.ClassLoader</code>.
+<code>ClassLoader</code> first delegates the loading operations to
+the parent class loader and then attempts to load the classes
+only if the parent class loader cannot find them.
+On the other hand,
+<code>javassist.Loader</code> attempts
+to load the classes before delegating to the parent class loader.
+It delegates only if:
+
+</p><ul><li>the classes are not found by calling <code>get()</code> on
+a <code>ClassPool</code> object, or
+
+<p></p></li><li>the classes have been specified by using
+<code>delegateLoadingOf()</code>
+to be loaded by the parent class loader.
+</li></ul>
+
+<p>This search order allows loading modified classes by Javassist.
+However, it delegates to the parent class loader if it fails
+to find modified classes for some reason.  Once a class is loaded by
+the parent class loader, the other classes referred to in that class will be
+also loaded by the parent class loader and thus they are never modified.
+Recall that all the classes referred to in a class C are loaded by the
+real loader of C.
+<em>If your program fails to load a modified class,</em> you should
+make sure whether all the classes using that class have been loaded by
+<code>javassist.Loader</code>.
+
+</p><p><br>
+
+</p><h3>3.4 Writing a class loader</h3>
+
+<p>A simple class loader using Javassist is as follows:
+
+</p><ul><pre>import javassist.*;
+
+public class SampleLoader extends ClassLoader {
+    /* Call MyApp.main().
+     */
+    public static void main(String[] args) throws Throwable {
+        SampleLoader s = new SampleLoader();
+        Class c = s.loadClass("MyApp");
+        c.getDeclaredMethod("main", new Class[] { String[].class })
+         .invoke(null, new Object[] { args });
+    }
+
+    private ClassPool pool;
+
+    public SampleLoader() throws NotFoundException {
+        pool = new ClassPool();
+        pool.insertClassPath("./class"); // <em>MyApp.class must be there.</em>
+    }
+
+    /* Finds a specified class.
+     * The bytecode for that class can be modified.
+     */
+    protected Class findClass(String name) throws ClassNotFoundException {
+        try {
+            CtClass cc = pool.get(name);
+            // <em>modify the CtClass object here</em>
+            byte[] b = cc.toBytecode();
+            return defineClass(name, b, 0, b.length);
+        } catch (NotFoundException e) {
+            throw new ClassNotFoundException();
+        } catch (IOException e) {
+            throw new ClassNotFoundException();
+        } catch (CannotCompileException e) {
+            throw new ClassNotFoundException();
+        }
+    }
+}</pre></ul>
+
+<p>The class <code>MyApp</code> is an application program.
+To execute this program, first put the class file under the
+<code>./class</code> directory, which must <em>not</em> be included
+in the class search path.  Otherwise, <code>MyApp.class</code> would
+be loaded by the default system class loader, which is the parent
+loader of <code>SampleLoader</code>.
+The directory name <code>./class</code> is specified by
+<code>insertClassPath()</code> in the constructor.
+You can choose a different name instead of <code>./class</code> if you want.
+Then do as follows:
+
+</p><ul><code>% java SampleLoader</code></ul>
+
+<p>The class loader loads the class <code>MyApp</code>
+(<code>./class/MyApp.class</code>) and calls
+<code>MyApp.main()</code> with the command line parameters.
+
+</p><p>This is the simplest way of using Javassist.  However, if you write
+a more complex class loader, you may need detailed knowledge of
+Java's class loading mechanism.  For example, the program above puts the
+<code>MyApp</code> class in a name space separated from the name space
+that the class <code>SampleLoader</code> belongs to because the two
+classes are loaded by different class loaders.
+Hence, the
+<code>MyApp</code> class cannot directly access the class
+<code>SampleLoader</code>.
+
+</p><p><br>
+
+</p><h3>3.5 Modifying a system class</h3>
+
+<p>The system classes like <code>java.lang.String</code> cannot be
+loaded by a class loader other than the system class loader.
+Therefore, <code>SampleLoader</code> or <code>javassist.Loader</code>
+shown above cannot modify the system classes at loading time.
+
+</p><p>If your application needs to do that, the system classes must be
+<em>statically</em> modified.  For example, the following program
+adds a new field <code>hiddenValue</code> to <code>java.lang.String</code>:
+
+</p><ul><pre>ClassPool pool = ClassPool.getDefault();
+CtClass cc = pool.get("java.lang.String");
+CtField f = new CtField(CtClass.intType, "hiddenValue", cc);
+f.setModifiers(Modifier.PUBLIC);
+cc.addField(f);
+cc.writeFile(".");</pre></ul>
+
+<p>This program produces a file <code>"./java/lang/String.class"</code>.
+
+</p><p>To run your program <code>MyApp</code>
+with this modified <code>String</code> class, do as follows:
+
+</p><ul><pre>% java -Xbootclasspath/p:. MyApp <i>arg1</i> <i>arg2</i>...
+</pre></ul>
+
+<p>Suppose that the definition of <code>MyApp</code> is as follows:
+
+</p><ul><pre>public class MyApp {
+    public static void main(String[] args) throws Exception {
+        System.out.println(String.class.getField("hiddenValue").getName());
+    }
+}</pre></ul>
+
+<p>If the modified <code>String</code> class is correctly loaded,
+<code>MyApp</code> prints <code>hiddenValue</code>.
+
+</p><p><i>Note: Applications that use this technique for the purpose of
+overriding a system class in <code>rt.jar</code> should not be
+deployed as doing so would contravene the Java 2 Runtime Environment
+binary code license.</i>
+
+</p><p><br>
+
+<a name="hotswap">
+</a></p><h3><a name="hotswap">3.6 Reloading a class at runtime</a></h3>
+
+<p>If the JVM is launched with the JPDA (Java Platform Debugger
+Architecture) enabled, a class is dynamically reloadable.  After the
+JVM loads a class, the old version of the class definition can be
+unloaded and a new one can be reloaded again.  That is, the definition
+of that class can be dynamically modified during runtime.  However,
+the new class definition must be somewhat compatible to the old one.
+<em>The JVM does not allow schema changes between the two versions.</em>
+They have the same set of methods and fields.
+
+</p><p>Javassist provides a convenient class for reloading a class at runtime.
+For more information, see the API documentation of
+<code>javassist.tools.HotSwapper</code>.
+
+</p><p><br>
+
+
+
+
+
+
+
+
+	
+             		
+              	
+              	</div></div></div>
+              	
+              <footer>
+              <div class="container">
+              <div class="row footer-row">
+              <div class="col-md-4">
+             <!-- <img style="margin:10px;margin-top:30px;float:none;width:100%;" src="images/logo-orange.png"  alt="logo-orange">-->
+              </div>
+              <div class=" col-md-4"> 
+              	<h2 id="sec3">You need support?</h2>
+              	<dl>
+  <dt>Development and support</dt>
+  <dd>If you have any questions on how to use ByteBuddy, or have ideas for future development, please get in touch via the mailing list.
+</dd>
+</dl>
+
+<dl>
+  <dt>Bugs</dt>
+  <dd>If you find any issues, please file a bug after checking for duplicates.</dd>
+</dl>
+                
+
+
+
+              	</p>
+              	
+              	</div>
+              	
+              	<div class="col-md-3"> 
+              	<h2 class="hidden-xs hidden-sm" style="opacity:0;">.</h2>
+              	              	<dl>
+  <dt>Development and support</dt>
+  <dd>If you have any questions on how to use ByteBuddy, or have ideas for future development, please get in touch via the mailing list.
+</dd>
+</dl>
+              	
+              	
+              	</div>
+              	
+              	<div class="row">
+              		<div class="col-md-4"><img src="//placehold.it/300x300" class="img-responsive"></div>
+                  	<div class="col-md-4"><img src="//placehold.it/300x300" class="img-responsive"></div>
+                  	<div class="col-md-4"><img src="//placehold.it/300x300" class="img-responsive"></div>
+              	</div>
+              
+              	<hr style="opacity:0.2;">
+              
+              	
+              	
+      		</div> 
+  	</div>
+</div></div>
+</footer>
+
+
+        
+        <script type='text/javascript' src="http://code.jquery.com/jquery.min.js"></script>
+
+
+        <script type='text/javascript' src="js/bootstrap.min.js"></script>
+
+
+
+
+
+        
+        <!-- JavaScript jQuery code from Bootply.com editor -->
+        
+        <script type='text/javascript'>
+        
+        $(document).ready(function() {
+        
+            $('#sidebar').affix({
+
+});
+
+var $body   = $(document.body);
+var navHeight = $('.navbar').outerHeight(true) + 100;
+
+$body.scrollspy({
+	target: '#leftCol',
+	offset: navHeight
+});
+
+/* smooth scrolling sections */
+$('a[href*=#]:not([href=#])').click(function() {
+    if (location.pathname.replace(/^\//,'') == this.pathname.replace(/^\//,'') && location.hostname == this.hostname) {
+      var target = $(this.hash);
+      target = target.length ? target : $('[name=' + this.hash.slice(1) +']');
+      if (target.length) {
+        $('html,body').animate({
+          scrollTop: target.offset().top - 100
+        }, 1000);
+        return false;
+      }
+    }
+});
+        
+        });
+        
+        </script>
+        
+    </body>
+</html>
