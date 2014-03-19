@@ -95,9 +95,9 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         /**
          * Creates an iterator from which a value is pulled each time no annotation
          *
-         * @param typeDescription
-         * @param source
-         * @param target
+         * @param typeDescription A description of the type that is instrumented.
+         * @param source          The source method that is bound to the {@code target} method.
+         * @param target          Tge target method that is subject to be bound by the {@code source} method.
          * @return An iterator that supplies default annotations for
          */
         Iterator<T> makeIterator(TypeDescription typeDescription, MethodDescription source, MethodDescription target);
