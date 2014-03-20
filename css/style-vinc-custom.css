@@ -141,3 +141,20 @@ pre {border-color:#FFA408;}
 
 code  {background-color: #E3F2FF;
 color:#428BCA;}
+
+.social-icon {background-image:url("../images/social-icons.png");       height: 65px;
+    width: 65px;display:inline-block;}
+
+.social-icon:hover {opacity:0.5;}
+
+
+.twitter {background-position:  4px 0;}
+.google {background-position:  287px 0;}
+.stackover {background-position: 216px 0;}
+.github {    background-position: 643px 0;}
+.rss {    background-position: 358px 0;}
+.linkedin {    background-position: 430px 0;}
+.reedit {    background-position: 572px 0;}
+
+
+
