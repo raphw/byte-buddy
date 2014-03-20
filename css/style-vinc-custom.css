@@ -80,6 +80,7 @@ h4 {margin-top:40px;}
     font-size: 13pt;
     font-weight: 200;
     line-height: 14pt;
+
 }
 .nav > li.active > a {
     font-weight: bold;
@@ -91,6 +92,9 @@ h2 {
     margin-bottom: 15px;
     padding-bottom: 15px;
 }
+
+.blue {}
+
 body {
     background: -moz-linear-gradient(left center , #FFFFFF 10%, #F4F9FF 91%) repeat scroll 0 0 transparent;
 }
