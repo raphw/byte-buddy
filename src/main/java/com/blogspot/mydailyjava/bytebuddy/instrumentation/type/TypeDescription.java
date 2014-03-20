@@ -73,8 +73,7 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
         public boolean isVisibleTo(TypeDescription typeDescription) {
             return isPublic()
                     || typeDescription.equals(this)
-                    || (isPackagePrivate() && getPackageName().equals(typeDescription.getPackageName()))
-                    || (isProtected() && isAssignableTo(typeDescription));
+                    || (!isPrivate() && typeDescription.getPackageName().equals(getPackageName()));
         }
 
         @Override
@@ -461,14 +460,6 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
      * @return The package internalName of the type described by this instance.
      */
     String getPackageName();
-
-    /**
-     * Checks if this type is visible from another type.
-     *
-     * @param typeDescription The type which is checked to be visible from this type.
-     * @return {@code true} if this type is visible for {@code typeDescription}.
-     */
-    boolean isVisibleTo(TypeDescription typeDescription);
 
     /**
      * Returns the size of the type described by this instance.

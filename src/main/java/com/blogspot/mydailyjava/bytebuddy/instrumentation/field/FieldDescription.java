@@ -27,6 +27,14 @@ public interface FieldDescription extends ModifierReviewable, ByteCodeElement, D
         }
 
         @Override
+        public boolean isVisibleTo(TypeDescription typeDescription) {
+            return isPublic()
+                    || typeDescription.equals(getDeclaringType())
+                    || (isProtected() && getDeclaringType().isAssignableFrom(typeDescription))
+                    || (!isPrivate() && typeDescription.getPackageName().equals(getDeclaringType().getPackageName()));
+        }
+
+        @Override
         public boolean equals(Object other) {
             return other == this || other instanceof FieldDescription
                     && getName().equals(((FieldDescription) other).getName())

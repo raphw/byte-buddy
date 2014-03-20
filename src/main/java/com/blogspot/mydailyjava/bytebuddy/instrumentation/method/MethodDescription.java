@@ -48,6 +48,14 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         }
 
         @Override
+        public boolean isVisibleTo(TypeDescription typeDescription) {
+            return isPublic()
+                    || typeDescription.equals(getDeclaringType())
+                    || (isProtected() && getDeclaringType().isAssignableFrom(typeDescription))
+                    || (!isPrivate() && typeDescription.getPackageName().equals(getDeclaringType().getPackageName()));
+        }
+
+        @Override
         public boolean isOverridable() {
             return !(isConstructor() || isFinal() || isPrivate() || isStatic() || getDeclaringType().isFinal());
         }

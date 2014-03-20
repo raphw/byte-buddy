@@ -1,5 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation;
 
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
+
 /**
  * Implementations describe an element represented in byte code, i.e. a type, a field or a method or a constructor.
  */
@@ -25,4 +27,12 @@ public interface ByteCodeElement {
      * @return The descriptor of this byte code element.
      */
     String getDescriptor();
+
+    /**
+     * Checks if this element is visible from a given type.
+     *
+     * @param typeDescription The type which is checked for its access of this element.
+     * @return {@code true} if this element is visible for {@code typeDescription}.
+     */
+    boolean isVisibleTo(TypeDescription typeDescription);
 }
