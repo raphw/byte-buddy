@@ -1,7 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation;
 
 import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
-import com.blogspot.mydailyjava.bytebuddy.modifier.Visibility;
+import com.blogspot.mydailyjava.bytebuddy.modifier.MemberVisibility;
 import com.blogspot.mydailyjava.bytebuddy.utility.CallTraceable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -476,7 +476,7 @@ public class FieldAccessorTest<T extends CallTraceable,
 
     @Test
     public void testDefineFieldGetter() throws Exception {
-        testGetter(instanceGetter, FieldAccessor.ofField(FOO).defineAs(propertyType, Visibility.PUBLIC), true);
+        testGetter(instanceGetter, FieldAccessor.ofField(FOO).defineAs(propertyType, MemberVisibility.PUBLIC), true);
     }
 
     @Test
@@ -501,7 +501,7 @@ public class FieldAccessorTest<T extends CallTraceable,
 
     @Test
     public void testDefineFieldSetter() throws Exception {
-        testSetter(instanceSetter, FieldAccessor.ofField(FOO).defineAs(propertyType, Visibility.PUBLIC), true);
+        testSetter(instanceSetter, FieldAccessor.ofField(FOO).defineAs(propertyType, MemberVisibility.PUBLIC), true);
     }
 
     @SuppressWarnings("unchecked")

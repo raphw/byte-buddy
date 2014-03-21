@@ -24,7 +24,7 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
-import com.blogspot.mydailyjava.bytebuddy.modifier.Visibility;
+import com.blogspot.mydailyjava.bytebuddy.modifier.MemberVisibility;
 import org.objectweb.asm.MethodVisitor;
 
 import java.util.ArrayList;
@@ -322,7 +322,7 @@ public class MethodCallProxy implements AuxiliaryType {
                 .defineConstructorDescriptive(new ArrayList<TypeDescription>(parameterFields.values()))
                 .intercept(new ConstructorCall());
         for (Map.Entry<String, TypeDescription> field : parameterFields.entrySet()) {
-            builder = builder.defineField(field.getKey(), field.getValue(), Visibility.PRIVATE);
+            builder = builder.defineField(field.getKey(), field.getValue(), MemberVisibility.PRIVATE);
         }
         return builder.make();
     }

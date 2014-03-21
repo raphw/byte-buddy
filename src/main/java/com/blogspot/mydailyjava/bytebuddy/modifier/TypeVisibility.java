@@ -4,18 +4,16 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.ModifierContributor;
 import org.objectweb.asm.Opcodes;
 
 /**
- * Describes a type, fields or methods visibility.
+ * Describes a type's visibility.
  */
-public enum Visibility implements ModifierContributor.ForType, ModifierContributor.ForMethod, ModifierContributor.ForField {
+public enum TypeVisibility implements ModifierContributor.ForType {
 
     PUBLIC(Opcodes.ACC_PUBLIC),
-    PACKAGE_PRIVATE(EMPTY_MASK),
-    PROTECTED(Opcodes.ACC_PROTECTED),
-    PRIVATE(Opcodes.ACC_PRIVATE);
+    PACKAGE_PRIVATE(EMPTY_MASK);
 
     private final int mask;
 
-    private Visibility(int mask) {
+    private TypeVisibility(int mask) {
         this.mask = mask;
     }
 

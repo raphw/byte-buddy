@@ -4,8 +4,8 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.ModifierContributor;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.modifier.FieldManifestation;
+import com.blogspot.mydailyjava.bytebuddy.modifier.MemberVisibility;
 import com.blogspot.mydailyjava.bytebuddy.modifier.Ownership;
-import com.blogspot.mydailyjava.bytebuddy.modifier.Visibility;
 import org.junit.Test;
 import org.mockito.asm.Opcodes;
 
@@ -109,7 +109,7 @@ public class ByteBuddyCommonsTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testIsNotEmptyThrowsException() throws Exception {
-        isNotEmpty(Arrays.asList(), FOO);
+        isNotEmpty(Arrays.<String>asList(), FOO);
     }
 
     @Test
@@ -117,7 +117,7 @@ public class ByteBuddyCommonsTest {
         assertThat(resolveModifierContributors(ByteBuddyCommons.FIELD_MODIFIER_MASK,
                 FieldManifestation.FINAL,
                 Ownership.STATIC,
-                Visibility.PRIVATE), is(Opcodes.ACC_FINAL | Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE));
+                MemberVisibility.PRIVATE), is(Opcodes.ACC_FINAL | Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE));
     }
 
     @Test(expected = IllegalArgumentException.class)

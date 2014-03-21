@@ -6,7 +6,7 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.ModifierContributor;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodList;
 import com.blogspot.mydailyjava.bytebuddy.modifier.SyntheticState;
-import com.blogspot.mydailyjava.bytebuddy.modifier.Visibility;
+import com.blogspot.mydailyjava.bytebuddy.modifier.TypeVisibility;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,7 +25,7 @@ public interface AuxiliaryType {
      * The default type access of an auxiliary type.
      */
     static final List<ModifierContributor.ForType> DEFAULT_TYPE_MODIFIER = Collections.unmodifiableList(
-            Arrays.<ModifierContributor.ForType>asList(Visibility.PACKAGE_PRIVATE, SyntheticState.SYNTHETIC));
+            Arrays.<ModifierContributor.ForType>asList(TypeVisibility.PACKAGE_PRIVATE, SyntheticState.SYNTHETIC));
 
 
     /**

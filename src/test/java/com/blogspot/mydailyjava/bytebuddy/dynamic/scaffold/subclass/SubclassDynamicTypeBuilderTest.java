@@ -15,7 +15,7 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.ByteCo
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
-import com.blogspot.mydailyjava.bytebuddy.modifier.Visibility;
+import com.blogspot.mydailyjava.bytebuddy.modifier.MemberVisibility;
 import com.blogspot.mydailyjava.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -121,7 +121,7 @@ public class SubclassDynamicTypeBuilderTest {
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ConstructorStrategy.Default.IMITATE_SUPER_TYPE)
-                .defineField(BAR, long.class, Visibility.PUBLIC)
+                .defineField(BAR, long.class, MemberVisibility.PUBLIC)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -158,7 +158,7 @@ public class SubclassDynamicTypeBuilderTest {
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ConstructorStrategy.Default.IMITATE_SUPER_TYPE)
-                .defineMethod(BAR, int.class, Arrays.<Class<?>>asList(long.class, Object.class), Visibility.PUBLIC)
+                .defineMethod(BAR, int.class, Arrays.<Class<?>>asList(long.class, Object.class), MemberVisibility.PUBLIC)
                 .intercept(instrumentation)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
@@ -202,7 +202,7 @@ public class SubclassDynamicTypeBuilderTest {
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ConstructorStrategy.Default.IMITATE_SUPER_TYPE)
-                .defineMethod(BAR, int.class, Arrays.<Class<?>>asList(long.class, Object.class), Visibility.PUBLIC)
+                .defineMethod(BAR, int.class, Arrays.<Class<?>>asList(long.class, Object.class), MemberVisibility.PUBLIC)
                 .withoutCode()
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)

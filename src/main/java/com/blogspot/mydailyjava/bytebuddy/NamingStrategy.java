@@ -1,9 +1,9 @@
 package com.blogspot.mydailyjava.bytebuddy;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
+import com.blogspot.mydailyjava.bytebuddy.modifier.MemberVisibility;
 import com.blogspot.mydailyjava.bytebuddy.modifier.SyntheticState;
 import com.blogspot.mydailyjava.bytebuddy.modifier.TypeManifestation;
-import com.blogspot.mydailyjava.bytebuddy.modifier.Visibility;
 
 import java.util.Collection;
 import java.util.Random;
@@ -40,7 +40,7 @@ public interface NamingStrategy {
          *
          * @return The visibility of this unnamed type.
          */
-        Visibility getVisibility();
+        MemberVisibility getVisibility();
 
         /**
          * Returns the manifestation of this unnamed type.

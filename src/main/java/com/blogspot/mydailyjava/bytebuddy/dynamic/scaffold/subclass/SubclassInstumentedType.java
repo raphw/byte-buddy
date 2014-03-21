@@ -8,9 +8,9 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescripti
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
+import com.blogspot.mydailyjava.bytebuddy.modifier.MemberVisibility;
 import com.blogspot.mydailyjava.bytebuddy.modifier.SyntheticState;
 import com.blogspot.mydailyjava.bytebuddy.modifier.TypeManifestation;
-import com.blogspot.mydailyjava.bytebuddy.modifier.Visibility;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Modifier;
@@ -176,15 +176,15 @@ public class SubclassInstumentedType
     }
 
     @Override
-    public Visibility getVisibility() {
+    public MemberVisibility getVisibility() {
         if ((modifiers & Modifier.PUBLIC) != 0) {
-            return Visibility.PUBLIC;
+            return MemberVisibility.PUBLIC;
         } else if ((modifiers & Modifier.PROTECTED) != 0) {
-            return Visibility.PROTECTED;
+            return MemberVisibility.PROTECTED;
         } else if ((modifiers & Modifier.PRIVATE) != 0) {
-            return Visibility.PROTECTED;
+            return MemberVisibility.PROTECTED;
         } else {
-            return Visibility.PACKAGE_PRIVATE;
+            return MemberVisibility.PACKAGE_PRIVATE;
         }
     }
 
