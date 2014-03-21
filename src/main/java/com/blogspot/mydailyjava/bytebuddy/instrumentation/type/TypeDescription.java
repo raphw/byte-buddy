@@ -39,6 +39,11 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
             public boolean matches(MethodDescription methodDescription) {
                 return foundSignatures.add(methodDescription.getUniqueSignature());
             }
+
+            @Override
+            public String toString() {
+                return "UniqueSignatureFilter{foundSignatures=" + foundSignatures + '}';
+            }
         }
 
         @Override

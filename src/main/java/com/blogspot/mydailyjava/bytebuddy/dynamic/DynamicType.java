@@ -75,10 +75,7 @@ public interface DynamicType {
 
                     @Override
                     public String toString() {
-                        return "SignatureMatcher{" +
-                                "returnType=" + returnType +
-                                ", parameterTypes=" + parameterTypes +
-                                '}';
+                        return "hasSignature(returnType=" + returnType + ", parameterTypes=" + parameterTypes + ')';
                     }
                 }
 

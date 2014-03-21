@@ -62,7 +62,7 @@ public interface JunctionMethodMatcher extends MethodMatcher {
 
         @Override
         public String toString() {
-            return "MethodMatcher.Conjunction{" + left + " and " + right + '}';
+            return "(" + left + " and " + right + ')';
         }
     }
 
@@ -104,7 +104,7 @@ public interface JunctionMethodMatcher extends MethodMatcher {
 
         @Override
         public String toString() {
-            return "MethodMatcher.Disjunction{" + left + " or " + right + '}';
+            return "(" + left + " or " + right + ')';
         }
     }
 

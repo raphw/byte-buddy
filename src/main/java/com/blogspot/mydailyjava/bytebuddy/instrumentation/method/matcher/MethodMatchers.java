@@ -23,15 +23,25 @@ public final class MethodMatchers {
 
     private static enum MatchMode {
 
-        EQUALS_FULLY,
-        EQUALS_FULLY_IGNORE_CASE,
-        STARTS_WITH,
-        STARTS_WITH_IGNORE_CASE,
-        ENDS_WITH,
-        ENDS_WITH_IGNORE_CASE,
-        CONTAINS,
-        CONTAINS_IGNORE_CASE,
-        MATCHES;
+        EQUALS_FULLY("named"),
+        EQUALS_FULLY_IGNORE_CASE("namedIgnoreCase"),
+        STARTS_WITH("startsWith"),
+        STARTS_WITH_IGNORE_CASE("startsWithIgnoreCase"),
+        ENDS_WITH("endsWith"),
+        ENDS_WITH_IGNORE_CASE("endsWithIgnoreCase"),
+        CONTAINS("contains"),
+        CONTAINS_IGNORE_CASE("containsIgnoreCase"),
+        MATCHES("matches");
+
+        private final String description;
+
+        private MatchMode(String description) {
+            this.description = description;
+        }
+
+        private String getDescription() {
+            return description;
+        }
 
         private boolean matches(String left, String right) {
             switch (this) {
@@ -61,34 +71,34 @@ public final class MethodMatchers {
 
     private static class MethodNameMethodMatcher extends JunctionMethodMatcher.AbstractBase {
 
-        private final String methodName;
+        private final String name;
         private final MatchMode matchMode;
 
-        public MethodNameMethodMatcher(String methodName, MatchMode matchMode) {
-            this.methodName = methodName;
+        public MethodNameMethodMatcher(String name, MatchMode matchMode) {
+            this.name = name;
             this.matchMode = matchMode;
         }
 
         @Override
         public boolean matches(MethodDescription methodDescription) {
-            return matchMode.matches(methodName, methodDescription.getName());
+            return matchMode.matches(name, methodDescription.getName());
         }
 
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
                     && matchMode == ((MethodNameMethodMatcher) other).matchMode
-                    && methodName.equals(((MethodNameMethodMatcher) other).methodName);
+                    && name.equals(((MethodNameMethodMatcher) other).name);
         }
 
         @Override
         public int hashCode() {
-            return 31 * methodName.hashCode() + matchMode.hashCode();
+            return 31 * name.hashCode() + matchMode.hashCode();
         }
 
         @Override
         public String toString() {
-            return "MethodNameMethodMatcher{methodName='" + methodName + "\', matchMode=" + matchMode + '}';
+            return matchMode.getDescription() + '(' + name + ')';
         }
     }
 
@@ -113,7 +123,7 @@ public final class MethodMatchers {
 
         @Override
         public String toString() {
-            return "ModifierMethodMatcher{modifiers=" + modifiers + '}';
+            return "modifiers(" + modifiers + ')';
         }
 
         @Override
@@ -152,7 +162,7 @@ public final class MethodMatchers {
 
         @Override
         public String toString() {
-            return "ParameterTypeMatcher{parameterType=" + parameterType + '}';
+            return "parameters(" + parameterType + ')';
         }
     }
 
@@ -182,7 +192,7 @@ public final class MethodMatchers {
 
         @Override
         public String toString() {
-            return "ParameterCountMatcher{numberOfParameters=" + numberOfParameters + '}';
+            return "parameterCount(" + numberOfParameters + ')';
         }
     }
 
@@ -212,7 +222,7 @@ public final class MethodMatchers {
 
         @Override
         public String toString() {
-            return "ReturnTypeMatcher{returnType=" + returnType + '}';
+            return "returns(" + returnType + ')';
         }
     }
 
@@ -247,7 +257,7 @@ public final class MethodMatchers {
 
         @Override
         public String toString() {
-            return "ExceptionMethodMatcher{exceptionType=" + exceptionType + '}';
+            return "canThrow(" + exceptionType + ')';
         }
     }
 
@@ -277,7 +287,7 @@ public final class MethodMatchers {
 
         @Override
         public String toString() {
-            return "MethodDescriptionMatcher{methodDescription=" + methodDescription + '}';
+            return "is(" + methodDescription + ')';
         }
     }
 
@@ -307,7 +317,7 @@ public final class MethodMatchers {
 
         @Override
         public String toString() {
-            return "MethodEqualityMethodMatcher{method=" + method + '}';
+            return "is(" + method + ')';
         }
     }
 
@@ -337,7 +347,7 @@ public final class MethodMatchers {
 
         @Override
         public String toString() {
-            return "ConstructorEqualityMethodMatcher{constructor=" + constructor + '}';
+            return "is(" + constructor + ')';
         }
     }
 
@@ -369,7 +379,7 @@ public final class MethodMatchers {
 
         @Override
         public String toString() {
-            return "MethodSignatureMethodMatcher{methodDescription=" + methodDescription + '}';
+            return "signatureOf(" + methodDescription + ')';
         }
     }
 
@@ -387,7 +397,7 @@ public final class MethodMatchers {
 
         @Override
         public String toString() {
-            return "IsMethodMethodMatcher";
+            return "isMethod()";
         }
 
         @Override
@@ -410,7 +420,7 @@ public final class MethodMatchers {
 
         @Override
         public String toString() {
-            return "OverridableMethodMatcher";
+            return "isOverridable()";
         }
 
         @Override
@@ -437,7 +447,7 @@ public final class MethodMatchers {
 
         @Override
         public String toString() {
-            return "DefaultFinalizeMethodMatcher";
+            return "isDefaultFinalizer()";
         }
 
         @Override
@@ -472,7 +482,7 @@ public final class MethodMatchers {
 
         @Override
         public String toString() {
-            return "PackageNameMethodMatcher{packageName='" + packageName + '\'' + '}';
+            return "inPackage(" + packageName + '\'' + ')';
         }
     }
 
@@ -506,7 +516,7 @@ public final class MethodMatchers {
 
         @Override
         public String toString() {
-            return "DeclaringTypeMethodMatcher{declaringType=" + declaringType + '}';
+            return "declaredBy(" + declaringType + ')';
         }
     }
 
@@ -536,7 +546,7 @@ public final class MethodMatchers {
 
         @Override
         public String toString() {
-            return "BooleanMethodMatcher{nameMatches=" + matches + '}';
+            return Boolean.toString(matches);
         }
     }
 
@@ -566,7 +576,7 @@ public final class MethodMatchers {
 
         @Override
         public String toString() {
-            return "NegatingMethodMatcher{methodMatcher=" + methodMatcher + '}';
+            return "not(" + methodMatcher + ')';
         }
     }
 

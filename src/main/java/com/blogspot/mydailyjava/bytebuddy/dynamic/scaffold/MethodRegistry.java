@@ -128,6 +128,15 @@ public interface MethodRegistry {
                 public boolean matches(MethodDescription methodDescription) {
                     return methodMatcher.matches(methodDescription);
                 }
+
+                @Override
+                public String toString() {
+                    return "MethodRegistry.Compiled.Entry{" +
+                            "methodMatcher=" + methodMatcher +
+                            ", byteCodeAppender=" + byteCodeAppender +
+                            ", attributeAppender=" + attributeAppender +
+                            '}';
+                }
             }
 
             private final InstrumentedType instrumentedType;
@@ -189,6 +198,22 @@ public interface MethodRegistry {
             @Override
             public MethodMatcher manifest(TypeDescription typeDescription) {
                 return this;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && matchedMethods.equals(((ListDifferenceMethodMatcher) other).matchedMethods);
+            }
+
+            @Override
+            public int hashCode() {
+                return matchedMethods.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "oneOf(" + matchedMethods + ')';
             }
         }
 
@@ -265,7 +290,8 @@ public interface MethodRegistry {
                 compiledEntries.add(AT_BEGINNING,
                         new Compiled.Entry(entry.latentMethodMatcher.manifest(instrumentedType),
                                 byteCodeAppenders.get(entry.instrumentation),
-                                entry.attributeAppenderFactory.make(instrumentedType)));
+                                entry.attributeAppenderFactory.make(instrumentedType))
+                );
             }
             return new ArrayList<Compiled.Entry>(compiledEntries);
         }
