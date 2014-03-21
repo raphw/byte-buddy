@@ -35,7 +35,7 @@ public abstract class FieldAccessor {
 
     public static interface FieldDefinable extends OwnerTypeLocatable {
 
-        AssignerConfigurable define(Class<?> type, ModifierContributor.ForField... modifier);
+        AssignerConfigurable defineAs(Class<?> type, ModifierContributor.ForField... modifier);
     }
 
     public static FieldDefinable ofField(String name) {
@@ -203,7 +203,7 @@ public abstract class FieldAccessor {
         }
 
         @Override
-        public AssignerConfigurable define(Class<?> type, ModifierContributor.ForField... modifier) {
+        public AssignerConfigurable defineAs(Class<?> type, ModifierContributor.ForField... modifier) {
             return new ForNamedField(fieldName,
                     new PreparationHandler.FieldDefiner(fieldName, type, modifier),
                     FieldLocator.ForInstrumentedType.INSTANCE,
@@ -213,7 +213,11 @@ public abstract class FieldAccessor {
 
         @Override
         public AssignerConfigurable in(TypeDescription typeDescription) {
-            return null;
+            return new ForNamedField(fieldName,
+                    preparationHandler,
+                    new FieldLocator.ForGivenType(typeDescription),
+                    assigner,
+                    considerRuntimeType);
         }
 
         @Override
@@ -457,6 +461,9 @@ public abstract class FieldAccessor {
                                                 Instrumentation.Context instrumentationContext,
                                                 FieldDescription fieldDescription,
                                                 MethodDescription methodDescription) {
+        if (fieldDescription.isFinal()) {
+            throw new IllegalArgumentException("Cannot apply setter on final field " + fieldDescription);
+        }
         return apply(methodVisitor,
                 instrumentationContext,
                 fieldDescription,
