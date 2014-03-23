@@ -11,7 +11,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
 
-public class MethodDescriptionForMethodTest {
+public class MethodDescriptionForLoadedMethodTest {
 
     private static final String HASH_CODE = "hashCode";
     private static final String INT_VALUE = "intValue";
@@ -25,10 +25,10 @@ public class MethodDescriptionForMethodTest {
 
     @Before
     public void setUp() throws Exception {
-        objectHashCode = new MethodDescription.ForMethod(Object.class.getDeclaredMethod(HASH_CODE));
-        integerIntValue = new MethodDescription.ForMethod(Integer.class.getDeclaredMethod(INT_VALUE));
-        doubleDoubleValue = new MethodDescription.ForMethod(Double.class.getDeclaredMethod(LONG_BITS_TO_DOUBLE, long.class));
-        objectWait = new MethodDescription.ForMethod(Object.class.getDeclaredMethod(WAIT, long.class, int.class));
+        objectHashCode = new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod(HASH_CODE));
+        integerIntValue = new MethodDescription.ForLoadedMethod(Integer.class.getDeclaredMethod(INT_VALUE));
+        doubleDoubleValue = new MethodDescription.ForLoadedMethod(Double.class.getDeclaredMethod(LONG_BITS_TO_DOUBLE, long.class));
+        objectWait = new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod(WAIT, long.class, int.class));
     }
 
     @Test

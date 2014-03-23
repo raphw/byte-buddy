@@ -146,6 +146,22 @@ public class MethodMatchersTest {
         }
     }
 
+    @SuppressWarnings("unused")
+    private static class TestBridge<T extends Number> {
+
+        public T foo(T t) {
+            return null;
+        }
+
+        public Integer foo(Integer s) {
+            return null;
+        }
+
+        public Integer foo(String s) {
+            return null;
+        }
+    }
+
     private MethodDescription testClassBase$foo;
     private MethodDescription testClassBase$bar;
     private MethodDescription testClassBase$baz;
@@ -180,41 +196,49 @@ public class MethodMatchersTest {
     private MethodDescription testModifier$constructor;
     private MethodDescription testClassBase$constructor;
 
+    private MethodDescription testBridge$bridge;
+    private MethodDescription testBridge$bridgeLegalTarget;
+    private MethodDescription testBridge$bridgeIllegalTarget;
+
     @Before
     public void setUp() throws Exception {
-        testClassBase$foo = new MethodDescription.ForMethod(TestClassBase.class.getDeclaredMethod(FOO_METHOD_NAME));
-        testClassBase$bar = new MethodDescription.ForMethod(TestClassBase.class.getDeclaredMethod(BAR_METHOD_NAME, Object.class));
-        testClassBase$baz = new MethodDescription.ForMethod(TestClassBase.class.getDeclaredMethod(BAZ_METHOD_NAME));
-        testClassBase$qux = new MethodDescription.ForMethod(TestClassBase.class.getDeclaredMethod(QUX_METHOD_NAME));
-        testClassBase$fin = new MethodDescription.ForMethod(TestClassBase.class.getDeclaredMethod(FIN_METHOD_NAME + "1"));
-        testClassBase$stat = new MethodDescription.ForMethod(TestClassBase.class.getDeclaredMethod(STAT_METHOD_NAME));
+        testClassBase$foo = new MethodDescription.ForLoadedMethod(TestClassBase.class.getDeclaredMethod(FOO_METHOD_NAME));
+        testClassBase$bar = new MethodDescription.ForLoadedMethod(TestClassBase.class.getDeclaredMethod(BAR_METHOD_NAME, Object.class));
+        testClassBase$baz = new MethodDescription.ForLoadedMethod(TestClassBase.class.getDeclaredMethod(BAZ_METHOD_NAME));
+        testClassBase$qux = new MethodDescription.ForLoadedMethod(TestClassBase.class.getDeclaredMethod(QUX_METHOD_NAME));
+        testClassBase$fin = new MethodDescription.ForLoadedMethod(TestClassBase.class.getDeclaredMethod(FIN_METHOD_NAME + "1"));
+        testClassBase$stat = new MethodDescription.ForLoadedMethod(TestClassBase.class.getDeclaredMethod(STAT_METHOD_NAME));
 
-        testClassBase$compareTo$synth = new MethodDescription.ForMethod(TestClassBase.class.getDeclaredMethod(GENERIC_INTERFACE_METHOD_NAME, Object.class));
-        testClassBase$compareTo = new MethodDescription.ForMethod(TestClassBase.class.getDeclaredMethod(GENERIC_INTERFACE_METHOD_NAME, String.class));
+        testClassBase$compareTo$synth = new MethodDescription.ForLoadedMethod(TestClassBase.class.getDeclaredMethod(GENERIC_INTERFACE_METHOD_NAME, Object.class));
+        testClassBase$compareTo = new MethodDescription.ForLoadedMethod(TestClassBase.class.getDeclaredMethod(GENERIC_INTERFACE_METHOD_NAME, String.class));
 
-        testClassExtension$foo = new MethodDescription.ForMethod(TestClassExtension.class.getDeclaredMethod(FOO_METHOD_NAME));
-        testClassExtension$bar = new MethodDescription.ForMethod(TestClassExtension.class.getDeclaredMethod(BAR_METHOD_NAME, Object.class));
-        testClassExtension$baz = new MethodDescription.ForMethod(TestClassExtension.class.getDeclaredMethod(BAZ_METHOD_NAME));
-        testClassExtension$qux = new MethodDescription.ForMethod(TestClassExtension.class.getDeclaredMethod(QUX_METHOD_NAME));
-        testClassExtension$fin = new MethodDescription.ForMethod(TestClassExtension.class.getDeclaredMethod(FIN_METHOD_NAME + "2"));
-        testClassExtension$stat = new MethodDescription.ForMethod(TestClassExtension.class.getDeclaredMethod(STAT_METHOD_NAME));
+        testClassExtension$foo = new MethodDescription.ForLoadedMethod(TestClassExtension.class.getDeclaredMethod(FOO_METHOD_NAME));
+        testClassExtension$bar = new MethodDescription.ForLoadedMethod(TestClassExtension.class.getDeclaredMethod(BAR_METHOD_NAME, Object.class));
+        testClassExtension$baz = new MethodDescription.ForLoadedMethod(TestClassExtension.class.getDeclaredMethod(BAZ_METHOD_NAME));
+        testClassExtension$qux = new MethodDescription.ForLoadedMethod(TestClassExtension.class.getDeclaredMethod(QUX_METHOD_NAME));
+        testClassExtension$fin = new MethodDescription.ForLoadedMethod(TestClassExtension.class.getDeclaredMethod(FIN_METHOD_NAME + "2"));
+        testClassExtension$stat = new MethodDescription.ForLoadedMethod(TestClassExtension.class.getDeclaredMethod(STAT_METHOD_NAME));
 
-        object$hashCode = new MethodDescription.ForMethod(Object.class.getDeclaredMethod(HASH_CODE_METHOD_NAME));
-        object$finalize = new MethodDescription.ForMethod(Object.class.getDeclaredMethod(FINALIZE_METHOD_NAME));
-        testModifier$finalize = new MethodDescription.ForMethod(TestModifier.class.getDeclaredMethod(FINALIZE_METHOD_NAME));
+        object$hashCode = new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod(HASH_CODE_METHOD_NAME));
+        object$finalize = new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod(FINALIZE_METHOD_NAME));
+        testModifier$finalize = new MethodDescription.ForLoadedMethod(TestModifier.class.getDeclaredMethod(FINALIZE_METHOD_NAME));
 
-        testClassBase$foobar = new MethodDescription.ForMethod(TestClassBase.class.getDeclaredMethod(FOOBAR_METHOD_NAME));
-        testClassExtension$fooBar = new MethodDescription.ForMethod(TestClassExtension.class.getDeclaredMethod(FOOBAR_METHOD_NAME));
+        testClassBase$foobar = new MethodDescription.ForLoadedMethod(TestClassBase.class.getDeclaredMethod(FOOBAR_METHOD_NAME));
+        testClassExtension$fooBar = new MethodDescription.ForLoadedMethod(TestClassExtension.class.getDeclaredMethod(FOOBAR_METHOD_NAME));
 
-        testBean$getter = new MethodDescription.ForMethod(TestBean.class.getDeclaredMethod(GET_PROPERTY_METHOD_NAME));
-        testBean$setter = new MethodDescription.ForMethod(TestBean.class.getDeclaredMethod(SET_PROPERTY_METHOD_NAME, String.class));
+        testBean$getter = new MethodDescription.ForLoadedMethod(TestBean.class.getDeclaredMethod(GET_PROPERTY_METHOD_NAME));
+        testBean$setter = new MethodDescription.ForLoadedMethod(TestBean.class.getDeclaredMethod(SET_PROPERTY_METHOD_NAME, String.class));
 
-        testModifier$sync = new MethodDescription.ForMethod(TestModifier.class.getDeclaredMethod(SYNC_METHOD_NAME));
-        testModifier$varargs = new MethodDescription.ForMethod(TestModifier.class.getDeclaredMethod(VARARGS_METHOD_NAME, Object[].class));
-        testModifier$strict = new MethodDescription.ForMethod(TestModifier.class.getDeclaredMethod(STRICT_METHOD_NAME));
+        testModifier$sync = new MethodDescription.ForLoadedMethod(TestModifier.class.getDeclaredMethod(SYNC_METHOD_NAME));
+        testModifier$varargs = new MethodDescription.ForLoadedMethod(TestModifier.class.getDeclaredMethod(VARARGS_METHOD_NAME, Object[].class));
+        testModifier$strict = new MethodDescription.ForLoadedMethod(TestModifier.class.getDeclaredMethod(STRICT_METHOD_NAME));
 
-        testModifier$constructor = new MethodDescription.ForConstructor(TestModifier.class.getDeclaredConstructor());
-        testClassBase$constructor = new MethodDescription.ForConstructor(TestClassBase.class.getDeclaredConstructor());
+        testModifier$constructor = new MethodDescription.ForLoadedConstructor(TestModifier.class.getDeclaredConstructor());
+        testClassBase$constructor = new MethodDescription.ForLoadedConstructor(TestClassBase.class.getDeclaredConstructor());
+
+        testBridge$bridge = new MethodDescription.ForLoadedMethod(TestBridge.class.getDeclaredMethod(FOO_METHOD_NAME, Number.class));
+        testBridge$bridgeLegalTarget = new MethodDescription.ForLoadedMethod(TestBridge.class.getDeclaredMethod(FOO_METHOD_NAME, Integer.class));
+        testBridge$bridgeIllegalTarget = new MethodDescription.ForLoadedMethod(TestBridge.class.getDeclaredMethod(FOO_METHOD_NAME, String.class));
     }
 
     @Test
@@ -402,19 +426,71 @@ public class MethodMatchersTest {
         assertThat(MethodMatchers.returns(Object.class).matches(testClassBase$foo), is(false));
         assertThat(MethodMatchers.returns(Object.class).matches(testClassBase$bar), is(true));
         assertThat(MethodMatchers.returns(String.class).matches(testClassBase$bar), is(false));
-        assertThat(MethodMatchers.takesArguments(Object.class).matches(testClassExtension$foo), is(false));
-        assertThat(MethodMatchers.takesArguments(Object.class).matches(testClassExtension$bar), is(true));
-        assertThat(MethodMatchers.takesArguments(String.class).matches(testClassExtension$bar), is(false));
+        assertThat(MethodMatchers.returns(Object.class).matches(testClassExtension$foo), is(false));
+        assertThat(MethodMatchers.returns(Object.class).matches(testClassExtension$bar), is(true));
+        assertThat(MethodMatchers.returns(String.class).matches(testClassExtension$bar), is(false));
     }
 
     @Test
-    public void testTakesArgumentsTypes() throws Exception {
+    public void testReturnsSubtypeOf() throws Exception {
+        assertThat(MethodMatchers.returnsSubtypeOf(Object.class).matches(testClassBase$foo), is(false));
+        assertThat(MethodMatchers.returnsSubtypeOf(Object.class).matches(testClassBase$bar), is(true));
+        assertThat(MethodMatchers.returnsSubtypeOf(String.class).matches(testClassBase$bar), is(false));
+        assertThat(MethodMatchers.returnsSubtypeOf(Object.class).matches(testClassExtension$foo), is(false));
+        assertThat(MethodMatchers.returnsSubtypeOf(Object.class).matches(testClassExtension$bar), is(true));
+        assertThat(MethodMatchers.returnsSubtypeOf(String.class).matches(testClassExtension$bar), is(false));
+        assertThat(MethodMatchers.returnsSubtypeOf(Object.class).matches(testClassExtension$fooBar), is(true));
+        assertThat(MethodMatchers.returnsSubtypeOf(String.class).matches(testClassExtension$fooBar), is(true));
+        assertThat(MethodMatchers.returnsSubtypeOf(Integer.class).matches(testClassExtension$fooBar), is(false));
+    }
+
+    @Test
+    public void testReturnsSuperTypeOf() throws Exception {
+        assertThat(MethodMatchers.returnsSupertypeOf(Object.class).matches(testClassBase$foo), is(false));
+        assertThat(MethodMatchers.returnsSupertypeOf(Object.class).matches(testClassBase$bar), is(true));
+        assertThat(MethodMatchers.returnsSupertypeOf(String.class).matches(testClassBase$bar), is(true));
+        assertThat(MethodMatchers.returnsSupertypeOf(Object.class).matches(testClassExtension$foo), is(false));
+        assertThat(MethodMatchers.returnsSupertypeOf(Object.class).matches(testClassExtension$bar), is(true));
+        assertThat(MethodMatchers.returnsSupertypeOf(String.class).matches(testClassExtension$bar), is(true));
+        assertThat(MethodMatchers.returnsSupertypeOf(Object.class).matches(testClassExtension$fooBar), is(false));
+        assertThat(MethodMatchers.returnsSupertypeOf(String.class).matches(testClassExtension$fooBar), is(true));
+        assertThat(MethodMatchers.returnsSupertypeOf(Integer.class).matches(testClassExtension$fooBar), is(false));
+    }
+
+    @Test
+    public void testTakesArguments() throws Exception {
         assertThat(MethodMatchers.takesArguments(Object.class).matches(testClassBase$foo), is(false));
         assertThat(MethodMatchers.takesArguments(Object.class).matches(testClassBase$bar), is(true));
         assertThat(MethodMatchers.takesArguments(String.class).matches(testClassBase$bar), is(false));
         assertThat(MethodMatchers.takesArguments(Object.class).matches(testClassExtension$foo), is(false));
         assertThat(MethodMatchers.takesArguments(Object.class).matches(testClassExtension$bar), is(true));
         assertThat(MethodMatchers.takesArguments(String.class).matches(testClassExtension$bar), is(false));
+    }
+
+    @Test
+    public void testTakesArgumentsAsSubtypes() throws Exception {
+        assertThat(MethodMatchers.takesArgumentsAsSubtypesOf(Object.class).matches(testClassBase$foo), is(false));
+        assertThat(MethodMatchers.takesArgumentsAsSubtypesOf(Object.class).matches(testClassBase$bar), is(true));
+        assertThat(MethodMatchers.takesArgumentsAsSubtypesOf(String.class).matches(testClassBase$bar), is(false));
+        assertThat(MethodMatchers.takesArgumentsAsSubtypesOf(Object.class).matches(testClassExtension$foo), is(false));
+        assertThat(MethodMatchers.takesArgumentsAsSubtypesOf(Object.class).matches(testClassExtension$bar), is(true));
+        assertThat(MethodMatchers.takesArgumentsAsSubtypesOf(String.class).matches(testClassExtension$bar), is(false));
+        assertThat(MethodMatchers.takesArgumentsAsSubtypesOf(Object.class).matches(testBean$setter), is(true));
+        assertThat(MethodMatchers.takesArgumentsAsSubtypesOf(String.class).matches(testBean$setter), is(true));
+        assertThat(MethodMatchers.takesArgumentsAsSubtypesOf(Integer.class).matches(testBean$setter), is(false));
+    }
+
+    @Test
+    public void testTakesArgumentsAsSuperTypes() throws Exception {
+        assertThat(MethodMatchers.takesArgumentsAsSuperTypesOf(Object.class).matches(testClassBase$foo), is(false));
+        assertThat(MethodMatchers.takesArgumentsAsSuperTypesOf(Object.class).matches(testClassBase$bar), is(true));
+        assertThat(MethodMatchers.takesArgumentsAsSuperTypesOf(String.class).matches(testClassBase$bar), is(true));
+        assertThat(MethodMatchers.takesArgumentsAsSuperTypesOf(Object.class).matches(testClassExtension$foo), is(false));
+        assertThat(MethodMatchers.takesArgumentsAsSuperTypesOf(Object.class).matches(testClassExtension$bar), is(true));
+        assertThat(MethodMatchers.takesArgumentsAsSuperTypesOf(String.class).matches(testClassExtension$bar), is(true));
+        assertThat(MethodMatchers.takesArgumentsAsSuperTypesOf(Object.class).matches(testBean$setter), is(false));
+        assertThat(MethodMatchers.takesArgumentsAsSuperTypesOf(String.class).matches(testBean$setter), is(true));
+        assertThat(MethodMatchers.takesArgumentsAsSuperTypesOf(Integer.class).matches(testBean$setter), is(false));
     }
 
     @Test
@@ -522,6 +598,18 @@ public class MethodMatchersTest {
         assertThat(MethodMatchers.hasSameJavaCompilerSignatureAs(object$finalize).matches(testModifier$finalize), is(true));
         assertThat(MethodMatchers.hasSameJavaCompilerSignatureAs(testClassBase$foobar).matches(testClassExtension$fooBar), is(true));
         assertThat(MethodMatchers.hasSameJavaCompilerSignatureAs(object$finalize).matches(testClassBase$foo), is(false));
+    }
+
+    @Test
+    public void testIsBridgeMethodCompatibleTo() throws Exception {
+        assertThat(MethodMatchers.isBridgeMethodCompatibleTo(testClassBase$foobar).matches(testClassExtension$fooBar), is(true));
+        assertThat(MethodMatchers.isBridgeMethodCompatibleTo(testClassExtension$fooBar).matches(testClassExtension$fooBar), is(true));
+        assertThat(MethodMatchers.isBridgeMethodCompatibleTo(testBridge$bridge).matches(testBridge$bridge), is(true));
+        assertThat(MethodMatchers.isBridgeMethodCompatibleTo(testBridge$bridge).matches(testBridge$bridgeLegalTarget), is(true));
+        assertThat(MethodMatchers.isBridgeMethodCompatibleTo(testBridge$bridge).matches(testBridge$bridgeIllegalTarget), is(false));
+        assertThat(MethodMatchers.isBridgeMethodCompatibleTo(testBridge$bridgeLegalTarget).matches(testBridge$bridge), is(false));
+        assertThat(MethodMatchers.isBridgeMethodCompatibleTo(testBridge$bridgeLegalTarget).matches(testBridge$bridgeLegalTarget), is(true));
+        assertThat(MethodMatchers.isBridgeMethodCompatibleTo(testBridge$bridgeLegalTarget).matches(testBridge$bridgeIllegalTarget), is(false));
     }
 
     @Test

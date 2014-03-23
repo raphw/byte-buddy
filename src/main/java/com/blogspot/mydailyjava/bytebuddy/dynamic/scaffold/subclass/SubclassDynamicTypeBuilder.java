@@ -4,6 +4,7 @@ import com.blogspot.mydailyjava.bytebuddy.ClassFormatVersion;
 import com.blogspot.mydailyjava.bytebuddy.NamingStrategy;
 import com.blogspot.mydailyjava.bytebuddy.asm.ClassVisitorWrapper;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
+import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.FieldRegistry;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.MethodRegistry;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.TypeWriter;
@@ -34,7 +35,7 @@ import static com.blogspot.mydailyjava.bytebuddy.utility.ByteBuddyCommons.*;
  */
 public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<T> {
 
-    private class SubclassFieldAnnotationTarget<T> extends AbstractDelegatingBuilder<T> implements FieldAnnotationTarget<T> {
+    private class SubclassFieldAnnotationTarget<S> extends AbstractDelegatingBuilder<S> implements FieldAnnotationTarget<S> {
 
         private final FieldToken fieldToken;
         private final FieldAttributeAppender.Factory attributeAppenderFactory;
@@ -45,14 +46,15 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         }
 
         @Override
-        protected DynamicType.Builder<T> materialize() {
-            return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
+        protected DynamicType.Builder<S> materialize() {
+            return new SubclassDynamicTypeBuilder<S>(classFormatVersion,
                     namingStrategy,
                     superType,
                     interfaceTypes,
                     modifiers,
                     attributeAppender,
                     ignoredMethods,
+                    bridgeMethodResolverFactory,
                     classVisitorWrapperChain,
                     fieldRegistry.include(fieldToken, attributeAppenderFactory),
                     methodRegistry,
@@ -63,18 +65,50 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         }
 
         @Override
-        public FieldAnnotationTarget<T> attribute(FieldAttributeAppender.Factory attributeAppenderFactory) {
-            return new SubclassFieldAnnotationTarget<T>(fieldToken,
+        public FieldAnnotationTarget<S> attribute(FieldAttributeAppender.Factory attributeAppenderFactory) {
+            return new SubclassFieldAnnotationTarget<S>(fieldToken,
                     new FieldAttributeAppender.Factory.Compound(this.attributeAppenderFactory, attributeAppenderFactory));
         }
 
         @Override
-        public FieldAnnotationTarget<T> annotateField(Annotation... annotation) {
+        public FieldAnnotationTarget<S> annotateField(Annotation... annotation) {
             return attribute(new FieldAttributeAppender.ForAnnotation(annotation));
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            SubclassFieldAnnotationTarget that = (SubclassFieldAnnotationTarget) other;
+            return attributeAppenderFactory.equals(that.attributeAppenderFactory)
+                    && fieldToken.equals(that.fieldToken)
+                    && SubclassDynamicTypeBuilder.this.equals(that.getSubclassDynamicTypeBuilder());
+        }
+
+        @Override
+        public int hashCode() {
+            int result = fieldToken.hashCode();
+            result = 31 * result + attributeAppenderFactory.hashCode();
+            result = 31 * result + SubclassDynamicTypeBuilder.this.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "SubclassFieldAnnotationTarget{" +
+                    "base=" + SubclassDynamicTypeBuilder.this +
+                    ", fieldToken=" + fieldToken +
+                    ", attributeAppenderFactory=" + attributeAppenderFactory +
+                    '}';
+        }
+
+        private SubclassDynamicTypeBuilder<?> getSubclassDynamicTypeBuilder() {
+            return SubclassDynamicTypeBuilder.this;
         }
     }
 
-    private class SubclassMatchedMethodInterception<T> implements MatchedMethodInterception<T> {
+    private class SubclassMatchedMethodInterception<S> implements MatchedMethodInterception<S> {
 
         private final MethodRegistry.LatentMethodMatcher latentMethodMatcher;
         private final List<MethodToken> methodTokens;
@@ -85,20 +119,52 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         }
 
         @Override
-        public MethodAnnotationTarget<T> intercept(Instrumentation instrumentation) {
-            return new SubclassMethodAnnotationTarget<T>(methodTokens,
+        public MethodAnnotationTarget<S> intercept(Instrumentation instrumentation) {
+            return new SubclassMethodAnnotationTarget<S>(methodTokens,
                     latentMethodMatcher,
                     instrumentation,
                     defaultMethodAttributeAppenderFactory);
         }
 
         @Override
-        public MethodAnnotationTarget<T> withoutCode() {
+        public MethodAnnotationTarget<S> withoutCode() {
             return intercept(Instrumentation.ForAbstractMethod.INSTANCE);
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            SubclassMatchedMethodInterception<?> that = (SubclassMatchedMethodInterception<?>) other;
+            return latentMethodMatcher.equals(that.latentMethodMatcher)
+                    && methodTokens.equals(that.methodTokens)
+                    && SubclassDynamicTypeBuilder.this.equals(that.getSubclassDynamicTypeBuilder());
+        }
+
+        @Override
+        public int hashCode() {
+            int result = latentMethodMatcher.hashCode();
+            result = 31 * result + methodTokens.hashCode();
+            result = 31 * result + SubclassDynamicTypeBuilder.this.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "SubclassMatchedMethodInterception{" +
+                    "base=" + SubclassDynamicTypeBuilder.this +
+                    ", latentMethodMatcher=" + latentMethodMatcher +
+                    ", methodTokens=" + methodTokens +
+                    '}';
+        }
+
+        private SubclassDynamicTypeBuilder<?> getSubclassDynamicTypeBuilder() {
+            return SubclassDynamicTypeBuilder.this;
         }
     }
 
-    private class SubclassMethodAnnotationTarget<T> extends AbstractDelegatingBuilder<T> implements MethodAnnotationTarget<T> {
+    private class SubclassMethodAnnotationTarget<S> extends AbstractDelegatingBuilder<S> implements MethodAnnotationTarget<S> {
 
         private final List<MethodToken> methodTokens;
         private final MethodRegistry.LatentMethodMatcher latentMethodMatcher;
@@ -116,14 +182,15 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         }
 
         @Override
-        protected DynamicType.Builder<T> materialize() {
-            return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
+        protected DynamicType.Builder<S> materialize() {
+            return new SubclassDynamicTypeBuilder<S>(classFormatVersion,
                     namingStrategy,
                     superType,
                     interfaceTypes,
                     modifiers,
                     attributeAppender,
                     ignoredMethods,
+                    bridgeMethodResolverFactory,
                     classVisitorWrapperChain,
                     fieldRegistry,
                     methodRegistry.prepend(latentMethodMatcher, instrumentation, attributeAppenderFactory),
@@ -134,8 +201,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         }
 
         @Override
-        public MethodAnnotationTarget<T> attribute(MethodAttributeAppender.Factory attributeAppenderFactory) {
-            return new SubclassMethodAnnotationTarget<T>(
+        public MethodAnnotationTarget<S> attribute(MethodAttributeAppender.Factory attributeAppenderFactory) {
+            return new SubclassMethodAnnotationTarget<S>(
                     methodTokens,
                     latentMethodMatcher,
                     instrumentation,
@@ -143,17 +210,55 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         }
 
         @Override
-        public MethodAnnotationTarget<T> annotateMethod(Annotation... annotation) {
+        public MethodAnnotationTarget<S> annotateMethod(Annotation... annotation) {
             return attribute(new MethodAttributeAppender.ForAnnotation(annotation));
         }
 
         @Override
-        public MethodAnnotationTarget<T> annotateParameter(int parameterIndex, Annotation... annotation) {
+        public MethodAnnotationTarget<S> annotateParameter(int parameterIndex, Annotation... annotation) {
             return attribute(new MethodAttributeAppender.ForAnnotation(parameterIndex, annotation));
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            SubclassMethodAnnotationTarget that = (SubclassMethodAnnotationTarget<?>) other;
+            return attributeAppenderFactory.equals(that.attributeAppenderFactory)
+                    && instrumentation.equals(that.instrumentation)
+                    && latentMethodMatcher.equals(that.latentMethodMatcher)
+                    && methodTokens.equals(that.methodTokens)
+                    && SubclassDynamicTypeBuilder.this.equals(that.getSubclassDynamicTypeBuilder());
+        }
+
+        @Override
+        public int hashCode() {
+            int result = methodTokens.hashCode();
+            result = 31 * result + latentMethodMatcher.hashCode();
+            result = 31 * result + instrumentation.hashCode();
+            result = 31 * result + attributeAppenderFactory.hashCode();
+            result = 31 * result + SubclassDynamicTypeBuilder.this.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "SubclassMethodAnnotationTarget{" +
+                    "base=" + SubclassDynamicTypeBuilder.this +
+                    ", methodTokens=" + methodTokens +
+                    ", latentMethodMatcher=" + latentMethodMatcher +
+                    ", instrumentation=" + instrumentation +
+                    ", attributeAppenderFactory=" + attributeAppenderFactory +
+                    '}';
+        }
+
+        private SubclassDynamicTypeBuilder<?> getSubclassDynamicTypeBuilder() {
+            return SubclassDynamicTypeBuilder.this;
         }
     }
 
-    private class SubclassOptionalMatchedMethodInterception<T> extends AbstractDelegatingBuilder<T> implements OptionalMatchedMethodInterception<T> {
+    private class SubclassOptionalMatchedMethodInterception<S> extends AbstractDelegatingBuilder<S> implements OptionalMatchedMethodInterception<S> {
 
         private TypeDescription interfaceType;
 
@@ -162,24 +267,25 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         }
 
         @Override
-        public MethodAnnotationTarget<T> intercept(Instrumentation instrumentation) {
+        public MethodAnnotationTarget<S> intercept(Instrumentation instrumentation) {
             return materialize().method(isDeclaredBy(interfaceType)).intercept(instrumentation);
         }
 
         @Override
-        public MethodAnnotationTarget<T> withoutCode() {
+        public MethodAnnotationTarget<S> withoutCode() {
             return materialize().method(isDeclaredBy(interfaceType)).withoutCode();
         }
 
         @Override
-        protected DynamicType.Builder<T> materialize() {
-            return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
+        protected DynamicType.Builder<S> materialize() {
+            return new SubclassDynamicTypeBuilder<S>(classFormatVersion,
                     namingStrategy,
                     superType,
                     join(interfaceTypes, isInterface(interfaceType)),
                     modifiers,
                     attributeAppender,
                     ignoredMethods,
+                    bridgeMethodResolverFactory,
                     classVisitorWrapperChain,
                     fieldRegistry,
                     methodRegistry,
@@ -187,6 +293,33 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                     defaultMethodAttributeAppenderFactory,
                     fieldTokens,
                     methodTokens);
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            SubclassOptionalMatchedMethodInterception<?> that = (SubclassOptionalMatchedMethodInterception<?>) other;
+            return interfaceType.equals(that.interfaceType)
+                    && SubclassDynamicTypeBuilder.this.equals(that.getSubclassDynamicTypeBuilder());
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * SubclassDynamicTypeBuilder.this.hashCode() + interfaceType.hashCode();
+        }
+
+        private SubclassDynamicTypeBuilder<?> getSubclassDynamicTypeBuilder() {
+            return SubclassDynamicTypeBuilder.this;
+        }
+
+        @Override
+        public String toString() {
+            return "SubclassOptionalMatchedMethodInterception{" +
+                    "base=" + SubclassDynamicTypeBuilder.this +
+                    "interfaceType=" + interfaceType +
+                    '}';
         }
     }
 
@@ -210,6 +343,11 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         public int size() {
             return constructor.size();
         }
+
+        @Override
+        public String toString() {
+            return "MethodTokenListForConstructors{constructor=" + constructor + '}';
+        }
     }
 
     private final ClassFormatVersion classFormatVersion;
@@ -219,6 +357,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     private final int modifiers;
     private final TypeAttributeAppender attributeAppender;
     private final MethodMatcher ignoredMethods;
+    private final BridgeMethodResolver.Factory bridgeMethodResolverFactory;
     private final ClassVisitorWrapper.Chain classVisitorWrapperChain;
     private final FieldRegistry fieldRegistry;
     private final MethodRegistry methodRegistry;
@@ -235,6 +374,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      * @param modifiers                             The modifiers to be represented by the dynamic type.
      * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
      * @param ignoredMethods                        A matcher for determining methods that are to be ignored for instrumentation.
+     * @param bridgeMethodResolverFactory           A factory for creating a bridge method resolver.
      * @param classVisitorWrapperChain              A chain of ASM class visitors to apply to the writing process.
      * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
      * @param methodRegistry                        The method registry to apply to the dynamic type creation.
@@ -251,6 +391,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                       int modifiers,
                                       TypeAttributeAppender attributeAppender,
                                       MethodMatcher ignoredMethods,
+                                      BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                                       ClassVisitorWrapper.Chain classVisitorWrapperChain,
                                       FieldRegistry fieldRegistry,
                                       MethodRegistry methodRegistry,
@@ -266,6 +407,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         this.modifiers = modifiers;
         this.attributeAppender = attributeAppender;
         this.ignoredMethods = ignoredMethods;
+        this.bridgeMethodResolverFactory = bridgeMethodResolverFactory;
         this.classVisitorWrapperChain = classVisitorWrapperChain;
         this.fieldRegistry = fieldRegistry;
         this.defaultFieldAttributeAppenderFactory = defaultFieldAttributeAppenderFactory;
@@ -283,6 +425,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      * @param modifiers                             The modifiers to be represented by the dynamic type.
      * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
      * @param ignoredMethods                        A matcher for determining methods that are to be ignored for instrumentation.
+     * @param bridgeMethodResolverFactory           A factory for creating a bridge method resolver.
      * @param classVisitorWrapperChain              A chain of ASM class visitors to apply to the writing process.
      * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
      * @param methodRegistry                        The method registry to apply to the dynamic type creation.
@@ -302,6 +445,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                          int modifiers,
                                          TypeAttributeAppender attributeAppender,
                                          MethodMatcher ignoredMethods,
+                                         BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                                          ClassVisitorWrapper.Chain classVisitorWrapperChain,
                                          FieldRegistry fieldRegistry,
                                          MethodRegistry methodRegistry,
@@ -317,6 +461,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         this.modifiers = modifiers;
         this.attributeAppender = attributeAppender;
         this.ignoredMethods = ignoredMethods;
+        this.bridgeMethodResolverFactory = bridgeMethodResolverFactory;
         this.classVisitorWrapperChain = classVisitorWrapperChain;
         this.fieldRegistry = fieldRegistry;
         this.methodRegistry = methodRegistry;
@@ -333,6 +478,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 modifiers,
                 attributeAppender,
                 ignoredMethods,
+                bridgeMethodResolverFactory,
                 classVisitorWrapperChain,
                 fieldRegistry,
                 methodRegistry,
@@ -356,6 +502,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 modifiers,
                 attributeAppender,
                 ignoredMethods,
+                bridgeMethodResolverFactory,
                 classVisitorWrapperChain,
                 fieldRegistry,
                 methodRegistry,
@@ -374,6 +521,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 resolveModifierContributors(TYPE_MODIFIER_MASK, modifier),
                 attributeAppender,
                 ignoredMethods,
+                bridgeMethodResolverFactory,
                 classVisitorWrapperChain,
                 fieldRegistry,
                 methodRegistry,
@@ -392,6 +540,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 modifiers,
                 attributeAppender,
                 new JunctionMethodMatcher.Conjunction(this.ignoredMethods, nonNull(ignoredMethods)),
+                bridgeMethodResolverFactory,
                 classVisitorWrapperChain,
                 fieldRegistry,
                 methodRegistry,
@@ -410,6 +559,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 modifiers,
                 new TypeAttributeAppender.Compound(this.attributeAppender, nonNull(attributeAppender)),
                 ignoredMethods,
+                bridgeMethodResolverFactory,
                 classVisitorWrapperChain,
                 fieldRegistry,
                 methodRegistry,
@@ -433,6 +583,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 modifiers,
                 attributeAppender,
                 ignoredMethods,
+                bridgeMethodResolverFactory,
                 classVisitorWrapperChain.append(nonNull(classVisitorWrapper)),
                 fieldRegistry,
                 methodRegistry,
@@ -496,7 +647,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 interfaceTypes,
                 modifiers,
                 namingStrategy));
-        SubclassInstrumentationContextDelegate contextDelegate = new SubclassInstrumentationContextDelegate(instrumentedType);
+        SubclassInstrumentationContextDelegate contextDelegate = new SubclassInstrumentationContextDelegate(instrumentedType, bridgeMethodResolverFactory);
         Instrumentation.Context instrumentationContext = new Instrumentation.Context.Default(classFormatVersion, contextDelegate, contextDelegate);
         MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.compile(instrumentedType, MethodRegistry.Compiled.Entry.Skip.INSTANCE);
         instrumentedType = compiledMethodRegistry.getInstrumentedType();
@@ -508,9 +659,64 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                         fieldRegistry.compile(instrumentedType, TypeWriter.FieldPool.Entry.NoOp.INSTANCE))
                 .methods()
                 .write(instrumentedType.getReachableMethods()
-                        .filter(isOverridable().and(not(ignoredMethods)).or(isDeclaredBy(instrumentedType))),
-                        compiledMethodRegistry)
+                                .filter(isOverridable().and(not(ignoredMethods)).or(isDeclaredBy(instrumentedType))),
+                        compiledMethodRegistry
+                )
                 .write(contextDelegate.getProxiedMethods(), contextDelegate)
                 .make();
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+        SubclassDynamicTypeBuilder that = (SubclassDynamicTypeBuilder) other;
+        return modifiers == that.modifiers && attributeAppender.equals(that.attributeAppender)
+                && bridgeMethodResolverFactory.equals(that.bridgeMethodResolverFactory)
+                && classFormatVersion.equals(that.classFormatVersion)
+                && classVisitorWrapperChain.equals(that.classVisitorWrapperChain)
+                && defaultFieldAttributeAppenderFactory.equals(that.defaultFieldAttributeAppenderFactory)
+                && defaultMethodAttributeAppenderFactory.equals(that.defaultMethodAttributeAppenderFactory)
+                && fieldRegistry.equals(that.fieldRegistry) && ignoredMethods.equals(that.ignoredMethods)
+                && interfaceTypes.equals(that.interfaceTypes) && methodRegistry.equals(that.methodRegistry)
+                && namingStrategy.equals(that.namingStrategy)
+                && superType.equals(that.superType);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = classFormatVersion.hashCode();
+        result = 31 * result + namingStrategy.hashCode();
+        result = 31 * result + superType.hashCode();
+        result = 31 * result + interfaceTypes.hashCode();
+        result = 31 * result + modifiers;
+        result = 31 * result + attributeAppender.hashCode();
+        result = 31 * result + ignoredMethods.hashCode();
+        result = 31 * result + bridgeMethodResolverFactory.hashCode();
+        result = 31 * result + classVisitorWrapperChain.hashCode();
+        result = 31 * result + fieldRegistry.hashCode();
+        result = 31 * result + methodRegistry.hashCode();
+        result = 31 * result + defaultFieldAttributeAppenderFactory.hashCode();
+        result = 31 * result + defaultMethodAttributeAppenderFactory.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "SubclassDynamicTypeBuilder{" +
+                "classFormatVersion=" + classFormatVersion +
+                ", namingStrategy=" + namingStrategy +
+                ", superType=" + superType +
+                ", interfaceTypes=" + interfaceTypes +
+                ", modifiers=" + modifiers +
+                ", attributeAppender=" + attributeAppender +
+                ", ignoredMethods=" + ignoredMethods +
+                ", bridgeMethodResolverFactory=" + bridgeMethodResolverFactory +
+                ", classVisitorWrapperChain=" + classVisitorWrapperChain +
+                ", fieldRegistry=" + fieldRegistry +
+                ", methodRegistry=" + methodRegistry +
+                ", defaultFieldAttributeAppenderFactory=" + defaultFieldAttributeAppenderFactory +
+                ", defaultMethodAttributeAppenderFactory=" + defaultMethodAttributeAppenderFactory +
+                '}';
     }
 }

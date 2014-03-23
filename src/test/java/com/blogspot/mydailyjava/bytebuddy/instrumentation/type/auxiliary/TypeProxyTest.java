@@ -98,7 +98,7 @@ public class TypeProxyTest {
                 if (method.getName().equals(ACCESSOR
                         + source.getName().substring(0, 1).toUpperCase()
                         + source.getName().substring(1))) {
-                    return new MethodDescription.ForMethod(method);
+                    return new MethodDescription.ForLoadedMethod(method);
                 }
             }
             throw new AssertionError("Cannot find delegate for " + source);

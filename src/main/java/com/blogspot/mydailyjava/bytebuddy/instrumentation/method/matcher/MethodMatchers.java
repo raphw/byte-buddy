@@ -134,35 +134,111 @@ public final class MethodMatchers {
 
     private static class ParameterTypeMatcher extends JunctionMethodMatcher.AbstractBase {
 
-        private final TypeList parameterType;
-
-        private ParameterTypeMatcher(Class<?>[] parameterType) {
-            this.parameterType = new TypeList.ForLoadedType(parameterType);
-        }
+        private final List<? extends TypeDescription> parameterTypes;
 
         private ParameterTypeMatcher(List<? extends TypeDescription> parameterTypes) {
-            parameterType = new TypeList.Explicit(parameterTypes);
+            this.parameterTypes = parameterTypes;
         }
 
         @Override
         public boolean matches(MethodDescription methodDescription) {
-            return methodDescription.getParameterTypes().equals(parameterType);
+            return methodDescription.getParameterTypes().equals(parameterTypes);
         }
 
         @Override
-        public boolean equals(Object o) {
-            return this == o || !(o == null || getClass() != o.getClass())
-                    && parameterType.equals(((ParameterTypeMatcher) o).parameterType);
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && parameterTypes.equals(((ParameterTypeMatcher) other).parameterTypes);
         }
 
         @Override
         public int hashCode() {
-            return parameterType.hashCode();
+            return parameterTypes.hashCode();
         }
 
         @Override
         public String toString() {
-            return "parameters(" + parameterType + ')';
+            return "parameters(" + parameterTypes + ')';
+        }
+    }
+
+    private static class ParameterSubtypeMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        private final List<? extends TypeDescription> parameterTypes;
+
+        private ParameterSubtypeMatcher(List<? extends TypeDescription> parameterTypes) {
+            this.parameterTypes = parameterTypes;
+        }
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            TypeList parameterTypes = methodDescription.getParameterTypes();
+            if (parameterTypes.size() != this.parameterTypes.size()) {
+                return false;
+            }
+            int currentIndex = 0;
+            for (TypeDescription parameterType : parameterTypes) {
+                if (!parameterType.isAssignableTo(this.parameterTypes.get(currentIndex++))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && parameterTypes.equals(((ParameterSubtypeMatcher) other).parameterTypes);
+        }
+
+        @Override
+        public int hashCode() {
+            return parameterTypes.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "parametersAssignableTo(" + parameterTypes + ')';
+        }
+    }
+
+    private static class ParameterSuperTypeMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        private final List<? extends TypeDescription> parameterTypes;
+
+        private ParameterSuperTypeMatcher(List<? extends TypeDescription> parameterTypes) {
+            this.parameterTypes = parameterTypes;
+        }
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            TypeList parameterTypes = methodDescription.getParameterTypes();
+            if (parameterTypes.size() != this.parameterTypes.size()) {
+                return false;
+            }
+            int currentIndex = 0;
+            for (TypeDescription parameterType : parameterTypes) {
+                if (!parameterType.isAssignableFrom(this.parameterTypes.get(currentIndex++))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && parameterTypes.equals(((ParameterSuperTypeMatcher) other).parameterTypes);
+        }
+
+        @Override
+        public int hashCode() {
+            return parameterTypes.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "parametersAssignableFrom(" + parameterTypes + ')';
         }
     }
 
@@ -210,9 +286,9 @@ public final class MethodMatchers {
         }
 
         @Override
-        public boolean equals(Object o) {
-            return this == o || !(o == null || getClass() != o.getClass())
-                    && returnType.equals(((ReturnTypeMatcher) o).returnType);
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && returnType.equals(((ReturnTypeMatcher) other).returnType);
         }
 
         @Override
@@ -223,6 +299,66 @@ public final class MethodMatchers {
         @Override
         public String toString() {
             return "returns(" + returnType + ')';
+        }
+    }
+
+    private static class ReturnSubtypeMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        private final TypeDescription returnType;
+
+        public ReturnSubtypeMatcher(TypeDescription returnType) {
+            this.returnType = returnType;
+        }
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.getReturnType().isAssignableTo(returnType);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && returnType.equals(((ReturnSubtypeMatcher) other).returnType);
+        }
+
+        @Override
+        public int hashCode() {
+            return returnType.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "returnsSubtypeOf(" + returnType + ')';
+        }
+    }
+
+    private static class ReturnSupertypeMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        private final TypeDescription returnType;
+
+        public ReturnSupertypeMatcher(TypeDescription returnType) {
+            this.returnType = returnType;
+        }
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.getReturnType().isAssignableFrom(returnType);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && returnType.equals(((ReturnSupertypeMatcher) other).returnType);
+        }
+
+        @Override
+        public int hashCode() {
+            return returnType.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "returnsSupertypeOf(" + returnType + ')';
         }
     }
 
@@ -788,7 +924,7 @@ public final class MethodMatchers {
     }
 
     /**
-     * Selects a method by its return type.
+     * Selects a method by its exact return type.
      *
      * @param type The return type of the method.
      * @return A new method matcher that selects methods returning {@code type}.
@@ -798,7 +934,7 @@ public final class MethodMatchers {
     }
 
     /**
-     * Selects a method by its return type.
+     * Selects a method by its exact return type.
      *
      * @param type A description of the return type of the method.
      * @return A new method matcher that selects methods returning {@code type}.
@@ -808,27 +944,71 @@ public final class MethodMatchers {
     }
 
     /**
-     * Selects a method by its parameter types in their exact order.
+     * Selects a method by its return type where only methods are matched that return a subtype of the given
+     * type, including the given type itself.
+     *
+     * @param type The return type that should be matched for the given method.
+     * @return A new method matcher that selects methods returning subtypes of {@code type}.
+     */
+    public static JunctionMethodMatcher returnsSubtypeOf(Class<?> type) {
+        return returnsSubtypeOf(new TypeDescription.ForLoadedType(type));
+    }
+
+    /**
+     * Selects a method by its return type where only methods are matched that return a subtype of the given
+     * type, including the given type itself.
+     *
+     * @param type The description of the return type that should be matched for the given method.
+     * @return A new method matcher that selects methods returning subtypes of {@code type}.
+     */
+    public static JunctionMethodMatcher returnsSubtypeOf(TypeDescription type) {
+        return new ReturnSubtypeMatcher(type);
+    }
+
+    /**
+     * Selects a method by its return type where only methods are matched that return a super type of the given
+     * type, including the given type itself.
+     *
+     * @param type The return type that should be matched for the given method.
+     * @return A new method matcher that selects methods returning super types of {@code type}.
+     */
+    public static JunctionMethodMatcher returnsSupertypeOf(Class<?> type) {
+        return returnsSupertypeOf(new TypeDescription.ForLoadedType(type));
+    }
+
+    /**
+     * Selects a method by its return type where only methods are matched that return a super type of the given
+     * type, including the given type itself.
+     *
+     * @param type The description of the return type that should be matched for the given method.
+     * @return A new method matcher that selects methods returning super types of {@code type}.
+     */
+    public static JunctionMethodMatcher returnsSupertypeOf(TypeDescription type) {
+        return new ReturnSupertypeMatcher(type);
+    }
+
+    /**
+     * Selects a method by its exact parameter types in their exact order.
      *
      * @param types The parameter types of the method.
      * @return A new method matcher that selects methods with the exact parameters contained by {@code types}.
      */
     public static JunctionMethodMatcher takesArguments(Class<?>... types) {
-        return new ParameterTypeMatcher(types);
+        return takesArguments(new TypeList.ForLoadedType(types));
     }
 
     /**
-     * Selects a method by its parameter types in their exact order.
+     * Selects a method by its exact parameter types in their exact order.
      *
      * @param types The parameter types of the method.
      * @return A new method matcher that selects methods with the exact parameters contained by {@code types}.
      */
     public static JunctionMethodMatcher takesArguments(TypeDescription... types) {
-        return new ParameterTypeMatcher(Arrays.asList(types));
+        return takesArguments(Arrays.asList(types));
     }
 
     /**
-     * Selects a method by its parameter types in their exact order.
+     * Selects a method by its exact parameter types in their exact order.
      *
      * @param types A list of parameter types of the method. The list will not be copied.
      * @return A new method matcher that selects methods with the exact parameters contained by {@code types}.
@@ -845,6 +1025,72 @@ public final class MethodMatchers {
      */
     public static JunctionMethodMatcher takesArguments(int number) {
         return new ParameterCountMatcher(number);
+    }
+
+    /**
+     * Selects a method by its parameter types in their exact order where only parameter types are matched
+     * that are subtypes of the given types, including the given type.
+     *
+     * @param types The parameter types to match against.
+     * @return A new method matcher that selects methods by its parameter types as given by {@code types}.
+     */
+    public static JunctionMethodMatcher takesArgumentsAsSubtypesOf(Class<?>... types) {
+        return takesArgumentsAsSubtypesOf(new TypeList.ForLoadedType(types));
+    }
+
+    /**
+     * Selects a method by its parameter types in their exact order where only parameter types are matched
+     * that are subtypes of the given types, including the given type.
+     *
+     * @param types The parameter types to match against.
+     * @return A new method matcher that selects methods by its parameter types as given by {@code types}.
+     */
+    public static JunctionMethodMatcher takesArgumentsAsSubtypesOf(TypeDescription... types) {
+        return takesArgumentsAsSubtypesOf(Arrays.asList(types));
+    }
+
+    /**
+     * Selects a method by its parameter types in their exact order where only parameter types are matched
+     * that are subtypes of the given types, including the given type.
+     *
+     * @param types The parameter types to match against.
+     * @return A new method matcher that selects methods by its parameter types as given by {@code types}.
+     */
+    public static JunctionMethodMatcher takesArgumentsAsSubtypesOf(List<? extends TypeDescription> types) {
+        return new ParameterSubtypeMatcher(types);
+    }
+
+    /**
+     * Selects a method by its parameter types in their exact order where only parameter types are matched
+     * that are super types of the given types, including the given type.
+     *
+     * @param types The parameter types to match against.
+     * @return A new method matcher that selects methods by its parameter types as given by {@code types}.
+     */
+    public static JunctionMethodMatcher takesArgumentsAsSuperTypesOf(Class<?>... types) {
+        return takesArgumentsAsSuperTypesOf(new TypeList.ForLoadedType(types));
+    }
+
+    /**
+     * Selects a method by its parameter types in their exact order where only parameter types are matched
+     * that are super types of the given types, including the given type.
+     *
+     * @param types The parameter types to match against.
+     * @return A new method matcher that selects methods by its parameter types as given by {@code types}.
+     */
+    public static JunctionMethodMatcher takesArgumentsAsSuperTypesOf(TypeDescription... types) {
+        return takesArgumentsAsSuperTypesOf(Arrays.asList(types));
+    }
+
+    /**
+     * Selects a method by its parameter types in their exact order where only parameter types are matched
+     * that are super types of the given types, including the given type.
+     *
+     * @param types The parameter types to match against.
+     * @return A new method matcher that selects methods by its parameter types as given by {@code types}.
+     */
+    public static JunctionMethodMatcher takesArgumentsAsSuperTypesOf(List<? extends TypeDescription> types) {
+        return new ParameterSuperTypeMatcher(types);
     }
 
     /**
@@ -1027,11 +1273,55 @@ public final class MethodMatchers {
      * Selects methods with identical signature to the given method description where the return type
      * is considered to be part of the signature.
      *
+     * @param method The method to match against.
+     * @return A method matcher selecting methods with the same signature as {@code methodDescription}.
+     */
+    public static JunctionMethodMatcher hasSameByteCodeSignatureAs(Method method) {
+        return hasSameByteCodeSignatureAs(new MethodDescription.ForLoadedMethod(method));
+    }
+
+    /**
+     * Selects methods with identical signature to the given method description where the return type
+     * is considered to be part of the signature.
+     *
+     * @param constructor The constructor to match against.
+     * @return A method matcher selecting methods with the same signature as {@code methodDescription}.
+     */
+    public static JunctionMethodMatcher hasSameByteCodeSignatureAs(Constructor<?> constructor) {
+        return hasSameByteCodeSignatureAs(new MethodDescription.ForLoadedConstructor(constructor));
+    }
+
+    /**
+     * Selects methods with identical signature to the given method description where the return type
+     * is considered to be part of the signature.
+     *
      * @param methodDescription The method to match against.
      * @return A method matcher selecting methods with the same signature as {@code methodDescription}.
      */
     public static JunctionMethodMatcher hasSameByteCodeSignatureAs(MethodDescription methodDescription) {
         return new MethodSignatureMethodMatcher(methodDescription);
+    }
+
+    /**
+     * Checks if a method has a Java compiler equal signature to another method which includes the name of the method
+     * and the exact types and order of its parameters. The return type is not considered for equality.
+     *
+     * @param method The method to be matched against.
+     * @return A matcher that selects methods with a compatible Java compiler signature.
+     */
+    public static JunctionMethodMatcher hasSameJavaCompilerSignatureAs(Method method) {
+        return hasSameJavaCompilerSignatureAs(new MethodDescription.ForLoadedMethod(method));
+    }
+
+    /**
+     * Checks if a method has a Java compiler equal signature to another method which includes the name of the method
+     * and the exact types and order of its parameters. The return type is not considered for equality.
+     *
+     * @param constructor The constructor to be matched against.
+     * @return A matcher that selects methods with a compatible Java compiler signature.
+     */
+    public static JunctionMethodMatcher hasSameJavaCompilerSignatureAs(Constructor<?> constructor) {
+        return hasSameJavaCompilerSignatureAs(new MethodDescription.ForLoadedConstructor(constructor));
     }
 
     /**
@@ -1044,6 +1334,28 @@ public final class MethodMatchers {
     public static JunctionMethodMatcher hasSameJavaCompilerSignatureAs(MethodDescription methodDescription) {
         return (methodDescription.isConstructor() ? isConstructor() : named(methodDescription.getName()))
                 .and(takesArguments(methodDescription.getParameterTypes()));
+    }
+
+    /**
+     * Determines if a method could be the target of the given method for a compile time bridge.
+     *
+     * @param method The bridge method to match against.
+     * @return A method matcher that determines if a method could be a bridge target for the given method.
+     */
+    public static JunctionMethodMatcher isBridgeMethodCompatibleTo(Method method) {
+        return isBridgeMethodCompatibleTo(new MethodDescription.ForLoadedMethod(method));
+    }
+
+    /**
+     * Determines if a method could be the target of the given method for a compile time bridge.
+     *
+     * @param methodDescription A description of the bridge method to match against.
+     * @return A method matcher that determines if a method could be a bridge target for the given method.
+     */
+    public static JunctionMethodMatcher isBridgeMethodCompatibleTo(MethodDescription methodDescription) {
+        return (methodDescription.isConstructor() ? isConstructor() : named(methodDescription.getName()))
+                .and(returnsSubtypeOf(methodDescription.getReturnType()))
+                .and(takesArgumentsAsSubtypesOf(methodDescription.getParameterTypes()));
     }
 
     /**

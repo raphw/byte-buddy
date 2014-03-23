@@ -31,9 +31,9 @@ public interface MethodList extends List<MethodDescription> {
         @Override
         public MethodDescription get(int index) {
             if (index < type.getDeclaredConstructors().length) {
-                return new MethodDescription.ForConstructor(type.getDeclaredConstructors()[index]);
+                return new MethodDescription.ForLoadedConstructor(type.getDeclaredConstructors()[index]);
             } else {
-                return new MethodDescription.ForMethod(type.getDeclaredMethods()[type.getDeclaredConstructors().length + index]);
+                return new MethodDescription.ForLoadedMethod(type.getDeclaredMethods()[type.getDeclaredConstructors().length + index]);
             }
         }
 
@@ -46,13 +46,13 @@ public interface MethodList extends List<MethodDescription> {
         public MethodList filter(MethodMatcher methodMatcher) {
             List<MethodDescription> result = new ArrayList<MethodDescription>(size());
             for (Method method : type.getDeclaredMethods()) {
-                MethodDescription methodDescription = new MethodDescription.ForMethod(method);
+                MethodDescription methodDescription = new MethodDescription.ForLoadedMethod(method);
                 if (methodMatcher.matches(methodDescription)) {
                     result.add(methodDescription);
                 }
             }
             for (Constructor<?> constructor : type.getDeclaredConstructors()) {
-                MethodDescription methodDescription = new MethodDescription.ForConstructor(constructor);
+                MethodDescription methodDescription = new MethodDescription.ForLoadedConstructor(constructor);
                 if (methodMatcher.matches(methodDescription)) {
                     result.add(methodDescription);
                 }

@@ -91,7 +91,7 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
     /**
      * An implementation of a method description for a loaded constructor.
      */
-    static class ForConstructor extends AbstractMethodDescription {
+    static class ForLoadedConstructor extends AbstractMethodDescription {
 
         private final Constructor<?> constructor;
 
@@ -100,7 +100,7 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
          *
          * @param constructor The loaded constructor to be represented by this method description.
          */
-        public ForConstructor(Constructor<?> constructor) {
+        public ForLoadedConstructor(Constructor<?> constructor) {
             this.constructor = constructor;
         }
 
@@ -202,14 +202,14 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
 
         @Override
         public String toString() {
-            return "MethodDescription.ForConstructor{" + constructor + "}";
+            return "MethodDescription.ForLoadedConstructor{" + constructor + "}";
         }
     }
 
     /**
      * An implementation of a method description for a loaded method.
      */
-    static class ForMethod extends AbstractMethodDescription {
+    static class ForLoadedMethod extends AbstractMethodDescription {
 
         private final Method method;
 
@@ -218,7 +218,7 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
          *
          * @param method The loaded method to be represented by this method description.
          */
-        public ForMethod(Method method) {
+        public ForLoadedMethod(Method method) {
             this.method = method;
         }
 
@@ -319,7 +319,7 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
 
         @Override
         public String toString() {
-            return "MethodDescription.ForMethod{" + method + "}";
+            return "MethodDescription.ForLoadedMethod{" + method + "}";
         }
     }
 

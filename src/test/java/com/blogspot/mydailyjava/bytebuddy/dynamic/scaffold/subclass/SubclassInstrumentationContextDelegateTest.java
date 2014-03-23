@@ -3,6 +3,7 @@ package com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass;
 import com.blogspot.mydailyjava.bytebuddy.ClassFormatVersion;
 import com.blogspot.mydailyjava.bytebuddy.asm.ClassVisitorWrapper;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.ClassLoadingStrategy;
+import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.TypeWriter;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.TypeInitializer;
@@ -36,7 +37,7 @@ import static org.mockito.Mockito.*;
 
 public class SubclassInstrumentationContextDelegateTest {
 
-    private static final String FOO = "foo", BAR = "bar", TO_STRING = "toString";
+    private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "bar", TO_STRING = "toString";
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -60,10 +61,12 @@ public class SubclassInstrumentationContextDelegateTest {
         when(firstMethod.getReturnType()).thenReturn(firstMethodReturnType);
         when(firstMethod.getParameterTypes()).thenReturn(firstMethodParameters);
         when(firstMethod.getDeclaringType()).thenReturn(superType);
+        when(firstMethod.getInternalName()).thenReturn(QUX);
         when(firstMethodReturnType.getStackSize()).thenReturn(StackSize.ZERO);
         when(secondMethod.getReturnType()).thenReturn(secondMethodReturnType);
         when(secondMethod.getParameterTypes()).thenReturn(secondMethodParameters);
         when(secondMethod.getDeclaringType()).thenReturn(superType);
+        when(secondMethod.getInternalName()).thenReturn(BAZ);
         when(superType.isAssignableFrom(superType)).thenReturn(true);
         when(secondMethodReturnType.getStackSize()).thenReturn(StackSize.ZERO);
         when(instrumentedType.detach()).thenReturn(instrumentedType);
@@ -71,7 +74,9 @@ public class SubclassInstrumentationContextDelegateTest {
         when(instrumentedType.getSupertype()).thenReturn(superType);
         when(methodList.filter(any(MethodMatcher.class))).thenReturn(methodList);
         when(methodList.iterator()).thenReturn(Arrays.<MethodDescription>asList().iterator());
-        delegate = new SubclassInstrumentationContextDelegate(instrumentedType, FOO);
+        delegate = new SubclassInstrumentationContextDelegate(instrumentedType,
+                BridgeMethodResolver.Simple.Factory.FAIL_FAST,
+                FOO);
     }
 
     @Test

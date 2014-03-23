@@ -229,7 +229,7 @@ public interface MethodAttributeAppender {
                 throw new IllegalArgumentException("The constructor " + method + " has more parameters than the " +
                         "instrumented method " + methodDescription);
             }
-            ForInstrumentedMethod.INSTANCE.apply(methodVisitor, new MethodDescription.ForMethod(method));
+            ForInstrumentedMethod.INSTANCE.apply(methodVisitor, new MethodDescription.ForLoadedMethod(method));
         }
 
         @Override
@@ -279,7 +279,7 @@ public interface MethodAttributeAppender {
                 throw new IllegalArgumentException("The constructor " + constructor + " has more parameters than the " +
                         "instrumented method " + methodDescription);
             }
-            ForInstrumentedMethod.INSTANCE.apply(methodVisitor, new MethodDescription.ForConstructor(constructor));
+            ForInstrumentedMethod.INSTANCE.apply(methodVisitor, new MethodDescription.ForLoadedConstructor(constructor));
         }
 
         @Override

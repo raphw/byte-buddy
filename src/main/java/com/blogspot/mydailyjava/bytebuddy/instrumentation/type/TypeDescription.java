@@ -188,9 +188,9 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
             Method enclosingMethod = type.getEnclosingMethod();
             Constructor<?> enclosingConstructor = type.getEnclosingConstructor();
             if (enclosingMethod != null) {
-                return new MethodDescription.ForMethod(enclosingMethod);
+                return new MethodDescription.ForLoadedMethod(enclosingMethod);
             } else if (enclosingConstructor != null) {
-                return new MethodDescription.ForConstructor(enclosingConstructor);
+                return new MethodDescription.ForLoadedConstructor(enclosingConstructor);
             } else {
                 return null;
             }

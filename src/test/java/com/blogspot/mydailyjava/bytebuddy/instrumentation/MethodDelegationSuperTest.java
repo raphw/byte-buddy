@@ -80,4 +80,17 @@ public class MethodDelegationSuperTest extends AbstractInstrumentationTest {
         Bar instance = loaded.getLoaded().newInstance();
         assertThat(instance.qux(), is(BAR + QUX));
     }
+
+    public static abstract class FooBarQuxBaz implements Qux {
+
+        @Override
+        public abstract Object qux();
+    }
+
+    @Test
+    public void testSuperCallOnAbstractMethod() throws Exception {
+        DynamicType.Loaded<FooBarQuxBaz> loaded = instrument(FooBarQuxBaz.class, MethodDelegation.to(FooBar.class));
+        FooBarQuxBaz instance = loaded.getLoaded().newInstance();
+        assertThat(instance.qux(), is((Object) (FOO + QUX)));
+    }
 }

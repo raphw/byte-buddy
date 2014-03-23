@@ -99,7 +99,7 @@ public enum MethodInvocation {
         public StackManipulation special(TypeDescription invocationTarget) {
             validateNonStaticAndTypeCompatibleCall(invocationTarget);
             if (methodDescription.isAbstract()) {
-                throw new IllegalStateException("Cannot call INVOKESPECIAL on abstract method");
+                throw new IllegalStateException("Cannot call INVOKESPECIAL on abstract method " + methodDescription);
             } else if ((methodDescription.isPrivate() || methodDescription.isConstructor())) {
                 if (this.typeDescription.equals(invocationTarget)) {
                     return this;

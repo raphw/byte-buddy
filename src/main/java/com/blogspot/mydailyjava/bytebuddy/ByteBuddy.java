@@ -2,6 +2,7 @@ package com.blogspot.mydailyjava.bytebuddy;
 
 import com.blogspot.mydailyjava.bytebuddy.asm.ClassVisitorWrapper;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
+import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.FieldRegistry;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.MethodRegistry;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
@@ -92,6 +93,7 @@ public class ByteBuddy {
                                          NamingStrategy namingStrategy,
                                          List<TypeDescription> interfaceTypes,
                                          MethodMatcher ignoredMethods,
+                                         BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                                          ClassVisitorWrapper.Chain classVisitorWrapperChain,
                                          MethodRegistry methodRegistry,
                                          Definable<Integer> modifiers,
@@ -105,6 +107,7 @@ public class ByteBuddy {
                     namingStrategy,
                     interfaceTypes,
                     ignoredMethods,
+                    bridgeMethodResolverFactory,
                     classVisitorWrapperChain,
                     methodRegistry,
                     modifiers,
@@ -121,6 +124,7 @@ public class ByteBuddy {
                     namingStrategy,
                     interfaceTypes,
                     ignoredMethods,
+                    bridgeMethodResolverFactory,
                     classVisitorWrapperChain,
                     methodRegistry,
                     modifiers,
@@ -260,6 +264,7 @@ public class ByteBuddy {
                     namingStrategy,
                     interfaceTypes,
                     ignoredMethods,
+                    bridgeMethodResolverFactory,
                     classVisitorWrapperChain,
                     methodRegistry.prepend(new MethodRegistry.LatentMethodMatcher.Simple(methodMatcher),
                             instrumentation,
@@ -267,7 +272,8 @@ public class ByteBuddy {
                     modifiers,
                     typeAttributeAppender,
                     defaultFieldAttributeAppenderFactory,
-                    defaultMethodAttributeAppenderFactory);
+                    defaultMethodAttributeAppenderFactory
+            );
         }
 
         @Override
@@ -293,7 +299,8 @@ public class ByteBuddy {
         @Override
         public String toString() {
             return "MethodAnnotationTarget{" +
-                    "methodMatcher=" + methodMatcher +
+                    "base=" + super.toString() +
+                    ", methodMatcher=" + methodMatcher +
                     ", instrumentation=" + instrumentation +
                     ", attributeAppenderFactory=" + attributeAppenderFactory +
                     '}';
@@ -313,6 +320,7 @@ public class ByteBuddy {
                     namingStrategy,
                     interfaceTypes,
                     ignoredMethods,
+                    bridgeMethodResolverFactory,
                     classVisitorWrapperChain,
                     methodRegistry,
                     modifiers,
@@ -357,6 +365,7 @@ public class ByteBuddy {
     protected final NamingStrategy namingStrategy;
     protected final List<TypeDescription> interfaceTypes;
     protected final MethodMatcher ignoredMethods;
+    protected final BridgeMethodResolver.Factory bridgeMethodResolverFactory;
     protected final ClassVisitorWrapper.Chain classVisitorWrapperChain;
     protected final MethodRegistry methodRegistry;
     protected final Definable<Integer> modifiers;
@@ -374,6 +383,7 @@ public class ByteBuddy {
                 new NamingStrategy.SuffixingRandom(BYTE_BUDDY_DEFAULT_PREFIX),
                 new TypeList.Empty(),
                 isDefaultFinalizer().or(isSynthetic()),
+                BridgeMethodResolver.Simple.Factory.FAIL_ON_REQUEST,
                 new ClassVisitorWrapper.Chain(),
                 new MethodRegistry.Default(),
                 new Definable.Undefined<Integer>(),
@@ -386,6 +396,7 @@ public class ByteBuddy {
                         NamingStrategy namingStrategy,
                         List<TypeDescription> interfaceTypes,
                         MethodMatcher ignoredMethods,
+                        BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                         ClassVisitorWrapper.Chain classVisitorWrapperChain,
                         MethodRegistry methodRegistry,
                         Definable<Integer> modifiers,
@@ -396,6 +407,7 @@ public class ByteBuddy {
         this.namingStrategy = namingStrategy;
         this.interfaceTypes = interfaceTypes;
         this.ignoredMethods = ignoredMethods;
+        this.bridgeMethodResolverFactory = bridgeMethodResolverFactory;
         this.classVisitorWrapperChain = classVisitorWrapperChain;
         this.methodRegistry = methodRegistry;
         this.modifiers = modifiers;
@@ -458,6 +470,7 @@ public class ByteBuddy {
                 modifiers.resolve(superType.getModifiers()),
                 typeAttributeAppender.resolve(TypeAttributeAppender.NoOp.INSTANCE),
                 ignoredMethods,
+                bridgeMethodResolverFactory,
                 classVisitorWrapperChain,
                 new FieldRegistry.Default(),
                 methodRegistry,
@@ -471,6 +484,7 @@ public class ByteBuddy {
                 namingStrategy,
                 interfaceTypes,
                 ignoredMethods,
+                bridgeMethodResolverFactory,
                 classVisitorWrapperChain,
                 methodRegistry,
                 modifiers,
@@ -484,6 +498,7 @@ public class ByteBuddy {
                 nonNull(namingStrategy),
                 interfaceTypes,
                 ignoredMethods,
+                bridgeMethodResolverFactory,
                 classVisitorWrapperChain,
                 methodRegistry,
                 modifiers,
@@ -497,6 +512,7 @@ public class ByteBuddy {
                 namingStrategy,
                 interfaceTypes,
                 ignoredMethods,
+                bridgeMethodResolverFactory,
                 classVisitorWrapperChain,
                 methodRegistry,
                 new Definable.Defined<Integer>(resolveModifierContributors(TYPE_MODIFIER_MASK, modifierContributor)),
@@ -510,6 +526,7 @@ public class ByteBuddy {
                 namingStrategy,
                 interfaceTypes,
                 ignoredMethods,
+                bridgeMethodResolverFactory,
                 classVisitorWrapperChain,
                 methodRegistry,
                 modifiers,
@@ -523,6 +540,7 @@ public class ByteBuddy {
                 namingStrategy,
                 interfaceTypes,
                 ignoredMethods,
+                bridgeMethodResolverFactory,
                 classVisitorWrapperChain,
                 methodRegistry,
                 modifiers,
@@ -540,6 +558,7 @@ public class ByteBuddy {
                 namingStrategy,
                 join(interfaceTypes, isInterface(type)),
                 ignoredMethods,
+                bridgeMethodResolverFactory,
                 classVisitorWrapperChain,
                 methodRegistry,
                 modifiers,
@@ -553,6 +572,7 @@ public class ByteBuddy {
                 namingStrategy,
                 interfaceTypes,
                 nonNull(ignoredMethods),
+                bridgeMethodResolverFactory,
                 classVisitorWrapperChain,
                 methodRegistry,
                 modifiers,
@@ -566,6 +586,7 @@ public class ByteBuddy {
                 namingStrategy,
                 interfaceTypes,
                 ignoredMethods,
+                bridgeMethodResolverFactory,
                 classVisitorWrapperChain.append(nonNull(classVisitorWrapper)),
                 methodRegistry,
                 modifiers,
@@ -579,6 +600,7 @@ public class ByteBuddy {
                 namingStrategy,
                 interfaceTypes,
                 ignoredMethods,
+                bridgeMethodResolverFactory,
                 classVisitorWrapperChain,
                 methodRegistry,
                 modifiers,
@@ -592,6 +614,7 @@ public class ByteBuddy {
                 namingStrategy,
                 interfaceTypes,
                 ignoredMethods,
+                bridgeMethodResolverFactory,
                 classVisitorWrapperChain,
                 methodRegistry,
                 modifiers,
@@ -614,6 +637,7 @@ public class ByteBuddy {
                 && defaultFieldAttributeAppenderFactory.equals(byteBuddy.defaultFieldAttributeAppenderFactory)
                 && defaultMethodAttributeAppenderFactory.equals(byteBuddy.defaultMethodAttributeAppenderFactory)
                 && ignoredMethods.equals(byteBuddy.ignoredMethods)
+                && bridgeMethodResolverFactory.equals(byteBuddy.bridgeMethodResolverFactory)
                 && interfaceTypes.equals(byteBuddy.interfaceTypes)
                 && methodRegistry.equals(byteBuddy.methodRegistry)
                 && modifiers.equals(byteBuddy.modifiers)
@@ -627,6 +651,7 @@ public class ByteBuddy {
         result = 31 * result + namingStrategy.hashCode();
         result = 31 * result + interfaceTypes.hashCode();
         result = 31 * result + ignoredMethods.hashCode();
+        result = 31 * result + bridgeMethodResolverFactory.hashCode();
         result = 31 * result + classVisitorWrapperChain.hashCode();
         result = 31 * result + methodRegistry.hashCode();
         result = 31 * result + modifiers.hashCode();
@@ -643,6 +668,7 @@ public class ByteBuddy {
                 ", namingStrategy=" + namingStrategy +
                 ", interfaceTypes=" + interfaceTypes +
                 ", ignoredMethods=" + ignoredMethods +
+                ", bridgeMethodResolverFactory=" + bridgeMethodResolverFactory +
                 ", classVisitorWrapperChain=" + classVisitorWrapperChain +
                 ", methodRegistry=" + methodRegistry +
                 ", modifiers=" + modifiers +

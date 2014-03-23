@@ -11,7 +11,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
 
-public class MethodDescriptionForConstructorTest {
+public class MethodDescriptionForLoadedConstructorTest {
 
     private static final String TO_STRING = "toString";
 
@@ -21,9 +21,9 @@ public class MethodDescriptionForConstructorTest {
 
     @Before
     public void setUp() throws Exception {
-        objectDefaultConstructor = new MethodDescription.ForConstructor(Object.class.getDeclaredConstructor());
-        stringDefaultConstructor = new MethodDescription.ForConstructor(String.class.getDeclaredConstructor());
-        stringSingleArgConstructor = new MethodDescription.ForConstructor(String.class.getDeclaredConstructor(String.class));
+        objectDefaultConstructor = new MethodDescription.ForLoadedConstructor(Object.class.getDeclaredConstructor());
+        stringDefaultConstructor = new MethodDescription.ForLoadedConstructor(String.class.getDeclaredConstructor());
+        stringSingleArgConstructor = new MethodDescription.ForLoadedConstructor(String.class.getDeclaredConstructor(String.class));
     }
 
     @Test

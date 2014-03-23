@@ -4,6 +4,7 @@ import com.blogspot.mydailyjava.bytebuddy.ClassFormatVersion;
 import com.blogspot.mydailyjava.bytebuddy.NamingStrategy;
 import com.blogspot.mydailyjava.bytebuddy.asm.ClassVisitorWrapper;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.ClassLoadingStrategy;
+import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.FieldRegistry;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.MethodRegistry;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
@@ -84,6 +85,7 @@ public class SubclassDynamicTypeBuilderTest {
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 none(),
+                BridgeMethodResolver.Simple.Factory.FAIL_FAST,
                 new ClassVisitorWrapper.Chain(),
                 new FieldRegistry.Default(),
                 new MethodRegistry.Default(),
@@ -115,6 +117,7 @@ public class SubclassDynamicTypeBuilderTest {
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 none(),
+                BridgeMethodResolver.Simple.Factory.FAIL_FAST,
                 new ClassVisitorWrapper.Chain(),
                 new FieldRegistry.Default(),
                 new MethodRegistry.Default(),
@@ -152,6 +155,7 @@ public class SubclassDynamicTypeBuilderTest {
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 none(),
+                BridgeMethodResolver.Simple.Factory.FAIL_FAST,
                 new ClassVisitorWrapper.Chain(),
                 new FieldRegistry.Default(),
                 new MethodRegistry.Default(),
@@ -196,6 +200,7 @@ public class SubclassDynamicTypeBuilderTest {
                 Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 none(),
+                BridgeMethodResolver.Simple.Factory.FAIL_FAST,
                 new ClassVisitorWrapper.Chain(),
                 new FieldRegistry.Default(),
                 new MethodRegistry.Default(),

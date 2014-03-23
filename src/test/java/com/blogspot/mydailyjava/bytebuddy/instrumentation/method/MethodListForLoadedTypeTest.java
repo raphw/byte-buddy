@@ -38,7 +38,7 @@ public class MethodListForLoadedTypeTest {
         for (Method method : Object.class.getDeclaredMethods()) {
             MethodList methodList = this.methodList.filter(MethodMatchers.is(method));
             assertThat(methodList.size(), is(1));
-            assertThat(methodList.getOnly(), CoreMatchers.<MethodDescription>equalTo(new MethodDescription.ForMethod(method)));
+            assertThat(methodList.getOnly(), CoreMatchers.<MethodDescription>equalTo(new MethodDescription.ForLoadedMethod(method)));
         }
     }
 }

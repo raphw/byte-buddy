@@ -5,6 +5,7 @@ import com.blogspot.mydailyjava.bytebuddy.NamingStrategy;
 import com.blogspot.mydailyjava.bytebuddy.asm.ClassVisitorWrapper;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.ClassLoadingStrategy;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
+import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.FieldRegistry;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.MethodRegistry;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
@@ -34,6 +35,7 @@ public abstract class AbstractInstrumentationTest {
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 not(isDeclaredBy(target)).or(isSynthetic()),
+                BridgeMethodResolver.Simple.Factory.FAIL_FAST,
                 new ClassVisitorWrapper.Chain(),
                 new FieldRegistry.Default(),
                 new MethodRegistry.Default(),
