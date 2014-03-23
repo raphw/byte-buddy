@@ -5,6 +5,7 @@ import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.TypeWriter;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodList;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocation;
@@ -13,6 +14,7 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
+import com.blogspot.mydailyjava.bytebuddy.utility.MethodSignatureToken;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -29,12 +31,96 @@ public class SubclassInstrumentationContextDelegate
 
     private static final String DEFAULT_PREFIX = "delegate";
 
+    private final String prefix;
+
+    private final Random random;
+    private final BridgeMethodResolver bridgeMethodResolver;
+
+    private final InstrumentedType instrumentedType;
+    private final List<MethodDescription> orderedAccessorMethods;
+    private final Map<MethodDescription, MethodDescription> knownTargetMethodsToAccessorMethod;
+    private final Map<MethodDescription, Entry> registeredAccessorMethodToTargetMethodCall;
+    private final Map<MethodSignatureToken, MethodDescription> reachableMethods;
+
+    /**
+     * Creates a new delegate with a default prefix.
+     *
+     * @param instrumentedType            The instrumented type that is subject of the instrumentation.
+     * @param bridgeMethodResolverFactory A factory that is used for creating a bridge method resolver for the given
+     *                                    instrumented type.
+     */
+    public SubclassInstrumentationContextDelegate(InstrumentedType instrumentedType,
+                                                  BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
+        this(instrumentedType, bridgeMethodResolverFactory, DEFAULT_PREFIX);
+    }
+
+    /**
+     * Creates a new delegate.
+     *
+     * @param instrumentedType            The instrumented type that is subject of the instrumentation.
+     * @param bridgeMethodResolverFactory A factory that is used for creating a bridge method resolver for the given
+     *                                    instrumented type.
+     * @param prefix                      The prefix to be used for the delegation methods.
+     */
+    public SubclassInstrumentationContextDelegate(InstrumentedType instrumentedType,
+                                                  BridgeMethodResolver.Factory bridgeMethodResolverFactory,
+                                                  String prefix) {
+        this.prefix = prefix;
+        this.instrumentedType = instrumentedType;
+        random = new Random();
+        MethodList reachableMethods = instrumentedType.getReachableMethods();
+        bridgeMethodResolver = bridgeMethodResolverFactory.make(reachableMethods);
+        this.reachableMethods = MethodSignatureToken.describe(reachableMethods);
+        orderedAccessorMethods = new ArrayList<MethodDescription>();
+        knownTargetMethodsToAccessorMethod = new HashMap<MethodDescription, MethodDescription>();
+        registeredAccessorMethodToTargetMethodCall = new HashMap<MethodDescription, Entry>();
+    }
+
+    @Override
+    public String name(AuxiliaryType auxiliaryType) {
+        return String.format("%s$%s$%d", instrumentedType.getName(), DEFAULT_PREFIX, Math.abs(random.nextInt()));
+    }
+
+    @Override
+    public MethodDescription requireAccessorMethodFor(MethodDescription targetMethod) {
+        targetMethod = reachableMethods.get(new MethodSignatureToken(targetMethod));
+        if (targetMethod == null) {
+            throw new IllegalArgumentException("Illegal method: " + targetMethod);
+        }
+        MethodDescription accessorMethod = knownTargetMethodsToAccessorMethod.get(targetMethod);
+        if (accessorMethod != null) {
+            return accessorMethod;
+        }
+        String name = String.format("%s$%s$%d", targetMethod.getInternalName(), prefix, Math.abs(random.nextInt()));
+        accessorMethod = new MethodDescription.Latent(name,
+                instrumentedType,
+                targetMethod.getReturnType(),
+                targetMethod.getParameterTypes(),
+                (targetMethod.isStatic() ? Opcodes.ACC_STATIC : 0) | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL);
+        knownTargetMethodsToAccessorMethod.put(targetMethod, accessorMethod);
+        Entry methodCall = new SameSignatureMethodCall(bridgeMethodResolver.resolve(targetMethod), instrumentedType);
+        registeredAccessorMethodToTargetMethodCall.put(accessorMethod, methodCall);
+        orderedAccessorMethods.add(accessorMethod);
+        return accessorMethod;
+    }
+
+    /**
+     * Returns an iterable containing all accessor methods that were registered with this delegate. The iterable can
+     * safely be co-modified in the same thread in order to allow the registration of additional accessor methods with
+     * this delegate while other accessors are already created for the instrumented type.
+     *
+     * @return An co-modifiable iterable of all accessors method that were registered with this delegate.
+     */
+    public Iterable<MethodDescription> getProxiedMethods() {
+        return new TypeWriter.SameThreadCoModifiableIterable<MethodDescription>(orderedAccessorMethods);
+    }
+
     private static class SameSignatureMethodCall implements Entry, ByteCodeAppender {
 
         private final StackManipulation targetMethodCall;
 
         private SameSignatureMethodCall(MethodDescription accessorMethod, TypeDescription instrumentedType) {
-            this.targetMethodCall = MethodInvocation.invoke(accessorMethod).special(instrumentedType);
+            this.targetMethodCall = MethodInvocation.invoke(accessorMethod).special(instrumentedType.getSupertype());
         }
 
         @Override
@@ -84,86 +170,6 @@ public class SubclassInstrumentationContextDelegate
         public String toString() {
             return "SameSignatureMethodCall{targetMethodCall=" + targetMethodCall + '}';
         }
-    }
-
-    private final String prefix;
-
-    private final Random random;
-    private final BridgeMethodResolver bridgeMethodResolver;
-
-    private final InstrumentedType instrumentedType;
-    private final List<MethodDescription> orderedAccessorMethods;
-    private final Map<MethodDescription, MethodDescription> knownTargetMethodsToAccessorMethod;
-    private final Map<MethodDescription, Entry> registeredAccessorMethodToTargetMethodCall;
-
-    /**
-     * Creates a new delegate with a default prefix.
-     *
-     * @param instrumentedType            The instrumented type that is subject of the instrumentation.
-     * @param bridgeMethodResolverFactory A factory that is used for creating a bridge method resolver for the given
-     *                                    instrumented type.
-     */
-    public SubclassInstrumentationContextDelegate(InstrumentedType instrumentedType,
-                                                  BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
-        this(instrumentedType, bridgeMethodResolverFactory, DEFAULT_PREFIX);
-    }
-
-    /**
-     * Creates a new delegate.
-     *
-     * @param instrumentedType            The instrumented type that is subject of the instrumentation.
-     * @param bridgeMethodResolverFactory A factory that is used for creating a bridge method resolver for the given
-     *                                    instrumented type.
-     * @param prefix                      The prefix to be used for the delegation methods.
-     */
-    public SubclassInstrumentationContextDelegate(InstrumentedType instrumentedType,
-                                                  BridgeMethodResolver.Factory bridgeMethodResolverFactory,
-                                                  String prefix) {
-        this.prefix = prefix;
-        this.instrumentedType = instrumentedType;
-        random = new Random();
-        bridgeMethodResolver = bridgeMethodResolverFactory.make(instrumentedType);
-        orderedAccessorMethods = new ArrayList<MethodDescription>();
-        knownTargetMethodsToAccessorMethod = new HashMap<MethodDescription, MethodDescription>();
-        registeredAccessorMethodToTargetMethodCall = new HashMap<MethodDescription, Entry>();
-    }
-
-    @Override
-    public String name(AuxiliaryType auxiliaryType) {
-        return String.format("%s$%s$%d", instrumentedType.getName(), DEFAULT_PREFIX, Math.abs(random.nextInt()));
-    }
-
-    @Override
-    public MethodDescription requireAccessorMethodFor(MethodDescription targetMethod) {
-        // TODO: Find method implementation on this instrumented type and substitute targetMethod with the overridden
-        // method in order to allow "INVOKESPECIAL" call. If the method is abstract, create an accessor method that
-        // throws an exception.
-        MethodDescription accessorMethod = knownTargetMethodsToAccessorMethod.get(targetMethod);
-        if (accessorMethod != null) {
-            return accessorMethod;
-        }
-        String name = String.format("%s$%s$%d", targetMethod.getInternalName(), prefix, Math.abs(random.nextInt()));
-        accessorMethod = new MethodDescription.Latent(name,
-                instrumentedType,
-                targetMethod.getReturnType(),
-                targetMethod.getParameterTypes(),
-                (targetMethod.isStatic() ? Opcodes.ACC_STATIC : 0) | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL);
-        knownTargetMethodsToAccessorMethod.put(targetMethod, accessorMethod);
-        Entry methodCall = new SameSignatureMethodCall(bridgeMethodResolver.resolve(targetMethod), instrumentedType);
-        registeredAccessorMethodToTargetMethodCall.put(accessorMethod, methodCall);
-        orderedAccessorMethods.add(accessorMethod);
-        return accessorMethod;
-    }
-
-    /**
-     * Returns an iterable containing all accessor methods that were registered with this delegate. The iterable can
-     * safely be co-modified in the same thread in order to allow the registration of additional accessor methods with
-     * this delegate while other accessors are already created for the instrumented type.
-     *
-     * @return An co-modifiable iterable of all accessors method that were registered with this delegate.
-     */
-    public Iterable<MethodDescription> getProxiedMethods() {
-        return new TypeWriter.SameThreadCoModifiableIterable<MethodDescription>(orderedAccessorMethods);
     }
 
     @Override

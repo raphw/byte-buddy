@@ -2,7 +2,7 @@ package com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodList;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
+import com.blogspot.mydailyjava.bytebuddy.utility.MethodSignatureToken;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,14 +31,14 @@ public interface BridgeMethodResolver {
 
     static interface Factory {
 
-        BridgeMethodResolver make(TypeDescription typeDescription);
+        BridgeMethodResolver make(MethodList relevant);
     }
 
     static enum NoOp implements BridgeMethodResolver, Factory {
         INSTANCE;
 
         @Override
-        public BridgeMethodResolver make(TypeDescription typeDescription) {
+        public BridgeMethodResolver make(MethodList relevant) {
             return this;
         }
 
@@ -63,8 +63,8 @@ public interface BridgeMethodResolver {
             }
 
             @Override
-            public BridgeMethodResolver make(TypeDescription typeDescription) {
-                return new Simple(typeDescription, conflictHandler);
+            public BridgeMethodResolver make(MethodList relevant) {
+                return new Simple(relevant, conflictHandler);
             }
         }
 
@@ -154,40 +154,13 @@ public interface BridgeMethodResolver {
             boolean isResolved();
         }
 
-        private static class SignatureToken {
+        private final Map<MethodSignatureToken, BridgeTarget> bridges;
 
-            private final MethodDescription methodDescription;
-
-            private SignatureToken(MethodDescription methodDescription) {
-                this.methodDescription = methodDescription;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                SignatureToken that = (SignatureToken) other;
-                return methodDescription.getInternalName().equals(that.methodDescription.getInternalName())
-                        && methodDescription.getReturnType().equals(that.methodDescription.getReturnType())
-                        && methodDescription.getParameterTypes().equals(that.methodDescription.getParameterTypes());
-            }
-
-            @Override
-            public int hashCode() {
-                int result = methodDescription.getInternalName().hashCode();
-                result = 31 * result + methodDescription.getReturnType().hashCode();
-                result = 31 * result + methodDescription.getParameterTypes().hashCode();
-                return result;
-            }
-        }
-
-        private final Map<SignatureToken, BridgeTarget> bridges;
-
-        public Simple(TypeDescription targetType, ConflictHandler conflictHandler) {
-            MethodList bridgeMethods = targetType.getReachableMethods().filter(isBridge());
-            bridges = new HashMap<SignatureToken, BridgeTarget>(bridgeMethods.size());
+        public Simple(MethodList relevant, ConflictHandler conflictHandler) {
+            MethodList bridgeMethods = relevant.filter(isBridge());
+            bridges = new HashMap<MethodSignatureToken, BridgeTarget>(bridgeMethods.size());
             for (MethodDescription bridgeMethod : bridgeMethods) {
-                bridges.put(new SignatureToken(bridgeMethod), findBridgeTargetFor(bridgeMethod, conflictHandler));
+                bridges.put(new MethodSignatureToken(bridgeMethod), findBridgeTargetFor(bridgeMethod, conflictHandler));
             }
         }
 
@@ -208,7 +181,7 @@ public interface BridgeMethodResolver {
 
         @Override
         public MethodDescription resolve(MethodDescription methodDescription) {
-            BridgeTarget bridgeTarget = bridges.get(new SignatureToken(methodDescription));
+            BridgeTarget bridgeTarget = bridges.get(new MethodSignatureToken(methodDescription));
             if (bridgeTarget == null) { // The given method is not a bridge method.
                 return methodDescription;
             } else if (bridgeTarget.isResolved()) { // There is a definite target for the given bridge method.

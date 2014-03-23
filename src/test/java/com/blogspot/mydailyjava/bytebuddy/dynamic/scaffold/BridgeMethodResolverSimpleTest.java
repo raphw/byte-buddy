@@ -69,7 +69,7 @@ public class BridgeMethodResolverSimpleTest {
         TypeDescription target = new TypeDescription.ForLoadedType(Bar.class);
         MethodList relevantMethods = target.getReachableMethods().filter(not(isConstructor().or(isDeclaredBy(Object.class))));
         assertThat(relevantMethods.size(), is(2));
-        BridgeMethodResolver bridgeMethodResolver = new BridgeMethodResolver.Simple(target, conflictHandler);
+        BridgeMethodResolver bridgeMethodResolver = new BridgeMethodResolver.Simple(target.getReachableMethods(), conflictHandler);
         assertThat(bridgeMethodResolver.resolve(relevantMethods.filter(isBridge()).getOnly()),
                 is(relevantMethods.filter(not(isBridge())).getOnly()));
         verifyZeroInteractions(conflictHandler);
@@ -80,7 +80,7 @@ public class BridgeMethodResolverSimpleTest {
         TypeDescription target = new TypeDescription.ForLoadedType(Qux.class);
         MethodList relevantMethods = target.getReachableMethods().filter(not(isConstructor().or(isDeclaredBy(Object.class))));
         assertThat(relevantMethods.size(), is(3));
-        BridgeMethodResolver bridgeMethodResolver = new BridgeMethodResolver.Simple(target, conflictHandler);
+        BridgeMethodResolver bridgeMethodResolver = new BridgeMethodResolver.Simple(target.getReachableMethods(), conflictHandler);
         for (MethodDescription methodDescription : relevantMethods.filter(isBridge())) {
             assertThat(bridgeMethodResolver.resolve(methodDescription), is(relevantMethods.filter(not(isBridge())).getOnly()));
         }
@@ -95,7 +95,7 @@ public class BridgeMethodResolverSimpleTest {
         when(conflictHandler.choose(any(MethodDescription.class), any(MethodList.class))).thenReturn(bridgeTarget);
         when(bridgeTarget.isResolved()).thenReturn(true);
         when(bridgeTarget.extract()).thenReturn(methodDescription);
-        BridgeMethodResolver bridgeMethodResolver = new BridgeMethodResolver.Simple(target, conflictHandler);
+        BridgeMethodResolver bridgeMethodResolver = new BridgeMethodResolver.Simple(target.getReachableMethods(), conflictHandler);
         assertThat(bridgeMethodResolver.resolve(relevantMethods.filter(isBridge()).getOnly()), is(methodDescription));
         verify(conflictHandler).choose(relevantMethods.filter(isBridge()).getOnly(), relevantMethods.filter(not(isBridge())));
         verifyNoMoreInteractions(conflictHandler);
