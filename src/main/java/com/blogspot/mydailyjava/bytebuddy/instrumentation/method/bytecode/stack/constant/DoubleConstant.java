@@ -5,6 +5,7 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+
 /**
  * This class is responsible for loading any {@code double} constant onto the operand stack.
  */
@@ -33,7 +34,25 @@ public enum DoubleConstant implements StackManipulation {
             methodVisitor.visitLdcInsn(value);
             return SIZE;
         }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && Double.compare(((ConstantPool) other).value, value) == 0;
+        }
+
+        @Override
+        public int hashCode() {
+            long temp = Double.doubleToLongBits(value);
+            return (int) (temp ^ (temp >>> 32));
+        }
+
+        @Override
+        public String toString() {
+            return "DoubleConstant.ConstantPool{value=" + value + '}';
+        }
     }
+
     /**
      * Creates a stack manipulation for loading a {@code double} value onto the operand stack.
      * <p/>

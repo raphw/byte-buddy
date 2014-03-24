@@ -34,6 +34,22 @@ public enum LongConstant implements StackManipulation {
             methodVisitor.visitLdcInsn(value);
             return SIZE;
         }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && value == ((ConstantPool) other).value;
+        }
+
+        @Override
+        public int hashCode() {
+            return (int) (value ^ (value >>> 32));
+        }
+
+        @Override
+        public String toString() {
+            return "LongConstant.ConstantPool{value=" + value + '}';
+        }
     }
 
     /**

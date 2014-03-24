@@ -5,6 +5,7 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+
 /**
  * This class is responsible for loading any {@code float} constant onto the operand stack.
  */
@@ -34,7 +35,24 @@ public enum FloatConstant implements StackManipulation {
             methodVisitor.visitLdcInsn(value);
             return SIZE;
         }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && Float.compare(((ConstantPool) other).value, value) == 0;
+        }
+
+        @Override
+        public int hashCode() {
+            return (value != +0.0f ? Float.floatToIntBits(value) : 0);
+        }
+
+        @Override
+        public String toString() {
+            return "ConstantPool.ConstantPool{value=" + value + '}';
+        }
     }
+
     /**
      * Creates a stack manipulation for loading a {@code float} value onto the operand stack.
      * <p/>

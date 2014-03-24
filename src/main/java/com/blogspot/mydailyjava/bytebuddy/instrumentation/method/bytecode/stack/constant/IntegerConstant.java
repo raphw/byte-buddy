@@ -24,11 +24,11 @@ public enum IntegerConstant implements StackManipulation {
 
     private static final Size SIZE = StackSize.SINGLE.toIncreasingSize();
 
-    private static class BiPush implements StackManipulation {
+    private static class SingleBytePush implements StackManipulation {
 
-        private final int value;
+        private final byte value;
 
-        private BiPush(int value) {
+        private SingleBytePush(byte value) {
             this.value = value;
         }
 
@@ -41,6 +41,94 @@ public enum IntegerConstant implements StackManipulation {
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
             methodVisitor.visitIntInsn(Opcodes.BIPUSH, value);
             return SIZE;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && value == ((SingleBytePush) other).value;
+        }
+
+        @Override
+        public int hashCode() {
+            return (int) value;
+        }
+
+        @Override
+        public String toString() {
+            return "IntegerConstant.SingleBytePush{value=" + value + '}';
+        }
+    }
+
+    private static class TwoBytePush implements StackManipulation {
+
+        private final short value;
+
+        private TwoBytePush(short value) {
+            this.value = value;
+        }
+
+        @Override
+        public boolean isValid() {
+            return true;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+            methodVisitor.visitIntInsn(Opcodes.SIPUSH, value);
+            return SIZE;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && value == ((TwoBytePush) other).value;
+        }
+
+        @Override
+        public int hashCode() {
+            return (int) value;
+        }
+
+        @Override
+        public String toString() {
+            return "IntegerConstant.TwoBytePush{value=" + value + '}';
+        }
+    }
+
+    private static class ConstantPoolValue implements StackManipulation {
+
+        private final int value;
+
+        private ConstantPoolValue(int value) {
+            this.value = value;
+        }
+
+        @Override
+        public boolean isValid() {
+            return true;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+            methodVisitor.visitLdcInsn(value);
+            return SIZE;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && value == ((ConstantPoolValue) other).value;
+        }
+
+        @Override
+        public int hashCode() {
+            return value;
+        }
+
+        @Override
+        public String toString() {
+            return "IntegerConstant.ConstantPoolValue{value=" + value + '}';
         }
     }
 
@@ -79,7 +167,13 @@ public enum IntegerConstant implements StackManipulation {
             case 5:
                 return FIVE;
             default:
-                return new BiPush(value);
+                if (value >= Byte.MIN_VALUE && value <= Byte.MAX_VALUE) {
+                    return new SingleBytePush((byte) value);
+                } else if (value >= Short.MIN_VALUE && value <= Short.MAX_VALUE) {
+                    return new TwoBytePush((short) value);
+                } else {
+                    return new ConstantPoolValue(value);
+                }
         }
     }
 
