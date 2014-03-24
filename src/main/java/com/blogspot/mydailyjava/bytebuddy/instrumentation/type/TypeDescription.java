@@ -64,6 +64,7 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
             MethodMatcher subclassFilter = not(MethodMatchers.isPrivate())
                     .and(not(MethodMatchers.isPackagePrivate()).or(isVisibleFromPackage(getPackageName())))
                     .and(isMethod())
+                    .and(not(MethodMatchers.isStatic()))
                     .and(uniqueSignatureFilter);
             if (getSupertype() != null) {
                 methodDescriptions.addAll(getSupertype().getReachableMethods().filter(subclassFilter));

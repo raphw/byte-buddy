@@ -11,9 +11,8 @@ import java.util.concurrent.Callable;
 
 /**
  * Parameters that are annotated with this annotation will be assigned a proxy for calling the instrumented method's
- * {@code super} implementation. If a method does not have a super instrumentation, the method with this parameter
- * annotation will not be considered as a possible binding candidate for the source method without such a super
- * implementation.
+ * {@code super} implementation. If a method does not have a super implementation, calling the annotated proxy will
+ * throw an exception.
  * <p/>
  * The proxy will both implement the {@link java.util.concurrent.Callable} and the {@link java.lang.Runnable} interfaces
  * such that the annotated parameter must be assignable to any of those interfaces or be of the {@link java.lang.Object}
@@ -53,8 +52,6 @@ public @interface SuperCall {
             TypeDescription targetType = target.getParameterTypes().get(targetParameterIndex);
             if (!targetType.represents(Runnable.class) && !targetType.represents(Callable.class) && !targetType.represents(Object.class)) {
                 throw new IllegalStateException("A method call proxy can only be assigned to Runnable or Callable types: " + target);
-            } else if (target.isAbstract()) {
-                return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             } else {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(new MethodCallProxy.AssignableSignatureCall(source));
             }

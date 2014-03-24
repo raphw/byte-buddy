@@ -1,11 +1,15 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation;
 
 import com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType;
+import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.subclass.SubclassInstrumentationContextDelegate;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.Super;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class MethodDelegationSuperTest extends AbstractInstrumentationTest {
 
@@ -91,6 +95,12 @@ public class MethodDelegationSuperTest extends AbstractInstrumentationTest {
     public void testSuperCallOnAbstractMethod() throws Exception {
         DynamicType.Loaded<FooBarQuxBaz> loaded = instrument(FooBarQuxBaz.class, MethodDelegation.to(FooBar.class));
         FooBarQuxBaz instance = loaded.getLoaded().newInstance();
-        assertThat(instance.qux(), is((Object) (FOO + QUX)));
+        try {
+            instance.qux();
+            fail();
+        } catch (RuntimeException e) {
+            assertThat(e.getMessage(), startsWith(SubclassInstrumentationContextDelegate.ABSTRACT_METHOD_WARNING_PREFIX));
+            assertEquals(RuntimeException.class, e.getClass());
+        }
     }
 }
