@@ -2,7 +2,6 @@ package com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodList;
-import com.blogspot.mydailyjava.bytebuddy.utility.MethodSignatureToken;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -154,13 +153,13 @@ public interface BridgeMethodResolver {
             boolean isResolved();
         }
 
-        private final Map<MethodSignatureToken, BridgeTarget> bridges;
+        private final Map<String, BridgeTarget> bridges;
 
         public Simple(MethodList relevant, ConflictHandler conflictHandler) {
             MethodList bridgeMethods = relevant.filter(isBridge());
-            bridges = new HashMap<MethodSignatureToken, BridgeTarget>(bridgeMethods.size());
+            bridges = new HashMap<String, BridgeTarget>(bridgeMethods.size());
             for (MethodDescription bridgeMethod : bridgeMethods) {
-                bridges.put(new MethodSignatureToken(bridgeMethod), findBridgeTargetFor(bridgeMethod, conflictHandler));
+                bridges.put(bridgeMethod.getUniqueSignature(), findBridgeTargetFor(bridgeMethod, conflictHandler));
             }
         }
 
@@ -181,7 +180,7 @@ public interface BridgeMethodResolver {
 
         @Override
         public MethodDescription resolve(MethodDescription methodDescription) {
-            BridgeTarget bridgeTarget = bridges.get(new MethodSignatureToken(methodDescription));
+            BridgeTarget bridgeTarget = bridges.get(methodDescription.getUniqueSignature());
             if (bridgeTarget == null) { // The given method is not a bridge method.
                 return methodDescription;
             } else if (bridgeTarget.isResolved()) { // There is a definite target for the given bridge method.

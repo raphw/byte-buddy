@@ -14,7 +14,6 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
-import com.blogspot.mydailyjava.bytebuddy.utility.MethodSignatureToken;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -40,7 +39,7 @@ public class SubclassInstrumentationContextDelegate
     private final List<MethodDescription> orderedAccessorMethods;
     private final Map<MethodDescription, MethodDescription> knownTargetMethodsToAccessorMethod;
     private final Map<MethodDescription, Entry> registeredAccessorMethodToTargetMethodCall;
-    private final Map<MethodSignatureToken, MethodDescription> reachableMethods;
+    private final Map<String, MethodDescription> reachableMethods;
 
     /**
      * Creates a new delegate with a default prefix.
@@ -70,7 +69,10 @@ public class SubclassInstrumentationContextDelegate
         random = new Random();
         MethodList reachableMethods = instrumentedType.getReachableMethods();
         bridgeMethodResolver = bridgeMethodResolverFactory.make(reachableMethods);
-        this.reachableMethods = MethodSignatureToken.describe(reachableMethods);
+        this.reachableMethods = new HashMap<String, MethodDescription>(reachableMethods.size());
+        for(MethodDescription methodDescription : reachableMethods) {
+            this.reachableMethods.put(methodDescription.getUniqueSignature(), methodDescription);
+        }
         orderedAccessorMethods = new ArrayList<MethodDescription>();
         knownTargetMethodsToAccessorMethod = new HashMap<MethodDescription, MethodDescription>();
         registeredAccessorMethodToTargetMethodCall = new HashMap<MethodDescription, Entry>();
@@ -83,7 +85,7 @@ public class SubclassInstrumentationContextDelegate
 
     @Override
     public MethodDescription requireAccessorMethodFor(MethodDescription targetMethod) {
-        targetMethod = reachableMethods.get(new MethodSignatureToken(targetMethod));
+        targetMethod = reachableMethods.get(targetMethod.getUniqueSignature());
         if (targetMethod == null) {
             throw new IllegalArgumentException("Illegal method: " + targetMethod);
         }
