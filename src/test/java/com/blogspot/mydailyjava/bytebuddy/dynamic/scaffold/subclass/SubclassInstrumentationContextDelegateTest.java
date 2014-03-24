@@ -10,7 +10,6 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.TypeInitializer;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodList;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
-import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
@@ -28,6 +27,7 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Iterator;
 
+import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.isBridge;
 import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -62,18 +62,22 @@ public class SubclassInstrumentationContextDelegateTest {
         when(firstMethod.getParameterTypes()).thenReturn(firstMethodParameters);
         when(firstMethod.getDeclaringType()).thenReturn(superType);
         when(firstMethod.getInternalName()).thenReturn(QUX);
+        when(firstMethod.getUniqueSignature()).thenReturn(FOO);
         when(firstMethodReturnType.getStackSize()).thenReturn(StackSize.ZERO);
         when(secondMethod.getReturnType()).thenReturn(secondMethodReturnType);
         when(secondMethod.getParameterTypes()).thenReturn(secondMethodParameters);
         when(secondMethod.getDeclaringType()).thenReturn(superType);
         when(secondMethod.getInternalName()).thenReturn(BAZ);
+        when(secondMethod.getUniqueSignature()).thenReturn(BAZ);
+        MethodDescription toStringMethod = new TypeDescription.ForLoadedType(Object.class)
+                .getDeclaredMethods().filter(named(TO_STRING)).getOnly();
         when(superType.isAssignableFrom(superType)).thenReturn(true);
         when(secondMethodReturnType.getStackSize()).thenReturn(StackSize.ZERO);
         when(instrumentedType.detach()).thenReturn(instrumentedType);
         when(instrumentedType.getReachableMethods()).thenReturn(methodList);
         when(instrumentedType.getSupertype()).thenReturn(superType);
-        when(methodList.filter(any(MethodMatcher.class))).thenReturn(methodList);
-        when(methodList.iterator()).thenReturn(Arrays.<MethodDescription>asList().iterator());
+        when(methodList.filter(isBridge())).thenReturn(new MethodList.Empty());
+        when(methodList.iterator()).thenReturn(Arrays.asList(firstMethod, secondMethod, toStringMethod).iterator());
         delegate = new SubclassInstrumentationContextDelegate(instrumentedType,
                 BridgeMethodResolver.Simple.Factory.FAIL_FAST,
                 FOO);
