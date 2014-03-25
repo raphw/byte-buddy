@@ -6,9 +6,12 @@ import com.blogspot.mydailyjava.bytebuddy.dynamic.ClassLoadingStrategy;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.TypeWriter;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.SuperMethodCall;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.TypeInitializer;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodList;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
@@ -20,19 +23,17 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 import org.mockito.asm.Opcodes;
-import sun.reflect.ReflectionFactory;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Iterator;
 
-import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.isBridge;
-import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.named;
+import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsNot.not;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 
 public class SubclassInstrumentationContextDelegateTest {
@@ -133,18 +134,24 @@ public class SubclassInstrumentationContextDelegateTest {
                 instrumentationContext,
                 ClassFormatVersion.forCurrentJavaVersion())
                 .build(new ClassVisitorWrapper.Chain());
+        TypeWriter.MethodPool constructorPool = mock(TypeWriter.MethodPool.class);
+        TypeWriter.MethodPool.Entry entry = mock(TypeWriter.MethodPool.Entry.class);
+        when(entry.isDefineMethod()).thenReturn(true);
+        when(entry.getAttributeAppender()).thenReturn(MethodAttributeAppender.NoOp.INSTANCE);
+        ByteCodeAppender superMethodCallAppender = SuperMethodCall.INSTANCE.appender(instrumentedType);
+        when(entry.getByteCodeAppender()).thenReturn(superMethodCallAppender);
+        when(constructorPool.target(any(MethodDescription.class))).thenReturn(entry);
         Class<?> loaded = typeWriter
                 .methods()
+                .write(new TypeDescription.ForLoadedType(Object.class).getDeclaredMethods().filter(isConstructor()), constructorPool)
                 .write(delegate.getProxiedMethods(), delegate)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER).getLoaded();
         assertThat(loaded.getName(), is(BAR));
         assertThat(loaded.getDeclaredFields().length, is(0));
         assertThat(loaded.getDeclaredMethods().length, is(1));
-        assertThat(loaded.getDeclaredConstructors().length, is(0));
-        Constructor<?> constructor = ReflectionFactory.getReflectionFactory()
-                .newConstructorForSerialization(loaded, Object.class.getDeclaredConstructor());
-        Object instance = constructor.newInstance();
+        assertThat(loaded.getDeclaredConstructors().length, is(1));
+        Object instance = loaded.newInstance();
         Method loadedProxyMethod = loaded.getDeclaredMethods()[0];
         loadedProxyMethod.setAccessible(true);
         assertThat((String) loadedProxyMethod.invoke(instance), is(instance.toString()));

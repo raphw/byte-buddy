@@ -1,0 +1,75 @@
+def versionAsm = '4.2'
+def versionMockito = '1.9.5'
+def versionJunit = '4.11'
+def versionGradleNexusPlugin = '0.7'
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+
+    dependencies {
+        classpath group: 'org.gradle.api.plugins', name: 'gradle-nexus-plugin', version: versionGradleNexusPlugin
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'nexus'
+
+sourceCompatibility = JavaVersion.VERSION_1_6
+targetCompatibility = JavaVersion.VERSION_1_6
+
+version = '0.1-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'Byte Buddy', 'Implementation-Version': version
+    }
+}
+
+/*modifyPom {
+    project {
+        name 'Byte Buddy'
+        description 'Byte Buddy is a Java library for creating Java classes at run time.'
+        url 'https://github.com/raphw/byte-buddy'
+        inceptionYear '2014'
+
+        scm {
+            url 'https://github.com/raphw/byte-buddy'
+            connection 'scm:https://raphw@github.com/raphw/byte-buddy.git'
+            developerConnection 'scm:git://github.com/raphw/byte-buddy.git'
+        }
+
+        licenses {
+            license {
+                name 'The Apache Software License, Version 2.0'
+                url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                distribution 'repo'
+            }
+        }
+
+        developers {
+            developer {
+                id 'raphw'
+                name 'Rafael Winterhalter'
+                email 'rafael.wth@gmail.com'
+            }
+        }
+    }
+}*/
+
+
+dependencies {
+    compile group: 'org.ow2.asm', name: 'asm', version: versionAsm
+    compile group: 'org.ow2.asm', name: 'asm-util', version: versionAsm
+    testCompile group: 'junit', name: 'junit', version: versionJunit
+    testCompile group: 'org.mockito', name: 'mockito-core', version: versionMockito
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '1.11'
+}
