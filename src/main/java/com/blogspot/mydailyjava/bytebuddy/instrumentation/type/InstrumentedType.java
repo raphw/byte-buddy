@@ -136,6 +136,7 @@ public interface InstrumentedType extends TypeDescription {
             private final String internalName;
             private final TypeDescription returnType;
             private final List<TypeDescription> parameterTypes;
+            private final List<TypeDescription> exceptionTypes;
             private final int modifiers;
 
             /**
@@ -149,10 +150,12 @@ public interface InstrumentedType extends TypeDescription {
             public MethodToken(String internalName,
                                TypeDescription returnType,
                                List<? extends TypeDescription> parameterTypes,
+                               List<? extends TypeDescription> exceptionTypes,
                                int modifiers) {
                 this.internalName = internalName;
                 this.returnType = returnType;
                 this.parameterTypes = new ArrayList<TypeDescription>(parameterTypes);
+                this.exceptionTypes = new ArrayList<TypeDescription>(exceptionTypes);
                 this.modifiers = modifiers;
             }
 
@@ -162,6 +165,10 @@ public interface InstrumentedType extends TypeDescription {
                 parameterTypes = new ArrayList<TypeDescription>(methodDescription.getParameterTypes().size());
                 for (TypeDescription typeDescription : methodDescription.getParameterTypes()) {
                     parameterTypes.add(withSubstitutedSelfReference(typeInternalName, typeDescription));
+                }
+                exceptionTypes = new ArrayList<TypeDescription>(methodDescription.getExceptionTypes().size());
+                for (TypeDescription typeDescription : methodDescription.getExceptionTypes()) {
+                    exceptionTypes.add(withSubstitutedSelfReference(typeInternalName, typeDescription));
                 }
                 modifiers = methodDescription.getModifiers();
             }
@@ -183,7 +190,7 @@ public interface InstrumentedType extends TypeDescription {
 
             @Override
             public TypeList getExceptionTypes() {
-                return new TypeList.Empty();
+                return new TypeList.Explicit(exceptionTypes);
             }
 
             @Override
@@ -515,6 +522,7 @@ public interface InstrumentedType extends TypeDescription {
     InstrumentedType withMethod(String name,
                                 TypeDescription returnType,
                                 List<? extends TypeDescription> parameterTypes,
+                                List<? extends TypeDescription> exceptionTypes,
                                 int modifiers);
 
     /**

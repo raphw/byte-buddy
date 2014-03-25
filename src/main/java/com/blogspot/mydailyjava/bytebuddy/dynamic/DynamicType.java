@@ -74,6 +74,21 @@ public interface DynamicType {
                     }
 
                     @Override
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        SignatureMatcher that = (SignatureMatcher) other;
+                        return parameterTypes.equals(that.parameterTypes) && returnType.equals(that.returnType);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = returnType.hashCode();
+                        result = 31 * result + parameterTypes.hashCode();
+                        return result;
+                    }
+
+                    @Override
                     public String toString() {
                         return "hasSignature(returnType=" + returnType + ", parameterTypes=" + parameterTypes + ')';
                     }
@@ -156,6 +171,15 @@ public interface DynamicType {
                         parameterTypes.add(considerSubstitution(parameterType, instrumentedType));
                     }
                     return parameterTypes;
+                }
+
+                /**
+                 * Resolves the declared exception types for the method.
+                 *
+                 * @return A list of type descriptions for the actual exception types.
+                 */
+                protected List<TypeDescription> resolveExceptionTypes() {
+                    return this.exceptionTypes;
                 }
 
                 /**
@@ -490,6 +514,7 @@ public interface DynamicType {
                     instrumentedType = instrumentedType.withMethod(methodToken.internalName,
                             methodToken.resolveReturnType(instrumentedType),
                             methodToken.resolveParameterTypes(instrumentedType),
+                            methodToken.resolveExceptionTypes(),
                             methodToken.modifiers);
                 }
                 return instrumentedType;
@@ -521,9 +546,14 @@ public interface DynamicType {
             @Override
             public ExceptionDeclarableMethodInterception<S> defineConstructor(Iterable<Class<?>> parameterTypes,
                                                                               ModifierContributor.ForMethod... modifier) {
-                List<Class<?>> parameterTypesList = new ArrayList<Class<?>>();
-                for(Class<?> parameterType : parameterTypes) {
-                    parameterTypesList.add(parameterType);
+                List<Class<?>> parameterTypesList;
+                if (parameterTypes instanceof List) {
+                    parameterTypesList = (List<Class<?>>) parameterTypes;
+                } else {
+                    parameterTypesList = new ArrayList<Class<?>>();
+                    for (Class<?> parameterType : parameterTypes) {
+                        parameterTypesList.add(parameterType);
+                    }
                 }
                 return defineConstructor(new TypeList.ForLoadedType(parameterTypesList), modifier);
             }
@@ -570,7 +600,7 @@ public interface DynamicType {
              * @return A target for instrumenting the defined method where the method will declare the given exception
              * types.
              */
-            MatchedMethodInterception<S> throwing(Class<? extends Throwable>... type);
+            MatchedMethodInterception<S> throwing(Class<?>... type);
 
             /**
              * Defines a number of {@link java.lang.Throwable} types to be include in the exception declaration.
@@ -803,7 +833,7 @@ public interface DynamicType {
         /**
          * Defines a new constructor for this type.
          *
-         * @param parameterTypes The parameter types of this constructor  where the current type can be represented by
+         * @param parameterTypes The parameter types of this constructor where the current type can be represented by
          *                       {@link com.blogspot.mydailyjava.bytebuddy.dynamic.TargetType}.
          * @param modifier       The modifiers for this constructor.
          * @return An interception delegate that exclusively matches the new constructor.

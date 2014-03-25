@@ -1,6 +1,6 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation;
 
-import com.blogspot.mydailyjava.bytebuddy.utility.PackagePrivateSample;
+import com.blogspot.mydailyjava.bytebuddy.utility.PackagePrivateMethod;
 import org.junit.Test;
 
 public class MethodDelegationExceptionTest extends AbstractInstrumentationTest {
@@ -30,7 +30,7 @@ public class MethodDelegationExceptionTest extends AbstractInstrumentationTest {
 
     @Test(expected = IllegalStateException.class)
     public void testNoVisibleMethod() throws Exception {
-        instrument(Foo.class, MethodDelegation.to(new PackagePrivateSample()));
+        instrument(Foo.class, MethodDelegation.to(new PackagePrivateMethod()));
     }
 
     @Test(expected = IllegalArgumentException.class)

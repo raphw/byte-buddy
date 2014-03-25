@@ -232,6 +232,22 @@ public final class ByteBuddyCommons {
         return typeDescriptions;
     }
 
+    /**
+     * Checks if given types can all be thrown, i.e. extend the {@link java.lang.Throwable} base class.
+     *
+     * @param types The type to check.
+     * @param <T>   the exact given type.
+     * @return The given types.
+     */
+    public static <T extends Iterable<? extends TypeDescription>> T isThrowable(T types) {
+        for (TypeDescription typeDescription : types) {
+            if (!typeDescription.isAssignableTo(Throwable.class)) {
+                throw new IllegalArgumentException("Not a isThrowable type: " + typeDescription);
+            }
+        }
+        return types;
+    }
+
     private ByteBuddyCommons() {
         throw new AssertionError();
     }

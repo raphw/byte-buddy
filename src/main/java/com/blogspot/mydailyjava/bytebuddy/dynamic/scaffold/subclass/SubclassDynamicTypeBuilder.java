@@ -172,7 +172,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         }
 
         @Override
-        public MatchedMethodInterception<S> throwing(Class<? extends Throwable>... type) {
+        public MatchedMethodInterception<S> throwing(Class<?>... type) {
             return throwing(new TypeList.ForLoadedType(nonNull(type)).toArray(new TypeDescription[type.length]));
         }
 
@@ -181,7 +181,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
             return materialize(new MethodToken(methodToken.getInternalName(),
                     methodToken.getReturnType(),
                     methodToken.getParameterTypes(),
-                    uniqueTypes(Arrays.asList(nonNull(type))),
+                    uniqueTypes(isThrowable(Arrays.asList(nonNull(type)))),
                     methodToken.getModifiers()));
         }
 

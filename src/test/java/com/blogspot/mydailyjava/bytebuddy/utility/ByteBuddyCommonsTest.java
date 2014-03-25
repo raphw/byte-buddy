@@ -35,7 +35,9 @@ public class ByteBuddyCommonsTest {
     @Before
     public void setUp() throws Exception {
         when(first.getInternalName()).thenReturn(FOO);
+        when(first.isAssignableTo(Throwable.class)).thenReturn(true);
         when(second.getInternalName()).thenReturn(BAR);
+        when(second.isAssignableTo(Throwable.class)).thenReturn(false);
     }
 
     @Test
@@ -155,5 +157,15 @@ public class ByteBuddyCommonsTest {
     @Test(expected = IllegalArgumentException.class)
     public void testUniqueForNonUniqueTypes() throws Exception {
         uniqueTypes(Arrays.asList(first, second, first));
+    }
+
+    @Test
+    public void testIsThrowableForThrowables() throws Exception {
+        assertThat(isThrowable(Arrays.asList(first)), is(Arrays.asList(first)));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testIsThrowableForNonThrowables() throws Exception {
+        isThrowable(Arrays.asList(first, second));
     }
 }

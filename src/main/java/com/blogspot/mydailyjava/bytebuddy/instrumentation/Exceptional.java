@@ -17,18 +17,18 @@ import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.
 
 /**
  * This instrumentation causes a {@link java.lang.Throwable} to be thrown when the instrumented method is invoked.
- * Be aware that the Java Virtual machine does not care about exception declarations and will throw any throwable
+ * Be aware that the Java Virtual machine does not care about exception declarations and will throw any isThrowable
  * from any method even if the method does not declared a checked exception.
  */
 public class Exceptional implements Instrumentation, ByteCodeAppender {
 
     /**
-     * Creates an instrumentation that creates a new instance of the given throwable type on each method invocation
+     * Creates an instrumentation that creates a new instance of the given isThrowable type on each method invocation
      * which is then thrown immediately. For this to be possible, the given type must define a default constructor
      * which is visible from the instrumented type.
      *
-     * @param throwable The type of the throwable.
-     * @return An instrumentation that will throw an instance of the throwable on each method invocation of the
+     * @param throwable The type of the isThrowable.
+     * @return An instrumentation that will throw an instance of the isThrowable on each method invocation of the
      * instrumented methods.
      */
     public static Instrumentation throwing(Class<? extends Throwable> throwable) {
@@ -37,13 +37,13 @@ public class Exceptional implements Instrumentation, ByteCodeAppender {
     }
 
     /**
-     * Creates an instrumentation that creates a new instance of the given throwable type on each method invocation
+     * Creates an instrumentation that creates a new instance of the given isThrowable type on each method invocation
      * which is then thrown immediately. For this to be possible, the given type must define a constructor that
      * takes a single {@link java.lang.String} as its argument.
      *
-     * @param throwable The type of the throwable.
+     * @param throwable The type of the isThrowable.
      * @param message   The string that is handed to the constructor. Usually an exception message.
-     * @return An instrumentation that will throw an instance of the throwable on each method invocation of the
+     * @return An instrumentation that will throw an instance of the isThrowable on each method invocation of the
      * instrumented methods.
      */
     public static Instrumentation throwing(Class<? extends Throwable> throwable, String message) {
@@ -52,7 +52,7 @@ public class Exceptional implements Instrumentation, ByteCodeAppender {
     }
 
     /**
-     * A construction delegate is responsible for calling a throwable's constructor.
+     * A construction delegate is responsible for calling a isThrowable's constructor.
      */
     public static interface ConstructionDelegate {
 
@@ -67,7 +67,7 @@ public class Exceptional implements Instrumentation, ByteCodeAppender {
             /**
              * Creates a new construction delegate that calls a default constructor.
              *
-             * @param targetType The type of the throwable.
+             * @param targetType The type of the isThrowable.
              */
             public ForDefaultConstructor(TypeDescription targetType) {
                 this.targetType = targetType;
@@ -115,7 +115,7 @@ public class Exceptional implements Instrumentation, ByteCodeAppender {
             /**
              * Creates a new construction delegate that calls a constructor by handing it the given string.
              *
-             * @param targetType The type of the throwable.
+             * @param targetType The type of the isThrowable.
              * @param message    The string that is handed to the constructor.
              */
             public ForStringConstructor(TypeDescription targetType, String message) {
@@ -160,7 +160,7 @@ public class Exceptional implements Instrumentation, ByteCodeAppender {
          * Creates a stack manipulation that creates pushes all constructor arguments onto the operand stack
          * and subsequently calls the constructor.
          *
-         * @return A stack manipulation for constructing a throwable.
+         * @return A stack manipulation for constructing a isThrowable.
          */
         StackManipulation make();
     }
@@ -172,7 +172,7 @@ public class Exceptional implements Instrumentation, ByteCodeAppender {
      * Creates a new instance of an instrumentation for throwing throwables.
      *
      * @param throwableType        The type of the exception to be thrown.
-     * @param constructionDelegate A delegate that is responsible for calling the throwable's constructor.
+     * @param constructionDelegate A delegate that is responsible for calling the isThrowable's constructor.
      */
     public Exceptional(TypeDescription throwableType,
                        ConstructionDelegate constructionDelegate) {

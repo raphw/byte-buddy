@@ -105,8 +105,13 @@ public class SubclassInstumentedType
     public InstrumentedType withMethod(String internalName,
                                        TypeDescription returnType,
                                        List<? extends TypeDescription> parameterTypes,
+                                       List<? extends TypeDescription> exceptionTypes,
                                        int modifiers) {
-        MethodDescription additionalMethod = new MethodToken(internalName, returnType, parameterTypes, modifiers);
+        MethodDescription additionalMethod = new MethodToken(internalName,
+                returnType,
+                parameterTypes,
+                exceptionTypes,
+                modifiers);
         if (methodDescriptions.contains(additionalMethod)) {
             throw new IllegalArgumentException("Method " + additionalMethod + " is already defined on " + this);
         }
