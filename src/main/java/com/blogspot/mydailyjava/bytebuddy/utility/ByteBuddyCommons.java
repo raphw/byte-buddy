@@ -61,7 +61,8 @@ public final class ByteBuddyCommons {
                     "native", "new", "null", "package", "private", "protected",
                     "public", "return", "short", "static", "strictfp", "super",
                     "switch", "synchronized", "this", "throw", "throws", "transient",
-                    "true", "try", "void", "volatile", "while")));
+                    "true", "try", "void", "volatile", "while"))
+    );
 
     /**
      * Validates that a value is not {@code null}.
@@ -99,7 +100,7 @@ public final class ByteBuddyCommons {
     public static TypeDescription isImplementable(TypeDescription type) {
         if (nonNull(type).isArray() || type.isPrimitive()) {
             throw new IllegalArgumentException(type + " is not implementable");
-        } else if(type.isFinal()) {
+        } else if (type.isFinal()) {
             throw new IllegalArgumentException("Cannot implement a final class such as " + type);
         }
         return type;
@@ -212,6 +213,23 @@ public final class ByteBuddyCommons {
             throw new IllegalArgumentException("Illegal modifiers " + Arrays.asList(modifierContributor));
         }
         return modifier;
+    }
+
+    /**
+     * Validates that there are no duplicates for a list of type descriptions.
+     *
+     * @param typeDescriptions The list to validate.
+     * @param <T>              The exact type of the list to validate.
+     * @return The same list that was given as an argument.
+     */
+    public static <T extends List<? extends TypeDescription>> T uniqueTypes(T typeDescriptions) {
+        Set<String> types = new HashSet<String>(typeDescriptions.size());
+        for (TypeDescription typeDescription : typeDescriptions) {
+            if (!types.add(typeDescription.getInternalName())) {
+                throw new IllegalArgumentException("Type was found more than once: " + typeDescription);
+            }
+        }
+        return typeDescriptions;
     }
 
     private ByteBuddyCommons() {

@@ -18,12 +18,10 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.Junctio
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.InstrumentedType;
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeList;
 
 import java.lang.annotation.Annotation;
-import java.util.AbstractList;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
 import static com.blogspot.mydailyjava.bytebuddy.utility.ByteBuddyCommons.*;
@@ -113,7 +111,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         private final MethodRegistry.LatentMethodMatcher latentMethodMatcher;
         private final List<MethodToken> methodTokens;
 
-        private SubclassMatchedMethodInterception(MethodRegistry.LatentMethodMatcher latentMethodMatcher, List<MethodToken> methodTokens) {
+        private SubclassMatchedMethodInterception(MethodRegistry.LatentMethodMatcher latentMethodMatcher,
+                                                  List<MethodToken> methodTokens) {
             this.latentMethodMatcher = latentMethodMatcher;
             this.methodTokens = methodTokens;
         }
@@ -156,6 +155,68 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                     "base=" + SubclassDynamicTypeBuilder.this +
                     ", latentMethodMatcher=" + latentMethodMatcher +
                     ", methodTokens=" + methodTokens +
+                    '}';
+        }
+
+        private SubclassDynamicTypeBuilder<?> getSubclassDynamicTypeBuilder() {
+            return SubclassDynamicTypeBuilder.this;
+        }
+    }
+
+    private class SubclassExceptionDeclarableMethodInterception<S> implements ExceptionDeclarableMethodInterception<S> {
+
+        private final MethodToken methodToken;
+
+        private SubclassExceptionDeclarableMethodInterception(MethodToken methodToken) {
+            this.methodToken = methodToken;
+        }
+
+        @Override
+        public MatchedMethodInterception<S> throwing(Class<? extends Throwable>... type) {
+            return throwing(new TypeList.ForLoadedType(nonNull(type)).toArray(new TypeDescription[type.length]));
+        }
+
+        @Override
+        public MatchedMethodInterception<S> throwing(TypeDescription... type) {
+            return materialize(new MethodToken(methodToken.getInternalName(),
+                    methodToken.getReturnType(),
+                    methodToken.getParameterTypes(),
+                    uniqueTypes(Arrays.asList(nonNull(type))),
+                    methodToken.getModifiers()));
+        }
+
+        @Override
+        public MethodAnnotationTarget<S> intercept(Instrumentation instrumentation) {
+            return materialize(methodToken).intercept(instrumentation);
+        }
+
+        @Override
+        public MethodAnnotationTarget<S> withoutCode() {
+            return materialize(methodToken).withoutCode();
+        }
+
+        private SubclassMatchedMethodInterception<S> materialize(MethodToken methodToken) {
+            return new SubclassMatchedMethodInterception<S>(methodToken, join(methodTokens, methodToken));
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && methodToken.equals(((SubclassExceptionDeclarableMethodInterception<?>) other).methodToken)
+                    && SubclassDynamicTypeBuilder.this.equals(((SubclassExceptionDeclarableMethodInterception<?>) other).getSubclassDynamicTypeBuilder());
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * SubclassDynamicTypeBuilder.this.hashCode() + methodToken.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "SubclassExceptionDeclarableMethodInterception{" +
+                    "base=" + SubclassDynamicTypeBuilder.this +
+                    "methodToken=" + methodToken +
                     '}';
         }
 
@@ -336,6 +397,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
             return new MethodToken(MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
                     new TypeDescription.ForLoadedType(void.class),
                     constructor.get(index).getParameterTypes(),
+                    constructor.get(index).getExceptionTypes(),
                     constructor.get(index).getModifiers());
         }
 
@@ -604,25 +666,27 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     }
 
     @Override
-    public MatchedMethodInterception<T> defineMethod(String name,
-                                                     TypeDescription returnType,
-                                                     List<? extends TypeDescription> parameterTypes,
-                                                     ModifierContributor.ForMethod... modifier) {
+    public ExceptionDeclarableMethodInterception<T> defineMethod(String name,
+                                                                 TypeDescription returnType,
+                                                                 List<? extends TypeDescription> parameterTypes,
+                                                                 ModifierContributor.ForMethod... modifier) {
         MethodToken methodToken = new MethodToken(isValidIdentifier(name),
                 nonNull(returnType),
                 nonNull(parameterTypes),
+                Collections.<TypeDescription>emptyList(),
                 resolveModifierContributors(METHOD_MODIFIER_MASK, nonNull(modifier)));
-        return new SubclassMatchedMethodInterception<T>(methodToken, join(methodTokens, methodToken));
+        return new SubclassExceptionDeclarableMethodInterception<T>(methodToken);
     }
 
     @Override
-    public MatchedMethodInterception<T> defineConstructorDescriptive(List<? extends TypeDescription> parameterTypes,
-                                                                     ModifierContributor.ForMethod... modifier) {
+    public ExceptionDeclarableMethodInterception<T> defineConstructor(List<? extends TypeDescription> parameterTypes,
+                                                                      ModifierContributor.ForMethod... modifier) {
         MethodToken methodToken = new MethodToken(MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
                 new TypeDescription.ForLoadedType(void.class),
                 nonNull(parameterTypes),
+                Collections.<TypeDescription>emptyList(),
                 resolveModifierContributors(METHOD_MODIFIER_MASK, nonNull(modifier)));
-        return new SubclassMatchedMethodInterception<T>(methodToken, join(methodTokens, methodToken));
+        return new SubclassExceptionDeclarableMethodInterception<T>(methodToken);
     }
 
     @Override

@@ -319,7 +319,7 @@ public class MethodCallProxy implements AuxiliaryType {
                 .modifiers(DEFAULT_TYPE_MODIFIER.toArray(new ModifierContributor.ForType[DEFAULT_TYPE_MODIFIER.size()]))
                 .implement(Runnable.class).intercept(new MethodCall(accessorMethod, assigner))
                 .implement(Callable.class).intercept(new MethodCall(accessorMethod, assigner))
-                .defineConstructorDescriptive(new ArrayList<TypeDescription>(parameterFields.values()))
+                .defineConstructor(new ArrayList<TypeDescription>(parameterFields.values()))
                 .intercept(new ConstructorCall());
         for (Map.Entry<String, TypeDescription> field : parameterFields.entrySet()) {
             builder = builder.defineField(field.getKey(), field.getValue(), MemberVisibility.PRIVATE);

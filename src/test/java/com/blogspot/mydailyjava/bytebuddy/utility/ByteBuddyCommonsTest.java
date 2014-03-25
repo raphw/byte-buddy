@@ -6,7 +6,11 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 import com.blogspot.mydailyjava.bytebuddy.modifier.FieldManifestation;
 import com.blogspot.mydailyjava.bytebuddy.modifier.MemberVisibility;
 import com.blogspot.mydailyjava.bytebuddy.modifier.Ownership;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
+import org.mockito.Mock;
 import org.mockito.asm.Opcodes;
 
 import java.util.Arrays;
@@ -16,10 +20,23 @@ import static com.blogspot.mydailyjava.bytebuddy.utility.ByteBuddyCommons.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsSame.sameInstance;
+import static org.mockito.Mockito.when;
 
 public class ByteBuddyCommonsTest {
 
-    private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz", FOOBAR = "foo.bar";
+    private static final String FOO = "foo", BAR = "bar", QUX = "qux", FOOBAR = "foo.bar";
+
+    @Rule
+    public TestRule mockitoRule = new MockitoRule(this);
+
+    @Mock
+    private TypeDescription first, second;
+
+    @Before
+    public void setUp() throws Exception {
+        when(first.getInternalName()).thenReturn(FOO);
+        when(second.getInternalName()).thenReturn(BAR);
+    }
 
     @Test
     public void testNonNull() throws Exception {
@@ -128,5 +145,15 @@ public class ByteBuddyCommonsTest {
     @Test(expected = IllegalArgumentException.class)
     public void testResolveModifierContributorsMask() throws Exception {
         resolveModifierContributors(ModifierContributor.EMPTY_MASK, Ownership.STATIC);
+    }
+
+    @Test
+    public void testUniqueForUniqueTypes() throws Exception {
+        assertThat(uniqueTypes(Arrays.asList(first, second)), is(Arrays.asList(first, second)));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testUniqueForNonUniqueTypes() throws Exception {
+        uniqueTypes(Arrays.asList(first, second, first));
     }
 }
