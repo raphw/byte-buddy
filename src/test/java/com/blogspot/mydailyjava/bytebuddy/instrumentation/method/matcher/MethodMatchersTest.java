@@ -1,6 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescription;
+import com.blogspot.mydailyjava.bytebuddy.utility.PackagePrivateMethod;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -200,6 +201,10 @@ public class MethodMatchersTest {
     private MethodDescription testBridge$bridgeLegalTarget;
     private MethodDescription testBridge$bridgeIllegalTarget;
 
+    private MethodDescription privateMethod;
+    private MethodDescription protectedMethod;
+    private MethodDescription packagePrivateMethod;
+
     @Before
     public void setUp() throws Exception {
         testClassBase$foo = new MethodDescription.ForLoadedMethod(TestClassBase.class.getDeclaredMethod(FOO_METHOD_NAME));
@@ -239,6 +244,10 @@ public class MethodMatchersTest {
         testBridge$bridge = new MethodDescription.ForLoadedMethod(TestBridge.class.getDeclaredMethod(FOO_METHOD_NAME, Number.class));
         testBridge$bridgeLegalTarget = new MethodDescription.ForLoadedMethod(TestBridge.class.getDeclaredMethod(FOO_METHOD_NAME, Integer.class));
         testBridge$bridgeIllegalTarget = new MethodDescription.ForLoadedMethod(TestBridge.class.getDeclaredMethod(FOO_METHOD_NAME, String.class));
+
+        privateMethod = new MethodDescription.ForLoadedMethod(PackagePrivateMethod.class.getDeclaredMethod(PackagePrivateMethod.PRIVATE_METHOD_NAME));
+        protectedMethod = new MethodDescription.ForLoadedMethod(PackagePrivateMethod.class.getDeclaredMethod(PackagePrivateMethod.PROTECTED_METHOD_NAME));
+        packagePrivateMethod = new MethodDescription.ForLoadedMethod(PackagePrivateMethod.class.getDeclaredMethod(PackagePrivateMethod.PACKAGE_PRIVATE_METHOD_NAME));
     }
 
     @Test
@@ -556,11 +565,12 @@ public class MethodMatchersTest {
     }
 
     @Test
-    public void testIsVisibleFromPackage() throws Exception {
-        assertThat(MethodMatchers.isVisibleFromPackage(MethodMatchersTest.class.getPackage().getName()).matches(testClassBase$foo), is(true));
-        assertThat(MethodMatchers.isVisibleFromPackage(MethodMatchersTest.class.getPackage().getName()).matches(testClassExtension$foo), is(true));
-        assertThat(MethodMatchers.isVisibleFromPackage(JAVA_LANG_PACKAGE).matches(testClassBase$foo), is(false));
-        assertThat(MethodMatchers.isVisibleFromPackage(JAVA_LANG_PACKAGE).matches(testClassExtension$foo), is(false));
+    public void testIsVisibleTo() throws Exception {
+        assertThat(MethodMatchers.isVisibleTo(MethodMatchersTest.class).matches(testClassBase$foo), is(true));
+        assertThat(MethodMatchers.isVisibleTo(MethodMatchersTest.class).matches(testClassExtension$foo), is(true));
+        assertThat(MethodMatchers.isVisibleTo(Object.class).matches(protectedMethod), is(false));
+        assertThat(MethodMatchers.isVisibleTo(Object.class).matches(packagePrivateMethod), is(false));
+        assertThat(MethodMatchers.isVisibleTo(Object.class).matches(privateMethod), is(false));
     }
 
     @Test

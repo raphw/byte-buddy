@@ -12,7 +12,7 @@ import java.util.*;
 /**
  * A method delegation binder is responsible for creating a method binding for a <i>source method</i> to a
  * <i>target method</i>. Such a binding allows to implement the source method by calling the target method.
- * <p/>
+ * <p>&nbsp;</p>
  * Usually, an instrumentation will attempt to bind a specific source method to a set of target method candidates
  * where all legal bindings are considered for binding. To chose a specific candidate, an
  * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.AmbiguityResolver}
@@ -370,7 +370,7 @@ public interface MethodDelegationBinder {
 
         /**
          * Returns the target method's parameter index for a given parameter binding token.
-         * <p/>
+         * <p>&nbsp;</p>
          * A binding token can be any object
          * that implements valid {@link Object#hashCode()} and {@link Object#equals(Object)} methods in order
          * to look up a given binding. This way, two bindings can be evaluated of having performed a similar type of
@@ -560,7 +560,7 @@ public interface MethodDelegationBinder {
      * A helper class that allows to identify a best binding for a given type and source method chosing from a list of given
      * target methods by using a given {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder}
      * and an {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.AmbiguityResolver}.
-     * <p/>
+     * <p>&nbsp;</p>
      * The {@code Processor} will:
      * <ol>
      * <li>Try to bind the {@code source} method using the {@code MethodDelegationBinder}.</li>

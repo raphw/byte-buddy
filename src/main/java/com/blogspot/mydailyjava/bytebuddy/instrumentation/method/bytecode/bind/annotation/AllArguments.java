@@ -18,7 +18,7 @@ import java.util.List;
  * <ul>
  * <li>Array</li>
  * </ul>
- * <p/>
+ * <p>&nbsp;</p>
  * If the parameters of the source method are not assignable to the collection's component type, the method with
  * the annotated parameter will not be considered as a possible binding target for the source method.
  *

@@ -5,7 +5,7 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
 
 /**
  * An assigner is responsible for converting some type {@code A} to another type {@code B} if possible.
- * <p/>
+ * <p>&nbsp;</p>
  * An assigner is for example responsible for type casting, auto boxing or unboxing or for the widening of primitive
  * types.
  */

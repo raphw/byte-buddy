@@ -131,7 +131,7 @@ public enum MethodVariableAccess {
 
     /**
      * Creates a stack assignment for a given index of the local variable array.
-     * <p/>
+     * <p>&nbsp;</p>
      * The index has to be relative to the method's local variable array size.
      *
      * @param variableOffset The offset of the variable where {@code double} and {@code long} types

@@ -3,7 +3,7 @@ package com.blogspot.mydailyjava.bytebuddy.instrumentation;
 /**
  * An element that describes a type modifier as described in the
  * <a href="http://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html">JVMS</a>.
- * <p/>
+ * <p>&nbsp;</p>
  * This allows for a more expressive and type safe alternative of defining a type's or type member's modifiers.
  * However, note that modifier's that apply competing modifiers (such as {@code private} and {@code protected}
  * should not be combined and will result in invalid types. An exception is thrown when built-in modifiers that

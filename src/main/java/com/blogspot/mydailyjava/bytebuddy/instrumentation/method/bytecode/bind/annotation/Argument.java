@@ -17,7 +17,7 @@ import java.util.LinkedHashSet;
  * with the given parameter. For example, if source method {@code foo(String, Integer)} is bound to target method
  * {@code bar(@Argument(1) Integer)}, the second parameter of {@code foo} will be bound to the first argument of
  * {@code bar}.
- * <p/>
+ * <p>&nbsp;</p>
  * If a source method has less parameters than specified by {@link Argument#value()}, the method carrying this parameter
  * annotation is excluded from the list of possible binding candidates to this particular source method. The same happens,
  * if the source method parameter at the specified index is not assignable to the annotated parameter.

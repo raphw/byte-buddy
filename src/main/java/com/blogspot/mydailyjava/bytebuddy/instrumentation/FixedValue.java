@@ -276,7 +276,7 @@ public abstract class FixedValue implements Instrumentation {
      * {@link java.lang.Float} and {@link java.lang.Double}.</li>
      * <li>A {@code null} reference.</li>
      * </ul>
-     * <p/>
+     * <p>&nbsp;</p>
      * If possible, the constant pool value is substituted by a byte code instruction that creates the value. (This is
      * possible for integer types and types that are presented by integers inside the JVM ({@code boolean}, {@code byte},
      * {@code short}, {@code char}) and for the {@code null} value. Additionally, several common constants of
@@ -348,7 +348,7 @@ public abstract class FixedValue implements Instrumentation {
      * will create a fixed value instrumentation that will always defined a field in the instrumented class. As a result,
      * object identity will be preserved between the given {@code fixedValue} and the value that is returned by
      * instrumented methods.
-     * <p/>
+     * <p>&nbsp;</p>
      * As an exception, the {@code null} value is always presented by a constant value and is never stored in a static
      * field.
      *
@@ -370,10 +370,11 @@ public abstract class FixedValue implements Instrumentation {
      * will create a fixed value instrumentation that will always defined a field in the instrumented class. As a result,
      * object identity will be preserved between the given {@code fixedValue} and the value that is returned by
      * instrumented methods. The field name can be explicitly determined.
-     * <p/>
+     * <p>&nbsp;</p>
      * As an exception, the {@code null} value cannot be used for this instrumentation but will cause an exception.
      *
      * @param fixedValue The fixed value to be returned by methods that are instrumented by this instrumentation.
+     * @param fieldName  The name of the field for storing the fixed value.
      * @return An instrumentation for the given {@code fixedValue}.
      */
     public static AssignerConfigurable reference(Object fixedValue, String fieldName) {

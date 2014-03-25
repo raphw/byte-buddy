@@ -55,7 +55,7 @@ public enum DoubleConstant implements StackManipulation {
 
     /**
      * Creates a stack manipulation for loading a {@code double} value onto the operand stack.
-     * <p/>
+     * <p>&nbsp;</p>
      * This is achieved either by invoking a specific opcode, if any, or by creating a constant pool entry.
      *
      * @param value The {@code double} value to load onto the stack.

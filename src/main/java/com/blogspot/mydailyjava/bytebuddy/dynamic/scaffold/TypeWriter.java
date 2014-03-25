@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * A type writer allows an easier creation of a dynamic type by enforcing the writing order
  * (type, annotations, fields, methods) that is required by ASM in order to successfully creating a Java type.
- * <p/>
+ * <p>&nbsp;</p>
  * Note: This type represents a mutable data structure since it is a wrapper around an ASM
  * {@link org.objectweb.asm.ClassWriter}. Once a phase of this type writer is left the old instances must not longer
  * be used.

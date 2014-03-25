@@ -28,7 +28,7 @@ public class MethodDelegationExceptionTest extends AbstractInstrumentationTest {
         instrument(Foo.class, MethodDelegation.to(Bar.class));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testNoVisibleMethod() throws Exception {
         instrument(Foo.class, MethodDelegation.to(new PackagePrivateMethod()));
     }

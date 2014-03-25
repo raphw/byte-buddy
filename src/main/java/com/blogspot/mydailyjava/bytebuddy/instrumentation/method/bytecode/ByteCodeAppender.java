@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * An appender that generates the byte code for a given method. This is done by writing the byte code instructions to
  * the given ASM {@link org.objectweb.asm.MethodVisitor}.
- * <p/>
+ * <p>&nbsp;</p>
  * The {@code ByteCodeAppender} is not allowed to write
  * annotations to the method or call the {@link org.objectweb.asm.MethodVisitor#visitCode()},
  * {@link org.objectweb.asm.MethodVisitor#visitMaxs(int, int)} or {@link org.objectweb.asm.MethodVisitor#visitEnd()}

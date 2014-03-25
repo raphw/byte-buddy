@@ -9,7 +9,7 @@ buildscript {
     }
 
     dependencies {
-        classpath group: 'org.gradle.api.plugins', name: 'gradle-nexus-plugin', version: versionGradleNexusPlugin
+        classpath group: 'org.gradle.api.plugins', name: 'gradle-nexus-plugin', version: '0.7'
     }
 }
 
@@ -31,7 +31,7 @@ jar {
     }
 }
 
-/*modifyPom {
+modifyPom {
     project {
         name 'Byte Buddy'
         description 'Byte Buddy is a Java library for creating Java classes at run time.'
@@ -60,12 +60,11 @@ jar {
             }
         }
     }
-}*/
-
+}
 
 dependencies {
     compile group: 'org.ow2.asm', name: 'asm', version: versionAsm
-    compile group: 'org.ow2.asm', name: 'asm-util', version: versionAsm
+    testCompile group: 'org.ow2.asm', name: 'asm-util', version: versionAsm
     testCompile group: 'junit', name: 'junit', version: versionJunit
     testCompile group: 'org.mockito', name: 'mockito-core', version: versionMockito
 }

@@ -145,6 +145,7 @@ public interface InstrumentedType extends TypeDescription {
              * @param internalName   The internal internalName of the method or constructor.
              * @param returnType     A description of the return type of this method.
              * @param parameterTypes A list of descriptions of the parameter types of this method.
+             * @param exceptionTypes A list of descriptions of the exception types that are declared by this method.
              * @param modifiers      The modifiers of this method.
              */
             public MethodToken(String internalName,
@@ -516,6 +517,7 @@ public interface InstrumentedType extends TypeDescription {
      * @param name           The internalName of the new field.
      * @param returnType     A description of the return type of the new field.
      * @param parameterTypes A list of descriptions of the parameter types.
+     * @param exceptionTypes A list of descriptions of the exception types that are declared by this method.
      * @param modifiers      The modifier of the new field.
      * @return A new instrumented type that is equal to this instrumented type but with the additional field.
      */

@@ -7,7 +7,7 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.MethodDescripti
  * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.AmbiguityResolver}
  * that resolves conflicting bindings by considering equality of a target method's internalName as an indicator for a dominant
  * binding.
- * <p/>
+ * <p>&nbsp;</p>
  * For example, if method {@code source.foo} can be bound to methods {@code targetA.foo} and {@code targetB.bar},
  * {@code targetA.foo} will be considered as dominant.
  */

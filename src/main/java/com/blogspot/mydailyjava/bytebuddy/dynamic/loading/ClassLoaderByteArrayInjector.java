@@ -5,7 +5,7 @@ import java.lang.reflect.Method;
 
 /**
  * An injector that loads classes by reflectively invoking non-public methods on a given {@link java.lang.ClassLoader}.
- * <p/>
+ * <p>&nbsp;</p>
  * Note that the injector is only able to load classes in a linear manner. Thus, classes that refer to other classes
  * which are not yet loaded cannot be injected but will result in a {@link java.lang.NoClassDefFoundError}. This becomes
  * a problem when classes refer to each other using cyclic references. This injector can further not be applied to the

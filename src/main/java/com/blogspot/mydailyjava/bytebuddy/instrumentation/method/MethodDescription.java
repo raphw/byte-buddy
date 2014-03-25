@@ -481,6 +481,7 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
     /**
      * Verifies if a method description represents a given loaded method.
      *
+     * @param method The method to be checked.
      * @return {@code true} if this method description represents the given loaded method.
      */
     boolean represents(Method method);
@@ -488,6 +489,7 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
     /**
      * Verifies if a method description represents a given loaded constructor.
      *
+     * @param constructor The constructor to be checked.
      * @return {@code true} if this method description represents the given loaded constructor.
      */
     boolean represents(Constructor<?> constructor);

@@ -39,7 +39,7 @@ import static com.blogspot.mydailyjava.bytebuddy.utility.ByteBuddyCommons.*;
  * customized by invoking the {@code MethodDelegation}'s several builder methods.
  * <h3>Without any customization, the method delegation will work as follows:</h3>
  * <u>Binding an instrumented method to a given delegate method</u>
- * <p/>
+ * <p>&nbsp;</p>
  * A method will be bound parameter by parameter. Considering a method {@code Foo#bar} being bound to a method
  * {@code Qux#baz}, the method delegation will be decided on basis of the following annotations:
  * <ul>
@@ -68,14 +68,14 @@ import static com.blogspot.mydailyjava.bytebuddy.utility.ByteBuddyCommons.*;
  * unbound parameter index of the source method as its parameter. This means that a method
  * {@code Qux#baz(@Argument(2) Object p1, Object p2, @Argument(0) Object p3} would be treated as if {@code p2} was annotated
  * with {@code @Argument(1)}.
- * <p/>
+ * <p>&nbsp;</p>
  * In addition, the {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.annotation.RuntimeType}
  * annotation can instruct a parameter to be bound by a
  * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner} with considering the
  * runtime type of the parameter.
- * <p/>
+ * <p>&nbsp;</p>
  * <u>Selecting among different methods that can be used for binding a method of the instrumented type</u>
- * <p/>
+ * <p>&nbsp;</p>
  * When deciding between two methods {@code Foo#bar} and {@code Foo#qux} that could both be used to delegating a
  * method call, the following consideration is applied in the given order:
  * <ol>
@@ -490,7 +490,7 @@ public class MethodDelegation implements Instrumentation {
      * type and must be set manually by the user of the instrumented class. Note that this prevents interception of
      * method calls within the constructor of the instrumented class which will instead result in a
      * {@link java.lang.NullPointerException}.
-     * <p/>
+     * <p>&nbsp;</p>
      * The field is typically accessed by reflection or by defining an accessor on the instrumented type.
      *
      * @param type      The type of the delegate and the field.
@@ -693,7 +693,7 @@ public class MethodDelegation implements Instrumentation {
 
     @Override
     public ByteCodeAppender appender(TypeDescription instrumentedType) {
-        MethodList methodList = this.methodList.filter(isVisibleFromPackage(instrumentedType.getPackageName()));
+        MethodList methodList = this.methodList.filter(isVisibleTo(instrumentedType));
         if (methodList.size() == 0) {
             throw new IllegalStateException("No bindable method is visible to " + instrumentedType);
         }

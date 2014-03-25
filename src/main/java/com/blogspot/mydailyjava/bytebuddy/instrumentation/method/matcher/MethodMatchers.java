@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * A collection of common {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.MethodMatcher}
  * implementations.
- * <p/>
+ * <p>&nbsp;</p>
  * This class is not meant to be instantiated but is usually imported statically in order to allow for improving
  * the readability of code.
  */
@@ -592,33 +592,33 @@ public final class MethodMatchers {
         }
     }
 
-    private static class PackageNameMethodMatcher extends JunctionMethodMatcher.AbstractBase {
+    private static class VisibilityMethodMatcher extends JunctionMethodMatcher.AbstractBase {
 
-        private final String packageName;
+        private final TypeDescription typeDescription;
 
-        private PackageNameMethodMatcher(String packageName) {
-            this.packageName = packageName;
+        private VisibilityMethodMatcher(TypeDescription typeDescription) {
+            this.typeDescription = typeDescription;
         }
 
         @Override
         public boolean matches(MethodDescription methodDescription) {
-            return methodDescription.getDeclaringType().getPackageName().equals(packageName);
+            return methodDescription.isVisibleTo(typeDescription);
         }
 
         @Override
-        public boolean equals(Object o) {
-            return this == o || !(o == null || getClass() != o.getClass())
-                    && packageName.equals(((PackageNameMethodMatcher) o).packageName);
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && typeDescription.equals(((VisibilityMethodMatcher) other).typeDescription);
         }
 
         @Override
         public int hashCode() {
-            return packageName.hashCode();
+            return typeDescription.hashCode();
         }
 
         @Override
         public String toString() {
-            return "inPackage(" + packageName + '\'' + ')';
+            return "visibleTo(" + typeDescription + ')';
         }
     }
 
@@ -1174,12 +1174,23 @@ public final class MethodMatchers {
     }
 
     /**
-     * Selects methods that are not constructors.
+     * Checks if a method is visible for a given type.
      *
-     * @return A new method matcher that matches constructors but not methods.
+     * @param typeDescription The type to which a method should be visible.
+     * @return A new method matcher that matches any method that is visible to the given type.
      */
-    public static JunctionMethodMatcher isVisibleFromPackage(String packageName) {
-        return new PackageNameMethodMatcher(packageName);
+    public static JunctionMethodMatcher isVisibleTo(Class<?> typeDescription) {
+        return isVisibleTo(new TypeDescription.ForLoadedType(typeDescription));
+    }
+
+    /**
+     * Checks if a method is visible for a given type.
+     *
+     * @param typeDescription The type to which a method should be visible.
+     * @return A new method matcher that matches any method that is visible to the given type.
+     */
+    public static JunctionMethodMatcher isVisibleTo(TypeDescription typeDescription) {
+        return new VisibilityMethodMatcher(typeDescription);
     }
 
     /**

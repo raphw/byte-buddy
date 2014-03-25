@@ -12,7 +12,7 @@ import java.util.Map;
  * A field registry represents an extendable collection of fields which are identified by their names that are mapped
  * to a given {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.FieldAttributeAppender}. Fields
  * can be uniquely identified by their name for a given type since fields are never inherited.
- * <p/>
+ * <p>&nbsp;</p>
  * This registry is the counterpart of a {@link com.blogspot.mydailyjava.bytebuddy.dynamic.scaffold.MethodRegistry}.
  * However, a field registry is implemented simpler since it does not have to deal with complex signatures or
  * inheritance. For the sake of consistency, the field registry follows however a similar pattern without introducing
@@ -118,7 +118,7 @@ public interface FieldRegistry {
      * retrieval of {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.attribute.FieldAttributeAppender}s for
      * known fields. Additionally, a fallback attribute appender is to be supplied which is returned if a requested
      * field cannot is not known to the compiled field registry.
-     * <p/>
+     * <p>&nbsp;</p>
      * If a field name is already registered, an exception will be thrown.
      *
      * @param instrumentedType The instrumented type for which this field registry is to be compiled.

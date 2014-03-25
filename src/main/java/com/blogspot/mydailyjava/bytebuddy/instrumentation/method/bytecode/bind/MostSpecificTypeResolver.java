@@ -8,7 +8,7 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
  * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.AmbiguityResolver}
  * that resolves two conflicting bindings by considering most-specific types of target method parameters in the same manner
  * as the Java compiler resolves bindings of overloaded method.
- * <p/>
+ * <p>&nbsp;</p>
  * This ambiguity resolver:
  * <ol>
  * <li>Checks for each parameter of the source method if a one-to-one parameter binding to both of the target methods exist.</li>
@@ -20,7 +20,7 @@ import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
  * consists of the most one-to-one parameter bindings is considered dominant.</li>
  * </ol>
  * Primitive types are considered dominant in the same manner as by the Java compiler.
- * <p/>
+ * <p>&nbsp;</p>
  * For example: If a source method only parameter was successfully bound one-to-one to the only parameters of the target
  * methods {@code foo(Object)} and {@code bar(String)}, this ambiguity resolver will detect that the {@code String} type
  * is more specific than the {@code Object} type and determine {@code bar(String)} as the dominant binding.

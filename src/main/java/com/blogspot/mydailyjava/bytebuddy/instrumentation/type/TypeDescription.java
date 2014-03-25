@@ -62,9 +62,9 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
             MethodMatcher uniqueSignatureFilter = new UniqueSignatureFilter();
             methodDescriptions.addAll(getDeclaredMethods().filter(uniqueSignatureFilter));
             MethodMatcher subclassFilter = not(MethodMatchers.isPrivate())
-                    .and(not(MethodMatchers.isPackagePrivate()).or(isVisibleFromPackage(getPackageName())))
                     .and(isMethod())
                     .and(not(MethodMatchers.isStatic()))
+                    .and(not(MethodMatchers.isPackagePrivate()).or(MethodMatchers.isVisibleTo(this)))
                     .and(uniqueSignatureFilter);
             if (getSupertype() != null) {
                 methodDescriptions.addAll(getSupertype().getReachableMethods().filter(subclassFilter));
@@ -311,7 +311,7 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
      * Checks if this type is assignable from the type described by this instance, for example for
      * {@code class Foo} and {@code class Bar extends Foo}, this method would return {@code true} for
      * {@code Foo.class.isAssignableFrom(Bar.class)}.
-     * <p/>
+     * <p>&nbsp;</p>
      * Implementations of this methods are allowed to delegate to
      * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription#isAssignableFrom(Class)}
      *
@@ -334,7 +334,7 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
      * Checks if this type is assignable from the type described by this instance, for example for
      * {@code class Foo} and {@code class Bar extends Foo}, this method would return {@code true} for
      * {@code Bar.class.isAssignableFrom(Foo.class)}.
-     * <p/>
+     * <p>&nbsp;</p>
      * Implementations of this methods are allowed to delegate to
      * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription#isAssignableTo(Class)}
      *

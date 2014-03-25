@@ -23,7 +23,7 @@ import java.util.*;
  * to the instrumented methods that were delegated to this instrumentation. This byte code appender will also
  * be responsible for providing implementations for the methods added in step <i>1</i>.</li>
  * </ol>
- * <p/>
+ * <p>&nbsp;</p>
  * An instrumentation implementation should provide meaningful implementations {@link java.lang.Object#equals(Object)}
  * and {@link Object#hashCode()} if it wants to avoid to be used twice within the creation of a dynamic type. For two
  * equal instrumentation implementations only one will be applied on the creation of a dynamic type.
@@ -163,7 +163,7 @@ public interface Instrumentation {
 
     /**
      * A compound instrumentation that allows to combine several instrumentations.
-     * <p/>
+     * <p>&nbsp;</p>
      * Note that the combination of two instrumentations might break the contract for implementing
      * {@link java.lang.Object#equals(Object)} and {@link Object#hashCode()} as described for
      * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation}.

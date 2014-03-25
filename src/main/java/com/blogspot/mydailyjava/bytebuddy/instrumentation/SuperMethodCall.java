@@ -19,7 +19,7 @@ import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.
  * considered to have a super method even if there is a method with a compatible signature. Constructors are
  * considered to have a "super method" if the direct super type defines a constructor with identical signature.
  * If a method is found to not have a super method, e.g. when instrumenting a static method, an exception is thrown.
- * <p/>
+ * <p>&nbsp;</p>
  * Besides implementing constructors, this instrumentation is useful when a method of a super type is not supposed
  * to be altered but should be equipped with additional annotations.
  */

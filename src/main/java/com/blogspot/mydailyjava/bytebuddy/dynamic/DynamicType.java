@@ -29,7 +29,7 @@ import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.
  * A dynamic type that is created at runtime, usually as the result of applying a
  * {@link com.blogspot.mydailyjava.bytebuddy.dynamic.DynamicType.Builder} or as the result of an
  * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType}.
- * <p/>
+ * <p>&nbsp;</p>
  * Note that the {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription}s will represent their
  * unloaded forms and therefore differ from the loaded types, especially with regards to annotations.
  */
@@ -127,6 +127,7 @@ public interface DynamicType {
                  * @param internalName   The internal internalName of the method.
                  * @param returnType     The return type of the method.
                  * @param parameterTypes A list of parameters for the method.
+                 * @param exceptionTypes A list of exception types that are declared for the method.
                  * @param modifiers      The modifers of the method.
                  */
                 public MethodToken(String internalName,
@@ -643,7 +644,7 @@ public interface DynamicType {
 
             /**
              * Defines annotations to be added to the currently selected method.
-             * <p/>
+             * <p>&nbsp;</p>
              * Note: The annotations will not be visible to
              * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation}s.
              *
@@ -654,11 +655,12 @@ public interface DynamicType {
 
             /**
              * Defines annotations to be added to a parameter of the currently selected methods.
-             * <p/>
+             * <p>&nbsp;</p>
              * Note: The annotations will not be visible to
              * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation}s.
              *
-             * @param annotation The annotations to add to a parameter of the currently selected methods.
+             * @param parameterIndex The index of the parameter to annotate.
+             * @param annotation     The annotations to add to a parameter of the currently selected methods.
              * @return A builder where the given annotation will be added to a parameter of the currently selected
              * methods.
              */
@@ -683,7 +685,7 @@ public interface DynamicType {
 
             /**
              * Defines annotations to be added to the currently selected field.
-             * <p/>
+             * <p>&nbsp;</p>
              * Note: The annotations will not be visible to
              * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation}s.
              *
@@ -754,7 +756,7 @@ public interface DynamicType {
 
         /**
          * Adds annotations to the currently constructed type.
-         * <p/>
+         * <p>&nbsp;</p>
          * Note: The annotations will not be visible to
          * {@link com.blogspot.mydailyjava.bytebuddy.instrumentation.Instrumentation}s.
          *

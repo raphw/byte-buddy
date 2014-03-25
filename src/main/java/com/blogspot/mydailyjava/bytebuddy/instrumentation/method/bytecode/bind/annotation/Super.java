@@ -16,7 +16,7 @@ import java.util.List;
  * Parameters that are annotated with this annotation are assigned an instance of an auxiliary proxy type that allows calling
  * any {@code super} methods of the instrumented type where the parameter type must be a super type of the instrumented type.
  * The proxy type will be a direct subclass of the parameter's type such as for example a specific interface.
- * <p/>
+ * <p>&nbsp;</p>
  * Obviously, the proxy type must be instantiated before it is assigned to the intercepting method's parameter. For this
  * purpose, two strategies are available which can be specified by setting the {@link Super#strategy()} parameter which can
  * be assigned:
@@ -35,11 +35,11 @@ import java.util.List;
  * constructor on the proxy. This implies that an interception by some method {@code qux(@Super Baz baz, @Super Bar bar)}
  * would cause the creation of two super call proxies, one extending {@code Baz}, the other extending {@code Bar}, give
  * that both types are super types of {@code Foo}.
- * <p/>
+ * <p>&nbsp;</p>
  * As an exception, no method calls to {@link Object#finalize()} are delegated by calling this method on the {@code super}-call
  * proxy by default. If this is absolutely necessary, this can however be enabled by setting {@link Super#ignoreFinalizer()}
  * to {@code false}.
- * <p/>
+ * <p>&nbsp;</p>
  * If a method parameter is not a super type of the instrumented type, the method with the parameter that is annoted by
  * #{@code Super} is not considered a possible delegation target.
  */

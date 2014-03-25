@@ -38,7 +38,7 @@ import static com.blogspot.mydailyjava.bytebuddy.instrumentation.method.matcher.
  * A method call proxy represents a class that is compiled against a particular method which can then be called whenever
  * either its {@link java.util.concurrent.Callable#call()} or {@link Runnable#run()} method is called where the method
  * call proxy implements both interfaces.
- * <p/>
+ * <p>&nbsp;</p>
  * In order to do so, the method call proxy instances are constructed by providing all the necessary information for
  * calling a particular method:
  * <ol>

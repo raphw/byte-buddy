@@ -10,7 +10,7 @@ import java.util.Random;
 
 /**
  * A naming strategy for finding a fully qualified internalName for a Java type.
- * <p/>
+ * <p>&nbsp;</p>
  * Note that subclasses that lie within the same package as their superclass have improved access to overriding
  * package-private methods of their super type.
  */
@@ -118,7 +118,7 @@ public interface NamingStrategy {
 
     /**
      * A naming strategy that applies a fixed internalName.
-     * <p/>
+     * <p>&nbsp;</p>
      * This strategy should only be used for one shot type generators since they will otherwise create types that
      * impose naming conflicts.
      */

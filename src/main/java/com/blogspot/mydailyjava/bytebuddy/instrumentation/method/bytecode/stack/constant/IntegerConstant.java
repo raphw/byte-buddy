@@ -144,7 +144,7 @@ public enum IntegerConstant implements StackManipulation {
 
     /**
      * Creates a stack manipulation for loading an {@code int} value onto the stack.
-     * <p/>
+     * <p>&nbsp;</p>
      * This is achieved either by invoking a constant opcode, if any, or by creating a binary push operation.
      *
      * @param value The {@code int} (or {@code byte}, {@code short}, {@code char}) value to load onto the stack.
