@@ -1,6 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.type;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
+import com.blogspot.mydailyjava.bytebuddy.utility.PackagePrivateType;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.asm.Type;
@@ -396,6 +397,13 @@ public class TypeDescriptionForLoadedTypeTest {
         assertThat(integerType.getStackSize(), is(StackSize.SINGLE));
         assertThat(serializableType.getStackSize(), is(StackSize.SINGLE));
         assertThat(objectArrayType.getStackSize(), is(StackSize.SINGLE));
+    }
+
+    @Test
+    public void testIsVisibleTo() throws Exception {
+        assertThat(objectType.isVisibleTo(integerType), is(true));
+        assertThat(objectType.isVisibleTo(new TypeDescription.ForLoadedType(PackagePrivateType.TYPE)), is(true));
+        assertThat(new TypeDescription.ForLoadedType(PackagePrivateType.TYPE).isVisibleTo(objectType), is(false));
     }
 
     @Test

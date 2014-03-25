@@ -1,6 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
+import com.blogspot.mydailyjava.bytebuddy.utility.PackagePrivateMethod;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.asm.Type;
@@ -17,11 +18,16 @@ public class MethodDescriptionForLoadedMethodTest {
     private static final String INT_VALUE = "intValue";
     private static final String LONG_BITS_TO_DOUBLE = "longBitsToDouble";
     private static final String WAIT = "wait";
+    private static final String CLONE = "clone";
 
     private MethodDescription objectHashCode;
     private MethodDescription integerIntValue;
     private MethodDescription doubleDoubleValue;
     private MethodDescription objectWait;
+    private MethodDescription objectClone;
+    private MethodDescription protectedMethod;
+    private MethodDescription packagePrivateMethod;
+    private MethodDescription privateMethod;
 
     @Before
     public void setUp() throws Exception {
@@ -29,6 +35,10 @@ public class MethodDescriptionForLoadedMethodTest {
         integerIntValue = new MethodDescription.ForLoadedMethod(Integer.class.getDeclaredMethod(INT_VALUE));
         doubleDoubleValue = new MethodDescription.ForLoadedMethod(Double.class.getDeclaredMethod(LONG_BITS_TO_DOUBLE, long.class));
         objectWait = new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod(WAIT, long.class, int.class));
+        objectClone = new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod(CLONE));
+        protectedMethod = new MethodDescription.ForLoadedMethod(PackagePrivateMethod.class.getDeclaredMethod(PackagePrivateMethod.PROTECTED_METHOD_NAME));
+        packagePrivateMethod = new MethodDescription.ForLoadedMethod(PackagePrivateMethod.class.getDeclaredMethod(PackagePrivateMethod.PACKAGE_PRIVATE_METHOD_NAME));
+        privateMethod = new MethodDescription.ForLoadedMethod(PackagePrivateMethod.class.getDeclaredMethod(PackagePrivateMethod.PRIVATE_METHOD_NAME));
     }
 
     @Test
@@ -80,6 +90,15 @@ public class MethodDescriptionForLoadedMethodTest {
         assertThat(doubleDoubleValue.getParameterOffset(0), is(0));
         assertThat(objectWait.getParameterOffset(0), is(1));
         assertThat(objectWait.getParameterOffset(1), is(3));
+    }
+
+    @Test
+    public void testIsVisibleTo() throws Exception {
+        assertThat(objectClone.isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(true));
+        assertThat(integerIntValue.isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(true));
+        assertThat(privateMethod.isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(packagePrivateMethod.isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(protectedMethod.isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
     }
 
     @Test

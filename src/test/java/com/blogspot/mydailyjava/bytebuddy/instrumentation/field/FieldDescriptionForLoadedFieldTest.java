@@ -1,5 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.field;
 
+import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
+import com.blogspot.mydailyjava.bytebuddy.utility.PackagePrivateField;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -12,20 +14,34 @@ public class FieldDescriptionForLoadedFieldTest {
 
     private static class Foo {
 
-        private Object foo;
+        public Object foo;
     }
 
     private FieldDescription fieldDescription;
+    private FieldDescription privateField;
+    private FieldDescription packagePrivateField;
+    private FieldDescription protectedField;
 
     @Before
     public void setUp() throws Exception {
         fieldDescription = new FieldDescription.ForLoadedField(Foo.class.getDeclaredField(FOO));
+        protectedField = new FieldDescription.ForLoadedField(PackagePrivateField.class.getDeclaredField(PackagePrivateField.PROTECTED_FIELD_NAME));
+        packagePrivateField = new FieldDescription.ForLoadedField(PackagePrivateField.class.getDeclaredField(PackagePrivateField.PACKAGE_PRIVATE_FIELD_NAME));
+        privateField = new FieldDescription.ForLoadedField(PackagePrivateField.class.getDeclaredField(PackagePrivateField.PRIVATE_FIELD_NAME));
     }
 
     @Test
     public void testFieldName() throws Exception {
         assertThat(fieldDescription.getName(), is(FOO));
         assertThat(fieldDescription.getInternalName(), is(FOO));
+    }
+
+    @Test
+    public void testIsVisibleTo() throws Exception {
+        assertThat(fieldDescription.isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(true));
+        assertThat(privateField.isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(packagePrivateField.isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(protectedField.isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.blogspot.mydailyjava.bytebuddy.instrumentation.method;
 
 import com.blogspot.mydailyjava.bytebuddy.instrumentation.type.TypeDescription;
+import com.blogspot.mydailyjava.bytebuddy.utility.PackagePrivateConstructor;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.asm.Type;
@@ -18,12 +19,14 @@ public class MethodDescriptionForLoadedConstructorTest {
     private MethodDescription objectDefaultConstructor;
     private MethodDescription stringDefaultConstructor;
     private MethodDescription stringSingleArgConstructor;
+    private MethodDescription packagePrivateConstructor;
 
     @Before
     public void setUp() throws Exception {
         objectDefaultConstructor = new MethodDescription.ForLoadedConstructor(Object.class.getDeclaredConstructor());
         stringDefaultConstructor = new MethodDescription.ForLoadedConstructor(String.class.getDeclaredConstructor());
         stringSingleArgConstructor = new MethodDescription.ForLoadedConstructor(String.class.getDeclaredConstructor(String.class));
+        packagePrivateConstructor = new MethodDescription.ForLoadedConstructor(PackagePrivateConstructor.class.getDeclaredConstructor());
     }
 
     @Test
@@ -73,6 +76,12 @@ public class MethodDescriptionForLoadedConstructorTest {
     @Test
     public void testGetParameterOffset() throws Exception {
         assertThat(stringSingleArgConstructor.getParameterOffset(0), is(1));
+    }
+
+    @Test
+    public void testIsVisibleTo() throws Exception {
+        assertThat(objectDefaultConstructor.isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(true));
+        assertThat(packagePrivateConstructor.isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
     }
 
     @Test
