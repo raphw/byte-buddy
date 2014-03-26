@@ -1,8 +1,3 @@
-def versionAsm = '4.2'
-def versionMockito = '1.9.5'
-def versionJunit = '4.11'
-def versionGradleNexusPlugin = '0.7'
-
 buildscript {
     repositories {
         jcenter()
@@ -18,6 +13,10 @@ apply plugin: 'nexus'
 
 sourceCompatibility = JavaVersion.VERSION_1_6
 targetCompatibility = JavaVersion.VERSION_1_6
+
+def versionAsm = '4.2'
+def versionMockito = '1.9.5'
+def versionJunit = '4.11'
 
 version = '0.1-SNAPSHOT'
 
@@ -35,7 +34,7 @@ modifyPom {
     project {
         name 'Byte Buddy'
         description 'Byte Buddy is a Java library for creating Java classes at run time.'
-        url 'https://github.com/raphw/byte-buddy'
+        url 'http://bytebuddy.net'
         inceptionYear '2014'
 
         scm {
