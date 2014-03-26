@@ -16,5 +16,9 @@ log/
 target/
 site/
 
+# Gradle
+.gradle/
+build/
+
 #jRebel
 rebel.xml
