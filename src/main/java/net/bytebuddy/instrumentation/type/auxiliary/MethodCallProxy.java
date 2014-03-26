@@ -48,6 +48,91 @@ import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isCons
  */
 public class MethodCallProxy implements AuxiliaryType {
 
+    private static final String FIELD_NAME_PREFIX = "argument";
+    private final MethodDescription targetMethod;
+    private final Assigner assigner;
+
+    /**
+     * Creates a new method call proxy for a given method and uses a default assigner for assigning the method's return
+     * value to either the {@link java.util.concurrent.Callable#call()} or {@link Runnable#run()} method returns.
+     *
+     * @param targetMethod The method to be proxied.
+     */
+    public MethodCallProxy(MethodDescription targetMethod) {
+        this(targetMethod, new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE), true));
+    }
+
+    /**
+     * Creates a new method call proxy for a given method.
+     *
+     * @param targetMethod The method to be proxied.
+     * @param assigner     An assigner for assigning the target method's return value to either the
+     *                     {@link java.util.concurrent.Callable#call()} or {@link Runnable#run()}} methods' return
+     *                     values.
+     */
+    public MethodCallProxy(MethodDescription targetMethod, Assigner assigner) {
+        this.targetMethod = targetMethod;
+        this.assigner = assigner;
+    }
+
+    private static LinkedHashMap<String, TypeDescription> extractFields(MethodDescription methodDescription) {
+        TypeList parameterTypes = methodDescription.getParameterTypes();
+        LinkedHashMap<String, TypeDescription> typeDescriptions =
+                new LinkedHashMap<String, TypeDescription>((methodDescription.isStatic() ? 0 : 1) + parameterTypes.size());
+        int currentIndex = 0;
+        if (!methodDescription.isStatic()) {
+            typeDescriptions.put(fieldName(currentIndex++), methodDescription.getDeclaringType());
+        }
+        for (TypeDescription parameterType : parameterTypes) {
+            typeDescriptions.put(fieldName(currentIndex++), parameterType);
+        }
+        return typeDescriptions;
+    }
+
+    private static String fieldName(int index) {
+        return String.format("%s%d", FIELD_NAME_PREFIX, index);
+    }
+
+    @Override
+    public DynamicType make(String auxiliaryTypeName,
+                            ClassFormatVersion classFormatVersion,
+                            MethodAccessorFactory methodAccessorFactory) {
+        MethodDescription accessorMethod = methodAccessorFactory.requireAccessorMethodFor(targetMethod);
+        LinkedHashMap<String, TypeDescription> parameterFields = extractFields(accessorMethod);
+        DynamicType.Builder<?> builder = new ByteBuddy(classFormatVersion)
+                .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
+                .name(auxiliaryTypeName)
+                .modifiers(DEFAULT_TYPE_MODIFIER.toArray(new ModifierContributor.ForType[DEFAULT_TYPE_MODIFIER.size()]))
+                .implement(Runnable.class).intercept(new MethodCall(accessorMethod, assigner))
+                .implement(Callable.class).intercept(new MethodCall(accessorMethod, assigner))
+                .defineConstructor(new ArrayList<TypeDescription>(parameterFields.values()))
+                .intercept(new ConstructorCall());
+        for (Map.Entry<String, TypeDescription> field : parameterFields.entrySet()) {
+            builder = builder.defineField(field.getKey(), field.getValue(), MemberVisibility.PRIVATE);
+        }
+        return builder.make();
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        return this == other || !(other == null || getClass() != other.getClass())
+                && assigner.equals(((MethodCallProxy) other).assigner)
+                && targetMethod.equals(((MethodCallProxy) other).targetMethod);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * targetMethod.hashCode() + assigner.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "MethodCallProxy{" +
+                "targetMethod=" + targetMethod +
+                ", assigner=" + assigner +
+                '}';
+    }
+
     /**
      * A stack manipulation that creates a {@link net.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy}
      * for a given method an pushes such an object onto the call stack. For this purpose, all arguments of the proxied method
@@ -102,9 +187,40 @@ public class MethodCallProxy implements AuxiliaryType {
         }
     }
 
-    private static final String FIELD_NAME_PREFIX = "argument";
-
     private static class MethodCall implements Instrumentation {
+
+        private final MethodDescription accessorMethod;
+        private final Assigner assigner;
+        private MethodCall(MethodDescription accessorMethod, Assigner assigner) {
+            this.accessorMethod = accessorMethod;
+            this.assigner = assigner;
+        }
+
+        @Override
+        public InstrumentedType prepare(InstrumentedType instrumentedType) {
+            return instrumentedType;
+        }
+
+        @Override
+        public ByteCodeAppender appender(TypeDescription instrumentedType) {
+            return new Appender(instrumentedType);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return this == o || !(o == null || getClass() != o.getClass())
+                    && accessorMethod.equals(((MethodCall) o).accessorMethod);
+        }
+
+        @Override
+        public int hashCode() {
+            return accessorMethod.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "MethodCall{accessorMethod=" + accessorMethod + '}';
+        }
 
         private class Appender implements ByteCodeAppender {
 
@@ -161,14 +277,9 @@ public class MethodCallProxy implements AuxiliaryType {
                         '}';
             }
         }
+    }
 
-        private final MethodDescription accessorMethod;
-        private final Assigner assigner;
-
-        private MethodCall(MethodDescription accessorMethod, Assigner assigner) {
-            this.accessorMethod = accessorMethod;
-            this.assigner = assigner;
-        }
+    private static class ConstructorCall implements Instrumentation {
 
         @Override
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
@@ -181,23 +292,14 @@ public class MethodCallProxy implements AuxiliaryType {
         }
 
         @Override
-        public boolean equals(Object o) {
-            return this == o || !(o == null || getClass() != o.getClass())
-                    && accessorMethod.equals(((MethodCall) o).accessorMethod);
+        public boolean equals(Object other) {
+            return other != null && other.getClass() == getClass();
         }
 
         @Override
         public int hashCode() {
-            return accessorMethod.hashCode();
+            return 31;
         }
-
-        @Override
-        public String toString() {
-            return "MethodCall{accessorMethod=" + accessorMethod + '}';
-        }
-    }
-
-    private static class ConstructorCall implements Instrumentation {
 
         private class Appender implements ByteCodeAppender {
 
@@ -259,109 +361,5 @@ public class MethodCallProxy implements AuxiliaryType {
                         '}';
             }
         }
-
-        @Override
-        public InstrumentedType prepare(InstrumentedType instrumentedType) {
-            return instrumentedType;
-        }
-
-        @Override
-        public ByteCodeAppender appender(TypeDescription instrumentedType) {
-            return new Appender(instrumentedType);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return other != null && other.getClass() == getClass();
-        }
-
-        @Override
-        public int hashCode() {
-            return 31;
-        }
-    }
-
-    private final MethodDescription targetMethod;
-    private final Assigner assigner;
-
-    /**
-     * Creates a new method call proxy for a given method and uses a default assigner for assigning the method's return
-     * value to either the {@link java.util.concurrent.Callable#call()} or {@link Runnable#run()} method returns.
-     *
-     * @param targetMethod The method to be proxied.
-     */
-    public MethodCallProxy(MethodDescription targetMethod) {
-        this(targetMethod, new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE), true));
-    }
-
-    /**
-     * Creates a new method call proxy for a given method.
-     *
-     * @param targetMethod The method to be proxied.
-     * @param assigner     An assigner for assigning the target method's return value to either the
-     *                     {@link java.util.concurrent.Callable#call()} or {@link Runnable#run()}} methods' return
-     *                     values.
-     */
-    public MethodCallProxy(MethodDescription targetMethod, Assigner assigner) {
-        this.targetMethod = targetMethod;
-        this.assigner = assigner;
-    }
-
-    @Override
-    public DynamicType make(String auxiliaryTypeName,
-                            ClassFormatVersion classFormatVersion,
-                            MethodAccessorFactory methodAccessorFactory) {
-        MethodDescription accessorMethod = methodAccessorFactory.requireAccessorMethodFor(targetMethod);
-        LinkedHashMap<String, TypeDescription> parameterFields = extractFields(accessorMethod);
-        DynamicType.Builder<?> builder = new ByteBuddy(classFormatVersion)
-                .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
-                .name(auxiliaryTypeName)
-                .modifiers(DEFAULT_TYPE_MODIFIER.toArray(new ModifierContributor.ForType[DEFAULT_TYPE_MODIFIER.size()]))
-                .implement(Runnable.class).intercept(new MethodCall(accessorMethod, assigner))
-                .implement(Callable.class).intercept(new MethodCall(accessorMethod, assigner))
-                .defineConstructor(new ArrayList<TypeDescription>(parameterFields.values()))
-                .intercept(new ConstructorCall());
-        for (Map.Entry<String, TypeDescription> field : parameterFields.entrySet()) {
-            builder = builder.defineField(field.getKey(), field.getValue(), MemberVisibility.PRIVATE);
-        }
-        return builder.make();
-    }
-
-    private static LinkedHashMap<String, TypeDescription> extractFields(MethodDescription methodDescription) {
-        TypeList parameterTypes = methodDescription.getParameterTypes();
-        LinkedHashMap<String, TypeDescription> typeDescriptions =
-                new LinkedHashMap<String, TypeDescription>((methodDescription.isStatic() ? 0 : 1) + parameterTypes.size());
-        int currentIndex = 0;
-        if (!methodDescription.isStatic()) {
-            typeDescriptions.put(fieldName(currentIndex++), methodDescription.getDeclaringType());
-        }
-        for (TypeDescription parameterType : parameterTypes) {
-            typeDescriptions.put(fieldName(currentIndex++), parameterType);
-        }
-        return typeDescriptions;
-    }
-
-    private static String fieldName(int index) {
-        return String.format("%s%d", FIELD_NAME_PREFIX, index);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && assigner.equals(((MethodCallProxy) other).assigner)
-                && targetMethod.equals(((MethodCallProxy) other).targetMethod);
-    }
-
-    @Override
-    public int hashCode() {
-        return 31 * targetMethod.hashCode() + assigner.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "MethodCallProxy{" +
-                "targetMethod=" + targetMethod +
-                ", assigner=" + assigner +
-                '}';
     }
 }

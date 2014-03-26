@@ -63,7 +63,8 @@ public @interface This {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(
                         new StackManipulation.Compound(
                                 MethodVariableAccess.REFERENCE.loadFromIndex(THIS_REFERENCE_INDEX),
-                                thisAssignment));
+                                thisAssignment)
+                );
             } else {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }

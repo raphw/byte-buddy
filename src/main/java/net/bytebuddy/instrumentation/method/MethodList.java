@@ -12,6 +12,25 @@ import java.util.*;
 public interface MethodList extends List<MethodDescription> {
 
     /**
+     * Returns a new list that only includes the methods that are matched by the given method matcher.
+     *
+     * @param methodMatcher A filter applied to this list.
+     * @return a new list where all methods match the given {@code methodMatcher}.
+     */
+    MethodList filter(MethodMatcher methodMatcher);
+
+    @Override
+    MethodList subList(int fromIndex, int toIndex);
+
+    /**
+     * Returns the only element in this method list or throws an exception if there is more than or less than
+     * one element in this list.
+     *
+     * @return the only element of this list.
+     */
+    MethodDescription getOnly();
+
+    /**
      * A method list implementation that returns all loaded byte code methods (methods and constructors) that
      * are declared for a given type.
      */
@@ -176,23 +195,4 @@ public interface MethodList extends List<MethodDescription> {
             return "MethodList.Empty";
         }
     }
-
-    /**
-     * Returns a new list that only includes the methods that are matched by the given method matcher.
-     *
-     * @param methodMatcher A filter applied to this list.
-     * @return a new list where all methods match the given {@code methodMatcher}.
-     */
-    MethodList filter(MethodMatcher methodMatcher);
-
-    @Override
-    MethodList subList(int fromIndex, int toIndex);
-
-    /**
-     * Returns the only element in this method list or throws an exception if there is more than or less than
-     * one element in this list.
-     *
-     * @return the only element of this list.
-     */
-    MethodDescription getOnly();
 }

@@ -24,6 +24,81 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
     static final String CONSTRUCTOR_INTERNAL_NAME = "<init>";
 
     /**
+     * Returns a description of the return type of the method described by this instance.
+     *
+     * @return A description of the return type of the method described by this instance.
+     */
+    TypeDescription getReturnType();
+
+    /**
+     * Returns a list of type descriptions of the method described by this instance.
+     *
+     * @return A list of type descriptions of the method described by this instance.
+     */
+    TypeList getParameterTypes();
+
+    /**
+     * Returns the parameter annotations of the method described by this instance.
+     *
+     * @return The parameter annotations of the method described by this instance.
+     */
+    Annotation[][] getParameterAnnotations();
+
+    /**
+     * Returns a description of the exception types of the method described by this instance.
+     *
+     * @return A description of the exception types of the method described by this instance.
+     */
+    TypeList getExceptionTypes();
+
+    /**
+     * Specifies if this method description represents a constructor.
+     *
+     * @return {@code true} if this method description represents a constructor.
+     */
+    boolean isConstructor();
+
+    /**
+     * Verifies if a method description represents a given loaded method.
+     *
+     * @param method The method to be checked.
+     * @return {@code true} if this method description represents the given loaded method.
+     */
+    boolean represents(Method method);
+
+    /**
+     * Verifies if a method description represents a given loaded constructor.
+     *
+     * @param constructor The constructor to be checked.
+     * @return {@code true} if this method description represents the given loaded constructor.
+     */
+    boolean represents(Constructor<?> constructor);
+
+    /**
+     * Verifies if this method description represents an overridable method.
+     *
+     * @return {@code true} if this method description represents an overridable method.
+     */
+    boolean isOverridable();
+
+    /**
+     * Returns the size of the local variable array that is required for this method, i.e. the size of all parameters
+     * if they were loaded on the stack including a reference to {@code this} if this method represented a non-static
+     * method.
+     *
+     * @return The size of this method on the operand stack.
+     */
+    int getStackSize();
+
+    /**
+     * Returns the offset of the parameter at {@code parameterIndex} on the described method's local variable array.
+     *
+     * @param parameterIndex The parameter index of interest.
+     * @return The offset of this parameter.
+     */
+    int getParameterOffset(int parameterIndex);
+
+    /**
      * An abstract base implementation of a method description.
      */
     static abstract class AbstractMethodDescription extends AbstractModifierReviewable implements MethodDescription {
@@ -442,79 +517,4 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
                     '}';
         }
     }
-
-    /**
-     * Returns a description of the return type of the method described by this instance.
-     *
-     * @return A description of the return type of the method described by this instance.
-     */
-    TypeDescription getReturnType();
-
-    /**
-     * Returns a list of type descriptions of the method described by this instance.
-     *
-     * @return A list of type descriptions of the method described by this instance.
-     */
-    TypeList getParameterTypes();
-
-    /**
-     * Returns the parameter annotations of the method described by this instance.
-     *
-     * @return The parameter annotations of the method described by this instance.
-     */
-    Annotation[][] getParameterAnnotations();
-
-    /**
-     * Returns a description of the exception types of the method described by this instance.
-     *
-     * @return A description of the exception types of the method described by this instance.
-     */
-    TypeList getExceptionTypes();
-
-    /**
-     * Specifies if this method description represents a constructor.
-     *
-     * @return {@code true} if this method description represents a constructor.
-     */
-    boolean isConstructor();
-
-    /**
-     * Verifies if a method description represents a given loaded method.
-     *
-     * @param method The method to be checked.
-     * @return {@code true} if this method description represents the given loaded method.
-     */
-    boolean represents(Method method);
-
-    /**
-     * Verifies if a method description represents a given loaded constructor.
-     *
-     * @param constructor The constructor to be checked.
-     * @return {@code true} if this method description represents the given loaded constructor.
-     */
-    boolean represents(Constructor<?> constructor);
-
-    /**
-     * Verifies if this method description represents an overridable method.
-     *
-     * @return {@code true} if this method description represents an overridable method.
-     */
-    boolean isOverridable();
-
-    /**
-     * Returns the size of the local variable array that is required for this method, i.e. the size of all parameters
-     * if they were loaded on the stack including a reference to {@code this} if this method represented a non-static
-     * method.
-     *
-     * @return The size of this method on the operand stack.
-     */
-    int getStackSize();
-
-    /**
-     * Returns the offset of the parameter at {@code parameterIndex} on the described method's local variable array.
-     *
-     * @param parameterIndex The parameter index of interest.
-     * @return The offset of this parameter.
-     */
-    int getParameterOffset(int parameterIndex);
 }

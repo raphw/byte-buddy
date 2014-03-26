@@ -17,6 +17,13 @@ import java.lang.reflect.Field;
 public interface FieldDescription extends ModifierReviewable, ByteCodeElement, DeclaredInType, AnnotatedElement {
 
     /**
+     * Returns a description of the type of this field.
+     *
+     * @return A type description of this field.
+     */
+    TypeDescription getFieldType();
+
+    /**
      * An abstract base implementation of a field description.
      */
     static abstract class AbstractFieldDescription extends AbstractModifierReviewable implements FieldDescription {
@@ -113,11 +120,4 @@ public interface FieldDescription extends ModifierReviewable, ByteCodeElement, D
             return field.isSynthetic();
         }
     }
-
-    /**
-     * Returns a description of the type of this field.
-     *
-     * @return A type description of this field.
-     */
-    TypeDescription getFieldType();
 }

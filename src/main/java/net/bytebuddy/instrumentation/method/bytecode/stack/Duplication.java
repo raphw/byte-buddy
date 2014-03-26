@@ -12,6 +12,12 @@ public enum Duplication implements StackManipulation {
     ZERO(StackSize.ZERO, Opcodes.NOP),
     SINGLE(StackSize.SINGLE, Opcodes.DUP),
     DOUBLE(StackSize.DOUBLE, Opcodes.DUP2);
+    private final Size size;
+    private final int opcode;
+    private Duplication(StackSize stackSize, int opcode) {
+        size = stackSize.toIncreasingSize();
+        this.opcode = opcode;
+    }
 
     /**
      * Duplicates a value given its type.
@@ -30,14 +36,6 @@ public enum Duplication implements StackManipulation {
             default:
                 throw new AssertionError();
         }
-    }
-
-    private final Size size;
-    private final int opcode;
-
-    private Duplication(StackSize stackSize, int opcode) {
-        size = stackSize.toIncreasingSize();
-        this.opcode = opcode;
     }
 
     @Override

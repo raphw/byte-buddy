@@ -8,6 +8,11 @@ public enum StackSize {
     ZERO(0),
     SINGLE(1),
     DOUBLE(2);
+    private final int size;
+
+    private StackSize(int size) {
+        this.size = size;
+    }
 
     /**
      * Finds the operand stack size of a given Java type.
@@ -37,12 +42,6 @@ public enum StackSize {
             size += of(type).getSize();
         }
         return size;
-    }
-
-    private final int size;
-
-    private StackSize(int size) {
-        this.size = size;
     }
 
     /**

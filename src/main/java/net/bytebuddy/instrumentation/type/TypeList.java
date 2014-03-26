@@ -14,6 +14,20 @@ import java.util.NoSuchElementException;
 public interface TypeList extends List<TypeDescription> {
 
     /**
+     * Returns a list of internal names of all types represented by this list.
+     *
+     * @return An array of all internal names or {@code null} if the list is empty.
+     */
+    String[] toInternalNames();
+
+    /**
+     * Returns the sum of the size of all types contained in this list.
+     *
+     * @return The sum of the size of all types contained in this list.
+     */
+    int getStackSize();
+
+    /**
      * Implementation of a type list for an array of loaded types.
      */
     static class ForLoadedType extends AbstractList<TypeDescription> implements TypeList {
@@ -28,6 +42,7 @@ public interface TypeList extends List<TypeDescription> {
         public ForLoadedType(Class<?>[] type) {
             this.type = type;
         }
+
         public ForLoadedType(List<Class<?>> types) {
             type = types.toArray(new Class<?>[types.size()]);
         }
@@ -129,18 +144,4 @@ public interface TypeList extends List<TypeDescription> {
             return 0;
         }
     }
-
-    /**
-     * Returns a list of internal names of all types represented by this list.
-     *
-     * @return An array of all internal names or {@code null} if the list is empty.
-     */
-    String[] toInternalNames();
-
-    /**
-     * Returns the sum of the size of all types contained in this list.
-     *
-     * @return The sum of the size of all types contained in this list.
-     */
-    int getStackSize();
 }

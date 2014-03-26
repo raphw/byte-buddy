@@ -10,6 +10,11 @@ public enum SyntheticState implements ModifierContributor.ForType, ModifierContr
 
     SYNTHETIC(Opcodes.ACC_SYNTHETIC),
     NON_SYNTHETIC(EMPTY_MASK);
+    private final int mask;
+
+    private SyntheticState(int mask) {
+        this.mask = mask;
+    }
 
     /**
      * Creates a synthetic state from a boolean value indicating if a type or member is supposed to be synthetic.
@@ -19,12 +24,6 @@ public enum SyntheticState implements ModifierContributor.ForType, ModifierContr
      */
     public static SyntheticState is(boolean synthetic) {
         return synthetic ? SYNTHETIC : NON_SYNTHETIC;
-    }
-
-    private final int mask;
-
-    private SyntheticState(int mask) {
-        this.mask = mask;
     }
 
     @Override

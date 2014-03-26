@@ -9,6 +9,24 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 public interface JunctionMethodMatcher extends MethodMatcher {
 
     /**
+     * Creates a new method matcher that returns {@code true} if both this method matcher and the given
+     * method matcher match a given method description.
+     *
+     * @param other The method matcher to compose with this method matcher.
+     * @return {@code true} if <b>both</b> this or the {@code other} method matcher returns true.
+     */
+    JunctionMethodMatcher and(MethodMatcher other);
+
+    /**
+     * Creates a new method matcher that returns {@code true} if either this method matcher or the given
+     * method matcher match a given method description.
+     *
+     * @param other The method matcher to compose with this method matcher.
+     * @return {@code true} if <b>either</b> this or the {@code other} method matcher returns true.
+     */
+    JunctionMethodMatcher or(MethodMatcher other);
+
+    /**
      * An abstract base implementation of a junction method matcher.
      */
     static abstract class AbstractBase implements JunctionMethodMatcher {
@@ -107,22 +125,4 @@ public interface JunctionMethodMatcher extends MethodMatcher {
             return "(" + left + " or " + right + ')';
         }
     }
-
-    /**
-     * Creates a new method matcher that returns {@code true} if both this method matcher and the given
-     * method matcher match a given method description.
-     *
-     * @param other The method matcher to compose with this method matcher.
-     * @return {@code true} if <b>both</b> this or the {@code other} method matcher returns true.
-     */
-    JunctionMethodMatcher and(MethodMatcher other);
-
-    /**
-     * Creates a new method matcher that returns {@code true} if either this method matcher or the given
-     * method matcher match a given method description.
-     *
-     * @param other The method matcher to compose with this method matcher.
-     * @return {@code true} if <b>either</b> this or the {@code other} method matcher returns true.
-     */
-    JunctionMethodMatcher or(MethodMatcher other);
 }

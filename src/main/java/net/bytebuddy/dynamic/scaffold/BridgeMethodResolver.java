@@ -28,10 +28,7 @@ import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
  */
 public interface BridgeMethodResolver {
 
-    static interface Factory {
-
-        BridgeMethodResolver make(MethodList relevant);
-    }
+    MethodDescription resolve(MethodDescription methodDescription);
 
     static enum NoOp implements BridgeMethodResolver, Factory {
         INSTANCE;
@@ -47,7 +44,49 @@ public interface BridgeMethodResolver {
         }
     }
 
+    static interface Factory {
+
+        BridgeMethodResolver make(MethodList relevant);
+    }
+
     static class Simple implements BridgeMethodResolver {
+
+        private final Map<String, BridgeTarget> bridges;
+
+        public Simple(MethodList relevant, ConflictHandler conflictHandler) {
+            MethodList bridgeMethods = relevant.filter(isBridge());
+            bridges = new HashMap<String, BridgeTarget>(bridgeMethods.size());
+            for (MethodDescription bridgeMethod : bridgeMethods) {
+                bridges.put(bridgeMethod.getUniqueSignature(), findBridgeTargetFor(bridgeMethod, conflictHandler));
+            }
+        }
+
+        private static BridgeTarget findBridgeTargetFor(MethodDescription bridgeMethod,
+                                                        ConflictHandler conflictHandler) {
+            MethodList targetCandidates = bridgeMethod.getDeclaringType()
+                    .getDeclaredMethods()
+                    .filter(not(isBridge()).and(isBridgeMethodCompatibleTo(bridgeMethod)));
+            switch (targetCandidates.size()) {
+                case 0:
+                    return new BridgeTarget.Resolved(bridgeMethod);
+                case 1:
+                    return new BridgeTarget.Candidate(targetCandidates.getOnly());
+                default:
+                    return conflictHandler.choose(bridgeMethod, targetCandidates);
+            }
+        }
+
+        @Override
+        public MethodDescription resolve(MethodDescription methodDescription) {
+            BridgeTarget bridgeTarget = bridges.get(methodDescription.getUniqueSignature());
+            if (bridgeTarget == null) { // The given method is not a bridge method.
+                return methodDescription;
+            } else if (bridgeTarget.isResolved()) { // There is a definite target for the given bridge method.
+                return bridgeTarget.extract();
+            } else { // There is a target for the bridge method which might however itself be a bridge method.
+                return resolve(bridgeTarget.extract());
+            }
+        }
 
         public static enum Factory implements BridgeMethodResolver.Factory {
 
@@ -68,6 +107,8 @@ public interface BridgeMethodResolver {
         }
 
         public static interface ConflictHandler {
+
+            BridgeTarget choose(MethodDescription bridgeMethod, MethodList targetCandidates);
 
             static enum Default implements ConflictHandler {
 
@@ -90,11 +131,27 @@ public interface BridgeMethodResolver {
                     }
                 }
             }
-
-            BridgeTarget choose(MethodDescription bridgeMethod, MethodList targetCandidates);
         }
 
         public static interface BridgeTarget {
+
+            MethodDescription extract();
+
+            boolean isResolved();
+
+            static enum Unknown implements BridgeTarget {
+                INSTANCE;
+
+                @Override
+                public MethodDescription extract() {
+                    throw new IllegalStateException("Could not resolve bridge method target");
+                }
+
+                @Override
+                public boolean isResolved() {
+                    return true;
+                }
+            }
 
             static class Resolved implements BridgeTarget {
 
@@ -133,63 +190,6 @@ public interface BridgeMethodResolver {
                     return false;
                 }
             }
-
-            static enum Unknown implements BridgeTarget {
-                INSTANCE;
-
-                @Override
-                public MethodDescription extract() {
-                    throw new IllegalStateException("Could not resolve bridge method target");
-                }
-
-                @Override
-                public boolean isResolved() {
-                    return true;
-                }
-            }
-
-            MethodDescription extract();
-
-            boolean isResolved();
-        }
-
-        private final Map<String, BridgeTarget> bridges;
-
-        public Simple(MethodList relevant, ConflictHandler conflictHandler) {
-            MethodList bridgeMethods = relevant.filter(isBridge());
-            bridges = new HashMap<String, BridgeTarget>(bridgeMethods.size());
-            for (MethodDescription bridgeMethod : bridgeMethods) {
-                bridges.put(bridgeMethod.getUniqueSignature(), findBridgeTargetFor(bridgeMethod, conflictHandler));
-            }
-        }
-
-        private static BridgeTarget findBridgeTargetFor(MethodDescription bridgeMethod,
-                                                        ConflictHandler conflictHandler) {
-            MethodList targetCandidates = bridgeMethod.getDeclaringType()
-                    .getDeclaredMethods()
-                    .filter(not(isBridge()).and(isBridgeMethodCompatibleTo(bridgeMethod)));
-            switch (targetCandidates.size()) {
-                case 0:
-                    return new BridgeTarget.Resolved(bridgeMethod);
-                case 1:
-                    return new BridgeTarget.Candidate(targetCandidates.getOnly());
-                default:
-                    return conflictHandler.choose(bridgeMethod, targetCandidates);
-            }
-        }
-
-        @Override
-        public MethodDescription resolve(MethodDescription methodDescription) {
-            BridgeTarget bridgeTarget = bridges.get(methodDescription.getUniqueSignature());
-            if (bridgeTarget == null) { // The given method is not a bridge method.
-                return methodDescription;
-            } else if (bridgeTarget.isResolved()) { // There is a definite target for the given bridge method.
-                return bridgeTarget.extract();
-            } else { // There is a target for the bridge method which might however itself be a bridge method.
-                return resolve(bridgeTarget.extract());
-            }
         }
     }
-
-    MethodDescription resolve(MethodDescription methodDescription);
 }

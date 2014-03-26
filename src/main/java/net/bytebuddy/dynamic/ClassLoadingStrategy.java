@@ -13,6 +13,18 @@ import java.util.Map;
 public interface ClassLoadingStrategy {
 
     /**
+     * Loads a given collection of classes given their binary representation.
+     *
+     * @param classLoader The class loader to used for loading the classes.
+     * @param types       Byte array representations of the types to be loaded mapped by their descriptions,
+     *                    where an iteration order defines an order in which they are supposed to be loaded,
+     *                    if relevant.
+     * @return A collection of the loaded classes which will be initialized in the iteration order of the
+     * returned collection.
+     */
+    Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types);
+
+    /**
      * Default class loading strategies.
      * <ol>
      * <li>The {@link net.bytebuddy.dynamic.ClassLoadingStrategy.Default#WRAPPER} strategy
@@ -62,16 +74,4 @@ public interface ClassLoadingStrategy {
             return loadedTypes;
         }
     }
-
-    /**
-     * Loads a given collection of classes given their binary representation.
-     *
-     * @param classLoader The class loader to used for loading the classes.
-     * @param types       Byte array representations of the types to be loaded mapped by their descriptions,
-     *                    where an iteration order defines an order in which they are supposed to be loaded,
-     *                    if relevant.
-     * @return A collection of the loaded classes which will be initialized in the iteration order of the
-     * returned collection.
-     */
-    Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types);
 }

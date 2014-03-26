@@ -17,6 +17,11 @@ public enum DefaultValue implements StackManipulation {
     DOUBLE(DoubleConstant.ZERO),
     VOID(LegalTrivialStackManipulation.INSTANCE),
     ANY_REFERENCE(NullConstant.INSTANCE);
+    private final StackManipulation stackManipulation;
+
+    private DefaultValue(StackManipulation stackManipulation) {
+        this.stackManipulation = stackManipulation;
+    }
 
     /**
      * Creates a stack assignment that loads the default value for a given type.
@@ -40,12 +45,6 @@ public enum DefaultValue implements StackManipulation {
         } else {
             return ANY_REFERENCE;
         }
-    }
-
-    private final StackManipulation stackManipulation;
-
-    private DefaultValue(StackManipulation stackManipulation) {
-        this.stackManipulation = stackManipulation;
     }
 
     @Override

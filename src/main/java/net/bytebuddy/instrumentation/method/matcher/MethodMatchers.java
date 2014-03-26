@@ -21,699 +21,8 @@ import java.util.List;
  */
 public final class MethodMatchers {
 
-    private static enum MatchMode {
-
-        EQUALS_FULLY("named"),
-        EQUALS_FULLY_IGNORE_CASE("namedIgnoreCase"),
-        STARTS_WITH("startsWith"),
-        STARTS_WITH_IGNORE_CASE("startsWithIgnoreCase"),
-        ENDS_WITH("endsWith"),
-        ENDS_WITH_IGNORE_CASE("endsWithIgnoreCase"),
-        CONTAINS("contains"),
-        CONTAINS_IGNORE_CASE("containsIgnoreCase"),
-        MATCHES("matches");
-
-        private final String description;
-
-        private MatchMode(String description) {
-            this.description = description;
-        }
-
-        private String getDescription() {
-            return description;
-        }
-
-        private boolean matches(String left, String right) {
-            switch (this) {
-                case EQUALS_FULLY:
-                    return right.equals(left);
-                case EQUALS_FULLY_IGNORE_CASE:
-                    return right.equalsIgnoreCase(left);
-                case STARTS_WITH:
-                    return right.startsWith(left);
-                case STARTS_WITH_IGNORE_CASE:
-                    return right.toLowerCase().startsWith(left.toLowerCase());
-                case ENDS_WITH:
-                    return right.endsWith(left);
-                case ENDS_WITH_IGNORE_CASE:
-                    return right.toLowerCase().endsWith(left.toLowerCase());
-                case CONTAINS:
-                    return right.contains(left);
-                case CONTAINS_IGNORE_CASE:
-                    return right.toLowerCase().contains(left.toLowerCase());
-                case MATCHES:
-                    return right.matches(left);
-                default:
-                    throw new AssertionError("Unknown match mode: " + this);
-            }
-        }
-    }
-
-    private static class MethodNameMethodMatcher extends JunctionMethodMatcher.AbstractBase {
-
-        private final String name;
-        private final MatchMode matchMode;
-
-        public MethodNameMethodMatcher(String name, MatchMode matchMode) {
-            this.name = name;
-            this.matchMode = matchMode;
-        }
-
-        @Override
-        public boolean matches(MethodDescription methodDescription) {
-            return matchMode.matches(name, methodDescription.getName());
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && matchMode == ((MethodNameMethodMatcher) other).matchMode
-                    && name.equals(((MethodNameMethodMatcher) other).name);
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * name.hashCode() + matchMode.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return matchMode.getDescription() + '(' + name + ')';
-        }
-    }
-
-    private static class ModifierMethodMatcher extends JunctionMethodMatcher.AbstractBase {
-
-        private final int modifiers;
-
-        public ModifierMethodMatcher(int modifiers) {
-            this.modifiers = modifiers;
-        }
-
-        @Override
-        public boolean matches(MethodDescription methodDescription) {
-            return (methodDescription.getModifiers() & modifiers) != 0;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && modifiers == ((ModifierMethodMatcher) other).modifiers;
-        }
-
-        @Override
-        public String toString() {
-            return "modifiers(" + modifiers + ')';
-        }
-
-        @Override
-        public int hashCode() {
-            return modifiers;
-        }
-    }
-
-    private static class ParameterTypeMatcher extends JunctionMethodMatcher.AbstractBase {
-
-        private final List<? extends TypeDescription> parameterTypes;
-
-        private ParameterTypeMatcher(List<? extends TypeDescription> parameterTypes) {
-            this.parameterTypes = parameterTypes;
-        }
-
-        @Override
-        public boolean matches(MethodDescription methodDescription) {
-            return methodDescription.getParameterTypes().equals(parameterTypes);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && parameterTypes.equals(((ParameterTypeMatcher) other).parameterTypes);
-        }
-
-        @Override
-        public int hashCode() {
-            return parameterTypes.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "parameters(" + parameterTypes + ')';
-        }
-    }
-
-    private static class ParameterSubtypeMatcher extends JunctionMethodMatcher.AbstractBase {
-
-        private final List<? extends TypeDescription> parameterTypes;
-
-        private ParameterSubtypeMatcher(List<? extends TypeDescription> parameterTypes) {
-            this.parameterTypes = parameterTypes;
-        }
-
-        @Override
-        public boolean matches(MethodDescription methodDescription) {
-            TypeList parameterTypes = methodDescription.getParameterTypes();
-            if (parameterTypes.size() != this.parameterTypes.size()) {
-                return false;
-            }
-            int currentIndex = 0;
-            for (TypeDescription parameterType : parameterTypes) {
-                if (!parameterType.isAssignableTo(this.parameterTypes.get(currentIndex++))) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && parameterTypes.equals(((ParameterSubtypeMatcher) other).parameterTypes);
-        }
-
-        @Override
-        public int hashCode() {
-            return parameterTypes.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "parametersAssignableTo(" + parameterTypes + ')';
-        }
-    }
-
-    private static class ParameterSuperTypeMatcher extends JunctionMethodMatcher.AbstractBase {
-
-        private final List<? extends TypeDescription> parameterTypes;
-
-        private ParameterSuperTypeMatcher(List<? extends TypeDescription> parameterTypes) {
-            this.parameterTypes = parameterTypes;
-        }
-
-        @Override
-        public boolean matches(MethodDescription methodDescription) {
-            TypeList parameterTypes = methodDescription.getParameterTypes();
-            if (parameterTypes.size() != this.parameterTypes.size()) {
-                return false;
-            }
-            int currentIndex = 0;
-            for (TypeDescription parameterType : parameterTypes) {
-                if (!parameterType.isAssignableFrom(this.parameterTypes.get(currentIndex++))) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && parameterTypes.equals(((ParameterSuperTypeMatcher) other).parameterTypes);
-        }
-
-        @Override
-        public int hashCode() {
-            return parameterTypes.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "parametersAssignableFrom(" + parameterTypes + ')';
-        }
-    }
-
-    private static class ParameterCountMatcher extends JunctionMethodMatcher.AbstractBase {
-
-        private final int numberOfParameters;
-
-        private ParameterCountMatcher(int numberOfParameters) {
-            this.numberOfParameters = numberOfParameters;
-        }
-
-        @Override
-        public boolean matches(MethodDescription methodDescription) {
-            return methodDescription.getParameterTypes().size() == numberOfParameters;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && numberOfParameters == ((ParameterCountMatcher) other).numberOfParameters;
-        }
-
-        @Override
-        public int hashCode() {
-            return numberOfParameters;
-        }
-
-        @Override
-        public String toString() {
-            return "parameterCount(" + numberOfParameters + ')';
-        }
-    }
-
-    private static class ReturnTypeMatcher extends JunctionMethodMatcher.AbstractBase {
-
-        private final TypeDescription returnType;
-
-        public ReturnTypeMatcher(TypeDescription returnType) {
-            this.returnType = returnType;
-        }
-
-        @Override
-        public boolean matches(MethodDescription methodDescription) {
-            return methodDescription.getReturnType().equals(returnType);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && returnType.equals(((ReturnTypeMatcher) other).returnType);
-        }
-
-        @Override
-        public int hashCode() {
-            return returnType.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "returns(" + returnType + ')';
-        }
-    }
-
-    private static class ReturnSubtypeMatcher extends JunctionMethodMatcher.AbstractBase {
-
-        private final TypeDescription returnType;
-
-        public ReturnSubtypeMatcher(TypeDescription returnType) {
-            this.returnType = returnType;
-        }
-
-        @Override
-        public boolean matches(MethodDescription methodDescription) {
-            return methodDescription.getReturnType().isAssignableTo(returnType);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && returnType.equals(((ReturnSubtypeMatcher) other).returnType);
-        }
-
-        @Override
-        public int hashCode() {
-            return returnType.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "returnsSubtypeOf(" + returnType + ')';
-        }
-    }
-
-    private static class ReturnSupertypeMatcher extends JunctionMethodMatcher.AbstractBase {
-
-        private final TypeDescription returnType;
-
-        public ReturnSupertypeMatcher(TypeDescription returnType) {
-            this.returnType = returnType;
-        }
-
-        @Override
-        public boolean matches(MethodDescription methodDescription) {
-            return methodDescription.getReturnType().isAssignableFrom(returnType);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && returnType.equals(((ReturnSupertypeMatcher) other).returnType);
-        }
-
-        @Override
-        public int hashCode() {
-            return returnType.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "returnsSupertypeOf(" + returnType + ')';
-        }
-    }
-
-    private static class ExceptionMethodMatcher extends JunctionMethodMatcher.AbstractBase {
-
-        private final TypeDescription exceptionType;
-
-        public ExceptionMethodMatcher(TypeDescription exceptionType) {
-            this.exceptionType = exceptionType;
-        }
-
-        @Override
-        public boolean matches(MethodDescription methodDescription) {
-            for (TypeDescription exceptionType : methodDescription.getExceptionTypes()) {
-                if (exceptionType.isAssignableFrom(this.exceptionType)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && exceptionType.equals(((ExceptionMethodMatcher) other).exceptionType);
-        }
-
-        @Override
-        public int hashCode() {
-            return exceptionType.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "canThrow(" + exceptionType + ')';
-        }
-    }
-
-    private static class MethodDescriptionMatcher extends JunctionMethodMatcher.AbstractBase {
-
-        private final MethodDescription methodDescription;
-
-        private MethodDescriptionMatcher(MethodDescription methodDescription) {
-            this.methodDescription = methodDescription;
-        }
-
-        @Override
-        public boolean matches(MethodDescription methodDescription) {
-            return methodDescription.equals(this.methodDescription);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && methodDescription.equals(((MethodDescriptionMatcher) other).methodDescription);
-        }
-
-        @Override
-        public int hashCode() {
-            return methodDescription.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "is(" + methodDescription + ')';
-        }
-    }
-
-    private static class MethodEqualityMethodMatcher extends JunctionMethodMatcher.AbstractBase {
-
-        private final Method method;
-
-        public MethodEqualityMethodMatcher(Method method) {
-            this.method = method;
-        }
-
-        @Override
-        public boolean matches(MethodDescription methodDescription) {
-            return methodDescription.represents(method);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && method.equals(((MethodEqualityMethodMatcher) other).method);
-        }
-
-        @Override
-        public int hashCode() {
-            return method.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "is(" + method + ')';
-        }
-    }
-
-    private static class ConstructorEqualityMethodMatcher extends JunctionMethodMatcher.AbstractBase {
-
-        private final Constructor<?> constructor;
-
-        public ConstructorEqualityMethodMatcher(Constructor<?> constructor) {
-            this.constructor = constructor;
-        }
-
-        @Override
-        public boolean matches(MethodDescription methodDescription) {
-            return methodDescription.represents(constructor);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && constructor.equals(((ConstructorEqualityMethodMatcher) other).constructor);
-        }
-
-        @Override
-        public int hashCode() {
-            return constructor.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "is(" + constructor + ')';
-        }
-    }
-
-    private static class MethodSignatureMethodMatcher extends JunctionMethodMatcher.AbstractBase {
-
-        private final MethodDescription methodDescription;
-
-        private MethodSignatureMethodMatcher(MethodDescription methodDescription) {
-            this.methodDescription = methodDescription;
-        }
-
-        @Override
-        public boolean matches(MethodDescription methodDescription) {
-            return methodDescription.getInternalName().equals(this.methodDescription.getInternalName())
-                    && methodDescription.getReturnType().equals(this.methodDescription.getReturnType())
-                    && methodDescription.getParameterTypes().equals(this.methodDescription.getParameterTypes());
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && methodDescription.equals(((MethodSignatureMethodMatcher) other).methodDescription);
-        }
-
-        @Override
-        public int hashCode() {
-            return methodDescription.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "signatureOf(" + methodDescription + ')';
-        }
-    }
-
-    private static class IsMethodMethodMatcher extends JunctionMethodMatcher.AbstractBase {
-
-        @Override
-        public boolean matches(MethodDescription methodDescription) {
-            return !methodDescription.isConstructor();
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return other == this || other instanceof IsMethodMethodMatcher;
-        }
-
-        @Override
-        public String toString() {
-            return "isMethod()";
-        }
-
-        @Override
-        public int hashCode() {
-            return 47;
-        }
-    }
-
-    private static class OverridableMethodMatcher extends JunctionMethodMatcher.AbstractBase {
-
-        @Override
-        public boolean matches(MethodDescription methodDescription) {
-            return methodDescription.isOverridable();
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return other == this || other instanceof OverridableMethodMatcher;
-        }
-
-        @Override
-        public String toString() {
-            return "isOverridable()";
-        }
-
-        @Override
-        public int hashCode() {
-            return 51;
-        }
-    }
-
-    private static class DefaultFinalizeMethodMatcher extends JunctionMethodMatcher.AbstractBase {
-
-        private static final String FINALIZE_METHOD_NAME = "finalize";
-
-        @Override
-        public boolean matches(MethodDescription methodDescription) {
-            return methodDescription.getDeclaringType().represents(Object.class)
-                    && methodDescription.getName().equals(FINALIZE_METHOD_NAME)
-                    && methodDescription.getParameterTypes().size() == 0;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return other == this || other instanceof DefaultFinalizeMethodMatcher;
-        }
-
-        @Override
-        public String toString() {
-            return "isDefaultFinalizer()";
-        }
-
-        @Override
-        public int hashCode() {
-            return 54;
-        }
-    }
-
-    private static class VisibilityMethodMatcher extends JunctionMethodMatcher.AbstractBase {
-
-        private final TypeDescription typeDescription;
-
-        private VisibilityMethodMatcher(TypeDescription typeDescription) {
-            this.typeDescription = typeDescription;
-        }
-
-        @Override
-        public boolean matches(MethodDescription methodDescription) {
-            return methodDescription.isVisibleTo(typeDescription);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && typeDescription.equals(((VisibilityMethodMatcher) other).typeDescription);
-        }
-
-        @Override
-        public int hashCode() {
-            return typeDescription.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "visibleTo(" + typeDescription + ')';
-        }
-    }
-
-    private static class DeclaringTypeMethodMatcher extends JunctionMethodMatcher.AbstractBase {
-
-        private final TypeDescription declaringType;
-
-        private DeclaringTypeMethodMatcher(Class<?> declaringType) {
-            this.declaringType = new TypeDescription.ForLoadedType(declaringType);
-        }
-
-        private DeclaringTypeMethodMatcher(TypeDescription declaringType) {
-            this.declaringType = declaringType;
-        }
-
-        @Override
-        public boolean matches(MethodDescription methodDescription) {
-            return methodDescription.getDeclaringType().equals(declaringType);
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            return this == o || !(o == null || getClass() != o.getClass())
-                    && declaringType.equals(((DeclaringTypeMethodMatcher) o).declaringType);
-        }
-
-        @Override
-        public int hashCode() {
-            return declaringType.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "declaredBy(" + declaringType + ')';
-        }
-    }
-
-    private static class BooleanMethodMatcher extends JunctionMethodMatcher.AbstractBase {
-
-        private final boolean matches;
-
-        private BooleanMethodMatcher(boolean matches) {
-            this.matches = matches;
-        }
-
-        @Override
-        public boolean matches(MethodDescription methodDescription) {
-            return matches;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && matches == ((BooleanMethodMatcher) other).matches;
-        }
-
-        @Override
-        public int hashCode() {
-            return (matches ? 1 : 0);
-        }
-
-        @Override
-        public String toString() {
-            return Boolean.toString(matches);
-        }
-    }
-
-    private static class NegatingMethodMatcher extends JunctionMethodMatcher.AbstractBase {
-
-        private final MethodMatcher methodMatcher;
-
-        public NegatingMethodMatcher(MethodMatcher methodMatcher) {
-            this.methodMatcher = methodMatcher;
-        }
-
-        @Override
-        public boolean matches(MethodDescription methodDescription) {
-            return !methodMatcher.matches(methodDescription);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && methodMatcher.equals(((NegatingMethodMatcher) other).methodMatcher);
-        }
-
-        @Override
-        public int hashCode() {
-            return methodMatcher.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "not(" + methodMatcher + ')';
-        }
+    private MethodMatchers() {
+        throw new AssertionError();
     }
 
     /**
@@ -1426,7 +735,698 @@ public final class MethodMatchers {
         return new BooleanMethodMatcher(false);
     }
 
-    private MethodMatchers() {
-        throw new AssertionError();
+    private static enum MatchMode {
+
+        EQUALS_FULLY("named"),
+        EQUALS_FULLY_IGNORE_CASE("namedIgnoreCase"),
+        STARTS_WITH("startsWith"),
+        STARTS_WITH_IGNORE_CASE("startsWithIgnoreCase"),
+        ENDS_WITH("endsWith"),
+        ENDS_WITH_IGNORE_CASE("endsWithIgnoreCase"),
+        CONTAINS("contains"),
+        CONTAINS_IGNORE_CASE("containsIgnoreCase"),
+        MATCHES("matches");
+
+        private final String description;
+
+        private MatchMode(String description) {
+            this.description = description;
+        }
+
+        private String getDescription() {
+            return description;
+        }
+
+        private boolean matches(String left, String right) {
+            switch (this) {
+                case EQUALS_FULLY:
+                    return right.equals(left);
+                case EQUALS_FULLY_IGNORE_CASE:
+                    return right.equalsIgnoreCase(left);
+                case STARTS_WITH:
+                    return right.startsWith(left);
+                case STARTS_WITH_IGNORE_CASE:
+                    return right.toLowerCase().startsWith(left.toLowerCase());
+                case ENDS_WITH:
+                    return right.endsWith(left);
+                case ENDS_WITH_IGNORE_CASE:
+                    return right.toLowerCase().endsWith(left.toLowerCase());
+                case CONTAINS:
+                    return right.contains(left);
+                case CONTAINS_IGNORE_CASE:
+                    return right.toLowerCase().contains(left.toLowerCase());
+                case MATCHES:
+                    return right.matches(left);
+                default:
+                    throw new AssertionError("Unknown match mode: " + this);
+            }
+        }
+    }
+
+    private static class MethodNameMethodMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        private final String name;
+        private final MatchMode matchMode;
+
+        public MethodNameMethodMatcher(String name, MatchMode matchMode) {
+            this.name = name;
+            this.matchMode = matchMode;
+        }
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return matchMode.matches(name, methodDescription.getName());
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && matchMode == ((MethodNameMethodMatcher) other).matchMode
+                    && name.equals(((MethodNameMethodMatcher) other).name);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * name.hashCode() + matchMode.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return matchMode.getDescription() + '(' + name + ')';
+        }
+    }
+
+    private static class ModifierMethodMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        private final int modifiers;
+
+        public ModifierMethodMatcher(int modifiers) {
+            this.modifiers = modifiers;
+        }
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return (methodDescription.getModifiers() & modifiers) != 0;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && modifiers == ((ModifierMethodMatcher) other).modifiers;
+        }
+
+        @Override
+        public String toString() {
+            return "modifiers(" + modifiers + ')';
+        }
+
+        @Override
+        public int hashCode() {
+            return modifiers;
+        }
+    }
+
+    private static class ParameterTypeMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        private final List<? extends TypeDescription> parameterTypes;
+
+        private ParameterTypeMatcher(List<? extends TypeDescription> parameterTypes) {
+            this.parameterTypes = parameterTypes;
+        }
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.getParameterTypes().equals(parameterTypes);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && parameterTypes.equals(((ParameterTypeMatcher) other).parameterTypes);
+        }
+
+        @Override
+        public int hashCode() {
+            return parameterTypes.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "parameters(" + parameterTypes + ')';
+        }
+    }
+
+    private static class ParameterSubtypeMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        private final List<? extends TypeDescription> parameterTypes;
+
+        private ParameterSubtypeMatcher(List<? extends TypeDescription> parameterTypes) {
+            this.parameterTypes = parameterTypes;
+        }
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            TypeList parameterTypes = methodDescription.getParameterTypes();
+            if (parameterTypes.size() != this.parameterTypes.size()) {
+                return false;
+            }
+            int currentIndex = 0;
+            for (TypeDescription parameterType : parameterTypes) {
+                if (!parameterType.isAssignableTo(this.parameterTypes.get(currentIndex++))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && parameterTypes.equals(((ParameterSubtypeMatcher) other).parameterTypes);
+        }
+
+        @Override
+        public int hashCode() {
+            return parameterTypes.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "parametersAssignableTo(" + parameterTypes + ')';
+        }
+    }
+
+    private static class ParameterSuperTypeMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        private final List<? extends TypeDescription> parameterTypes;
+
+        private ParameterSuperTypeMatcher(List<? extends TypeDescription> parameterTypes) {
+            this.parameterTypes = parameterTypes;
+        }
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            TypeList parameterTypes = methodDescription.getParameterTypes();
+            if (parameterTypes.size() != this.parameterTypes.size()) {
+                return false;
+            }
+            int currentIndex = 0;
+            for (TypeDescription parameterType : parameterTypes) {
+                if (!parameterType.isAssignableFrom(this.parameterTypes.get(currentIndex++))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && parameterTypes.equals(((ParameterSuperTypeMatcher) other).parameterTypes);
+        }
+
+        @Override
+        public int hashCode() {
+            return parameterTypes.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "parametersAssignableFrom(" + parameterTypes + ')';
+        }
+    }
+
+    private static class ParameterCountMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        private final int numberOfParameters;
+
+        private ParameterCountMatcher(int numberOfParameters) {
+            this.numberOfParameters = numberOfParameters;
+        }
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.getParameterTypes().size() == numberOfParameters;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && numberOfParameters == ((ParameterCountMatcher) other).numberOfParameters;
+        }
+
+        @Override
+        public int hashCode() {
+            return numberOfParameters;
+        }
+
+        @Override
+        public String toString() {
+            return "parameterCount(" + numberOfParameters + ')';
+        }
+    }
+
+    private static class ReturnTypeMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        private final TypeDescription returnType;
+
+        public ReturnTypeMatcher(TypeDescription returnType) {
+            this.returnType = returnType;
+        }
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.getReturnType().equals(returnType);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && returnType.equals(((ReturnTypeMatcher) other).returnType);
+        }
+
+        @Override
+        public int hashCode() {
+            return returnType.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "returns(" + returnType + ')';
+        }
+    }
+
+    private static class ReturnSubtypeMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        private final TypeDescription returnType;
+
+        public ReturnSubtypeMatcher(TypeDescription returnType) {
+            this.returnType = returnType;
+        }
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.getReturnType().isAssignableTo(returnType);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && returnType.equals(((ReturnSubtypeMatcher) other).returnType);
+        }
+
+        @Override
+        public int hashCode() {
+            return returnType.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "returnsSubtypeOf(" + returnType + ')';
+        }
+    }
+
+    private static class ReturnSupertypeMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        private final TypeDescription returnType;
+
+        public ReturnSupertypeMatcher(TypeDescription returnType) {
+            this.returnType = returnType;
+        }
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.getReturnType().isAssignableFrom(returnType);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && returnType.equals(((ReturnSupertypeMatcher) other).returnType);
+        }
+
+        @Override
+        public int hashCode() {
+            return returnType.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "returnsSupertypeOf(" + returnType + ')';
+        }
+    }
+
+    private static class ExceptionMethodMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        private final TypeDescription exceptionType;
+
+        public ExceptionMethodMatcher(TypeDescription exceptionType) {
+            this.exceptionType = exceptionType;
+        }
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            for (TypeDescription exceptionType : methodDescription.getExceptionTypes()) {
+                if (exceptionType.isAssignableFrom(this.exceptionType)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && exceptionType.equals(((ExceptionMethodMatcher) other).exceptionType);
+        }
+
+        @Override
+        public int hashCode() {
+            return exceptionType.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "canThrow(" + exceptionType + ')';
+        }
+    }
+
+    private static class MethodDescriptionMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        private final MethodDescription methodDescription;
+
+        private MethodDescriptionMatcher(MethodDescription methodDescription) {
+            this.methodDescription = methodDescription;
+        }
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.equals(this.methodDescription);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && methodDescription.equals(((MethodDescriptionMatcher) other).methodDescription);
+        }
+
+        @Override
+        public int hashCode() {
+            return methodDescription.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "is(" + methodDescription + ')';
+        }
+    }
+
+    private static class MethodEqualityMethodMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        private final Method method;
+
+        public MethodEqualityMethodMatcher(Method method) {
+            this.method = method;
+        }
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.represents(method);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && method.equals(((MethodEqualityMethodMatcher) other).method);
+        }
+
+        @Override
+        public int hashCode() {
+            return method.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "is(" + method + ')';
+        }
+    }
+
+    private static class ConstructorEqualityMethodMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        private final Constructor<?> constructor;
+
+        public ConstructorEqualityMethodMatcher(Constructor<?> constructor) {
+            this.constructor = constructor;
+        }
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.represents(constructor);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && constructor.equals(((ConstructorEqualityMethodMatcher) other).constructor);
+        }
+
+        @Override
+        public int hashCode() {
+            return constructor.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "is(" + constructor + ')';
+        }
+    }
+
+    private static class MethodSignatureMethodMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        private final MethodDescription methodDescription;
+
+        private MethodSignatureMethodMatcher(MethodDescription methodDescription) {
+            this.methodDescription = methodDescription;
+        }
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.getInternalName().equals(this.methodDescription.getInternalName())
+                    && methodDescription.getReturnType().equals(this.methodDescription.getReturnType())
+                    && methodDescription.getParameterTypes().equals(this.methodDescription.getParameterTypes());
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && methodDescription.equals(((MethodSignatureMethodMatcher) other).methodDescription);
+        }
+
+        @Override
+        public int hashCode() {
+            return methodDescription.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "signatureOf(" + methodDescription + ')';
+        }
+    }
+
+    private static class IsMethodMethodMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return !methodDescription.isConstructor();
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return other == this || other instanceof IsMethodMethodMatcher;
+        }
+
+        @Override
+        public String toString() {
+            return "isMethod()";
+        }
+
+        @Override
+        public int hashCode() {
+            return 47;
+        }
+    }
+
+    private static class OverridableMethodMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.isOverridable();
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return other == this || other instanceof OverridableMethodMatcher;
+        }
+
+        @Override
+        public String toString() {
+            return "isOverridable()";
+        }
+
+        @Override
+        public int hashCode() {
+            return 51;
+        }
+    }
+
+    private static class DefaultFinalizeMethodMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        private static final String FINALIZE_METHOD_NAME = "finalize";
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.getDeclaringType().represents(Object.class)
+                    && methodDescription.getName().equals(FINALIZE_METHOD_NAME)
+                    && methodDescription.getParameterTypes().size() == 0;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return other == this || other instanceof DefaultFinalizeMethodMatcher;
+        }
+
+        @Override
+        public String toString() {
+            return "isDefaultFinalizer()";
+        }
+
+        @Override
+        public int hashCode() {
+            return 54;
+        }
+    }
+
+    private static class VisibilityMethodMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        private final TypeDescription typeDescription;
+
+        private VisibilityMethodMatcher(TypeDescription typeDescription) {
+            this.typeDescription = typeDescription;
+        }
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.isVisibleTo(typeDescription);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && typeDescription.equals(((VisibilityMethodMatcher) other).typeDescription);
+        }
+
+        @Override
+        public int hashCode() {
+            return typeDescription.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "visibleTo(" + typeDescription + ')';
+        }
+    }
+
+    private static class DeclaringTypeMethodMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        private final TypeDescription declaringType;
+
+        private DeclaringTypeMethodMatcher(Class<?> declaringType) {
+            this.declaringType = new TypeDescription.ForLoadedType(declaringType);
+        }
+
+        private DeclaringTypeMethodMatcher(TypeDescription declaringType) {
+            this.declaringType = declaringType;
+        }
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.getDeclaringType().equals(declaringType);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return this == o || !(o == null || getClass() != o.getClass())
+                    && declaringType.equals(((DeclaringTypeMethodMatcher) o).declaringType);
+        }
+
+        @Override
+        public int hashCode() {
+            return declaringType.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "declaredBy(" + declaringType + ')';
+        }
+    }
+
+    private static class BooleanMethodMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        private final boolean matches;
+
+        private BooleanMethodMatcher(boolean matches) {
+            this.matches = matches;
+        }
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return matches;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && matches == ((BooleanMethodMatcher) other).matches;
+        }
+
+        @Override
+        public int hashCode() {
+            return (matches ? 1 : 0);
+        }
+
+        @Override
+        public String toString() {
+            return Boolean.toString(matches);
+        }
+    }
+
+    private static class NegatingMethodMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        private final MethodMatcher methodMatcher;
+
+        public NegatingMethodMatcher(MethodMatcher methodMatcher) {
+            this.methodMatcher = methodMatcher;
+        }
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return !methodMatcher.matches(methodDescription);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && methodMatcher.equals(((NegatingMethodMatcher) other).methodMatcher);
+        }
+
+        @Override
+        public int hashCode() {
+            return methodMatcher.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "not(" + methodMatcher + ')';
+        }
     }
 }

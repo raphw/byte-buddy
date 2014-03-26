@@ -17,6 +17,13 @@ public interface ModifierContributor {
     static final int EMPTY_MASK = 0;
 
     /**
+     * Returns the mask of this modifier.
+     *
+     * @return The modifier mask that is to be applied to the target type or type member.
+     */
+    int getMask();
+
+    /**
      * A marker interface for modifiers that can be applied to methods.
      */
     static interface ForMethod extends ModifierContributor {
@@ -36,11 +43,4 @@ public interface ModifierContributor {
     static interface ForType extends ModifierContributor {
         /* marker interface */
     }
-
-    /**
-     * Returns the mask of this modifier.
-     *
-     * @return The modifier mask that is to be applied to the target type or type member.
-     */
-    int getMask();
 }

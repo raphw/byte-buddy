@@ -21,48 +21,24 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
     LONG("java/lang/Long", StackSize.SINGLE, Long.class, long.class, "longValue", "()J"),
     FLOAT("java/lang/Float", StackSize.ZERO, Float.class, float.class, "floatValue", "()F"),
     DOUBLE("java/lang/Double", StackSize.SINGLE, Double.class, double.class, "doubleValue", "()D");
-
-    /**
-     * Implementations represent an unboxing delegate that is able to perform the unboxing operation.
-     */
-    public static interface UnboxingResponsible {
-
-        /**
-         * Attempts to unbox the represented type in order to assign the unboxed value to the given target type
-         * while using the assigner that is provided by the method call.
-         *
-         * @param targetType          The type that is the desired outcome of the assignment.
-         * @param assigner            The assigner used to assign the unboxed type to the target type.
-         * @param considerRuntimeType If {@code true}, unsafe castings are allowed for this assignment.
-         * @return A stack manipulation representing this assignment if such an assignment is possible. An illegal
-         * assignment otherwise.
-         */
-        StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, boolean considerRuntimeType);
-    }
-
-    private static enum ExplicitlyTypedUnboxingResponsible implements UnboxingResponsible {
-
-        BOOLEAN(PrimitiveUnboxingDelegate.BOOLEAN),
-        BYTE(PrimitiveUnboxingDelegate.BYTE),
-        SHORT(PrimitiveUnboxingDelegate.SHORT),
-        CHARACTER(PrimitiveUnboxingDelegate.CHARACTER),
-        INTEGER(PrimitiveUnboxingDelegate.INTEGER),
-        LONG(PrimitiveUnboxingDelegate.LONG),
-        FLOAT(PrimitiveUnboxingDelegate.FLOAT),
-        DOUBLE(PrimitiveUnboxingDelegate.DOUBLE);
-
-        private final PrimitiveUnboxingDelegate primitiveUnboxingDelegate;
-
-        private ExplicitlyTypedUnboxingResponsible(PrimitiveUnboxingDelegate primitiveUnboxingDelegate) {
-            this.primitiveUnboxingDelegate = primitiveUnboxingDelegate;
-        }
-
-        @Override
-        public StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, boolean considerRuntimeType) {
-            return new Compound(
-                    primitiveUnboxingDelegate,
-                    PrimitiveWideningDelegate.forPrimitive(primitiveUnboxingDelegate.primitiveType).widenTo(targetType));
-        }
+    private final String wrapperTypeName;
+    private final Size size;
+    private final TypeDescription wrapperType;
+    private final TypeDescription primitiveType;
+    private final String unboxingMethodName;
+    private final String unboxingMethodDescriptor;
+    private PrimitiveUnboxingDelegate(String wrapperTypeName,
+                                      StackSize sizeIncrease,
+                                      Class<?> wrapperType,
+                                      Class<?> primitiveType,
+                                      String unboxingMethodName,
+                                      String unboxingMethodDescriptor) {
+        this.wrapperTypeName = wrapperTypeName;
+        this.size = sizeIncrease.toIncreasingSize();
+        this.wrapperType = new TypeDescription.ForLoadedType(wrapperType);
+        this.primitiveType = new TypeDescription.ForLoadedType(primitiveType);
+        this.unboxingMethodName = unboxingMethodName;
+        this.unboxingMethodDescriptor = unboxingMethodDescriptor;
     }
 
     private static PrimitiveUnboxingDelegate forPrimitive(TypeDescription typeDescription) {
@@ -84,23 +60,6 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
             return DOUBLE;
         } else {
             throw new IllegalArgumentException("Expected non-void primitive type instead of " + typeDescription);
-        }
-    }
-
-    private static class ImplicitlyTypedUnboxingResponsible implements UnboxingResponsible {
-
-        private final TypeDescription originalType;
-
-        private ImplicitlyTypedUnboxingResponsible(TypeDescription originalType) {
-            this.originalType = originalType;
-        }
-
-        @Override
-        public StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, boolean considerRuntimeType) {
-            PrimitiveUnboxingDelegate primitiveUnboxingDelegate = PrimitiveUnboxingDelegate.forPrimitive(targetType);
-            return new Compound(
-                    assigner.assign(originalType, primitiveUnboxingDelegate.wrapperType, considerRuntimeType),
-                    primitiveUnboxingDelegate);
         }
     }
 
@@ -142,27 +101,6 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
         }
     }
 
-    private final String wrapperTypeName;
-    private final Size size;
-    private final TypeDescription wrapperType;
-    private final TypeDescription primitiveType;
-    private final String unboxingMethodName;
-    private final String unboxingMethodDescriptor;
-
-    private PrimitiveUnboxingDelegate(String wrapperTypeName,
-                                      StackSize sizeIncrease,
-                                      Class<?> wrapperType,
-                                      Class<?> primitiveType,
-                                      String unboxingMethodName,
-                                      String unboxingMethodDescriptor) {
-        this.wrapperTypeName = wrapperTypeName;
-        this.size = sizeIncrease.toIncreasingSize();
-        this.wrapperType = new TypeDescription.ForLoadedType(wrapperType);
-        this.primitiveType = new TypeDescription.ForLoadedType(primitiveType);
-        this.unboxingMethodName = unboxingMethodName;
-        this.unboxingMethodDescriptor = unboxingMethodDescriptor;
-    }
-
     @Override
     public boolean isValid() {
         return true;
@@ -172,5 +110,65 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
     public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
         methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, wrapperTypeName, unboxingMethodName, unboxingMethodDescriptor);
         return size;
+    }
+
+    private static enum ExplicitlyTypedUnboxingResponsible implements UnboxingResponsible {
+
+        BOOLEAN(PrimitiveUnboxingDelegate.BOOLEAN),
+        BYTE(PrimitiveUnboxingDelegate.BYTE),
+        SHORT(PrimitiveUnboxingDelegate.SHORT),
+        CHARACTER(PrimitiveUnboxingDelegate.CHARACTER),
+        INTEGER(PrimitiveUnboxingDelegate.INTEGER),
+        LONG(PrimitiveUnboxingDelegate.LONG),
+        FLOAT(PrimitiveUnboxingDelegate.FLOAT),
+        DOUBLE(PrimitiveUnboxingDelegate.DOUBLE);
+
+        private final PrimitiveUnboxingDelegate primitiveUnboxingDelegate;
+
+        private ExplicitlyTypedUnboxingResponsible(PrimitiveUnboxingDelegate primitiveUnboxingDelegate) {
+            this.primitiveUnboxingDelegate = primitiveUnboxingDelegate;
+        }
+
+        @Override
+        public StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, boolean considerRuntimeType) {
+            return new Compound(
+                    primitiveUnboxingDelegate,
+                    PrimitiveWideningDelegate.forPrimitive(primitiveUnboxingDelegate.primitiveType).widenTo(targetType));
+        }
+    }
+
+    /**
+     * Implementations represent an unboxing delegate that is able to perform the unboxing operation.
+     */
+    public static interface UnboxingResponsible {
+
+        /**
+         * Attempts to unbox the represented type in order to assign the unboxed value to the given target type
+         * while using the assigner that is provided by the method call.
+         *
+         * @param targetType          The type that is the desired outcome of the assignment.
+         * @param assigner            The assigner used to assign the unboxed type to the target type.
+         * @param considerRuntimeType If {@code true}, unsafe castings are allowed for this assignment.
+         * @return A stack manipulation representing this assignment if such an assignment is possible. An illegal
+         * assignment otherwise.
+         */
+        StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, boolean considerRuntimeType);
+    }
+
+    private static class ImplicitlyTypedUnboxingResponsible implements UnboxingResponsible {
+
+        private final TypeDescription originalType;
+
+        private ImplicitlyTypedUnboxingResponsible(TypeDescription originalType) {
+            this.originalType = originalType;
+        }
+
+        @Override
+        public StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, boolean considerRuntimeType) {
+            PrimitiveUnboxingDelegate primitiveUnboxingDelegate = PrimitiveUnboxingDelegate.forPrimitive(targetType);
+            return new Compound(
+                    assigner.assign(originalType, primitiveUnboxingDelegate.wrapperType, considerRuntimeType),
+                    primitiveUnboxingDelegate);
+        }
     }
 }

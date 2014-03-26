@@ -49,6 +49,27 @@ import java.util.List;
 public @interface Super {
 
     /**
+     * Determines how the {@code super}call proxy type is instantiated.
+     *
+     * @return The instantiation strategy for this proxy.
+     */
+    Instantiation strategy() default Instantiation.CONSTRUCTOR;
+
+    /**
+     * If {@code true}, the proxy type will not implement {@code super} calls to {@link Object#finalize()} or any overridden methods.
+     *
+     * @return {@code false} if finalizer methods should be considered for {@code super}-call proxy type delegation.
+     */
+    boolean ignoreFinalizer() default true;
+
+    /**
+     * Defines the argument types of the constructor to be called for the created {@code super}-call proxy type.
+     *
+     * @return The arguments of the called constructor.
+     */
+    Class<?>[] constructorArguments() default {};
+
+    /**
      * Determines the instantiation of the proxy type.
      *
      * @see net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Super
@@ -123,25 +144,4 @@ public @interface Super {
             }
         }
     }
-
-    /**
-     * Determines how the {@code super}call proxy type is instantiated.
-     *
-     * @return The instantiation strategy for this proxy.
-     */
-    Instantiation strategy() default Instantiation.CONSTRUCTOR;
-
-    /**
-     * If {@code true}, the proxy type will not implement {@code super} calls to {@link Object#finalize()} or any overridden methods.
-     *
-     * @return {@code false} if finalizer methods should be considered for {@code super}-call proxy type delegation.
-     */
-    boolean ignoreFinalizer() default true;
-
-    /**
-     * Defines the argument types of the constructor to be called for the created {@code super}-call proxy type.
-     *
-     * @return The arguments of the called constructor.
-     */
-    Class<?>[] constructorArguments() default {};
 }

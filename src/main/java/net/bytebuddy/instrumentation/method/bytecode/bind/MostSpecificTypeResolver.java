@@ -28,119 +28,6 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 public enum MostSpecificTypeResolver implements MethodDelegationBinder.AmbiguityResolver {
     INSTANCE;
 
-    /**
-     * This token is used to mark a one-to-one binding of a source method parameter to a target method parameter.
-     *
-     * @see net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.MethodBinding#getTargetParameterIndex(Object)
-     */
-    public static class ParameterIndexToken {
-
-        private final int parameterIndex;
-
-        /**
-         * Create a parameter index token for a given parameter of the source method.
-         *
-         * @param parameterIndex The parameter index of the source method which is mapped to a target method parameter.
-         */
-        public ParameterIndexToken(int parameterIndex) {
-            this.parameterIndex = parameterIndex;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && parameterIndex == ((ParameterIndexToken) other).parameterIndex;
-        }
-
-        @Override
-        public int hashCode() {
-            return parameterIndex;
-        }
-
-        @Override
-        public String toString() {
-            return "MostSpecificTypeResolver.ParameterIndexToken{" + parameterIndex + '}';
-        }
-    }
-
-    private static enum PrimitiveTypePrecedence {
-
-        BOOLEAN(0),
-        BYTE(1),
-        SHORT(2),
-        INTEGER(3),
-        CHARACTER(4),
-        LONG(5),
-        FLOAT(6),
-        DOUBLE(7);
-
-        public static PrimitiveTypePrecedence forPrimitive(TypeDescription typeDescription) {
-            if (typeDescription.represents(boolean.class)) {
-                return BOOLEAN;
-            } else if (typeDescription.represents(byte.class)) {
-                return BYTE;
-            } else if (typeDescription.represents(short.class)) {
-                return SHORT;
-            } else if (typeDescription.represents(int.class)) {
-                return INTEGER;
-            } else if (typeDescription.represents(char.class)) {
-                return CHARACTER;
-            } else if (typeDescription.represents(long.class)) {
-                return LONG;
-            } else if (typeDescription.represents(float.class)) {
-                return FLOAT;
-            } else if (typeDescription.represents(double.class)) {
-                return DOUBLE;
-            } else {
-                throw new IllegalArgumentException("Not a non-void, primitive type " + typeDescription);
-            }
-        }
-
-        private final int score;
-
-        private PrimitiveTypePrecedence(int score) {
-            this.score = score;
-        }
-
-        public Resolution resolve(PrimitiveTypePrecedence right) {
-            if (score - right.score == 0) {
-                return Resolution.UNKNOWN;
-            } else if (score - right.score > 0) {
-                return Resolution.RIGHT;
-            } else /* score - right.score < 0 */ {
-                return Resolution.LEFT;
-            }
-        }
-    }
-
-    @Override
-    public Resolution resolve(MethodDescription source,
-                              MethodDelegationBinder.MethodBinding left,
-                              MethodDelegationBinder.MethodBinding right) {
-        Resolution resolution = Resolution.UNKNOWN;
-        int leftExtra = 0, rightExtra = 0;
-        for (int sourceParameterIndex = 0;
-             sourceParameterIndex < source.getParameterTypes().size();
-             sourceParameterIndex++) {
-            ParameterIndexToken parameterIndexToken = new ParameterIndexToken(sourceParameterIndex);
-            Integer leftParameterIndex = left.getTargetParameterIndex(parameterIndexToken);
-            Integer rightParameterIndex = right.getTargetParameterIndex(parameterIndexToken);
-            if (leftParameterIndex != null && rightParameterIndex != null) {
-                resolution = resolution.merge(
-                        resolveRivalBinding(source.getParameterTypes().get(sourceParameterIndex),
-                                leftParameterIndex,
-                                left,
-                                rightParameterIndex,
-                                right));
-            } else if (leftParameterIndex != null /* && rightParameterIndex == null */) {
-                leftExtra++;
-            } else if (/*leftParameterIndex == null && */ rightParameterIndex != null) {
-                rightExtra++;
-            }
-        }
-        return resolution == Resolution.UNKNOWN ? resolveByScore(leftExtra - rightExtra) : resolution;
-    }
-
     private static Resolution resolveRivalBinding(TypeDescription sourceParameterType,
                                                   int leftParameterIndex,
                                                   MethodDelegationBinder.MethodBinding left,
@@ -178,6 +65,119 @@ public enum MostSpecificTypeResolver implements MethodDelegationBinder.Ambiguity
             return Resolution.LEFT;
         } else /* difference < 0*/ {
             return Resolution.RIGHT;
+        }
+    }
+
+    @Override
+    public Resolution resolve(MethodDescription source,
+                              MethodDelegationBinder.MethodBinding left,
+                              MethodDelegationBinder.MethodBinding right) {
+        Resolution resolution = Resolution.UNKNOWN;
+        int leftExtra = 0, rightExtra = 0;
+        for (int sourceParameterIndex = 0;
+             sourceParameterIndex < source.getParameterTypes().size();
+             sourceParameterIndex++) {
+            ParameterIndexToken parameterIndexToken = new ParameterIndexToken(sourceParameterIndex);
+            Integer leftParameterIndex = left.getTargetParameterIndex(parameterIndexToken);
+            Integer rightParameterIndex = right.getTargetParameterIndex(parameterIndexToken);
+            if (leftParameterIndex != null && rightParameterIndex != null) {
+                resolution = resolution.merge(
+                        resolveRivalBinding(source.getParameterTypes().get(sourceParameterIndex),
+                                leftParameterIndex,
+                                left,
+                                rightParameterIndex,
+                                right)
+                );
+            } else if (leftParameterIndex != null /* && rightParameterIndex == null */) {
+                leftExtra++;
+            } else if (/*leftParameterIndex == null && */ rightParameterIndex != null) {
+                rightExtra++;
+            }
+        }
+        return resolution == Resolution.UNKNOWN ? resolveByScore(leftExtra - rightExtra) : resolution;
+    }
+
+    private static enum PrimitiveTypePrecedence {
+
+        BOOLEAN(0),
+        BYTE(1),
+        SHORT(2),
+        INTEGER(3),
+        CHARACTER(4),
+        LONG(5),
+        FLOAT(6),
+        DOUBLE(7);
+        private final int score;
+
+        private PrimitiveTypePrecedence(int score) {
+            this.score = score;
+        }
+
+        public static PrimitiveTypePrecedence forPrimitive(TypeDescription typeDescription) {
+            if (typeDescription.represents(boolean.class)) {
+                return BOOLEAN;
+            } else if (typeDescription.represents(byte.class)) {
+                return BYTE;
+            } else if (typeDescription.represents(short.class)) {
+                return SHORT;
+            } else if (typeDescription.represents(int.class)) {
+                return INTEGER;
+            } else if (typeDescription.represents(char.class)) {
+                return CHARACTER;
+            } else if (typeDescription.represents(long.class)) {
+                return LONG;
+            } else if (typeDescription.represents(float.class)) {
+                return FLOAT;
+            } else if (typeDescription.represents(double.class)) {
+                return DOUBLE;
+            } else {
+                throw new IllegalArgumentException("Not a non-void, primitive type " + typeDescription);
+            }
+        }
+
+        public Resolution resolve(PrimitiveTypePrecedence right) {
+            if (score - right.score == 0) {
+                return Resolution.UNKNOWN;
+            } else if (score - right.score > 0) {
+                return Resolution.RIGHT;
+            } else /* score - right.score < 0 */ {
+                return Resolution.LEFT;
+            }
+        }
+    }
+
+    /**
+     * This token is used to mark a one-to-one binding of a source method parameter to a target method parameter.
+     *
+     * @see net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.MethodBinding#getTargetParameterIndex(Object)
+     */
+    public static class ParameterIndexToken {
+
+        private final int parameterIndex;
+
+        /**
+         * Create a parameter index token for a given parameter of the source method.
+         *
+         * @param parameterIndex The parameter index of the source method which is mapped to a target method parameter.
+         */
+        public ParameterIndexToken(int parameterIndex) {
+            this.parameterIndex = parameterIndex;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && parameterIndex == ((ParameterIndexToken) other).parameterIndex;
+        }
+
+        @Override
+        public int hashCode() {
+            return parameterIndex;
+        }
+
+        @Override
+        public String toString() {
+            return "MostSpecificTypeResolver.ParameterIndexToken{" + parameterIndex + '}';
         }
     }
 }

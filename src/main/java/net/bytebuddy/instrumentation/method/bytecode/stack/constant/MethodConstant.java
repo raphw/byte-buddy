@@ -20,6 +20,20 @@ import java.util.List;
 public abstract class MethodConstant implements StackManipulation {
 
     private static final String CLASS_TYPE_INTERNAL_NAME = "java/lang/Class";
+    /**
+     * A description of the method to be loaded onto the stack.
+     */
+    protected final MethodDescription methodDescription;
+
+    /**
+     * Creates a new method constant.
+     *
+     * @param methodDescription The method description for which the {@link java.lang.reflect.Method} representation
+     *                          should be created.
+     */
+    protected MethodConstant(MethodDescription methodDescription) {
+        this.methodDescription = methodDescription;
+    }
 
     /**
      * Creates a stack manipulation that loads a method constant onto the operand stack.
@@ -33,6 +47,70 @@ public abstract class MethodConstant implements StackManipulation {
         } else {
             return new ForMethod(methodDescription);
         }
+    }
+
+    private static List<StackManipulation> typeConstantsFor(TypeList parameterTypes) {
+        List<StackManipulation> typeConstants = new ArrayList<StackManipulation>(parameterTypes.size());
+        for (TypeDescription parameterType : parameterTypes) {
+            typeConstants.add(new ClassConstant(parameterType));
+        }
+        return typeConstants;
+    }
+
+    @Override
+    public boolean isValid() {
+        return true;
+    }
+
+    @Override
+    public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+        Size argumentSize = prepare(methodVisitor)
+                .aggregate(ArrayFactory.targeting(new TypeDescription.ForLoadedType(Class.class))
+                        .withValues(typeConstantsFor(methodDescription.getParameterTypes()))
+                        .apply(methodVisitor, instrumentationContext));
+        methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
+                CLASS_TYPE_INTERNAL_NAME,
+                getMethodName(),
+                getDescriptor());
+        return new Size(1, argumentSize.getMaximalSize());
+    }
+
+    /**
+     * Applies all preparation to the given method visitor.
+     *
+     * @param methodVisitor The method visitor to which the preparation is applied.
+     * @return The size of this preparation.
+     */
+    protected abstract Size prepare(MethodVisitor methodVisitor);
+
+    /**
+     * Returns the name of the {@link java.lang.Class} method for creating this method constant.
+     *
+     * @return The descriptor for creating this method constant.
+     */
+    protected abstract String getMethodName();
+
+    /**
+     * Returns the descriptor of the {@link java.lang.Class} method for creating this method constant.
+     *
+     * @return The descriptor for creating this method constant.
+     */
+    protected abstract String getDescriptor();
+
+    @Override
+    public boolean equals(Object other) {
+        return this == other || !(other == null || getClass() != other.getClass())
+                && methodDescription.equals(((MethodConstant) other).methodDescription);
+    }
+
+    @Override
+    public int hashCode() {
+        return methodDescription.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "MethodConstant{methodDescription=" + methodDescription + '}';
     }
 
     private static class ForMethod extends MethodConstant {
@@ -88,84 +166,5 @@ public abstract class MethodConstant implements StackManipulation {
         protected String getDescriptor() {
             return GET_DECLARED_CONSTRUCTOR_DESCRIPTOR;
         }
-    }
-
-    /**
-     * A description of the method to be loaded onto the stack.
-     */
-    protected final MethodDescription methodDescription;
-
-    /**
-     * Creates a new method constant.
-     *
-     * @param methodDescription The method description for which the {@link java.lang.reflect.Method} representation
-     *                          should be created.
-     */
-    protected MethodConstant(MethodDescription methodDescription) {
-        this.methodDescription = methodDescription;
-    }
-
-    @Override
-    public boolean isValid() {
-        return true;
-    }
-
-    @Override
-    public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-        Size argumentSize = prepare(methodVisitor)
-                .aggregate(ArrayFactory.targeting(new TypeDescription.ForLoadedType(Class.class))
-                        .withValues(typeConstantsFor(methodDescription.getParameterTypes()))
-                        .apply(methodVisitor, instrumentationContext));
-        methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-                CLASS_TYPE_INTERNAL_NAME,
-                getMethodName(),
-                getDescriptor());
-        return new Size(1, argumentSize.getMaximalSize());
-    }
-
-    /**
-     * Applies all preparation to the given method visitor.
-     *
-     * @param methodVisitor The method visitor to which the preparation is applied.
-     * @return The size of this preparation.
-     */
-    protected abstract Size prepare(MethodVisitor methodVisitor);
-
-    /**
-     * Returns the name of the {@link java.lang.Class} method for creating this method constant.
-     *
-     * @return The descriptor for creating this method constant.
-     */
-    protected abstract String getMethodName();
-
-    /**
-     * Returns the descriptor of the {@link java.lang.Class} method for creating this method constant.
-     *
-     * @return The descriptor for creating this method constant.
-     */
-    protected abstract String getDescriptor();
-
-    private static List<StackManipulation> typeConstantsFor(TypeList parameterTypes) {
-        List<StackManipulation> typeConstants = new ArrayList<StackManipulation>(parameterTypes.size());
-        for (TypeDescription parameterType : parameterTypes) {
-            typeConstants.add(new ClassConstant(parameterType));
-        }
-        return typeConstants;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && methodDescription.equals(((MethodConstant) other).methodDescription);
-    }
-
-    @Override
-    public int hashCode() {
-        return methodDescription.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "MethodConstant{methodDescription=" + methodDescription + '}';
     }
 }

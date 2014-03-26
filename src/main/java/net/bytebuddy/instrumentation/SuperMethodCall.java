@@ -26,6 +26,19 @@ import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.hasSam
 public enum SuperMethodCall implements Instrumentation {
     INSTANCE;
 
+    @Override
+    public InstrumentedType prepare(InstrumentedType instrumentedType) {
+        return instrumentedType;
+    }
+
+    @Override
+    public ByteCodeAppender appender(TypeDescription instrumentedType) {
+        if (instrumentedType.getSupertype() == null) {
+            throw new IllegalArgumentException("The object type does not have a super type");
+        }
+        return new SuperMethodCallAppender(instrumentedType.getSupertype());
+    }
+
     private static class SuperMethodCallAppender implements ByteCodeAppender {
 
         private final TypeDescription targetType;
@@ -76,18 +89,5 @@ public enum SuperMethodCall implements Instrumentation {
         public String toString() {
             return "SuperMethodCallAppender{targetType=" + targetType + '}';
         }
-    }
-
-    @Override
-    public InstrumentedType prepare(InstrumentedType instrumentedType) {
-        return instrumentedType;
-    }
-
-    @Override
-    public ByteCodeAppender appender(TypeDescription instrumentedType) {
-        if (instrumentedType.getSupertype() == null) {
-            throw new IllegalArgumentException("The object type does not have a super type");
-        }
-        return new SuperMethodCallAppender(instrumentedType.getSupertype());
     }
 }

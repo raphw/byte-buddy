@@ -8,47 +8,50 @@ import org.objectweb.asm.Opcodes;
  */
 public class ClassFormatVersion {
 
-    private static final String JAVA_VERSION_PROPERTY = "java.version";
-
     /**
      * The byte code version of Java 1.
      */
     public static final ClassFormatVersion JAVA_V1 = new ClassFormatVersion(Opcodes.V1_1);
-
     /**
      * The byte code version of Java 2.
      */
     public static final ClassFormatVersion JAVA_V2 = new ClassFormatVersion(Opcodes.V1_2);
-
     /**
      * The byte code version of Java 3.
      */
     public static final ClassFormatVersion JAVA_V3 = new ClassFormatVersion(Opcodes.V1_3);
-
     /**
      * The byte code version of Java 4.
      */
     public static final ClassFormatVersion JAVA_V4 = new ClassFormatVersion(Opcodes.V1_4);
-
     /**
      * The byte code version of Java 5.
      */
     public static final ClassFormatVersion JAVA_V5 = new ClassFormatVersion(Opcodes.V1_5);
-
     /**
      * The byte code version of Java 6.
      */
     public static final ClassFormatVersion JAVA_V6 = new ClassFormatVersion(Opcodes.V1_6);
-
     /**
      * The byte code version of Java 7.
      */
     public static final ClassFormatVersion JAVA_V7 = new ClassFormatVersion(Opcodes.V1_7);
-
     /**
      * The byte code version of Java 8.
      */
     public static final ClassFormatVersion JAVA_V8 = new ClassFormatVersion(Opcodes.V1_7 + 1);
+    private static final String JAVA_VERSION_PROPERTY = "java.version";
+    private final int versionNumber;
+
+    /**
+     * Creates a wrapper for a given minor-major release of the Java class file format and validates the
+     * integrity of the version number.
+     *
+     * @param versionNumber The minor-major release number.
+     */
+    public ClassFormatVersion(int versionNumber) {
+        this.versionNumber = validateVersionNumber(versionNumber);
+    }
 
     /**
      * Creates a ClassFormatVersion for a given major release of Java. Currently, all versions reaching from
@@ -80,8 +83,6 @@ public class ClassFormatVersion {
         }
     }
 
-    private final int versionNumber;
-
     /**
      * Finds the highest class format version compatible to the current JVM version by parsing the java.version property
      * provided by {@link java.lang.System#getProperty(String)}.
@@ -100,14 +101,11 @@ public class ClassFormatVersion {
         return ClassFormatVersion.forKnownJavaVersion(Integer.parseInt(versionString.substring(versionIndex[1] + 1, versionIndex[2])));
     }
 
-    /**
-     * Creates a wrapper for a given minor-major release of the Java class file format and validates the
-     * integrity of the version number.
-     *
-     * @param versionNumber The minor-major release number.
-     */
-    public ClassFormatVersion(int versionNumber) {
-        this.versionNumber = validateVersionNumber(versionNumber);
+    private static int validateVersionNumber(int versionNumber) {
+        if (!(versionNumber > 0)) {
+            throw new IllegalArgumentException("Class version " + versionNumber + " is not valid");
+        }
+        return versionNumber;
     }
 
     /**
@@ -116,13 +114,6 @@ public class ClassFormatVersion {
      * @return The minor-major release number of this class format version.
      */
     public int getVersionNumber() {
-        return versionNumber;
-    }
-
-    private static int validateVersionNumber(int versionNumber) {
-        if (!(versionNumber > 0)) {
-            throw new IllegalArgumentException("Class version " + versionNumber + " is not valid");
-        }
         return versionNumber;
     }
 

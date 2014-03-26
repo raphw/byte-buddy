@@ -32,6 +32,29 @@ import java.util.LinkedHashSet;
 public @interface Argument {
 
     /**
+     * The index of the parameter of the source method that should be bound to this parameter.
+     *
+     * @return The required parameter index.
+     */
+    int value();
+
+    /**
+     * Determines if the argument binding is to be considered by a
+     * {@link net.bytebuddy.instrumentation.method.bytecode.bind.MostSpecificTypeResolver}
+     * for resolving ambiguous bindings of two methods. If
+     * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument.BindingMechanic#UNIQUE},
+     * of two bindable target methods such as for example {@code foo(String)} and {@code bar(Object)}, the {@code foo}
+     * method would be considered as dominant over the {@code bar} method because of its more specific argument type. As
+     * a side effect, only one parameter of any target method can be bound to a source method parameter with a given
+     * index unless the {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument.BindingMechanic#ANONYMOUS}
+     * option is used for any other binding.
+     *
+     * @return The binding type that should be applied to this parameter binding.
+     * @see net.bytebuddy.instrumentation.method.bytecode.bind.MostSpecificTypeResolver
+     */
+    BindingMechanic bindingMechanic() default BindingMechanic.UNIQUE;
+
+    /**
      * Determines if a parameter binding should be considered for resolving ambiguous method bindings.
      *
      * @see Argument#bindingMechanic()
@@ -51,7 +74,8 @@ public @interface Argument {
                         new StackManipulation.Compound(
                                 MethodVariableAccess.forType(sourceType).loadFromIndex(parameterOffset),
                                 assigner.assign(sourceType, targetType, considerRuntimeType)),
-                        new MostSpecificTypeResolver.ParameterIndexToken(sourceParameterIndex));
+                        new MostSpecificTypeResolver.ParameterIndexToken(sourceParameterIndex)
+                );
             }
         },
         ANONYMOUS {
@@ -65,7 +89,8 @@ public @interface Argument {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(
                         new StackManipulation.Compound(
                                 MethodVariableAccess.forType(sourceType).loadFromIndex(parameterOffset),
-                                assigner.assign(sourceType, targetType, considerRuntimeType)));
+                                assigner.assign(sourceType, targetType, considerRuntimeType))
+                );
             }
         };
 
@@ -135,6 +160,27 @@ public @interface Argument {
     static enum NextUnboundAsDefaultsProvider implements TargetMethodAnnotationDrivenBinder.DefaultsProvider {
         INSTANCE;
 
+        private static Iterator<Integer> makeFreeIndexList(MethodDescription source, MethodDescription target) {
+            LinkedHashSet<Integer> results = new LinkedHashSet<Integer>(source.getParameterTypes().size());
+            for (int sourceIndex = 0; sourceIndex < source.getParameterTypes().size(); sourceIndex++) {
+                results.add(sourceIndex);
+            }
+            for (Annotation[] parameterAnnotation : target.getParameterAnnotations()) {
+                for (Annotation aParameterAnnotation : parameterAnnotation) {
+                    if (aParameterAnnotation.annotationType() == Argument.class) {
+                        results.remove(((Argument) aParameterAnnotation).value());
+                        break;
+                    }
+                }
+            }
+            return results.iterator();
+        }
+
+        @Override
+        public Iterator<Argument> makeIterator(TypeDescription typeDescription, MethodDescription source, MethodDescription target) {
+            return new NextUnboundArgumentIterator(makeFreeIndexList(source, target));
+        }
+
         private static class DefaultArgument implements Argument {
 
             private final int parameterIndex;
@@ -182,49 +228,5 @@ public @interface Argument {
                 iterator.remove();
             }
         }
-
-        @Override
-        public Iterator<Argument> makeIterator(TypeDescription typeDescription, MethodDescription source, MethodDescription target) {
-            return new NextUnboundArgumentIterator(makeFreeIndexList(source, target));
-        }
-
-        private static Iterator<Integer> makeFreeIndexList(MethodDescription source, MethodDescription target) {
-            LinkedHashSet<Integer> results = new LinkedHashSet<Integer>(source.getParameterTypes().size());
-            for (int sourceIndex = 0; sourceIndex < source.getParameterTypes().size(); sourceIndex++) {
-                results.add(sourceIndex);
-            }
-            for (Annotation[] parameterAnnotation : target.getParameterAnnotations()) {
-                for (Annotation aParameterAnnotation : parameterAnnotation) {
-                    if (aParameterAnnotation.annotationType() == Argument.class) {
-                        results.remove(((Argument) aParameterAnnotation).value());
-                        break;
-                    }
-                }
-            }
-            return results.iterator();
-        }
     }
-
-    /**
-     * The index of the parameter of the source method that should be bound to this parameter.
-     *
-     * @return The required parameter index.
-     */
-    int value();
-
-    /**
-     * Determines if the argument binding is to be considered by a
-     * {@link net.bytebuddy.instrumentation.method.bytecode.bind.MostSpecificTypeResolver}
-     * for resolving ambiguous bindings of two methods. If
-     * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument.BindingMechanic#UNIQUE},
-     * of two bindable target methods such as for example {@code foo(String)} and {@code bar(Object)}, the {@code foo}
-     * method would be considered as dominant over the {@code bar} method because of its more specific argument type. As
-     * a side effect, only one parameter of any target method can be bound to a source method parameter with a given
-     * index unless the {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument.BindingMechanic#ANONYMOUS}
-     * option is used for any other binding.
-     *
-     * @return The binding type that should be applied to this parameter binding.
-     * @see net.bytebuddy.instrumentation.method.bytecode.bind.MostSpecificTypeResolver
-     */
-    BindingMechanic bindingMechanic() default BindingMechanic.UNIQUE;
 }

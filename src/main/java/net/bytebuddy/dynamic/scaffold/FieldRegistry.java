@@ -21,6 +21,29 @@ import java.util.Map;
 public interface FieldRegistry {
 
     /**
+     * Creates a new field registry with the given attribute appender registered for the supplied field matcher.
+     *
+     * @param latentFieldMatcher       The field matcher uniquely identifying the field to be registered.
+     * @param attributeAppenderFactory The field attribute appender factory to be registered for this field.
+     * @return A new field registry that knows about the new field registration.
+     */
+    FieldRegistry include(LatentFieldMatcher latentFieldMatcher, FieldAttributeAppender.Factory attributeAppenderFactory);
+
+    /**
+     * Once all entries for a field registry were registered, a field registry can be compiled in order to allow the
+     * retrieval of {@link net.bytebuddy.instrumentation.attribute.FieldAttributeAppender}s for
+     * known fields. Additionally, a fallback attribute appender is to be supplied which is returned if a requested
+     * field cannot is not known to the compiled field registry.
+     * <p>&nbsp;</p>
+     * If a field name is already registered, an exception will be thrown.
+     *
+     * @param instrumentedType The instrumented type for which this field registry is to be compiled.
+     * @param fallback         A fallback entry that serves as a fallback for non-registered fields.
+     * @return A compiled field registry representing the fields that were registered with this field registry.
+     */
+    Compiled compile(TypeDescription instrumentedType, TypeWriter.FieldPool.Entry fallback);
+
+    /**
      * Represents a compiled field registry.
      */
     static interface Compiled extends TypeWriter.FieldPool {
@@ -56,25 +79,6 @@ public interface FieldRegistry {
      */
     static class Default implements FieldRegistry {
 
-        private class Compiled implements FieldRegistry.Compiled {
-
-            private final TypeWriter.FieldPool.Entry fallback;
-
-            private Compiled(TypeWriter.FieldPool.Entry fallback) {
-                this.fallback = fallback;
-            }
-
-            @Override
-            public TypeWriter.FieldPool.Entry target(FieldDescription fieldDescription) {
-                TypeWriter.FieldPool.Entry entry = entries.get(fieldDescription.getInternalName());
-                if (entry == null) {
-                    return fallback;
-                } else {
-                    return entry;
-                }
-            }
-        }
-
         private final Map<String, TypeWriter.FieldPool.Entry> entries;
 
         /**
@@ -102,28 +106,24 @@ public interface FieldRegistry {
         public FieldRegistry.Compiled compile(TypeDescription instrumentedType, TypeWriter.FieldPool.Entry fallback) {
             return new Compiled(fallback);
         }
+
+        private class Compiled implements FieldRegistry.Compiled {
+
+            private final TypeWriter.FieldPool.Entry fallback;
+
+            private Compiled(TypeWriter.FieldPool.Entry fallback) {
+                this.fallback = fallback;
+            }
+
+            @Override
+            public TypeWriter.FieldPool.Entry target(FieldDescription fieldDescription) {
+                TypeWriter.FieldPool.Entry entry = entries.get(fieldDescription.getInternalName());
+                if (entry == null) {
+                    return fallback;
+                } else {
+                    return entry;
+                }
+            }
+        }
     }
-
-    /**
-     * Creates a new field registry with the given attribute appender registered for the supplied field matcher.
-     *
-     * @param latentFieldMatcher       The field matcher uniquely identifying the field to be registered.
-     * @param attributeAppenderFactory The field attribute appender factory to be registered for this field.
-     * @return A new field registry that knows about the new field registration.
-     */
-    FieldRegistry include(LatentFieldMatcher latentFieldMatcher, FieldAttributeAppender.Factory attributeAppenderFactory);
-
-    /**
-     * Once all entries for a field registry were registered, a field registry can be compiled in order to allow the
-     * retrieval of {@link net.bytebuddy.instrumentation.attribute.FieldAttributeAppender}s for
-     * known fields. Additionally, a fallback attribute appender is to be supplied which is returned if a requested
-     * field cannot is not known to the compiled field registry.
-     * <p>&nbsp;</p>
-     * If a field name is already registered, an exception will be thrown.
-     *
-     * @param instrumentedType The instrumented type for which this field registry is to be compiled.
-     * @param fallback         A fallback entry that serves as a fallback for non-registered fields.
-     * @return A compiled field registry representing the fields that were registered with this field registry.
-     */
-    Compiled compile(TypeDescription instrumentedType, TypeWriter.FieldPool.Entry fallback);
 }

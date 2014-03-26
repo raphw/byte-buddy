@@ -106,11 +106,365 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
 public class MethodDelegation implements Instrumentation {
 
     private static final String NO_METHODS_ERROR_MESSAGE = "The target type does not define any methods for delegation";
+    private final InstrumentationDelegate instrumentationDelegate;
+    private final List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders;
+    private final TargetMethodAnnotationDrivenBinder.DefaultsProvider<?> defaultsProvider;
+    private final MethodDelegationBinder.AmbiguityResolver ambiguityResolver;
+    private final Assigner assigner;
+    private final MethodList methodList;
+
+    /**
+     * Creates a new method delegation.
+     *
+     * @param instrumentationDelegate The instrumentation delegate to use by this method delegator.
+     * @param parameterBinders        The parameter binders to use by this method delegator.
+     * @param defaultsProvider        The defaults provider to use by this method delegator.
+     * @param ambiguityResolver       The ambiguity resolver to use by this method delegator.
+     * @param assigner                The assigner to be supplied by this method delegator.
+     * @param methodList              A list of methods that should be considered as possible binding targets by
+     *                                this method delegator.
+     */
+    protected MethodDelegation(InstrumentationDelegate instrumentationDelegate,
+                               List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders,
+                               TargetMethodAnnotationDrivenBinder.DefaultsProvider<?> defaultsProvider,
+                               MethodDelegationBinder.AmbiguityResolver ambiguityResolver,
+                               Assigner assigner,
+                               MethodList methodList) {
+        this.instrumentationDelegate = instrumentationDelegate;
+        this.parameterBinders = parameterBinders;
+        this.defaultsProvider = defaultsProvider;
+        this.ambiguityResolver = ambiguityResolver;
+        this.assigner = assigner;
+        this.methodList = isNotEmpty(methodList, NO_METHODS_ERROR_MESSAGE);
+    }
+
+    /**
+     * Creates an instrumentation where only {@code static} methods of the given type are considered as binding targets.
+     *
+     * @param type The type containing the {@code static} methods for binding.
+     * @return A method delegation instrumentation to the given {@code static} methods.
+     */
+    public static MethodDelegation to(Class<?> type) {
+        if (type == null) {
+            throw new NullPointerException("Type must not be null");
+        } else if (type.isInterface()) {
+            throw new IllegalArgumentException("Cannot delegate to interface " + type);
+        } else if (type.isArray()) {
+            throw new IllegalArgumentException("Cannot delegate to array " + type);
+        } else if (type.isPrimitive()) {
+            throw new IllegalArgumentException("Cannot delegate to primitive " + type);
+        }
+        return new MethodDelegation(InstrumentationDelegate.ForStaticMethod.INSTANCE,
+                defaultArgumentBinders(),
+                defaultDefaultsProvider(),
+                defaultAmbiguityResolver(),
+                defaultAssigner(),
+                new TypeDescription.ForLoadedType(type).getReachableMethods().filter(isStatic().and(not(isPrivate()))));
+    }
+
+    /**
+     * Creates an instrumentation where only instance methods of the given object are considered as binding targets.
+     * This method will never bind to constructors but will consider methods that are defined in super types. Note
+     * that this includes methods that were defined by the {@link java.lang.Object} class.
+     *
+     * @param delegate A delegate instance which will be injected by a type initializer and to which all intercepted
+     *                 method calls are delegated to.
+     * @return A method delegation instrumentation to the given {@code static} methods.
+     */
+    public static MethodDelegation to(Object delegate) {
+        return new MethodDelegation(new InstrumentationDelegate.ForStaticFieldInstance(nonNull(delegate)),
+                defaultArgumentBinders(),
+                defaultDefaultsProvider(),
+                defaultAmbiguityResolver(),
+                defaultAssigner(),
+                new TypeDescription.ForLoadedType(delegate.getClass())
+                        .getReachableMethods()
+                        .filter(not(isStatic().or(isPrivate()).or(isConstructor())))
+        );
+    }
+
+    /**
+     * Creates an instrumentation where only instance methods of the given object are considered as binding targets.
+     * This method will never bind to constructors but will consider methods that are defined in super types. Note
+     * that this includes methods that were defined by the {@link java.lang.Object} class.
+     *
+     * @param delegate  A delegate instance which will be injected by a type initializer and to which all intercepted
+     *                  method calls are delegated to.
+     * @param fieldName The name of the field for storing the delegate instance.
+     * @return A method delegation instrumentation to the given {@code static} methods.
+     */
+    public static MethodDelegation to(Object delegate, String fieldName) {
+        return new MethodDelegation(
+                new InstrumentationDelegate.ForStaticFieldInstance(nonNull(delegate), isValidIdentifier(fieldName)),
+                defaultArgumentBinders(),
+                defaultDefaultsProvider(),
+                defaultAmbiguityResolver(),
+                defaultAssigner(),
+                new TypeDescription.ForLoadedType(delegate.getClass())
+                        .getReachableMethods()
+                        .filter(not(isStatic().or(isPrivate()).or(isConstructor())))
+        );
+    }
+
+    /**
+     * Creates an instrumentation where method calls are delegated to an instance that is manually stored in a field
+     * {@code fieldName} that is defined for the instrumented type. The field belongs to any instance of the instrumented
+     * type and must be set manually by the user of the instrumented class. Note that this prevents interception of
+     * method calls within the constructor of the instrumented class which will instead result in a
+     * {@link java.lang.NullPointerException}.
+     * <p>&nbsp;</p>
+     * The field is typically accessed by reflection or by defining an accessor on the instrumented type.
+     *
+     * @param type      The type of the delegate and the field.
+     * @param fieldName The name of the field.
+     * @return A method delegation that intercepts method calls by delegating to method calls on the given instance.
+     */
+    public static MethodDelegation instanceField(Class<?> type, String fieldName) {
+        return new MethodDelegation(
+                new InstrumentationDelegate.ForInstanceField(new TypeDescription.ForLoadedType(nonNull(type)), isValidIdentifier(fieldName)),
+                defaultArgumentBinders(),
+                defaultDefaultsProvider(),
+                defaultAmbiguityResolver(),
+                defaultAssigner(),
+                new TypeDescription.ForLoadedType(type)
+                        .getReachableMethods()
+                        .filter(not(isStatic().or(isPrivate()).or(isConstructor())))
+        );
+    }
+
+    /**
+     * Creates an instrumentation where method calls are delegated to constructor calls on the given type. As a result,
+     * the return values of all instrumented methods must be assignable to
+     *
+     * @param type The type that should be constructed by the instrumented methods.
+     * @return An instrumentation that creates instances of the given type as its result.
+     */
+    public static MethodDelegation construct(Class<?> type) {
+        return new MethodDelegation(new InstrumentationDelegate.ForConstruction(new TypeDescription.ForLoadedType(type)),
+                defaultArgumentBinders(),
+                defaultDefaultsProvider(),
+                defaultAmbiguityResolver(),
+                defaultAssigner(),
+                new TypeDescription.ForLoadedType(type)
+                        .getDeclaredMethods()
+                        .filter(isConstructor())
+        );
+    }
+
+    private static List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> defaultArgumentBinders() {
+        return Arrays.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>asList(Argument.Binder.INSTANCE,
+                AllArguments.Binder.INSTANCE,
+                Origin.Binder.INSTANCE,
+                This.Binder.INSTANCE,
+                Super.Binder.INSTANCE,
+                SuperCall.Binder.INSTANCE);
+    }
+
+    private static TargetMethodAnnotationDrivenBinder.DefaultsProvider<?> defaultDefaultsProvider() {
+        return Argument.NextUnboundAsDefaultsProvider.INSTANCE;
+    }
+
+    private static MethodDelegationBinder.AmbiguityResolver defaultAmbiguityResolver() {
+        return MethodDelegationBinder.AmbiguityResolver.Chain.of(
+                BindingPriority.Resolver.INSTANCE,
+                MethodNameEqualityResolver.INSTANCE,
+                MostSpecificTypeResolver.INSTANCE,
+                ParameterLengthResolver.INSTANCE
+        );
+    }
+
+    private static Assigner defaultAssigner() {
+        return new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE), false);
+    }
+
+    /**
+     * Defines an parameter binder to be appended to the already defined parameter binders.
+     *
+     * @param parameterBinder The parameter binder to append to the already defined parameter binders.
+     * @return A method delegation instrumentation that makes use of the given parameter binder.
+     */
+    public MethodDelegation appendArgumentBinder(TargetMethodAnnotationDrivenBinder.ParameterBinder<?> parameterBinder) {
+        return new MethodDelegation(instrumentationDelegate,
+                join(parameterBinders, nonNull(parameterBinder)),
+                defaultsProvider,
+                ambiguityResolver,
+                assigner,
+                methodList);
+    }
+
+    /**
+     * Defines a number of parameter binders to be appended to be used by this method delegation.
+     *
+     * @param parameterBinder The parameter binders to use by this parameter binders.
+     * @return A method delegation instrumentation that makes use of the given parameter binders.
+     */
+    public MethodDelegation defineArgumentBinder(TargetMethodAnnotationDrivenBinder.ParameterBinder<?>... parameterBinder) {
+        return new MethodDelegation(instrumentationDelegate,
+                Arrays.asList(nonNull(parameterBinder)),
+                defaultsProvider,
+                ambiguityResolver,
+                assigner,
+                methodList);
+    }
+
+    /**
+     * A provider for annotation instances on values that are not explicitly annotated.
+     *
+     * @param defaultsProvider The defaults provider to use.
+     * @return A method delegation instrumentation that makes use of the given defaults provider.
+     */
+    public MethodDelegation defaultsProvider(TargetMethodAnnotationDrivenBinder.DefaultsProvider defaultsProvider) {
+        return new MethodDelegation(instrumentationDelegate,
+                parameterBinders,
+                nonNull(defaultsProvider),
+                ambiguityResolver,
+                assigner,
+                methodList);
+    }
+
+    /**
+     * Defines an ambiguity resolver to be appended to the already defined ambiguity resolver for resolving binding conflicts.
+     *
+     * @param ambiguityResolver The ambiguity resolver to append to the already defined ambiguity resolvers.
+     * @return A method delegation instrumentation that makes use of the given ambiguity resolver.
+     */
+    public MethodDelegation appendAmbiguityResolver(MethodDelegationBinder.AmbiguityResolver ambiguityResolver) {
+        return defineAmbiguityResolver(MethodDelegationBinder.AmbiguityResolver.Chain
+                .of(this.ambiguityResolver, nonNull(ambiguityResolver)));
+    }
+
+    /**
+     * Defines an ambiguity resolver to be used for resolving binding conflicts.
+     *
+     * @param ambiguityResolver The ambiguity resolver to use exclusively.
+     * @return A method delegation instrumentation that makes use of the given ambiguity resolver.
+     */
+    public MethodDelegation defineAmbiguityResolver(MethodDelegationBinder.AmbiguityResolver... ambiguityResolver) {
+        return new MethodDelegation(instrumentationDelegate,
+                parameterBinders,
+                defaultsProvider,
+                MethodDelegationBinder.AmbiguityResolver.Chain.of(nonNull(ambiguityResolver)),
+                assigner,
+                methodList);
+    }
+
+    /**
+     * Applies an assigner to the method delegation that is used for assigning method return and parameter types.
+     *
+     * @param assigner The assigner to apply.
+     * @return A method delegation instrumentation that makes use of the given designer.
+     */
+    public MethodDelegation assigner(Assigner assigner) {
+        return new MethodDelegation(instrumentationDelegate,
+                parameterBinders,
+                defaultsProvider,
+                ambiguityResolver,
+                nonNull(assigner),
+                methodList);
+    }
+
+    /**
+     * Applies a filter to target methods that are eligible for delegation.
+     *
+     * @param methodMatcher A filter where only methods that match the filter are considered for delegation.
+     * @return A method delegation with the filter applied.
+     */
+    public MethodDelegation filter(MethodMatcher methodMatcher) {
+        return new MethodDelegation(instrumentationDelegate,
+                parameterBinders,
+                defaultsProvider,
+                ambiguityResolver,
+                assigner,
+                isNotEmpty(methodList.filter(nonNull(methodMatcher)), NO_METHODS_ERROR_MESSAGE));
+    }
+
+    @Override
+    public InstrumentedType prepare(InstrumentedType instrumentedType) {
+        return instrumentationDelegate.prepare(instrumentedType);
+    }
+
+    @Override
+    public ByteCodeAppender appender(TypeDescription instrumentedType) {
+        MethodList methodList = this.methodList.filter(isVisibleTo(instrumentedType));
+        if (methodList.size() == 0) {
+            throw new IllegalStateException("No bindable method is visible to " + instrumentedType);
+        }
+        return new MethodDelegationByteCodeAppender(instrumentationDelegate.getPreparingStackAssignment(instrumentedType),
+                instrumentedType,
+                methodList,
+                new MethodDelegationBinder.Processor(new TargetMethodAnnotationDrivenBinder(
+                        parameterBinders,
+                        defaultsProvider,
+                        assigner,
+                        instrumentationDelegate.getMethodInvoker(instrumentedType)
+                ), ambiguityResolver)
+        );
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+        MethodDelegation that = (MethodDelegation) other;
+        return ambiguityResolver.equals(that.ambiguityResolver)
+                && assigner.equals(that.assigner)
+                && defaultsProvider.equals(that.defaultsProvider)
+                && instrumentationDelegate.equals(that.instrumentationDelegate)
+                && methodList.equals(that.methodList)
+                && parameterBinders.equals(that.parameterBinders);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = instrumentationDelegate.hashCode();
+        result = 31 * result + parameterBinders.hashCode();
+        result = 31 * result + defaultsProvider.hashCode();
+        result = 31 * result + ambiguityResolver.hashCode();
+        result = 31 * result + assigner.hashCode();
+        result = 31 * result + methodList.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "MethodDelegation{" +
+                "instrumentationDelegate=" + instrumentationDelegate +
+                ", parameterBinders=" + parameterBinders +
+                ", defaultsProvider=" + defaultsProvider +
+                ", ambiguityResolver=" + ambiguityResolver +
+                ", assigner=" + assigner +
+                ", methodList=" + methodList +
+                '}';
+    }
 
     /**
      * An instrumentation delegate is responsible for executing the actual method delegation.
      */
     protected static interface InstrumentationDelegate {
+
+        /**
+         * Prepares the instrumented type.
+         *
+         * @param instrumentedType The instrumented type to be prepared.
+         * @return The instrumented type after it was prepared.
+         */
+        InstrumentedType prepare(InstrumentedType instrumentedType);
+
+        /**
+         * Returns the stack manipulation responsible for preparing the instance representing the instrumentation.
+         *
+         * @param instrumentedType A description of the instrumented type to which the instrumentation is applied.
+         * @return A stack manipulation representing the preparation.
+         */
+        StackManipulation getPreparingStackAssignment(TypeDescription instrumentedType);
+
+        /**
+         * Returns the method invoker responsible for invoking the delegation method.
+         *
+         * @param instrumentedType The instrumented type to which the instrumentation is applied.
+         * @return A method invoker responsible for invoking the delegation method.
+         */
+        MethodDelegationBinder.MethodInvoker getMethodInvoker(TypeDescription instrumentedType);
 
         /**
          * An instrumentation applied to a static method.
@@ -329,30 +683,6 @@ public class MethodDelegation implements Instrumentation {
                         '}';
             }
         }
-
-        /**
-         * Prepares the instrumented type.
-         *
-         * @param instrumentedType The instrumented type to be prepared.
-         * @return The instrumented type after it was prepared.
-         */
-        InstrumentedType prepare(InstrumentedType instrumentedType);
-
-        /**
-         * Returns the stack manipulation responsible for preparing the instance representing the instrumentation.
-         *
-         * @param instrumentedType A description of the instrumented type to which the instrumentation is applied.
-         * @return A stack manipulation representing the preparation.
-         */
-        StackManipulation getPreparingStackAssignment(TypeDescription instrumentedType);
-
-        /**
-         * Returns the method invoker responsible for invoking the delegation method.
-         *
-         * @param instrumentedType The instrumented type to which the instrumentation is applied.
-         * @return A method invoker responsible for invoking the delegation method.
-         */
-        MethodDelegationBinder.MethodInvoker getMethodInvoker(TypeDescription instrumentedType);
     }
 
     private static class MethodDelegationByteCodeAppender implements ByteCodeAppender {
@@ -416,331 +746,5 @@ public class MethodDelegation implements Instrumentation {
                     ", processor=" + processor +
                     '}';
         }
-    }
-
-    /**
-     * Creates an instrumentation where only {@code static} methods of the given type are considered as binding targets.
-     *
-     * @param type The type containing the {@code static} methods for binding.
-     * @return A method delegation instrumentation to the given {@code static} methods.
-     */
-    public static MethodDelegation to(Class<?> type) {
-        if (type == null) {
-            throw new NullPointerException("Type must not be null");
-        } else if (type.isInterface()) {
-            throw new IllegalArgumentException("Cannot delegate to interface " + type);
-        } else if (type.isArray()) {
-            throw new IllegalArgumentException("Cannot delegate to array " + type);
-        } else if (type.isPrimitive()) {
-            throw new IllegalArgumentException("Cannot delegate to primitive " + type);
-        }
-        return new MethodDelegation(InstrumentationDelegate.ForStaticMethod.INSTANCE,
-                defaultArgumentBinders(),
-                defaultDefaultsProvider(),
-                defaultAmbiguityResolver(),
-                defaultAssigner(),
-                new TypeDescription.ForLoadedType(type).getReachableMethods().filter(isStatic().and(not(isPrivate()))));
-    }
-
-    /**
-     * Creates an instrumentation where only instance methods of the given object are considered as binding targets.
-     * This method will never bind to constructors but will consider methods that are defined in super types. Note
-     * that this includes methods that were defined by the {@link java.lang.Object} class.
-     *
-     * @param delegate A delegate instance which will be injected by a type initializer and to which all intercepted
-     *                 method calls are delegated to.
-     * @return A method delegation instrumentation to the given {@code static} methods.
-     */
-    public static MethodDelegation to(Object delegate) {
-        return new MethodDelegation(new InstrumentationDelegate.ForStaticFieldInstance(nonNull(delegate)),
-                defaultArgumentBinders(),
-                defaultDefaultsProvider(),
-                defaultAmbiguityResolver(),
-                defaultAssigner(),
-                new TypeDescription.ForLoadedType(delegate.getClass())
-                        .getReachableMethods()
-                        .filter(not(isStatic().or(isPrivate()).or(isConstructor()))));
-    }
-
-    /**
-     * Creates an instrumentation where only instance methods of the given object are considered as binding targets.
-     * This method will never bind to constructors but will consider methods that are defined in super types. Note
-     * that this includes methods that were defined by the {@link java.lang.Object} class.
-     *
-     * @param delegate  A delegate instance which will be injected by a type initializer and to which all intercepted
-     *                  method calls are delegated to.
-     * @param fieldName The name of the field for storing the delegate instance.
-     * @return A method delegation instrumentation to the given {@code static} methods.
-     */
-    public static MethodDelegation to(Object delegate, String fieldName) {
-        return new MethodDelegation(
-                new InstrumentationDelegate.ForStaticFieldInstance(nonNull(delegate), isValidIdentifier(fieldName)),
-                defaultArgumentBinders(),
-                defaultDefaultsProvider(),
-                defaultAmbiguityResolver(),
-                defaultAssigner(),
-                new TypeDescription.ForLoadedType(delegate.getClass())
-                        .getReachableMethods()
-                        .filter(not(isStatic().or(isPrivate()).or(isConstructor()))));
-    }
-
-    /**
-     * Creates an instrumentation where method calls are delegated to an instance that is manually stored in a field
-     * {@code fieldName} that is defined for the instrumented type. The field belongs to any instance of the instrumented
-     * type and must be set manually by the user of the instrumented class. Note that this prevents interception of
-     * method calls within the constructor of the instrumented class which will instead result in a
-     * {@link java.lang.NullPointerException}.
-     * <p>&nbsp;</p>
-     * The field is typically accessed by reflection or by defining an accessor on the instrumented type.
-     *
-     * @param type      The type of the delegate and the field.
-     * @param fieldName The name of the field.
-     * @return A method delegation that intercepts method calls by delegating to method calls on the given instance.
-     */
-    public static MethodDelegation instanceField(Class<?> type, String fieldName) {
-        return new MethodDelegation(
-                new InstrumentationDelegate.ForInstanceField(new TypeDescription.ForLoadedType(nonNull(type)), isValidIdentifier(fieldName)),
-                defaultArgumentBinders(),
-                defaultDefaultsProvider(),
-                defaultAmbiguityResolver(),
-                defaultAssigner(),
-                new TypeDescription.ForLoadedType(type)
-                        .getReachableMethods()
-                        .filter(not(isStatic().or(isPrivate()).or(isConstructor()))));
-    }
-
-    /**
-     * Creates an instrumentation where method calls are delegated to constructor calls on the given type. As a result,
-     * the return values of all instrumented methods must be assignable to
-     *
-     * @param type The type that should be constructed by the instrumented methods.
-     * @return An instrumentation that creates instances of the given type as its result.
-     */
-    public static MethodDelegation construct(Class<?> type) {
-        return new MethodDelegation(new InstrumentationDelegate.ForConstruction(new TypeDescription.ForLoadedType(type)),
-                defaultArgumentBinders(),
-                defaultDefaultsProvider(),
-                defaultAmbiguityResolver(),
-                defaultAssigner(),
-                new TypeDescription.ForLoadedType(type)
-                        .getDeclaredMethods()
-                        .filter(isConstructor()));
-    }
-
-    private static List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> defaultArgumentBinders() {
-        return Arrays.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>asList(Argument.Binder.INSTANCE,
-                AllArguments.Binder.INSTANCE,
-                Origin.Binder.INSTANCE,
-                This.Binder.INSTANCE,
-                Super.Binder.INSTANCE,
-                SuperCall.Binder.INSTANCE);
-    }
-
-    private static TargetMethodAnnotationDrivenBinder.DefaultsProvider<?> defaultDefaultsProvider() {
-        return Argument.NextUnboundAsDefaultsProvider.INSTANCE;
-    }
-
-    private static MethodDelegationBinder.AmbiguityResolver defaultAmbiguityResolver() {
-        return MethodDelegationBinder.AmbiguityResolver.Chain.of(
-                BindingPriority.Resolver.INSTANCE,
-                MethodNameEqualityResolver.INSTANCE,
-                MostSpecificTypeResolver.INSTANCE,
-                ParameterLengthResolver.INSTANCE
-        );
-    }
-
-    private static Assigner defaultAssigner() {
-        return new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE), false);
-    }
-
-    private final InstrumentationDelegate instrumentationDelegate;
-    private final List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders;
-    private final TargetMethodAnnotationDrivenBinder.DefaultsProvider<?> defaultsProvider;
-    private final MethodDelegationBinder.AmbiguityResolver ambiguityResolver;
-    private final Assigner assigner;
-    private final MethodList methodList;
-
-    /**
-     * Creates a new method delegation.
-     *
-     * @param instrumentationDelegate The instrumentation delegate to use by this method delegator.
-     * @param parameterBinders        The parameter binders to use by this method delegator.
-     * @param defaultsProvider        The defaults provider to use by this method delegator.
-     * @param ambiguityResolver       The ambiguity resolver to use by this method delegator.
-     * @param assigner                The assigner to be supplied by this method delegator.
-     * @param methodList              A list of methods that should be considered as possible binding targets by
-     *                                this method delegator.
-     */
-    protected MethodDelegation(InstrumentationDelegate instrumentationDelegate,
-                               List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders,
-                               TargetMethodAnnotationDrivenBinder.DefaultsProvider<?> defaultsProvider,
-                               MethodDelegationBinder.AmbiguityResolver ambiguityResolver,
-                               Assigner assigner,
-                               MethodList methodList) {
-        this.instrumentationDelegate = instrumentationDelegate;
-        this.parameterBinders = parameterBinders;
-        this.defaultsProvider = defaultsProvider;
-        this.ambiguityResolver = ambiguityResolver;
-        this.assigner = assigner;
-        this.methodList = isNotEmpty(methodList, NO_METHODS_ERROR_MESSAGE);
-    }
-
-    /**
-     * Defines an parameter binder to be appended to the already defined parameter binders.
-     *
-     * @param parameterBinder The parameter binder to append to the already defined parameter binders.
-     * @return A method delegation instrumentation that makes use of the given parameter binder.
-     */
-    public MethodDelegation appendArgumentBinder(TargetMethodAnnotationDrivenBinder.ParameterBinder<?> parameterBinder) {
-        return new MethodDelegation(instrumentationDelegate,
-                join(parameterBinders, nonNull(parameterBinder)),
-                defaultsProvider,
-                ambiguityResolver,
-                assigner,
-                methodList);
-    }
-
-    /**
-     * Defines a number of parameter binders to be appended to be used by this method delegation.
-     *
-     * @param parameterBinder The parameter binders to use by this parameter binders.
-     * @return A method delegation instrumentation that makes use of the given parameter binders.
-     */
-    public MethodDelegation defineArgumentBinder(TargetMethodAnnotationDrivenBinder.ParameterBinder<?>... parameterBinder) {
-        return new MethodDelegation(instrumentationDelegate,
-                Arrays.asList(nonNull(parameterBinder)),
-                defaultsProvider,
-                ambiguityResolver,
-                assigner,
-                methodList);
-    }
-
-    /**
-     * A provider for annotation instances on values that are not explicitly annotated.
-     *
-     * @param defaultsProvider The defaults provider to use.
-     * @return A method delegation instrumentation that makes use of the given defaults provider.
-     */
-    public MethodDelegation defaultsProvider(TargetMethodAnnotationDrivenBinder.DefaultsProvider defaultsProvider) {
-        return new MethodDelegation(instrumentationDelegate,
-                parameterBinders,
-                nonNull(defaultsProvider),
-                ambiguityResolver,
-                assigner,
-                methodList);
-    }
-
-    /**
-     * Defines an ambiguity resolver to be appended to the already defined ambiguity resolver for resolving binding conflicts.
-     *
-     * @param ambiguityResolver The ambiguity resolver to append to the already defined ambiguity resolvers.
-     * @return A method delegation instrumentation that makes use of the given ambiguity resolver.
-     */
-    public MethodDelegation appendAmbiguityResolver(MethodDelegationBinder.AmbiguityResolver ambiguityResolver) {
-        return defineAmbiguityResolver(MethodDelegationBinder.AmbiguityResolver.Chain
-                .of(this.ambiguityResolver, nonNull(ambiguityResolver)));
-    }
-
-    /**
-     * Defines an ambiguity resolver to be used for resolving binding conflicts.
-     *
-     * @param ambiguityResolver The ambiguity resolver to use exclusively.
-     * @return A method delegation instrumentation that makes use of the given ambiguity resolver.
-     */
-    public MethodDelegation defineAmbiguityResolver(MethodDelegationBinder.AmbiguityResolver... ambiguityResolver) {
-        return new MethodDelegation(instrumentationDelegate,
-                parameterBinders,
-                defaultsProvider,
-                MethodDelegationBinder.AmbiguityResolver.Chain.of(nonNull(ambiguityResolver)),
-                assigner,
-                methodList);
-    }
-
-    /**
-     * Applies an assigner to the method delegation that is used for assigning method return and parameter types.
-     *
-     * @param assigner The assigner to apply.
-     * @return A method delegation instrumentation that makes use of the given designer.
-     */
-    public MethodDelegation assigner(Assigner assigner) {
-        return new MethodDelegation(instrumentationDelegate,
-                parameterBinders,
-                defaultsProvider,
-                ambiguityResolver,
-                nonNull(assigner),
-                methodList);
-    }
-
-    /**
-     * Applies a filter to target methods that are eligible for delegation.
-     *
-     * @param methodMatcher A filter where only methods that match the filter are considered for delegation.
-     * @return A method delegation with the filter applied.
-     */
-    public MethodDelegation filter(MethodMatcher methodMatcher) {
-        return new MethodDelegation(instrumentationDelegate,
-                parameterBinders,
-                defaultsProvider,
-                ambiguityResolver,
-                assigner,
-                isNotEmpty(methodList.filter(nonNull(methodMatcher)), NO_METHODS_ERROR_MESSAGE));
-    }
-
-    @Override
-    public InstrumentedType prepare(InstrumentedType instrumentedType) {
-        return instrumentationDelegate.prepare(instrumentedType);
-    }
-
-    @Override
-    public ByteCodeAppender appender(TypeDescription instrumentedType) {
-        MethodList methodList = this.methodList.filter(isVisibleTo(instrumentedType));
-        if (methodList.size() == 0) {
-            throw new IllegalStateException("No bindable method is visible to " + instrumentedType);
-        }
-        return new MethodDelegationByteCodeAppender(instrumentationDelegate.getPreparingStackAssignment(instrumentedType),
-                instrumentedType,
-                methodList,
-                new MethodDelegationBinder.Processor(new TargetMethodAnnotationDrivenBinder(
-                        parameterBinders,
-                        defaultsProvider,
-                        assigner,
-                        instrumentationDelegate.getMethodInvoker(instrumentedType)
-                ), ambiguityResolver));
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) return true;
-        if (other == null || getClass() != other.getClass()) return false;
-        MethodDelegation that = (MethodDelegation) other;
-        return ambiguityResolver.equals(that.ambiguityResolver)
-                && assigner.equals(that.assigner)
-                && defaultsProvider.equals(that.defaultsProvider)
-                && instrumentationDelegate.equals(that.instrumentationDelegate)
-                && methodList.equals(that.methodList)
-                && parameterBinders.equals(that.parameterBinders);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = instrumentationDelegate.hashCode();
-        result = 31 * result + parameterBinders.hashCode();
-        result = 31 * result + defaultsProvider.hashCode();
-        result = 31 * result + ambiguityResolver.hashCode();
-        result = 31 * result + assigner.hashCode();
-        result = 31 * result + methodList.hashCode();
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return "MethodDelegation{" +
-                "instrumentationDelegate=" + instrumentationDelegate +
-                ", parameterBinders=" + parameterBinders +
-                ", defaultsProvider=" + defaultsProvider +
-                ", ambiguityResolver=" + ambiguityResolver +
-                ", assigner=" + assigner +
-                ", methodList=" + methodList +
-                '}';
     }
 }

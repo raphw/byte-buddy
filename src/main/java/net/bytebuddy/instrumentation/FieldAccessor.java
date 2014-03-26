@@ -35,9 +35,169 @@ import static net.bytebuddy.utility.ByteBuddyCommons.resolveModifierContributors
 public abstract class FieldAccessor implements Instrumentation {
 
     /**
+     * The assigner to use.
+     */
+    protected final Assigner assigner;
+    /**
+     * {@code true} if the runtime type of the field's value should be considered when a field
+     * is accessed.
+     */
+    protected final boolean considerRuntimeType;
+
+    /**
+     * Creates a new field accessor.
+     *
+     * @param assigner            The assigner to use.
+     * @param considerRuntimeType {@code true} if a field value's runtime type should be considered.
+     */
+    protected FieldAccessor(Assigner assigner, boolean considerRuntimeType) {
+        this.assigner = assigner;
+        this.considerRuntimeType = considerRuntimeType;
+    }
+
+    /**
+     * Defines a field accessor where any access is targeted to a field named {@code name}.
+     *
+     * @param name The name of the field to be accessed.
+     * @return A field accessor for a field of a given name.
+     */
+    public static FieldDefinable ofField(String name) {
+        return new ForNamedField(name, defaultAssigner(), defaultConsiderRuntimeType());
+    }
+
+    /**
+     * Defines a field accessor where any access is targeted to a field that matches the methods
+     * name with the Java specification for bean properties, i.e. a method {@code getFoo} or {@code setFoo(value)}
+     * will either read or write a field named {@code foo}.
+     *
+     * @return A field accessor that follows the Java naming conventions for bean properties.
+     */
+    public static OwnerTypeLocatable ofBeanProperty() {
+        return new ForBeanProperty(defaultAssigner(), defaultConsiderRuntimeType());
+    }
+
+    private static Assigner defaultAssigner() {
+        return new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE);
+    }
+
+    private static boolean defaultConsiderRuntimeType() {
+        return false;
+    }
+
+    /**
+     * Applies a field getter instrumentation.
+     *
+     * @param methodVisitor          The method visitor to write any instructions to.
+     * @param instrumentationContext The instrumentation context of the current instrumentation.
+     * @param fieldDescription       The description of the field to read.
+     * @param methodDescription      The method that is target of the instrumentation.
+     * @return The required size of the operand stack and local variable array for this instrumentation.
+     */
+    protected ByteCodeAppender.Size applyGetter(MethodVisitor methodVisitor,
+                                                Instrumentation.Context instrumentationContext,
+                                                FieldDescription fieldDescription,
+                                                MethodDescription methodDescription) {
+        return apply(methodVisitor,
+                instrumentationContext,
+                fieldDescription,
+                methodDescription,
+                new StackManipulation.Compound(
+                        FieldAccess.forField(fieldDescription).getter(),
+                        assigner.assign(fieldDescription.getFieldType(),
+                                methodDescription.getReturnType(),
+                                considerRuntimeType)
+                )
+        );
+    }
+
+    /**
+     * Applies a field setter instrumentation.
+     *
+     * @param methodVisitor          The method visitor to write any instructions to.
+     * @param instrumentationContext The instrumentation context of the current instrumentation.
+     * @param fieldDescription       The description of the field to write to.
+     * @param methodDescription      The method that is target of the instrumentation.
+     * @return The required size of the operand stack and local variable array for this instrumentation.
+     */
+    protected ByteCodeAppender.Size applySetter(MethodVisitor methodVisitor,
+                                                Instrumentation.Context instrumentationContext,
+                                                FieldDescription fieldDescription,
+                                                MethodDescription methodDescription) {
+        if (fieldDescription.isFinal()) {
+            throw new IllegalArgumentException("Cannot apply setter on final field " + fieldDescription);
+        }
+        return apply(methodVisitor,
+                instrumentationContext,
+                fieldDescription,
+                methodDescription,
+                new StackManipulation.Compound(
+                        MethodVariableAccess.forType(fieldDescription.getFieldType())
+                                .loadFromIndex(methodDescription.getParameterOffset(0)),
+                        assigner.assign(methodDescription.getParameterTypes().get(0),
+                                fieldDescription.getFieldType(),
+                                considerRuntimeType),
+                        FieldAccess.forField(fieldDescription).putter()
+                )
+        );
+    }
+
+    private ByteCodeAppender.Size apply(MethodVisitor methodVisitor,
+                                        Instrumentation.Context instrumentationContext,
+                                        FieldDescription fieldDescription,
+                                        MethodDescription methodDescription,
+                                        StackManipulation fieldAccess) {
+        if (methodDescription.isStatic() && !fieldDescription.isStatic()) {
+            throw new IllegalArgumentException("Cannot call instance field "
+                    + fieldDescription + " from static method " + methodDescription);
+        }
+        StackManipulation.Size stackSize = new StackManipulation.Compound(
+                fieldDescription.isStatic()
+                        ? LegalTrivialStackManipulation.INSTANCE
+                        : MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                fieldAccess,
+                MethodReturn.returning(methodDescription.getReturnType())
+        ).apply(methodVisitor, instrumentationContext);
+        return new ByteCodeAppender.Size(stackSize.getMaximalSize(), methodDescription.getStackSize());
+    }
+
+    /**
+     * Locates a field's name.
+     *
+     * @param targetMethod The method that is target of the instrumentation.
+     * @return The name of the field to be located for this instrumentation.
+     */
+    protected abstract String getFieldName(MethodDescription targetMethod);
+
+    @Override
+    public boolean equals(Object other) {
+        return this == other || !(other == null || getClass() != other.getClass())
+                && considerRuntimeType == ((FieldAccessor) other).considerRuntimeType
+                && assigner.equals(((FieldAccessor) other).assigner);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * assigner.hashCode() + (considerRuntimeType ? 1 : 0);
+    }
+
+    /**
      * A field locator allows to determine a field name for a given method.
      */
     public static interface FieldLocator {
+
+        FieldDescription locate(String name);
+
+        /**
+         * A factory that only looks up fields in the instrumented type.
+         */
+        static enum ForInstrumentedType implements Factory {
+            INSTANCE;
+
+            @Override
+            public FieldLocator make(TypeDescription instrumentedType) {
+                return new ForGivenType(instrumentedType);
+            }
+        }
 
         /**
          * A factory for creating a {@link net.bytebuddy.instrumentation.FieldAccessor.FieldLocator}.
@@ -60,19 +220,6 @@ public abstract class FieldAccessor implements Instrumentation {
          * a field with identical name.
          */
         static class ForInstrumentedTypeHierarchy implements FieldLocator {
-
-            /**
-             * A field locator factory creating a
-             * {@link net.bytebuddy.instrumentation.FieldAccessor.FieldLocator.ForInstrumentedTypeHierarchy}.
-             */
-            public static enum Factory implements FieldLocator.Factory {
-                INSTANCE;
-
-                @Override
-                public FieldLocator make(TypeDescription instrumentedType) {
-                    return new ForInstrumentedTypeHierarchy(instrumentedType);
-                }
-            }
 
             private final TypeDescription instrumentedType;
 
@@ -116,6 +263,19 @@ public abstract class FieldAccessor implements Instrumentation {
             @Override
             public String toString() {
                 return "FieldLocator.ForInstrumentedTypeHierarchy{instrumentedType=" + instrumentedType + '}';
+            }
+
+            /**
+             * A field locator factory creating a
+             * {@link net.bytebuddy.instrumentation.FieldAccessor.FieldLocator.ForInstrumentedTypeHierarchy}.
+             */
+            public static enum Factory implements FieldLocator.Factory {
+                INSTANCE;
+
+                @Override
+                public FieldLocator make(TypeDescription instrumentedType) {
+                    return new ForInstrumentedTypeHierarchy(instrumentedType);
+                }
             }
         }
 
@@ -161,20 +321,6 @@ public abstract class FieldAccessor implements Instrumentation {
                 return "FieldLocator.ForGivenType{targetType=" + targetType + '}';
             }
         }
-
-        /**
-         * A factory that only looks up fields in the instrumented type.
-         */
-        static enum ForInstrumentedType implements Factory {
-            INSTANCE;
-
-            @Override
-            public FieldLocator make(TypeDescription instrumentedType) {
-                return new ForGivenType(instrumentedType);
-            }
-        }
-
-        FieldDescription locate(String name);
     }
 
     /**
@@ -239,35 +385,6 @@ public abstract class FieldAccessor implements Instrumentation {
          * @return A field accessor that defines a field of the given type.
          */
         AssignerConfigurable defineAs(Class<?> type, ModifierContributor.ForField... modifier);
-    }
-
-    /**
-     * Defines a field accessor where any access is targeted to a field named {@code name}.
-     *
-     * @param name The name of the field to be accessed.
-     * @return A field accessor for a field of a given name.
-     */
-    public static FieldDefinable ofField(String name) {
-        return new ForNamedField(name, defaultAssigner(), defaultConsiderRuntimeType());
-    }
-
-    /**
-     * Defines a field accessor where any access is targeted to a field that matches the methods
-     * name with the Java specification for bean properties, i.e. a method {@code getFoo} or {@code setFoo(value)}
-     * will either read or write a field named {@code foo}.
-     *
-     * @return A field accessor that follows the Java naming conventions for bean properties.
-     */
-    public static OwnerTypeLocatable ofBeanProperty() {
-        return new ForBeanProperty(defaultAssigner(), defaultConsiderRuntimeType());
-    }
-
-    private static Assigner defaultAssigner() {
-        return new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE);
-    }
-
-    private static boolean defaultConsiderRuntimeType() {
-        return false;
     }
 
     /**
@@ -368,71 +485,9 @@ public abstract class FieldAccessor implements Instrumentation {
      */
     protected static class ForNamedField extends FieldAccessor implements FieldDefinable {
 
-        private static interface PreparationHandler {
-
-            static enum NoOp implements PreparationHandler {
-                INSTANCE;
-
-                @Override
-                public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType;
-                }
-            }
-
-            static class FieldDefiner implements PreparationHandler {
-
-                private final String name;
-                private final TypeDescription typeDescription;
-                private final int modifiers;
-
-                public FieldDefiner(String name, Class<?> type, ModifierContributor.ForField... contributor) {
-                    this.name = isValidIdentifier(name);
-                    typeDescription = new TypeDescription.ForLoadedType(type);
-                    modifiers = resolveModifierContributors(ByteBuddyCommons.FIELD_MODIFIER_MASK, contributor);
-                }
-
-                @Override
-                public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType.withField(name,
-                            typeDescription.represents(TargetType.class) ? instrumentedType : typeDescription,
-                            modifiers);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    FieldDefiner that = (FieldDefiner) other;
-                    return modifiers == that.modifiers
-                            && name.equals(that.name)
-                            && typeDescription.equals(that.typeDescription);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = name.hashCode();
-                    result = 31 * result + typeDescription.hashCode();
-                    result = 31 * result + modifiers;
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "FieldAccessor.ForNamedField.PreparationHandler.FieldDefiner{" +
-                            "name='" + name + '\'' +
-                            ", typeDescription=" + typeDescription +
-                            ", modifiers=" + modifiers +
-                            '}';
-                }
-            }
-
-            InstrumentedType prepare(InstrumentedType instrumentedType);
-        }
-
         private final String fieldName;
         private final PreparationHandler preparationHandler;
         private final FieldLocator.Factory fieldLocatorFactory;
-
         /**
          * Creates a field accessor instrumentation for a field of a given name.
          *
@@ -538,6 +593,67 @@ public abstract class FieldAccessor implements Instrumentation {
                     ", fieldLocatorFactory=" + fieldLocatorFactory +
                     '}';
         }
+
+        private static interface PreparationHandler {
+
+            InstrumentedType prepare(InstrumentedType instrumentedType);
+
+            static enum NoOp implements PreparationHandler {
+                INSTANCE;
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
+                }
+            }
+
+            static class FieldDefiner implements PreparationHandler {
+
+                private final String name;
+                private final TypeDescription typeDescription;
+                private final int modifiers;
+
+                public FieldDefiner(String name, Class<?> type, ModifierContributor.ForField... contributor) {
+                    this.name = isValidIdentifier(name);
+                    typeDescription = new TypeDescription.ForLoadedType(type);
+                    modifiers = resolveModifierContributors(ByteBuddyCommons.FIELD_MODIFIER_MASK, contributor);
+                }
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType.withField(name,
+                            typeDescription.represents(TargetType.class) ? instrumentedType : typeDescription,
+                            modifiers);
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    FieldDefiner that = (FieldDefiner) other;
+                    return modifiers == that.modifiers
+                            && name.equals(that.name)
+                            && typeDescription.equals(that.typeDescription);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = name.hashCode();
+                    result = 31 * result + typeDescription.hashCode();
+                    result = 31 * result + modifiers;
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "FieldAccessor.ForNamedField.PreparationHandler.FieldDefiner{" +
+                            "name='" + name + '\'' +
+                            ", typeDescription=" + typeDescription +
+                            ", modifiers=" + modifiers +
+                            '}';
+                }
+            }
+        }
     }
 
     /**
@@ -603,123 +719,5 @@ public abstract class FieldAccessor implements Instrumentation {
                     "fieldAccessor=" + FieldAccessor.this +
                     '}';
         }
-    }
-
-    /**
-     * The assigner to use.
-     */
-    protected final Assigner assigner;
-
-    /**
-     * {@code true} if the runtime type of the field's value should be considered when a field
-     * is accessed.
-     */
-    protected final boolean considerRuntimeType;
-
-    /**
-     * Creates a new field accessor.
-     *
-     * @param assigner            The assigner to use.
-     * @param considerRuntimeType {@code true} if a field value's runtime type should be considered.
-     */
-    protected FieldAccessor(Assigner assigner, boolean considerRuntimeType) {
-        this.assigner = assigner;
-        this.considerRuntimeType = considerRuntimeType;
-    }
-
-    /**
-     * Applies a field getter instrumentation.
-     *
-     * @param methodVisitor          The method visitor to write any instructions to.
-     * @param instrumentationContext The instrumentation context of the current instrumentation.
-     * @param fieldDescription       The description of the field to read.
-     * @param methodDescription      The method that is target of the instrumentation.
-     * @return The required size of the operand stack and local variable array for this instrumentation.
-     */
-    protected ByteCodeAppender.Size applyGetter(MethodVisitor methodVisitor,
-                                                Instrumentation.Context instrumentationContext,
-                                                FieldDescription fieldDescription,
-                                                MethodDescription methodDescription) {
-        return apply(methodVisitor,
-                instrumentationContext,
-                fieldDescription,
-                methodDescription,
-                new StackManipulation.Compound(
-                        FieldAccess.forField(fieldDescription).getter(),
-                        assigner.assign(fieldDescription.getFieldType(),
-                                methodDescription.getReturnType(),
-                                considerRuntimeType)
-                )
-        );
-    }
-
-    /**
-     * Applies a field setter instrumentation.
-     *
-     * @param methodVisitor          The method visitor to write any instructions to.
-     * @param instrumentationContext The instrumentation context of the current instrumentation.
-     * @param fieldDescription       The description of the field to write to.
-     * @param methodDescription      The method that is target of the instrumentation.
-     * @return The required size of the operand stack and local variable array for this instrumentation.
-     */
-    protected ByteCodeAppender.Size applySetter(MethodVisitor methodVisitor,
-                                                Instrumentation.Context instrumentationContext,
-                                                FieldDescription fieldDescription,
-                                                MethodDescription methodDescription) {
-        if (fieldDescription.isFinal()) {
-            throw new IllegalArgumentException("Cannot apply setter on final field " + fieldDescription);
-        }
-        return apply(methodVisitor,
-                instrumentationContext,
-                fieldDescription,
-                methodDescription,
-                new StackManipulation.Compound(
-                        MethodVariableAccess.forType(fieldDescription.getFieldType())
-                                .loadFromIndex(methodDescription.getParameterOffset(0)),
-                        assigner.assign(methodDescription.getParameterTypes().get(0),
-                                fieldDescription.getFieldType(),
-                                considerRuntimeType),
-                        FieldAccess.forField(fieldDescription).putter()
-                )
-        );
-    }
-
-    private ByteCodeAppender.Size apply(MethodVisitor methodVisitor,
-                                        Instrumentation.Context instrumentationContext,
-                                        FieldDescription fieldDescription,
-                                        MethodDescription methodDescription,
-                                        StackManipulation fieldAccess) {
-        if (methodDescription.isStatic() && !fieldDescription.isStatic()) {
-            throw new IllegalArgumentException("Cannot call instance field "
-                    + fieldDescription + " from static method " + methodDescription);
-        }
-        StackManipulation.Size stackSize = new StackManipulation.Compound(
-                fieldDescription.isStatic()
-                        ? LegalTrivialStackManipulation.INSTANCE
-                        : MethodVariableAccess.REFERENCE.loadFromIndex(0),
-                fieldAccess,
-                MethodReturn.returning(methodDescription.getReturnType())
-        ).apply(methodVisitor, instrumentationContext);
-        return new ByteCodeAppender.Size(stackSize.getMaximalSize(), methodDescription.getStackSize());
-    }
-
-    /**
-     * Locates a field's name.
-     *
-     * @param targetMethod The method that is target of the instrumentation.
-     * @return The name of the field to be located for this instrumentation.
-     */
-    protected abstract String getFieldName(MethodDescription targetMethod);
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && considerRuntimeType == ((FieldAccessor) other).considerRuntimeType
-                && assigner.equals(((FieldAccessor) other).assigner);
-    }
-
-    @Override
-    public int hashCode() {
-        return 31 * assigner.hashCode() + (considerRuntimeType ? 1 : 0);
     }
 }

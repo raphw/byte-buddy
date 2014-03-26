@@ -21,6 +21,22 @@ public enum PrimitiveBoxingDelegate {
     LONG("java/lang/Long", StackSize.SINGLE, Long.class, "valueOf", "(J)Ljava/lang/Long;"),
     FLOAT("java/lang/Float", StackSize.ZERO, Float.class, "valueOf", "(F)Ljava/lang/Float;"),
     DOUBLE("java/lang/Double", StackSize.SINGLE, Double.class, "valueOf", "(D)Ljava/lang/Double;");
+    private final String wrapperTypeName;
+    private final StackManipulation.Size size;
+    private final TypeDescription wrapperType;
+    private final String boxingMethodName;
+    private final String boxingMethodDescriptor;
+    private PrimitiveBoxingDelegate(String wrapperTypeName,
+                                    StackSize sizeDecrease,
+                                    Class<?> wrapperType,
+                                    String boxingMethodName,
+                                    String boxingMethodDescriptor) {
+        this.wrapperTypeName = wrapperTypeName;
+        this.size = sizeDecrease.toDecreasingSize();
+        this.wrapperType = new TypeDescription.ForLoadedType(wrapperType);
+        this.boxingMethodName = boxingMethodName;
+        this.boxingMethodDescriptor = boxingMethodDescriptor;
+    }
 
     /**
      * Locates a boxing delegate for a given primitive type.
@@ -50,22 +66,17 @@ public enum PrimitiveBoxingDelegate {
         }
     }
 
-    private final String wrapperTypeName;
-    private final StackManipulation.Size size;
-    private final TypeDescription wrapperType;
-    private final String boxingMethodName;
-    private final String boxingMethodDescriptor;
-
-    private PrimitiveBoxingDelegate(String wrapperTypeName,
-                                    StackSize sizeDecrease,
-                                    Class<?> wrapperType,
-                                    String boxingMethodName,
-                                    String boxingMethodDescriptor) {
-        this.wrapperTypeName = wrapperTypeName;
-        this.size = sizeDecrease.toDecreasingSize();
-        this.wrapperType = new TypeDescription.ForLoadedType(wrapperType);
-        this.boxingMethodName = boxingMethodName;
-        this.boxingMethodDescriptor = boxingMethodDescriptor;
+    /**
+     * Creates a stack manipulation that boxes the represented primitive type and applies a chained assignment
+     * to the result of this boxing operation.
+     *
+     * @param targetType          The type that is target of the assignment operation.
+     * @param chainedAssigner     The assigner that is to be used to perform the chained assignment.
+     * @param considerRuntimeType If {@code true}, unsafe cast operations are allowed for performing an assignment.
+     * @return A stack manipulation that represents the described assignment operation.
+     */
+    public StackManipulation assignBoxedTo(TypeDescription targetType, Assigner chainedAssigner, boolean considerRuntimeType) {
+        return new BoxingStackManipulation(chainedAssigner.assign(wrapperType, targetType, considerRuntimeType));
     }
 
     private class BoxingStackManipulation implements StackManipulation {
@@ -86,18 +97,5 @@ public enum PrimitiveBoxingDelegate {
             methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, wrapperTypeName, boxingMethodName, boxingMethodDescriptor);
             return size.aggregate(stackManipulation.apply(methodVisitor, instrumentationContext));
         }
-    }
-
-    /**
-     * Creates a stack manipulation that boxes the represented primitive type and applies a chained assignment
-     * to the result of this boxing operation.
-     *
-     * @param targetType          The type that is target of the assignment operation.
-     * @param chainedAssigner     The assigner that is to be used to perform the chained assignment.
-     * @param considerRuntimeType If {@code true}, unsafe cast operations are allowed for performing an assignment.
-     * @return A stack manipulation that represents the described assignment operation.
-     */
-    public StackManipulation assignBoxedTo(TypeDescription targetType, Assigner chainedAssigner, boolean considerRuntimeType) {
-        return new BoxingStackManipulation(chainedAssigner.assign(wrapperType, targetType, considerRuntimeType));
     }
 }

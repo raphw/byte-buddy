@@ -15,9 +15,43 @@ import java.util.Arrays;
 public interface FieldAttributeAppender {
 
     /**
+     * Applies this attribute appender to a given field visitor.
+     *
+     * @param fieldVisitor     The field visitor to which the attributes that are represented by this attribute appender
+     *                         are written to.
+     * @param fieldDescription The description of the field to which the field visitor belongs to.
+     */
+    void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription);
+
+    /**
+     * A field attribute appender that does not append any attributes.
+     */
+    static enum NoOp implements FieldAttributeAppender, Factory {
+        INSTANCE;
+
+        @Override
+        public FieldAttributeAppender make(TypeDescription typeDescription) {
+            return this;
+        }
+
+        @Override
+        public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription) {
+            /* do nothing */
+        }
+    }
+
+    /**
      * A factory that creates field attribute appenders for a given type.
      */
     static interface Factory {
+
+        /**
+         * Returns a field attribute appender that is applicable for a given type description.
+         *
+         * @param typeDescription The type for which a field attribute appender is to be applied for.
+         * @return The field attribute appender which should be applied for the given type.
+         */
+        FieldAttributeAppender make(TypeDescription typeDescription);
 
         /**
          * A field attribute appender factory that combines several field attribute appender factories to be
@@ -62,31 +96,6 @@ public interface FieldAttributeAppender {
             public String toString() {
                 return "FieldAttributeAppender.Factory.Compound{" + Arrays.toString(factory) + '}';
             }
-        }
-
-        /**
-         * Returns a field attribute appender that is applicable for a given type description.
-         *
-         * @param typeDescription The type for which a field attribute appender is to be applied for.
-         * @return The field attribute appender which should be applied for the given type.
-         */
-        FieldAttributeAppender make(TypeDescription typeDescription);
-    }
-
-    /**
-     * A field attribute appender that does not append any attributes.
-     */
-    static enum NoOp implements FieldAttributeAppender, Factory {
-        INSTANCE;
-
-        @Override
-        public FieldAttributeAppender make(TypeDescription typeDescription) {
-            return this;
-        }
-
-        @Override
-        public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription) {
-            /* do nothing */
         }
     }
 
@@ -227,13 +236,4 @@ public interface FieldAttributeAppender {
             return "FieldAttributeAppenderCompound{" + Arrays.toString(fieldAttributeAppender) + '}';
         }
     }
-
-    /**
-     * Applies this attribute appender to a given field visitor.
-     *
-     * @param fieldVisitor     The field visitor to which the attributes that are represented by this attribute appender
-     *                         are written to.
-     * @param fieldDescription The description of the field to which the field visitor belongs to.
-     */
-    void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription);
 }

@@ -64,6 +64,10 @@ public final class ByteBuddyCommons {
                     "true", "try", "void", "volatile", "while"))
     );
 
+    private ByteBuddyCommons() {
+        throw new AssertionError();
+    }
+
     /**
      * Validates that a value is not {@code null}.
      *
@@ -246,9 +250,5 @@ public final class ByteBuddyCommons {
             }
         }
         return types;
-    }
-
-    private ByteBuddyCommons() {
-        throw new AssertionError();
     }
 }

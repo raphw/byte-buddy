@@ -13,12 +13,112 @@ import java.util.List;
 public class ArrayFactory implements CollectionFactory {
 
     private static final StackManipulation.Size SIZE = StackSize.ZERO.toDecreasingSize();
+    private final TypeDescription componentType;
+    private final ArrayCreator arrayCreator;
+    private final StackManipulation.Size sizeDecrease;
+
+    /**
+     * Creates a new array factory with a given
+     * {@link net.bytebuddy.instrumentation.method.bytecode.stack.collection.ArrayFactory.ArrayCreator}
+     * without inferring the type from the component type. Normally,
+     * {@link net.bytebuddy.instrumentation.method.bytecode.stack.collection.ArrayFactory#targeting(net.bytebuddy.instrumentation.type.TypeDescription)}
+     * should be used.
+     *
+     * @param componentType The component type of the array factory.
+     * @param arrayCreator  The array creator responsible for providing the correct byte code instructions.
+     */
+    protected ArrayFactory(TypeDescription componentType, ArrayCreator arrayCreator) {
+        this.componentType = componentType;
+        this.arrayCreator = arrayCreator;
+        // Size decreases by index and array reference (2) and array element (1, 2) after each element storage.
+        sizeDecrease = StackSize.DOUBLE.toDecreasingSize().aggregate(componentType.getStackSize().toDecreasingSize());
+    }
+
+    /**
+     * Creates a new array factory for a given component type.
+     *
+     * @param componentType The component type of the array that is to be build.
+     * @return A new array factory for the given type.
+     */
+    public static ArrayFactory targeting(TypeDescription componentType) {
+        return new ArrayFactory(componentType, makeArrayCreatorFor(componentType));
+    }
+
+    private static ArrayCreator makeArrayCreatorFor(TypeDescription componentType) {
+        if (componentType.isPrimitive()) {
+            if (componentType.represents(boolean.class)) {
+                return ArrayCreator.Primitive.BOOLEAN;
+            } else if (componentType.represents(byte.class)) {
+                return ArrayCreator.Primitive.BYTE;
+            } else if (componentType.represents(short.class)) {
+                return ArrayCreator.Primitive.SHORT;
+            } else if (componentType.represents(char.class)) {
+                return ArrayCreator.Primitive.CHARACTER;
+            } else if (componentType.represents(int.class)) {
+                return ArrayCreator.Primitive.INTEGER;
+            } else if (componentType.represents(long.class)) {
+                return ArrayCreator.Primitive.LONG;
+            } else if (componentType.represents(float.class)) {
+                return ArrayCreator.Primitive.FLOAT;
+            } else if (componentType.represents(double.class)) {
+                return ArrayCreator.Primitive.DOUBLE;
+            } else {
+                throw new IllegalArgumentException("Cannot create array of type " + componentType);
+            }
+        } else {
+            return new ArrayCreator.Reference(componentType);
+        }
+    }
+
+    @Override
+    public StackManipulation withValues(List<StackManipulation> stackManipulations) {
+        return new ArrayStackManipulation(stackManipulations);
+    }
+
+    @Override
+    public TypeDescription getComponentType() {
+        return componentType;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ArrayFactory that = (ArrayFactory) o;
+        return arrayCreator.equals(that.arrayCreator)
+                && componentType.equals(that.componentType)
+                && sizeDecrease.equals(that.sizeDecrease);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = componentType.hashCode();
+        result = 31 * result + arrayCreator.hashCode();
+        result = 31 * result + sizeDecrease.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "ArrayFactory{" +
+                "componentType=" + componentType +
+                ", arrayCreator=" + arrayCreator +
+                ", sizeDecrease=" + sizeDecrease +
+                '}';
+    }
 
     /**
      * An array creator is responsible for providing correct byte code instructions for creating an array
      * and for storing values into it.
      */
     protected static interface ArrayCreator extends StackManipulation {
+
+        /**
+         * The opcode instruction for storing a value of the component type inside an array.
+         *
+         * @return The correct storage opcode for the represented type.
+         */
+        int getStorageOpcode();
 
         /**
          * An array creator implementation for primitive types.
@@ -86,48 +186,6 @@ public class ArrayFactory implements CollectionFactory {
                 return Opcodes.AASTORE;
             }
         }
-
-        /**
-         * The opcode instruction for storing a value of the component type inside an array.
-         * @return The correct storage opcode for the represented type.
-         */
-        int getStorageOpcode();
-    }
-
-    /**
-     * Creates a new array factory for a given component type.
-     *
-     * @param componentType The component type of the array that is to be build.
-     * @return A new array factory for the given type.
-     */
-    public static ArrayFactory targeting(TypeDescription componentType) {
-        return new ArrayFactory(componentType, makeArrayCreatorFor(componentType));
-    }
-
-    private static ArrayCreator makeArrayCreatorFor(TypeDescription componentType) {
-        if (componentType.isPrimitive()) {
-            if (componentType.represents(boolean.class)) {
-                return ArrayCreator.Primitive.BOOLEAN;
-            } else if (componentType.represents(byte.class)) {
-                return ArrayCreator.Primitive.BYTE;
-            } else if (componentType.represents(short.class)) {
-                return ArrayCreator.Primitive.SHORT;
-            } else if (componentType.represents(char.class)) {
-                return ArrayCreator.Primitive.CHARACTER;
-            } else if (componentType.represents(int.class)) {
-                return ArrayCreator.Primitive.INTEGER;
-            } else if (componentType.represents(long.class)) {
-                return ArrayCreator.Primitive.LONG;
-            } else if (componentType.represents(float.class)) {
-                return ArrayCreator.Primitive.FLOAT;
-            } else if (componentType.represents(double.class)) {
-                return ArrayCreator.Primitive.DOUBLE;
-            } else {
-                throw new IllegalArgumentException("Cannot create array of type " + componentType);
-            }
-        } else {
-            return new ArrayCreator.Reference(componentType);
-        }
     }
 
     private class ArrayStackManipulation implements StackManipulation {
@@ -164,63 +222,6 @@ public class ArrayFactory implements CollectionFactory {
             }
             return size;
         }
-    }
-
-    private final TypeDescription componentType;
-    private final ArrayCreator arrayCreator;
-    private final StackManipulation.Size sizeDecrease;
-
-    /**
-     * Creates a new array factory with a given
-     * {@link net.bytebuddy.instrumentation.method.bytecode.stack.collection.ArrayFactory.ArrayCreator}
-     * without inferring the type from the component type. Normally,
-     * {@link net.bytebuddy.instrumentation.method.bytecode.stack.collection.ArrayFactory#targeting(net.bytebuddy.instrumentation.type.TypeDescription)}
-     * should be used.
-     * @param componentType The component type of the array factory.
-     * @param arrayCreator The array creator responsible for providing the correct byte code instructions.
-     */
-    protected ArrayFactory(TypeDescription componentType, ArrayCreator arrayCreator) {
-        this.componentType = componentType;
-        this.arrayCreator = arrayCreator;
-        // Size decreases by index and array reference (2) and array element (1, 2) after each element storage.
-        sizeDecrease = StackSize.DOUBLE.toDecreasingSize().aggregate(componentType.getStackSize().toDecreasingSize());
-    }
-
-    @Override
-    public StackManipulation withValues(List<StackManipulation> stackManipulations) {
-        return new ArrayStackManipulation(stackManipulations);
-    }
-
-    @Override
-    public TypeDescription getComponentType() {
-        return componentType;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ArrayFactory that = (ArrayFactory) o;
-        return arrayCreator.equals(that.arrayCreator)
-                && componentType.equals(that.componentType)
-                && sizeDecrease.equals(that.sizeDecrease);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = componentType.hashCode();
-        result = 31 * result + arrayCreator.hashCode();
-        result = 31 * result + sizeDecrease.hashCode();
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return "ArrayFactory{" +
-                "componentType=" + componentType +
-                ", arrayCreator=" + arrayCreator +
-                ", sizeDecrease=" + sizeDecrease +
-                '}';
     }
 }
 

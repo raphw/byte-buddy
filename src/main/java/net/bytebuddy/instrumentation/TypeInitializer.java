@@ -11,6 +11,38 @@ import java.util.List;
 public interface TypeInitializer {
 
     /**
+     * Callback that is invoked on the creation of an instrumented type. If the type initializer is alive, this
+     * method should be implemented empty instead of throwing an exception.
+     *
+     * @param type The manifestation of the instrumented type.
+     */
+    void onLoad(Class<?> type);
+
+    /**
+     * Indicates if this initializer is alive and needs to be invoked.
+     *
+     * @return {@code true} if this initializer is alive.
+     */
+    boolean isAlive();
+
+    /**
+     * A type initializer that does not do anything.
+     */
+    static enum NoOp implements TypeInitializer, Serializable {
+        INSTANCE;
+
+        @Override
+        public void onLoad(Class<?> type) {
+            /* do nothing */
+        }
+
+        @Override
+        public boolean isAlive() {
+            return false;
+        }
+    }
+
+    /**
      * A compound type initializer that combines several type initializers.
      */
     static class Compound implements TypeInitializer, Serializable {
@@ -68,36 +100,4 @@ public interface TypeInitializer {
             return "TypeInitializer.Compound{typeInitializer=" + Arrays.toString(typeInitializer) + '}';
         }
     }
-
-    /**
-     * A type initializer that does not do anything.
-     */
-    static enum NoOp implements TypeInitializer, Serializable {
-        INSTANCE;
-
-        @Override
-        public void onLoad(Class<?> type) {
-            /* do nothing */
-        }
-
-        @Override
-        public boolean isAlive() {
-            return false;
-        }
-    }
-
-    /**
-     * Callback that is invoked on the creation of an instrumented type. If the type initializer is alive, this
-     * method should be implemented empty instead of throwing an exception.
-     *
-     * @param type The manifestation of the instrumented type.
-     */
-    void onLoad(Class<?> type);
-
-    /**
-     * Indicates if this initializer is alive and needs to be invoked.
-     *
-     * @return {@code true} if this initializer is alive.
-     */
-    boolean isAlive();
 }

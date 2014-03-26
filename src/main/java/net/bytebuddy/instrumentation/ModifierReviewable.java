@@ -9,113 +9,6 @@ import java.lang.reflect.Modifier;
  */
 public interface ModifierReviewable {
 
-    static abstract class AbstractModifierReviewable implements ModifierReviewable {
-
-        @Override
-        public boolean isAbstract() {
-            return matchesMask(Modifier.ABSTRACT);
-        }
-
-        @Override
-        public boolean isFinal() {
-            return matchesMask(Modifier.FINAL);
-        }
-
-        @Override
-        public boolean isStatic() {
-            return matchesMask(Modifier.STATIC);
-        }
-
-        @Override
-        public boolean isPublic() {
-            return matchesMask(Modifier.PUBLIC);
-        }
-
-        @Override
-        public boolean isProtected() {
-            return matchesMask(Modifier.PROTECTED);
-        }
-
-        @Override
-        public boolean isPackagePrivate() {
-            return !isPublic() && !isProtected() && !isPrivate();
-        }
-
-        @Override
-        public boolean isPrivate() {
-            return matchesMask(Modifier.PRIVATE);
-        }
-
-        @Override
-        public boolean isNative() {
-            return matchesMask(Modifier.NATIVE);
-        }
-
-        @Override
-        public boolean isSynchronized() {
-            return matchesMask(Modifier.SYNCHRONIZED);
-        }
-
-        @Override
-        public boolean isStrict() {
-            return matchesMask(Modifier.STRICT);
-        }
-
-        @Override
-        public boolean isSynthetic() {
-            return matchesMask(Opcodes.ACC_SYNTHETIC);
-        }
-
-        @Override
-        public boolean isSuper() {
-            return matchesMask(Opcodes.ACC_SUPER);
-        }
-
-        @Override
-        public boolean isBridge() {
-            return matchesMask(Opcodes.ACC_BRIDGE);
-        }
-
-        @Override
-        public boolean isDeprecated() {
-            return matchesMask(Opcodes.ACC_DEPRECATED);
-        }
-
-        @Override
-        public boolean isAnnotation() {
-            return matchesMask(Opcodes.ACC_ANNOTATION);
-        }
-
-        @Override
-        public boolean isEnum() {
-            return matchesMask(Opcodes.ACC_ENUM);
-        }
-
-        @Override
-        public boolean isInterface() {
-            return matchesMask(Opcodes.ACC_INTERFACE);
-        }
-
-        @Override
-        public boolean isTransient() {
-            return matchesMask(Opcodes.ACC_TRANSIENT);
-        }
-
-        @Override
-        public boolean isVolatile() {
-            return matchesMask(Opcodes.ACC_VOLATILE);
-        }
-
-        @Override
-        public boolean isVarArgs() {
-            return matchesMask(Opcodes.ACC_VARARGS);
-        }
-
-        private boolean matchesMask(int mask) {
-            return (getModifiers() & mask) != 0;
-        }
-    }
-
     /**
      * Specifies if the modifier described by this object is {@code final}.
      *
@@ -262,4 +155,111 @@ public interface ModifierReviewable {
      * @return The modifier that is described by this object.
      */
     int getModifiers();
+
+    static abstract class AbstractModifierReviewable implements ModifierReviewable {
+
+        @Override
+        public boolean isAbstract() {
+            return matchesMask(Modifier.ABSTRACT);
+        }
+
+        @Override
+        public boolean isFinal() {
+            return matchesMask(Modifier.FINAL);
+        }
+
+        @Override
+        public boolean isStatic() {
+            return matchesMask(Modifier.STATIC);
+        }
+
+        @Override
+        public boolean isPublic() {
+            return matchesMask(Modifier.PUBLIC);
+        }
+
+        @Override
+        public boolean isProtected() {
+            return matchesMask(Modifier.PROTECTED);
+        }
+
+        @Override
+        public boolean isPackagePrivate() {
+            return !isPublic() && !isProtected() && !isPrivate();
+        }
+
+        @Override
+        public boolean isPrivate() {
+            return matchesMask(Modifier.PRIVATE);
+        }
+
+        @Override
+        public boolean isNative() {
+            return matchesMask(Modifier.NATIVE);
+        }
+
+        @Override
+        public boolean isSynchronized() {
+            return matchesMask(Modifier.SYNCHRONIZED);
+        }
+
+        @Override
+        public boolean isStrict() {
+            return matchesMask(Modifier.STRICT);
+        }
+
+        @Override
+        public boolean isSynthetic() {
+            return matchesMask(Opcodes.ACC_SYNTHETIC);
+        }
+
+        @Override
+        public boolean isSuper() {
+            return matchesMask(Opcodes.ACC_SUPER);
+        }
+
+        @Override
+        public boolean isBridge() {
+            return matchesMask(Opcodes.ACC_BRIDGE);
+        }
+
+        @Override
+        public boolean isDeprecated() {
+            return matchesMask(Opcodes.ACC_DEPRECATED);
+        }
+
+        @Override
+        public boolean isAnnotation() {
+            return matchesMask(Opcodes.ACC_ANNOTATION);
+        }
+
+        @Override
+        public boolean isEnum() {
+            return matchesMask(Opcodes.ACC_ENUM);
+        }
+
+        @Override
+        public boolean isInterface() {
+            return matchesMask(Opcodes.ACC_INTERFACE);
+        }
+
+        @Override
+        public boolean isTransient() {
+            return matchesMask(Opcodes.ACC_TRANSIENT);
+        }
+
+        @Override
+        public boolean isVolatile() {
+            return matchesMask(Opcodes.ACC_VOLATILE);
+        }
+
+        @Override
+        public boolean isVarArgs() {
+            return matchesMask(Opcodes.ACC_VARARGS);
+        }
+
+        private boolean matchesMask(int mask) {
+            return (getModifiers() & mask) != 0;
+        }
+    }
 }

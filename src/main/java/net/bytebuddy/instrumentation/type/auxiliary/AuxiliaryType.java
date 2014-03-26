@@ -24,6 +24,19 @@ public interface AuxiliaryType {
     static final List<ModifierContributor.ForType> DEFAULT_TYPE_MODIFIER = Collections.unmodifiableList(
             Arrays.<ModifierContributor.ForType>asList(TypeVisibility.PACKAGE_PRIVATE, SyntheticState.SYNTHETIC));
 
+    /**
+     * Creates a new auxiliary type.
+     *
+     * @param auxiliaryTypeName     The fully qualified non-internal name for this auxiliary type. The type should be in
+     *                              the same package than the instrumented type this auxiliary type is providing services
+     *                              to in order to allow package-private access.
+     * @param classFormatVersion    The class format version the auxiliary class should be written in.
+     * @param methodAccessorFactory A factory for accessor methods.
+     * @return A dynamically created type representing this auxiliary type.
+     */
+    DynamicType make(String auxiliaryTypeName,
+                     ClassFormatVersion classFormatVersion,
+                     MethodAccessorFactory methodAccessorFactory);
 
     /**
      * A factory for creating method proxies for an auxiliary type. Such proxies are required to allow a type to
@@ -41,18 +54,4 @@ public interface AuxiliaryType {
          */
         MethodDescription requireAccessorMethodFor(MethodDescription targetMethod);
     }
-
-    /**
-     * Creates a new auxiliary type.
-     *
-     * @param auxiliaryTypeName     The fully qualified non-internal name for this auxiliary type. The type should be in
-     *                              the same package than the instrumented type this auxiliary type is providing services
-     *                              to in order to allow package-private access.
-     * @param classFormatVersion    The class format version the auxiliary class should be written in.
-     * @param methodAccessorFactory A factory for accessor methods.
-     * @return A dynamically created type representing this auxiliary type.
-     */
-    DynamicType make(String auxiliaryTypeName,
-                     ClassFormatVersion classFormatVersion,
-                     MethodAccessorFactory methodAccessorFactory);
 }

@@ -22,12 +22,24 @@ public @interface BindingPriority {
     static final double DEFAULT = 1d;
 
     /**
+     * The binding priority for the annotated method. A method of higher priority will be preferred over a method
+     * of lower priority.
+     *
+     * @return The priority for the annotated method.
+     */
+    double value();
+
+    /**
      * An ambiguity resolver that considers the priority of a method as defined by the
      * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.BindingPriority}
      * annotation.
      */
     static enum Resolver implements MethodDelegationBinder.AmbiguityResolver {
         INSTANCE;
+
+        private static double resolve(BindingPriority bindingPriority) {
+            return bindingPriority == null ? DEFAULT : bindingPriority.value();
+        }
 
         @Override
         public Resolution resolve(MethodDescription source,
@@ -43,17 +55,5 @@ public @interface BindingPriority {
                 return Resolution.LEFT;
             }
         }
-
-        private static double resolve(BindingPriority bindingPriority) {
-            return bindingPriority == null ? DEFAULT : bindingPriority.value();
-        }
     }
-
-    /**
-     * The binding priority for the annotated method. A method of higher priority will be preferred over a method
-     * of lower priority.
-     *
-     * @return The priority for the annotated method.
-     */
-    double value();
 }

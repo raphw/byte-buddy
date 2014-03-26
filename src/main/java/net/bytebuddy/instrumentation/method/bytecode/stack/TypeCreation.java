@@ -10,6 +10,17 @@ import org.objectweb.asm.Opcodes;
  */
 public class TypeCreation implements StackManipulation {
 
+    private final TypeDescription typeDescription;
+
+    /**
+     * Constructs a new type creation.
+     *
+     * @param typeDescription The type to be create.
+     */
+    protected TypeCreation(TypeDescription typeDescription) {
+        this.typeDescription = typeDescription;
+    }
+
     /**
      * Creates a type creation for the given type.
      *
@@ -21,17 +32,6 @@ public class TypeCreation implements StackManipulation {
             throw new IllegalArgumentException(typeDescription + " is not instantiable");
         }
         return new TypeCreation(typeDescription);
-    }
-
-    private final TypeDescription typeDescription;
-
-    /**
-     * Constructs a new type creation.
-     *
-     * @param typeDescription The type to be create.
-     */
-    protected TypeCreation(TypeDescription typeDescription) {
-        this.typeDescription = typeDescription;
     }
 
     @Override

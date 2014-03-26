@@ -13,6 +13,14 @@ import java.util.Arrays;
 public interface TypeAttributeAppender {
 
     /**
+     * Applies this type attribute appender.
+     *
+     * @param classVisitor    The class visitor to which the annotations of this visitor should be written to.
+     * @param typeDescription A description of the instrumented type that is target of the ongoing instrumentation.
+     */
+    void apply(ClassVisitor classVisitor, TypeDescription typeDescription);
+
+    /**
      * A type attribute appender that does not append any attributes.
      */
     static enum NoOp implements TypeAttributeAppender {
@@ -21,6 +29,24 @@ public interface TypeAttributeAppender {
         @Override
         public void apply(ClassVisitor classVisitor, TypeDescription typeDescription) {
             /* do nothing */
+        }
+    }
+
+    /**
+     * An attribute appender that writes all annotations that are found on a given target type to the
+     * instrumented type this type attribute appender is applied onto. The visibility for the annotation
+     * will be inferred from the annotations' {@link java.lang.annotation.RetentionPolicy}.
+     */
+    static enum ForSuperType implements TypeAttributeAppender {
+        INSTANCE;
+
+        @Override
+        public void apply(ClassVisitor classVisitor, TypeDescription typeDescription) {
+            AnnotationAppender annotationAppender =
+                    new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor));
+            for (Annotation annotation : typeDescription.getSupertype().getAnnotations()) {
+                annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
+            }
         }
     }
 
@@ -110,24 +136,6 @@ public interface TypeAttributeAppender {
     }
 
     /**
-     * An attribute appender that writes all annotations that are found on a given target type to the
-     * instrumented type this type attribute appender is applied onto. The visibility for the annotation
-     * will be inferred from the annotations' {@link java.lang.annotation.RetentionPolicy}.
-     */
-    static enum ForSuperType implements TypeAttributeAppender {
-        INSTANCE;
-
-        @Override
-        public void apply(ClassVisitor classVisitor, TypeDescription typeDescription) {
-            AnnotationAppender annotationAppender =
-                    new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor));
-            for (Annotation annotation : typeDescription.getSupertype().getAnnotations()) {
-                annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
-            }
-        }
-    }
-
-    /**
      * A compound type attribute appender that concatenates a number of other attribute appenders.
      */
     static class Compound implements TypeAttributeAppender {
@@ -166,12 +174,4 @@ public interface TypeAttributeAppender {
             return "TypeAttributeAppender.Compound{" + Arrays.toString(typeAttributeAppender) + '}';
         }
     }
-
-    /**
-     * Applies this type attribute appender.
-     *
-     * @param classVisitor    The class visitor to which the annotations of this visitor should be written to.
-     * @param typeDescription A description of the instrumented type that is target of the ongoing instrumentation.
-     */
-    void apply(ClassVisitor classVisitor, TypeDescription typeDescription);
 }

@@ -17,6 +17,30 @@ import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
 public interface ConstructorStrategy {
 
     /**
+     * Extracts constructors for a given super type. The extracted constructor signatures will then be imitated by the
+     * created dynamic type.
+     *
+     * @param superType The super type from which constructors are to be extracted.
+     * @return A list of constructor descriptions which will be mimicked by the instrumented type of which
+     * the {@code superType} is the direct super type of the instrumented type.
+     */
+    MethodList extractConstructors(TypeDescription superType);
+
+    /**
+     * Returns a method registry that is capable of creating byte code for the constructors that were
+     * provided by the
+     * {@link net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy#extractConstructors(net.bytebuddy.instrumentation.type.TypeDescription)}
+     * method of this instance.
+     *
+     * @param methodRegistry                        The original method registry.
+     * @param defaultMethodAttributeAppenderFactory The default method attribute appender factory.
+     * @return A method registry that is capable of providing byte code for the constructors that were added by
+     * this strategy.
+     */
+    MethodRegistry inject(MethodRegistry methodRegistry,
+                          MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory);
+
+    /**
      * Default implementations of constructor strategies.
      * <ol>
      * <li>The {@link net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy.Default#NO_CONSTRUCTORS}
@@ -74,28 +98,4 @@ public interface ConstructorStrategy {
             }
         }
     }
-
-    /**
-     * Extracts constructors for a given super type. The extracted constructor signatures will then be imitated by the
-     * created dynamic type.
-     *
-     * @param superType The super type from which constructors are to be extracted.
-     * @return A list of constructor descriptions which will be mimicked by the instrumented type of which
-     * the {@code superType} is the direct super type of the instrumented type.
-     */
-    MethodList extractConstructors(TypeDescription superType);
-
-    /**
-     * Returns a method registry that is capable of creating byte code for the constructors that were
-     * provided by the
-     * {@link net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy#extractConstructors(net.bytebuddy.instrumentation.type.TypeDescription)}
-     * method of this instance.
-     *
-     * @param methodRegistry                        The original method registry.
-     * @param defaultMethodAttributeAppenderFactory The default method attribute appender factory.
-     * @return A method registry that is capable of providing byte code for the constructors that were added by
-     * this strategy.
-     */
-    MethodRegistry inject(MethodRegistry methodRegistry,
-                          MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory);
 }

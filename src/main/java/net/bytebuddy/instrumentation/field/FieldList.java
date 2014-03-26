@@ -11,6 +11,15 @@ import java.util.NoSuchElementException;
 public interface FieldList extends List<FieldDescription> {
 
     /**
+     * Identifies a single field description in this list that is named {@code fieldName} and returns this field
+     * description. If no such field is in the list, an exception is thrown.
+     *
+     * @param fieldName The internalName of the required field.
+     * @return The field named {@code fieldName}.
+     */
+    FieldDescription named(String fieldName);
+
+    /**
      * An implementation of a field list for an array of loaded fields.
      */
     static class ForLoadedField extends AbstractList<FieldDescription> implements FieldList {
@@ -104,13 +113,4 @@ public interface FieldList extends List<FieldDescription> {
             throw new IllegalArgumentException("Expected to find a field " + fieldName + " but found none");
         }
     }
-
-    /**
-     * Identifies a single field description in this list that is named {@code fieldName} and returns this field
-     * description. If no such field is in the list, an exception is thrown.
-     *
-     * @param fieldName The internalName of the required field.
-     * @return The field named {@code fieldName}.
-     */
-    FieldDescription named(String fieldName);
 }

@@ -18,6 +18,15 @@ public enum MethodVariableAccess {
     FLOAT(Opcodes.FLOAD, 11, StackSize.SINGLE),
     DOUBLE(Opcodes.DLOAD, 14, StackSize.DOUBLE),
     REFERENCE(Opcodes.ALOAD, 17, StackSize.SINGLE);
+    private final int loadOpcode;
+    private final int loadOpcodeShortcutIndex;
+    private final StackManipulation.Size size;
+
+    private MethodVariableAccess(int loadOpcode, int loadOpcodeShortcutIndex, StackSize stackSize) {
+        this.loadOpcode = loadOpcode;
+        this.loadOpcodeShortcutIndex = loadOpcodeShortcutIndex;
+        this.size = stackSize.toIncreasingSize();
+    }
 
     /**
      * Locates the correct accessor for a variable of a given type.
@@ -83,14 +92,17 @@ public enum MethodVariableAccess {
         return new StackManipulation.Compound(stackManipulation);
     }
 
-    private final int loadOpcode;
-    private final int loadOpcodeShortcutIndex;
-    private final StackManipulation.Size size;
-
-    private MethodVariableAccess(int loadOpcode, int loadOpcodeShortcutIndex, StackSize stackSize) {
-        this.loadOpcode = loadOpcode;
-        this.loadOpcodeShortcutIndex = loadOpcodeShortcutIndex;
-        this.size = stackSize.toIncreasingSize();
+    /**
+     * Creates a stack assignment for a given index of the local variable array.
+     * <p>&nbsp;</p>
+     * The index has to be relative to the method's local variable array size.
+     *
+     * @param variableOffset The offset of the variable where {@code double} and {@code long} types
+     *                       count two slots.
+     * @return A stack manipulation representing the method retrieval.
+     */
+    public StackManipulation loadFromIndex(int variableOffset) {
+        return new ArgumentLoadingStackManipulation(variableOffset);
     }
 
     private class ArgumentLoadingStackManipulation implements StackManipulation {
@@ -127,19 +139,6 @@ public enum MethodVariableAccess {
             }
             return size;
         }
-    }
-
-    /**
-     * Creates a stack assignment for a given index of the local variable array.
-     * <p>&nbsp;</p>
-     * The index has to be relative to the method's local variable array size.
-     *
-     * @param variableOffset The offset of the variable where {@code double} and {@code long} types
-     *                       count two slots.
-     * @return A stack manipulation representing the method retrieval.
-     */
-    public StackManipulation loadFromIndex(int variableOffset) {
-        return new ArgumentLoadingStackManipulation(variableOffset);
     }
 }
 

@@ -16,6 +16,7 @@ public class ClassConstant implements StackManipulation {
 
     /**
      * Creates a stack manipulation that represents loading a class constant onto the stack.
+     *
      * @param typeDescription A description of the class to load onto the stack.
      */
     public ClassConstant(TypeDescription typeDescription) {

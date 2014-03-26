@@ -18,6 +18,12 @@ public enum MethodReturn implements StackManipulation {
     LONG(Opcodes.LRETURN, StackSize.DOUBLE),
     VOID(Opcodes.RETURN, StackSize.ZERO),
     ANY_REFERENCE(Opcodes.ARETURN, StackSize.SINGLE);
+    private final int returnOpcode;
+    private final Size size;
+    private MethodReturn(int returnOpcode, StackSize stackSize) {
+        this.returnOpcode = returnOpcode;
+        size = stackSize.toDecreasingSize();
+    }
 
     /**
      * Returns a method return corresponding to a given type.
@@ -41,14 +47,6 @@ public enum MethodReturn implements StackManipulation {
         } else {
             return ANY_REFERENCE;
         }
-    }
-
-    private final int returnOpcode;
-    private final Size size;
-
-    private MethodReturn(int returnOpcode, StackSize stackSize) {
-        this.returnOpcode = returnOpcode;
-        size = stackSize.toDecreasingSize();
     }
 
     @Override

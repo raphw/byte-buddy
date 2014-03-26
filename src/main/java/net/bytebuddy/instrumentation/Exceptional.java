@@ -22,6 +22,21 @@ import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.takesA
  */
 public class Exceptional implements Instrumentation, ByteCodeAppender {
 
+    private final TypeDescription throwableType;
+    private final ConstructionDelegate constructionDelegate;
+
+    /**
+     * Creates a new instance of an instrumentation for throwing throwables.
+     *
+     * @param throwableType        The type of the exception to be thrown.
+     * @param constructionDelegate A delegate that is responsible for calling the isThrowable's constructor.
+     */
+    public Exceptional(TypeDescription throwableType,
+                       ConstructionDelegate constructionDelegate) {
+        this.throwableType = throwableType;
+        this.constructionDelegate = constructionDelegate;
+    }
+
     /**
      * Creates an instrumentation that creates a new instance of the given isThrowable type on each method invocation
      * which is then thrown immediately. For this to be possible, the given type must define a default constructor
@@ -51,10 +66,64 @@ public class Exceptional implements Instrumentation, ByteCodeAppender {
         return new Exceptional(exceptionType, new ConstructionDelegate.ForStringConstructor(exceptionType, message));
     }
 
+    @Override
+    public InstrumentedType prepare(InstrumentedType instrumentedType) {
+        return instrumentedType;
+    }
+
+    @Override
+    public ByteCodeAppender appender(TypeDescription instrumentedType) {
+        return this;
+    }
+
+    @Override
+    public boolean appendsCode() {
+        return true;
+    }
+
+    @Override
+    public Size apply(MethodVisitor methodVisitor,
+                      Context instrumentationContext,
+                      MethodDescription instrumentedMethod) {
+        StackManipulation.Size stackSize = new StackManipulation.Compound(
+                constructionDelegate.make(),
+                Throw.INSTANCE
+        ).apply(methodVisitor, instrumentationContext);
+        return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        return this == other || !(other == null || getClass() != other.getClass())
+                && constructionDelegate.equals(((Exceptional) other).constructionDelegate)
+                && throwableType.equals(((Exceptional) other).throwableType);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * throwableType.hashCode() + constructionDelegate.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "Exceptional{" +
+                "throwableType=" + throwableType +
+                ", constructionDelegate=" + constructionDelegate +
+                '}';
+    }
+
     /**
      * A construction delegate is responsible for calling a isThrowable's constructor.
      */
     public static interface ConstructionDelegate {
+
+        /**
+         * Creates a stack manipulation that creates pushes all constructor arguments onto the operand stack
+         * and subsequently calls the constructor.
+         *
+         * @return A stack manipulation for constructing a isThrowable.
+         */
+        StackManipulation make();
 
         /**
          * A construction delegate that calls the default constructor.
@@ -155,74 +224,5 @@ public class Exceptional implements Instrumentation, ByteCodeAppender {
                         '}';
             }
         }
-
-        /**
-         * Creates a stack manipulation that creates pushes all constructor arguments onto the operand stack
-         * and subsequently calls the constructor.
-         *
-         * @return A stack manipulation for constructing a isThrowable.
-         */
-        StackManipulation make();
-    }
-
-    private final TypeDescription throwableType;
-    private final ConstructionDelegate constructionDelegate;
-
-    /**
-     * Creates a new instance of an instrumentation for throwing throwables.
-     *
-     * @param throwableType        The type of the exception to be thrown.
-     * @param constructionDelegate A delegate that is responsible for calling the isThrowable's constructor.
-     */
-    public Exceptional(TypeDescription throwableType,
-                       ConstructionDelegate constructionDelegate) {
-        this.throwableType = throwableType;
-        this.constructionDelegate = constructionDelegate;
-    }
-
-    @Override
-    public InstrumentedType prepare(InstrumentedType instrumentedType) {
-        return instrumentedType;
-    }
-
-    @Override
-    public ByteCodeAppender appender(TypeDescription instrumentedType) {
-        return this;
-    }
-
-    @Override
-    public boolean appendsCode() {
-        return true;
-    }
-
-    @Override
-    public Size apply(MethodVisitor methodVisitor,
-                      Context instrumentationContext,
-                      MethodDescription instrumentedMethod) {
-        StackManipulation.Size stackSize = new StackManipulation.Compound(
-                constructionDelegate.make(),
-                Throw.INSTANCE
-        ).apply(methodVisitor, instrumentationContext);
-        return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && constructionDelegate.equals(((Exceptional) other).constructionDelegate)
-                && throwableType.equals(((Exceptional) other).throwableType);
-    }
-
-    @Override
-    public int hashCode() {
-        return 31 * throwableType.hashCode() + constructionDelegate.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "Exceptional{" +
-                "throwableType=" + throwableType +
-                ", constructionDelegate=" + constructionDelegate +
-                '}';
     }
 }

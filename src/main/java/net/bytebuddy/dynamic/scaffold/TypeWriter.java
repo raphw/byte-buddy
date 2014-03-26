@@ -36,50 +36,11 @@ public interface TypeWriter<T> {
     static final int ASM_MANUAL_FLAG = 0;
 
     /**
-     * An iterable view of a list that can be modified within the same thread without breaking
-     * the iterator. Instead, the iterator will continue its iteration over the additional entries
-     * that were prepended to the list.
+     * Creates the dynamic type.
      *
-     * @param <S> The type of the list elements.
+     * @return An unloaded dynamic type that is the outcome of the type writing
      */
-    static class SameThreadCoModifiableIterable<S> implements Iterable<S> {
-
-        private class SameThreadCoModifiableIterator implements Iterator<S> {
-
-            private int index = 0;
-
-            @Override
-            public boolean hasNext() {
-                return index < elements.size();
-            }
-
-            @Override
-            public S next() {
-                return elements.get(index++);
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-        }
-
-        private final List<? extends S> elements;
-
-        /**
-         * Creates a new iterable view.
-         *
-         * @param elements The elements to be represented by this view.
-         */
-        public SameThreadCoModifiableIterable(List<? extends S> elements) {
-            this.elements = elements;
-        }
-
-        @Override
-        public Iterator<S> iterator() {
-            return new SameThreadCoModifiableIterator();
-        }
-    }
+    DynamicType.Unloaded<T> make();
 
     /**
      * An field pool that allows a lookup for how to implement a field.
@@ -87,11 +48,28 @@ public interface TypeWriter<T> {
     static interface FieldPool {
 
         /**
+         * Returns the field attribute appender that matches a given field description or a default field
+         * attribute appender if no appender was registered for the given field.
+         *
+         * @param fieldDescription The field description of interest.
+         * @return The registered field attribute appender for the given field or the default appender if no such
+         * appender was found.
+         */
+        Entry target(FieldDescription fieldDescription);
+
+        /**
          * An entry of a field pool that describes how a field is implemented.
          *
          * @see net.bytebuddy.dynamic.scaffold.TypeWriter.FieldPool
          */
         static interface Entry {
+
+            /**
+             * Returns the field attribute appender factory for a given field.
+             *
+             * @return The attribute appender factory to be applied on the given field.
+             */
+            FieldAttributeAppender.Factory getFieldAppenderFactory();
 
             /**
              * A default implementation of a compiled field registry that simply returns a no-op
@@ -130,24 +108,7 @@ public interface TypeWriter<T> {
                     return attributeAppenderFactory;
                 }
             }
-
-            /**
-             * Returns the field attribute appender factory for a given field.
-             *
-             * @return The attribute appender factory to be applied on the given field.
-             */
-            FieldAttributeAppender.Factory getFieldAppenderFactory();
         }
-
-        /**
-         * Returns the field attribute appender that matches a given field description or a default field
-         * attribute appender if no appender was registered for the given field.
-         *
-         * @param fieldDescription The field description of interest.
-         * @return The registered field attribute appender for the given field or the default appender if no such
-         * appender was found.
-         */
-        Entry target(FieldDescription fieldDescription);
     }
 
     /**
@@ -156,11 +117,46 @@ public interface TypeWriter<T> {
     static interface MethodPool {
 
         /**
+         * Looks up a handler entry for a given method.
+         *
+         * @param methodDescription The method being processed.
+         * @return A handler entry for the given method.
+         */
+        Entry target(MethodDescription methodDescription);
+
+        /**
          * An entry of a method pool that describes how a method is implemented.
          *
          * @see net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool
          */
         static interface Entry {
+
+            /**
+             * Determines if this entry requires a method to be defined for a given instrumentation.
+             *
+             * @return {@code true} if a method should be defined for a given instrumentation.
+             */
+            boolean isDefineMethod();
+
+            /**
+             * The byte code appender to be used for the instrumentation by this entry. Must not
+             * be called if {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Entry#isDefineMethod()}
+             * returns {@code false}.
+             *
+             * @return The byte code appender that is responsible for the instrumentation of a method matched for
+             * this entry.
+             */
+            ByteCodeAppender getByteCodeAppender();
+
+            /**
+             * The method attribute appender that is to be used for the instrumentation by this entry.  Must not
+             * be called if {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Entry#isDefineMethod()}
+             * returns {@code false}.
+             *
+             * @return The method attribute appender that is responsible for the instrumentation of a method matched for
+             * this entry.
+             */
+            MethodAttributeAppender getAttributeAppender();
 
             /**
              * A skip entry that instructs to ignore a method.
@@ -233,42 +229,7 @@ public interface TypeWriter<T> {
                             '}';
                 }
             }
-
-            /**
-             * Determines if this entry requires a method to be defined for a given instrumentation.
-             *
-             * @return {@code true} if a method should be defined for a given instrumentation.
-             */
-            boolean isDefineMethod();
-
-            /**
-             * The byte code appender to be used for the instrumentation by this entry. Must not
-             * be called if {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Entry#isDefineMethod()}
-             * returns {@code false}.
-             *
-             * @return The byte code appender that is responsible for the instrumentation of a method matched for
-             * this entry.
-             */
-            ByteCodeAppender getByteCodeAppender();
-
-            /**
-             * The method attribute appender that is to be used for the instrumentation by this entry.  Must not
-             * be called if {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Entry#isDefineMethod()}
-             * returns {@code false}.
-             *
-             * @return The method attribute appender that is responsible for the instrumentation of a method matched for
-             * this entry.
-             */
-            MethodAttributeAppender getAttributeAppender();
         }
-
-        /**
-         * Looks up a handler entry for a given method.
-         *
-         * @param methodDescription The method being processed.
-         * @return A handler entry for the given method.
-         */
-        Entry target(MethodDescription methodDescription);
     }
 
     /**
@@ -349,11 +310,104 @@ public interface TypeWriter<T> {
     }
 
     /**
+     * An iterable view of a list that can be modified within the same thread without breaking
+     * the iterator. Instead, the iterator will continue its iteration over the additional entries
+     * that were prepended to the list.
+     *
+     * @param <S> The type of the list elements.
+     */
+    static class SameThreadCoModifiableIterable<S> implements Iterable<S> {
+
+        private final List<? extends S> elements;
+
+        /**
+         * Creates a new iterable view.
+         *
+         * @param elements The elements to be represented by this view.
+         */
+        public SameThreadCoModifiableIterable(List<? extends S> elements) {
+            this.elements = elements;
+        }
+
+        @Override
+        public Iterator<S> iterator() {
+            return new SameThreadCoModifiableIterator();
+        }
+
+        private class SameThreadCoModifiableIterator implements Iterator<S> {
+
+            private int index = 0;
+
+            @Override
+            public boolean hasNext() {
+                return index < elements.size();
+            }
+
+            @Override
+            public S next() {
+                return elements.get(index++);
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        }
+    }
+
+    /**
      * A builder that creates a new type writer for given arguments.
      *
      * @param <T> The best known loaded type for the dynamically created type.
      */
     static class Builder<T> {
+
+        private final InstrumentedType instrumentedType;
+        private final Instrumentation.Context instrumentationContext;
+        private final ClassFormatVersion classFormatVersion;
+
+        /**
+         * Creates a new builder for a given instrumented type.
+         *
+         * @param instrumentedType       The instrumented type to be written.
+         * @param instrumentationContext The instrumentation context for this instrumentation.
+         * @param classFormatVersion     The class format version for the type that is written.
+         */
+        public Builder(InstrumentedType instrumentedType,
+                       Instrumentation.Context instrumentationContext,
+                       ClassFormatVersion classFormatVersion) {
+            this.instrumentedType = instrumentedType;
+            this.instrumentationContext = instrumentationContext;
+            this.classFormatVersion = classFormatVersion;
+        }
+
+        private static int overrideModifiers(MethodDescription methodDescription, boolean appendsCode) {
+            if (appendsCode && (methodDescription.isAbstract() || methodDescription.isNative())) {
+                return methodDescription.getModifiers() & ~MethodManifestation.ABSTRACTION_MASK;
+            } else if (!appendsCode && !methodDescription.isAbstract() && !methodDescription.isNative()) {
+                return methodDescription.getModifiers() | Opcodes.ACC_ABSTRACT;
+            } else {
+                return methodDescription.getModifiers();
+            }
+        }
+
+        /**
+         * Creates a new type writer and moves it to its general phase.
+         *
+         * @param classVisitorWrapper A class visitor wrapper to be applied to the ASM class writing process.
+         * @return A new type writer for the given type.
+         */
+        public InGeneralPhase<T> build(ClassVisitorWrapper classVisitorWrapper) {
+            ClassWriter classWriter = new ClassWriter(ASM_MANUAL_FLAG);
+            ClassVisitor classVisitor = classVisitorWrapper.wrap(classWriter);
+            classVisitor.visit(classFormatVersion.getVersionNumber(),
+                    instrumentedType.getModifiers(),
+                    instrumentedType.getInternalName(),
+                    null,
+                    instrumentedType.getSupertype() == null ? null : instrumentedType.getSupertype().getInternalName(),
+                    instrumentedType.getInterfaces().toInternalNames());
+            return new GeneralPhaseTypeWriter<T>(classWriter, classVisitor);
+        }
 
         private abstract class AbstractTypeWriter<T> implements TypeWriter<T> {
 
@@ -459,59 +513,5 @@ public interface TypeWriter<T> {
                 return this;
             }
         }
-
-        private static int overrideModifiers(MethodDescription methodDescription, boolean appendsCode) {
-            if (appendsCode && (methodDescription.isAbstract() || methodDescription.isNative())) {
-                return methodDescription.getModifiers() & ~MethodManifestation.ABSTRACTION_MASK;
-            } else if (!appendsCode && !methodDescription.isAbstract() && !methodDescription.isNative()) {
-                return methodDescription.getModifiers() | Opcodes.ACC_ABSTRACT;
-            } else {
-                return methodDescription.getModifiers();
-            }
-        }
-
-        private final InstrumentedType instrumentedType;
-        private final Instrumentation.Context instrumentationContext;
-        private final ClassFormatVersion classFormatVersion;
-
-        /**
-         * Creates a new builder for a given instrumented type.
-         *
-         * @param instrumentedType       The instrumented type to be written.
-         * @param instrumentationContext The instrumentation context for this instrumentation.
-         * @param classFormatVersion     The class format version for the type that is written.
-         */
-        public Builder(InstrumentedType instrumentedType,
-                       Instrumentation.Context instrumentationContext,
-                       ClassFormatVersion classFormatVersion) {
-            this.instrumentedType = instrumentedType;
-            this.instrumentationContext = instrumentationContext;
-            this.classFormatVersion = classFormatVersion;
-        }
-
-        /**
-         * Creates a new type writer and moves it to its general phase.
-         *
-         * @param classVisitorWrapper A class visitor wrapper to be applied to the ASM class writing process.
-         * @return A new type writer for the given type.
-         */
-        public InGeneralPhase<T> build(ClassVisitorWrapper classVisitorWrapper) {
-            ClassWriter classWriter = new ClassWriter(ASM_MANUAL_FLAG);
-            ClassVisitor classVisitor = classVisitorWrapper.wrap(classWriter);
-            classVisitor.visit(classFormatVersion.getVersionNumber(),
-                    instrumentedType.getModifiers(),
-                    instrumentedType.getInternalName(),
-                    null,
-                    instrumentedType.getSupertype() == null ? null : instrumentedType.getSupertype().getInternalName(),
-                    instrumentedType.getInterfaces().toInternalNames());
-            return new GeneralPhaseTypeWriter<T>(classWriter, classVisitor);
-        }
     }
-
-    /**
-     * Creates the dynamic type.
-     *
-     * @return An unloaded dynamic type that is the outcome of the type writing
-     */
-    DynamicType.Unloaded<T> make();
 }

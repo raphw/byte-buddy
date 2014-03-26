@@ -16,9 +16,74 @@ import java.util.Arrays;
 public interface MethodAttributeAppender {
 
     /**
+     * Applies this attribute appender to a given method visitor.
+     *
+     * @param methodVisitor     The method visitor to which the attributes that are represented by this attribute
+     *                          appender are written to.
+     * @param methodDescription The description of the method for which the given method visitor creates an
+     *                          instrumentation for.
+     */
+    void apply(MethodVisitor methodVisitor, MethodDescription methodDescription);
+
+    /**
+     * A method attribute appender that does not append any attributes.
+     */
+    static enum NoOp implements MethodAttributeAppender, Factory {
+        INSTANCE;
+
+        @Override
+        public MethodAttributeAppender make(TypeDescription typeDescription) {
+            return this;
+        }
+
+        @Override
+        public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
+            /* do nothing */
+        }
+    }
+
+    /**
+     * Implementation of a method attribute appender that writes all annotations of the instrumented method to the
+     * method that is being created. This includes method and parameter annotations.
+     */
+    static enum ForInstrumentedMethod implements MethodAttributeAppender, Factory {
+        INSTANCE;
+
+        @Override
+        public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
+            AnnotationAppender methodAppender =
+                    new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethod(methodVisitor));
+            for (Annotation annotation : methodDescription.getAnnotations()) {
+                methodAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
+            }
+            int i = 0;
+            for (Annotation[] annotations : methodDescription.getParameterAnnotations()) {
+                AnnotationAppender parameterAppender =
+                        new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethodParameter(methodVisitor, i++));
+                for (Annotation annotation : annotations) {
+                    parameterAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
+                }
+            }
+        }
+
+        @Override
+        public MethodAttributeAppender make(TypeDescription typeDescription) {
+            return this;
+        }
+    }
+
+    /**
      * A factory that creates method attribute appenders for a given type.
      */
     static interface Factory {
+
+        /**
+         * Returns a method attribute appender that is applicable for a given type description.
+         *
+         * @param typeDescription The type for which a method attribute appender is to be applied for.
+         * @return The method attribute appender which should be applied for the given type.
+         */
+        MethodAttributeAppender make(TypeDescription typeDescription);
 
         /**
          * A method attribute appender factory that combines several method attribute appender factories to be
@@ -64,31 +129,6 @@ public interface MethodAttributeAppender {
                 return "MethodAttributeAppender.Factory.Compound{" + Arrays.toString(factory) + '}';
             }
         }
-
-        /**
-         * Returns a method attribute appender that is applicable for a given type description.
-         *
-         * @param typeDescription The type for which a method attribute appender is to be applied for.
-         * @return The method attribute appender which should be applied for the given type.
-         */
-        MethodAttributeAppender make(TypeDescription typeDescription);
-    }
-
-    /**
-     * A method attribute appender that does not append any attributes.
-     */
-    static enum NoOp implements MethodAttributeAppender, Factory {
-        INSTANCE;
-
-        @Override
-        public MethodAttributeAppender make(TypeDescription typeDescription) {
-            return this;
-        }
-
-        @Override
-        public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
-            /* do nothing */
-        }
     }
 
     /**
@@ -97,57 +137,8 @@ public interface MethodAttributeAppender {
      */
     static class ForAnnotation implements MethodAttributeAppender, Factory {
 
-        private static interface Target {
-
-            static enum OnMethod implements Target {
-                INSTANCE;
-
-                @Override
-                public AnnotationAppender.Target make(MethodVisitor methodVisitor, MethodDescription methodDescription) {
-                    return new AnnotationAppender.Target.OnMethod(methodVisitor);
-                }
-            }
-
-            static class OnMethodParameter implements Target {
-
-                private final int parameterIndex;
-
-                public OnMethodParameter(int parameterIndex) {
-                    this.parameterIndex = parameterIndex;
-                }
-
-                @Override
-                public AnnotationAppender.Target make(MethodVisitor methodVisitor, MethodDescription methodDescription) {
-                    if (parameterIndex >= methodDescription.getParameterTypes().size()) {
-                        throw new IllegalArgumentException("Method " + methodDescription
-                                + " has less then " + parameterIndex + " parameters");
-                    }
-                    return new AnnotationAppender.Target.OnMethodParameter(methodVisitor, parameterIndex);
-                }
-
-                @Override
-                public boolean equals(Object o) {
-                    return this == o || !(o == null || getClass() != o.getClass())
-                            && parameterIndex == ((OnMethodParameter) o).parameterIndex;
-                }
-
-                @Override
-                public int hashCode() {
-                    return parameterIndex;
-                }
-
-                @Override
-                public String toString() {
-                    return "Target.OnMethodParameter{parameterIndex=" + parameterIndex + '}';
-                }
-            }
-
-            AnnotationAppender.Target make(MethodVisitor methodVisitor, MethodDescription methodDescription);
-        }
-
         private final Annotation[] annotation;
         private final Target target;
-
         /**
          * Create a new annotation appender for a method.
          *
@@ -201,6 +192,54 @@ public interface MethodAttributeAppender {
                     "annotation=" + Arrays.toString(annotation) +
                     ", target=" + target +
                     '}';
+        }
+
+        private static interface Target {
+
+            AnnotationAppender.Target make(MethodVisitor methodVisitor, MethodDescription methodDescription);
+
+            static enum OnMethod implements Target {
+                INSTANCE;
+
+                @Override
+                public AnnotationAppender.Target make(MethodVisitor methodVisitor, MethodDescription methodDescription) {
+                    return new AnnotationAppender.Target.OnMethod(methodVisitor);
+                }
+            }
+
+            static class OnMethodParameter implements Target {
+
+                private final int parameterIndex;
+
+                public OnMethodParameter(int parameterIndex) {
+                    this.parameterIndex = parameterIndex;
+                }
+
+                @Override
+                public AnnotationAppender.Target make(MethodVisitor methodVisitor, MethodDescription methodDescription) {
+                    if (parameterIndex >= methodDescription.getParameterTypes().size()) {
+                        throw new IllegalArgumentException("Method " + methodDescription
+                                + " has less then " + parameterIndex + " parameters");
+                    }
+                    return new AnnotationAppender.Target.OnMethodParameter(methodVisitor, parameterIndex);
+                }
+
+                @Override
+                public boolean equals(Object o) {
+                    return this == o || !(o == null || getClass() != o.getClass())
+                            && parameterIndex == ((OnMethodParameter) o).parameterIndex;
+                }
+
+                @Override
+                public int hashCode() {
+                    return parameterIndex;
+                }
+
+                @Override
+                public String toString() {
+                    return "Target.OnMethodParameter{parameterIndex=" + parameterIndex + '}';
+                }
+            }
         }
     }
 
@@ -305,36 +344,6 @@ public interface MethodAttributeAppender {
     }
 
     /**
-     * Implementation of a method attribute appender that writes all annotations of the instrumented method to the
-     * method that is being created. This includes method and parameter annotations.
-     */
-    static enum ForInstrumentedMethod implements MethodAttributeAppender, Factory {
-        INSTANCE;
-
-        @Override
-        public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
-            AnnotationAppender methodAppender =
-                    new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethod(methodVisitor));
-            for (Annotation annotation : methodDescription.getAnnotations()) {
-                methodAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
-            }
-            int i = 0;
-            for (Annotation[] annotations : methodDescription.getParameterAnnotations()) {
-                AnnotationAppender parameterAppender =
-                        new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethodParameter(methodVisitor, i++));
-                for (Annotation annotation : annotations) {
-                    parameterAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
-                }
-            }
-        }
-
-        @Override
-        public MethodAttributeAppender make(TypeDescription typeDescription) {
-            return this;
-        }
-    }
-
-    /**
      * A method attribute appender that combines several method attribute appenders to be represented as a single
      * method attribute appender.
      */
@@ -375,14 +384,4 @@ public interface MethodAttributeAppender {
             return "MethodAttributeAppender.Compound{" + Arrays.toString(methodAttributeAppender) + '}';
         }
     }
-
-    /**
-     * Applies this attribute appender to a given method visitor.
-     *
-     * @param methodVisitor     The method visitor to which the attributes that are represented by this attribute
-     *                          appender are written to.
-     * @param methodDescription The description of the method for which the given method visitor creates an
-     *                          instrumentation for.
-     */
-    void apply(MethodVisitor methodVisitor, MethodDescription methodDescription);
 }

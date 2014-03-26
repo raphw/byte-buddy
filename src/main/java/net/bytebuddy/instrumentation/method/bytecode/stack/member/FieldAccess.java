@@ -14,7 +14,29 @@ public enum FieldAccess {
 
     STATIC(Opcodes.PUTSTATIC, Opcodes.GETSTATIC, StackSize.ZERO),
     INSTANCE(Opcodes.PUTFIELD, Opcodes.GETFIELD, StackSize.SINGLE);
+    private final int putterOpcode;
+    private final int getterOpcode;
+    private final int targetSizeChange;
 
+    private FieldAccess(int putterOpcode, int getterOpcode, StackSize targetSizeChange) {
+        this.putterOpcode = putterOpcode;
+        this.getterOpcode = getterOpcode;
+        this.targetSizeChange = targetSizeChange.getSize();
+    }
+
+    /**
+     * Creates a field access representation for a given field.
+     *
+     * @param fieldDescription The field to be accessed.
+     * @return A field access definition for the given field.
+     */
+    public static Defined forField(FieldDescription fieldDescription) {
+        if (fieldDescription.isStatic()) {
+            return STATIC.new AccessDispatcher(fieldDescription);
+        } else {
+            return INSTANCE.new AccessDispatcher(fieldDescription);
+        }
+    }
     /**
      * Representation of a field access for which a getter and a putter can be created.
      */
@@ -43,6 +65,43 @@ public enum FieldAccess {
     }
 
     private class AccessDispatcher implements Defined {
+
+        private final FieldDescription fieldDescription;
+
+        private AccessDispatcher(FieldDescription fieldDescription) {
+            this.fieldDescription = fieldDescription;
+        }
+
+        @Override
+        public StackManipulation getter() {
+            return new FieldGetInstruction();
+        }
+
+        @Override
+        public StackManipulation putter() {
+            return new FieldPutInstruction();
+        }
+
+        @Override
+        public FieldDescription getDefinedField() {
+            return fieldDescription;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && fieldDescription.equals(((AccessDispatcher) other).fieldDescription);
+        }
+
+        @Override
+        public int hashCode() {
+            return fieldDescription.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "FieldAccess.AccessDispatcher{fieldDescription=" + fieldDescription + '}';
+        }
 
         private abstract class AbstractFieldInstruction implements StackManipulation {
 
@@ -133,66 +192,5 @@ public enum FieldAccess {
                 return AccessDispatcher.this;
             }
         }
-
-        private final FieldDescription fieldDescription;
-
-        private AccessDispatcher(FieldDescription fieldDescription) {
-            this.fieldDescription = fieldDescription;
-        }
-
-        @Override
-        public StackManipulation getter() {
-            return new FieldGetInstruction();
-        }
-
-        @Override
-        public StackManipulation putter() {
-            return new FieldPutInstruction();
-        }
-
-        @Override
-        public FieldDescription getDefinedField() {
-            return fieldDescription;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && fieldDescription.equals(((AccessDispatcher) other).fieldDescription);
-        }
-
-        @Override
-        public int hashCode() {
-            return fieldDescription.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "FieldAccess.AccessDispatcher{fieldDescription=" + fieldDescription + '}';
-        }
-    }
-
-    /**
-     * Creates a field access representation for a given field.
-     *
-     * @param fieldDescription The field to be accessed.
-     * @return A field access definition for the given field.
-     */
-    public static Defined forField(FieldDescription fieldDescription) {
-        if (fieldDescription.isStatic()) {
-            return STATIC.new AccessDispatcher(fieldDescription);
-        } else {
-            return INSTANCE.new AccessDispatcher(fieldDescription);
-        }
-    }
-
-    private final int putterOpcode;
-    private final int getterOpcode;
-    private final int targetSizeChange;
-
-    private FieldAccess(int putterOpcode, int getterOpcode, StackSize targetSizeChange) {
-        this.putterOpcode = putterOpcode;
-        this.getterOpcode = getterOpcode;
-        this.targetSizeChange = targetSizeChange.getSize();
     }
 }

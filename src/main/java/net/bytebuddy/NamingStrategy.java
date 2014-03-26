@@ -17,6 +17,17 @@ import java.util.Random;
 public interface NamingStrategy {
 
     /**
+     * Generates a fully qualified internalName for a Java type. The resulting should not lie within the {@code java.lang}
+     * package since such types cannot be loaded using a normal class loader. Also, the internalName should not yet be taken
+     * by another type since this would cause conflicts in the internalName space. Therefore, it is recommendable to include
+     * a random sequence within the internalName.
+     *
+     * @param unnamedType An unnamed type that is to be named.
+     * @return A valid identifier for a Java type.
+     */
+    String getName(UnnamedType unnamedType);
+
+    /**
      * An description of a type which is to be named.
      */
     static interface UnnamedType {
@@ -140,15 +151,4 @@ public interface NamingStrategy {
             return name;
         }
     }
-
-    /**
-     * Generates a fully qualified internalName for a Java type. The resulting should not lie within the {@code java.lang}
-     * package since such types cannot be loaded using a normal class loader. Also, the internalName should not yet be taken
-     * by another type since this would cause conflicts in the internalName space. Therefore, it is recommendable to include
-     * a random sequence within the internalName.
-     *
-     * @param unnamedType An unnamed type that is to be named.
-     * @return A valid identifier for a Java type.
-     */
-    String getName(UnnamedType unnamedType);
 }

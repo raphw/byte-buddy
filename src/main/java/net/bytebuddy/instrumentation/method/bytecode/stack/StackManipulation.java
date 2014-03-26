@@ -11,6 +11,22 @@ import java.util.Arrays;
 public interface StackManipulation {
 
     /**
+     * Determines if this stack manipulation is valid.
+     *
+     * @return If {@code false}, this manipulation cannot be applied and should throw an exception.
+     */
+    boolean isValid();
+
+    /**
+     * Applies the stack manipulation that is described by this instance.
+     *
+     * @param methodVisitor          The method visitor used to write the method implementation to.
+     * @param instrumentationContext The context of the current instrumentation.
+     * @return The changes to the size of the operand stack that are implied by this stack manipulation.
+     */
+    Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext);
+
+    /**
      * A description of the size change that is imposed by some
      * {@link net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation}.
      */
@@ -133,20 +149,4 @@ public interface StackManipulation {
             return "StackManipulation.Compound{" + Arrays.asList(stackManipulation) + "}";
         }
     }
-
-    /**
-     * Determines if this stack manipulation is valid.
-     *
-     * @return If {@code false}, this manipulation cannot be applied and should throw an exception.
-     */
-    boolean isValid();
-
-    /**
-     * Applies the stack manipulation that is described by this instance.
-     *
-     * @param methodVisitor          The method visitor used to write the method implementation to.
-     * @param instrumentationContext The context of the current instrumentation.
-     * @return The changes to the size of the operand stack that are implied by this stack manipulation.
-     */
-    Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext);
 }

@@ -86,27 +86,30 @@ public enum PrimitiveWideningDelegate {
             IllegalStackManipulation.INSTANCE,                                                     // to long
             IllegalStackManipulation.INSTANCE,                                                     // to float
             LegalTrivialStackManipulation.INSTANCE);                                               // to double
-
-    private static class WideningStackManipulation implements StackManipulation {
-
-        private final int conversionInstruction;
-        private final Size size;
-
-        public WideningStackManipulation(int conversionInstruction, Size size) {
-            this.conversionInstruction = conversionInstruction;
-            this.size = size;
-        }
-
-        @Override
-        public boolean isValid() {
-            return true;
-        }
-
-        @Override
-        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-            methodVisitor.visitInsn(conversionInstruction);
-            return size;
-        }
+    private final StackManipulation toBooleanStackManipulation;
+    private final StackManipulation toByteStackManipulation;
+    private final StackManipulation toShortStackManipulation;
+    private final StackManipulation toCharacterStackManipulation;
+    private final StackManipulation toIntegerStackManipulation;
+    private final StackManipulation toLongStackManipulation;
+    private final StackManipulation toFloatStackManipulation;
+    private final StackManipulation toDoubleStackManipulation;
+    private PrimitiveWideningDelegate(StackManipulation toBooleanStackManipulation,
+                                      StackManipulation toByteStackManipulation,
+                                      StackManipulation toShortStackManipulation,
+                                      StackManipulation toCharacterStackManipulation,
+                                      StackManipulation toIntegerStackManipulation,
+                                      StackManipulation toLongStackManipulation,
+                                      StackManipulation toFloatStackManipulation,
+                                      StackManipulation toDoubleStackManipulation) {
+        this.toBooleanStackManipulation = toBooleanStackManipulation;
+        this.toByteStackManipulation = toByteStackManipulation;
+        this.toShortStackManipulation = toShortStackManipulation;
+        this.toCharacterStackManipulation = toCharacterStackManipulation;
+        this.toIntegerStackManipulation = toIntegerStackManipulation;
+        this.toLongStackManipulation = toLongStackManipulation;
+        this.toFloatStackManipulation = toFloatStackManipulation;
+        this.toDoubleStackManipulation = toDoubleStackManipulation;
     }
 
     /**
@@ -137,33 +140,6 @@ public enum PrimitiveWideningDelegate {
         }
     }
 
-    private final StackManipulation toBooleanStackManipulation;
-    private final StackManipulation toByteStackManipulation;
-    private final StackManipulation toShortStackManipulation;
-    private final StackManipulation toCharacterStackManipulation;
-    private final StackManipulation toIntegerStackManipulation;
-    private final StackManipulation toLongStackManipulation;
-    private final StackManipulation toFloatStackManipulation;
-    private final StackManipulation toDoubleStackManipulation;
-
-    private PrimitiveWideningDelegate(StackManipulation toBooleanStackManipulation,
-                                      StackManipulation toByteStackManipulation,
-                                      StackManipulation toShortStackManipulation,
-                                      StackManipulation toCharacterStackManipulation,
-                                      StackManipulation toIntegerStackManipulation,
-                                      StackManipulation toLongStackManipulation,
-                                      StackManipulation toFloatStackManipulation,
-                                      StackManipulation toDoubleStackManipulation) {
-        this.toBooleanStackManipulation = toBooleanStackManipulation;
-        this.toByteStackManipulation = toByteStackManipulation;
-        this.toShortStackManipulation = toShortStackManipulation;
-        this.toCharacterStackManipulation = toCharacterStackManipulation;
-        this.toIntegerStackManipulation = toIntegerStackManipulation;
-        this.toLongStackManipulation = toLongStackManipulation;
-        this.toFloatStackManipulation = toFloatStackManipulation;
-        this.toDoubleStackManipulation = toDoubleStackManipulation;
-    }
-
     /**
      * Attempts to widen the represented type into another type.
      *
@@ -189,6 +165,28 @@ public enum PrimitiveWideningDelegate {
             return toDoubleStackManipulation;
         } else {
             throw new IllegalArgumentException("Not a primitive non-void type: " + typeDescription);
+        }
+    }
+
+    private static class WideningStackManipulation implements StackManipulation {
+
+        private final int conversionInstruction;
+        private final Size size;
+
+        public WideningStackManipulation(int conversionInstruction, Size size) {
+            this.conversionInstruction = conversionInstruction;
+            this.size = size;
+        }
+
+        @Override
+        public boolean isValid() {
+            return true;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+            methodVisitor.visitInsn(conversionInstruction);
+            return size;
         }
     }
 }

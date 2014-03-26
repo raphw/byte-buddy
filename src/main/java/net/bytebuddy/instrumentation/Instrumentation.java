@@ -31,9 +31,76 @@ import java.util.*;
 public interface Instrumentation {
 
     /**
+     * During the preparation phase of an instrumentation, implementations are eligible to adding fields or methods
+     * to the currently instrumented type. All methods that are added by this instrumentation are required to be implemented
+     * by the {@link net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender} that is emitted
+     * on the call to
+     * {@link net.bytebuddy.instrumentation.Instrumentation#appender(net.bytebuddy.instrumentation.type.TypeDescription)}
+     * call. On this method call, type initializers can also be added to the instrumented type.
+     *
+     * @param instrumentedType The instrumented type that is the basis of the ongoing instrumentation.
+     * @return The instrumented type with any applied changes, if any.
+     */
+    InstrumentedType prepare(InstrumentedType instrumentedType);
+
+    /**
+     * Creates a byte code appender that determines the implementation of the instrumented type's methods.
+     *
+     * @param instrumentedType The instrumented type that is to be created.
+     * @return A byte code appender for implementing methods delegated to this instrumentation. This byte code appender
+     * is also responsible for handling methods that were added by this instrumentation on the call to
+     * {@link net.bytebuddy.instrumentation.Instrumentation#prepare(net.bytebuddy.instrumentation.type.InstrumentedType)}.
+     */
+    ByteCodeAppender appender(TypeDescription instrumentedType);
+
+    /**
+     * An instrumentation for an abstract method that does not append any code and will throw an exception if it is
+     * attempted to be composed with other methods that do provide an implementation.
+     */
+    static enum ForAbstractMethod implements Instrumentation, ByteCodeAppender {
+        INSTANCE;
+
+        @Override
+        public InstrumentedType prepare(InstrumentedType instrumentedType) {
+            return instrumentedType;
+        }
+
+        @Override
+        public ByteCodeAppender appender(TypeDescription instrumentedType) {
+            return this;
+        }
+
+        @Override
+        public boolean appendsCode() {
+            return false;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
+            throw new IllegalStateException();
+        }
+    }
+
+    /**
      * The context for an instrumentation application.
      */
     static interface Context {
+
+        /**
+         * Registers an auxiliary type as required for the current instrumentation. Registering a type will cause the
+         * creation of this type even if this type is not effectively used for the current instrumentation.
+         *
+         * @param auxiliaryType The auxiliary type that is required for the current instrumentation.
+         * @return A description of the registered auxiliary type.
+         */
+        TypeDescription register(AuxiliaryType auxiliaryType);
+
+        /**
+         * Returns a list of auxiliary types that are currently registered for the instrumentation for this context.
+         *
+         * @return A list containing all auxiliary types currently registered.
+         */
+        List<DynamicType> getRegisteredAuxiliaryTypes();
 
         /**
          * A convenience implementation of an instrumentation context that allows for a better composition
@@ -41,26 +108,11 @@ public interface Instrumentation {
          */
         static class Default implements Context, AuxiliaryType.MethodAccessorFactory {
 
-            /**
-             * Representation of a naming strategy for an auxiliary type.
-             */
-            public static interface AuxiliaryTypeNamingStrategy {
-
-                /**
-                 * NAmes an auxiliary type.
-                 *
-                 * @param auxiliaryType The auxiliary type to name.
-                 * @return The fully qualified name for the given auxiliary type.
-                 */
-                String name(AuxiliaryType auxiliaryType);
-            }
-
             private final ClassFormatVersion classFormatVersion;
             private final AuxiliaryTypeNamingStrategy auxiliaryTypeNamingStrategy;
             private final AuxiliaryType.MethodAccessorFactory methodAccessorFactory;
             private final Map<AuxiliaryType, DynamicType> auxiliaryTypes;
             private final Map<MethodDescription, MethodDescription> registeredAccessorMethods;
-
             /**
              * Creates a new default instrumentation context.
              *
@@ -114,50 +166,20 @@ public interface Instrumentation {
                         ", registeredAccessorMethods=" + registeredAccessorMethods +
                         '}';
             }
-        }
 
-        /**
-         * Registers an auxiliary type as required for the current instrumentation. Registering a type will cause the
-         * creation of this type even if this type is not effectively used for the current instrumentation.
-         *
-         * @param auxiliaryType The auxiliary type that is required for the current instrumentation.
-         * @return A description of the registered auxiliary type.
-         */
-        TypeDescription register(AuxiliaryType auxiliaryType);
+            /**
+             * Representation of a naming strategy for an auxiliary type.
+             */
+            public static interface AuxiliaryTypeNamingStrategy {
 
-        /**
-         * Returns a list of auxiliary types that are currently registered for the instrumentation for this context.
-         *
-         * @return A list containing all auxiliary types currently registered.
-         */
-        List<DynamicType> getRegisteredAuxiliaryTypes();
-    }
-
-    /**
-     * An instrumentation for an abstract method that does not append any code and will throw an exception if it is
-     * attempted to be composed with other methods that do provide an implementation.
-     */
-    static enum ForAbstractMethod implements Instrumentation, ByteCodeAppender {
-        INSTANCE;
-
-        @Override
-        public InstrumentedType prepare(InstrumentedType instrumentedType) {
-            return instrumentedType;
-        }
-
-        @Override
-        public ByteCodeAppender appender(TypeDescription instrumentedType) {
-            return this;
-        }
-
-        @Override
-        public boolean appendsCode() {
-            return false;
-        }
-
-        @Override
-        public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
-            throw new IllegalStateException();
+                /**
+                 * NAmes an auxiliary type.
+                 *
+                 * @param auxiliaryType The auxiliary type to name.
+                 * @return The fully qualified name for the given auxiliary type.
+                 */
+                String name(AuxiliaryType auxiliaryType);
+            }
         }
     }
 
@@ -217,27 +239,4 @@ public interface Instrumentation {
             return "Compound{" + Arrays.toString(instrumentation) + '}';
         }
     }
-
-    /**
-     * During the preparation phase of an instrumentation, implementations are eligible to adding fields or methods
-     * to the currently instrumented type. All methods that are added by this instrumentation are required to be implemented
-     * by the {@link net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender} that is emitted
-     * on the call to
-     * {@link net.bytebuddy.instrumentation.Instrumentation#appender(net.bytebuddy.instrumentation.type.TypeDescription)}
-     * call. On this method call, type initializers can also be added to the instrumented type.
-     *
-     * @param instrumentedType The instrumented type that is the basis of the ongoing instrumentation.
-     * @return The instrumented type with any applied changes, if any.
-     */
-    InstrumentedType prepare(InstrumentedType instrumentedType);
-
-    /**
-     * Creates a byte code appender that determines the implementation of the instrumented type's methods.
-     *
-     * @param instrumentedType The instrumented type that is to be created.
-     * @return A byte code appender for implementing methods delegated to this instrumentation. This byte code appender
-     * is also responsible for handling methods that were added by this instrumentation on the call to
-     * {@link net.bytebuddy.instrumentation.Instrumentation#prepare(net.bytebuddy.instrumentation.type.InstrumentedType)}.
-     */
-    ByteCodeAppender appender(TypeDescription instrumentedType);
 }

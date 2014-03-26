@@ -15,6 +15,16 @@ import java.lang.reflect.Method;
 public interface AnnotationAppender {
 
     /**
+     * Terminally writes the given annotation to the specified target.
+     *
+     * @param annotation           The annotation to be written.
+     * @param annotationVisibility Determines the annotation visibility for the given annotation.
+     * @return Usually {@code this} or any other annotation appender capable of writing another annotation to
+     * the specified target.
+     */
+    AnnotationAppender append(Annotation annotation, AnnotationVisibility annotationVisibility);
+
+    /**
      * Determines if an annotation should be written to a specified target and if the annotation should be marked
      * as being visible at runtime.
      */
@@ -23,6 +33,12 @@ public interface AnnotationAppender {
         RUNTIME(true, false),
         CLASS_FILE(false, false),
         INVISIBLE(false, true);
+        private final boolean visible;
+        private final boolean suppressed;
+        private AnnotationVisibility(boolean visible, boolean suppressed) {
+            this.visible = visible;
+            this.suppressed = suppressed;
+        }
 
         /**
          * Finds the annotation visibility that is declared for a given annotation.
@@ -40,14 +56,6 @@ public interface AnnotationAppender {
             } else {
                 return RUNTIME;
             }
-        }
-
-        private final boolean visible;
-        private final boolean suppressed;
-
-        private AnnotationVisibility(boolean visible, boolean suppressed) {
-            this.visible = visible;
-            this.suppressed = suppressed;
         }
 
         /**
@@ -76,6 +84,16 @@ public interface AnnotationAppender {
      * Represents a target for an annotation writing process.
      */
     static interface Target {
+
+        /**
+         * Creates an annotation visitor that is going to consume an annotation writing.
+         *
+         * @param annotationTypeDescriptor The type descriptor for the annotation to be written.
+         * @param visible                  {@code true} if the annotation is to be visible at runtime.
+         * @return An annotation visitor that is going to consume an annotation that is written to the latter
+         * by the caller of this method.
+         */
+        AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible);
 
         /**
          * Target for an annotation that is written to a Java type.
@@ -196,16 +214,6 @@ public interface AnnotationAppender {
                         '}';
             }
         }
-
-        /**
-         * Creates an annotation visitor that is going to consume an annotation writing.
-         *
-         * @param annotationTypeDescriptor The type descriptor for the annotation to be written.
-         * @param visible                  {@code true} if the annotation is to be visible at runtime.
-         * @return An annotation visitor that is going to consume an annotation that is written to the latter
-         * by the caller of this method.
-         */
-        AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible);
     }
 
     /**
@@ -291,14 +299,4 @@ public interface AnnotationAppender {
             return "Default{target=" + target + '}';
         }
     }
-
-    /**
-     * Terminally writes the given annotation to the specified target.
-     *
-     * @param annotation           The annotation to be written.
-     * @param annotationVisibility Determines the annotation visibility for the given annotation.
-     * @return Usually {@code this} or any other annotation appender capable of writing another annotation to
-     * the specified target.
-     */
-    AnnotationAppender append(Annotation annotation, AnnotationVisibility annotationVisibility);
 }

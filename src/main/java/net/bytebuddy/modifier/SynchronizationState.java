@@ -10,6 +10,11 @@ public enum SynchronizationState implements ModifierContributor.ForMethod {
 
     PLAIN(EMPTY_MASK),
     SYNCHRONIZED(Opcodes.ACC_SYNCHRONIZED);
+    private final int mask;
+
+    private SynchronizationState(int mask) {
+        this.mask = mask;
+    }
 
     /**
      * Creates a synchronization state from a boolean value indicating if a method is supposed to be synchronized.
@@ -19,12 +24,6 @@ public enum SynchronizationState implements ModifierContributor.ForMethod {
      */
     public static SynchronizationState is(boolean isSynchronized) {
         return isSynchronized ? SYNCHRONIZED : PLAIN;
-    }
-
-    private final int mask;
-
-    private SynchronizationState(int mask) {
-        this.mask = mask;
     }
 
     @Override

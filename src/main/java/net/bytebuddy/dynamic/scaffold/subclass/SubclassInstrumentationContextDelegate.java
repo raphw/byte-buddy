@@ -41,123 +41,14 @@ public class SubclassInstrumentationContextDelegate
     public static final String ABSTRACT_METHOD_WARNING_PREFIX = "There is no super implementation for: ";
 
     private static final String DEFAULT_PREFIX = "delegate";
-
-    private static class SameSignatureMethodCall implements Entry, ByteCodeAppender {
-
-        private final StackManipulation targetMethodCall;
-
-        private SameSignatureMethodCall(MethodDescription accessorMethod, TypeDescription instrumentedType) {
-            this.targetMethodCall = MethodInvocation.invoke(accessorMethod).special(instrumentedType.getSupertype());
-        }
-
-        @Override
-        public ByteCodeAppender getByteCodeAppender() {
-            return this;
-        }
-
-        @Override
-        public boolean isDefineMethod() {
-            return true;
-        }
-
-        @Override
-        public boolean appendsCode() {
-            return true;
-        }
-
-        @Override
-        public Size apply(MethodVisitor methodVisitor,
-                          Instrumentation.Context instrumentationContext,
-                          MethodDescription instrumentedMethod) {
-            StackManipulation.Size stackSize = new StackManipulation.Compound(
-                    MethodVariableAccess.loadThisAndArguments(instrumentedMethod),
-                    targetMethodCall,
-                    MethodReturn.returning(instrumentedMethod.getReturnType())
-            ).apply(methodVisitor, instrumentationContext);
-            return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
-        }
-
-        @Override
-        public MethodAttributeAppender getAttributeAppender() {
-            return MethodAttributeAppender.NoOp.INSTANCE;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && targetMethodCall.equals(((SameSignatureMethodCall) other).targetMethodCall);
-        }
-
-        @Override
-        public int hashCode() {
-            return targetMethodCall.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "SameSignatureMethodCall{targetMethodCall=" + targetMethodCall + '}';
-        }
-    }
-
-    private static enum AbstractMethodCall implements Entry, ByteCodeAppender {
-        INSTANCE;
-
-        private final TypeDescription exceptionType;
-        private final MethodDescription constructor;
-
-        private AbstractMethodCall() {
-            exceptionType = new TypeDescription.ForLoadedType(RuntimeException.class);
-            constructor = exceptionType.getDeclaredMethods()
-                    .filter(isConstructor().and(takesArguments(String.class))).getOnly();
-        }
-
-        @Override
-        public boolean isDefineMethod() {
-            return true;
-        }
-
-        @Override
-        public ByteCodeAppender getByteCodeAppender() {
-            return this;
-        }
-
-        @Override
-        public MethodAttributeAppender getAttributeAppender() {
-            return MethodAttributeAppender.NoOp.INSTANCE;
-        }
-
-
-        @Override
-        public boolean appendsCode() {
-            return true;
-        }
-
-        @Override
-        public Size apply(MethodVisitor methodVisitor,
-                          Instrumentation.Context instrumentationContext,
-                          MethodDescription instrumentedMethod) {
-            StackManipulation.Size stackSize = new StackManipulation.Compound(
-                    TypeCreation.forType(exceptionType),
-                    Duplication.SINGLE,
-                    new TextConstant(ABSTRACT_METHOD_WARNING_PREFIX + instrumentedMethod),
-                    MethodInvocation.invoke(constructor),
-                    Throw.INSTANCE
-            ).apply(methodVisitor, instrumentationContext);
-            return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
-        }
-    }
-
     private final String prefix;
-
     private final Random random;
     private final BridgeMethodResolver bridgeMethodResolver;
-
     private final InstrumentedType instrumentedType;
     private final List<MethodDescription> orderedAccessorMethods;
     private final Map<MethodDescription, MethodDescription> knownTargetMethodsToAccessorMethod;
     private final Map<MethodDescription, Entry> registeredAccessorMethodToTargetMethodCall;
     private final Map<String, MethodDescription> reachableMethods;
-
     /**
      * Creates a new delegate with a default prefix.
      *
@@ -169,7 +60,6 @@ public class SubclassInstrumentationContextDelegate
                                                   BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
         this(instrumentedType, bridgeMethodResolverFactory, DEFAULT_PREFIX);
     }
-
     /**
      * Creates a new delegate.
      *
@@ -254,5 +144,110 @@ public class SubclassInstrumentationContextDelegate
                 ", random=" + random +
                 ", knownTargetMethodsToAccessorMethod=" + knownTargetMethodsToAccessorMethod +
                 '}';
+    }
+
+    private static enum AbstractMethodCall implements Entry, ByteCodeAppender {
+        INSTANCE;
+
+        private final TypeDescription exceptionType;
+        private final MethodDescription constructor;
+
+        private AbstractMethodCall() {
+            exceptionType = new TypeDescription.ForLoadedType(RuntimeException.class);
+            constructor = exceptionType.getDeclaredMethods()
+                    .filter(isConstructor().and(takesArguments(String.class))).getOnly();
+        }
+
+        @Override
+        public boolean isDefineMethod() {
+            return true;
+        }
+
+        @Override
+        public ByteCodeAppender getByteCodeAppender() {
+            return this;
+        }
+
+        @Override
+        public MethodAttributeAppender getAttributeAppender() {
+            return MethodAttributeAppender.NoOp.INSTANCE;
+        }
+
+
+        @Override
+        public boolean appendsCode() {
+            return true;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor,
+                          Instrumentation.Context instrumentationContext,
+                          MethodDescription instrumentedMethod) {
+            StackManipulation.Size stackSize = new StackManipulation.Compound(
+                    TypeCreation.forType(exceptionType),
+                    Duplication.SINGLE,
+                    new TextConstant(ABSTRACT_METHOD_WARNING_PREFIX + instrumentedMethod),
+                    MethodInvocation.invoke(constructor),
+                    Throw.INSTANCE
+            ).apply(methodVisitor, instrumentationContext);
+            return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
+        }
+    }
+
+    private static class SameSignatureMethodCall implements Entry, ByteCodeAppender {
+
+        private final StackManipulation targetMethodCall;
+
+        private SameSignatureMethodCall(MethodDescription accessorMethod, TypeDescription instrumentedType) {
+            this.targetMethodCall = MethodInvocation.invoke(accessorMethod).special(instrumentedType.getSupertype());
+        }
+
+        @Override
+        public ByteCodeAppender getByteCodeAppender() {
+            return this;
+        }
+
+        @Override
+        public boolean isDefineMethod() {
+            return true;
+        }
+
+        @Override
+        public boolean appendsCode() {
+            return true;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor,
+                          Instrumentation.Context instrumentationContext,
+                          MethodDescription instrumentedMethod) {
+            StackManipulation.Size stackSize = new StackManipulation.Compound(
+                    MethodVariableAccess.loadThisAndArguments(instrumentedMethod),
+                    targetMethodCall,
+                    MethodReturn.returning(instrumentedMethod.getReturnType())
+            ).apply(methodVisitor, instrumentationContext);
+            return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
+        }
+
+        @Override
+        public MethodAttributeAppender getAttributeAppender() {
+            return MethodAttributeAppender.NoOp.INSTANCE;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && targetMethodCall.equals(((SameSignatureMethodCall) other).targetMethodCall);
+        }
+
+        @Override
+        public int hashCode() {
+            return targetMethodCall.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "SameSignatureMethodCall{targetMethodCall=" + targetMethodCall + '}';
+        }
     }
 }

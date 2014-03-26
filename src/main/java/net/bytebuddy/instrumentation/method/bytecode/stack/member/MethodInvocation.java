@@ -16,6 +16,29 @@ public enum MethodInvocation {
     INTERFACE(Opcodes.INVOKEINTERFACE),
     STATIC(Opcodes.INVOKESTATIC),
     SPECIAL(Opcodes.INVOKESPECIAL);
+    private final int invocationOpcode;
+
+    private MethodInvocation(int callOpcode) {
+        this.invocationOpcode = callOpcode;
+    }
+
+    /**
+     * Creates a method invocation with an implicitly determined invocation type.
+     *
+     * @param methodDescription The method to be invoked.
+     * @return A stack manipulation with implicitly determined invocation type.
+     */
+    public static WithImplicitInvocationTargetType invoke(MethodDescription methodDescription) {
+        if (methodDescription.isStatic()) { // Check this property first, private static methods must use INVOKESTATIC.
+            return STATIC.new Invocation(methodDescription);
+        } else if (methodDescription.isPrivate() || methodDescription.isConstructor()) {
+            return SPECIAL.new Invocation(methodDescription);
+        } else if (methodDescription.getDeclaringType().isInterface()) {
+            return INTERFACE.new Invocation(methodDescription);
+        } else {
+            return VIRTUAL.new Invocation(methodDescription);
+        }
+    }
 
     /**
      * Represents a method invocation where the invocation type (static, virtual, special, interface) is derived
@@ -122,29 +145,5 @@ public enum MethodInvocation {
         public MethodInvocation getImplicitInvocationType() {
             return MethodInvocation.this;
         }
-    }
-
-    /**
-     * Creates a method invocation with an implicitly determined invocation type.
-     *
-     * @param methodDescription The method to be invoked.
-     * @return A stack manipulation with implicitly determined invocation type.
-     */
-    public static WithImplicitInvocationTargetType invoke(MethodDescription methodDescription) {
-        if (methodDescription.isStatic()) { // Check this property first, private static methods must use INVOKESTATIC.
-            return STATIC.new Invocation(methodDescription);
-        } else if (methodDescription.isPrivate() || methodDescription.isConstructor()) {
-            return SPECIAL.new Invocation(methodDescription);
-        } else if (methodDescription.getDeclaringType().isInterface()) {
-            return INTERFACE.new Invocation(methodDescription);
-        } else {
-            return VIRTUAL.new Invocation(methodDescription);
-        }
-    }
-
-    private final int invocationOpcode;
-
-    private MethodInvocation(int callOpcode) {
-        this.invocationOpcode = callOpcode;
     }
 }

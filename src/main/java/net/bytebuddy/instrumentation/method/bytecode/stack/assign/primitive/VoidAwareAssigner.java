@@ -24,44 +24,8 @@ import org.objectweb.asm.Opcodes;
  */
 public class VoidAwareAssigner implements Assigner {
 
-    private static enum ValueRemovingStackManipulation implements StackManipulation {
-
-        POP_ONE_FRAME(Opcodes.POP, StackSize.SINGLE.toDecreasingSize()),
-        POP_TWO_FRAMES(Opcodes.POP2, StackSize.DOUBLE.toDecreasingSize());
-
-        public static ValueRemovingStackManipulation of(TypeDescription typeDescription) {
-            if (typeDescription.represents(long.class) || typeDescription.represents(double.class)) {
-                return POP_TWO_FRAMES;
-            } else if (typeDescription.represents(void.class)) {
-                throw new IllegalArgumentException("Cannot pop void type from stack");
-            } else {
-                return POP_ONE_FRAME;
-            }
-        }
-
-        private final int removalOpCode;
-        private final Size sizeChange;
-
-        private ValueRemovingStackManipulation(int removalOpCode, Size sizeChange) {
-            this.removalOpCode = removalOpCode;
-            this.sizeChange = sizeChange;
-        }
-
-        @Override
-        public boolean isValid() {
-            return true;
-        }
-
-        @Override
-        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-            methodVisitor.visitInsn(removalOpCode);
-            return sizeChange;
-        }
-    }
-
     private final Assigner nonVoidAwareAssigner;
     private final boolean returnDefaultValue;
-
     /**
      * Creates a new assigner that is capable of handling void types.
      *
@@ -103,5 +67,38 @@ public class VoidAwareAssigner implements Assigner {
     @Override
     public String toString() {
         return "VoidAwareAssigner{chained=" + nonVoidAwareAssigner + ", returnDefaultValue=" + returnDefaultValue + '}';
+    }
+
+    private static enum ValueRemovingStackManipulation implements StackManipulation {
+
+        POP_ONE_FRAME(Opcodes.POP, StackSize.SINGLE.toDecreasingSize()),
+        POP_TWO_FRAMES(Opcodes.POP2, StackSize.DOUBLE.toDecreasingSize());
+        private final int removalOpCode;
+        private final Size sizeChange;
+        private ValueRemovingStackManipulation(int removalOpCode, Size sizeChange) {
+            this.removalOpCode = removalOpCode;
+            this.sizeChange = sizeChange;
+        }
+
+        public static ValueRemovingStackManipulation of(TypeDescription typeDescription) {
+            if (typeDescription.represents(long.class) || typeDescription.represents(double.class)) {
+                return POP_TWO_FRAMES;
+            } else if (typeDescription.represents(void.class)) {
+                throw new IllegalArgumentException("Cannot pop void type from stack");
+            } else {
+                return POP_ONE_FRAME;
+            }
+        }
+
+        @Override
+        public boolean isValid() {
+            return true;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+            methodVisitor.visitInsn(removalOpCode);
+            return sizeChange;
+        }
     }
 }

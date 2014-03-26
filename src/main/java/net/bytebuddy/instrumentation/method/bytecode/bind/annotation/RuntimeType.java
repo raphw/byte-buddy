@@ -26,6 +26,10 @@ public @interface RuntimeType {
      */
     static final class Verifier {
 
+        private Verifier() {
+            throw new AssertionError();
+        }
+
         /**
          * Checks if method return values should be assigned by considering the run time type.
          *
@@ -55,10 +59,6 @@ public @interface RuntimeType {
                 }
             }
             return false;
-        }
-
-        private Verifier() {
-            throw new AssertionError();
         }
     }
 }

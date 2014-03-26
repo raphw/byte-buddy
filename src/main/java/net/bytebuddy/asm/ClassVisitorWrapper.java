@@ -14,6 +14,15 @@ import java.util.List;
 public interface ClassVisitorWrapper {
 
     /**
+     * Applies a {@code ClassVisitorWrapper} to the creation of a {@link net.bytebuddy.dynamic.DynamicType}.
+     *
+     * @param classVisitor A {@code ClassVisitor} to become the new primary class visitor to which the created
+     *                     {@link net.bytebuddy.dynamic.DynamicType} is written to.
+     * @return A new {@code ClassVisitor} that usually delegates to the {@code ClassVisitor} delivered in the argument.
+     */
+    ClassVisitor wrap(ClassVisitor classVisitor);
+
+    /**
      * An ordered, immutable chain of {@link net.bytebuddy.asm.ClassVisitorWrapper}s.
      */
     static class Chain implements ClassVisitorWrapper {
@@ -75,13 +84,4 @@ public interface ClassVisitorWrapper {
             return classVisitor;
         }
     }
-
-    /**
-     * Applies a {@code ClassVisitorWrapper} to the creation of a {@link net.bytebuddy.dynamic.DynamicType}.
-     *
-     * @param classVisitor A {@code ClassVisitor} to become the new primary class visitor to which the created
-     *                     {@link net.bytebuddy.dynamic.DynamicType} is written to.
-     * @return A new {@code ClassVisitor} that usually delegates to the {@code ClassVisitor} delivered in the argument.
-     */
-    ClassVisitor wrap(ClassVisitor classVisitor);
 }

@@ -20,6 +20,10 @@ public @interface IgnoreForBinding {
      */
     static final class Verifier {
 
+        private Verifier() {
+            throw new AssertionError();
+        }
+
         /**
          * Validates if a method should be ignored for binding.
          *
@@ -28,10 +32,6 @@ public @interface IgnoreForBinding {
          */
         public static boolean check(MethodDescription methodDescription) {
             return methodDescription.isAnnotationPresent(IgnoreForBinding.class);
-        }
-
-        private Verifier() {
-            throw new AssertionError();
         }
     }
 }
