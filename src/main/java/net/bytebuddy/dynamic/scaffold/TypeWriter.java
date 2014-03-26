@@ -409,7 +409,7 @@ public interface TypeWriter<T> {
             return new GeneralPhaseTypeWriter<T>(classWriter, classVisitor);
         }
 
-        private abstract class AbstractTypeWriter<T> implements TypeWriter<T> {
+        private abstract class AbstractTypeWriter<S> implements TypeWriter<S> {
 
             protected final ClassWriter classWriter;
             protected final ClassVisitor classVisitor;
@@ -420,46 +420,46 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            public DynamicType.Unloaded<T> make() {
+            public DynamicType.Unloaded<S> make() {
                 classVisitor.visitEnd();
-                return new DynamicType.Default.Unloaded<T>(instrumentedType.detach(),
+                return new DynamicType.Default.Unloaded<S>(instrumentedType.detach(),
                         classWriter.toByteArray(),
                         instrumentedType.getTypeInitializer(),
                         instrumentationContext.getRegisteredAuxiliaryTypes());
             }
         }
 
-        private class GeneralPhaseTypeWriter<T> extends AbstractTypeWriter<T> implements InGeneralPhase<T> {
+        private class GeneralPhaseTypeWriter<S> extends AbstractTypeWriter<S> implements InGeneralPhase<S> {
 
             private GeneralPhaseTypeWriter(ClassWriter classWriter, ClassVisitor classVisitor) {
                 super(classWriter, classVisitor);
             }
 
             @Override
-            public InGeneralPhase<T> attributeType(TypeAttributeAppender typeAttributeAppender) {
+            public InGeneralPhase<S> attributeType(TypeAttributeAppender typeAttributeAppender) {
                 typeAttributeAppender.apply(classVisitor, instrumentedType);
                 return this;
             }
 
             @Override
-            public InFieldPhase<T> fields() {
-                return new FieldPhaseTypeWriter<T>(classWriter, classVisitor);
+            public InFieldPhase<S> fields() {
+                return new FieldPhaseTypeWriter<S>(classWriter, classVisitor);
             }
 
             @Override
-            public InMethodPhase<T> methods() {
-                return new MethodPhaseTypeWriter<T>(classWriter, classVisitor);
+            public InMethodPhase<S> methods() {
+                return new MethodPhaseTypeWriter<S>(classWriter, classVisitor);
             }
         }
 
-        private class FieldPhaseTypeWriter<T> extends AbstractTypeWriter<T> implements InFieldPhase<T> {
+        private class FieldPhaseTypeWriter<S> extends AbstractTypeWriter<S> implements InFieldPhase<S> {
 
             private FieldPhaseTypeWriter(ClassWriter classWriter, ClassVisitor classVisitor) {
                 super(classWriter, classVisitor);
             }
 
             @Override
-            public InFieldPhase<T> write(Iterable<? extends FieldDescription> fieldDescriptions, FieldPool fieldPool) {
+            public InFieldPhase<S> write(Iterable<? extends FieldDescription> fieldDescriptions, FieldPool fieldPool) {
                 for (FieldDescription fieldDescription : fieldDescriptions) {
                     FieldVisitor fieldVisitor = classVisitor.visitField(fieldDescription.getModifiers(),
                             fieldDescription.getInternalName(),
@@ -476,19 +476,19 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            public InMethodPhase<T> methods() {
-                return new MethodPhaseTypeWriter<T>(classWriter, classVisitor);
+            public InMethodPhase<S> methods() {
+                return new MethodPhaseTypeWriter<S>(classWriter, classVisitor);
             }
         }
 
-        private class MethodPhaseTypeWriter<T> extends AbstractTypeWriter<T> implements InMethodPhase<T> {
+        private class MethodPhaseTypeWriter<S> extends AbstractTypeWriter<S> implements InMethodPhase<S> {
 
             private MethodPhaseTypeWriter(ClassWriter classWriter, ClassVisitor classVisitor) {
                 super(classWriter, classVisitor);
             }
 
             @Override
-            public InMethodPhase<T> write(Iterable<? extends MethodDescription> methodDescriptions, MethodPool methodPool) {
+            public InMethodPhase<S> write(Iterable<? extends MethodDescription> methodDescriptions, MethodPool methodPool) {
                 for (MethodDescription methodDescription : methodDescriptions) {
                     MethodPool.Entry entry = methodPool.target(methodDescription);
                     if (entry.isDefineMethod()) {
