@@ -6,6 +6,7 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import org.objectweb.asm.Opcodes;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -664,6 +665,15 @@ public final class MethodMatchers {
      */
     public static JunctionMethodMatcher isBridgeMethodCompatibleTo(Method method) {
         return isBridgeMethodCompatibleTo(new MethodDescription.ForLoadedMethod(method));
+    }
+
+    /**
+     * Checks if a method is annotated by a given parameter.
+     * @param annotationType The annotation type of interest.
+     * @return A method matcher that matches methods that carry the given annotation.
+     */
+    public static JunctionMethodMatcher isAnnotatedBy(Class<? extends Annotation> annotationType) {
+        return new AnnotationMethodMatcher(annotationType);
     }
 
     /**
@@ -1367,6 +1377,36 @@ public final class MethodMatchers {
         @Override
         public String toString() {
             return "declaredBy(" + declaringType + ')';
+        }
+    }
+
+    private static class AnnotationMethodMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        private final Class<? extends Annotation> annotationType;
+
+        private AnnotationMethodMatcher(Class<? extends Annotation> annotationType) {
+            this.annotationType = annotationType;
+        }
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.isAnnotationPresent(annotationType);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && annotationType.equals(((AnnotationMethodMatcher) other).annotationType);
+        }
+
+        @Override
+        public int hashCode() {
+            return annotationType.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "isAnnotatedBy(" + annotationType + ')';
         }
     }
 

@@ -5,6 +5,9 @@ import net.bytebuddy.utility.PackagePrivateMethod;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
@@ -31,9 +34,13 @@ public class MethodMatchersTest {
     private static final String FOO_METHOD_NAME_REGEX = "fo{2}";
     private static final String BAR_METHOD_NAME_REGEX = "b[a]r";
 
-    private static final String JAVA_LANG_PACKAGE = "java.lang";
     private static final String HASH_CODE_METHOD_NAME = "hashCode";
     private static final String FINALIZE_METHOD_NAME = "finalize";
+
+    @Retention(RetentionPolicy.RUNTIME)
+    private static @interface Foo {
+        /* empty */
+    }
 
     @SuppressWarnings("unused")
     private static interface TestInterface<T> {
@@ -44,6 +51,7 @@ public class MethodMatchersTest {
     @SuppressWarnings("unused")
     private static class TestClassBase implements TestInterface<String> {
 
+        @Foo
         public void foo() {
             /* empty */
         }
@@ -620,6 +628,12 @@ public class MethodMatchersTest {
         assertThat(MethodMatchers.isBridgeMethodCompatibleTo(testBridge$bridgeLegalTarget).matches(testBridge$bridge), is(false));
         assertThat(MethodMatchers.isBridgeMethodCompatibleTo(testBridge$bridgeLegalTarget).matches(testBridge$bridgeLegalTarget), is(true));
         assertThat(MethodMatchers.isBridgeMethodCompatibleTo(testBridge$bridgeLegalTarget).matches(testBridge$bridgeIllegalTarget), is(false));
+    }
+
+    @Test
+    public void testIsAnnotatedBy() throws Exception {
+        assertThat(MethodMatchers.isAnnotatedBy(Foo.class).matches(testClassBase$foo), is(true));
+        assertThat(MethodMatchers.isAnnotatedBy(Foo.class).matches(testClassExtension$foo), is(false));
     }
 
     @Test
