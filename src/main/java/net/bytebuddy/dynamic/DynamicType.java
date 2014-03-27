@@ -44,11 +44,11 @@ public interface DynamicType {
 
     /**
      * Returns a byte array representing this dynamic type. This byte array might be reused by this dynamic type and
-     * should therefore not be altered.
+     * must therefore not be altered.
      *
      * @return A byte array of the type's binary representation.
      */
-    byte[] getByte();
+    byte[] getBytes();
 
     /**
      * Returns a map of all auxiliary types that are required for making use of the main type.
@@ -1041,7 +1041,7 @@ public interface DynamicType {
         }
 
         @Override
-        public byte[] getByte() {
+        public byte[] getBytes() {
             return binaryRepresentation;
         }
 
@@ -1049,7 +1049,7 @@ public interface DynamicType {
         public Map<TypeDescription, byte[]> getRawAuxiliaryTypes() {
             Map<TypeDescription, byte[]> auxiliaryTypes = new HashMap<TypeDescription, byte[]>();
             for (DynamicType auxiliaryType : this.auxiliaryTypes) {
-                auxiliaryTypes.put(auxiliaryType.getDescription(), auxiliaryType.getByte());
+                auxiliaryTypes.put(auxiliaryType.getDescription(), auxiliaryType.getBytes());
                 auxiliaryTypes.putAll(auxiliaryType.getRawAuxiliaryTypes());
             }
             return auxiliaryTypes;

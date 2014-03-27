@@ -159,17 +159,20 @@ public class MethodDelegation implements Instrumentation {
                 defaultDefaultsProvider(),
                 defaultAmbiguityResolver(),
                 defaultAssigner(),
-                new TypeDescription.ForLoadedType(type).getReachableMethods().filter(isStatic().and(not(isPrivate()))));
+                new TypeDescription.ForLoadedType(type).getDeclaredMethods().filter(isStatic().and(not(isPrivate()))));
     }
 
     /**
      * Creates an instrumentation where only instance methods of the given object are considered as binding targets.
      * This method will never bind to constructors but will consider methods that are defined in super types. Note
-     * that this includes methods that were defined by the {@link java.lang.Object} class.
+     * that this includes methods that were defined by the {@link java.lang.Object} class. You can narrow this default
+     * selection by explicitly selecting methods with calling the
+     * {@link net.bytebuddy.instrumentation.MethodDelegation#filter(net.bytebuddy.instrumentation.method.matcher.MethodMatcher)}
+     * method on the returned method delegation.
      *
      * @param delegate A delegate instance which will be injected by a type initializer and to which all intercepted
      *                 method calls are delegated to.
-     * @return A method delegation instrumentation to the given {@code static} methods.
+     * @return A method delegation instrumentation to the given instance methods.
      */
     public static MethodDelegation to(Object delegate) {
         return new MethodDelegation(new InstrumentationDelegate.ForStaticFieldInstance(nonNull(delegate)),
