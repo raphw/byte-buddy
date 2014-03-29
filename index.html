@@ -23,7 +23,7 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a href="/" class="navbar-brand"><img src="images/logo-text.png" width="132px" alt="logo text"/></a>
+            <a href="#/" class="navbar-brand"><img src="images/logo-text.png" width="132px" alt="logo text"/></a>
         </div>
         <nav class="collapse navbar-collapse" role="navigation" data-ng-controller="menuController">
             <ul class="nav navbar-nav">
@@ -37,23 +37,16 @@
     </div>
 </header>
 
-<div class="container">
-    <div class="row buddy" style="margin-top:50px;">
-        <div class="col-md-3 col-xs-7" id="leftCol">
-            <ul class="nav nav-stacked affix" id="sidebar">
-                <li><a href="#sec0">Welcome</a></li>
-                <li><a href="#sec1">Hello world!</a></li>
-                <li><a href="#sec2">Get Byte Buddy</a></li>
-            </ul>
+<div class="container" style="margin: 10px 0;">
+    <div class="row">
+        <div style="right:0; padding-top: 10px;"
+             class="visible-sm visible-xs col-xs-5">
+            <img src="images/logo-bg.png" style="width:100%;" alt="Byte Buddy logo"/>
         </div>
-        <div style="position:absolute;right:0;" class="visible-sm visible-xs col-xs-7 col-sm-6">
-            <img src="images/logo-bg.png" style="width:100%;" alt="Byte Buddy logo">
-        </div>
-        <div class="clearfix visible-xs"></div>
-        <div class="col-md-7 col-sm-12" style="padding-top:30px;">
-            <div data-ng-view=""></div>
-        </div>
+        <div class="clearfix visible-sm visible-xs"></div>
     </div>
+    <div class="clearfix visible-xs"></div>
+    <div data-ng-view=""></div>
 </div>
 
 <footer>

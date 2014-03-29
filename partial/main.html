@@ -1,51 +1,94 @@
 <div class="row">
-    <div class="col-md-8">
-        <h2 id="sec0">Welcome, <br>I'm your Byte Buddy!</h2>
+    <div class="col-md-7 col-md-offset-3">
+        <div class="row">
+            <div class="col-md-8 col-xs-12">
+                <h2 id="sec0">Welcome, <br>I'm your Byte Buddy!</h2>
 
-        <p class="lead">
-            Byte Buddy is a code generation library for creating Java classes during the runtime of a Java application
-            and
-            without the help of a compiler. Other than the code generation utilities that ship with the Java Class
-            Library,
-            Byte Buddy allows the creation of arbitrary classes and is not limited to implementing interfaces for the
-            creation
-            of runtime proxies.
+                <p class="lead">
+                    Byte Buddy is a code generation library for creating Java classes during the runtime of a Java
+                    application
+                    and
+                    without the help of a compiler. Other than the code generation utilities that ship with the Java
+                    Class
+                    Library,
+                    Byte Buddy allows the creation of arbitrary classes and is not limited to implementing interfaces
+                    for
+                    the
+                    creation
+                    of runtime proxies.
+                </p>
+            </div>
+            <div class="col-md-4 hidden-sm hidden-xs">
+                <img width="393" alt="Byte Buddy logo" src="images/logo-bg.png"/>
+            </div>
+        </div>
+        <p>
+            In order to use Byte Buddy, one does not require an understanding of Java byte code or the class file
+            format. In
+            contrast, Byte Buddy’s API aims for code that is concise and easy to understand for everybody. Nevertheless,
+            Byte
+            Buddy remains fully customizable down to the possibility of defining custom byte code. Furthermore, the API
+            was
+            designed to be as non-intrusive as possible and as a result, Byte Buddy does not leave any trace in the
+            classes
+            that
+            were created by it. For this reason, the generated classes can exist without requiring Byte Buddy on the
+            class
+            path.
+            Because of this feature, Byte Buddy’s mascot was chosen to be a ghost.
+        </p>
+
+        <p>
+            Byte Buddy is written in Java 6 but supports the generation of classes for any Java version. Byte Buddy is a
+            light-weight library and only depends on the visitor API of the Java byte code parser library ASM which does
+            itself
+            not require any further dependencies.
+        </p>
+
+        <p>
+            At first sight, runtime code generation can appear to be some sort of black magic that should be avoided and
+            only
+            few developers write applications that explicitly generate code during their runtime. However, this picture
+            changes
+            when creating libraries that need to interact with arbitrary code and unknown type hierarchies. In this
+            context,
+            a
+            library implementer must often choose between either requiring a user to implement library-proprietary
+            interfaces or
+            to generate code at runtime when the user’s type hierarchy becomes first known to the library. Many known
+            libraries
+            such as for example Spring or Hibernate choose the latter approach which is popular among their users under
+            the
+            term
+            of using Plain Old Java Objects. As a result, code generation has become an ubiquitous concept in the Java
+            space.
+            Byte Buddy is an attempt to innovate the runtime creation of Java types in order to provide a better tool
+            set to
+            those relying on such functionality.
         </p>
     </div>
-    <div class="col-md-4 hidden-sm hidden-xs">
-        <img width="393" alt="Byte Buddy logo" src="images/logo-bg.png"/>
-    </div>
 </div>
-<p>
-    In order to use Byte Buddy, one does not require an understanding of Java byte code or the class file format. In
-    contrast, Byte Buddy’s API aims for code that is concise and easy to understand for everybody. Nevertheless, Byte
-    Buddy remains fully customizable down to the possibility of defining custom byte code. Furthermore, the API was
-    designed to be as non-intrusive as possible and as a result, Byte Buddy does not leave any trace in the classes that
-    were created by it. For this reason, the generated classes can exist without requiring Byte Buddy on the class path.
-    Because of this feature, Byte Buddy’s mascot was chosen to be a ghost.
-</p>
-<p>
-    Byte Buddy is written in Java 6 but supports the generation of classes for any Java version. Byte Buddy is a
-    light-weight library and only depends on the visitor API of the Java byte code parser library ASM which does itself
-    not require any further dependencies.
-</p>
-<p>
-    At first sight, runtime code generation can appear to be some sort of black magic that should be avoided and only
-    few developers write applications that explicitly generate code during their runtime. However, this picture changes
-    when creating libraries that need to interact with arbitrary code and unknown type hierarchies. In this context, a
-    library implementer must often choose between either requiring a user to implement library-proprietary interfaces or
-    to generate code at runtime when the user’s type hierarchy becomes first known to the library. Many known libraries
-    such as for example Spring or Hibernate choose the latter approach which is popular among their users under the term
-    of using Plain Old Java Objects. As a result, code generation has become an ubiquitous concept in the Java space.
-    Byte Buddy is an attempt to innovate the runtime creation of Java types in order to provide a better tool set to
-    those relying on such functionality.
-</p>
-<h2 id="sec1">Hello world!</h2>
-<p>
-    Saying Hello World with Byte Buddy is as easy as it can get. Any creation of a Java class starts with an
-    instance of
-    the ByteBuddy class which represents a configuration for creating new types:
-</p>
+<div class="row">
+    <div class="col-md-3 hidden-sm hidden-xs" style="padding-right: 0;">
+        <img alt="buddy-code" src="images/buddy-code.png"
+             style="margin-top: 200px; float: right; width: 100%;">
+    </div>
+    <div class="col-md-7">
+        <div class="row">
+            <div class="col-xs-8 col-md-12">
+                <h2 id="sec1">Hello world!</h2>
+            </div>
+            <div class="visible-sm visible-xs col-xs-5"
+                 style="position:absolute; right: 0; margin-right: -15px; margin-top: -20px; z-index: -10;">
+                <img alt="buddy-code" src="images/buddy-code.png" style="width: 100%;"/>
+            </div>
+            <div class="clearfix visible-sm visible-xs"></div>
+        </div>
+        <p>
+            Saying Hello World with Byte Buddy is as easy as it can get. Any creation of a Java class starts with an
+            instance of
+            the ByteBuddy class which represents a configuration for creating new types:
+        </p>
 
 <pre>
 Class&lt;?&gt; dynamicType = new ByteBuddy()
@@ -58,50 +101,68 @@ Class&lt;?&gt; dynamicType = new ByteBuddy()
 assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
 </pre>
 
-<p>
-    The default ByteBuddy configuration which is used in the above example will create a Java class in the version
-    of
-    the class file format that is related by the version of the processing Java virtual machine. As hopefully
-    obvious
-    from the example code, the created type will extend the Object class and intercept its toString method which
-    should
-    return a fixed value of Hello World!. The method to be intercepted is identified by a method matcher. In the
-    example, a predefined method matcher named(String) is used which identifies a method by its exact name. Byte
-    Buddy
-    comes with numerous predefined and well-tested method matchers which are collected in the MethodMatchers class.
-    The
-    creation of custom matchers is however as simple as implementing the (functional) MethodMatcher interface.
-</p>
+        <p>
+            The default ByteBuddy configuration which is used in the above example will create a Java class in the
+            version
+            of
+            the class file format that is related by the version of the processing Java virtual machine. As hopefully
+            obvious
+            from the example code, the created type will extend the Object class and intercept its toString method which
+            should
+            return a fixed value of Hello World!. The method to be intercepted is identified by a method matcher. In the
+            example, a predefined method matcher named(String) is used which identifies a method by its exact name. Byte
+            Buddy
+            comes with numerous predefined and well-tested method matchers which are collected in the MethodMatchers
+            class.
+            The
+            creation of custom matchers is however as simple as implementing the (functional) MethodMatcher interface.
+        </p>
 
-<p>
-    For implementing the toString method, the FixedValue class defines a constant return value for the intercepted
-    method. Defining a constant value is only one example of many method interceptors that ship with Byte Buddy. By
-    implementing the Instrumentation interface, a method could however even be defined by custom byte code.
-</p>
+        <p>
+            For implementing the toString method, the FixedValue class defines a constant return value for the
+            intercepted
+            method. Defining a constant value is only one example of many method interceptors that ship with Byte Buddy.
+            By
+            implementing the Instrumentation interface, a method could however even be defined by custom byte code.
+        </p>
 
-<p>
-    Finally, the described Java class is created and then loaded into the Java virtual machine. For this purpose, a
-    target class loader is required as well as a class loading strategy where we choose a wrapper strategy. The
-    latter
-    creates a new child class loader which wraps the given class loader and only knows about the newly created
-    dynamic
-    type. Eventually, we can convince ourselves of the result by calling the toString method on an instance of the
-    created class and finding the return value to represent the constant value we expected.
-</p>
-<h2 id="sec2">Getting Byte Buddy</h2>
-<dl>
-    <dt>Download</dt>
-    <dd>
-        Byte Buddy is currently in pre-release in the snapshot version 0.1. Once, this web page is completed, it will
-        be available on Maven Central. For now, you can <a href="https://github.com/raphw/byte-buddy">download</a>
-        the project from GitHub.
-    </dd>
-</dl>
-<dl>
-    <dt>Licence</dt>
-    <dd>
-        ByteBuddy is an open source project distributed under the liberal and business friendly
-        <a href="http://www.apache.org/licenses/LICENSE-2.0.html">Apache 2.0 licence</a>. The source code is freely
-        available on <a href="https://github.com/raphw/byte-buddy">GitHub</a>.
-    </dd>
-</dl>
+        <p>
+            Finally, the described Java class is created and then loaded into the Java virtual machine. For this
+            purpose, a
+            target class loader is required as well as a class loading strategy where we choose a wrapper strategy. The
+            latter
+            creates a new child class loader which wraps the given class loader and only knows about the newly created
+            dynamic
+            type. Eventually, we can convince ourselves of the result by calling the toString method on an instance of
+            the
+            created class and finding the return value to represent the constant value we expected.
+        </p>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-7 col-md-offset-3">
+        <h2 id="sec2">Getting Byte Buddy</h2>
+        <dl>
+            <dt>Download</dt>
+            <dd>
+                Byte Buddy is currently in pre-release in the snapshot version 0.1. Once, this web page is completed, it
+                will
+                be available on Maven Central. For now, you can <a
+                    href="https://github.com/raphw/byte-buddy">download</a>
+                the project from GitHub.
+            </dd>
+        </dl>
+        <dl>
+            <dt>Licence</dt>
+            <dd>
+                ByteBuddy is an open source project distributed under the liberal and business friendly
+                <a href="http://www.apache.org/licenses/LICENSE-2.0.html">Apache 2.0 licence</a>. The source code is
+                freely
+                available on <a href="https://github.com/raphw/byte-buddy">GitHub</a>.
+            </dd>
+        </dl>
+    </div>
+    <div class="col-md-2 visible-md visible-lg" style="margin-top:-30px;">
+        <img alt="Byte Buddy logo" src="images/buddy-download.png" style="width:100%;">
+    </div>
+</div>
