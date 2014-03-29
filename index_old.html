@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en" style="overflow-x:hidden;">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>ByteBuddy - the byte code ghost</title>
+    <meta name="generator" content="Bootply"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="icon" href="images/favicon.png" type="image/png">
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/style-vinc-custom.css" rel="stylesheet">
+    <link href='http://fonts.googleapis.com/css?family=Bevan' rel='stylesheet' type='text/css'>
+
+    <!--[if lt IE 9]>
+    <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+
+    <!-- CSS code from Bootply.com editor -->
+
+    <style type="text/css">
+
+        @media (max-width: 767px) {
+            body {
+                padding-right: 0px;
+                padding-left: 0px;
+            }
+        }
+
+        body {
+            padding-top: 50px;
+        }
+
+        #masthead {
+            min-height: 250px;
+        }
+
+        #masthead h1 {
+            font-size: 30px;
+            line-height: 1;
+            padding-top: 20px;
+        }
+
+        #masthead .well {
+            margin-top: 8%;
+        }
+
+        @media only screen and (max-device-width: 768px) {
+            /* Styles */
+            h2 {
+                font-size: 15pt;
+                padding-bottom: 8px;
+                margin-bottom: 8px;
+            }
+        }
+
+        @media screen and (min-width: 768px) {
+            #masthead h1 {
+                font-size: 50px;
+            }
+        }
+
+        .navbar-bright {
+            background-color: #111155;
+            color: #fff;
+        }
+
+        .affix-top, .affix {
+            position: static;
+        }
+
+        @media (min-width: 979px) {
+            #sidebar.affix-top {
+                position: static;
+                margin-top: 100px;
+                width: 228px;
+            }
+
+            #sidebar.affix {
+                position: fixed;
+                top: 200px;
+                width: 228px;
+            }
+        }
+
+
+    </style>
+</head>
+
+<!-- HTML code from Bootply.com editor -->
+
+<body>
+
+
+<header class="navbar navbar-default navbar-fixed-top" role="banner">
+    <div class="container">
+        <div class="navbar-header">
+            <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a href="/" class="navbar-brand"><img src="images/logo-text.png" width="132" alt="logo-text"></a>
+        </div>
+        <nav class="collapse navbar-collapse" role="navigation">
+            <ul class="nav navbar-nav">
+                <li class="active">
+                    <a href="index_old.html">Hello</a>
+                </li>
+                <li>
+                    <a href="get_started.html">Get Started</a>
+                </li>
+                <li>
+                    <a href="cookbook.html">Cook Book</a>
+                </li>
+                <li>
+                    <a href="#sec2">Development</a>
+                </li>
+                <li>
+                    <a href="javadoc/v0_1/index.html">Java Docs</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</header>
+
+
+<!-- Begin Body -->
+<div class="container">
+    <div class="row buddy" style="margin-top:50px;">
+        <div class="col-md-3 col-xs-7" id="leftCol">
+
+            <ul class="nav nav-stacked affix" id="sidebar">
+                <li><a href="#sec0">Hello</a></li>
+                <li><a href="#sec1">I love Byte Code</a></li>
+                <li><a href="#sec2">I‘m Open Source</a></li>
+                <li><a href="#sec3">You need Support?</a></li>
+            </ul>
+
+
+        </div>
+        <div style="position:absolute;right:0px;" class="visible-sm visible-xs col-xs-7 col-sm-6">
+
+            <img src="images/logo-bg.png" style="width:100%;" alt="buddy-single">
+
+        </div>
+        <div class="clearfix visible-xs"></div>
+        <div class="col-md-4 col-sm-12" style="padding-top:30px;">
+
+            <h2 id="sec0">Hello, <br>I‘m your Byte Buddy!</h2>
+
+
+            <p class="lead">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum lobortis vehicula
+                porttitor. Nulla id
+                arcu vel lacus faucibus blandit eu quis tellus. Maecenas iaculis convallis metus, sed fermentum magna
+                molestie id.
+                Morbi pulvinar metus consequat velit auctor, sit amet faucibus elit mattis.</p>
+
+            <p> Nam condimentum ac diam eget vulputate.
+                Proin consequat mattis neque, nec ultricies nisi gravida eget. Nam non eros ut quam tincidunt fringilla
+                eget quis felis.
+                Donec scelerisque lacinia mi a volutpat. Praesent et consequat dolor. Integer leo urna, luctus id
+                viverra nec, tempor nec
+                neque. Cras nec tempus dolor, a eleifend sem. Etiam sagittis luctus nunc, commodo porttitor lectus.
+                Suspendisse elementum nisi adipiscing est pretium, eu molestie justo lobortis. Aliquam purus urna,
+                sagittis eu lacinia quis,
+                imperdiet vel tortor. Vivamus nec varius libero. Duis quis pulvinar velit, at vestibulum magna. Donec
+                quis elementum massa. Fusce
+                tincidunt diam risus, eu consequat neque ultricies vitae. Ut a libero iaculis metus pellentesque
+                bibendum.</p>
+            <ul>
+                <li>Mauris eros nibh, hendrerit vitae orci eu, tempus dapibus metus. Mauris at sodales ipsum.</li>
+                <li>Cras tempor odio eu turpis sollicitudin molestie a vel lorem.</li>
+                <li>Etiam ac erat eleifend, tincidunt felis at, bibendum orci.</li>
+                <li>Nunc vel placerat diam. Morbi egestas nec urna non mattis.</li>
+                <li>Duis mollis nulla elit, vel sodales orci suscipit venenatis.</li>
+            </ul>
+
+            <hr class="col-md-12">
+            <p>jEtiam sagittis quis libero semper posuere. Nullam convallis, felis et porta pharetra, neque orci cursus
+                ligula, volutpat accumsan tortor nunc id sem.
+                Mauris suscipit, tellus id elementum imperdiet, orci nisl tempus nibh, aliquam hendrerit nisl nisi eu
+                velit.
+                Maecenas enim elit, lobortis ut luctus ac, hendrerit eu leo. Suspendisse vel vestibulum ipsum. Donec
+                porttitor porttitor ornare. Nullam vel metus
+                quis nibh suscipit pulvinar. Donec nec tristique felis. Fusce sed arcu adipiscing, ullamcorper urna non,
+                pulvinar diam. Nam enim ante, ornare ac
+                aliquet a, egestas non tellus.
+            </p>
+
+        </div>
+
+        <div class="col-md-4 hidden-sm hidden-xs">
+
+            <img src="images/logo-bg.png" width="393" alt="buddy-single">
+
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-offset-4 col-xs-8 col-md-8 col-sm-8">
+
+            <h2 id="sec1">Look, <br>what I can do for you</h2>
+
+        </div>
+
+        <div style="position:absolute;right:0px;margin-right:-15px;margin-top:-100px;"
+             class="visible-sm visible-xs col-xs-7 col-sm-6">
+            <img style="width:100%;" src="images/buddy-code.png" alt="buddy-code">
+
+
+        </div>
+
+        <div class="clearfix visible-sm visible-xs"></div>
+    </div>
+
+
+    <div class="row buddy">
+
+        <div class="col-md-4 hidden-sm hidden-xs " style="padding-right:0;">
+
+            <img style="margin-top:200px;float:right;width:100%;" src="images/buddy-code.png" alt="buddy-code">
+
+
+        </div>
+
+        <div style="padding-left:0;" class="col-md-8 col-sm-12">
+              
+              
+            <pre>
+            import javassist.*;
+
+public class SampleLoader extends ClassLoader {
+    /* Call MyApp.main().
+     */
+    public static void main(String[] args) throws Throwable {
+        SampleLoader s = new SampleLoader();
+        Class c = s.loadClass("MyApp");
+        c.getDeclaredMethod("main", new Class[] { String[].class })
+         .invoke(null, new Object[] { args });
+    }
+
+    private ClassPool pool;
+
+    public SampleLoader() throws NotFoundException {
+        pool = new ClassPool();
+        pool.insertClassPath("./class"); // MyApp.class must be there.
+    }
+
+    /* Finds a specified class.
+     * The bytecode for that class can be modified.
+     */
+    protected Class findClass(String name) throws ClassNotFoundException {
+        try {
+            CtClass cc = pool.get(name);
+            // modify the CtClass object here
+            byte[] b = cc.toBytecode();
+            return defineClass(name, b, 0, b.length);
+        } catch (NotFoundException e) {
+            throw new ClassNotFoundException();
+        } catch (IOException e) {
+            throw new ClassNotFoundException();
+        } catch (CannotCompileException e) {
+            throw new ClassNotFoundException();
+        }
+    }
+}
+</pre>
+
+
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-offset-3 col-xs-8 col-md-8 col-sm-8">
+            <h2 id="sec2">Get me, <br>I'm Open Source.</h2>
+
+        </div>
+        <div style="" class="visible-sm visible-xs col-xs-4 col-sm-6">
+
+            <img style="width:100%;float:right;" src="images/buddy-download.png" alt="logo-orange">
+        </div>
+
+    </div>
+    <div class="row  buddy buddy3">
+
+        <div style="padding-top:2em;" class="col-md-offset-3 col-xs-12 col-md-6 col-sm-12">
+
+            <dl>
+                <dt>Licence</dt>
+                <dd>ByteBuddy is an open source project distributed under the liberal and business friendly Apache 2.0
+                    licence.
+                    The source code is available at GitHub.
+                </dd>
+            </dl>
+
+            <dl>
+                <dt>Download Releases</dt>
+                <dd>Download the ByteBuddy jar (version 1.2.3)
+                    Read the cookbook introduction, Enjoy!
+                </dd>
+            </dl>
+
+            <dl>
+                <dt>Version Info</dt>
+                <dd>Download the ByteBuddy jar (version 1.2.3)
+                    Read the cookbook introduction, Enjoy!
+                </dd>
+            </dl>
+
+        </div>
+
+        <div class="col-md-2 visible-md visible-lg" style="margin-top:-100px;">
+            <img style="width:100%;" src="images/buddy-download.png" alt="logo-orange">
+        </div>
+    </div>
+</div>
+
+
+<footer>
+    <div class="container">
+        <div class="row footer-row">
+            <div class="col-md-4">
+                <!-- <img style="margin:10px;margin-top:30px;float:none;width:100%;" src="images/logo-orange.png"  alt="logo-orange">-->
+            </div>
+            <div class=" col-md-4">
+                <h2 id="sec3">You need support?</h2>
+                <dl>
+                    <dt>Development and support</dt>
+                    <dd>If you have any questions on how to use ByteBuddy, or have ideas for future development, please
+                        get in touch via the mailing list.
+                    </dd>
+                </dl>
+
+                <dl>
+                    <dt>Bugs</dt>
+                    <dd>If you find any issues, please file a bug after checking for duplicates.</dd>
+                </dl>
+
+
+                </p>
+
+            </div>
+
+            <div class="col-md-4">
+                <h2 class="hidden-xs hidden-sm" style="opacity:0;">.</h2>
+
+
+                <dl>
+                    <dt>Social Networks</dt>
+                    <dd>
+                        <div class="btn-group">
+
+                            <a
+                                    class=" "
+                                    href="https://plus.google.com/share?url=_URL_"
+                                    >
+                                <i class="media-object social-icon google"></i>
+                            </a>
+
+
+                            <a
+                                    class=""
+                                    href="http://www.linkedin.com/shareArticle?url=_URL_"
+                                    >
+                                <i class="media-object social-icon linkedin"></i>
+                            </a>
+
+
+                            <a
+                                    class=""
+                                    href="http://twitter.com/share?url=_URL_&text=_ADDITIONAL_TEXT_&via=TWITTER_NAME"
+                                    >
+                                <i class="media-object social-icon twitter"></i>
+                            </a>
+
+                            <a href="#">
+                                <i class="media-object social-icon stackover" style="" src="..."
+                                   alt="StackOverflow"></i>
+                            </a>
+                            <a href="#">
+                                <i class="media-object social-icon github" style="" src="..." alt="GitHub"></i>
+                            </a>
+                            <a href="#">
+                                <i class="media-object social-icon rss" style="" src="..." alt="RSS"></i>
+                            </a>
+                            <a href="#">
+                                <i class="media-object social-icon reedit" style="" src="..." alt="Reddit"></i>
+                            </a>
+
+                        </div>
+
+                    </dd>
+                </dl>
+
+
+                <dl>
+                    <dt>Development and support</dt>
+                    <dd>If you have any questions on how to use ByteBuddy, or have ideas for future development, please
+                        get in touch via the mailing list.
+                    </dd>
+                </dl>
+
+
+            </div>
+
+            <div class="row">
+                <div class="col-md-4"><img src="//placehold.it/300x300" class="img-responsive"></div>
+                <div class="col-md-4"><img src="//placehold.it/300x300" class="img-responsive"></div>
+                <div class="col-md-4"><img src="//placehold.it/300x300" class="img-responsive"></div>
+            </div>
+
+            <hr style="opacity:0.2;">
+
+
+        </div>
+    </div>
+</footer>
+
+
+<script type='text/javascript' src="http://code.jquery.com/jquery.min.js"></script>
+
+
+<script type='text/javascript' src="js/bootstrap.min.js"></script>
+
+
+<!-- JavaScript jQuery code from Bootply.com editor -->
+
+<script type='text/javascript'>
+
+    $(document).ready(function () {
+
+        $('#sidebar').affix({
+
+        });
+
+        var $body = $(document.body);
+        var navHeight = $('.navbar').outerHeight(true) + 100;
+
+        $body.scrollspy({
+            target: '#leftCol',
+            offset: navHeight
+        });
+
+        /* smooth scrolling sections */
+        $('a[href*=#]:not([href=#])').click(function () {
+            if (location.pathname.replace(/^\//, '') == this.pathname.replace(/^\//, '') && location.hostname == this.hostname) {
+                var target = $(this.hash);
+                target = target.length ? target : $('[name=' + this.hash.slice(1) + ']');
+                if (target.length) {
+                    $('html,body').animate({
+                        scrollTop: target.offset().top - 100
+                    }, 1000);
+                    return false;
+                }
+            }
+        });
+
+    });
+
+</script>
+
+</body>
+</html>
