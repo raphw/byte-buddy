@@ -1,15 +1,6 @@
-var byteBuddyApp = angular.module('byteBuddy', ['ngRoute']);
+var byteBuddyApp = angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'duScroll']);
 
-byteBuddyApp.directive('markdown', function () {
-    var converter = new Showdown.converter();
-    return {
-        restrict: 'A',
-        link: function (scope, element, attrs) {
-            var htmlText = converter.makeHtml(element.text());
-            element.html(htmlText);
-        }
-    };
-});
+byteBuddyApp.value('duScrollDuration', 3500);
 
 byteBuddyApp.config(function ($routeProvider) {
     $routeProvider
@@ -39,13 +30,14 @@ byteBuddyApp.controller('menuController', function ($scope, $location) {
     $scope.activeClass = function (current) {
         return current.target === '#' + ($location.path() || '/') ? 'active' : '';
     };
+    $scope.isCollapsed = true;
 });
 
 byteBuddyApp.controller('socialMediaController', function ($scope) {
     $scope.icons = [
-        {name: 'Google', style: 'google', target: 'https://plus.google.com/share?url=_URL_'},
-        {name: 'LinkedIn', style: 'linkedin', target: 'http://www.linkedin.com/shareArticle?url=_URL_'},
-        {name: 'Twitter', style: 'twitter', target: 'http://twitter.com/share?url=_URL_&text=_ADDITIONAL_TEXT_&via=TWITTER_NAME'},
+        {name: 'Google', style: 'google', target: '#'},
+        {name: 'LinkedIn', style: 'linkedin', target: '#'},
+        {name: 'Twitter', style: 'twitter', target: '#'},
         {name: 'Stack Overflow', style: 'stackover', target: '#'},
         {name: 'GitHub', style: 'github', target: '#'},
         {name: 'RSS', style: 'rss', target: '#'},

@@ -1,23 +1,22 @@
 <div class="row visible-sm visible-xs">
-    <div class="col-xs-6 col-md-3" style="padding: 10px 0 0 10px;">
+    <div class="col-xs-6" style="padding: 10px 0 0 10px;">
         <ul class="nav nav-tabs nav-stacked" style="border: 0;">
-            <li><a href="#welcome">Welcome</a></li>
-            <li><a href="#helloworld">Hello world</a></li>
-            <li><a href="#getbytebuddy">Getting Byte Buddy</a></li>
-            <li><a href="#support">Support</a></li>
+            <li><a href="#welcome" data-du-smooth-scroll="" data-offset="40">Welcome</a></li>
+            <li><a href="#helloworld" data-du-smooth-scroll="" data-offset="40">Hello world</a></li>
+            <li><a href="#getbytebuddy" data-du-smooth-scroll="" data-offset="40">Getting Byte Buddy</a></li>
+            <li><a href="#support" data-du-smooth-scroll="" data-offset="40">Support</a></li>
         </ul>
     </div>
-    <div style="right:0; padding-top: 10px;"
-         class="col-xs-5">
+    <div style="right:0; padding-top: 10px;" class="col-xs-5">
         <img src="images/logo-bg.png" style="width:100%;" alt="Byte Buddy logo"/>
     </div>
     <div class="clearfix"></div>
 </div>
-<div class="row">
+<div class="row" id="welcome">
     <div class="col-md-7 col-md-offset-3">
         <div class="row">
             <div class="col-md-8 col-xs-12">
-                <h2 id="welcome">Welcome, <br/>I'm your Byte Buddy!</h2>
+                <h2>Welcome, <br/>I'm your Byte Buddy!</h2>
 
                 <p class="lead">
                     Byte Buddy is a code generation library for creating Java classes during the runtime of a Java
@@ -83,7 +82,7 @@
         </p>
     </div>
 </div>
-<div class="row">
+<div class="row" id="helloworld">
     <div class="col-md-3 hidden-sm hidden-xs" style="padding-right: 0;">
         <img alt="buddy-code" src="images/buddy-code.png"
              style="margin-top: 200px; float: right; width: 100%;">
@@ -91,7 +90,7 @@
     <div class="col-md-7">
         <div class="row">
             <div class="col-xs-8 col-md-12">
-                <h2 id="helloworld">Hello world!</h2>
+                <h2>Hello world!</h2>
             </div>
             <div class="visible-sm visible-xs col-xs-5"
                  style="position:absolute; right: 0; margin-right: -15px; margin-top: -20px; z-index: -10;">
@@ -145,9 +144,9 @@ assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
         </p>
     </div>
 </div>
-<div class="row">
+<div class="row" id="getbytebuddy">
     <div class="col-md-7 col-md-offset-3">
-        <h2 id="getbytebuddy">Getting Byte Buddy</h2>
+        <h2>Getting Byte Buddy</h2>
         <dl>
             <dt>Download</dt>
             <dd>
