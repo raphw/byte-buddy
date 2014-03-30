@@ -38,14 +38,6 @@
 </header>
 
 <div class="container" style="margin: 10px 0;">
-    <div class="row">
-        <div style="right:0; padding-top: 10px;"
-             class="visible-sm visible-xs col-xs-5">
-            <img src="images/logo-bg.png" style="width:100%;" alt="Byte Buddy logo"/>
-        </div>
-        <div class="clearfix visible-sm visible-xs"></div>
-    </div>
-    <div class="clearfix visible-xs"></div>
     <div data-ng-view=""></div>
 </div>
 
@@ -58,7 +50,7 @@
                      alt="logo-orange"/>
             </div>
             <div class="col-md-6">
-                <h2 id="sec3">Need for support?</h2>
+                <h2 id="support">Need for support?</h2>
                 <dl>
                     <dt>Bugs and feature requests</dt>
                     <dd>
@@ -81,10 +73,10 @@
                 <dl>
                     <dt>Get in touch and share</dt>
                     <dd>
-                        Byte Buddy was written by Rafael Winterhalter and first published in 2014. Get in touch on a
+                        Byte Buddy was created by Rafael Winterhalter and first published in 2014. Get in touch on a
                         social media of your choice or tell the world about Byte Buddy.<br/>
 
-                        <div class="btn-group" data-ng-controller="socialMediaController">
+                        <div class="btn-group" data-ng-controller="socialMediaController" style="padding-top: 7px;">
                             <a href="{{icon.target}}">
                                 <i data-ng-repeat="icon in icons" class="media-object social-icon {{icon.style}}"></i>
                             </a>
@@ -92,11 +84,17 @@
                     </dd>
                 </dl>
                 <dl>
-                    <dt>Thank you note</dt>
+                    <dt>Thank-you note</dt>
                     <dd>
                         I want to thank <a href="http://www.kantega.no">Kantega AS</a> for their financial support of
                         this project. I further want to thank <a href="http://www.vincentbauer.com">Vincent Bauer</a>
                         who created Byte Buddy's logo and design.
+                    </dd>
+                </dl>
+                <dl>
+                    <dt>Legal information</dt>
+                    <dd>
+                        2014 &copy; Rafael Winterhalter, Kantega AS, Kirkegata 5, 0153 Oslo, Norway
                     </dd>
                 </dl>
             </div>
