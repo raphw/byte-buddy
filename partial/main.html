@@ -20,16 +20,10 @@
 
                 <p class="lead">
                     Byte Buddy is a code generation library for creating Java classes during the runtime of a Java
-                    application
-                    and
-                    without the help of a compiler. Other than the code generation utilities that ship with the Java
-                    Class
-                    Library,
-                    Byte Buddy allows the creation of arbitrary classes and is not limited to implementing interfaces
-                    for
-                    the
-                    creation
-                    of runtime proxies.
+                    application and without the help of a compiler. Other than the code generation utilities that
+                    <a href="http://docs.oracle.com/javase/6/docs/api/java/lang/reflect/Proxy.html">ship
+                        with the Java Class Library</a>, Byte Buddy allows the creation of arbitrary classes and is not
+                    limited to implementing interfaces for the creation of runtime proxies.
                 </p>
             </div>
             <div class="col-md-4 hidden-sm hidden-xs">
@@ -37,48 +31,36 @@
             </div>
         </div>
         <p>
-            In order to use Byte Buddy, one does not require an understanding of Java byte code or the class file
-            format. In
-            contrast, Byte Buddy’s API aims for code that is concise and easy to understand for everybody. Nevertheless,
-            Byte
-            Buddy remains fully customizable down to the possibility of defining custom byte code. Furthermore, the API
-            was
-            designed to be as non-intrusive as possible and as a result, Byte Buddy does not leave any trace in the
-            classes
-            that
-            were created by it. For this reason, the generated classes can exist without requiring Byte Buddy on the
-            class
-            path.
-            Because of this feature, Byte Buddy’s mascot was chosen to be a ghost.
+            In order to use Byte Buddy, one does not require an understanding of Java byte code or the
+            <a href="http://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html">class file format</a>.
+            In contrast, Byte Buddy's API aims for code that is concise and easy to understand for
+            everybody. Nevertheless, Byte Buddy remains fully customizable down to the possibility of defining custom
+            byte code. Furthermore, the API was designed to be as non-intrusive as possible and as a result, Byte
+            Buddy does not leave any trace in the classes that were created by it. For this reason, the generated
+            classes can exist without requiring Byte Buddy on the class path. Because of this feature, Byte Buddy's
+            mascot was chosen to be a ghost.
         </p>
 
         <p>
             Byte Buddy is written in Java 6 but supports the generation of classes for any Java version. Byte Buddy is a
-            light-weight library and only depends on the visitor API of the Java byte code parser library ASM which does
-            itself
-            not require any further dependencies.
+            light-weight library and only depends on the visitor API of the Java byte code parser library
+            <a href="http://asm.ow2.org/">ASM</a> which does itself
+            <a href="http://search.maven.org/remotecontent?filepath=org/ow2/asm/asm/4.2/asm-4.2.pom">not require any
+                further dependencies</a>.
         </p>
 
         <p>
             At first sight, runtime code generation can appear to be some sort of black magic that should be avoided and
-            only
-            few developers write applications that explicitly generate code during their runtime. However, this picture
-            changes
-            when creating libraries that need to interact with arbitrary code and unknown type hierarchies. In this
-            context,
-            a
-            library implementer must often choose between either requiring a user to implement library-proprietary
-            interfaces or
-            to generate code at runtime when the user’s type hierarchy becomes first known to the library. Many known
-            libraries
-            such as for example Spring or Hibernate choose the latter approach which is popular among their users under
-            the
-            term
-            of using Plain Old Java Objects. As a result, code generation has become an ubiquitous concept in the Java
-            space.
-            Byte Buddy is an attempt to innovate the runtime creation of Java types in order to provide a better tool
-            set to
-            those relying on such functionality.
+            only few developers write applications that explicitly generate code during their runtime. However, this
+            picture changes when creating libraries that need to interact with arbitrary code and unknown type
+            hierarchies. In this context, a library implementer must often choose between either requiring a user to
+            implement library-proprietary interfaces or to generate code at runtime when the user's type hierarchy
+            becomes first known to the library. Many known libraries such as for example <i>Spring</i> or
+            <i>Hibernate</i> choose the latter approach which is popular among their users under the term of using
+            <a href="http://en.wikipedia.org/wiki/Plain_Old_Java_Object"><i>Plain Old Java Objects</i></a>. As a result,
+            code generation has become an ubiquitous concept in the Java space. Byte Buddy is an attempt to innovate
+            the runtime creation of Java types in order to provide a better tool set to those relying on such
+            functionality.
         </p>
     </div>
 </div>
@@ -124,7 +106,9 @@ assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
             example, a predefined method matcher <code>named(String)</code> is used which identifies a method by its
             exact name. Byte Buddy comes with numerous predefined and well-tested method matchers which are collected
             in the <code>MethodMatchers</code> class. The creation of custom matchers is however as simple as
-            implementing the (functional) <code>MethodMatcher</code> interface.
+            implementing the
+            (<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/FunctionalInterface.html">functional</a>)
+            <code>MethodMatcher</code> interface.
         </p>
 
         <p>
