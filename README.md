@@ -225,6 +225,7 @@ a Gradle installation of your own. Simply call
 
 ```shell
 git clone https://github.com/raphw/byte-buddy.git
+cd byte-buddy
 gradlew build
 ```
 
