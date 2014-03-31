@@ -1,4 +1,4 @@
-var byteBuddyApp = angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'duScroll']);
+var byteBuddyApp = angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'placeholders', 'duScroll']);
 
 byteBuddyApp.value('duScrollDuration', 3500);
 
@@ -17,7 +17,6 @@ byteBuddyApp.config(function ($routeProvider) {
             templateUrl: 'partial/develop.html'
         })
         .otherwise({redirectTo: '/'});
-
 });
 
 byteBuddyApp.controller('menuController', function ($scope, $location) {

@@ -1,145 +1,276 @@
 <div class="row">
-    <div class="col-xs-6 col-md-3" style="padding: 40px 0 0 25px;">
+<div class="col-xs-6 col-md-3" style="height: 100%;">
+    <div class="sidebar hidden-print affix-top" role="complementary" data-affix="0" style="padding: 60px 0 0 25px;">
         <ul class="nav nav-tabs nav-stacked" style="border: 0;">
-            <li><a href="#welcome" data-du-smooth-scroll="" data-du-scrollspy="" data-offset="40">Firs section</a></li>
-            <li><a href="#helloworld" data-du-smooth-scroll="" data-du-scrollspy="" data-offset="40">Second section</a>
+            <li><a href="#welcome" data-du-smooth-scroll="" data-du-scrollspy="" data-offset="40">First section</a>
+            </li>
+            <li><a href="#helloworld" data-du-smooth-scroll="" data-du-scrollspy="" data-offset="40">Second
+                section</a>
             </li>
         </ul>
     </div>
-    <div class="col-md-8 col-md-offset-1">
-        <div class="row" id="welcome">
-            <h2>First section</h2>
+</div>
+<div class="col-md-8 col-md-offset-1" id="affixComponent">
+<div class="row" id="welcome">
+    <h2>First section</h2>
 
-            <p>
-                This program first obtains a <code>ClassPool</code> object, which
-                controls bytecode modification with Javassist. The
-                <code>ClassPool</code> object is a container of <code>CtClass</code>
-                object representing a class file. It reads a class file on demand for
-                constructing a <code>CtClass</code> object and records the
-                constructed object for responding later accesses.
+    <p>
+        This program first obtains a <code>ClassPool</code> object, which
+        controls bytecode modification with Javassist. The
+        <code>ClassPool</code> object is a container of <code>CtClass</code>
+        object representing a class file. It reads a class file on demand for
+        constructing a <code>CtClass</code> object and records the
+        constructed object for responding later accesses.
 
-                To modify the definition of a class, the users must first obtain
-                from a <code>ClassPool</code> object
-                a reference to a <code>CtClass</code> object representing that class.
-                <code>get()</code> in <code>ClassPool</code> is used for this purpose.
-                In the case of the program shown above, the
-                <code>CtClass</code> object representing a class
-                <code>test.Rectangle</code> is obtained from the
-                <code>ClassPool</code> object and it is assigned to a variable
-                <code>cc</code>.
-                The <code>ClassPool</code> object returned by <code>getDfault()</code>
-                searches the default system search path.
-            </p>
+        To modify the definition of a class, the users must first obtain
+        from a <code>ClassPool</code> object
+        a reference to a <code>CtClass</code> object representing that class.
+        <code>get()</code> in <code>ClassPool</code> is used for this purpose.
+        In the case of the program shown above, the
+        <code>CtClass</code> object representing a class
+        <code>test.Rectangle</code> is obtained from the
+        <code>ClassPool</code> object and it is assigned to a variable
+        <code>cc</code>.
+        The <code>ClassPool</code> object returned by <code>getDfault()</code>
+        searches the default system search path.
+    </p>
 
-            <p>
-                From the implementation viewpoint, <code>ClassPool</code> is a hash
-                table of <code>CtClass</code> objects, which uses the class names as
-                keys. <code>get()</code> in <code>ClassPool</code> searches this hash
-                table to find a <code>CtClass</code> object associated with the
-                specified key. If such a <code>CtClass</code> object is not found,
-                <code>get()</code> reads a class file to construct a new
-                <code>CtClass</code> object, which is recorded in the hash table and
-                then returned as the resulting value of <code>get()</code>.
-            </p>
+    <p id="sub1">
+        From the implementation viewpoint, <code>ClassPool</code> is a hash
+        table of <code>CtClass</code> objects, which uses the class names as
+        keys. <code>get()</code> in <code>ClassPool</code> searches this hash
+        table to find a <code>CtClass</code> object associated with the
+        specified key. If such a <code>CtClass</code> object is not found,
+        <code>get()</code> reads a class file to construct a new
+        <code>CtClass</code> object, which is recorded in the hash table and
+        then returned as the resulting value of <code>get()</code>.
+    </p>
 
-            <p>
-                This program first obtains a <code>ClassPool</code> object, which
-                controls bytecode modification with Javassist. The
-                <code>ClassPool</code> object is a container of <code>CtClass</code>
-                object representing a class file. It reads a class file on demand for
-                constructing a <code>CtClass</code> object and records the
-                constructed object for responding later accesses.
+    <p>
+        This program first obtains a <code>ClassPool</code> object, which
+        controls bytecode modification with Javassist. The
+        <code>ClassPool</code> object is a container of <code>CtClass</code>
+        object representing a class file. It reads a class file on demand for
+        constructing a <code>CtClass</code> object and records the
+        constructed object for responding later accesses.
 
-                To modify the definition of a class, the users must first obtain
-                from a <code>ClassPool</code> object
-                a reference to a <code>CtClass</code> object representing that class.
-                <code>get()</code> in <code>ClassPool</code> is used for this purpose.
-                In the case of the program shown above, the
-                <code>CtClass</code> object representing a class
-                <code>test.Rectangle</code> is obtained from the
-                <code>ClassPool</code> object and it is assigned to a variable
-                <code>cc</code>.
-                The <code>ClassPool</code> object returned by <code>getDfault()</code>
-                searches the default system search path.
-            </p>
+        To modify the definition of a class, the users must first obtain
+        from a <code>ClassPool</code> object
+        a reference to a <code>CtClass</code> object representing that class.
+        <code>get()</code> in <code>ClassPool</code> is used for this purpose.
+        In the case of the program shown above, the
+        <code>CtClass</code> object representing a class
+        <code>test.Rectangle</code> is obtained from the
+        <code>ClassPool</code> object and it is assigned to a variable
+        <code>cc</code>.
+        The <code>ClassPool</code> object returned by <code>getDfault()</code>
+        searches the default system search path.
+    </p>
 
-            <p>
-                From the implementation viewpoint, <code>ClassPool</code> is a hash
-                table of <code>CtClass</code> objects, which uses the class names as
-                keys. <code>get()</code> in <code>ClassPool</code> searches this hash
-                table to find a <code>CtClass</code> object associated with the
-                specified key. If such a <code>CtClass</code> object is not found,
-                <code>get()</code> reads a class file to construct a new
-                <code>CtClass</code> object, which is recorded in the hash table and
-                then returned as the resulting value of <code>get()</code>.
-            </p>
-        </div>
-        <div class="row" id="helloworld">
-            <h2>Second section</h2>
+    <p>
+        From the implementation viewpoint, <code>ClassPool</code> is a hash
+        table of <code>CtClass</code> objects, which uses the class names as
+        keys. <code>get()</code> in <code>ClassPool</code> searches this hash
+        table to find a <code>CtClass</code> object associated with the
+        specified key. If such a <code>CtClass</code> object is not found,
+        <code>get()</code> reads a class file to construct a new
+        <code>CtClass</code> object, which is recorded in the hash table and
+        then returned as the resulting value of <code>get()</code>.
+    </p>
+</div>
+<div class="row" id="helloworld">
+    <h2>Second section</h2>
 
-            <p>
-                This program first obtains a <code>ClassPool</code> object, which
-                controls bytecode modification with Javassist. The
-                <code>ClassPool</code> object is a container of <code>CtClass</code>
-                object representing a class file. It reads a class file on demand for
-                constructing a <code>CtClass</code> object and records the
-                constructed object for responding later accesses.
+    <p>
+        This program first obtains a <code>ClassPool</code> object, which
+        controls bytecode modification with Javassist. The
+        <code>ClassPool</code> object is a container of <code>CtClass</code>
+        object representing a class file. It reads a class file on demand for
+        constructing a <code>CtClass</code> object and records the
+        constructed object for responding later accesses.
 
-                To modify the definition of a class, the users must first obtain
-                from a <code>ClassPool</code> object
-                a reference to a <code>CtClass</code> object representing that class.
-                <code>get()</code> in <code>ClassPool</code> is used for this purpose.
-                In the case of the program shown above, the
-                <code>CtClass</code> object representing a class
-                <code>test.Rectangle</code> is obtained from the
-                <code>ClassPool</code> object and it is assigned to a variable
-                <code>cc</code>.
-                The <code>ClassPool</code> object returned by <code>getDfault()</code>
-                searches the default system search path.
-            </p>
+        To modify the definition of a class, the users must first obtain
+        from a <code>ClassPool</code> object
+        a reference to a <code>CtClass</code> object representing that class.
+        <code>get()</code> in <code>ClassPool</code> is used for this purpose.
+        In the case of the program shown above, the
+        <code>CtClass</code> object representing a class
+        <code>test.Rectangle</code> is obtained from the
+        <code>ClassPool</code> object and it is assigned to a variable
+        <code>cc</code>.
+        The <code>ClassPool</code> object returned by <code>getDfault()</code>
+        searches the default system search path.
+    </p>
 
-            <p>
-                From the implementation viewpoint, <code>ClassPool</code> is a hash
-                table of <code>CtClass</code> objects, which uses the class names as
-                keys. <code>get()</code> in <code>ClassPool</code> searches this hash
-                table to find a <code>CtClass</code> object associated with the
-                specified key. If such a <code>CtClass</code> object is not found,
-                <code>get()</code> reads a class file to construct a new
-                <code>CtClass</code> object, which is recorded in the hash table and
-                then returned as the resulting value of <code>get()</code>.
-            </p>
+    <p>
+        From the implementation viewpoint, <code>ClassPool</code> is a hash
+        table of <code>CtClass</code> objects, which uses the class names as
+        keys. <code>get()</code> in <code>ClassPool</code> searches this hash
+        table to find a <code>CtClass</code> object associated with the
+        specified key. If such a <code>CtClass</code> object is not found,
+        <code>get()</code> reads a class file to construct a new
+        <code>CtClass</code> object, which is recorded in the hash table and
+        then returned as the resulting value of <code>get()</code>.
+    </p>
 
-            <p>
-                This program first obtains a <code>ClassPool</code> object, which
-                controls bytecode modification with Javassist. The
-                <code>ClassPool</code> object is a container of <code>CtClass</code>
-                object representing a class file. It reads a class file on demand for
-                constructing a <code>CtClass</code> object and records the
-                constructed object for responding later accesses.
+    <p>
+        This program first obtains a <code>ClassPool</code> object, which
+        controls bytecode modification with Javassist. The
+        <code>ClassPool</code> object is a container of <code>CtClass</code>
+        object representing a class file. It reads a class file on demand for
+        constructing a <code>CtClass</code> object and records the
+        constructed object for responding later accesses.
 
-                To modify the definition of a class, the users must first obtain
-                from a <code>ClassPool</code> object
-                a reference to a <code>CtClass</code> object representing that class.
-                <code>get()</code> in <code>ClassPool</code> is used for this purpose.
-                In the case of the program shown above, the
-                <code>CtClass</code> object representing a class
-                <code>test.Rectangle</code> is obtained from the
-                <code>ClassPool</code> object and it is assigned to a variable
-                <code>cc</code>.
-                The <code>ClassPool</code> object returned by <code>getDfault()</code>
-                searches the default system search path.
-            </p>
+        To modify the definition of a class, the users must first obtain
+        from a <code>ClassPool</code> object
+        a reference to a <code>CtClass</code> object representing that class.
+        <code>get()</code> in <code>ClassPool</code> is used for this purpose.
+        In the case of the program shown above, the
+        <code>CtClass</code> object representing a class
+        <code>test.Rectangle</code> is obtained from the
+        <code>ClassPool</code> object and it is assigned to a variable
+        <code>cc</code>.
+        The <code>ClassPool</code> object returned by <code>getDfault()</code>
+        searches the default system search path.
+    </p>
 
-            <p>
-                From the implementation viewpoint, <code>ClassPool</code> is a hash
-                table of <code>CtClass</code> objects, which uses the class names as
-                keys. <code>get()</code> in <code>ClassPool</code> searches this hash
-                table to find a <code>CtClass</code> object associated with the
-                specified key. If such a <code>CtClass</code> object is not found,
-                <code>get()</code> reads a class file to construct a new
-                <code>CtClass</code> object, which is recorded in the hash table and
-                then returned as the resulting value of <code>get()</code>.
-            </p>
-        </div>
-    </div>
+    <p>
+        This program first obtains a <code>ClassPool</code> object, which
+        controls bytecode modification with Javassist. The
+        <code>ClassPool</code> object is a container of <code>CtClass</code>
+        object representing a class file. It reads a class file on demand for
+        constructing a <code>CtClass</code> object and records the
+        constructed object for responding later accesses.
+
+        To modify the definition of a class, the users must first obtain
+        from a <code>ClassPool</code> object
+        a reference to a <code>CtClass</code> object representing that class.
+        <code>get()</code> in <code>ClassPool</code> is used for this purpose.
+        In the case of the program shown above, the
+        <code>CtClass</code> object representing a class
+        <code>test.Rectangle</code> is obtained from the
+        <code>ClassPool</code> object and it is assigned to a variable
+        <code>cc</code>.
+        The <code>ClassPool</code> object returned by <code>getDfault()</code>
+        searches the default system search path.
+    </p>
+
+    <p>
+        From the implementation viewpoint, <code>ClassPool</code> is a hash
+        table of <code>CtClass</code> objects, which uses the class names as
+        keys. <code>get()</code> in <code>ClassPool</code> searches this hash
+        table to find a <code>CtClass</code> object associated with the
+        specified key. If such a <code>CtClass</code> object is not found,
+        <code>get()</code> reads a class file to construct a new
+        <code>CtClass</code> object, which is recorded in the hash table and
+        then returned as the resulting value of <code>get()</code>.
+    </p>
+
+    <p>
+        This program first obtains a <code>ClassPool</code> object, which
+        controls bytecode modification with Javassist. The
+        <code>ClassPool</code> object is a container of <code>CtClass</code>
+        object representing a class file. It reads a class file on demand for
+        constructing a <code>CtClass</code> object and records the
+        constructed object for responding later accesses.
+
+        To modify the definition of a class, the users must first obtain
+        from a <code>ClassPool</code> object
+        a reference to a <code>CtClass</code> object representing that class.
+        <code>get()</code> in <code>ClassPool</code> is used for this purpose.
+        In the case of the program shown above, the
+        <code>CtClass</code> object representing a class
+        <code>test.Rectangle</code> is obtained from the
+        <code>ClassPool</code> object and it is assigned to a variable
+        <code>cc</code>.
+        The <code>ClassPool</code> object returned by <code>getDfault()</code>
+        searches the default system search path.
+    </p>
+
+    <p>
+        This program first obtains a <code>ClassPool</code> object, which
+        controls bytecode modification with Javassist. The
+        <code>ClassPool</code> object is a container of <code>CtClass</code>
+        object representing a class file. It reads a class file on demand for
+        constructing a <code>CtClass</code> object and records the
+        constructed object for responding later accesses.
+
+        To modify the definition of a class, the users must first obtain
+        from a <code>ClassPool</code> object
+        a reference to a <code>CtClass</code> object representing that class.
+        <code>get()</code> in <code>ClassPool</code> is used for this purpose.
+        In the case of the program shown above, the
+        <code>CtClass</code> object representing a class
+        <code>test.Rectangle</code> is obtained from the
+        <code>ClassPool</code> object and it is assigned to a variable
+        <code>cc</code>.
+        The <code>ClassPool</code> object returned by <code>getDfault()</code>
+        searches the default system search path.
+    </p>
+
+    <p>
+        From the implementation viewpoint, <code>ClassPool</code> is a hash
+        table of <code>CtClass</code> objects, which uses the class names as
+        keys. <code>get()</code> in <code>ClassPool</code> searches this hash
+        table to find a <code>CtClass</code> object associated with the
+        specified key. If such a <code>CtClass</code> object is not found,
+        <code>get()</code> reads a class file to construct a new
+        <code>CtClass</code> object, which is recorded in the hash table and
+        then returned as the resulting value of <code>get()</code>.
+    </p>
+
+    <p>
+        This program first obtains a <code>ClassPool</code> object, which
+        controls bytecode modification with Javassist. The
+        <code>ClassPool</code> object is a container of <code>CtClass</code>
+        object representing a class file. It reads a class file on demand for
+        constructing a <code>CtClass</code> object and records the
+        constructed object for responding later accesses.
+
+        To modify the definition of a class, the users must first obtain
+        from a <code>ClassPool</code> object
+        a reference to a <code>CtClass</code> object representing that class.
+        <code>get()</code> in <code>ClassPool</code> is used for this purpose.
+        In the case of the program shown above, the
+        <code>CtClass</code> object representing a class
+        <code>test.Rectangle</code> is obtained from the
+        <code>ClassPool</code> object and it is assigned to a variable
+        <code>cc</code>.
+        The <code>ClassPool</code> object returned by <code>getDfault()</code>
+        searches the default system search path.
+    </p>
+
+    <p>
+        This program first obtains a <code>ClassPool</code> object, which
+        controls bytecode modification with Javassist. The
+        <code>ClassPool</code> object is a container of <code>CtClass</code>
+        object representing a class file. It reads a class file on demand for
+        constructing a <code>CtClass</code> object and records the
+        constructed object for responding later accesses.
+
+        To modify the definition of a class, the users must first obtain
+        from a <code>ClassPool</code> object
+        a reference to a <code>CtClass</code> object representing that class.
+        <code>get()</code> in <code>ClassPool</code> is used for this purpose.
+        In the case of the program shown above, the
+        <code>CtClass</code> object representing a class
+        <code>test.Rectangle</code> is obtained from the
+        <code>ClassPool</code> object and it is assigned to a variable
+        <code>cc</code>.
+        The <code>ClassPool</code> object returned by <code>getDfault()</code>
+        searches the default system search path.
+    </p>
+
+    <p>
+        From the implementation viewpoint, <code>ClassPool</code> is a hash
+        table of <code>CtClass</code> objects, which uses the class names as
+        keys. <code>get()</code> in <code>ClassPool</code> searches this hash
+        table to find a <code>CtClass</code> object associated with the
+        specified key. If such a <code>CtClass</code> object is not found,
+        <code>get()</code> reads a class file to construct a new
+        <code>CtClass</code> object, which is recorded in the hash table and
+        then returned as the resulting value of <code>get()</code>.
+    </p>
+</div>
+</div>
 </div>

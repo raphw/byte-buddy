@@ -41,21 +41,3 @@ body {
     background-color: #111155;
     color: #fff;
 }
-
-.affix-top, .affix {
-    position: static;
-}
-
-@media (min-width: 979px) {
-    #sidebar.affix-top {
-        position: static;
-        margin-top: 100px;
-        width: 228px;
-    }
-
-    #sidebar.affix {
-        position: fixed;
-        top: 200px;
-        width: 228px;
-    }
-}
