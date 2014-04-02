@@ -10,6 +10,9 @@ angular.module('ui.bootstrap.affix', [])
                 });
                 function checkPosition() {
                     var target = document.getElementById('affixComponent');
+                    if(!target) {
+                        return;
+                    }
                     var offset = $parse(scope.affix)(scope);
                     var currentOffset = win.prop('pageYOffset');
                     var documentHeight = target.clientHeight || target.offsetHeight || target.scrollHeight;
