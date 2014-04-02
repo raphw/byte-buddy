@@ -168,7 +168,10 @@ public class MethodDelegation implements Instrumentation {
      * that this includes methods that were defined by the {@link java.lang.Object} class. You can narrow this default
      * selection by explicitly selecting methods with calling the
      * {@link net.bytebuddy.instrumentation.MethodDelegation#filter(net.bytebuddy.instrumentation.method.matcher.MethodMatcher)}
-     * method on the returned method delegation.
+     * method on the returned method delegation as for example:
+     * <pre>MethodDelegation.to(new Foo()).filter(MethodMatchers.not(isDeclaredBy(Object.class)));</pre>
+     * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
+     * for delegation.
      *
      * @param delegate A delegate instance which will be injected by a type initializer and to which all intercepted
      *                 method calls are delegated to.
@@ -189,7 +192,13 @@ public class MethodDelegation implements Instrumentation {
     /**
      * Creates an instrumentation where only instance methods of the given object are considered as binding targets.
      * This method will never bind to constructors but will consider methods that are defined in super types. Note
-     * that this includes methods that were defined by the {@link java.lang.Object} class.
+     * that this includes methods that were defined by the {@link java.lang.Object} class. You can narrow this default
+     * selection by explicitly selecting methods with calling the
+     * {@link net.bytebuddy.instrumentation.MethodDelegation#filter(net.bytebuddy.instrumentation.method.matcher.MethodMatcher)}
+     * method on the returned method delegation as for example:
+     * <pre>MethodDelegation.to(new Foo()).filter(MethodMatchers.not(isDeclaredBy(Object.class)));</pre>
+     * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
+     * for delegation.
      *
      * @param delegate  A delegate instance which will be injected by a type initializer and to which all intercepted
      *                  method calls are delegated to.
@@ -214,7 +223,14 @@ public class MethodDelegation implements Instrumentation {
      * {@code fieldName} that is defined for the instrumented type. The field belongs to any instance of the instrumented
      * type and must be set manually by the user of the instrumented class. Note that this prevents interception of
      * method calls within the constructor of the instrumented class which will instead result in a
-     * {@link java.lang.NullPointerException}.
+     * {@link java.lang.NullPointerException}. Note that this includes methods that were defined by the
+     * {@link java.lang.Object} class. You can narrow this default selection by explicitly selecting methods with
+     * calling the
+     * {@link net.bytebuddy.instrumentation.MethodDelegation#filter(net.bytebuddy.instrumentation.method.matcher.MethodMatcher)}
+     * method on the returned method delegation as for example:
+     * <pre>MethodDelegation.to(new Foo()).filter(MethodMatchers.not(isDeclaredBy(Object.class)));</pre>
+     * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
+     * for delegation.
      * <p>&nbsp;</p>
      * The field is typically accessed by reflection or by defining an accessor on the instrumented type.
      *

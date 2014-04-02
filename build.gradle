@@ -5,11 +5,13 @@ buildscript {
 
     dependencies {
         classpath group: 'org.gradle.api.plugins', name: 'gradle-nexus-plugin', version: '0.7'
+        classpath group: 'com.github.jengelman.gradle.plugins', name: 'shadow', version: '0.8'
     }
 }
 
 apply plugin: 'java'
 apply plugin: 'nexus'
+apply plugin: 'shadow'
 
 sourceCompatibility = JavaVersion.VERSION_1_6
 targetCompatibility = JavaVersion.VERSION_1_6
@@ -33,6 +35,8 @@ jar {
 modifyPom {
     project {
         name 'Byte Buddy'
+        artifactId 'byte-buddy'
+        groupId 'net.bytebuddy'
         description 'Byte Buddy is a Java library for creating Java classes at run time.'
         url 'http://bytebuddy.net'
         inceptionYear '2014'
@@ -58,6 +62,14 @@ modifyPom {
                 email 'rafael.wth@gmail.com'
             }
         }
+    }
+}
+
+shadow {
+    classifier 'nodep'
+    relocation {
+        pattern = 'org.objectweb.asm'
+        shadedPattern = 'net.bytebuddy.jar.asm'
     }
 }
 

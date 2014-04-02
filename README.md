@@ -200,19 +200,43 @@ writing a thorough documentation. However, Byte Buddy already comes with a
 feel like using Byte Buddy in your project, feel free to do so even today. When doing so, note the information on
 adding a dependency to Byte Buddy to your project below.
 
-Project dependency
----------------------
+Dependency and API evolution
+----------------------------
 
-Byte Buddy is written on top of [ASM](http://asm.ow2.org/), a library for processing compiled Java classes. The
-authors of ASM
-recommend users of their library to
-[repackage the ASM dependency into a different name space](http://asm.ow2.org/doc/faq.html#Q15) when building a project,
-in case that the latter is meant to be used within other Java projects. This is done in order to avoid version
-conflicts. This is necessary since ASM cannot guarantee the backwards compatibility of its API as a result of
-unpredictable future changes in the Java class file format. Since Byte Buddy allows for direct interaction with ASM,
-a dependency to Byte Buddy should be repackaged in a similar manner. For this purpose, you can for example use the
-[Shade plugin](http://maven.apache.org/plugins/maven-shade-plugin/examples/class-relocation.html) when using Maven.
-With Gradle, a similar tool is the [Shadow plugin](https://github.com/johnrengelman/shadow).
+Byte Buddy is written on top of [ASM](http://asm.ow2.org/), a mature and well-tested library for reading and writing
+compiled Java classes. In order to allow for advanced type manipulations, Byte Buddy is intentionally exposing the
+ASM API to its users. Of course, the direct use of ASM remains fully optional and most users will most likely never
+require it. This choice was made such that a user of Byte Buddy is not restrained to its higher-level functionality
+but can implement custom instrumentations without a fuzz when it is necessary.
+
+However, this imposes one possible problem when relying onto Byte Buddy as a project dependency and making use of the
+exposed ASM API. The authors of ASM require their users to
+[repackage the ASM dependency into a different name space](http://asm.ow2.org/doc/faq.html#Q15). This is necessary
+because one cannot anticipate changes in the Java class file format what can lead to API incompatibilities of future
+versions of ASM. Because of this, each version of Byte Buddy is distributed in two different packaging formats:
+
+- A no-dependency version that repackages the ASM dependency from its `org.objectweb.asm` into Byte Buddy's own
+namespace `net.bytebuddy.jar.asm`. Doing so, the ASM dependency is also contained within Byte Buddy's *jar* file. By
+using this version, you do not need to worry about possible ASM version clashes which might be caused by the use of
+ASM by both Byte Buddy and other libraries. If you do not plan to use ASM, do not know what ASM is or what this
+is all about, this is the version you want to use. The artifact ID of this packaging format is `byte-buddy`.
+- A version with an explicit dependency on ASM in its original `org.objectweb.asm` namespace. **This version must only
+be used for repackaging Byte Buddy and its ASM dependency into *your own* namespace**. Never distribute your
+application while directly relying on this dependency. Otherwise, your users might experience version conflicts of
+different ASM versions on their class path. The artifact ID of this packaging format is `byte-buddy-dep`.
+
+Normally, you would use the first, no-dependency version. However, if you are using Byte Buddy and making use of the
+exposed ASM API, you **must** use the second version of Byte Buddy **and repackage it** into your own name space as
+suggested. This is in particularly true when you plan to redistribute your code for the use by others. Future versions
+of Byte Buddy will update their ASM dependency to newer version what will then lead to version clashes between
+different ASM versions that were repackaged by Byte Buddy, if you have not follow this recommendation! In contrast, the
+Byte Buddy API itself will only apply version compatible changes.
+
+There exist several tools that allow for an easy automatization of the repacking of dependencies during your build
+processes. You can for example use the
+[Shade plugin](http://maven.apache.org/plugins/maven-shade-plugin/examples/class-relocation.html) for Maven. With
+Gradle, a similar tool is the [Shadow plugin](https://github.com/johnrengelman/shadow) which Byte Buddy is using
+for executing its repackaging.
 
 License and development
 -----------------------
@@ -230,10 +254,10 @@ gradlew build
 ```
 
 from your shell and Byte Buddy is cloned and built on your machine. Byte Buddy is currently tested for the
-[*OpenJDK*](http://openjdk.java.net/) versions 6,7 and 8 using Travic CI. Please use GitHub's
-[issue tracker](https://github.com/raphw/byte-buddy/issues) for reporting bugs. When committing code, please
-provide test cases that prove the functionality of your features or that demonstrate a bug fix. Furthermore, make sure
-you are not breaking any existing test cases. If possible, please take the time to write some documentation. For feature
-requests or general feedback, you can also use the issue tracker.
+[*OpenJDK*](http://openjdk.java.net/) versions 6 and 7 and the *Oracle JDK* versions 7 and8 using Travic CI. Please
+use GitHub's [issue tracker](https://github.com/raphw/byte-buddy/issues) for reporting bugs. When committing code,
+please provide test cases that prove the functionality of your features or that demonstrate a bug fix. Furthermore,
+make sure you are not breaking any existing test cases. If possible, please take the time to write some documentation.
+For feature requests or general feedback, you can also use the issue tracker.
 
 [![Build Status](https://travis-ci.org/raphw/byte-buddy.png)](https://travis-ci.org/raphw/byte-buddy)
