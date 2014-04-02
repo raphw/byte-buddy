@@ -29,8 +29,17 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'p
         $scope.activeClass = function (current) {
             return current.target === '#' + ($location.path() || '/') ? 'active' : '';
         };
-        $scope.isCollapsed = true;
-        $rootScope.$on("$locationChangeStart", function (event, next, current) {
+        var collapsed = true;
+        $scope.isCollapsed = function() {
+            return collapsed;
+        };
+        $scope.toggleCollapse = function() {
+            collapsed = !collapsed;
+        };
+        $scope.collapse = function() {
+            collapsed = true;
+        };
+        $rootScope.$on("$routeChangeStart", function (event, next, current) {
             scroller.scrollTo(0, 0, 1500);
         });
     })
