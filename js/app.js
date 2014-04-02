@@ -1,4 +1,4 @@
-angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'placeholders', 'duScroll'])
+angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'duScroll'])
 
     .value('duScrollDuration', 3500)
 
