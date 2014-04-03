@@ -9,8 +9,14 @@ buildscript {
 }
 
 apply plugin: 'java'
+apply plugin: 'maven'
 apply plugin: 'nexus'
 apply plugin: 'shadow'
+
+/**
+ * We define the base configuration that is required for building the project.
+ * Note that the Nexus plugin is configured to deploy to the Sonatype Maven repository by default.
+ */
 
 sourceCompatibility = JavaVersion.VERSION_1_6
 targetCompatibility = JavaVersion.VERSION_1_6
@@ -18,13 +24,18 @@ targetCompatibility = JavaVersion.VERSION_1_6
 description = 'Byte Buddy is a Java library for creating Java classes at run time.'
 version = '0.1-SNAPSHOT'
 
-def dependencyFolderName = 'dep'
-def noDependencyFolderName = 'nodep'
 def dependencyQualifier = 'dep'
 
 def versionAsm = '4.2'
 def versionMockito = '1.9.5'
 def versionJunit = '4.11'
+
+def artifactBase = 'byte-buddy'
+def groupName = 'net.bytebuddy'
+
+/**
+ * We set up the JAR and the project dependencies.
+ */
 
 jar {
     manifest {
@@ -43,15 +54,27 @@ dependencies {
     testCompile group: 'org.mockito', name: 'mockito-core', version: versionMockito
 }
 
+/**
+ * We a version for creating a Gradle wrapper.
+ */
+
 task wrapper(type: Wrapper) {
     gradleVersion = '1.11'
 }
 
+/**
+ * For defining the contents of the Maven POM, we need to specify some meta information about the project.
+ * Some of the POM information is derived from the project information (such as dependencies, description,
+ * group and artifact ID).
+ */
+
+group = groupName
+
 modifyPom {
     project {
         name 'Byte Buddy'
-        artifactId 'byte-buddy'
-        groupId 'net.bytebuddy'
+        packaging = 'jar'
+        artifactId = artifactBase
         url 'http://bytebuddy.net'
         inceptionYear '2014'
         scm {
@@ -73,45 +96,39 @@ modifyPom {
                 email 'rafael.wth@gmail.com'
             }
         }
+        issueManagement {
+            system 'GitHub'
+            url 'https://github.com/raphw/byte-buddy/issues'
+        }
     }
 }
 
 /*
  * In order to avoid version conflicts of ASM, we need to repackage the dependency into Byte Buddy's namespace.
- * The target package will be 'net.bytebuddy.jar.asm'. For the sake of overview, we will rename the original
- * artifacts to include a qualifier. Furthermore, we will segregate the jars
+ * The target package will be 'net.bytebuddy.jar.asm'. This is done by the Shadow plugin.
  */
+
+def temporaryDir = "${libsDir}${File.separator}nodep"
 
 shadow {
     relocation {
         pattern = 'org.objectweb.asm'
         shadedPattern = 'net.bytebuddy.jar.asm'
     }
-    destinationDir "${libsDir}/${noDependencyFolderName}/"
+    destinationDir temporaryDir
     artifactAttached false
 }
 
-def artifactPattern = "${version}(?:-(?:(?:javadoc)|(?:sources)))?.jar".replace(".", "\\.")
-
-shadowJar.doFirst {
-    def dependencyDir = new File(libsDir, dependencyFolderName)
-    if(dependencyDir.mkdirs()) {
-        logger.info('Created directory {}', dependencyDir)
-    }
-    libsDir.listFiles().each { file ->
-        if (file.isFile() && file.name.matches("^.*${artifactPattern}\$")) {
-            def renamed = file.name.replaceAll(artifactPattern, "${dependencyQualifier}-\$0")
-            logger.info('Copying original artifact {} as {}', file.name, renamed)
-            new File(dependencyDir, renamed) << file.bytes
-        }
-    }
-}
-
 shadowJar.doLast {
-    libsDir.listFiles().each { file ->
-        if (file.isFile() && file.name.matches("^.*${artifactPattern}\$")) {
-            logger.info('Deleting shadowed, now duplicated artifact {}', file.name)
-            file.delete()
+    logger.info("Move shadowed jars from ${temporaryDir} into ${libsDir}")
+    def origin = new File(temporaryDir)
+    origin.listFiles().each {
+        def targetFile = new File(libsDir, it.name)
+        if((!targetFile.exists() || !targetFile.delete()) || !it.renameTo(targetFile)) {
+            throw new StopActionException("Could not move shadowed ${it}")
         }
+    }
+    if(!origin.delete()) {
+        throw new StopActionException("Could not delete temporary ${origin}");
     }
 }
