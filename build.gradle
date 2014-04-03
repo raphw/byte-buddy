@@ -16,15 +16,16 @@ apply plugin: 'shadow'
 sourceCompatibility = JavaVersion.VERSION_1_6
 targetCompatibility = JavaVersion.VERSION_1_6
 
+description = 'Byte Buddy is a Java library for creating Java classes at run time.'
+version = '0.1-SNAPSHOT'
+
+def dependencyFolderName = 'dep'
+def noDependencyFolderName = 'nodep'
+def dependencyQualifier = 'dep'
+
 def versionAsm = '4.2'
 def versionMockito = '1.9.5'
 def versionJunit = '4.11'
-
-version = '0.1-SNAPSHOT'
-
-repositories {
-    mavenCentral()
-}
 
 jar {
     manifest {
@@ -32,12 +33,26 @@ jar {
     }
 }
 
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile group: 'org.ow2.asm', name: 'asm', version: versionAsm
+    testCompile group: 'org.ow2.asm', name: 'asm-util', version: versionAsm
+    testCompile group: 'junit', name: 'junit', version: versionJunit
+    testCompile group: 'org.mockito', name: 'mockito-core', version: versionMockito
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '1.11'
+}
+
 modifyPom {
     project {
         name 'Byte Buddy'
         artifactId 'byte-buddy'
         groupId 'net.bytebuddy'
-        description 'Byte Buddy is a Java library for creating Java classes at run time.'
         url 'http://bytebuddy.net'
         inceptionYear '2014'
 
@@ -65,21 +80,40 @@ modifyPom {
     }
 }
 
+/*
+ * In order to avoid version conflicts of ASM, we need to repackage the dependency into Byte Buddy's namespace.
+ * The target package will be 'net.bytebuddy.jar.asm'. For the sake of overview, we will rename the original
+ * artifacts to include a qualifier. Furthermore, we will segregate the jars
+ */
+
 shadow {
-    classifier 'nodep'
     relocation {
         pattern = 'org.objectweb.asm'
         shadedPattern = 'net.bytebuddy.jar.asm'
     }
+    destinationDir "${libsDir}/${noDependencyFolderName}/"
+    artifactAttached false
 }
 
-dependencies {
-    compile group: 'org.ow2.asm', name: 'asm', version: versionAsm
-    testCompile group: 'org.ow2.asm', name: 'asm-util', version: versionAsm
-    testCompile group: 'junit', name: 'junit', version: versionJunit
-    testCompile group: 'org.mockito', name: 'mockito-core', version: versionMockito
+def artifactPattern = "${version}(?:-(?:(?:javadoc)|(?:sources)))?.jar".replace(".", "\\.")
+
+shadowJar.doFirst {
+    def dependencyDir = new File(libsDir, dependencyFolderName)
+    dependencyDir.mkdirs()
+    libsDir.listFiles().each { file ->
+        if (file.isFile() && file.name.matches("^.*${artifactPattern}\$")) {
+            def renamed = file.name.replaceAll(artifactPattern, "${dependencyQualifier}-\$0")
+            logger.info('Copying original artifact {} as {}', file.name, renamed)
+            new File(dependencyDir, renamed) << file.bytes
+        }
+    }
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '1.11'
+shadowJar.doLast {
+    libsDir.listFiles().each { file ->
+        if (file.isFile() && file.name.matches("^.*${artifactPattern}\$")) {
+            logger.info('Deleting shadowed, now duplicated artifact {}', file.name)
+            file.delete()
+        }
+    }
 }
