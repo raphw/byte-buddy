@@ -2,7 +2,6 @@ buildscript {
     repositories {
         jcenter()
     }
-
     dependencies {
         classpath group: 'org.gradle.api.plugins', name: 'gradle-nexus-plugin', version: '0.7'
         classpath group: 'com.github.jengelman.gradle.plugins', name: 'shadow', version: '0.8'
@@ -55,13 +54,11 @@ modifyPom {
         groupId 'net.bytebuddy'
         url 'http://bytebuddy.net'
         inceptionYear '2014'
-
         scm {
             url 'https://github.com/raphw/byte-buddy'
             connection 'scm:https://raphw@github.com/raphw/byte-buddy.git'
             developerConnection 'scm:git://github.com/raphw/byte-buddy.git'
         }
-
         licenses {
             license {
                 name 'The Apache Software License, Version 2.0'
@@ -69,7 +66,6 @@ modifyPom {
                 distribution 'repo'
             }
         }
-
         developers {
             developer {
                 id 'raphw'
@@ -99,7 +95,9 @@ def artifactPattern = "${version}(?:-(?:(?:javadoc)|(?:sources)))?.jar".replace(
 
 shadowJar.doFirst {
     def dependencyDir = new File(libsDir, dependencyFolderName)
-    dependencyDir.mkdirs()
+    if(dependencyDir.mkdirs()) {
+        logger.info('Created directory {}', dependencyDir)
+    }
     libsDir.listFiles().each { file ->
         if (file.isFile() && file.name.matches("^.*${artifactPattern}\$")) {
             def renamed = file.name.replaceAll(artifactPattern, "${dependencyQualifier}-\$0")
