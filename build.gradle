@@ -105,7 +105,12 @@ modifyPom {
 
 /*
  * In order to avoid version conflicts of ASM, we need to repackage the dependency into Byte Buddy's namespace.
- * The target package will be 'net.bytebuddy.jar.asm'. This is done by the Shadow plugin.
+ * The target package will be 'net.bytebuddy.jar.asm'. This is done by the Shadow plugin. Unfortunately, we cannot
+ * apply the shadowing to the source and javadoc JARs. This will hopefully not be of too much confusion to the users
+ * because they are not supposed to be using ASM accessing classes when using the shadowed version but shadow the
+ * classes themselves as described on http://bytebuddy.net/#/tutorial.
+ *
+ * If you are aware of a better solution, PLEASE let us know. We are hoping to improve this in the future.
  */
 
 def temporaryDir = "${libsDir}${File.separator}nodep"
@@ -124,11 +129,11 @@ shadowJar.doLast {
     def origin = new File(temporaryDir)
     origin.listFiles().each {
         def targetFile = new File(libsDir, it.name)
-        if((!targetFile.exists() || !targetFile.delete()) || !it.renameTo(targetFile)) {
+        if ((!targetFile.exists() || !targetFile.delete()) || !it.renameTo(targetFile)) {
             throw new StopActionException("Could not move shadowed ${it}")
         }
     }
-    if(!origin.delete()) {
+    if (!origin.delete()) {
         throw new StopActionException("Could not delete temporary ${origin}");
     }
 }
