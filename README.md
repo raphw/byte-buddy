@@ -235,8 +235,8 @@ Byte Buddy API itself will only apply version compatible changes.
 There exist several tools that allow for an easy automatization of the repacking of dependencies during your build
 processes. You can for example use the
 [Shade plugin](http://maven.apache.org/plugins/maven-shade-plugin/examples/class-relocation.html) for Maven. With
-Gradle, a similar tool is the [Shadow plugin](https://github.com/johnrengelman/shadow) which Byte Buddy is using
-for executing its repackaging.
+Gradle, a similar tool is the [Shadow plugin](https://github.com/johnrengelman/shadow). Another alternative is
+<a href="http://code.google.com/p/jarjar/">jarjar</a>, a library that offers integration as an Ant task.
 
 License and development
 -----------------------
@@ -244,13 +244,12 @@ License and development
 Byte Buddy is licensed under the liberal and business-friendly
 [*Apache Licence, Version 2.0*](http://www.apache.org/licenses/LICENSE-2.0.html) and is freely available on this GitHub
 page. Byte Buddy will be released on Maven Central once the mentioned tutorial is finished. The project is built using
-[Gradle](http://www.gradle.org/). You can use the Gradle wrapper that comes with the project such that you do not need
-a Gradle installation of your own. Simply call
+<a href="http://maven.apache.org/">Maven</a>. From your shell, this might look something like this:
 
 ```shell
 git clone https://github.com/raphw/byte-buddy.git
 cd byte-buddy
-gradlew build
+mvn package
 ```
 
 from your shell and Byte Buddy is cloned and built on your machine. Byte Buddy is currently tested for the
