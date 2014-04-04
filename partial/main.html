@@ -212,8 +212,8 @@ assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
             during your build processes. You can for example use the
             <a href="http://maven.apache.org/plugins/maven-shade-plugin/examples/class-relocation.html">Shade
                 plugin</a> for Maven. With Gradle, a similar tool is the <a
-                href="https://github.com/johnrengelman/shadow">Shadow plugin</a> which Byte Buddy is using
-            itself for its repackaging.
+                href="https://github.com/johnrengelman/shadow">Shadow plugin</a>. Another alternative is
+            <a href="http://code.google.com/p/jarjar/">jarjar</a>, a library that offers integration as an Ant task.
         </p>
     </div>
 </div>
