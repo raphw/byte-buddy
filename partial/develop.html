@@ -35,6 +35,21 @@ mvn package</pre>
     Java 6 compiler.
     </p>
 
+    <p>
+        The project is currently organized in three different modules. The root project <code>byte-buddy-parent</code>
+        serves as a common ground for the configuration of any Byte Buddy module. The project's implementation is found
+        in the <code>byte-buddy-dev</code> module. This module is configured to rely on a direct dependency onto the
+        <a href="http://asm.ow2.org/">ASM</a> library, thus the <i>dev</i> qualifier in the module's name. Because the
+        ASM library does <a href="http://asm.ow2.org/doc/faq.html#Q15">not guarantee to respect
+        backwards-compatibility</a>, the <code>byte-buddy</code> module repackages the ASM-dependency into Byte Buddy's
+        own name space. In doing so, the ASM dependency is moved to <code>net.bytebuddy.jar.asm</code>. This
+        dependency-free module does not define sources of its own but relies on the <code>byte-buddy-dev</code> module.
+        On its build, all depdencies are resolved and a dependency-free deployment descriptor is created. Further
+        information can be found in the section on <a href="#/dependency">how to define a dependency onto Byte Buddy</a>.
+        For generating source code and javadoc artifcats, you need to run the Maven build using the <code>extras</code>
+        profile.
+    </p>
+
     <h2>Contribute</h2>
 
     <p>
