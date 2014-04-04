@@ -15,7 +15,7 @@ import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.is;
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
 /**
- * A method registry is responsible for
+ * A method registry is responsible for storing information on how a method is intercepted.
  */
 public interface MethodRegistry {
 
@@ -47,9 +47,8 @@ public interface MethodRegistry {
 
     /**
      * Once all entries for a method registry were registered, a method registry can be compiled in order to allow the
-     * retrieval of {@link net.bytebuddy.dynamic.scaffold.MethodRegistry.Compiled.Entry}s for
-     * known method. Additionally, a fallback entry is to be supplied which is returned if a requested
-     * method is not known to the compiled method registry.
+     * retrieval of a compiled entry for a known method. Additionally, a fallback entry is to be supplied which is
+     * returned if a requested method is not known to the compiled method registry.
      *
      * @param instrumentedType The instrumented type for which this field registry is to be compiled.
      * @param fallback         The fallback field attribute appender factory that serves as a fallback for unknown methods.

@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>net.bytebuddy</groupId>
+    <artifactId>byte-buddy-parent</artifactId>
+    <version>0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <inceptionYear>2014</inceptionYear>
+
+    <name>Byte Buddy (parent)</name>
+    <description>
+        Byte Buddy is a Java library for creating Java classes at run time.
+        The parent artifact contains configuration information that concern all submodules.
+    </description>
+    <url>http://bytebuddy.net</url>
+
+    <modules>
+        <module>byte-buddy</module>
+        <module>byte-buddy-dep</module>
+    </modules>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <code.level>1.6</code.level>
+        <shade.artifactid>byte-buddy</shade.artifactid>
+        <shade.source>org.objectweb.asm</shade.source>
+        <shade.target>net.bytebuddy.jar.asm</shade.target>
+        <version.asm>4.2</version.asm>
+        <version.junit>4.11</version.junit>
+        <version.mockito>1.9.5</version.mockito>
+        <version.plugin.compiler>3.1</version.plugin.compiler>
+        <version.plugin.javadoc>2.9.1</version.plugin.javadoc>
+        <version.plugin.source>2.2.1</version.plugin.source>
+        <mode.extra>false</mode.extra>
+    </properties>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+            <comments>A business-friendly OSS license</comments>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>raphw</id>
+            <name>Rafael Winterhalter</name>
+            <email>rafael.wth@web.de</email>
+            <url>http://mydailyjava.blogspot.com</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+            <timezone>+1</timezone>
+        </developer>
+    </developers>
+
+    <!-- OSS parent for deployment to Maven Central -->
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>7</version>
+    </parent>
+
+    <issueManagement>
+        <system>github.com</system>
+        <url>https://github.com/raphw/byte-buddy/issues</url>
+    </issueManagement>
+
+    <scm>
+        <connection>scm:git:git@github.com:raphw/byte-buddy.git</connection>
+        <developerConnection>scm:git:git@github.com:raphw/byte-buddy.git</developerConnection>
+        <url>git@github.com:raphw/byte-buddy.git</url>
+    </scm>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.ow2.asm</groupId>
+                <artifactId>asm</artifactId>
+                <version>${version.asm}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.ow2.asm</groupId>
+                <artifactId>asm-util</artifactId>
+                <version>${version.asm}</version>
+            </dependency>
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>${version.junit}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>${version.mockito}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <!-- Define the compiler level -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${version.plugin.compiler}</version>
+                <inherited>true</inherited>
+                <configuration>
+                    <source>${code.level}</source>
+                    <target>${code.level}</target>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>extras</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <sources.create>true</sources.create>
+            </properties>
+            <build>
+                <plugins>
+                    <!-- Create source code artifact -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>${version.plugin.source}</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <!-- Create javadoc artifact -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>${version.plugin.javadoc}</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+</project>
