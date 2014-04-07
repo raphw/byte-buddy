@@ -11,7 +11,7 @@
     </div>
     <div class="col-md-8 col-md-offset-1" id="affixComponent">
         <div class="row" style="background-color: orange; font-weight: bold; color: #ffffff; padding: 5px;">
-            This tutorial is currently in the make and yet only filled with placeholder text. We hope to publish Byte
+            This tutorial is currently in the make. We hope to publish a first release of Byte
             Buddy together with the completed version of this webpage before July 2014!
         </div>
         <div class="row" id="concept">
@@ -47,7 +47,8 @@
                 </li>
                 <li>
                     The reflection API breaks type-safety: Even though the JVM is capable of improving the reflective
-                    runtime, we might be required to expose this reflective API to our library's users. However,
+                    runtime, we might be required to expose this reflective API to our library's users when enhancing
+                    the user types. However,
                     type-safety is one of Java's strong suites. We do not want to take it away when interacting with out
                     user's code. To get a better understanding of the problem, let us look at the example of a miniature
                     security library.
@@ -62,15 +63,17 @@
             </p>
 <pre>class Service {
   void deleteEverything() {
-    // delete everything …
+    // delete everything ...
   }
 }</pre>
             <p>
                 Such a reset should of course only be performed by administrators and never by a normal user of our
-                application. By analyzing our source code, we can make sure that this will never happen. However, we
-                want more security which is why we want to use a security framework for making sure that the method
-                is never called by anybody but by an administrator. Our framework's public API should look like
-                this:
+                application. By analyzing our source code, we can make sure that this will never happen. However, 
+                we can expect our application to grow and to be changed in the future. Therefore, we want to implement
+                a tighter security model where the method invocation is guarded by an explicit check for the application
+                user. We will normaly use a security framework for making sure that the method
+                is never called by anybody but by an administrator. We will assume a framework with a public API 
+                as follows:
             </p>
 <pre>@interface Secured {
   String user();
@@ -86,15 +89,15 @@ interface Framework {
             <p>
                 In this framework, the <code>Secured</code> annotation should be used to mark methods that can only be
                 accessed by a given user. The <code>UserHolder</code> is used for globally defining which user is
-                currently considered to be logged in. The Framework interface allows for the creation of secured type's
-                by calling their default constructor. Of course, this framework is overly simple, but in principal
+                currently logged into the application. The framework interface allows for the creation of secured types
+                by calling their default constructors. Of course, this framework is overly simple, but in principal
                 this is how security frameworks like for example the popular
                 <a href="http://projects.spring.io/spring-security/">Spring Security</a> work. A feature of this
-                security framework is that we preserve the user's type hierarchy. By the contract of our Framework
-                interface, we promise the user to return an instance of any type <code>T</code> it is handed over.
+                security framework is that we preserve the user's types. By the contract of our framework
+                interface, we promise the user to return an instance of any type <code>T</code> it receives.
                 Imagine for now that we knew that this type could only be <code>T = Service</code> and that
-                the method was annotated with <code>@Secured("ADMIN")</code>. This way, we could easily implement a
-                secured version of this type by subclassing it:
+                the <code>deleteEverything</code> method was annotated with <code>@Secured("ADMIN")</code>. 
+                This way, we could easily implement a secured version of this type by subclassing it:
             </p>
 <pre>class SecuredService extends Service {
   @Override void deleteEverything() {
@@ -106,7 +109,7 @@ interface Framework {
   }
 }</pre>
             <p>
-                This way, we could fulfill the contract of our framework by:
+                With this additional class we could implement the framework as follows:
             </p>
 <pre>class HardcodedFrameworkImpl implements Framework {
   @Override
@@ -119,34 +122,46 @@ interface Framework {
   }
 }</pre>
             <p>
-                Of course, this implementation is not of much use. We promised in the secure method's
+                Of course, this implementation is not of much use. We promised in the <code>secure</code> method's
                 contract to provide security for any type but in reality, we will throw an exception
                 once we encounter something else then the known <code>Service</code>. Also, this would require our
                 security library to know about about this particular <code>Service</code> type when the library is
-                compiled. Obviously, this is not a feasible solution for securing any type.
+                compiled. Obviously, this is not a feasible solution for implementing the framework.
                 So how can we solve this problem? Well, since this is a tutorial on a code generation
                 library you will have guessed the answer: We will create a subclass on demand and at
-                runtime when the <code>Service</code> class first becomes known to our security framework. However,
-                note that you should use code generation with care. Java types are something very
-                special to the JVM and follow some different rules with respect to garbage collection.
-                Therefore, you should use code generation with care and you should never solve problems
-                with generated code that you could have solved by improving your application's
-                implementation. However, if you need to interact with unknown types while preserving
-                this unknown type hierarchy, code generation is most likely your online option.
-                Byte Buddy is only one solution that allows for the creating of compiled Java code
-                during the runtime of a Java program. Other libraries that you can consider to use
-                instead of Byte Buddy are:
+                runtime when the <code>Service</code> class first becomes known to our security framework. With code
+                generation, we can take a given type, subclass it at runtime and override the methods we want to
+                secure. Many popular Java frameworks are implemented this way.
+            </p>
+            <p>
+                Before we learn all about code generation and Byte Buddy,
+                note that you should use code generation with care. Java types are something rather
+                special to the JVM and are rarely garbage collected.
+                Therefore, you should nver overuse code generation but only solve problems
+                using generated code when it is the only way out. However, if you need to interact with 
+                unknown types while preserving
+                this unknown type hierarchy, code generation is most likely your only option. Many popular frameworks,
+                such as frameworks for dependency injection, object-relational mapping or mocking are implemented
+                this way.
+            </p>
+            <p>
+                Of cource, Byte Buddy is not the first library for code generation. However, we believe that Byte
+                Buddy knows some tricks the other frameworks cannot offer. The general idea of Byte Buddy is to work
+                declaratively, both by focusing on using a domain specific language and annotations. No other code
+                generation library for the JVM we know of works this way. Nevertheless, you might want to have a look
+                at some other frameworks to find out which one suites you best: 
             </p>
             <ul>
                 <li>
                     <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Proxy.html">Java proxies</a>:
                     The Java Class Library comes with a proxy toolkit that allows for the creation of classes that
-                    implement a given set of interfaces. This is handy but also very limited. The above miniature
-                    framework could for example not be implemented this way.
+                    implement a given set of interfaces. This built-in proxy supplier is handy but also very limited. 
+                    The above mentioned security framework could for example not be implemented this way since we
+                    want to extend classes and not interfaces.
                 </li>
                 <li>
-                    <a href="http://cglib.sourceforge.net/">cglib</a>: The code generation library was implemented in
-                    the early life of Java and it did unfortunately not catch up with the development of the Java
+                    <a href="http://cglib.sourceforge.net/">cglib</a>: The code generation library was implemented 
+                    during the years of Java and it did unfortunately not catch up with the development of the Java
                     platform. Nevertheless, cglib remains a quite powerful library but its active development became
                     rather vague. For this reason, many of its users found other solutions.
                 </li>
