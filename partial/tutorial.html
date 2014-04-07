@@ -161,14 +161,16 @@ interface Framework {
                 </li>
                 <li>
                     <a href="http://cglib.sourceforge.net/">cglib</a>: The code generation library was implemented 
-                    during the years of Java and it did unfortunately not catch up with the development of the Java
-                    platform. Nevertheless, cglib remains a quite powerful library but its active development became
-                    rather vague. For this reason, many of its users found other solutions.
+                    during the early years of Java and it did unfortunately not catch up with the development of the 
+                    Java platform. Nevertheless, cglib remains a quite powerful library but its active development 
+                    became rather vague. Also, many developers dislike cglibs rather verbose API. For this reason, 
+                    many of its users moved away from cglib.
                 </li>
                 <li>
                     <a href="http://www.csg.ci.i.u-tokyo.ac.jp/~chiba/javassist/">javassist</a>: This library comes with
                     a compiler that takes strings of Java code which are translated into Java byte code during the
-                    runtime of an application. This is very ambitious and a great idea. However, the javassist
+                    runtime of an application. This is very ambitious and in principle a great idea since Java source
+                    code is obviously a great way for describing Java classes. However, the javassist
                     compiler does not compare to the javac compiler in its functionality and allows for easy mistakes
                     when dynamically composing strings to implement more complex logic. Additionally, javassist comes
                     with a proxy library which is similar to the JCL's proxy tools but allows extending classes and
@@ -177,21 +179,25 @@ interface Framework {
                 </li>
                 <li>
                     <a href="http://jodd.org/doc/proxetta/">Proxetta</a>: Proxetta is a module in the Jodd framework
-                    and uses marker types for creating runtime code. Its functionality is however also rather limited.
+                    and uses marker types for creating runtime code. Its functionality is however also rather limited
+                    when interacting with unknwon user types.
                 </li>
             </ul>
             <p>
-                We believe that Byte Buddy knows some tricks that these other frameworks do not offer.
+                We believe that Byte Buddy can offer functionaliy that is not offered by any of these libraries.
                 Byte Buddy comes with an expressive domain specific language that allows for the
-                creation of very custom types without writing lots of codes. At the same type, Byte
+                creation of very custom types without writing verbose code. At the same type, Byte
                 Buddy is very open for customization and will not restrain you to the features that come
-                out of the box. In the end, you can even define custom byte code for implemented methods
-                but even without knowing what byte code is, you will be able to do quite a lot without
-                digging deep into the framework. Have you had a look at the Hello World! example?
+                out of the box. In the end, you can even define custom byte code for implemented methods.
+                But even without knowing what byte code is, you will be able to do quite a lot without
+                digging deep into the framework. Have you had a look at the <code>Hello World!</code> example?
+                </p>
+                <p>
                 In this tutorial we will gradually explain the features of Byte Buddy. We will start
                 with the more general features that are most likely to be required by a majority of
                 users. We will then consider increasingly advanced features and give a short
-                introduction to Java byte code and explain how the advanced features of Byte Buddy can
+                introduction to Java byte code and then use this as a foundation to explain how the 
+                advanced features of Byte Buddy can
                 be used.
             </p>
         </div>
