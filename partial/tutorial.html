@@ -1,282 +1,184 @@
-<h1>
-    This tutorial is currently in the make and yet only filled with placeholder text. We hope to publish Byte Buddy
-    together with the completed version of this webpage before July 2014!
-</h1>
 <div class="row">
-<div class="col-xs-6 col-md-3" style="height: 100%;">
-    <div class="sidebar hidden-print affix-top" role="complementary" data-affix="0">
-        <div style="padding: 40px 0 0 15px;">
-            <ul class="nav nav-tabs nav-stacked" style="border: 0;">
-                <li><a href="#welcome" data-du-smooth-scroll="" data-du-scrollspy="" data-offset="40">First section</a>
-                </li>
-                <li><a href="#helloworld" data-du-smooth-scroll="" data-du-scrollspy="" data-offset="40">Second
-                    section</a>
-                </li>
-            </ul>
+    <div class="col-xs-6 col-md-3" style="height: 100%;">
+        <div class="sidebar hidden-print affix-top" role="complementary" data-affix="0">
+            <div style="padding: 40px 0 0 15px;">
+                <ul class="nav nav-tabs nav-stacked" style="border: 0;">
+                    <li><a href="#concept" data-du-smooth-scroll="" data-du-scrollspy="" data-offset="40">What for?</a>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
-</div>
-<div class="col-md-8 col-md-offset-1" id="affixComponent">
-<div class="row" id="welcome">
-    <h2>First section</h2>
+    <div class="col-md-8 col-md-offset-1" id="affixComponent">
+        <div class="row" style="background-color: orange; font-weight: bold; color: #ffffff; padding: 5px;">
+            This tutorial is currently in the make and yet only filled with placeholder text. We hope to publish Byte
+            Buddy together with the completed version of this webpage before July 2014!
+        </div>
+        <div class="row" id="concept">
+            <h2>Why runtime code generation?</h2>
 
-    <p>
-        This program first obtains a <code>ClassPool</code> object, which
-        controls bytecode modification with Javassist. The
-        <code>ClassPool</code> object is a container of <code>CtClass</code>
-        object representing a class file. It reads a class file on demand for
-        constructing a <code>CtClass</code> object and records the
-        constructed object for responding later accesses.
+            <p>
+                The Java language comes with a comparatively strict type system. Java requires all variables and objects
+                to be of a specific type and an attempt to assign incompatible types will always cause an error. These
+                errors will usually be emitted by the Java compiler or at the very least by the Java runtime, if a
+                developer has made erroneous use of explicit type castings. This behavior is great for writing business
+                applications because business domains can usually be described in an expressive manner. This way, we can
+                use Java to build very readable and type-safe applications. Among other things, it is Java's type system
+                that is responsible for Java's popularity in enterprise programming.
+            </p>
 
-        To modify the definition of a class, the users must first obtain
-        from a <code>ClassPool</code> object
-        a reference to a <code>CtClass</code> object representing that class.
-        <code>get()</code> in <code>ClassPool</code> is used for this purpose.
-        In the case of the program shown above, the
-        <code>CtClass</code> object representing a class
-        <code>test.Rectangle</code> is obtained from the
-        <code>ClassPool</code> object and it is assigned to a variable
-        <code>cc</code>.
-        The <code>ClassPool</code> object returned by <code>getDfault()</code>
-        searches the default system search path.
-    </p>
+            <p>
+                However, by enforcing its strict type system, Java imposes limitations that restrict the language's
+                scope of use in other domains. For example, when writing a library that is to be used by other Java
+                applications, we will normally not be able to use any type that is defined in the user's application
+                because these types are unknown to us when our library is compiled. In order to call methods or access
+                fields of the user's code, the Java Class Library comes with a reflection API. Using the reflection API,
+                we are able to introspect unknown types and to call methods or access fields. Unfortunately, the use of
+                the reflection API has two significant downsides:
+            </p>
+            <ul>
+                <li>
+                    The reflection API is slower than a hard-coded method invocation: First, one needs to perform a
+                    rather expensive method lookup to get hold of an object that describes a specific method. And when a
+                    method is invoked, this requires the JVM to run native code which requires long run time compared to
+                    a direct invocation. However, modern JVMs know a concept called inflation where the JNI invocation
+                    is replaced by generated byte code that is injected into a dynamically created class. As you can
+                    see, even the JVM itself uses code generation!
+                </li>
+                <li>
+                    The reflection API breaks type-safety: Even though the JVM is capable of improving the reflective
+                    runtime, we might be required to expose this reflective API to our library's users. However,
+                    type-safety is one of Java's strong suites. We do not want to take it away when interacting with out
+                    user's code. To get a better understanding of the problem, let us look at the example of a miniature
+                    security library.
+                </li>
+            </ul>
+            <h4>Writing a security library</h4>
 
-    <p id="sub1">
-        From the implementation viewpoint, <code>ClassPool</code> is a hash
-        table of <code>CtClass</code> objects, which uses the class names as
-        keys. <code>get()</code> in <code>ClassPool</code> searches this hash
-        table to find a <code>CtClass</code> object associated with the
-        specified key. If such a <code>CtClass</code> object is not found,
-        <code>get()</code> reads a class file to construct a new
-        <code>CtClass</code> object, which is recorded in the hash table and
-        then returned as the resulting value of <code>get()</code>.
-    </p>
+            <p>
+                Business applications can grow large and sometimes it is difficult to keep overview of call stacks
+                in our application. Imagine a business application that implements a reset functionality that allows
+                deleting everything from the application's database.
+            </p>
+<pre>class Service {
+  void deleteEverything() {
+    // delete everything …
+  }
+}</pre>
+            <p>
+                Such a reset should of course only be performed by administrators and never by a normal user of our
+                application. By analyzing our source code, we can make sure that this will never happen. However, we
+                want more security which is why we want to use a security framework for making sure that the method
+                is never called by anybody but by an administrator. Our framework's public API should look like
+                this:
+            </p>
+<pre>@interface Secured {
+  String user();
+}
 
-    <p>
-        This program first obtains a <code>ClassPool</code> object, which
-        controls bytecode modification with Javassist. The
-        <code>ClassPool</code> object is a container of <code>CtClass</code>
-        object representing a class file. It reads a class file on demand for
-        constructing a <code>CtClass</code> object and records the
-        constructed object for responding later accesses.
+class UserHolder {
+  static String user;
+}
 
-        To modify the definition of a class, the users must first obtain
-        from a <code>ClassPool</code> object
-        a reference to a <code>CtClass</code> object representing that class.
-        <code>get()</code> in <code>ClassPool</code> is used for this purpose.
-        In the case of the program shown above, the
-        <code>CtClass</code> object representing a class
-        <code>test.Rectangle</code> is obtained from the
-        <code>ClassPool</code> object and it is assigned to a variable
-        <code>cc</code>.
-        The <code>ClassPool</code> object returned by <code>getDfault()</code>
-        searches the default system search path.
-    </p>
-
-    <p>
-        From the implementation viewpoint, <code>ClassPool</code> is a hash
-        table of <code>CtClass</code> objects, which uses the class names as
-        keys. <code>get()</code> in <code>ClassPool</code> searches this hash
-        table to find a <code>CtClass</code> object associated with the
-        specified key. If such a <code>CtClass</code> object is not found,
-        <code>get()</code> reads a class file to construct a new
-        <code>CtClass</code> object, which is recorded in the hash table and
-        then returned as the resulting value of <code>get()</code>.
-    </p>
-</div>
-<div class="row" id="helloworld">
-    <h2>Second section</h2>
-
-    <p>
-        This program first obtains a <code>ClassPool</code> object, which
-        controls bytecode modification with Javassist. The
-        <code>ClassPool</code> object is a container of <code>CtClass</code>
-        object representing a class file. It reads a class file on demand for
-        constructing a <code>CtClass</code> object and records the
-        constructed object for responding later accesses.
-
-        To modify the definition of a class, the users must first obtain
-        from a <code>ClassPool</code> object
-        a reference to a <code>CtClass</code> object representing that class.
-        <code>get()</code> in <code>ClassPool</code> is used for this purpose.
-        In the case of the program shown above, the
-        <code>CtClass</code> object representing a class
-        <code>test.Rectangle</code> is obtained from the
-        <code>ClassPool</code> object and it is assigned to a variable
-        <code>cc</code>.
-        The <code>ClassPool</code> object returned by <code>getDfault()</code>
-        searches the default system search path.
-    </p>
-
-    <p>
-        From the implementation viewpoint, <code>ClassPool</code> is a hash
-        table of <code>CtClass</code> objects, which uses the class names as
-        keys. <code>get()</code> in <code>ClassPool</code> searches this hash
-        table to find a <code>CtClass</code> object associated with the
-        specified key. If such a <code>CtClass</code> object is not found,
-        <code>get()</code> reads a class file to construct a new
-        <code>CtClass</code> object, which is recorded in the hash table and
-        then returned as the resulting value of <code>get()</code>.
-    </p>
-
-    <p>
-        This program first obtains a <code>ClassPool</code> object, which
-        controls bytecode modification with Javassist. The
-        <code>ClassPool</code> object is a container of <code>CtClass</code>
-        object representing a class file. It reads a class file on demand for
-        constructing a <code>CtClass</code> object and records the
-        constructed object for responding later accesses.
-
-        To modify the definition of a class, the users must first obtain
-        from a <code>ClassPool</code> object
-        a reference to a <code>CtClass</code> object representing that class.
-        <code>get()</code> in <code>ClassPool</code> is used for this purpose.
-        In the case of the program shown above, the
-        <code>CtClass</code> object representing a class
-        <code>test.Rectangle</code> is obtained from the
-        <code>ClassPool</code> object and it is assigned to a variable
-        <code>cc</code>.
-        The <code>ClassPool</code> object returned by <code>getDfault()</code>
-        searches the default system search path.
-    </p>
-
-    <p>
-        This program first obtains a <code>ClassPool</code> object, which
-        controls bytecode modification with Javassist. The
-        <code>ClassPool</code> object is a container of <code>CtClass</code>
-        object representing a class file. It reads a class file on demand for
-        constructing a <code>CtClass</code> object and records the
-        constructed object for responding later accesses.
-
-        To modify the definition of a class, the users must first obtain
-        from a <code>ClassPool</code> object
-        a reference to a <code>CtClass</code> object representing that class.
-        <code>get()</code> in <code>ClassPool</code> is used for this purpose.
-        In the case of the program shown above, the
-        <code>CtClass</code> object representing a class
-        <code>test.Rectangle</code> is obtained from the
-        <code>ClassPool</code> object and it is assigned to a variable
-        <code>cc</code>.
-        The <code>ClassPool</code> object returned by <code>getDfault()</code>
-        searches the default system search path.
-    </p>
-
-    <p>
-        From the implementation viewpoint, <code>ClassPool</code> is a hash
-        table of <code>CtClass</code> objects, which uses the class names as
-        keys. <code>get()</code> in <code>ClassPool</code> searches this hash
-        table to find a <code>CtClass</code> object associated with the
-        specified key. If such a <code>CtClass</code> object is not found,
-        <code>get()</code> reads a class file to construct a new
-        <code>CtClass</code> object, which is recorded in the hash table and
-        then returned as the resulting value of <code>get()</code>.
-    </p>
-
-    <p>
-        This program first obtains a <code>ClassPool</code> object, which
-        controls bytecode modification with Javassist. The
-        <code>ClassPool</code> object is a container of <code>CtClass</code>
-        object representing a class file. It reads a class file on demand for
-        constructing a <code>CtClass</code> object and records the
-        constructed object for responding later accesses.
-
-        To modify the definition of a class, the users must first obtain
-        from a <code>ClassPool</code> object
-        a reference to a <code>CtClass</code> object representing that class.
-        <code>get()</code> in <code>ClassPool</code> is used for this purpose.
-        In the case of the program shown above, the
-        <code>CtClass</code> object representing a class
-        <code>test.Rectangle</code> is obtained from the
-        <code>ClassPool</code> object and it is assigned to a variable
-        <code>cc</code>.
-        The <code>ClassPool</code> object returned by <code>getDfault()</code>
-        searches the default system search path.
-    </p>
-
-    <p>
-        This program first obtains a <code>ClassPool</code> object, which
-        controls bytecode modification with Javassist. The
-        <code>ClassPool</code> object is a container of <code>CtClass</code>
-        object representing a class file. It reads a class file on demand for
-        constructing a <code>CtClass</code> object and records the
-        constructed object for responding later accesses.
-
-        To modify the definition of a class, the users must first obtain
-        from a <code>ClassPool</code> object
-        a reference to a <code>CtClass</code> object representing that class.
-        <code>get()</code> in <code>ClassPool</code> is used for this purpose.
-        In the case of the program shown above, the
-        <code>CtClass</code> object representing a class
-        <code>test.Rectangle</code> is obtained from the
-        <code>ClassPool</code> object and it is assigned to a variable
-        <code>cc</code>.
-        The <code>ClassPool</code> object returned by <code>getDfault()</code>
-        searches the default system search path.
-    </p>
-
-    <p>
-        From the implementation viewpoint, <code>ClassPool</code> is a hash
-        table of <code>CtClass</code> objects, which uses the class names as
-        keys. <code>get()</code> in <code>ClassPool</code> searches this hash
-        table to find a <code>CtClass</code> object associated with the
-        specified key. If such a <code>CtClass</code> object is not found,
-        <code>get()</code> reads a class file to construct a new
-        <code>CtClass</code> object, which is recorded in the hash table and
-        then returned as the resulting value of <code>get()</code>.
-    </p>
-
-    <p>
-        This program first obtains a <code>ClassPool</code> object, which
-        controls bytecode modification with Javassist. The
-        <code>ClassPool</code> object is a container of <code>CtClass</code>
-        object representing a class file. It reads a class file on demand for
-        constructing a <code>CtClass</code> object and records the
-        constructed object for responding later accesses.
-
-        To modify the definition of a class, the users must first obtain
-        from a <code>ClassPool</code> object
-        a reference to a <code>CtClass</code> object representing that class.
-        <code>get()</code> in <code>ClassPool</code> is used for this purpose.
-        In the case of the program shown above, the
-        <code>CtClass</code> object representing a class
-        <code>test.Rectangle</code> is obtained from the
-        <code>ClassPool</code> object and it is assigned to a variable
-        <code>cc</code>.
-        The <code>ClassPool</code> object returned by <code>getDfault()</code>
-        searches the default system search path.
-    </p>
-
-    <p>
-        This program first obtains a <code>ClassPool</code> object, which
-        controls bytecode modification with Javassist. The
-        <code>ClassPool</code> object is a container of <code>CtClass</code>
-        object representing a class file. It reads a class file on demand for
-        constructing a <code>CtClass</code> object and records the
-        constructed object for responding later accesses.
-
-        To modify the definition of a class, the users must first obtain
-        from a <code>ClassPool</code> object
-        a reference to a <code>CtClass</code> object representing that class.
-        <code>get()</code> in <code>ClassPool</code> is used for this purpose.
-        In the case of the program shown above, the
-        <code>CtClass</code> object representing a class
-        <code>test.Rectangle</code> is obtained from the
-        <code>ClassPool</code> object and it is assigned to a variable
-        <code>cc</code>.
-        The <code>ClassPool</code> object returned by <code>getDfault()</code>
-        searches the default system search path.
-    </p>
-
-    <p>
-        From the implementation viewpoint, <code>ClassPool</code> is a hash
-        table of <code>CtClass</code> objects, which uses the class names as
-        keys. <code>get()</code> in <code>ClassPool</code> searches this hash
-        table to find a <code>CtClass</code> object associated with the
-        specified key. If such a <code>CtClass</code> object is not found,
-        <code>get()</code> reads a class file to construct a new
-        <code>CtClass</code> object, which is recorded in the hash table and
-        then returned as the resulting value of <code>get()</code>.
-    </p>
-</div>
-</div>
+interface Framework {
+  &lt;T&gt; T secure(Class &lt;T&gt; type);
+}</pre>
+            <p>
+                In this framework, the <code>Secured</code> annotation should be used to mark methods that can only be
+                accessed by a given user. The <code>UserHolder</code> is used for globally defining which user is
+                currently considered to be logged in. The Framework interface allows for the creation of secured type's
+                by calling their default constructor. Of course, this framework is overly simple, but in principal
+                this is how security frameworks like for example the popular
+                <a href="http://projects.spring.io/spring-security/">Spring Security</a> work. A feature of this
+                security framework is that we preserve the user's type hierarchy. By the contract of our Framework
+                interface, we promise the user to return an instance of any type <code>T</code> it is handed over.
+                Imagine for now that we knew that this type could only be <code>T = Service</code> and that
+                the method was annotated with <code>@Secured("ADMIN")</code>. This way, we could easily implement a
+                secured version of this type by subclassing it:
+            </p>
+<pre>class SecuredService extends Service {
+  @Override void deleteEverything() {
+    if(UserHolder.user.equals("ADMIN")) {
+      super.deleteEverything();
+    } else {
+      throw new IllegalStateException("Not authorized");
+    }
+  }
+}</pre>
+            <p>
+                This way, we could fulfill the contract of our framework by:
+            </p>
+<pre>class HardcodedFrameworkImpl implements Framework {
+  @Override
+  public &lt;T&gt; T secure(Class &lt;T&gt; type) {
+    if(type == Service.class) {
+      return new SecuredService();
+    } else {
+      throw new IllegalArgumentException("Unknown: " + type);
+    }
+  }
+}</pre>
+            <p>
+                Of course, this implementation is not of much use. We promised in the secure method's
+                contract to provide security for any type but in reality, we will throw an exception
+                once we encounter something else then the known <code>Service</code>. Also, this would require our
+                security library to know about about this particular <code>Service</code> type when the library is
+                compiled. Obviously, this is not a feasible solution for securing any type.
+                So how can we solve this problem? Well, since this is a tutorial on a code generation
+                library you will have guessed the answer: We will create a subclass on demand and at
+                runtime when the <code>Service</code> class first becomes known to our security framework. However,
+                note that you should use code generation with care. Java types are something very
+                special to the JVM and follow some different rules with respect to garbage collection.
+                Therefore, you should use code generation with care and you should never solve problems
+                with generated code that you could have solved by improving your application's
+                implementation. However, if you need to interact with unknown types while preserving
+                this unknown type hierarchy, code generation is most likely your online option.
+                Byte Buddy is only one solution that allows for the creating of compiled Java code
+                during the runtime of a Java program. Other libraries that you can consider to use
+                instead of Byte Buddy are:
+            </p>
+            <ul>
+                <li>
+                    <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Proxy.html">Java proxies</a>:
+                    The Java Class Library comes with a proxy toolkit that allows for the creation of classes that
+                    implement a given set of interfaces. This is handy but also very limited. The above miniature
+                    framework could for example not be implemented this way.
+                </li>
+                <li>
+                    <a href="http://cglib.sourceforge.net/">cglib</a>: The code generation library was implemented in
+                    the early life of Java and it did unfortunately not catch up with the development of the Java
+                    platform. Nevertheless, cglib remains a quite powerful library but its active development became
+                    rather vague. For this reason, many of its users found other solutions.
+                </li>
+                <li>
+                    <a href="http://www.csg.ci.i.u-tokyo.ac.jp/~chiba/javassist/">javassist</a>: This library comes with
+                    a compiler that takes strings of Java code which are translated into Java byte code during the
+                    runtime of an application. This is very ambitious and a great idea. However, the javassist
+                    compiler does not compare to the javac compiler in its functionality and allows for easy mistakes
+                    when dynamically composing strings to implement more complex logic. Additionally, javassist comes
+                    with a proxy library which is similar to the JCL's proxy tools but allows extending classes and
+                    is not limited to interfaces. The scope of these proxy tools are however equally limited in its API
+                    and functionality.
+                </li>
+                <li>
+                    <a href="http://jodd.org/doc/proxetta/">Proxetta</a>: Proxetta is a module in the Jodd framework
+                    and uses marker types for creating runtime code. Its functionality is however also rather limited.
+                </li>
+            </ul>
+            <p>
+                We believe that Byte Buddy knows some tricks that these other frameworks do not offer.
+                Byte Buddy comes with an expressive domain specific language that allows for the
+                creation of very custom types without writing lots of codes. At the same type, Byte
+                Buddy is very open for customization and will not restrain you to the features that come
+                out of the box. In the end, you can even define custom byte code for implemented methods
+                but even without knowing what byte code is, you will be able to do quite a lot without
+                digging deep into the framework. Have you had a look at the Hello World! example?
+                In this tutorial we will gradually explain the features of Byte Buddy. We will start
+                with the more general features that are most likely to be required by a majority of
+                users. We will then consider increasingly advanced features and give a short
+                introduction to Java byte code and explain how the advanced features of Byte Buddy can
+                be used.
+            </p>
+        </div>
+    </div>
 </div>
