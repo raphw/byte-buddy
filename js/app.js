@@ -71,7 +71,7 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
             {name: 'Use cases', target: '#concept'},
             {name: 'Creating a class', target: '#gettingstarted'},
             {name: 'Fields and methods', target: '#members'},
-            {name: 'Annotations', target: '#attributes'},
+            {name: 'Attributes / annotations', target: '#attributes'},
             {name: 'Cook book', target: '#cookbook'},
             {name: 'Custom methods', target: '#customization'}
         ];
