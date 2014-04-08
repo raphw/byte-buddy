@@ -1,11 +1,7 @@
 <div class="row visible-sm visible-xs">
     <div class="col-xs-6" style="padding: 10px 0 0 10px;">
-        <ul class="nav nav-tabs nav-stacked" style="border: 0;">
-            <li><a href="#welcome" data-du-smooth-scroll="" data-offset="40">Welcome</a></li>
-            <li><a href="#helloworld" data-du-smooth-scroll="" data-offset="40">Hello world</a></li>
-            <li><a href="#getbytebuddy" data-du-smooth-scroll="" data-offset="40">Getting Byte Buddy</a></li>
-            <li><a href="#dependency" data-du-smooth-scroll="" data-offset="40">Dependency management</a></li>
-            <li><a href="#support" data-du-smooth-scroll="" data-offset="40">Support</a></li>
+        <ul class="nav nav-tabs nav-stacked" style="border: 0;" data-ng-repeat="link in links">
+            <li><a data-ng-href="{{link.target}}" data-du-smooth-scroll="" data-offset="40">{{link.name}}</a></li>
         </ul>
     </div>
     <div style="right:0; padding-top: 10px;" class="col-xs-5">
@@ -137,9 +133,9 @@ assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
             <dd>
                 Byte Buddy is currently in pre-release in the snapshot version 0.1. Once, this web page is completed, it
                 will be available on Maven Central. For now, you can <a href="https://github.com/raphw/byte-buddy">download</a>
-                the project from GitHub. Make sure to read through the information on
-                <a href="#dependency" data-du-smooth-scroll="" data-offset="40">defining a project dependency</a> onto
-                Byte Buddy.
+                the project from GitHub. Before releasing a project using Byte Buddy, make sure to read through the
+                information on <a href="#dependency" data-du-smooth-scroll="" data-offset="40">maintaining a project
+                dependency</a>.
             </dd>
         </dl>
         <dl>

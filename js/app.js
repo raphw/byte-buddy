@@ -5,15 +5,15 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
     .config(function ($routeProvider) {
         $routeProvider
             .when('/', {
-                controller: 'noOp',
+                controller: 'mainController',
                 templateUrl: 'partial/main.html'
             })
             .when('/tutorial', {
-                controller: 'noOp',
+                controller: 'tutorialController',
                 templateUrl: 'partial/tutorial.html'
             })
             .when('/develop', {
-                controller: 'noOp',
+                controller: 'developController',
                 templateUrl: 'partial/develop.html'
             })
             .otherwise({redirectTo: '/'});
@@ -30,13 +30,13 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
             return current.target === '#' + ($location.path() || '/') ? 'active' : '';
         };
         var collapsed = true;
-        $scope.isCollapsed = function() {
+        $scope.isCollapsed = function () {
             return collapsed;
         };
-        $scope.toggleCollapse = function() {
+        $scope.toggleCollapse = function () {
             collapsed = !collapsed;
         };
-        $scope.collapse = function() {
+        $scope.collapse = function () {
             collapsed = true;
         };
         $rootScope.$on("$routeChangeStart", function (event, next, current) {
@@ -56,5 +56,26 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
         ];
     })
 
-    .controller('noOp', function ($scope) {
+    .controller('mainController', function ($scope) {
+        $scope.links = [
+            {name: 'Welcome', target: '#welcome'},
+            {name: 'Hello world', target: '#helloworld'},
+            {name: 'Getting Byte Buddy', target: '#getbytebuddy'},
+            {name: 'Dependency management', target: '#dependency'},
+            {name: 'Support', target: '#support'}
+        ];
+    })
+
+    .controller('tutorialController', function ($scope) {
+        $scope.links = [
+            {name: 'Use cases', target: '#concept'},
+            {name: 'The basics', target: '#gettingstarted'},
+            {name: 'Implementing methods', target: '#instrumentations'},
+            {name: 'Annotations', target: '#attributes'},
+            {name: 'Example use', target: '#example'},
+            {name: 'Custom methods', target: '#customization'}
+        ];
+    })
+
+    .controller('developController', function ($scope) {
     });

@@ -16,7 +16,7 @@ angular.module('ui.bootstrap.affix', [])
                     var offset = $parse(scope.affix)(scope);
                     var currentOffset = win.prop('pageYOffset');
                     var documentHeight = target.clientHeight || target.offsetHeight || target.scrollHeight;
-                    var bottomOffset = -180;
+                    var bottomOffset = -310;
                     var affix;
                     if (currentOffset <= offset) {
                         affix = 'top';
