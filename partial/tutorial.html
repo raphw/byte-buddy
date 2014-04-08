@@ -168,21 +168,23 @@ interface Framework {
     we know of works this way. Nevertheless, you might want to have a look at some other frameworks for code generation
     to find out which one suites you best:
 </p>
-    <li>
-        <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Proxy.html">Java proxies</a>:
-        The Java Class Library comes with a proxy toolkit that allows for the creation of classes that
+
+<dl class="dl-horizontal">
+  <dt><a href="http://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Proxy.html">Java proxies</a></dt>
+  <dd>The Java Class Library comes with a proxy toolkit that allows for the creation of classes that
         implement a given set of interfaces. This built-in proxy supplier is handy but also very limited.
         The above mentioned security framework could for example not be implemented this way since we
-        want to extend classes and not interfaces.
-    </li>
-    <li>
-        <a href="http://cglib.sourceforge.net/">cglib</a>: The code generation library was implemented
+        want to extend classes and not interfaces.</dd>
+        
+        
+    <dt><a href="http://cglib.sourceforge.net/">cglib</a></dt>
+  <dd>The code generation library was implemented
         during the early years of Java and it did unfortunately not keep up with the development of the
         Java platform. Nevertheless, cglib remains a quite powerful library but its active development
-        became rather vague. For this reason, many of its users moved away from cglib.
-    </li>
-    <li>
-        <a href="http://www.csg.ci.i.u-tokyo.ac.jp/~chiba/javassist/">javassist</a>: This library comes with
+        became rather vague. For this reason, many of its users moved away from cglib.</dd>
+        
+    <dt><a href="http://www.csg.ci.i.u-tokyo.ac.jp/~chiba/javassist/">javassist</a></dt>
+  <dd>This library comes with
         a compiler that takes strings containing Java source code which are translated into Java byte code during
         the
         runtime of an application. This is very ambitious and in principle a great idea since Java source
@@ -191,15 +193,20 @@ interface Framework {
         when dynamically composing strings to implement more complex logic. Additionally, javassist comes
         with a proxy library which is similar to the JCL's proxy utilities but allows extending classes and
         is not limited to interfaces. The scope of javassist's proxy tools remain however equally limited in its API
-        and functionality.
-    </li>
-    <li>
-        <a href="http://jodd.org/doc/proxetta/">Proxetta</a>: Proxetta is a module of the Jodd framework and a
+        and functionality.</dd>
+        
+        <dt><a href="http://jodd.org/doc/proxetta/">Proxetta</a></dt>
+  <dd>Proxetta is a module of the Jodd framework and a
         rather young player in the code generation game. Proxetta focuses on the creation of proxies and can be
         considered similar to cglib in its approach but brings some advanced functionality to the plate such as using
-        marker types for creating custom byte code.
-    </li>
-</ul>
+        marker types for creating custom byte code.</dd>
+        
+</dl>
+
+
+
+
+
 <p>
     See for yourself but we believe that Byte Buddy offers functionality that is not offered by any of these libraries.
     Byte Buddy comes with an expressive domain specific language that allows for the creation of very custom runtime
