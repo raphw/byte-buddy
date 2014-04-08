@@ -90,6 +90,8 @@ h1, h2, h3 {
 
 h4 {
     margin-top: 40px;
+    color: rgba(255, 153, 0, 1);
+    font-weight: bold;
 }
 
 .nav > li > a {
@@ -106,6 +108,34 @@ h4 {
     -webkit-border-radius: 0;
     -moz-border-radius: 0;
     border-radius: 0;
+}
+
+ul.padded > li {
+    padding-top: 9px;
+}
+
+ul.padded > li:first-child {
+    padding-top: 0;
+}
+
+dl.padded > dt {
+    padding-top: 9px;
+}
+
+dl.padded > dd {
+    padding-top: 9px;
+}
+
+ul.colored-list {
+    list-style-type: square;
+}
+
+ul.colored-list > li {
+    color: rgba(255, 153, 0, 1);
+}
+
+ul.colored-list > li > span {
+    color: black;
 }
 
 h2 {
