@@ -387,10 +387,11 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = byteBuddy.subclass(Object.class).mak
             If we create a new <code>ClassLoader</code>, this class loader defines a new namespace. As an implication,
             it is possible to load two classes with identical name as long as these classes are loaded by two different
             class loaders. These two classes will then never be considered as equal by a Java virtual machine, even if
-            both classes represent an identical class implementation.
-            This rule for equality holds however also for Java packages. This means that a class <code>example.Foo</code>
-            will not be able to access package-private methods of another class <code>example.Bar</code> if both classes
-            were not loaded with the same class loader.
+            both classes represent an identical class implementation. This rule for equality holds however also for Java
+            packages. This means that a class <code>example.Foo</code> will not be able to access package-private
+            methods of another class <code>example.Bar</code> if both classes were not loaded with the same class loader.
+            Also, if <code>example.Bar</code> extended <code>example.Foo</code>, any overriden package-private methods
+            would become inoperative but would delegate to the original implementations.
         </span></li>
         <li><span>
             Whenever a class is loaded, its class loader will look up any type that is referenced in this class
@@ -408,7 +409,7 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = byteBuddy.subclass(Object.class).mak
         You might consider the chance of encountering circular dependencies to be of minor relevance since you
         are creating one dynamic type at a time. However, the dynamic creation of a type might trigger the creation of
         so-called auxiliary types. These types are created by Byte Buddy automatically to provide access to the dynamic
-        type you are creating. We will learn more about auxiliary types in the following section, do not worry about
+        type you are creating. We learn more about auxiliary types in the following section, do not worry about
         them for now. However, because of this, we recommend you to load dynamically created classes by creating a
         specific <code>ClassLoader</code> instead of injecting them into an existing one, whenever possible.
     </p>
@@ -417,11 +418,11 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = byteBuddy.subclass(Object.class).mak
         After creating a <code>DynamicType.Unloaded</code>, this type can be loaded using a
         <code>ClassLoadingStrategy</code>. Byte Buddy provides two such strategies out of the box where each follows
         one of the concepts that were described above. These strategies are defined in <code>ClassLoadingStrategy.Default</code>
-        where
-        the <code>WRAPPER</code> strategy will create a new <code>ClassLoader</code> and the <code>INJECTION</code>
-        strategy will attempt to inject a dynamic type using reflection. Let's look at such class loading in action:
+        where the <code>WRAPPER</code> strategy will create a new <code>ClassLoader</code> and the
+        <code>INJECTION</code> strategy will attempt to inject a dynamic type using reflection. Let's look at such class
+        loading in action:
     </p>
-<pre>Class&lt;?&gt; new ByteBuddy()
+<pre>Class&lt;?&gt; type = new ByteBuddy()
   .subclass(Object.class)
   .make()
   .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
@@ -429,16 +430,151 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = byteBuddy.subclass(Object.class).mak
 </pre>
     <p>
         In the above example, we have created and loaded a class. We used the <code>WRAPPER</code> strategy for loading
-        the class which is suitable for most cases, as we mentioned it before. However, for this easy class creation, the
-        <code>INJECTION</code> strategy would have worked as well. Finally, the <code>getLoaded</code> method returns an
-        instance of a Java <code>Class</code> that represents the dynamic class which is now loaded.
+        the class which is suitable for most cases, as we mentioned it before. However, for this easy class creation,
+        the <code>INJECTION</code> strategy would have worked as well. Finally, the <code>getLoaded</code> method
+        returns an instance of a Java <code>Class</code> that represents the dynamic class which is now loaded.
     </p>
 </div>
 <div class="row" id="members">
     <h2>Fields and methods</h2>
 
     <p>
-        To be completed.
+        The type we created in the previous section did not define any fields or methods. However, by subclassing
+        <code>Object</code>, it inherits the methods that are defined by its super class. Let us verify this Java
+        trivia and call the <code>toString</code> method on an instance of the dynamic type. We can get hold of an
+        instance by calling the created class's constructor reflectively.
+    </p>
+<pre>String toString = new ByteBuddy()
+  .subclass(Object.class)
+  .name("example.Type")
+  .make()
+  .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+  .getLoaded()
+  .newInstance() // Java reflection API
+  .toString();
+</pre>
+    <p>
+        The implementation of the <code>Object#toString</code> method returns the simple class name with the
+        concatenated hex representation of the instance's hash code. And in fact, calling the <code>toString</code>
+        method on the instance we created returns something like <code>example.Type@340d1fa5</code>.
+    </p>
+
+    <p>
+        Of course, we are not done here. The whole point of creating dynamic classes is the ability to define new logic.
+        To demonstrate how this is done, let us start with something simple: We want to override the
+        <code>toString</code> method and return <code>Hello World!</code> instead of the default defined by
+        <code>Object</code>. Let's apply this to our previous example:
+    </p>
+<pre>String toString = new ByteBuddy()
+  .subclass(Object.class)
+  .name("example.Type")
+  .method(named("toString")).intercept(FixedValue.value("Hello World!"))
+  .make()
+  .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+  .getLoaded()
+  .newInstance()
+  .toString();
+</pre>
+    <p>
+        The line we added to our code contains two instructions in Byte Buddy's domain specific language. The first
+        instruction is <code>method</code> which allows us to select any number of methods that we want to override.
+        This selection is applied by handing over a <code>MethodMatcher</code> which serves as a predicate for deciding
+        for each overridable method if it should be overriden or not. Byte Buddy comes with a lot of predefined method
+        matchers which are collected in the <code>MethodMatchers</code> class. Normally, you would import this class
+        statically such that the resulting code reads more naturally. Such a static import was also assumed for the
+        above example where we used the <code>named</code> method matcher which selects methods by their exact names.
+        Note that the predefined method matchers are composable. This way, we could have described the method selection
+        in further detail such as by:
+    </p>
+    <pre>named("toString").and(returns(String.class)).and(takesArguments(0))</pre>
+    <p>
+        This latter method matcher describes the <code>toString</code> method by its full Java signature and therefore
+        only matches this particular method. However, in the given context we know that there is no other method
+        named <code>toString</code> such that our original method matcher is sufficient.
+    </p>
+
+    <p>
+        After selecting the <code>toString</code> method, the second instruction <code>intercept</code> determines
+        the implementation that should override all methods of the given selection. In order to know how to implement a
+        method, this instruction requires a single argument of type <code>Instrumentation</code>. In the above example,
+        we are making use of the <code>FixedValue</code> instrumentation which ships with Byte Buddy. As suggested by
+        this class's name, the instrumentation implements a method to always return a given value. We will have a more
+        detailed look at the <code>FixedValue</code> instrumentation a little later in this section. Right now, let us
+        rather look a little closer at the method selection.
+    </p>
+
+    <p>
+        So far, we only intercepted a single method. In real applications, things might however be more complicated and
+        we might want to apply different rules for overriding methods by a dynamic type. Let us look at an example for
+        such a scenario:
+    </p>
+<pre>class Foo {
+  public String bar() { return null; }
+  public String foo() { return null; }
+  public String foo(Object o) { return null; }
+}
+
+Foo dynamicFoo = new ByteBuddy()
+  .subclass(Foo.class)
+  .method(isDeclaredBy(Foo.class)).intercept(FixedValue.value("Hello World!"))
+  .method(named("foo")).intercept(FixedValue.value("Hello Foo!"))
+  .method(named("foo").and(takesArguments(1))).intercept(FixedValue.value("..."))
+  .make()
+  .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+  .getLoaded()
+  .newInstance();
+</pre>
+    <p>
+        In the above example, we defined three different rules for overriding methods. When investigating the code, you
+        will notice that the first rule concerns any method that is defined by <code>Foo</code>, i.e. all three
+        methods in the example class. The second rule matches both methods that are named <code>foo</code> instead.
+        And the last rule only matches the <code>foo(Object)</code> method. But given this ambiguity, how does Byte
+        Buddy decide which rule is applied to which method?
+    </p>
+
+    <p>
+        Byte Buddy organizes such rules in a stack form. This means, whenever you register a new rule for overriding
+        a method, ít is pushed on the top of this stack and is always applied first until a new rule is added which
+        will become of even higher priority. For the above example, this means that:
+    </p>
+
+    <ul class="colored-list padded">
+        <li><span>
+            The <code>bar</code> method will first get matched against <code>named("foo").and(takesArguments(1))</code>
+            and then <code>named("foo")</code> where both attempts turn out negative. Finally, the
+            <code>isDeclaredBy(Foo.class)</code> matcher gives green light to override the <code>bar</code> method to
+            return <code>Hello World!</code>.
+        </span></li>
+        <li><span>
+            Similarly, the <code>foo()</code> method will be matched against
+            <code>named("foo").and(takesArguments(1))</code> first where the missing argument results in a negative
+            outcome. After this, the <code>named("foo")</code> matcher will determine a positive match such that the
+            <code>foo()</code> method is overriden to return <code>Hello Foo!</code>.
+        </span></li>
+        <li><span>
+            The <code>foo(Object)</code> is immediately matched by the <code>named("foo").and(takesArguments(1))</code>
+            matcher such that the overriden implementation will return <code>...</code>.
+        </span></li>
+    </ul>
+    <p>
+        Because of this organizations, you should register more specific method matchers last. Otherwise, any less
+        specific method matcher that is registered afterwards might prevent rules that you defined before from being
+        applied.
+    </p>
+
+    <p>
+        In some scenarios, you might want to define a new method that does not override a method of a super type or an
+        interface. This is also possible in Byte Buddy. For this purpose, you can call <code>defineMethod</code> where
+        you are able to define a signature. After defining a method, you are able to provide an
+        <code>Instrumentation</code> just as with a method that was identified by a method matcher. Note that method
+        matchers that are registered after a method's definition might supersede this by the stacking principle
+        that we just described. By <code>defineField</code>, Byte Buddy allows to define fields for a given type. In
+        Java, fields are never overriden but can only be <a href="http://en.wikipedia.org/wiki/Variable_shadowing">shadowed</a>.
+        For this reason, no field matching or the like is available.
+    </p>
+
+    <p>
+        Discussion of all built-in instrumentations to be completed.
     </p>
 </div>
 <div class="row" id="attributes">
