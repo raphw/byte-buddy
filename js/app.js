@@ -6,15 +6,15 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
         $routeProvider
             .when('/', {
                 controller: 'mainController',
-                templateUrl: 'partial/main.html'
+                templateUrl: 'partial/main.partial.html'
             })
             .when('/tutorial', {
                 controller: 'tutorialController',
-                templateUrl: 'partial/tutorial.html'
+                templateUrl: 'partial/tutorial.partial.html'
             })
             .when('/develop', {
                 controller: 'developController',
-                templateUrl: 'partial/develop.html'
+                templateUrl: 'partial/develop.partial.html'
             })
             .otherwise({redirectTo: '/'});
     })

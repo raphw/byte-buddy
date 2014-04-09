@@ -33,13 +33,12 @@
 <h2>Why runtime code generation?</h2>
 
 <p>
-    The Java language comes with a comparatively strict type system. Java requires all variables and objects
-    to be of a specific type and an attempt to assign incompatible types will always cause an error. These
-    errors are usually emitted by the Java compiler or at the very least by the Java runtime, if a
-    developer has made erroneous use of explicit type castings. This behavior is great for writing business
-    applications because business domains can usually be described in such an explicit manner. This way, we can
-    use Java to build very readable and robust applications. Among other things, it is Java's type system
-    that is responsible for Java's popularity in enterprise programming.
+    The Java language comes with a comparatively strict type system. Java requires all variables and objects to be of a
+    specific type and an attempt to assign incompatible types will always cause an error. These errors are usually
+    emitted by the Java compiler or at the very least by the Java runtime. This behavior is great for writing business
+    applications because business domains can usually be described in such an explicit manner. This way, we can use Java
+    to build very readable and robust applications. Among other things, it is Java's type system that is responsible for
+    Java's popularity in enterprise programming.
 </p>
 
 <p>
@@ -66,8 +65,8 @@
         The reflection API breaks type-safety: Even though the JVM is capable of improving the reflective
         runtime, we might be required to expose this reflective API to our library's users when enhancing
         the user types. However, type-safety is one of Java's strong suites. We do not want to take it away when
-        interacting with out user's code. To get a better understanding of the problem, let us look at the
-        example of a miniature security library.
+        interacting with out user's code. To get a better understanding of this problem, let us look at the example
+        of a miniature security library.
     </span></li>
 </ul>
 <h4>Writing a security library</h4>
@@ -75,7 +74,7 @@
 <p>
     Business applications can grow large and sometimes it is difficult to keep an overview of call stacks
     in our application. This can become problematic when we have crucial methods in our application that should
-    only be called in special circumstances. Imagine a business application that implements a reset
+    only be called under specific conditions. Imagine a business application that implements a reset
     functionality that allows deleting everything from the application's database.
 </p>
 <pre>class Service {
@@ -85,7 +84,7 @@
 }</pre>
 <p>
     Such a reset should of course only be performed by administrators and never by a normal user of our
-    application. By analyzing our source code, we can make sure that this will never happen. However,
+    application. By analyzing our source code, we could of course make sure that this will never happen. However,
     we can expect our application to grow and to be changed in the future. Therefore, we want to implement
     a tighter security model where the method invocation is guarded by an explicit check for the application's
     current user. We will normally use a security framework for making sure that the method is never called by
@@ -93,7 +92,7 @@
 </p>
 
 <p>
-    For this purpose, assume that we are using a security framework with a public API as follows:
+    For this purpose, assume that we are using a security framework with a public API as the following:
 </p>
 <pre>@interface Secured {
   String user();
@@ -114,11 +113,11 @@ interface Framework {
     simple, but in principal this is how security frameworks like for example the popular
     <a href="http://projects.spring.io/spring-security/">Spring Security</a> work. A feature of this
     security framework is that we preserve the user's types. By the contract of our framework interface, we
-    promise the user to return an instance of any type <code>T</code> it receives. Thanks to this functionality,
+    promise the user to return an instance of any type <code>T</code> it receives. Thanks to this,
     a user is able to interact with his own types as if the security framework did not exist. In a test
     environment, a user could even create unsecured instances of his types and use these instances instead of the
-    secured ones. You will agree that this is really handy! Such frameworks are known as being working with
-    POJOs, plain old Java objects, a term that was coined for describing such non-intrusive frameworks that do
+    secured ones. You will agree that this is really handy! Such frameworks are known to interact with
+    <i>POJOs</i>, plain old Java objects, a term that was coined for describing non-intrusive frameworks that do
     not impose their own types upon their users.
 </p>
 
@@ -158,29 +157,29 @@ interface Framework {
     feasible solution for implementing the framework. So how can we solve this problem? Well, since this is a
     tutorial on a code generation library you will have guessed the answer: We create a subclass on demand
     and at runtime when the <code>Service</code> class first becomes known to our security framework by the
-    invocation of the <code>secure</code> method. With code generation, we can take a given type, subclass it at
+    invocation of the <code>secure</code> method. With code generation, we can take any given type, subclass it at
     runtime and override the methods we want to secure. In our case, we override all methods that are annotated
     with <code>@Secured</code> and read the required user from the annotation's <code>user</code> property. Many
-    popular Java frameworks are implemented this way.
+    popular Java frameworks are implemented using a similar approach.
 </p>
 
 <h4>General information</h4>
 
 <p>
     Before we learn all about code generation and Byte Buddy, note that you should use code generation with
-    care. Java types are something rather special to the JVM and are rarely garbage collected. Therefore, you
+    care. Java types are something rather special to the JVM and are often not garbage collected. Therefore, you
     should never overuse code generation but only solve problems using generated code when it is the only way
-    out. However, if you need to interact with unknown types while preserving this unknown type hierarchy, code
-    generation is most likely your only option. Most frameworks for dependency injection, object-relational mapping
-    or mocking are for example implemented this way.
+    out. However, if you need to enhance unknown types as in the previous example, code generation is most likely your
+    only option. Frameworks for security, transaction management, object-relational mapping or mocking are typical
+    users of code generation libraries.
 </p>
 
 <p>
     Of course, Byte Buddy is not the first library for code generation on the JVM. However, we believe that Byte Buddy
     knows some tricks the other frameworks cannot apply. The overall objective of Byte Buddy is to work declaratively,
-    both by focusing on using a domain specific language and annotations. No other code generation library for the JVM
-    we know of works this way. Nevertheless, you might want to have a look at some other frameworks for code generation
-    to find out which one suites you best:
+    both by focusing on its domain specific language and the use of annotations. No other code generation library for
+    the JVM we know of works this way. Nevertheless, you might want to have a look at some other frameworks for code
+    generation to find out which one suites you best:
 </p>
 
 <dl class="dl-horizontal padded">
@@ -196,9 +195,9 @@ interface Framework {
         <a href="http://cglib.sourceforge.net/">cglib</a>
     </dt>
     <dd>
-        The code generation library was implemented during the early years of Java and it did unfortunately not keep up
-        with the development of the Java platform. Nevertheless, cglib remains a quite powerful library but its active
-        development became rather vague. For this reason, many of its users moved away from cglib.
+        The <i>code generation library</i> was implemented during the early years of Java and it did unfortunately not
+        keep up with the development of the Java platform. Nevertheless, cglib remains a quite powerful library but its
+        active development became rather vague. For this reason, many of its users moved away from cglib.
     </dd>
     <dt>
         <a href="http://www.csg.ci.i.u-tokyo.ac.jp/~chiba/javassist/">javassist</a>
@@ -217,8 +216,7 @@ interface Framework {
     </dt>
     <dd>
         Proxetta is a module of the Jodd framework and a rather young player in the code generation game. Proxetta
-        focuses on the creation of proxies and can be considered similar to cglib in its approach but brings some
-        advanced functionality to the plate such as using marker types for creating custom byte code.
+        focuses on the creation of proxies and can be considered as similar to cglib in its approach.
     </dd>
 </dl>
 
@@ -236,9 +234,9 @@ interface Framework {
 <p>
     In the following tutorial we will gradually explain the features of Byte Buddy. We will start with its more general
     features which are most likely used by a majority of users. We will then consider increasingly advanced topics and
-    give a short introduction to Java byte code and the class file format. But don't be discourage by that later
-    material! You can do almost anything by using Byte Buddy's standard API and without understanding any Java internal.
-    For learning about the standard API, just read on.
+    give a short introduction to Java byte code and the class file format. And don't be discouraged in case you fast
+    forward to this later material! You can do almost anything by using Byte Buddy's standard API and without
+    understanding any JVM specifics. For learning about the standard API, just read on.
 </p>
 </div>
 <div class="row" id="gettingstarted">
@@ -263,8 +261,8 @@ interface Framework {
         type.
         This dynamically created type would be equivalent to a Java class that only extends <code>Object</code> without
         explicitly implementing any methods, fields or constructors. You might have noted that we did not even name the
-        dynamically generated type, something that is required by the Java compiler. Of course, you could have easily
-        named your type explicitly:
+        dynamically generated type, something that normally is required when defining a Java class. Of course, you could
+        have easily named your type explicitly:
     </p>
 <pre>DynamicType.Unloaded&lt;?&gt; dynamicType = new ByteBuddy()
   .subclass(Object.class)
@@ -288,13 +286,13 @@ interface Framework {
     <p>
         This default behavior might not be convenient for you. And thanks to the convention over configuration
         principle, you can always alter the default behavior by your needs. This is where the <code>ByteBuddy</code>
-        class comes into place. By creating a <code>new ByteBuddy()</code> instance, you create a default configuration
-        that you can customize by your needs. Let's try this:
+        class comes into place. By creating a <code>new ByteBuddy()</code> instance, you create a default configuration.
+        By calling methods on this configuration, you can customize it by your individual needs. Let's try this:
     </p>
 <pre>DynamicType.Unloaded&lt;?&gt; dynamicType = new ByteBuddy()
   .withNamingStrategy(new NamingStrategy() {
     @Override public String getName(UnnamedType unnamedType) {
-        return "i.heart.ByteBuddy." + unnamedType.getSuperClass().getSimpleName();
+        return "i.love.ByteBuddy." + unnamedType.getSuperClass().getSimpleName();
     }
   })
   .subclass(Object.class)
@@ -303,8 +301,8 @@ interface Framework {
     <p>
         In the above code example, we created a new configuration that differs from the default configuration in its
         type naming strategy. The anonymous class is implemented to simply concatenate the string
-        <code>i.heart.ByteBuddy</code> and the base class's simple name. When subclassing the
-        <code>Object</code> type, the dynamic type is therefore named <code>i.heart.ByteBuddy.Object</code>. Be however
+        <code>i.love.ByteBuddy</code> and the base class's simple name. When subclassing the
+        <code>Object</code> type, the dynamic type is therefore named <code>i.love.ByteBuddy.Object</code>. Be however
         careful
         when creating your own naming strategies! The Java virtual machine uses names to distinguish between types
         which is why you want to avoid naming collisions. If you need to customize the naming behavior, consider
@@ -319,7 +317,7 @@ interface Framework {
         language is implemented. The one detail you need to know about the implementation is that the language is built
         around <a href="http://en.wikipedia.org/wiki/Immutable_object">immutable objects</a>. As a matter of fact,
         almost every class that lives in the Byte Buddy namespace was made immutable and in the few cases we could not
-        make a class immutable, we explicitly mention it in this class's javadoc. If you implement custom
+        make a type immutable, we explicitly mention it in this class's javadoc. If you implement custom
         features for Byte Buddy, we recommend you to stick with this principle.
     </p>
 
@@ -332,8 +330,8 @@ byteBuddy.withNamingStrategy(new NamingStrategy.SuffixingRandom("suffix"));
 DynamicType.Unloaded&lt;?&gt; dynamicType = byteBuddy.subclass(Object.class).make();
 </pre>
     <p>
-        You might have expected the dynamic type to be generated using the custom naming strategy
-        <code>new NamingStrategy.SuffixingRandom("suffix")</code> that was allegedly defined. Instead of mutating the
+        You might expect the dynamic type to be generated using the custom naming strategy <code>new
+        NamingStrategy.SuffixingRandom("suffix")</code> that was (allegedly) defined. Instead of mutating the
         instance that is stored in the <code>byteBuddy</code> variable, the invocation of the
         <code>withNamingStrategy</code> method returns a customized <code>ByteBuddy</code> instance which is however
         lost. As a result, the dynamic type is created using the default configuration which was originally created.
@@ -358,10 +356,10 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = byteBuddy.subclass(Object.class).mak
         While directly accessing a class's binary form is straight forward, loading a type is unfortunately more
         complex. In Java, all classes are loaded using a <code>ClassLoader</code>. One example for such a class loader
         is the bootstrap class loader which is responsible for loading the classes of the Java Class Library. The
-        system class loader, on the other hand, is responsible for loaded classes from the Java class path.
-        Obviously, none of these class loaders or any other class loader is aware of a dynamic class we have created.
-        To overcome this, we have to find other possibilities for loading a runtime generated class. Byte Buddy offers
-        solutions to two different approaches out of the box:
+        system class loader, on the other hand, is responsible for loading classes on the Java application's class path.
+        Obviously, none of these preexisting class loaders is aware of any dynamic class we have created. To overcome
+        this, we have to find other possibilities for loading a runtime generated class. Byte Buddy offers solutions by
+        two different approaches out of the box:
     </p>
 
     <ul class="colored-list padded">
@@ -390,14 +388,14 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = byteBuddy.subclass(Object.class).mak
             it is possible to load two classes with identical name as long as these classes are loaded by two different
             class loaders. These two classes will then never be considered as equal by a Java virtual machine, even if
             both classes represent an identical class implementation.
-            This rule for equality hold however also for
-            Java packages. This means that a class <code>example.Foo</code> will not be able to access package-private methods
-            of another class <code>example.Bar</code> if both classes were not loaded with the same class loader.
+            This rule for equality holds however also for Java packages. This means that a class <code>example.Foo</code>
+            will not be able to access package-private methods of another class <code>example.Bar</code> if both classes
+            were not loaded with the same class loader.
         </span></li>
         <li><span>
-            Whenever a class is loaded, the class's class loader will look up any class that is referenced in this class
-            once a code segment referencing a class is is resolved. This lookup delegates to the same class loader. Imagine
-            a scenario where we dynamically created two classes <code>example.Foo</code> and <code>example.Bar</code>.
+            Whenever a class is loaded, its class loader will look up any type that is referenced in this class
+            once a code segment referencing another type is is resolved. This lookup delegates to the same class loader.
+            Imagine a scenario where we dynamically created two classes <code>example.Foo</code> and <code>example.Bar</code>.
             If we injected <code>example.Foo</code> into an existent class loader, this class loader might attempt to
             locate <code>example.Bar</code>. This lookup will however fail since the latter class was created dynamically
             and is unreachable for the class loader into which we just injected the <code>example.Foo</code> class.
@@ -418,7 +416,8 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = byteBuddy.subclass(Object.class).mak
     <p>
         After creating a <code>DynamicType.Unloaded</code>, this type can be loaded using a
         <code>ClassLoadingStrategy</code>. Byte Buddy provides two such strategies out of the box where each follows
-        one of the concepts that were described above. These strategies are defined in <code>ClassLoadingStrategy.Default</code> where
+        one of the concepts that were described above. These strategies are defined in <code>ClassLoadingStrategy.Default</code>
+        where
         the <code>WRAPPER</code> strategy will create a new <code>ClassLoader</code> and the <code>INJECTION</code>
         strategy will attempt to inject a dynamic type using reflection. Let's look at such class loading in action:
     </p>
@@ -430,9 +429,9 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = byteBuddy.subclass(Object.class).mak
 </pre>
     <p>
         In the above example, we have created and loaded a class. We used the <code>WRAPPER</code> strategy for loading
-        the class which is suitable for most cases, as mentioned above. However, for this easy class creation, the
-        <code>INJECTION</code> strategy would have worked as well. Finally, the <code>getLoaded</code> method returns an instance
-        of a Java <code>Class</code> that represents the dynamic class.
+        the class which is suitable for most cases, as we mentioned it before. However, for this easy class creation, the
+        <code>INJECTION</code> strategy would have worked as well. Finally, the <code>getLoaded</code> method returns an
+        instance of a Java <code>Class</code> that represents the dynamic class which is now loaded.
     </p>
 </div>
 <div class="row" id="members">
