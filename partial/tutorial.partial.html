@@ -460,8 +460,8 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = byteBuddy.subclass(Object.class).mak
     </p>
 
     <p>
-        Of course, we are not done here. The whole point of creating dynamic classes is the ability to define new logic.
-        To demonstrate how this is done, let us start with something simple: We want to override the
+        Of course, we are not done here. The main motivation of creating dynamic classes is the ability to define new
+        logic. To demonstrate how this is done, let us start with something simple: We want to override the
         <code>toString</code> method and return <code>Hello World!</code> instead of the default defined by
         <code>Object</code>. Let's apply this to our previous example:
     </p>
@@ -478,7 +478,7 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = byteBuddy.subclass(Object.class).mak
     <p>
         The line we added to our code contains two instructions in Byte Buddy's domain specific language. The first
         instruction is <code>method</code> which allows us to select any number of methods that we want to override.
-        This selection is applied by handing over a <code>MethodMatcher</code> which serves as a predicate for deciding
+        This selection is applied by handing over a <code>MethodMatcher</code> which serves as a predicate to decide
         for each overridable method if it should be overriden or not. Byte Buddy comes with a lot of predefined method
         matchers which are collected in the <code>MethodMatchers</code> class. Normally, you would import this class
         statically such that the resulting code reads more naturally. Such a static import was also assumed for the
@@ -527,22 +527,23 @@ Foo dynamicFoo = new ByteBuddy()
     <p>
         In the above example, we defined three different rules for overriding methods. When investigating the code, you
         will notice that the first rule concerns any method that is defined by <code>Foo</code>, i.e. all three
-        methods in the example class. The second rule matches both methods that are named <code>foo</code> instead.
-        And the last rule only matches the <code>foo(Object)</code> method. But given this ambiguity, how does Byte
-        Buddy decide which rule is applied to which method?
+        methods in the example class. The second rule matches both methods that are named <code>foo</code>, a subset of
+        the previous selection. And the last rule only matches the <code>foo(Object)</code> method which is a
+        further reduction of the former selection. But given this ambiguity, how does Byte Buddy decide which rule is
+        applied to which method?
     </p>
 
     <p>
-        Byte Buddy organizes such rules in a stack form. This means, whenever you register a new rule for overriding
+        Byte Buddy organizes such rules in a stack form. This means that whenever you register a new rule for overriding
         a method, ít is pushed on the top of this stack and is always applied first until a new rule is added which
         will become of even higher priority. For the above example, this means that:
     </p>
 
     <ul class="colored-list padded">
         <li><span>
-            The <code>bar</code> method will first get matched against <code>named("foo").and(takesArguments(1))</code>
-            and then <code>named("foo")</code> where both attempts turn out negative. Finally, the
-            <code>isDeclaredBy(Foo.class)</code> matcher gives green light to override the <code>bar</code> method to
+            The <code>bar()</code> method will first get matched against <code>named("foo").and(takesArguments(1))</code>
+            and then against <code>named("foo")</code> where both attempts turn out negative. Finally, the
+            <code>isDeclaredBy(Foo.class)</code> matcher gives green light to override the <code>bar()</code> method to
             return <code>Hello World!</code>.
         </span></li>
         <li><span>
@@ -565,13 +566,97 @@ Foo dynamicFoo = new ByteBuddy()
     <p>
         In some scenarios, you might want to define a new method that does not override a method of a super type or an
         interface. This is also possible in Byte Buddy. For this purpose, you can call <code>defineMethod</code> where
-        you are able to define a signature. After defining a method, you are able to provide an
+        you are able to define a signature. After defining a method, you are ask to provide an
         <code>Instrumentation</code> just as with a method that was identified by a method matcher. Note that method
-        matchers that are registered after a method's definition might supersede this by the stacking principle
-        that we just described. By <code>defineField</code>, Byte Buddy allows to define fields for a given type. In
-        Java, fields are never overriden but can only be <a href="http://en.wikipedia.org/wiki/Variable_shadowing">shadowed</a>.
-        For this reason, no field matching or the like is available.
+        matchers that are registered after a method's definition might supersede this instrumentation by the stacking
+        principle that we discussed before. By <code>defineField</code>, Byte Buddy allows to define fields for a given
+        type. In Java, fields are never overriden but can only be
+        <a href="http://en.wikipedia.org/wiki/Variable_shadowing">shadowed</a>. For this reason, no field matching or
+        the like is available.
     </p>
+
+    <p>
+        With this knowledge on how methods are selected, we are ready to implement these methods. For this purpose,
+        we will now look at predefined <code>Instrumentation</code> implementations. Defining custom instrumentations
+        is discussed in <a href="#customization">the its own section</a> and is only intended for users that
+        require customized method implementations.
+    </p>
+
+    <h4>A closer look at fixed values</h4>
+
+    <p>
+        We have already seen the <code>FixedValue</code> instrumentation in action. As the name suggests, methods
+        that are instrumented to return a fixed value will simply return the provided object without doing anything
+        else. A fixed value can be provided by a class in two different manners:
+    </p>
+
+    <ul class="colored-list padded">
+        <li><span>
+            The value is written to a
+            <a href="http://en.wikipedia.org/wiki/Java_class_file#The_constant_pool">class's constant pool</a>. A
+            constant pool is a section within the Java class file format and contains numerous stateless values that
+            describe this class. This pool contains for example the class's name or the names and signatures of its
+            fields and values. It is furthermore capable of storing <code>String</code> values that are referenced in
+            a class and we are able to add new values to the pool. Furthermore, it knows how to store primitive types
+            and class name references. Other types cannot be stored in the constant pool.
+        </span></li>
+        <li><span>
+            The value is stored in a static field of the class. For doing this, the value of the field needs however
+            get injected into the class after it was loaded into the Java virtual machine. For this purpose, every
+            dynamically created class is equipped with a <code>TypeInitializer</code>. When you instruct a
+            <code>DynamicType.Unloaded</code> to be loaded, Byte Buddy will automatically trigger its type
+            initializer such that the class is ready for use. Therefore, you do not normally need to worry about type
+            initializers. However, if you want to load dynamic classes to be loaded outside of Byte Buddy, it is
+            important that you activate alive type initializers manually when these classes are loaded. Otherwise, a
+            <code>FixedValue</code> instrumentation would for example return <code>null</code> instead of the required
+            value because the field value was never set. Dynamic types might however not require any explicit
+            initialization. You can query a type initializer for its liveliness by calling its <code>isAlive</code>
+            method. A class's <code>TypeInitializer</code> is exposed by the <code>DynamicType</code> interface.
+        </span></li>
+    </ul>
+
+    <p>
+        When you implement a method by <code>FixedValue#value(Object)</code>, Byte Buddy will analyze the parameter's
+        type and define it to be stored in the class pool of the dynamic type if possible and otherwise store the value
+        in a static field. Note however, that the instance that is returned by the selected methods might be of a
+        different object identity. Therefore, you can instruct Byte Buddy to always store an object in a static field
+        by using <code>FixedValue#reference(Object)</code>. The latter method is overloaded such that you can provide
+        a field name as a second argument. Otherwise, a field name is derived automatically from the object's hash
+        code. An exception from this behavior is the <code>null</code> value. The <code>null</code> value is never
+        stored in a field but is simply represented by its literal expression.
+    </p>
+
+    <p>
+        You might wonder about type safety in this context. Obviously, you could define a method to return an invalid
+        value:
+    </p>
+<pre>
+Foo dynamicFoo = new ByteBuddy()
+  .subclass(Foo.class)
+  .method(isDeclaredBy(Foo.class)).intercept(FixedValue.value(0))
+  .make()
+</pre>
+    <p>
+        It would be difficult to prevent this interception by the compiler within Java's type system. Instead, Byte
+        Buddy will throw a <code>IllegalArgumentException</code> when the type is created and the illegal assignment of
+        a primitive integer to a <code>String</code> is made. Byte Buddy will try its best to assure that no illegal
+        Java type can be created but <i>fail fast</i> throw an exception.
+    </p>
+
+    <p>
+        Byte Buddy's assignment behavior is customizable. Again, Byte Buddy only provides a sane default which mimics
+        the assignment behavior of the Java compiler, i.e. it will allow assignments of a type to its super types
+        and it will consider to box primitive values or to unbox their wrapper representation. You might however
+        implement your own <code>Assigner</code> which is capable of appling more advanced assignments. For example,
+        you might always want to call the <code>toString</code> method on an object if a method's return value is
+        <code>String</code>. We will look into such custom implementations in the
+        <a href="#customization">last section of this tutorial</a>. For now, we settle for mentioning that you call
+        <code>withAssigner</code> on any <code>FixedValue</code> instrumentation to customize the assignment behavior.
+        Additionally to an <code>Assigner</code>, this method accepts a boolean on whether it should attempt to apply
+        runtime type castings if an object is not directly assignable.
+    </p>
+
+    <h4>Delegating a method call</h4>
 
     <p>
         Discussion of all built-in instrumentations to be completed.
@@ -592,7 +677,7 @@ Foo dynamicFoo = new ByteBuddy()
     </p>
 </div>
 <div class="row" id="customization">
-    <h2>Custom methods</h2>
+    <h2>Custom instrumentation</h2>
 
     <p>
         To be completed.
