@@ -77,7 +77,7 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
 
     .controller('tutorialController', function ($scope) {
         $scope.links = [
-            {name: 'Use cases', target: '#concept'},
+            {name: 'Preliminary', target: '#rational'},
             {name: 'Creating a class', target: '#gettingstarted'},
             {name: 'Fields and methods', target: '#members'},
             {name: 'Attributes / annotations', target: '#attributes'},
