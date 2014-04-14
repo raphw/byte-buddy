@@ -8,6 +8,7 @@ import org.objectweb.asm.Opcodes;
  * and belongs to a class or in contrast to an instance.
  */
 public enum Ownership implements ModifierContributor.ForField, ModifierContributor.ForMethod {
+
     MEMBER(EMPTY_MASK),
     STATIC(Opcodes.ACC_STATIC);
 

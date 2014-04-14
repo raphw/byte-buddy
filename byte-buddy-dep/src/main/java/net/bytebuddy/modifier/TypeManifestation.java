@@ -11,7 +11,9 @@ public enum TypeManifestation implements ModifierContributor.ForType {
     PLAIN(EMPTY_MASK),
     FINAL(Opcodes.ACC_FINAL),
     ABSTRACT(Opcodes.ACC_ABSTRACT),
-    INTERFACE(Opcodes.ACC_INTERFACE | Opcodes.ACC_INTERFACE);
+    INTERFACE(Opcodes.ACC_INTERFACE | Opcodes.ACC_INTERFACE),
+    ENUM(Opcodes.ACC_ENUM | Opcodes.ACC_FINAL),
+    ABSTRACT_ENUM(Opcodes.ACC_ENUM | Opcodes.ACC_ABSTRACT);
 
     private final int mask;
 

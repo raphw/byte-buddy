@@ -10,6 +10,7 @@ public enum SynchronizationState implements ModifierContributor.ForMethod {
 
     PLAIN(EMPTY_MASK),
     SYNCHRONIZED(Opcodes.ACC_SYNCHRONIZED);
+
     private final int mask;
 
     private SynchronizationState(int mask) {

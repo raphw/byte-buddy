@@ -10,6 +10,7 @@ public enum SyntheticState implements ModifierContributor.ForType, ModifierContr
 
     SYNTHETIC(Opcodes.ACC_SYNTHETIC),
     NON_SYNTHETIC(EMPTY_MASK);
+
     private final int mask;
 
     private SyntheticState(int mask) {
