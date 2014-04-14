@@ -173,8 +173,8 @@ assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
             format what can lead to API incompatibilities of future versions of ASM. Because of this, each
             version of Byte Buddy is distributed in two different packaging formats:
         </p>
-        <ul>
-            <li>
+        <ul class="colored-list padded">
+            <li><span>
                 A no-dependency version that repackages the ASM dependency from its
                 <code>org.objectweb.asm</code> into Byte Buddy's own namespace
                 <code>net.bytebuddy.jar.asm</code>.
@@ -183,15 +183,15 @@ assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
                 by the use of ASM by both Byte Buddy and other libraries. If you do not plan to use ASM, do not
                 know what ASM is or what this is all about, this is the version you want to use. The artifact ID
                 of this packaging format is <code>byte-buddy</code>.
-            </li>
-            <li>
+            </span></li>
+            <li><span>
                 A version with an explicit dependency on ASM in its original <code>org.objectweb.asm</code>
                 namespace. This version <b>must only be used for repackaging</b> Byte Buddy and its ASM
                 dependency into <b>your own</b> namespace. Never distribute your application while directly
                 relying on this dependency. Otherwise, your users might experience version conflicts of
                 different ASM versions on their class path. The artifact ID of this packaging format is
                 <code>byte-buddy-dep</code>.
-            </li>
+            </span></li>
         </ul>
         <p>
             Normally, you would use the first, no-dependency version. However, if you are using Byte Buddy and
