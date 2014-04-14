@@ -273,6 +273,7 @@ code {
 */
 
 pre, pre.prettyprint {
+    background: #F5F5F5;
     border: 1px solid #FFA408;
     padding: 5px 10px;
     margin-bottom: 20px;
@@ -283,7 +284,7 @@ pre.prettyprint ol {
     padding: 0;
 }
 
-li.L4, li.L9 {
+li.L0, li.L1, li.L2, li.L3, li.L4, li.L5, li.L6, li.L7, li.L8, li.L9 {
     list-style-type: none
 }
 

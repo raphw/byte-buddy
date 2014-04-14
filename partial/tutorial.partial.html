@@ -128,7 +128,8 @@ interface Framework {
     simply subclassing it:
 </p>
 <pre class="prettyprint">class SecuredService extends Service {
-  @Override void deleteEverything() {
+  @Override
+  void deleteEverything() {
     if(UserHolder.user.equals("ADMIN")) {
       super.deleteEverything();
     } else {
@@ -291,7 +292,8 @@ interface Framework {
     </p>
 <pre class="prettyprint">DynamicType.Unloaded&lt;?&gt; dynamicType = new ByteBuddy()
   .withNamingStrategy(new NamingStrategy() {
-    @Override public String getName(UnnamedType unnamedType) {
+    @Override
+    public String getName(UnnamedType unnamedType) {
         return "i.love.ByteBuddy." + unnamedType.getSuperClass().getSimpleName();
     }
   })
