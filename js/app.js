@@ -1,6 +1,6 @@
 angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'duScroll'])
 
-    .value('duScrollDuration', 3500)
+    .value('duScrollDuration', 2000)
 
     .config(function ($routeProvider) {
         $routeProvider
@@ -17,6 +17,15 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
                 templateUrl: 'partial/develop.partial.html'
             })
             .otherwise({redirectTo: '/'});
+    })
+
+    .directive('prettyprint', function () {
+        return {
+            restrict: 'C',
+            link: function postLink(scope, element) {
+                element.html(prettyPrintOne(element.html(), '', true));
+            }
+        };
     })
 
     .controller('menuController', function ($scope, $location, $rootScope, scroller) {

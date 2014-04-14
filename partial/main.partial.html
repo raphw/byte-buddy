@@ -83,7 +83,7 @@
             new types:
         </p>
 
-<pre>
+<pre class="prettyprint">
 Class&lt;?&gt; dynamicType = new ByteBuddy()
   .subclass(Object.class)
   .method(named("toString")).intercept(FixedValue.value("Hello World!"))

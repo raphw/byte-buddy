@@ -1,24 +1,9 @@
+/*
+ * Element styling and bootstrap customization
+ */
+
 html {
     overflow-x: hidden;
-}
-
-.navbar-default {
-    background: none repeat scroll 0 0 white;
-    border-top: 3px solid #FFA408;
-}
-
-.navbar-default .navbar-nav li.active a {
-    background-color: #FFA408;
-    color: #FFFFFF;
-}
-
-.navbar .navbar-nav {
-    display: inline-block;
-    float: none;
-}
-
-.navbar .navbar-collapse {
-    text-align: center;
 }
 
 .buddy_logo {
@@ -50,10 +35,6 @@ html {
     padding-bottom: 80px;
 }
 
-#sidebar.affix {
-    z-index: 10;
-}
-
 footer {
     z-index: 100;
     background: rgb(255, 153, 0); /* Old browsers */
@@ -80,10 +61,6 @@ footer {
     color: #D13838;
 }
 
-dt {
-    color: #D13838;
-}
-
 h1, h2, h3 {
     font-family: 'Bevan', cursive;
 }
@@ -94,20 +71,20 @@ h4 {
     font-weight: bold;
 }
 
-.nav > li > a {
-    color: #000003;
-    font-size: 13pt;
-    line-height: 14pt;
-    font-weight: bold;
-    border-left: 3px transparent;
+h2 {
+    border-bottom: 4px dotted #F5F5F5;
+    color: #3FA9F5;
+    line-height: 1.2em;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
 }
 
-.nav > li > a.active {
-    padding-right: 15px;
-    border-right: 3px solid rgba(255, 153, 0, 1);
-    -webkit-border-radius: 0;
-    -moz-border-radius: 0;
-    border-radius: 0;
+/*
+ * List styling
+ */
+
+dt {
+    color: #D13838;
 }
 
 ul.padded > li {
@@ -138,20 +115,12 @@ ul.colored-list > li > span {
     color: #333333;
 }
 
-h2 {
-    border-bottom: 4px dotted #F5F5F5;
-    color: #3FA9F5;
-    line-height: 1.2em;
-    margin-bottom: 15px;
-    padding-bottom: 15px;
-}
+/*
+ * General page style
+ */
 
 body {
     background: -moz-linear-gradient(left center, #FFFFFF 10%, #F4F9FF 91%) repeat scroll 0 0 transparent;
-}
-
-pre {
-    margin-bottom: 25px;
 }
 
 body {
@@ -167,6 +136,53 @@ body {
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#f4f9ff', GradientType=1); /* IE6-8 */
 }
 
+/*
+ * Navigation
+ */
+
+.navbar-default {
+    background: none repeat scroll 0 0 white;
+    border-top: 3px solid #FFA408;
+}
+
+.navbar-default .navbar-nav li.active a {
+    background-color: #FFA408;
+    color: #FFFFFF;
+}
+
+.navbar .navbar-nav {
+    display: inline-block;
+    float: none;
+}
+
+.navbar .navbar-collapse {
+    text-align: center;
+}
+
+/*
+ * Affix menu
+ */
+
+#sidebar.affix {
+    z-index: 10;
+}
+
+.nav > li > a {
+    color: #000003;
+    font-size: 13pt;
+    line-height: 14pt;
+    font-weight: bold;
+    border-left: 3px transparent;
+}
+
+.nav > li > a.active {
+    padding-right: 15px;
+    border-right: 3px solid rgba(255, 153, 0, 1);
+    -webkit-border-radius: 0;
+    -moz-border-radius: 0;
+    border-radius: 0;
+}
+
 .nav > li > a:hover {
     background: none;
 }
@@ -179,7 +195,10 @@ body {
     position: absolute !important;
 }
 
-/**** TYPO **/
+/*
+ * Typographic styling
+ */
+
 p {
     color: #333333;
     line-height: 1.5em;
@@ -201,14 +220,14 @@ h3, html small {
     font-family: 'Helvetica Neue', 'Arial', sans-serif;
 }
 
-pre {
-    border-color: #FFA408;
-}
-
 code {
     background-color: #E3F2FF;
     color: #428BCA;
 }
+
+/*
+ * Social media icons
+*/
 
 .social-icon {
     background-image: url("../images/social-icons.png");
@@ -249,5 +268,72 @@ code {
     background-position: 572px 0;
 }
 
+/*
+ * Customization of Google pretty print
+*/
 
+pre, pre.prettyprint {
+    border: 1px solid #FFA408;
+    padding: 5px 10px;
+    margin-bottom: 20px;
+}
 
+pre.prettyprint ol {
+    margin: 0;
+    padding: 0;
+}
+
+li.L4, li.L9 {
+    list-style-type: none
+}
+
+li.L1, li.L3, li.L5, li.L7, li.L9 {
+    background: #eee
+}
+
+/*
+ * Bootply generated styling
+ */
+@media (max-width: 767px) {
+    body {
+        padding-right: 0;
+        padding-left: 0;
+    }
+}
+
+body {
+    padding-top: 50px;
+}
+
+#masthead {
+    min-height: 250px;
+}
+
+#masthead h1 {
+    font-size: 30px;
+    line-height: 1;
+    padding-top: 20px;
+}
+
+#masthead .well {
+    margin-top: 8%;
+}
+
+@media only screen and (max-device-width: 768px) {
+    h2 {
+        font-size: 15pt;
+        padding-bottom: 8px;
+        margin-bottom: 8px;
+    }
+}
+
+@media screen and (min-width: 768px) {
+    #masthead h1 {
+        font-size: 50px;
+    }
+}
+
+.navbar-bright {
+    background-color: #111155;
+    color: #fff;
+}
