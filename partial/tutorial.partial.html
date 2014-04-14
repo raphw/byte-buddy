@@ -662,11 +662,11 @@ new ByteBuddy()
 
 <p>
     In many scenarios, returning a fixed value from a method is of course insufficient. For more flexibility, Byte
-    Buddy offers the <code>MethodDelegation</code> instrumentation which offers maximal freedom in reacting to method
+    Buddy provides the <code>MethodDelegation</code> instrumentation which offers maximal freedom in reacting to method
     calls. A method delegation defines a method of the dynamically created type to forward any call to another
     method which may live outside of the dynamic type. This way, a dynamic class's logic can be represented using
-    plain Java while only the binding is achieved by code generation. Before discussing the details, let us look at an
-    example of using a <code>MethodDelegation</code>:
+    plain Java while only the binding to another method is achieved by code generation. Before discussing the details, 
+    let us look at an example of using a <code>MethodDelegation</code>:
 </p>
 <pre class="prettyprint">
 class Source {
@@ -714,13 +714,13 @@ class Target {
     You might have noticed that the above methods are now all called <code>intercept</code>. Byte Buddy does not require
     target methods to be named equally to a source method. We will look closer into this matter shortly. More
     importantly, if you ran the former example with the altered definition of <code>Target</code>, you would
-    observe that the method with the <code>String</code> argument was bound to <code>intercept(String)</code>. But why
+    observe that the the <code>named(String)</code> method was bound to <code>intercept(String)</code>. But why
     is that? Obviously, the <code>intercept(int)</code> method cannot receive the <code>String</code> argument of the
-    original method and is therefore not even considered as a possible match. However, this is not true for the
-    <code>intercept(Object)</code> method. In order to resolve this ambiguity, Byte Buddy once again mimics the Java
-    compiler by choosing the method binding with the most specific parameter types. Note that the same rule is applied
-    by the Java compiler when choosing among overloaded methods! Since <code>String</code> is more specific than
-    <code>Object</code>, the <code>intercept(String)</code> class is chosen among the three alternatives.
+    source method and is therefore not even considered as a possible match. However, this is not true for the
+    <code>intercept(Object)</code> method which could be bound. In order to resolve this ambiguity, Byte Buddy once 
+    again mimics the Java compiler by choosing the method binding with the most specific parameter types. Compare this 
+    behvior with that of the Java compiler when binding an overloaded method! Since <code>String</code> is more specific 
+    than <code>Object</code>, the <code>intercept(String)</code> class is finally chosen among the three alternatives.
 </p>
 
 <p>
@@ -729,15 +729,21 @@ class Target {
     configuration principle which is open for change if the defaults do not fit the actual requirements. Usually, the
     <code>MethodDelegation</code> instrumentation works with annotations where a parameter's annotation decides
     what value should be assigned to it. However, if no annotation is found, Byte Buddy treats a parameter as if
-    it was annotated with a default annotation which is <code>@Annotation(n)</code>. When observing such a
-    <code>@Argument(n)</code> annotation, Byte Buddy injects the <code>n</code>-th argument of the source method.
-    In case that the source method has less than <code>n</code> parameters, it simply considers this
-    particular target method as incompatible and moves on to the next possible method. When defining a default for
-    a non-annotated parameter, Byte Buddy chooses the <i>next free</i> parameter that was not yet mentioned for
-    another parameter. According to this rule, Byte Buddy would treat
-<pre class="prettyprint">void foo(@Argument(2) Object o1, Object o2, @Argument(0) Object o3)</pre>
-as if the <code>o2</code> parameter was annotated by <code>@Argument(1)</code> since the first source
-method parameter can already be observed for to the <code>foo</code> method's third parameter.
+    it was annotated with a default annotation which is <code>@Annotation(n)</code>. When observing such an
+    <code>@Argument(n)</code> annotation, Byte Buddy assigns the <code>n + 1</code>-th argument of the source method
+    to the annotated parameter. In case that the source method has less than <code>n + 1</code> parameters, it simply 
+    considers this particular target method as incompatible and moves on to the next possible candidate. When 
+    defining a default for a non-annotated parameter, Byte Buddy chooses the <i>next free</i> parameter that 
+    was not yet discovered on another parameter. According to this rule, Byte Buddy would treat
+    <pre class="prettyprint">void foo(Object o1, Object o2, @Argument(0) Object o3)</pre>
+    as if the <code>o1</code> parameter was annotated by <code>@Argument(1)</code> and the <code>o2</code>
+    parameter was annotated by <code>@Argument(2)</code>.
+</p>
+<p>
+    And even the described behavior for treating non-annotated parameters can be adjusted to custom needs. Any  
+    <code>MethodDeleation</code> used a <code>DefaultsProvider</code> for obtaining an annotation value whenever no
+    explicit annotation is discovered on a target method's parameter. Such a customized <code>DefaultsProvider</code>
+    can be set by calling <code>defaultsProvider</code> on any <code>MethodDelegation</code>.
 </p>
 
 <p>
@@ -768,8 +774,8 @@ method parameter can already be observed for to the <code>foo</code> method's th
     Besides the four annotation we have discussed so far, there are two more annotations that grant access to the
     super implementations of a dynamic type's methods. This way, a dynamic type could for example add
     <a href="http://en.wikipedia.org/wiki/Aspect-oriented_programming">aspects</a> to a class such as the logging
-    of method calls. Using the <code>@SuperCall</code> annotation, such a super method call can be executed even from
-    outside the dynamic class as demonstrated in the following example:
+    of method invocations. Using the <code>@SuperCall</code> annotation, such a super method call can be executed 
+    even from outside the dynamic class as demonstrated in the following example:
 </p>
 <pre class="prettyprint">
 class MemoryDatabase {
@@ -801,14 +807,19 @@ MemoryDatabase loggingDatabase = new ByteBuddy()
 
 <p>
     From the above example, it is obvious that the super method is called by injecting some instance of a
-    <code>Callable</code> into the <code>LoggerInterceptor</code> which invokes the original implementation
-    of <code>MemoryDatabase#load(String)</code> from its <code>call</code> method. This helper class is called an
-    <code>AuxiliaryType</code> within Byte Buddy's terminology. Auxiliary types are created on demand by Byte Buddy
-    and are directly accessible from the <code>DynamicType</code> interface after a class is created dynamically.
-    Because of such auxiliary types, the manual creation of one dynamic type result in the creation of several
-    additional types which aid the implementation of the original class. You might still wonder how this auxiliary
-    type is able to call a super method of another type. This behavior is however quite common in Java and resemles
-    a class that is implemented as the following class in Java source code:
+    <code>Callable</code> into the <code>LoggerInterceptor</code> which invokes the original, non-overriden 
+    implementation of <code>MemoryDatabase#load(String)</code> from its <code>call</code> method. This helper 
+    class is called an <code>AuxiliaryType</code> within Byte Buddy's terminology. Auxiliary types are created 
+    on demand by Byte Buddy and are directly accessible from the <code>DynamicType</code> interface after a 
+    class is created dynamically. Because of such auxiliary types, the manual creation of one dynamic type might
+    result in the creation of several additional types which aid the implementation of the original class. Finally,
+    note that the <code>@SuperCall</code> annotation can also be used on the <code>Runnable</code> type where
+    the original method's return value is however dropped.
+</p>
+<p>
+    You might still wonder how this auxiliary type is able to call a super method of another type what is normally
+    forbidden in Java. This behavior is however quite common in Java and resemles compiled code that was generated
+    similarly to that of the following class:
 </p>
 
 <pre class="prettyprint">
@@ -836,11 +847,11 @@ class LoggingMemoryDatabase extends MemoryDatabase {
 
 <p>
     Sometimes, you might however want to call a super method with different arguments than those that were assigned on
-    the method's invocation. This is also possible in Byte Buddy by using the <code>@Super</code> annotation. The super
-    annotation will trigger the creation of an <code>AuxiliaryType</code> which does however extend a super class or
-    interface of the actual dynamic type. Again, the auxiliary type will override all methods to call their super
-    implementations on the dynamic type. This way, the example logger interceptor from before can also be implemented
-    as follows:
+    the method's original invocation. This is also possible in Byte Buddy by using the <code>@Super</code> annotation. 
+    This annotation will trigger the creation of another <code>AuxiliaryType</code> which now extends a super class or
+    an interface of the dynamic type in question. Similar to before, the auxiliary type will override all methods to 
+    call their super implementations on the dynamic type. This way, the example logger interceptor from the previous
+    example can be implemented to change the actual invocation:
 </p>
 
 <pre class="prettyprint">
@@ -857,7 +868,27 @@ class ChangingLoggerInterceptor {
 </pre>
 
 <p>
-    To to: exceptions, runtime types, ambiguity resolvers, customization.
+    In case that a parameter that is annotated with <code>@Super</code> does not represent a super type of the relevant
+    dynamic type, the method will not be considered as a binding target for any of its methods.  
+</p>
+
+<p>
+    Because the <code>@Super</code> annotation allows for the use of any type, we might be required to provide  
+    information on how this type can be constructed. By default, Byte Buddy will attempt to use the type's default
+    constructor. This will always work for interfaces which implicitly extend the <code>Object</code> type but a 
+    super class of the dynamic type might not even proide a default constructor. If this is the case or if a 
+    different constructor should be used for creating the auxiliary type, the <code>@Super</code> annotation 
+    allows to identify a different constructor by setting its parameter types as the annotation's 
+    <code>constructorArguments</code> property. This constructor will then be called by assigning any parameter its
+    defailt value. Alternatively, it is also possible to use the <code>Super.Instantiation.UNSAFE</code> 
+    strategy for creating classes which uses Java internal classes for creating the auxiliar type without invoking 
+    any constructor. However, note that this strategy is not necessarily portable to non-Oracle JVMs and might not 
+    longer be availble in future JVM releases. As of today, the internal classes that are used by this unsafe 
+    instantiation strategy are however found in almost any JVM implementation.
+</p>
+
+<p>
+    To to: exceptions, runtime types, other annotations, ambiguity resolvers, customization.
 </p>
 
 <p>
