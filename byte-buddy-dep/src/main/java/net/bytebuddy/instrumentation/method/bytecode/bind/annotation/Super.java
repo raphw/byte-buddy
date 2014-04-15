@@ -22,13 +22,13 @@ import java.util.List;
  * be assigned:
  * <ol>
  * <li>{@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Super.Instantiation#CONSTRUCTOR}:
- * A constructor call is made where {@link Super#constructorArguments()} determines the constructor's signature. Any constructor
+ * A constructor call is made where {@link Super#constructorParameters()} determines the constructor's signature. Any constructor
  * parameter is assigned the parameter's default value when the constructor is called. Calling the default constructor is the
  * preconfigured strategy.</li>
  * <li>{@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Super.Instantiation#UNSAFE}:
  * The proxy is created by making use of Java's {@link sun.reflect.ReflectionFactory} which is however not a public API which
  * is why it should be used with care. No constructor is called when this strategy is used. If this option is set, the
- * {@link Super#constructorArguments()} parameter is ignored.</li>
+ * {@link Super#constructorParameters()} parameter is ignored.</li>
  * </ol>
  * Note that when for example intercepting a type {@code Foo} that implements some interface {@code Bar}, the proxy type
  * will only implement {@code Bar} and therefore extend {@link java.lang.Object} what allows for calling the default
@@ -63,11 +63,11 @@ public @interface Super {
     boolean ignoreFinalizer() default true;
 
     /**
-     * Defines the argument types of the constructor to be called for the created {@code super}-call proxy type.
+     * Defines the parameter types of the constructor to be called for the created {@code super}-call proxy type.
      *
-     * @return The arguments of the called constructor.
+     * @return The parameter types of the constructor to be called.
      */
-    Class<?>[] constructorArguments() default {};
+    Class<?>[] constructorParameters() default {};
 
     /**
      * Determines the instantiation of the proxy type.
@@ -80,8 +80,8 @@ public @interface Super {
             protected StackManipulation proxyFor(TypeDescription parameterType,
                                                  TypeDescription instrumentedType,
                                                  Super annotation) {
-                List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(annotation.constructorArguments().length);
-                for (Class<?> constructorParameter : annotation.constructorArguments()) {
+                List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(annotation.constructorParameters().length);
+                for (Class<?> constructorParameter : annotation.constructorParameters()) {
                     typeDescriptions.add(constructorParameter == TargetType.class
                             ? TargetType.DESCRIPTION
                             : new TypeDescription.ForLoadedType(constructorParameter));

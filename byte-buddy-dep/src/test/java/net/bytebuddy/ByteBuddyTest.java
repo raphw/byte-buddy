@@ -5,6 +5,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.FixedValue;
 import net.bytebuddy.instrumentation.MethodDelegation;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument;
+import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.RuntimeType;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Super;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.SuperCall;
 import net.bytebuddy.instrumentation.type.TypeDescription;
@@ -336,6 +337,41 @@ public class ByteBuddyTest {
                 .getLoaded()
                 .newInstance();
         assertThat(loggingDatabase.load("qux"), is(Arrays.asList("qux (logged access): foo", "qux (logged access): bar")));
+    }
+
+    @SuppressWarnings("unused")
+    public static class Loop {
+
+        public String loop(String value) {
+            return value;
+        }
+
+        public int loop(int value) {
+            return value;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class Interceptor {
+
+        @RuntimeType
+        public static Object intercept(@RuntimeType Object value) {
+            println("Invoked method with: " + value);
+            return value;
+        }
+    }
+
+    @Test
+    public void testFieldsAndMethodsMethodRuntimeType() throws Exception {
+        Loop trivialGetterBean = new ByteBuddy()
+                .subclass(Loop.class)
+                .method(isDeclaredBy(Loop.class)).intercept(MethodDelegation.to(Interceptor.class))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded()
+                .newInstance();
+        assertThat(trivialGetterBean.loop(42), is(42));
+        assertThat(trivialGetterBean.loop("foo"), is("foo"));
     }
 
     @SuppressWarnings("unused")

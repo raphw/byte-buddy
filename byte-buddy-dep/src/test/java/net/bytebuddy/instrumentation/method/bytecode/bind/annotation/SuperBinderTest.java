@@ -32,7 +32,7 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
         when(targetTypeList.get(INDEX)).thenReturn(targetType);
         when(annotation.strategy()).thenReturn(instantiation);
         when(instantiation.proxyFor(targetType, instrumentedType, annotation)).thenReturn(stackManipulation);
-        when(annotation.constructorArguments()).thenReturn(new Class<?>[0]);
+        when(annotation.constructorParameters()).thenReturn(new Class<?>[0]);
     }
 
     @Test
