@@ -233,7 +233,8 @@ class HardcodedFrameworkImpl implements Framework {
     At the same time, Byte Buddy is very open for customization and does not restrain you to the features that come out
     of the box. If required, you can even define custom byte code for any implemented method. But even without knowing
     what byte code is or how it works, you are able to do quite a lot without digging deep into the framework. Did
-    you for example have a look at the <a href="#/#helloworld"><code>Hello World!</code> example</a>? Using Byte Buddy
+    you for example have a look at the <a data-ng-href="#helloworld"><code>Hello World!</code> example</a>? Using Byte
+    Buddy
     is that easy.
 </p>
 
@@ -593,8 +594,9 @@ Foo dynamicFoo = new ByteBuddy()
 <p>
     With this knowledge on how methods are selected, we are ready to learn about how we can implement these methods.
     For this purpose, we now look at predefined <code>Instrumentation</code> implementations that ship with Byte Buddy.
-    Defining custom instrumentations is discussed in <a href="#customization">the its own section</a> and is only
-    intended for users that require very custom method implementations.
+    Defining custom instrumentations is discussed in
+    <a data-ng-href="#customization" data-du-smooth-scroll="" data-du-scrollspy="" data-offset="40">the its own
+        section</a> and is only intended for users that require very custom method implementations.
 </p>
 
 <h4>A closer look at fixed values</h4>
@@ -668,9 +670,10 @@ new ByteBuddy()
     it is possible that Byte Buddy causes <a href="http://en.wikipedia.org/wiki/Heap_pollution">heap pollution</a>.
     Instead of using the predefined assigner, you can always implement your own <code>Assigner</code> which is capable
     of type transformations that are not implicit in the Java programming language. We will look into such custom
-    implementations in the <a href="#customization">last section of this tutorial</a>. For now, we settle for
-    mentioning that you can define such custom assigners by calling <code>withAssigner</code> on any
-    <code>FixedValue</code> instrumentation.
+    implementations in the
+    <a data-ng-href="#customization" data-du-smooth-scroll="" data-du-scrollspy="" data-offset="40">last section
+        of this tutorial</a>. For now, we settle for mentioning that you can define such custom assigners by calling
+    <code>withAssigner</code> on any <code>FixedValue</code> instrumentation.
 </p>
 
 <h4>Delegating a method call</h4>
@@ -797,7 +800,8 @@ class Target {
 <p>
     Besides using the predefined annotations, Byte Buddy allows you to define your own annotations by registering
     one or several <code>ParameterBinder</code>s. We will look into such customization in the
-    <a href="#customization">last section of this tutorial</a>.
+    <a data-ng-href="#customization" data-du-smooth-scroll="" data-du-scrollspy="" data-offset="40">last section of
+        this tutorial</a>.
 </p>
 
 <p>
@@ -1053,7 +1057,59 @@ class Interceptor {
 <h4>Calling a super method</h4>
 
 <p>
-    To be completed: Including constructor strategies, defining constructors. Purpose: Annotations.
+    As the name suggests, the <code>SuperMethodCall</code> instrumentation can be used to invoke a method's super
+    implementation. At first glance, the sole invocation of a super implementation does not seem very useful
+    since this will not change an implementation but only replicate existent logic. However, by overriding a method,
+    you are able to change the annotations of a method and its parameters, something we will look into
+    <a data-ng-href="#attributes" data-du-smooth-scroll="" data-du-scrollspy="" data-offset="40">in the next section</a>.
+    Another rational for calling a super method in Java is however the definition of a constructor which must always
+    invoke another constructor of either its super type or of its own type.
+</p>
+
+<p>
+    So far we simply assumed that the constructors of a dynamic type would always resemble the constructors of its
+    direct super type. As an example, we could call
+</p>
+
+<pre class="prettyprint">
+new ByteBuddy()
+  .subclass(Object.class)
+  .make()
+</pre>
+
+<p>
+    to create a subclass of <code>Object</code> with a single default constructor which is defined to simply invoke its
+    direct super constructor, the default constructor of <code>Object</code>. However, this behavior is not stipulated
+    by Byte Buddy. Instead, the above code is a shortcut for calling
+</p>
+
+<pre class="prettyprint">
+new ByteBuddy()
+  .subclass(Object.class, ConstructorStrategy.Default.IMITATE_SUPER_TYPE)
+  .make()
+</pre>
+
+<p>
+    where a <code>ConstructorStrategy</code> is responsible for creating a set of predefined constructors for any given
+    class. Besides the above strategy which copies each constructor of a dynamic type's direct super class, there exist
+    two other predefined strategies: one that does not create any constructor at all and one that creates a default
+    constructor which is invoking the direct super class's default constructor and throws an exception if no such
+    constructor exists.
+</p>
+
+<p>
+    Within the Java class file format, constructors do not generally differ from methods such that Byte Buddy allows
+    them to be treated just as such. However, constructors are required to contain a hard-coded invocation of another
+    constructor to be accepted by the Java runtime. For this reason, any other predefined instrumentation than
+    <code>SuperMethodCall</code> will fail to create a valid Java class when applied to a constructor.
+</p>
+
+<p>
+    However, by using <a data-ng-href="#customization" data-du-smooth-scroll="" data-du-scrollspy="" data-offset="40">
+    custom instrumentations</a>, you are able to define your own constructors by either implementing a custom
+    <code>ConstructorStrategy</code> or by defining an individual constructor within Byte Buddy's domain specific
+    language using the <code>defineConstructor</code> method. Furthermore, we are planing to add new features to Byte
+    Buddy for defining more complex constructors out of the box.
 </p>
 
 <h4>Accessing fields</h4>
