@@ -652,10 +652,13 @@ new ByteBuddy()
     Byte Buddy's assignment behavior is customizable. Again, Byte Buddy only provides a sane default which mimics
     the assignment behavior of the Java compiler. Consequently, Byte Buddy allows an assignment of a type to any
     of its super types and it will also consider to box primitive values or to unbox their wrapper representations.
-    You might however implement your own <code>Assigner</code> which is capable of type transformations that are not
-    implicit in the Java programming language. We will look into such custom implementations in the
-    <a href="#customization">last section of this tutorial</a>. For now, we settle for mentioning that you can define
-    such custom assigners by calling <code>withAssigner</code> on any <code>FixedValue</code> instrumentation.
+    Note however, that Byte Buddy does not currently support generic types and will only consider raw types. Therefore,
+    it is possible that Byte Buddy causes <a href="http://en.wikipedia.org/wiki/Heap_pollution">heap pollution</a>.
+    Instead of using the predefined assigner, you can always implement your own <code>Assigner</code> which is capable
+    of type transformations that are not implicit in the Java programming language. We will look into such custom
+    implementations in the <a href="#customization">last section of this tutorial</a>. For now, we settle for
+    mentioning that you can define such custom assigners by calling <code>withAssigner</code> on any
+    <code>FixedValue</code> instrumentation.
 </p>
 
 <h4>Delegating a method call</h4>
@@ -767,9 +770,10 @@ class Target {
         The <code>@This</code> annotation induces the assignment of the dynamic type's instance on which the
         instrumented method is currently invoked. If the annotated parameter is not assignable to an instance of
         the dynamic type, the current method is not considered as a candidate for being bound to the source method.
-        Note that calling any methods on this instance will result in calling the instrumented method implementations.
-        For calling overriden implementations, you need to use the <code>@Super</code> annotation which is discussed
-        below. A typical reason for using the <code>@This</code> annotation to gain access to an instance's fields.
+        Note that calling any methods on this instance will result in calling a potentially instrumented method
+        implementation. For calling overriden implementations, you need to use the <code>@Super</code> annotation
+        which is discussed below. A typical reason for using the <code>@This</code> annotation to gain access to an
+        instance's fields.
     </span></li>
     <li><span>
         Parameters that are annotated with <code>@Origin</code> must either be of type <code>Method</code> or
@@ -780,8 +784,8 @@ class Target {
 
 <p>
     Besides using the predefined annotations, Byte Buddy allows you to define your own annotations by registering
-    a <code>ParameterBinder</code>. We will look into such customization in the <a href="#customization">last section
-    of this tutorial</a>.
+    one or several <code>ParameterBinder</code>s. We will look into such customization in the
+    <a href="#customization">last section of this tutorial</a>.
 </p>
 
 <p>
@@ -825,7 +829,7 @@ MemoryDatabase loggingDatabase = new ByteBuddy()
     implementation of <code>MemoryDatabase#load(String)</code> from its <code>call</code> method. This helper
     class is called an <code>AuxiliaryType</code> within Byte Buddy's terminology. Auxiliary types are created
     on demand by Byte Buddy and are directly accessible from the <code>DynamicType</code> interface after a
-    class is created dynamically. Because of such auxiliary types, the manual creation of one dynamic type might
+    class was created. Because of such auxiliary types, the manual creation of one dynamic type might
     result in the creation of several additional types which aid the implementation of the original class. Finally,
     note that the <code>@SuperCall</code> annotation can also be used on the <code>Runnable</code> type where
     the original method's return value is however dropped.
@@ -915,8 +919,9 @@ class ChangingLoggerInterceptor {
     <i>not</i> declare any checked exception. Usually, the Java compiler would refuse to compile such an invocation.
     However, in contrast to the compiler the Java runtime does not treat checked exceptions differently than their
     unchecked counterparts and permits this invocation. For this reason, we decided to ignore checked exceptions and
-    grant full flexibility when dealing with exceptions. However, be careful when throwing undeclared checked exceptions
-    from dynamically created methods since the encounter of such an exception might confuse the users of your code.
+    grant full flexibility in their use. However, be careful when throwing undeclared checked exceptions
+    from dynamically created methods since the encounter of such an exception might confuse the users of your
+    application.
 </p>
 
 <p>
@@ -933,11 +938,11 @@ class Loop {
 </pre>
 
 <p>
-    Because the methods of the above class define two similar methods with incompatible types, you would not usually be
-    able to instrument both methods by using a single interceptor method. Instead, you would have to provide two methods
-    with different signatures only to satisfy the static type check. To overcome this limitation, Byte Buddy allows to
-    annotate methods and method parameters with <code>@RuntimeType</code> what instructs Byte Buddy to suspend the
-    strict type check in favor of a runtime type casting:
+    Because the methods of the above class describe two similar signatures with incompatible types, you would not
+    usually be able to instrument both methods by using a single interceptor method. Instead, you would have to provide
+    two different target methods with different signatures only to satisfy the static type check. To overcome this
+    limitation, Byte Buddy allows to annotate methods and method parameters with <code>@RuntimeType</code> what
+    instructs Byte Buddy to suspend the strict type check in favor of a runtime type casting:
 </p>
 
 <pre class="prettyprint">
@@ -954,17 +959,17 @@ class Interceptor {
     Using the above target method, we are now able to provide a single interception method for both source methods.
     Note that Byte Buddy is also able to box and to unbox primitive values. However, be aware that the use of
     <code>@RuntimeType</code> comes at the cost of abandoning type safety and you might end up with a
-    <code>ClassCastException</code> if mix up incompatible types.
+    <code>ClassCastException</code> if you got incompatible types mixed up.
 </p>
 
 <p>
     So far, we have seen a great deal of the <code>MethodDelegation</code> instrumentation. But before we proceed,
     we want to take a more detailed look on how Byte Buddy selects a target method. We already described how Byte
     Buddy resolves a <i>most specific</i> method by comparing parameter types but there is more to it. After Byte Buddy
-    identified candidate methods that would allow for a binding to a given source method, it delegates the resolution
+    identified candidate methods that qualified for a binding to a given source method, it delegates the resolution
     to a chain of <code>AmbiguityResolver</code>s. Again, you are free to implement your own ambiguity resolvers that
     can complement or even replace Byte Buddy's defaults. Without such alterations, the ambiguity resolver chain
-    attempt to identify a unique target method by applying the following rules in the same order as below:
+    attempts to identify a unique target method by applying the following rules in the same order as below:
 </p>
 
 <ul class="colored-list padded">
@@ -982,7 +987,7 @@ class Interceptor {
         If two methods bind the same parameters of a source method by using <code>@Argument</code>, the method with
         the most specific parameter types will be considered. In this context, it does not matter if a the annotation
         is provided explicitly or implicitly by a <code>DefaultsProvider</code>. The resolution algorithm works similar
-        to those of the Java compiler's algorithm for resolving calls to overloaded methods. If two types are equally
+        to the Java compiler's algorithm for resolving calls to overloaded methods. If two types are equally
         specific, the method that binds more arguments will be considered as a target. If a parameter should be
         assigned an argument without considering the parameter type at this resolution stage, this is possible
         by setting the annotation's <code>bindingMechanic</code> attribute to <code>BindingMechanic.ANONYMOUS</code>.
@@ -996,40 +1001,41 @@ class Interceptor {
 </ul>
 
 <p>
-    So far, we only delegated method calls to static methods by delegating to a specific class as in
-    <code>MethodDelegation.to(Target.class)</code>. It is however possible to either delegate to instance methods
-    or even to constructors:
+    So far, we only delegated method invocations to static methods by naming a specific class as in
+    <code>MethodDelegation.to(Target.class)</code>. It is however also possible to delegate to instance methods
+    or to constructors:
 </p>
 
 <ul class="colored-list padded">
     <li><span>
         By calling <code>MethodDelegation.to(new Target())</code>, it is possible to delegate method invocations
-        to any of the instance methods of the <code>Target</code> class. Note that this includes any methods that
-        are defined throughout the class hierarchy of the instance, including the methods that are defined in
-        <code>Object</code>. You might want to restrict the range of candidate methods what is possible by applying
-        a filter to a method delegation by calling <code>filter(MethodMatcher)</code> on any delegation. The
-        <code>MethodMatcher</code> type is the same that was used before for identifying source method. The instance
-        which is the target of the method delegation is stored in a static field. Similarly to the definition of
-        fixed values, this requires the definition of a <code>TypeInitializer</code>. Instead of storing a delegation
-        in a static field, you can define the use of an instance field by
-        <code>MethodDelegation.instanceField(Class, String)</code> where the second argument is used as a field name.
-        Remember that you need to assign a value to this field before using an instance of such a dynamic class.
+        to any of the instance methods of the <code>Target</code> class. Note that this includes methods that
+        are defined anywhere in the instance's class hierarchy, including the methods that are defined in the
+        <code>Object</code> class. You might want to restrict the range of candidate methods what is possible by
+        applying a filter to a method delegation by calling <code>filter(MethodMatcher)</code> on any
+        <code>MethodDelegation</code>. The <code>MethodMatcher</code> type is the same that was used before for
+        selecting source methods within Byte Buddy's domain specific language. The instance which is the target of the
+        method delegation is stored in a static field. Similarly to the definition of fixed values, this requires the
+        definition of a <code>TypeInitializer</code>. Instead of storing a delegation in a static field, you can
+        alternatively define the use of an instance field by <code>MethodDelegation.instanceField(Class, String)</code>
+        where the second argument is defining a field name to which all method delegations are forwarded. Always
+        remember to assign a value to this field before calling methods on an instance of such a dynamic class.
         Otherwise, a method delegation will result in a <code>NullPointerException</code>.
     </span></li>
     <li><span>
         A method delegation can be used to construct instances of a given type. By using
         <code>MethodDelegation.construct(Class)</code>, any invocation of an intercepted method will return a
-        new instance of the target type.
+        new instance of the given target type.
     </span></li>
 </ul>
 
 <p>
     As you just learned, the <code>MethodDelegation</code> inspects annotations for adjusting its binding logic.
-    These annotations are specific to Byte Buddy but this does not mean that the annotated classes become dependent
-    on Byte Buddy to run. Instead, the Java runtime will simply ignore annotation types that are not found on the
-    class path when loading a class. This implies that Byte Buddy is no longer required once a class is created.
-    This means that you could load the dynamic classes in another JVM process without putting Byte Buddy on the
-    class path.
+    These annotations are specific to Byte Buddy but this does not mean that the annotated classes become in any
+    way dependent on Byte Buddy. Instead, the Java runtime will simply ignore annotation types that cannot be found on
+    the class path when a class is loaded. This implies that Byte Buddy is no longer required after a dynamic class
+    is created. This means that you could load the dynamic classes and the types to which it delegates its method calls
+    in another JVM process even without having Byte Buddy on the class path.
 </p>
 
 </div>
