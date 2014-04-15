@@ -201,6 +201,9 @@ public interface DynamicType {
 
         /**
          * Defines a new method for this type.
+         * <p>&nbsp;</p>
+         * Note that a method definition will shadow any method of identical signature that was defined in a super
+         * class. This implies that the defined method will be treated as if it does not have a super implementation.
          *
          * @param name           The name of the method.
          * @param returnType     The return type of the method  where the current type can be represented by
@@ -217,6 +220,9 @@ public interface DynamicType {
 
         /**
          * Defines a new method for this type.
+         * <p>&nbsp;</p>
+         * Note that a method definition will shadow any method of identical signature that was defined in a super
+         * class. This implies that the defined method will be treated as if it does not have a super implementation.
          *
          * @param name           The name of the method.
          * @param returnType     A description of the return type of the method  where the current type can be
@@ -233,6 +239,11 @@ public interface DynamicType {
 
         /**
          * Defines a new constructor for this type.
+         * <p>&nbsp;</p>
+         * Note that a constructor's implementation must call another constructor of the same class or a constructor of
+         * its super class. This constructor call must be hardcoded inside of the constructor's method body. Before
+         * this constructor call is made, it is not legal to call any methods or to read any fields of the instance
+         * under construction.
          *
          * @param parameterTypes The parameter types of this constructor where the current type can be represented by
          *                       {@link net.bytebuddy.dynamic.TargetType}.
@@ -244,6 +255,11 @@ public interface DynamicType {
 
         /**
          * Defines a new constructor for this type.
+         * <p>&nbsp;</p>
+         * Note that a constructor's implementation must call another constructor of the same class or a constructor of
+         * its super class. This constructor call must be hardcoded inside of the constructor's method body. Before
+         * this constructor call is made, it is not legal to call any methods or to read any fields of the instance
+         * under construction.
          *
          * @param parameterTypes The descriptions of the parameter types of this constructor where the current type can be
          *                       represented by a description of {@link net.bytebuddy.dynamic.TargetType}.
