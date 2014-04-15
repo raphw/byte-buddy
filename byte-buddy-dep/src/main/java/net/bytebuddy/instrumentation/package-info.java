@@ -2,7 +2,7 @@
  * The instrumentation package contains any logic for intercepting method calls. The following instrumentations ship
  * with Byte Buddy:
  * <ol>
- * <li>{@link net.bytebuddy.instrumentation.Exceptional}: The exceptional interception allows to throw
+ * <li>{@link net.bytebuddy.instrumentation.ExceptionMethod}: This interception allows to throw
  * {@link java.lang.Throwable} instances on a method call.</li>
  * <li>{@link net.bytebuddy.instrumentation.FieldAccessor}: A field accessor allows to read or write a class's field
  * value according to the Java bean specification, i.e. implements setter and getter methods.</li>

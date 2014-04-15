@@ -17,10 +17,10 @@ import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.takesA
 
 /**
  * This instrumentation causes a {@link java.lang.Throwable} to be thrown when the instrumented method is invoked.
- * Be aware that the Java Virtual machine does not care about exception declarations and will throw any isThrowable
- * from any method even if the method does not declared a checked exception.
+ * Be aware that the Java Virtual machine does not care about exception declarations and will throw any
+ * {@link java.lang.Throwable} from any method even if the method does not declared a checked exception.
  */
-public class Exceptional implements Instrumentation, ByteCodeAppender {
+public class ExceptionMethod implements Instrumentation, ByteCodeAppender {
 
     private final TypeDescription throwableType;
     private final ConstructionDelegate constructionDelegate;
@@ -31,8 +31,8 @@ public class Exceptional implements Instrumentation, ByteCodeAppender {
      * @param throwableType        The type of the exception to be thrown.
      * @param constructionDelegate A delegate that is responsible for calling the isThrowable's constructor.
      */
-    public Exceptional(TypeDescription throwableType,
-                       ConstructionDelegate constructionDelegate) {
+    public ExceptionMethod(TypeDescription throwableType,
+                           ConstructionDelegate constructionDelegate) {
         this.throwableType = throwableType;
         this.constructionDelegate = constructionDelegate;
     }
@@ -48,7 +48,7 @@ public class Exceptional implements Instrumentation, ByteCodeAppender {
      */
     public static Instrumentation throwing(Class<? extends Throwable> throwable) {
         TypeDescription exceptionType = new TypeDescription.ForLoadedType(throwable);
-        return new Exceptional(exceptionType, new ConstructionDelegate.ForDefaultConstructor(exceptionType));
+        return new ExceptionMethod(exceptionType, new ConstructionDelegate.ForDefaultConstructor(exceptionType));
     }
 
     /**
@@ -63,7 +63,7 @@ public class Exceptional implements Instrumentation, ByteCodeAppender {
      */
     public static Instrumentation throwing(Class<? extends Throwable> throwable, String message) {
         TypeDescription exceptionType = new TypeDescription.ForLoadedType(throwable);
-        return new Exceptional(exceptionType, new ConstructionDelegate.ForStringConstructor(exceptionType, message));
+        return new ExceptionMethod(exceptionType, new ConstructionDelegate.ForStringConstructor(exceptionType, message));
     }
 
     @Override
@@ -95,8 +95,8 @@ public class Exceptional implements Instrumentation, ByteCodeAppender {
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && constructionDelegate.equals(((Exceptional) other).constructionDelegate)
-                && throwableType.equals(((Exceptional) other).throwableType);
+                && constructionDelegate.equals(((ExceptionMethod) other).constructionDelegate)
+                && throwableType.equals(((ExceptionMethod) other).throwableType);
     }
 
     @Override
@@ -106,7 +106,7 @@ public class Exceptional implements Instrumentation, ByteCodeAppender {
 
     @Override
     public String toString() {
-        return "Exceptional{" +
+        return "ExceptionMethod{" +
                 "throwableType=" + throwableType +
                 ", constructionDelegate=" + constructionDelegate +
                 '}';
@@ -165,7 +165,7 @@ public class Exceptional implements Instrumentation, ByteCodeAppender {
 
             @Override
             public String toString() {
-                return "Exceptional.ConstructionDelegate.ForDefaultConstructor{" +
+                return "ExceptionMethod.ConstructionDelegate.ForDefaultConstructor{" +
                         "targetType=" + targetType +
                         ", targetConstructor=" + targetConstructor +
                         '}';
@@ -217,7 +217,7 @@ public class Exceptional implements Instrumentation, ByteCodeAppender {
 
             @Override
             public String toString() {
-                return "Exceptional.ConstructionDelegate.ForStringConstructor{" +
+                return "ExceptionMethod.ConstructionDelegate.ForStringConstructor{" +
                         "targetType=" + targetType +
                         ", targetConstructor=" + targetConstructor +
                         ", message='" + message + '\'' +
