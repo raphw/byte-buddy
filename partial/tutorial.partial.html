@@ -1119,6 +1119,55 @@ new ByteBuddy()
     constructor delegation and field access.
 </p>
 
+<pre class="prettyprint">
+class UserType {
+  public String doSomething() { return null; }
+}
+
+interface Interceptor {
+  String doSomethingElse();
+}
+
+interface InterceptionAccessor {
+  Interceptor getInterceptor();
+  void setInterceptor(Interceptor interceptor);
+}
+</pre>
+
+
+<pre class="prettyprint">
+interface InstanceCreator {
+  Object makeInstance();
+}
+
+class HelloWorldInterceptor implements Interceptor {
+  public String doSomethingElse() {
+    return "Hello World!";
+  }
+}
+</pre>
+
+<pre class="prettyprint">
+ByteBuddy byteBuddy = new ByteBuddy();
+Class<? extends UserType> dynamicUserType = byteBuddy
+  .subclass(UserType.class)
+    .method(not(isDeclaredBy(Object.class)))
+    .intercept(MethodDelegation.instanceField(Interceptor.class, "interceptor"))
+  .implement(InterceptionAccessor.class).intercept(FieldAccessor.ofBeanProperty())
+  .make()
+  .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+  .getLoaded();
+InstanceCreator factory = byteBuddy
+  .subclass(InstanceCreator.class)
+    .method(not(isDeclaredBy(Object.class)))
+    .intercept(MethodDelegation.construct(dynamicUserType))
+  .make()
+  .load(dynamicUserType.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+  .getLoaded().newInstance();
+UserType userType = (UserType) factory.makeInstance();
+((InterceptionAccessor) userType).setInterceptor(new HelloWorldInterceptor());
+</pre>
+
 <h4>Miscellaneous</h4>
 
 <p>
