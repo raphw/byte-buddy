@@ -77,7 +77,8 @@
     only be called under specific conditions. Imagine a business application that implements a reset
     functionality that allows deleting everything from the application's database.
 </p>
-<pre class="prettyprint">class Service {
+<pre class="prettyprint">
+class Service {
   void deleteEverything() {
     // delete everything ...
   }
@@ -94,7 +95,9 @@
 <p>
     For this purpose, assume that we are using a security framework with a public API as the following:
 </p>
-<pre class="prettyprint">@interface Secured {
+<pre class="prettyprint">
+@Retention(RetentionPolicy.RUNTIME)
+@interface Secured {
   String user();
 }
 
@@ -127,7 +130,8 @@ interface Framework {
     <code>@Secured("ADMIN")</code>. This way, we could easily implement a secured version of this particular type by
     simply subclassing it:
 </p>
-<pre class="prettyprint">class SecuredService extends Service {
+<pre class="prettyprint">
+class SecuredService extends Service {
   @Override
   void deleteEverything() {
     if(UserHolder.user.equals("ADMIN")) {
@@ -140,7 +144,8 @@ interface Framework {
 <p>
     With this additional class we could implement the framework as follows:
 </p>
-<pre class="prettyprint">class HardcodedFrameworkImpl implements Framework {
+<pre class="prettyprint">
+class HardcodedFrameworkImpl implements Framework {
   @Override
   public &lt;T&gt; T secure(Class&lt;T&gt; type) {
     if(type == Service.class) {
@@ -253,7 +258,8 @@ interface Framework {
         into the right direction most of the time. But enough of the talking, let us create a first class at a Java
         program's runtime:
     </p>
-<pre class="prettyprint">DynamicType.Unloaded&lt;?&gt; dynamicType = new ByteBuddy()
+<pre class="prettyprint">
+DynamicType.Unloaded&lt;?&gt; dynamicType = new ByteBuddy()
   .subclass(Object.class)
   .make();
 </pre>
@@ -265,7 +271,8 @@ interface Framework {
         dynamically generated type, something that normally is required when defining a Java class. Of course, you could
         have easily named your type explicitly:
     </p>
-<pre class="prettyprint">DynamicType.Unloaded&lt;?&gt; dynamicType = new ByteBuddy()
+<pre class="prettyprint">
+DynamicType.Unloaded&lt;?&gt; dynamicType = new ByteBuddy()
   .subclass(Object.class)
   .name("example.Type")
   .make();
@@ -327,7 +334,8 @@ interface Framework {
         As an implication of the mentioned immutability, you must be careful when for example configuring
         <code>ByteBuddy</code> instances. You might for example make the following mistake:
     </p>
-<pre class="prettyprint">ByteBuddy byteBuddy = new ByteBuddy();
+<pre class="prettyprint">
+ByteBuddy byteBuddy = new ByteBuddy();
 byteBuddy.withNamingStrategy(new NamingStrategy.SuffixingRandom("suffix"));
 DynamicType.Unloaded&lt;?&gt; dynamicType = byteBuddy.subclass(Object.class).make();
 </pre>
@@ -424,7 +432,8 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = byteBuddy.subclass(Object.class).mak
         <code>INJECTION</code> strategy attempts to inject a dynamic type using reflection. Let's look at such class
         loading in action:
     </p>
-<pre class="prettyprint">Class&lt;?&gt; type = new ByteBuddy()
+<pre class="prettyprint">
+Class&lt;?&gt; type = new ByteBuddy()
   .subclass(Object.class)
   .make()
   .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
@@ -446,7 +455,8 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = byteBuddy.subclass(Object.class).mak
     trivia and call the <code>toString</code> method on an instance of the dynamic type. We can get hold of an
     instance by calling the created class's constructor reflectively.
 </p>
-<pre class="prettyprint">String toString = new ByteBuddy()
+<pre class="prettyprint">
+String toString = new ByteBuddy()
   .subclass(Object.class)
   .name("example.Type")
   .make()
@@ -466,7 +476,8 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = byteBuddy.subclass(Object.class).mak
     logic. To demonstrate how this is done, let us start with something simple. We want to override the
     <code>toString</code> method and return <code>Hello World!</code> instead of the previous default value:
 </p>
-<pre class="prettyprint">String toString = new ByteBuddy()
+<pre class="prettyprint">
+String toString = new ByteBuddy()
   .subclass(Object.class)
   .name("example.Type")
   .method(named("toString")).intercept(FixedValue.value("Hello World!"))
@@ -509,7 +520,8 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = byteBuddy.subclass(Object.class).mak
     we might want to apply different rules for overriding different methods. Let us look at an example of such a
     scenario:
 </p>
-<pre class="prettyprint">class Foo {
+<pre class="prettyprint">
+class Foo {
   public String bar() { return null; }
   public String foo() { return null; }
   public String foo(Object o) { return null; }
@@ -1054,7 +1066,7 @@ class Interceptor {
 <h4>Miscellaneous</h4>
 
 <p>
-    To be completed: StubMethod, InvocationHandlerAdapter, Exceptional, ForAbstractMethod.
+    To be completed: StubMethod, ExceptionMethod, InvocationHandlerAdapter, ForAbstractMethod.
 </p>
 
 </div>
