@@ -15,6 +15,7 @@ import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.modifier.TypeManifestation;
 
 import java.lang.annotation.Annotation;
 import java.util.Collections;
@@ -314,7 +315,7 @@ public class ByteBuddy {
                 namingStrategy,
                 actualSuperType,
                 interfaceTypes,
-                modifiers.resolve(superType.getModifiers()),
+                modifiers.resolve(superType.getModifiers() & ~TypeManifestation.INTERFACE.getMask()),
                 typeAttributeAppender.resolve(TypeAttributeAppender.NoOp.INSTANCE),
                 ignoredMethods,
                 bridgeMethodResolverFactory,

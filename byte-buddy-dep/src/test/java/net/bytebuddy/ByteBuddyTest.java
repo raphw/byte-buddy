@@ -2,6 +2,7 @@ package net.bytebuddy;
 
 import net.bytebuddy.dynamic.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.instrumentation.FieldAccessor;
 import net.bytebuddy.instrumentation.FixedValue;
 import net.bytebuddy.instrumentation.MethodDelegation;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
+import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.not;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -328,7 +330,7 @@ public class ByteBuddyTest {
     }
 
     @Test
-    public void testFieldsAndMethodsMethodSuper() throws Exception {
+    public void testFieldsAndMethodsSuper() throws Exception {
         MemoryDatabase loggingDatabase = new ByteBuddy()
                 .subclass(MemoryDatabase.class)
                 .method(named("load")).intercept(MethodDelegation.to(ChangingLoggerInterceptor.class))
@@ -362,7 +364,7 @@ public class ByteBuddyTest {
     }
 
     @Test
-    public void testFieldsAndMethodsMethodRuntimeType() throws Exception {
+    public void testFieldsAndMethodsRuntimeType() throws Exception {
         Loop trivialGetterBean = new ByteBuddy()
                 .subclass(Loop.class)
                 .method(isDeclaredBy(Loop.class)).intercept(MethodDelegation.to(Interceptor.class))
@@ -372,6 +374,62 @@ public class ByteBuddyTest {
                 .newInstance();
         assertThat(trivialGetterBean.loop(42), is(42));
         assertThat(trivialGetterBean.loop("foo"), is("foo"));
+    }
+
+    @SuppressWarnings("unused")
+    public static class UserType {
+
+        public String doSomething() {
+            return null;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static interface Interceptor2 {
+
+        String doSomethingElse();
+    }
+
+    @SuppressWarnings("unused")
+    public static class HelloWorldInterceptor implements Interceptor2 {
+
+        public String doSomethingElse() {
+            return "Hello World!";
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static interface InterceptionAccessor {
+
+        Interceptor2 getInterceptor();
+
+        void setInterceptor(Interceptor2 interceptor);
+    }
+
+    @SuppressWarnings("unused")
+    public static interface InstanceCreator {
+        Object makeInstance();
+    }
+
+    @Test
+    public void testFieldsAndMethodsFieldAccess() throws Exception {
+        ByteBuddy byteBuddy = new ByteBuddy();
+        Class<? extends UserType> dynamicUserType = byteBuddy
+                .subclass(UserType.class)
+                .method(not(isDeclaredBy(Object.class))).intercept(MethodDelegation.instanceField(Interceptor2.class, "interceptor"))
+                .implement(InterceptionAccessor.class).intercept(FieldAccessor.ofBeanProperty())
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        InstanceCreator factory = byteBuddy
+                .subclass(InstanceCreator.class)
+                .method(not(isDeclaredBy(Object.class))).intercept(MethodDelegation.construct(dynamicUserType))
+                .make()
+                .load(dynamicUserType.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded().newInstance();
+        UserType userType = (UserType) factory.makeInstance();
+        ((InterceptionAccessor) userType).setInterceptor(new HelloWorldInterceptor());
+        assertThat(userType.doSomething(), is("Hello World!"));
     }
 
     @SuppressWarnings("unused")
