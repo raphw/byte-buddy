@@ -572,9 +572,11 @@ Foo dynamicFoo = new ByteBuddy()
         </span></li>
 </ul>
 <p>
-    Because of this organizations, you should always register more specific method matchers last. Otherwise, any less
+    Because of this organization, you should always register more specific method matchers last. Otherwise, any less
     specific method matcher that is registered afterwards might prevent rules that you defined before from being
-    applied.
+    applied. Note that the <code>ByteBuddy</code> configuration allows to define an <code>ignoreMethod</code>
+    property. Methods that are successfully matched against this method matcher are never overriden. By default,
+    Byte Buddy does not override any synthetic methods.
 </p>
 
 <p>
@@ -883,8 +885,8 @@ class LoggingMemoryDatabase extends MemoryDatabase {
 <p>
     Sometimes, you might however want to call a super method with different arguments than those that were assigned on
     the method's original invocation. This is also possible in Byte Buddy by using the <code>@Super</code> annotation.
-    This annotation will trigger the creation of another <code>AuxiliaryType</code> which now extends a super class or
-    an interface of the dynamic type in question. Similar to before, the auxiliary type will override all methods to
+    This annotation triggers the creation of another <code>AuxiliaryType</code> which now extends a super class or
+    an interface of the dynamic type in question. Similar to before, the auxiliary type overrides all methods to
     call their super implementations on the dynamic type. This way, the example logger interceptor from the previous
     example can be implemented to change the actual invocation:
 </p>
@@ -903,19 +905,19 @@ class ChangingLoggerInterceptor {
 </pre>
 
 <p>
-    Note that the instance that is assigned to the parameter annotated with <code>@Super</code> will be of a different
+    Note that the instance that is assigned to the parameter annotated with <code>@Super</code> is of a different
     identity to the actual instance of the dynamic type! Therefore, no instance field that is accessible by means of
     the parameter reflects the actual instance's field. Furthermore, non-overridable methods of the auxiliary instance
-    will not delegate their invocations but retain the original implementation what can result in absurd behavior when
+    do not delegate their invocations but retain the original implementation what can result in absurd behavior when
     they are invoked. Finally, in case that a parameter that is annotated with <code>@Super</code> does not represent
-    a super type of the relevant dynamic type, the method will not be considered as a binding target for any of its
+    a super type of the relevant dynamic type, the method is not considered as a binding target for any of its
     methods.
 </p>
 
 <p>
     Because the <code>@Super</code> annotation allows for the use of any type, we might be required to provide
-    information on how this type can be constructed. By default, Byte Buddy will attempt to use a class's default
-    constructor. This will always work for interfaces which implicitly extend the <code>Object</code> type. However,
+    information on how this type can be constructed. By default, Byte Buddy attempts to use a class's default
+    constructor. This always works for interfaces which implicitly extend the <code>Object</code> type. However,
     when extending a super class of the dynamic type, this class might not even provide a default constructor.
     If this is the case or if a specific constructor should be used for creating such an auxiliary type, the
     <code>@Super</code> annotation allows to identify a different constructor by setting its parameter types as
@@ -991,28 +993,28 @@ class Interceptor {
 <ul class="colored-list padded">
     <li><span>
         Methods can be assigned an explicit priority by annotating them with <code>@BindingPriority</code>. If a method
-        is of a higher priority than another method, the high priority method will always be preferred over that with
-        lower priority. In addition, a method that is annotated by <code>@IgnoreForBinding</code> will never be
+        is of a higher priority than another method, the high priority method is always preferred over that with
+        lower priority. In addition, a method that is annotated by <code>@IgnoreForBinding</code> is never
         considered as a target method.
     </span></li>
     <li><span>
-        If a source method and a target method have an identical name, this target method will be preferred over
+        If a source method and a target method have an identical name, this target method is preferred over
         other target methods that have a different name.
     </span></li>
     <li><span>
         If two methods bind the same parameters of a source method by using <code>@Argument</code>, the method with
-        the most specific parameter types will be considered. In this context, it does not matter if a the annotation
+        the most specific parameter types is considered. In this context, it does not matter if a the annotation
         is provided explicitly or implicitly by a <code>DefaultsProvider</code>. The resolution algorithm works similar
         to the Java compiler's algorithm for resolving calls to overloaded methods. If two types are equally
-        specific, the method that binds more arguments will be considered as a target. If a parameter should be
+        specific, the method that binds more arguments is considered as a target. If a parameter should be
         assigned an argument without considering the parameter type at this resolution stage, this is possible
         by setting the annotation's <code>bindingMechanic</code> attribute to <code>BindingMechanic.ANONYMOUS</code>.
         Furthermore, note that non-anonymous parameters need to be unique per index value on each target method for the
         resolution algorithm to work.
     </span></li>
     <li><span>
-        If a target method has more parameters than another target method, the former method will be preferred over
-        the latter.
+        If a target method has more parameters than another target method, the former method is preferred over the
+        latter.
     </span></li>
 </ul>
 
@@ -1040,7 +1042,7 @@ class Interceptor {
     </span></li>
     <li><span>
         A method delegation can be used to construct instances of a given type. By using
-        <code>MethodDelegation.construct(Class)</code>, any invocation of an intercepted method will return a
+        <code>MethodDelegation.construct(Class)</code>, any invocation of an intercepted method returns a
         new instance of the given target type.
     </span></li>
 </ul>
@@ -1048,7 +1050,7 @@ class Interceptor {
 <p>
     As you just learned, the <code>MethodDelegation</code> inspects annotations for adjusting its binding logic.
     These annotations are specific to Byte Buddy but this does not mean that the annotated classes become in any
-    way dependent on Byte Buddy. Instead, the Java runtime will simply ignore annotation types that cannot be found on
+    way dependent on Byte Buddy. Instead, the Java runtime simply ignores annotation types that cannot be found on
     the class path when a class is loaded. This implies that Byte Buddy is no longer required after a dynamic class
     is created. This means that you could load the dynamic classes and the types to which it delegates its method calls
     in another JVM process even without having Byte Buddy on the class path.
@@ -1115,8 +1117,45 @@ new ByteBuddy()
 <h4>Accessing fields</h4>
 
 <p>
-    To be completed: Getters and setters / full blown example with combining instance delegation,
-    constructor delegation and field access.
+    Using the <code>FieldAccessor</code>, it is possible to implement a method to read or to write a field value. In
+    order to be compatible to this instrumentation, a method must either:
+</p>
+
+<ul class="colored-list padded">
+    <li><span>
+        Have a signature similar to <code>void setBar(Foo f)</code> to define a field setter. The setter will normally
+        access a field named <code>bar</code>, as it is conventional in the
+        <a href="http://www.oracle.com/technetwork/java/javase/documentation/spec-136004.html">Java bean
+            specification</a>. In this context, the parameter type <code>Foo</code> must be a sub type this field's
+        type.
+    </span></li>
+    <li><span>
+        Have a signature similar to <code>Foo getBar()</code> to define a field getter. The setter will normally
+        access a field named <code>bar</code>, as it is conventional in the Java bean specification. For this to be
+        possible, the method's return type <code>Foo</code> must be a super type of the field's type.
+    </span></li>
+</ul>
+
+<p>
+    Creating such an instrumentation is trivial: Simply call <code>FieldAccessor.ofBeanProperty()</code>. However,
+    if you do not want to derive a field's name from a method's name, you can still specify the field name explicitly
+    by using <code>FieldAccessor.ofField(String)</code>. Using this method, the only argument defines the field's name
+    that should be accessed. If required, this even allows you to define a new field if such a field does not yet
+    exist. When accessing an existing field, you are able to specify the type in which a field is defined by calling
+    the <code>in</code> method. In Java, it is legal to define a field in several classes of a hierarchy. In the
+    process, a field of a class is <i>shadowed</i> by the field definition in its subclass. Without such an explicit
+    location of the field's class, Byte Buddy will access the first field it encounters by traversing through a class
+    hierarchy, starting with the most specific class.
+</p>
+
+<p>
+    Let us look at an example application of the <code>FieldAccessor</code>. For this example, we assume that we
+    receive some <code>UserType</code> that we want to subclass at runtime. For this purpose, we want to register an
+    <code>Interceptor</code> for each instance which is represented by an interface. This way, we are able to provide
+    different implementations according to our actual requirement. This latter implementation should then be
+    exchangeable by calling methods of the <code>InterceptionAccessor</code> interface on the corresponding instance.
+    In order to create instances of this dynamic type, we further do not want to use reflection but call a method of
+    an <code>InstanceCreator</code> which serves as an object factory. The following types resemble this setup:
 </p>
 
 <pre class="prettyprint">
@@ -1132,24 +1171,22 @@ interface InterceptionAccessor {
   Interceptor getInterceptor();
   void setInterceptor(Interceptor interceptor);
 }
-</pre>
 
-
-<pre class="prettyprint">
 interface InstanceCreator {
   Object makeInstance();
 }
-
-class HelloWorldInterceptor implements Interceptor {
-  public String doSomethingElse() {
-    return "Hello World!";
-  }
-}
 </pre>
 
+<p>
+    We already learned how to intercept methods of a class by using a <code>MethodDelegation</code>. Using the latter
+    instrumentation, we can define a delegation to an instance field and name this field <code>interceptor</code>.
+    Additionally, we are implementing the <code>InterceptionAccessor</code> interface and intercept all methods
+    of the interface to implement accessors of this field. By defining a bean property accessor, we achieve a getter
+    for <code>getInterceptor</code> and a setter for <code>setInterceptor</code>:
+</p>
+
 <pre class="prettyprint">
-ByteBuddy byteBuddy = new ByteBuddy();
-Class<? extends UserType> dynamicUserType = byteBuddy
+Class<? extends UserType> dynamicUserType = new ByteBuddy()
   .subclass(UserType.class)
     .method(not(isDeclaredBy(Object.class)))
     .intercept(MethodDelegation.instanceField(Interceptor.class, "interceptor"))
@@ -1157,13 +1194,44 @@ Class<? extends UserType> dynamicUserType = byteBuddy
   .make()
   .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
   .getLoaded();
-InstanceCreator factory = byteBuddy
+</pre>
+
+<p>
+    With the new <code>dynamicUserType</code>, we can implement the <code>InstanceCreator</code> interface to
+    become a factory of this dynamic type. Again, we are using the already known <code>MethodDelegation</code> to
+    call the dynamic type's default constructor:
+</p>
+
+<pre class="prettyprint">
+InstanceCreator factory = new ByteBuddy()
   .subclass(InstanceCreator.class)
     .method(not(isDeclaredBy(Object.class)))
     .intercept(MethodDelegation.construct(dynamicUserType))
   .make()
   .load(dynamicUserType.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
   .getLoaded().newInstance();
+</pre>
+
+<p>
+    Note that we need to use the <code>dynamicUserType</code>'s class loader to load the factory. Otherwise, this
+    type would not be visible to the factory when it is loaded.
+</p>
+
+<p>
+    With these two dynamic types, we can finally create a new instance of the dynamically enhanced
+    <code>UserType</code> and define custom <code>Interceptor</code>s for its instances. Let us conclude this example
+    by applying some <code>HelloWorldInterceptor</code> to a freshly created instance. Note how we are now able to do
+    this without using any reflection, thanks to both the field accessor interface and the factory.
+</p>
+
+<pre class="prettyprint">
+class HelloWorldInterceptor implements Interceptor {
+  @Override
+  public String doSomethingElse() {
+    return "Hello World!";
+  }
+}
+
 UserType userType = (UserType) factory.makeInstance();
 ((InterceptionAccessor) userType).setInterceptor(new HelloWorldInterceptor());
 </pre>
@@ -1171,8 +1239,36 @@ UserType userType = (UserType) factory.makeInstance();
 <h4>Miscellaneous</h4>
 
 <p>
-    To be completed: StubMethod, ExceptionMethod, InvocationHandlerAdapter, ForAbstractMethod.
+    Additionally to the <code>Instrumentation</code>s we discussed so far, Byte Buddy includes several other
+    implementations:
 </p>
+
+<ul class="colored-list padded">
+    <li><span>
+        A <code>StubMethod</code> implements a method to simply return the method return type's default value without
+        any further action. This way, a method call can be silently suppressed. This approach can for example be used
+        to implement mock types. The default value of any primitive type is zero or the zero character respectively.
+        Methods that return a reference type return <code>null</code> as their default.
+    </span></li>
+    <li><span>
+        The <code>ExceptionMethod</code> can be used to implement a method to only throw an exception. As mentioned
+        before, it is possible to throw checked exceptions from any method even if a method does not declare this
+        exception.
+    </span></li>
+    <li><span>
+        The <code>InvocationHandlerAdapter</code> allows to use existing <code>InvocationHandler</code>s from the
+        for the <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Proxy.html">proxy classes</a>
+        that ship with the Java Class Library.
+    </span></li>
+    <li><span>
+        Finally, <code>Instrumentation.ForAbstractMethod</code> allows to define an abstract method. Defining abstract
+        methods is however supported directly by Byte Buddy's domain specific language. Simply call the
+        <code>withoutCode</code> method after your method selection. When defining abstract methods, remember to
+        also define your dynamic class to be abstract by setting the corresponding modifier during the
+        definition of a class. The latter is also supported by Byte Buddy's domain specific language by calling
+        <code>modifier</code> when describing a class.
+    </span></li>
+</ul>
 
 </div>
 <div class="row" id="attributes">
