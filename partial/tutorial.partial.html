@@ -1186,7 +1186,7 @@ interface InstanceCreator {
 </p>
 
 <pre class="prettyprint">
-Class<? extends UserType> dynamicUserType = new ByteBuddy()
+Class&lt;? extends UserType&gt; dynamicUserType = new ByteBuddy()
   .subclass(UserType.class)
     .method(not(isDeclaredBy(Object.class)))
     .intercept(MethodDelegation.instanceField(Interceptor.class, "interceptor"))
