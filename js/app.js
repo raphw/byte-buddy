@@ -55,13 +55,13 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
 
     .controller('socialMediaController', function ($scope) {
         $scope.icons = [
-            {name: 'Google', style: 'google', target: '#'},
-            {name: 'LinkedIn', style: 'linkedin', target: '#'},
-            {name: 'Twitter', style: 'twitter', target: '#'},
-            {name: 'Stack Overflow', style: 'stackover', target: '#'},
-            {name: 'GitHub', style: 'github', target: '#'},
-            {name: 'RSS', style: 'rss', target: '#'},
-            {name: 'Reddit', style: 'reedit', target: '#'}
+            {name: 'Google', style: 'google', target: 'https://plus.google.com/share?url=http%3A%2F%2Fbytebuddy.net'},
+            {name: 'LinkedIn', style: 'linkedin', target: 'http://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Fbytebuddy.net&title=Byte%20Buddy%20-%20runtime%20code%20generation%20for%20Java&summary=Byte%20Buddy%20is%20a%20light-weight%20and%20easy%20to%20use%20library%20for%20generating%20Java%20code%20at%20the%20run%20time%20of%20a%20Java%20application.%20It%20is%20open-source%20and%20free.%20Check%20it%20out%20at%20http%3A%2F%2Fbytebuddy.net&source=http%3A%2F%2Fbytebuddy.net'},
+            {name: 'Twitter', style: 'twitter', target: 'https://twitter.com/intent/tweet?source=webclient&text=Check%20out%20%23ByteBuddy%2C%20a%20library%20for%20generating%20%23Java%20code%20at%20run%20time%20%28http%3A%2F%2Fbytebuddy.net%29'},
+            {name: 'Stack Overflow', style: 'stackover', target: 'http://stackoverflow.com/questions/tagged/byte-buddy'},
+            {name: 'GitHub', style: 'github', target: 'https://github.com/raphw/byte-buddy'},
+            {name: 'Facebook', style: 'facebook', target: 'https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Fbytebuddy.net'},
+            {name: 'Reddit', style: 'reedit', target: 'http://www.reddit.com/submit?url=http%3A%2F%2Fbytebuddy.net'}
         ];
     })
 

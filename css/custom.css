@@ -241,6 +241,10 @@ code {
     display: inline-block;
 }
 
+.social-link:hover {
+    text-decoration: none;
+}
+
 .social-icon:hover {
     opacity: 0.5;
 }
@@ -261,7 +265,7 @@ code {
     background-position: 643px 0;
 }
 
-.rss {
+.facebook {
     background-position: 358px 0;
 }
 

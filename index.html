@@ -59,7 +59,8 @@
                     <dd>
                         Feel free to ask questions about Byte Buddy on
                         <a href="http://http://stackoverflow.com">Stack Overflow</a> and tag them with
-                        <code class="so-tag">byte-buddy</code>. We are monitoring questions with this tag and will normally answer you
+                        <code class="so-tag">byte-buddy</code>. We are monitoring questions with this tag and will
+                        normally answer you
                         as quickly as possible. We think that Stack Overflow is a great place to share
                         knowledge which is why we decided to not maintain our own support platform. If you have a
                         question that does not fit into Stack Overflow's Q&amp;A format, please ask your question
@@ -87,14 +88,14 @@
                     </dd>
                 </dl>
                 <dl>
-                    <dt>Get in touch and share</dt>
+                    <dt>Tell others</dt>
                     <dd>
-                        Byte Buddy is maintained by Rafael Winterhalter and was first published in 2014. Get in touch by
-                        a social media of your choice or tell the world about Byte Buddy.<br/>
+                        Byte Buddy is maintained by Rafael Winterhalter and was first published in 2014. Thank you
+                        for telling the world about this project!<br/>
 
                         <div class="btn-group" data-ng-controller="socialMediaController" style="padding-top: 7px;">
-                            <a href="{{icon.target}}">
-                                <i data-ng-repeat="icon in icons" class="media-object social-icon {{icon.style}}"></i>
+                            <a data-ng-repeat="icon in icons" data-ng-href="{{icon.target}}" class="social-link">
+                                <i class="media-object social-icon {{icon.style}}"></i>
                             </a>
                         </div>
                     </dd>
