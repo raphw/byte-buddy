@@ -34,6 +34,9 @@
         <version.plugin.compiler>3.1</version.plugin.compiler>
         <version.plugin.javadoc>2.9.1</version.plugin.javadoc>
         <version.plugin.source>2.2.1</version.plugin.source>
+        <version.plugin.gpg>1.4</version.plugin.gpg>
+        <version.plugin.release>2.5</version.plugin.release>
+        <distribution.bintray>https://api.bintray.com/maven/raphw/maven/ByteBuddy</distribution.bintray>
         <mode.extra>false</mode.extra>
     </properties>
 
@@ -58,13 +61,6 @@
             <timezone>+1</timezone>
         </developer>
     </developers>
-
-    <!-- OSS parent for deployment to Maven Central -->
-    <parent>
-        <groupId>org.sonatype.oss</groupId>
-        <artifactId>oss-parent</artifactId>
-        <version>7</version>
-    </parent>
 
     <issueManagement>
         <system>github.com</system>
@@ -116,8 +112,25 @@
                     <encoding>${project.build.sourceEncoding}</encoding>
                 </configuration>
             </plugin>
+            <!-- Define release properties -->
+            <plugin>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>${version.plugin.release}</version>
+                <configuration>
+                    <useReleaseProfile>false</useReleaseProfile>
+                    <releaseProfiles>extras</releaseProfiles>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
+
+    <distributionManagement>
+      <repository>
+        <id>bintray</id>
+        <url>${distribution.bintray}</url>
+      </repository>
+    </distributionManagement>
 
     <profiles>
         <profile>
@@ -154,6 +167,21 @@
                                 <id>attach-javadocs</id>
                                 <goals>
                                     <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <!-- Sign artifacts -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>${version.plugin.gpg}</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
                                 </goals>
                             </execution>
                         </executions>

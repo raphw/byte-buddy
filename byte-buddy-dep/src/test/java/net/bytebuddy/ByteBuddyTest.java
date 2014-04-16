@@ -393,6 +393,7 @@ public class ByteBuddyTest {
     @SuppressWarnings("unused")
     public static class HelloWorldInterceptor implements Interceptor2 {
 
+        @Override
         public String doSomethingElse() {
             return "Hello World!";
         }
