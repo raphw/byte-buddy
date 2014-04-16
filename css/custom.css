@@ -225,6 +225,11 @@ code {
     color: #428BCA;
 }
 
+.so-tag {
+    background-color: #D13838;
+    color: #FFA408;
+}
+
 /*
  * Social media icons
 */
