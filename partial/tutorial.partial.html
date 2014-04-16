@@ -1,4 +1,5 @@
-<div class="row">
+<div class="row container">
+
 <div class="col-md-3 visible-md visible-lg" style="height: 100%;">
     <div class="sidebar hidden-print affix-top" role="complementary" data-affix="0">
         <div style="padding: 40px 0 0 15px;">
@@ -12,6 +13,7 @@
         </div>
     </div>
 </div>
+
 <div class="visible-xs visible-sm">
     <div class="hidden-print" role="complementary">
         <ul class="nav nav-tabs nav-stacked" style="border: 0;" data-ng-repeat="link in links">
@@ -23,11 +25,14 @@
         </ul>
     </div>
 </div>
+
 <div class="col-md-8 col-md-offset-1" id="affixComponent">
+
 <div class="row" style="background-color: orange; font-weight: bold; color: #ffffff; padding: 5px;">
     This tutorial is currently in the make. We hope to publish a first release of Byte
     Buddy together with the completed version of this tutorial and web page before July 2014!
 </div>
+
 <div class="row" id="rational">
 
 <h2>Why runtime code generation?</h2>
@@ -50,6 +55,7 @@
     we are able to introspect unknown types and to call methods or access fields. Unfortunately, the use of
     the reflection API has two significant downsides:
 </p>
+
 <ul class="colored-list padded">
     <li><span>
         Using the reflection API is
@@ -69,6 +75,7 @@
         of a miniature security library.
     </span></li>
 </ul>
+
 <h4>Writing a security library</h4>
 
 <p>
@@ -77,12 +84,15 @@
     only be called under specific conditions. Imagine a business application that implements a reset
     functionality that allows deleting everything from the application's database.
 </p>
+
 <pre class="prettyprint">
 class Service {
   void deleteEverything() {
     // delete everything ...
   }
-}</pre>
+}
+</pre>
+
 <p>
     Such a reset should of course only be performed by administrators and never by a normal user of our
     application. By analyzing our source code, we could of course make sure that this will never happen. However,
@@ -95,6 +105,7 @@ class Service {
 <p>
     For this purpose, assume that we are using a security framework with a public API as the following:
 </p>
+
 <pre class="prettyprint">
 @Retention(RetentionPolicy.RUNTIME)
 @interface Secured {
@@ -107,7 +118,9 @@ class UserHolder {
 
 interface Framework {
   &lt;T&gt; T secure(Class&lt;T&gt; type);
-}</pre>
+}
+</pre>
+
 <p>
     In this framework, the <code>Secured</code> annotation should be used to mark methods that can only be
     accessed by a given user. The <code>UserHolder</code> is used for globally defining which user is
@@ -130,6 +143,7 @@ interface Framework {
     <code>@Secured("ADMIN")</code>. This way, we could easily implement a secured version of this particular type by
     simply subclassing it:
 </p>
+
 <pre class="prettyprint">
 class SecuredService extends Service {
   @Override
@@ -140,10 +154,13 @@ class SecuredService extends Service {
       throw new IllegalStateException("Not authorized");
     }
   }
-}</pre>
+}
+</pre>
+
 <p>
     With this additional class we could implement the framework as follows:
 </p>
+
 <pre class="prettyprint">
 class HardcodedFrameworkImpl implements Framework {
   @Override
@@ -154,7 +171,9 @@ class HardcodedFrameworkImpl implements Framework {
       throw new IllegalArgumentException("Unknown: " + type);
     }
   }
-}</pre>
+}
+</pre>
+
 <p>
     Of course, this implementation is not of much use. By the <code>secure</code> method's signature we suggested
     that the method can provide security for any type but in reality, we will throw an exception once we encounter
@@ -234,8 +253,7 @@ class HardcodedFrameworkImpl implements Framework {
     of the box. If required, you can even define custom byte code for any implemented method. But even without knowing
     what byte code is or how it works, you are able to do quite a lot without digging deep into the framework. Did
     you for example have a look at the <a data-ng-href="#helloworld"><code>Hello World!</code> example</a>? Using Byte
-    Buddy
-    is that easy.
+    Buddy is that easy.
 </p>
 
 <p>
@@ -245,59 +263,67 @@ class HardcodedFrameworkImpl implements Framework {
     forward to this later material! You can do almost anything by using Byte Buddy's standard API and without
     understanding any JVM specifics. For learning about the standard API, just read on.
 </p>
-</div>
-<div class="row" id="gettingstarted">
-    <h2>Creating a class</h2>
 
-    <p>
-        Any type that is created by Byte Buddy is emitted by an instance of the <code>ByteBuddy</code> class. Simply
-        create a new instance by calling <code>new ByteBuddy()</code> and you are ready to go. Hopefully, you are using
-        an development environment where you get suggestions on the methods that you can call on a given object. This
-        way, you can avoid to manually look up a class's API in <a href="javadoc/v0_1/index.html">Byte Buddy's
-        javadoc</a> but have your IDE guide you through the process. As mentioned before, Byte Buddy offers a domain
-        specific language which intends to be as human-readable as possible. Your IDE's hints will therefore point you
-        into the right direction most of the time. But enough of the talking, let us create a first class at a Java
-        program's runtime:
-    </p>
+</div>
+
+<div class="row" id="gettingstarted">
+
+<h2>Creating a class</h2>
+
+<p>
+    Any type that is created by Byte Buddy is emitted by an instance of the <code>ByteBuddy</code> class. Simply
+    create a new instance by calling <code>new ByteBuddy()</code> and you are ready to go. Hopefully, you are using
+    an development environment where you get suggestions on the methods that you can call on a given object. This
+    way, you can avoid to manually look up a class's API in <a href="javadoc/v0_1/index.html">Byte Buddy's
+    javadoc</a> but have your IDE guide you through the process. As mentioned before, Byte Buddy offers a domain
+    specific language which intends to be as human-readable as possible. Your IDE's hints will therefore point you
+    into the right direction most of the time. But enough of the talking, let us create a first class at a Java
+    program's runtime:
+</p>
+
 <pre class="prettyprint">
 DynamicType.Unloaded&lt;?&gt; dynamicType = new ByteBuddy()
   .subclass(Object.class)
   .make();
 </pre>
-    <p>
-        As it is hopefully obvious, the above code example creates a new class that extends the <code>Object</code>
-        type.
-        This dynamically created type would be equivalent to a Java class that only extends <code>Object</code> without
-        explicitly implementing any methods, fields or constructors. You might have noted that we did not even name the
-        dynamically generated type, something that normally is required when defining a Java class. Of course, you could
-        have easily named your type explicitly:
-    </p>
+
+<p>
+    As it is hopefully obvious, the above code example creates a new class that extends the <code>Object</code>
+    type.
+    This dynamically created type would be equivalent to a Java class that only extends <code>Object</code> without
+    explicitly implementing any methods, fields or constructors. You might have noted that we did not even name the
+    dynamically generated type, something that normally is required when defining a Java class. Of course, you could
+    have easily named your type explicitly:
+</p>
+
 <pre class="prettyprint">
 DynamicType.Unloaded&lt;?&gt; dynamicType = new ByteBuddy()
   .subclass(Object.class)
   .name("example.Type")
   .make();
 </pre>
-    <p>
-        But what happens without the explicit naming? Byte Buddy lives and breaths of
-        <a href="http://en.wikipedia.org/wiki/Convention_over_configuration">convention over configuration</a> and
-        provides you with defaults that we found convenient. As for the name of a type, the default Byte Buddy
-        configuration provides a <code>NamingStrategy</code> which randomly creates a class name based on a dynamic
-        type's superclass name. Furthermore, the name is defined to be in the same package as the subclass such
-        that package-private methods of the direct superclass are always visible to the dynamic type. If you for example
-        subclassed a type named <code>example.Foo</code>, the generated name will be something like
-        <code>example.Foo$$ByteBuddy$$1376491271</code> where the numeric sequence is random. An exception of this rule
-        is made when subclassing types from the <code>java.lang</code> package where types such as <code>Object</code>
-        live. Java's security model does not allow custom types to live is this namespace. Therefore, such type names
-        are prefixed with <code>net.bytebuddy.renamed</code> by the default naming strategy.
-    </p>
 
-    <p>
-        This default behavior might not be convenient for you. And thanks to the convention over configuration
-        principle, you can always alter the default behavior by your needs. This is where the <code>ByteBuddy</code>
-        class comes into place. By creating a <code>new ByteBuddy()</code> instance, you create a default configuration.
-        By calling methods on this configuration, you can customize it by your individual needs. Let's try this:
-    </p>
+<p>
+    But what happens without the explicit naming? Byte Buddy lives and breaths of
+    <a href="http://en.wikipedia.org/wiki/Convention_over_configuration">convention over configuration</a> and
+    provides you with defaults that we found convenient. As for the name of a type, the default Byte Buddy
+    configuration provides a <code>NamingStrategy</code> which randomly creates a class name based on a dynamic
+    type's superclass name. Furthermore, the name is defined to be in the same package as the subclass such
+    that package-private methods of the direct superclass are always visible to the dynamic type. If you for example
+    subclassed a type named <code>example.Foo</code>, the generated name will be something like
+    <code>example.Foo$$ByteBuddy$$1376491271</code> where the numeric sequence is random. An exception of this rule
+    is made when subclassing types from the <code>java.lang</code> package where types such as <code>Object</code>
+    live. Java's security model does not allow custom types to live is this namespace. Therefore, such type names
+    are prefixed with <code>net.bytebuddy.renamed</code> by the default naming strategy.
+</p>
+
+<p>
+    This default behavior might not be convenient for you. And thanks to the convention over configuration
+    principle, you can always alter the default behavior by your needs. This is where the <code>ByteBuddy</code>
+    class comes into place. By creating a <code>new ByteBuddy()</code> instance, you create a default configuration.
+    By calling methods on this configuration, you can customize it by your individual needs. Let's try this:
+</p>
+
 <pre class="prettyprint">DynamicType.Unloaded&lt;?&gt; dynamicType = new ByteBuddy()
   .withNamingStrategy(new NamingStrategy() {
     @Override
@@ -308,131 +334,135 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = new ByteBuddy()
   .subclass(Object.class)
   .make();
 </pre>
-    <p>
-        In the above code example, we created a new configuration that differs from the default configuration in its
-        type naming strategy. The anonymous class is implemented to simply concatenate the string
-        <code>i.love.ByteBuddy</code> and the base class's simple name. When subclassing the
-        <code>Object</code> type, the dynamic type is therefore named <code>i.love.ByteBuddy.Object</code>. Be however
-        careful
-        when creating your own naming strategies! The Java virtual machine uses names to distinguish between types
-        which is why you want to avoid naming collisions. If you need to customize the naming behavior, consider
-        using Byte Buddy's built-in <code>NamingStrategy.SuffixingRandom</code> which you can customize to include
-        a prefix that is more meaningful to your application than our default.
-    </p>
 
-    <h4>Domain specific language and immutability</h4>
+<p>
+    In the above code example, we created a new configuration that differs from the default configuration in its
+    type naming strategy. The anonymous class is implemented to simply concatenate the string
+    <code>i.love.ByteBuddy</code> and the base class's simple name. When subclassing the
+    <code>Object</code> type, the dynamic type is therefore named <code>i.love.ByteBuddy.Object</code>. Be however
+    careful when creating your own naming strategies! The Java virtual machine uses names to distinguish between types
+    which is why you want to avoid naming collisions. If you need to customize the naming behavior, consider
+    using Byte Buddy's built-in <code>NamingStrategy.SuffixingRandom</code> which you can customize to include
+    a prefix that is more meaningful to your application than our default.
+</p>
 
-    <p>
-        After seeing Byte Buddy's domain specific language in action, we need to have a short look at the way this
-        language is implemented. The one detail you need to know about the implementation is that the language is built
-        around <a href="http://en.wikipedia.org/wiki/Immutable_object">immutable objects</a>. As a matter of fact,
-        almost every class that lives in the Byte Buddy namespace was made immutable and in the few cases we could not
-        make a type immutable, we explicitly mention it in this class's javadoc. If you implement custom
-        features for Byte Buddy, we recommend you to stick with this principle.
-    </p>
+<h4>Domain specific language and immutability</h4>
 
-    <p>
-        As an implication of the mentioned immutability, you must be careful when for example configuring
-        <code>ByteBuddy</code> instances. You might for example make the following mistake:
-    </p>
+<p>
+    After seeing Byte Buddy's domain specific language in action, we need to have a short look at the way this
+    language is implemented. The one detail you need to know about the implementation is that the language is built
+    around <a href="http://en.wikipedia.org/wiki/Immutable_object">immutable objects</a>. As a matter of fact,
+    almost every class that lives in the Byte Buddy namespace was made immutable and in the few cases we could not
+    make a type immutable, we explicitly mention it in this class's javadoc. If you implement custom
+    features for Byte Buddy, we recommend you to stick with this principle.
+</p>
+
+<p>
+    As an implication of the mentioned immutability, you must be careful when for example configuring
+    <code>ByteBuddy</code> instances. You might for example make the following mistake:
+</p>
+
 <pre class="prettyprint">
 ByteBuddy byteBuddy = new ByteBuddy();
 byteBuddy.withNamingStrategy(new NamingStrategy.SuffixingRandom("suffix"));
 DynamicType.Unloaded&lt;?&gt; dynamicType = byteBuddy.subclass(Object.class).make();
 </pre>
-    <p>
-        You might expect the dynamic type to be generated using the custom naming strategy <code>new
-        NamingStrategy.SuffixingRandom("suffix")</code> that was (allegedly) defined. Instead of mutating the
-        instance that is stored in the <code>byteBuddy</code> variable, the invocation of the
-        <code>withNamingStrategy</code> method returns a customized <code>ByteBuddy</code> instance which is however
-        lost. As a result, the dynamic type is created using the default configuration which was originally created.
-    </p>
 
-    <h4>Loading a class</h4>
+<p>
+    You might expect the dynamic type to be generated using the custom naming strategy <code>new
+    NamingStrategy.SuffixingRandom("suffix")</code> that was (allegedly) defined. Instead of mutating the
+    instance that is stored in the <code>byteBuddy</code> variable, the invocation of the
+    <code>withNamingStrategy</code> method returns a customized <code>ByteBuddy</code> instance which is however
+    lost. As a result, the dynamic type is created using the default configuration which was originally created.
+</p>
 
-    <p>
-        So far we only have defined and created a dynamic type but we did not make any use of it. A type that is
-        created by Byte Buddy is represented by an instance of <code>DynamicType.Unloaded</code>. As the name
-        suggests, these types are not loaded into the Java virtual machine. Instead, classes created by Byte Buddy are
-        represented in their binary form, in the
-        <a href="http://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html">Java class file format</a>. This way,
-        it is up to you to decide what you want to do with a generated class. For example, you might want to run
-        Byte Buddy from a build script that only generates classes to enhance a Java application before it is deployed.
-        For this purpose, the <code>DynamicType.Unloaded</code> class allows to extract a byte array that represents
-        the dynamic type. For convenience, the type additionally offers a <code>saveIn(File)</code> method that allows
-        you to store a class in a given folder.
-    </p>
+<h4>Loading a class</h4>
 
-    <p>
-        While directly accessing a class's binary form is straight forward, loading a type is unfortunately more
-        complex. In Java, all classes are loaded using a <code>ClassLoader</code>. One example for such a class loader
-        is the bootstrap class loader which is responsible for loading the classes of the Java Class Library. The
-        system class loader, on the other hand, is responsible for loading classes on the Java application's class path.
-        Obviously, none of these preexisting class loaders is aware of any dynamic class we have created. To overcome
-        this, we have to find other possibilities for loading a runtime generated class. Byte Buddy offers solutions by
-        two different approaches out of the box:
-    </p>
+<p>
+    So far we only have defined and created a dynamic type but we did not make any use of it. A type that is
+    created by Byte Buddy is represented by an instance of <code>DynamicType.Unloaded</code>. As the name
+    suggests, these types are not loaded into the Java virtual machine. Instead, classes created by Byte Buddy are
+    represented in their binary form, in the
+    <a href="http://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html">Java class file format</a>. This way,
+    it is up to you to decide what you want to do with a generated class. For example, you might want to run
+    Byte Buddy from a build script that only generates classes to enhance a Java application before it is deployed.
+    For this purpose, the <code>DynamicType.Unloaded</code> class allows to extract a byte array that represents
+    the dynamic type. For convenience, the type additionally offers a <code>saveIn(File)</code> method that allows
+    you to store a class in a given folder.
+</p>
 
-    <ul class="colored-list padded">
-        <li><span>
-            We simply create a new <code>ClassLoader</code> which is explicitly told about the existence of a
-            particular dynamically created class. Because
-            Java class loaders are organized in hierarchies, we define this class loader as the child of a given class
-            loader that already exists in the running Java application. This way, all types of the running Java
-            program is visible to the dynamic type that was loaded with new new <code>ClassLoader</code>.
-        </span></li>
-        <li><span>
-            We can use reflection to inject a new type into an existent class loader. Usually, a class loader is asked
-            to provide a given type by its name. Using reflection, we can turn this principle around and call a
-            protected method to inject a new class into the class loader without the class loader actually knowing how
-            to locate this dynamic class.
-        </span></li>
-    </ul>
+<p>
+    While directly accessing a class's binary form is straight forward, loading a type is unfortunately more
+    complex. In Java, all classes are loaded using a <code>ClassLoader</code>. One example for such a class loader
+    is the bootstrap class loader which is responsible for loading the classes of the Java Class Library. The
+    system class loader, on the other hand, is responsible for loading classes on the Java application's class path.
+    Obviously, none of these preexisting class loaders is aware of any dynamic class we have created. To overcome
+    this, we have to find other possibilities for loading a runtime generated class. Byte Buddy offers solutions by
+    two different approaches out of the box:
+</p>
 
-    <p>
-        Unfortunately, both approaches have downsides.
-    </p>
+<ul class="colored-list padded">
+    <li><span>
+        We simply create a new <code>ClassLoader</code> which is explicitly told about the existence of a
+        particular dynamically created class. Because
+        Java class loaders are organized in hierarchies, we define this class loader as the child of a given class
+        loader that already exists in the running Java application. This way, all types of the running Java
+        program is visible to the dynamic type that was loaded with new new <code>ClassLoader</code>.
+    </span></li>
+    <li><span>
+        We can use reflection to inject a new type into an existent class loader. Usually, a class loader is asked
+        to provide a given type by its name. Using reflection, we can turn this principle around and call a
+        protected method to inject a new class into the class loader without the class loader actually knowing how
+        to locate this dynamic class.
+     </span></li>
+</ul>
 
-    <ul class="colored-list padded">
-        <li><span>
-            If we create a new <code>ClassLoader</code>, this class loader defines a new namespace. As an implication,
-            it is possible to load two classes with identical name as long as these classes are loaded by two different
-            class loaders. These two classes are then never be considered as equal by a Java virtual machine, even if
-            both classes represent an identical class implementation. This rule for equality holds however also for Java
-            packages. This means that a class <code>example.Foo</code> is not able to access package-private
-            methods of another class <code>example.Bar</code> if both classes were not loaded with the same class loader.
-            Also, if <code>example.Bar</code> extended <code>example.Foo</code>, any overriden package-private methods
-            would become inoperative but would delegate to the original implementations.
-        </span></li>
-        <li><span>
-            Whenever a class is loaded, its class loader will look up any type that is referenced in this class
-            once a code segment referencing another type is is resolved. This lookup delegates to the same class loader.
-            Imagine a scenario where we dynamically created two classes <code>example.Foo</code> and <code>example.Bar</code>.
-            If we injected <code>example.Foo</code> into an existent class loader, this class loader might attempt to
-            locate <code>example.Bar</code>. This lookup will however fail since the latter class was created dynamically
-            and is unreachable for the class loader into which we just injected the <code>example.Foo</code> class.
-            Therefore, the reflective approach cannot be used for classes with circular dependencies that become
-            effective during class loading.
-        </span></li>
-    </ul>
+<p>
+    Unfortunately, both approaches have downsides.
+</p>
 
-    <p>
-        You might consider the chance of encountering circular dependencies to be of minor relevance since you
-        are creating one dynamic type at a time. However, the dynamic creation of a type might trigger the creation of
-        so-called auxiliary types. These types are created by Byte Buddy automatically to provide access to the dynamic
-        type you are creating. We learn more about auxiliary types in the following section, do not worry about
-        them for now. However, because of this, we recommend you to load dynamically created classes by creating a
-        specific <code>ClassLoader</code> instead of injecting them into an existing one, whenever possible.
-    </p>
+<ul class="colored-list padded">
+    <li><span>
+        If we create a new <code>ClassLoader</code>, this class loader defines a new namespace. As an implication,
+        it is possible to load two classes with identical name as long as these classes are loaded by two different
+        class loaders. These two classes are then never be considered as equal by a Java virtual machine, even if
+        both classes represent an identical class implementation. This rule for equality holds however also for Java
+        packages. This means that a class <code>example.Foo</code> is not able to access package-private
+        methods of another class <code>example.Bar</code> if both classes were not loaded with the same class loader.
+        Also, if <code>example.Bar</code> extended <code>example.Foo</code>, any overriden package-private methods
+        would become inoperative but would delegate to the original implementations.
+    </span></li>
+    <li><span>
+        Whenever a class is loaded, its class loader will look up any type that is referenced in this class
+        once a code segment referencing another type is is resolved. This lookup delegates to the same class loader.
+        Imagine a scenario where we dynamically created two classes <code>example.Foo</code> and <code>example.Bar</code>.
+        If we injected <code>example.Foo</code> into an existent class loader, this class loader might attempt to
+        locate <code>example.Bar</code>. This lookup will however fail since the latter class was created dynamically
+        and is unreachable for the class loader into which we just injected the <code>example.Foo</code> class.
+        Therefore, the reflective approach cannot be used for classes with circular dependencies that become
+        effective during class loading.
+    </span></li>
+</ul>
 
-    <p>
-        After creating a <code>DynamicType.Unloaded</code>, this type can be loaded using a
-        <code>ClassLoadingStrategy</code>. Byte Buddy provides two such strategies out of the box where each follows
-        one of the concepts that were described above. These strategies are defined in <code>ClassLoadingStrategy.Default</code>
-        where the <code>WRAPPER</code> strategy creates a new <code>ClassLoader</code> and the
-        <code>INJECTION</code> strategy attempts to inject a dynamic type using reflection. Let's look at such class
-        loading in action:
-    </p>
+<p>
+    You might consider the chance of encountering circular dependencies to be of minor relevance since you
+    are creating one dynamic type at a time. However, the dynamic creation of a type might trigger the creation of
+    so-called auxiliary types. These types are created by Byte Buddy automatically to provide access to the dynamic
+    type you are creating. We learn more about auxiliary types in the following section, do not worry about
+    them for now. However, because of this, we recommend you to load dynamically created classes by creating a
+    specific <code>ClassLoader</code> instead of injecting them into an existing one, whenever possible.
+</p>
+
+<p>
+    After creating a <code>DynamicType.Unloaded</code>, this type can be loaded using a
+    <code>ClassLoadingStrategy</code>. Byte Buddy provides two such strategies out of the box where each follows
+    one of the concepts that were described above. These strategies are defined in
+    <code>ClassLoadingStrategy.Default</code>
+    where the <code>WRAPPER</code> strategy creates a new <code>ClassLoader</code> and the
+    <code>INJECTION</code> strategy attempts to inject a dynamic type using reflection. Let's look at such class
+    loading in action:
+</p>
+
 <pre class="prettyprint">
 Class&lt;?&gt; type = new ByteBuddy()
   .subclass(Object.class)
@@ -440,14 +470,18 @@ Class&lt;?&gt; type = new ByteBuddy()
   .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
   .getLoaded();
 </pre>
-    <p>
-        In the above example, we have created and loaded a class. We used the <code>WRAPPER</code> strategy for loading
-        the class which is suitable for most cases, as we mentioned it before. However, for this easy class creation,
-        the <code>INJECTION</code> strategy would have worked as well. Finally, the <code>getLoaded</code> method
-        returns an instance of a Java <code>Class</code> that represents the dynamic class which is now loaded.
-    </p>
+
+<p>
+    In the above example, we have created and loaded a class. We used the <code>WRAPPER</code> strategy for loading
+    the class which is suitable for most cases, as we mentioned it before. However, for this easy class creation,
+    the <code>INJECTION</code> strategy would have worked as well. Finally, the <code>getLoaded</code> method
+    returns an instance of a Java <code>Class</code> that represents the dynamic class which is now loaded.
+</p>
+
 </div>
+
 <div class="row" id="members">
+
 <h2>Fields and methods</h2>
 
 <p>
@@ -456,6 +490,7 @@ Class&lt;?&gt; type = new ByteBuddy()
     trivia and call the <code>toString</code> method on an instance of the dynamic type. We can get hold of an
     instance by calling the created class's constructor reflectively.
 </p>
+
 <pre class="prettyprint">
 String toString = new ByteBuddy()
   .subclass(Object.class)
@@ -466,6 +501,7 @@ String toString = new ByteBuddy()
   .newInstance() // Java reflection API
   .toString();
 </pre>
+
 <p>
     The implementation of the <code>Object#toString</code> method returns the concatenation of the instance's fully
     qualified class name and the hex representation of the instance's hash code. And in fact, invoking the
@@ -477,6 +513,7 @@ String toString = new ByteBuddy()
     logic. To demonstrate how this is done, let us start with something simple. We want to override the
     <code>toString</code> method and return <code>Hello World!</code> instead of the previous default value:
 </p>
+
 <pre class="prettyprint">
 String toString = new ByteBuddy()
   .subclass(Object.class)
@@ -488,6 +525,7 @@ String toString = new ByteBuddy()
   .newInstance()
   .toString();
 </pre>
+
 <p>
     The line we added to our code contains two instructions in Byte Buddy's domain specific language. The first
     instruction is <code>method</code> which allows us to select any number of methods that we want to override.
@@ -499,7 +537,11 @@ String toString = new ByteBuddy()
     Note that the predefined method matchers are composable. This way, we could have described the method selection
     in further detail such as by:
 </p>
-<pre class="prettyprint">named("toString").and(returns(String.class)).and(takesArguments(0))</pre>
+
+<pre class="prettyprint">
+named("toString").and(returns(String.class)).and(takesArguments(0))
+</pre>
+
 <p>
     This latter method matcher describes the <code>toString</code> method by its full Java signature and therefore
     only matches this particular method. However, in the given context we know that there is no other method
@@ -521,6 +563,7 @@ String toString = new ByteBuddy()
     we might want to apply different rules for overriding different methods. Let us look at an example of such a
     scenario:
 </p>
+
 <pre class="prettyprint">
 class Foo {
   public String bar() { return null; }
@@ -538,6 +581,7 @@ Foo dynamicFoo = new ByteBuddy()
   .getLoaded()
   .newInstance();
 </pre>
+
 <p>
     In the above example, we defined three different rules for overriding methods. When investigating the code, you
     will notice that the first rule concerns any method that is defined by <code>Foo</code>, i.e. all three
@@ -555,22 +599,23 @@ Foo dynamicFoo = new ByteBuddy()
 
 <ul class="colored-list padded">
     <li><span>
-            The <code>bar()</code> method is first matched against <code>named("foo").and(takesArguments(1))</code>
-            and then against <code>named("foo")</code> where both matching attempts turn out negative. Finally, the
-            <code>isDeclaredBy(Foo.class)</code> matcher gives green light to override the <code>bar()</code> method to
-            return <code>One!</code>.
-        </span></li>
+        The <code>bar()</code> method is first matched against <code>named("foo").and(takesArguments(1))</code>
+        and then against <code>named("foo")</code> where both matching attempts turn out negative. Finally, the
+        <code>isDeclaredBy(Foo.class)</code> matcher gives green light to override the <code>bar()</code> method to
+        return <code>One!</code>.
+    </span></li>
     <li><span>
-            Similarly, the <code>foo()</code> method is first matched against
-            <code>named("foo").and(takesArguments(1))</code> first where the missing argument results in an unsuccessful
-            matching. After this, the <code>named("foo")</code> matcher determines a positive match such that the
-            <code>foo()</code> method is overriden to return <code>Two!</code>.
-        </span></li>
+        Similarly, the <code>foo()</code> method is first matched against
+        <code>named("foo").and(takesArguments(1))</code> first where the missing argument results in an unsuccessful
+        matching. After this, the <code>named("foo")</code> matcher determines a positive match such that the
+        <code>foo()</code> method is overriden to return <code>Two!</code>.
+    </span></li>
     <li><span>
-            The <code>foo(Object)</code> is immediately matched by the <code>named("foo").and(takesArguments(1))</code>
-            matcher such that the overriden implementation returns <code>Three!</code>.
-        </span></li>
+        The <code>foo(Object)</code> is immediately matched by the <code>named("foo").and(takesArguments(1))</code>
+        matcher such that the overriden implementation returns <code>Three!</code>.
+    </span></li>
 </ul>
+
 <p>
     Because of this organization, you should always register more specific method matchers last. Otherwise, any less
     specific method matcher that is registered afterwards might prevent rules that you defined before from being
@@ -588,7 +633,8 @@ Foo dynamicFoo = new ByteBuddy()
     principle that we discussed before.
 </p>
 
-<p>With <code>defineField</code>, Byte Buddy allows to define fields for a given type. In Java, fields are never
+<p>
+    With <code>defineField</code>, Byte Buddy allows to define fields for a given type. In Java, fields are never
     overriden but can only be <a href="http://en.wikipedia.org/wiki/Variable_shadowing">shadowed</a>. For this reason,
     no field matching or the like is available.
 </p>
@@ -611,28 +657,28 @@ Foo dynamicFoo = new ByteBuddy()
 
 <ul class="colored-list padded">
     <li><span>
-            The fixed value is written to a
-            <a href="http://en.wikipedia.org/wiki/Java_class_file#The_constant_pool">class's constant pool</a>. The
-            constant pool is a section within the Java class file format and contains numerous stateless values that
-            describe the properties of any class. The constant pool is mainly required to remember a class's properties
-            such as the class's name or the names of its methods. Besides these reflective properties, the constant
-            pool has room for storing any string or primitive value that is used within a method or a field of the
-            class. Besides strings and primitive values, the class pool can also store references to other types.
-        </span></li>
+        The fixed value is written to a
+        <a href="http://en.wikipedia.org/wiki/Java_class_file#The_constant_pool">class's constant pool</a>. The
+        constant pool is a section within the Java class file format and contains numerous stateless values that
+        describe the properties of any class. The constant pool is mainly required to remember a class's properties
+        such as the class's name or the names of its methods. Besides these reflective properties, the constant
+        pool has room for storing any string or primitive value that is used within a method or a field of the
+        class. Besides strings and primitive values, the class pool can also store references to other types.
+    </span></li>
     <li><span>
-            The value is stored in a static field of the class. For this to happen, the field must however be assigned
-            the given value once the class was loaded into the Java virtual machine. For this purpose, every
-            dynamically created class is accompanied by a <code>TypeInitializer</code> which can be configured to
-            execute such explicit initialization. When you instruct a <code>DynamicType.Unloaded</code> to be loaded,
-            Byte Buddy automatically triggers its type initializer such that the class is ready for use. Therefore,
-            you do not normally need to worry about type initializers. However, if you want to load dynamic classes to
-            be loaded outside of Byte Buddy, it is important that you run their type initializers manually after these
-            classes are loaded. Otherwise, a <code>FixedValue</code> instrumentation would for example return
-            <code>null</code> instead of the required value because the static field was never assigned this value.
-            Many dynamic types might however not require explicit initialization. A class's type initializer can
-            therefore be queried for its liveliness by calling its <code>isAlive</code> method. If you need to trigger
-            a <code>TypeInitializer</code> manually, you find it exposed by the <code>DynamicType</code> interface.
-        </span></li>
+        The value is stored in a static field of the class. For this to happen, the field must however be assigned
+        the given value once the class was loaded into the Java virtual machine. For this purpose, every
+        dynamically created class is accompanied by a <code>TypeInitializer</code> which can be configured to
+        execute such explicit initialization. When you instruct a <code>DynamicType.Unloaded</code> to be loaded,
+        Byte Buddy automatically triggers its type initializer such that the class is ready for use. Therefore,
+        you do not normally need to worry about type initializers. However, if you want to load dynamic classes to
+        be loaded outside of Byte Buddy, it is important that you run their type initializers manually after these
+        classes are loaded. Otherwise, a <code>FixedValue</code> instrumentation would for example return
+        <code>null</code> instead of the required value because the static field was never assigned this value.
+        Many dynamic types might however not require explicit initialization. A class's type initializer can
+        therefore be queried for its liveliness by calling its <code>isAlive</code> method. If you need to trigger
+        a <code>TypeInitializer</code> manually, you find it exposed by the <code>DynamicType</code> interface.
+    </span></li>
 </ul>
 
 <p>
@@ -650,12 +696,14 @@ Foo dynamicFoo = new ByteBuddy()
     You might wonder about type safety in this context. Obviously, you could define a method to return an invalid
     value:
 </p>
+
 <pre class="prettyprint">
 new ByteBuddy()
   .subclass(Foo.class)
   .method(isDeclaredBy(Foo.class)).intercept(FixedValue.value(0))
   .make();
 </pre>
+
 <p>
     It would be difficult to prevent this invalid instrumentation by the compiler within Java's type system. Instead,
     Byte Buddy will throw an <code>IllegalArgumentException</code> when the type is created and the illegal assignment
@@ -688,6 +736,7 @@ new ByteBuddy()
     plain Java while only the binding to another method is achieved by code generation. Before discussing the details,
     let us look at an example of using a <code>MethodDelegation</code>:
 </p>
+
 <pre class="prettyprint">
 class Source {
   public String hello(String name) { return null; }
@@ -723,6 +772,7 @@ String helloWorld = new ByteBuddy()
     decide between methods if there is an actual choice? For this purpose, let us assume the <code>Target</code> class
     to be defined as follows:
 </p>
+
 <pre class="prettyprint">
 class Target {
   public static String intercept(String name) { return "Hello " + name + "!"; }
@@ -730,6 +780,7 @@ class Target {
   public static String intercept(Object o) { return o.toString(); }
 }
 </pre>
+
 <p>
     You might have noticed that the above methods are now all called <code>intercept</code>. Byte Buddy does not require
     target methods to be named equally to a source method. We will look closer into this matter shortly. More
@@ -756,7 +807,11 @@ class Target {
     defining a default for a non-annotated parameter, Byte Buddy chooses the <i>next free</i> parameter that
     cannot be discovered on another parameter. According to this rule, Byte Buddy would treat
 </p>
-<pre class="prettyprint">void foo(Object o1, @Argument(0) Object o2, Object o3)</pre>
+
+<pre class="prettyprint">
+void foo(Object o1, @Argument(0) Object o2, Object o3)
+</pre>
+
 <p>
     as if the <code>o1</code> parameter was annotated by <code>@Argument(1)</code> and the <code>o3</code>
     parameter was annotated by <code>@Argument(2)</code>. As previously announced, the <code>n = 0</code> value
@@ -813,6 +868,7 @@ class Target {
     of method invocations. Using the <code>@SuperCall</code> annotation, an invocation of the super implementation of
     a method can be executed even from outside the dynamic class as demonstrated in the following example:
 </p>
+
 <pre class="prettyprint">
 class MemoryDatabase {
   public List&lt;String&gt; load(String info) {
@@ -1271,6 +1327,7 @@ UserType userType = (UserType) factory.makeInstance();
 </ul>
 
 </div>
+
 <div class="row" id="attributes">
     <h2>Attributes and annotations</h2>
 
@@ -1278,6 +1335,7 @@ UserType userType = (UserType) factory.makeInstance();
         To be completed.
     </p>
 </div>
+
 <div class="row" id="customization">
     <h2>Custom instrumentation</h2>
 
@@ -1285,5 +1343,7 @@ UserType userType = (UserType) factory.makeInstance();
         To be completed.
     </p>
 </div>
+
 </div>
+
 </div>
