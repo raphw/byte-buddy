@@ -1112,6 +1112,84 @@ class Interceptor {
     in another JVM process even without having Byte Buddy on the class path.
 </p>
 
+<p>
+    Before we proceed to the next section, we should discuss a final caveat concerning the <code>@Super</code>
+    annotation. Using this annotation can be problematic when it is used in the context of so-called <i>bridge
+    methods</i>. Bridge methods are created by the Java compiler, mainly in order to support extending generic
+    types. The easiest way for understanding this problem is to look at an example:
+</p>
+
+<pre class="prettyprint">
+class Foo&lt;T&gt; {
+  void m(T t) { }
+}
+
+class Bar extends Foo&lt;String&gt; {
+  @Override
+  void m(String s) { }
+}
+</pre>
+
+<p>
+    When compiling the above <code>Foo</code> class, the Java compiler will apply a
+    <a href="http://docs.oracle.com/javase/tutorial/java/generics/erasure.html">type erasure</a> in order to hide
+    the generic type from the Java runtime which is unaware of the Java language's concept of generics. In the process
+    of type erasure, all type variables are reduced to their lower bound which is implicitly set to <code>Object</code>
+    if no explicit bound is specified. As a result, the only method of <code>Foo</code> is compiled as if it was defined
+    with the signature <code>m(Object)</code>. At the same time, the Java compiler creates a <i>desugared</i> version of
+    the <code>Bar</code> class. This class contains an additional bridge method with the same erased method signature
+    <code>m(Object)</code> which only delegates its invocation to the actual method <code>m(String)</code>. With
+    these rules applied, the Java compiler will process the classes as if they were defined as follows:
+</p>
+
+<pre class="prettyprint">
+class Foo { // type erasure
+  void m(Object t) { }
+}
+
+class Bar extends Foo {
+
+  @Override
+  void m(Object t) { // bridge method
+    m((String) t);
+  }
+
+  void m(String t) { }
+}
+</pre>
+
+<p>
+    Thanks to the above class definition, the Java runtime can simply assume that a <code>m(Object)</code> method
+    exists for any subclass of <code>Foo</code> without looking up a generic type's effective method signatures.
+    While this is convenient for the Java runtime, this can become problematic to us when we define a target method
+    to use <code>@Super Foo&lt;String&gt;</code> on an enhanced <code>Bar</code> class. A user would expect a call of
+    the <code>m</code> method to invoke the super implementation of <code>m(String)</code>, relative to the dynamically
+    created subtype of <code>Bar</code>. However, because of the generic type's erasure, <code>m(Object)</code>
+    would be invoked instead. Since this method is only a bridge, this invocation would result in a call of the actual
+    implementation of <code>m(String)</code> directly on the dynamic type instead of calling its super implementation.
+    Since this hardly is the desired behavior, Byte Buddy uses a <code>BridgeMethodResolver</code> when implementing
+    methods for these <code>@Super</code> proxies. Unfortunately, the Java compiler does not annotate bridge methods
+    with their target method's signature. Therefore, the target of a bridge method must be resolved manually what can
+    lead to ambiguous results when a generic method gets overloaded:
+</p>
+
+<pre class="prettyprint">
+class Qux extends Foo&lt;Integer&gt; {
+  @Override
+  void m(Integer i) { }
+
+  void m(Long l) { }
+}
+</pre>
+
+<p>
+    For the above <code>Qux</code> class, Byte Buddy's <code>BridgeMethodResolver</code> cannot tell if the
+    synthetic bridge method invokes the <code>m(Integer)</code> or the <code>m(Long)</code> method. You can however
+    configure <code>ByteBuddy</code> to use a custom bridge method resolver which is aware of the resolution for
+    a particular class's bridge methods. However, in a future version, Byte Buddy will provide a better support for
+    processing generic types what will solve this limitation.
+</p>
+
 <h4>Calling a super method</h4>
 
 <p>
