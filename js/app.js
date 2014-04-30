@@ -80,7 +80,7 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
             {name: 'Preliminary', target: '#rational'},
             {name: 'Creating a class', target: '#gettingstarted'},
             {name: 'Fields and methods', target: '#members'},
-            {name: 'Attributes / annotations', target: '#attributes'},
+            {name: 'Attributes', target: '#attributes'},
             {name: 'Custom instrumentation', target: '#customization'}
         ];
     })

@@ -1116,7 +1116,7 @@ class Interceptor {
     Before we proceed to the next section, we should discuss a final caveat concerning the <code>@Super</code>
     annotation. Using this annotation can be problematic when it is used in the context of so-called <i>bridge
     methods</i>. Bridge methods are created by the Java compiler, mainly in order to support inheritance from
-    generic types. The easiest way for understanding the related problem is to look at an example of such 
+    generic types. The easiest way for understanding the related problem is to look at an example of such
     inheritance:
 </p>
 
@@ -1135,7 +1135,8 @@ class Bar extends Foo&lt;String&gt; {
     When compiling the above <code>Foo</code> class, the Java compiler will apply a
     <a href="http://docs.oracle.com/javase/tutorial/java/generics/erasure.html">type erasure</a> in order to hide
     the generic type from the Java runtime which is unaware of the Java language's concept of generics. In the process
-    of type erasure, all type variables are reduced to their lower bounds which are implicitly set to <code>Object</code>
+    of type erasure, all type variables are reduced to their lower bounds which are implicitly set to
+    <code>Object</code>
     if no explicit bound is specified. As a result, the only method of <code>Foo</code> is compiled as if it was defined
     with the signature <code>m(Object)</code>. At the same time, the Java compiler creates a <i>desugared</i> version of
     the <code>Bar</code> class. This class contains an additional bridge method with the same erased method signature
@@ -1161,20 +1162,21 @@ class Bar extends Foo {
 
 <p>
     Thanks to the above class definition, the Java runtime can simply process method invocations on raw types
-    and act as if generic types did not exist. Instead, it is the <code>Bar</code> class itself that shoulders the 
-    responsibility of invoking the correct method. In this sence, generic types are nothing but syntactic sugar. 
+    and act as if generic types did not exist. Instead, it is the <code>Bar</code> class itself that shoulders the
+    responsibility of invoking the correct method. In this sence, generic types are nothing but syntactic sugar.
     While this is convenient for the Java runtime, this can become problematic to us when we dynamically extend
-    <code>Bar</code> and require an auxiliary class for an assignment to <code>@Super Foo&lt;String&gt;</code>. 
-    For this auxiliary class, a user would expect a call of the <code>m</code> method to invoke <code>Bar</code>'s 
-    implementation of <code>m(String)</code> which is this method's super implementation relative to the created 
-    dynamic class. However, because of the generic type's erasure, <code>m(Object)</code> would be invoked instead. 
-    Since this method is only a bridge, this invocation delegates to <code>m(String)</code> <b>without</b> invoking 
-    the super implementation. 
+    <code>Bar</code> and require an auxiliary class for an assignment to <code>@Super Foo&lt;String&gt;</code>.
+    For this auxiliary class, a user would expect a call of the <code>m</code> method to invoke <code>Bar</code>'s
+    implementation of <code>m(String)</code> which is this method's super implementation relative to the created
+    dynamic class. However, because of the generic type's erasure, <code>m(Object)</code> would be invoked instead.
+    Since this method is only a bridge, this invocation delegates to <code>m(String)</code> <b>without</b> invoking
+    the super implementation.
 </p>
+
 <p>
-    To overcome this problem, Byte Buddy uses a <code>BridgeMethodResolver</code> when implementing methods of 
-    auxiliary classes for <code>@Super</code> annotated parameters. Unfortunately for us, the Java compiler only marks 
-    bridge methods but does not reveal their invocation target. As a consequence, we need to manually resolve a bridge 
+    To overcome this problem, Byte Buddy uses a <code>BridgeMethodResolver</code> when implementing methods of
+    auxiliary classes for <code>@Super</code> annotated parameters. Unfortunately for us, the Java compiler only marks
+    bridge methods but does not reveal their invocation target. As a consequence, we need to manually resolve a bridge
     method's target what can lead to ambiguous results if a generic method is overloaded. Let us look at an example
     of such ambiguity:
 </p>
@@ -1192,7 +1194,7 @@ class Qux extends Foo&lt;Integer&gt; {
     For the above <code>Qux</code> class, Byte Buddy's <code>BridgeMethodResolver</code> cannot tell if the
     synthetic bridge method targets the <code>m(Integer)</code> or the <code>m(Long)</code> method. You can however
     configure <code>ByteBuddy</code> to use a custom bridge method resolver which is aware of the resolution for
-    a particular class's bridge methods. In a future version, Byte Buddy will provide better support for processing 
+    a particular class's bridge methods. In a future version, Byte Buddy will provide better support for processing
     generic types based on a class's meta information what allows for a resolition of such ambiguities.
 </p>
 
@@ -1416,9 +1418,84 @@ UserType userType = (UserType) factory.makeInstance();
     <h2>Attributes and annotations</h2>
 
     <p>
-        To be completed.
+        We just learned how Byte Buddy relies on annotations for providing some of its functionality. And Byte Buddy is
+        by far not the only Java application with an annotation-based API. In order to integrate dynamically created
+        types with such applications, Byte Buddy allows to define annotations for dynamically created types and their
+        members. Before looking into the details of assigning annotations to dynamic types, let us look at an example
+        of annotating a dynamically created class:
+    </p>
+
+<pre class="prettyprint">
+@Retention(RetentionPolicy.RUNTIME)
+@interface RuntimeDefinition { }
+
+class RuntimeDefinitionImpl implements RuntimeDefinition {
+  @Override
+  public Class&lt;? extends Annotation&gt; annotationType() {
+    return RuntimeDefinition.class;
+  }
+}
+
+new ByteBuddy()
+  .subclass(Object.class)
+  .annotateType(new RuntimeDefinitionImpl())
+  .make();
+</pre>
+
+    <p>
+        As insinuated by Java's <code>@interface</code> keyword, annotations are internally represented as interface
+        types. As a consequence, annotations can be implemented by a Java class just like an ordinary interface. The
+        only difference to implementing an interface is an annotation's implicit <code>annotationType</code> method
+        which determines the annotation type a class represents. The latter method usually returns the implemented
+        annotation type's class literal. Other than that, any annotation property is implemented as if it was an
+        interface method. However, note that an annotation's default values need to be repeated by an annotation
+        method's implementation.
+    </p>
+
+    <p>
+        Defining annotations for a dynamically created class can be in particular important when a class should serve
+        as a subclass proxy for another class. A subclass proxy is often used to implement
+        <a href="http://en.wikipedia.org/wiki/Cross-cutting_concern">cross-cutting concerns</a> where the subclass
+        should mimic the original class as transparently as possible. However, annotations on a class are not retained
+        for its subclasses as long as this behavior is explicitly required by defining an annotation to be
+        <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/annotation/Inherited.html"><code>@Inherited</code></a>.
+        Using Byte Buddy, creating subclass proxies that retain their base class's annotations is easy by using
+        the <code>attribute</code> method. This methods expects a <code>TypeAttributeAppender</code> as its argument.
+        A type attribute appender offers a generic way for defining the annotations of a dynamically created class,
+        based on its base class. For example, by using a <code>TypeAttributeAppender.ForSuperType</code>, a class's
+        annotations are copied to its dynamically created subclasses. Note that annotations and type attribute
+        appenders are additive and no annotation type must be defined more than once for any class.
+    </p>
+
+    <p>
+        Method and field annotations are defined similarly to type annotations which we just discussed. A method
+        annotation can be defined as a conclusive statement in Byte Buddy's domain specific language for implementing a
+        method. Likewise, a field can be annotated after its definition:
     </p>
 </div>
+
+<pre class="prettyprint">
+new ByteBuddy()
+  .subclass(Object.class)
+  .method(named("toString"))
+    .intercept(SuperMethodCall.INSTANCE)
+    .annotateMethod(new RuntimeDefinitionImpl())
+  .defineField("foo", Object.class)
+    .annotateField(new RuntimeDefinitionImpl())
+</pre>
+
+<p>
+    The above code example overrides the <code>toString</code> method and annotates the overridden method with
+    <code>RuntimeDefinition</code>. Furthermore, the created type defines a field <code>foo</code> that carries the
+    same annotation.
+</p>
+
+<p>
+    By default, a <code>ByteBuddy</code> configuration does not define any annotations for a dynamically created type
+    or type member. However, this behavior can be altered by providing a default <code>TypeAttributeAppender</code>,
+    <code>MethodAttributeAppender</code> or <code>FieldAttributeAppender</code>. Note that such default appenders are
+    not additive but replace their former values.
+</p>
 
 <div class="row" id="customization">
     <h2>Custom instrumentation</h2>
