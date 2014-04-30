@@ -301,6 +301,10 @@ li.L1, li.L3, li.L5, li.L7, li.L9 {
     background: #eee
 }
 
+.pln-as-lit .pln {
+    color: #F5871F !important;
+}
+
 /*
  * Bootply generated styling
  */
