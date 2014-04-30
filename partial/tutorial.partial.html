@@ -1615,8 +1615,10 @@ AC
         provide our own implementation:
     </p>
 
-<pre>
-class IntegerSum implements StackManipulation {
+<pre class="prettyprint">
+enum IntegerSum implements StackManipulation {
+
+  INSTANCE; // singleton
 
   @Override
   public boolean isValid() {
@@ -1624,13 +1626,96 @@ class IntegerSum implements StackManipulation {
   }
 
   @Override
-  public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+  public Size apply(MethodVisitor methodVisitor,
+                    Instrumentation.Context instrumentationContext) {
     methodVisitor.visitInsn(Opcodes.IADD);
     return new Size(-1, 0);
   }
 }
 </pre>
 
+    <p>
+        Each <code>StackManipulation</code> combines an ASM-based stack manipulation with a description of its size
+        impact. To fulfill this contact, the above class describes to reduce the stack <code>Size</code> by one since
+        it consumes two values and pushes one value back onto the stack. Other than that, it does not require a
+        specific minimum stack size as it is expressed by the <code>Size</code>'s second value <code>0</code>.
+        Furthermore, any <code>StackManipulation</code> can express to be invalid. This behavior can be used for more
+        complex stack manipulation as for example variable assignments which might break type constraints. We will look
+        at an example of such an invalid stack manipulation later in this section. Finally, note that we describe
+        the stack manipulation as a singleton. Using such immutable, functional descriptions stack manipulations proved
+        to be a good practice for Byte Buddy's internal implementation and we can only recommend you to follow the same
+        approach.
+    </p>
+
+    <p>
+        With the <code>IntegerSum</code>, the <code>IntegerConstant</code> and the additional predefined
+        <code>MethodReturn</code> stack manipulations, we can finally implement a method. Within Byte Buddy, a method
+        implementation is contained by a <code>ByteCodeAppender</code> which can be implemented as follows:
+    </p>
+
+<pre class="prettyprint">
+enum SumMethod implements ByteCodeAppender {
+
+  INSTANCE; // singleton
+
+  @Override
+  public boolean appendsCode() {
+    return true;
+  }
+
+  @Override
+  public Size apply(MethodVisitor methodVisitor,
+                    Instrumentation.Context instrumentationContext,
+                    MethodDescription instrumentedMethod) {
+    if (!instrumentedMethod.getReturnType().represents(int.class)) {
+      throw new IllegalArgumentException(instrumentedMethod + " must return int");
+    }
+    StackManipulation.Size operandStackSize = new StackManipulation.Compound(
+      IntegerConstant.forValue(10),
+      IntegerConstant.forValue(50),
+      IntegerSum.INSTANCE,
+      MethodReturn.returning(instrumentedMethod.getReturnType())
+    ).apply(methodVisitor, instrumentationContext);
+    return new Size(operandStackSize.getMaximalSize(),
+                    instrumentedMethod.getStackSize());
+  }
+}
+</pre>
+
+    <p>
+        Again, the custom <code>ByteCodeAppender</code> is implemented as a singleton enumeration. Because abstract
+        methods are defined without an implementation, a byte code might not require to append code. As obvious from
+        the <code>apply</code> method, this is however not true for our <code>SumMethod</code>.
+    </p>
+
+<pre class="prettyprint">
+enum SumInstrumentation implements Instrumentation {
+
+  INSTANCE; // singleton
+
+  @Override
+  public InstrumentedType prepare(InstrumentedType instrumentedType) {
+    return instrumentedType;
+  }
+
+  @Override
+  public ByteCodeAppender appender(TypeDescription instrumentedType) {
+    return SumMethod.INSTANCE;
+  }
+}
+</pre>
+
+<pre class="prettyprint">
+abstract class SumExample {
+  public abstract int calculate();
+}
+
+new ByteBuddy()
+  .subclass(SumExample.class)
+    .method(named("calculate"))
+    .intercept(SumInstrumentation.INSTANCE)
+  .make()
+</pre>
     <p>
         To be completed: Explain JVM's stack execution model (mention stack size, jump instructions and stack frames),
         Byte Buddy's StackManipulation abstraction, ByteCodeAppender and Instrumentation implement a simple assigner
