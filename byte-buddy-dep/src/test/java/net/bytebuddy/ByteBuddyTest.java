@@ -2,16 +2,24 @@ package net.bytebuddy;
 
 import net.bytebuddy.dynamic.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.instrumentation.FieldAccessor;
-import net.bytebuddy.instrumentation.FixedValue;
-import net.bytebuddy.instrumentation.MethodDelegation;
-import net.bytebuddy.instrumentation.SuperMethodCall;
-import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument;
-import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.RuntimeType;
-import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Super;
-import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.SuperCall;
+import net.bytebuddy.instrumentation.*;
+import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
+import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
+import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.*;
+import net.bytebuddy.instrumentation.method.bytecode.stack.IllegalStackManipulation;
+import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
+import net.bytebuddy.instrumentation.method.bytecode.stack.assign.primitive.PrimitiveTypeAwareAssigner;
+import net.bytebuddy.instrumentation.method.bytecode.stack.constant.IntegerConstant;
+import net.bytebuddy.instrumentation.method.bytecode.stack.constant.TextConstant;
+import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocation;
+import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
+import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.junit.Test;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
@@ -435,10 +443,10 @@ public class ByteBuddyTest {
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    public @interface RuntimeDefinition {
+    public static @interface RuntimeDefinition {
     }
 
-    private class RuntimeDefinitionImpl implements RuntimeDefinition {
+    private static class RuntimeDefinitionImpl implements RuntimeDefinition {
 
         @Override
         public Class<? extends Annotation> annotationType() {
@@ -471,6 +479,158 @@ public class ByteBuddyTest {
                 .getLoaded();
         assertThat(dynamicType.getDeclaredMethod("toString").isAnnotationPresent(RuntimeDefinition.class), is(true));
         assertThat(dynamicType.getDeclaredField("foo").isAnnotationPresent(RuntimeDefinition.class), is(true));
+    }
+
+    public static enum IntegerSum implements StackManipulation {
+        INSTANCE;
+
+        @Override
+        public boolean isValid() {
+            return true;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+            methodVisitor.visitInsn(Opcodes.IADD);
+            return new Size(-1, 0);
+        }
+    }
+
+    public static enum SumMethod implements ByteCodeAppender {
+        INSTANCE;
+
+        @Override
+        public boolean appendsCode() {
+            return true;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor,
+                          Instrumentation.Context instrumentationContext,
+                          MethodDescription instrumentedMethod) {
+            if (!instrumentedMethod.getReturnType().represents(int.class)) {
+                throw new IllegalArgumentException(instrumentedMethod + " must return int");
+            }
+            StackManipulation.Size operandStackSize = new StackManipulation.Compound(
+                    IntegerConstant.forValue(10),
+                    IntegerConstant.forValue(50),
+                    IntegerSum.INSTANCE,
+                    MethodReturn.returning(instrumentedMethod.getReturnType())
+            ).apply(methodVisitor, instrumentationContext);
+            return new Size(operandStackSize.getMaximalSize(), instrumentedMethod.getStackSize());
+        }
+    }
+
+    public static enum SumInstrumentation implements Instrumentation {
+        INSTANCE;
+
+        @Override
+        public InstrumentedType prepare(InstrumentedType instrumentedType) {
+            return instrumentedType;
+        }
+
+        @Override
+        public ByteCodeAppender appender(TypeDescription instrumentedType) {
+            return SumMethod.INSTANCE;
+        }
+    }
+
+    public static abstract class SumExample {
+
+        public abstract int calculate();
+    }
+
+    @Test
+    public void testCustomInstrumentationMethodImplementation() throws Exception {
+        assertThat(new ByteBuddy()
+                .subclass(SumExample.class)
+                .method(named("calculate")).intercept(SumInstrumentation.INSTANCE)
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded()
+                .newInstance()
+                .calculate(), is(60));
+    }
+
+    public static enum ToStringAssigner implements Assigner {
+        INSTANCE;
+
+        @Override
+        public StackManipulation assign(TypeDescription sourceType,
+                                        TypeDescription targetType,
+                                        boolean considerRuntimeType) {
+            if (!sourceType.isPrimitive() && targetType.represents(String.class)) {
+                MethodDescription toStringMethod = new TypeDescription.ForLoadedType(Object.class)
+                        .getDeclaredMethods()
+                        .filter(named("toString"))
+                        .getOnly();
+                return MethodInvocation.invoke(toStringMethod);
+            } else {
+                return IllegalStackManipulation.INSTANCE;
+            }
+        }
+    }
+
+    @Test
+    public void testCustomInstrumentationAssigner() throws Exception {
+        assertThat(new ByteBuddy()
+                .subclass(Object.class)
+                .method(named("toString"))
+                .intercept(FixedValue.reference(42)
+                        .withAssigner(new PrimitiveTypeAwareAssigner(ToStringAssigner.INSTANCE), false))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded()
+                .newInstance()
+                .toString(), is("42"));
+
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    public static @interface StringValue {
+
+        String value();
+    }
+
+    public static enum StringValueHandler implements TargetMethodAnnotationDrivenBinder.ParameterBinder<StringValue> {
+        INSTANCE;
+
+        @Override
+        public Class<StringValue> getHandledType() {
+            return StringValue.class;
+        }
+
+        @Override
+        public MethodDelegationBinder.ParameterBinding<?> bind(StringValue annotation,
+                                                               int targetParameterIndex,
+                                                               MethodDescription source,
+                                                               MethodDescription target,
+                                                               TypeDescription instrumentedType,
+                                                               Assigner assigner) {
+            return new MethodDelegationBinder.ParameterBinding.Anonymous(new TextConstant(annotation.value()));
+        }
+    }
+
+    public static class ToStringInterceptor {
+
+        public static String makeString(@StringValue("Hello!") String value) {
+            return value;
+        }
+    }
+
+    @Test
+    public void testCustomInstrumentationDelegationAnnotation() throws Exception {
+        assertThat(new ByteBuddy()
+                .subclass(Object.class)
+                .method(named("toString"))
+                .intercept(MethodDelegation.to(ToStringInterceptor.class)
+                        .defineArgumentBinder(StringValueHandler.INSTANCE))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded()
+                .newInstance()
+                .toString(), is("Hello!"));
+
     }
 
     @SuppressWarnings("unused")
