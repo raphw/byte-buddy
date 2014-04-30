@@ -1688,6 +1688,19 @@ enum SumMethod implements ByteCodeAppender {
         the <code>apply</code> method, this is however not true for our <code>SumMethod</code>.
     </p>
 
+    <p>
+        Before implementing the desired method, we first want to validate that the instrumented method actually returns
+        a primitive integer. If this validation succeeds, we load the two numbers <code>10</code> and <code>50</code>
+        onto the stack, apply the summation and return this value. By wrapping all these instructions in a compound
+        stack manipulations, we can conclusively retrieve the aggregated stack size that is required to perform this
+        chain of stack manipulations. Finally, we return the overall size that is required by this stack manipulation.
+        Besides the size of the execution stack which is expressed by the size of the <code>StackManipulation</code>,
+        this information requires the size of the method's local variables which simply resembles the required
+        size for the method's parameters since we did not define any local variables of our own. With this
+        implementation of our summation method, we are now ready to provide a custom <code>Instrumentation</code> for
+        this method which we can provide to Byte Buddy's domain specific language:
+    </p>
+
 <pre class="prettyprint">
 enum SumInstrumentation implements Instrumentation {
 
