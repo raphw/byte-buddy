@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic;
 
-import net.bytebuddy.ClassFormatVersion;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.dynamic.scaffold.FieldRegistry;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
@@ -97,10 +97,10 @@ public interface DynamicType {
         /**
          * Defines a class file format version for this builder for which the dynamic types should be created.
          *
-         * @param classFormatVersion The class format version for the dynamic type to implement.
+         * @param classFileVersion The class format version for the dynamic type to implement.
          * @return A builder that writes its classes in a given class format version.
          */
-        Builder<T> classFormatVersion(ClassFormatVersion classFormatVersion);
+        Builder<T> classFormatVersion(ClassFileVersion classFileVersion);
 
         /**
          * Adds an interface to be implemented the created type.
@@ -834,8 +834,8 @@ public interface DynamicType {
             protected abstract class AbstractDelegatingBuilder<U> implements Builder<U> {
 
                 @Override
-                public Builder<U> classFormatVersion(ClassFormatVersion classFormatVersion) {
-                    return materialize().classFormatVersion(classFormatVersion);
+                public Builder<U> classFormatVersion(ClassFileVersion classFileVersion) {
+                    return materialize().classFormatVersion(classFileVersion);
                 }
 
                 @Override

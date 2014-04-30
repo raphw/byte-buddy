@@ -1,6 +1,6 @@
 package net.bytebuddy.instrumentation.attribute.annotation;
 
-import net.bytebuddy.ClassFormatVersion;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
@@ -230,7 +230,7 @@ public class AnnotationAppenderDefaultTest {
 
     private Class<?> makeTypeWithAnnotation(Annotation annotation) throws Exception {
         ClassWriter classWriter = new ClassWriter(ASM_MANUAL);
-        classWriter.visit(ClassFormatVersion.forCurrentJavaVersion().getVersionNumber(),
+        classWriter.visit(ClassFileVersion.forCurrentJavaVersion().getVersionNumber(),
                 Opcodes.ACC_PUBLIC,
                 BAR.replace('.', '/'),
                 null,

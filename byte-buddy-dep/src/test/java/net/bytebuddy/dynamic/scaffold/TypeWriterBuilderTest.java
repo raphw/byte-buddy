@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.scaffold;
 
-import net.bytebuddy.ClassFormatVersion;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.dynamic.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.DynamicType;
@@ -138,7 +138,7 @@ public class TypeWriterBuilderTest {
         });
         typeWriter = new TypeWriter.Builder<Object>(instrumentedType,
                 instrumentationContext,
-                ClassFormatVersion.forCurrentJavaVersion()).build(classVisitorWrapper);
+                ClassFileVersion.forCurrentJavaVersion()).build(classVisitorWrapper);
         verify(classVisitorWrapper).wrap(any(ClassWriter.class));
     }
 

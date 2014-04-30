@@ -40,7 +40,7 @@ public class ByteBuddy {
     /**
      * The class formation version of the current configuration.
      */
-    protected final ClassFormatVersion classFormatVersion;
+    protected final ClassFileVersion classFileVersion;
     /**
      * The naming strategy of the current configuration.
      */
@@ -89,16 +89,16 @@ public class ByteBuddy {
      * class format version.
      */
     public ByteBuddy() {
-        this(ClassFormatVersion.forCurrentJavaVersion());
+        this(ClassFileVersion.forCurrentJavaVersion());
     }
 
     /**
      * Defines a new {@code ByteBuddy} default configuration for the given class format version.
      *
-     * @param classFormatVersion The class format version to apply.
+     * @param classFileVersion The class format version to apply.
      */
-    public ByteBuddy(ClassFormatVersion classFormatVersion) {
-        this(classFormatVersion,
+    public ByteBuddy(ClassFileVersion classFileVersion) {
+        this(classFileVersion,
                 new NamingStrategy.SuffixingRandom(BYTE_BUDDY_DEFAULT_PREFIX),
                 new TypeList.Empty(),
                 isDefaultFinalizer().or(isSynthetic()),
@@ -114,7 +114,7 @@ public class ByteBuddy {
     /**
      * Defines a new {@code ByteBuddy} configuration.
      *
-     * @param classFormatVersion                    The currently defined class format version.
+     * @param classFileVersion                    The currently defined class format version.
      * @param namingStrategy                        The currently defined naming strategy.
      * @param interfaceTypes                        The currently defined collection of interfaces to be implemented
      *                                              by any dynamically created type.
@@ -131,7 +131,7 @@ public class ByteBuddy {
      * @param defaultMethodAttributeAppenderFactory The method attribute appender to apply as a default for any
      *                                              method definition or instrumentation.
      */
-    protected ByteBuddy(ClassFormatVersion classFormatVersion,
+    protected ByteBuddy(ClassFileVersion classFileVersion,
                         NamingStrategy namingStrategy,
                         List<TypeDescription> interfaceTypes,
                         MethodMatcher ignoredMethods,
@@ -142,7 +142,7 @@ public class ByteBuddy {
                         Definable<TypeAttributeAppender> typeAttributeAppender,
                         FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                         MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
-        this.classFormatVersion = classFormatVersion;
+        this.classFileVersion = classFileVersion;
         this.namingStrategy = namingStrategy;
         this.interfaceTypes = interfaceTypes;
         this.ignoredMethods = ignoredMethods;
@@ -160,8 +160,8 @@ public class ByteBuddy {
      *
      * @return The class format version that is defined for this configuration.
      */
-    public ClassFormatVersion getClassFormatVersion() {
-        return classFormatVersion;
+    public ClassFileVersion getClassFileVersion() {
+        return classFileVersion;
     }
 
     /**
@@ -311,7 +311,7 @@ public class ByteBuddy {
             actualSuperType = new TypeDescription.ForLoadedType(Object.class);
             interfaceTypes = join(superType, interfaceTypes);
         }
-        return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
+        return new SubclassDynamicTypeBuilder<T>(classFileVersion,
                 namingStrategy,
                 actualSuperType,
                 interfaceTypes,
@@ -330,11 +330,11 @@ public class ByteBuddy {
     /**
      * Defines a new class format version for this configuration.
      *
-     * @param classFormatVersion The class format version to define for this configuration.
+     * @param classFileVersion The class format version to define for this configuration.
      * @return A new configuration that represents this configuration with the given class format version.
      */
-    public ByteBuddy withClassFormatVersion(ClassFormatVersion classFormatVersion) {
-        return new ByteBuddy(nonNull(classFormatVersion),
+    public ByteBuddy withClassFormatVersion(ClassFileVersion classFileVersion) {
+        return new ByteBuddy(nonNull(classFileVersion),
                 namingStrategy,
                 interfaceTypes,
                 ignoredMethods,
@@ -354,7 +354,7 @@ public class ByteBuddy {
      * @return A new configuration that represents this configuration with the given class format version.
      */
     public ByteBuddy withNamingStrategy(NamingStrategy namingStrategy) {
-        return new ByteBuddy(classFormatVersion,
+        return new ByteBuddy(classFileVersion,
                 nonNull(namingStrategy),
                 interfaceTypes,
                 ignoredMethods,
@@ -375,7 +375,7 @@ public class ByteBuddy {
      * @return A new configuration that represents this configuration with the given modifier contributors.
      */
     public ByteBuddy withModifiers(ModifierContributor.ForType... modifierContributor) {
-        return new ByteBuddy(classFormatVersion,
+        return new ByteBuddy(classFileVersion,
                 namingStrategy,
                 interfaceTypes,
                 ignoredMethods,
@@ -396,7 +396,7 @@ public class ByteBuddy {
      * @return A new configuration that represents this configuration with the given type attribute appender.
      */
     public ByteBuddy withAttribute(TypeAttributeAppender typeAttributeAppender) {
-        return new ByteBuddy(classFormatVersion,
+        return new ByteBuddy(classFileVersion,
                 namingStrategy,
                 interfaceTypes,
                 ignoredMethods,
@@ -418,7 +418,7 @@ public class ByteBuddy {
      * type attribute appender.
      */
     public ByteBuddy withTypeAnnotation(Annotation... annotation) {
-        return new ByteBuddy(classFormatVersion,
+        return new ByteBuddy(classFileVersion,
                 namingStrategy,
                 interfaceTypes,
                 ignoredMethods,
@@ -450,7 +450,7 @@ public class ByteBuddy {
      * implement the given interface.
      */
     public OptionalMethodInterception withImplementing(TypeDescription type) {
-        return new OptionalMethodInterception(classFormatVersion,
+        return new OptionalMethodInterception(classFileVersion,
                 namingStrategy,
                 join(interfaceTypes, isInterface(nonNull(type))),
                 ignoredMethods,
@@ -474,7 +474,7 @@ public class ByteBuddy {
      * that are to be ignored for any instrumentation.
      */
     public ByteBuddy withIgnoredMethods(MethodMatcher ignoredMethods) {
-        return new ByteBuddy(classFormatVersion,
+        return new ByteBuddy(classFileVersion,
                 namingStrategy,
                 interfaceTypes,
                 nonNull(ignoredMethods),
@@ -496,7 +496,7 @@ public class ByteBuddy {
      * type.
      */
     public ByteBuddy withClassVisitor(ClassVisitorWrapper classVisitorWrapper) {
-        return new ByteBuddy(classFormatVersion,
+        return new ByteBuddy(classFileVersion,
                 namingStrategy,
                 interfaceTypes,
                 ignoredMethods,
@@ -519,7 +519,7 @@ public class ByteBuddy {
      * the creation process of any field of a dynamic type.
      */
     public ByteBuddy withDefaultFieldAttributeAppender(FieldAttributeAppender.Factory attributeAppenderFactory) {
-        return new ByteBuddy(classFormatVersion,
+        return new ByteBuddy(classFileVersion,
                 namingStrategy,
                 interfaceTypes,
                 ignoredMethods,
@@ -542,7 +542,7 @@ public class ByteBuddy {
      * the creation or interception process of any method of a dynamic type.
      */
     public ByteBuddy withDefaultMethodAttributeAppender(MethodAttributeAppender.Factory attributeAppenderFactory) {
-        return new ByteBuddy(classFormatVersion,
+        return new ByteBuddy(classFileVersion,
                 namingStrategy,
                 interfaceTypes,
                 ignoredMethods,
@@ -590,7 +590,7 @@ public class ByteBuddy {
         if (this == other) return true;
         if (other == null || getClass() != other.getClass()) return false;
         ByteBuddy byteBuddy = (ByteBuddy) other;
-        return classFormatVersion.equals(byteBuddy.classFormatVersion)
+        return classFileVersion.equals(byteBuddy.classFileVersion)
                 && classVisitorWrapperChain.equals(byteBuddy.classVisitorWrapperChain)
                 && defaultFieldAttributeAppenderFactory.equals(byteBuddy.defaultFieldAttributeAppenderFactory)
                 && defaultMethodAttributeAppenderFactory.equals(byteBuddy.defaultMethodAttributeAppenderFactory)
@@ -605,7 +605,7 @@ public class ByteBuddy {
 
     @Override
     public int hashCode() {
-        int result = classFormatVersion.hashCode();
+        int result = classFileVersion.hashCode();
         result = 31 * result + namingStrategy.hashCode();
         result = 31 * result + interfaceTypes.hashCode();
         result = 31 * result + ignoredMethods.hashCode();
@@ -622,7 +622,7 @@ public class ByteBuddy {
     @Override
     public String toString() {
         return "ByteBuddy{" +
-                "classFormatVersion=" + classFormatVersion +
+                "classFormatVersion=" + classFileVersion +
                 ", namingStrategy=" + namingStrategy +
                 ", interfaceTypes=" + interfaceTypes +
                 ", ignoredMethods=" + ignoredMethods +
@@ -765,7 +765,7 @@ public class ByteBuddy {
         /**
          * Creates a new method annotation target.
          *
-         * @param classFormatVersion                    The currently defined class format version.
+         * @param classFileVersion                    The currently defined class format version.
          * @param namingStrategy                        The currently defined naming strategy.
          * @param interfaceTypes                        The currently defined collection of interfaces to be implemented
          *                                              by any dynamically created type.
@@ -787,7 +787,7 @@ public class ByteBuddy {
          * @param attributeAppenderFactory              The method attribute appender factory that was defined for the
          *                                              current method selection.
          */
-        protected MethodAnnotationTarget(ClassFormatVersion classFormatVersion,
+        protected MethodAnnotationTarget(ClassFileVersion classFileVersion,
                                          NamingStrategy namingStrategy,
                                          List<TypeDescription> interfaceTypes,
                                          MethodMatcher ignoredMethods,
@@ -801,7 +801,7 @@ public class ByteBuddy {
                                          MethodMatcher methodMatcher,
                                          Instrumentation instrumentation,
                                          MethodAttributeAppender.Factory attributeAppenderFactory) {
-            super(classFormatVersion,
+            super(classFileVersion,
                     namingStrategy,
                     interfaceTypes,
                     ignoredMethods,
@@ -826,7 +826,7 @@ public class ByteBuddy {
          * attribute appender factory applied to the current method selection.
          */
         public MethodAnnotationTarget attribute(MethodAttributeAppender.Factory attributeAppenderFactory) {
-            return new MethodAnnotationTarget(classFormatVersion,
+            return new MethodAnnotationTarget(classFileVersion,
                     namingStrategy,
                     interfaceTypes,
                     ignoredMethods,
@@ -868,8 +868,8 @@ public class ByteBuddy {
         }
 
         @Override
-        public ClassFormatVersion getClassFormatVersion() {
-            return materialize().getClassFormatVersion();
+        public ClassFileVersion getClassFileVersion() {
+            return materialize().getClassFileVersion();
         }
 
         @Override
@@ -938,8 +938,8 @@ public class ByteBuddy {
         }
 
         @Override
-        public ByteBuddy withClassFormatVersion(ClassFormatVersion classFormatVersion) {
-            return materialize().withClassFormatVersion(classFormatVersion);
+        public ByteBuddy withClassFormatVersion(ClassFileVersion classFileVersion) {
+            return materialize().withClassFormatVersion(classFileVersion);
         }
 
         @Override
@@ -988,7 +988,7 @@ public class ByteBuddy {
          * @return A {@code ByteBuddy} instance representing the current configuration.
          */
         protected ByteBuddy materialize() {
-            return new ByteBuddy(classFormatVersion,
+            return new ByteBuddy(classFileVersion,
                     namingStrategy,
                     interfaceTypes,
                     ignoredMethods,
@@ -1048,7 +1048,7 @@ public class ByteBuddy {
         /**
          * Creates a new optional method interception.
          *
-         * @param classFormatVersion                    The currently defined class format version.
+         * @param classFileVersion                    The currently defined class format version.
          * @param namingStrategy                        The currently defined naming strategy.
          * @param interfaceTypes                        The currently defined collection of interfaces to be implemented
          *                                              by any dynamically created type.
@@ -1066,7 +1066,7 @@ public class ByteBuddy {
          *                                              method definition or instrumentation.
          * @param methodMatcher                         The method matcher representing the current method selection.
          */
-        protected OptionalMethodInterception(ClassFormatVersion classFormatVersion,
+        protected OptionalMethodInterception(ClassFileVersion classFileVersion,
                                              NamingStrategy namingStrategy,
                                              List<TypeDescription> interfaceTypes,
                                              MethodMatcher ignoredMethods,
@@ -1078,7 +1078,7 @@ public class ByteBuddy {
                                              FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                                              MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
                                              MethodMatcher methodMatcher) {
-            super(classFormatVersion,
+            super(classFileVersion,
                     namingStrategy,
                     interfaceTypes,
                     ignoredMethods,
@@ -1148,7 +1148,7 @@ public class ByteBuddy {
 
         @Override
         public MethodAnnotationTarget intercept(Instrumentation instrumentation) {
-            return new MethodAnnotationTarget(classFormatVersion,
+            return new MethodAnnotationTarget(classFileVersion,
                     namingStrategy,
                     interfaceTypes,
                     ignoredMethods,

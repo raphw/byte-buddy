@@ -1,6 +1,6 @@
 package net.bytebuddy.instrumentation;
 
-import net.bytebuddy.ClassFormatVersion;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
@@ -108,7 +108,7 @@ public interface Instrumentation {
          */
         static class Default implements Context, AuxiliaryType.MethodAccessorFactory {
 
-            private final ClassFormatVersion classFormatVersion;
+            private final ClassFileVersion classFileVersion;
             private final AuxiliaryTypeNamingStrategy auxiliaryTypeNamingStrategy;
             private final AuxiliaryType.MethodAccessorFactory methodAccessorFactory;
             private final Map<AuxiliaryType, DynamicType> auxiliaryTypes;
@@ -116,15 +116,15 @@ public interface Instrumentation {
             /**
              * Creates a new default instrumentation context.
              *
-             * @param classFormatVersion          The class format version for auxiliary types.
+             * @param classFileVersion          The class format version for auxiliary types.
              * @param auxiliaryTypeNamingStrategy The naming strategy for auxiliary types that are registered.
              * @param methodAccessorFactory       A factory for creating method proxies for the currently instrumented
              *                                    type.
              */
-            public Default(ClassFormatVersion classFormatVersion,
+            public Default(ClassFileVersion classFileVersion,
                            AuxiliaryTypeNamingStrategy auxiliaryTypeNamingStrategy,
                            AuxiliaryType.MethodAccessorFactory methodAccessorFactory) {
-                this.classFormatVersion = classFormatVersion;
+                this.classFileVersion = classFileVersion;
                 this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
                 this.methodAccessorFactory = methodAccessorFactory;
                 auxiliaryTypes = new HashMap<AuxiliaryType, DynamicType>();
@@ -135,7 +135,7 @@ public interface Instrumentation {
             public TypeDescription register(AuxiliaryType auxiliaryType) {
                 DynamicType dynamicType = auxiliaryTypes.get(auxiliaryType);
                 if (dynamicType == null) {
-                    dynamicType = auxiliaryType.make(auxiliaryTypeNamingStrategy.name(auxiliaryType), classFormatVersion, this);
+                    dynamicType = auxiliaryType.make(auxiliaryTypeNamingStrategy.name(auxiliaryType), classFileVersion, this);
                     auxiliaryTypes.put(auxiliaryType, dynamicType);
                 }
                 return dynamicType.getDescription();
@@ -159,7 +159,7 @@ public interface Instrumentation {
             @Override
             public String toString() {
                 return "Default{" +
-                        "classFormatVersion=" + classFormatVersion +
+                        "classFormatVersion=" + classFileVersion +
                         ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
                         ", methodAccessorFactory=" + methodAccessorFactory +
                         ", auxiliaryTypes=" + auxiliaryTypes +

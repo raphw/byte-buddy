@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.subclass;
 
-import net.bytebuddy.ClassFormatVersion;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.instrumentation.TypeInitializer;
 import net.bytebuddy.instrumentation.field.FieldDescription;
@@ -26,7 +26,7 @@ public class SubclassInstumentedType
         extends InstrumentedType.AbstractBase
         implements NamingStrategy.UnnamedType {
 
-    private final ClassFormatVersion classFormatVersion;
+    private final ClassFileVersion classFileVersion;
     private final TypeDescription superClass;
     private final List<TypeDescription> interfaces;
     private final int modifiers;
@@ -35,18 +35,18 @@ public class SubclassInstumentedType
     /**
      * Creates a new immutable type instrumentation for a loaded superclass.
      *
-     * @param classFormatVersion The class format version of this instrumentation.
+     * @param classFileVersion The class format version of this instrumentation.
      * @param superClass         The superclass of this instrumentation.
      * @param interfaces         A collection of loaded interfaces that are implemented by this instrumented class.
      * @param modifiers          The modifiers for this instrumentation.
      * @param namingStrategy     The naming strategy to be applied for this instrumentation.
      */
-    public SubclassInstumentedType(ClassFormatVersion classFormatVersion,
+    public SubclassInstumentedType(ClassFileVersion classFileVersion,
                                    TypeDescription superClass,
                                    List<TypeDescription> interfaces,
                                    int modifiers,
                                    NamingStrategy namingStrategy) {
-        this.classFormatVersion = classFormatVersion;
+        this.classFileVersion = classFileVersion;
         this.superClass = superClass;
         this.interfaces = interfaces;
         this.modifiers = modifiers;
@@ -56,7 +56,7 @@ public class SubclassInstumentedType
     /**
      * Creates a new immutable type instrumentation for a loaded superclass.
      *
-     * @param classFormatVersion The class format version of this instrumentation.
+     * @param classFileVersion The class format version of this instrumentation.
      * @param superClass         The superclass of this instrumentation.
      * @param interfaces         A collection of loaded interfaces that are implemented by this instrumented class.
      * @param modifiers          The modifiers for this instrumentation.
@@ -65,7 +65,7 @@ public class SubclassInstumentedType
      * @param methodDescriptions A list of method descriptions to be applied for this instrumentation.
      * @param typeInitializer    A type initializer to be applied for this instrumentation.
      */
-    protected SubclassInstumentedType(ClassFormatVersion classFormatVersion,
+    protected SubclassInstumentedType(ClassFileVersion classFileVersion,
                                       TypeDescription superClass,
                                       List<TypeDescription> interfaces,
                                       int modifiers,
@@ -74,7 +74,7 @@ public class SubclassInstumentedType
                                       List<? extends MethodDescription> methodDescriptions,
                                       TypeInitializer typeInitializer) {
         super(typeInitializer, name, fieldDescriptions, methodDescriptions);
-        this.classFormatVersion = classFormatVersion;
+        this.classFileVersion = classFileVersion;
         this.superClass = superClass;
         this.interfaces = interfaces;
         this.modifiers = modifiers;
@@ -91,7 +91,7 @@ public class SubclassInstumentedType
         }
         List<FieldDescription> fieldDescriptions = new ArrayList<FieldDescription>(this.fieldDescriptions);
         fieldDescriptions.add(additionalField);
-        return new SubclassInstumentedType(classFormatVersion,
+        return new SubclassInstumentedType(classFileVersion,
                 superClass,
                 interfaces,
                 this.modifiers,
@@ -117,7 +117,7 @@ public class SubclassInstumentedType
         }
         List<MethodDescription> methodDescriptions = new ArrayList<MethodDescription>(this.methodDescriptions);
         methodDescriptions.add(additionalMethod);
-        return new SubclassInstumentedType(classFormatVersion,
+        return new SubclassInstumentedType(classFileVersion,
                 superClass,
                 interfaces,
                 this.modifiers,
@@ -129,7 +129,7 @@ public class SubclassInstumentedType
 
     @Override
     public InstrumentedType withInitializer(TypeInitializer typeInitializer) {
-        return new SubclassInstumentedType(classFormatVersion,
+        return new SubclassInstumentedType(classFileVersion,
                 superClass,
                 interfaces,
                 modifiers,
@@ -141,7 +141,7 @@ public class SubclassInstumentedType
 
     @Override
     public TypeDescription detach() {
-        return new SubclassInstumentedType(classFormatVersion,
+        return new SubclassInstumentedType(classFileVersion,
                 superClass,
                 interfaces,
                 modifiers,
@@ -213,14 +213,14 @@ public class SubclassInstumentedType
     }
 
     @Override
-    public ClassFormatVersion getClassFormatVersion() {
-        return classFormatVersion;
+    public ClassFileVersion getClassFileVersion() {
+        return classFileVersion;
     }
 
     @Override
     public String toString() {
         return "SubclassInstumentedType{" +
-                "classFormatVersion=" + classFormatVersion +
+                "classFormatVersion=" + classFileVersion +
                 ", superClass=" + superClass +
                 ", interfaces=" + interfaces +
                 ", modifiers=" + modifiers +

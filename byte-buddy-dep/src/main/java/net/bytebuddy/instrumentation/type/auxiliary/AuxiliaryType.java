@@ -1,6 +1,6 @@
 package net.bytebuddy.instrumentation.type.auxiliary;
 
-import net.bytebuddy.ClassFormatVersion;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.ModifierContributor;
 import net.bytebuddy.instrumentation.method.MethodDescription;
@@ -30,12 +30,12 @@ public interface AuxiliaryType {
      * @param auxiliaryTypeName     The fully qualified non-internal name for this auxiliary type. The type should be in
      *                              the same package than the instrumented type this auxiliary type is providing services
      *                              to in order to allow package-private access.
-     * @param classFormatVersion    The class format version the auxiliary class should be written in.
+     * @param classFileVersion    The class format version the auxiliary class should be written in.
      * @param methodAccessorFactory A factory for accessor methods.
      * @return A dynamically created type representing this auxiliary type.
      */
     DynamicType make(String auxiliaryTypeName,
-                     ClassFormatVersion classFormatVersion,
+                     ClassFileVersion classFileVersion,
                      MethodAccessorFactory methodAccessorFactory);
 
     /**

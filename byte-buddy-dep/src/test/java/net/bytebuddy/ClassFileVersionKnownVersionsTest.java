@@ -1,6 +1,5 @@
 package net.bytebuddy;
 
-import net.bytebuddy.ClassFormatVersion;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -13,7 +12,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
 @RunWith(Parameterized.class)
-public class ClassFormatVersionKnownVersionsTest {
+public class ClassFileVersionKnownVersionsTest {
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
@@ -32,13 +31,13 @@ public class ClassFormatVersionKnownVersionsTest {
     private final int javaVersion;
     private final int byteCodeVersion;
 
-    public ClassFormatVersionKnownVersionsTest(int javaVersion, int byteCodeVersion) {
+    public ClassFileVersionKnownVersionsTest(int javaVersion, int byteCodeVersion) {
         this.javaVersion = javaVersion;
         this.byteCodeVersion = byteCodeVersion;
     }
 
     @Test
     public void testVersionIsAsExpected() throws Exception {
-        assertThat(ClassFormatVersion.forKnownJavaVersion(javaVersion).getVersionNumber(), is(byteCodeVersion));
+        assertThat(ClassFileVersion.forKnownJavaVersion(javaVersion).getVersionNumber(), is(byteCodeVersion));
     }
 }

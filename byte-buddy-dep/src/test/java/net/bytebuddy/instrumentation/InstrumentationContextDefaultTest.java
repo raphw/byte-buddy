@@ -1,6 +1,6 @@
 package net.bytebuddy.instrumentation;
 
-import net.bytebuddy.ClassFormatVersion;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.type.TypeDescription;
@@ -38,17 +38,17 @@ public class InstrumentationContextDefaultTest {
     @Mock
     private MethodDescription firstMethod, firstProxyMethod, secondMethod, secondProxyMethod;
     @Mock
-    private ClassFormatVersion classFormatVersion;
+    private ClassFileVersion classFileVersion;
 
     private Instrumentation.Context.Default defaultContext;
 
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        defaultContext = new Instrumentation.Context.Default(classFormatVersion, auxiliaryTypeNamingStrategy, methodAccessorFactory);
-        when(firstAuxiliary.make(any(String.class), any(ClassFormatVersion.class), any(AuxiliaryType.MethodAccessorFactory.class)))
+        defaultContext = new Instrumentation.Context.Default(classFileVersion, auxiliaryTypeNamingStrategy, methodAccessorFactory);
+        when(firstAuxiliary.make(any(String.class), any(ClassFileVersion.class), any(AuxiliaryType.MethodAccessorFactory.class)))
                 .thenReturn(firstDynamic);
-        when(secondAuxiliary.make(any(String.class), any(ClassFormatVersion.class), any(AuxiliaryType.MethodAccessorFactory.class)))
+        when(secondAuxiliary.make(any(String.class), any(ClassFileVersion.class), any(AuxiliaryType.MethodAccessorFactory.class)))
                 .thenReturn(secondDynamic);
         when(firstDynamic.getDescription()).thenReturn(firstDescription);
         when(secondDynamic.getDescription()).thenReturn(secondDescription);
@@ -64,15 +64,15 @@ public class InstrumentationContextDefaultTest {
         assertThat(defaultContext.register(secondAuxiliary), is(secondDescription));
         assertThat(defaultContext.getRegisteredAuxiliaryTypes().size(), is(2));
         assertThat(defaultContext.getRegisteredAuxiliaryTypes(), hasItems(firstDynamic, secondDynamic));
-        verify(firstAuxiliary).make(FOO, classFormatVersion, defaultContext);
-        verify(secondAuxiliary).make(BAR, classFormatVersion, defaultContext);
+        verify(firstAuxiliary).make(FOO, classFileVersion, defaultContext);
+        verify(secondAuxiliary).make(BAR, classFileVersion, defaultContext);
         verifyNoMoreInteractions(firstAuxiliary);
         verifyNoMoreInteractions(secondAuxiliary);
         verify(auxiliaryTypeNamingStrategy).name(firstAuxiliary);
         verify(auxiliaryTypeNamingStrategy).name(secondAuxiliary);
         verifyNoMoreInteractions(auxiliaryTypeNamingStrategy);
         verifyZeroInteractions(methodAccessorFactory);
-        verifyZeroInteractions(classFormatVersion);
+        verifyZeroInteractions(classFileVersion);
     }
 
     @Test
@@ -81,12 +81,12 @@ public class InstrumentationContextDefaultTest {
         assertThat(defaultContext.register(firstAuxiliary), is(firstDescription));
         assertThat(defaultContext.getRegisteredAuxiliaryTypes().size(), is(1));
         assertThat(defaultContext.getRegisteredAuxiliaryTypes(), hasItem(firstDynamic));
-        verify(firstAuxiliary).make(FOO, classFormatVersion, defaultContext);
+        verify(firstAuxiliary).make(FOO, classFileVersion, defaultContext);
         verifyNoMoreInteractions(firstAuxiliary);
         verify(auxiliaryTypeNamingStrategy).name(firstAuxiliary);
         verifyNoMoreInteractions(auxiliaryTypeNamingStrategy);
         verifyZeroInteractions(methodAccessorFactory);
-        verifyZeroInteractions(classFormatVersion);
+        verifyZeroInteractions(classFileVersion);
     }
 
     @Test
@@ -98,6 +98,6 @@ public class InstrumentationContextDefaultTest {
         verify(methodAccessorFactory).requireAccessorMethodFor(secondMethod);
         verifyNoMoreInteractions(methodAccessorFactory);
         verifyZeroInteractions(auxiliaryTypeNamingStrategy);
-        verifyZeroInteractions(classFormatVersion);
+        verifyZeroInteractions(classFileVersion);
     }
 }

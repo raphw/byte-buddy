@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.subclass;
 
-import net.bytebuddy.ClassFormatVersion;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.dynamic.ClassLoadingStrategy;
@@ -82,7 +82,7 @@ public class SubclassDynamicTypeBuilderTest {
 
     @Test
     public void testPlainSubclass() throws Exception {
-        Class<?> loaded = new SubclassDynamicTypeBuilder<Object>(ClassFormatVersion.forCurrentJavaVersion(),
+        Class<?> loaded = new SubclassDynamicTypeBuilder<Object>(ClassFileVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOO),
                 new TypeDescription.ForLoadedType(Object.class),
                 new TypeList.ForLoadedType(Arrays.<Class<?>>asList(Serializable.class)),
@@ -114,7 +114,7 @@ public class SubclassDynamicTypeBuilderTest {
 
     @Test
     public void testSubclassWithDefinedField() throws Exception {
-        Class<?> loaded = new SubclassDynamicTypeBuilder<Object>(ClassFormatVersion.forCurrentJavaVersion(),
+        Class<?> loaded = new SubclassDynamicTypeBuilder<Object>(ClassFileVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOO),
                 new TypeDescription.ForLoadedType(Object.class),
                 new TypeList.ForLoadedType(Arrays.<Class<?>>asList(Serializable.class)),
@@ -152,7 +152,7 @@ public class SubclassDynamicTypeBuilderTest {
 
     @Test
     public void testSubclassWithDefinedMethod() throws Exception {
-        Class<?> loaded = new SubclassDynamicTypeBuilder<Object>(ClassFormatVersion.forCurrentJavaVersion(),
+        Class<?> loaded = new SubclassDynamicTypeBuilder<Object>(ClassFileVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOO),
                 new TypeDescription.ForLoadedType(Object.class),
                 new TypeList.ForLoadedType(Arrays.<Class<?>>asList(Serializable.class)),
@@ -197,7 +197,7 @@ public class SubclassDynamicTypeBuilderTest {
 
     @Test
     public void testSubclassWithDefinedAbstractMethod() throws Exception {
-        Class<?> loaded = new SubclassDynamicTypeBuilder<Object>(ClassFormatVersion.forCurrentJavaVersion(),
+        Class<?> loaded = new SubclassDynamicTypeBuilder<Object>(ClassFileVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOO),
                 new TypeDescription.ForLoadedType(Object.class),
                 new TypeList.ForLoadedType(Arrays.<Class<?>>asList(Serializable.class)),
@@ -238,7 +238,7 @@ public class SubclassDynamicTypeBuilderTest {
 
     @Test
     public void testSubclassWithDefinedConstructor() throws Exception {
-        Class<?> loaded = new SubclassDynamicTypeBuilder<Object>(ClassFormatVersion.forCurrentJavaVersion(),
+        Class<?> loaded = new SubclassDynamicTypeBuilder<Object>(ClassFileVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOO),
                 new TypeDescription.ForLoadedType(Object.class),
                 new TypeList.ForLoadedType(Arrays.<Class<?>>asList(Serializable.class)),

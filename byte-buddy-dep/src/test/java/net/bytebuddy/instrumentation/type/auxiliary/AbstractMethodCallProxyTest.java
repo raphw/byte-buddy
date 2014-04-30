@@ -1,6 +1,6 @@
 package net.bytebuddy.instrumentation.type.auxiliary;
 
-import net.bytebuddy.ClassFormatVersion;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.method.MethodDescription;
@@ -38,7 +38,7 @@ public class AbstractMethodCallProxyTest {
         when(methodAccessorFactory.requireAccessorMethodFor(targetMethod)).thenReturn(proxyMethod);
         String auxiliaryTypeName = getClass().getName() + "$" + proxyTarget.getSimpleName() + "$Proxy";
         DynamicType dynamicType = new MethodCallProxy(targetMethod).make(auxiliaryTypeName,
-                ClassFormatVersion.forCurrentJavaVersion(),
+                ClassFileVersion.forCurrentJavaVersion(),
                 methodAccessorFactory);
         DynamicType.Unloaded<?> unloaded = (DynamicType.Unloaded<?>) dynamicType;
         Class<?> auxiliaryType = unloaded.load(getClass().getClassLoader(), ClassLoadingStrategy.Default.INJECTION).getLoaded();

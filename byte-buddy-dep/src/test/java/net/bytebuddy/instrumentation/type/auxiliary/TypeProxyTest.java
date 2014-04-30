@@ -1,6 +1,6 @@
 package net.bytebuddy.instrumentation.type.auxiliary;
 
-import net.bytebuddy.ClassFormatVersion;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.method.MethodDescription;
@@ -147,7 +147,7 @@ public class TypeProxyTest {
         DynamicType dynamicType = new TypeProxy(
                 new TypeDescription.ForLoadedType(proxyType),
                 new TypeDescription.ForLoadedType(instrumentedType),
-                true).make(auxiliaryTypeName, ClassFormatVersion.forCurrentJavaVersion(), methodAccessorFactory);
+                true).make(auxiliaryTypeName, ClassFileVersion.forCurrentJavaVersion(), methodAccessorFactory);
         DynamicType.Unloaded<?> unloaded = (DynamicType.Unloaded<?>) dynamicType;
         Class<?> auxiliaryType = unloaded.load(getClass().getClassLoader(), ClassLoadingStrategy.Default.INJECTION).getLoaded();
         assertThat(auxiliaryType.getName(), is(auxiliaryTypeName));

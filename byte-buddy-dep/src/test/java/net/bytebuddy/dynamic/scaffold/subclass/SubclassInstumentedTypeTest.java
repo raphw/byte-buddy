@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.subclass;
 
-import net.bytebuddy.ClassFormatVersion;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.instrumentation.type.AbstractInstrumentedTypeTest;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
@@ -23,7 +23,7 @@ public class SubclassInstumentedTypeTest extends AbstractInstrumentedTypeTest {
     @Override
     protected InstrumentedType makePlainInstrumentedType() {
         return new SubclassInstumentedType(
-                ClassFormatVersion.forCurrentJavaVersion(),
+                ClassFileVersion.forCurrentJavaVersion(),
                 new TypeDescription.ForLoadedType(Object.class),
                 new TypeList.ForLoadedType(Collections.<Class<?>>singletonList(Serializable.class)),
                 Opcodes.ACC_PUBLIC,

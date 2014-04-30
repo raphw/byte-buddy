@@ -5,6 +5,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.FieldAccessor;
 import net.bytebuddy.instrumentation.FixedValue;
 import net.bytebuddy.instrumentation.MethodDelegation;
+import net.bytebuddy.instrumentation.SuperMethodCall;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.RuntimeType;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Super;
@@ -431,6 +432,45 @@ public class ByteBuddyTest {
         UserType userType = (UserType) factory.makeInstance();
         ((InterceptionAccessor) userType).setInterceptor(new HelloWorldInterceptor());
         assertThat(userType.doSomething(), is("Hello World!"));
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface RuntimeDefinition {
+    }
+
+    private class RuntimeDefinitionImpl implements RuntimeDefinition {
+
+        @Override
+        public Class<? extends Annotation> annotationType() {
+            return RuntimeDefinition.class;
+        }
+    }
+
+    @Test
+    public void testAttributesAndAnnotationForClass() throws Exception {
+        assertThat(new ByteBuddy()
+                .subclass(Object.class)
+                .annotateType(new RuntimeDefinitionImpl())
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded()
+                .isAnnotationPresent(RuntimeDefinition.class), is(true));
+    }
+
+    @Test
+    public void testAttributesAndAnnotationForMethodAndField() throws Exception {
+        Class<?> dynamicType = new ByteBuddy()
+                .subclass(Object.class)
+                .method(named("toString"))
+                .intercept(SuperMethodCall.INSTANCE)
+                .annotateMethod(new RuntimeDefinitionImpl())
+                .defineField("foo", Object.class)
+                .annotateField(new RuntimeDefinitionImpl())
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(dynamicType.getDeclaredMethod("toString").isAnnotationPresent(RuntimeDefinition.class), is(true));
+        assertThat(dynamicType.getDeclaredField("foo").isAnnotationPresent(RuntimeDefinition.class), is(true));
     }
 
     @SuppressWarnings("unused")

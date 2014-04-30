@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.scaffold;
 
-import net.bytebuddy.ClassFormatVersion;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.Instrumentation;
@@ -364,21 +364,21 @@ public interface TypeWriter<T> {
 
         private final InstrumentedType instrumentedType;
         private final Instrumentation.Context instrumentationContext;
-        private final ClassFormatVersion classFormatVersion;
+        private final ClassFileVersion classFileVersion;
 
         /**
          * Creates a new builder for a given instrumented type.
          *
          * @param instrumentedType       The instrumented type to be written.
          * @param instrumentationContext The instrumentation context for this instrumentation.
-         * @param classFormatVersion     The class format version for the type that is written.
+         * @param classFileVersion     The class format version for the type that is written.
          */
         public Builder(InstrumentedType instrumentedType,
                        Instrumentation.Context instrumentationContext,
-                       ClassFormatVersion classFormatVersion) {
+                       ClassFileVersion classFileVersion) {
             this.instrumentedType = instrumentedType;
             this.instrumentationContext = instrumentationContext;
-            this.classFormatVersion = classFormatVersion;
+            this.classFileVersion = classFileVersion;
         }
 
         private static int overrideModifiers(MethodDescription methodDescription, boolean appendsCode) {
@@ -400,7 +400,7 @@ public interface TypeWriter<T> {
         public InGeneralPhase<T> build(ClassVisitorWrapper classVisitorWrapper) {
             ClassWriter classWriter = new ClassWriter(ASM_MANUAL_FLAG);
             ClassVisitor classVisitor = classVisitorWrapper.wrap(classWriter);
-            classVisitor.visit(classFormatVersion.getVersionNumber(),
+            classVisitor.visit(classFileVersion.getVersionNumber(),
                     instrumentedType.getModifiers(),
                     instrumentedType.getInternalName(),
                     null,

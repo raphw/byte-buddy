@@ -1,6 +1,6 @@
 package net.bytebuddy.instrumentation;
 
-import net.bytebuddy.ClassFormatVersion;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.dynamic.ClassLoadingStrategy;
@@ -28,7 +28,7 @@ public abstract class AbstractInstrumentationTest {
     protected <T> DynamicType.Loaded<T> instrument(Class<T> target, Instrumentation instrumentation) {
         assertThat(target.isInterface(), is(false));
         return new SubclassDynamicTypeBuilder<T>(
-                ClassFormatVersion.forCurrentJavaVersion(),
+                ClassFileVersion.forCurrentJavaVersion(),
                 new NamingStrategy.SuffixingRandom(SUFFIX),
                 new TypeDescription.ForLoadedType(target),
                 new TypeList.Empty(),

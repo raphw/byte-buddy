@@ -1,7 +1,7 @@
 package net.bytebuddy.instrumentation.type.auxiliary;
 
 import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.ClassFormatVersion;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
@@ -66,10 +66,10 @@ public class TypeProxy implements AuxiliaryType {
 
     @Override
     public DynamicType make(String auxiliaryTypeName,
-                            ClassFormatVersion classFormatVersion,
+                            ClassFileVersion classFileVersion,
                             MethodAccessorFactory methodAccessorFactory) {
         MethodMatcher finalizerMatcher = ignoreFinalizer ? not(isFinalizer()) : any();
-        return new ByteBuddy(classFormatVersion)
+        return new ByteBuddy(classFileVersion)
                 .subclass(proxiedType, ConstructorStrategy.Default.IMITATE_SUPER_TYPE)
                 .name(auxiliaryTypeName)
                 .modifiers(DEFAULT_TYPE_MODIFIER.toArray(new ModifierContributor.ForType[DEFAULT_TYPE_MODIFIER.size()]))

@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.subclass;
 
-import net.bytebuddy.ClassFormatVersion;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.dynamic.DynamicType;
@@ -33,7 +33,7 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
  */
 public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<T> {
 
-    private final ClassFormatVersion classFormatVersion;
+    private final ClassFileVersion classFileVersion;
     private final NamingStrategy namingStrategy;
     private final TypeDescription superType;
     private final List<TypeDescription> interfaceTypes;
@@ -49,7 +49,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     /**
      * Creates a new immutable type builder for a subclassing a loaded class.
      *
-     * @param classFormatVersion                    The class format version for the created dynamic type.
+     * @param classFileVersion                    The class format version for the created dynamic type.
      * @param namingStrategy                        The naming strategy for naming the dynamic type.
      * @param superType                             The loaded super type the dynamic type should extend.
      * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
@@ -66,7 +66,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      *                                              if no specific appender was specified for a given method.
      * @param constructorStrategy                   The strategy for creating constructors when defining this dynamic type.
      */
-    public SubclassDynamicTypeBuilder(ClassFormatVersion classFormatVersion,
+    public SubclassDynamicTypeBuilder(ClassFileVersion classFileVersion,
                                       NamingStrategy namingStrategy,
                                       TypeDescription superType,
                                       List<? extends TypeDescription> interfaceTypes,
@@ -82,7 +82,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                       ConstructorStrategy constructorStrategy) {
         super(Collections.<FieldToken>emptyList(),
                 new MethodTokenListForConstructors(constructorStrategy.extractConstructors(superType)));
-        this.classFormatVersion = classFormatVersion;
+        this.classFileVersion = classFileVersion;
         this.namingStrategy = namingStrategy;
         this.superType = superType;
         this.interfaceTypes = new ArrayList<TypeDescription>(interfaceTypes);
@@ -99,7 +99,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     /**
      * Creates a new immutable type builder for a subclassing a loaded class.
      *
-     * @param classFormatVersion                    The class format version for the created dynamic type.
+     * @param classFileVersion                    The class format version for the created dynamic type.
      * @param namingStrategy                        The naming strategy for naming the dynamic type.
      * @param superType                             The loaded super type the dynamic type should extend.
      * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
@@ -119,7 +119,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      * @param methodTokens                          A list of method representations that were added explicitly to this
      *                                              dynamic type.
      */
-    protected SubclassDynamicTypeBuilder(ClassFormatVersion classFormatVersion,
+    protected SubclassDynamicTypeBuilder(ClassFileVersion classFileVersion,
                                          NamingStrategy namingStrategy,
                                          TypeDescription superType,
                                          List<TypeDescription> interfaceTypes,
@@ -135,7 +135,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                          List<FieldToken> fieldTokens,
                                          List<MethodToken> methodTokens) {
         super(fieldTokens, methodTokens);
-        this.classFormatVersion = classFormatVersion;
+        this.classFileVersion = classFileVersion;
         this.namingStrategy = namingStrategy;
         this.superType = superType;
         this.interfaceTypes = interfaceTypes;
@@ -151,8 +151,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     }
 
     @Override
-    public DynamicType.Builder<T> classFormatVersion(ClassFormatVersion classFormatVersion) {
-        return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
+    public DynamicType.Builder<T> classFormatVersion(ClassFileVersion classFileVersion) {
+        return new SubclassDynamicTypeBuilder<T>(classFileVersion,
                 namingStrategy,
                 superType,
                 interfaceTypes,
@@ -176,7 +176,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public DynamicType.Builder<T> name(String name) {
-        return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
+        return new SubclassDynamicTypeBuilder<T>(classFileVersion,
                 new NamingStrategy.Fixed(isValidTypeName(name)),
                 superType,
                 interfaceTypes,
@@ -195,7 +195,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public DynamicType.Builder<T> modifiers(ModifierContributor.ForType... modifier) {
-        return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
+        return new SubclassDynamicTypeBuilder<T>(classFileVersion,
                 namingStrategy,
                 superType,
                 interfaceTypes,
@@ -214,7 +214,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public DynamicType.Builder<T> ignoreMethods(MethodMatcher ignoredMethods) {
-        return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
+        return new SubclassDynamicTypeBuilder<T>(classFileVersion,
                 namingStrategy,
                 superType,
                 interfaceTypes,
@@ -233,7 +233,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public DynamicType.Builder<T> attribute(TypeAttributeAppender attributeAppender) {
-        return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
+        return new SubclassDynamicTypeBuilder<T>(classFileVersion,
                 namingStrategy,
                 superType,
                 interfaceTypes,
@@ -257,7 +257,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public DynamicType.Builder<T> classVisitor(ClassVisitorWrapper classVisitorWrapper) {
-        return new SubclassDynamicTypeBuilder<T>(classFormatVersion,
+        return new SubclassDynamicTypeBuilder<T>(classFileVersion,
                 namingStrategy,
                 superType,
                 interfaceTypes,
@@ -325,16 +325,16 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public DynamicType.Unloaded<T> make() {
-        InstrumentedType instrumentedType = applyRecordedMembersTo(new SubclassInstumentedType(classFormatVersion,
+        InstrumentedType instrumentedType = applyRecordedMembersTo(new SubclassInstumentedType(classFileVersion,
                 superType,
                 interfaceTypes,
                 modifiers,
                 namingStrategy));
         SubclassInstrumentationContextDelegate contextDelegate = new SubclassInstrumentationContextDelegate(instrumentedType, bridgeMethodResolverFactory);
-        Instrumentation.Context instrumentationContext = new Instrumentation.Context.Default(classFormatVersion, contextDelegate, contextDelegate);
+        Instrumentation.Context instrumentationContext = new Instrumentation.Context.Default(classFileVersion, contextDelegate, contextDelegate);
         MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.compile(instrumentedType, MethodRegistry.Compiled.Entry.Skip.INSTANCE);
         instrumentedType = compiledMethodRegistry.getInstrumentedType();
-        return new TypeWriter.Builder<T>(instrumentedType, instrumentationContext, classFormatVersion)
+        return new TypeWriter.Builder<T>(instrumentedType, instrumentationContext, classFileVersion)
                 .build(classVisitorWrapperChain)
                 .attributeType(attributeAppender)
                 .fields()
@@ -356,7 +356,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         SubclassDynamicTypeBuilder that = (SubclassDynamicTypeBuilder) other;
         return modifiers == that.modifiers && attributeAppender.equals(that.attributeAppender)
                 && bridgeMethodResolverFactory.equals(that.bridgeMethodResolverFactory)
-                && classFormatVersion.equals(that.classFormatVersion)
+                && classFileVersion.equals(that.classFileVersion)
                 && classVisitorWrapperChain.equals(that.classVisitorWrapperChain)
                 && defaultFieldAttributeAppenderFactory.equals(that.defaultFieldAttributeAppenderFactory)
                 && defaultMethodAttributeAppenderFactory.equals(that.defaultMethodAttributeAppenderFactory)
@@ -368,7 +368,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public int hashCode() {
-        int result = classFormatVersion.hashCode();
+        int result = classFileVersion.hashCode();
         result = 31 * result + namingStrategy.hashCode();
         result = 31 * result + superType.hashCode();
         result = 31 * result + interfaceTypes.hashCode();
@@ -387,7 +387,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     @Override
     public String toString() {
         return "SubclassDynamicTypeBuilder{" +
-                "classFormatVersion=" + classFormatVersion +
+                "classFormatVersion=" + classFileVersion +
                 ", namingStrategy=" + namingStrategy +
                 ", superType=" + superType +
                 ", interfaceTypes=" + interfaceTypes +
@@ -443,7 +443,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
         @Override
         protected DynamicType.Builder<S> materialize() {
-            return new SubclassDynamicTypeBuilder<S>(classFormatVersion,
+            return new SubclassDynamicTypeBuilder<S>(classFileVersion,
                     namingStrategy,
                     superType,
                     interfaceTypes,
@@ -642,7 +642,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
         @Override
         protected DynamicType.Builder<S> materialize() {
-            return new SubclassDynamicTypeBuilder<S>(classFormatVersion,
+            return new SubclassDynamicTypeBuilder<S>(classFileVersion,
                     namingStrategy,
                     superType,
                     interfaceTypes,
@@ -737,7 +737,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
         @Override
         protected DynamicType.Builder<S> materialize() {
-            return new SubclassDynamicTypeBuilder<S>(classFormatVersion,
+            return new SubclassDynamicTypeBuilder<S>(classFileVersion,
                     namingStrategy,
                     superType,
                     join(interfaceTypes, isInterface(interfaceType)),

@@ -1,7 +1,7 @@
 package net.bytebuddy.instrumentation.type.auxiliary;
 
 import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.ClassFormatVersion;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.instrumentation.Instrumentation;
@@ -95,11 +95,11 @@ public class MethodCallProxy implements AuxiliaryType {
 
     @Override
     public DynamicType make(String auxiliaryTypeName,
-                            ClassFormatVersion classFormatVersion,
+                            ClassFileVersion classFileVersion,
                             MethodAccessorFactory methodAccessorFactory) {
         MethodDescription accessorMethod = methodAccessorFactory.requireAccessorMethodFor(targetMethod);
         LinkedHashMap<String, TypeDescription> parameterFields = extractFields(accessorMethod);
-        DynamicType.Builder<?> builder = new ByteBuddy(classFormatVersion)
+        DynamicType.Builder<?> builder = new ByteBuddy(classFileVersion)
                 .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
                 .name(auxiliaryTypeName)
                 .modifiers(DEFAULT_TYPE_MODIFIER.toArray(new ModifierContributor.ForType[DEFAULT_TYPE_MODIFIER.size()]))

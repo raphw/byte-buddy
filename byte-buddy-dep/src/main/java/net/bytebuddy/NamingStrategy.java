@@ -72,7 +72,7 @@ public interface NamingStrategy {
          *
          * @return The class format version of this unnamed type.
          */
-        ClassFormatVersion getClassFormatVersion();
+        ClassFileVersion getClassFileVersion();
     }
 
     /**

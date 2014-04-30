@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.subclass;
 
-import net.bytebuddy.ClassFormatVersion;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.dynamic.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
@@ -132,7 +132,7 @@ public class SubclassInstrumentationContextDelegateTest {
                 .filter(named(TO_STRING)).getOnly());
         TypeWriter.InGeneralPhase<?> typeWriter = new TypeWriter.Builder<Object>(instrumentedType,
                 instrumentationContext,
-                ClassFormatVersion.forCurrentJavaVersion())
+                ClassFileVersion.forCurrentJavaVersion())
                 .build(new ClassVisitorWrapper.Chain());
         TypeWriter.MethodPool constructorPool = mock(TypeWriter.MethodPool.class);
         TypeWriter.MethodPool.Entry entry = mock(TypeWriter.MethodPool.Entry.class);

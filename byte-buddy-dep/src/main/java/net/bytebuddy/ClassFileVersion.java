@@ -3,43 +3,43 @@ package net.bytebuddy;
 import org.objectweb.asm.Opcodes;
 
 /**
- * A wrapper object for representing a validated class format version as specified by the
+ * A wrapper object for representing a validated class file version in the format that is specified by the
  * <a href="http://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html">JVMS</a>.
  */
-public class ClassFormatVersion {
+public class ClassFileVersion {
 
     /**
-     * The byte code version of Java 1.
+     * The class file version of Java 1.
      */
-    public static final ClassFormatVersion JAVA_V1 = new ClassFormatVersion(Opcodes.V1_1);
+    public static final ClassFileVersion JAVA_V1 = new ClassFileVersion(Opcodes.V1_1);
     /**
-     * The byte code version of Java 2.
+     * The class file version of Java 2.
      */
-    public static final ClassFormatVersion JAVA_V2 = new ClassFormatVersion(Opcodes.V1_2);
+    public static final ClassFileVersion JAVA_V2 = new ClassFileVersion(Opcodes.V1_2);
     /**
-     * The byte code version of Java 3.
+     * The class file version of Java 3.
      */
-    public static final ClassFormatVersion JAVA_V3 = new ClassFormatVersion(Opcodes.V1_3);
+    public static final ClassFileVersion JAVA_V3 = new ClassFileVersion(Opcodes.V1_3);
     /**
-     * The byte code version of Java 4.
+     * The class file version of Java 4.
      */
-    public static final ClassFormatVersion JAVA_V4 = new ClassFormatVersion(Opcodes.V1_4);
+    public static final ClassFileVersion JAVA_V4 = new ClassFileVersion(Opcodes.V1_4);
     /**
-     * The byte code version of Java 5.
+     * The class file version of Java 5.
      */
-    public static final ClassFormatVersion JAVA_V5 = new ClassFormatVersion(Opcodes.V1_5);
+    public static final ClassFileVersion JAVA_V5 = new ClassFileVersion(Opcodes.V1_5);
     /**
-     * The byte code version of Java 6.
+     * The class file version of Java 6.
      */
-    public static final ClassFormatVersion JAVA_V6 = new ClassFormatVersion(Opcodes.V1_6);
+    public static final ClassFileVersion JAVA_V6 = new ClassFileVersion(Opcodes.V1_6);
     /**
-     * The byte code version of Java 7.
+     * The class file version of Java 7.
      */
-    public static final ClassFormatVersion JAVA_V7 = new ClassFormatVersion(Opcodes.V1_7);
+    public static final ClassFileVersion JAVA_V7 = new ClassFileVersion(Opcodes.V1_7);
     /**
-     * The byte code version of Java 8.
+     * The class file version of Java 8.
      */
-    public static final ClassFormatVersion JAVA_V8 = new ClassFormatVersion(Opcodes.V1_7 + 1);
+    public static final ClassFileVersion JAVA_V8 = new ClassFileVersion(Opcodes.V1_7 + 1);
     private static final String JAVA_VERSION_PROPERTY = "java.version";
     private final int versionNumber;
 
@@ -49,18 +49,18 @@ public class ClassFormatVersion {
      *
      * @param versionNumber The minor-major release number.
      */
-    public ClassFormatVersion(int versionNumber) {
+    public ClassFileVersion(int versionNumber) {
         this.versionNumber = validateVersionNumber(versionNumber);
     }
 
     /**
-     * Creates a ClassFormatVersion for a given major release of Java. Currently, all versions reaching from
+     * Creates a class file version for a given major release of Java. Currently, all versions reaching from
      * Java 1 to Java 8 are supported.
      *
      * @param javaVersion The Java version.
-     * @return A wrapper for the given Java version.
+     * @return A wrapper for the given Java class file version.
      */
-    public static ClassFormatVersion forKnownJavaVersion(int javaVersion) {
+    public static ClassFileVersion forKnownJavaVersion(int javaVersion) {
         switch (javaVersion) {
             case 1:
                 return JAVA_V1;
@@ -84,12 +84,12 @@ public class ClassFormatVersion {
     }
 
     /**
-     * Finds the highest class format version compatible to the current JVM version by parsing the java.version property
-     * provided by {@link java.lang.System#getProperty(String)}.
+     * Finds the highest class file version that is compatible to the current JVM version by parsing the java.version
+     * property which is provided by {@link java.lang.System#getProperty(String)}.
      *
-     * @return The currently running Java process's byte code format version.
+     * @return The currently running Java process's class file version.
      */
-    public static ClassFormatVersion forCurrentJavaVersion() {
+    public static ClassFileVersion forCurrentJavaVersion() {
         String versionString = System.getProperty(JAVA_VERSION_PROPERTY);
         int[] versionIndex = {-1, 0, 0};
         for (int i = 1; i < 3; i++) {
@@ -98,7 +98,7 @@ public class ClassFormatVersion {
                 throw new IllegalStateException("This JVM's version string does not seem to be valid: " + versionString);
             }
         }
-        return ClassFormatVersion.forKnownJavaVersion(Integer.parseInt(versionString.substring(versionIndex[1] + 1, versionIndex[2])));
+        return ClassFileVersion.forKnownJavaVersion(Integer.parseInt(versionString.substring(versionIndex[1] + 1, versionIndex[2])));
     }
 
     private static int validateVersionNumber(int versionNumber) {
@@ -120,7 +120,7 @@ public class ClassFormatVersion {
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && versionNumber == ((ClassFormatVersion) other).versionNumber;
+                && versionNumber == ((ClassFileVersion) other).versionNumber;
     }
 
     @Override
