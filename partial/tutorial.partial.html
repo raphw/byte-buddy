@@ -1784,6 +1784,84 @@ new ByteBuddy()
     returns a fixed string value.
 </p>
 
+
+<pre class="prettyprint">
+enum ToStringAssigner implements Assigner {
+
+  INSTANCE; // singleton
+
+  @Override
+  public StackManipulation assign(TypeDescription sourceType,
+                                  TypeDescription targetType,
+                                  boolean considerRuntimeType) {
+    if (!sourceType.isPrimitive() && targetType.represents(String.class)) {
+      MethodDescription toStringMethod = new TypeDescription.ForLoadedType(Object.class)
+        .getDeclaredMethods()
+        .filter(named("toString"))
+        .getOnly();
+      return MethodInvocation.invoke(toStringMethod);
+    } else {
+      return IllegalStackManipulation.INSTANCE;
+    }
+  }
+}
+</pre>
+
+<pre class="prettyprint">
+new ByteBuddy()
+  .subclass(Object.class)
+  .method(named("toString"))
+    .intercept(FixedValue.reference(42)
+      .withAssigner(new PrimitiveTypeAwareAssigner(ToStringAssigner.INSTANCE), false))
+  .make()
+</pre>
+
+<pre class="prettyprint">
+@Retention(RetentionPolicy.RUNTIME)
+@interface StringValue {
+  String value();
+}
+</pre>
+
+<pre class="prettyprint">
+enum StringValueBinder
+  implements TargetMethodAnnotationDrivenBinder.ParameterBinder&lt;StringValue&gt; {
+
+  INSTANCE; // singleton
+
+  @Override
+  public Class&lt;StringValue&gt; getHandledType() {
+    return StringValue.class;
+  }
+
+  @Override
+  public MethodDelegationBinder.ParameterBinding&lt;?&gt; bind(StringValue annotation,
+                                                         int targetParameterIndex,
+                                                         MethodDescription source,
+                                                         MethodDescription target,
+                                                         TypeDescription instrumentedType,
+                                                         Assigner assigner) {
+    return new MethodDelegationBinder.ParameterBinding.Anonymous(
+      new TextConstant(annotation.value()));
+  }
+}
+</pre>
+
+<pre class="prettyprint">
+class ToStringInterceptor {
+  public static String makeString(@StringValue("Hello!") String value) {
+    return value;
+  }
+}
+
+new ByteBuddy()
+  .subclass(Object.class)
+  .method(named("toString"))
+    .intercept(MethodDelegation.to(ToStringInterceptor.class)
+      .defineArgumentBinder(StringValueBinder.INSTANCE))
+  .make()
+</pre>
+
 </div>
 
 </div>
