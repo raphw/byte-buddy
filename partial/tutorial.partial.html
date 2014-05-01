@@ -1191,7 +1191,7 @@ class Qux extends Foo&lt;Integer&gt; {
     synthetic bridge method targets the <code>m(Integer)</code> or the <code>m(Long)</code> method. You can however
     configure <code>ByteBuddy</code> to use a custom bridge method resolver which is aware of the resolution for
     a particular class's bridge methods. In a future version, Byte Buddy will provide better support for processing
-    generic types based on a class's meta information what allows for a resolition of such ambiguities.
+    generic types based on a class's meta information what allows for a resolution of such ambiguities.
 </p>
 
 <h4>Calling a super method</h4>
@@ -1415,9 +1415,9 @@ UserType userType = (UserType) factory.makeInstance();
     <p>
         We just learned how Byte Buddy relies on annotations for providing some of its functionality. And Byte Buddy is
         by far not the only Java application with an annotation-based API. In order to integrate dynamically created
-        types with such applications, Byte Buddy allows to define annotations for dynamically created types and their
-        members. Before looking into the details of assigning annotations to dynamic types, let us look at an example
-        of annotating a dynamically created class:
+        types with such applications, Byte Buddy allows to define annotations for such types and their members. Before
+        looking into the details of assigning annotations to dynamically created types, let us look at an example of
+        annotating a runtime class:
     </p>
 
 <pre class="prettyprint">
@@ -1448,24 +1448,25 @@ new ByteBuddy()
     </p>
 
     <p>
-        Defining annotations for a dynamically created class can be in particular important when a class should serve
+        Defining annotations for a dynamically created class can be in particularly important when a class should serve
         as a subclass proxy for another class. A subclass proxy is often used to implement
         <a href="http://en.wikipedia.org/wiki/Cross-cutting_concern">cross-cutting concerns</a> where the subclass
         should mimic the original class as transparently as possible. However, annotations on a class are not retained
         for its subclasses as long as this behavior is explicitly required by defining an annotation to be
         <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/annotation/Inherited.html"><code>@Inherited</code></a>.
-        Using Byte Buddy, creating subclass proxies that retain their base class's annotations is easy by using
-        the <code>attribute</code> method. This methods expects a <code>TypeAttributeAppender</code> as its argument.
-        A type attribute appender offers a generic way for defining the annotations of a dynamically created class,
-        based on its base class. For example, by using a <code>TypeAttributeAppender.ForSuperType</code>, a class's
-        annotations are copied to its dynamically created subclasses. Note that annotations and type attribute
-        appenders are additive and no annotation type must be defined more than once for any class.
+        Using Byte Buddy, creating subclass proxies that retain their base class's annotations is easy by invoking
+        the <code>attribute</code> method of Byte Buddy's domain specific language. This methods expects a
+        <code>TypeAttributeAppender</code> as its argument. A type attribute appender offers a generic way for defining
+        the annotations of a dynamically created class, based on its base class. For example, by passing a
+        <code>TypeAttributeAppender.ForSuperType</code>, a class's annotations are copied to its dynamically created
+        subclasses. Note that annotations and type attribute appenders are additive and no annotation type must be
+        defined more than once for any class.
     </p>
 
     <p>
         Method and field annotations are defined similarly to type annotations which we just discussed. A method
         annotation can be defined as a conclusive statement in Byte Buddy's domain specific language for implementing a
-        method. Likewise, a field can be annotated after its definition:
+        method. Likewise, a field can be annotated after its definition. Again, let us look at an example:
     </p>
 
 
@@ -1486,7 +1487,7 @@ new ByteBuddy()
     </p>
 
     <p>
-        By default, a <code>ByteBuddy</code> configuration does not define any annotations for a dynamically created
+        By default, a <code>ByteBuddy</code> configuration does not predefine any annotations for a dynamically created
         type or type member. However, this behavior can be altered by providing a default
         <code>TypeAttributeAppender</code>, <code>MethodAttributeAppender</code> or <code>FieldAttributeAppender</code>.
         Note that such default appenders are not additive but replace their former values.
@@ -1500,12 +1501,12 @@ new ByteBuddy()
 
 <p>
     In the previous sections, we described Byte Buddy's standard API. None of the features described so far
-    requires a knowledge or the explicit expression of Java byte code. However, if you require to create custom
+    requires a knowledge or the explicit expression of Java byte code. However, if you require the creation of custom
     byte code, you can do so by directly accessing the API of <a href="http://asm.ow2.org/">ASM</a>, a
     low-level byte code library on top of which Byte Buddy is built. However, note that different versions of ASM
     are not compatible to another such that you need to repackage Byte Buddy into your own namespace when releasing
-    your code. Otherwise, your application might introduce incompatibilities to other uses of Byte Buddy when
-    another dependency is expecting a different version of Byte Buddy that is using a different version of ASM. You
+    your code. Otherwise, your application might introduce incompatibilities with other utilization of Byte Buddy when
+    another dependency is expecting a different version of Byte Buddy that is based on a different version of ASM. You
     can find detailed information on maintaining a dependency on Byte Buddy
     <a href="/#dependency">on the front page</a>.
 </p>
@@ -1514,8 +1515,8 @@ new ByteBuddy()
     The ASM library comes with
     <a href="http://download.forge.objectweb.org/asm/asm4-guide.pdf">an excellent documentation</a> of Java byte
     code and on the use of the library. Therefore, we want to refer you to this documentation in case that you want
-    to learn in detail about Java byte code and ASM's API. Instead, we will only provide a brief introduction to
-    the JVM's execution model and Byte Buddy's adaption of ASM's API.
+    to learn in detail about Java byte code and ASM's API. Instead, we are only going to provide a brief introduction
+    to the JVM's execution model and Byte Buddy's adaption of ASM's API.
 </p>
 
 <p>
@@ -1525,34 +1526,36 @@ new ByteBuddy()
 
 <ul class="colored-list padded">
     <li><span>
-            <b>Base data</b>: A class file references the class's name as well as the name of its superclass and its
-            implemented interfaces. Additionally, a class file contains different meta data as for example the class's
-            Java version number or the name of the source file the compiler processed for creating the class.
-       </span></li>
+        <b>Base data</b>: A class file references the class's name as well as the name of its superclass and its
+        implemented interfaces. Additionally, a class file contains different meta data as for example the class's
+        Java version number, its annotations or the name of the source file the compiler processed for creating
+        the class.
+    </span></li>
     <li><span>
-            <b>Constant pool</b>: A class's constant pool is a collection of values that are referenced by a member of
-            the class. Among those values, the constant pool stores for example primitive values and strings that are
-            created by literal expressions within a method's body or as a field's value. Furthermore, the constant pool
-            stores the names of all types and methods that are used within the class.
-       </span></li>
+        <b>Constant pool</b>: A class's constant pool is a collection of values that are referenced by a member or
+        an annotation of this class. Among those values, the constant pool stores for example primitive values and
+        strings that are created by some literal expression in the class's source code. Furthermore, the constant pool
+        stores the names of all types and methods that are used within the class.
+    </span></li>
     <li><span>
-            <b>Field list</b>: A Java class file contains a list of fields that are declared in the class.
-            Additionally to the type, name and the modifiers of a field, the class file stores the annotations of each
-            field.
-       </span></li>
+         <b>Field list</b>: A Java class file contains a list of all fields that are declared in this class.
+         Additionally to the type, name and the modifiers of a field, the class file stores the annotations of each
+         field.
+    </span></li>
     <li><span>
-            <b>Method list</b>: Similar to the list of fields, a Java class file contains a list of all declared
-            methods. Other than fields, non-abstract methods are additionally described by an array of byte instructions
-            that describe the method body. These instructions form the so-called Java byte code.
-        </span></li>
+         <b>Method list</b>: Similar to the list of fields, a Java class file contains a list of all declared
+         methods. Other than fields, non-abstract methods are additionally described by an array of byte instructions
+         that describe the method body. These instructions represent the so-called Java byte code.
+    </span></li>
 </ul>
 
 <p>
-    With this format, the only non-trivial element is the description of a method's implementation, an array of
-    execution instructions which are each encoded with a single byte. These instructions are processed by a virtual
-    <a href="http://en.wikipedia.org/wiki/Stack_machine">stack machine</a> each time a method is invoked. For a
+    Fortunately, the ASM library takes full responsibility of creating an applicable constant pool. With this, the only
+    non-trivial element remains the description of a method's implementation which is an array of execution
+    instructions, each encoded as a single byte. These instructions are processed by a virtual
+    <a href="http://en.wikipedia.org/wiki/Stack_machine">stack machine</a> on the method's invocation. For a
     simple example, let us consider a method that calculates and returns the sum of the two primitive integers
-    <code>10</code> and <code>50</code>:
+    <code>10</code> and <code>50</code>. This method's Java byte code would look as follows:
 </p>
 
 <pre class="prettyprint">
@@ -1565,23 +1568,23 @@ IRETURN     // stack is empty
 <p>
     The above <a href="http://en.wikipedia.org/wiki/Java_bytecode_instruction_listings">mnemonic of an array of
     Java byte code</a> starts off by pushing both numbers onto the stack by using the <code>LDC</code> instruction.
-    This execution order differs from the order that is expressed in Java source code where the addition would be
-    written down with an infix notation <code>10 + 50</code>. However, this order cannot be processed by a stack
-    machine where any instruction can only access the upper most value that is currently found on the stack. An
-    example of such an instruction is <code>IADD</code> which two times consumes the currently upmost stack value
-    which it expects to be a primitive integer. In the process, it adds these two values and pushes the result
-    back onto the top of the stack. Finally, the <code>IRETURN</code> statement consumes this calculation result
-    and returns it from the method, leaving an empty stack.
+    Note how this execution order differs from the order that is expressed in Java source code where the addition would
+    be written as the infix notation <code>10 + 50</code>. However, the latter order cannot be processed by a stack
+    machine where any instruction like <code>+</code> can only access the upper most values that are currently found on
+    the stack. This addition is expressed by <code>IADD</code> which consumes the two upmost stack values which it both
+    expects to be primitive integers. In the process, it adds these two values and pushes the result back onto the top
+    of the stack. Finally, the <code>IRETURN</code> statement consumes this calculation result and returns it from the
+    method, leaving us with an empty stack.
 </p>
 
 <p>
     We already mentioned that any primitive value that is referenced in a method is stored in the class's constant
     pool. This is also true for the numbers <code>50</code> and <code>10</code> which are referenced in the above
-    method. Any value in the constant pool is assigned an access index with the length of two bytes. Let us assume
-    that the numbers <code>10</code> and <code>50</code> were stored at the first and second index. Together with
-    the byte values of the above mnemonic which are <code>0x12</code> for <code>LDC</code>, <code>0x60</code> for
-    <code>IADD</code> and <code>0xAC</code> for <code>IRETURN</code>, we now know how write down the above method
-    in raw Java byte code:
+    method. Any value in the constant pool is assigned an index with the length of two bytes. Let us assume
+    that the numbers <code>10</code> and <code>50</code> were stored at the indexes <code>1</code> and <code>2</code>.
+    Together with the byte values of the above mnemonic which are <code>0x12</code> for <code>LDC</code>,
+    <code>0x60</code> for <code>IADD</code> and <code>0xAC</code> for <code>IRETURN</code>, we now know how express
+    the above method as raw byte instructions:
 </p>
 
 <pre class="prettyprint pln-as-lit">
@@ -1592,25 +1595,26 @@ AC
 </pre>
 
 <p>
-    For a compiled class, this exact byte sequence would be contained in the class file. However, this description
-    is not yet enough in order to define a method's implementation. In order to accelerate a Java application's
-    runtime execution, each method needs to inform the Java virtual machine about the maximal size it will ever
-    occupy. This includes information on the required size of the execution stack which is two for the above
-    example method. Additionally, a method needs to signal the size it requires for method local variables which
-    includes the required size for any method argument and even the size for the <code>this</code> reference for
-    non-static method. To make things worse, not all values consume equal size. Both <code>long</code> and
-    <code>double</code> values consume two slots while any other value consumes one slot on the stack and in the
-    local variable storage.
+    For a compiled class, this exact byte sequence could be found in the class file. However, this description does
+    not yet suffice to fully define a method's implementation. In order to accelerate a Java application's
+    runtime execution, each method is required to inform the Java virtual machine about the required size for its
+    execution stack. For the above method which comes without branches, this is rather easy to determine as we already
+    saw that there will be at most two values on the stack. However, for more complex methods, providing this
+    information can easily become a complex task. And to make things worse, stack values can be of different size.
+    Both <code>long</code> and <code>double</code> values consume two slots while any other value consumes one
+    As if this wasn't enough, the Java virtual machine also requires information about the size of all local variable
+    assignments it is required to store for a method's execution. All local variables of a method are stored in an
+    array which also includes any parameter value and an additional slot containing the <code>this</code> reference for
+    non-static methods. Again, <code>long</code> and <code>double</code> values consume two slots in this array.
 </p>
 
 <p>
     Evidently, keeping track of all this information makes the manual assembly of Java byte code tedious and
-    error-prone which is why Byte Buddy provides a simplifying abstraction. Within Byte Buddy, any manipulation of
-    a stack value is contained by an implementation of <code>StackManipulation</code>. A stack manipulation is a
-    functional expression for a Java byte code instruction. An example of such an expression would be the
-    <code>LDC</code> instruction which is represented by the <code>IntegerConstant</code> class. The computation
-    of the sum of two primitive integers is however not yet represented in Byte Buddy such that we need to
-    provide our own implementation:
+    error-prone which is why Byte Buddy provides a simplifying abstraction. Within Byte Buddy, any stack instruction is
+    contained by an implementation of the <code>StackManipulation</code> interface. Any implementation of a stack
+    manipulation combines an instruction to alter a given stack and information on the size impact of this instruction.
+    Any number of such instructions can then easily be conflated to a common instruction. To demonstrate this, let us
+    implement a <code>StackManipulation</code> for the <code>IADD</code> instruction:
 </p>
 
 <pre class="prettyprint">
@@ -1633,22 +1637,23 @@ enum IntegerSum implements StackManipulation {
 </pre>
 
 <p>
-    Each <code>StackManipulation</code> combines an ASM-based stack manipulation with a description of its size
-    impact. To fulfill this contact, the above class describes to reduce the stack <code>Size</code> by one since
-    it consumes two values and pushes one value back onto the stack. Other than that, it does not require a
-    specific minimum stack size as it is expressed by the <code>Size</code>'s second value <code>0</code>.
-    Furthermore, any <code>StackManipulation</code> can express to be invalid. This behavior can be used for more
-    complex stack manipulation as for example variable assignments which might break type constraints. We will look
-    at an example of such an invalid stack manipulation later in this section. Finally, note that we describe
-    the stack manipulation as a singleton. Using such immutable, functional descriptions stack manipulations proved
-    to be a good practice for Byte Buddy's internal implementation and we can only recommend you to follow the same
-    approach.
+    From the above <code>apply</code> method, we learn that this stack manipulation executes the <code>IADD</code>
+    instruction by invoking the related method on ASM's method visitor. Furthermore, the method expresses that the
+    instruction reduces the current stack <code>Size</code> by one slot. The second argument of the created
+    <code>Size</code> instance is <code>0</code> what expresses that this instruction does not require a specific
+    minimal stack size for calculating interim results. Furthermore, any <code>StackManipulation</code> can express to
+    be invalid. This behavior can be used for more complex stack manipulation as for example object assignments which
+    might break a type constraint. We will look at an example of an invalid stack manipulation later in this section.
+    Finally, note that we describe the stack manipulation as a
+    <a href="http://en.wikipedia.org/wiki/Singleton_pattern#The_Enum_way">singleton enumeration</a>. Using such
+    immutable, functional descriptions of stack manipulations proved to be a good practice for Byte Buddy's internal
+    implementation and we can only recommend you to follow the same approach.
 </p>
 
 <p>
-    With the <code>IntegerSum</code>, the <code>IntegerConstant</code> and the additional predefined
-    <code>MethodReturn</code> stack manipulations, we can finally implement a method. Within Byte Buddy, a method
-    implementation is contained by a <code>ByteCodeAppender</code> which can be implemented as follows:
+    By combining the above <code>IntegerSum</code> with the predefined <code>IntegerConstant</code> and the
+    <code>MethodReturn</code> stack manipulations, we can now implement a method. Within Byte Buddy, a method
+    implementation is contained by a <code>ByteCodeAppender</code> which we implement as follows:
 </p>
 
 <pre class="prettyprint">
@@ -1672,7 +1677,7 @@ enum SumMethod implements ByteCodeAppender {
       IntegerConstant.forValue(10),
       IntegerConstant.forValue(50),
       IntegerSum.INSTANCE,
-      MethodReturn.returning(instrumentedMethod.getReturnType())
+      MethodReturn.INTEGER
     ).apply(methodVisitor, instrumentationContext);
     return new Size(operandStackSize.getMaximalSize(),
                     instrumentedMethod.getStackSize());
@@ -1682,21 +1687,27 @@ enum SumMethod implements ByteCodeAppender {
 
 <p>
     Again, the custom <code>ByteCodeAppender</code> is implemented as a singleton enumeration. Because abstract
-    methods are defined without an implementation, a byte code might not require to append code. As obvious from
-    the <code>apply</code> method, this is however not true for our <code>SumMethod</code>.
+    methods are defined without an implementation, a byte code appender might not require to append any code. As
+    obvious from the above <code>apply</code> method, this is however not true for our <code>SumMethod</code>
+    implementation.
 </p>
 
 <p>
-    Before implementing the desired method, we first want to validate that the instrumented method actually returns
-    a primitive integer. If this validation succeeds, we load the two numbers <code>10</code> and <code>50</code>
-    onto the stack, apply the summation and return this value. By wrapping all these instructions in a compound
-    stack manipulations, we can conclusively retrieve the aggregated stack size that is required to perform this
-    chain of stack manipulations. Finally, we return the overall size that is required by this stack manipulation.
-    Besides the size of the execution stack which is expressed by the size of the <code>StackManipulation</code>,
-    this information requires the size of the method's local variables which simply resembles the required
-    size for the method's parameters since we did not define any local variables of our own. With this
-    implementation of our summation method, we are now ready to provide a custom <code>Instrumentation</code> for
-    this method which we can provide to Byte Buddy's domain specific language:
+    Before implementing the desired method, we first validate that the instrumented method really returns a primitive
+    integer. Otherwise, the created class would be rejected by the JVM's validator. Then we load the two numbers
+    <code>10</code> and <code>50</code> onto the execution stack, apply the summation of these values and return the
+    calculation result. By wrapping all these instructions with a compound stack manipulations, we can conclusively
+    retrieve the aggregated stack size that is required to perform this chain of stack manipulations. Finally, we
+    return the overall size that is required for this method. The first argument of the returned
+    <code>ByteCodeAppender.Size</code> reflects the required size for the execution stack which we just mentioned to
+    be expressed by the <code>StackManipulation.Size</code>. Additionally, the second argument reflects the required
+    size for the local variable array which here simply resembles the required size for the method's parameters and
+    a possible <code>this</code> reference since we did not define any local variables of our own.
+</p>
+
+<p>
+    With this implementation of our summation method, we are now ready to provide a custom <code>Instrumentation</code>
+    for this method which we can provide to Byte Buddy's domain specific language:
 </p>
 
 <pre class="prettyprint">
@@ -1716,6 +1727,33 @@ enum SumInstrumentation implements Instrumentation {
 }
 </pre>
 
+<p>
+    Any <code>Instrumentation</code> is queried in two stages. First, an instrumentation gets the chance to
+    alter the created class by adding additional fields or methods in the <code>prepare</code> method. Furthermore,
+    the preparation allows an instrumentation to register <code>TypeInitializer</code>s which we learned about in
+    a previous section. If no such preparations are required, it suffices to return the <code>InstrumentedType</code>
+    which is provided by the argument. Note that an <code>Instrumentation</code> should not normally return a
+    customized instance of an instrumented type but call the interfaces appender methods which are all prefixed by
+    <code>with</code>. After any <code>Instrumentation</code> for a particular class creation is prepared, the
+    <code>appender</code> method is invoked to return a <code>ByteCodeAppender</code>. This appender will then be
+    queried for any method that was selected for a given instrumentation and also for any method that was registered
+    during the instrumentation's invokation of the <code>prepare</code> method.
+</p>
+
+<p>
+    Note that Byte Buddy only invokes each <code>Instrumentation</code>'s <code>prepare</code> and <code>appender</code>
+    methods a single time during the creation process of any class, independently of the number of times they are
+    delivered within the domain specific language. This way, an <code>Instrumentation</code> avoids to verify if a
+    field or method was already defined before. In the process, Byte Buddy compares <code>Instrumentation</code>s by
+    their <code>hashCode</code> and <code>equals</code> methods. In general, any class that is used by Byte Buddy
+    should provide meaningful implementations of these methods. The fact that enumerations come with such
+    implementations per definition is another good reason for their use.
+</p>
+
+<p>
+    With all this, let us see the <code>SumInstrumentation</code> in action:
+</p>
+
 <pre class="prettyprint">
 abstract class SumExample {
   public abstract int calculate();
@@ -1727,11 +1765,23 @@ new ByteBuddy()
     .intercept(SumInstrumentation.INSTANCE)
   .make()
 </pre>
+
 <p>
-    To be completed: Explain JVM's stack execution model (mention stack size, jump instructions and stack frames),
-    Byte Buddy's StackManipulation abstraction, ByteCodeAppender and Instrumentation implement a simple assigner
-    that calls toString, implement a custom instrumentation that calls toString on its only argument, implement a
-    custom annotation handler that returns a fixed string value.
+    Congratulations! You just extended Byte Buddy to implement a custom method that computes and returns the sum of
+    <code>10</code> and <code>50</code>. Of course, this example implementation is not of much use but now you
+    hopefully got the drill in order to apply this knowledge to implement your own requirements. If you feel that
+    you created something handy, feel free to <a href="/develop">contribute your instrumentation</a>. We are looking
+    forward to it!
+</p>
+
+<p>
+    Before we move on to customizing some other components of Byte Buddy, we should briefly discuss the use of jump
+    instructions and the related Java stack frames.
+</p>
+
+<p>
+    To be completed: implement a simple assigner that calls toString // implement a custom annotation handler that
+    returns a fixed string value.
 </p>
 
 </div>
