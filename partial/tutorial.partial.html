@@ -1811,9 +1811,9 @@ enum ToStringAssigner implements Assigner {
                                   TypeDescription targetType,
                                   boolean considerRuntimeType) {
     if (!sourceType.isPrimitive() && targetType.represents(String.class)) {
-      MethodDescription toStringMethod = new TypeDescription.ForLoadedType(Object.class)
-        .getDeclaredMethods()
-        .filter(named("toString"))
+      MethodDescription toStringMethod = sourceType
+        .getReachableMethods()
+        .filter(named("toString").and(takesArguments(0)).and(returns(String.class)))
         .getOnly();
       return MethodInvocation.invoke(toStringMethod);
     } else {
