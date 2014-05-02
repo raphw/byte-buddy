@@ -1797,9 +1797,21 @@ new ByteBuddy()
 <h4>Creating a custom assigner</h4>
 
 <p>
-    To be completed: implement a simple assigner that calls toString
+    In a previous section, we discussed that Byte Buddy's built in <code>Instrumentation</code>s rely on an
+    <code>Assigner</code> in order to assign values to variables. In this process, an <code>Assigner</code> is able to
+    apply a transformation of one value to another by emitting an appropriate <code>StackManipulation</code>. Doing so,
+    Byte Buddy's built-in assigners provide for example auto-boxing of primitive values and their wrapper types.
+    In the most trivial case, a value is assignable to a variable <i>as is</i>. In some cases, an assignment may
+    however not be possible at all what can be expressed by returning an invalid <code>StackManipulation</code> from an
+    assigner. A canonical implementation of an invalid assignment is provided by Byte Buddy's
+    <code>IllegalStackManipulation</code> class.
 </p>
 
+<p>
+    To demonstrate the use of a custom assigner, we are now going to implement an <code>Assigner</code> that only
+    assigns values to <code>String</code>-typed variables by calling the <code>toString</code> method on any
+    value it receives:
+</p>
 
 <pre class="prettyprint">
 enum ToStringAssigner implements Assigner {
@@ -1823,14 +1835,37 @@ enum ToStringAssigner implements Assigner {
 }
 </pre>
 
+<p>
+    The above implementation first validates that the input value is not of a primitive type and that the target
+    variable type is of a <code>String</code> type. If these conditions are not fulfilled, the <code>Assigner</code>
+    emits an <code>IllegalStackManipulation</code> to render the attempted assignment invalid. Otherwise, we identify
+    the source type's <code>toString</code> method by its unique signature. We then use Byte Buddy's
+    <code>MethodInvocation</code> in order to create a <code>StackManipulation</code> that calls this method on the
+    source value. We can now integrate this custom <code>Assigner</code> with for example Byte Buddy's
+    <code>FixedValue</code> instrumentation as follows:
+</p>
+
 <pre class="prettyprint">
 new ByteBuddy()
   .subclass(Object.class)
   .method(named("toString"))
-    .intercept(FixedValue.reference(42)
+    .intercept(FixedValue.value(42)
       .withAssigner(new PrimitiveTypeAwareAssigner(ToStringAssigner.INSTANCE), false))
   .make()
 </pre>
+
+<p>
+    When the <code>toString</code> method is called on an instance of the above type, it will return the string value
+    <code>42</code>. This is only possible by using our custom assigner which converts the <code>Integer</code> type
+    to a <code>String</code> by invoking the <code>toString</code> method. Note that we additionally wrapped
+    the custom assigner with the built-in <code>PrimitiveTypeAwareAssigner</code> which performs an auto-boxing of
+    the provided primitive <code>int</code> to its wrapper type before delegating the assignment of this wrapped
+    primitive value to its inner assigner. Other built-in assigners are the <code>VoidAwareAssigner</code> and the
+    <code>ReferenceTypeAwareAssigner</code>. Always remember to implement meaningful <code>hashCode</code> and
+    <code>equals</code> methods for your custom assigners since those methods are normally called from their
+    counterparts in the <code>Instrumentation</code> that is making use of a given assigner. Again, by implementing
+    an assigner as a singleton enumeration, we avoid doing this manually.
+</p>
 
 <h4>Creating a custom parameter binder</h4>
 
@@ -1863,8 +1898,8 @@ enum StringValueBinder
                                                          MethodDescription target,
                                                          TypeDescription instrumentedType,
                                                          Assigner assigner) {
-    return new MethodDelegationBinder.ParameterBinding.Anonymous(
-      new TextConstant(annotation.value()));
+    StackManipulation constant = new TextConstant(annotation.value());
+    return new MethodDelegationBinder.ParameterBinding.Anonymous(constant);
   }
 }
 </pre>
