@@ -28,11 +28,6 @@
 
 <div class="col-md-8 col-md-offset-1" id="affixComponent">
 
-<div class="row" style="background-color: orange; font-weight: bold; color: #ffffff; padding: 5px;">
-    This tutorial is currently in the make. We hope to publish a first release of Byte
-    Buddy together with the completed version of this tutorial and web page before July 2014!
-</div>
-
 <div class="row" id="rational">
 
 <h2>Why runtime code generation?</h2>
@@ -274,11 +269,10 @@ class HardcodedFrameworkImpl implements Framework {
     Any type that is created by Byte Buddy is emitted by an instance of the <code>ByteBuddy</code> class. Simply
     create a new instance by calling <code>new ByteBuddy()</code> and you are ready to go. Hopefully, you are using
     an development environment where you get suggestions on the methods that you can call on a given object. This
-    way, you can avoid to manually look up a class's API in <a href="javadoc/v0_1/index.html">Byte Buddy's
-    javadoc</a> but have your IDE guide you through the process. As mentioned before, Byte Buddy offers a domain
-    specific language which intends to be as human-readable as possible. Your IDE's hints will therefore point you
-    into the right direction most of the time. But enough of the talking, let us create a first class at a Java
-    program's runtime:
+    way, you can avoid to manually look up a class's API in Byte Buddy's javadoc but have your IDE guide you through
+    the process. As mentioned before, Byte Buddy offers a domain specific language which intends to be as
+    human-readable as possible. Your IDE's hints will therefore point you into the right direction most of the time.
+    But enough of the talking, let us create a first class at a Java program's runtime:
 </p>
 
 <pre class="prettyprint">

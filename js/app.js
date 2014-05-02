@@ -34,12 +34,12 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
         };
     })
 
-    .controller('menuController', function ($scope, $location, $rootScope, scroller) {
+    .controller('menuController', function ($scope, $location, $rootScope, scroller, repository) {
         $scope.menuItems = [
             {name: 'Welcome', target: '#/'},
             {name: 'Learn', target: '#/tutorial'},
             {name: 'Develop', target: '#/develop'},
-            {name: 'API', target: 'javadoc/v0_1/index.html'}
+            {name: 'API', target: 'javadoc/' + repository.version + '/index.html'}
         ];
         $scope.activeClass = function (current) {
             return current.target === '#' + ($location.path() || '/') ? 'active' : '';
