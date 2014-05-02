@@ -50,7 +50,7 @@
                             <dependencyReducedPomLocation>
                                 ${project.build.directory}/dependency-reduced-pom.xml
                             </dependencyReducedPomLocation>
-                            <createSourcesJar>${mode.extra}</createSourcesJar>
+                            <createSourcesJar>true</createSourcesJar>
                             <shadeSourcesContent>true</shadeSourcesContent>
                             <relocations>
                                 <relocation>
