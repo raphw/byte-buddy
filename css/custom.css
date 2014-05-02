@@ -315,10 +315,13 @@ li.L1, li.L3, li.L5, li.L7, li.L9 {
     padding: 4px 7px;
     border: 0;
     cursor: pointer;
+    color: black;
 }
 
 .repository .nav-tabs li.active a {
     padding: 4px 7px;
+    color: black;
+    cursor: default;
     border: 0;
     background-color: #F5871F;
 }

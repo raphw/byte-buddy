@@ -240,7 +240,7 @@ class HardcodedFrameworkImpl implements Framework {
         <a href="http://jodd.org/doc/proxetta/">Proxetta</a>
     </dt>
     <dd>
-        Proxetta is a module of the Jodd framework and a rather young player in the code generation game. Proxetta
+        Proxetta is a module of the Jodd framework and a rather young player in the field of code generation. Proxetta
         focuses on the creation of proxies and can be considered as similar to cglib in its approach.
     </dd>
 </dl>
@@ -1870,7 +1870,11 @@ new ByteBuddy()
 <h4>Creating a custom parameter binder</h4>
 
 <p>
-    To be completed: implement a custom annotation handler that returns a fixed string value.
+    We already mentioned in a previous section that it is possible to extend the <code>MethodDelegation</code>
+    instrumentation to process user-defined annotations. For this purpose, we need to provide a custom
+    <code>ParameterBinder</code> which knows how to handle a given annotation. As an example, we want to define
+    an annotation with the purpose to simply inject a fixed string into the annotated parameter. First, we define such
+    a <code>StringValue</code> annotation:
 </p>
 
 <pre class="prettyprint">
@@ -1879,6 +1883,20 @@ new ByteBuddy()
   String value();
 }
 </pre>
+
+<p>
+    We need to make sure that the annotation is visible at runtime by setting the appropriate
+    <code>RuntimePolicy</code>. Otherwise, the annotation is not retained at runtime and Byte Buddy does not have a
+    chance to discover it. Doing so, the above <code>value</code> property contains the string which is assigned to
+    the annotated parameter as a value.
+</p>
+
+<p>
+    With our custom annotation, we need to create a corresponding <code>ParameterBinder</code> which is able to create
+    a <code>StackManipulation</code> which expresses the binding for this parameter. This parameter binder is invoked
+    each time, its corresponding annotation is discovered on a parameter by the <code>MethodDelegation</code>.
+    Implementing a custom parameter binder for our example annotation is straight forward:
+</p>
 
 <pre class="prettyprint">
 enum StringValueBinder
@@ -1898,11 +1916,36 @@ enum StringValueBinder
                                                          MethodDescription target,
                                                          TypeDescription instrumentedType,
                                                          Assigner assigner) {
+    if (!target.getParameterTypes().get(targetParameterIndex).represents(String.class)) {
+      throw new IllegalStateException(target + " makes wrong use of StringValue");
+    }
     StackManipulation constant = new TextConstant(annotation.value());
     return new MethodDelegationBinder.ParameterBinding.Anonymous(constant);
   }
 }
 </pre>
+
+<p>
+    Initially, the parameter binder makes sure that the <code>target</code> method's relevant parameter is actually
+    a <code>String</code> type. If this is not the case, we will throw an exception to inform the annotation's user
+    of his illegal placing of this annotation. Otherwise, we simply create a <code>TextConstant</code> which represents
+    the loading of a constant pool string onto the execution stack. This <code>StackManipulation</code> is then wrapped
+    as an anonymous <code>ParameterBinding</code> which is finally returned from the method. Alternatively, you could
+    have provided either a <code>Unique</code> or an <code>Illegal</code> parameter binding. A unique binding is
+    identified by any object which allows to retrieve this binding from an <code>AmbiguityResolver</code>. In a later
+    step, such a resolver is able to look up if a parameter binding was registered with some unique identifier and can
+    then decide if this binding is superior to another successfully bound method. With an illegal binding, one can
+    instruct Byte Buddy that a specific pair of a <code>source</code> and a <code>target</code> method is incompatible
+    and cannot be bound together.
+</p>
+
+<p>
+    This already is all the information that is required for using a custom annotation with a
+    <code>MethodDelegation</code> instrumentation. After receiving a <code>ParameterBinding</code>, it makes sure that
+    its value is bound to the correct parameter or it will discard the current pair of a <code>source</code> and
+    <code>target</code> method as unbindable. Furthermore, it will allow <code>AmbiguityResolver</code>s to look up
+    unique bindings. Finally, let us put this custom annotation in action:
+</p>
 
 <pre class="prettyprint">
 class ToStringInterceptor {
@@ -1915,9 +1958,17 @@ new ByteBuddy()
   .subclass(Object.class)
   .method(named("toString"))
     .intercept(MethodDelegation.to(ToStringInterceptor.class)
-      .defineArgumentBinder(StringValueBinder.INSTANCE))
+      .defineParameterBinder(StringValueBinder.INSTANCE))
   .make()
 </pre>
+
+<p>
+    Note that by specifying the <code>StringValueBinder</code> as the only parameter binder, we replace all defaults.
+    Alternatively, we could have appended the parameter binder to those that are already registered. With only one
+    possible target method in the <code>ToStringInterceptor</code>, the dynamic class's intercepted
+    <code>toString</code> method is bound to the latter method's invocation. When the target method is invoked,
+    Byte Buddy assigns the annotation's string value as the target method's only parameter.
+</p>
 
 </div>
 
