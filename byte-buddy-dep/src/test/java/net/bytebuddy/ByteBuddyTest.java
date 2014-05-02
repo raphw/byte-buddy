@@ -583,7 +583,6 @@ public class ByteBuddyTest {
                 .getLoaded()
                 .newInstance()
                 .toString(), is("42"));
-
     }
 
     @Retention(RetentionPolicy.RUNTIME)
@@ -634,7 +633,6 @@ public class ByteBuddyTest {
                 .getLoaded()
                 .newInstance()
                 .toString(), is("Hello!"));
-
     }
 
     @SuppressWarnings("unused")
