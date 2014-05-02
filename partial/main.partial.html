@@ -131,18 +131,32 @@ assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
         <dl>
             <dt>Download</dt>
             <dd>
-                Byte Buddy is currently in pre-release in the snapshot version 0.1. Once, this web page is completed, it
-                will be available on Maven Central. For now, you can <a href="https://github.com/raphw/byte-buddy">download</a>
-                the project from GitHub. Before releasing a project using Byte Buddy, make sure to read through the
-                information on <a href="#dependency" data-du-smooth-scroll="" data-offset="40">maintaining a project
-                dependency</a>.
+                Byte Buddy is currently released in version {{version}}. You can download Byte Buddy directly
+                from <a href="https://bintray.com/raphw/maven/ByteBuddy">its Bintray page</a>. Alternatively, you can
+                also download the source code from <a href="https://github.com/raphw/byte-buddy">GitHub</a>.
+            </dd>
+        </dl>
+        <dl>
+            <dt>Build dependency</dt>
+            <dd>
+                Byte Buddy releases are available from the <a href="http://search.maven.org/">Maven Central</a> and
+                <a href="https://bintray.com/bintray/jcenter">JCenter</a> repositories. Using a build manager, it is
+                therefore easy to define a project dependency on Byte Buddy. Before releasing your project, please take
+                the time to read through the information on
+                <a href="#dependency" data-du-smooth-scroll="" data-offset="40">maintaining a project dependency</a> on
+                Byte Buddy.<br style="margin-bottom: 20px;" />
+                <tabset class="repository">
+                    <tab ng-repeat="tab in tabs" heading="{{tab.title}}" active="tab.active">
+                        <pre data-ng-class="prettyprint" data-ng-bind="tab.content"></pre>
+                    </tab>
+                </tabset>
             </dd>
         </dl>
         <dl>
             <dt>Licence</dt>
             <dd>
-                ByteBuddy is an open source project distributed under the liberal and business friendly
-                <a href="http://www.apache.org/licenses/LICENSE-2.0.html">Apache 2.0 licence</a>. The source code is
+                ByteBuddy is an open source project distributed under the liberal and business-friendly
+                <a href="http://www.apache.org/licenses/LICENSE-2.0.html">Apache 2.0 licence</a>. Its source code is
                 freely available on <a href="https://github.com/raphw/byte-buddy">GitHub</a>.
             </dd>
         </dl>

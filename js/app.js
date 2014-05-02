@@ -2,6 +2,12 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
 
     .value('duScrollDuration', 2000)
 
+    .constant('repository', {
+        groupId: 'net.bytebuddy',
+        artifactId: 'byte-buddy',
+        version: '0.1'
+    })
+
     .config(function ($routeProvider) {
         $routeProvider
             .when('/', {
@@ -65,13 +71,38 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
         ];
     })
 
-    .controller('mainController', function ($scope) {
+    .controller('mainController', function ($scope, repository) {
         $scope.links = [
             {name: 'Welcome', target: '#welcome'},
             {name: 'Hello world', target: '#helloworld'},
             {name: 'Getting Byte Buddy', target: '#getbytebuddy'},
             {name: 'Dependency management', target: '#dependency'},
             {name: 'Support', target: '#support'}
+        ];
+        $scope.version = repository.version;
+        $scope.tabs = [
+            { title: 'Maven', content: '<dependency>\n  <groupId>'
+                + repository.groupId + '</groupId>\n  <artifactId>'
+                + repository.artifactId + '</artifactId>\n  <version>'
+                + repository.version + '</version>\n</dependency>' },
+            { title: 'Gradle', content: repository.groupId + ':'
+                + repository.artifactId + ':'
+                + repository.version },
+            { title: 'SBT', content: 'libraryDependencies += "'
+                + repository.groupId + '" % "'
+                + repository.artifactId + '" % "'
+                + repository.version + '"' },
+            { title: 'Ivy', content: '<dependency org="'
+                + repository.groupId + '" name="'
+                + repository.artifactId + '" rev="'
+                + repository.version + '" />' },
+            { title: 'Buildr', content: '\'' + repository.groupId + ':'
+                + repository.artifactId + ':jar:'
+                + repository.version + '\'' },
+            { title: 'Grape', content: '@Grapes(\n  @Grab(group=\''
+                + repository.groupId + '\', module=\''
+                + repository.artifactId + '\', version=\''
+                + repository.version + '\')\n)' }
         ];
     })
 

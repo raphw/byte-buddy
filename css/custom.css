@@ -306,6 +306,24 @@ li.L1, li.L3, li.L5, li.L7, li.L9 {
 }
 
 /*
+ * Custom tab navigation
+ */
+
+.repository .nav-tabs li a, .repository .nav-tabs li a:hover {
+    font-size: 14px;
+    margin: 0;
+    padding: 4px 7px;
+    border: 0;
+    cursor: pointer;
+}
+
+.repository .nav-tabs li.active a {
+    padding: 4px 7px;
+    border: 0;
+    background-color: #F5871F;
+}
+
+/*
  * Bootply generated styling
  */
 @media (max-width: 767px) {
