@@ -38,7 +38,6 @@
         <version.plugin.release>2.5</version.plugin.release>
         <version.plugin.resources>2.6</version.plugin.resources>
         <distribution.bintray>https://api.bintray.com/maven/raphw/maven/ByteBuddy</distribution.bintray>
-        <mode.extra>false</mode.extra>
     </properties>
 
     <licenses>
