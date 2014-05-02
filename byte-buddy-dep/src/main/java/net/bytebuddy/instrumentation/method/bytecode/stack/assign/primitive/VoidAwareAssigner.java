@@ -26,6 +26,7 @@ public class VoidAwareAssigner implements Assigner {
 
     private final Assigner nonVoidAwareAssigner;
     private final boolean returnDefaultValue;
+
     /**
      * Creates a new assigner that is capable of handling void types.
      *
@@ -75,6 +76,7 @@ public class VoidAwareAssigner implements Assigner {
         POP_TWO_FRAMES(Opcodes.POP2, StackSize.DOUBLE.toDecreasingSize());
         private final int removalOpCode;
         private final Size sizeChange;
+
         private ValueRemovingStackManipulation(int removalOpCode, Size sizeChange) {
             this.removalOpCode = removalOpCode;
             this.sizeChange = sizeChange;

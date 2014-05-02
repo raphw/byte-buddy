@@ -213,6 +213,7 @@ public interface MethodRegistry {
             private final InstrumentedType instrumentedType;
             private final List<Entry> entries;
             private final MethodRegistry.Compiled.Entry fallback;
+
             private Compiled(InstrumentedType instrumentedType,
                              List<Entry> entries,
                              MethodRegistry.Compiled.Entry fallback) {

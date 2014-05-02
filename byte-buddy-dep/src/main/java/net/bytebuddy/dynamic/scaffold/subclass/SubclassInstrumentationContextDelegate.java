@@ -49,6 +49,7 @@ public class SubclassInstrumentationContextDelegate
     private final Map<MethodDescription, MethodDescription> knownTargetMethodsToAccessorMethod;
     private final Map<MethodDescription, Entry> registeredAccessorMethodToTargetMethodCall;
     private final Map<String, MethodDescription> reachableMethods;
+
     /**
      * Creates a new delegate with a default prefix.
      *
@@ -60,6 +61,7 @@ public class SubclassInstrumentationContextDelegate
                                                   BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
         this(instrumentedType, bridgeMethodResolverFactory, DEFAULT_PREFIX);
     }
+
     /**
      * Creates a new delegate.
      *

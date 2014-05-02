@@ -27,6 +27,7 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
     private final TypeDescription primitiveType;
     private final String unboxingMethodName;
     private final String unboxingMethodDescriptor;
+
     private PrimitiveUnboxingDelegate(String wrapperTypeName,
                                       StackSize sizeIncrease,
                                       Class<?> wrapperType,

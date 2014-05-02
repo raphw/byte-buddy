@@ -277,10 +277,10 @@ public class MethodDelegationConstructionTest<T extends CallTraceable>
     private final Matcher<?> matcher;
 
     public MethodDelegationConstructionTest(Class<T> sourceType,
-                                Class<?> targetType,
-                                Class<?>[] parameterTypes,
-                                Object[] arguments,
-                                Matcher<?> matcher) {
+                                            Class<?> targetType,
+                                            Class<?>[] parameterTypes,
+                                            Object[] arguments,
+                                            Matcher<?> matcher) {
         this.sourceType = sourceType;
         this.targetType = targetType;
         this.parameterTypes = parameterTypes;

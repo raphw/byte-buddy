@@ -10,7 +10,6 @@ public class MyTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
 
-
     @Test
     public void testName() throws Exception {
         System.out.println();

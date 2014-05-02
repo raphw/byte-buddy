@@ -84,9 +84,10 @@ public class MethodRegistryDefaultTest {
     @Test
     public void testFallbackReturnedForEmptyRegistry() throws Exception {
         assertThat(new MethodRegistry.Default()
-                .compile(basicInstrumentedType, fallback)
-                .target(unknownMethod),
-                is(fallback));
+                        .compile(basicInstrumentedType, fallback)
+                        .target(unknownMethod),
+                is(fallback)
+        );
     }
 
     @Test

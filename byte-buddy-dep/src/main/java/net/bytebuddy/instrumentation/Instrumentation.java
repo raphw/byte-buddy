@@ -113,10 +113,11 @@ public interface Instrumentation {
             private final AuxiliaryType.MethodAccessorFactory methodAccessorFactory;
             private final Map<AuxiliaryType, DynamicType> auxiliaryTypes;
             private final Map<MethodDescription, MethodDescription> registeredAccessorMethods;
+
             /**
              * Creates a new default instrumentation context.
              *
-             * @param classFileVersion          The class format version for auxiliary types.
+             * @param classFileVersion            The class format version for auxiliary types.
              * @param auxiliaryTypeNamingStrategy The naming strategy for auxiliary types that are registered.
              * @param methodAccessorFactory       A factory for creating method proxies for the currently instrumented
              *                                    type.

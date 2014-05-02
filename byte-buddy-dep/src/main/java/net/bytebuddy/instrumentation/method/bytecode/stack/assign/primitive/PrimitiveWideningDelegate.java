@@ -94,6 +94,7 @@ public enum PrimitiveWideningDelegate {
     private final StackManipulation toLongStackManipulation;
     private final StackManipulation toFloatStackManipulation;
     private final StackManipulation toDoubleStackManipulation;
+
     private PrimitiveWideningDelegate(StackManipulation toBooleanStackManipulation,
                                       StackManipulation toByteStackManipulation,
                                       StackManipulation toShortStackManipulation,

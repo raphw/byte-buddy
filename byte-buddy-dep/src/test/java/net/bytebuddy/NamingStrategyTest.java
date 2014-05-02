@@ -1,6 +1,5 @@
 package net.bytebuddy;
 
-import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Rule;
@@ -9,9 +8,9 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 import org.objectweb.asm.MethodVisitor;
 
-import static org.hamcrest.core.StringStartsWith.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.StringStartsWith.startsWith;
 import static org.mockito.Mockito.*;
 
 public class NamingStrategyTest {

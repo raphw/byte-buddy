@@ -669,6 +669,7 @@ public final class MethodMatchers {
 
     /**
      * Checks if a method is annotated by a given parameter.
+     *
      * @param annotationType The annotation type of interest.
      * @return A method matcher that matches methods that carry the given annotation.
      */

@@ -46,10 +46,11 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     private final MethodRegistry methodRegistry;
     private final FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory;
     private final MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory;
+
     /**
      * Creates a new immutable type builder for a subclassing a loaded class.
      *
-     * @param classFileVersion                    The class format version for the created dynamic type.
+     * @param classFileVersion                      The class format version for the created dynamic type.
      * @param namingStrategy                        The naming strategy for naming the dynamic type.
      * @param superType                             The loaded super type the dynamic type should extend.
      * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
@@ -96,10 +97,11 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         this.defaultMethodAttributeAppenderFactory = defaultMethodAttributeAppenderFactory;
         this.methodRegistry = constructorStrategy.inject(methodRegistry, defaultMethodAttributeAppenderFactory);
     }
+
     /**
      * Creates a new immutable type builder for a subclassing a loaded class.
      *
-     * @param classFileVersion                    The class format version for the created dynamic type.
+     * @param classFileVersion                      The class format version for the created dynamic type.
      * @param namingStrategy                        The naming strategy for naming the dynamic type.
      * @param superType                             The loaded super type the dynamic type should extend.
      * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.

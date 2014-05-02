@@ -191,6 +191,7 @@ public class MethodCallProxy implements AuxiliaryType {
 
         private final MethodDescription accessorMethod;
         private final Assigner assigner;
+
         private MethodCall(MethodDescription accessorMethod, Assigner assigner) {
             this.accessorMethod = accessorMethod;
             this.assigner = assigner;

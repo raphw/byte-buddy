@@ -29,10 +29,10 @@ public class TextConstantTest {
     @Test
     public void testTextValue() throws Exception {
         StackManipulation.Size size = new TextConstant(FOO).apply(methodVisitor, instrumentationContext);
-         assertThat(size.getSizeImpact(), is(1));
-         assertThat(size.getMaximalSize(), is(1));
-         verify(methodVisitor).visitLdcInsn(FOO);
-         verifyNoMoreInteractions(methodVisitor);
-         verifyZeroInteractions(instrumentationContext);
+        assertThat(size.getSizeImpact(), is(1));
+        assertThat(size.getMaximalSize(), is(1));
+        verify(methodVisitor).visitLdcInsn(FOO);
+        verifyNoMoreInteractions(methodVisitor);
+        verifyZeroInteractions(instrumentationContext);
     }
 }

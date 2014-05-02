@@ -35,6 +35,7 @@ public interface AnnotationAppender {
         INVISIBLE(false, true);
         private final boolean visible;
         private final boolean suppressed;
+
         private AnnotationVisibility(boolean visible, boolean suppressed) {
             this.visible = visible;
             this.suppressed = suppressed;

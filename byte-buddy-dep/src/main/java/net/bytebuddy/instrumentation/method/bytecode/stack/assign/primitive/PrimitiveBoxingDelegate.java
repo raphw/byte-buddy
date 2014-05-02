@@ -26,6 +26,7 @@ public enum PrimitiveBoxingDelegate {
     private final TypeDescription wrapperType;
     private final String boxingMethodName;
     private final String boxingMethodDescriptor;
+
     private PrimitiveBoxingDelegate(String wrapperTypeName,
                                     StackSize sizeDecrease,
                                     Class<?> wrapperType,

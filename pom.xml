@@ -126,10 +126,10 @@
     </build>
 
     <distributionManagement>
-      <repository>
-        <id>bintray</id>
-        <url>${distribution.bintray}</url>
-      </repository>
+        <repository>
+            <id>bintray</id>
+            <url>${distribution.bintray}</url>
+        </repository>
     </distributionManagement>
 
     <profiles>

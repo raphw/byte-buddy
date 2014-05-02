@@ -371,7 +371,7 @@ public interface TypeWriter<T> {
          *
          * @param instrumentedType       The instrumented type to be written.
          * @param instrumentationContext The instrumentation context for this instrumentation.
-         * @param classFileVersion     The class format version for the type that is written.
+         * @param classFileVersion       The class format version for the type that is written.
          */
         public Builder(InstrumentedType instrumentedType,
                        Instrumentation.Context instrumentationContext,

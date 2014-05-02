@@ -43,7 +43,7 @@ public class TypeProxyTest {
         return Arrays.asList(new Object[][]{
                 {BAR, new Class<?>[0], new Object[0], nullValue()},
                 {TO_STRING, new Class<?>[0], new Object[0], is(TO_STRING)},
-                {EQUALS, new Class<?>[] {Object.class}, new Object[]{EQUALS}, is(EQUALS_RESULT)},
+                {EQUALS, new Class<?>[]{Object.class}, new Object[]{EQUALS}, is(EQUALS_RESULT)},
                 {HASH_CODE, new Class<?>[0], new Object[0], is(HASH_CODE_RESULT)},
                 {CLONE, new Class<?>[0], new Object[0], is(CLONE)}
         });

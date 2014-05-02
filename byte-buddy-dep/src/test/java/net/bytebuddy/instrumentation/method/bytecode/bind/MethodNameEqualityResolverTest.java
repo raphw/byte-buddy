@@ -12,22 +12,22 @@ public class MethodNameEqualityResolverTest extends AbstractAmbiguityResolverTes
     private static final String BAR = "bar";
 
     @Test
-    public void testBothEqual() throws Exception{
+    public void testBothEqual() throws Exception {
         test(FOO, FOO, FOO, MethodDelegationBinder.AmbiguityResolver.Resolution.AMBIGUOUS);
     }
 
     @Test
-    public void testLeftEqual() throws Exception{
+    public void testLeftEqual() throws Exception {
         test(FOO, BAR, FOO, MethodDelegationBinder.AmbiguityResolver.Resolution.LEFT);
     }
 
     @Test
-    public void testRightEqual() throws Exception{
+    public void testRightEqual() throws Exception {
         test(BAR, FOO, FOO, MethodDelegationBinder.AmbiguityResolver.Resolution.RIGHT);
     }
 
     @Test
-    public void testNoneEqual() throws Exception{
+    public void testNoneEqual() throws Exception {
         test(BAR, BAR, FOO, MethodDelegationBinder.AmbiguityResolver.Resolution.AMBIGUOUS);
     }
 

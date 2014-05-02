@@ -37,6 +37,7 @@ public enum FieldAccess {
             return INSTANCE.new AccessDispatcher(fieldDescription);
         }
     }
+
     /**
      * Representation of a field access for which a getter and a putter can be created.
      */

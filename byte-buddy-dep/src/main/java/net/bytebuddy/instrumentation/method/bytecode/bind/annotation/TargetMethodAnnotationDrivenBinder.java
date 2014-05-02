@@ -19,6 +19,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
     private final DefaultsProvider<?> defaultsProvider;
     private final Assigner assigner;
     private final MethodInvoker methodInvoker;
+
     /**
      * Creates a new method delegation binder that binds method based on annotations found on the target method.
      *
@@ -70,6 +71,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         }
         return methodDelegationBindingBuilder.build(returningStackManipulation);
     }
+
     /**
      * A parameter binder is used as a delegate for binding a parameter according to a particular annotation type found
      * on this parameter.

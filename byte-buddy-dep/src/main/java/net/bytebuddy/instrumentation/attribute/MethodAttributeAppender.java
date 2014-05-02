@@ -139,6 +139,7 @@ public interface MethodAttributeAppender {
 
         private final Annotation[] annotation;
         private final Target target;
+
         /**
          * Create a new annotation appender for a method.
          *

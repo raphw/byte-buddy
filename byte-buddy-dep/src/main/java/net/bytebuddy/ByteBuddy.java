@@ -114,7 +114,7 @@ public class ByteBuddy {
     /**
      * Defines a new {@code ByteBuddy} configuration.
      *
-     * @param classFileVersion                    The currently defined class format version.
+     * @param classFileVersion                      The currently defined class format version.
      * @param namingStrategy                        The currently defined naming strategy.
      * @param interfaceTypes                        The currently defined collection of interfaces to be implemented
      *                                              by any dynamically created type.
@@ -765,7 +765,7 @@ public class ByteBuddy {
         /**
          * Creates a new method annotation target.
          *
-         * @param classFileVersion                    The currently defined class format version.
+         * @param classFileVersion                      The currently defined class format version.
          * @param namingStrategy                        The currently defined naming strategy.
          * @param interfaceTypes                        The currently defined collection of interfaces to be implemented
          *                                              by any dynamically created type.
@@ -1048,7 +1048,7 @@ public class ByteBuddy {
         /**
          * Creates a new optional method interception.
          *
-         * @param classFileVersion                    The currently defined class format version.
+         * @param classFileVersion                      The currently defined class format version.
          * @param namingStrategy                        The currently defined naming strategy.
          * @param interfaceTypes                        The currently defined collection of interfaces to be implemented
          *                                              by any dynamically created type.

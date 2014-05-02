@@ -20,6 +20,7 @@ public enum MethodReturn implements StackManipulation {
     ANY_REFERENCE(Opcodes.ARETURN, StackSize.SINGLE);
     private final int returnOpcode;
     private final Size size;
+
     private MethodReturn(int returnOpcode, StackSize stackSize) {
         this.returnOpcode = returnOpcode;
         size = stackSize.toDecreasingSize();

@@ -488,6 +488,7 @@ public abstract class FieldAccessor implements Instrumentation {
         private final String fieldName;
         private final PreparationHandler preparationHandler;
         private final FieldLocator.Factory fieldLocatorFactory;
+
         /**
          * Creates a field accessor instrumentation for a field of a given name.
          *

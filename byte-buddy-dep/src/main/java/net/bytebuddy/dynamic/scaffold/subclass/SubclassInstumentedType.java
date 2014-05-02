@@ -36,10 +36,10 @@ public class SubclassInstumentedType
      * Creates a new immutable type instrumentation for a loaded superclass.
      *
      * @param classFileVersion The class format version of this instrumentation.
-     * @param superClass         The superclass of this instrumentation.
-     * @param interfaces         A collection of loaded interfaces that are implemented by this instrumented class.
-     * @param modifiers          The modifiers for this instrumentation.
-     * @param namingStrategy     The naming strategy to be applied for this instrumentation.
+     * @param superClass       The superclass of this instrumentation.
+     * @param interfaces       A collection of loaded interfaces that are implemented by this instrumented class.
+     * @param modifiers        The modifiers for this instrumentation.
+     * @param namingStrategy   The naming strategy to be applied for this instrumentation.
      */
     public SubclassInstumentedType(ClassFileVersion classFileVersion,
                                    TypeDescription superClass,
@@ -56,7 +56,7 @@ public class SubclassInstumentedType
     /**
      * Creates a new immutable type instrumentation for a loaded superclass.
      *
-     * @param classFileVersion The class format version of this instrumentation.
+     * @param classFileVersion   The class format version of this instrumentation.
      * @param superClass         The superclass of this instrumentation.
      * @param interfaces         A collection of loaded interfaces that are implemented by this instrumented class.
      * @param modifiers          The modifiers for this instrumentation.

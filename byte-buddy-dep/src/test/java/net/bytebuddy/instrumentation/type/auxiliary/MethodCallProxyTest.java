@@ -23,6 +23,7 @@ public class MethodCallProxyTest extends AbstractMethodCallProxyTest {
             register(FOO, this);
         }
     }
+
     @SuppressWarnings("unused")
     public static class StaticMethod extends CallTraceable {
 

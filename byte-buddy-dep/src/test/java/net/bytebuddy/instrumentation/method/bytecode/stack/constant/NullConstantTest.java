@@ -27,10 +27,10 @@ public class NullConstantTest {
     @Test
     public void testTextValue() throws Exception {
         StackManipulation.Size size = NullConstant.INSTANCE.apply(methodVisitor, instrumentationContext);
-         assertThat(size.getSizeImpact(), is(1));
-         assertThat(size.getMaximalSize(), is(1));
-         verify(methodVisitor).visitInsn(Opcodes.ACONST_NULL);
-         verifyNoMoreInteractions(methodVisitor);
-         verifyZeroInteractions(instrumentationContext);
+        assertThat(size.getSizeImpact(), is(1));
+        assertThat(size.getMaximalSize(), is(1));
+        verify(methodVisitor).visitInsn(Opcodes.ACONST_NULL);
+        verifyNoMoreInteractions(methodVisitor);
+        verifyZeroInteractions(instrumentationContext);
     }
 }

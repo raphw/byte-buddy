@@ -169,6 +169,7 @@ public interface MethodDelegationBinder {
 
             private final StackManipulation delegate;
             private final T identificationToken;
+
             /**
              * Creates a new unique parameter binding representant.
              *

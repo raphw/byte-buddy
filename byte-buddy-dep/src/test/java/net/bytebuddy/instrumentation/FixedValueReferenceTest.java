@@ -43,7 +43,7 @@ public class FixedValueReferenceTest extends AbstractInstrumentationTest {
         assertType(instrument(Foo.class, FixedValue.value(bar)));
     }
 
-    private void assertType(DynamicType.Loaded<Foo> loaded) throws Exception{
+    private void assertType(DynamicType.Loaded<Foo> loaded) throws Exception {
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
