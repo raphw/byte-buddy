@@ -1,7 +1,9 @@
 What is Byte Buddy?
 -------------------
 
+<a href="http://bytebuddy.net">
 <img src="https://raw.githubusercontent.com/raphw/byte-buddy/gh-pages/images/logo-bg.png" alt="Byte Buddy logo" height="160px" align="right" />
+</a>
 
 Byte Buddy is a code generation library for creating Java classes during the runtime of a Java application and without
 the help of a compiler. Other than the
@@ -30,6 +32,8 @@ such as for example *Spring* or *Hibernate* choose the latter approach which is 
 of using [*Plain Old Java Objects*](http://en.wikipedia.org/wiki/Plain_Old_Java_Object). As a result, code generation
 has become an ubiquitous concept in the Java space. Byte Buddy is an attempt to innovate the runtime creation of Java
 types in order to provide a better tool set to those relying on such functionality.
+
+[![Download](https://api.bintray.com/packages/raphw/maven/ByteBuddy/images/download.png)](https://bintray.com/raphw/maven/ByteBuddy/_latestVersion)
 
 Hello World
 -----------
@@ -116,7 +120,7 @@ with `@Argument(n)` which will instruct Byte Buddy to inject the `n`-th argument
 the annotated parameter. Further, note that the order of the parameters of the `Bank`'s obfuscation method
 is opposite to the intercepted method in `Account`. Also note how Byte Buddy is capable of auto-boxing the `Integer`
 value. The third parameter of the `Bank`'s obfuscation method is annotated with `@Super` which instructs
-Byte Buddy to create a proxy that allows to call the non-intercepted (`super`) imlementations of the extended type.
+Byte Buddy to create a proxy that allows to call the non-intercepted (`super`) implementations of the extended type.
 
 For the given implementation of a `Bank`, we can now create a `BankAccount` using `ByteBuddy`:
 
@@ -184,7 +188,7 @@ class BankAccount extends Account implements Serializable {
 You can check out the documentation of the `MethodDelegation` class for more information. There are plenty of other
 options for delegation such as delegating to a class or an instance member. And there are other instrumentations that
 ship with ByteBuddy and were not yet mentioned. One of them allows the implementation of `StubMethod`s. The
-`Exceptional` instrumentation allows to throw exceptions. One can coduct a `SuperMethodCall` or implement a
+`Exceptional` instrumentation allows to throw exceptions. One can conduct a `SuperMethodCall` or implement a
 `FieldAccessor`. Or one can adapt Java Class Library proxies by using an `InvocationHandlerAdapter`. Just as for the
 `MethodDelegation`, the Java documentation is a good place to getting started. Give Byte Buddy a try! You will like it.
 
@@ -194,11 +198,10 @@ Where to go from here?
 Byte Buddy is a comprehensive library that tackles the rather complex matter of code generation. In the two above
 examples, we only scratched the surface of Byte Buddy's capabilities. However, for using some of the more low-level
 features of this library, a basic understanding of Java byte code is required. A tutorial of this depth is better
-suited for another format than a GitHub readme and is currently in work. This is why I am at the moment focusing on
-writing a thorough documentation. However, Byte Buddy already comes with a
-[detailed in-code documentation](http://bytebuddy.net/javadoc/v0_1/) and extensive test case coverae. If you
-feel like using Byte Buddy in your project, feel free to do so even today. When doing so, note the information on
-adding a dependency to Byte Buddy to your project below.
+suited for another format than a GitHub readme file. You can find such an tutorial on
+[Byte Buddy's web page](http://bytebuddy.net/#/tutorial). Furthermore, Byte Buddy comes with a
+[detailed in-code documentation](http://bytebuddy.net/javadoc/) and extensive test case coverage. When using Byte
+Buddy, make sure to read the information on maintaining a project dependency below.
 
 Dependency and API evolution
 ----------------------------
@@ -260,5 +263,3 @@ make sure you are not breaking any existing test cases. If possible, please take
 For feature requests or general feedback, you can also use the issue tracker.
 
 [![Build Status](https://travis-ci.org/raphw/byte-buddy.png)](https://travis-ci.org/raphw/byte-buddy)
-
-[![Download](https://api.bintray.com/packages/raphw/maven/ByteBuddy/images/download.png)](https://bintray.com/raphw/maven/ByteBuddy/_latestVersion)
