@@ -260,3 +260,5 @@ make sure you are not breaking any existing test cases. If possible, please take
 For feature requests or general feedback, you can also use the issue tracker.
 
 [![Build Status](https://travis-ci.org/raphw/byte-buddy.png)](https://travis-ci.org/raphw/byte-buddy)
+
+[![Download](https://api.bintray.com/packages/raphw/maven/ByteBuddy/images/download.png)](https://bintray.com/raphw/maven/ByteBuddy/_latestVersion)
