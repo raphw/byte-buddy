@@ -515,7 +515,7 @@ public class ByteBuddyTest {
                     IntegerConstant.forValue(10),
                     IntegerConstant.forValue(50),
                     IntegerSum.INSTANCE,
-                    MethodReturn.returning(instrumentedMethod.getReturnType())
+                    MethodReturn.INTEGER
             ).apply(methodVisitor, instrumentationContext);
             return new Size(operandStackSize.getMaximalSize(), instrumentedMethod.getStackSize());
         }
@@ -560,9 +560,9 @@ public class ByteBuddyTest {
                                         TypeDescription targetType,
                                         boolean considerRuntimeType) {
             if (!sourceType.isPrimitive() && targetType.represents(String.class)) {
-                MethodDescription toStringMethod = new TypeDescription.ForLoadedType(Object.class)
-                        .getDeclaredMethods()
-                        .filter(named("toString"))
+                MethodDescription toStringMethod = sourceType
+                        .getReachableMethods()
+                        .filter(named("toString").and(takesArguments(0)).and(returns(String.class)))
                         .getOnly();
                 return MethodInvocation.invoke(toStringMethod);
             } else {
@@ -576,7 +576,7 @@ public class ByteBuddyTest {
         assertThat(new ByteBuddy()
                 .subclass(Object.class)
                 .method(named("toString"))
-                .intercept(FixedValue.reference(42)
+                .intercept(FixedValue.value(42)
                         .withAssigner(new PrimitiveTypeAwareAssigner(ToStringAssigner.INSTANCE), false))
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
@@ -592,7 +592,7 @@ public class ByteBuddyTest {
         String value();
     }
 
-    public static enum StringValueHandler implements TargetMethodAnnotationDrivenBinder.ParameterBinder<StringValue> {
+    public static enum StringValueBinder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<StringValue> {
         INSTANCE;
 
         @Override
@@ -607,7 +607,11 @@ public class ByteBuddyTest {
                                                                MethodDescription target,
                                                                TypeDescription instrumentedType,
                                                                Assigner assigner) {
-            return new MethodDelegationBinder.ParameterBinding.Anonymous(new TextConstant(annotation.value()));
+            if (!target.getParameterTypes().get(targetParameterIndex).represents(String.class)) {
+                throw new IllegalStateException(target + " makes wrong use of StringValue");
+            }
+            StackManipulation constant = new TextConstant(annotation.value());
+            return new MethodDelegationBinder.ParameterBinding.Anonymous(constant);
         }
     }
 
@@ -624,7 +628,7 @@ public class ByteBuddyTest {
                 .subclass(Object.class)
                 .method(named("toString"))
                 .intercept(MethodDelegation.to(ToStringInterceptor.class)
-                        .defineArgumentBinder(StringValueHandler.INSTANCE))
+                        .defineParameterBinder(StringValueBinder.INSTANCE))
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()

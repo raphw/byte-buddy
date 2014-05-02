@@ -155,7 +155,7 @@ public class MethodDelegation implements Instrumentation {
             throw new IllegalArgumentException("Cannot delegate to primitive " + type);
         }
         return new MethodDelegation(InstrumentationDelegate.ForStaticMethod.INSTANCE,
-                defaultArgumentBinders(),
+                defaultParameterBinders(),
                 defaultDefaultsProvider(),
                 defaultAmbiguityResolver(),
                 defaultAssigner(),
@@ -179,7 +179,7 @@ public class MethodDelegation implements Instrumentation {
      */
     public static MethodDelegation to(Object delegate) {
         return new MethodDelegation(new InstrumentationDelegate.ForStaticFieldInstance(nonNull(delegate)),
-                defaultArgumentBinders(),
+                defaultParameterBinders(),
                 defaultDefaultsProvider(),
                 defaultAmbiguityResolver(),
                 defaultAssigner(),
@@ -208,7 +208,7 @@ public class MethodDelegation implements Instrumentation {
     public static MethodDelegation to(Object delegate, String fieldName) {
         return new MethodDelegation(
                 new InstrumentationDelegate.ForStaticFieldInstance(nonNull(delegate), isValidIdentifier(fieldName)),
-                defaultArgumentBinders(),
+                defaultParameterBinders(),
                 defaultDefaultsProvider(),
                 defaultAmbiguityResolver(),
                 defaultAssigner(),
@@ -241,7 +241,7 @@ public class MethodDelegation implements Instrumentation {
     public static MethodDelegation instanceField(Class<?> type, String fieldName) {
         return new MethodDelegation(
                 new InstrumentationDelegate.ForInstanceField(new TypeDescription.ForLoadedType(nonNull(type)), isValidIdentifier(fieldName)),
-                defaultArgumentBinders(),
+                defaultParameterBinders(),
                 defaultDefaultsProvider(),
                 defaultAmbiguityResolver(),
                 defaultAssigner(),
@@ -260,7 +260,7 @@ public class MethodDelegation implements Instrumentation {
      */
     public static MethodDelegation construct(Class<?> type) {
         return new MethodDelegation(new InstrumentationDelegate.ForConstruction(new TypeDescription.ForLoadedType(type)),
-                defaultArgumentBinders(),
+                defaultParameterBinders(),
                 defaultDefaultsProvider(),
                 defaultAmbiguityResolver(),
                 defaultAssigner(),
@@ -270,7 +270,7 @@ public class MethodDelegation implements Instrumentation {
         );
     }
 
-    private static List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> defaultArgumentBinders() {
+    private static List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> defaultParameterBinders() {
         return Arrays.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>asList(Argument.Binder.INSTANCE,
                 AllArguments.Binder.INSTANCE,
                 Origin.Binder.INSTANCE,
@@ -302,7 +302,7 @@ public class MethodDelegation implements Instrumentation {
      * @param parameterBinder The parameter binder to append to the already defined parameter binders.
      * @return A method delegation instrumentation that makes use of the given parameter binder.
      */
-    public MethodDelegation appendArgumentBinder(TargetMethodAnnotationDrivenBinder.ParameterBinder<?> parameterBinder) {
+    public MethodDelegation appendParameterBinder(TargetMethodAnnotationDrivenBinder.ParameterBinder<?> parameterBinder) {
         return new MethodDelegation(instrumentationDelegate,
                 join(parameterBinders, nonNull(parameterBinder)),
                 defaultsProvider,
@@ -317,7 +317,7 @@ public class MethodDelegation implements Instrumentation {
      * @param parameterBinder The parameter binders to use by this parameter binders.
      * @return A method delegation instrumentation that makes use of the given parameter binders.
      */
-    public MethodDelegation defineArgumentBinder(TargetMethodAnnotationDrivenBinder.ParameterBinder<?>... parameterBinder) {
+    public MethodDelegation defineParameterBinder(TargetMethodAnnotationDrivenBinder.ParameterBinder<?>... parameterBinder) {
         return new MethodDelegation(instrumentationDelegate,
                 Arrays.asList(nonNull(parameterBinder)),
                 defaultsProvider,
