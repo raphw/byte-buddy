@@ -12,6 +12,13 @@ public class MethodDelegationBindingPriorityTest extends AbstractInstrumentation
     private static final String FOO = "FOO", BAR = "bar";
     private static final double PRIORITY = 10d;
 
+    @Test
+    public void testBindingPriority() throws Exception {
+        DynamicType.Loaded<Foo> loaded = instrument(Foo.class, MethodDelegation.to(Bar.class));
+        Foo instance = loaded.getLoaded().newInstance();
+        assertThat(instance.foo(), is(FOO));
+    }
+
     public static class Foo {
 
         public String foo() {
@@ -29,12 +36,5 @@ public class MethodDelegationBindingPriorityTest extends AbstractInstrumentation
         public static String qux() {
             return BAR;
         }
-    }
-
-    @Test
-    public void testBindingPriority() throws Exception {
-        DynamicType.Loaded<Foo> loaded = instrument(Foo.class, MethodDelegation.to(Bar.class));
-        Foo instance = loaded.getLoaded().newInstance();
-        assertThat(instance.foo(), is(FOO));
     }
 }

@@ -21,6 +21,18 @@ import static org.mockito.Mockito.*;
 @RunWith(Parameterized.class)
 public class LongConstantPoolValueTest {
 
+    private final long value;
+    @Rule
+    public TestRule mockitoRule = new MockitoRule(this);
+    @Mock
+    private MethodVisitor methodVisitor;
+    @Mock
+    private Instrumentation.Context instrumentationContext;
+
+    public LongConstantPoolValueTest(long value) {
+        this.value = value;
+    }
+
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
@@ -35,20 +47,6 @@ public class LongConstantPoolValueTest {
                 {Long.MAX_VALUE},
         });
     }
-
-    @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
-
-    private final long value;
-
-    public LongConstantPoolValueTest(long value) {
-        this.value = value;
-    }
-
-    @Mock
-    private MethodVisitor methodVisitor;
-    @Mock
-    private Instrumentation.Context instrumentationContext;
 
     @Test
     public void testBiPush() throws Exception {

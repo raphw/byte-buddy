@@ -43,35 +43,11 @@ public class AnnotationAppenderDefaultTest {
         annotationAppender = new AnnotationAppender.Default(target);
     }
 
-    @Retention(RetentionPolicy.RUNTIME)
-    public static @interface Foo {
-
-        static class Instance implements Foo {
-
-            @Override
-            public Class<? extends Annotation> annotationType() {
-                return Foo.class;
-            }
-        }
-    }
-
     @Test
     public void testNoArgumentAnnotation() throws Exception {
         Class<?> bar = makeTypeWithAnnotation(new Foo.Instance());
         assertThat(bar.getAnnotations().length, is(1));
         assertThat(bar.isAnnotationPresent(Foo.class), is(true));
-    }
-
-    @Retention(RetentionPolicy.SOURCE)
-    public static @interface FooSourceCodeRetention {
-
-        static class Instance implements FooSourceCodeRetention {
-
-            @Override
-            public Class<? extends Annotation> annotationType() {
-                return FooSourceCodeRetention.class;
-            }
-        }
     }
 
     @Test
@@ -80,33 +56,10 @@ public class AnnotationAppenderDefaultTest {
         assertThat(bar.getAnnotations().length, is(0));
     }
 
-    @Retention(RetentionPolicy.CLASS)
-    public static @interface FooByteCodeRetention {
-
-        static class Instance implements FooByteCodeRetention {
-
-            @Override
-            public Class<? extends Annotation> annotationType() {
-                return FooByteCodeRetention.class;
-            }
-        }
-    }
-
     @Test
     public void testNoArgumentAnnotationByteCodeRetention() throws Exception {
         Class<?> bar = makeTypeWithAnnotation(new FooByteCodeRetention.Instance());
         assertThat(bar.getAnnotations().length, is(0));
-    }
-
-    public static @interface FooNoRetention {
-
-        static class Instance implements FooNoRetention {
-
-            @Override
-            public Class<? extends Annotation> annotationType() {
-                return FooNoRetention.class;
-            }
-        }
     }
 
     @Test
@@ -115,102 +68,12 @@ public class AnnotationAppenderDefaultTest {
         assertThat(bar.getAnnotations().length, is(0));
     }
 
-    @Retention(RetentionPolicy.RUNTIME)
-    public static @interface Qux {
-
-        static class Instance implements Qux {
-
-            private final String value;
-
-            public Instance(String value) {
-                this.value = value;
-            }
-
-            @Override
-            public String value() {
-                return value;
-            }
-
-            @Override
-            public Class<? extends Annotation> annotationType() {
-                return Qux.class;
-            }
-        }
-
-        String value();
-    }
-
     @Test
     public void testSingleArgumentAnnotation() throws Exception {
         Class<?> bar = makeTypeWithAnnotation(new Qux.Instance(FOOBAR));
         assertThat(bar.getAnnotations().length, is(1));
         assertThat(bar.isAnnotationPresent(Qux.class), is(true));
         assertThat(bar.getAnnotation(Qux.class).value(), is(FOOBAR));
-    }
-
-    @Retention(RetentionPolicy.RUNTIME)
-    public static @interface Baz {
-
-        static class Instance implements Baz {
-
-            private final String value;
-            private final int[] array;
-            private final Foo annotation;
-            private final Enum enumeration;
-            private final Class<?> type;
-
-            public Instance(String value, int[] array, Foo annotation, Enum enumeration, Class<?> type) {
-                this.value = value;
-                this.array = array;
-                this.annotation = annotation;
-                this.enumeration = enumeration;
-                this.type = type;
-            }
-
-            @Override
-            public String value() {
-                return value;
-            }
-
-            @Override
-            public int[] array() {
-                return array;
-            }
-
-            @Override
-            public Foo annotation() {
-                return annotation;
-            }
-
-            @Override
-            public Enum enumeration() {
-                return enumeration;
-            }
-
-            @Override
-            public Class<?> type() {
-                return type;
-            }
-
-            @Override
-            public Class<? extends Annotation> annotationType() {
-                return Baz.class;
-            }
-        }
-
-        static enum Enum {
-            VALUE
-        }
-
-        String value();
-
-        int[] array();
-
-        Foo annotation();
-
-        Enum enumeration();
-
-        Class<?> type();
     }
 
     @Test
@@ -259,5 +122,142 @@ public class AnnotationAppenderDefaultTest {
         assertThat(bar.getName(), is(BAR));
         assertEquals(Object.class, bar.getSuperclass());
         return bar;
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    public static @interface Foo {
+
+        static class Instance implements Foo {
+
+            @Override
+            public Class<? extends Annotation> annotationType() {
+                return Foo.class;
+            }
+        }
+    }
+
+    @Retention(RetentionPolicy.SOURCE)
+    public static @interface FooSourceCodeRetention {
+
+        static class Instance implements FooSourceCodeRetention {
+
+            @Override
+            public Class<? extends Annotation> annotationType() {
+                return FooSourceCodeRetention.class;
+            }
+        }
+    }
+
+    @Retention(RetentionPolicy.CLASS)
+    public static @interface FooByteCodeRetention {
+
+        static class Instance implements FooByteCodeRetention {
+
+            @Override
+            public Class<? extends Annotation> annotationType() {
+                return FooByteCodeRetention.class;
+            }
+        }
+    }
+
+    public static @interface FooNoRetention {
+
+        static class Instance implements FooNoRetention {
+
+            @Override
+            public Class<? extends Annotation> annotationType() {
+                return FooNoRetention.class;
+            }
+        }
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    public static @interface Qux {
+
+        String value();
+
+        static class Instance implements Qux {
+
+            private final String value;
+
+            public Instance(String value) {
+                this.value = value;
+            }
+
+            @Override
+            public String value() {
+                return value;
+            }
+
+            @Override
+            public Class<? extends Annotation> annotationType() {
+                return Qux.class;
+            }
+        }
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    public static @interface Baz {
+
+        String value();
+
+        int[] array();
+
+        Foo annotation();
+
+        Enum enumeration();
+
+        Class<?> type();
+
+        static enum Enum {
+            VALUE
+        }
+
+        static class Instance implements Baz {
+
+            private final String value;
+            private final int[] array;
+            private final Foo annotation;
+            private final Enum enumeration;
+            private final Class<?> type;
+
+            public Instance(String value, int[] array, Foo annotation, Enum enumeration, Class<?> type) {
+                this.value = value;
+                this.array = array;
+                this.annotation = annotation;
+                this.enumeration = enumeration;
+                this.type = type;
+            }
+
+            @Override
+            public String value() {
+                return value;
+            }
+
+            @Override
+            public int[] array() {
+                return array;
+            }
+
+            @Override
+            public Foo annotation() {
+                return annotation;
+            }
+
+            @Override
+            public Enum enumeration() {
+                return enumeration;
+            }
+
+            @Override
+            public Class<?> type() {
+                return type;
+            }
+
+            @Override
+            public Class<? extends Annotation> annotationType() {
+                return Baz.class;
+            }
+        }
     }
 }

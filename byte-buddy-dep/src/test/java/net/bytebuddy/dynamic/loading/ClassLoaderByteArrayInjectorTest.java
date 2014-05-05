@@ -12,10 +12,6 @@ import static org.hamcrest.core.Is.is;
 
 public class ClassLoaderByteArrayInjectorTest {
 
-    private static class Foo {
-        /* Note: Foo is know to the system class loader but not to the bootstrap class loader */
-    }
-
     private ClassLoader classLoader;
     private ClassLoaderByteArrayInjector classLoaderByteArrayInjector;
 
@@ -29,5 +25,9 @@ public class ClassLoaderByteArrayInjectorTest {
     public void testInjection() throws Exception {
         classLoaderByteArrayInjector.inject(Foo.class.getName(), ClassFileExtraction.extract(Foo.class));
         assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
+    }
+
+    private static class Foo {
+        /* Note: Foo is know to the system class loader but not to the bootstrap class loader */
     }
 }

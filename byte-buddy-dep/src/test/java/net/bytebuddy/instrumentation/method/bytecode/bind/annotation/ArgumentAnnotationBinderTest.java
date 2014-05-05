@@ -19,9 +19,9 @@ import static org.mockito.Mockito.*;
 public class ArgumentAnnotationBinderTest extends AbstractAnnotationBinderTest<Argument> {
 
     @Mock
-    private TypeList sourceParameters, targetParameters;
-    @Mock
     TypeDescription sourceType, targetType;
+    @Mock
+    private TypeList sourceParameters, targetParameters;
 
     public ArgumentAnnotationBinderTest() {
         super(Argument.class);

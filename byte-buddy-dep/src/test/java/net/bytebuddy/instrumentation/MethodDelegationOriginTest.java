@@ -11,6 +11,25 @@ import static org.hamcrest.core.IsInstanceOf.instanceOf;
 
 public class MethodDelegationOriginTest extends AbstractInstrumentationTest {
 
+    @Test
+    public void testOriginClass() throws Exception {
+        DynamicType.Loaded<Foo> loaded = instrument(Foo.class, MethodDelegation.to(OriginClass.class));
+        Foo instance = loaded.getLoaded().newInstance();
+        assertThat(instance.foo(), instanceOf(Class.class));
+    }
+
+    @Test
+    public void testOriginMethod() throws Exception {
+        DynamicType.Loaded<Foo> loaded = instrument(Foo.class, MethodDelegation.to(OriginMethod.class));
+        Foo instance = loaded.getLoaded().newInstance();
+        assertThat(instance.foo(), instanceOf(Method.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testOriginIllegal() throws Exception {
+        instrument(Foo.class, MethodDelegation.to(OriginIllegal.class));
+    }
+
     public static class Foo {
 
         public Object foo() {
@@ -25,13 +44,6 @@ public class MethodDelegationOriginTest extends AbstractInstrumentationTest {
         }
     }
 
-    @Test
-    public void testOriginClass() throws Exception {
-        DynamicType.Loaded<Foo> loaded = instrument(Foo.class, MethodDelegation.to(OriginClass.class));
-        Foo instance = loaded.getLoaded().newInstance();
-        assertThat(instance.foo(), instanceOf(Class.class));
-    }
-
     public static class OriginMethod {
 
         public static Object foo(@Origin Method method) {
@@ -39,22 +51,10 @@ public class MethodDelegationOriginTest extends AbstractInstrumentationTest {
         }
     }
 
-    @Test
-    public void testOriginMethod() throws Exception {
-        DynamicType.Loaded<Foo> loaded = instrument(Foo.class, MethodDelegation.to(OriginMethod.class));
-        Foo instance = loaded.getLoaded().newInstance();
-        assertThat(instance.foo(), instanceOf(Method.class));
-    }
-
     public static class OriginIllegal {
 
         public static Object foo(@Origin Object object) {
             return object;
         }
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testOriginIllegal() throws Exception {
-        instrument(Foo.class, MethodDelegation.to(OriginIllegal.class));
     }
 }

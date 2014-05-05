@@ -11,12 +11,6 @@ import static org.hamcrest.core.Is.is;
 public class FieldDescriptionForLoadedFieldTest {
 
     private static final String FOO = "foo";
-
-    private static class Foo {
-
-        public Object foo;
-    }
-
     private FieldDescription fieldDescription;
     private FieldDescription privateField;
     private FieldDescription packagePrivateField;
@@ -52,5 +46,10 @@ public class FieldDescriptionForLoadedFieldTest {
     @Test
     public void testDeclaringType() throws Exception {
         assertThat(fieldDescription.getDeclaringType().represents(Foo.class), is(true));
+    }
+
+    private static class Foo {
+
+        public Object foo;
     }
 }

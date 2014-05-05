@@ -25,8 +25,27 @@ import static org.mockito.Mockito.*;
 @RunWith(Parameterized.class)
 public class PrimitiveWideningDelegateNontrivialTest {
 
+    private final Class<?> sourceType;
+    private final Class<?> targetType;
+    private final int sizeChange;
+    private final int opcode;
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+    @Mock
+    private TypeDescription sourceTypeDescription, targetTypeDescription;
+    @Mock
+    private MethodVisitor methodVisitor;
+    @Mock
+    private Instrumentation.Context instrumentationContext;
+    public PrimitiveWideningDelegateNontrivialTest(Class<?> sourceType,
+                                                   Class<?> targetType,
+                                                   int sizeChange,
+                                                   int opcode) {
+        this.sourceType = sourceType;
+        this.targetType = targetType;
+        this.sizeChange = sizeChange;
+        this.opcode = opcode;
+    }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
@@ -48,28 +67,6 @@ public class PrimitiveWideningDelegateNontrivialTest {
                 {float.class, double.class, 1, Opcodes.F2D}
         });
     }
-
-    private final Class<?> sourceType;
-    private final Class<?> targetType;
-    private final int sizeChange;
-    private final int opcode;
-
-    public PrimitiveWideningDelegateNontrivialTest(Class<?> sourceType,
-                                                   Class<?> targetType,
-                                                   int sizeChange,
-                                                   int opcode) {
-        this.sourceType = sourceType;
-        this.targetType = targetType;
-        this.sizeChange = sizeChange;
-        this.opcode = opcode;
-    }
-
-    @Mock
-    private TypeDescription sourceTypeDescription, targetTypeDescription;
-    @Mock
-    private MethodVisitor methodVisitor;
-    @Mock
-    private Instrumentation.Context instrumentationContext;
 
     @Before
     public void setUp() throws Exception {

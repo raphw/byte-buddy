@@ -21,6 +21,18 @@ import static org.mockito.Mockito.*;
 @RunWith(Parameterized.class)
 public class FloatConstantPoolValueTest {
 
+    private final float value;
+    @Rule
+    public TestRule mockitoRule = new MockitoRule(this);
+    @Mock
+    private MethodVisitor methodVisitor;
+    @Mock
+    private Instrumentation.Context instrumentationContext;
+
+    public FloatConstantPoolValueTest(float value) {
+        this.value = value;
+    }
+
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
@@ -34,20 +46,6 @@ public class FloatConstantPoolValueTest {
                 {Float.MAX_VALUE},
         });
     }
-
-    @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
-
-    private final float value;
-
-    public FloatConstantPoolValueTest(float value) {
-        this.value = value;
-    }
-
-    @Mock
-    private MethodVisitor methodVisitor;
-    @Mock
-    private Instrumentation.Context instrumentationContext;
 
     @Test
     public void testBiPush() throws Exception {

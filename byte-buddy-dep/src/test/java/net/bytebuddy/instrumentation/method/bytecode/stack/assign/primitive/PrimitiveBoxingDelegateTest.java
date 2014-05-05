@@ -30,9 +30,34 @@ import static org.mockito.Mockito.*;
 public class PrimitiveBoxingDelegateTest {
 
     private static final String VALUE_OF = "valueOf";
-
+    private final Class<?> primitiveType;
+    private final TypeDescription primitiveTypeDescription;
+    private final TypeDescription referenceTypeDescription;
+    private final String boxingMethodDescriptor;
+    private final int sizeChange;
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+    @Mock
+    private TypeDescription targetType;
+    @Mock
+    private Assigner chainedAssigner;
+    @Mock
+    private StackManipulation stackManipulation;
+    @Mock
+    private MethodVisitor methodVisitor;
+    @Mock
+    private Instrumentation.Context instrumentationContext;
+    public PrimitiveBoxingDelegateTest(Class<?> primitiveType,
+                                       Class<?> referenceType,
+                                       String boxingMethodDescriptor,
+                                       int sizeChange) {
+        this.primitiveType = primitiveType;
+        primitiveTypeDescription = mock(TypeDescription.class);
+        when(primitiveTypeDescription.represents(primitiveType)).thenReturn(true);
+        referenceTypeDescription = new TypeDescription.ForLoadedType(referenceType);
+        this.boxingMethodDescriptor = boxingMethodDescriptor;
+        this.sizeChange = sizeChange;
+    }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
@@ -47,35 +72,6 @@ public class PrimitiveBoxingDelegateTest {
                 {double.class, Double.class, "(D)Ljava/lang/Double;", -1},
         });
     }
-
-    private final Class<?> primitiveType;
-    private final TypeDescription primitiveTypeDescription;
-    private final TypeDescription referenceTypeDescription;
-    private final String boxingMethodDescriptor;
-    private final int sizeChange;
-
-    public PrimitiveBoxingDelegateTest(Class<?> primitiveType,
-                                       Class<?> referenceType,
-                                       String boxingMethodDescriptor,
-                                       int sizeChange) {
-        this.primitiveType = primitiveType;
-        primitiveTypeDescription = mock(TypeDescription.class);
-        when(primitiveTypeDescription.represents(primitiveType)).thenReturn(true);
-        referenceTypeDescription = new TypeDescription.ForLoadedType(referenceType);
-        this.boxingMethodDescriptor = boxingMethodDescriptor;
-        this.sizeChange = sizeChange;
-    }
-
-    @Mock
-    private TypeDescription targetType;
-    @Mock
-    private Assigner chainedAssigner;
-    @Mock
-    private StackManipulation stackManipulation;
-    @Mock
-    private MethodVisitor methodVisitor;
-    @Mock
-    private Instrumentation.Context instrumentationContext;
 
     @Before
     public void setUp() throws Exception {

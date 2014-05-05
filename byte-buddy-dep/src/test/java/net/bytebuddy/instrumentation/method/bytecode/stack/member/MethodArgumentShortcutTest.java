@@ -24,8 +24,25 @@ import static org.mockito.Mockito.*;
 @RunWith(Parameterized.class)
 public class MethodArgumentShortcutTest {
 
+    private final TypeDescription typeDescription;
+    private final int index;
+    private final int opcode;
+    private final int size;
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+    @Mock
+    private MethodVisitor methodVisitor;
+    @Mock
+    private Instrumentation.Context instrumentationContext;
+
+    public MethodArgumentShortcutTest(Class<?> type, int index, int opcode, int size) {
+        this.typeDescription = mock(TypeDescription.class);
+        when(typeDescription.isPrimitive()).thenReturn(type.isPrimitive());
+        when(typeDescription.represents(type)).thenReturn(true);
+        this.index = index;
+        this.opcode = opcode;
+        this.size = size;
+    }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
@@ -52,25 +69,6 @@ public class MethodArgumentShortcutTest {
                 {float.class, 3, MoreOpcodes.FLOAD_3, 1},
         });
     }
-
-    private final TypeDescription typeDescription;
-    private final int index;
-    private final int opcode;
-    private final int size;
-
-    public MethodArgumentShortcutTest(Class<?> type, int index, int opcode, int size) {
-        this.typeDescription = mock(TypeDescription.class);
-        when(typeDescription.isPrimitive()).thenReturn(type.isPrimitive());
-        when(typeDescription.represents(type)).thenReturn(true);
-        this.index = index;
-        this.opcode = opcode;
-        this.size = size;
-    }
-
-    @Mock
-    private MethodVisitor methodVisitor;
-    @Mock
-    private Instrumentation.Context instrumentationContext;
 
     @After
     public void setUp() throws Exception {

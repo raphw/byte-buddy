@@ -15,6 +15,12 @@ import static org.hamcrest.core.Is.is;
 @RunWith(Parameterized.class)
 public class AnnotationVisibilityTest {
 
+    private final Class<?> annotationType;
+
+    public AnnotationVisibilityTest(Class<?> annotationType) {
+        this.annotationType = annotationType;
+    }
+
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
@@ -28,12 +34,6 @@ public class AnnotationVisibilityTest {
                 {SuperCall.class},
                 {This.class}
         });
-    }
-
-    private final Class<?> annotationType;
-
-    public AnnotationVisibilityTest(Class<?> annotationType) {
-        this.annotationType = annotationType;
     }
 
     @Test

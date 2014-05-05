@@ -26,8 +26,20 @@ import static org.mockito.Mockito.*;
 @RunWith(Parameterized.class)
 public class DefaultValueTest {
 
+    private final Class<?> type;
+    private final int opcode;
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+    @Mock
+    private MethodVisitor methodVisitor;
+    @Mock
+    private TypeDescription typeDescription;
+    @Mock
+    private Instrumentation.Context instrumentationContext;
+    public DefaultValueTest(Class<?> type, int opcode) {
+        this.type = type;
+        this.opcode = opcode;
+    }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
@@ -43,21 +55,6 @@ public class DefaultValueTest {
                 {Object.class, Opcodes.ACONST_NULL}
         });
     }
-
-    private final Class<?> type;
-    private final int opcode;
-
-    public DefaultValueTest(Class<?> type, int opcode) {
-        this.type = type;
-        this.opcode = opcode;
-    }
-
-    @Mock
-    private MethodVisitor methodVisitor;
-    @Mock
-    private TypeDescription typeDescription;
-    @Mock
-    private Instrumentation.Context instrumentationContext;
 
     @Before
     public void setUp() throws Exception {

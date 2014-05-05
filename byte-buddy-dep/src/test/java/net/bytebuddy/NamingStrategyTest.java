@@ -8,6 +8,8 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 import org.objectweb.asm.MethodVisitor;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.StringStartsWith.startsWith;
@@ -42,9 +44,25 @@ public class NamingStrategyTest {
     }
 
     @Test
+    public void testPrefixingRandomEqualsHashCode() throws Exception {
+        assertThat(new NamingStrategy.SuffixingRandom(FOO, BAR).hashCode(), is(new NamingStrategy.SuffixingRandom(FOO, BAR).hashCode()));
+        assertThat(new NamingStrategy.SuffixingRandom(FOO, BAR), equalTo(new NamingStrategy.SuffixingRandom(FOO, BAR)));
+        assertThat(new NamingStrategy.SuffixingRandom(FOO, BAR).hashCode(), not(is(new NamingStrategy.SuffixingRandom(BAR, FOO).hashCode())));
+        assertThat(new NamingStrategy.SuffixingRandom(FOO, BAR), not(equalTo(new NamingStrategy.SuffixingRandom(BAR, FOO))));
+    }
+
+    @Test
     public void testFixed() throws Exception {
         NamingStrategy namingStrategy = new NamingStrategy.Fixed(FOO);
         assertThat(namingStrategy.getName(unnamedType), is(FOO));
         verifyZeroInteractions(unnamedType);
+    }
+
+    @Test
+    public void testFixedRandomEqualsHashCode() throws Exception {
+        assertThat(new NamingStrategy.Fixed(FOO).hashCode(), is(new NamingStrategy.Fixed(FOO).hashCode()));
+        assertThat(new NamingStrategy.Fixed(FOO), equalTo(new NamingStrategy.Fixed(FOO)));
+        assertThat(new NamingStrategy.Fixed(FOO).hashCode(), not(is(new NamingStrategy.Fixed(BAR).hashCode())));
+        assertThat(new NamingStrategy.Fixed(FOO), not(equalTo(new NamingStrategy.Fixed(BAR))));
     }
 }

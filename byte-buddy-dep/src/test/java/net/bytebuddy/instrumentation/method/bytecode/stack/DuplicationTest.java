@@ -24,6 +24,21 @@ import static org.mockito.Mockito.*;
 @RunWith(Parameterized.class)
 public class DuplicationTest {
 
+    private final StackSize stackSize;
+    private final int opcode;
+    @Rule
+    public TestRule mockitoRule = new MockitoRule(this);
+    @Mock
+    private TypeDescription typeDescription;
+    @Mock
+    private MethodVisitor methodVisitor;
+    @Mock
+    private Instrumentation.Context instrumentationContext;
+    public DuplicationTest(StackSize stackSize, int opcode) {
+        this.stackSize = stackSize;
+        this.opcode = opcode;
+    }
+
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
@@ -32,24 +47,6 @@ public class DuplicationTest {
                 {StackSize.DOUBLE, Opcodes.DUP2}
         });
     }
-
-    private final StackSize stackSize;
-    private final int opcode;
-
-    public DuplicationTest(StackSize stackSize, int opcode) {
-        this.stackSize = stackSize;
-        this.opcode = opcode;
-    }
-
-    @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
-
-    @Mock
-    private TypeDescription typeDescription;
-    @Mock
-    private MethodVisitor methodVisitor;
-    @Mock
-    private Instrumentation.Context instrumentationContext;
 
     @Before
     public void setUp() throws Exception {

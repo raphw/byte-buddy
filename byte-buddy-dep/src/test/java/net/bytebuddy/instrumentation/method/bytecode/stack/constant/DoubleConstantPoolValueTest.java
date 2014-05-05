@@ -21,6 +21,18 @@ import static org.mockito.Mockito.*;
 @RunWith(Parameterized.class)
 public class DoubleConstantPoolValueTest {
 
+    private final double value;
+    @Rule
+    public TestRule mockitoRule = new MockitoRule(this);
+    @Mock
+    private MethodVisitor methodVisitor;
+    @Mock
+    private Instrumentation.Context instrumentationContext;
+
+    public DoubleConstantPoolValueTest(double value) {
+        this.value = value;
+    }
+
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
@@ -36,20 +48,6 @@ public class DoubleConstantPoolValueTest {
                 {Double.MAX_VALUE},
         });
     }
-
-    @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
-
-    private final double value;
-
-    public DoubleConstantPoolValueTest(double value) {
-        this.value = value;
-    }
-
-    @Mock
-    private MethodVisitor methodVisitor;
-    @Mock
-    private Instrumentation.Context instrumentationContext;
 
     @Test
     public void testBiPush() throws Exception {

@@ -29,41 +29,6 @@ public class BridgeMethodResolverSimpleTest {
     @Mock
     private MethodDescription methodDescription;
 
-    private static class Foo<T> {
-
-        public T foo(T t) {
-            return null;
-        }
-    }
-
-    private static class Bar<T extends Number> extends Foo<T> {
-
-        @Override
-        public T foo(T t) {
-            return null;
-        }
-    }
-
-    private static class Qux extends Bar<Integer> {
-
-        @Override
-        public Integer foo(Integer integer) {
-            return null;
-        }
-    }
-
-    private static class Baz extends Foo<Integer> {
-
-        @Override
-        public Integer foo(Integer i) {
-            return null;
-        }
-
-        public String foo(String s) {
-            return null;
-        }
-    }
-
     @Test
     public void testFindsBridgeMethodSingleStep() throws Exception {
         TypeDescription target = new TypeDescription.ForLoadedType(Bar.class);
@@ -102,5 +67,40 @@ public class BridgeMethodResolverSimpleTest {
         verify(bridgeTarget).isResolved();
         verify(bridgeTarget).extract();
         verifyNoMoreInteractions(bridgeTarget);
+    }
+
+    private static class Foo<T> {
+
+        public T foo(T t) {
+            return null;
+        }
+    }
+
+    private static class Bar<T extends Number> extends Foo<T> {
+
+        @Override
+        public T foo(T t) {
+            return null;
+        }
+    }
+
+    private static class Qux extends Bar<Integer> {
+
+        @Override
+        public Integer foo(Integer integer) {
+            return null;
+        }
+    }
+
+    private static class Baz extends Foo<Integer> {
+
+        @Override
+        public Integer foo(Integer i) {
+            return null;
+        }
+
+        public String foo(String s) {
+            return null;
+        }
     }
 }

@@ -48,6 +48,52 @@ public class StubMethodTest extends AbstractInstrumentationTest {
     private static final long LONG_DEFAULT_VALUE = 0L;
     private static final float FLOAT_DEFAULT_VALUE = 0f;
     private static final double DOUBLE_DEFAULT_VALUE = 0d;
+    private final Matcher<?> matcher;
+    private final String methodName;
+    private final Class<?>[] methodParameterTypes;
+    private final Object[] methodArguments;
+    public StubMethodTest(Matcher<?> matcher,
+                          String methodName,
+                          Class<?>[] methodParameterTypes,
+                          Object[] methodArguments) {
+        this.matcher = matcher;
+        this.methodName = methodName;
+        this.methodParameterTypes = methodParameterTypes;
+        this.methodArguments = methodArguments;
+    }
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+                {is(STRING_DEFAULT_VALUE), OBJECT_METHOD, new Class<?>[0], new Object[0]},
+                {is(BOOLEAN_DEFAULT_VALUE), BOOLEAN_METHOD, new Class<?>[0], new Object[0]},
+                {is(BYTE_DEFAULT_VALUE), BYTE_METHOD, new Class<?>[0], new Object[0]},
+                {is(SHORT_DEFAULT_VALUE), SHORT_METHOD, new Class<?>[0], new Object[0]},
+                {is(CHAR_DEFAULT_VALUE), CHAR_METHOD, new Class<?>[0], new Object[0]},
+                {is(INT_DEFAULT_VALUE), INT_METHOD, new Class<?>[0], new Object[0]},
+                {is(LONG_DEFAULT_VALUE), LONG_METHOD, new Class<?>[0], new Object[0]},
+                {is(FLOAT_DEFAULT_VALUE), FLOAT_METHOD, new Class<?>[0], new Object[0]},
+                {is(DOUBLE_DEFAULT_VALUE), DOUBLE_METHOD, new Class<?>[0], new Object[0]},
+                {nullValue(), VOID_METHOD, new Class<?>[0], new Object[0]},
+                {nullValue(), PARAMETERS_METHOD,
+                        new Class<?>[]{long.class, float.class, int.class, double.class, Object.class},
+                        new Object[]{LONG_VALUE, FLOAT_VALUE, INT_VALUE, DOUBLE_VALUE, STRING_VALUE}}
+        });
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testInstrumentedMethod() throws Exception {
+        DynamicType.Loaded<Foo> loaded = instrument(Foo.class, StubMethod.INSTANCE);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(11));
+        Foo instance = loaded.getLoaded().newInstance();
+        assertNotEquals(Foo.class, instance.getClass());
+        assertThat(instance, instanceOf(Foo.class));
+        assertThat(loaded.getLoaded().getDeclaredMethod(methodName, methodParameterTypes)
+                .invoke(instance, methodArguments), (Matcher) matcher);
+        instance.assertZeroCalls();
+    }
 
     @SuppressWarnings("unused")
     public static class Foo extends CallTraceable {
@@ -104,53 +150,5 @@ public class StubMethodTest extends AbstractInstrumentationTest {
         public void parameters(long l, float f, int i, double d, Object o) {
             register(PARAMETERS_METHOD, l, f, i, d, o);
         }
-    }
-
-    @Parameterized.Parameters
-    public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-                {is(STRING_DEFAULT_VALUE), OBJECT_METHOD, new Class<?>[0], new Object[0]},
-                {is(BOOLEAN_DEFAULT_VALUE), BOOLEAN_METHOD, new Class<?>[0], new Object[0]},
-                {is(BYTE_DEFAULT_VALUE), BYTE_METHOD, new Class<?>[0], new Object[0]},
-                {is(SHORT_DEFAULT_VALUE), SHORT_METHOD, new Class<?>[0], new Object[0]},
-                {is(CHAR_DEFAULT_VALUE), CHAR_METHOD, new Class<?>[0], new Object[0]},
-                {is(INT_DEFAULT_VALUE), INT_METHOD, new Class<?>[0], new Object[0]},
-                {is(LONG_DEFAULT_VALUE), LONG_METHOD, new Class<?>[0], new Object[0]},
-                {is(FLOAT_DEFAULT_VALUE), FLOAT_METHOD, new Class<?>[0], new Object[0]},
-                {is(DOUBLE_DEFAULT_VALUE), DOUBLE_METHOD, new Class<?>[0], new Object[0]},
-                {nullValue(), VOID_METHOD, new Class<?>[0], new Object[0]},
-                {nullValue(), PARAMETERS_METHOD,
-                        new Class<?>[]{long.class, float.class, int.class, double.class, Object.class},
-                        new Object[]{LONG_VALUE, FLOAT_VALUE, INT_VALUE, DOUBLE_VALUE, STRING_VALUE}}
-        });
-    }
-
-    private final Matcher<?> matcher;
-    private final String methodName;
-    private final Class<?>[] methodParameterTypes;
-    private final Object[] methodArguments;
-
-    public StubMethodTest(Matcher<?> matcher,
-                          String methodName,
-                          Class<?>[] methodParameterTypes,
-                          Object[] methodArguments) {
-        this.matcher = matcher;
-        this.methodName = methodName;
-        this.methodParameterTypes = methodParameterTypes;
-        this.methodArguments = methodArguments;
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    public void testInstrumentedMethod() throws Exception {
-        DynamicType.Loaded<Foo> loaded = instrument(Foo.class, StubMethod.INSTANCE);
-        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
-        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(11));
-        Foo instance = loaded.getLoaded().newInstance();
-        assertNotEquals(Foo.class, instance.getClass());
-        assertThat(instance, instanceOf(Foo.class));
-        assertThat(loaded.getLoaded().getDeclaredMethod(methodName, methodParameterTypes)
-                .invoke(instance, methodArguments), (Matcher) matcher);
-        instance.assertZeroCalls();
     }
 }

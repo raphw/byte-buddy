@@ -15,10 +15,6 @@ import static org.hamcrest.core.Is.is;
 
 public class ClassLoadingStrategyDefaultTest {
 
-    private static class Foo {
-        /* empty */
-    }
-
     private ClassLoader classLoader;
     private TypeDescription typeDescription;
     private Map<TypeDescription, byte[]> binaryRepresentations;
@@ -47,5 +43,9 @@ public class ClassLoadingStrategyDefaultTest {
         Class<?> type = loaded.get(typeDescription);
         assertThat(type.getClassLoader(), is(classLoader));
         assertThat(type.getName(), is(Foo.class.getName()));
+    }
+
+    private static class Foo {
+        /* empty */
     }
 }

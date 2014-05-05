@@ -23,8 +23,23 @@ import static org.mockito.Mockito.*;
 @RunWith(Parameterized.class)
 public class PrimitiveWideningDelegateIllegalTest {
 
+    private final TypeDescription sourceTypeDescription;
+    private final TypeDescription targetTypeDescription;
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+    @Mock
+    private MethodVisitor methodVisitor;
+    @Mock
+    private Instrumentation.Context instrumentationContext;
+
+    public PrimitiveWideningDelegateIllegalTest(Class<?> sourceType, Class<?> targetType) {
+        sourceTypeDescription = mock(TypeDescription.class);
+        when(sourceTypeDescription.isPrimitive()).thenReturn(true);
+        when(sourceTypeDescription.represents(sourceType)).thenReturn(true);
+        targetTypeDescription = mock(TypeDescription.class);
+        when(targetTypeDescription.isPrimitive()).thenReturn(true);
+        when(targetTypeDescription.represents(targetType)).thenReturn(true);
+    }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
@@ -67,23 +82,6 @@ public class PrimitiveWideningDelegateIllegalTest {
                 {double.class, float.class},
         });
     }
-
-    private final TypeDescription sourceTypeDescription;
-    private final TypeDescription targetTypeDescription;
-
-    public PrimitiveWideningDelegateIllegalTest(Class<?> sourceType, Class<?> targetType) {
-        sourceTypeDescription = mock(TypeDescription.class);
-        when(sourceTypeDescription.isPrimitive()).thenReturn(true);
-        when(sourceTypeDescription.represents(sourceType)).thenReturn(true);
-        targetTypeDescription = mock(TypeDescription.class);
-        when(targetTypeDescription.isPrimitive()).thenReturn(true);
-        when(targetTypeDescription.represents(targetType)).thenReturn(true);
-    }
-
-    @Mock
-    private MethodVisitor methodVisitor;
-    @Mock
-    private Instrumentation.Context instrumentationContext;
 
     @After
     public void tearDown() throws Exception {

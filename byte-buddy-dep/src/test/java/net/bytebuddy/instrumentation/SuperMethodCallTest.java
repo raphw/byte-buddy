@@ -38,6 +38,52 @@ public class SuperMethodCallTest extends AbstractInstrumentationTest {
     private static final long LONG_VALUE = 42L;
     private static final float FLOAT_VALUE = 42f;
     private static final double DOUBLE_VALUE = 42d;
+    private final Matcher<?> matcher;
+    private final String methodName;
+    private final Class<?>[] methodParameterTypes;
+    private final Object[] methodArguments;
+    public SuperMethodCallTest(Matcher<?> matcher,
+                               String methodName,
+                               Class<?>[] methodParameterTypes,
+                               Object[] methodArguments) {
+        this.matcher = matcher;
+        this.methodName = methodName;
+        this.methodParameterTypes = methodParameterTypes;
+        this.methodArguments = methodArguments;
+    }
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+                {is(STRING_VALUE), OBJECT_METHOD, new Class<?>[0], new Object[0]},
+                {is(BOOLEAN_VALUE), BOOLEAN_METHOD, new Class<?>[0], new Object[0]},
+                {is(BYTE_VALUE), BYTE_METHOD, new Class<?>[0], new Object[0]},
+                {is(SHORT_VALUE), SHORT_METHOD, new Class<?>[0], new Object[0]},
+                {is(CHAR_VALUE), CHAR_METHOD, new Class<?>[0], new Object[0]},
+                {is(INT_VALUE), INT_METHOD, new Class<?>[0], new Object[0]},
+                {is(LONG_VALUE), LONG_METHOD, new Class<?>[0], new Object[0]},
+                {is(FLOAT_VALUE), FLOAT_METHOD, new Class<?>[0], new Object[0]},
+                {is(DOUBLE_VALUE), DOUBLE_METHOD, new Class<?>[0], new Object[0]},
+                {nullValue(), VOID_METHOD, new Class<?>[0], new Object[0]},
+                {nullValue(), PARAMETERS_METHOD,
+                        new Class<?>[]{long.class, float.class, int.class, double.class, Object.class},
+                        new Object[]{LONG_VALUE, FLOAT_VALUE, INT_VALUE, DOUBLE_VALUE, STRING_VALUE}}
+        });
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testInstrumentedMethod() throws Exception {
+        DynamicType.Loaded<Foo> loaded = instrument(Foo.class, SuperMethodCall.INSTANCE);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(11));
+        Foo instance = loaded.getLoaded().newInstance();
+        assertNotEquals(Foo.class, instance.getClass());
+        assertThat(instance, instanceOf(Foo.class));
+        assertThat(loaded.getLoaded().getDeclaredMethod(methodName, methodParameterTypes)
+                .invoke(instance, methodArguments), (Matcher) matcher);
+        instance.assertOnlyCall(methodName, methodArguments);
+    }
 
     @SuppressWarnings("unused")
     public static class Foo extends CallTraceable {
@@ -94,53 +140,5 @@ public class SuperMethodCallTest extends AbstractInstrumentationTest {
         public void parameters(long l, float f, int i, double d, Object o) {
             register(PARAMETERS_METHOD, l, f, i, d, o);
         }
-    }
-
-    @Parameterized.Parameters
-    public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-                {is(STRING_VALUE), OBJECT_METHOD, new Class<?>[0], new Object[0]},
-                {is(BOOLEAN_VALUE), BOOLEAN_METHOD, new Class<?>[0], new Object[0]},
-                {is(BYTE_VALUE), BYTE_METHOD, new Class<?>[0], new Object[0]},
-                {is(SHORT_VALUE), SHORT_METHOD, new Class<?>[0], new Object[0]},
-                {is(CHAR_VALUE), CHAR_METHOD, new Class<?>[0], new Object[0]},
-                {is(INT_VALUE), INT_METHOD, new Class<?>[0], new Object[0]},
-                {is(LONG_VALUE), LONG_METHOD, new Class<?>[0], new Object[0]},
-                {is(FLOAT_VALUE), FLOAT_METHOD, new Class<?>[0], new Object[0]},
-                {is(DOUBLE_VALUE), DOUBLE_METHOD, new Class<?>[0], new Object[0]},
-                {nullValue(), VOID_METHOD, new Class<?>[0], new Object[0]},
-                {nullValue(), PARAMETERS_METHOD,
-                        new Class<?>[]{long.class, float.class, int.class, double.class, Object.class},
-                        new Object[]{LONG_VALUE, FLOAT_VALUE, INT_VALUE, DOUBLE_VALUE, STRING_VALUE}}
-        });
-    }
-
-    private final Matcher<?> matcher;
-    private final String methodName;
-    private final Class<?>[] methodParameterTypes;
-    private final Object[] methodArguments;
-
-    public SuperMethodCallTest(Matcher<?> matcher,
-                               String methodName,
-                               Class<?>[] methodParameterTypes,
-                               Object[] methodArguments) {
-        this.matcher = matcher;
-        this.methodName = methodName;
-        this.methodParameterTypes = methodParameterTypes;
-        this.methodArguments = methodArguments;
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    public void testInstrumentedMethod() throws Exception {
-        DynamicType.Loaded<Foo> loaded = instrument(Foo.class, SuperMethodCall.INSTANCE);
-        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
-        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(11));
-        Foo instance = loaded.getLoaded().newInstance();
-        assertNotEquals(Foo.class, instance.getClass());
-        assertThat(instance, instanceOf(Foo.class));
-        assertThat(loaded.getLoaded().getDeclaredMethod(methodName, methodParameterTypes)
-                .invoke(instance, methodArguments), (Matcher) matcher);
-        instance.assertOnlyCall(methodName, methodArguments);
     }
 }

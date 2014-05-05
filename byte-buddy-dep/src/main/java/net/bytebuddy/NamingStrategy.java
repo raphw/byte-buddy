@@ -125,6 +125,31 @@ public interface NamingStrategy {
             }
             return String.format("%s$$%s$$%d", superClassName, suffix, Math.abs(random.nextInt()));
         }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            SuffixingRandom that = (SuffixingRandom) other;
+            return javaLangPackagePrefix.equals(that.javaLangPackagePrefix)
+                    && suffix.equals(that.suffix);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = suffix.hashCode();
+            result = 31 * result + javaLangPackagePrefix.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "NamingStrategy.SuffixingRandom{" +
+                    "suffix='" + suffix + '\'' +
+                    ", javaLangPackagePrefix='" + javaLangPackagePrefix + '\'' +
+                    ", random=" + random +
+                    '}';
+        }
     }
 
     /**
@@ -149,6 +174,22 @@ public interface NamingStrategy {
         @Override
         public String getName(UnnamedType UnnamedType) {
             return name;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && name.equals(((Fixed) other).name);
+        }
+
+        @Override
+        public int hashCode() {
+            return name.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "NamingStrategy.Fixed{name='" + name + '\'' + '}';
         }
     }
 }

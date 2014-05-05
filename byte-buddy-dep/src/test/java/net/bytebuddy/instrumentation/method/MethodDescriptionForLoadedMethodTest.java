@@ -29,6 +29,21 @@ public class MethodDescriptionForLoadedMethodTest {
     private MethodDescription packagePrivateMethod;
     private MethodDescription privateMethod;
 
+    private static int hashCode(Method method) {
+        return (Type.getInternalName(method.getDeclaringClass()) + "." + method.getName() + Type.getMethodDescriptor(method)).hashCode();
+    }
+
+    private static void assertMethodEquality(MethodDescription methodDescription, Method method) {
+        MethodDescription otherMethod = mock(MethodDescription.class);
+        TypeDescription otherType = mock(TypeDescription.class);
+        when(otherMethod.getUniqueSignature()).thenReturn(method.getName() + Type.getMethodDescriptor(method));
+        when(otherMethod.getDeclaringType()).thenReturn(otherType);
+        when(otherType.getName()).thenReturn(method.getDeclaringClass().getName());
+        assertThat(methodDescription.equals(otherMethod), is(true));
+        verify(otherType).getName();
+        verifyNoMoreInteractions(otherType);
+    }
+
     @Before
     public void setUp() throws Exception {
         objectHashCode = new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod(HASH_CODE));
@@ -108,25 +123,10 @@ public class MethodDescriptionForLoadedMethodTest {
         assertThat(doubleDoubleValue.hashCode(), is(hashCode(Double.class.getMethod(LONG_BITS_TO_DOUBLE, long.class))));
     }
 
-    private static int hashCode(Method method) {
-        return (Type.getInternalName(method.getDeclaringClass()) + "." + method.getName() + Type.getMethodDescriptor(method)).hashCode();
-    }
-
     @Test
     public void testEquals() throws Exception {
         assertMethodEquality(objectHashCode, Object.class.getMethod(HASH_CODE));
         assertMethodEquality(integerIntValue, Integer.class.getMethod(INT_VALUE));
         assertMethodEquality(doubleDoubleValue, Double.class.getMethod(LONG_BITS_TO_DOUBLE, long.class));
-    }
-
-    private static void assertMethodEquality(MethodDescription methodDescription, Method method) {
-        MethodDescription otherMethod = mock(MethodDescription.class);
-        TypeDescription otherType = mock(TypeDescription.class);
-        when(otherMethod.getUniqueSignature()).thenReturn(method.getName() + Type.getMethodDescriptor(method));
-        when(otherMethod.getDeclaringType()).thenReturn(otherType);
-        when(otherType.getName()).thenReturn(method.getDeclaringClass().getName());
-        assertThat(methodDescription.equals(otherMethod), is(true));
-        verify(otherType).getName();
-        verifyNoMoreInteractions(otherType);
     }
 }

@@ -41,6 +41,57 @@ public class FixedValueConstantPoolTypesTest<T extends CallTraceable>
     private static final long LONG_DEFAULT_VALUE = 0L;
     private static final float FLOAT_DEFAULT_VALUE = 0f;
     private static final double DOUBLE_DEFAULT_VALUE = 0d;
+    private final Object fixedValue;
+    private final Class<T> helperClass;
+
+    public FixedValueConstantPoolTypesTest(Object fixedValue, Class<T> helperClass) {
+        this.fixedValue = fixedValue;
+        this.helperClass = helperClass;
+    }
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+                {STRING_VALUE, StringTarget.class},
+                {BOOLEAN_VALUE, BooleanTarget.class},
+                {BYTE_VALUE, ByteTarget.class},
+                {SHORT_VALUE, ShortTarget.class},
+                {CHAR_VALUE, CharTarget.class},
+                {INT_VALUE, IntTarget.class},
+                {LONG_VALUE, LongTarget.class},
+                {FLOAT_VALUE, FloatTarget.class},
+                {DOUBLE_VALUE, DoubleTarget.class},
+                {NULL_VALUE, NullTarget.class}
+        });
+    }
+
+    @Test
+    public void testConstantPool() throws Exception {
+        DynamicType.Loaded<T> loaded = instrument(helperClass, FixedValue.value(fixedValue));
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(2));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        T instance = loaded.getLoaded().newInstance();
+        assertNotEquals(StringTarget.class, instance.getClass());
+        assertThat(instance, instanceOf(helperClass));
+        assertThat(loaded.getLoaded().getDeclaredMethod(FOO).invoke(instance), is(fixedValue));
+        assertThat(loaded.getLoaded().getDeclaredMethod(BAR).invoke(instance), is(fixedValue));
+        instance.assertZeroCalls();
+    }
+
+    @Test
+    public void testStaticField() throws Exception {
+        DynamicType.Loaded<T> loaded = instrument(helperClass, FixedValue.reference(fixedValue));
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(2));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(fixedValue == null ? 0 : 1));
+        T instance = loaded.getLoaded().newInstance();
+        assertNotEquals(StringTarget.class, instance.getClass());
+        assertThat(instance, instanceOf(helperClass));
+        assertThat(loaded.getLoaded().getDeclaredMethod(FOO).invoke(instance), is(fixedValue));
+        assertThat(loaded.getLoaded().getDeclaredMethod(BAR).invoke(instance), is(fixedValue));
+        instance.assertZeroCalls();
+    }
 
     @SuppressWarnings("unused")
     public static class StringTarget extends CallTraceable {
@@ -180,57 +231,5 @@ public class FixedValueConstantPoolTypesTest<T extends CallTraceable>
             register(BAR);
             return mock(Runnable.class);
         }
-    }
-
-    @Parameterized.Parameters
-    public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-                {STRING_VALUE, StringTarget.class},
-                {BOOLEAN_VALUE, BooleanTarget.class},
-                {BYTE_VALUE, ByteTarget.class},
-                {SHORT_VALUE, ShortTarget.class},
-                {CHAR_VALUE, CharTarget.class},
-                {INT_VALUE, IntTarget.class},
-                {LONG_VALUE, LongTarget.class},
-                {FLOAT_VALUE, FloatTarget.class},
-                {DOUBLE_VALUE, DoubleTarget.class},
-                {NULL_VALUE, NullTarget.class}
-        });
-    }
-
-    private final Object fixedValue;
-    private final Class<T> helperClass;
-
-    public FixedValueConstantPoolTypesTest(Object fixedValue, Class<T> helperClass) {
-        this.fixedValue = fixedValue;
-        this.helperClass = helperClass;
-    }
-
-    @Test
-    public void testConstantPool() throws Exception {
-        DynamicType.Loaded<T> loaded = instrument(helperClass, FixedValue.value(fixedValue));
-        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
-        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(2));
-        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
-        T instance = loaded.getLoaded().newInstance();
-        assertNotEquals(StringTarget.class, instance.getClass());
-        assertThat(instance, instanceOf(helperClass));
-        assertThat(loaded.getLoaded().getDeclaredMethod(FOO).invoke(instance), is(fixedValue));
-        assertThat(loaded.getLoaded().getDeclaredMethod(BAR).invoke(instance), is(fixedValue));
-        instance.assertZeroCalls();
-    }
-
-    @Test
-    public void testStaticField() throws Exception {
-        DynamicType.Loaded<T> loaded = instrument(helperClass, FixedValue.reference(fixedValue));
-        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
-        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(2));
-        assertThat(loaded.getLoaded().getDeclaredFields().length, is(fixedValue == null ? 0 : 1));
-        T instance = loaded.getLoaded().newInstance();
-        assertNotEquals(StringTarget.class, instance.getClass());
-        assertThat(instance, instanceOf(helperClass));
-        assertThat(loaded.getLoaded().getDeclaredMethod(FOO).invoke(instance), is(fixedValue));
-        assertThat(loaded.getLoaded().getDeclaredMethod(BAR).invoke(instance), is(fixedValue));
-        instance.assertZeroCalls();
     }
 }

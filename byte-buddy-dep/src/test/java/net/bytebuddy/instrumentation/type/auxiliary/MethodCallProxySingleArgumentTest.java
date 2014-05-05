@@ -26,6 +26,51 @@ public class MethodCallProxySingleArgumentTest<T extends CallTraceable> extends 
     private static final float FLOAT_VALUE = 42f;
     private static final double DOUBLE_VALUE = 42d;
     private static final Object NULL_VALUE = null;
+    private final Object value;
+    private final Class<T> targetType;
+    private final Class<?> valueType;
+
+    public MethodCallProxySingleArgumentTest(Object value, Class<T> targetType, Class<?> valueType) {
+        this.value = value;
+        this.targetType = targetType;
+        this.valueType = valueType;
+    }
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+                {STRING_VALUE, StringTarget.class, String.class},
+                {BOOLEAN_VALUE, BooleanTarget.class, boolean.class},
+                {BYTE_VALUE, ByteTarget.class, byte.class},
+                {SHORT_VALUE, ShortTarget.class, short.class},
+                {CHAR_VALUE, CharTarget.class, char.class},
+                {INT_VALUE, IntTarget.class, int.class},
+                {LONG_VALUE, LongTarget.class, long.class},
+                {FLOAT_VALUE, FloatTarget.class, float.class},
+                {DOUBLE_VALUE, DoubleTarget.class, double.class},
+                {NULL_VALUE, NullTarget.class, Void.class}
+        });
+    }
+
+    @Test
+    public void testRunMethod() throws Exception {
+        Class<?> auxiliaryType = proxyOnlyDeclaredMethodOf(targetType);
+        Constructor<?> constructor = auxiliaryType.getDeclaredConstructor(targetType, valueType);
+        constructor.setAccessible(true);
+        T proxiedInstance = targetType.newInstance();
+        ((Runnable) constructor.newInstance(proxiedInstance, value)).run();
+        proxiedInstance.assertOnlyCall(FOO, value);
+    }
+
+    @Test
+    public void testCallMethod() throws Exception {
+        Class<?> auxiliaryType = proxyOnlyDeclaredMethodOf(targetType);
+        Constructor<?> constructor = auxiliaryType.getDeclaredConstructor(targetType, valueType);
+        constructor.setAccessible(true);
+        T proxiedInstance = targetType.newInstance();
+        assertThat(((Callable<?>) constructor.newInstance(proxiedInstance, value)).call(), is(value));
+        proxiedInstance.assertOnlyCall(FOO, value);
+    }
 
     @SuppressWarnings("unused")
     public static class StringTarget extends CallTraceable {
@@ -114,51 +159,5 @@ public class MethodCallProxySingleArgumentTest<T extends CallTraceable> extends 
         public void foo(Void v) {
             register(FOO, v);
         }
-    }
-
-    @Parameterized.Parameters
-    public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-                {STRING_VALUE, StringTarget.class, String.class},
-                {BOOLEAN_VALUE, BooleanTarget.class, boolean.class},
-                {BYTE_VALUE, ByteTarget.class, byte.class},
-                {SHORT_VALUE, ShortTarget.class, short.class},
-                {CHAR_VALUE, CharTarget.class, char.class},
-                {INT_VALUE, IntTarget.class, int.class},
-                {LONG_VALUE, LongTarget.class, long.class},
-                {FLOAT_VALUE, FloatTarget.class, float.class},
-                {DOUBLE_VALUE, DoubleTarget.class, double.class},
-                {NULL_VALUE, NullTarget.class, Void.class}
-        });
-    }
-
-    private final Object value;
-    private final Class<T> targetType;
-    private final Class<?> valueType;
-
-    public MethodCallProxySingleArgumentTest(Object value, Class<T> targetType, Class<?> valueType) {
-        this.value = value;
-        this.targetType = targetType;
-        this.valueType = valueType;
-    }
-
-    @Test
-    public void testRunMethod() throws Exception {
-        Class<?> auxiliaryType = proxyOnlyDeclaredMethodOf(targetType);
-        Constructor<?> constructor = auxiliaryType.getDeclaredConstructor(targetType, valueType);
-        constructor.setAccessible(true);
-        T proxiedInstance = targetType.newInstance();
-        ((Runnable) constructor.newInstance(proxiedInstance, value)).run();
-        proxiedInstance.assertOnlyCall(FOO, value);
-    }
-
-    @Test
-    public void testCallMethod() throws Exception {
-        Class<?> auxiliaryType = proxyOnlyDeclaredMethodOf(targetType);
-        Constructor<?> constructor = auxiliaryType.getDeclaredConstructor(targetType, valueType);
-        constructor.setAccessible(true);
-        T proxiedInstance = targetType.newInstance();
-        assertThat(((Callable<?>) constructor.newInstance(proxiedInstance, value)).call(), is(value));
-        proxiedInstance.assertOnlyCall(FOO, value);
     }
 }

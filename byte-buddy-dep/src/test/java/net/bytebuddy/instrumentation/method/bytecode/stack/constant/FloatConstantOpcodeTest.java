@@ -23,6 +23,20 @@ import static org.mockito.Mockito.*;
 @RunWith(Parameterized.class)
 public class FloatConstantOpcodeTest {
 
+    private final float value;
+    private final int opcode;
+    @Rule
+    public TestRule mockitoRule = new MockitoRule(this);
+    @Mock
+    private MethodVisitor methodVisitor;
+    @Mock
+    private Instrumentation.Context instrumentationContext;
+
+    public FloatConstantOpcodeTest(float value, int opcode) {
+        this.value = value;
+        this.opcode = opcode;
+    }
+
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
@@ -31,22 +45,6 @@ public class FloatConstantOpcodeTest {
                 {2f, Opcodes.FCONST_2}
         });
     }
-
-    @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
-
-    private final float value;
-    private final int opcode;
-
-    public FloatConstantOpcodeTest(float value, int opcode) {
-        this.value = value;
-        this.opcode = opcode;
-    }
-
-    @Mock
-    private MethodVisitor methodVisitor;
-    @Mock
-    private Instrumentation.Context instrumentationContext;
 
     @After
     public void tearDown() throws Exception {

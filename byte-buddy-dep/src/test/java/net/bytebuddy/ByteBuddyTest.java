@@ -37,6 +37,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class ByteBuddyTest {
 
+    @SuppressWarnings("unused")
+    private static void println(String s) {
+        /* do nothing */
+    }
+
     @Test
     public void testHelloWorld() throws Exception {
         Class<?> dynamicType = new ByteBuddy()
@@ -46,39 +51,6 @@ public class ByteBuddyTest {
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
-    }
-
-    @Retention(RetentionPolicy.RUNTIME)
-    private static @interface Unsafe {
-        /* empty */
-    }
-
-    @Retention(RetentionPolicy.RUNTIME)
-    private static @interface Secured {
-        /* empty */
-    }
-
-    @SuppressWarnings("unused")
-    public static class Account {
-
-        private int amount = 100;
-
-        @Unsafe
-        public String transfer(int amount, String recipient) {
-            this.amount -= amount;
-            return "transferred $" + amount + " to " + recipient;
-        }
-    }
-
-    @SuppressWarnings("unused")
-    public static class Bank {
-
-        public static String obfuscate(@Argument(1) String recipient,
-                                       @Argument(0) Integer amount,
-                                       @Super Account zuper) {
-            //System.out.println("Transfer " + amount + " to " + recipient);
-            return zuper.transfer(amount, recipient.substring(0, 3) + "XXX") + " (obfuscated)";
-        }
     }
 
     @Test
@@ -118,14 +90,6 @@ public class ByteBuddyTest {
                 .name("example.Type")
                 .make();
         assertThat(dynamicType, notNullValue());
-    }
-
-    private static class GettingStartedNamingStrategy implements NamingStrategy {
-
-        @Override
-        public String getName(UnnamedType unnamedType) {
-            return "i.heart.ByteBuddy." + unnamedType.getSuperClass().getSimpleName();
-        }
     }
 
     @Test
@@ -169,22 +133,6 @@ public class ByteBuddyTest {
                 .filter(named("toString").and(returns(String.class)).and(takesArguments(0))).size(), is(1));
     }
 
-    @SuppressWarnings("unused")
-    public static class Foo {
-
-        public String foo() {
-            return null;
-        }
-
-        public String foo(Object o) {
-            return null;
-        }
-
-        public String bar() {
-            return null;
-        }
-    }
-
     @Test
     public void testFieldsAndMethodsMatcherStack() throws Exception {
         Foo foo = new ByteBuddy()
@@ -209,20 +157,6 @@ public class ByteBuddyTest {
                 .make();
     }
 
-    @SuppressWarnings("unused")
-    public static class Source {
-        public String hello(String name) {
-            return null;
-        }
-    }
-
-    @SuppressWarnings("unused")
-    public static class Target {
-        public static String hello(String name) {
-            return "Hello " + name + "!";
-        }
-    }
-
     @Test
     public void testFieldsAndMethodsMethodDelegation() throws Exception {
         String helloWorld = new ByteBuddy()
@@ -234,21 +168,6 @@ public class ByteBuddyTest {
                 .newInstance()
                 .hello("World");
         assertThat(helloWorld, is("Hello World!"));
-    }
-
-    @SuppressWarnings("unused")
-    public static class Target2 {
-        public static String intercept(String name) {
-            return "Hello " + name + "!";
-        }
-
-        public static String intercept(int i) {
-            return Integer.toString(i);
-        }
-
-        public static String intercept(Object o) {
-            return o.toString();
-        }
     }
 
     @Test
@@ -264,24 +183,6 @@ public class ByteBuddyTest {
         assertThat(helloWorld, is("Hello World!"));
     }
 
-
-    public static class MemoryDatabase {
-        public List<String> load(String info) {
-            return Arrays.asList(info + ": foo", info + ": bar");
-        }
-    }
-
-    public static class LoggerInterceptor {
-        public static List<String> log(@SuperCall Callable<List<String>> zuper) throws Exception {
-            println("Calling database");
-            try {
-                return zuper.call();
-            } finally {
-                println("Returned from database");
-            }
-        }
-    }
-
     @Test
     public void testFieldsAndMethodsMethodSuperCall() throws Exception {
         MemoryDatabase loggingDatabase = new ByteBuddy()
@@ -294,48 +195,9 @@ public class ByteBuddyTest {
         assertThat(loggingDatabase.load("qux"), is(Arrays.asList("qux: foo", "qux: bar")));
     }
 
-    @SuppressWarnings("unchecked")
-    class LoggingMemoryDatabase extends MemoryDatabase {
-
-        private class LoadMethodSuperCall implements Callable {
-
-            private final String info;
-
-            private LoadMethodSuperCall(String info) {
-                this.info = info;
-            }
-
-            @Override
-            public Object call() throws Exception {
-                return LoggingMemoryDatabase.super.load(info);
-            }
-        }
-
-        @Override
-        public List<String> load(String info) {
-            try {
-                return LoggerInterceptor.log(new LoadMethodSuperCall(info));
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
-
     @Test
     public void testFieldsAndMethodsMethodSuperCallExplicit() throws Exception {
         assertThat(new LoggingMemoryDatabase().load("qux"), is(Arrays.asList("qux: foo", "qux: bar")));
-    }
-
-    @SuppressWarnings("unused")
-    public static class ChangingLoggerInterceptor {
-        public static List<String> log(@Super MemoryDatabase zuper, String info) {
-            println("Calling database");
-            try {
-                return zuper.load(info + " (logged access)");
-            } finally {
-                println("Returned from database");
-            }
-        }
     }
 
     @Test
@@ -350,28 +212,6 @@ public class ByteBuddyTest {
         assertThat(loggingDatabase.load("qux"), is(Arrays.asList("qux (logged access): foo", "qux (logged access): bar")));
     }
 
-    @SuppressWarnings("unused")
-    public static class Loop {
-
-        public String loop(String value) {
-            return value;
-        }
-
-        public int loop(int value) {
-            return value;
-        }
-    }
-
-    @SuppressWarnings("unused")
-    public static class Interceptor {
-
-        @RuntimeType
-        public static Object intercept(@RuntimeType Object value) {
-            println("Invoked method with: " + value);
-            return value;
-        }
-    }
-
     @Test
     public void testFieldsAndMethodsRuntimeType() throws Exception {
         Loop trivialGetterBean = new ByteBuddy()
@@ -383,42 +223,6 @@ public class ByteBuddyTest {
                 .newInstance();
         assertThat(trivialGetterBean.loop(42), is(42));
         assertThat(trivialGetterBean.loop("foo"), is("foo"));
-    }
-
-    @SuppressWarnings("unused")
-    public static class UserType {
-
-        public String doSomething() {
-            return null;
-        }
-    }
-
-    @SuppressWarnings("unused")
-    public static interface Interceptor2 {
-
-        String doSomethingElse();
-    }
-
-    @SuppressWarnings("unused")
-    public static class HelloWorldInterceptor implements Interceptor2 {
-
-        @Override
-        public String doSomethingElse() {
-            return "Hello World!";
-        }
-    }
-
-    @SuppressWarnings("unused")
-    public static interface InterceptionAccessor {
-
-        Interceptor2 getInterceptor();
-
-        void setInterceptor(Interceptor2 interceptor);
-    }
-
-    @SuppressWarnings("unused")
-    public static interface InstanceCreator {
-        Object makeInstance();
     }
 
     @Test
@@ -440,18 +244,6 @@ public class ByteBuddyTest {
         UserType userType = (UserType) factory.makeInstance();
         ((InterceptionAccessor) userType).setInterceptor(new HelloWorldInterceptor());
         assertThat(userType.doSomething(), is("Hello World!"));
-    }
-
-    @Retention(RetentionPolicy.RUNTIME)
-    public static @interface RuntimeDefinition {
-    }
-
-    private static class RuntimeDefinitionImpl implements RuntimeDefinition {
-
-        @Override
-        public Class<? extends Annotation> annotationType() {
-            return RuntimeDefinition.class;
-        }
     }
 
     @Test
@@ -479,6 +271,46 @@ public class ByteBuddyTest {
                 .getLoaded();
         assertThat(dynamicType.getDeclaredMethod("toString").isAnnotationPresent(RuntimeDefinition.class), is(true));
         assertThat(dynamicType.getDeclaredField("foo").isAnnotationPresent(RuntimeDefinition.class), is(true));
+    }
+
+    @Test
+    public void testCustomInstrumentationMethodImplementation() throws Exception {
+        assertThat(new ByteBuddy()
+                .subclass(SumExample.class)
+                .method(named("calculate")).intercept(SumInstrumentation.INSTANCE)
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded()
+                .newInstance()
+                .calculate(), is(60));
+    }
+
+    @Test
+    public void testCustomInstrumentationAssigner() throws Exception {
+        assertThat(new ByteBuddy()
+                .subclass(Object.class)
+                .method(named("toString"))
+                .intercept(FixedValue.value(42)
+                        .withAssigner(new PrimitiveTypeAwareAssigner(ToStringAssigner.INSTANCE), false))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded()
+                .newInstance()
+                .toString(), is("42"));
+    }
+
+    @Test
+    public void testCustomInstrumentationDelegationAnnotation() throws Exception {
+        assertThat(new ByteBuddy()
+                .subclass(Object.class)
+                .method(named("toString"))
+                .intercept(MethodDelegation.to(ToStringInterceptor.class)
+                        .defineParameterBinder(StringValueBinder.INSTANCE))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded()
+                .newInstance()
+                .toString(), is("Hello!"));
     }
 
     public static enum IntegerSum implements StackManipulation {
@@ -535,23 +367,6 @@ public class ByteBuddyTest {
         }
     }
 
-    public static abstract class SumExample {
-
-        public abstract int calculate();
-    }
-
-    @Test
-    public void testCustomInstrumentationMethodImplementation() throws Exception {
-        assertThat(new ByteBuddy()
-                .subclass(SumExample.class)
-                .method(named("calculate")).intercept(SumInstrumentation.INSTANCE)
-                .make()
-                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded()
-                .newInstance()
-                .calculate(), is(60));
-    }
-
     public static enum ToStringAssigner implements Assigner {
         INSTANCE;
 
@@ -569,26 +384,6 @@ public class ByteBuddyTest {
                 return IllegalStackManipulation.INSTANCE;
             }
         }
-    }
-
-    @Test
-    public void testCustomInstrumentationAssigner() throws Exception {
-        assertThat(new ByteBuddy()
-                .subclass(Object.class)
-                .method(named("toString"))
-                .intercept(FixedValue.value(42)
-                        .withAssigner(new PrimitiveTypeAwareAssigner(ToStringAssigner.INSTANCE), false))
-                .make()
-                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded()
-                .newInstance()
-                .toString(), is("42"));
-    }
-
-    @Retention(RetentionPolicy.RUNTIME)
-    public static @interface StringValue {
-
-        String value();
     }
 
     public static enum StringValueBinder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<StringValue> {
@@ -614,6 +409,202 @@ public class ByteBuddyTest {
         }
     }
 
+    @Retention(RetentionPolicy.RUNTIME)
+    private static @interface Unsafe {
+        /* empty */
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    private static @interface Secured {
+        /* empty */
+    }
+
+    @SuppressWarnings("unused")
+    public static interface Interceptor2 {
+
+        String doSomethingElse();
+    }
+
+    @SuppressWarnings("unused")
+    public static interface InterceptionAccessor {
+
+        Interceptor2 getInterceptor();
+
+        void setInterceptor(Interceptor2 interceptor);
+    }
+
+    @SuppressWarnings("unused")
+    public static interface InstanceCreator {
+        Object makeInstance();
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    public static @interface RuntimeDefinition {
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    public static @interface StringValue {
+
+        String value();
+    }
+
+    @SuppressWarnings("unused")
+    public static class Account {
+
+        private int amount = 100;
+
+        @Unsafe
+        public String transfer(int amount, String recipient) {
+            this.amount -= amount;
+            return "transferred $" + amount + " to " + recipient;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class Bank {
+
+        public static String obfuscate(@Argument(1) String recipient,
+                                       @Argument(0) Integer amount,
+                                       @Super Account zuper) {
+            //System.out.println("Transfer " + amount + " to " + recipient);
+            return zuper.transfer(amount, recipient.substring(0, 3) + "XXX") + " (obfuscated)";
+        }
+    }
+
+    private static class GettingStartedNamingStrategy implements NamingStrategy {
+
+        @Override
+        public String getName(UnnamedType unnamedType) {
+            return "i.heart.ByteBuddy." + unnamedType.getSuperClass().getSimpleName();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class Foo {
+
+        public String foo() {
+            return null;
+        }
+
+        public String foo(Object o) {
+            return null;
+        }
+
+        public String bar() {
+            return null;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class Source {
+        public String hello(String name) {
+            return null;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class Target {
+        public static String hello(String name) {
+            return "Hello " + name + "!";
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class Target2 {
+        public static String intercept(String name) {
+            return "Hello " + name + "!";
+        }
+
+        public static String intercept(int i) {
+            return Integer.toString(i);
+        }
+
+        public static String intercept(Object o) {
+            return o.toString();
+        }
+    }
+
+    public static class MemoryDatabase {
+        public List<String> load(String info) {
+            return Arrays.asList(info + ": foo", info + ": bar");
+        }
+    }
+
+    public static class LoggerInterceptor {
+        public static List<String> log(@SuperCall Callable<List<String>> zuper) throws Exception {
+            println("Calling database");
+            try {
+                return zuper.call();
+            } finally {
+                println("Returned from database");
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ChangingLoggerInterceptor {
+        public static List<String> log(@Super MemoryDatabase zuper, String info) {
+            println("Calling database");
+            try {
+                return zuper.load(info + " (logged access)");
+            } finally {
+                println("Returned from database");
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class Loop {
+
+        public String loop(String value) {
+            return value;
+        }
+
+        public int loop(int value) {
+            return value;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class Interceptor {
+
+        @RuntimeType
+        public static Object intercept(@RuntimeType Object value) {
+            println("Invoked method with: " + value);
+            return value;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class UserType {
+
+        public String doSomething() {
+            return null;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class HelloWorldInterceptor implements Interceptor2 {
+
+        @Override
+        public String doSomethingElse() {
+            return "Hello World!";
+        }
+    }
+
+    private static class RuntimeDefinitionImpl implements RuntimeDefinition {
+
+        @Override
+        public Class<? extends Annotation> annotationType() {
+            return RuntimeDefinition.class;
+        }
+    }
+
+    public static abstract class SumExample {
+
+        public abstract int calculate();
+    }
+
     public static class ToStringInterceptor {
 
         public static String makeString(@StringValue("Hello!") String value) {
@@ -621,22 +612,30 @@ public class ByteBuddyTest {
         }
     }
 
-    @Test
-    public void testCustomInstrumentationDelegationAnnotation() throws Exception {
-        assertThat(new ByteBuddy()
-                .subclass(Object.class)
-                .method(named("toString"))
-                .intercept(MethodDelegation.to(ToStringInterceptor.class)
-                        .defineParameterBinder(StringValueBinder.INSTANCE))
-                .make()
-                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded()
-                .newInstance()
-                .toString(), is("Hello!"));
-    }
+    @SuppressWarnings("unchecked")
+    class LoggingMemoryDatabase extends MemoryDatabase {
 
-    @SuppressWarnings("unused")
-    private static void println(String s) {
-        /* do nothing */
+        @Override
+        public List<String> load(String info) {
+            try {
+                return LoggerInterceptor.log(new LoadMethodSuperCall(info));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private class LoadMethodSuperCall implements Callable {
+
+            private final String info;
+
+            private LoadMethodSuperCall(String info) {
+                this.info = info;
+            }
+
+            @Override
+            public Object call() throws Exception {
+                return LoggingMemoryDatabase.super.load(info);
+            }
+        }
     }
 }

@@ -25,8 +25,22 @@ import static org.mockito.Mockito.*;
 @RunWith(Parameterized.class)
 public class MethodReturnTest {
 
+    private final Class<?> type;
+    private final int opcode;
+    private final int sizeChange;
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+    @Mock
+    private MethodVisitor methodVisitor;
+    @Mock
+    private TypeDescription typeDescription;
+    @Mock
+    private Instrumentation.Context instrumentationContext;
+    public MethodReturnTest(Class<?> type, int opcode, int sizeChange) {
+        this.type = type;
+        this.opcode = opcode;
+        this.sizeChange = sizeChange;
+    }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
@@ -44,23 +58,6 @@ public class MethodReturnTest {
                 {boolean.class, Opcodes.IRETURN, 1},
         });
     }
-
-    private final Class<?> type;
-    private final int opcode;
-    private final int sizeChange;
-
-    public MethodReturnTest(Class<?> type, int opcode, int sizeChange) {
-        this.type = type;
-        this.opcode = opcode;
-        this.sizeChange = sizeChange;
-    }
-
-    @Mock
-    private MethodVisitor methodVisitor;
-    @Mock
-    private TypeDescription typeDescription;
-    @Mock
-    private Instrumentation.Context instrumentationContext;
 
     @Before
     public void setUp() throws Exception {

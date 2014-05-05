@@ -20,15 +20,9 @@ import static org.mockito.Mockito.when;
 
 public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
 
+    private final Class<T> annotationType;
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
-
-    private final Class<T> annotationType;
-
-    protected AbstractAnnotationBinderTest(Class<T> annotationType) {
-        this.annotationType = annotationType;
-    }
-
     protected T annotation;
     @Mock
     protected MethodDescription source, target;
@@ -40,6 +34,9 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
     protected StackManipulation stackManipulation;
     @Mock
     protected TypeList sourceTypeList, targetTypeList;
+    protected AbstractAnnotationBinderTest(Class<T> annotationType) {
+        this.annotationType = annotationType;
+    }
 
     @Before
     public void setUp() throws Exception {

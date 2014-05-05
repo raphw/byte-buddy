@@ -20,22 +20,12 @@ import static org.mockito.Mockito.*;
 
 public class ConstructorStrategyDefaultTest {
 
-    @SuppressWarnings("unused")
-    private static class Foo {
-
-        public Foo(Void v) {
-            /* empty */
-        }
-    }
-
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
-
     @Mock
     private MethodRegistry methodRegistry;
     @Mock
     private MethodAttributeAppender.Factory methodAttributeAppenderFactory;
-
     private TypeDescription stringType;
     private TypeDescription fooType;
 
@@ -76,5 +66,13 @@ public class ConstructorStrategyDefaultTest {
     @Test(expected = IllegalArgumentException.class)
     public void testDefaultConstructorStrategyNoDefault() throws Exception {
         ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.extractConstructors(fooType);
+    }
+
+    @SuppressWarnings("unused")
+    private static class Foo {
+
+        public Foo(Void v) {
+            /* empty */
+        }
     }
 }

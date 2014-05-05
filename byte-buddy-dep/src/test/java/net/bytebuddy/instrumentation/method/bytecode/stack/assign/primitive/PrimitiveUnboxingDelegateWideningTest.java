@@ -27,24 +27,6 @@ import static org.mockito.Mockito.*;
 @RunWith(Parameterized.class)
 public class PrimitiveUnboxingDelegateWideningTest {
 
-    @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
-
-    @Parameterized.Parameters
-    public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-                {Short.class, long.class, "shortValue", "()S", Opcodes.I2L, 1, 1},
-                {Short.class, float.class, "shortValue", "()S", Opcodes.I2F, 0, 0},
-                {Short.class, double.class, "shortValue", "()S", Opcodes.I2D, 1, 1},
-                {Integer.class, long.class, "intValue", "()I", Opcodes.I2L, 1, 1},
-                {Integer.class, float.class, "intValue", "()I", Opcodes.I2F, 0, 0},
-                {Integer.class, double.class, "intValue", "()I", Opcodes.I2D, 1, 1},
-                {Long.class, float.class, "longValue", "()J", Opcodes.L2F, 0, 1},
-                {Long.class, double.class, "longValue", "()J", Opcodes.L2D, 1, 1},
-                {Float.class, double.class, "floatValue", "()F", Opcodes.F2D, 1, 1},
-        });
-    }
-
     private final Class<?> primitiveType;
     private final Class<?> referenceType;
     private final String unboxingMethodName;
@@ -52,7 +34,16 @@ public class PrimitiveUnboxingDelegateWideningTest {
     private final int wideningOpcode;
     private final int sizeChange;
     private final int interimMaximum;
-
+    @Rule
+    public TestRule mockitoRule = new MockitoRule(this);
+    @Mock
+    private TypeDescription referenceTypeDescription, primitiveTypeDescription;
+    @Mock
+    private Assigner chainedAssigner;
+    @Mock
+    private MethodVisitor methodVisitor;
+    @Mock
+    private Instrumentation.Context instrumentationContext;
     public PrimitiveUnboxingDelegateWideningTest(Class<?> referenceType,
                                                  Class<?> primitiveType,
                                                  String unboxingMethodName,
@@ -69,14 +60,20 @@ public class PrimitiveUnboxingDelegateWideningTest {
         this.interimMaximum = interimMaximum;
     }
 
-    @Mock
-    private TypeDescription referenceTypeDescription, primitiveTypeDescription;
-    @Mock
-    private Assigner chainedAssigner;
-    @Mock
-    private MethodVisitor methodVisitor;
-    @Mock
-    private Instrumentation.Context instrumentationContext;
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+                {Short.class, long.class, "shortValue", "()S", Opcodes.I2L, 1, 1},
+                {Short.class, float.class, "shortValue", "()S", Opcodes.I2F, 0, 0},
+                {Short.class, double.class, "shortValue", "()S", Opcodes.I2D, 1, 1},
+                {Integer.class, long.class, "intValue", "()I", Opcodes.I2L, 1, 1},
+                {Integer.class, float.class, "intValue", "()I", Opcodes.I2F, 0, 0},
+                {Integer.class, double.class, "intValue", "()I", Opcodes.I2D, 1, 1},
+                {Long.class, float.class, "longValue", "()J", Opcodes.L2F, 0, 1},
+                {Long.class, double.class, "longValue", "()J", Opcodes.L2D, 1, 1},
+                {Float.class, double.class, "floatValue", "()F", Opcodes.F2D, 1, 1},
+        });
+    }
 
     @Before
     public void setUp() throws Exception {

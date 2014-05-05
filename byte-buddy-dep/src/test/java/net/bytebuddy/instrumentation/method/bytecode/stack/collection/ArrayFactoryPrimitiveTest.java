@@ -14,6 +14,15 @@ import static org.mockito.Mockito.verify;
 @RunWith(Parameterized.class)
 public class ArrayFactoryPrimitiveTest extends AbstractArrayFactoryTest {
 
+    private final Class<?> primitiveType;
+    private final int createOpcode;
+    private final int storeOpcode;
+    public ArrayFactoryPrimitiveTest(Class<?> primitiveType, int createOpcode, int storeOpcode) {
+        this.primitiveType = primitiveType;
+        this.createOpcode = createOpcode;
+        this.storeOpcode = storeOpcode;
+    }
+
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
@@ -26,16 +35,6 @@ public class ArrayFactoryPrimitiveTest extends AbstractArrayFactoryTest {
                 {float.class, Opcodes.T_FLOAT, Opcodes.FASTORE},
                 {double.class, Opcodes.T_DOUBLE, Opcodes.DASTORE},
         });
-    }
-
-    private final Class<?> primitiveType;
-    private final int createOpcode;
-    private final int storeOpcode;
-
-    public ArrayFactoryPrimitiveTest(Class<?> primitiveType, int createOpcode, int storeOpcode) {
-        this.primitiveType = primitiveType;
-        this.createOpcode = createOpcode;
-        this.storeOpcode = storeOpcode;
     }
 
     @Test

@@ -24,8 +24,23 @@ import static org.mockito.Mockito.*;
 @RunWith(Parameterized.class)
 public class MethodArgumentTest {
 
+    private final TypeDescription typeDescription;
+    private final int opcode;
+    private final int size;
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+    @Mock
+    private MethodVisitor methodVisitor;
+    @Mock
+    private Instrumentation.Context instrumentationContext;
+
+    public MethodArgumentTest(Class<?> type, int opcode, int size) {
+        this.typeDescription = mock(TypeDescription.class);
+        when(typeDescription.isPrimitive()).thenReturn(type.isPrimitive());
+        when(typeDescription.represents(type)).thenReturn(true);
+        this.opcode = opcode;
+        this.size = size;
+    }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
@@ -41,23 +56,6 @@ public class MethodArgumentTest {
                 {double.class, Opcodes.DLOAD, 2},
         });
     }
-
-    private final TypeDescription typeDescription;
-    private final int opcode;
-    private final int size;
-
-    public MethodArgumentTest(Class<?> type, int opcode, int size) {
-        this.typeDescription = mock(TypeDescription.class);
-        when(typeDescription.isPrimitive()).thenReturn(type.isPrimitive());
-        when(typeDescription.represents(type)).thenReturn(true);
-        this.opcode = opcode;
-        this.size = size;
-    }
-
-    @Mock
-    private MethodVisitor methodVisitor;
-    @Mock
-    private Instrumentation.Context instrumentationContext;
 
     @After
     public void setUp() throws Exception {

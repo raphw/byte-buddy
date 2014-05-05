@@ -14,6 +14,13 @@ import static org.hamcrest.core.Is.is;
 @RunWith(Parameterized.class)
 public class ClassFileVersionKnownVersionsTest {
 
+    private final int javaVersion;
+    private final int byteCodeVersion;
+    public ClassFileVersionKnownVersionsTest(int javaVersion, int byteCodeVersion) {
+        this.javaVersion = javaVersion;
+        this.byteCodeVersion = byteCodeVersion;
+    }
+
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
@@ -26,14 +33,6 @@ public class ClassFileVersionKnownVersionsTest {
                 {7, Opcodes.V1_7},
                 {8, Opcodes.V1_7 + 1},
         });
-    }
-
-    private final int javaVersion;
-    private final int byteCodeVersion;
-
-    public ClassFileVersionKnownVersionsTest(int javaVersion, int byteCodeVersion) {
-        this.javaVersion = javaVersion;
-        this.byteCodeVersion = byteCodeVersion;
     }
 
     @Test

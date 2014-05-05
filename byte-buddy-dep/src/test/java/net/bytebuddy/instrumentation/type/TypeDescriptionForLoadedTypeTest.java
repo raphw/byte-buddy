@@ -30,6 +30,14 @@ public class TypeDescriptionForLoadedTypeTest {
     private TypeDescription serializableType;
     private TypeDescription objectArrayType;
 
+    private static void assertTypeEquality(TypeDescription typeDescription, Class<?> type) {
+        TypeDescription otherType = mock(TypeDescription.class);
+        when(otherType.getName()).thenReturn(type.getName());
+        assertThat(typeDescription.equals(otherType), is(true));
+        verify(otherType).getName();
+        verifyNoMoreInteractions(otherType);
+    }
+
     @Before
     public void setUp() throws Exception {
         objectType = new TypeDescription.ForLoadedType(Object.class);
@@ -428,13 +436,5 @@ public class TypeDescriptionForLoadedTypeTest {
         assertTypeEquality(integerType, Integer.class);
         assertTypeEquality(serializableType, Serializable.class);
         assertTypeEquality(objectArrayType, Object[].class);
-    }
-
-    private static void assertTypeEquality(TypeDescription typeDescription, Class<?> type) {
-        TypeDescription otherType = mock(TypeDescription.class);
-        when(otherType.getName()).thenReturn(type.getName());
-        assertThat(typeDescription.equals(otherType), is(true));
-        verify(otherType).getName();
-        verifyNoMoreInteractions(otherType);
     }
 }

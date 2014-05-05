@@ -21,6 +21,29 @@ import static org.mockito.Mockito.when;
 
 public class AbstractMostSpecificTypeResolverTest extends AbstractAmbiguityResolverTest {
 
+    @Mock
+    protected TypeList sourceTypeList, leftTypeList, rightTypeList;
+    @Mock
+    protected TypeDescription sourceType;
+
+    protected static Matcher<? super MostSpecificTypeResolver.ParameterIndexToken> describesArgument(int... index) {
+        Matcher<? super MostSpecificTypeResolver.ParameterIndexToken> token = CoreMatchers.anything();
+        for (int anIndex : index) {
+            token = anyOf(new IndexTokenMatcher(anIndex), token);
+        }
+        return token;
+    }
+
+    @Override
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+        when(source.getParameterTypes()).thenReturn(sourceTypeList);
+        when(sourceTypeList.get(anyInt())).thenReturn(sourceType);
+        when(leftMethod.getParameterTypes()).thenReturn(leftTypeList);
+        when(rightMethod.getParameterTypes()).thenReturn(rightTypeList);
+    }
+
     private static class IndexTokenMatcher extends BaseMatcher<MostSpecificTypeResolver.ParameterIndexToken> {
 
         private final int index;
@@ -39,14 +62,6 @@ public class AbstractMostSpecificTypeResolverTest extends AbstractAmbiguityResol
         public void describeTo(Description description) {
             description.appendText("Expected matching token for parameter index ").appendValue(index);
         }
-    }
-
-    protected static Matcher<? super MostSpecificTypeResolver.ParameterIndexToken> describesArgument(int... index) {
-        Matcher<? super MostSpecificTypeResolver.ParameterIndexToken> token = CoreMatchers.anything();
-        for (int anIndex : index) {
-            token = anyOf(new IndexTokenMatcher(anIndex), token);
-        }
-        return token;
     }
 
     protected static class TokenAnswer implements Answer<Integer> {
@@ -70,20 +85,5 @@ public class AbstractMostSpecificTypeResolverTest extends AbstractAmbiguityResol
             assert invocation.getArguments().length == 1;
             return indexMapping.get(invocation.getArguments()[0]);
         }
-    }
-
-    @Mock
-    protected TypeList sourceTypeList, leftTypeList, rightTypeList;
-    @Mock
-    protected TypeDescription sourceType;
-
-    @Override
-    @Before
-    public void setUp() throws Exception {
-        super.setUp();
-        when(source.getParameterTypes()).thenReturn(sourceTypeList);
-        when(sourceTypeList.get(anyInt())).thenReturn(sourceType);
-        when(leftMethod.getParameterTypes()).thenReturn(leftTypeList);
-        when(rightMethod.getParameterTypes()).thenReturn(rightTypeList);
     }
 }

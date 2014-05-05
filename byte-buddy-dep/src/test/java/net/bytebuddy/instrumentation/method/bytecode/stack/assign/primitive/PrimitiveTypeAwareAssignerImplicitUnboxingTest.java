@@ -24,8 +24,28 @@ import static org.mockito.Mockito.*;
 @RunWith(Parameterized.class)
 public class PrimitiveTypeAwareAssignerImplicitUnboxingTest {
 
+    private final Class<?> sourceType;
+    private final Class<?> wrapperType;
+    private final Class<?> targetType;
+    private final boolean assignable;
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+    @Mock
+    private TypeDescription sourceTypeDescription, targetTypeDescription;
+    @Mock
+    private Assigner chainedAssigner;
+    @Mock
+    private StackManipulation chainedStackManipulation;
+    private Assigner primitiveAssigner;
+    public PrimitiveTypeAwareAssignerImplicitUnboxingTest(Class<?> sourceType,
+                                                          Class<?> wrapperType,
+                                                          Class<?> targetType,
+                                                          boolean assignable) {
+        this.sourceType = sourceType;
+        this.wrapperType = wrapperType;
+        this.targetType = targetType;
+        this.assignable = assignable;
+    }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
@@ -40,30 +60,6 @@ public class PrimitiveTypeAwareAssignerImplicitUnboxingTest {
                 {Object.class, Double.class, double.class, true}
         });
     }
-
-    private final Class<?> sourceType;
-    private final Class<?> wrapperType;
-    private final Class<?> targetType;
-    private final boolean assignable;
-
-    public PrimitiveTypeAwareAssignerImplicitUnboxingTest(Class<?> sourceType,
-                                                          Class<?> wrapperType,
-                                                          Class<?> targetType,
-                                                          boolean assignable) {
-        this.sourceType = sourceType;
-        this.wrapperType = wrapperType;
-        this.targetType = targetType;
-        this.assignable = assignable;
-    }
-
-    @Mock
-    private TypeDescription sourceTypeDescription, targetTypeDescription;
-    @Mock
-    private Assigner chainedAssigner;
-    @Mock
-    private StackManipulation chainedStackManipulation;
-
-    private Assigner primitiveAssigner;
 
     @Before
     public void setUp() throws Exception {

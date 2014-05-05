@@ -12,6 +12,13 @@ public class MethodDelegationAllArgumentsTest extends AbstractInstrumentationTes
     private static final int FOO = 42, BAR = 21;
     private static final String QUX = "qux", BAZ = "baz";
 
+    @Test
+    public void testAllArguments() throws Exception {
+        DynamicType.Loaded<Foo> loaded = instrument(Foo.class, MethodDelegation.to(Bar.class));
+        Foo instance = loaded.getLoaded().newInstance();
+        assertThat(instance.foo(FOO, BAR), is((Object) (QUX + FOO + BAR)));
+    }
+
     public static class Foo {
 
         public Object foo(int i1, Integer i2) {
@@ -24,12 +31,5 @@ public class MethodDelegationAllArgumentsTest extends AbstractInstrumentationTes
         public static String qux(@AllArguments int[] args) {
             return QUX + args[0] + args[1];
         }
-    }
-
-    @Test
-    public void testAllArguments() throws Exception {
-        DynamicType.Loaded<Foo> loaded = instrument(Foo.class, MethodDelegation.to(Bar.class));
-        Foo instance = loaded.getLoaded().newInstance();
-        assertThat(instance.foo(FOO, BAR), is((Object) (QUX + FOO + BAR)));
     }
 }

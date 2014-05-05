@@ -9,6 +9,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class MethodDelegationThisTest extends AbstractInstrumentationTest {
 
+    @Test
+    public void testThis() throws Exception {
+        DynamicType.Loaded<Foo> loaded = instrument(Foo.class, MethodDelegation.to(Bar.class));
+        Foo instance = loaded.getLoaded().newInstance();
+        assertThat(instance.foo(), is((Object) instance));
+    }
+
     public static class Foo {
 
         public Object foo() {
@@ -25,12 +32,5 @@ public class MethodDelegationThisTest extends AbstractInstrumentationTest {
         public static Object baz(@This Void v) {
             return v;
         }
-    }
-
-    @Test
-    public void testThis() throws Exception {
-        DynamicType.Loaded<Foo> loaded = instrument(Foo.class, MethodDelegation.to(Bar.class));
-        Foo instance = loaded.getLoaded().newInstance();
-        assertThat(instance.foo(), is((Object) instance));
     }
 }

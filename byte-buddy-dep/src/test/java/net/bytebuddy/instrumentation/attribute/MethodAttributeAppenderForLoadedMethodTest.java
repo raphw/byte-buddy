@@ -13,15 +13,6 @@ public class MethodAttributeAppenderForLoadedMethodTest extends AbstractMethodAt
 
     private static final String BAR = "bar";
     private static final int PARAMETER_INDEX = 0;
-
-    private static abstract class Foo {
-
-        @Qux
-        @Baz
-        @QuxBaz
-        protected abstract void bar(@Qux @Baz @QuxBaz Object o);
-    }
-
     private Method method;
 
     @Before
@@ -41,5 +32,13 @@ public class MethodAttributeAppenderForLoadedMethodTest extends AbstractMethodAt
         verifyNoMoreInteractions(methodVisitor);
         verify(methodDescription).getParameterTypes();
         verifyNoMoreInteractions(methodDescription);
+    }
+
+    private static abstract class Foo {
+
+        @Qux
+        @Baz
+        @QuxBaz
+        protected abstract void bar(@Qux @Baz @QuxBaz Object o);
     }
 }

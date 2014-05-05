@@ -27,8 +27,22 @@ import static org.mockito.Mockito.*;
 @RunWith(Parameterized.class)
 public class VoidAwareAssignerNonVoidToVoidTest {
 
+    private final Class<?> sourceType;
+    private final int opcode;
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+    @Mock
+    private TypeDescription sourceTypeDescription, targetTypeDescription;
+    @Mock
+    private Assigner chainedAssigner;
+    @Mock
+    private MethodVisitor methodVisitor;
+    @Mock
+    private Instrumentation.Context instrumentationContext;
+    public VoidAwareAssignerNonVoidToVoidTest(Class<?> sourceType, int opcode) {
+        this.sourceType = sourceType;
+        this.opcode = opcode;
+    }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
@@ -43,23 +57,6 @@ public class VoidAwareAssignerNonVoidToVoidTest {
                 {Object.class, Opcodes.POP}
         });
     }
-
-    private final Class<?> sourceType;
-    private final int opcode;
-
-    public VoidAwareAssignerNonVoidToVoidTest(Class<?> sourceType, int opcode) {
-        this.sourceType = sourceType;
-        this.opcode = opcode;
-    }
-
-    @Mock
-    private TypeDescription sourceTypeDescription, targetTypeDescription;
-    @Mock
-    private Assigner chainedAssigner;
-    @Mock
-    private MethodVisitor methodVisitor;
-    @Mock
-    private Instrumentation.Context instrumentationContext;
 
     @Before
     public void setUp() throws Exception {

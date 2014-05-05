@@ -9,14 +9,6 @@ import static org.hamcrest.core.Is.is;
 public class FieldListForLoadedFieldTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
-
-    private static class Foo {
-
-        private Object foo;
-
-        private Object bar;
-    }
-
     private FieldList fieldList;
 
     @Before
@@ -39,5 +31,12 @@ public class FieldListForLoadedFieldTest {
     @Test(expected = IllegalArgumentException.class)
     public void testNamedIllegal() throws Exception {
         fieldList.named(QUX);
+    }
+
+    private static class Foo {
+
+        private Object foo;
+
+        private Object bar;
     }
 }

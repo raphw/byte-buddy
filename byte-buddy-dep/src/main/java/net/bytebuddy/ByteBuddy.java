@@ -668,12 +668,17 @@ public class ByteBuddy {
 
             @Override
             public boolean equals(Object other) {
-                return other != null && other instanceof Undefined;
+                return other != null && other.getClass() == Undefined.class;
             }
 
             @Override
             public int hashCode() {
                 return 31;
+            }
+
+            @Override
+            public String toString() {
+                return "Definable.Undefined{}";
             }
         }
 
@@ -713,7 +718,7 @@ public class ByteBuddy {
 
             @Override
             public String toString() {
-                return "Defined{value=" + value + '}';
+                return "Definable.Defined{value=" + value + '}';
             }
         }
     }

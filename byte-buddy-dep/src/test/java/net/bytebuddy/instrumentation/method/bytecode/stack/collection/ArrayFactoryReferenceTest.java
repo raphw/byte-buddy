@@ -15,6 +15,13 @@ import static org.mockito.Mockito.verify;
 @RunWith(Parameterized.class)
 public class ArrayFactoryReferenceTest extends AbstractArrayFactoryTest {
 
+    private final Class<?> type;
+    private final String internalTypeName;
+    public ArrayFactoryReferenceTest(Class<?> type) {
+        this.type = type;
+        internalTypeName = Type.getInternalName(type);
+    }
+
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
@@ -22,14 +29,6 @@ public class ArrayFactoryReferenceTest extends AbstractArrayFactoryTest {
                 {Object[].class},
                 {String.class},
         });
-    }
-
-    private final Class<?> type;
-    private final String internalTypeName;
-
-    public ArrayFactoryReferenceTest(Class<?> type) {
-        this.type = type;
-        internalTypeName = Type.getInternalName(type);
     }
 
     @Test

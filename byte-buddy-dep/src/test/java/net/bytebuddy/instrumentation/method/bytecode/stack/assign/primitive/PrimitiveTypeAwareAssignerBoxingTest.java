@@ -23,8 +23,25 @@ import static org.mockito.Mockito.*;
 @RunWith(Parameterized.class)
 public class PrimitiveTypeAwareAssignerBoxingTest {
 
+    private final Class<?> sourceType;
+    private final Class<?> targetType;
+    private final boolean assignable;
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+    @Mock
+    private TypeDescription sourceTypeDescription, targetTypeDescription;
+    @Mock
+    private Assigner chainedAssigner;
+    @Mock
+    private StackManipulation chainedStackManipulation;
+    private Assigner primitiveAssigner;
+    public PrimitiveTypeAwareAssignerBoxingTest(Class<?> sourceType,
+                                                Class<?> targetType,
+                                                boolean assignable) {
+        this.sourceType = sourceType;
+        this.targetType = targetType;
+        this.assignable = assignable;
+    }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
@@ -39,27 +56,6 @@ public class PrimitiveTypeAwareAssignerBoxingTest {
                 {double.class, Double.class, true}
         });
     }
-
-    private final Class<?> sourceType;
-    private final Class<?> targetType;
-    private final boolean assignable;
-
-    public PrimitiveTypeAwareAssignerBoxingTest(Class<?> sourceType,
-                                                Class<?> targetType,
-                                                boolean assignable) {
-        this.sourceType = sourceType;
-        this.targetType = targetType;
-        this.assignable = assignable;
-    }
-
-    @Mock
-    private TypeDescription sourceTypeDescription, targetTypeDescription;
-    @Mock
-    private Assigner chainedAssigner;
-    @Mock
-    private StackManipulation chainedStackManipulation;
-
-    private Assigner primitiveAssigner;
 
     @Before
     public void setUp() throws Exception {

@@ -12,13 +12,6 @@ public class ExceptionMethodTest extends AbstractInstrumentationTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
-    public static class Foo extends CallTraceable {
-
-        public void foo() {
-            register(FOO);
-        }
-    }
-
     @Test
     public void testWithoutMessage() throws Exception {
         DynamicType.Loaded<Foo> loaded = instrument(Foo.class, ExceptionMethod.throwing(RuntimeException.class));
@@ -90,5 +83,12 @@ public class ExceptionMethodTest extends AbstractInstrumentationTest {
         assertThat(ExceptionMethod.throwing(RuntimeException.class, FOO), not(is(ExceptionMethod.throwing(Exception.class, FOO))));
         assertThat(ExceptionMethod.throwing(RuntimeException.class, FOO).hashCode(), not(is(ExceptionMethod.throwing(RuntimeException.class, BAR).hashCode())));
         assertThat(ExceptionMethod.throwing(RuntimeException.class, FOO), not(is(ExceptionMethod.throwing(RuntimeException.class, BAR))));
+    }
+
+    public static class Foo extends CallTraceable {
+
+        public void foo() {
+            register(FOO);
+        }
     }
 }

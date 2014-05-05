@@ -13,11 +13,6 @@ import static org.hamcrest.core.Is.is;
 public class ByteArrayClassLoaderTest {
 
     private static final String BAR = "bar";
-
-    private static class Foo {
-        /* Note: Foo is know to the system class loader but not to the bootstrap class loader */
-    }
-
     private ClassLoader classLoader;
 
     @Before
@@ -35,5 +30,9 @@ public class ByteArrayClassLoaderTest {
     public void testNonSuccessfulHit() throws Exception {
         // Note: Will throw a class format error instead targeting not found exception targeting loader attempts.
         classLoader.loadClass(BAR);
+    }
+
+    private static class Foo {
+        /* Note: Foo is know to the system class loader but not to the bootstrap class loader */
     }
 }

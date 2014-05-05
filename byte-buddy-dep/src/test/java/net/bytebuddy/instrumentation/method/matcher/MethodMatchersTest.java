@@ -36,179 +36,35 @@ public class MethodMatchersTest {
 
     private static final String HASH_CODE_METHOD_NAME = "hashCode";
     private static final String FINALIZE_METHOD_NAME = "finalize";
-
-    @Retention(RetentionPolicy.RUNTIME)
-    private static @interface Foo {
-        /* empty */
-    }
-
-    @SuppressWarnings("unused")
-    private static interface TestInterface<T> {
-
-        void gen(T o);
-    }
-
-    @SuppressWarnings("unused")
-    private static class TestClassBase implements TestInterface<String> {
-
-        @Foo
-        public void foo() {
-            /* empty */
-        }
-
-        private Object bar(Object o) throws Exception {
-            return null;
-        }
-
-        protected void baz() {
-            /* empty */
-        }
-
-        void qux() {
-            /* empty */
-        }
-
-        public static void stat() {
-            /* empty */
-        }
-
-        public final void fin1() {
-            /* empty */
-        }
-
-        @Override
-        public void gen(String o) {
-            /* empty */
-        }
-
-        public Object foobar() {
-            return null;
-        }
-    }
-
-    @SuppressWarnings("unused")
-    private static class TestClassExtension extends TestClassBase {
-
-        @Override
-        public void foo() {
-            /* empty */
-        }
-
-        private Object bar(Object o) throws RuntimeException {
-            return null;
-        }
-
-        @Override
-        protected void baz() {
-            /* empty */
-        }
-
-        @Override
-        void qux() {
-            /* empty */
-        }
-
-        public static void stat() {
-            /* empty */
-        }
-
-        public final void fin2() {
-            /* empty */
-        }
-
-        @Override
-        public String foobar() {
-            return null;
-        }
-    }
-
-    @SuppressWarnings("unused")
-    private static class TestModifier {
-
-        public synchronized void sync() {
-            /* empty */
-        }
-
-        public void varargs(Object... o) {
-            /* empty */
-        }
-
-        public strictfp void strict() {
-            /* empty */
-        }
-
-        @Override
-        protected void finalize() throws Throwable {
-            super.finalize();
-        }
-    }
-
-    @SuppressWarnings("unused")
-    private static class TestBean {
-
-        public String getProperty() {
-            return null;
-        }
-
-        public void setProperty(String property) {
-            /* empty */
-        }
-    }
-
-    @SuppressWarnings("unused")
-    private static class TestBridge<T extends Number> {
-
-        public T foo(T t) {
-            return null;
-        }
-
-        public Integer foo(Integer s) {
-            return null;
-        }
-
-        public Integer foo(String s) {
-            return null;
-        }
-    }
-
     private MethodDescription testClassBase$foo;
     private MethodDescription testClassBase$bar;
     private MethodDescription testClassBase$baz;
     private MethodDescription testClassBase$qux;
     private MethodDescription testClassBase$fin;
     private MethodDescription testClassBase$stat;
-
     private MethodDescription testClassBase$compareTo;
     private MethodDescription testClassBase$compareTo$synth;
-
     private MethodDescription testClassExtension$foo;
     private MethodDescription testClassExtension$bar;
     private MethodDescription testClassExtension$baz;
     private MethodDescription testClassExtension$qux;
     private MethodDescription testClassExtension$fin;
     private MethodDescription testClassExtension$stat;
-
     private MethodDescription testClassBase$foobar;
     private MethodDescription testClassExtension$fooBar;
-
     private MethodDescription testBean$getter;
     private MethodDescription testBean$setter;
-
     private MethodDescription object$hashCode;
     private MethodDescription object$finalize;
     private MethodDescription testModifier$finalize;
-
     private MethodDescription testModifier$sync;
     private MethodDescription testModifier$varargs;
     private MethodDescription testModifier$strict;
-
     private MethodDescription testModifier$constructor;
     private MethodDescription testClassBase$constructor;
-
     private MethodDescription testBridge$bridge;
     private MethodDescription testBridge$bridgeLegalTarget;
     private MethodDescription testBridge$bridgeIllegalTarget;
-
     private MethodDescription privateMethod;
     private MethodDescription protectedMethod;
     private MethodDescription packagePrivateMethod;
@@ -674,5 +530,139 @@ public class MethodMatchersTest {
     public void testNone() throws Exception {
         assertThat(MethodMatchers.none().matches(testClassBase$foo), is(false));
         assertThat(MethodMatchers.none().matches(testClassExtension$foo), is(false));
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    private static @interface Foo {
+        /* empty */
+    }
+
+    @SuppressWarnings("unused")
+    private static interface TestInterface<T> {
+
+        void gen(T o);
+    }
+
+    @SuppressWarnings("unused")
+    private static class TestClassBase implements TestInterface<String> {
+
+        public static void stat() {
+            /* empty */
+        }
+
+        @Foo
+        public void foo() {
+            /* empty */
+        }
+
+        private Object bar(Object o) throws Exception {
+            return null;
+        }
+
+        protected void baz() {
+            /* empty */
+        }
+
+        void qux() {
+            /* empty */
+        }
+
+        public final void fin1() {
+            /* empty */
+        }
+
+        @Override
+        public void gen(String o) {
+            /* empty */
+        }
+
+        public Object foobar() {
+            return null;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    private static class TestClassExtension extends TestClassBase {
+
+        public static void stat() {
+            /* empty */
+        }
+
+        @Override
+        public void foo() {
+            /* empty */
+        }
+
+        private Object bar(Object o) throws RuntimeException {
+            return null;
+        }
+
+        @Override
+        protected void baz() {
+            /* empty */
+        }
+
+        @Override
+        void qux() {
+            /* empty */
+        }
+
+        public final void fin2() {
+            /* empty */
+        }
+
+        @Override
+        public String foobar() {
+            return null;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    private static class TestModifier {
+
+        public synchronized void sync() {
+            /* empty */
+        }
+
+        public void varargs(Object... o) {
+            /* empty */
+        }
+
+        public strictfp void strict() {
+            /* empty */
+        }
+
+        @Override
+        protected void finalize() throws Throwable {
+            super.finalize();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    private static class TestBean {
+
+        public String getProperty() {
+            return null;
+        }
+
+        public void setProperty(String property) {
+            /* empty */
+        }
+    }
+
+    @SuppressWarnings("unused")
+    private static class TestBridge<T extends Number> {
+
+        public T foo(T t) {
+            return null;
+        }
+
+        public Integer foo(Integer s) {
+            return null;
+        }
+
+        public Integer foo(String s) {
+            return null;
+        }
     }
 }

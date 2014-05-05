@@ -22,27 +22,18 @@ import static org.mockito.Mockito.*;
 @RunWith(Parameterized.class)
 public class IntegerConstantPushAndConstantTest {
 
-    private static enum PushType {
+    private final int value;
+    private final PushType pushType;
+    @Rule
+    public TestRule mockitoRule = new MockitoRule(this);
+    @Mock
+    private MethodVisitor methodVisitor;
+    @Mock
+    private Instrumentation.Context instrumentationContext;
 
-        BIPUSH,
-        SIPUSH,
-        LDC;
-
-        private void verifyInstruction(MethodVisitor methodVisitor, int value) {
-            switch (this) {
-                case BIPUSH:
-                    verify(methodVisitor).visitIntInsn(Opcodes.BIPUSH, value);
-                    break;
-                case SIPUSH:
-                    verify(methodVisitor).visitIntInsn(Opcodes.SIPUSH, value);
-                    break;
-                case LDC:
-                    verify(methodVisitor).visitLdcInsn(value);
-                    break;
-                default:
-                    throw new AssertionError();
-            }
-        }
+    public IntegerConstantPushAndConstantTest(int value, PushType pushType) {
+        this.value = value;
+        this.pushType = pushType;
     }
 
     @Parameterized.Parameters
@@ -66,22 +57,6 @@ public class IntegerConstantPushAndConstantTest {
         });
     }
 
-    @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
-
-    private final int value;
-    private final PushType pushType;
-
-    public IntegerConstantPushAndConstantTest(int value, PushType pushType) {
-        this.value = value;
-        this.pushType = pushType;
-    }
-
-    @Mock
-    private MethodVisitor methodVisitor;
-    @Mock
-    private Instrumentation.Context instrumentationContext;
-
     @Test
     public void testBiPush() throws Exception {
         StackManipulation.Size size = IntegerConstant.forValue(value).apply(methodVisitor, instrumentationContext);
@@ -90,5 +65,28 @@ public class IntegerConstantPushAndConstantTest {
         pushType.verifyInstruction(methodVisitor, value);
         verifyNoMoreInteractions(methodVisitor);
         verifyZeroInteractions(instrumentationContext);
+    }
+
+    private static enum PushType {
+
+        BIPUSH,
+        SIPUSH,
+        LDC;
+
+        private void verifyInstruction(MethodVisitor methodVisitor, int value) {
+            switch (this) {
+                case BIPUSH:
+                    verify(methodVisitor).visitIntInsn(Opcodes.BIPUSH, value);
+                    break;
+                case SIPUSH:
+                    verify(methodVisitor).visitIntInsn(Opcodes.SIPUSH, value);
+                    break;
+                case LDC:
+                    verify(methodVisitor).visitLdcInsn(value);
+                    break;
+                default:
+                    throw new AssertionError();
+            }
+        }
     }
 }

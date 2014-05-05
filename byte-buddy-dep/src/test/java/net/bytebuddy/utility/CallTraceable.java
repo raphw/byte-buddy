@@ -10,17 +10,6 @@ import static org.hamcrest.core.Is.is;
 
 public class CallTraceable {
 
-    protected static class MethodCall {
-
-        public final String name;
-        public final Object arguments[];
-
-        public MethodCall(String name, Object... arguments) {
-            this.name = name;
-            this.arguments = arguments;
-        }
-    }
-
     protected final List<MethodCall> methodCalls;
 
     public CallTraceable() {
@@ -43,5 +32,16 @@ public class CallTraceable {
 
     public void reset() {
         methodCalls.clear();
+    }
+
+    protected static class MethodCall {
+
+        public final String name;
+        public final Object arguments[];
+
+        public MethodCall(String name, Object... arguments) {
+            this.name = name;
+            this.arguments = arguments;
+        }
     }
 }

@@ -21,6 +21,22 @@ public class MethodDescriptionForLoadedConstructorTest {
     private MethodDescription stringSingleArgConstructor;
     private MethodDescription packagePrivateConstructor;
 
+    private static int hashCode(Constructor<?> constructor) {
+        return (Type.getInternalName(constructor.getDeclaringClass()) + "."
+                + MethodDescription.CONSTRUCTOR_INTERNAL_NAME + Type.getConstructorDescriptor(constructor)).hashCode();
+    }
+
+    private static void assertConstructorEquality(MethodDescription methodDescription, Constructor<?> constructor) {
+        MethodDescription otherMethod = mock(MethodDescription.class);
+        TypeDescription otherType = mock(TypeDescription.class);
+        when(otherMethod.getUniqueSignature()).thenReturn(MethodDescription.CONSTRUCTOR_INTERNAL_NAME + Type.getConstructorDescriptor(constructor));
+        when(otherMethod.getDeclaringType()).thenReturn(otherType);
+        when(otherType.getName()).thenReturn(constructor.getDeclaringClass().getName());
+        assertThat(methodDescription.equals(otherMethod), is(true));
+        verify(otherType).getName();
+        verifyNoMoreInteractions(otherType);
+    }
+
     @Before
     public void setUp() throws Exception {
         objectDefaultConstructor = new MethodDescription.ForLoadedConstructor(Object.class.getDeclaredConstructor());
@@ -91,26 +107,10 @@ public class MethodDescriptionForLoadedConstructorTest {
         assertThat(stringSingleArgConstructor.hashCode(), is(hashCode(String.class.getDeclaredConstructor(String.class))));
     }
 
-    private static int hashCode(Constructor<?> constructor) {
-        return (Type.getInternalName(constructor.getDeclaringClass()) + "."
-                + MethodDescription.CONSTRUCTOR_INTERNAL_NAME + Type.getConstructorDescriptor(constructor)).hashCode();
-    }
-
     @Test
     public void testEquals() throws Exception {
         assertConstructorEquality(objectDefaultConstructor, Object.class.getDeclaredConstructor());
         assertConstructorEquality(stringDefaultConstructor, String.class.getDeclaredConstructor());
         assertConstructorEquality(stringSingleArgConstructor, String.class.getDeclaredConstructor(String.class));
-    }
-
-    private static void assertConstructorEquality(MethodDescription methodDescription, Constructor<?> constructor) {
-        MethodDescription otherMethod = mock(MethodDescription.class);
-        TypeDescription otherType = mock(TypeDescription.class);
-        when(otherMethod.getUniqueSignature()).thenReturn(MethodDescription.CONSTRUCTOR_INTERNAL_NAME + Type.getConstructorDescriptor(constructor));
-        when(otherMethod.getDeclaringType()).thenReturn(otherType);
-        when(otherType.getName()).thenReturn(constructor.getDeclaringClass().getName());
-        assertThat(methodDescription.equals(otherMethod), is(true));
-        verify(otherType).getName();
-        verifyNoMoreInteractions(otherType);
     }
 }

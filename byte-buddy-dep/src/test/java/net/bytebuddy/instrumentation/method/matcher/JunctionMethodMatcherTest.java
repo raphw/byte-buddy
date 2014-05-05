@@ -11,16 +11,7 @@ import static org.junit.Assert.assertThat;
 
 public class JunctionMethodMatcherTest {
 
-    @SuppressWarnings("unused")
-    public static class MatchedClass {
-
-        public void foo() {
-            /* empty */
-        }
-    }
-
     private static final String FOO_METHOD_NAME = "foo";
-
     private Method testClass$foo;
 
     @Before
@@ -42,5 +33,13 @@ public class JunctionMethodMatcherTest {
                 MethodMatchers.returns(void.class)).matches(new MethodDescription.ForLoadedMethod(testClass$foo)), is(true));
         assertThat(new JunctionMethodMatcher.Disjunction(MethodMatchers.not(MethodMatchers.named(FOO_METHOD_NAME)),
                 MethodMatchers.none()).matches(new MethodDescription.ForLoadedMethod(testClass$foo)), is(false));
+    }
+
+    @SuppressWarnings("unused")
+    public static class MatchedClass {
+
+        public void foo() {
+            /* empty */
+        }
     }
 }

@@ -39,6 +39,32 @@ public class DynamicTypeDefaultTest {
     private DynamicType dynamicType;
     private byte[] binaryRepresentation, auxiliaryTypeBinaryRepresentation;
 
+    private static void assertFile(File file, byte[] binaryRepresentation) throws IOException {
+        FileInputStream fileInputStream = new FileInputStream(file);
+        try {
+            byte[] buffer = new byte[binaryRepresentation.length + 1];
+            assertThat(fileInputStream.read(buffer), is(binaryRepresentation.length));
+            int index = 0;
+            for (byte b : binaryRepresentation) {
+                assertThat(buffer[index++], is(b));
+            }
+            assertThat(buffer[index], is((byte) 0));
+        } finally {
+            fileInputStream.close();
+        }
+        assertThat(file.delete(), is(true));
+    }
+
+    private static File makeTemporaryFolder() throws IOException {
+        File file = File.createTempFile(TEMP, TEMP);
+        try {
+            File folder = new File(file.getParentFile(), TEMP + Math.abs(new Random().nextInt()));
+            assertThat(folder.mkdir(), is(true));
+            return folder;
+        } finally {
+            assertThat(file.delete(), is(true));
+        }
+    }
 
     @Before
     public void setUp() throws Exception {
@@ -97,7 +123,6 @@ public class DynamicTypeDefaultTest {
         assertThat(dynamicType.getTypeInitializers().get(auxiliaryTypeDescription), is(auxiliaryTypeInitializer));
     }
 
-
     @Test
     public void testFileSaving() throws Exception {
         File folder = makeTemporaryFolder();
@@ -109,32 +134,5 @@ public class DynamicTypeDefaultTest {
             assertThat(folder.delete(), is(true));
         }
         verify(auxiliaryType).saveIn(folder);
-    }
-
-    private static void assertFile(File file, byte[] binaryRepresentation) throws IOException {
-        FileInputStream fileInputStream = new FileInputStream(file);
-        try {
-            byte[] buffer = new byte[binaryRepresentation.length + 1];
-            assertThat(fileInputStream.read(buffer), is(binaryRepresentation.length));
-            int index = 0;
-            for (byte b : binaryRepresentation) {
-                assertThat(buffer[index++], is(b));
-            }
-            assertThat(buffer[index], is((byte) 0));
-        } finally {
-            fileInputStream.close();
-        }
-        assertThat(file.delete(), is(true));
-    }
-
-    private static File makeTemporaryFolder() throws IOException {
-        File file = File.createTempFile(TEMP, TEMP);
-        try {
-            File folder = new File(file.getParentFile(), TEMP + Math.abs(new Random().nextInt()));
-            assertThat(folder.mkdir(), is(true));
-            return folder;
-        } finally {
-            assertThat(file.delete(), is(true));
-        }
     }
 }

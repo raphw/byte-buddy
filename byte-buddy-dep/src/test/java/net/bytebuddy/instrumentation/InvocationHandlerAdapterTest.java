@@ -18,47 +18,6 @@ public class InvocationHandlerAdapterTest extends AbstractInstrumentationTest {
 
     public static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
-    private static class Foo implements InvocationHandler {
-
-        private final String marker;
-
-        private Foo() {
-            marker = FOO;
-        }
-
-        private Foo(String marker) {
-            this.marker = marker;
-        }
-
-        @Override
-        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            assertThat(args.length, is(1));
-            assertThat(args[0], is((Object) FOO));
-            assertThat(method.getName(), is(BAR));
-            assertThat(proxy, instanceOf(Bar.class));
-            return proxy;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && marker.equals(((Foo) other).marker);
-        }
-
-        @Override
-        public int hashCode() {
-            return marker.hashCode();
-        }
-    }
-
-    public static class Bar extends CallTraceable {
-
-        public Object bar(Object o) {
-            register(BAR);
-            return o;
-        }
-    }
-
     @Test
     public void testStaticAdapter() throws Exception {
         DynamicType.Loaded<Bar> loaded = instrument(Bar.class, InvocationHandlerAdapter.of(new Foo()));
@@ -105,5 +64,46 @@ public class InvocationHandlerAdapterTest extends AbstractInstrumentationTest {
         assertThat(InvocationHandlerAdapter.of(QUX), not(is(InvocationHandlerAdapter.of(FOO))));
         assertThat(InvocationHandlerAdapter.of(QUX).hashCode(), not(is(InvocationHandlerAdapter.of(new Foo(BAR), QUX).hashCode())));
         assertThat(InvocationHandlerAdapter.of(QUX), not(is(InvocationHandlerAdapter.of(new Foo(BAR), QUX))));
+    }
+
+    private static class Foo implements InvocationHandler {
+
+        private final String marker;
+
+        private Foo() {
+            marker = FOO;
+        }
+
+        private Foo(String marker) {
+            this.marker = marker;
+        }
+
+        @Override
+        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            assertThat(args.length, is(1));
+            assertThat(args[0], is((Object) FOO));
+            assertThat(method.getName(), is(BAR));
+            assertThat(proxy, instanceOf(Bar.class));
+            return proxy;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && marker.equals(((Foo) other).marker);
+        }
+
+        @Override
+        public int hashCode() {
+            return marker.hashCode();
+        }
+    }
+
+    public static class Bar extends CallTraceable {
+
+        public Object bar(Object o) {
+            register(BAR);
+            return o;
+        }
     }
 }

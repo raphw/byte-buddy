@@ -118,7 +118,7 @@ public interface MethodRegistry {
 
             @Override
             public String toString() {
-                return "LatentMethodMatcher.Simple{methodMatcher=" + methodMatcher + '}';
+                return "MethodRegistry.LatentMethodMatcher.Simple{methodMatcher=" + methodMatcher + '}';
             }
         }
     }
@@ -208,6 +208,22 @@ public interface MethodRegistry {
             return new ArrayList<Compiled.Entry>(compiledEntries);
         }
 
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && entries.equals(((Default) other).entries);
+        }
+
+        @Override
+        public int hashCode() {
+            return entries.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "MethodRegistry.Default{entries=" + entries + '}';
+        }
+
         private static class Compiled implements MethodRegistry.Compiled {
 
             private final InstrumentedType instrumentedType;
@@ -235,6 +251,33 @@ public interface MethodRegistry {
             @Override
             public InstrumentedType getInstrumentedType() {
                 return instrumentedType;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                Compiled compiled = (Compiled) other;
+                return entries.equals(compiled.entries)
+                        && fallback.equals(compiled.fallback)
+                        && instrumentedType.equals(compiled.instrumentedType);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = instrumentedType.hashCode();
+                result = 31 * result + entries.hashCode();
+                result = 31 * result + fallback.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "MethodRegistry.Default.Compiled{" +
+                        "instrumentedType=" + instrumentedType +
+                        ", entries=" + entries +
+                        ", fallback=" + fallback +
+                        '}';
             }
 
             private static class Entry implements MethodRegistry.Compiled.Entry, MethodMatcher {
@@ -272,8 +315,26 @@ public interface MethodRegistry {
                 }
 
                 @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    Entry entry = (Entry) other;
+                    return attributeAppender.equals(entry.attributeAppender)
+                            && byteCodeAppender.equals(entry.byteCodeAppender)
+                            && methodMatcher.equals(entry.methodMatcher);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = methodMatcher.hashCode();
+                    result = 31 * result + byteCodeAppender.hashCode();
+                    result = 31 * result + attributeAppender.hashCode();
+                    return result;
+                }
+
+                @Override
                 public String toString() {
-                    return "MethodRegistry.Compiled.Entry{" +
+                    return "MethodRegistry.Default.Compiled.Entry{" +
                             "methodMatcher=" + methodMatcher +
                             ", byteCodeAppender=" + byteCodeAppender +
                             ", attributeAppender=" + attributeAppender +
@@ -294,6 +355,33 @@ public interface MethodRegistry {
                 this.latentMethodMatcher = latentMethodMatcher;
                 this.instrumentation = instrumentation;
                 this.attributeAppenderFactory = attributeAppenderFactory;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                Entry entry = (Entry) other;
+                return attributeAppenderFactory.equals(entry.attributeAppenderFactory)
+                        && instrumentation.equals(entry.instrumentation)
+                        && latentMethodMatcher.equals(entry.latentMethodMatcher);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = latentMethodMatcher.hashCode();
+                result = 31 * result + instrumentation.hashCode();
+                result = 31 * result + attributeAppenderFactory.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "MethodRegistry.Default.Entry{" +
+                        "latentMethodMatcher=" + latentMethodMatcher +
+                        ", instrumentation=" + instrumentation +
+                        ", attributeAppenderFactory=" + attributeAppenderFactory +
+                        '}';
             }
         }
 

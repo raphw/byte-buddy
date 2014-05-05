@@ -13,6 +13,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @RunWith(Parameterized.class)
 public class StackSizeTest {
 
+    private final Class<?> type;
+    private final StackSize stackSize;
+    public StackSizeTest(Class<?> type, StackSize stackSize) {
+        this.type = type;
+        this.stackSize = stackSize;
+    }
+
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
@@ -27,14 +34,6 @@ public class StackSizeTest {
                 {double.class, StackSize.DOUBLE},
                 {Object.class, StackSize.SINGLE},
         });
-    }
-
-    private final Class<?> type;
-    private final StackSize stackSize;
-
-    public StackSizeTest(Class<?> type, StackSize stackSize) {
-        this.type = type;
-        this.stackSize = stackSize;
     }
 
     @Test

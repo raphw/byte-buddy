@@ -11,6 +11,13 @@ public class MethodDelegationIgnoreForBindingTest extends AbstractInstrumentatio
 
     private static final String FOO = "FOO", BAR = "bar";
 
+    @Test
+    public void testIgnoreForBinding() throws Exception {
+        DynamicType.Loaded<Foo> loaded = instrument(Foo.class, MethodDelegation.to(Bar.class));
+        Foo instance = loaded.getLoaded().newInstance();
+        assertThat(instance.foo(), is(FOO));
+    }
+
     public static class Foo {
 
         public String foo() {
@@ -28,12 +35,5 @@ public class MethodDelegationIgnoreForBindingTest extends AbstractInstrumentatio
         public static String qux() {
             return BAR;
         }
-    }
-
-    @Test
-    public void testIgnoreForBinding() throws Exception {
-        DynamicType.Loaded<Foo> loaded = instrument(Foo.class, MethodDelegation.to(Bar.class));
-        Foo instance = loaded.getLoaded().newInstance();
-        assertThat(instance.foo(), is(FOO));
     }
 }

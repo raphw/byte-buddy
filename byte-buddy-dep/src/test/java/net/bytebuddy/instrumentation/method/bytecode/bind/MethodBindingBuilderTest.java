@@ -23,34 +23,11 @@ import static org.mockito.Mockito.*;
 
 public class MethodBindingBuilderTest {
 
-    @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
-
-    private static class Key {
-
-        private final String identifier;
-
-        private Key(String identifier) {
-            this.identifier = identifier;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && identifier.equals(((Key) other).identifier);
-
-        }
-
-        @Override
-        public int hashCode() {
-            return identifier.hashCode();
-        }
-    }
-
     private static final String FOO = "foo";
     private static final String BAR = "bar";
     private static final String BAZ = "baz";
-
+    @Rule
+    public TestRule mockitoRule = new MockitoRule(this);
     @Mock
     private MethodDescription methodDescription;
     @Mock
@@ -161,5 +138,26 @@ public class MethodBindingBuilderTest {
     public void testParameterNumberInequality() throws Exception {
         when(methodParameterList.size()).thenReturn(1);
         new MethodDelegationBinder.MethodBinding.Builder(methodInvoker, methodDescription).build(legalStackManipulation);
+    }
+
+    private static class Key {
+
+        private final String identifier;
+
+        private Key(String identifier) {
+            this.identifier = identifier;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && identifier.equals(((Key) other).identifier);
+
+        }
+
+        @Override
+        public int hashCode() {
+            return identifier.hashCode();
+        }
     }
 }

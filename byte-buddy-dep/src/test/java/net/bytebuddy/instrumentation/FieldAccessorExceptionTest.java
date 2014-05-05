@@ -4,6 +4,21 @@ import org.junit.Test;
 
 public class FieldAccessorExceptionTest extends AbstractInstrumentationTest {
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testFinalFieldSetter() throws Exception {
+        instrument(Foo.class, FieldAccessor.ofBeanProperty());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testFieldNoVisibleField() throws Exception {
+        instrument(Bar.class, FieldAccessor.ofBeanProperty());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testFieldNoBeanMethodName() throws Exception {
+        instrument(Qux.class, FieldAccessor.ofBeanProperty());
+    }
+
     @SuppressWarnings("unused")
     public static class Foo {
 
@@ -12,11 +27,6 @@ public class FieldAccessorExceptionTest extends AbstractInstrumentationTest {
         public void setFoo(Object o) {
             /* empty */
         }
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testFinalFieldSetter() throws Exception {
-        instrument(Foo.class, FieldAccessor.ofBeanProperty());
     }
 
     @SuppressWarnings("unused")
@@ -29,11 +39,6 @@ public class FieldAccessorExceptionTest extends AbstractInstrumentationTest {
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testFieldNoVisibleField() throws Exception {
-        instrument(Bar.class, FieldAccessor.ofBeanProperty());
-    }
-
     @SuppressWarnings("unused")
     public static class Qux {
 
@@ -42,10 +47,5 @@ public class FieldAccessorExceptionTest extends AbstractInstrumentationTest {
         public void qux(Object o) {
             /* empty */
         }
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testFieldNoBeanMethodName() throws Exception {
-        instrument(Qux.class, FieldAccessor.ofBeanProperty());
     }
 }

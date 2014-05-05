@@ -107,6 +107,22 @@ public interface FieldRegistry {
             return new Compiled(fallback);
         }
 
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && entries.equals(((Default) other).entries);
+        }
+
+        @Override
+        public int hashCode() {
+            return entries.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "FieldRegistry.Default{entries=" + entries + '}';
+        }
+
         private class Compiled implements FieldRegistry.Compiled {
 
             private final TypeWriter.FieldPool.Entry fallback;
@@ -123,6 +139,22 @@ public interface FieldRegistry {
                 } else {
                     return entry;
                 }
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && fallback.equals(((Compiled) other).fallback);
+            }
+
+            @Override
+            public int hashCode() {
+                return fallback.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "FieldRegistry.Default.Compiled{fallback=" + fallback + '}';
             }
         }
     }

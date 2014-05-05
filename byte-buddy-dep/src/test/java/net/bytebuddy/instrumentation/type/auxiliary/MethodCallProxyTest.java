@@ -16,32 +16,6 @@ public class MethodCallProxyTest extends AbstractMethodCallProxyTest {
     private static final int INT_VALUE = 21;
     private static final boolean BOOLEAN_VALUE = true;
 
-    @SuppressWarnings("unused")
-    public static class NoParameterMethod extends CallTraceable {
-
-        public void foo() {
-            register(FOO, this);
-        }
-    }
-
-    @SuppressWarnings("unused")
-    public static class StaticMethod extends CallTraceable {
-
-        public static CallTraceable CALL_TRACEABLE = new CallTraceable();
-
-        public static void foo() {
-            CALL_TRACEABLE.register(FOO);
-        }
-    }
-
-    @SuppressWarnings("unused")
-    public static class MultipleParameterMethod extends CallTraceable {
-
-        public void foo(long l, String s, int i, boolean b) {
-            register(FOO, this, l, s, i, b);
-        }
-    }
-
     @Test
     public void testNoParameterMethod() throws Exception {
         Class<?> auxiliaryType = proxyOnlyDeclaredMethodOf(NoParameterMethod.class);
@@ -85,5 +59,31 @@ public class MethodCallProxyTest extends AbstractMethodCallProxyTest {
         Object[] callableArguments = new Object[]{callableProxied, LONG_VALUE, String_VALUE, INT_VALUE, BOOLEAN_VALUE};
         assertThat(((Callable<?>) constructor.newInstance(callableArguments)).call(), nullValue());
         callableProxied.assertOnlyCall(FOO, callableArguments);
+    }
+
+    @SuppressWarnings("unused")
+    public static class NoParameterMethod extends CallTraceable {
+
+        public void foo() {
+            register(FOO, this);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class StaticMethod extends CallTraceable {
+
+        public static CallTraceable CALL_TRACEABLE = new CallTraceable();
+
+        public static void foo() {
+            CALL_TRACEABLE.register(FOO);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class MultipleParameterMethod extends CallTraceable {
+
+        public void foo(long l, String s, int i, boolean b) {
+            register(FOO, this, l, s, i, b);
+        }
     }
 }

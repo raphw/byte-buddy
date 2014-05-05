@@ -12,6 +12,7 @@ import static org.hamcrest.core.Is.is;
 public class ClassFileExtraction {
 
     private static final int ASM_MANUAL = 0;
+    private static final int CA = 0xCA, FE = 0xFE, BA = 0xBA, BE = 0xBE;
 
     public static byte[] extract(Class<?> type) throws IOException {
         ClassReader classReader = new ClassReader(type.getName());
@@ -19,12 +20,6 @@ public class ClassFileExtraction {
         classReader.accept(classWriter, ASM_MANUAL);
         return classWriter.toByteArray();
     }
-
-    private static class Foo {
-        /* empty */
-    }
-
-    private static final int CA = 0xCA, FE = 0xFE, BA = 0xBA, BE = 0xBE;
 
     @Test
     public void testClassFileExtraction() throws Exception {
@@ -34,5 +29,9 @@ public class ClassFileExtraction {
         assertThat(binaryFoo[1], is(new Integer(FE).byteValue()));
         assertThat(binaryFoo[2], is(new Integer(BA).byteValue()));
         assertThat(binaryFoo[3], is(new Integer(BE).byteValue()));
+    }
+
+    private static class Foo {
+        /* empty */
     }
 }

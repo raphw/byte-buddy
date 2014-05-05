@@ -32,33 +32,6 @@ public class TargetMethodAnnotationDrivenBinderTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
-
-    private static class Key {
-
-        private final String value;
-
-        private Key(String value) {
-            this.value = value;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && value.equals(((Key) other).value);
-        }
-
-        @Override
-        public int hashCode() {
-            return value.hashCode();
-        }
-    }
-
-    private static @interface FirstPseudoAnnotation {
-    }
-
-    private static @interface SecondPseudoAnnotation {
-    }
-
     @Mock
     private TargetMethodAnnotationDrivenBinder.ParameterBinder<?> firstParameterBinder, secondParameterBinder;
     @Mock
@@ -69,23 +42,59 @@ public class TargetMethodAnnotationDrivenBinderTest {
     private StackManipulation assignmentBinding, methodInvocation;
     @Mock
     private TargetMethodAnnotationDrivenBinder.MethodInvoker methodInvoker;
-
     @Mock
     private TypeDescription typeDescription;
     @Mock
     private MethodDescription source, target;
     @Mock
     private TypeDescription sourceTypeDescription, targetTypeDescription;
-
     @Mock
     private FirstPseudoAnnotation firstPseudoAnnotation;
     @Mock
     private SecondPseudoAnnotation secondPseudoAnnotation;
-
     @Mock
     private MethodVisitor methodVisitor;
     @Mock
     private Instrumentation.Context instrumentationContext;
+
+    @SuppressWarnings("unchecked")
+    private static MethodDelegationBinder.ParameterBinding<?> prepareArgumentBinder(TargetMethodAnnotationDrivenBinder.ParameterBinder<?> parameterBinder,
+                                                                                    Class<? extends Annotation> annotationType,
+                                                                                    Object identificationToken,
+                                                                                    boolean bindingResult) {
+        doReturn(annotationType).when(parameterBinder).getHandledType();
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = mock(MethodDelegationBinder.ParameterBinding.class);
+        when(parameterBinding.isValid()).thenReturn(bindingResult);
+        when(parameterBinding.apply(any(MethodVisitor.class), any(Instrumentation.Context.class))).thenReturn(new StackManipulation.Size(0, 0));
+        when(parameterBinding.getIdentificationToken()).thenReturn(identificationToken);
+        when(((TargetMethodAnnotationDrivenBinder.ParameterBinder) parameterBinder).bind(any(Annotation.class),
+                anyInt(),
+                any(MethodDescription.class),
+                any(MethodDescription.class),
+                any(TypeDescription.class),
+                any(Assigner.class)))
+                .thenReturn(parameterBinding);
+        return parameterBinding;
+    }
+
+    @SuppressWarnings({"unchecked", "unused"})
+    private static Iterator<Annotation> prepareDefaultProvider(TargetMethodAnnotationDrivenBinder.DefaultsProvider<?> defaultsProvider,
+                                                               List<? extends Annotation> defaultIteratorValues) {
+        Iterator<Annotation> annotationIterator = mock(Iterator.class);
+        when(defaultsProvider.makeIterator(any(TypeDescription.class), any(MethodDescription.class), any(MethodDescription.class)))
+                .thenReturn((Iterator) annotationIterator);
+        OngoingStubbing<Boolean> iteratorConditionStubbing = when(annotationIterator.hasNext());
+        for (Annotation defaultIteratorValue : defaultIteratorValues) {
+            iteratorConditionStubbing = iteratorConditionStubbing.thenReturn(true);
+        }
+        iteratorConditionStubbing.thenReturn(false);
+        OngoingStubbing<Annotation> iteratorValueStubbing = when(annotationIterator.next());
+        for (Annotation defaultIteratorValue : defaultIteratorValues) {
+            iteratorValueStubbing = iteratorValueStubbing.thenReturn(defaultIteratorValue);
+        }
+        iteratorValueStubbing.thenThrow(NoSuchElementException.class);
+        return annotationIterator;
+    }
 
     @Before
     public void setUp() throws Exception {
@@ -473,42 +482,29 @@ public class TargetMethodAnnotationDrivenBinderTest {
         verify(secondBinding).getIdentificationToken();
     }
 
-    @SuppressWarnings("unchecked")
-    private static MethodDelegationBinder.ParameterBinding<?> prepareArgumentBinder(TargetMethodAnnotationDrivenBinder.ParameterBinder<?> parameterBinder,
-                                                                                    Class<? extends Annotation> annotationType,
-                                                                                    Object identificationToken,
-                                                                                    boolean bindingResult) {
-        doReturn(annotationType).when(parameterBinder).getHandledType();
-        MethodDelegationBinder.ParameterBinding<?> parameterBinding = mock(MethodDelegationBinder.ParameterBinding.class);
-        when(parameterBinding.isValid()).thenReturn(bindingResult);
-        when(parameterBinding.apply(any(MethodVisitor.class), any(Instrumentation.Context.class))).thenReturn(new StackManipulation.Size(0, 0));
-        when(parameterBinding.getIdentificationToken()).thenReturn(identificationToken);
-        when(((TargetMethodAnnotationDrivenBinder.ParameterBinder) parameterBinder).bind(any(Annotation.class),
-                anyInt(),
-                any(MethodDescription.class),
-                any(MethodDescription.class),
-                any(TypeDescription.class),
-                any(Assigner.class)))
-                .thenReturn(parameterBinding);
-        return parameterBinding;
+    private static @interface FirstPseudoAnnotation {
     }
 
-    @SuppressWarnings({"unchecked", "unused"})
-    private static Iterator<Annotation> prepareDefaultProvider(TargetMethodAnnotationDrivenBinder.DefaultsProvider<?> defaultsProvider,
-                                                               List<? extends Annotation> defaultIteratorValues) {
-        Iterator<Annotation> annotationIterator = mock(Iterator.class);
-        when(defaultsProvider.makeIterator(any(TypeDescription.class), any(MethodDescription.class), any(MethodDescription.class)))
-                .thenReturn((Iterator) annotationIterator);
-        OngoingStubbing<Boolean> iteratorConditionStubbing = when(annotationIterator.hasNext());
-        for (Annotation defaultIteratorValue : defaultIteratorValues) {
-            iteratorConditionStubbing = iteratorConditionStubbing.thenReturn(true);
+    private static @interface SecondPseudoAnnotation {
+    }
+
+    private static class Key {
+
+        private final String value;
+
+        private Key(String value) {
+            this.value = value;
         }
-        iteratorConditionStubbing.thenReturn(false);
-        OngoingStubbing<Annotation> iteratorValueStubbing = when(annotationIterator.next());
-        for (Annotation defaultIteratorValue : defaultIteratorValues) {
-            iteratorValueStubbing = iteratorValueStubbing.thenReturn(defaultIteratorValue);
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && value.equals(((Key) other).value);
         }
-        iteratorValueStubbing.thenThrow(NoSuchElementException.class);
-        return annotationIterator;
+
+        @Override
+        public int hashCode() {
+            return value.hashCode();
+        }
     }
 }

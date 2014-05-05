@@ -37,6 +37,57 @@ public class MethodDelegationConstructionTest<T extends CallTraceable>
     private static final long DEFAULT_LONG = 1L;
     private static final float DEFAULT_FLOAT = 1f;
     private static final double DEFAULT_DOUBLE = 1d;
+    private final Class<T> sourceType;
+    private final Class<?> targetType;
+    private final Class<?>[] parameterTypes;
+    private final Object[] arguments;
+    private final Matcher<?> matcher;
+
+    public MethodDelegationConstructionTest(Class<T> sourceType,
+                                            Class<?> targetType,
+                                            Class<?>[] parameterTypes,
+                                            Object[] arguments,
+                                            Matcher<?> matcher) {
+        this.sourceType = sourceType;
+        this.targetType = targetType;
+        this.parameterTypes = parameterTypes;
+        this.arguments = arguments;
+        this.matcher = matcher;
+    }
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+                {BooleanSource.class, BooleanTarget.class, new Class<?>[]{boolean.class}, new Object[]{DEFAULT_BOOLEAN}, is(!DEFAULT_BOOLEAN)},
+                {ByteSource.class, ByteTarget.class, new Class<?>[]{byte.class}, new Object[]{DEFAULT_BYTE}, is((byte) (DEFAULT_BYTE * BYTE_MULTIPLICATOR))},
+                {ShortSource.class, ShortTarget.class, new Class<?>[]{short.class}, new Object[]{DEFAULT_SHORT}, is((short) (DEFAULT_SHORT * SHORT_MULTIPLICATOR))},
+                {CharSource.class, CharTarget.class, new Class<?>[]{char.class}, new Object[]{DEFAULT_CHAR}, is((char) (DEFAULT_CHAR * CHAR_MULTIPLICATOR))},
+                {IntSource.class, IntTarget.class, new Class<?>[]{int.class}, new Object[]{DEFAULT_INT}, is(DEFAULT_INT * INT_MULTIPLICATOR)},
+                {LongSource.class, LongTarget.class, new Class<?>[]{long.class}, new Object[]{DEFAULT_LONG}, is(DEFAULT_LONG * LONG_MULTIPLICATOR)},
+                {FloatSource.class, FloatTarget.class, new Class<?>[]{float.class}, new Object[]{DEFAULT_FLOAT}, is(DEFAULT_FLOAT * FLOAT_MULTIPLICATOR)},
+                {DoubleSource.class, DoubleTarget.class, new Class<?>[]{double.class}, new Object[]{DEFAULT_DOUBLE}, is(DEFAULT_DOUBLE * DOUBLE_MULTIPLICATOR)},
+                {VoidSource.class, VoidTarget.class, new Class<?>[0], new Object[0], nullValue()},
+                {StringSource.class, StringTarget.class, new Class<?>[]{String.class}, new Object[]{FOO}, is(FOO + BAR)},
+        });
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testConstruction() throws Exception {
+        DynamicType.Loaded<T> loaded = instrument(sourceType, MethodDelegation.construct(targetType));
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        T instance = loaded.getLoaded().newInstance();
+        assertNotEquals(sourceType, instance.getClass());
+        assertThat(instance, instanceOf(sourceType));
+        Object value = loaded.getLoaded().getDeclaredMethod(FOO, parameterTypes).invoke(instance, arguments);
+        assertThat(value, instanceOf(targetType));
+        Field field = targetType.getDeclaredField("value");
+        field.setAccessible(true);
+        assertThat(field.get(value), (Matcher) matcher);
+        instance.assertZeroCalls();
+    }
 
     public static class BooleanSource extends CallTraceable {
 
@@ -252,57 +303,5 @@ public class MethodDelegationConstructionTest<T extends CallTraceable>
         public static String bar(String s) {
             return s + BAR;
         }
-    }
-
-    @Parameterized.Parameters
-    public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-                {BooleanSource.class, BooleanTarget.class, new Class<?>[]{boolean.class}, new Object[]{DEFAULT_BOOLEAN}, is(!DEFAULT_BOOLEAN)},
-                {ByteSource.class, ByteTarget.class, new Class<?>[]{byte.class}, new Object[]{DEFAULT_BYTE}, is((byte) (DEFAULT_BYTE * BYTE_MULTIPLICATOR))},
-                {ShortSource.class, ShortTarget.class, new Class<?>[]{short.class}, new Object[]{DEFAULT_SHORT}, is((short) (DEFAULT_SHORT * SHORT_MULTIPLICATOR))},
-                {CharSource.class, CharTarget.class, new Class<?>[]{char.class}, new Object[]{DEFAULT_CHAR}, is((char) (DEFAULT_CHAR * CHAR_MULTIPLICATOR))},
-                {IntSource.class, IntTarget.class, new Class<?>[]{int.class}, new Object[]{DEFAULT_INT}, is(DEFAULT_INT * INT_MULTIPLICATOR)},
-                {LongSource.class, LongTarget.class, new Class<?>[]{long.class}, new Object[]{DEFAULT_LONG}, is(DEFAULT_LONG * LONG_MULTIPLICATOR)},
-                {FloatSource.class, FloatTarget.class, new Class<?>[]{float.class}, new Object[]{DEFAULT_FLOAT}, is(DEFAULT_FLOAT * FLOAT_MULTIPLICATOR)},
-                {DoubleSource.class, DoubleTarget.class, new Class<?>[]{double.class}, new Object[]{DEFAULT_DOUBLE}, is(DEFAULT_DOUBLE * DOUBLE_MULTIPLICATOR)},
-                {VoidSource.class, VoidTarget.class, new Class<?>[0], new Object[0], nullValue()},
-                {StringSource.class, StringTarget.class, new Class<?>[]{String.class}, new Object[]{FOO}, is(FOO + BAR)},
-        });
-    }
-
-    private final Class<T> sourceType;
-    private final Class<?> targetType;
-    private final Class<?>[] parameterTypes;
-    private final Object[] arguments;
-    private final Matcher<?> matcher;
-
-    public MethodDelegationConstructionTest(Class<T> sourceType,
-                                            Class<?> targetType,
-                                            Class<?>[] parameterTypes,
-                                            Object[] arguments,
-                                            Matcher<?> matcher) {
-        this.sourceType = sourceType;
-        this.targetType = targetType;
-        this.parameterTypes = parameterTypes;
-        this.arguments = arguments;
-        this.matcher = matcher;
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    public void testConstruction() throws Exception {
-        DynamicType.Loaded<T> loaded = instrument(sourceType, MethodDelegation.construct(targetType));
-        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
-        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
-        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
-        T instance = loaded.getLoaded().newInstance();
-        assertNotEquals(sourceType, instance.getClass());
-        assertThat(instance, instanceOf(sourceType));
-        Object value = loaded.getLoaded().getDeclaredMethod(FOO, parameterTypes).invoke(instance, arguments);
-        assertThat(value, instanceOf(targetType));
-        Field field = targetType.getDeclaredField("value");
-        field.setAccessible(true);
-        assertThat(field.get(value), (Matcher) matcher);
-        instance.assertZeroCalls();
     }
 }

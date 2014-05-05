@@ -11,15 +11,6 @@ import static org.mockito.Mockito.*;
 public class FieldAttributeAppenderForLoadedFieldTest extends AbstractFieldAttributeAppenderTest {
 
     private static final String BAR = "bar";
-
-    private static class Foo {
-
-        @Qux
-        @Baz
-        @QuxBaz
-        private Object bar;
-    }
-
     private Field field;
 
     @Before
@@ -34,5 +25,13 @@ public class FieldAttributeAppenderForLoadedFieldTest extends AbstractFieldAttri
         verify(fieldVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
         verifyNoMoreInteractions(fieldVisitor);
         verifyZeroInteractions(fieldDescription);
+    }
+
+    private static class Foo {
+
+        @Qux
+        @Baz
+        @QuxBaz
+        private Object bar;
     }
 }

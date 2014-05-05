@@ -24,8 +24,20 @@ import static org.mockito.Mockito.*;
 @RunWith(Parameterized.class)
 public class PrimitiveWideningDelegateTrivialTest {
 
+    private final Class<?> sourceType;
+    private final Class<?> targetType;
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+    @Mock
+    private TypeDescription sourceTypeDescription, targetTypeDescription;
+    @Mock
+    private MethodVisitor methodVisitor;
+    @Mock
+    private Instrumentation.Context instrumentationContext;
+    public PrimitiveWideningDelegateTrivialTest(Class<?> sourceType, Class<?> targetType) {
+        this.sourceType = sourceType;
+        this.targetType = targetType;
+    }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
@@ -44,21 +56,6 @@ public class PrimitiveWideningDelegateTrivialTest {
                 {double.class, double.class}
         });
     }
-
-    private final Class<?> sourceType;
-    private final Class<?> targetType;
-
-    public PrimitiveWideningDelegateTrivialTest(Class<?> sourceType, Class<?> targetType) {
-        this.sourceType = sourceType;
-        this.targetType = targetType;
-    }
-
-    @Mock
-    private TypeDescription sourceTypeDescription, targetTypeDescription;
-    @Mock
-    private MethodVisitor methodVisitor;
-    @Mock
-    private Instrumentation.Context instrumentationContext;
 
     @Before
     public void setUp() throws Exception {

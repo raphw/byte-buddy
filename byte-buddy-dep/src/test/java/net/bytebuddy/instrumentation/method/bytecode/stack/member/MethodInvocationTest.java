@@ -28,26 +28,10 @@ import static org.mockito.Mockito.*;
 public class MethodInvocationTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
-
-    @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
-
-    @Parameterized.Parameters
-    public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-                {2, StackSize.SINGLE},
-                {0, StackSize.ZERO},
-        });
-    }
-
     private final int methodStackSize;
     private final StackSize returnTypeSize;
-
-    public MethodInvocationTest(int methodStackSize, StackSize returnTypeSize) {
-        this.methodStackSize = methodStackSize;
-        this.returnTypeSize = returnTypeSize;
-    }
-
+    @Rule
+    public TestRule mockitoRule = new MockitoRule(this);
     @Mock
     private MethodDescription methodDescription;
     @Mock
@@ -56,8 +40,19 @@ public class MethodInvocationTest {
     private MethodVisitor methodVisitor;
     @Mock
     private Instrumentation.Context instrumentationContext;
-
     private int expectedSizeChange;
+    public MethodInvocationTest(int methodStackSize, StackSize returnTypeSize) {
+        this.methodStackSize = methodStackSize;
+        this.returnTypeSize = returnTypeSize;
+    }
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+                {2, StackSize.SINGLE},
+                {0, StackSize.ZERO},
+        });
+    }
 
     @Before
     public void setUp() throws Exception {

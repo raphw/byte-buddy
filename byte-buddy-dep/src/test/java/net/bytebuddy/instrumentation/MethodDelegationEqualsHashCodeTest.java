@@ -10,40 +10,6 @@ public class MethodDelegationEqualsHashCodeTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
-    public static class Foo {
-
-        public static void foo() {
-            /* empty */
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            return obj != null && obj.getClass() == getClass();
-        }
-
-        @Override
-        public int hashCode() {
-            return 31;
-        }
-    }
-
-    public static class Bar {
-
-        public static void bar() {
-            /* empty */
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            return obj != null && obj.getClass() == getClass();
-        }
-
-        @Override
-        public int hashCode() {
-            return 27;
-        }
-    }
-
     @Test
     public void testStaticMethodDelegation() throws Exception {
         assertThat(MethodDelegation.to(Foo.class).hashCode(), is(MethodDelegation.to(Foo.class).hashCode()));
@@ -84,5 +50,39 @@ public class MethodDelegationEqualsHashCodeTest {
         assertThat(MethodDelegation.construct(Foo.class), is(MethodDelegation.construct(Foo.class)));
         assertThat(MethodDelegation.construct(Foo.class).hashCode(), not(is(MethodDelegation.construct(Bar.class).hashCode())));
         assertThat(MethodDelegation.construct(Foo.class), not(is(MethodDelegation.construct(Bar.class))));
+    }
+
+    public static class Foo {
+
+        public static void foo() {
+            /* empty */
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return obj != null && obj.getClass() == getClass();
+        }
+
+        @Override
+        public int hashCode() {
+            return 31;
+        }
+    }
+
+    public static class Bar {
+
+        public static void bar() {
+            /* empty */
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return obj != null && obj.getClass() == getClass();
+        }
+
+        @Override
+        public int hashCode() {
+            return 27;
+        }
     }
 }

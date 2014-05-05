@@ -23,8 +23,23 @@ import static org.mockito.Mockito.*;
 @RunWith(Parameterized.class)
 public class PrimitiveTypeAwareAssignerPrimitiveTest {
 
+    private final Class<?> sourceType;
+    private final Class<?> targetType;
+    private final boolean assignable;
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+    @Mock
+    private TypeDescription sourceTypeDescription, targetTypeDescription;
+    @Mock
+    private Assigner chainedAssigner;
+    private Assigner primitiveAssigner;
+    public PrimitiveTypeAwareAssignerPrimitiveTest(Class<?> sourceType,
+                                                   Class<?> targetType,
+                                                   boolean assignable) {
+        this.sourceType = sourceType;
+        this.targetType = targetType;
+        this.assignable = assignable;
+    }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
@@ -102,25 +117,6 @@ public class PrimitiveTypeAwareAssignerPrimitiveTest {
                 {double.class, double.class, true},
         });
     }
-
-    private final Class<?> sourceType;
-    private final Class<?> targetType;
-    private final boolean assignable;
-
-    public PrimitiveTypeAwareAssignerPrimitiveTest(Class<?> sourceType,
-                                                   Class<?> targetType,
-                                                   boolean assignable) {
-        this.sourceType = sourceType;
-        this.targetType = targetType;
-        this.assignable = assignable;
-    }
-
-    @Mock
-    private TypeDescription sourceTypeDescription, targetTypeDescription;
-    @Mock
-    private Assigner chainedAssigner;
-
-    private Assigner primitiveAssigner;
 
     @Before
     public void setUp() throws Exception {

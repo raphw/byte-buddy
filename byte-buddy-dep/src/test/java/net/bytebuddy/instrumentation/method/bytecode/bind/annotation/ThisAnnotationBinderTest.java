@@ -19,6 +19,11 @@ import static org.mockito.Mockito.*;
 
 public class ThisAnnotationBinderTest extends AbstractAnnotationBinderTest<This> {
 
+    @Mock
+    private TypeList typeList;
+    @Mock
+    private TypeDescription parameterType;
+
     public ThisAnnotationBinderTest() {
         super(This.class);
     }
@@ -27,11 +32,6 @@ public class ThisAnnotationBinderTest extends AbstractAnnotationBinderTest<This>
     public void testAnnotationType() throws Exception {
         assertEquals(This.class, This.Binder.INSTANCE.getHandledType());
     }
-
-    @Mock
-    private TypeList typeList;
-    @Mock
-    private TypeDescription parameterType;
 
     @Override
     @Before

@@ -40,212 +40,6 @@ public class MethodDelegationTest<T extends CallTraceable>
     private static final long DEFAULT_LONG = 1L;
     private static final float DEFAULT_FLOAT = 1f;
     private static final double DEFAULT_DOUBLE = 1d;
-
-    public static class BooleanSource extends CallTraceable {
-
-        public boolean foo(boolean b) {
-            register(FOO);
-            return b;
-        }
-    }
-
-    public static class BooleanTarget {
-
-        public boolean qux(boolean b) {
-            return bar(b);
-        }
-
-        public static boolean bar(boolean b) {
-            return !b;
-        }
-    }
-
-    public static class ByteSource extends CallTraceable {
-
-        public byte foo(byte b) {
-            register(FOO);
-            return b;
-        }
-    }
-
-    public static class ByteTarget {
-
-        public byte qux(byte b) {
-            return bar(b);
-        }
-
-        public static byte bar(byte b) {
-            return (byte) (b * BYTE_MULTIPLICATOR);
-        }
-    }
-
-    public static class ShortSource extends CallTraceable {
-
-        public short foo(short s) {
-            register(FOO);
-            return s;
-        }
-    }
-
-    public static class ShortTarget {
-
-        public short qux(short s) {
-            return bar(s);
-        }
-
-        public static short bar(short s) {
-            return (short) (s * SHORT_MULTIPLICATOR);
-        }
-    }
-
-    public static class CharSource extends CallTraceable {
-
-        public char foo(char s) {
-            register(FOO);
-            return s;
-        }
-    }
-
-    public static class CharTarget {
-
-        public char qux(char c) {
-            return bar(c);
-        }
-
-        public static char bar(char c) {
-            return (char) (c * CHAR_MULTIPLICATOR);
-        }
-    }
-
-    public static class IntSource extends CallTraceable {
-
-        public int foo(int i) {
-            register(FOO);
-            return i;
-        }
-    }
-
-    public static class IntTarget {
-
-        public int qux(int i) {
-            return bar(i);
-        }
-
-        public static int bar(int i) {
-            return i * INT_MULTIPLICATOR;
-        }
-    }
-
-    public static class LongSource extends CallTraceable {
-
-        public long foo(long l) {
-            register(FOO);
-            return l;
-        }
-    }
-
-    public static class LongTarget {
-
-        public long qux(long l) {
-            return bar(l);
-        }
-
-        public static long bar(long l) {
-            return l * LONG_MULTIPLICATOR;
-        }
-    }
-
-    public static class FloatSource extends CallTraceable {
-
-        public float foo(float f) {
-            register(FOO);
-            return f;
-        }
-    }
-
-    public static class FloatTarget {
-
-        public float qux(float f) {
-            return bar(f);
-        }
-
-        public static float bar(float f) {
-            return f * FLOAT_MULTIPLICATOR;
-        }
-    }
-
-    public static class DoubleSource extends CallTraceable {
-
-        public double foo(double d) {
-            register(FOO);
-            return d;
-        }
-    }
-
-    public static class DoubleTarget {
-
-        public double qux(double d) {
-            return bar(d);
-        }
-
-        public static double bar(double d) {
-            return d * DOUBLE_MULTIPLICATOR;
-        }
-    }
-
-    public static class VoidSource extends CallTraceable {
-
-        public void foo() {
-            register(FOO);
-        }
-    }
-
-    public static class VoidTarget {
-
-        public void qux() {
-            bar();
-        }
-
-        public static void bar() {
-            /* empty */
-        }
-    }
-
-    public static class StringSource extends CallTraceable {
-
-        public String foo(String s) {
-            register(FOO);
-            return s;
-        }
-    }
-
-    public static class StringTarget {
-
-        public String qux(String s) {
-            return bar(s);
-        }
-
-        public static String bar(String s) {
-            return s + BAR;
-        }
-    }
-
-    @Parameterized.Parameters
-    public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-                {BooleanSource.class, BooleanTarget.class, new Class<?>[]{boolean.class}, new Object[]{DEFAULT_BOOLEAN}, is(!DEFAULT_BOOLEAN)},
-                {ByteSource.class, ByteTarget.class, new Class<?>[]{byte.class}, new Object[]{DEFAULT_BYTE}, is((byte) (DEFAULT_BYTE * BYTE_MULTIPLICATOR))},
-                {ShortSource.class, ShortTarget.class, new Class<?>[]{short.class}, new Object[]{DEFAULT_SHORT}, is((short) (DEFAULT_SHORT * SHORT_MULTIPLICATOR))},
-                {CharSource.class, CharTarget.class, new Class<?>[]{char.class}, new Object[]{DEFAULT_CHAR}, is((char) (DEFAULT_CHAR * CHAR_MULTIPLICATOR))},
-                {IntSource.class, IntTarget.class, new Class<?>[]{int.class}, new Object[]{DEFAULT_INT}, is(DEFAULT_INT * INT_MULTIPLICATOR)},
-                {LongSource.class, LongTarget.class, new Class<?>[]{long.class}, new Object[]{DEFAULT_LONG}, is(DEFAULT_LONG * LONG_MULTIPLICATOR)},
-                {FloatSource.class, FloatTarget.class, new Class<?>[]{float.class}, new Object[]{DEFAULT_FLOAT}, is(DEFAULT_FLOAT * FLOAT_MULTIPLICATOR)},
-                {DoubleSource.class, DoubleTarget.class, new Class<?>[]{double.class}, new Object[]{DEFAULT_DOUBLE}, is(DEFAULT_DOUBLE * DOUBLE_MULTIPLICATOR)},
-                {VoidSource.class, VoidTarget.class, new Class<?>[0], new Object[0], nullValue()},
-                {StringSource.class, StringTarget.class, new Class<?>[]{String.class}, new Object[]{FOO}, is(FOO + BAR)},
-        });
-    }
-
     private final Class<T> sourceType;
     private final Class<?> targetType;
     private final Class<?>[] parameterTypes;
@@ -262,6 +56,22 @@ public class MethodDelegationTest<T extends CallTraceable>
         this.parameterTypes = parameterTypes;
         this.arguments = arguments;
         this.matcher = matcher;
+    }
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+                {BooleanSource.class, BooleanTarget.class, new Class<?>[]{boolean.class}, new Object[]{DEFAULT_BOOLEAN}, is(!DEFAULT_BOOLEAN)},
+                {ByteSource.class, ByteTarget.class, new Class<?>[]{byte.class}, new Object[]{DEFAULT_BYTE}, is((byte) (DEFAULT_BYTE * BYTE_MULTIPLICATOR))},
+                {ShortSource.class, ShortTarget.class, new Class<?>[]{short.class}, new Object[]{DEFAULT_SHORT}, is((short) (DEFAULT_SHORT * SHORT_MULTIPLICATOR))},
+                {CharSource.class, CharTarget.class, new Class<?>[]{char.class}, new Object[]{DEFAULT_CHAR}, is((char) (DEFAULT_CHAR * CHAR_MULTIPLICATOR))},
+                {IntSource.class, IntTarget.class, new Class<?>[]{int.class}, new Object[]{DEFAULT_INT}, is(DEFAULT_INT * INT_MULTIPLICATOR)},
+                {LongSource.class, LongTarget.class, new Class<?>[]{long.class}, new Object[]{DEFAULT_LONG}, is(DEFAULT_LONG * LONG_MULTIPLICATOR)},
+                {FloatSource.class, FloatTarget.class, new Class<?>[]{float.class}, new Object[]{DEFAULT_FLOAT}, is(DEFAULT_FLOAT * FLOAT_MULTIPLICATOR)},
+                {DoubleSource.class, DoubleTarget.class, new Class<?>[]{double.class}, new Object[]{DEFAULT_DOUBLE}, is(DEFAULT_DOUBLE * DOUBLE_MULTIPLICATOR)},
+                {VoidSource.class, VoidTarget.class, new Class<?>[0], new Object[0], nullValue()},
+                {StringSource.class, StringTarget.class, new Class<?>[]{String.class}, new Object[]{FOO}, is(FOO + BAR)},
+        });
     }
 
     @Test
@@ -309,5 +119,194 @@ public class MethodDelegationTest<T extends CallTraceable>
         assertThat(instance, instanceOf(sourceType));
         assertThat(loaded.getLoaded().getDeclaredMethod(FOO, parameterTypes).invoke(instance, arguments), (Matcher) matcher);
         instance.assertZeroCalls();
+    }
+
+    public static class BooleanSource extends CallTraceable {
+
+        public boolean foo(boolean b) {
+            register(FOO);
+            return b;
+        }
+    }
+
+    public static class BooleanTarget {
+
+        public static boolean bar(boolean b) {
+            return !b;
+        }
+
+        public boolean qux(boolean b) {
+            return bar(b);
+        }
+    }
+
+    public static class ByteSource extends CallTraceable {
+
+        public byte foo(byte b) {
+            register(FOO);
+            return b;
+        }
+    }
+
+    public static class ByteTarget {
+
+        public static byte bar(byte b) {
+            return (byte) (b * BYTE_MULTIPLICATOR);
+        }
+
+        public byte qux(byte b) {
+            return bar(b);
+        }
+    }
+
+    public static class ShortSource extends CallTraceable {
+
+        public short foo(short s) {
+            register(FOO);
+            return s;
+        }
+    }
+
+    public static class ShortTarget {
+
+        public static short bar(short s) {
+            return (short) (s * SHORT_MULTIPLICATOR);
+        }
+
+        public short qux(short s) {
+            return bar(s);
+        }
+    }
+
+    public static class CharSource extends CallTraceable {
+
+        public char foo(char s) {
+            register(FOO);
+            return s;
+        }
+    }
+
+    public static class CharTarget {
+
+        public static char bar(char c) {
+            return (char) (c * CHAR_MULTIPLICATOR);
+        }
+
+        public char qux(char c) {
+            return bar(c);
+        }
+    }
+
+    public static class IntSource extends CallTraceable {
+
+        public int foo(int i) {
+            register(FOO);
+            return i;
+        }
+    }
+
+    public static class IntTarget {
+
+        public static int bar(int i) {
+            return i * INT_MULTIPLICATOR;
+        }
+
+        public int qux(int i) {
+            return bar(i);
+        }
+    }
+
+    public static class LongSource extends CallTraceable {
+
+        public long foo(long l) {
+            register(FOO);
+            return l;
+        }
+    }
+
+    public static class LongTarget {
+
+        public static long bar(long l) {
+            return l * LONG_MULTIPLICATOR;
+        }
+
+        public long qux(long l) {
+            return bar(l);
+        }
+    }
+
+    public static class FloatSource extends CallTraceable {
+
+        public float foo(float f) {
+            register(FOO);
+            return f;
+        }
+    }
+
+    public static class FloatTarget {
+
+        public static float bar(float f) {
+            return f * FLOAT_MULTIPLICATOR;
+        }
+
+        public float qux(float f) {
+            return bar(f);
+        }
+    }
+
+    public static class DoubleSource extends CallTraceable {
+
+        public double foo(double d) {
+            register(FOO);
+            return d;
+        }
+    }
+
+    public static class DoubleTarget {
+
+        public static double bar(double d) {
+            return d * DOUBLE_MULTIPLICATOR;
+        }
+
+        public double qux(double d) {
+            return bar(d);
+        }
+    }
+
+    public static class VoidSource extends CallTraceable {
+
+        public void foo() {
+            register(FOO);
+        }
+    }
+
+    public static class VoidTarget {
+
+        public static void bar() {
+            /* empty */
+        }
+
+        public void qux() {
+            bar();
+        }
+    }
+
+    public static class StringSource extends CallTraceable {
+
+        public String foo(String s) {
+            register(FOO);
+            return s;
+        }
+    }
+
+    public static class StringTarget {
+
+        public static String bar(String s) {
+            return s + BAR;
+        }
+
+        public String qux(String s) {
+            return bar(s);
+        }
     }
 }

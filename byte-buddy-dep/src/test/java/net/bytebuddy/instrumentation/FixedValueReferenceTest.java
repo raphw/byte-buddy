@@ -13,19 +13,6 @@ import static org.junit.Assert.assertNotEquals;
 public class FixedValueReferenceTest extends AbstractInstrumentationTest {
 
     private static final String BAR = "bar";
-
-    public static class Foo extends CallTraceable {
-
-        public Bar bar() {
-            register(BAR);
-            return new Bar();
-        }
-    }
-
-    public static class Bar {
-        /* empty */
-    }
-
     private Bar bar;
 
     @Before
@@ -52,5 +39,17 @@ public class FixedValueReferenceTest extends AbstractInstrumentationTest {
         assertThat(instance, instanceOf(Foo.class));
         assertThat((Bar) loaded.getLoaded().getDeclaredMethod(BAR).invoke(instance), is(bar));
         instance.assertZeroCalls();
+    }
+
+    public static class Foo extends CallTraceable {
+
+        public Bar bar() {
+            register(BAR);
+            return new Bar();
+        }
+    }
+
+    public static class Bar {
+        /* empty */
     }
 }

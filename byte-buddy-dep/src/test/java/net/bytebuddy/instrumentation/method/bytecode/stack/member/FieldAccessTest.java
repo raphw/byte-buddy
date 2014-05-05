@@ -28,25 +28,20 @@ import static org.mockito.Mockito.*;
 public class FieldAccessTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
-
-    @Parameterized.Parameters
-    public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-                {true, StackSize.SINGLE, 1, 1, Opcodes.GETSTATIC, -1, 0, Opcodes.PUTSTATIC},
-                {true, StackSize.DOUBLE, 2, 2, Opcodes.GETSTATIC, -2, 0, Opcodes.PUTSTATIC},
-                {false, StackSize.SINGLE, 0, 0, Opcodes.GETFIELD, -2, 0, Opcodes.PUTFIELD},
-                {false, StackSize.DOUBLE, 1, 1, Opcodes.GETFIELD, -3, 0, Opcodes.PUTFIELD}
-        });
-    }
-
-    @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
-
     private final boolean isStatic;
     private final StackSize fieldSize;
     private final int getterChange, getterMaximum, getterOpcode;
     private final int putterChange, putterMaximum, putterOpcode;
-
+    @Rule
+    public TestRule mockitoRule = new MockitoRule(this);
+    @Mock
+    private FieldDescription fieldDescription;
+    @Mock
+    private TypeDescription declaringType, fieldType;
+    @Mock
+    private MethodVisitor methodVisitor;
+    @Mock
+    private Instrumentation.Context instrumentationContext;
     public FieldAccessTest(boolean isStatic,
                            StackSize fieldSize,
                            int getterChange,
@@ -65,14 +60,15 @@ public class FieldAccessTest {
         this.putterOpcode = putterOpcode;
     }
 
-    @Mock
-    private FieldDescription fieldDescription;
-    @Mock
-    private TypeDescription declaringType, fieldType;
-    @Mock
-    private MethodVisitor methodVisitor;
-    @Mock
-    private Instrumentation.Context instrumentationContext;
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+                {true, StackSize.SINGLE, 1, 1, Opcodes.GETSTATIC, -1, 0, Opcodes.PUTSTATIC},
+                {true, StackSize.DOUBLE, 2, 2, Opcodes.GETSTATIC, -2, 0, Opcodes.PUTSTATIC},
+                {false, StackSize.SINGLE, 0, 0, Opcodes.GETFIELD, -2, 0, Opcodes.PUTFIELD},
+                {false, StackSize.DOUBLE, 1, 1, Opcodes.GETFIELD, -3, 0, Opcodes.PUTFIELD}
+        });
+    }
 
     @Before
     public void setUp() throws Exception {

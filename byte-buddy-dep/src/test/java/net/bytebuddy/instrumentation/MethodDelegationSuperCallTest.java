@@ -13,6 +13,22 @@ public class MethodDelegationSuperCallTest extends AbstractInstrumentationTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
+    @Test
+    public void testRunnableSuperCall() throws Exception {
+        DynamicType.Loaded<Foo> loaded = instrument(Foo.class, MethodDelegation.to(RunnableClass.class));
+        Foo instance = loaded.getLoaded().newInstance();
+        assertThat(instance.value, is(BAR));
+        instance.foo();
+        assertThat(instance.value, is(FOO));
+    }
+
+    @Test
+    public void testCallableSuperCall() throws Exception {
+        DynamicType.Loaded<Bar> loaded = instrument(Bar.class, MethodDelegation.to(CallableClass.class));
+        Bar instance = loaded.getLoaded().newInstance();
+        assertThat(instance.bar(), is(FOO));
+    }
+
     public static class Foo {
 
         public String value = BAR;
@@ -29,15 +45,6 @@ public class MethodDelegationSuperCallTest extends AbstractInstrumentationTest {
         }
     }
 
-    @Test
-    public void testRunnableSuperCall() throws Exception {
-        DynamicType.Loaded<Foo> loaded = instrument(Foo.class, MethodDelegation.to(RunnableClass.class));
-        Foo instance = loaded.getLoaded().newInstance();
-        assertThat(instance.value, is(BAR));
-        instance.foo();
-        assertThat(instance.value, is(FOO));
-    }
-
     public static class Bar {
 
         public String bar() {
@@ -50,12 +57,5 @@ public class MethodDelegationSuperCallTest extends AbstractInstrumentationTest {
         public static String bar(@SuperCall Callable<String> callable) throws Exception {
             return callable.call();
         }
-    }
-
-    @Test
-    public void testCallableSuperCall() throws Exception {
-        DynamicType.Loaded<Bar> loaded = instrument(Bar.class, MethodDelegation.to(CallableClass.class));
-        Bar instance = loaded.getLoaded().newInstance();
-        assertThat(instance.bar(), is(FOO));
     }
 }

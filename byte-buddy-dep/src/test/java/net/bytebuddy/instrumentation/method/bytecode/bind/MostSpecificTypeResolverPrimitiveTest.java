@@ -20,6 +20,18 @@ import static org.mockito.Mockito.*;
 @RunWith(Parameterized.class)
 public class MostSpecificTypeResolverPrimitiveTest extends AbstractMostSpecificTypeResolverTest {
 
+    private final Class<?> firstType;
+    private final Class<?> secondType;
+    @Mock
+    private TypeDescription firstPrimitive;
+    @Mock
+    private TypeDescription secondPrimitive;
+
+    public MostSpecificTypeResolverPrimitiveTest(Class<?> firstType, Class<?> secondType) {
+        this.firstType = firstType;
+        this.secondType = secondType;
+    }
+
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
@@ -59,19 +71,6 @@ public class MostSpecificTypeResolverPrimitiveTest extends AbstractMostSpecificT
                 {float.class, double.class},
         });
     }
-
-    private final Class<?> firstType;
-    private final Class<?> secondType;
-
-    public MostSpecificTypeResolverPrimitiveTest(Class<?> firstType, Class<?> secondType) {
-        this.firstType = firstType;
-        this.secondType = secondType;
-    }
-
-    @Mock
-    private TypeDescription firstPrimitive;
-    @Mock
-    private TypeDescription secondPrimitive;
 
     @Override
     @Before

@@ -83,5 +83,21 @@ public interface ClassVisitorWrapper {
             }
             return classVisitor;
         }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && classVisitorWrappers.equals(((Chain) other).classVisitorWrappers);
+        }
+
+        @Override
+        public int hashCode() {
+            return classVisitorWrappers.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "ClassVisitorWrapper.Chain{classVisitorWrappers=" + classVisitorWrappers + '}';
+        }
     }
 }
