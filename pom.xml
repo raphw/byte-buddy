@@ -123,6 +123,19 @@
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                 </configuration>
             </plugin>
+            <!-- Add cobertura support -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>cobertura-maven-plugin</artifactId>
+                <version>2.6</version>
+                <configuration>
+                    <aggregate>true</aggregate>
+                    <instrumentation>
+                        <ignoreTrivial>true</ignoreTrivial>
+                    </instrumentation>
+                    <check/>
+                </configuration>
+            </plugin>
         </plugins>
         <pluginManagement>
             <plugins>
@@ -149,9 +162,6 @@
             <activation>
                 <activeByDefault>false</activeByDefault>
             </activation>
-            <properties>
-                <sources.create>true</sources.create>
-            </properties>
             <build>
                 <plugins>
                     <!-- Create source code artifact -->
