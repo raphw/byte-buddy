@@ -102,7 +102,10 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
             { title: 'Grape', content: '@Grapes(\n  @Grab(group=\''
                 + repository.groupId + '\', module=\''
                 + repository.artifactId + '\', version=\''
-                + repository.version + '\')\n)' }
+                + repository.version + '\')\n)' },
+            { title: 'Leiningen', content: '[' + repository.groupId + '/' 
+                + repository.artifactId + ' "' 
+                + repository.version + '"]' }
         ];
     })
 
