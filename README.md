@@ -263,3 +263,5 @@ make sure you are not breaking any existing test cases. If possible, please take
 For feature requests or general feedback, you can also use the issue tracker.
 
 [![Build Status](https://travis-ci.org/raphw/byte-buddy.png)](https://travis-ci.org/raphw/byte-buddy)
+
+[![Coverage Status](https://coveralls.io/repos/raphw/byte-buddy/badge.png)](https://coveralls.io/r/raphw/byte-buddy)
