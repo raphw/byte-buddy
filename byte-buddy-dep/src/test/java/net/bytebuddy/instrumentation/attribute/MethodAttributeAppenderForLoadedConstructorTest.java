@@ -14,17 +14,6 @@ public class MethodAttributeAppenderForLoadedConstructorTest extends AbstractMet
 
     private static final String BAR = "bar";
     private static final int PARAMETER_INDEX = 0;
-
-    private static abstract class Foo {
-
-        @Qux
-        @Baz
-        @QuxBaz
-        protected Foo(@Qux @Baz @QuxBaz Object o) {
-            /* empty */
-        }
-    }
-
     private Constructor<?> constructor;
 
     @Before
@@ -44,5 +33,15 @@ public class MethodAttributeAppenderForLoadedConstructorTest extends AbstractMet
         verifyNoMoreInteractions(methodVisitor);
         verify(methodDescription).getParameterTypes();
         verifyNoMoreInteractions(methodDescription);
+    }
+
+    private static abstract class Foo {
+
+        @Qux
+        @Baz
+        @QuxBaz
+        protected Foo(@Qux @Baz @QuxBaz Object o) {
+            /* empty */
+        }
     }
 }

@@ -12,6 +12,15 @@ public class MethodBindingAmbiguityResolutionTest {
     private static final MethodDelegationBinder.AmbiguityResolver.Resolution RIGHT =
             MethodDelegationBinder.AmbiguityResolver.Resolution.RIGHT;
 
+    private static void testConflictMerge(MethodDelegationBinder.AmbiguityResolver.Resolution first,
+                                          MethodDelegationBinder.AmbiguityResolver.Resolution second) {
+        assertThat(first.merge(second), is(MethodDelegationBinder.AmbiguityResolver.Resolution.AMBIGUOUS));
+    }
+
+    private static void testSelfMerge(MethodDelegationBinder.AmbiguityResolver.Resolution resolution) {
+        assertThat(resolution.merge(resolution), is(resolution));
+    }
+
     @Test
     public void testSelfMerge() throws Exception {
         testSelfMerge(LEFT);
@@ -22,14 +31,5 @@ public class MethodBindingAmbiguityResolutionTest {
     public void testConflictMerge() throws Exception {
         testConflictMerge(LEFT, RIGHT);
         testConflictMerge(RIGHT, LEFT);
-    }
-
-    private static void testConflictMerge(MethodDelegationBinder.AmbiguityResolver.Resolution first,
-                                          MethodDelegationBinder.AmbiguityResolver.Resolution second) {
-        assertThat(first.merge(second), is(MethodDelegationBinder.AmbiguityResolver.Resolution.AMBIGUOUS));
-    }
-
-    private static void testSelfMerge(MethodDelegationBinder.AmbiguityResolver.Resolution resolution) {
-        assertThat(resolution.merge(resolution), is(resolution));
     }
 }

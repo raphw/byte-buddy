@@ -156,8 +156,19 @@ public interface BridgeMethodResolver {
             }
         }
 
+        /**
+         * A conflict handler is queried for resolving a bridge method with multiple possible target methods.
+         */
         public static interface ConflictHandler {
 
+            /**
+             * Returns a target method for the given bridge method out of the given list of candidate methods.
+             * Alternatively, a runtime exception might be thrown if no unambiguous target method can be identified.
+             *
+             * @param bridgeMethod     The bridge method to resolve.
+             * @param targetCandidates The list of possible candidates.
+             * @return A representation of the target of the bridge method.
+             */
             BridgeTarget choose(MethodDescription bridgeMethod, MethodList targetCandidates);
 
             /**
@@ -195,7 +206,7 @@ public interface BridgeMethodResolver {
         /**
          * A target of a resolved bridge method which is created by a {@link net.bytebuddy.dynamic.scaffold.BridgeMethodResolver.Simple}.
          */
-        protected static interface BridgeTarget {
+        public static interface BridgeTarget {
 
             /**
              * Extracts the resolved bridge method target or throws an exception if no such target exists.
