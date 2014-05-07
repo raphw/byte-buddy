@@ -222,7 +222,9 @@ public class FieldAccessorTest<T extends CallTraceable,
         public boolean getFoo() {
             register(FOO);
             return BOOLEAN_DEFAULT_VALUE;
-        }        protected boolean foo = BOOLEAN_VALUE;
+        }
+
+        protected boolean foo = BOOLEAN_VALUE;
 
 
     }
@@ -231,7 +233,9 @@ public class FieldAccessorTest<T extends CallTraceable,
 
         public void setFoo(boolean foo) {
             register(FOO, foo);
-        }        protected boolean foo = BOOLEAN_DEFAULT_VALUE;
+        }
+
+        protected boolean foo = BOOLEAN_DEFAULT_VALUE;
 
 
     }
@@ -241,7 +245,9 @@ public class FieldAccessorTest<T extends CallTraceable,
         public boolean getFoo() {
             register(FOO);
             return BOOLEAN_DEFAULT_VALUE;
-        }        protected static boolean foo = BOOLEAN_VALUE;
+        }
+
+        protected static boolean foo = BOOLEAN_VALUE;
 
 
     }
@@ -250,7 +256,9 @@ public class FieldAccessorTest<T extends CallTraceable,
 
         public void setFoo(boolean foo) {
             register(FOO, foo);
-        }        protected static boolean foo = BOOLEAN_DEFAULT_VALUE;
+        }
+
+        protected static boolean foo = BOOLEAN_DEFAULT_VALUE;
 
 
     }
@@ -260,7 +268,9 @@ public class FieldAccessorTest<T extends CallTraceable,
         public byte getFoo() {
             register(FOO);
             return BYTE_DEFAULT_VALUE;
-        }        protected byte foo = BYTE_VALUE;
+        }
+
+        protected byte foo = BYTE_VALUE;
 
 
     }
@@ -269,7 +279,9 @@ public class FieldAccessorTest<T extends CallTraceable,
 
         public void setFoo(byte foo) {
             register(FOO, foo);
-        }        protected byte foo = BYTE_DEFAULT_VALUE;
+        }
+
+        protected byte foo = BYTE_DEFAULT_VALUE;
 
 
     }
@@ -279,7 +291,9 @@ public class FieldAccessorTest<T extends CallTraceable,
         public byte getFoo() {
             register(FOO);
             return BYTE_DEFAULT_VALUE;
-        }        protected static byte foo = BYTE_VALUE;
+        }
+
+        protected static byte foo = BYTE_VALUE;
 
 
     }
@@ -288,7 +302,9 @@ public class FieldAccessorTest<T extends CallTraceable,
 
         public void setFoo(byte foo) {
             register(FOO, foo);
-        }        protected static byte foo = BYTE_DEFAULT_VALUE;
+        }
+
+        protected static byte foo = BYTE_DEFAULT_VALUE;
 
 
     }
@@ -298,7 +314,9 @@ public class FieldAccessorTest<T extends CallTraceable,
         public short getFoo() {
             register(FOO);
             return SHORT_DEFAULT_VALUE;
-        }        protected short foo = SHORT_VALUE;
+        }
+
+        protected short foo = SHORT_VALUE;
 
 
     }
@@ -307,7 +325,9 @@ public class FieldAccessorTest<T extends CallTraceable,
 
         public void setFoo(short foo) {
             register(FOO, foo);
-        }        protected short foo = SHORT_DEFAULT_VALUE;
+        }
+
+        protected short foo = SHORT_DEFAULT_VALUE;
 
 
     }
@@ -317,7 +337,9 @@ public class FieldAccessorTest<T extends CallTraceable,
         public short getFoo() {
             register(FOO);
             return SHORT_DEFAULT_VALUE;
-        }        protected static short foo = SHORT_VALUE;
+        }
+
+        protected static short foo = SHORT_VALUE;
 
 
     }
@@ -326,7 +348,9 @@ public class FieldAccessorTest<T extends CallTraceable,
 
         public void setFoo(short foo) {
             register(FOO, foo);
-        }        protected static short foo = SHORT_DEFAULT_VALUE;
+        }
+
+        protected static short foo = SHORT_DEFAULT_VALUE;
 
 
     }
@@ -336,7 +360,9 @@ public class FieldAccessorTest<T extends CallTraceable,
         public int getFoo() {
             register(FOO);
             return INT_DEFAULT_VALUE;
-        }        protected int foo = INT_VALUE;
+        }
+
+        protected int foo = INT_VALUE;
 
 
     }
@@ -345,7 +371,9 @@ public class FieldAccessorTest<T extends CallTraceable,
 
         public void setFoo(int foo) {
             register(FOO, foo);
-        }        protected int foo = INT_DEFAULT_VALUE;
+        }
+
+        protected int foo = INT_DEFAULT_VALUE;
 
 
     }
@@ -355,7 +383,9 @@ public class FieldAccessorTest<T extends CallTraceable,
         public int getFoo() {
             register(FOO);
             return INT_DEFAULT_VALUE;
-        }        protected static int foo = INT_VALUE;
+        }
+
+        protected static int foo = INT_VALUE;
 
 
     }
@@ -364,7 +394,9 @@ public class FieldAccessorTest<T extends CallTraceable,
 
         public void setFoo(int foo) {
             register(FOO, foo);
-        }        protected static int foo = INT_DEFAULT_VALUE;
+        }
+
+        protected static int foo = INT_DEFAULT_VALUE;
 
 
     }
@@ -374,7 +406,9 @@ public class FieldAccessorTest<T extends CallTraceable,
         public char getFoo() {
             register(FOO);
             return CHAR_DEFAULT_VALUE;
-        }        protected char foo = CHAR_VALUE;
+        }
+
+        protected char foo = CHAR_VALUE;
 
 
     }
@@ -383,7 +417,9 @@ public class FieldAccessorTest<T extends CallTraceable,
 
         public void setFoo(char foo) {
             register(FOO, foo);
-        }        protected char foo = CHAR_DEFAULT_VALUE;
+        }
+
+        protected char foo = CHAR_DEFAULT_VALUE;
 
 
     }
@@ -393,7 +429,9 @@ public class FieldAccessorTest<T extends CallTraceable,
         public char getFoo() {
             register(FOO);
             return CHAR_DEFAULT_VALUE;
-        }        protected static char foo = CHAR_VALUE;
+        }
+
+        protected static char foo = CHAR_VALUE;
 
 
     }
@@ -402,7 +440,9 @@ public class FieldAccessorTest<T extends CallTraceable,
 
         public void setFoo(char foo) {
             register(FOO, foo);
-        }        protected static char foo = CHAR_DEFAULT_VALUE;
+        }
+
+        protected static char foo = CHAR_DEFAULT_VALUE;
 
 
     }
@@ -412,7 +452,9 @@ public class FieldAccessorTest<T extends CallTraceable,
         public long getFoo() {
             register(FOO);
             return LONG_DEFAULT_VALUE;
-        }        protected long foo = LONG_VALUE;
+        }
+
+        protected long foo = LONG_VALUE;
 
 
     }
@@ -421,7 +463,9 @@ public class FieldAccessorTest<T extends CallTraceable,
 
         public void setFoo(long foo) {
             register(FOO, foo);
-        }        protected long foo = LONG_DEFAULT_VALUE;
+        }
+
+        protected long foo = LONG_DEFAULT_VALUE;
 
 
     }
@@ -431,7 +475,9 @@ public class FieldAccessorTest<T extends CallTraceable,
         public long getFoo() {
             register(FOO);
             return LONG_DEFAULT_VALUE;
-        }        protected static long foo = LONG_VALUE;
+        }
+
+        protected static long foo = LONG_VALUE;
 
 
     }
@@ -440,7 +486,9 @@ public class FieldAccessorTest<T extends CallTraceable,
 
         public void setFoo(long foo) {
             register(FOO, foo);
-        }        protected static long foo = LONG_DEFAULT_VALUE;
+        }
+
+        protected static long foo = LONG_DEFAULT_VALUE;
 
 
     }
@@ -450,7 +498,9 @@ public class FieldAccessorTest<T extends CallTraceable,
         public float getFoo() {
             register(FOO);
             return FLOAT_DEFAULT_VALUE;
-        }        protected float foo = FLOAT_VALUE;
+        }
+
+        protected float foo = FLOAT_VALUE;
 
 
     }
@@ -459,7 +509,9 @@ public class FieldAccessorTest<T extends CallTraceable,
 
         public void setFoo(float foo) {
             register(FOO, foo);
-        }        protected float foo = FLOAT_DEFAULT_VALUE;
+        }
+
+        protected float foo = FLOAT_DEFAULT_VALUE;
 
 
     }
@@ -469,7 +521,9 @@ public class FieldAccessorTest<T extends CallTraceable,
         public float getFoo() {
             register(FOO);
             return FLOAT_DEFAULT_VALUE;
-        }        protected static float foo = FLOAT_VALUE;
+        }
+
+        protected static float foo = FLOAT_VALUE;
 
 
     }
@@ -478,7 +532,9 @@ public class FieldAccessorTest<T extends CallTraceable,
 
         public void setFoo(float foo) {
             register(FOO, foo);
-        }        protected static float foo = FLOAT_DEFAULT_VALUE;
+        }
+
+        protected static float foo = FLOAT_DEFAULT_VALUE;
 
 
     }
@@ -488,7 +544,9 @@ public class FieldAccessorTest<T extends CallTraceable,
         public double getFoo() {
             register(FOO);
             return DOUBLE_DEFAULT_VALUE;
-        }        protected double foo = DOUBLE_VALUE;
+        }
+
+        protected double foo = DOUBLE_VALUE;
 
 
     }
@@ -497,7 +555,9 @@ public class FieldAccessorTest<T extends CallTraceable,
 
         public void setFoo(double foo) {
             register(FOO, foo);
-        }        protected double foo = DOUBLE_DEFAULT_VALUE;
+        }
+
+        protected double foo = DOUBLE_DEFAULT_VALUE;
 
 
     }
@@ -507,7 +567,9 @@ public class FieldAccessorTest<T extends CallTraceable,
         public double getFoo() {
             register(FOO);
             return DOUBLE_DEFAULT_VALUE;
-        }        protected static double foo = DOUBLE_VALUE;
+        }
+
+        protected static double foo = DOUBLE_VALUE;
 
 
     }
@@ -516,7 +578,9 @@ public class FieldAccessorTest<T extends CallTraceable,
 
         public void setFoo(double foo) {
             register(FOO, foo);
-        }        protected static double foo = DOUBLE_DEFAULT_VALUE;
+        }
+
+        protected static double foo = DOUBLE_DEFAULT_VALUE;
 
 
     }
@@ -526,7 +590,9 @@ public class FieldAccessorTest<T extends CallTraceable,
         public Object getFoo() {
             register(FOO);
             return STRING_DEFAULT_VALUE;
-        }        protected Object foo = STRING_VALUE;
+        }
+
+        protected Object foo = STRING_VALUE;
 
 
     }
@@ -535,7 +601,9 @@ public class FieldAccessorTest<T extends CallTraceable,
 
         public void setFoo(Object foo) {
             register(FOO, foo);
-        }        protected Object foo = STRING_DEFAULT_VALUE;
+        }
+
+        protected Object foo = STRING_DEFAULT_VALUE;
 
 
     }
@@ -545,7 +613,9 @@ public class FieldAccessorTest<T extends CallTraceable,
         public Object getFoo() {
             register(FOO);
             return STRING_DEFAULT_VALUE;
-        }        protected static Object foo = STRING_VALUE;
+        }
+
+        protected static Object foo = STRING_VALUE;
 
 
     }
@@ -554,7 +624,9 @@ public class FieldAccessorTest<T extends CallTraceable,
 
         public void setFoo(Object foo) {
             register(FOO, foo);
-        }        protected static Object foo = STRING_DEFAULT_VALUE;
+        }
+
+        protected static Object foo = STRING_DEFAULT_VALUE;
 
 
     }

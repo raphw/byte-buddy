@@ -42,6 +42,7 @@ public class FieldAccessTest {
     private MethodVisitor methodVisitor;
     @Mock
     private Instrumentation.Context instrumentationContext;
+
     public FieldAccessTest(boolean isStatic,
                            StackSize fieldSize,
                            int getterChange,

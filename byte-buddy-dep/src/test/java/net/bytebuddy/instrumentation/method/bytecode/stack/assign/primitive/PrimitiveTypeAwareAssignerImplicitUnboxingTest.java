@@ -37,6 +37,7 @@ public class PrimitiveTypeAwareAssignerImplicitUnboxingTest {
     @Mock
     private StackManipulation chainedStackManipulation;
     private Assigner primitiveAssigner;
+
     public PrimitiveTypeAwareAssignerImplicitUnboxingTest(Class<?> sourceType,
                                                           Class<?> wrapperType,
                                                           Class<?> targetType,

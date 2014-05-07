@@ -52,6 +52,7 @@ public class StubMethodTest extends AbstractInstrumentationTest {
     private final String methodName;
     private final Class<?>[] methodParameterTypes;
     private final Object[] methodArguments;
+
     public StubMethodTest(Matcher<?> matcher,
                           String methodName,
                           Class<?>[] methodParameterTypes,

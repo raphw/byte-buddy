@@ -45,6 +45,7 @@ public class TypeProxyTest {
     public TestRule mockitoRule = new MockitoRule(this);
     @Mock
     private AuxiliaryType.MethodAccessorFactory methodAccessorFactory;
+
     public TypeProxyTest(String methodName, Class<?>[] parameterTypes, Object[] methodArguments, Matcher<?> matcher) {
         this.methodName = methodName;
         this.parameterTypes = parameterTypes;

@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 
 public class ByteBuddyCommonsTest {
 
-    private static final String FOO = "foo", BAR = "bar", QUX = "qux", FOOBAR = "foo.bar";
+    private static final String FOO = "foo", BAR = "bar", QUX = "qux", FOOBAR = "foo.bar", PUBLIC = "public";
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -106,9 +106,20 @@ public class ByteBuddyCommonsTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testIsValidIdentifierThrowsException() throws Exception {
+    public void testIsValidIdentifierInvalidTokenStartThrowsException() throws Exception {
         isValidIdentifier(MethodDescription.CONSTRUCTOR_INTERNAL_NAME);
     }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testIsValidIdentifierInvalidTokenMiddleThrowsException() throws Exception {
+        isValidIdentifier(FOO + ">");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testIsValidIdentifierAsKeywordThrowsException() throws Exception {
+        isValidIdentifier(PUBLIC);
+    }
+
 
     @Test
     public void testIsValidTypeName() throws Exception {

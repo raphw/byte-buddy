@@ -34,6 +34,7 @@ public class DuplicationTest {
     private MethodVisitor methodVisitor;
     @Mock
     private Instrumentation.Context instrumentationContext;
+
     public DuplicationTest(StackSize stackSize, int opcode) {
         this.stackSize = stackSize;
         this.opcode = opcode;

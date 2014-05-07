@@ -47,6 +47,7 @@ public class PrimitiveUnboxingDelegateDirectTest {
     private MethodVisitor methodVisitor;
     @Mock
     private Instrumentation.Context instrumentationContext;
+
     public PrimitiveUnboxingDelegateDirectTest(Class<?> primitiveType,
                                                Class<?> wrapperType,
                                                String unboxingMethodName,

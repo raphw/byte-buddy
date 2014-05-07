@@ -17,6 +17,7 @@ public class ArrayFactoryReferenceTest extends AbstractArrayFactoryTest {
 
     private final Class<?> type;
     private final String internalTypeName;
+
     public ArrayFactoryReferenceTest(Class<?> type) {
         this.type = type;
         internalTypeName = Type.getInternalName(type);

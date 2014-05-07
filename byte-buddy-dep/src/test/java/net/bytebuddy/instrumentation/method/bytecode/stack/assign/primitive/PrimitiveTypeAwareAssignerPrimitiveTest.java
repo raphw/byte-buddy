@@ -33,6 +33,7 @@ public class PrimitiveTypeAwareAssignerPrimitiveTest {
     @Mock
     private Assigner chainedAssigner;
     private Assigner primitiveAssigner;
+
     public PrimitiveTypeAwareAssignerPrimitiveTest(Class<?> sourceType,
                                                    Class<?> targetType,
                                                    boolean assignable) {

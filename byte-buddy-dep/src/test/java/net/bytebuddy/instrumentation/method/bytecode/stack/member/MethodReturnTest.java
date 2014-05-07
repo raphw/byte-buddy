@@ -36,6 +36,7 @@ public class MethodReturnTest {
     private TypeDescription typeDescription;
     @Mock
     private Instrumentation.Context instrumentationContext;
+
     public MethodReturnTest(Class<?> type, int opcode, int sizeChange) {
         this.type = type;
         this.opcode = opcode;

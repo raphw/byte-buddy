@@ -26,4 +26,12 @@ public class MethodCallProxyEqualsHashCodeTest {
         assertThat(new MethodCallProxy(first).hashCode(), not(is(new MethodCallProxy(second).hashCode())));
         assertThat(new MethodCallProxy(first), not(is(new MethodCallProxy(second))));
     }
+
+    @Test
+    public void testAssignableSignatureCallEqualsHashCode() throws Exception {
+        assertThat(new MethodCallProxy.AssignableSignatureCall(first).hashCode(), is(new MethodCallProxy.AssignableSignatureCall(first).hashCode()));
+        assertThat(new MethodCallProxy.AssignableSignatureCall(first), is(new MethodCallProxy.AssignableSignatureCall(first)));
+        assertThat(new MethodCallProxy.AssignableSignatureCall(first).hashCode(), not(is(new MethodCallProxy.AssignableSignatureCall(second).hashCode())));
+        assertThat(new MethodCallProxy.AssignableSignatureCall(first), not(is(new MethodCallProxy.AssignableSignatureCall(second))));
+    }
 }

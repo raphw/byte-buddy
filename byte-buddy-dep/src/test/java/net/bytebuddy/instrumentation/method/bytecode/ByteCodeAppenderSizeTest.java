@@ -3,6 +3,7 @@ package net.bytebuddy.instrumentation.method.bytecode;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -19,5 +20,13 @@ public class ByteCodeAppenderSizeTest {
         assertThat(mergedLeft, equalTo(mergedRight));
         assertThat(mergedLeft.getOperandStackSize(), is(BIGGER));
         assertThat(mergedLeft.getLocalVariableSize(), is(BIGGER));
+    }
+
+    @Test
+    public void testHashCodeEquals() throws Exception {
+        assertThat(new ByteCodeAppender.Size(LOWER, BIGGER).hashCode(), is(new ByteCodeAppender.Size(LOWER, BIGGER).hashCode()));
+        assertThat(new ByteCodeAppender.Size(LOWER, BIGGER), is(new ByteCodeAppender.Size(LOWER, BIGGER)));
+        assertThat(new ByteCodeAppender.Size(LOWER, BIGGER).hashCode(), not(is(new ByteCodeAppender.Size(BIGGER, LOWER).hashCode())));
+        assertThat(new ByteCodeAppender.Size(LOWER, BIGGER), not(is(new ByteCodeAppender.Size(BIGGER, LOWER))));
     }
 }

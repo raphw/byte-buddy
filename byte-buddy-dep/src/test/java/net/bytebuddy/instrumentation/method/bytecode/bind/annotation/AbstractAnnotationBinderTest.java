@@ -34,6 +34,7 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
     protected StackManipulation stackManipulation;
     @Mock
     protected TypeList sourceTypeList, targetTypeList;
+
     protected AbstractAnnotationBinderTest(Class<T> annotationType) {
         this.annotationType = annotationType;
     }

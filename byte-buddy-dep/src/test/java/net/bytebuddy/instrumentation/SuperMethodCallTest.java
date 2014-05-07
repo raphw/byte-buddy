@@ -42,6 +42,7 @@ public class SuperMethodCallTest extends AbstractInstrumentationTest {
     private final String methodName;
     private final Class<?>[] methodParameterTypes;
     private final Object[] methodArguments;
+
     public SuperMethodCallTest(Matcher<?> matcher,
                                String methodName,
                                Class<?>[] methodParameterTypes,

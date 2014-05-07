@@ -34,6 +34,7 @@ public class PrimitiveWideningDelegateTrivialTest {
     private MethodVisitor methodVisitor;
     @Mock
     private Instrumentation.Context instrumentationContext;
+
     public PrimitiveWideningDelegateTrivialTest(Class<?> sourceType, Class<?> targetType) {
         this.sourceType = sourceType;
         this.targetType = targetType;

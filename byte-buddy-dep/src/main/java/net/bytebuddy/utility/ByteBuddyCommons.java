@@ -173,9 +173,6 @@ public final class ByteBuddyCommons {
      */
     public static String isValidTypeName(String typeName) {
         String[] segments = nonNull(typeName).split("\\.");
-        if (segments.length == 0) {
-            throw new IllegalArgumentException("An empty string is not a valid Java type name");
-        }
         for (String segment : segments) {
             isValidIdentifier(segment);
         }

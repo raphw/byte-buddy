@@ -16,6 +16,7 @@ public class ClassFileVersionKnownVersionsTest {
 
     private final int javaVersion;
     private final int byteCodeVersion;
+
     public ClassFileVersionKnownVersionsTest(int javaVersion, int byteCodeVersion) {
         this.javaVersion = javaVersion;
         this.byteCodeVersion = byteCodeVersion;

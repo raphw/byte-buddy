@@ -37,6 +37,7 @@ public class PrimitiveWideningDelegateNontrivialTest {
     private MethodVisitor methodVisitor;
     @Mock
     private Instrumentation.Context instrumentationContext;
+
     public PrimitiveWideningDelegateNontrivialTest(Class<?> sourceType,
                                                    Class<?> targetType,
                                                    int sizeChange,

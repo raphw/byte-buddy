@@ -47,6 +47,7 @@ public class PrimitiveBoxingDelegateTest {
     private MethodVisitor methodVisitor;
     @Mock
     private Instrumentation.Context instrumentationContext;
+
     public PrimitiveBoxingDelegateTest(Class<?> primitiveType,
                                        Class<?> referenceType,
                                        String boxingMethodDescriptor,

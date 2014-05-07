@@ -39,6 +39,7 @@ public class VoidAwareAssignerNonVoidToVoidTest {
     private MethodVisitor methodVisitor;
     @Mock
     private Instrumentation.Context instrumentationContext;
+
     public VoidAwareAssignerNonVoidToVoidTest(Class<?> sourceType, int opcode) {
         this.sourceType = sourceType;
         this.opcode = opcode;

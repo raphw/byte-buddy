@@ -15,6 +15,7 @@ public class StackSizeTest {
 
     private final Class<?> type;
     private final StackSize stackSize;
+
     public StackSizeTest(Class<?> type, StackSize stackSize) {
         this.type = type;
         this.stackSize = stackSize;

@@ -10,6 +10,7 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 import org.objectweb.asm.MethodVisitor;
 
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -45,6 +46,11 @@ public class ByteCodeAppenderCompoundTest {
     }
 
     @Test
+    public void testDoesNotAppendCode() throws Exception {
+        assertThat(compound.appendsCode(), is(false));
+    }
+
+    @Test
     public void testApplication() throws Exception {
         when(first.apply(methodVisitor, instrumentationContext, methodDescription)).thenReturn(new ByteCodeAppender.Size(MINIMUM, MAXIMUM));
         when(second.apply(methodVisitor, instrumentationContext, methodDescription)).thenReturn(new ByteCodeAppender.Size(MAXIMUM, MINIMUM));
@@ -53,5 +59,13 @@ public class ByteCodeAppenderCompoundTest {
         assertThat(size.getOperandStackSize(), is(MAXIMUM));
         verifyZeroInteractions(methodVisitor);
         verifyZeroInteractions(instrumentationContext);
+    }
+
+    @Test
+    public void testHashCodeEquals() throws Exception {
+        assertThat(compound.hashCode(), is(new ByteCodeAppender.Compound(first, second).hashCode()));
+        assertThat(compound, is((ByteCodeAppender) new ByteCodeAppender.Compound(first, second)));
+        assertThat(compound.hashCode(), not(is(new ByteCodeAppender.Compound(second, first).hashCode())));
+        assertThat(compound, not(is((ByteCodeAppender) new ByteCodeAppender.Compound(second, first))));
     }
 }

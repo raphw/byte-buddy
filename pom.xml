@@ -37,6 +37,8 @@
         <version.plugin.gpg>1.4</version.plugin.gpg>
         <version.plugin.release>2.5</version.plugin.release>
         <version.plugin.resources>2.6</version.plugin.resources>
+        <version.plugin.cobertura>2.6</version.plugin.cobertura>
+        <version.plugin.coveralls>2.2.0</version.plugin.coveralls>
         <distribution.bintray>https://api.bintray.com/maven/raphw/maven/ByteBuddy</distribution.bintray>
     </properties>
 
@@ -127,14 +129,17 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>cobertura-maven-plugin</artifactId>
-                <version>2.6</version>
+                <version>${version.plugin.cobertura}</version>
                 <configuration>
                     <aggregate>true</aggregate>
-                    <instrumentation>
-                        <ignoreTrivial>true</ignoreTrivial>
-                    </instrumentation>
                     <check/>
                 </configuration>
+            </plugin>
+            <!-- Generate coveralls reports from Travis -->
+            <plugin>
+                <groupId>org.eluder.coveralls</groupId>
+                <artifactId>coveralls-maven-plugin</artifactId>
+                <version>${version.plugin.coveralls}</version>
             </plugin>
         </plugins>
         <pluginManagement>

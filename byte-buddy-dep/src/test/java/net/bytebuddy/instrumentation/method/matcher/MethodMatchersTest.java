@@ -5,9 +5,12 @@ import net.bytebuddy.utility.PackagePrivateMethod;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.util.concurrent.ExecutionException;
 
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
@@ -68,6 +71,8 @@ public class MethodMatchersTest {
     private MethodDescription privateMethod;
     private MethodDescription protectedMethod;
     private MethodDescription packagePrivateMethod;
+    private MethodDescription visibilityBridgeMethod;
+    private MethodDescription noVisibilityBridgeMethod;
 
     @Before
     public void setUp() throws Exception {
@@ -112,6 +117,9 @@ public class MethodMatchersTest {
         privateMethod = new MethodDescription.ForLoadedMethod(PackagePrivateMethod.class.getDeclaredMethod(PackagePrivateMethod.PRIVATE_METHOD_NAME));
         protectedMethod = new MethodDescription.ForLoadedMethod(PackagePrivateMethod.class.getDeclaredMethod(PackagePrivateMethod.PROTECTED_METHOD_NAME));
         packagePrivateMethod = new MethodDescription.ForLoadedMethod(PackagePrivateMethod.class.getDeclaredMethod(PackagePrivateMethod.PACKAGE_PRIVATE_METHOD_NAME));
+
+        visibilityBridgeMethod = new MethodDescription.ForLoadedMethod(VisibilityBridgeExtension.class.getDeclaredMethod(FOO_METHOD_NAME));
+        noVisibilityBridgeMethod = new MethodDescription.ForLoadedMethod(VisibilityBridgeExtension.class.getDeclaredMethod(BAR_METHOD_NAME));
     }
 
     @Test
@@ -184,6 +192,14 @@ public class MethodMatchersTest {
         assertThat(MethodMatchers.nameMatches(FOO_METHOD_NAME_REGEX).matches(testClassExtension$foo), is(true));
         assertThat(MethodMatchers.nameMatches(BAR_METHOD_NAME_REGEX).matches(testClassBase$foo), is(false));
         assertThat(MethodMatchers.nameMatches(BAR_METHOD_NAME_REGEX).matches(testClassExtension$foo), is(false));
+    }
+
+    @Test
+    public void testNameMatcherHashCodeEquals() throws Exception {
+        assertThat(MethodMatchers.named(FOO_METHOD_NAME).hashCode(), is(MethodMatchers.named(FOO_METHOD_NAME).hashCode()));
+        assertThat(MethodMatchers.named(FOO_METHOD_NAME), is(MethodMatchers.named(FOO_METHOD_NAME)));
+        assertThat(MethodMatchers.named(FOO_METHOD_NAME).hashCode(), not(is(MethodMatchers.named(BAR_METHOD_NAME).hashCode())));
+        assertThat(MethodMatchers.named(FOO_METHOD_NAME), not(is(MethodMatchers.named(BAR_METHOD_NAME))));
     }
 
     @Test
@@ -272,7 +288,6 @@ public class MethodMatchersTest {
         assertThat(MethodMatchers.isStrict().matches(testModifier$strict), is(true));
         assertThat(MethodMatchers.isStrict().matches(testModifier$sync), is(false));
         assertThat(MethodMatchers.isStrict().matches(testModifier$varargs), is(false));
-
     }
 
     @Test
@@ -295,6 +310,14 @@ public class MethodMatchersTest {
     }
 
     @Test
+    public void testModifierHashCodeEquals() throws Exception {
+        assertThat(MethodMatchers.isPublic().hashCode(), is(MethodMatchers.isPublic().hashCode()));
+        assertThat(MethodMatchers.isPublic(), is(MethodMatchers.isPublic()));
+        assertThat(MethodMatchers.isPublic().hashCode(), not(is(MethodMatchers.isProtected().hashCode())));
+        assertThat(MethodMatchers.isPublic(), not(is(MethodMatchers.isProtected())));
+    }
+
+    @Test
     public void testReturns() throws Exception {
         assertThat(MethodMatchers.returns(Object.class).matches(testClassBase$foo), is(false));
         assertThat(MethodMatchers.returns(Object.class).matches(testClassBase$bar), is(true));
@@ -302,6 +325,14 @@ public class MethodMatchersTest {
         assertThat(MethodMatchers.returns(Object.class).matches(testClassExtension$foo), is(false));
         assertThat(MethodMatchers.returns(Object.class).matches(testClassExtension$bar), is(true));
         assertThat(MethodMatchers.returns(String.class).matches(testClassExtension$bar), is(false));
+    }
+
+    @Test
+    public void testReturnTypeMatcherHashCodeEquals() throws Exception {
+        assertThat(MethodMatchers.returns(Object.class).hashCode(), is(MethodMatchers.returns(Object.class).hashCode()));
+        assertThat(MethodMatchers.returns(Object.class), is(MethodMatchers.returns(Object.class)));
+        assertThat(MethodMatchers.returns(Object.class).hashCode(), not(is(MethodMatchers.returns(String.class).hashCode())));
+        assertThat(MethodMatchers.returns(Object.class), not(is(MethodMatchers.returns(String.class))));
     }
 
     @Test
@@ -318,6 +349,14 @@ public class MethodMatchersTest {
     }
 
     @Test
+    public void testReturnSubtypeMatcherHashCodeEquals() throws Exception {
+        assertThat(MethodMatchers.returnsSubtypeOf(Object.class).hashCode(), is(MethodMatchers.returnsSubtypeOf(Object.class).hashCode()));
+        assertThat(MethodMatchers.returnsSubtypeOf(Object.class), is(MethodMatchers.returnsSubtypeOf(Object.class)));
+        assertThat(MethodMatchers.returnsSubtypeOf(Object.class).hashCode(), not(is(MethodMatchers.returnsSubtypeOf(String.class).hashCode())));
+        assertThat(MethodMatchers.returnsSubtypeOf(Object.class), not(is(MethodMatchers.returnsSubtypeOf(String.class))));
+    }
+
+    @Test
     public void testReturnsSuperTypeOf() throws Exception {
         assertThat(MethodMatchers.returnsSupertypeOf(Object.class).matches(testClassBase$foo), is(false));
         assertThat(MethodMatchers.returnsSupertypeOf(Object.class).matches(testClassBase$bar), is(true));
@@ -331,6 +370,14 @@ public class MethodMatchersTest {
     }
 
     @Test
+    public void testReturnSuperTypeMatcherHashCodeEquals() throws Exception {
+        assertThat(MethodMatchers.returnsSupertypeOf(Object.class).hashCode(), is(MethodMatchers.returnsSupertypeOf(Object.class).hashCode()));
+        assertThat(MethodMatchers.returnsSupertypeOf(Object.class), is(MethodMatchers.returnsSupertypeOf(Object.class)));
+        assertThat(MethodMatchers.returnsSupertypeOf(Object.class).hashCode(), not(is(MethodMatchers.returnsSupertypeOf(String.class).hashCode())));
+        assertThat(MethodMatchers.returnsSupertypeOf(Object.class), not(is(MethodMatchers.returnsSupertypeOf(String.class))));
+    }
+
+    @Test
     public void testTakesArguments() throws Exception {
         assertThat(MethodMatchers.takesArguments(Object.class).matches(testClassBase$foo), is(false));
         assertThat(MethodMatchers.takesArguments(Object.class).matches(testClassBase$bar), is(true));
@@ -338,6 +385,14 @@ public class MethodMatchersTest {
         assertThat(MethodMatchers.takesArguments(Object.class).matches(testClassExtension$foo), is(false));
         assertThat(MethodMatchers.takesArguments(Object.class).matches(testClassExtension$bar), is(true));
         assertThat(MethodMatchers.takesArguments(String.class).matches(testClassExtension$bar), is(false));
+    }
+
+    @Test
+    public void testArgumentTypeMatcherHashCodeEquals() throws Exception {
+        assertThat(MethodMatchers.takesArguments(Object.class).hashCode(), is(MethodMatchers.takesArguments(Object.class).hashCode()));
+        assertThat(MethodMatchers.takesArguments(Object.class), is(MethodMatchers.takesArguments(Object.class)));
+        assertThat(MethodMatchers.takesArguments(Object.class).hashCode(), not(is(MethodMatchers.takesArguments(String.class).hashCode())));
+        assertThat(MethodMatchers.takesArguments(Object.class), not(is(MethodMatchers.takesArguments(String.class))));
     }
 
     @Test
@@ -354,6 +409,14 @@ public class MethodMatchersTest {
     }
 
     @Test
+    public void testArgumentAsSubtypeTypeMatcherHashCodeEquals() throws Exception {
+        assertThat(MethodMatchers.takesArgumentsAsSubtypesOf(Object.class).hashCode(), is(MethodMatchers.takesArgumentsAsSubtypesOf(Object.class).hashCode()));
+        assertThat(MethodMatchers.takesArgumentsAsSubtypesOf(Object.class), is(MethodMatchers.takesArgumentsAsSubtypesOf(Object.class)));
+        assertThat(MethodMatchers.takesArgumentsAsSubtypesOf(Object.class).hashCode(), not(is(MethodMatchers.takesArgumentsAsSubtypesOf(String.class).hashCode())));
+        assertThat(MethodMatchers.takesArgumentsAsSubtypesOf(Object.class), not(is(MethodMatchers.takesArgumentsAsSubtypesOf(String.class))));
+    }
+
+    @Test
     public void testTakesArgumentsAsSuperTypes() throws Exception {
         assertThat(MethodMatchers.takesArgumentsAsSuperTypesOf(Object.class).matches(testClassBase$foo), is(false));
         assertThat(MethodMatchers.takesArgumentsAsSuperTypesOf(Object.class).matches(testClassBase$bar), is(true));
@@ -367,6 +430,14 @@ public class MethodMatchersTest {
     }
 
     @Test
+    public void testArgumentAsSuperTypeMatcherHashCodeEquals() throws Exception {
+        assertThat(MethodMatchers.takesArgumentsAsSuperTypesOf(Object.class).hashCode(), is(MethodMatchers.takesArgumentsAsSuperTypesOf(Object.class).hashCode()));
+        assertThat(MethodMatchers.takesArgumentsAsSuperTypesOf(Object.class), is(MethodMatchers.takesArgumentsAsSuperTypesOf(Object.class)));
+        assertThat(MethodMatchers.takesArgumentsAsSuperTypesOf(Object.class).hashCode(), not(is(MethodMatchers.takesArgumentsAsSuperTypesOf(String.class).hashCode())));
+        assertThat(MethodMatchers.takesArgumentsAsSuperTypesOf(Object.class), not(is(MethodMatchers.takesArgumentsAsSuperTypesOf(String.class))));
+    }
+
+    @Test
     public void testTakesArgumentsNumeric() throws Exception {
         assertThat(MethodMatchers.takesArguments(0).matches(testClassBase$foo), is(true));
         assertThat(MethodMatchers.takesArguments(1).matches(testClassBase$bar), is(true));
@@ -374,6 +445,14 @@ public class MethodMatchersTest {
         assertThat(MethodMatchers.takesArguments(1).matches(testClassExtension$foo), is(false));
         assertThat(MethodMatchers.takesArguments(2).matches(testClassExtension$bar), is(false));
         assertThat(MethodMatchers.takesArguments(0).matches(testClassExtension$bar), is(false));
+    }
+
+    @Test
+    public void testArgumentNumberMatcherHashCodeEquals() throws Exception {
+        assertThat(MethodMatchers.takesArguments(0).hashCode(), is(MethodMatchers.takesArguments(0).hashCode()));
+        assertThat(MethodMatchers.takesArguments(0), is(MethodMatchers.takesArguments(0)));
+        assertThat(MethodMatchers.takesArguments(0).hashCode(), not(is(MethodMatchers.takesArguments(1).hashCode())));
+        assertThat(MethodMatchers.takesArguments(0), not(is(MethodMatchers.takesArguments(1))));
     }
 
     @Test
@@ -388,6 +467,14 @@ public class MethodMatchersTest {
     }
 
     @Test
+    public void testThrowMatcherHashCodeEquals() throws Exception {
+        assertThat(MethodMatchers.canThrow(IOException.class).hashCode(), is(MethodMatchers.canThrow(IOException.class).hashCode()));
+        assertThat(MethodMatchers.canThrow(IOException.class), is(MethodMatchers.canThrow(IOException.class)));
+        assertThat(MethodMatchers.canThrow(IOException.class).hashCode(), not(is(MethodMatchers.canThrow(ExecutionException.class).hashCode())));
+        assertThat(MethodMatchers.canThrow(IOException.class), not(is(MethodMatchers.canThrow(ExecutionException.class))));
+    }
+
+    @Test
     public void testIsGivenMethod() throws Exception {
         assertThat(MethodMatchers.is(TestClassBase.class.getDeclaredMethod(FOO_METHOD_NAME)).matches(testClassBase$foo), is(true));
         assertThat(MethodMatchers.is(TestClassExtension.class.getDeclaredMethod(FOO_METHOD_NAME)).matches(testClassBase$foo), is(false));
@@ -396,10 +483,15 @@ public class MethodMatchersTest {
     }
 
     @Test
-    public void testIsGivenConstructor() throws Exception {
-        assertThat(MethodMatchers.is(TestModifier.class.getDeclaredConstructor()).matches(testModifier$constructor), is(true));
-        assertThat(MethodMatchers.is(TestModifier.class.getDeclaredConstructor()).matches(testClassBase$constructor), is(false));
-        assertThat(MethodMatchers.is(TestClassBase.class.getDeclaredConstructor()).matches(testClassBase$foo), is(false));
+    public void testMethodMatcherHashCodeEquals() throws Exception {
+        assertThat(MethodMatchers.is(TestClassBase.class.getDeclaredMethod(FOO_METHOD_NAME)).hashCode(),
+                is(MethodMatchers.is(TestClassBase.class.getDeclaredMethod(FOO_METHOD_NAME)).hashCode()));
+        assertThat(MethodMatchers.is(TestClassBase.class.getDeclaredMethod(FOO_METHOD_NAME)),
+                is(MethodMatchers.is(TestClassBase.class.getDeclaredMethod(FOO_METHOD_NAME))));
+        assertThat(MethodMatchers.is(TestClassBase.class.getDeclaredMethod(FOO_METHOD_NAME)).hashCode(),
+                not(is(MethodMatchers.is(TestClassBase.class.getDeclaredMethod(BAR_METHOD_NAME, Object.class)).hashCode())));
+        assertThat(MethodMatchers.is(TestClassBase.class.getDeclaredMethod(FOO_METHOD_NAME)),
+                not(is(MethodMatchers.is(TestClassBase.class.getDeclaredMethod(BAR_METHOD_NAME, Object.class)))));
     }
 
     @Test
@@ -410,6 +502,14 @@ public class MethodMatchersTest {
         assertThat(MethodMatchers.is(testClassExtension$foo).matches(testClassExtension$foo), is(true));
         assertThat(MethodMatchers.is(testModifier$constructor).matches(testModifier$constructor), is(true));
         assertThat(MethodMatchers.is(testClassBase$constructor).matches(testClassBase$foo), is(false));
+    }
+
+    @Test
+    public void testMethodDescriptionMatcherHashCodeEquals() throws Exception {
+        assertThat(MethodMatchers.is(testClassBase$foo).hashCode(), is(MethodMatchers.is(testClassBase$foo).hashCode()));
+        assertThat(MethodMatchers.is(testClassBase$foo), is(MethodMatchers.is(testClassBase$foo)));
+        assertThat(MethodMatchers.is(testClassBase$foo).hashCode(), not(is(MethodMatchers.is(testClassExtension$foo).hashCode())));
+        assertThat(MethodMatchers.is(testClassBase$foo), not(is(MethodMatchers.is(testClassExtension$foo))));
     }
 
     @Test
@@ -429,6 +529,14 @@ public class MethodMatchersTest {
     }
 
     @Test
+    public void testIsMethodIsConstructorMatcherHashCodeEquals() throws Exception {
+        assertThat(MethodMatchers.isMethod().hashCode(), is(MethodMatchers.isMethod().hashCode()));
+        assertThat(MethodMatchers.isMethod(), is(MethodMatchers.isMethod()));
+        assertThat(MethodMatchers.isMethod().hashCode(), not(is(MethodMatchers.isConstructor().hashCode())));
+        assertThat(MethodMatchers.isMethod(), not(is(MethodMatchers.isConstructor())));
+    }
+
+    @Test
     public void testIsVisibleTo() throws Exception {
         assertThat(MethodMatchers.isVisibleTo(MethodMatchersTest.class).matches(testClassBase$foo), is(true));
         assertThat(MethodMatchers.isVisibleTo(MethodMatchersTest.class).matches(testClassExtension$foo), is(true));
@@ -438,10 +546,26 @@ public class MethodMatchersTest {
     }
 
     @Test
+    public void testIsVisibleToMatcherHashCodeEquals() throws Exception {
+        assertThat(MethodMatchers.isVisibleTo(Object.class).hashCode(), is(MethodMatchers.isVisibleTo(Object.class).hashCode()));
+        assertThat(MethodMatchers.isVisibleTo(Object.class), is(MethodMatchers.isVisibleTo(Object.class)));
+        assertThat(MethodMatchers.isVisibleTo(Object.class).hashCode(), not(is(MethodMatchers.isVisibleTo(String.class).hashCode())));
+        assertThat(MethodMatchers.isVisibleTo(Object.class), not(is(MethodMatchers.isVisibleTo(String.class))));
+    }
+
+    @Test
     public void testIsDeclaredBy() throws Exception {
         assertThat(MethodMatchers.isDeclaredBy(TestModifier.class).matches(testModifier$finalize), is(true));
         assertThat(MethodMatchers.isDeclaredBy(TestModifier.class).matches(testClassExtension$fooBar), is(false));
         assertThat(MethodMatchers.isDeclaredBy(TestModifier.class).matches(testClassBase$foo), is(false));
+    }
+
+    @Test
+    public void testDeclarationMatcherHashCodeEquals() throws Exception {
+        assertThat(MethodMatchers.isDeclaredBy(Object.class).hashCode(), is(MethodMatchers.isDeclaredBy(Object.class).hashCode()));
+        assertThat(MethodMatchers.isDeclaredBy(Object.class), is(MethodMatchers.isDeclaredBy(Object.class)));
+        assertThat(MethodMatchers.isDeclaredBy(Object.class).hashCode(), not(is(MethodMatchers.isDeclaredBy(String.class).hashCode())));
+        assertThat(MethodMatchers.isDeclaredBy(Object.class), not(is(MethodMatchers.isDeclaredBy(String.class))));
     }
 
     @Test
@@ -458,6 +582,16 @@ public class MethodMatchersTest {
         assertThat(MethodMatchers.isGetter().matches(testBean$setter), is(false));
         assertThat(MethodMatchers.isGetter(String.class).matches(testBean$getter), is(true));
         assertThat(MethodMatchers.isGetter(Object.class).matches(testBean$getter), is(false));
+    }
+
+    @Test
+    public void testAccessorHashCodeEquals() throws Exception {
+        assertThat(MethodMatchers.isSetter().hashCode(), is(MethodMatchers.isSetter().hashCode()));
+        assertThat(MethodMatchers.isSetter(), is(MethodMatchers.isSetter()));
+        assertThat(MethodMatchers.isSetter().hashCode(), not(is(MethodMatchers.isGetter().hashCode())));
+        assertThat(MethodMatchers.isSetter(), not(is(MethodMatchers.isGetter())));
+        assertThat(MethodMatchers.isGetter().hashCode(), not(is(MethodMatchers.isSetter().hashCode())));
+        assertThat(MethodMatchers.isGetter(), not(is(MethodMatchers.isSetter())));
     }
 
     @Test
@@ -484,6 +618,13 @@ public class MethodMatchersTest {
         assertThat(MethodMatchers.isBridgeMethodCompatibleTo(testBridge$bridgeLegalTarget).matches(testBridge$bridge), is(false));
         assertThat(MethodMatchers.isBridgeMethodCompatibleTo(testBridge$bridgeLegalTarget).matches(testBridge$bridgeLegalTarget), is(true));
         assertThat(MethodMatchers.isBridgeMethodCompatibleTo(testBridge$bridgeLegalTarget).matches(testBridge$bridgeIllegalTarget), is(false));
+    }
+
+    @Test
+    public void testIsVisibilityBridge() throws Exception {
+        assertThat(MethodMatchers.isVisibilityBridge().matches(visibilityBridgeMethod), is(true));
+        assertThat(MethodMatchers.isVisibilityBridge().matches(noVisibilityBridgeMethod), is(false));
+        assertThat(MethodMatchers.isVisibilityBridge().matches(testClassBase$compareTo$synth), is(false));
     }
 
     @Test
@@ -530,6 +671,16 @@ public class MethodMatchersTest {
     public void testNone() throws Exception {
         assertThat(MethodMatchers.none().matches(testClassBase$foo), is(false));
         assertThat(MethodMatchers.none().matches(testClassExtension$foo), is(false));
+    }
+
+    @Test
+    public void testBooleanMatcher() throws Exception {
+        assertThat(MethodMatchers.any().hashCode(), is(MethodMatchers.any().hashCode()));
+        assertThat(MethodMatchers.any(), is(MethodMatchers.any()));
+        assertThat(MethodMatchers.any().hashCode(), not(is(MethodMatchers.none().hashCode())));
+        assertThat(MethodMatchers.any(), not(is(MethodMatchers.none())));
+        assertThat(MethodMatchers.none().hashCode(), not(is(MethodMatchers.any().hashCode())));
+        assertThat(MethodMatchers.none(), not(is(MethodMatchers.any())));
     }
 
     @Retention(RetentionPolicy.RUNTIME)
@@ -663,6 +814,27 @@ public class MethodMatchersTest {
 
         public Integer foo(String s) {
             return null;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    static class VisibilityBridgeBase {
+
+        public void foo() {
+            /* empty */
+        }
+
+        public void bar() {
+            /* empty */
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class VisibilityBridgeExtension extends VisibilityBridgeBase {
+
+        @Override
+        public void bar() {
+            /* empty */
         }
     }
 }

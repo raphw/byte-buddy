@@ -12,20 +12,6 @@ import java.lang.annotation.Target;
 
 public class Java8Rule implements MethodRule {
 
-    private static class NoOpStatement extends Statement {
-
-        @Override
-        public void evaluate() throws Throwable {
-            /* do nothing */
-        }
-    }
-
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.METHOD)
-    public static @interface Enforce {
-        /* empty */
-    }
-
     private final boolean java8OrHigher;
 
     public Java8Rule() {
@@ -38,6 +24,20 @@ public class Java8Rule implements MethodRule {
             return base;
         } else {
             return new NoOpStatement();
+        }
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.METHOD)
+    public static @interface Enforce {
+        /* empty */
+    }
+
+    private static class NoOpStatement extends Statement {
+
+        @Override
+        public void evaluate() throws Throwable {
+            /* do nothing */
         }
     }
 }

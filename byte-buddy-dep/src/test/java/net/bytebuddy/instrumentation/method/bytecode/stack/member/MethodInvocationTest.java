@@ -41,6 +41,7 @@ public class MethodInvocationTest {
     @Mock
     private Instrumentation.Context instrumentationContext;
     private int expectedSizeChange;
+
     public MethodInvocationTest(int methodStackSize, StackSize returnTypeSize) {
         this.methodStackSize = methodStackSize;
         this.returnTypeSize = returnTypeSize;

@@ -36,6 +36,7 @@ public class DefaultValueTest {
     private TypeDescription typeDescription;
     @Mock
     private Instrumentation.Context instrumentationContext;
+
     public DefaultValueTest(Class<?> type, int opcode) {
         this.type = type;
         this.opcode = opcode;

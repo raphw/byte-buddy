@@ -35,6 +35,7 @@ public class PrimitiveTypeAwareAssignerBoxingTest {
     @Mock
     private StackManipulation chainedStackManipulation;
     private Assigner primitiveAssigner;
+
     public PrimitiveTypeAwareAssignerBoxingTest(Class<?> sourceType,
                                                 Class<?> targetType,
                                                 boolean assignable) {

@@ -1,6 +1,7 @@
 package net.bytebuddy.instrumentation.method.matcher;
 
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.RuntimeType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
@@ -687,6 +688,15 @@ public final class MethodMatchers {
         return (methodDescription.isConstructor() ? isConstructor() : named(methodDescription.getName()))
                 .and(returnsSubtypeOf(methodDescription.getReturnType()))
                 .and(takesArgumentsAsSubtypesOf(methodDescription.getParameterTypes()));
+    }
+
+    /**
+     * Matches methods that represent a so-called visibility bridge.
+     *
+     * @return
+     */
+    public static JunctionMethodMatcher isVisibilityBridge() {
+        return new VisibilityBridgeMethodMatcher();
     }
 
     /**
@@ -1462,12 +1472,46 @@ public final class MethodMatchers {
 
         @Override
         public int hashCode() {
-            return methodMatcher.hashCode();
+            return -1 * methodMatcher.hashCode();
         }
 
         @Override
         public String toString() {
             return "not(" + methodMatcher + ')';
+        }
+    }
+
+    private static class VisibilityBridgeMethodMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            if (!methodDescription.isBridge()) {
+                return false;
+            }
+            MethodMatcher signatureFilter = hasSameByteCodeSignatureAs(methodDescription);
+            TypeDescription currentType = methodDescription.getDeclaringType();
+            while ((currentType = currentType.getSupertype()) != null) {
+                MethodList matchedMethods = currentType.getDeclaredMethods().filter(signatureFilter);
+                if (matchedMethods.size() != 0) {
+                    return !matchedMethods.getOnly().isBridge();
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return obj != null && obj.getClass() == getClass();
+        }
+
+        @Override
+        public int hashCode() {
+            return 56;
+        }
+
+        @Override
+        public String toString() {
+            return "isVisibilityBridge()";
         }
     }
 }

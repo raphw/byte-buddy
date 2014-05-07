@@ -101,7 +101,7 @@ public class ByteBuddy {
         this(classFileVersion,
                 new NamingStrategy.SuffixingRandom(BYTE_BUDDY_DEFAULT_PREFIX),
                 new TypeList.Empty(),
-                isDefaultFinalizer().or(isSynthetic()),
+                isDefaultFinalizer().or(isSynthetic().and(not(isVisibilityBridge()))),
                 BridgeMethodResolver.Simple.Factory.FAIL_ON_REQUEST,
                 new ClassVisitorWrapper.Chain(),
                 new MethodRegistry.Default(),
@@ -467,7 +467,9 @@ public class ByteBuddy {
     /**
      * Defines a new method matcher for methods that are ignored by any dynamic type that is created by this
      * configuration which will replace the current configuration. By default, this method matcher is defined
-     * to ignore instrumenting synthetic methods and the default finalizer method.
+     * to ignore instrumenting synthetic methods and the default finalizer method. The only exception from per-default
+     * overridable synthetic methods are bridge methods which is only implemented by the Java compiler to increase a
+     * method's visibility.
      *
      * @param ignoredMethods The methods to always be ignored for any instrumentation.
      * @return A new configuration that represents this configuration with the given method matcher defining methods
