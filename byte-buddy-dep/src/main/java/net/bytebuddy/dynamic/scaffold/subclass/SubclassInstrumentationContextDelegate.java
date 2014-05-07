@@ -109,7 +109,9 @@ public class SubclassInstrumentationContextDelegate
                 targetMethod.getParameterTypes(),
                 (targetMethod.isStatic() ? Opcodes.ACC_STATIC : 0) | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL);
         knownTargetMethodsToAccessorMethod.put(targetMethod, accessorMethod);
-        Entry methodCall = targetMethod.isAbstract() || targetMethod.getDeclaringType().equals(instrumentedType)
+        Entry methodCall = targetMethod.isAbstract()
+                || targetMethod.getDeclaringType().isInterface() // covers Java 8 default methods
+                || targetMethod.getDeclaringType().equals(instrumentedType)
                 ? AbstractMethodCall.INSTANCE
                 : new SameSignatureMethodCall(bridgeMethodResolver.resolve(targetMethod), instrumentedType);
         registeredAccessorMethodToTargetMethodCall.put(accessorMethod, methodCall);
