@@ -6,7 +6,7 @@ import org.objectweb.asm.Opcodes;
  * A wrapper object for representing a validated class file version in the format that is specified by the
  * <a href="http://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html">JVMS</a>.
  */
-public class ClassFileVersion {
+public class ClassFileVersion implements Comparable<ClassFileVersion> {
 
     /**
      * The class file version of Java 1.
@@ -115,6 +115,11 @@ public class ClassFileVersion {
      */
     public int getVersionNumber() {
         return versionNumber;
+    }
+
+    @Override
+    public int compareTo(ClassFileVersion other) {
+        return versionNumber < other.versionNumber ? -1 : versionNumber == other.versionNumber ? 0 : 1;
     }
 
     @Override
