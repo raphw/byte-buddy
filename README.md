@@ -262,4 +262,4 @@ please provide test cases that prove the functionality of your features or that 
 make sure you are not breaking any existing test cases. If possible, please take the time to write some documentation.
 For feature requests or general feedback, you can also use the issue tracker.
 
-[![Build Status](https://travis-ci.org/raphw/byte-buddy.png)](https://travis-ci.org/raphw/byte-buddy)
+[![Build Status](https://travis-ci.org/raphw/byte-buddy.png)](https://travis-ci.org/raphw/byte-buddy) [![Coverage Status](https://coveralls.io/repos/raphw/byte-buddy/badge.png?branch=master)](https://coveralls.io/r/raphw/byte-buddy?branch=master)
