@@ -132,6 +132,10 @@
                 <version>${version.plugin.cobertura}</version>
                 <configuration>
                     <aggregate>true</aggregate>
+                    <formats>
+                        <format>html</format>
+                        <format>xml</format>
+                    </formats>
                     <check/>
                 </configuration>
             </plugin>
