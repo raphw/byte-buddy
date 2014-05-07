@@ -100,7 +100,7 @@ public interface DynamicType {
          * @param classFileVersion The class format version for the dynamic type to implement.
          * @return A builder that writes its classes in a given class format version.
          */
-        Builder<T> classFormatVersion(ClassFileVersion classFileVersion);
+        Builder<T> classFileVersion(ClassFileVersion classFileVersion);
 
         /**
          * Adds an interface to be implemented the created type.
@@ -834,8 +834,8 @@ public interface DynamicType {
             protected abstract class AbstractDelegatingBuilder<U> implements Builder<U> {
 
                 @Override
-                public Builder<U> classFormatVersion(ClassFileVersion classFileVersion) {
-                    return materialize().classFormatVersion(classFileVersion);
+                public Builder<U> classFileVersion(ClassFileVersion classFileVersion) {
+                    return materialize().classFileVersion(classFileVersion);
                 }
 
                 @Override

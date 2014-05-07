@@ -18,6 +18,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.Collections;
 
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
@@ -122,6 +123,15 @@ public class AnnotationAppenderDefaultTest {
         assertThat(bar.getName(), is(BAR));
         assertEquals(Object.class, bar.getSuperclass());
         return bar;
+    }
+
+    @Test
+    public void testHashCodeEquals() throws Exception {
+        AnnotationAppender.Target first = mock(AnnotationAppender.Target.class), second = mock(AnnotationAppender.Target.class);
+        assertThat(new AnnotationAppender.Default(first).hashCode(), is(new AnnotationAppender.Default(first).hashCode()));
+        assertThat(new AnnotationAppender.Default(first), is(new AnnotationAppender.Default(first)));
+        assertThat(new AnnotationAppender.Default(first).hashCode(), not(is(new AnnotationAppender.Default(second).hashCode())));
+        assertThat(new AnnotationAppender.Default(first), not(is(new AnnotationAppender.Default(second))));
     }
 
     @Retention(RetentionPolicy.RUNTIME)

@@ -302,7 +302,7 @@ public interface BridgeMethodResolver {
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && target.equals(((Resolved) other).target);
+                            && target.equals(((Candidate) other).target);
                 }
 
                 @Override

@@ -297,7 +297,7 @@ public interface AnnotationAppender {
 
         @Override
         public String toString() {
-            return "Default{target=" + target + '}';
+            return "AnnotationAppender.Default{target=" + target + '}';
         }
     }
 }

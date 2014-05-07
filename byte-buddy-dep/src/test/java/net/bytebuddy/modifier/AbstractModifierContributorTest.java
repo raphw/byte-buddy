@@ -8,8 +8,8 @@ import static org.hamcrest.core.Is.is;
 
 public abstract class AbstractModifierContributorTest {
 
-    private final ModifierContributor modifierContributor;
-    private final int expectedModifier;
+    protected final ModifierContributor modifierContributor;
+    protected final int expectedModifier;
 
     public AbstractModifierContributorTest(ModifierContributor modifierContributor, int expectedModifier) {
         this.modifierContributor = modifierContributor;

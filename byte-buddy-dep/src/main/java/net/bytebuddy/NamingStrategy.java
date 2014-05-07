@@ -68,9 +68,9 @@ public interface NamingStrategy {
         SyntheticState getSyntheticState();
 
         /**
-         * Returns the class format version of this unnamed type.
+         * Returns the class file version of this unnamed type.
          *
-         * @return The class format version of this unnamed type.
+         * @return The class file version of this unnamed type.
          */
         ClassFileVersion getClassFileVersion();
     }

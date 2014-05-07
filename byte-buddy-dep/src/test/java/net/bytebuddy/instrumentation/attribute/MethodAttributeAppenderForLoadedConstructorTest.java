@@ -7,10 +7,12 @@ import org.mockito.asm.Type;
 
 import java.lang.reflect.Constructor;
 
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
 
 public class MethodAttributeAppenderForLoadedConstructorTest extends AbstractMethodAttributeAppenderTest {
-
 
     private static final String BAR = "bar";
     private static final int PARAMETER_INDEX = 0;
@@ -33,6 +35,19 @@ public class MethodAttributeAppenderForLoadedConstructorTest extends AbstractMet
         verifyNoMoreInteractions(methodVisitor);
         verify(methodDescription).getParameterTypes();
         verifyNoMoreInteractions(methodDescription);
+    }
+
+    @Test
+    public void testHashCodeEquals() throws Exception {
+        Constructor<?> otherConstructor = Object.class.getDeclaredConstructor();
+        assertThat(new MethodAttributeAppender.ForLoadedConstructor(constructor).hashCode(),
+                is(new MethodAttributeAppender.ForLoadedConstructor(constructor).hashCode()));
+        assertThat(new MethodAttributeAppender.ForLoadedConstructor(constructor),
+                is(new MethodAttributeAppender.ForLoadedConstructor(constructor)));
+        assertThat(new MethodAttributeAppender.ForLoadedConstructor(constructor).hashCode(),
+                not(is(new MethodAttributeAppender.ForLoadedConstructor(otherConstructor).hashCode())));
+        assertThat(new MethodAttributeAppender.ForLoadedConstructor(constructor),
+                not(is(new MethodAttributeAppender.ForLoadedConstructor(otherConstructor))));
     }
 
     private static abstract class Foo {

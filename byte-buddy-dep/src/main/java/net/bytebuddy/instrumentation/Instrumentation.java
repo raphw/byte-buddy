@@ -117,7 +117,7 @@ public interface Instrumentation {
             /**
              * Creates a new default instrumentation context.
              *
-             * @param classFileVersion            The class format version for auxiliary types.
+             * @param classFileVersion            The class file version for auxiliary types.
              * @param auxiliaryTypeNamingStrategy The naming strategy for auxiliary types that are registered.
              * @param methodAccessorFactory       A factory for creating method proxies for the currently instrumented
              *                                    type.
@@ -160,7 +160,7 @@ public interface Instrumentation {
             @Override
             public String toString() {
                 return "Default{" +
-                        "classFormatVersion=" + classFileVersion +
+                        "classFileVersion=" + classFileVersion +
                         ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
                         ", methodAccessorFactory=" + methodAccessorFactory +
                         ", auxiliaryTypes=" + auxiliaryTypes +

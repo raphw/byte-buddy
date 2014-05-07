@@ -35,7 +35,7 @@ public class SubclassInstumentedType
     /**
      * Creates a new immutable type instrumentation for a loaded superclass.
      *
-     * @param classFileVersion The class format version of this instrumentation.
+     * @param classFileVersion The class file version of this instrumentation.
      * @param superClass       The superclass of this instrumentation.
      * @param interfaces       A collection of loaded interfaces that are implemented by this instrumented class.
      * @param modifiers        The modifiers for this instrumentation.
@@ -56,7 +56,7 @@ public class SubclassInstumentedType
     /**
      * Creates a new immutable type instrumentation for a loaded superclass.
      *
-     * @param classFileVersion   The class format version of this instrumentation.
+     * @param classFileVersion   The class file version of this instrumentation.
      * @param superClass         The superclass of this instrumentation.
      * @param interfaces         A collection of loaded interfaces that are implemented by this instrumented class.
      * @param modifiers          The modifiers for this instrumentation.
@@ -220,7 +220,7 @@ public class SubclassInstumentedType
     @Override
     public String toString() {
         return "SubclassInstumentedType{" +
-                "classFormatVersion=" + classFileVersion +
+                "classFileVersion=" + classFileVersion +
                 ", superClass=" + superClass +
                 ", interfaces=" + interfaces +
                 ", modifiers=" + modifiers +

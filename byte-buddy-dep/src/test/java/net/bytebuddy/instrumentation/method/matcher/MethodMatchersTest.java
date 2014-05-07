@@ -495,6 +495,25 @@ public class MethodMatchersTest {
     }
 
     @Test
+    public void testIsGivenConstructor() throws Exception {
+        assertThat(MethodMatchers.is(TestClassBase.class.getDeclaredConstructor()).matches(testClassBase$constructor), is(true));
+        assertThat(MethodMatchers.is(TestClassExtension.class.getDeclaredConstructor()).matches(testModifier$constructor), is(false));
+        assertThat(MethodMatchers.is(TestClassBase.class.getDeclaredConstructor()).matches(testClassBase$bar), is(false));
+    }
+
+    @Test
+    public void testConstructorMatcherHashCodeEquals() throws Exception {
+        assertThat(MethodMatchers.is(TestClassBase.class.getDeclaredConstructor()).hashCode(),
+                is(MethodMatchers.is(TestClassBase.class.getDeclaredConstructor()).hashCode()));
+        assertThat(MethodMatchers.is(TestClassBase.class.getDeclaredConstructor()),
+                is(MethodMatchers.is(TestClassBase.class.getDeclaredConstructor())));
+        assertThat(MethodMatchers.is(TestClassBase.class.getDeclaredConstructor()).hashCode(),
+                not(is(MethodMatchers.is(TestClassExtension.class.getDeclaredConstructor()).hashCode())));
+        assertThat(MethodMatchers.is(TestClassBase.class.getDeclaredConstructor()),
+                not(is(MethodMatchers.is(TestClassExtension.class.getDeclaredConstructor()))));
+    }
+
+    @Test
     public void testIsGivenMethodDescription() throws Exception {
         assertThat(MethodMatchers.is(testClassBase$foo).matches(testClassBase$foo), is(true));
         assertThat(MethodMatchers.is(testClassExtension$foo).matches(testClassBase$foo), is(false));
@@ -634,11 +653,27 @@ public class MethodMatchersTest {
     }
 
     @Test
+    public void testAnnotationMatcherHashCodeEquals() throws Exception {
+        assertThat(MethodMatchers.isAnnotatedBy(Foo.class).hashCode(), is(MethodMatchers.isAnnotatedBy(Foo.class).hashCode()));
+        assertThat(MethodMatchers.isAnnotatedBy(Foo.class), is(MethodMatchers.isAnnotatedBy(Foo.class)));
+        assertThat(MethodMatchers.isAnnotatedBy(Foo.class).hashCode(), not(is(MethodMatchers.isAnnotatedBy(Override.class).hashCode())));
+        assertThat(MethodMatchers.isAnnotatedBy(Foo.class), not(is(MethodMatchers.isAnnotatedBy(Override.class))));
+    }
+
+    @Test
     public void testIsOverridable() throws Exception {
         assertThat(MethodMatchers.isOverridable().matches(testClassBase$foo), is(true));
         assertThat(MethodMatchers.isOverridable().matches(testClassBase$bar), is(false));
         assertThat(MethodMatchers.isOverridable().matches(testClassBase$stat), is(false));
         assertThat(MethodMatchers.isOverridable().matches(testModifier$constructor), is(false));
+    }
+
+    @Test
+    public void testOverridableMatcherHashCodeEquals() throws Exception {
+        assertThat(MethodMatchers.isOverridable().hashCode(), is(MethodMatchers.isOverridable().hashCode()));
+        assertThat(MethodMatchers.isOverridable(), is(MethodMatchers.isOverridable()));
+        assertThat(MethodMatchers.isOverridable().hashCode(), not(is(MethodMatchers.isGetter().hashCode())));
+        assertThat(MethodMatchers.isOverridable(), not(is(MethodMatchers.isGetter())));
     }
 
     @Test

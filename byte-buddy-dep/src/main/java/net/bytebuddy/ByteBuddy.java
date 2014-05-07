@@ -38,7 +38,7 @@ public class ByteBuddy {
 
     private static final String BYTE_BUDDY_DEFAULT_PREFIX = "ByteBuddy";
     /**
-     * The class formation version of the current configuration.
+     * The class file version of the current configuration.
      */
     protected final ClassFileVersion classFileVersion;
     /**
@@ -86,16 +86,16 @@ public class ByteBuddy {
 
     /**
      * Defines a new {@code ByteBuddy} default configuration for the current Java virtual machine's
-     * class format version.
+     * class file version.
      */
     public ByteBuddy() {
         this(ClassFileVersion.forCurrentJavaVersion());
     }
 
     /**
-     * Defines a new {@code ByteBuddy} default configuration for the given class format version.
+     * Defines a new {@code ByteBuddy} default configuration for the given class file version.
      *
-     * @param classFileVersion The class format version to apply.
+     * @param classFileVersion The class file version to apply.
      */
     public ByteBuddy(ClassFileVersion classFileVersion) {
         this(classFileVersion,
@@ -114,7 +114,7 @@ public class ByteBuddy {
     /**
      * Defines a new {@code ByteBuddy} configuration.
      *
-     * @param classFileVersion                      The currently defined class format version.
+     * @param classFileVersion                      The currently defined class file version.
      * @param namingStrategy                        The currently defined naming strategy.
      * @param interfaceTypes                        The currently defined collection of interfaces to be implemented
      *                                              by any dynamically created type.
@@ -156,9 +156,9 @@ public class ByteBuddy {
     }
 
     /**
-     * Returns the class format version that is defined for the current configuration.
+     * Returns the class file version that is defined for the current configuration.
      *
-     * @return The class format version that is defined for this configuration.
+     * @return The class file version that is defined for this configuration.
      */
     public ClassFileVersion getClassFileVersion() {
         return classFileVersion;
@@ -328,12 +328,12 @@ public class ByteBuddy {
     }
 
     /**
-     * Defines a new class format version for this configuration.
+     * Defines a new class file version for this configuration.
      *
-     * @param classFileVersion The class format version to define for this configuration.
-     * @return A new configuration that represents this configuration with the given class format version.
+     * @param classFileVersion The class file version to define for this configuration.
+     * @return A new configuration that represents this configuration with the given class file version.
      */
-    public ByteBuddy withClassFormatVersion(ClassFileVersion classFileVersion) {
+    public ByteBuddy withClassFileVersion(ClassFileVersion classFileVersion) {
         return new ByteBuddy(nonNull(classFileVersion),
                 namingStrategy,
                 interfaceTypes,
@@ -624,7 +624,7 @@ public class ByteBuddy {
     @Override
     public String toString() {
         return "ByteBuddy{" +
-                "classFormatVersion=" + classFileVersion +
+                "classFileVersion=" + classFileVersion +
                 ", namingStrategy=" + namingStrategy +
                 ", interfaceTypes=" + interfaceTypes +
                 ", ignoredMethods=" + ignoredMethods +
@@ -772,7 +772,7 @@ public class ByteBuddy {
         /**
          * Creates a new method annotation target.
          *
-         * @param classFileVersion                      The currently defined class format version.
+         * @param classFileVersion                      The currently defined class file version.
          * @param namingStrategy                        The currently defined naming strategy.
          * @param interfaceTypes                        The currently defined collection of interfaces to be implemented
          *                                              by any dynamically created type.
@@ -945,8 +945,8 @@ public class ByteBuddy {
         }
 
         @Override
-        public ByteBuddy withClassFormatVersion(ClassFileVersion classFileVersion) {
-            return materialize().withClassFormatVersion(classFileVersion);
+        public ByteBuddy withClassFileVersion(ClassFileVersion classFileVersion) {
+            return materialize().withClassFileVersion(classFileVersion);
         }
 
         @Override
@@ -1055,7 +1055,7 @@ public class ByteBuddy {
         /**
          * Creates a new optional method interception.
          *
-         * @param classFileVersion                      The currently defined class format version.
+         * @param classFileVersion                      The currently defined class file version.
          * @param namingStrategy                        The currently defined naming strategy.
          * @param interfaceTypes                        The currently defined collection of interfaces to be implemented
          *                                              by any dynamically created type.

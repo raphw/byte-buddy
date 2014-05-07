@@ -44,7 +44,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     private final int versionNumber;
 
     /**
-     * Creates a wrapper for a given minor-major release of the Java class file format and validates the
+     * Creates a wrapper for a given minor-major release of the Java class file file and validates the
      * integrity of the version number.
      *
      * @param versionNumber The minor-major release number.
@@ -109,9 +109,9 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     }
 
     /**
-     * Returns the minor-major release number of this class format version.
+     * Returns the minor-major release number of this class file version.
      *
-     * @return The minor-major release number of this class format version.
+     * @return The minor-major release number of this class file version.
      */
     public int getVersionNumber() {
         return versionNumber;
@@ -135,6 +135,6 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
 
     @Override
     public String toString() {
-        return "ClassFormatVersion{versionNumber=" + versionNumber + '}';
+        return "ClassFileVersion{versionNumber=" + versionNumber + '}';
     }
 }

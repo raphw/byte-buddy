@@ -1267,13 +1267,13 @@ public final class MethodMatchers {
         }
 
         @Override
-        public String toString() {
-            return "isMethod()";
+        public int hashCode() {
+            return 47;
         }
 
         @Override
-        public int hashCode() {
-            return 47;
+        public String toString() {
+            return "isMethod()";
         }
     }
 

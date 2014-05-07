@@ -50,7 +50,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     /**
      * Creates a new immutable type builder for a subclassing a loaded class.
      *
-     * @param classFileVersion                      The class format version for the created dynamic type.
+     * @param classFileVersion                      The class file version for the created dynamic type.
      * @param namingStrategy                        The naming strategy for naming the dynamic type.
      * @param superType                             The loaded super type the dynamic type should extend.
      * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
@@ -101,7 +101,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     /**
      * Creates a new immutable type builder for a subclassing a loaded class.
      *
-     * @param classFileVersion                      The class format version for the created dynamic type.
+     * @param classFileVersion                      The class file version for the created dynamic type.
      * @param namingStrategy                        The naming strategy for naming the dynamic type.
      * @param superType                             The loaded super type the dynamic type should extend.
      * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
@@ -153,7 +153,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     }
 
     @Override
-    public DynamicType.Builder<T> classFormatVersion(ClassFileVersion classFileVersion) {
+    public DynamicType.Builder<T> classFileVersion(ClassFileVersion classFileVersion) {
         return new SubclassDynamicTypeBuilder<T>(classFileVersion,
                 namingStrategy,
                 superType,
@@ -389,7 +389,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     @Override
     public String toString() {
         return "SubclassDynamicTypeBuilder{" +
-                "classFormatVersion=" + classFileVersion +
+                "classFileVersion=" + classFileVersion +
                 ", namingStrategy=" + namingStrategy +
                 ", superType=" + superType +
                 ", interfaceTypes=" + interfaceTypes +
