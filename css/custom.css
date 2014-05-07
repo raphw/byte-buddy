@@ -136,6 +136,10 @@ body {
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#f4f9ff', GradientType=1); /* IE6-8 */
 }
 
+.preview-text {
+    display: none;
+}
+
 /*
  * Navigation
  */
