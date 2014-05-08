@@ -260,7 +260,7 @@ from your shell and Byte Buddy is cloned and built on your machine. Byte Buddy i
 use GitHub's [issue tracker](https://github.com/raphw/byte-buddy/issues) for reporting bugs. When committing code,
 please provide test cases that prove the functionality of your features or that demonstrate a bug fix. Furthermore,
 make sure you are not breaking any existing test cases. If possible, please take the time to write some documentation.
-For feature requests or general feedback, you can also use the [issue tracker]](https://github.com/raphw/byte-buddy/issues)
+For feature requests or general feedback, you can also use the [issue tracker](https://github.com/raphw/byte-buddy/issues)
 or contact us on [our mailing list](https://groups.google.com/forum/#!forum/byte-buddy).
 
 [![Build Status](https://travis-ci.org/raphw/byte-buddy.png)](https://travis-ci.org/raphw/byte-buddy) [![Coverage Status](https://coveralls.io/repos/raphw/byte-buddy/badge.png?branch=master)](https://coveralls.io/r/raphw/byte-buddy?branch=master)
