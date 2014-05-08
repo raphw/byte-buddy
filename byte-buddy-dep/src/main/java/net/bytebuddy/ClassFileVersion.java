@@ -91,7 +91,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      */
     public static ClassFileVersion forCurrentJavaVersion() {
         String versionString = System.getProperty(JAVA_VERSION_PROPERTY);
-        int[] versionIndex = new int[]{ -1, 0, 0 };
+        int[] versionIndex = {-1, 0, 0};
         for (int i = 1; i < 3; i++) {
             versionIndex[i] = versionString.indexOf('.', versionIndex[i - 1] + 1);
             if (versionIndex[i] == -1) {
