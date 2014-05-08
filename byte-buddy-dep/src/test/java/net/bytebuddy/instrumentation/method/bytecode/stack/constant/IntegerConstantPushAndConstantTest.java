@@ -39,21 +39,21 @@ public class IntegerConstantPushAndConstantTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {Integer.MIN_VALUE, PushType.LDC},
-                {Short.MIN_VALUE - 1, PushType.LDC},
-                {Short.MIN_VALUE, PushType.SIPUSH},
-                {Byte.MIN_VALUE - 1, PushType.SIPUSH},
-                {Byte.MIN_VALUE, PushType.BIPUSH},
-                {-100, PushType.BIPUSH},
-                {-2, PushType.BIPUSH},
-                {6, PushType.BIPUSH},
-                {7, PushType.BIPUSH},
-                {100, PushType.BIPUSH},
-                {Byte.MAX_VALUE, PushType.BIPUSH},
-                {Byte.MAX_VALUE + 1, PushType.SIPUSH},
-                {Short.MAX_VALUE, PushType.SIPUSH},
-                {Short.MAX_VALUE + 1, PushType.LDC},
-                {Integer.MAX_VALUE, PushType.LDC},
+                { Integer.MIN_VALUE, PushType.LDC },
+                { Short.MIN_VALUE - 1, PushType.LDC },
+                { Short.MIN_VALUE, PushType.SIPUSH },
+                { Byte.MIN_VALUE - 1, PushType.SIPUSH },
+                { Byte.MIN_VALUE, PushType.BIPUSH },
+                { -100, PushType.BIPUSH },
+                { -2, PushType.BIPUSH },
+                { 6, PushType.BIPUSH },
+                { 7, PushType.BIPUSH },
+                { 100, PushType.BIPUSH },
+                { Byte.MAX_VALUE, PushType.BIPUSH },
+                { Byte.MAX_VALUE + 1, PushType.SIPUSH },
+                { Short.MAX_VALUE, PushType.SIPUSH },
+                { Short.MAX_VALUE + 1, PushType.LDC },
+                { Integer.MAX_VALUE, PushType.LDC },
         });
     }
 

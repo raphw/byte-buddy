@@ -28,7 +28,7 @@ import java.util.LinkedHashSet;
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.PARAMETER})
+@Target({ ElementType.PARAMETER })
 public @interface Argument {
 
     /**
@@ -121,6 +121,10 @@ public @interface Argument {
      * @see TargetMethodAnnotationDrivenBinder
      */
     static enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Argument> {
+
+        /**
+         * The singleton instance.
+         */
         INSTANCE;
 
         @Override
@@ -158,6 +162,10 @@ public @interface Argument {
      * @see TargetMethodAnnotationDrivenBinder.DefaultsProvider
      */
     static enum NextUnboundAsDefaultsProvider implements TargetMethodAnnotationDrivenBinder.DefaultsProvider {
+
+        /**
+         * The singleton instance.
+         */
         INSTANCE;
 
         private static Iterator<Integer> makeFreeIndexList(MethodDescription source, MethodDescription target) {

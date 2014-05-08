@@ -45,7 +45,7 @@ import java.util.List;
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.PARAMETER, ElementType.METHOD})
+@Target({ ElementType.PARAMETER, ElementType.METHOD })
 public @interface Super {
 
     /**
@@ -67,7 +67,7 @@ public @interface Super {
      *
      * @return The parameter types of the constructor to be called.
      */
-    Class<?>[] constructorParameters() default {};
+    Class<?>[] constructorParameters() default { };
 
     /**
      * Determines the instantiation of the proxy type.
@@ -120,6 +120,10 @@ public @interface Super {
      * @see TargetMethodAnnotationDrivenBinder
      */
     static enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Super> {
+
+        /**
+         * The singleton instance.
+         */
         INSTANCE;
 
         @Override

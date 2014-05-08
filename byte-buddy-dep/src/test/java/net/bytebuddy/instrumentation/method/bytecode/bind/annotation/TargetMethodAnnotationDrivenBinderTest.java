@@ -77,7 +77,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
         return parameterBinding;
     }
 
-    @SuppressWarnings({"unchecked", "unused"})
+    @SuppressWarnings({ "unchecked", "unused" })
     private static Iterator<Annotation> prepareDefaultProvider(TargetMethodAnnotationDrivenBinder.DefaultsProvider<?> defaultsProvider,
                                                                List<? extends Annotation> defaultIteratorValues) {
         Iterator<Annotation> annotationIterator = mock(Iterator.class);
@@ -178,7 +178,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
         when(methodInvocation.isValid()).thenReturn(true);
         RuntimeType runtimeType = mock(RuntimeType.class);
         doReturn(RuntimeType.class).when(runtimeType).annotationType();
-        when(target.getAnnotations()).thenReturn(new Annotation[]{runtimeType});
+        when(target.getAnnotations()).thenReturn(new Annotation[]{ runtimeType });
         MethodDelegationBinder methodDelegationBinder = new TargetMethodAnnotationDrivenBinder(
                 Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>emptyList(),
                 defaultsProvider,
@@ -352,7 +352,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
         when(typeList.size()).thenReturn(2);
         when(target.getParameterTypes()).thenReturn(typeList);
         when(target.getStackSize()).thenReturn(3);
-        when(target.getParameterAnnotations()).thenReturn(new Annotation[][]{{secondPseudoAnnotation}, {firstPseudoAnnotation}});
+        when(target.getParameterAnnotations()).thenReturn(new Annotation[][]{ { secondPseudoAnnotation }, { firstPseudoAnnotation } });
         when(target.getAnnotations()).thenReturn(new Annotation[0]);
         MethodDelegationBinder.ParameterBinding<?> firstBinding = prepareArgumentBinder(
                 firstParameterBinder,
@@ -420,7 +420,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
         when(typeList.size()).thenReturn(2);
         when(target.getParameterTypes()).thenReturn(typeList);
         when(target.getStackSize()).thenReturn(3);
-        when(target.getParameterAnnotations()).thenReturn(new Annotation[][]{{}, {firstPseudoAnnotation}});
+        when(target.getParameterAnnotations()).thenReturn(new Annotation[][]{ { }, { firstPseudoAnnotation } });
         when(target.getAnnotations()).thenReturn(new Annotation[0]);
         MethodDelegationBinder.ParameterBinding<?> firstBinding = prepareArgumentBinder(
                 firstParameterBinder,

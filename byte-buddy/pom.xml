@@ -21,7 +21,6 @@
     <properties>
         <shade.source>org.objectweb.asm</shade.source>
         <shade.target>net.bytebuddy.jar.asm</shade.target>
-        <version.plugin.shade>2.2</version.plugin.shade>
     </properties>
 
     <dependencies>

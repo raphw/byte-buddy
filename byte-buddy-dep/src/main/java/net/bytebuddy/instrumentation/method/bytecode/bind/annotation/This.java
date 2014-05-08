@@ -20,7 +20,7 @@ import java.lang.annotation.*;
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.PARAMETER})
+@Target({ ElementType.PARAMETER })
 public @interface This {
 
     /**
@@ -31,6 +31,10 @@ public @interface This {
      * @see TargetMethodAnnotationDrivenBinder
      */
     static enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<This> {
+
+        /**
+         * The singleton instance.
+         */
         INSTANCE;
 
         private static final int THIS_REFERENCE_INDEX = 0;

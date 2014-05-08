@@ -10,10 +10,29 @@ import org.objectweb.asm.Opcodes;
  */
 public enum MethodManifestation implements ModifierContributor.ForMethod {
 
+    /**
+     * Modifier for a non-native, non-abstract, non-final method. (This is the default modifier.)
+     */
     PLAIN(EMPTY_MASK),
+
+    /**
+     * Modifier for a native method.
+     */
     NATIVE(Opcodes.ACC_NATIVE),
+
+    /**
+     * Modifier for an abstract method.
+     */
     ABSTRACT(Opcodes.ACC_ABSTRACT),
+
+    /**
+     * Modifier for a final method.
+     */
     FINAL(Opcodes.ACC_FINAL),
+
+    /**
+     * Modifier for a native and final method.
+     */
     FINAL_NATIVE(Opcodes.ACC_FINAL | Opcodes.ACC_NATIVE);
 
     /**

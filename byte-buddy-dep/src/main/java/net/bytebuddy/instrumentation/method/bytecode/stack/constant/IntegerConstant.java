@@ -14,12 +14,39 @@ import org.objectweb.asm.Opcodes;
  */
 public enum IntegerConstant implements StackManipulation {
 
+    /**
+     * A JVM-type {@code int} constant of value {@code -1}.
+     */
     MINUS_ONE(Opcodes.ICONST_M1),
+
+    /**
+     * A JVM-type {@code int} constant of value {@code 0}.
+     */
     ZERO(Opcodes.ICONST_0),
+
+    /**
+     * A JVM-type {@code int} constant of value {@code 1}.
+     */
     ONE(Opcodes.ICONST_1),
+
+    /**
+     * A JVM-type {@code int} constant of value {@code 2}.
+     */
     TWO(Opcodes.ICONST_2),
+
+    /**
+     * A JVM-type {@code int} constant of value {@code 3}.
+     */
     THREE(Opcodes.ICONST_3),
+
+    /**
+     * A JVM-type {@code int} constant of value {@code 4}.
+     */
     FOUR(Opcodes.ICONST_4),
+
+    /**
+     * A JVM-type {@code int} constant of value {@code 5}.
+     */
     FIVE(Opcodes.ICONST_5);
 
     private static final Size SIZE = StackSize.SINGLE.toIncreasingSize();

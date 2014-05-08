@@ -226,7 +226,7 @@ public final class MethodMatchers {
     }
 
     /**
-     * Selects a method when it is marked as a bridge method
+     * Selects a method when it is marked as a bridge method.
      *
      * @return A method matcher for the specified regular expression.
      */
@@ -693,7 +693,7 @@ public final class MethodMatchers {
     /**
      * Matches methods that represent a so-called visibility bridge.
      *
-     * @return
+     * @return A matcher for identifying visibility bridges.
      */
     public static JunctionMethodMatcher isVisibilityBridge() {
         return new VisibilityBridgeMethodMatcher();

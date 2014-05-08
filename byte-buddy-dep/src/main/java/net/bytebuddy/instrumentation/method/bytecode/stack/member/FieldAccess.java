@@ -12,7 +12,14 @@ import org.objectweb.asm.Opcodes;
  */
 public enum FieldAccess {
 
+    /**
+     * The representation of field access to a static field.
+     */
     STATIC(Opcodes.PUTSTATIC, Opcodes.GETSTATIC, StackSize.ZERO),
+
+    /**
+     * The representation of field access to an instance field.
+     */
     INSTANCE(Opcodes.PUTFIELD, Opcodes.GETFIELD, StackSize.SINGLE);
     private final int putterOpcode;
     private final int getterOpcode;

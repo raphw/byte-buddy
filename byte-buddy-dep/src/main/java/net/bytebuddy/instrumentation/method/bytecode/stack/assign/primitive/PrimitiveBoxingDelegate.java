@@ -13,13 +13,44 @@ import org.objectweb.asm.Opcodes;
  */
 public enum PrimitiveBoxingDelegate {
 
+    /**
+     * The boxing delegate for {@code boolean} values.
+     */
     BOOLEAN("java/lang/Boolean", StackSize.ZERO, Boolean.class, "valueOf", "(Z)Ljava/lang/Boolean;"),
+
+    /**
+     * The boxing delegate for {@code byte} values.
+     */
     BYTE("java/lang/Byte", StackSize.ZERO, Byte.class, "valueOf", "(B)Ljava/lang/Byte;"),
+
+    /**
+     * The boxing delegate for {@code short} values.
+     */
     SHORT("java/lang/Short", StackSize.ZERO, Short.class, "valueOf", "(S)Ljava/lang/Short;"),
+
+    /**
+     * The boxing delegate for {@code char} values.
+     */
     CHARACTER("java/lang/Character", StackSize.ZERO, Character.class, "valueOf", "(C)Ljava/lang/Character;"),
+
+    /**
+     * The boxing delegate for {@code int} values.
+     */
     INTEGER("java/lang/Integer", StackSize.ZERO, Integer.class, "valueOf", "(I)Ljava/lang/Integer;"),
+
+    /**
+     * The boxing delegate for {@code long} values.
+     */
     LONG("java/lang/Long", StackSize.SINGLE, Long.class, "valueOf", "(J)Ljava/lang/Long;"),
+
+    /**
+     * The boxing delegate for {@code float} values.
+     */
     FLOAT("java/lang/Float", StackSize.ZERO, Float.class, "valueOf", "(F)Ljava/lang/Float;"),
+
+    /**
+     * The boxing delegate for {@code double} values.
+     */
     DOUBLE("java/lang/Double", StackSize.SINGLE, Double.class, "valueOf", "(D)Ljava/lang/Double;");
     private final String wrapperTypeName;
     private final StackManipulation.Size size;

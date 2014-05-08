@@ -94,7 +94,7 @@ public interface ModifierReviewable {
     boolean isSuper();
 
     /**
-     * Specifies if the modifier described by this object represents the bridge flag
+     * Specifies if the modifier described by this object represents the bridge flag.
      *
      * @return {@code true} if the modifier described by this object represents the bridge flag
      */
@@ -156,7 +156,10 @@ public interface ModifierReviewable {
      */
     int getModifiers();
 
-    static abstract class AbstractModifierReviewable implements ModifierReviewable {
+    /**
+     * An abstract base implementation of a {@link net.bytebuddy.instrumentation.ModifierReviewable} class.
+     */
+    abstract static class AbstractModifierReviewable implements ModifierReviewable {
 
         @Override
         public boolean isAbstract() {

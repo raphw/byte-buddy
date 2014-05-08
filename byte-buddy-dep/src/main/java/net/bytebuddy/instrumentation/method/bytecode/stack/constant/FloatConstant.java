@@ -11,8 +11,19 @@ import org.objectweb.asm.Opcodes;
  */
 public enum FloatConstant implements StackManipulation {
 
+    /**
+     * A {@code float} constant of value {@code 0.0f}.
+     */
     ZERO(Opcodes.FCONST_0),
+
+    /**
+     * A {@code float} constant of value {@code 1.0f}.
+     */
     ONE(Opcodes.FCONST_1),
+
+    /**
+     * A {@code float} constant of value {@code 2.0f}.
+     */
     TWO(Opcodes.FCONST_2);
 
     private static final Size SIZE = StackSize.SINGLE.toIncreasingSize();

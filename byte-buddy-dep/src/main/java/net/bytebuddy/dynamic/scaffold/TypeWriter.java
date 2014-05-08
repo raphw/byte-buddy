@@ -77,6 +77,10 @@ public interface TypeWriter<T> {
              * for any field.
              */
             static enum NoOp implements Entry {
+
+                /**
+                 * The singleton instance.
+                 */
                 INSTANCE;
 
                 @Override
@@ -162,6 +166,10 @@ public interface TypeWriter<T> {
              * A skip entry that instructs to ignore a method.
              */
             static enum Skip implements Entry {
+
+                /**
+                 * The singleton instance.
+                 */
                 INSTANCE;
 
                 @Override

@@ -13,10 +13,29 @@ import org.objectweb.asm.Opcodes;
  */
 public enum MethodVariableAccess {
 
+    /**
+     * The accessor handler for a JVM-integer.
+     */
     INTEGER(Opcodes.ILOAD, 5, StackSize.SINGLE),
+
+    /**
+     * The accessor handler for a {@code long}.
+     */
     LONG(Opcodes.LLOAD, 8, StackSize.DOUBLE),
+
+    /**
+     * The accessor handler for a {@code float}.
+     */
     FLOAT(Opcodes.FLOAD, 11, StackSize.SINGLE),
+
+    /**
+     * The accessor handler for a {@code double}.
+     */
     DOUBLE(Opcodes.DLOAD, 14, StackSize.DOUBLE),
+
+    /**
+     * The accessor handler for a reference type.
+     */
     REFERENCE(Opcodes.ALOAD, 17, StackSize.SINGLE);
     private final int loadOpcode;
     private final int loadOpcodeShortcutIndex;
@@ -53,34 +72,36 @@ public enum MethodVariableAccess {
     }
 
     /**
-     * Loads all method parameters for a given method, including a reference to the object instance if the method is
-     * not static.
+     * Loads all method arguments for a given method onto the operand stack, including a reference to {@code this},
+     * if the method is non-static.
      *
-     * @param methodDescription The method for which all parameters and an instance reference, if any, is to be loaded.
-     * @return A stack manipulation representing the loading of all parameters including a reference to the instance if any.
+     * @param methodDescription The method for which all method arguments should be loaded onto the stack, including
+     *                          a reference to {@code this} if the method is non-static.
+     * @return A stack manipulation representing the loading of all method arguments including a reference to the
+     * instance if any.
      */
     public static StackManipulation loadThisAndArguments(MethodDescription methodDescription) {
-        int stackValues = (methodDescription.isStatic() ? 0 : 1) + methodDescription.getParameterTypes().size();
-        StackManipulation[] stackManipulation = new StackManipulation[stackValues];
-        int parameterIndex = 0, stackIndex;
-        if (!methodDescription.isStatic()) {
-            stackManipulation[parameterIndex++] = forType(methodDescription.getDeclaringType()).loadFromIndex(0);
-            stackIndex = methodDescription.getDeclaringType().getStackSize().getSize();
-        } else {
-            stackIndex = 0;
-        }
-        for (TypeDescription parameterType : methodDescription.getParameterTypes()) {
-            stackManipulation[parameterIndex++] = forType(parameterType).loadFromIndex(stackIndex);
-            stackIndex += parameterType.getStackSize().getSize();
-        }
-        return new StackManipulation.Compound(stackManipulation);
+        return loadArguments(methodDescription, true);
     }
 
+    /**
+     * Loads all method arguments for a given method onto the operand stack.
+     *
+     * @param methodDescription The method for which all method arguments should be loaded onto the stack.
+     * @return A stack manipulation representing the loading of all method arguments.
+     */
     public static StackManipulation loadArguments(MethodDescription methodDescription) {
-        int stackValues = methodDescription.getParameterTypes().size();
+        return loadArguments(methodDescription, false);
+    }
+
+    private static StackManipulation loadArguments(MethodDescription methodDescription, boolean includeThisReference) {
+        int stackValues = (!includeThisReference || methodDescription.isStatic() ? 0 : 1) + methodDescription.getParameterTypes().size();
         StackManipulation[] stackManipulation = new StackManipulation[stackValues];
         int parameterIndex = 0, stackIndex;
         if (!methodDescription.isStatic()) {
+            if (includeThisReference) {
+                stackManipulation[parameterIndex++] = MethodVariableAccess.REFERENCE.loadFromIndex(0);
+            }
             stackIndex = methodDescription.getDeclaringType().getStackSize().getSize();
         } else {
             stackIndex = 0;

@@ -7,6 +7,10 @@ import org.objectweb.asm.MethodVisitor;
  * An impossible manipulation of the operand stack that must not be applied.
  */
 public enum IllegalStackManipulation implements StackManipulation {
+
+    /**
+     * The singleton instance.
+     */
     INSTANCE;
 
     @Override

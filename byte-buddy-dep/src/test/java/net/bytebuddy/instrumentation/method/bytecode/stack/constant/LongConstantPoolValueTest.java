@@ -36,15 +36,15 @@ public class LongConstantPoolValueTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {Long.MIN_VALUE},
-                {Integer.MIN_VALUE},
-                {-100L},
-                {-2L},
-                {6L},
-                {7L},
-                {100L},
-                {Integer.MAX_VALUE},
-                {Long.MAX_VALUE},
+                { Long.MIN_VALUE },
+                { Integer.MIN_VALUE },
+                { -100L },
+                { -2L },
+                { 6L },
+                { 7L },
+                { 100L },
+                { Integer.MAX_VALUE },
+                { Long.MAX_VALUE },
         });
     }
 

@@ -35,10 +35,10 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Collections;
 
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.none;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsCollectionContaining.hasItem;
 import static org.junit.Assert.assertEquals;
@@ -273,5 +273,54 @@ public class SubclassDynamicTypeBuilderTest {
         assertThat(constructor.getDeclaredAnnotations().length, is(0));
         assertThat(constructor.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(loaded.getDeclaredMethods().length, is(0));
+    }
+
+    @Test
+    public void testHashCodeEquals() throws Exception {
+        assertThat(makeSimple(Opcodes.ACC_PUBLIC).hashCode(), is(makeSimple(Opcodes.ACC_PUBLIC).hashCode()));
+        assertThat(makeSimple(Opcodes.ACC_PUBLIC), is(makeSimple(Opcodes.ACC_PUBLIC)));
+        assertThat(makeSimple(Opcodes.ACC_PUBLIC).hashCode(), not(is(makeSimple(Opcodes.ACC_ABSTRACT).hashCode())));
+        assertThat(makeSimple(Opcodes.ACC_PUBLIC), not(is(makeSimple(Opcodes.ACC_ABSTRACT))));
+        assertThat(makeSimple(Opcodes.ACC_PUBLIC).defineField(FOO, Object.class).hashCode(),
+                is(makeSimple(Opcodes.ACC_PUBLIC).defineField(FOO, Object.class).hashCode()));
+        assertThat(makeSimple(Opcodes.ACC_PUBLIC).defineField(FOO, Object.class),
+                is(makeSimple(Opcodes.ACC_PUBLIC).defineField(FOO, Object.class)));
+        assertThat(makeSimple(Opcodes.ACC_PUBLIC).defineField(FOO, Object.class).hashCode(),
+                not(is(makeSimple(Opcodes.ACC_PUBLIC).defineField(BAR, Object.class).hashCode())));
+        assertThat(makeSimple(Opcodes.ACC_PUBLIC).defineField(FOO, Object.class),
+                not(is(makeSimple(Opcodes.ACC_PUBLIC).defineField(BAR, Object.class))));
+        assertThat(makeSimple(Opcodes.ACC_PUBLIC).defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList()).hashCode(),
+                is(makeSimple(Opcodes.ACC_PUBLIC).defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList()).hashCode()));
+        assertThat(makeSimple(Opcodes.ACC_PUBLIC).defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList()),
+                is(makeSimple(Opcodes.ACC_PUBLIC).defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList())));
+        assertThat(makeSimple(Opcodes.ACC_PUBLIC).defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList()).hashCode(),
+                not(is(makeSimple(Opcodes.ACC_PUBLIC).defineMethod(BAR, Object.class, Collections.<Class<?>>emptyList()).hashCode())));
+        assertThat(makeSimple(Opcodes.ACC_PUBLIC).defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList()),
+                not(is(makeSimple(Opcodes.ACC_PUBLIC).defineMethod(BAR, Object.class, Collections.<Class<?>>emptyList()))));
+        assertThat(makeSimple(Opcodes.ACC_PUBLIC).defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList()).withoutCode().hashCode(),
+                is(makeSimple(Opcodes.ACC_PUBLIC).defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList()).withoutCode().hashCode()));
+        assertThat(makeSimple(Opcodes.ACC_PUBLIC).defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList()).withoutCode(),
+                is(makeSimple(Opcodes.ACC_PUBLIC).defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList()).withoutCode()));
+        assertThat(makeSimple(Opcodes.ACC_PUBLIC).defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList()).withoutCode().hashCode(),
+                not(is(makeSimple(Opcodes.ACC_PUBLIC).defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList()).intercept(instrumentation).hashCode())));
+        assertThat(makeSimple(Opcodes.ACC_PUBLIC).defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList()).withoutCode(),
+                not(is(makeSimple(Opcodes.ACC_PUBLIC).defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList()).intercept(instrumentation))));
+    }
+
+    private SubclassDynamicTypeBuilder<Object> makeSimple(int modifiers) {
+        return new SubclassDynamicTypeBuilder<Object>(ClassFileVersion.forCurrentJavaVersion(),
+                new NamingStrategy.Fixed(FOO),
+                new TypeDescription.ForLoadedType(Object.class),
+                new TypeList.ForLoadedType(Arrays.<Class<?>>asList(Serializable.class)),
+                modifiers,
+                TypeAttributeAppender.NoOp.INSTANCE,
+                none(),
+                BridgeMethodResolver.Simple.Factory.FAIL_FAST,
+                new ClassVisitorWrapper.Chain(),
+                new FieldRegistry.Default(),
+                new MethodRegistry.Default(),
+                FieldAttributeAppender.NoOp.INSTANCE,
+                MethodAttributeAppender.NoOp.INSTANCE,
+                ConstructorStrategy.Default.NO_CONSTRUCTORS);
     }
 }

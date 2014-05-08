@@ -76,7 +76,7 @@ public class NextUnboundAsDefaultBinderTest {
         Argument indexZeroArgument = mock(Argument.class);
         when(indexZeroArgument.value()).thenReturn(0);
         doReturn(Argument.class).when(indexZeroArgument).annotationType();
-        when(target.getParameterAnnotations()).thenReturn(new Annotation[][]{{indexZeroArgument}, {}});
+        when(target.getParameterAnnotations()).thenReturn(new Annotation[][]{ { indexZeroArgument }, { } });
         Iterator<Argument> iterator = Argument.NextUnboundAsDefaultsProvider.INSTANCE
                 .makeIterator(typeDescription, source, target);
         assertThat(iterator.hasNext(), is(true));
@@ -91,7 +91,7 @@ public class NextUnboundAsDefaultBinderTest {
         Argument indexOneArgument = mock(Argument.class);
         when(indexOneArgument.value()).thenReturn(1);
         doReturn(Argument.class).when(indexOneArgument).annotationType();
-        when(target.getParameterAnnotations()).thenReturn(new Annotation[][]{{indexOneArgument}, {}});
+        when(target.getParameterAnnotations()).thenReturn(new Annotation[][]{ { indexOneArgument }, { } });
         Iterator<Argument> iterator = Argument.NextUnboundAsDefaultsProvider.INSTANCE
                 .makeIterator(typeDescription, source, target);
         assertThat(iterator.hasNext(), is(true));
@@ -109,7 +109,7 @@ public class NextUnboundAsDefaultBinderTest {
         Argument indexOneArgument = mock(Argument.class);
         when(indexOneArgument.value()).thenReturn(1);
         doReturn(Argument.class).when(indexOneArgument).annotationType();
-        when(target.getParameterAnnotations()).thenReturn(new Annotation[][]{{indexOneArgument}, {indexZeroArgument}});
+        when(target.getParameterAnnotations()).thenReturn(new Annotation[][]{ { indexOneArgument }, { indexZeroArgument } });
         Iterator<Argument> iterator = Argument.NextUnboundAsDefaultsProvider.INSTANCE
                 .makeIterator(typeDescription, source, target);
         assertThat(iterator.hasNext(), is(false));

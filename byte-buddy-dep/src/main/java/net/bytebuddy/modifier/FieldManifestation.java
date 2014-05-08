@@ -8,8 +8,19 @@ import org.objectweb.asm.Opcodes;
  */
 public enum FieldManifestation implements ModifierContributor.ForField {
 
+    /**
+     * Modifier for a non-final, non-volatile field. (This is the default modifier.)
+     */
     PLAIN(EMPTY_MASK),
+
+    /**
+     * Modifier for a final field.
+     */
     FINAL(Opcodes.ACC_FINAL),
+
+    /**
+     * Modifier for a volatile field.
+     */
     VOLATILE(Opcodes.ACC_VOLATILE);
 
     private final int mask;

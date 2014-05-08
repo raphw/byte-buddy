@@ -25,10 +25,10 @@ import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
 import static net.bytebuddy.utility.ByteBuddyCommons.*;
 
 /**
- * {@code ByteBuddy} is a configurable factory for creating {@link net.bytebuddy.dynamic.DynamicType}s which represent
- * dynamically created Java {@link java.lang.Class}es which can be saved on disk or loaded into the Java virtual
- * machine. Each instance of {@code ByteBuddy} is immutable where any of the factory methods returns a new instance
- * that represents the altered configuration.
+ * {@code ByteBuddy} instances are configurable factories for creating new Java types at a JVM's runtime.
+ * Such types are represented by {@link net.bytebuddy.dynamic.DynamicType}s which can be saved to disk or loaded into
+ * the Java virtual machine. Each instance of {@code ByteBuddy} is immutable where any of the factory methods returns
+ * a new instance that represents the altered configuration.
  * <p>&nbsp;</p>
  * Note that any configuration defines to ignore the instrumentation of any synthetic methods or the default finalizer
  * method {@link Object#finalize()}. This behavior can be altered by
@@ -568,7 +568,7 @@ public class ByteBuddy {
     }
 
     /**
-     * Intercepts a given method selection
+     * Intercepts a given method selection.
      *
      * @param methodMatcher The method matcher representing all methods to intercept.
      * @return A matched method interception for the given selection.
@@ -578,7 +578,7 @@ public class ByteBuddy {
     }
 
     /**
-     * Intercepts a given constructor selection
+     * Intercepts a given constructor selection.
      *
      * @param methodMatcher The method matcher representing all constructors to intercept.
      * @return A matched method interception for the given selection.

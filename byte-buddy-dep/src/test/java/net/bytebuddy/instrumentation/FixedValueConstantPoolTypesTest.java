@@ -52,16 +52,16 @@ public class FixedValueConstantPoolTypesTest<T extends CallTraceable>
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {STRING_VALUE, StringTarget.class},
-                {BOOLEAN_VALUE, BooleanTarget.class},
-                {BYTE_VALUE, ByteTarget.class},
-                {SHORT_VALUE, ShortTarget.class},
-                {CHAR_VALUE, CharTarget.class},
-                {INT_VALUE, IntTarget.class},
-                {LONG_VALUE, LongTarget.class},
-                {FLOAT_VALUE, FloatTarget.class},
-                {DOUBLE_VALUE, DoubleTarget.class},
-                {NULL_VALUE, NullTarget.class}
+                { STRING_VALUE, StringTarget.class },
+                { BOOLEAN_VALUE, BooleanTarget.class },
+                { BYTE_VALUE, ByteTarget.class },
+                { SHORT_VALUE, ShortTarget.class },
+                { CHAR_VALUE, CharTarget.class },
+                { INT_VALUE, IntTarget.class },
+                { LONG_VALUE, LongTarget.class },
+                { FLOAT_VALUE, FloatTarget.class },
+                { DOUBLE_VALUE, DoubleTarget.class },
+                { NULL_VALUE, NullTarget.class }
         });
     }
 

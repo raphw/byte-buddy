@@ -20,12 +20,13 @@
     <modules>
         <module>byte-buddy</module>
         <module>byte-buddy-dep</module>
+        <module>byte-buddy-benchmark</module>
     </modules>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <code.level>1.6</code.level>
-        <shade.artifactid>byte-buddy</shade.artifactid>
+        <cobertura.exclude.benchmark>net/bytebuddy/benchmark/**/*.class</cobertura.exclude.benchmark>
         <shade.source>org.objectweb.asm</shade.source>
         <shade.target>net.bytebuddy.jar.asm</shade.target>
         <version.asm>4.2</version.asm>
@@ -34,11 +35,13 @@
         <version.plugin.compiler>3.1</version.plugin.compiler>
         <version.plugin.javadoc>2.9.1</version.plugin.javadoc>
         <version.plugin.source>2.2.1</version.plugin.source>
+        <version.plugin.shade>2.2</version.plugin.shade>
         <version.plugin.gpg>1.4</version.plugin.gpg>
         <version.plugin.release>2.5</version.plugin.release>
         <version.plugin.resources>2.6</version.plugin.resources>
         <version.plugin.cobertura>2.6</version.plugin.cobertura>
         <version.plugin.coveralls>2.2.0</version.plugin.coveralls>
+        <version.plugin.checkstyle>2.12.1</version.plugin.checkstyle>
         <distribution.bintray>https://api.bintray.com/maven/raphw/maven/ByteBuddy</distribution.bintray>
     </properties>
 
@@ -125,13 +128,18 @@
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                 </configuration>
             </plugin>
-            <!-- Add cobertura support -->
+            <!-- Add cobertura support for test case coverage-->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>cobertura-maven-plugin</artifactId>
                 <version>${version.plugin.cobertura}</version>
                 <configuration>
                     <aggregate>true</aggregate>
+                    <instrumentation>
+                        <excludes>
+                            <exclude>${cobertura.exclude.benchmark}</exclude>
+                        </excludes>
+                    </instrumentation>
                     <formats>
                         <format>html</format>
                         <format>xml</format>
@@ -145,6 +153,26 @@
                 <artifactId>coveralls-maven-plugin</artifactId>
                 <version>${version.plugin.coveralls}</version>
             </plugin>
+            <!-- Check style on build -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>${version.plugin.checkstyle}</version>
+                <executions>
+                    <execution>
+                        <id>validate</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <configLocation>checkstyle.xml</configLocation>
+                            <consoleOutput>true</consoleOutput>
+                            <failsOnError>true</failsOnError>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
         <pluginManagement>
             <plugins>
@@ -157,6 +185,16 @@
             </plugins>
         </pluginManagement>
     </build>
+
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jxr-plugin</artifactId>
+                <version>2.3</version>
+            </plugin>
+        </plugins>
+    </reporting>
 
     <distributionManagement>
         <repository>

@@ -50,6 +50,10 @@ public interface MethodDelegationBinder {
          * {@link net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocation}.
          */
         static enum Simple implements MethodInvoker {
+
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
             @Override
@@ -104,6 +108,10 @@ public interface MethodDelegationBinder {
          * suggests that a source method cannot be bound to a specific target method.
          */
         static enum Illegal implements ParameterBinding<Void> {
+
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
             @Override
@@ -246,6 +254,10 @@ public interface MethodDelegationBinder {
          * @see net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder
          */
         static enum Illegal implements MethodBinding {
+
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
             @Override
@@ -485,6 +497,10 @@ public interface MethodDelegationBinder {
          * An ambiguity resolver that does not attempt to resolve a conflicting binding.
          */
         static enum NoOp implements AmbiguityResolver {
+
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
             @Override

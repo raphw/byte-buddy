@@ -24,6 +24,10 @@ import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.hasSam
  * to be altered but should be equipped with additional annotations.
  */
 public enum SuperMethodCall implements Instrumentation {
+
+    /**
+     * The singleton instance.
+     */
     INSTANCE;
 
     @Override

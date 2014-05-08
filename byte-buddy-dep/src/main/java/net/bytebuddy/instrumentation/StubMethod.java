@@ -21,6 +21,10 @@ import org.objectweb.asm.MethodVisitor;
  * </ol>
  */
 public enum StubMethod implements Instrumentation, ByteCodeAppender {
+
+    /**
+     * The singleton instance.
+     */
     INSTANCE;
 
     @Override

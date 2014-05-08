@@ -12,9 +12,24 @@ import org.objectweb.asm.Opcodes;
  */
 public enum MethodInvocation {
 
+    /**
+     * A virtual method invocation.
+     */
     VIRTUAL(Opcodes.INVOKEVIRTUAL),
+
+    /**
+     * An interface-typed virtual method invocation.
+     */
     INTERFACE(Opcodes.INVOKEINTERFACE),
+
+    /**
+     * A static method invocation.
+     */
     STATIC(Opcodes.INVOKESTATIC),
+
+    /**
+     * A specialized virtual method invocation.
+     */
     SPECIAL(Opcodes.INVOKESPECIAL);
     private final int invocationOpcode;
 
@@ -42,7 +57,7 @@ public enum MethodInvocation {
 
     /**
      * Represents a method invocation where the invocation type (static, virtual, special, interface) is derived
-     * from the
+     * from the given method's description.
      */
     public static interface WithImplicitInvocationTargetType extends StackManipulation {
 

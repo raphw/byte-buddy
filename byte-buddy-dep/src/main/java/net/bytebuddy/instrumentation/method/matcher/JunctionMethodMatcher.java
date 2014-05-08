@@ -29,7 +29,7 @@ public interface JunctionMethodMatcher extends MethodMatcher {
     /**
      * An abstract base implementation of a junction method matcher.
      */
-    static abstract class AbstractBase implements JunctionMethodMatcher {
+    abstract static class AbstractBase implements JunctionMethodMatcher {
 
         @Override
         public JunctionMethodMatcher and(MethodMatcher other) {

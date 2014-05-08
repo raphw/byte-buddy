@@ -20,6 +20,7 @@ import org.mockito.stubbing.Answer;
 import java.lang.reflect.Field;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
@@ -187,5 +188,32 @@ public class MethodRegistryDefaultTest {
         assertThat(compiled.target(instrumentationAppendedMethod).getAttributeAppender(),
                 is((MethodAttributeAppender) MethodAttributeAppender.NoOp.INSTANCE));
         verify(croppedMethodList, times(7) /* for 7 calls to compiled.target */).filter(any(MethodMatcher.class));
+    }
+
+
+    @Test
+    public void testHashCodeEquals() throws Exception {
+        assertThat(new MethodRegistry.Default().hashCode(), is(new MethodRegistry.Default().hashCode()));
+        assertThat(new MethodRegistry.Default(), is(new MethodRegistry.Default()));
+        assertThat(new MethodRegistry.Default().append(latentMatchesKnownMethod, simpleInstrumentation, simpleAttributeAppenderFactory).hashCode(),
+                not(is(new MethodRegistry.Default().hashCode())));
+        assertThat(new MethodRegistry.Default().append(latentMatchesKnownMethod, simpleInstrumentation, simpleAttributeAppenderFactory),
+                not(is((MethodRegistry) new MethodRegistry.Default())));
+    }
+
+    @Test
+    public void testCompiledHashCodeEquals() throws Exception {
+        assertThat(new MethodRegistry.Default().compile(basicInstrumentedType, fallback).hashCode(),
+                is(new MethodRegistry.Default().compile(basicInstrumentedType, fallback).hashCode()));
+        assertThat(new MethodRegistry.Default().compile(basicInstrumentedType, fallback),
+                is(new MethodRegistry.Default().compile(basicInstrumentedType, fallback)));
+        assertThat(new MethodRegistry.Default().append(latentMatchesKnownMethod, simpleInstrumentation, simpleAttributeAppenderFactory)
+                        .compile(basicInstrumentedType, fallback).hashCode(),
+                not(is(new MethodRegistry.Default().hashCode()))
+        );
+        assertThat(new MethodRegistry.Default().append(latentMatchesKnownMethod, simpleInstrumentation, simpleAttributeAppenderFactory)
+                        .compile(basicInstrumentedType, fallback),
+                not(is(new MethodRegistry.Default().compile(basicInstrumentedType, fallback)))
+        );
     }
 }

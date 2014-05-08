@@ -8,7 +8,13 @@ import org.objectweb.asm.Opcodes;
  */
 public enum SynchronizationState implements ModifierContributor.ForMethod {
 
+    /**
+     * Modifier for non-synchronized method. (This is the default modifier.)
+     */
     PLAIN(EMPTY_MASK),
+    /**
+     * Modifier for a synchronized method.
+     */
     SYNCHRONIZED(Opcodes.ACC_SYNCHRONIZED);
 
     private final int mask;

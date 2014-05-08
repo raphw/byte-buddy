@@ -8,7 +8,14 @@ import org.objectweb.asm.Opcodes;
  */
 public enum SyntheticState implements ModifierContributor.ForType, ModifierContributor.ForMethod, ModifierContributor.ForField {
 
+    /**
+     * Modifier for marking a type member as synthetic.
+     */
     SYNTHETIC(Opcodes.ACC_SYNTHETIC),
+
+    /**
+     * Modifier for not marking a type member as synthetic. (This is the default modifier.)
+     */
     NON_SYNTHETIC(EMPTY_MASK);
 
     private final int mask;

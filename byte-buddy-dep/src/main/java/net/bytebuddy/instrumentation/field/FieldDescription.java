@@ -26,7 +26,7 @@ public interface FieldDescription extends ModifierReviewable, ByteCodeElement, D
     /**
      * An abstract base implementation of a field description.
      */
-    static abstract class AbstractFieldDescription extends AbstractModifierReviewable implements FieldDescription {
+    abstract static class AbstractFieldDescription extends AbstractModifierReviewable implements FieldDescription {
 
         @Override
         public String getInternalName() {

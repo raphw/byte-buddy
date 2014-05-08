@@ -12,11 +12,34 @@ import org.objectweb.asm.Opcodes;
  */
 public enum MethodReturn implements StackManipulation {
 
+    /**
+     * The method return handler for returning a JVM-integer.
+     */
     INTEGER(Opcodes.IRETURN, StackSize.SINGLE),
+
+    /**
+     * The method return handler for returning a {@code double}.
+     */
     DOUBLE(Opcodes.DRETURN, StackSize.DOUBLE),
+
+    /**
+     * The method return handler for returning a {@code float}.
+     */
     FLOAT(Opcodes.FRETURN, StackSize.SINGLE),
+
+    /**
+     * The method return handler for returning a {@code long}.
+     */
     LONG(Opcodes.LRETURN, StackSize.DOUBLE),
+
+    /**
+     * The method return handler for returning {@code void}.
+     */
     VOID(Opcodes.RETURN, StackSize.ZERO),
+
+    /**
+     * The method return handler for returning a reference type.
+     */
     ANY_REFERENCE(Opcodes.ARETURN, StackSize.SINGLE);
     private final int returnOpcode;
     private final Size size;

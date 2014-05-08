@@ -24,6 +24,10 @@ public interface TypeAttributeAppender {
      * A type attribute appender that does not append any attributes.
      */
     static enum NoOp implements TypeAttributeAppender {
+
+        /**
+         * The singleton instance.
+         */
         INSTANCE;
 
         @Override
@@ -38,6 +42,10 @@ public interface TypeAttributeAppender {
      * will be inferred from the annotations' {@link java.lang.annotation.RetentionPolicy}.
      */
     static enum ForSuperType implements TypeAttributeAppender {
+
+        /**
+         * The singleton instance.
+         */
         INSTANCE;
 
         @Override

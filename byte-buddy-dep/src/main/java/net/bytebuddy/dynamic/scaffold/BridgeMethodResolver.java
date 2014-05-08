@@ -41,6 +41,10 @@ public interface BridgeMethodResolver {
      * returning the method it is given to resolve.
      */
     static enum NoOp implements BridgeMethodResolver, Factory {
+
+        /**
+         * The singleton instance.
+         */
         INSTANCE;
 
         @Override
@@ -226,6 +230,10 @@ public interface BridgeMethodResolver {
              * Represents a bridge method with an unknown target method.
              */
             static enum Unknown implements BridgeTarget {
+
+                /**
+                 * The singleton instance.
+                 */
                 INSTANCE;
 
                 @Override

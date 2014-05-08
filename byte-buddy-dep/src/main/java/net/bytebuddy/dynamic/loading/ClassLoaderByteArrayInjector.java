@@ -14,19 +14,19 @@ import java.lang.reflect.Method;
  */
 public class ClassLoaderByteArrayInjector {
 
-    private static Method FIND_LOADED_CLASS_METHOD;
-    private static Method LOAD_BYTE_ARRAY_METHOD;
+    private static Method findLoadedClassMethod;
+    private static Method loadByteArrayMethod;
 
-    private static Exception EXCEPTION;
+    private static Exception exception;
 
     static {
         try {
-            FIND_LOADED_CLASS_METHOD = ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class);
-            FIND_LOADED_CLASS_METHOD.setAccessible(true);
-            LOAD_BYTE_ARRAY_METHOD = ClassLoader.class.getDeclaredMethod("defineClass", String.class, byte[].class, int.class, int.class);
-            LOAD_BYTE_ARRAY_METHOD.setAccessible(true);
+            findLoadedClassMethod = ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class);
+            findLoadedClassMethod.setAccessible(true);
+            loadByteArrayMethod = ClassLoader.class.getDeclaredMethod("defineClass", String.class, byte[].class, int.class, int.class);
+            loadByteArrayMethod.setAccessible(true);
         } catch (Exception e) {
-            EXCEPTION = e;
+            exception = e;
         }
     }
 
@@ -49,16 +49,16 @@ public class ClassLoaderByteArrayInjector {
      * @return The loaded class that is a result of the class loading attempt.
      */
     public Class<?> inject(String name, byte[] binaryRepresentation) {
-        if (FIND_LOADED_CLASS_METHOD == null || LOAD_BYTE_ARRAY_METHOD == null) {
-            throw new IllegalStateException("Could not initialize class loader injector", EXCEPTION);
+        if (findLoadedClassMethod == null || loadByteArrayMethod == null) {
+            throw new IllegalStateException("Could not initialize class loader injector", exception);
         }
         try {
             synchronized (classLoader) {
-                Class<?> type = (Class<?>) FIND_LOADED_CLASS_METHOD.invoke(classLoader, name);
+                Class<?> type = (Class<?>) findLoadedClassMethod.invoke(classLoader, name);
                 if (type != null) {
                     return type;
                 } else {
-                    return (Class<?>) LOAD_BYTE_ARRAY_METHOD.invoke(classLoader,
+                    return (Class<?>) loadByteArrayMethod.invoke(classLoader,
                             name,
                             binaryRepresentation,
                             0,

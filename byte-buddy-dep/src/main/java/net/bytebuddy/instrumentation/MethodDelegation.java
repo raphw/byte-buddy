@@ -38,7 +38,7 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
  * targets of the method delegation can further be filtered by applying a filter. The method delegation can be
  * customized by invoking the {@code MethodDelegation}'s several builder methods.
  * <h3>Without any customization, the method delegation will work as follows:</h3>
- * <u>Binding an instrumented method to a given delegate method</u>
+ * <span style="text-decoration: underline">Binding an instrumented method to a given delegate method</span>
  * <p>&nbsp;</p>
  * A method will be bound parameter by parameter. Considering a method {@code Foo#bar} being bound to a method
  * {@code Qux#baz}, the method delegation will be decided on basis of the following annotations:
@@ -74,7 +74,8 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
  * {@link net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner} with considering the
  * runtime type of the parameter.
  * <p>&nbsp;</p>
- * <u>Selecting among different methods that can be used for binding a method of the instrumented type</u>
+ * <span style="text-decoration: underline">Selecting among different methods that can be used for binding a method
+ * of the instrumented type</span>
  * <p>&nbsp;</p>
  * When deciding between two methods {@code Foo#bar} and {@code Foo#qux} that could both be used to delegating a
  * method call, the following consideration is applied in the given order:
@@ -489,6 +490,10 @@ public class MethodDelegation implements Instrumentation {
          * An instrumentation applied to a static method.
          */
         static enum ForStaticMethod implements InstrumentationDelegate {
+
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
             @Override

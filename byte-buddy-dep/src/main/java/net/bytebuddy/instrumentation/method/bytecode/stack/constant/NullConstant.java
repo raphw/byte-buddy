@@ -10,6 +10,10 @@ import org.objectweb.asm.Opcodes;
  * Represents a stack manipulation to load a {@code null} pointer onto the operand stack.
  */
 public enum NullConstant implements StackManipulation {
+
+    /**
+     * The singleton instance.
+     */
     INSTANCE;
 
     private static final Size SIZE = StackSize.SINGLE.toIncreasingSize();

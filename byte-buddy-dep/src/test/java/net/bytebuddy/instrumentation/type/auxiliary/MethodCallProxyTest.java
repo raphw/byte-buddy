@@ -52,11 +52,11 @@ public class MethodCallProxyTest extends AbstractMethodCallProxyTest {
                 boolean.class);
         constructor.setAccessible(true);
         MultipleParameterMethod runnableProxied = new MultipleParameterMethod();
-        Object[] runnableArguments = new Object[]{runnableProxied, LONG_VALUE, String_VALUE, INT_VALUE, BOOLEAN_VALUE};
+        Object[] runnableArguments = new Object[]{ runnableProxied, LONG_VALUE, String_VALUE, INT_VALUE, BOOLEAN_VALUE };
         ((Runnable) constructor.newInstance(runnableArguments)).run();
         runnableProxied.assertOnlyCall(FOO, runnableArguments);
         MultipleParameterMethod callableProxied = new MultipleParameterMethod();
-        Object[] callableArguments = new Object[]{callableProxied, LONG_VALUE, String_VALUE, INT_VALUE, BOOLEAN_VALUE};
+        Object[] callableArguments = new Object[]{ callableProxied, LONG_VALUE, String_VALUE, INT_VALUE, BOOLEAN_VALUE };
         assertThat(((Callable<?>) constructor.newInstance(callableArguments)).call(), nullValue());
         callableProxied.assertOnlyCall(FOO, callableArguments);
     }

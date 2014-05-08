@@ -68,8 +68,8 @@ public class DynamicTypeDefaultTest {
 
     @Before
     public void setUp() throws Exception {
-        binaryRepresentation = new byte[]{0, 1, 2};
-        auxiliaryTypeBinaryRepresentation = new byte[]{4, 5, 6};
+        binaryRepresentation = new byte[]{ 0, 1, 2 };
+        auxiliaryTypeBinaryRepresentation = new byte[]{ 4, 5, 6 };
         dynamicType = new DynamicType.Default(typeDescription,
                 binaryRepresentation,
                 mainTypeInitializer,
@@ -89,7 +89,7 @@ public class DynamicTypeDefaultTest {
     }
 
     @Test
-    public void testName() throws Exception {
+    public void testTypeDescription() throws Exception {
         assertThat(dynamicType.getDescription(), is(typeDescription));
     }
 

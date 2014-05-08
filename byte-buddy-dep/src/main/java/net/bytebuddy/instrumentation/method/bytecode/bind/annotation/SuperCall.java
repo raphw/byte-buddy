@@ -24,7 +24,7 @@ import java.util.concurrent.Callable;
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.PARAMETER, ElementType.METHOD})
+@Target({ ElementType.PARAMETER, ElementType.METHOD })
 public @interface SuperCall {
 
     /**
@@ -35,6 +35,10 @@ public @interface SuperCall {
      * @see TargetMethodAnnotationDrivenBinder
      */
     static enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<SuperCall> {
+
+        /**
+         * The singleton instance.
+         */
         INSTANCE;
 
         @Override

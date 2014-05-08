@@ -22,10 +22,10 @@ public class SynchronizationStateTest extends AbstractModifierContributorTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {SynchronizationState.is(false), 0},
-                {SynchronizationState.PLAIN, 0},
-                {SynchronizationState.is(true), Opcodes.ACC_SYNCHRONIZED},
-                {SynchronizationState.SYNCHRONIZED, Opcodes.ACC_SYNCHRONIZED}
+                { SynchronizationState.is(false), 0 },
+                { SynchronizationState.PLAIN, 0 },
+                { SynchronizationState.is(true), Opcodes.ACC_SYNCHRONIZED },
+                { SynchronizationState.SYNCHRONIZED, Opcodes.ACC_SYNCHRONIZED }
         });
     }
 

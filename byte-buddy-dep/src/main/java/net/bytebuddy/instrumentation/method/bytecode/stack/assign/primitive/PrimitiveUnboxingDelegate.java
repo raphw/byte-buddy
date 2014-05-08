@@ -13,13 +13,37 @@ import org.objectweb.asm.Opcodes;
  */
 public enum PrimitiveUnboxingDelegate implements StackManipulation {
 
+    /**
+     * The unboxing delegate for {@code Boolean} types.
+     */
     BOOLEAN("java/lang/Boolean", StackSize.ZERO, Boolean.class, boolean.class, "booleanValue", "()Z"),
+    /**
+     * The unboxing delegate for {@code Byte} types.
+     */
     BYTE("java/lang/Byte", StackSize.ZERO, Byte.class, byte.class, "byteValue", "()B"),
+    /**
+     * The unboxing delegate for {@code Short} types.
+     */
     SHORT("java/lang/Short", StackSize.ZERO, Short.class, short.class, "shortValue", "()S"),
+    /**
+     * The unboxing delegate for {@code Character} types.
+     */
     CHARACTER("java/lang/Character", StackSize.ZERO, Character.class, char.class, "charValue", "()C"),
+    /**
+     * The unboxing delegate for {@code Integer} types.
+     */
     INTEGER("java/lang/Integer", StackSize.ZERO, Integer.class, int.class, "intValue", "()I"),
+    /**
+     * The unboxing delegate for {@code Long} types.
+     */
     LONG("java/lang/Long", StackSize.SINGLE, Long.class, long.class, "longValue", "()J"),
+    /**
+     * The unboxing delegate for {@code Float} types.
+     */
     FLOAT("java/lang/Float", StackSize.ZERO, Float.class, float.class, "floatValue", "()F"),
+    /**
+     * The unboxing delegate for {@code Double} types.
+     */
     DOUBLE("java/lang/Double", StackSize.SINGLE, Double.class, double.class, "doubleValue", "()D");
     private final String wrapperTypeName;
     private final Size size;

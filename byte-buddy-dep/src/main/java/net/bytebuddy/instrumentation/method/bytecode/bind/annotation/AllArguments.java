@@ -28,7 +28,7 @@ import java.util.List;
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.PARAMETER})
+@Target({ ElementType.PARAMETER })
 public @interface AllArguments {
 
     /**
@@ -39,6 +39,10 @@ public @interface AllArguments {
      * @see TargetMethodAnnotationDrivenBinder
      */
     static enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<AllArguments> {
+
+        /**
+         * The singleton instance.
+         */
         INSTANCE;
 
         @Override

@@ -29,6 +29,10 @@ public interface MethodAttributeAppender {
      * A method attribute appender that does not append any attributes.
      */
     static enum NoOp implements MethodAttributeAppender, Factory {
+
+        /**
+         * The singleton instance.
+         */
         INSTANCE;
 
         @Override
@@ -47,6 +51,10 @@ public interface MethodAttributeAppender {
      * method that is being created. This includes method and parameter annotations.
      */
     static enum ForInstrumentedMethod implements MethodAttributeAppender, Factory {
+
+        /**
+         * The singleton instance.
+         */
         INSTANCE;
 
         @Override
@@ -200,6 +208,7 @@ public interface MethodAttributeAppender {
             AnnotationAppender.Target make(MethodVisitor methodVisitor, MethodDescription methodDescription);
 
             static enum OnMethod implements Target {
+
                 INSTANCE;
 
                 @Override

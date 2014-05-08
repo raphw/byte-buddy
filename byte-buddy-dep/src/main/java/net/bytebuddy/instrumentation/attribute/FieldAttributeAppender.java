@@ -27,6 +27,10 @@ public interface FieldAttributeAppender {
      * A field attribute appender that does not append any attributes.
      */
     static enum NoOp implements FieldAttributeAppender, Factory {
+
+        /**
+         * The singleton instance.
+         */
         INSTANCE;
 
         @Override

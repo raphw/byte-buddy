@@ -27,14 +27,14 @@ public class ArrayFactoryPrimitiveTest extends AbstractArrayFactoryTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {boolean.class, Opcodes.T_BOOLEAN, Opcodes.BASTORE},
-                {byte.class, Opcodes.T_BYTE, Opcodes.BASTORE},
-                {short.class, Opcodes.T_SHORT, Opcodes.SASTORE},
-                {char.class, Opcodes.T_CHAR, Opcodes.CASTORE},
-                {int.class, Opcodes.T_INT, Opcodes.IASTORE},
-                {long.class, Opcodes.T_LONG, Opcodes.LASTORE},
-                {float.class, Opcodes.T_FLOAT, Opcodes.FASTORE},
-                {double.class, Opcodes.T_DOUBLE, Opcodes.DASTORE},
+                { boolean.class, Opcodes.T_BOOLEAN, Opcodes.BASTORE },
+                { byte.class, Opcodes.T_BYTE, Opcodes.BASTORE },
+                { short.class, Opcodes.T_SHORT, Opcodes.SASTORE },
+                { char.class, Opcodes.T_CHAR, Opcodes.CASTORE },
+                { int.class, Opcodes.T_INT, Opcodes.IASTORE },
+                { long.class, Opcodes.T_LONG, Opcodes.LASTORE },
+                { float.class, Opcodes.T_FLOAT, Opcodes.FASTORE },
+                { double.class, Opcodes.T_DOUBLE, Opcodes.DASTORE },
         });
     }
 

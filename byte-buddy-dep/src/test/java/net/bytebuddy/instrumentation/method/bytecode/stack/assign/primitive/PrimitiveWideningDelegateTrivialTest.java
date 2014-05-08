@@ -43,18 +43,18 @@ public class PrimitiveWideningDelegateTrivialTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {boolean.class, boolean.class},
-                {byte.class, byte.class},
-                {byte.class, short.class},
-                {byte.class, int.class},
-                {short.class, short.class},
-                {short.class, int.class},
-                {char.class, int.class},
-                {char.class, char.class},
-                {int.class, int.class},
-                {long.class, long.class},
-                {float.class, float.class},
-                {double.class, double.class}
+                { boolean.class, boolean.class },
+                { byte.class, byte.class },
+                { byte.class, short.class },
+                { byte.class, int.class },
+                { short.class, short.class },
+                { short.class, int.class },
+                { char.class, int.class },
+                { char.class, char.class },
+                { int.class, int.class },
+                { long.class, long.class },
+                { float.class, float.class },
+                { double.class, double.class }
         });
     }
 

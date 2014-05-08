@@ -18,12 +18,12 @@ public class TypeManifestationTest extends AbstractModifierContributorTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {TypeManifestation.PLAIN, 0},
-                {TypeManifestation.ABSTRACT, Opcodes.ACC_ABSTRACT},
-                {TypeManifestation.ABSTRACT_ENUM, Opcodes.ACC_ABSTRACT | Opcodes.ACC_ENUM},
-                {TypeManifestation.ENUM, Opcodes.ACC_ENUM | Opcodes.ACC_FINAL},
-                {TypeManifestation.FINAL, Opcodes.ACC_FINAL},
-                {TypeManifestation.INTERFACE, Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT},
+                { TypeManifestation.PLAIN, 0 },
+                { TypeManifestation.ABSTRACT, Opcodes.ACC_ABSTRACT },
+                { TypeManifestation.ABSTRACT_ENUM, Opcodes.ACC_ABSTRACT | Opcodes.ACC_ENUM },
+                { TypeManifestation.ENUM, Opcodes.ACC_ENUM | Opcodes.ACC_FINAL },
+                { TypeManifestation.FINAL, Opcodes.ACC_FINAL },
+                { TypeManifestation.INTERFACE, Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT },
         });
     }
 }

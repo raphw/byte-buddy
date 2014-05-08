@@ -52,6 +52,10 @@ public interface FieldRegistry {
          * A no-op field registry that does not register annotations for any field.
          */
         static enum NoOp implements Compiled {
+
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
             @Override
@@ -141,15 +145,20 @@ public interface FieldRegistry {
                 }
             }
 
+            private FieldRegistry getFieldRegistry() {
+                return Default.this;
+            }
+
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && fallback.equals(((Compiled) other).fallback);
+                        && fallback.equals(((Compiled) other).fallback)
+                        && Default.this.equals(((Compiled) other).getFieldRegistry());
             }
 
             @Override
             public int hashCode() {
-                return fallback.hashCode();
+                return 31 * Default.this.hashCode() * fallback.hashCode();
             }
 
             @Override

@@ -7,6 +7,10 @@ import org.objectweb.asm.MethodVisitor;
  * A trivial stack manipulation that does not require any manipulation of the operand stack.
  */
 public enum LegalTrivialStackManipulation implements StackManipulation {
+
+    /**
+     * The singleton instance.
+     */
     INSTANCE(new Size(0, 0));
 
     private final Size size;

@@ -17,9 +17,9 @@ public class MemberVisibilityTest extends AbstractModifierContributorTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {FieldManifestation.PLAIN, 0},
-                {FieldManifestation.FINAL, org.objectweb.asm.Opcodes.ACC_FINAL},
-                {FieldManifestation.VOLATILE, org.objectweb.asm.Opcodes.ACC_VOLATILE},
+                { FieldManifestation.PLAIN, 0 },
+                { FieldManifestation.FINAL, org.objectweb.asm.Opcodes.ACC_FINAL },
+                { FieldManifestation.VOLATILE, org.objectweb.asm.Opcodes.ACC_VOLATILE },
         });
     }
 }

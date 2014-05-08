@@ -22,10 +22,10 @@ public class SyntheticStateTest extends AbstractModifierContributorTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {SyntheticState.is(false), 0},
-                {SyntheticState.NON_SYNTHETIC, 0},
-                {SyntheticState.is(true), Opcodes.ACC_SYNTHETIC},
-                {SyntheticState.SYNTHETIC, Opcodes.ACC_SYNTHETIC}
+                { SyntheticState.is(false), 0 },
+                { SyntheticState.NON_SYNTHETIC, 0 },
+                { SyntheticState.is(true), Opcodes.ACC_SYNTHETIC },
+                { SyntheticState.SYNTHETIC, Opcodes.ACC_SYNTHETIC }
         });
     }
 

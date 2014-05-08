@@ -36,7 +36,8 @@ public class SubclassInstrumentationContextDelegate
         TypeWriter.MethodPool {
 
     /**
-     * The prefix for exceptions that are thrown on
+     * The prefix for exception messages that are thrown when calling invoking a super proxy's method for an abstract
+     * method of the instrumented type.
      */
     public static final String ABSTRACT_METHOD_WARNING_PREFIX = "There is no super implementation for: ";
 
@@ -151,6 +152,7 @@ public class SubclassInstrumentationContextDelegate
     }
 
     private static enum AbstractMethodCall implements Entry, ByteCodeAppender {
+
         INSTANCE;
 
         private final TypeDescription exceptionType;

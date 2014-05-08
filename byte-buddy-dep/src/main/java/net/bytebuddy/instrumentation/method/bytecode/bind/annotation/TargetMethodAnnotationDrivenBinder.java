@@ -116,7 +116,8 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
     public static interface DefaultsProvider<T extends Annotation> {
 
         /**
-         * Creates an iterator from which a value is pulled each time no annotation
+         * Creates an iterator from which a value is pulled each time no processable annotation is found on a
+         * method parameter.
          *
          * @param typeDescription A description of the type that is instrumented.
          * @param source          The source method that is bound to the {@code target} method.
@@ -130,6 +131,10 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          * method is required to annotate each parameter with a known annotation.
          */
         static enum Empty implements DefaultsProvider<Annotation> {
+
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
             @Override
@@ -140,6 +145,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
             }
 
             private static enum EmptyIterator implements Iterator<Annotation> {
+
                 INSTANCE;
 
                 @Override
@@ -214,6 +220,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                                        Assigner assigner);
 
             static enum Unbound implements Handler {
+
                 INSTANCE;
 
                 @Override

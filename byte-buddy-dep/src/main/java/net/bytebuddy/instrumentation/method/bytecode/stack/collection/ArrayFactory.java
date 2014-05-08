@@ -10,6 +10,10 @@ import org.objectweb.asm.Opcodes;
 
 import java.util.List;
 
+/**
+ * A {@link net.bytebuddy.instrumentation.method.bytecode.stack.collection.CollectionFactory} that is capable of
+ * creating an array of a given type with any number of given values.
+ */
 public class ArrayFactory implements CollectionFactory {
 
     private static final StackManipulation.Size SIZE = StackSize.ZERO.toDecreasingSize();

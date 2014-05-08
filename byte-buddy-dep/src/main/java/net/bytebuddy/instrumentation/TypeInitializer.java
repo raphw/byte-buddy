@@ -29,6 +29,10 @@ public interface TypeInitializer {
      * A type initializer that does not do anything.
      */
     static enum NoOp implements TypeInitializer, Serializable {
+
+        /**
+         * The singleton instance.
+         */
         INSTANCE;
 
         @Override

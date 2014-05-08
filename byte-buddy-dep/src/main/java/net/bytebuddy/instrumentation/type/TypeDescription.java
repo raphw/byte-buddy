@@ -90,7 +90,7 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
     boolean represents(Class<?> type);
 
     /**
-     * Checks if the type described by this entity is an array
+     * Checks if the type described by this entity is an array.
      *
      * @return {@code true} if this type description represents an array.
      */
@@ -213,7 +213,7 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
     /**
      * An abstract base implementation of a type description.
      */
-    static abstract class AbstractTypeDescription extends AbstractModifierReviewable implements TypeDescription {
+    abstract static class AbstractTypeDescription extends AbstractModifierReviewable implements TypeDescription {
 
         @Override
         public boolean isInstance(Object object) {

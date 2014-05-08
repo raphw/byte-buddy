@@ -172,7 +172,7 @@ public interface NamingStrategy {
         }
 
         @Override
-        public String getName(UnnamedType UnnamedType) {
+        public String getName(UnnamedType unnamedType) {
             return name;
         }
 

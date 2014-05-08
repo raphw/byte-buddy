@@ -63,14 +63,14 @@ public class PrimitiveUnboxingDelegateDirectTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {boolean.class, Boolean.class, "booleanValue", "()Z", 0},
-                {byte.class, Byte.class, "byteValue", "()B", 0},
-                {short.class, Short.class, "shortValue", "()S", 0},
-                {char.class, Character.class, "charValue", "()C", 0},
-                {int.class, Integer.class, "intValue", "()I", 0},
-                {long.class, Long.class, "longValue", "()J", 1},
-                {float.class, Float.class, "floatValue", "()F", 0},
-                {double.class, Double.class, "doubleValue", "()D", 1},
+                { boolean.class, Boolean.class, "booleanValue", "()Z", 0 },
+                { byte.class, Byte.class, "byteValue", "()B", 0 },
+                { short.class, Short.class, "shortValue", "()S", 0 },
+                { char.class, Character.class, "charValue", "()C", 0 },
+                { int.class, Integer.class, "intValue", "()I", 0 },
+                { long.class, Long.class, "longValue", "()J", 1 },
+                { float.class, Float.class, "floatValue", "()F", 0 },
+                { double.class, Double.class, "doubleValue", "()D", 1 },
         });
     }
 

@@ -26,7 +26,7 @@ import java.lang.reflect.Method;
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.PARAMETER})
+@Target({ ElementType.PARAMETER })
 public @interface Origin {
 
     /**
@@ -36,6 +36,10 @@ public @interface Origin {
      * @see TargetMethodAnnotationDrivenBinder
      */
     static enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Origin> {
+
+        /**
+         * The singleton instance.
+         */
         INSTANCE;
 
         @Override

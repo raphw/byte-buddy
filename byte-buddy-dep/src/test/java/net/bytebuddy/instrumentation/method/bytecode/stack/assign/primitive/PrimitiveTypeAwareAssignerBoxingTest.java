@@ -47,14 +47,14 @@ public class PrimitiveTypeAwareAssignerBoxingTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {boolean.class, Boolean.class, true},
-                {byte.class, Byte.class, true},
-                {short.class, Short.class, true},
-                {char.class, Character.class, true},
-                {int.class, Integer.class, true},
-                {long.class, Long.class, true},
-                {float.class, Float.class, true},
-                {double.class, Double.class, true}
+                { boolean.class, Boolean.class, true },
+                { byte.class, Byte.class, true },
+                { short.class, Short.class, true },
+                { char.class, Character.class, true },
+                { int.class, Integer.class, true },
+                { long.class, Long.class, true },
+                { float.class, Float.class, true },
+                { double.class, Double.class, true }
         });
     }
 

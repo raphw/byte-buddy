@@ -442,7 +442,7 @@ public interface DynamicType {
          * @param <S> The most specific known loaded type that is implemented by the created dynamic type, usually the
          *            type itself, an interface or the direct super class.
          */
-        static abstract class AbstractBase<S> implements Builder<S> {
+        abstract static class AbstractBase<S> implements Builder<S> {
 
             /**
              * This builder's currently registered field tokens.

@@ -11,12 +11,37 @@ import org.objectweb.asm.MethodVisitor;
  */
 public enum DefaultValue implements StackManipulation {
 
+    /**
+     * The default value of a JVM integer which covers Java's {@code int}, {@code boolean}, {@code byte},
+     * {@code short} and {@code char} values.
+     */
     INTEGER(IntegerConstant.ZERO),
+
+    /**
+     * The default value of a {@code long}.
+     */
     LONG(LongConstant.ZERO),
+
+    /**
+     * The default value of a {@code float}.
+     */
     FLOAT(FloatConstant.ZERO),
+
+    /**
+     * The default value of a {@code double}.
+     */
     DOUBLE(DoubleConstant.ZERO),
+
+    /**
+     * The default value of a {@code void} which resembles a no-op manipulation.
+     */
     VOID(LegalTrivialStackManipulation.INSTANCE),
+
+    /**
+     * The default value of a reference type which resembles the {@code null} reference.
+     */
     ANY_REFERENCE(NullConstant.INSTANCE);
+
     private final StackManipulation stackManipulation;
 
     private DefaultValue(StackManipulation stackManipulation) {

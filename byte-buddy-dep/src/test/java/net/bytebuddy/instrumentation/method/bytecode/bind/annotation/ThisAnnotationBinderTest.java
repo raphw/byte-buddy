@@ -61,7 +61,7 @@ public class ThisAnnotationBinderTest extends AbstractAnnotationBinderTest<This>
         when(target.getParameterTypes()).thenReturn(typeList);
         RuntimeType runtimeType = mock(RuntimeType.class);
         doReturn(RuntimeType.class).when(runtimeType).annotationType();
-        when(target.getParameterAnnotations()).thenReturn(new Annotation[][]{{runtimeType}});
+        when(target.getParameterAnnotations()).thenReturn(new Annotation[][]{ { runtimeType } });
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
                 .bind(annotation, 0, source, target, instrumentedType, assigner);
         assertThat(parameterBinding.isValid(), is(true));

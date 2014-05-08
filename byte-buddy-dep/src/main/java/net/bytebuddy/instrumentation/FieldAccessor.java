@@ -185,12 +185,22 @@ public abstract class FieldAccessor implements Instrumentation {
      */
     public static interface FieldLocator {
 
+        /**
+         * Locates a field of a given name or throws an exception if no field with such a name exists.
+         *
+         * @param name The name of the field to locate.
+         * @return A representation of this field.
+         */
         FieldDescription locate(String name);
 
         /**
          * A factory that only looks up fields in the instrumented type.
          */
         static enum ForInstrumentedType implements Factory {
+
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
             @Override
@@ -270,6 +280,10 @@ public abstract class FieldAccessor implements Instrumentation {
              * {@link net.bytebuddy.instrumentation.FieldAccessor.FieldLocator.ForInstrumentedTypeHierarchy}.
              */
             public static enum Factory implements FieldLocator.Factory {
+
+                /**
+                 * The singleton instance.
+                 */
                 INSTANCE;
 
                 @Override

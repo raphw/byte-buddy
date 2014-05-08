@@ -45,15 +45,15 @@ public class DefaultValueTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {void.class, -1},
-                {byte.class, Opcodes.ICONST_0},
-                {short.class, Opcodes.ICONST_0},
-                {char.class, Opcodes.ICONST_0},
-                {int.class, Opcodes.ICONST_0},
-                {long.class, Opcodes.LCONST_0},
-                {float.class, Opcodes.FCONST_0},
-                {double.class, Opcodes.DCONST_0},
-                {Object.class, Opcodes.ACONST_NULL}
+                { void.class, -1 },
+                { byte.class, Opcodes.ICONST_0 },
+                { short.class, Opcodes.ICONST_0 },
+                { char.class, Opcodes.ICONST_0 },
+                { int.class, Opcodes.ICONST_0 },
+                { long.class, Opcodes.LCONST_0 },
+                { float.class, Opcodes.FCONST_0 },
+                { double.class, Opcodes.DCONST_0 },
+                { Object.class, Opcodes.ACONST_NULL }
         });
     }
 

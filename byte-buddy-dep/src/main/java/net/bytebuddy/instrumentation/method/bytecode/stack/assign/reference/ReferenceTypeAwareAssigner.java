@@ -15,6 +15,10 @@ import org.objectweb.asm.Opcodes;
  * each other if they represent the same type.
  */
 public enum ReferenceTypeAwareAssigner implements Assigner {
+
+    /**
+     * The singleton instance.
+     */
     INSTANCE;
 
     @Override

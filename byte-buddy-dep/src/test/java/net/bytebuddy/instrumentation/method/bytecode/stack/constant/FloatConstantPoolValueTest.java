@@ -36,14 +36,14 @@ public class FloatConstantPoolValueTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {Float.MIN_VALUE},
-                {-100f},
-                {-2f},
-                {0.5f},
-                {6f},
-                {7f},
-                {100f},
-                {Float.MAX_VALUE},
+                { Float.MIN_VALUE },
+                { -100f },
+                { -2f },
+                { 0.5f },
+                { 6f },
+                { 7f },
+                { 100f },
+                { Float.MAX_VALUE },
         });
     }
 

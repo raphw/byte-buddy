@@ -8,7 +8,14 @@ import org.objectweb.asm.Opcodes;
  */
 public enum TypeVisibility implements ModifierContributor.ForType {
 
+    /**
+     * Modifier for a public type.
+     */
     PUBLIC(Opcodes.ACC_PUBLIC),
+
+    /**
+     * Modifier for a package-private type. (This is the default modifier.)
+     */
     PACKAGE_PRIVATE(EMPTY_MASK);
 
     private final int mask;

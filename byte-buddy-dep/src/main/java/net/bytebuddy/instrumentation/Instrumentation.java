@@ -58,6 +58,10 @@ public interface Instrumentation {
      * attempted to be composed with other methods that do provide an implementation.
      */
     static enum ForAbstractMethod implements Instrumentation, ByteCodeAppender {
+
+        /**
+         * The singleton instance.
+         */
         INSTANCE;
 
         @Override

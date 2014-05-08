@@ -46,17 +46,17 @@ public class MethodReturnTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {void.class, Opcodes.RETURN, 0},
-                {Object.class, Opcodes.ARETURN, 1},
-                {Object[].class, Opcodes.ARETURN, 1},
-                {long.class, Opcodes.LRETURN, 2},
-                {double.class, Opcodes.DRETURN, 2},
-                {float.class, Opcodes.FRETURN, 1},
-                {int.class, Opcodes.IRETURN, 1},
-                {char.class, Opcodes.IRETURN, 1},
-                {short.class, Opcodes.IRETURN, 1},
-                {byte.class, Opcodes.IRETURN, 1},
-                {boolean.class, Opcodes.IRETURN, 1},
+                { void.class, Opcodes.RETURN, 0 },
+                { Object.class, Opcodes.ARETURN, 1 },
+                { Object[].class, Opcodes.ARETURN, 1 },
+                { long.class, Opcodes.LRETURN, 2 },
+                { double.class, Opcodes.DRETURN, 2 },
+                { float.class, Opcodes.FRETURN, 1 },
+                { int.class, Opcodes.IRETURN, 1 },
+                { char.class, Opcodes.IRETURN, 1 },
+                { short.class, Opcodes.IRETURN, 1 },
+                { byte.class, Opcodes.IRETURN, 1 },
+                { boolean.class, Opcodes.IRETURN, 1 },
         });
     }
 

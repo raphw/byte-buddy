@@ -77,7 +77,7 @@ public interface InstrumentedType extends TypeDescription {
     /**
      * An abstract base implementation of an instrumented type.
      */
-    static abstract class AbstractBase extends AbstractTypeDescription implements InstrumentedType {
+    abstract static class AbstractBase extends AbstractTypeDescription implements InstrumentedType {
 
         /**
          * The type initializer for this instrumented type.

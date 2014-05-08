@@ -101,7 +101,7 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
     /**
      * An abstract base implementation of a method description.
      */
-    static abstract class AbstractMethodDescription extends AbstractModifierReviewable implements MethodDescription {
+    abstract static class AbstractMethodDescription extends AbstractModifierReviewable implements MethodDescription {
 
         @Override
         public String getUniqueSignature() {

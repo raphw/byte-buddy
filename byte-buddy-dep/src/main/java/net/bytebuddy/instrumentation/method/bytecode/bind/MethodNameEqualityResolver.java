@@ -12,6 +12,10 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
  * {@code targetA.foo} will be considered as dominant.
  */
 public enum MethodNameEqualityResolver implements MethodDelegationBinder.AmbiguityResolver {
+
+    /**
+     * The singleton instance.
+     */
     INSTANCE;
 
     @Override

@@ -11,7 +11,14 @@ import org.objectweb.asm.Opcodes;
  */
 public enum DoubleConstant implements StackManipulation {
 
+    /**
+     * A {@code double} constant of value {@code 0.0}.
+     */
     ZERO(Opcodes.DCONST_0),
+
+    /**
+     * A {@code double} constant of value {@code 1.0}.
+     */
     ONE(Opcodes.DCONST_1);
 
     private static final StackManipulation.Size SIZE = StackSize.DOUBLE.toIncreasingSize();

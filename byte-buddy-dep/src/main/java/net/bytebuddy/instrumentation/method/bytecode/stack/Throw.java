@@ -8,6 +8,10 @@ import org.objectweb.asm.Opcodes;
  * Throws a {@link java.lang.Throwable} which must lie on top of the stack when this stack manipulation is called.
  */
 public enum Throw implements StackManipulation {
+
+    /**
+     * The singleton instance.
+     */
     INSTANCE;
 
     @Override

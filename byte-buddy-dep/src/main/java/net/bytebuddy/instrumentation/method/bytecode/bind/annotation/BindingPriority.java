@@ -11,7 +11,7 @@ import java.lang.annotation.*;
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD})
+@Target({ ElementType.METHOD })
 public @interface BindingPriority {
 
     /**
@@ -35,6 +35,10 @@ public @interface BindingPriority {
      * annotation.
      */
     static enum Resolver implements MethodDelegationBinder.AmbiguityResolver {
+
+        /**
+         * The singleton instance.
+         */
         INSTANCE;
 
         private static double resolve(BindingPriority bindingPriority) {

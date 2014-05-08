@@ -26,6 +26,10 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
  * is more specific than the {@code Object} type and determine {@code bar(String)} as the dominant binding.
  */
 public enum MostSpecificTypeResolver implements MethodDelegationBinder.AmbiguityResolver {
+
+    /**
+     * The singleton instance.
+     */
     INSTANCE;
 
     private static Resolution resolveRivalBinding(TypeDescription sourceParameterType,

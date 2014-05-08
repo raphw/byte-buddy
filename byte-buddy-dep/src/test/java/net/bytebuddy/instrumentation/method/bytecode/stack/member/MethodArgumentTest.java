@@ -45,15 +45,15 @@ public class MethodArgumentTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {Object.class, Opcodes.ALOAD, 1},
-                {boolean.class, Opcodes.ILOAD, 1},
-                {byte.class, Opcodes.ILOAD, 1},
-                {short.class, Opcodes.ILOAD, 1},
-                {char.class, Opcodes.ILOAD, 1},
-                {int.class, Opcodes.ILOAD, 1},
-                {long.class, Opcodes.LLOAD, 2},
-                {float.class, Opcodes.FLOAD, 1},
-                {double.class, Opcodes.DLOAD, 2},
+                { Object.class, Opcodes.ALOAD, 1 },
+                { boolean.class, Opcodes.ILOAD, 1 },
+                { byte.class, Opcodes.ILOAD, 1 },
+                { short.class, Opcodes.ILOAD, 1 },
+                { char.class, Opcodes.ILOAD, 1 },
+                { int.class, Opcodes.ILOAD, 1 },
+                { long.class, Opcodes.LLOAD, 2 },
+                { float.class, Opcodes.FLOAD, 1 },
+                { double.class, Opcodes.DLOAD, 2 },
         });
     }
 

@@ -76,9 +76,9 @@ public class MostSpecificTypeResolverReferenceTest extends AbstractMostSpecificT
     public void testLeftMethodDominantByType() throws Exception {
         when(sourceTypeList.size()).thenReturn(1);
         when(leftTypeList.get(0)).thenReturn(dominantTargetType);
-        when(left.getTargetParameterIndex(any())).thenAnswer(new TokenAnswer(new int[][]{{0, 0}}));
+        when(left.getTargetParameterIndex(any())).thenAnswer(new TokenAnswer(new int[][]{ { 0, 0 } }));
         when(rightTypeList.get(1)).thenReturn(weakTargetType);
-        when(right.getTargetParameterIndex(any())).thenAnswer(new TokenAnswer(new int[][]{{0, 1}}));
+        when(right.getTargetParameterIndex(any())).thenAnswer(new TokenAnswer(new int[][]{ { 0, 1 } }));
         MethodDelegationBinder.AmbiguityResolver.Resolution resolution =
                 MostSpecificTypeResolver.INSTANCE.resolve(source, left, right);
         assertThat(resolution, is(MethodDelegationBinder.AmbiguityResolver.Resolution.LEFT));
@@ -93,9 +93,9 @@ public class MostSpecificTypeResolverReferenceTest extends AbstractMostSpecificT
     public void testRightMethodDominantByType() throws Exception {
         when(sourceTypeList.size()).thenReturn(1);
         when(leftTypeList.get(0)).thenReturn(weakTargetType);
-        when(left.getTargetParameterIndex(any())).thenAnswer(new TokenAnswer(new int[][]{{0, 0}}));
+        when(left.getTargetParameterIndex(any())).thenAnswer(new TokenAnswer(new int[][]{ { 0, 0 } }));
         when(rightTypeList.get(1)).thenReturn(dominantTargetType);
-        when(right.getTargetParameterIndex(any())).thenAnswer(new TokenAnswer(new int[][]{{0, 1}}));
+        when(right.getTargetParameterIndex(any())).thenAnswer(new TokenAnswer(new int[][]{ { 0, 1 } }));
         MethodDelegationBinder.AmbiguityResolver.Resolution resolution =
                 MostSpecificTypeResolver.INSTANCE.resolve(source, left, right);
         assertThat(resolution, is(MethodDelegationBinder.AmbiguityResolver.Resolution.RIGHT));
@@ -111,10 +111,10 @@ public class MostSpecificTypeResolverReferenceTest extends AbstractMostSpecificT
         when(sourceTypeList.size()).thenReturn(1);
         when(leftTypeList.get(0)).thenReturn(weakTargetType);
         when(left.getTargetParameterIndex(any(MostSpecificTypeResolver.ParameterIndexToken.class)))
-                .thenAnswer(new TokenAnswer(new int[][]{{0, 0}}));
+                .thenAnswer(new TokenAnswer(new int[][]{ { 0, 0 } }));
         when(rightTypeList.get(0)).thenReturn(weakTargetType);
         when(right.getTargetParameterIndex(any(MostSpecificTypeResolver.ParameterIndexToken.class)))
-                .thenAnswer(new TokenAnswer(new int[][]{{0, 0}}));
+                .thenAnswer(new TokenAnswer(new int[][]{ { 0, 0 } }));
         MethodDelegationBinder.AmbiguityResolver.Resolution resolution =
                 MostSpecificTypeResolver.INSTANCE.resolve(source, left, right);
         assertThat(resolution, is(MethodDelegationBinder.AmbiguityResolver.Resolution.AMBIGUOUS));
@@ -132,10 +132,10 @@ public class MostSpecificTypeResolverReferenceTest extends AbstractMostSpecificT
         when(sourceTypeList.size()).thenReturn(1);
         when(leftTypeList.get(0)).thenReturn(dominantTargetType);
         when(left.getTargetParameterIndex(any(MostSpecificTypeResolver.ParameterIndexToken.class)))
-                .thenAnswer(new TokenAnswer(new int[][]{{0, 0}}));
+                .thenAnswer(new TokenAnswer(new int[][]{ { 0, 0 } }));
         when(rightTypeList.get(0)).thenReturn(dominantTargetType);
         when(right.getTargetParameterIndex(any(MostSpecificTypeResolver.ParameterIndexToken.class)))
-                .thenAnswer(new TokenAnswer(new int[][]{{0, 0}}));
+                .thenAnswer(new TokenAnswer(new int[][]{ { 0, 0 } }));
         MethodDelegationBinder.AmbiguityResolver.Resolution resolution =
                 MostSpecificTypeResolver.INSTANCE.resolve(source, left, right);
         assertThat(resolution, is(MethodDelegationBinder.AmbiguityResolver.Resolution.AMBIGUOUS));
@@ -154,11 +154,11 @@ public class MostSpecificTypeResolverReferenceTest extends AbstractMostSpecificT
         when(leftTypeList.get(0)).thenReturn(dominantTargetType);
         when(leftTypeList.get(1)).thenReturn(weakTargetType);
         when(left.getTargetParameterIndex(any(MostSpecificTypeResolver.ParameterIndexToken.class)))
-                .thenAnswer(new TokenAnswer(new int[][]{{0, 0}, {1, 1}}));
+                .thenAnswer(new TokenAnswer(new int[][]{ { 0, 0 }, { 1, 1 } }));
         when(rightTypeList.get(0)).thenReturn(weakTargetType);
         when(rightTypeList.get(1)).thenReturn(dominantTargetType);
         when(right.getTargetParameterIndex(any(MostSpecificTypeResolver.ParameterIndexToken.class)))
-                .thenAnswer(new TokenAnswer(new int[][]{{0, 0}, {1, 1}}));
+                .thenAnswer(new TokenAnswer(new int[][]{ { 0, 0 }, { 1, 1 } }));
         MethodDelegationBinder.AmbiguityResolver.Resolution resolution =
                 MostSpecificTypeResolver.INSTANCE.resolve(source, left, right);
         assertThat(resolution, is(MethodDelegationBinder.AmbiguityResolver.Resolution.AMBIGUOUS));
@@ -179,10 +179,10 @@ public class MostSpecificTypeResolverReferenceTest extends AbstractMostSpecificT
         when(leftTypeList.get(0)).thenReturn(dominantTargetType);
         when(leftTypeList.get(1)).thenReturn(weakTargetType);
         when(left.getTargetParameterIndex(any(MostSpecificTypeResolver.ParameterIndexToken.class)))
-                .thenAnswer(new TokenAnswer(new int[][]{{0, 0}, {1, 1}}));
+                .thenAnswer(new TokenAnswer(new int[][]{ { 0, 0 }, { 1, 1 } }));
         when(rightTypeList.get(0)).thenReturn(dominantTargetType);
         when(right.getTargetParameterIndex(any(MostSpecificTypeResolver.ParameterIndexToken.class)))
-                .thenAnswer(new TokenAnswer(new int[][]{{0, 0}}));
+                .thenAnswer(new TokenAnswer(new int[][]{ { 0, 0 } }));
         MethodDelegationBinder.AmbiguityResolver.Resolution resolution =
                 MostSpecificTypeResolver.INSTANCE.resolve(source, left, right);
         assertThat(resolution, is(MethodDelegationBinder.AmbiguityResolver.Resolution.LEFT));
@@ -202,11 +202,11 @@ public class MostSpecificTypeResolverReferenceTest extends AbstractMostSpecificT
         when(sourceTypeList.size()).thenReturn(2);
         when(leftTypeList.get(0)).thenReturn(dominantTargetType);
         when(left.getTargetParameterIndex(any(MostSpecificTypeResolver.ParameterIndexToken.class)))
-                .thenAnswer(new TokenAnswer(new int[][]{{0, 0}}));
+                .thenAnswer(new TokenAnswer(new int[][]{ { 0, 0 } }));
         when(rightTypeList.get(0)).thenReturn(dominantTargetType);
         when(rightTypeList.get(1)).thenReturn(dominantTargetType);
         when(right.getTargetParameterIndex(any(MostSpecificTypeResolver.ParameterIndexToken.class)))
-                .thenAnswer(new TokenAnswer(new int[][]{{0, 0}, {1, 1}}));
+                .thenAnswer(new TokenAnswer(new int[][]{ { 0, 0 }, { 1, 1 } }));
         MethodDelegationBinder.AmbiguityResolver.Resolution resolution =
                 MostSpecificTypeResolver.INSTANCE.resolve(source, left, right);
         assertThat(resolution, is(MethodDelegationBinder.AmbiguityResolver.Resolution.RIGHT));

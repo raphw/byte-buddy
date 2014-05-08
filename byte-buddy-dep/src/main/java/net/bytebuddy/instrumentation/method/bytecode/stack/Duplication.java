@@ -9,8 +9,20 @@ import org.objectweb.asm.Opcodes;
  * Duplicates a value that is lying on top of the stack.
  */
 public enum Duplication implements StackManipulation {
+
+    /**
+     * A duplication of no values. This corresponds a no-op instruction.
+     */
     ZERO(StackSize.ZERO, Opcodes.NOP),
+
+    /**
+     * A duplication of a single-sized stack values.
+     */
     SINGLE(StackSize.SINGLE, Opcodes.DUP),
+
+    /**
+     * A duplication of a double-sized stack value.
+     */
     DOUBLE(StackSize.DOUBLE, Opcodes.DUP2);
     private final Size size;
     private final int opcode;
