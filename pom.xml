@@ -27,6 +27,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <code.level>1.6</code.level>
         <cobertura.exclude.benchmark>net/bytebuddy/benchmark/**/*.class</cobertura.exclude.benchmark>
+        <distribution.bintray>https://api.bintray.com/maven/raphw/maven/ByteBuddy</distribution.bintray>
         <shade.source>org.objectweb.asm</shade.source>
         <shade.target>net.bytebuddy.jar.asm</shade.target>
         <version.asm>4.2</version.asm>
@@ -42,7 +43,6 @@
         <version.plugin.cobertura>2.6</version.plugin.cobertura>
         <version.plugin.coveralls>2.2.0</version.plugin.coveralls>
         <version.plugin.checkstyle>2.12.1</version.plugin.checkstyle>
-        <distribution.bintray>https://api.bintray.com/maven/raphw/maven/ByteBuddy</distribution.bintray>
     </properties>
 
     <licenses>
@@ -118,6 +118,12 @@
                     <encoding>${project.build.sourceEncoding}</encoding>
                 </configuration>
             </plugin>
+            <!-- Use an explicit version of the resource plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>${version.plugin.resources}</version>
+            </plugin>
             <!-- Define release properties -->
             <plugin>
                 <artifactId>maven-release-plugin</artifactId>
@@ -128,7 +134,7 @@
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                 </configuration>
             </plugin>
-            <!-- Add cobertura support for test case coverage-->
+            <!-- Configure Cobertura support for evaluating test case coverage -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>cobertura-maven-plugin</artifactId>
@@ -153,37 +159,7 @@
                 <artifactId>coveralls-maven-plugin</artifactId>
                 <version>${version.plugin.coveralls}</version>
             </plugin>
-            <!-- Check style on build -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>${version.plugin.checkstyle}</version>
-                <executions>
-                    <execution>
-                        <id>validate</id>
-                        <phase>validate</phase>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                        <configuration>
-                            <configLocation>checkstyle.xml</configLocation>
-                            <consoleOutput>true</consoleOutput>
-                            <failsOnError>true</failsOnError>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
-        <pluginManagement>
-            <plugins>
-                <!-- Use an explicit version of the resource plugin -->
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-resources-plugin</artifactId>
-                    <version>${version.plugin.resources}</version>
-                </plugin>
-            </plugins>
-        </pluginManagement>
     </build>
 
     <reporting>
@@ -251,6 +227,36 @@
                                 <goals>
                                     <goal>sign</goal>
                                 </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>checks</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <!-- Check style on build -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-checkstyle-plugin</artifactId>
+                        <version>${version.plugin.checkstyle}</version>
+                        <executions>
+                            <execution>
+                                <id>validate</id>
+                                <phase>validate</phase>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                                <configuration>
+                                    <configLocation>checkstyle.xml</configLocation>
+                                    <consoleOutput>true</consoleOutput>
+                                    <failsOnError>true</failsOnError>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
