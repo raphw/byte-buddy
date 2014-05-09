@@ -34,10 +34,12 @@
         <version.junit>4.11</version.junit>
         <version.mockito>1.9.5</version.mockito>
         <version.plugin.compiler>3.1</version.plugin.compiler>
+        <version.plugin.install>2.5.1</version.plugin.install>
         <version.plugin.javadoc>2.9.1</version.plugin.javadoc>
         <version.plugin.source>2.2.1</version.plugin.source>
         <version.plugin.shade>2.2</version.plugin.shade>
         <version.plugin.gpg>1.4</version.plugin.gpg>
+        <version.plugin.jxr>2.3</version.plugin.jxr>
         <version.plugin.release>2.5</version.plugin.release>
         <version.plugin.resources>2.6</version.plugin.resources>
         <version.plugin.cobertura>2.6</version.plugin.cobertura>
@@ -106,24 +108,6 @@
 
     <build>
         <plugins>
-            <!-- Define the compiler level -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>${version.plugin.compiler}</version>
-                <inherited>true</inherited>
-                <configuration>
-                    <source>${code.level}</source>
-                    <target>${code.level}</target>
-                    <encoding>${project.build.sourceEncoding}</encoding>
-                </configuration>
-            </plugin>
-            <!-- Use an explicit version of the resource plugin -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>${version.plugin.resources}</version>
-            </plugin>
             <!-- Define release properties -->
             <plugin>
                 <artifactId>maven-release-plugin</artifactId>
@@ -160,6 +144,32 @@
                 <version>${version.plugin.coveralls}</version>
             </plugin>
         </plugins>
+
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>${version.plugin.resources}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-install-plugin</artifactId>
+                    <version>${version.plugin.install}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${version.plugin.compiler}</version>
+                    <inherited>true</inherited>
+                    <configuration>
+                        <source>${code.level}</source>
+                        <target>${code.level}</target>
+                        <encoding>${project.build.sourceEncoding}</encoding>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
 
     <reporting>
@@ -167,7 +177,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jxr-plugin</artifactId>
-                <version>2.3</version>
+                <version>${version.plugin.jxr}</version>
             </plugin>
         </plugins>
     </reporting>
