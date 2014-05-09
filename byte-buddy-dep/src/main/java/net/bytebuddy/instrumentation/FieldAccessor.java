@@ -614,6 +614,7 @@ public abstract class FieldAccessor implements Instrumentation {
             InstrumentedType prepare(InstrumentedType instrumentedType);
 
             static enum NoOp implements PreparationHandler {
+
                 INSTANCE;
 
                 @Override

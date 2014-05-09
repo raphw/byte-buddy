@@ -30,9 +30,21 @@ public interface AnnotationAppender {
      */
     static enum AnnotationVisibility {
 
+        /**
+         * The annotation is preserved in the compiled class and visible at runtime.
+         */
         RUNTIME(true, false),
+
+        /**
+         * The annotation is preserved in the compiled class but not visible at runtime.
+         */
         CLASS_FILE(false, false),
+
+        /**
+         * The annotation is ignored.
+         */
         INVISIBLE(false, true);
+
         private final boolean visible;
         private final boolean suppressed;
 

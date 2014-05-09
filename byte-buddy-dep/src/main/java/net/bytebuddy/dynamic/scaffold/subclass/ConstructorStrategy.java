@@ -42,24 +42,28 @@ public interface ConstructorStrategy {
 
     /**
      * Default implementations of constructor strategies.
-     * <ol>
-     * <li>The {@link net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy.Default#NO_CONSTRUCTORS}
-     * strategy is adding no constructors such that the instrumented type will by default not have any. This is legal by
-     * Java byte code requirements. However, if no constructor is added manually if this strategy is applied, the type
-     * is not constructable without using JVM non-public functionality.</li>
-     * <li>The {@link net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy.Default#DEFAULT_CONSTRUCTOR}
-     * strategy is adding a default constructor that calls it's super types default constructor. If no such constructor is defined,
-     * an {@link IllegalArgumentException} is thrown. Only {@code public} or {@code protected} constructors are considered
-     * by this strategy.</li>
-     * <li>The {@link net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy.Default#IMITATE_SUPER_TYPE}
-     * strategy is adding all constructors of the super type which are making direct calls to their super constructor of
-     * same signature. Only {@code public} or {@code protected} constructors are considered by this strategy.</li>
-     * </ol>
      */
     static enum Default implements ConstructorStrategy {
 
+        /**
+         * This strategy is adding no constructors such that the instrumented type will by default not have any. This
+         * is legal by Java byte code requirements. However, if no constructor is added manually if this strategy is
+         * applied, the type is not constructable without using JVM non-public functionality.
+         */
         NO_CONSTRUCTORS,
+
+        /**
+         * This strategy is adding a default constructor that calls it's super types default constructor. If no such
+         * constructor is defined, an {@link IllegalArgumentException} is thrown. Only {@code public} or
+         * {@code protected} constructors are considered by this strategy.
+         */
         DEFAULT_CONSTRUCTOR,
+
+        /**
+         * This strategy is adding all constructors of the super type which are making direct calls to their super
+         * constructor of same signature. Only {@code public} or {@code protected} constructors are considered by this
+         * strategy.
+         */
         IMITATE_SUPER_TYPE;
 
         @Override

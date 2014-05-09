@@ -75,6 +75,11 @@ public @interface Super {
      * @see net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Super
      */
     static enum Instantiation {
+
+        /**
+         * A proxy instance is instantiated by its constructor. For the constructor's arguments, the parameters default
+         * values are used. The constructor can be identified by setting {@link Super#constructorParameters()}.
+         */
         CONSTRUCTOR {
             @Override
             protected StackManipulation proxyFor(TypeDescription parameterType,
@@ -89,6 +94,11 @@ public @interface Super {
                 return new TypeProxy.ByConstructor(parameterType, instrumentedType, typeDescriptions, annotation.ignoreFinalizer());
             }
         },
+
+        /**
+         * A proxy is instantiated by calling JVM internal methods and without calling a constructor. This strategy
+         * might fail on exotic JVM implementations.
+         */
         UNSAFE {
             @Override
             protected StackManipulation proxyFor(TypeDescription parameterType,

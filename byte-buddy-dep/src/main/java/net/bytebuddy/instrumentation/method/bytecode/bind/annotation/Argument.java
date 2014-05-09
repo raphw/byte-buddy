@@ -62,6 +62,11 @@ public @interface Argument {
      */
     static enum BindingMechanic {
 
+        /**
+         * The binding is unique, i.e. only one such binding must be present among all parameters of a method. As a
+         * consequence, the binding can be latter identified by an
+         * {@link net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.AmbiguityResolver}.
+         */
         UNIQUE {
             @Override
             protected MethodDelegationBinder.ParameterBinding<?> makeBinding(TypeDescription sourceType,
@@ -78,6 +83,10 @@ public @interface Argument {
                 );
             }
         },
+
+        /**
+         * The binding is anonymous, i.e. it can be present on several parameters of the same method.
+         */
         ANONYMOUS {
             @Override
             protected MethodDelegationBinder.ParameterBinding<?> makeBinding(TypeDescription sourceType,

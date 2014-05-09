@@ -144,9 +144,26 @@ public interface BridgeMethodResolver {
          */
         public static enum Factory implements BridgeMethodResolver.Factory {
 
+            /**
+             * A factory for a {@link net.bytebuddy.dynamic.scaffold.BridgeMethodResolver.Factory} that implements the
+             * {@link net.bytebuddy.dynamic.scaffold.BridgeMethodResolver.Simple.ConflictHandler.Default#FAIL_FAST}
+             * strategy.
+             */
             FAIL_FAST(ConflictHandler.Default.FAIL_FAST),
-            FAIL_ON_REQUEST(ConflictHandler.Default.FAIL_FAST),
-            CALL_BRIDGE(ConflictHandler.Default.FAIL_FAST);
+
+            /**
+             * A factory for a {@link net.bytebuddy.dynamic.scaffold.BridgeMethodResolver.Factory} that implements the
+             * {@link net.bytebuddy.dynamic.scaffold.BridgeMethodResolver.Simple.ConflictHandler.Default#FAIL_ON_REQUEST}
+             * strategy.
+             */
+            FAIL_ON_REQUEST(ConflictHandler.Default.FAIL_ON_REQUEST),
+
+            /**
+             * A factory for a {@link net.bytebuddy.dynamic.scaffold.BridgeMethodResolver.Factory} that implements the
+             * {@link net.bytebuddy.dynamic.scaffold.BridgeMethodResolver.Simple.ConflictHandler.Default#CALL_BRIDGE}
+             * strategy.
+             */
+            CALL_BRIDGE(ConflictHandler.Default.CALL_BRIDGE);
 
             private final ConflictHandler conflictHandler;
 
@@ -176,18 +193,24 @@ public interface BridgeMethodResolver {
             BridgeTarget choose(MethodDescription bridgeMethod, MethodList targetCandidates);
 
             /**
-             * Default implementations of a {@link net.bytebuddy.dynamic.scaffold.BridgeMethodResolver.Simple.ConflictHandler}.
-             * This conflict handler will either:
-             * <ul>
-             * <li><b>FAIL_FAST</b>: Fails immediately when an ambiguous resolution is discovered.</li>
-             * <li><b>FAIL_ON_REQUEST</b>: Fails lazily when an ambiguous resolution is applied.</li>
-             * <li><b>CALL_BRIDGE</b>: Calls the bridge methods directly which was resolved ambiguously.</li>
-             * </ul>
+             * Default implementations of a
+             * {@link net.bytebuddy.dynamic.scaffold.BridgeMethodResolver.Simple.ConflictHandler}.
              */
             static enum Default implements ConflictHandler {
 
+                /**
+                 * A strategy that fails immediately when an ambiguous resolution is discovered.
+                 */
                 FAIL_FAST,
+
+                /**
+                 * A strategy that fails when an ambiguous resolution is attempted to be used.
+                 */
                 FAIL_ON_REQUEST,
+
+                /**
+                 * A strategy that calls the unresolved bridge method when its target resolution is ambigous.
+                 */
                 CALL_BRIDGE;
 
                 @Override

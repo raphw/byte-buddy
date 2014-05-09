@@ -25,27 +25,28 @@ public interface ClassLoadingStrategy {
     Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types);
 
     /**
-     * Default class loading strategies.
-     * <ol>
-     * <li>The {@link net.bytebuddy.dynamic.ClassLoadingStrategy.Default#WRAPPER} strategy
-     * will create a new {@link net.bytebuddy.dynamic.loading.ByteArrayClassLoader} which
-     * has the given class loader as its parent. The byte array class loader is aware of a given number of types
-     * and can natively load the given classes. This allows to load classes with cyclic dependencies since the byte
-     * array class loader is queried on each encountered unknown class. Due to the encapsulation of the
-     * classes that were loaded by a byte array class loader, this strategy will lead to the unloading of these
-     * classes once this class loader, its classes or any instances of these classes become unreachable.</li>
-     * <li>The {@link net.bytebuddy.dynamic.ClassLoadingStrategy.Default#INJECTION} strategy
-     * will not create a new class loader but inject all classes into the given {@link java.lang.ClassLoader} by
-     * reflective access. This prevents the loading of classes with cyclic dependencies but avoids the creation of
-     * an additional class loader. The advantage of this strategy is that the loaded classes will have package-private
-     * access to other classes within their package of the class loader into which they are injected what is not
-     * permitted when the wrapper class loader is used. This strategy is implemented using a
-     * {@link net.bytebuddy.dynamic.loading.ClassLoaderByteArrayInjector}.</li>
-     * </ol>
+     * This class contains implementations of default class loading strategies.
      */
     static enum Default implements ClassLoadingStrategy {
 
+        /**
+         * This strategy creates a new {@link net.bytebuddy.dynamic.loading.ByteArrayClassLoader} with the given
+         * class loader as its parent. The byte array class loader is aware of a given number of types and can
+         * natively load the given classes. This allows to load classes with cyclic dependencies since the byte
+         * array class loader is queried on each encountered unknown class. Due to the encapsulation of the
+         * classes that were loaded by a byte array class loader, this strategy will lead to the unloading of these
+         * classes once this class loader, its classes or any instances of these classes become unreachable.
+         */
         WRAPPER,
+
+        /**
+         * This strategy creates a new class loader but inject all classes into the given {@link java.lang.ClassLoader}
+         * by reflective access. This prevents the loading of classes with cyclic dependencies but avoids the creation
+         * of an additional class loader. The advantage of this strategy is that the loaded classes will have
+         * package-private access to other classes within their package of the class loader into which they are
+         * injected what is not permitted when the wrapper class loader is used. This strategy is implemented using a
+         * {@link net.bytebuddy.dynamic.loading.ClassLoaderByteArrayInjector}.
+         */
         INJECTION;
 
         @Override
