@@ -65,7 +65,7 @@ public final class ByteBuddyCommons {
     );
 
     private ByteBuddyCommons() {
-        throw new AssertionError();
+        throw new UnsupportedOperationException();
     }
 
     /**

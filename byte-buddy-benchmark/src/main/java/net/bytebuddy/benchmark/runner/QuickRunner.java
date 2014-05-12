@@ -32,6 +32,6 @@ public class QuickRunner {
     }
 
     private QuickRunner() {
-        throw new AssertionError();
+        throw new UnsupportedOperationException();
     }
 }

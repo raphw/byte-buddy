@@ -24,7 +24,7 @@ import java.util.List;
 public final class MethodMatchers {
 
     private MethodMatchers() {
-        throw new AssertionError();
+        throw new UnsupportedOperationException();
     }
 
     /**

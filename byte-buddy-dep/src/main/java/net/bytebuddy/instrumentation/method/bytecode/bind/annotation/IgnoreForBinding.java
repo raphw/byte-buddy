@@ -21,7 +21,7 @@ public @interface IgnoreForBinding {
     static final class Verifier {
 
         private Verifier() {
-            throw new AssertionError();
+            throw new UnsupportedOperationException();
         }
 
         /**

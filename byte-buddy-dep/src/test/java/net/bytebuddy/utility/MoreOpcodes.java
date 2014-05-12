@@ -31,6 +31,6 @@ public final class MoreOpcodes {
     public static final int ALOAD_3 = 45;
 
     private MoreOpcodes() {
-        throw new AssertionError();
+        throw new UnsupportedOperationException();
     }
 }
