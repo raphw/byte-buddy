@@ -235,8 +235,45 @@ code {
 }
 
 /*
+ * Table styling
+ */
+
+table.table-section-border {
+    font-size: 13px;
+}
+
+table.table-section-border tr td {
+    border: none;
+}
+
+table.table-section-border thead, table.table-section-border tbody td:first-child {
+    font-weight: bold;
+}
+
+table.table-section-border thead {
+    text-align: center;
+}
+
+table.table-section-border, table.table-section-border thead tr {
+    border-bottom: 2px double #FFA408;
+}
+
+table.table-section-border tr.table-auxiliary {
+    font-style: italic;
+}
+
+table.table-section-border tr.table-auxiliary td {
+    margin-top: 0;
+    padding-top: 0;
+}
+
+table.table-section-border tr.table-section {
+    border-top: 1px dashed #FFA408;
+}
+
+/*
  * Social media icons
-*/
+ */
 
 .social-icon {
     background-image: url("../images/social-icons.png");

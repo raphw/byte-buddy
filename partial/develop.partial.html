@@ -56,10 +56,12 @@ mvn package
         backwards-compatibility</a>, the <code>byte-buddy</code> module repackages the ASM-dependency into Byte Buddy's
         own name space. In doing so, the ASM dependency is moved to <code>net.bytebuddy.jar.asm</code>. This
         dependency-free module does not define sources of its own but relies on the <code>byte-buddy-dev</code> module.
-        On its build, all depdencies are resolved and a dependency-free deployment descriptor is created. Further
+        On its build, all dependencies are resolved and a dependency-free deployment descriptor is created. Further
         information can be found in the section on <a href="#/dependency">how to define a dependency onto Byte Buddy</a>.
-        For generating source code and javadoc artifcats, you need to run the Maven build using the <code>extras</code>
-        profile.
+        In order to activate this repacking, you need to run the Maven build using the <code>extras</code> profile which
+        will furthermore cause the creation of artifacts for source code and javadoc. As another module,
+        <code>byte-buddy-benchmark</code> contains a <a href="http://openjdk.java.net/projects/code-tools/jmh/">JMH</a>
+        benchmark for measuring Byte Buddy's runtime behavior compared to other code generation libraries.
     </p>
 
     <h2>Contribute</h2>
@@ -70,7 +72,8 @@ mvn package
         sure that you have accurately described your changes and the fixed issue and please provide a test case that
         reproduces the problem and proves that your fix is working. This makes our work much easier and we will be able
         to apply your patch much quicker. If you add new non-private methods, fields or types, make sure to write
-        some in-code documentation that describes their purpose.
+        some in-code documentation that describes their purpose. If you apply performance-relevant changes, please
+        self-critically reflect those changes using the <code>byte-buddy-benchmark</code> suite.
     </p>
 
     <p>

@@ -199,7 +199,8 @@ class HardcodedFrameworkImpl implements Framework {
     knows some tricks the other frameworks cannot apply. The overall objective of Byte Buddy is to work declaratively,
     both by focusing on its domain specific language and the use of annotations. No other code generation library for
     the JVM we know of works this way. Nevertheless, you might want to have a look at some other frameworks for code
-    generation to find out which one suites you best:
+    generation to find out which one suites you best. Among others, the following libraries are prevalent in the Java
+    space:
 </p>
 
 <dl class="dl-horizontal padded">
@@ -231,13 +232,6 @@ class HardcodedFrameworkImpl implements Framework {
         the JCL's proxy utilities but allows extending classes and is not limited to interfaces. The scope of
         javassist's proxy tools remain however equally limited in its API and functionality.
     </dd>
-    <dt>
-        <a href="http://jodd.org/doc/proxetta/">Proxetta</a>
-    </dt>
-    <dd>
-        Proxetta is a module of the Jodd framework and a rather young player in the field of code generation. Proxetta
-        focuses on the creation of proxies and can be considered as similar to cglib in its approach.
-    </dd>
 </dl>
 
 <p>
@@ -249,6 +243,149 @@ class HardcodedFrameworkImpl implements Framework {
     what byte code is or how it works, you are able to do quite a lot without digging deep into the framework. Did
     you for example have a look at the <a data-ng-href="#helloworld"><code>Hello World!</code> example</a>? Using Byte
     Buddy is that easy.
+</p>
+
+<p>
+    Of course, a pleasant API is not the only feature to consider when choosing a code generation library. For many
+    applications, the runtime characteristics of generated code is more likely to determine a best choice. And beyond
+    the runtime of the generated code itself, the runtime for creating a dynamic class can also be a concern. Claiming
+    that <i>We are the fastest!</i> is as easy as it is hard to provide a valid metric for a library's speed. Still, we
+    want to provide such a metric as a basic orientation. However, keep in mind that these results do not necessarily
+    translate to your more specific use case where you should rather conduct an individual metric.
+</p>
+
+<p>
+    Before discussing our metric, let us look at the raw data. The following table displays an operation's average
+    runtime in nanoseconds where the standard deviation is attached in braces:
+</p>
+
+<div class="table-responsive">
+    <table class="table table-section-border">
+        <thead>
+        <tr>
+            <td></td>
+            <td colspan="2">Byte Buddy</td>
+            <td colspan="2">cglib</td>
+            <td colspan="2">javassist</td>
+            <td colspan="2">Java proxy</td>
+        </tr>
+        </thead>
+        <tbody>
+        <tr class="table-section section-uneven">
+            <td>trivial class creation</td>
+            <td>76.885</td>
+            <td>(0.622)</td>
+            <td>260.398</td>
+            <td>(2.668)</td>
+            <td>165.573</td>
+            <td>(2.312)</td>
+            <td>75.116</td>
+            <td>(0.908)</td>
+        </tr>
+        <tr class="table-section section-even">
+            <td>interface (stub methods)</td>
+            <td>182.009</td>
+            <td>(1.200)</td>
+            <td>845.030</td>
+            <td>(4.601)</td>
+            <td>736.244</td>
+            <td>(5.120)</td>
+            <td>1046.891</td>
+            <td>(5.574)</td>
+        </tr>
+        <tr class="table-section section-uneven">
+            <td>stub method invocation</td>
+            <td>0.001</td>
+            <td>(0.000)</td>
+            <td>0.002</td>
+            <td>(0.000)</td>
+            <td>0.009</td>
+            <td>(0.000)</td>
+            <td>0.005</td>
+            <td>(0.000)</td>
+        </tr>
+        <tr class="table-section section-even">
+            <td>class (super method invocation)</td>
+            <td>219.615</td>
+            <td>(1.968)</td>
+            <td>1589.276</td>
+            <td>(14.151)</td>
+            <td>658.563</td>
+            <td>(2.131)</td>
+            <td colspan="2">&ndash;</td>
+        </tr>
+        <tr class="table-auxiliary section-even">
+            <td></td>
+            <td><i>3111.525</i></td>
+            <td>(27.637)</td>
+            <td colspan="2"></td>
+            <td colspan="2"></td>
+            <td colspan="2"></td>
+        </tr>
+        <tr class="table-section section-uneven">
+            <td>super method invocation</td>
+            <td>0.002</td>
+            <td>(0.000)</td>
+            <td>0.019</td>
+            <td>(0.000)</td>
+            <td>0.028</td>
+            <td>(0.001)</td>
+            <td colspan="2">&ndash;</td>
+        </tr>
+        <tr class="table-auxiliary section-uneven">
+            <td></td>
+            <td>0.003</td>
+            <td>(0.000)</td>
+            <td colspan="2"></td>
+            <td colspan="2"></td>
+            <td colspan="2"></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<p>
+    As obvious from the table, Byte Buddy generally outperforms its counterparts. This concerns both the runtime of a
+    class's creation and the runtime of invoking the generated class's methods. The first benchmark defines the task
+    to subclass <code>Object</code> without implementing or overriding any methods what gives a good measure for a
+    library's general overhead. In this benchmark, Byte Buddy performs equally well as Java's built-in proxies.
+    However, when additionally implementing an interface with 20 methods by creating method stubs, Byte Buddy performs
+    better than any other benchmarked library. This is especially true for the runtime behavior of the generated class.
+    The good performance of the class generation is partly determined by the manner a method's implementation is
+    described to Byte Buddy. This can be observed in the last benchmark which measures the required time for subclassing
+    a class with 20 methods where all methods should be overridden to merely call their super class's implementation.
+    Using Byte Buddy, this can be achieved immediately by using a <code>SuperMethodCall</code> or by describing this
+    behavior as annotated Java code using a <code>MethodDelegation</code>. Do not worry about these classes for now, we
+    will discuss both of these approaches in a later section. As the benchmark states, the latter approach is slower
+    and takes more time than performing this task using another library. The performance loss is caused by the
+    <code>MethodDelegation</code>'s flexible nature to be configured by few annotations what requires Byte Buddy to
+    interpret the user's code for an optimal method implementation. This performance loss does however not persist to
+    the class's runtime performance where all meta information is already expressed within the method's implementation.
+</p>
+
+<p>
+    In general, Byte Buddy does not want to be opinionated about a trade-off between costs of class creation and
+    the costs of using generated code. If the runtime of class creation is in particular important to you, you should
+    however always consider to implement a specialized method <code>Instrumentation</code>. This topic is covered in
+    detail in a later section of this tutorial. For most users, Byte Buddy's general purpose instrumentations should
+    however suffice since runtime generated classes are usually only created in an application's bootstrap. Do not
+    forget that the above measures reflect nanoseconds. Only while reading this paragraph, a code generator could have
+    created millions of classes. In this context, note that Java classes are not garbage collected as long as their
+    class loader is alive. This often means that classes are never garbage collected. Therefore, be careful when
+    generating code as it
+    <a href="http://www.oracle.com/technetwork/java/javase/memleaks-137499.html#gbyuu">can give you trouble</a> when
+    limited <i>perm gen</i> or <i>meta space</i> is available.
+</p>
+
+<p>
+    Finally, note that our metrics measure the performance of Java code that was priorly optimized by a
+    JVM's <a href="http://en.wikipedia.org/wiki/Just-in-time_compilation">just in time compiler</a>. If your code is
+    only executed occasionally, the performance will be worse than it is suggested by the above metrics. In this
+    case, your code is however not performance-critical to begin with. The code for this metrics is distributed
+    together with Byte Buddy and you can run these metrics on your own computer where the above numbers might be scaled
+    depending on your machine's processing power. For this reason, do not interpret the above numbers absolutely but
+    consider them as a relative measure comparing different libraries. When further developing Byte Buddy, we want
+    to monitor these metrics in order to avoid performance penalties when adding new features.
 </p>
 
 <p>
