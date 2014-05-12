@@ -30,4 +30,8 @@ public class QuickRunner {
                 .forks(1)
                 .build()).run();
     }
+
+    private QuickRunner() {
+        throw new AssertionError();
+    }
 }
