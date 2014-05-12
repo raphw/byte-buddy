@@ -68,8 +68,8 @@ public class DynamicTypeDefaultTest {
 
     @Before
     public void setUp() throws Exception {
-        binaryRepresentation = new byte[]{ 0, 1, 2 };
-        auxiliaryTypeBinaryRepresentation = new byte[]{ 4, 5, 6 };
+        binaryRepresentation = new byte[]{0, 1, 2};
+        auxiliaryTypeBinaryRepresentation = new byte[]{4, 5, 6};
         dynamicType = new DynamicType.Default(typeDescription,
                 binaryRepresentation,
                 mainTypeInitializer,

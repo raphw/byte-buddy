@@ -15,7 +15,7 @@ public class TypeListForLoadedTypeTest {
 
     @Before
     public void setUp() throws Exception {
-        typeList = new TypeList.ForLoadedType(new Class<?>[]{ Object.class, Integer.class, long.class });
+        typeList = new TypeList.ForLoadedType(new Class<?>[]{Object.class, Integer.class, long.class});
     }
 
     @Test

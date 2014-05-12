@@ -45,7 +45,8 @@ public interface ClassLoadingStrategy {
          * of an additional class loader. The advantage of this strategy is that the loaded classes will have
          * package-private access to other classes within their package of the class loader into which they are
          * injected what is not permitted when the wrapper class loader is used. This strategy is implemented using a
-         * {@link net.bytebuddy.dynamic.loading.ClassLoaderByteArrayInjector}.
+         * {@link net.bytebuddy.dynamic.loading.ClassLoaderByteArrayInjector}. Note that this strategy usually yields
+         * a better runtime performance.
          */
         INJECTION;
 

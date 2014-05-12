@@ -18,10 +18,10 @@ public class MethodManifestationTest extends AbstractModifierContributorTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                { MethodManifestation.PLAIN, 0 },
-                { MethodManifestation.ABSTRACT, Opcodes.ACC_ABSTRACT },
-                { MethodManifestation.FINAL, Opcodes.ACC_FINAL },
-                { MethodManifestation.FINAL_NATIVE, Opcodes.ACC_FINAL | Opcodes.ACC_NATIVE },
+                {MethodManifestation.PLAIN, 0},
+                {MethodManifestation.ABSTRACT, Opcodes.ACC_ABSTRACT},
+                {MethodManifestation.FINAL, Opcodes.ACC_FINAL},
+                {MethodManifestation.FINAL_NATIVE, Opcodes.ACC_FINAL | Opcodes.ACC_NATIVE},
         });
     }
 }

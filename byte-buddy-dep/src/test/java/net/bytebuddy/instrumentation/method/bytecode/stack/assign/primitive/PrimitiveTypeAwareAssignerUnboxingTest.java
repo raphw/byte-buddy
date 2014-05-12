@@ -45,14 +45,14 @@ public class PrimitiveTypeAwareAssignerUnboxingTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                { Boolean.class, boolean.class, true },
-                { Byte.class, byte.class, true },
-                { Short.class, short.class, true },
-                { Character.class, char.class, true },
-                { Integer.class, int.class, true },
-                { Long.class, long.class, true },
-                { Float.class, float.class, true },
-                { Double.class, double.class, true }
+                {Boolean.class, boolean.class, true},
+                {Byte.class, byte.class, true},
+                {Short.class, short.class, true},
+                {Character.class, char.class, true},
+                {Integer.class, int.class, true},
+                {Long.class, long.class, true},
+                {Float.class, float.class, true},
+                {Double.class, double.class, true}
         });
     }
 

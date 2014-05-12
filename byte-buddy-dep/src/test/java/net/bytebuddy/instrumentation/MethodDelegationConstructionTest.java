@@ -58,16 +58,16 @@ public class MethodDelegationConstructionTest<T extends CallTraceable>
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                { BooleanSource.class, BooleanTarget.class, new Class<?>[]{ boolean.class }, new Object[]{ DEFAULT_BOOLEAN }, is(!DEFAULT_BOOLEAN) },
-                { ByteSource.class, ByteTarget.class, new Class<?>[]{ byte.class }, new Object[]{ DEFAULT_BYTE }, is((byte) (DEFAULT_BYTE * BYTE_MULTIPLICATOR)) },
-                { ShortSource.class, ShortTarget.class, new Class<?>[]{ short.class }, new Object[]{ DEFAULT_SHORT }, is((short) (DEFAULT_SHORT * SHORT_MULTIPLICATOR)) },
-                { CharSource.class, CharTarget.class, new Class<?>[]{ char.class }, new Object[]{ DEFAULT_CHAR }, is((char) (DEFAULT_CHAR * CHAR_MULTIPLICATOR)) },
-                { IntSource.class, IntTarget.class, new Class<?>[]{ int.class }, new Object[]{ DEFAULT_INT }, is(DEFAULT_INT * INT_MULTIPLICATOR) },
-                { LongSource.class, LongTarget.class, new Class<?>[]{ long.class }, new Object[]{ DEFAULT_LONG }, is(DEFAULT_LONG * LONG_MULTIPLICATOR) },
-                { FloatSource.class, FloatTarget.class, new Class<?>[]{ float.class }, new Object[]{ DEFAULT_FLOAT }, is(DEFAULT_FLOAT * FLOAT_MULTIPLICATOR) },
-                { DoubleSource.class, DoubleTarget.class, new Class<?>[]{ double.class }, new Object[]{ DEFAULT_DOUBLE }, is(DEFAULT_DOUBLE * DOUBLE_MULTIPLICATOR) },
-                { VoidSource.class, VoidTarget.class, new Class<?>[0], new Object[0], nullValue() },
-                { StringSource.class, StringTarget.class, new Class<?>[]{ String.class }, new Object[]{ FOO }, is(FOO + BAR) },
+                {BooleanSource.class, BooleanTarget.class, new Class<?>[]{boolean.class}, new Object[]{DEFAULT_BOOLEAN}, is(!DEFAULT_BOOLEAN)},
+                {ByteSource.class, ByteTarget.class, new Class<?>[]{byte.class}, new Object[]{DEFAULT_BYTE}, is((byte) (DEFAULT_BYTE * BYTE_MULTIPLICATOR))},
+                {ShortSource.class, ShortTarget.class, new Class<?>[]{short.class}, new Object[]{DEFAULT_SHORT}, is((short) (DEFAULT_SHORT * SHORT_MULTIPLICATOR))},
+                {CharSource.class, CharTarget.class, new Class<?>[]{char.class}, new Object[]{DEFAULT_CHAR}, is((char) (DEFAULT_CHAR * CHAR_MULTIPLICATOR))},
+                {IntSource.class, IntTarget.class, new Class<?>[]{int.class}, new Object[]{DEFAULT_INT}, is(DEFAULT_INT * INT_MULTIPLICATOR)},
+                {LongSource.class, LongTarget.class, new Class<?>[]{long.class}, new Object[]{DEFAULT_LONG}, is(DEFAULT_LONG * LONG_MULTIPLICATOR)},
+                {FloatSource.class, FloatTarget.class, new Class<?>[]{float.class}, new Object[]{DEFAULT_FLOAT}, is(DEFAULT_FLOAT * FLOAT_MULTIPLICATOR)},
+                {DoubleSource.class, DoubleTarget.class, new Class<?>[]{double.class}, new Object[]{DEFAULT_DOUBLE}, is(DEFAULT_DOUBLE * DOUBLE_MULTIPLICATOR)},
+                {VoidSource.class, VoidTarget.class, new Class<?>[0], new Object[0], nullValue()},
+                {StringSource.class, StringTarget.class, new Class<?>[]{String.class}, new Object[]{FOO}, is(FOO + BAR)},
         });
     }
 

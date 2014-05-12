@@ -51,21 +51,21 @@ public class PrimitiveWideningDelegateNontrivialTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                { byte.class, long.class, 1, Opcodes.I2L },
-                { byte.class, float.class, 0, Opcodes.I2F },
-                { byte.class, double.class, 1, Opcodes.I2L },
-                { short.class, long.class, 1, Opcodes.I2L },
-                { short.class, float.class, 0, Opcodes.I2F },
-                { short.class, double.class, 1, Opcodes.I2D },
-                { char.class, long.class, 1, Opcodes.I2L },
-                { char.class, float.class, 0, Opcodes.I2F },
-                { char.class, double.class, 1, Opcodes.I2D },
-                { int.class, long.class, 1, Opcodes.I2L },
-                { int.class, float.class, 0, Opcodes.I2F },
-                { int.class, double.class, 1, Opcodes.I2D },
-                { long.class, float.class, -1, Opcodes.L2F },
-                { long.class, double.class, 0, Opcodes.L2D },
-                { float.class, double.class, 1, Opcodes.F2D }
+                {byte.class, long.class, 1, Opcodes.I2L},
+                {byte.class, float.class, 0, Opcodes.I2F},
+                {byte.class, double.class, 1, Opcodes.I2L},
+                {short.class, long.class, 1, Opcodes.I2L},
+                {short.class, float.class, 0, Opcodes.I2F},
+                {short.class, double.class, 1, Opcodes.I2D},
+                {char.class, long.class, 1, Opcodes.I2L},
+                {char.class, float.class, 0, Opcodes.I2F},
+                {char.class, double.class, 1, Opcodes.I2D},
+                {int.class, long.class, 1, Opcodes.I2L},
+                {int.class, float.class, 0, Opcodes.I2F},
+                {int.class, double.class, 1, Opcodes.I2D},
+                {long.class, float.class, -1, Opcodes.L2F},
+                {long.class, double.class, 0, Opcodes.L2D},
+                {float.class, double.class, 1, Opcodes.F2D}
         });
     }
 

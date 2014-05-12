@@ -26,7 +26,12 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <code.level>1.6</code.level>
-        <cobertura.exclude.benchmark>net/bytebuddy/benchmark/**/*.class</cobertura.exclude.benchmark>
+        <cobertura.exclude.benchmark.generated>
+            net/bytebuddy/benchmark/generated/**/*.class
+        </cobertura.exclude.benchmark.generated>
+        <cobertura.exclude.benchmark.runner>
+            net/bytebuddy/benchmark/runner/**/*.class
+        </cobertura.exclude.benchmark.runner>
         <distribution.bintray>https://api.bintray.com/maven/raphw/maven/ByteBuddy</distribution.bintray>
         <shade.source>org.objectweb.asm</shade.source>
         <shade.target>net.bytebuddy.jar.asm</shade.target>
@@ -127,7 +132,8 @@
                     <aggregate>true</aggregate>
                     <instrumentation>
                         <excludes>
-                            <exclude>${cobertura.exclude.benchmark}</exclude>
+                            <exclude>${cobertura.exclude.benchmark.generated}</exclude>
+                            <exclude>${cobertura.exclude.benchmark.runner}</exclude>
                         </excludes>
                     </instrumentation>
                     <formats>

@@ -40,8 +40,8 @@ public class LongConstantOpcodeTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                { 0L, Opcodes.LCONST_0 },
-                { 1L, Opcodes.LCONST_1 }
+                {0L, Opcodes.LCONST_0},
+                {1L, Opcodes.LCONST_1}
         });
     }
 

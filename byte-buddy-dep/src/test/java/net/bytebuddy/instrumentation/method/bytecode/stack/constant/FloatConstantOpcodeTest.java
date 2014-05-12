@@ -40,9 +40,9 @@ public class FloatConstantOpcodeTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                { 0f, Opcodes.FCONST_0 },
-                { 1f, Opcodes.FCONST_1 },
-                { 2f, Opcodes.FCONST_2 }
+                {0f, Opcodes.FCONST_0},
+                {1f, Opcodes.FCONST_1},
+                {2f, Opcodes.FCONST_2}
         });
     }
 

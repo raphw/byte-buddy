@@ -24,7 +24,7 @@ import java.util.concurrent.Callable;
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ ElementType.PARAMETER, ElementType.METHOD })
+@Target({ElementType.PARAMETER, ElementType.METHOD})
 public @interface SuperCall {
 
     /**

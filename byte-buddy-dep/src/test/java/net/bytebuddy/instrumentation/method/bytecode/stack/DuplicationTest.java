@@ -43,9 +43,9 @@ public class DuplicationTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                { StackSize.ZERO, Opcodes.NOP },
-                { StackSize.SINGLE, Opcodes.DUP },
-                { StackSize.DOUBLE, Opcodes.DUP2 }
+                {StackSize.ZERO, Opcodes.NOP},
+                {StackSize.SINGLE, Opcodes.DUP},
+                {StackSize.DOUBLE, Opcodes.DUP2}
         });
     }
 

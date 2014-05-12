@@ -79,7 +79,7 @@ public class AnnotationAppenderDefaultTest {
 
     @Test
     public void testMultipleArgumentAnnotation() throws Exception {
-        int[] array = { 2, 3, 4 };
+        int[] array = {2, 3, 4};
         Class<?> bar = makeTypeWithAnnotation(new Baz.Instance(FOOBAR, array, new Foo.Instance(), Baz.Enum.VALUE, Void.class));
         assertThat(bar.getAnnotations().length, is(1));
         assertThat(bar.isAnnotationPresent(Baz.class), is(true));

@@ -64,10 +64,10 @@ public class FieldAccessTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                { true, StackSize.SINGLE, 1, 1, Opcodes.GETSTATIC, -1, 0, Opcodes.PUTSTATIC },
-                { true, StackSize.DOUBLE, 2, 2, Opcodes.GETSTATIC, -2, 0, Opcodes.PUTSTATIC },
-                { false, StackSize.SINGLE, 0, 0, Opcodes.GETFIELD, -2, 0, Opcodes.PUTFIELD },
-                { false, StackSize.DOUBLE, 1, 1, Opcodes.GETFIELD, -3, 0, Opcodes.PUTFIELD }
+                {true, StackSize.SINGLE, 1, 1, Opcodes.GETSTATIC, -1, 0, Opcodes.PUTSTATIC},
+                {true, StackSize.DOUBLE, 2, 2, Opcodes.GETSTATIC, -2, 0, Opcodes.PUTSTATIC},
+                {false, StackSize.SINGLE, 0, 0, Opcodes.GETFIELD, -2, 0, Opcodes.PUTFIELD},
+                {false, StackSize.DOUBLE, 1, 1, Opcodes.GETFIELD, -3, 0, Opcodes.PUTFIELD}
         });
     }
 

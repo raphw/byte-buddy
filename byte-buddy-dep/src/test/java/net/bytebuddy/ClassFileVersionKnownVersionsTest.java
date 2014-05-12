@@ -25,14 +25,14 @@ public class ClassFileVersionKnownVersionsTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                { 1, Opcodes.V1_1 },
-                { 2, Opcodes.V1_2 },
-                { 3, Opcodes.V1_3 },
-                { 4, Opcodes.V1_4 },
-                { 5, Opcodes.V1_5 },
-                { 6, Opcodes.V1_6 },
-                { 7, Opcodes.V1_7 },
-                { 8, Opcodes.V1_7 + 1 },
+                {1, Opcodes.V1_1},
+                {2, Opcodes.V1_2},
+                {3, Opcodes.V1_3},
+                {4, Opcodes.V1_4},
+                {5, Opcodes.V1_5},
+                {6, Opcodes.V1_6},
+                {7, Opcodes.V1_7},
+                {8, Opcodes.V1_7 + 1},
         });
     }
 

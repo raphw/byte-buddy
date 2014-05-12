@@ -36,16 +36,16 @@ public class DoubleConstantPoolValueTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                { Double.MIN_VALUE },
-                { Float.MIN_VALUE },
-                { -100d },
-                { -2d },
-                { 0.5d },
-                { 6d },
-                { 7d },
-                { 100d },
-                { Float.MAX_VALUE },
-                { Double.MAX_VALUE },
+                {Double.MIN_VALUE},
+                {Float.MIN_VALUE},
+                {-100d},
+                {-2d},
+                {0.5d},
+                {6d},
+                {7d},
+                {100d},
+                {Float.MAX_VALUE},
+                {Double.MAX_VALUE},
         });
     }
 

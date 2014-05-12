@@ -64,15 +64,15 @@ public class PrimitiveUnboxingDelegateWideningTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                { Short.class, long.class, "shortValue", "()S", Opcodes.I2L, 1, 1 },
-                { Short.class, float.class, "shortValue", "()S", Opcodes.I2F, 0, 0 },
-                { Short.class, double.class, "shortValue", "()S", Opcodes.I2D, 1, 1 },
-                { Integer.class, long.class, "intValue", "()I", Opcodes.I2L, 1, 1 },
-                { Integer.class, float.class, "intValue", "()I", Opcodes.I2F, 0, 0 },
-                { Integer.class, double.class, "intValue", "()I", Opcodes.I2D, 1, 1 },
-                { Long.class, float.class, "longValue", "()J", Opcodes.L2F, 0, 1 },
-                { Long.class, double.class, "longValue", "()J", Opcodes.L2D, 1, 1 },
-                { Float.class, double.class, "floatValue", "()F", Opcodes.F2D, 1, 1 },
+                {Short.class, long.class, "shortValue", "()S", Opcodes.I2L, 1, 1},
+                {Short.class, float.class, "shortValue", "()S", Opcodes.I2F, 0, 0},
+                {Short.class, double.class, "shortValue", "()S", Opcodes.I2D, 1, 1},
+                {Integer.class, long.class, "intValue", "()I", Opcodes.I2L, 1, 1},
+                {Integer.class, float.class, "intValue", "()I", Opcodes.I2F, 0, 0},
+                {Integer.class, double.class, "intValue", "()I", Opcodes.I2D, 1, 1},
+                {Long.class, float.class, "longValue", "()J", Opcodes.L2F, 0, 1},
+                {Long.class, double.class, "longValue", "()J", Opcodes.L2D, 1, 1},
+                {Float.class, double.class, "floatValue", "()F", Opcodes.F2D, 1, 1},
         });
     }
 

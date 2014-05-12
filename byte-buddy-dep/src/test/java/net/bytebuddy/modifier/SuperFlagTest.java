@@ -18,8 +18,8 @@ public class SuperFlagTest extends AbstractModifierContributorTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                { SuperFlag.UNDEFINED, 0 },
-                { SuperFlag.DEFINED, Opcodes.ACC_SUPER }
+                {SuperFlag.UNDEFINED, 0},
+                {SuperFlag.DEFINED, Opcodes.ACC_SUPER}
         });
     }
 }

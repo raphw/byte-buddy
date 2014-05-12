@@ -35,40 +35,40 @@ public class MostSpecificTypeResolverPrimitiveTest extends AbstractMostSpecificT
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                { boolean.class, byte.class },
-                { boolean.class, short.class },
-                { boolean.class, char.class },
-                { boolean.class, int.class },
-                { boolean.class, long.class },
-                { boolean.class, float.class },
-                { boolean.class, double.class },
+                {boolean.class, byte.class},
+                {boolean.class, short.class},
+                {boolean.class, char.class},
+                {boolean.class, int.class},
+                {boolean.class, long.class},
+                {boolean.class, float.class},
+                {boolean.class, double.class},
 
-                { byte.class, short.class },
-                { byte.class, char.class },
-                { byte.class, int.class },
-                { byte.class, long.class },
-                { byte.class, float.class },
-                { byte.class, double.class },
+                {byte.class, short.class},
+                {byte.class, char.class},
+                {byte.class, int.class},
+                {byte.class, long.class},
+                {byte.class, float.class},
+                {byte.class, double.class},
 
-                { short.class, char.class },
-                { short.class, int.class },
-                { short.class, long.class },
-                { short.class, float.class },
-                { short.class, double.class },
+                {short.class, char.class},
+                {short.class, int.class},
+                {short.class, long.class},
+                {short.class, float.class},
+                {short.class, double.class},
 
-                { char.class, long.class },
-                { char.class, float.class },
-                { char.class, double.class },
+                {char.class, long.class},
+                {char.class, float.class},
+                {char.class, double.class},
 
-                { int.class, char.class },
-                { int.class, long.class },
-                { int.class, float.class },
-                { int.class, double.class },
+                {int.class, char.class},
+                {int.class, long.class},
+                {int.class, float.class},
+                {int.class, double.class},
 
-                { long.class, float.class },
-                { long.class, double.class },
+                {long.class, float.class},
+                {long.class, double.class},
 
-                { float.class, double.class },
+                {float.class, double.class},
         });
     }
 
@@ -115,10 +115,10 @@ public class MostSpecificTypeResolverPrimitiveTest extends AbstractMostSpecificT
         when(sourceType.isPrimitive()).thenReturn(true);
         when(leftTypeList.get(0)).thenReturn(leftPrimitive);
         when(left.getTargetParameterIndex(any(MostSpecificTypeResolver.ParameterIndexToken.class)))
-                .thenAnswer(new TokenAnswer(new int[][]{ { 0, 0 } }));
+                .thenAnswer(new TokenAnswer(new int[][]{{0, 0}}));
         when(rightTypeList.get(0)).thenReturn(rightPrimitive);
         when(right.getTargetParameterIndex(any(MostSpecificTypeResolver.ParameterIndexToken.class)))
-                .thenAnswer(new TokenAnswer(new int[][]{ { 0, 0 } }));
+                .thenAnswer(new TokenAnswer(new int[][]{{0, 0}}));
         MethodDelegationBinder.AmbiguityResolver.Resolution resolution =
                 MostSpecificTypeResolver.INSTANCE.resolve(source, left, right);
         assertThat(resolution, is(expected));

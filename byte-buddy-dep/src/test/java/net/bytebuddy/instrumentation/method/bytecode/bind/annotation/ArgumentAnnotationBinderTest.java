@@ -41,7 +41,7 @@ public class ArgumentAnnotationBinderTest extends AbstractAnnotationBinderTest<A
     public void testLegalBindingRuntimeTypeUnique() throws Exception {
         RuntimeType runtimeType = mock(RuntimeType.class);
         doReturn(RuntimeType.class).when(runtimeType).annotationType();
-        assertBinding(new Annotation[][]{ { }, { runtimeType } }, true, Argument.BindingMechanic.UNIQUE);
+        assertBinding(new Annotation[][]{{}, {runtimeType}}, true, Argument.BindingMechanic.UNIQUE);
     }
 
     @Test
@@ -53,7 +53,7 @@ public class ArgumentAnnotationBinderTest extends AbstractAnnotationBinderTest<A
     public void testLegalBindingRuntimeTypeAnonymous() throws Exception {
         RuntimeType runtimeType = mock(RuntimeType.class);
         doReturn(RuntimeType.class).when(runtimeType).annotationType();
-        assertBinding(new Annotation[][]{ { }, { runtimeType } }, true, Argument.BindingMechanic.ANONYMOUS);
+        assertBinding(new Annotation[][]{{}, {runtimeType}}, true, Argument.BindingMechanic.ANONYMOUS);
     }
 
     private void assertBinding(Annotation[][] annotations,

@@ -24,15 +24,15 @@ public class AnnotationVisibilityTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                { AllArguments.class },
-                { Argument.class },
-                { BindingPriority.class },
-                { IgnoreForBinding.class },
-                { Origin.class },
-                { RuntimeType.class },
-                { Super.class },
-                { SuperCall.class },
-                { This.class }
+                {AllArguments.class},
+                {Argument.class},
+                {BindingPriority.class},
+                {IgnoreForBinding.class},
+                {Origin.class},
+                {RuntimeType.class},
+                {Super.class},
+                {SuperCall.class},
+                {This.class}
         });
     }
 

@@ -47,8 +47,8 @@ public class DynamicTypeDefaultUnloadedTest {
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        binaryRepresentation = new byte[]{ 0, 1, 2 };
-        auxiliaryTypeByte = new byte[]{ 4, 5, 6 };
+        binaryRepresentation = new byte[]{0, 1, 2};
+        auxiliaryTypeByte = new byte[]{4, 5, 6};
         unloaded = new DynamicType.Default.Unloaded<Object>(typeDescription,
                 binaryRepresentation,
                 mainTypeInitializer,

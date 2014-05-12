@@ -26,9 +26,9 @@ public class ArrayFactoryReferenceTest extends AbstractArrayFactoryTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                { Object.class },
-                { Object[].class },
-                { String.class },
+                {Object.class},
+                {Object[].class},
+                {String.class},
         });
     }
 

@@ -31,7 +31,7 @@ public class RuntimeTypeVerifierTest {
 
     @Test
     public void testCheckMethodValid() throws Exception {
-        when(methodDescription.getAnnotations()).thenReturn(new Annotation[]{ runtimeType });
+        when(methodDescription.getAnnotations()).thenReturn(new Annotation[]{runtimeType});
         assertThat(RuntimeType.Verifier.check(methodDescription), is(true));
         verify(methodDescription).getAnnotations();
         verifyNoMoreInteractions(methodDescription);
@@ -47,7 +47,7 @@ public class RuntimeTypeVerifierTest {
 
     @Test
     public void testCheckMethodParameterValid() throws Exception {
-        when(methodDescription.getParameterAnnotations()).thenReturn(new Annotation[][]{ { runtimeType } });
+        when(methodDescription.getParameterAnnotations()).thenReturn(new Annotation[][]{{runtimeType}});
         assertThat(RuntimeType.Verifier.check(methodDescription, 0), is(true));
         verify(methodDescription).getParameterAnnotations();
         verifyNoMoreInteractions(methodDescription);

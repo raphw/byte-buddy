@@ -18,8 +18,8 @@ public class OwnershipTest extends AbstractModifierContributorTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                { Ownership.MEMBER, 0 },
-                { Ownership.STATIC, Opcodes.ACC_STATIC },
+                {Ownership.MEMBER, 0},
+                {Ownership.STATIC, Opcodes.ACC_STATIC},
         });
     }
 }

@@ -56,19 +56,19 @@ public class SuperMethodCallTest extends AbstractInstrumentationTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                { is(STRING_VALUE), OBJECT_METHOD, new Class<?>[0], new Object[0] },
-                { is(BOOLEAN_VALUE), BOOLEAN_METHOD, new Class<?>[0], new Object[0] },
-                { is(BYTE_VALUE), BYTE_METHOD, new Class<?>[0], new Object[0] },
-                { is(SHORT_VALUE), SHORT_METHOD, new Class<?>[0], new Object[0] },
-                { is(CHAR_VALUE), CHAR_METHOD, new Class<?>[0], new Object[0] },
-                { is(INT_VALUE), INT_METHOD, new Class<?>[0], new Object[0] },
-                { is(LONG_VALUE), LONG_METHOD, new Class<?>[0], new Object[0] },
-                { is(FLOAT_VALUE), FLOAT_METHOD, new Class<?>[0], new Object[0] },
-                { is(DOUBLE_VALUE), DOUBLE_METHOD, new Class<?>[0], new Object[0] },
-                { nullValue(), VOID_METHOD, new Class<?>[0], new Object[0] },
-                { nullValue(), PARAMETERS_METHOD,
-                        new Class<?>[]{ long.class, float.class, int.class, double.class, Object.class },
-                        new Object[]{ LONG_VALUE, FLOAT_VALUE, INT_VALUE, DOUBLE_VALUE, STRING_VALUE } }
+                {is(STRING_VALUE), OBJECT_METHOD, new Class<?>[0], new Object[0]},
+                {is(BOOLEAN_VALUE), BOOLEAN_METHOD, new Class<?>[0], new Object[0]},
+                {is(BYTE_VALUE), BYTE_METHOD, new Class<?>[0], new Object[0]},
+                {is(SHORT_VALUE), SHORT_METHOD, new Class<?>[0], new Object[0]},
+                {is(CHAR_VALUE), CHAR_METHOD, new Class<?>[0], new Object[0]},
+                {is(INT_VALUE), INT_METHOD, new Class<?>[0], new Object[0]},
+                {is(LONG_VALUE), LONG_METHOD, new Class<?>[0], new Object[0]},
+                {is(FLOAT_VALUE), FLOAT_METHOD, new Class<?>[0], new Object[0]},
+                {is(DOUBLE_VALUE), DOUBLE_METHOD, new Class<?>[0], new Object[0]},
+                {nullValue(), VOID_METHOD, new Class<?>[0], new Object[0]},
+                {nullValue(), PARAMETERS_METHOD,
+                        new Class<?>[]{long.class, float.class, int.class, double.class, Object.class},
+                        new Object[]{LONG_VALUE, FLOAT_VALUE, INT_VALUE, DOUBLE_VALUE, STRING_VALUE}}
         });
     }
 

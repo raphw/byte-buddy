@@ -50,8 +50,8 @@ public class MethodInvocationTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                { 2, StackSize.SINGLE },
-                { 0, StackSize.ZERO },
+                {2, StackSize.SINGLE},
+                {0, StackSize.ZERO},
         });
     }
 

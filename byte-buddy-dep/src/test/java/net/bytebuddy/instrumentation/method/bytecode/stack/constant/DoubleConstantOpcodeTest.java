@@ -41,8 +41,8 @@ public class DoubleConstantOpcodeTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                { 0d, Opcodes.DCONST_0 },
-                { 1d, Opcodes.DCONST_1 }
+                {0d, Opcodes.DCONST_0},
+                {1d, Opcodes.DCONST_1}
         });
     }
 

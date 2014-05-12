@@ -48,14 +48,14 @@ public class VoidAwareAssignerNonVoidToVoidTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                { byte.class, Opcodes.POP },
-                { short.class, Opcodes.POP },
-                { char.class, Opcodes.POP },
-                { int.class, Opcodes.POP },
-                { long.class, Opcodes.POP2 },
-                { float.class, Opcodes.POP },
-                { double.class, Opcodes.POP2 },
-                { Object.class, Opcodes.POP }
+                {byte.class, Opcodes.POP},
+                {short.class, Opcodes.POP},
+                {char.class, Opcodes.POP},
+                {int.class, Opcodes.POP},
+                {long.class, Opcodes.POP2},
+                {float.class, Opcodes.POP},
+                {double.class, Opcodes.POP2},
+                {Object.class, Opcodes.POP}
         });
     }
 

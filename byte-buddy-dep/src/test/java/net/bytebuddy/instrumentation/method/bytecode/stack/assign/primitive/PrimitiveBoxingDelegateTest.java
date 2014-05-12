@@ -63,14 +63,14 @@ public class PrimitiveBoxingDelegateTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                { boolean.class, Boolean.class, "(Z)Ljava/lang/Boolean;", 0 },
-                { byte.class, Byte.class, "(B)Ljava/lang/Byte;", 0 },
-                { short.class, Short.class, "(S)Ljava/lang/Short;", 0 },
-                { char.class, Character.class, "(C)Ljava/lang/Character;", 0 },
-                { int.class, Integer.class, "(I)Ljava/lang/Integer;", 0 },
-                { long.class, Long.class, "(J)Ljava/lang/Long;", -1 },
-                { float.class, Float.class, "(F)Ljava/lang/Float;", 0 },
-                { double.class, Double.class, "(D)Ljava/lang/Double;", -1 },
+                {boolean.class, Boolean.class, "(Z)Ljava/lang/Boolean;", 0},
+                {byte.class, Byte.class, "(B)Ljava/lang/Byte;", 0},
+                {short.class, Short.class, "(S)Ljava/lang/Short;", 0},
+                {char.class, Character.class, "(C)Ljava/lang/Character;", 0},
+                {int.class, Integer.class, "(I)Ljava/lang/Integer;", 0},
+                {long.class, Long.class, "(J)Ljava/lang/Long;", -1},
+                {float.class, Float.class, "(F)Ljava/lang/Float;", 0},
+                {double.class, Double.class, "(D)Ljava/lang/Double;", -1},
         });
     }
 

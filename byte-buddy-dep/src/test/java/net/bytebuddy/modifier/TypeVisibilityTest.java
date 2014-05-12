@@ -18,8 +18,8 @@ public class TypeVisibilityTest extends AbstractModifierContributorTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                { TypeVisibility.PACKAGE_PRIVATE, 0 },
-                { TypeVisibility.PUBLIC, Opcodes.ACC_PUBLIC }
+                {TypeVisibility.PACKAGE_PRIVATE, 0},
+                {TypeVisibility.PUBLIC, Opcodes.ACC_PUBLIC}
         });
     }
 }

@@ -118,7 +118,7 @@
                                     <version>${project.version}</version>
                                     <packaging>jar</packaging>
                                     <classifier>javadoc</classifier>
-                                    <file>${build.directory}/byte-buddy-${project.version}-javadoc.jar</file>
+                                    <file>${project.build.directory}/byte-buddy-${project.version}-javadoc.jar</file>
                                 </configuration>
                             </execution>
                             <execution>
@@ -133,7 +133,8 @@
                                     <version>${project.version}</version>
                                     <packaging>jar.asc</packaging>
                                     <classifier>javadoc</classifier>
-                                    <file>${build.directory}/byte-buddy-${project.version}-javadoc.jar.asc</file>
+                                    <file>${project.build.directory}/byte-buddy-${project.version}-javadoc.jar.asc
+                                    </file>
                                 </configuration>
                             </execution>
                         </executions>

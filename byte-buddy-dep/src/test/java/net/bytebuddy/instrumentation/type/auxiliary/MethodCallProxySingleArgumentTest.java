@@ -39,16 +39,16 @@ public class MethodCallProxySingleArgumentTest<T extends CallTraceable> extends 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                { STRING_VALUE, StringTarget.class, String.class },
-                { BOOLEAN_VALUE, BooleanTarget.class, boolean.class },
-                { BYTE_VALUE, ByteTarget.class, byte.class },
-                { SHORT_VALUE, ShortTarget.class, short.class },
-                { CHAR_VALUE, CharTarget.class, char.class },
-                { INT_VALUE, IntTarget.class, int.class },
-                { LONG_VALUE, LongTarget.class, long.class },
-                { FLOAT_VALUE, FloatTarget.class, float.class },
-                { DOUBLE_VALUE, DoubleTarget.class, double.class },
-                { NULL_VALUE, NullTarget.class, Void.class }
+                {STRING_VALUE, StringTarget.class, String.class},
+                {BOOLEAN_VALUE, BooleanTarget.class, boolean.class},
+                {BYTE_VALUE, ByteTarget.class, byte.class},
+                {SHORT_VALUE, ShortTarget.class, short.class},
+                {CHAR_VALUE, CharTarget.class, char.class},
+                {INT_VALUE, IntTarget.class, int.class},
+                {LONG_VALUE, LongTarget.class, long.class},
+                {FLOAT_VALUE, FloatTarget.class, float.class},
+                {DOUBLE_VALUE, DoubleTarget.class, double.class},
+                {NULL_VALUE, NullTarget.class, Void.class}
         });
     }
 
