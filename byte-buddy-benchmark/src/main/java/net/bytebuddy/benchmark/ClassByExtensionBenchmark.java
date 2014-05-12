@@ -11,7 +11,10 @@ import net.bytebuddy.instrumentation.SuperMethodCall;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.RuntimeType;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.SuperCall;
 import net.sf.cglib.proxy.*;
-import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.GenerateMicroBenchmark;
+import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.OutputTimeUnit;
 
 import java.lang.reflect.Method;
 import java.net.URL;

@@ -14,6 +14,10 @@ public class QuickRunner {
 
     private static final String WILDCARD = ".*";
 
+    private QuickRunner() {
+        throw new UnsupportedOperationException();
+    }
+
     /**
      * Executes the benchmark.
      *
@@ -29,9 +33,5 @@ public class QuickRunner {
                 .include(WILDCARD + TrivialClassCreationBenchmark.class.getSimpleName() + WILDCARD)
                 .forks(1)
                 .build()).run();
-    }
-
-    private QuickRunner() {
-        throw new UnsupportedOperationException();
     }
 }
