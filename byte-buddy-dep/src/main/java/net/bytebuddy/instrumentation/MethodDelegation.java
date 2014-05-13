@@ -25,7 +25,6 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
 
@@ -515,9 +514,8 @@ public class MethodDelegation implements Instrumentation {
         /**
          * An instrumentation applied on a static field.
          */
-        static class ForStaticFieldInstance implements InstrumentationDelegate, TypeInitializer {
+        static class ForStaticFieldInstance implements InstrumentationDelegate {
 
-            private static final Object STATIC_FIELD = null;
             private static final String PREFIX = "methodDelegate";
 
             private final String fieldName;
@@ -549,7 +547,7 @@ public class MethodDelegation implements Instrumentation {
                 return instrumentedType.withField(fieldName,
                         new TypeDescription.ForLoadedType(delegate.getClass()),
                         Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC)
-                        .withInitializer(this);
+                        .withInitializer(TypeInitializer.ForStaticField.nonAccessible(fieldName, delegate));
             }
 
             @Override
@@ -560,22 +558,6 @@ public class MethodDelegation implements Instrumentation {
             @Override
             public MethodDelegationBinder.MethodInvoker getMethodInvoker(TypeDescription instrumentedType) {
                 return new MethodDelegationBinder.MethodInvoker.Virtual(new TypeDescription.ForLoadedType(delegate.getClass()));
-            }
-
-            @Override
-            public void onLoad(Class<?> type) {
-                try {
-                    Field field = type.getDeclaredField(fieldName);
-                    field.setAccessible(true);
-                    field.set(STATIC_FIELD, delegate);
-                } catch (Exception e) {
-                    throw new IllegalStateException("Cannot set static field " + fieldName + " on " + type, e);
-                }
-            }
-
-            @Override
-            public boolean isAlive() {
-                return true;
             }
 
             @Override

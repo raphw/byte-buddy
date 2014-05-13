@@ -15,8 +15,6 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import java.lang.reflect.Field;
-
 /**
  * This instrumentation returns a fixed value for a method. Other than the
  * {@link net.bytebuddy.instrumentation.StubMethod} instrumentation, this implementation allows
@@ -322,9 +320,8 @@ public abstract class FixedValue implements Instrumentation {
     /**
      * A fixed value instrumentation that represents its fixed value as a static field of the instrumented class.
      */
-    protected static class ForStaticField extends FixedValue implements AssignerConfigurable, TypeInitializer {
+    protected static class ForStaticField extends FixedValue implements AssignerConfigurable {
 
-        private static final Object STATIC_FIELD = null;
         private static final String PREFIX = "fixedValue";
         private final String fieldName;
         private final Object fixedValue;
@@ -370,28 +367,12 @@ public abstract class FixedValue implements Instrumentation {
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType
                     .withField(fieldName, fieldType, Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC)
-                    .withInitializer(this);
+                    .withInitializer(TypeInitializer.ForStaticField.nonAccessible(fieldName, fixedValue));
         }
 
         @Override
         public ByteCodeAppender appender(TypeDescription instrumentedType) {
             return new StaticFieldByteCodeAppender(instrumentedType);
-        }
-
-        @Override
-        public void onLoad(Class<?> type) {
-            try {
-                Field field = type.getDeclaredField(fieldName);
-                field.setAccessible(true);
-                field.set(STATIC_FIELD, fixedValue);
-            } catch (Exception e) {
-                throw new IllegalStateException("Cannot set static field " + fieldName + " on " + type, e);
-            }
-        }
-
-        @Override
-        public boolean isAlive() {
-            return true;
         }
 
         @Override

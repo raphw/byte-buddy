@@ -20,7 +20,6 @@ import net.bytebuddy.instrumentation.type.TypeList;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.util.ArrayList;
 import java.util.List;
@@ -143,9 +142,8 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
         return 31 * fieldName.hashCode();
     }
 
-    private static class ForStaticDelegation extends InvocationHandlerAdapter implements TypeInitializer {
+    private static class ForStaticDelegation extends InvocationHandlerAdapter {
 
-        private static final Object STATIC_FIELD = null;
         private final InvocationHandler invocationHandler;
 
         private ForStaticDelegation(InvocationHandler invocationHandler, String fieldName) {
@@ -157,28 +155,12 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType
                     .withField(fieldName, new TypeDescription.ForLoadedType(InvocationHandler.class), Opcodes.ACC_STATIC)
-                    .withInitializer(this);
+                    .withInitializer(TypeInitializer.ForStaticField.nonAccessible(fieldName, invocationHandler));
         }
 
         @Override
         public ByteCodeAppender appender(TypeDescription instrumentedType) {
             return new Appender(instrumentedType);
-        }
-
-        @Override
-        public void onLoad(Class<?> type) {
-            try {
-                Field field = type.getDeclaredField(fieldName);
-                field.setAccessible(true);
-                field.set(STATIC_FIELD, invocationHandler);
-            } catch (Exception e) {
-                throw new IllegalStateException("Cannot set static field " + fieldName + " on " + type, e);
-            }
-        }
-
-        @Override
-        public boolean isAlive() {
-            return true;
         }
 
         @Override
