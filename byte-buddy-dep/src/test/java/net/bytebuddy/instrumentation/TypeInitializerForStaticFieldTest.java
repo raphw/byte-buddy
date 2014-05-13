@@ -10,12 +10,6 @@ public class TypeInitializerForStaticFieldTest {
 
     private static final String FOO = "foo";
 
-    @SuppressWarnings("unused")
-    public static class Foo {
-
-        public static Object foo;
-    }
-
     @Test
     public void testAccessibleField() throws Exception {
         Object object = new Object();
@@ -23,12 +17,6 @@ public class TypeInitializerForStaticFieldTest {
         assertThat(typeInitializer.isAlive(), is(true));
         typeInitializer.onLoad(Foo.class);
         assertThat(Foo.foo, is(object));
-    }
-
-    @SuppressWarnings("unused")
-    public static class Bar {
-
-        private static Object foo;
     }
 
     @Test
@@ -67,5 +55,17 @@ public class TypeInitializerForStaticFieldTest {
                 not(is(TypeInitializer.ForStaticField.accessible(FOO + FOO, first).hashCode())));
         assertThat(TypeInitializer.ForStaticField.accessible(FOO, first),
                 not(is(TypeInitializer.ForStaticField.accessible(FOO + FOO, first))));
+    }
+
+    @SuppressWarnings("unused")
+    public static class Foo {
+
+        public static Object foo;
+    }
+
+    @SuppressWarnings("unused")
+    public static class Bar {
+
+        private static Object foo;
     }
 }

@@ -55,6 +55,21 @@ public interface TypeInitializer {
     static class ForStaticField<T> implements TypeInitializer, Serializable {
 
         private static final Object STATIC_FIELD = null;
+        private final String fieldName;
+        private final T value;
+        private final boolean makeAccessible;
+        /**
+         * Creates a new {@link net.bytebuddy.instrumentation.TypeInitializer} for setting a static field.
+         *
+         * @param fieldName      the name of the field.
+         * @param value          The value to be set.
+         * @param makeAccessible Whether the field should be made accessible.
+         */
+        protected ForStaticField(String fieldName, T value, boolean makeAccessible) {
+            this.fieldName = fieldName;
+            this.value = value;
+            this.makeAccessible = makeAccessible;
+        }
 
         /**
          * Creates a {@link net.bytebuddy.instrumentation.TypeInitializer} for given field name and value where the
@@ -78,23 +93,6 @@ public interface TypeInitializer {
          */
         public static TypeInitializer nonAccessible(String fieldName, Object value) {
             return new ForStaticField<Object>(fieldName, value, true);
-        }
-
-        private final String fieldName;
-        private final T value;
-        private final boolean makeAccessible;
-
-        /**
-         * Creates a new {@link net.bytebuddy.instrumentation.TypeInitializer} for setting a static field.
-         *
-         * @param fieldName      the name of the field.
-         * @param value          The value to be set.
-         * @param makeAccessible Whether the field should be made accessible.
-         */
-        protected ForStaticField(String fieldName, T value, boolean makeAccessible) {
-            this.fieldName = fieldName;
-            this.value = value;
-            this.makeAccessible = makeAccessible;
         }
 
         @Override

@@ -72,6 +72,36 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         return methodDelegationBindingBuilder.build(returningStackManipulation);
     }
 
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+        TargetMethodAnnotationDrivenBinder that = (TargetMethodAnnotationDrivenBinder) other;
+        return assigner.equals(that.assigner)
+                && defaultsProvider.equals(that.defaultsProvider)
+                && delegationProcessor.equals(that.delegationProcessor)
+                && methodInvoker.equals(that.methodInvoker);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = delegationProcessor.hashCode();
+        result = 31 * result + defaultsProvider.hashCode();
+        result = 31 * result + assigner.hashCode();
+        result = 31 * result + methodInvoker.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "TargetMethodAnnotationDrivenBinder{" +
+                "delegationProcessor=" + delegationProcessor +
+                ", defaultsProvider=" + defaultsProvider +
+                ", assigner=" + assigner +
+                ", methodInvoker=" + methodInvoker +
+                '}';
+    }
+
     /**
      * A parameter binder is used as a delegate for binding a parameter according to a particular annotation type found
      * on this parameter.
@@ -211,6 +241,24 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
             return new Handler.Bound<Annotation>((ParameterBinder<Annotation>) parameterBinder, annotation);
         }
 
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && argumentBinders.equals(((DelegationProcessor) other).argumentBinders);
+        }
+
+        @Override
+        public int hashCode() {
+            return argumentBinders.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "TargetMethodAnnotationDrivenBinder.DelegationProcessor{" +
+                    "argumentBinders=" + argumentBinders +
+                    '}';
+        }
+
         private static interface Handler {
 
             ParameterBinding<?> handle(int targetParameterIndex,
@@ -278,53 +326,5 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 }
             }
         }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && argumentBinders.equals(((DelegationProcessor) other).argumentBinders);
-        }
-
-        @Override
-        public int hashCode() {
-            return argumentBinders.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "TargetMethodAnnotationDrivenBinder.DelegationProcessor{" +
-                    "argumentBinders=" + argumentBinders +
-                    '}';
-        }
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) return true;
-        if (other == null || getClass() != other.getClass()) return false;
-        TargetMethodAnnotationDrivenBinder that = (TargetMethodAnnotationDrivenBinder) other;
-        return assigner.equals(that.assigner)
-                && defaultsProvider.equals(that.defaultsProvider)
-                && delegationProcessor.equals(that.delegationProcessor)
-                && methodInvoker.equals(that.methodInvoker);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = delegationProcessor.hashCode();
-        result = 31 * result + defaultsProvider.hashCode();
-        result = 31 * result + assigner.hashCode();
-        result = 31 * result + methodInvoker.hashCode();
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return "TargetMethodAnnotationDrivenBinder{" +
-                "delegationProcessor=" + delegationProcessor +
-                ", defaultsProvider=" + defaultsProvider +
-                ", assigner=" + assigner +
-                ", methodInvoker=" + methodInvoker +
-                '}';
     }
 }

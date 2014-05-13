@@ -492,7 +492,8 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 is(new TargetMethodAnnotationDrivenBinder(Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>emptyList(),
                         defaultsProvider,
                         assigner,
-                        methodInvoker).hashCode()));
+                        methodInvoker).hashCode())
+        );
         assertThat(new TargetMethodAnnotationDrivenBinder(Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>emptyList(),
                         defaultsProvider,
                         assigner,
@@ -500,7 +501,8 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 is(new TargetMethodAnnotationDrivenBinder(Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>emptyList(),
                         defaultsProvider,
                         assigner,
-                        methodInvoker)));
+                        methodInvoker))
+        );
         assertThat(new TargetMethodAnnotationDrivenBinder(Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>singletonList(firstParameterBinder),
                         defaultsProvider,
                         assigner,
@@ -508,7 +510,8 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 not(is(new TargetMethodAnnotationDrivenBinder(Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>emptyList(),
                         defaultsProvider,
                         assigner,
-                        methodInvoker).hashCode())));
+                        methodInvoker).hashCode()))
+        );
         assertThat(new TargetMethodAnnotationDrivenBinder(Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>singletonList(firstParameterBinder),
                         defaultsProvider,
                         assigner,
@@ -516,7 +519,8 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 not(is(new TargetMethodAnnotationDrivenBinder(Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>emptyList(),
                         defaultsProvider,
                         assigner,
-                        methodInvoker))));
+                        methodInvoker)))
+        );
     }
 
     private static @interface FirstPseudoAnnotation {
