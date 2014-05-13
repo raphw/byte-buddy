@@ -185,7 +185,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
             for (Annotation anAnnotation : annotation) {
                 ParameterBinder<?> parameterBinder = argumentBinders.get(anAnnotation.annotationType());
                 if (parameterBinder != null && handler != null) {
-                    throw new IllegalArgumentException("Ambiguous binding for parameter annotated with two handled annotation types");
+                    throw new IllegalStateException("Ambiguous binding for parameter annotated with two handled annotation types");
                 } else if (parameterBinder != null /* && handler == null */) {
                     handler = makeDelegate(parameterBinder, anAnnotation);
                 }
@@ -249,9 +249,82 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                                                   MethodDescription target,
                                                   TypeDescription typeDescription,
                                                   Assigner assigner) {
-                    return parameterBinder.bind(annotation, targetParameterIndex, source, target, typeDescription, assigner);
+                    return parameterBinder.bind(annotation,
+                            targetParameterIndex,
+                            source,
+                            target,
+                            typeDescription,
+                            assigner);
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && annotation.equals(((Bound) other).annotation)
+                            && parameterBinder.equals(((Bound) other).parameterBinder);
+                }
+
+                @Override
+                public int hashCode() {
+                    return 31 * parameterBinder.hashCode() + annotation.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "TargetMethodAnnotationDrivenBinder.DelegationProcessor.Handler.Bound{" +
+                            "parameterBinder=" + parameterBinder +
+                            ", annotation=" + annotation +
+                            '}';
                 }
             }
         }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && argumentBinders.equals(((DelegationProcessor) other).argumentBinders);
+        }
+
+        @Override
+        public int hashCode() {
+            return argumentBinders.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "TargetMethodAnnotationDrivenBinder.DelegationProcessor{" +
+                    "argumentBinders=" + argumentBinders +
+                    '}';
+        }
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+        TargetMethodAnnotationDrivenBinder that = (TargetMethodAnnotationDrivenBinder) other;
+        return assigner.equals(that.assigner)
+                && defaultsProvider.equals(that.defaultsProvider)
+                && delegationProcessor.equals(that.delegationProcessor)
+                && methodInvoker.equals(that.methodInvoker);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = delegationProcessor.hashCode();
+        result = 31 * result + defaultsProvider.hashCode();
+        result = 31 * result + assigner.hashCode();
+        result = 31 * result + methodInvoker.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "TargetMethodAnnotationDrivenBinder{" +
+                "delegationProcessor=" + delegationProcessor +
+                ", defaultsProvider=" + defaultsProvider +
+                ", assigner=" + assigner +
+                ", methodInvoker=" + methodInvoker +
+                '}';
     }
 }

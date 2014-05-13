@@ -21,6 +21,7 @@ import org.objectweb.asm.MethodVisitor;
 import java.lang.annotation.Annotation;
 import java.util.*;
 
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Matchers.anyBoolean;
@@ -480,6 +481,42 @@ public class TargetMethodAnnotationDrivenBinderTest {
         verify(firstBinding).getIdentificationToken();
         verify(secondBinding, atLeast(1)).isValid();
         verify(secondBinding).getIdentificationToken();
+    }
+
+    @Test
+    public void testHashCodeEquals() throws Exception {
+        assertThat(new TargetMethodAnnotationDrivenBinder(Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>emptyList(),
+                        defaultsProvider,
+                        assigner,
+                        methodInvoker).hashCode(),
+                is(new TargetMethodAnnotationDrivenBinder(Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>emptyList(),
+                        defaultsProvider,
+                        assigner,
+                        methodInvoker).hashCode()));
+        assertThat(new TargetMethodAnnotationDrivenBinder(Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>emptyList(),
+                        defaultsProvider,
+                        assigner,
+                        methodInvoker),
+                is(new TargetMethodAnnotationDrivenBinder(Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>emptyList(),
+                        defaultsProvider,
+                        assigner,
+                        methodInvoker)));
+        assertThat(new TargetMethodAnnotationDrivenBinder(Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>singletonList(firstParameterBinder),
+                        defaultsProvider,
+                        assigner,
+                        methodInvoker).hashCode(),
+                not(is(new TargetMethodAnnotationDrivenBinder(Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>emptyList(),
+                        defaultsProvider,
+                        assigner,
+                        methodInvoker).hashCode())));
+        assertThat(new TargetMethodAnnotationDrivenBinder(Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>singletonList(firstParameterBinder),
+                        defaultsProvider,
+                        assigner,
+                        methodInvoker),
+                not(is(new TargetMethodAnnotationDrivenBinder(Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>emptyList(),
+                        defaultsProvider,
+                        assigner,
+                        methodInvoker))));
     }
 
     private static @interface FirstPseudoAnnotation {
