@@ -345,7 +345,7 @@ class HardcodedFrameworkImpl implements Framework {
 </div>
 
 <p>
-    As obvious from the table, Byte Buddy generally outperforms its counterparts. This concerns both the runtime of a
+    As obvious from the table, Byte Buddy generally outperforms its competition. This concerns both the runtime of a
     class's creation and the runtime of invoking the generated class's methods. The first benchmark defines the task
     to subclass <code>Object</code> without implementing or overriding any methods what gives a good measure for a
     library's general overhead. In this benchmark, Byte Buddy performs equally well as Java's built-in proxies.
@@ -358,21 +358,21 @@ class HardcodedFrameworkImpl implements Framework {
     behavior as annotated Java code using a <code>MethodDelegation</code>. Do not worry about these classes for now, we
     will discuss both of these approaches in a later section. As the benchmark states, the latter approach is slower
     and takes more time than performing this task using another library. The performance loss is caused by the
-    <code>MethodDelegation</code>'s flexible nature to be configured by few annotations what requires Byte Buddy to
-    interpret the user's code for an optimal method implementation. This performance loss does however not persist to
-    the class's runtime performance where all meta information is already expressed within the method's implementation.
+    <code>MethodDelegation</code>'s approach of creating additional accessor classes for injecting into a user's Java
+    code. This optimizes runtime performance and a subclass's memory footprint but it requires time for the creation
+    of these auxiliary classes.
 </p>
 
 <p>
-    In general, Byte Buddy does not want to be opinionated about a trade-off between costs of class creation and
-    the costs of using generated code. If the runtime of class creation is in particular important to you, you should
-    however always consider to implement a specialized method <code>Instrumentation</code>. This topic is covered in
-    detail in a later section of this tutorial. For most users, Byte Buddy's general purpose instrumentations should
-    however suffice since runtime generated classes are usually only created in an application's bootstrap. Do not
-    forget that the above measures reflect nanoseconds. Only while reading this paragraph, a code generator could have
-    created millions of classes. In this context, note that Java classes are not garbage collected as long as their
-    class loader is alive. This often means that classes are never garbage collected. Therefore, be careful when
-    generating code as it
+    In general, Byte Buddy does not want to be opinionated about this trade-off between the costs of class creation and
+    the costs of using the generated code. If the runtime of class creation is in particular important to you, you
+    should however always consider to implement a specialized method <code>Instrumentation</code>. This topic is covered
+    in detail in a later section of this tutorial. For most users, Byte Buddy's general purpose instrumentations should
+    however suffice since generated code is usually only created once during an application's bootstrap. And neither
+    forget that the above measures are scaled in nanoseconds. Only while reading this paragraph, a code generator
+    could have created millions of classes. In this context, note that Java classes are not garbage collected as long
+    as their class loader is alive. This often means that classes are never garbage collected. Therefore, be careful
+    when generating code as it
     <a href="http://www.oracle.com/technetwork/java/javase/memleaks-137499.html#gbyuu">can give you trouble</a> when
     limited <i>perm gen</i> or <i>meta space</i> is available.
 </p>
