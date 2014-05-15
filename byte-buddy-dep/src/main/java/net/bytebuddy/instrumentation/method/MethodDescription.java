@@ -98,9 +98,21 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
      */
     int getParameterOffset(int parameterIndex);
 
+    /**
+     * Checks if this method represents a Java 8+ default method.
+     *
+     * @return {@code true} if this method is a default method.
+     */
     boolean isDefaultMethod();
 
-    boolean isInvokableOn(TypeDescription typeDescription);
+    /**
+     * Checks if this method can be called using the {@code INVOKESPECIAL} for a given type.
+     *
+     * @param typeDescription The type o
+     * @return {@code true} if this method can be called using the {@code INVOKESPECIAL} instruction
+     * using the given type.
+     */
+    boolean isSpecializableFor(TypeDescription typeDescription);
 
     /**
      * An abstract base implementation of a method description.
@@ -160,9 +172,14 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         }
 
         @Override
-        public boolean isInvokableOn(TypeDescription typeDescription) {
-            return typeDescription.equals(getDeclaringType())
-                    || (!(isStatic() || isPrivate() || isConstructor()) && getDeclaringType().isAssignableFrom(typeDescription));
+        public boolean isSpecializableFor(TypeDescription targetType) {
+            if (isStatic()) { // Static private methods are never specializable, check static property first
+                return false;
+            } else if (isPrivate() || isConstructor()) {
+                return getDeclaringType().equals(targetType);
+            } else {
+                return !isAbstract() && getDeclaringType().isAssignableFrom(targetType);
+            }
         }
 
         @Override

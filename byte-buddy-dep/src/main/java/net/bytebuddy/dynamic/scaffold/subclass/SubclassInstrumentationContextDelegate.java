@@ -56,6 +56,7 @@ public class SubclassInstrumentationContextDelegate
      * Creates a new delegate with a default prefix.
      *
      * @param instrumentedType            The instrumented type that is subject of the instrumentation.
+     * @param methodLookupEngine          The method lookup engine to query for reachable methods.
      * @param bridgeMethodResolverFactory A factory that is used for creating a bridge method resolver for the given
      *                                    instrumented type.
      */
@@ -69,6 +70,7 @@ public class SubclassInstrumentationContextDelegate
      * Creates a new delegate.
      *
      * @param instrumentedType            The instrumented type that is subject of the instrumentation.
+     * @param methodLookupEngine          The method lookup engine to query for reachable methods.
      * @param bridgeMethodResolverFactory A factory that is used for creating a bridge method resolver for the given
      *                                    instrumented type.
      * @param prefix                      The prefix to be used for the delegation methods.
@@ -113,11 +115,9 @@ public class SubclassInstrumentationContextDelegate
                 targetMethod.getParameterTypes(),
                 (targetMethod.isStatic() ? Opcodes.ACC_STATIC : 0) | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL);
         knownTargetMethodsToAccessorMethod.put(targetMethod, accessorMethod);
-        Entry methodCall = targetMethod.isAbstract()
-                || targetMethod.getDeclaringType().isInterface() // covers Java 8 default methods
-                || targetMethod.getDeclaringType().equals(instrumentedType)
-                ? AbstractMethodCall.INSTANCE
-                : new SameSignatureMethodCall(bridgeMethodResolver.resolve(targetMethod), instrumentedType);
+        Entry methodCall = targetMethod.isSpecializableFor(instrumentedType.getSupertype())
+                ? new SameSignatureMethodCall(bridgeMethodResolver.resolve(targetMethod), instrumentedType)
+                : AbstractMethodCall.INSTANCE;
         registeredAccessorMethodToTargetMethodCall.put(accessorMethod, methodCall);
         orderedAccessorMethods.add(accessorMethod);
         return accessorMethod;
@@ -231,7 +231,7 @@ public class SubclassInstrumentationContextDelegate
                           Instrumentation.Context instrumentationContext,
                           MethodDescription instrumentedMethod) {
             StackManipulation.Size stackSize = new StackManipulation.Compound(
-                    MethodVariableAccess.loadThisAndArguments(instrumentedMethod),
+                    MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
                     targetMethodCall,
                     MethodReturn.returning(instrumentedMethod.getReturnType())
             ).apply(methodVisitor, instrumentationContext);

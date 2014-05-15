@@ -9,6 +9,8 @@ import net.bytebuddy.instrumentation.ModifierContributor;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.MethodList;
+import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.method.bytecode.stack.Duplication;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
@@ -29,10 +31,11 @@ import org.objectweb.asm.MethodVisitor;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isConstructor;
+import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
 
 /**
  * A method call proxy represents a class that is compiled against a particular method which can then be called whenever
@@ -99,12 +102,15 @@ public class MethodCallProxy implements AuxiliaryType {
                             MethodAccessorFactory methodAccessorFactory) {
         MethodDescription accessorMethod = methodAccessorFactory.requireAccessorMethodFor(targetMethod);
         LinkedHashMap<String, TypeDescription> parameterFields = extractFields(accessorMethod);
+        Instrumentation methodCall = new MethodCall(accessorMethod, assigner);
         DynamicType.Builder<?> builder = new ByteBuddy(classFileVersion)
                 .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
+                .methodLookupEngine(ProxyMethodLookupEngine.INSTANCE)
                 .name(auxiliaryTypeName)
                 .modifiers(DEFAULT_TYPE_MODIFIER.toArray(new ModifierContributor.ForType[DEFAULT_TYPE_MODIFIER.size()]))
-                .implement(Runnable.class).intercept(new MethodCall(accessorMethod, assigner))
-                .implement(Callable.class).intercept(new MethodCall(accessorMethod, assigner))
+                .implement(Runnable.class)
+                .implement(Callable.class)
+                .method(not(isDeclaredBy(Object.class))).intercept(methodCall)
                 .defineConstructor(new ArrayList<TypeDescription>(parameterFields.values()))
                 .intercept(new ConstructorCall());
         for (Map.Entry<String, TypeDescription> field : parameterFields.entrySet()) {
@@ -131,6 +137,33 @@ public class MethodCallProxy implements AuxiliaryType {
                 "targetMethod=" + targetMethod +
                 ", assigner=" + assigner +
                 '}';
+    }
+
+    private static enum ProxyMethodLookupEngine implements MethodLookupEngine, MethodLookupEngine.Factory {
+
+        INSTANCE;
+
+        private final MethodList methodList;
+
+        private ProxyMethodLookupEngine() {
+            List<MethodDescription> methodDescriptions = new ArrayList<MethodDescription>(2);
+            methodDescriptions.addAll(new MethodList.ForLoadedType(Runnable.class));
+            methodDescriptions.addAll(new MethodList.ForLoadedType(Callable.class));
+            methodList = new MethodList.Explicit(methodDescriptions);
+        }
+
+        @Override
+        public MethodList getReachableMethods(TypeDescription typeDescription) {
+            List<MethodDescription> methodDescriptions = new ArrayList<MethodDescription>(3);
+            methodDescriptions.addAll(methodList);
+            methodDescriptions.addAll(typeDescription.getDeclaredMethods());
+            return new MethodList.Explicit(methodDescriptions);
+        }
+
+        @Override
+        public MethodLookupEngine make() {
+            return this;
+        }
     }
 
     /**
@@ -165,7 +198,7 @@ public class MethodCallProxy implements AuxiliaryType {
             return new Compound(
                     TypeCreation.forType(auxiliaryType),
                     Duplication.SINGLE,
-                    MethodVariableAccess.loadThisAndArguments(targetMethod),
+                    MethodVariableAccess.loadThisReferenceAndArguments(targetMethod),
                     MethodInvocation.invoke(auxiliaryType.getDeclaredMethods().filter(isConstructor()).getOnly())
             ).apply(methodVisitor, instrumentationContext);
         }

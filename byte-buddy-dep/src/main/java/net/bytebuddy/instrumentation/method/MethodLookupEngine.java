@@ -1,9 +1,9 @@
 package net.bytebuddy.instrumentation.method;
 
-import jdk.internal.org.objectweb.asm.Opcodes;
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import org.objectweb.asm.Opcodes;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -19,18 +19,80 @@ import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
  */
 public interface MethodLookupEngine {
 
+    /**
+     * Retrieves all methods that can be called on a given type. The resulting list of methods must not contain
+     * any duplicates when considering byte code signatures. Furthermore, if a method is overriden, a method must
+     * be contained in its most specific version. In the process, class methods must shadow interface methods of
+     * identical signature. As an only deviation from the JVM's {@link Class#getMethods()}, methods of identical
+     * signature of incompatible interfaces must only be returned once. These methods should be represented by some
+     * sort of virtual method description which is fully aware of its state. All virtually invoked methods must be
+     * contained in this lookup. Static methods, constructors and private methods must however only be contained
+     * for the actual class's type.
+     *
+     * @param typeDescription The type for which all reachable methods should be looked up.
+     * @return A list of unique, reachable methods for the given type.
+     */
     MethodList getReachableMethods(TypeDescription typeDescription);
 
+    /**
+     * A factory for creating a {@link net.bytebuddy.instrumentation.method.MethodLookupEngine}.
+     */
     static interface Factory {
 
+        /**
+         * Returns a {@link net.bytebuddy.instrumentation.method.MethodLookupEngine}.
+         *
+         * @return A {@link net.bytebuddy.instrumentation.method.MethodLookupEngine}.
+         */
         MethodLookupEngine make();
     }
 
+    /**
+     * This {@link net.bytebuddy.instrumentation.method.MethodDescription} represents methods that are defined
+     * ambiguously on several interfaces of a common type.
+     */
     static class ConflictingInterfaceMethod extends MethodDescription.AbstractMethodDescription {
 
-        protected static MethodDescription of(TypeDescription virtualHost,
-                                              MethodDescription conflictingMethod,
-                                              MethodDescription discoveredMethod) {
+        private static final int CONFLICTING_INTERFACE_MODIFIER = Opcodes.ACC_ABSTRACT | Opcodes.ACC_PUBLIC;
+        private final TypeDescription virtualHost;
+        private final List<MethodDescription> methodDescriptions;
+
+        /**
+         * Creates a new conflicting interface method.
+         *
+         * @param virtualHost        The virtual host of the methods that are not really declared by any type.
+         * @param methodDescriptions The methods that are in conflict to another. All of these methods must be
+         *                           methods that are declared in an interface and none of these methods must
+         *                           override another.
+         */
+        protected ConflictingInterfaceMethod(TypeDescription virtualHost, List<MethodDescription> methodDescriptions) {
+            this.virtualHost = virtualHost;
+            this.methodDescriptions = methodDescriptions;
+        }
+
+        /**
+         * Creates a new method description for at least two conflicting interface methods. This factory is intended
+         * for the use by {@link net.bytebuddy.instrumentation.method.MethodLookupEngine.Default} and assumes
+         * similar properties to the latter classes resolution algorithm:
+         * <ul>
+         * <li>It is illegal to add a method of identical byte code signature after already adding this method for a
+         * sub interface where this method was overriden. It is however legal to add a method of a super interface
+         * before adding a method of a sub interface.</li>
+         * <li>The first argument is checked for being a
+         * {@link net.bytebuddy.instrumentation.method.MethodLookupEngine.ConflictingInterfaceMethod} and is resolved
+         * accordingly. The second argument is however not considered to be a conflicting interface method.</li>
+         * </ul>
+         *
+         * @param virtualHost       The virtual host which should be used as a declaring class for this virtual method.
+         * @param conflictingMethod The method which was already registered when a new method of identical signature
+         *                          was discovered. This method might itself be a conflicting interface method and is
+         *                          then resolved for the methods it represents method when processing.
+         * @param discoveredMethod  The new discovered method. This method must not be a conflicting interface method.
+         * @return A new method description that represents the conflicting methods.
+         */
+        private static MethodDescription of(TypeDescription virtualHost,
+                                            MethodDescription conflictingMethod,
+                                            MethodDescription discoveredMethod) {
             List<MethodDescription> methodDescriptions;
             if (conflictingMethod instanceof ConflictingInterfaceMethod) {
                 List<MethodDescription> known = ((ConflictingInterfaceMethod) conflictingMethod).methodDescriptions;
@@ -45,14 +107,6 @@ public interface MethodLookupEngine {
                 methodDescriptions = Arrays.asList(conflictingMethod, discoveredMethod);
             }
             return new ConflictingInterfaceMethod(virtualHost, methodDescriptions);
-        }
-
-        private final TypeDescription virtualHost;
-        private final List<MethodDescription> methodDescriptions;
-
-        private ConflictingInterfaceMethod(TypeDescription virtualHost, List<MethodDescription> methodDescriptions) {
-            this.virtualHost = virtualHost;
-            this.methodDescriptions = methodDescriptions;
         }
 
         @Override
@@ -122,17 +176,28 @@ public interface MethodLookupEngine {
 
         @Override
         public int getModifiers() {
-            return Opcodes.ACC_ABSTRACT | Opcodes.ACC_PUBLIC;
+            return CONFLICTING_INTERFACE_MODIFIER;
         }
 
+        /**
+         * {@inheritDoc}
+         *
+         * @param targetType
+         * @return
+         */
         @Override
-        public boolean isInvokableOn(TypeDescription typeDescription) {
+        public boolean isSpecializableFor(TypeDescription targetType) {
+            MethodDescription invokableMethod = null;
             for (MethodDescription methodDescription : methodDescriptions) {
-                if (super.isInvokableOn(methodDescription.getDeclaringType())) {
-                    return true;
+                if (!methodDescription.isAbstract() && methodDescription.getDeclaringType().isAssignableFrom(targetType)) {
+                    if (invokableMethod == null) {
+                        invokableMethod = methodDescription;
+                    } else {
+                        return false;
+                    }
                 }
             }
-            return false;
+            return invokableMethod != null;
         }
 
         @Override
@@ -144,10 +209,19 @@ public interface MethodLookupEngine {
         }
     }
 
-    static abstract class AbstractCachingBase implements MethodLookupEngine {
+    /**
+     * An abstract implementation of a method lookup engine which maintains a cache of prior look-ups.
+     */
+    abstract static class AbstractCachingBase implements MethodLookupEngine {
 
+        /**
+         * The cache of prior look-ups.
+         */
         protected final Map<TypeDescription, MethodList> reachableMethods;
 
+        /**
+         * Creates a new instance of a caching lookup engine.
+         */
         protected AbstractCachingBase() {
             reachableMethods = new HashMap<TypeDescription, MethodList>();
         }
@@ -162,6 +236,12 @@ public interface MethodLookupEngine {
             return result;
         }
 
+        /**
+         * Retrieves the reachable methods for a non-cached method.
+         *
+         * @param typeDescription The type for which all reachable methods should be looked up.
+         * @return A list of reachable methods which are added to the cache and returned to the requester.
+         */
         protected abstract MethodList doGetReachableMethods(TypeDescription typeDescription);
 
         @Override
@@ -183,17 +263,13 @@ public interface MethodLookupEngine {
         }
     }
 
+    /**
+     * A default implementation of a method lookup engine. This engine queries each type and interface for its
+     * declared methods and adds them in the same order as the would be returned by calling {@link Class#getMethods()}.
+     * However, conflicting interface methods are represented by
+     * {@link net.bytebuddy.instrumentation.method.MethodLookupEngine.ConflictingInterfaceMethod} instances.
+     */
     static class Default extends AbstractCachingBase {
-
-        public static enum Factory implements MethodLookupEngine.Factory {
-
-            INSTANCE;
-
-            @Override
-            public MethodLookupEngine make() {
-                return new Default();
-            }
-        }
 
         @Override
         protected MethodList doGetReachableMethods(TypeDescription typeDescription) {
@@ -205,6 +281,23 @@ public interface MethodLookupEngine {
             }
             methodBucket.pushInterfaces(interfaces);
             return methodBucket.toMethodList();
+        }
+
+        /**
+         * A factory for creating {@link net.bytebuddy.instrumentation.method.MethodLookupEngine.Default} lookup
+         * engines.
+         */
+        public static enum Factory implements MethodLookupEngine.Factory {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public MethodLookupEngine make() {
+                return new Default();
+            }
         }
 
         /**
@@ -240,9 +333,9 @@ public interface MethodLookupEngine {
             private final Map<String, MethodDescription> interfaceMethods;
 
             /**
-             * A marker pool of interfaces that were already processed by this bucket.
+             * A marker pool of types that were already pushed into this bucket.
              */
-            private final Set<TypeDescription> processedInterfaces;
+            private final Set<TypeDescription> processedTypes;
 
             private final TypeDescription virtualHost;
 
@@ -255,7 +348,7 @@ public interface MethodLookupEngine {
                 this.virtualHost = hostingType;
                 classMethods = new HashMap<String, MethodDescription>();
                 interfaceMethods = new HashMap<String, MethodDescription>();
-                processedInterfaces = new HashSet<TypeDescription>();
+                processedTypes = new HashSet<TypeDescription>();
                 superTypeMatcher = isMethod().and(not(isPrivate().or(isStatic()).or(isPackagePrivate().and(not(isVisibleTo(hostingType))))));
                 pushClass(hostingType, any());
             }
@@ -272,10 +365,12 @@ public interface MethodLookupEngine {
              * @param typeDescription The (non-interface) class to push into the bucket.
              */
             private void pushClass(TypeDescription typeDescription, MethodMatcher methodMatcher) {
-                for (MethodDescription methodDescription : typeDescription.getDeclaredMethods().filter(methodMatcher)) {
-                    String uniqueSignature = methodDescription.getUniqueSignature();
-                    if (!classMethods.containsKey(uniqueSignature)) {
-                        classMethods.put(uniqueSignature, methodDescription);
+                if (processedTypes.add(typeDescription)) {
+                    for (MethodDescription methodDescription : typeDescription.getDeclaredMethods().filter(methodMatcher)) {
+                        String uniqueSignature = methodDescription.getUniqueSignature();
+                        if (!classMethods.containsKey(uniqueSignature)) {
+                            classMethods.put(uniqueSignature, methodDescription);
+                        }
                     }
                 }
             }
@@ -328,14 +423,14 @@ public interface MethodLookupEngine {
              * is impossible to discover a method of a sub interface when processing an interface. Additionally, if the
              * same super interface was pushed into the bucket at a later point, the interface would not be processed
              * again since it was already marked as processed by adding it to
-             * {@link net.bytebuddy.instrumentation.method.MethodLookupEngine.Default.MethodBucket#processedInterfaces}.
+             * {@link net.bytebuddy.instrumentation.method.MethodLookupEngine.Default.MethodBucket#processedTypes}.
              *
              * @param typeDescription  The interface type to process.
              * @param processedMethods A set of unique method signatures that were already processed.
              */
             private void pushInterface(TypeDescription typeDescription, Set<String> processedMethods) {
                 Set<String> locallyProcessedMethods = new HashSet<String>(processedMethods);
-                if (processedInterfaces.add(typeDescription)) {
+                if (processedTypes.add(typeDescription)) {
                     for (MethodDescription methodDescription : typeDescription.getDeclaredMethods().filter(superTypeMatcher)) {
                         String uniqueSignature = methodDescription.getUniqueSignature();
                         if (!processedMethods.contains(uniqueSignature)) {
@@ -358,6 +453,17 @@ public interface MethodLookupEngine {
                 methodDescriptions.addAll(classMethods.values());
                 methodDescriptions.addAll(interfaceMethods.values());
                 return new MethodList.Explicit(methodDescriptions);
+            }
+
+            @Override
+            public String toString() {
+                return "MethodBucket{" +
+                        "classMethods=" + classMethods +
+                        ", interfaceMethods=" + interfaceMethods +
+                        ", processedTypes=" + processedTypes +
+                        ", virtualHost=" + virtualHost +
+                        ", superTypeMatcher=" + superTypeMatcher +
+                        '}';
             }
         }
     }

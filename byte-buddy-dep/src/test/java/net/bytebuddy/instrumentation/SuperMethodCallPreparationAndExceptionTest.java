@@ -63,7 +63,7 @@ public class SuperMethodCallPreparationAndExceptionTest {
         SuperMethodCall.INSTANCE.appender(typeDescription).apply(methodVisitor, instrumentationContext, methodDescription);
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testStaticMethod() throws Exception {
         when(typeDescription.getSupertype()).thenReturn(superType);
         when(methodDescription.isStatic()).thenReturn(true);

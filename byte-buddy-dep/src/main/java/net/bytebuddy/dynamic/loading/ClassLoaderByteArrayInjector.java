@@ -14,22 +14,28 @@ import java.lang.reflect.Method;
  */
 public class ClassLoaderByteArrayInjector {
 
-    private static Method findLoadedClassMethod;
-    private static Method loadByteArrayMethod;
-
-    private static Exception exception;
+    /**
+     * A storage for the reflection method representations that are obtained on loading this classes.
+     */
+    private static final ReflectionStore REFLECTION_STORE;
 
     static {
+        ReflectionStore reflectionStore;
         try {
-            findLoadedClassMethod = ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class);
+            Method findLoadedClassMethod = ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class);
             findLoadedClassMethod.setAccessible(true);
-            loadByteArrayMethod = ClassLoader.class.getDeclaredMethod("defineClass", String.class, byte[].class, int.class, int.class);
+            Method loadByteArrayMethod = ClassLoader.class.getDeclaredMethod("defineClass", String.class, byte[].class, int.class, int.class);
             loadByteArrayMethod.setAccessible(true);
+            reflectionStore = new ReflectionStore.Resolved(findLoadedClassMethod, loadByteArrayMethod);
         } catch (Exception e) {
-            exception = e;
+            reflectionStore = new ReflectionStore.Faulty(e);
         }
+        REFLECTION_STORE = reflectionStore;
     }
 
+    /**
+     * The class loader into which the classes are to be injected.
+     */
     private final ClassLoader classLoader;
 
     /**
@@ -49,16 +55,13 @@ public class ClassLoaderByteArrayInjector {
      * @return The loaded class that is a result of the class loading attempt.
      */
     public Class<?> inject(String name, byte[] binaryRepresentation) {
-        if (findLoadedClassMethod == null || loadByteArrayMethod == null) {
-            throw new IllegalStateException("Could not initialize class loader injector", exception);
-        }
         try {
             synchronized (classLoader) {
-                Class<?> type = (Class<?>) findLoadedClassMethod.invoke(classLoader, name);
+                Class<?> type = (Class<?>) REFLECTION_STORE.getFindLoadedClassMethod().invoke(classLoader, name);
                 if (type != null) {
                     return type;
                 } else {
-                    return (Class<?>) loadByteArrayMethod.invoke(classLoader,
+                    return (Class<?>) REFLECTION_STORE.getLoadByteArrayMethod().invoke(classLoader,
                             name,
                             binaryRepresentation,
                             0,
@@ -69,6 +72,131 @@ public class ClassLoaderByteArrayInjector {
             throw new IllegalStateException("Could not access injection method", e);
         } catch (InvocationTargetException e) {
             throw new IllegalStateException("Exception on invoking loader method", e.getCause());
+        }
+    }
+
+    /**
+     * A storage for method representations in order to access a class loader reflectively.
+     */
+    private static interface ReflectionStore {
+
+        /**
+         * Returns the method for finding a class on a class loader.
+         *
+         * @return The method for finding a class on a class loader.
+         */
+        Method getFindLoadedClassMethod();
+
+        /**
+         * Returns the method for loading a class into a class loader.
+         *
+         * @return The method for loading a class into a class loader.
+         */
+        Method getLoadByteArrayMethod();
+
+        /**
+         * Represents a successfully loaded method lookup.
+         */
+        static class Resolved implements ReflectionStore {
+
+            /**
+             * The method for finding a class on a class loader.
+             */
+            private final Method findLoadedClassMethod;
+
+            /**
+             * The method for loading a class into a class loader.
+             */
+            private final Method loadByteArrayMethod;
+
+            /**
+             * Creates a new resolved reflection store.
+             *
+             * @param findLoadedClassMethod The method for finding a class on a class loader.
+             * @param loadByteArrayMethod   The method for loading a class into a class loader.
+             */
+            private Resolved(Method findLoadedClassMethod, Method loadByteArrayMethod) {
+                this.findLoadedClassMethod = findLoadedClassMethod;
+                this.loadByteArrayMethod = loadByteArrayMethod;
+            }
+
+            @Override
+            public Method getFindLoadedClassMethod() {
+                return findLoadedClassMethod;
+            }
+
+            @Override
+            public Method getLoadByteArrayMethod() {
+                return loadByteArrayMethod;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && findLoadedClassMethod.equals(((Resolved) other).findLoadedClassMethod)
+                        && loadByteArrayMethod.equals(((Resolved) other).loadByteArrayMethod);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = findLoadedClassMethod.hashCode();
+                result = 31 * result + loadByteArrayMethod.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "ClassLoaderByteArrayInjector.ReflectionStore.Resolved{" +
+                        "findLoadedClassMethod=" + findLoadedClassMethod +
+                        ", loadByteArrayMethod=" + loadByteArrayMethod +
+                        '}';
+            }
+        }
+
+        /**
+         * Represents an unsuccessfully loaded method lookup.
+         */
+        static class Faulty implements ReflectionStore {
+
+            /**
+             * An exception to throw when attempting to lookup a method using this reflection store.
+             */
+            private final RuntimeException exception;
+
+            /**
+             * Creates a new faulty reflection store.
+             *
+             * @param exception The exception that was thrown when attempting to lookup the method.
+             */
+            private Faulty(Exception exception) {
+                this.exception = new RuntimeException("Could not execute reflective lookup", exception);
+            }
+
+            @Override
+            public Method getFindLoadedClassMethod() {
+                throw exception;
+            }
+
+            @Override
+            public Method getLoadByteArrayMethod() {
+                throw exception;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && exception.equals(((Faulty) other).exception);
+            }
+
+            @Override
+            public int hashCode() {
+                return exception.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "ClassLoaderByteArrayInjector.ReflectionStore.Faulty{exception=" + exception + '}';
+            }
         }
     }
 }

@@ -61,7 +61,7 @@ public class MethodArgumentDescriptionTest {
     @Test
     public void testStaticMethod() throws Exception {
         when(methodDescription.isStatic()).thenReturn(true);
-        StackManipulation stackManipulation = MethodVariableAccess.loadThisAndArguments(methodDescription);
+        StackManipulation stackManipulation = MethodVariableAccess.loadThisReferenceAndArguments(methodDescription);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, instrumentationContext);
         assertThat(size.getSizeImpact(), is(PARAMETER_STACK_SIZE));
@@ -73,7 +73,7 @@ public class MethodArgumentDescriptionTest {
 
     @Test
     public void testNonStaticMethod() throws Exception {
-        StackManipulation stackManipulation = MethodVariableAccess.loadThisAndArguments(methodDescription);
+        StackManipulation stackManipulation = MethodVariableAccess.loadThisReferenceAndArguments(methodDescription);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, instrumentationContext);
         assertThat(size.getSizeImpact(), is(PARAMETER_STACK_SIZE + 1));

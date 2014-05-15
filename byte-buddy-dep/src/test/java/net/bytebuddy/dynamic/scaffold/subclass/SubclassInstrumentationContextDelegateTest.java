@@ -67,12 +67,14 @@ public class SubclassInstrumentationContextDelegateTest {
         when(firstMethod.getDeclaringType()).thenReturn(superType);
         when(firstMethod.getInternalName()).thenReturn(QUX);
         when(firstMethod.getUniqueSignature()).thenReturn(FOO);
+        when(firstMethod.isSpecializableFor(superType)).thenReturn(true);
         when(firstMethodReturnType.getStackSize()).thenReturn(StackSize.ZERO);
         when(secondMethod.getReturnType()).thenReturn(secondMethodReturnType);
         when(secondMethod.getParameterTypes()).thenReturn(secondMethodParameters);
         when(secondMethod.getDeclaringType()).thenReturn(superType);
         when(secondMethod.getInternalName()).thenReturn(BAZ);
         when(secondMethod.getUniqueSignature()).thenReturn(BAZ);
+        when(secondMethod.isSpecializableFor(superType)).thenReturn(true);
         MethodDescription toStringMethod = new TypeDescription.ForLoadedType(Object.class)
                 .getDeclaredMethods().filter(named(TO_STRING)).getOnly();
         when(superType.isAssignableFrom(superType)).thenReturn(true);

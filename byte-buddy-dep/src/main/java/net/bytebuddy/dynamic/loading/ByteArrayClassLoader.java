@@ -12,6 +12,9 @@ import java.util.Map;
  */
 public class ByteArrayClassLoader extends ClassLoader {
 
+    /**
+     * A mutable map of type names mapped to their binary representation.
+     */
     private final Map<String, byte[]> typeDefinitions;
 
     /**

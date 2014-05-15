@@ -79,6 +79,9 @@ public interface BridgeMethodResolver {
      */
     static class Simple implements BridgeMethodResolver {
 
+        /**
+         * A map of all bridges mapped by their unique signature.
+         */
         private final Map<String, BridgeTarget> bridges;
 
         /**
@@ -95,6 +98,13 @@ public interface BridgeMethodResolver {
             }
         }
 
+        /**
+         * Attempts to find a bridge target for a given bridge method.
+         *
+         * @param bridgeMethod    The bridge method to resolve.
+         * @param conflictHandler A conflict handler that is queried for handling ambiguous resolutions.
+         * @return The resolved bridge method target.
+         */
         private static BridgeTarget findBridgeTargetFor(MethodDescription bridgeMethod,
                                                         ConflictHandler conflictHandler) {
             MethodList targetCandidates = bridgeMethod.getDeclaringType()
@@ -165,8 +175,16 @@ public interface BridgeMethodResolver {
              */
             CALL_BRIDGE(ConflictHandler.Default.CALL_BRIDGE);
 
+            /**
+             * This factory's conflict handler.
+             */
             private final ConflictHandler conflictHandler;
 
+            /**
+             * Creates a new factory.
+             *
+             * @param conflictHandler The conflict handler for this factory.
+             */
             private Factory(ConflictHandler conflictHandler) {
                 this.conflictHandler = conflictHandler;
             }
@@ -275,8 +293,16 @@ public interface BridgeMethodResolver {
              */
             static class Resolved implements BridgeTarget {
 
+                /**
+                 * The target method for this resolved bridge method.
+                 */
                 private final MethodDescription target;
 
+                /**
+                 * Creates a new resolved bridge method target.
+                 *
+                 * @param target The target method for a bridge method.
+                 */
                 public Resolved(MethodDescription target) {
                     this.target = target;
                 }
@@ -314,8 +340,16 @@ public interface BridgeMethodResolver {
              */
             static class Candidate implements BridgeTarget {
 
+                /**
+                 * The target method candidate for this resolved bridge method.
+                 */
                 private final MethodDescription target;
 
+                /**
+                 * Creates a new bridge method target candidate.
+                 *
+                 * @param target The target method candidate for a bridge method.
+                 */
                 public Candidate(MethodDescription target) {
                     this.target = target;
                 }

@@ -83,6 +83,9 @@ public interface FieldRegistry {
      */
     static class Default implements FieldRegistry {
 
+        /**
+         * Contains all registered field registry entries mapped by the field name. This map should never be mutated.
+         */
         private final Map<String, TypeWriter.FieldPool.Entry> entries;
 
         /**
@@ -92,6 +95,11 @@ public interface FieldRegistry {
             entries = Collections.emptyMap();
         }
 
+        /**
+         * Creates a new field registry.
+         *
+         * @param entries The entries of this field registry.
+         */
         private Default(Map<String, TypeWriter.FieldPool.Entry> entries) {
             this.entries = entries;
         }
@@ -127,10 +135,21 @@ public interface FieldRegistry {
             return "FieldRegistry.Default{entries=" + entries + '}';
         }
 
+        /**
+         * A compiled default field registry.
+         */
         private class Compiled implements FieldRegistry.Compiled {
 
+            /**
+             * The fallback entry for this compiled field registry.
+             */
             private final TypeWriter.FieldPool.Entry fallback;
 
+            /**
+             * Creates a new compiled default field registry.
+             *
+             * @param fallback The fallback entry for this compiled field registry.
+             */
             private Compiled(TypeWriter.FieldPool.Entry fallback) {
                 this.fallback = fallback;
             }
@@ -145,6 +164,11 @@ public interface FieldRegistry {
                 }
             }
 
+            /**
+             * Returns the outer class of this instance.
+             *
+             * @return The outer class of this instance.
+             */
             private FieldRegistry getFieldRegistry() {
                 return Default.this;
             }

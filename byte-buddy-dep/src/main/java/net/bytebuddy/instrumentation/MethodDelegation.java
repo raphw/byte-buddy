@@ -182,6 +182,15 @@ public class MethodDelegation implements Instrumentation {
         return to(delegate, defaultMethodLookupEngine());
     }
 
+    /**
+     * Identical to {@link net.bytebuddy.instrumentation.MethodDelegation#to(Object)} but uses an explicit
+     * {@link net.bytebuddy.instrumentation.method.MethodLookupEngine}.
+     *
+     * @param delegate           A delegate instance which will be injected by a type initializer and to which all
+     *                           intercepted method calls are delegated to.
+     * @param methodLookupEngine The method lookup engine to use.
+     * @return A method delegation instrumentation to the given instance methods.
+     */
     public static MethodDelegation to(Object delegate, MethodLookupEngine methodLookupEngine) {
         return new MethodDelegation(new InstrumentationDelegate.ForStaticFieldInstance(nonNull(delegate)),
                 defaultParameterBinders(),
@@ -213,6 +222,16 @@ public class MethodDelegation implements Instrumentation {
         return to(delegate, fieldName, defaultMethodLookupEngine());
     }
 
+    /**
+     * Identical to {@link net.bytebuddy.instrumentation.MethodDelegation#to(Object, java.lang.String)} but uses an
+     * explicit {@link net.bytebuddy.instrumentation.method.MethodLookupEngine}.
+     *
+     * @param delegate           A delegate instance which will be injected by a type initializer and to which all intercepted
+     *                           method calls are delegated to.
+     * @param fieldName          The name of the field for storing the delegate instance.
+     * @param methodLookupEngine The method lookup engine to use.
+     * @return A method delegation instrumentation to the given {@code static} methods.
+     */
     public static MethodDelegation to(Object delegate, String fieldName, MethodLookupEngine methodLookupEngine) {
         return new MethodDelegation(
                 new InstrumentationDelegate.ForStaticFieldInstance(nonNull(delegate), isValidIdentifier(fieldName)),
@@ -249,6 +268,15 @@ public class MethodDelegation implements Instrumentation {
         return instanceField(type, fieldName, defaultMethodLookupEngine());
     }
 
+    /**
+     * Identical to {@link net.bytebuddy.instrumentation.MethodDelegation#instanceField(Class, String)} but uses an
+     * explicit {@link net.bytebuddy.instrumentation.method.MethodLookupEngine}.
+     *
+     * @param type               The type of the delegate and the field.
+     * @param fieldName          The name of the field.
+     * @param methodLookupEngine The method lookup engine to use.
+     * @return A method delegation that intercepts method calls by delegating to method calls on the given instance.
+     */
     public static MethodDelegation instanceField(Class<?> type, String fieldName, MethodLookupEngine methodLookupEngine) {
         return new MethodDelegation(
                 new InstrumentationDelegate.ForInstanceField(new TypeDescription.ForLoadedType(nonNull(type)), isValidIdentifier(fieldName)),

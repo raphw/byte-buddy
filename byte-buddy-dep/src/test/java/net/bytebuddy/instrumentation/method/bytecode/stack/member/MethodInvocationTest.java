@@ -20,38 +20,39 @@ import org.objectweb.asm.Opcodes;
 import java.util.Arrays;
 import java.util.Collection;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
 
 @RunWith(Parameterized.class)
 public class MethodInvocationTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
-    private final int methodStackSize;
-    private final StackSize returnTypeSize;
+    private static final int ARGUMENT_STACK_SIZE = 1;
+    private final StackSize stackSize;
+    private final int expectedSize;
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
     @Mock
     private MethodDescription methodDescription;
     @Mock
-    private TypeDescription declaringType, declaringTypeSubType, returnType;
-    @Mock
-    private MethodVisitor methodVisitor;
+    private TypeDescription returnType, declaringType, otherType;
     @Mock
     private Instrumentation.Context instrumentationContext;
-    private int expectedSizeChange;
+    @Mock
+    private MethodVisitor methodVisitor;
 
-    public MethodInvocationTest(int methodStackSize, StackSize returnTypeSize) {
-        this.methodStackSize = methodStackSize;
-        this.returnTypeSize = returnTypeSize;
+    public MethodInvocationTest(StackSize stackSize) {
+        this.stackSize = stackSize;
+        this.expectedSize = stackSize.getSize() - ARGUMENT_STACK_SIZE;
     }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {2, StackSize.SINGLE},
-                {0, StackSize.ZERO},
+                {StackSize.ZERO},
+                {StackSize.SINGLE},
+                {StackSize.DOUBLE}
         });
     }
 
@@ -59,18 +60,12 @@ public class MethodInvocationTest {
     public void setUp() throws Exception {
         when(methodDescription.getReturnType()).thenReturn(returnType);
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
+        when(methodDescription.getStackSize()).thenReturn(ARGUMENT_STACK_SIZE);
         when(declaringType.getInternalName()).thenReturn(FOO);
+        when(otherType.getInternalName()).thenReturn(BAZ);
         when(methodDescription.getInternalName()).thenReturn(BAR);
         when(methodDescription.getDescriptor()).thenReturn(QUX);
-        when(declaringType.isAssignableFrom(declaringTypeSubType)).thenReturn(true);
-        when(declaringTypeSubType.getInternalName()).thenReturn(BAZ);
-        expectedSizeChange = configureSizeChange(methodStackSize, returnTypeSize);
-    }
-
-    private int configureSizeChange(int methodStackSize, StackSize returnTypeSize) {
-        when(methodDescription.getStackSize()).thenReturn(methodStackSize);
-        when(returnType.getStackSize()).thenReturn(returnTypeSize);
-        return returnTypeSize.getSize() - methodStackSize;
+        when(returnType.getStackSize()).thenReturn(stackSize);
     }
 
     @After
@@ -79,127 +74,96 @@ public class MethodInvocationTest {
     }
 
     @Test
-    public void testStaticMethodImplicitInvocation() throws Exception {
+    public void testStaticMethodInvocation() throws Exception {
         when(methodDescription.isStatic()).thenReturn(true);
-        evaluateImplicitlyTypedInvocation(Opcodes.INVOKESTATIC);
-        verify(methodDescription, atLeast(1)).isStatic();
+        assertInvocation(MethodInvocation.invoke(methodDescription), Opcodes.INVOKESTATIC, FOO);
     }
 
     @Test
-    public void testVirtualMethodImplicitInvocation() throws Exception {
-        evaluateImplicitlyTypedInvocation(Opcodes.INVOKEVIRTUAL);
-        verify(methodDescription, atLeast(1)).isStatic();
-        verify(methodDescription, atLeast(1)).isConstructor();
-        verify(methodDescription, atLeast(1)).isPrivate();
-    }
-
-    @Test
-    public void testPrivateMethodImplicitInvocation() throws Exception {
-        when(methodDescription.isPrivate()).thenReturn(true);
-        evaluateImplicitlyTypedInvocation(Opcodes.INVOKESPECIAL);
-        verify(methodDescription, atLeast(1)).isStatic();
-        verify(methodDescription, atLeast(1)).isPrivate();
-    }
-
-    @Test
-    public void testPrivateStaticMethodImplicitInvocation() throws Exception {
-        when(methodDescription.isPrivate()).thenReturn(true);
+    public void testStaticPrivateMethodInvocation() throws Exception {
         when(methodDescription.isStatic()).thenReturn(true);
-        evaluateImplicitlyTypedInvocation(Opcodes.INVOKESTATIC);
-        verify(methodDescription, atLeast(1)).isStatic();
+        when(methodDescription.isPrivate()).thenReturn(true);
+        assertInvocation(MethodInvocation.invoke(methodDescription), Opcodes.INVOKESTATIC, FOO);
     }
 
     @Test
-    public void testConstructorImplicitInvocation() throws Exception {
+    public void testPrivateMethodInvocation() throws Exception {
+        when(methodDescription.isPrivate()).thenReturn(true);
+        assertInvocation(MethodInvocation.invoke(methodDescription), Opcodes.INVOKESPECIAL, FOO);
+    }
+
+    @Test
+    public void testConstructorMethodInvocation() throws Exception {
         when(methodDescription.isConstructor()).thenReturn(true);
-        evaluateImplicitlyTypedInvocation(Opcodes.INVOKESPECIAL);
-        verify(methodDescription, atLeast(1)).isConstructor();
+        assertInvocation(MethodInvocation.invoke(methodDescription), Opcodes.INVOKESPECIAL, FOO);
+    }
+
+    @Test
+    public void testPublicMethodInvocation() throws Exception {
+        assertInvocation(MethodInvocation.invoke(methodDescription), Opcodes.INVOKEVIRTUAL, FOO);
+    }
+
+    @Test
+    public void testInterfaceMethodInvocation() throws Exception {
+        when(declaringType.isInterface()).thenReturn(true);
+        assertInvocation(MethodInvocation.invoke(methodDescription), Opcodes.INVOKEINTERFACE, FOO);
+    }
+
+    @Test
+    public void testDefaultInterfaceMethodInvocation() throws Exception {
+        when(methodDescription.isDefaultMethod()).thenReturn(true);
+        when(declaringType.isInterface()).thenReturn(true);
+        assertInvocation(MethodInvocation.invoke(methodDescription), Opcodes.INVOKESPECIAL, FOO);
+    }
+
+    @Test
+    public void testExplicitlySpecialMethodInvocation() throws Exception {
+        when(methodDescription.isSpecializableFor(otherType)).thenReturn(true);
+        assertInvocation(MethodInvocation.invoke(methodDescription).special(otherType), Opcodes.INVOKESPECIAL, BAZ);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testIllegalSpecialMethodInvocation() throws Exception {
+        MethodInvocation.invoke(methodDescription).special(otherType);
+    }
+
+    @Test
+    public void testExplicitlyVirtualMethodInvocation() throws Exception {
+        when(declaringType.isAssignableFrom(otherType)).thenReturn(true);
+        assertInvocation(MethodInvocation.invoke(methodDescription).virtual(otherType), Opcodes.INVOKEVIRTUAL, BAZ);
+    }
+
+    @Test
+    public void testExplicitlyVirtualMethodInvocationOfInterface() throws Exception {
+        when(declaringType.isAssignableFrom(otherType)).thenReturn(true);
+        when(otherType.isInterface()).thenReturn(true);
+        assertInvocation(MethodInvocation.invoke(methodDescription).virtual(otherType), Opcodes.INVOKEINTERFACE, BAZ);
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testStaticMethodExplicitVirtualInvocation() throws Exception {
+    public void testStaticVirtualInvocation() throws Exception {
         when(methodDescription.isStatic()).thenReturn(true);
-        TypeDescription explicitType = mock(TypeDescription.class);
-        MethodInvocation.invoke(methodDescription).virtual(explicitType);
+        MethodInvocation.invoke(methodDescription).virtual(otherType);
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testStaticMethodExplicitSpecialInvocation() throws Exception {
-        when(methodDescription.isStatic()).thenReturn(true);
-        TypeDescription explicitType = mock(TypeDescription.class);
-        MethodInvocation.invoke(methodDescription).special(explicitType);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testConstructorExplicitVirtualInvocation() throws Exception {
-        when(methodDescription.isConstructor()).thenReturn(true);
-        TypeDescription explicitType = mock(TypeDescription.class);
-        MethodInvocation.invoke(methodDescription).virtual(explicitType);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testConstructorExplicitSpecialInvocationNonDeclaringType() throws Exception {
-        when(methodDescription.isConstructor()).thenReturn(true);
-        TypeDescription explicitType = mock(TypeDescription.class);
-        MethodInvocation.invoke(methodDescription).special(explicitType);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testConstructorExplicitSpecialInvocationDeclaringType() throws Exception {
-        when(methodDescription.isConstructor()).thenReturn(true);
-        MethodInvocation.invoke(methodDescription).special(declaringType);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testPrivateMethodExplicitVirtualInvocation() throws Exception {
+    public void testPrivateVirtualInvocation() throws Exception {
         when(methodDescription.isPrivate()).thenReturn(true);
-        TypeDescription explicitType = mock(TypeDescription.class);
-        MethodInvocation.invoke(methodDescription).virtual(explicitType);
+        MethodInvocation.invoke(methodDescription).virtual(otherType);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testPrivateMethodExplicitSpecialInvocationNonDeclaringType() throws Exception {
-        when(methodDescription.isPrivate()).thenReturn(true);
-        TypeDescription explicitType = mock(TypeDescription.class);
-        MethodInvocation.invoke(methodDescription).special(explicitType);
+    @Test(expected = IllegalStateException.class)
+    public void testConstructorVirtualInvocation() throws Exception {
+        when(methodDescription.isConstructor()).thenReturn(true);
+        MethodInvocation.invoke(methodDescription).virtual(otherType);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testPrivateMethodExplicitSpecialInvocationDeclaringType() throws Exception {
-        when(methodDescription.isPrivate()).thenReturn(true);
-        MethodInvocation.invoke(methodDescription).special(declaringType);
-    }
-
-    @Test
-    public void testVirtualMethodExplicitVirtualInvocationSubType() throws Exception {
-        evaluateInvocation(Opcodes.INVOKEVIRTUAL, BAZ, MethodInvocation.invoke(methodDescription).virtual(declaringTypeSubType));
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testVirtualMethodExplicitVirtualInvocationNonSubType() throws Exception {
-        MethodInvocation.invoke(methodDescription).virtual(returnType);
-    }
-
-    @Test
-    public void testVirtualMethodExplicitSpecialInvocationSubType() throws Exception {
-        evaluateInvocation(Opcodes.INVOKESPECIAL, BAZ, MethodInvocation.invoke(methodDescription).special(declaringTypeSubType));
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testVirtualMethodExplicitSpecialInvocationNonSubType() throws Exception {
-        MethodInvocation.invoke(methodDescription).special(returnType);
-    }
-
-    private void evaluateImplicitlyTypedInvocation(int opcode) {
-        evaluateInvocation(opcode, FOO, MethodInvocation.invoke(methodDescription));
-    }
-
-    private void evaluateInvocation(int opcode, String internalTypeName, StackManipulation invocation) {
-        assertThat(invocation.isValid(), is(true));
-        StackManipulation.Size size = invocation.apply(methodVisitor, instrumentationContext);
-        assertThat(size.getSizeImpact(), is(expectedSizeChange));
-        assertThat(size.getMaximalSize(), is(Math.max(0, expectedSizeChange)));
-        verify(methodVisitor).visitMethodInsn(opcode, internalTypeName, BAR, QUX);
+    private void assertInvocation(StackManipulation stackManipulation, int opcode, String typeName) {
+        assertThat(stackManipulation.isValid(), is(true));
+        StackManipulation.Size size = stackManipulation.apply(methodVisitor, instrumentationContext);
+        assertThat(size.getSizeImpact(), is(expectedSize));
+        assertThat(size.getMaximalSize(), is(Math.max(0, expectedSize)));
+        verify(methodVisitor).visitMethodInsn(opcode, typeName, BAR, QUX);
         verifyNoMoreInteractions(methodVisitor);
     }
 }

@@ -24,9 +24,7 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.*;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isConstructor;
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.named;
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.takesArguments;
+import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
 
 /**
  * A dynamic type that is created at runtime, usually as the result of applying a
@@ -176,6 +174,12 @@ public interface DynamicType {
          */
         Builder<T> classVisitor(ClassVisitorWrapper classVisitorWrapper);
 
+        /**
+         * Defines the use of a specific factory for a {@link net.bytebuddy.instrumentation.method.MethodLookupEngine}.
+         *
+         * @param methodLookupEngineFactory The factory to be used.
+         * @return A builder that applies the given method lookup engine factory.
+         */
         Builder<T> methodLookupEngine(MethodLookupEngine.Factory methodLookupEngineFactory);
 
         /**
@@ -469,6 +473,14 @@ public interface DynamicType {
                 this.methodTokens = methodTokens;
             }
 
+            /**
+             * If a type is represented by a {@link net.bytebuddy.dynamic.TargetType} placeholder, this method
+             * substitutes the type by the instrumented type.
+             *
+             * @param type             The type to consider for substitution.
+             * @param instrumentedType The instrumented type which the type might be substituted against.
+             * @return The actually represented type.
+             */
             private static TypeDescription considerSubstitution(TypeDescription type, TypeDescription instrumentedType) {
                 return type.represents(TargetType.class) ? instrumentedType : type;
             }
@@ -981,7 +993,7 @@ public interface DynamicType {
          * The byte array representing this dynamic type.
          */
         protected final byte[] binaryRepresentation;
-        /*
+        /**
          * The type initializer for this dynamic type.
          */
         protected final TypeInitializer typeInitializer;

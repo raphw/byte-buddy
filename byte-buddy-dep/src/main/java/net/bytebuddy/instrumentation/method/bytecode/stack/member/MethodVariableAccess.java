@@ -80,7 +80,7 @@ public enum MethodVariableAccess {
      * @return A stack manipulation representing the loading of all method arguments including a reference to the
      * instance if any.
      */
-    public static StackManipulation loadThisAndArguments(MethodDescription methodDescription) {
+    public static StackManipulation loadThisReferenceAndArguments(MethodDescription methodDescription) {
         return loadArguments(methodDescription, true);
     }
 

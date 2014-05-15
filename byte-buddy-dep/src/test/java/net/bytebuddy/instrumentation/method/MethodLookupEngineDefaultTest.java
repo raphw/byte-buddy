@@ -2,6 +2,7 @@ package net.bytebuddy.instrumentation.method;
 
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -17,6 +18,10 @@ public class MethodLookupEngineDefaultTest {
 
     private MethodLookupEngine methodLookupEngine;
 
+    private static MethodMatcher isVirtualTo(TypeDescription typeDescription) {
+        return isMethod().and(not(isPrivate().or(isStatic()).or(isPackagePrivate().and(not(isVisibleTo(typeDescription))))));
+    }
+
     @Before
     public void setUp() throws Exception {
         methodLookupEngine = MethodLookupEngine.Default.Factory.INSTANCE.make();
@@ -30,14 +35,6 @@ public class MethodLookupEngineDefaultTest {
         assertThat(reachableMethods, containsAllOf(objectType.getDeclaredMethods()));
     }
 
-    private static class ClassOverridingToString {
-
-        @Override
-        public String toString() {
-            return super.toString();
-        }
-    }
-
     @Test
     public void testClassOverrideLookup() throws Exception {
         TypeDescription objectType = new TypeDescription.ForLoadedType(Object.class);
@@ -48,15 +45,6 @@ public class MethodLookupEngineDefaultTest {
                 .filter(isVirtualTo(classOverridingToString)).filter(not(named(TO_STRING)))));
         assertThat(reachableMethods.size(), is(classOverridingToString.getDeclaredMethods().size()
                 + objectType.getDeclaredMethods().filter(isVirtualTo(classOverridingToString)).size() - 1));
-    }
-
-    private static interface SingleMethodInterface {
-
-        void foo();
-    }
-
-    private static abstract class AbstractSingleInterfaceClass implements SingleMethodInterface {
-        /* empty */
     }
 
     @Test
@@ -73,14 +61,6 @@ public class MethodLookupEngineDefaultTest {
                 + objectType.getDeclaredMethods().filter(isVirtualTo(abstractSingleInterfaceClass)).size()));
     }
 
-    private static class SingleInterfaceClass implements SingleMethodInterface {
-
-        @Override
-        public void foo() {
-            /* empty */
-        }
-    }
-
     @Test
     public void testInterfaceImplementedLookup() throws Exception {
         TypeDescription objectType = new TypeDescription.ForLoadedType(Object.class);
@@ -90,16 +70,6 @@ public class MethodLookupEngineDefaultTest {
         assertThat(reachableMethods, containsAllOf(objectType.getDeclaredMethods().filter(isVirtualTo(singleInterfaceClass))));
         assertThat(reachableMethods.size(), is(singleInterfaceClass.getDeclaredMethods().size()
                 + objectType.getDeclaredMethods().filter(isVirtualTo(singleInterfaceClass)).size()));
-    }
-
-    private static interface SingleMethodOverridingInterface extends SingleMethodInterface {
-
-        @Override
-        void foo();
-    }
-
-    private static abstract class AbstractSingleMethodOverridingClass implements SingleMethodOverridingInterface {
-        /* empty */
     }
 
     @Test
@@ -116,10 +86,6 @@ public class MethodLookupEngineDefaultTest {
                 + objectType.getDeclaredMethods().filter(isVirtualTo(abstractSingleMethodOverridingClass)).size()));
     }
 
-    private static abstract class AbstractFoldedInterfaceClass extends AbstractSingleInterfaceClass implements SingleMethodOverridingInterface {
-        /* empty */
-    }
-
     @Test
     public void testInterfaceFoldedRedefinitionLookup() throws Exception {
         TypeDescription objectType = new TypeDescription.ForLoadedType(Object.class);
@@ -134,14 +100,6 @@ public class MethodLookupEngineDefaultTest {
                 + objectType.getDeclaredMethods().filter(isVirtualTo(abstractFoldedInterfaceClass)).size()));
     }
 
-    private static abstract class AbstractFoldedReverseInterfaceBaseClass implements SingleMethodOverridingInterface {
-        /* empty */
-    }
-
-    private static abstract class AbstractFoldedReverseInterfaceClass extends AbstractFoldedReverseInterfaceBaseClass implements SingleMethodInterface {
-        /* empty */
-    }
-
     @Test
     public void testInterfaceFoldedReversedRedefinitionLookup() throws Exception {
         TypeDescription objectType = new TypeDescription.ForLoadedType(Object.class);
@@ -154,15 +112,6 @@ public class MethodLookupEngineDefaultTest {
         assertThat(reachableMethods.size(), is(abstractFoldedReverseInterfaceClass.getDeclaredMethods().size()
                 + singleMethodOverridingInterface.getDeclaredMethods().size()
                 + objectType.getDeclaredMethods().filter(isVirtualTo(abstractFoldedReverseInterfaceClass)).size()));
-    }
-
-    private static interface AdditionalMethodInterface extends SingleMethodOverridingInterface {
-
-        void bar();
-    }
-
-    private static abstract class AbstractAdditionalMethodInterfaceClass implements AdditionalMethodInterface {
-        /* empty */
     }
 
     @Test
@@ -182,15 +131,6 @@ public class MethodLookupEngineDefaultTest {
                 + objectType.getDeclaredMethods().filter(isVirtualTo(abstractAdditionalMethodInterfaceClass)).size()));
     }
 
-    private static interface ConflictingSingleMethodInterface {
-
-        void foo();
-    }
-
-    private static abstract class ConflictingInterfaceClass implements SingleMethodInterface, ConflictingSingleMethodInterface {
-        /* empty */
-    }
-
     @Test
     public void testConflictingInterfaceLookup() throws Exception {
         TypeDescription objectType = new TypeDescription.ForLoadedType(Object.class);
@@ -206,7 +146,78 @@ public class MethodLookupEngineDefaultTest {
         assertThat(conflictMethod.getDeclaringType(), is(conflictingInterfaceClass));
     }
 
-    private static MethodMatcher isVirtualTo(TypeDescription typeDescription) {
-        return isMethod().and(not(isPrivate().or(isStatic()).or(isPackagePrivate().and(not(isVisibleTo(typeDescription))))));
+    @Test
+    public void testHashCodeEquals() throws Exception {
+        assertThat(methodLookupEngine.hashCode(), is(new MethodLookupEngine.Default().hashCode()));
+        assertThat(methodLookupEngine, is((MethodLookupEngine) new MethodLookupEngine.Default()));
+        MethodLookupEngine otherEngine = new MethodLookupEngine.Default();
+        otherEngine.getReachableMethods(new TypeDescription.ForLoadedType(Object.class));
+        assertThat(methodLookupEngine.hashCode(), CoreMatchers.not(is(otherEngine.hashCode())));
+        assertThat(methodLookupEngine, CoreMatchers.not(is(otherEngine)));
+    }
+
+    private static interface SingleMethodInterface {
+
+        void foo();
+    }
+
+    private static interface SingleMethodOverridingInterface extends SingleMethodInterface {
+
+        @Override
+        void foo();
+    }
+
+    private static interface AdditionalMethodInterface extends SingleMethodOverridingInterface {
+
+        void bar();
+    }
+
+    private static interface ConflictingSingleMethodInterface {
+
+        void foo();
+    }
+
+    private static class ClassOverridingToString {
+
+        @Override
+        public String toString() {
+            return super.toString();
+        }
+    }
+
+    private static abstract class AbstractSingleInterfaceClass implements SingleMethodInterface {
+        /* empty */
+    }
+
+    private static class SingleInterfaceClass implements SingleMethodInterface {
+
+        @Override
+        public void foo() {
+            /* empty */
+        }
+    }
+
+    private static abstract class AbstractSingleMethodOverridingClass implements SingleMethodOverridingInterface {
+        /* empty */
+    }
+
+    private static abstract class AbstractFoldedInterfaceClass extends AbstractSingleInterfaceClass implements SingleMethodOverridingInterface {
+        /* empty */
+    }
+
+    private static abstract class AbstractFoldedReverseInterfaceBaseClass implements SingleMethodOverridingInterface {
+        /* empty */
+    }
+
+    private static abstract class AbstractFoldedReverseInterfaceClass extends AbstractFoldedReverseInterfaceBaseClass implements SingleMethodInterface {
+        /* empty */
+    }
+
+    private static abstract class AbstractAdditionalMethodInterfaceClass implements AdditionalMethodInterface {
+        /* empty */
+    }
+
+    private static abstract class ConflictingInterfaceClass implements SingleMethodInterface, ConflictingSingleMethodInterface {
+        /* empty */
     }
 }

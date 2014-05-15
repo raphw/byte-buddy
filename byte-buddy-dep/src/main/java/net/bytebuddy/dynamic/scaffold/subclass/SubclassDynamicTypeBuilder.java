@@ -63,6 +63,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      * @param classVisitorWrapperChain              A chain of ASM class visitors to apply to the writing process.
      * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
      * @param methodRegistry                        The method registry to apply to the dynamic type creation.
+     * @param methodLookupEngineFactory             The method lookup engine factory to apply to the dynamic type creation.
      * @param defaultFieldAttributeAppenderFactory  The field attribute appender factory that should be applied by default if
      *                                              no specific appender was specified for a given field.
      * @param defaultMethodAttributeAppenderFactory The method attribute appender factory that should be applied by default
@@ -116,6 +117,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      * @param classVisitorWrapperChain              A chain of ASM class visitors to apply to the writing process.
      * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
      * @param methodRegistry                        The method registry to apply to the dynamic type creation.
+     * @param methodLookupEngineFactory             The method lookup engine factory to apply to the dynamic type creation.
      * @param defaultFieldAttributeAppenderFactory  The field attribute appender factory that should be applied by default if
      *                                              no specific appender was specified for a given field.
      * @param defaultMethodAttributeAppenderFactory The method attribute appender factory that should be applied by default
