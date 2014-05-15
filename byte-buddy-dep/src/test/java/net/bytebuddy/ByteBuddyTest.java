@@ -375,11 +375,11 @@ public class ByteBuddyTest {
                                         TypeDescription targetType,
                                         boolean considerRuntimeType) {
             if (!sourceType.isPrimitive() && targetType.represents(String.class)) {
-                MethodDescription toStringMethod = sourceType
-                        .getReachableMethods()
-                        .filter(named("toString").and(takesArguments(0)).and(returns(String.class)))
+                MethodDescription toStringMethod = new TypeDescription.ForLoadedType(Object.class)
+                        .getDeclaredMethods()
+                        .filter(named("toString"))
                         .getOnly();
-                return MethodInvocation.invoke(toStringMethod);
+                return MethodInvocation.invoke(toStringMethod).virtual(sourceType);
             } else {
                 return IllegalStackManipulation.INSTANCE;
             }

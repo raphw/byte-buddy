@@ -27,6 +27,9 @@ public interface ClassVisitorWrapper {
      */
     static class Chain implements ClassVisitorWrapper {
 
+        /**
+         * The class visitor wrappers that are represented by this chain in their order. This list must not be mutated.
+         */
         private final List<ClassVisitorWrapper> classVisitorWrappers;
 
         /**

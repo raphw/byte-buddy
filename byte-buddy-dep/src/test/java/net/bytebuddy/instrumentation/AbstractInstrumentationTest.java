@@ -13,6 +13,7 @@ import net.bytebuddy.dynamic.scaffold.subclass.SubclassDynamicTypeBuilder;
 import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
+import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import org.objectweb.asm.Opcodes;
@@ -39,6 +40,7 @@ public abstract class AbstractInstrumentationTest {
                 new ClassVisitorWrapper.Chain(),
                 new FieldRegistry.Default(),
                 new MethodRegistry.Default(),
+                MethodLookupEngine.Default.Factory.INSTANCE,
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ConstructorStrategy.Default.IMITATE_SUPER_TYPE)

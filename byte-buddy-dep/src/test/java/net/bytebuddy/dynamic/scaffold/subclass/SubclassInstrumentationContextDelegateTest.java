@@ -11,6 +11,7 @@ import net.bytebuddy.instrumentation.TypeInitializer;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
+import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
@@ -53,6 +54,8 @@ public class SubclassInstrumentationContextDelegateTest {
     private TypeList firstMethodParameters, secondMethodParameters;
     @Mock
     private MethodList methodList;
+    @Mock
+    private MethodLookupEngine methodLookupEngine;
 
     private SubclassInstrumentationContextDelegate delegate;
 
@@ -75,11 +78,12 @@ public class SubclassInstrumentationContextDelegateTest {
         when(superType.isAssignableFrom(superType)).thenReturn(true);
         when(secondMethodReturnType.getStackSize()).thenReturn(StackSize.ZERO);
         when(instrumentedType.detach()).thenReturn(instrumentedType);
-        when(instrumentedType.getReachableMethods()).thenReturn(methodList);
+        when(methodLookupEngine.getReachableMethods(instrumentedType)).thenReturn(methodList);
         when(instrumentedType.getSupertype()).thenReturn(superType);
         when(methodList.filter(isBridge())).thenReturn(new MethodList.Empty());
         when(methodList.iterator()).thenReturn(Arrays.asList(firstMethod, secondMethod, toStringMethod).iterator());
         delegate = new SubclassInstrumentationContextDelegate(instrumentedType,
+                methodLookupEngine,
                 BridgeMethodResolver.Simple.Factory.FAIL_FAST,
                 FOO);
     }

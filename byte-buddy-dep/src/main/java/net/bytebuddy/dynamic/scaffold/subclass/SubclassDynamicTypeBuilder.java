@@ -14,6 +14,7 @@ import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.method.matcher.JunctionMethodMatcher;
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
@@ -44,6 +45,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     private final ClassVisitorWrapper.Chain classVisitorWrapperChain;
     private final FieldRegistry fieldRegistry;
     private final MethodRegistry methodRegistry;
+    private final MethodLookupEngine.Factory methodLookupEngineFactory;
     private final FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory;
     private final MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory;
 
@@ -78,6 +80,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                       ClassVisitorWrapper.Chain classVisitorWrapperChain,
                                       FieldRegistry fieldRegistry,
                                       MethodRegistry methodRegistry,
+                                      MethodLookupEngine.Factory methodLookupEngineFactory,
                                       FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                                       MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
                                       ConstructorStrategy constructorStrategy) {
@@ -93,6 +96,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         this.bridgeMethodResolverFactory = bridgeMethodResolverFactory;
         this.classVisitorWrapperChain = classVisitorWrapperChain;
         this.fieldRegistry = fieldRegistry;
+        this.methodLookupEngineFactory = methodLookupEngineFactory;
         this.defaultFieldAttributeAppenderFactory = defaultFieldAttributeAppenderFactory;
         this.defaultMethodAttributeAppenderFactory = defaultMethodAttributeAppenderFactory;
         this.methodRegistry = constructorStrategy.inject(methodRegistry, defaultMethodAttributeAppenderFactory);
@@ -132,6 +136,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                          ClassVisitorWrapper.Chain classVisitorWrapperChain,
                                          FieldRegistry fieldRegistry,
                                          MethodRegistry methodRegistry,
+                                         MethodLookupEngine.Factory methodLookupEngineFactory,
                                          FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                                          MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
                                          List<FieldToken> fieldTokens,
@@ -148,6 +153,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         this.classVisitorWrapperChain = classVisitorWrapperChain;
         this.fieldRegistry = fieldRegistry;
         this.methodRegistry = methodRegistry;
+        this.methodLookupEngineFactory = methodLookupEngineFactory;
         this.defaultFieldAttributeAppenderFactory = defaultFieldAttributeAppenderFactory;
         this.defaultMethodAttributeAppenderFactory = defaultMethodAttributeAppenderFactory;
     }
@@ -165,6 +171,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 classVisitorWrapperChain,
                 fieldRegistry,
                 methodRegistry,
+                methodLookupEngineFactory,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
                 fieldTokens,
@@ -189,6 +196,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 classVisitorWrapperChain,
                 fieldRegistry,
                 methodRegistry,
+                methodLookupEngineFactory,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
                 fieldTokens,
@@ -208,6 +216,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 classVisitorWrapperChain,
                 fieldRegistry,
                 methodRegistry,
+                methodLookupEngineFactory,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
                 fieldTokens,
@@ -227,6 +236,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 classVisitorWrapperChain,
                 fieldRegistry,
                 methodRegistry,
+                methodLookupEngineFactory,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
                 fieldTokens,
@@ -246,6 +256,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 classVisitorWrapperChain,
                 fieldRegistry,
                 methodRegistry,
+                methodLookupEngineFactory,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
                 fieldTokens,
@@ -270,6 +281,27 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 classVisitorWrapperChain.append(nonNull(classVisitorWrapper)),
                 fieldRegistry,
                 methodRegistry,
+                methodLookupEngineFactory,
+                defaultFieldAttributeAppenderFactory,
+                defaultMethodAttributeAppenderFactory,
+                fieldTokens,
+                methodTokens);
+    }
+
+    @Override
+    public DynamicType.Builder<T> methodLookupEngine(MethodLookupEngine.Factory methodLookupEngineFactory) {
+        return new SubclassDynamicTypeBuilder<T>(classFileVersion,
+                namingStrategy,
+                superType,
+                interfaceTypes,
+                modifiers,
+                attributeAppender,
+                ignoredMethods,
+                bridgeMethodResolverFactory,
+                classVisitorWrapperChain,
+                fieldRegistry,
+                methodRegistry,
+                methodLookupEngineFactory,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
                 fieldTokens,
@@ -332,7 +364,10 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 interfaceTypes,
                 modifiers,
                 namingStrategy));
-        SubclassInstrumentationContextDelegate contextDelegate = new SubclassInstrumentationContextDelegate(instrumentedType, bridgeMethodResolverFactory);
+        MethodLookupEngine methodLookupEngine = methodLookupEngineFactory.make();
+        SubclassInstrumentationContextDelegate contextDelegate = new SubclassInstrumentationContextDelegate(instrumentedType,
+                methodLookupEngine,
+                bridgeMethodResolverFactory);
         Instrumentation.Context instrumentationContext = new Instrumentation.Context.Default(classFileVersion, contextDelegate, contextDelegate);
         MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.compile(instrumentedType, MethodRegistry.Compiled.Entry.Skip.INSTANCE);
         instrumentedType = compiledMethodRegistry.getInstrumentedType();
@@ -343,7 +378,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 .write(instrumentedType.getDeclaredFields(),
                         fieldRegistry.compile(instrumentedType, TypeWriter.FieldPool.Entry.NoOp.INSTANCE))
                 .methods()
-                .write(instrumentedType.getReachableMethods()
+                .write(methodLookupEngine.getReachableMethods(instrumentedType)
                                 .filter(isOverridable().and(not(ignoredMethods)).or(isDeclaredBy(instrumentedType))),
                         compiledMethodRegistry
                 )
@@ -356,14 +391,18 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         if (this == other) return true;
         if (other == null || getClass() != other.getClass()) return false;
         SubclassDynamicTypeBuilder that = (SubclassDynamicTypeBuilder) other;
-        return modifiers == that.modifiers && attributeAppender.equals(that.attributeAppender)
+        return modifiers == that.modifiers
+                && attributeAppender.equals(that.attributeAppender)
                 && bridgeMethodResolverFactory.equals(that.bridgeMethodResolverFactory)
                 && classFileVersion.equals(that.classFileVersion)
                 && classVisitorWrapperChain.equals(that.classVisitorWrapperChain)
                 && defaultFieldAttributeAppenderFactory.equals(that.defaultFieldAttributeAppenderFactory)
                 && defaultMethodAttributeAppenderFactory.equals(that.defaultMethodAttributeAppenderFactory)
-                && fieldRegistry.equals(that.fieldRegistry) && ignoredMethods.equals(that.ignoredMethods)
-                && interfaceTypes.equals(that.interfaceTypes) && methodRegistry.equals(that.methodRegistry)
+                && fieldRegistry.equals(that.fieldRegistry)
+                && ignoredMethods.equals(that.ignoredMethods)
+                && interfaceTypes.equals(that.interfaceTypes)
+                && methodLookupEngineFactory.equals(that.methodLookupEngineFactory)
+                && methodRegistry.equals(that.methodRegistry)
                 && namingStrategy.equals(that.namingStrategy)
                 && superType.equals(that.superType);
     }
@@ -381,6 +420,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         result = 31 * result + classVisitorWrapperChain.hashCode();
         result = 31 * result + fieldRegistry.hashCode();
         result = 31 * result + methodRegistry.hashCode();
+        result = 31 * result + methodLookupEngineFactory.hashCode();
         result = 31 * result + defaultFieldAttributeAppenderFactory.hashCode();
         result = 31 * result + defaultMethodAttributeAppenderFactory.hashCode();
         return result;
@@ -400,6 +440,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 ", classVisitorWrapperChain=" + classVisitorWrapperChain +
                 ", fieldRegistry=" + fieldRegistry +
                 ", methodRegistry=" + methodRegistry +
+                ", methodLookupEngineFactory=" + methodLookupEngineFactory +
                 ", defaultFieldAttributeAppenderFactory=" + defaultFieldAttributeAppenderFactory +
                 ", defaultMethodAttributeAppenderFactory=" + defaultMethodAttributeAppenderFactory +
                 '}';
@@ -456,6 +497,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                     classVisitorWrapperChain,
                     fieldRegistry.include(fieldToken, attributeAppenderFactory),
                     methodRegistry,
+                    methodLookupEngineFactory,
                     defaultFieldAttributeAppenderFactory,
                     defaultMethodAttributeAppenderFactory,
                     join(fieldTokens, fieldToken),
@@ -655,6 +697,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                     classVisitorWrapperChain,
                     fieldRegistry,
                     methodRegistry.prepend(latentMethodMatcher, instrumentation, attributeAppenderFactory),
+                    methodLookupEngineFactory,
                     defaultFieldAttributeAppenderFactory,
                     defaultMethodAttributeAppenderFactory,
                     fieldTokens,
@@ -750,6 +793,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                     classVisitorWrapperChain,
                     fieldRegistry,
                     methodRegistry,
+                    methodLookupEngineFactory,
                     defaultFieldAttributeAppenderFactory,
                     defaultMethodAttributeAppenderFactory,
                     fieldTokens,

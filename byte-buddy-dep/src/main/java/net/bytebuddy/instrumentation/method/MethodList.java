@@ -52,7 +52,7 @@ public interface MethodList extends List<MethodDescription> {
             if (index < type.getDeclaredConstructors().length) {
                 return new MethodDescription.ForLoadedConstructor(type.getDeclaredConstructors()[index]);
             } else {
-                return new MethodDescription.ForLoadedMethod(type.getDeclaredMethods()[type.getDeclaredConstructors().length + index]);
+                return new MethodDescription.ForLoadedMethod(type.getDeclaredMethods()[index - type.getDeclaredConstructors().length]);
             }
         }
 

@@ -11,7 +11,9 @@ import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
+import net.bytebuddy.instrumentation.method.matcher.MethodMatchers;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
@@ -24,6 +26,7 @@ import java.util.*;
 
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isConstructor;
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.named;
+import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.takesArguments;
 
 /**
  * A dynamic type that is created at runtime, usually as the result of applying a
@@ -172,6 +175,8 @@ public interface DynamicType {
          * @return A builder that will apply the given ASM class visitor.
          */
         Builder<T> classVisitor(ClassVisitorWrapper classVisitorWrapper);
+
+        Builder<T> methodLookupEngine(MethodLookupEngine.Factory methodLookupEngineFactory);
 
         /**
          * Defines a new field for this type.
@@ -580,7 +585,8 @@ public interface DynamicType {
                 @Override
                 public MethodMatcher manifest(TypeDescription instrumentedType) {
                     return (MethodDescription.CONSTRUCTOR_INTERNAL_NAME.equals(internalName) ? isConstructor() : named(internalName))
-                            .and(new SignatureMatcher(resolveReturnType(instrumentedType), resolveParameterTypes(instrumentedType)));
+                            .and(MethodMatchers.returns(resolveReturnType(instrumentedType)))
+                            .and(takesArguments(resolveParameterTypes(instrumentedType)));
                 }
 
                 /**
@@ -687,43 +693,6 @@ public interface DynamicType {
                             ", parameterTypes=" + parameterTypes +
                             ", exceptionTypes=" + exceptionTypes +
                             ", modifiers=" + modifiers + '}';
-                }
-
-                private static class SignatureMatcher implements MethodMatcher {
-
-                    private final TypeDescription returnType;
-                    private final List<TypeDescription> parameterTypes;
-
-                    private SignatureMatcher(TypeDescription returnType, List<TypeDescription> parameterTypes) {
-                        this.returnType = returnType;
-                        this.parameterTypes = parameterTypes;
-                    }
-
-                    @Override
-                    public boolean matches(MethodDescription methodDescription) {
-                        return methodDescription.getReturnType().equals(returnType)
-                                && methodDescription.getParameterTypes().equals(parameterTypes);
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        SignatureMatcher that = (SignatureMatcher) other;
-                        return parameterTypes.equals(that.parameterTypes) && returnType.equals(that.returnType);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = returnType.hashCode();
-                        result = 31 * result + parameterTypes.hashCode();
-                        return result;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "hasSignature(returnType=" + returnType + ", parameterTypes=" + parameterTypes + ')';
-                    }
                 }
             }
 
@@ -879,6 +848,11 @@ public interface DynamicType {
                 }
 
                 @Override
+                public Builder<U> methodLookupEngine(MethodLookupEngine.Factory methodLookupEngineFactory) {
+                    return materialize().methodLookupEngine(methodLookupEngineFactory);
+                }
+
+                @Override
                 public FieldAnnotationTarget<U> defineField(String name,
                                                             Class<?> fieldType,
                                                             ModifierContributor.ForField... modifier) {
@@ -995,6 +969,9 @@ public interface DynamicType {
      */
     static class Default implements DynamicType {
 
+        /**
+         * The file name extension for Java class files.
+         */
         private static final String CLASS_FILE_EXTENSION = ".class";
         /**
          * A type description of this dynamic type.
@@ -1132,6 +1109,12 @@ public interface DynamicType {
                         initialize(classLoadingStrategy.load(classLoader, types)));
             }
 
+            /**
+             * Runs all type initializers for all loaded classes.
+             *
+             * @param uninitialized The uninitialized loaded classes mapped by their type description.
+             * @return A new hash map that contains the same classes as those given.
+             */
             private Map<TypeDescription, Class<?>> initialize(Map<TypeDescription, Class<?>> uninitialized) {
                 Map<TypeDescription, TypeInitializer> typeInitializers = getTypeInitializers();
                 for (Map.Entry<TypeDescription, Class<?>> entry : uninitialized.entrySet()) {
@@ -1159,6 +1142,9 @@ public interface DynamicType {
          */
         protected static class Loaded<T> extends Default implements DynamicType.Loaded<T> {
 
+            /**
+             * The loaded types for the given loaded dynamic type.
+             */
             private final Map<TypeDescription, Class<?>> loadedTypes;
 
             /**

@@ -2,6 +2,7 @@ package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
+import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodNameEqualityResolver;
@@ -178,13 +179,16 @@ public class MethodDelegation implements Instrumentation {
      * @return A method delegation instrumentation to the given instance methods.
      */
     public static MethodDelegation to(Object delegate) {
+        return to(delegate, defaultMethodLookupEngine());
+    }
+
+    public static MethodDelegation to(Object delegate, MethodLookupEngine methodLookupEngine) {
         return new MethodDelegation(new InstrumentationDelegate.ForStaticFieldInstance(nonNull(delegate)),
                 defaultParameterBinders(),
                 defaultDefaultsProvider(),
                 defaultAmbiguityResolver(),
                 defaultAssigner(),
-                new TypeDescription.ForLoadedType(delegate.getClass())
-                        .getReachableMethods()
+                methodLookupEngine.getReachableMethods(new TypeDescription.ForLoadedType(delegate.getClass()))
                         .filter(not(isStatic().or(isPrivate()).or(isConstructor())))
         );
     }
@@ -206,14 +210,17 @@ public class MethodDelegation implements Instrumentation {
      * @return A method delegation instrumentation to the given {@code static} methods.
      */
     public static MethodDelegation to(Object delegate, String fieldName) {
+        return to(delegate, fieldName, defaultMethodLookupEngine());
+    }
+
+    public static MethodDelegation to(Object delegate, String fieldName, MethodLookupEngine methodLookupEngine) {
         return new MethodDelegation(
                 new InstrumentationDelegate.ForStaticFieldInstance(nonNull(delegate), isValidIdentifier(fieldName)),
                 defaultParameterBinders(),
                 defaultDefaultsProvider(),
                 defaultAmbiguityResolver(),
                 defaultAssigner(),
-                new TypeDescription.ForLoadedType(delegate.getClass())
-                        .getReachableMethods()
+                methodLookupEngine.getReachableMethods(new TypeDescription.ForLoadedType(delegate.getClass()))
                         .filter(not(isStatic().or(isPrivate()).or(isConstructor())))
         );
     }
@@ -239,14 +246,17 @@ public class MethodDelegation implements Instrumentation {
      * @return A method delegation that intercepts method calls by delegating to method calls on the given instance.
      */
     public static MethodDelegation instanceField(Class<?> type, String fieldName) {
+        return instanceField(type, fieldName, defaultMethodLookupEngine());
+    }
+
+    public static MethodDelegation instanceField(Class<?> type, String fieldName, MethodLookupEngine methodLookupEngine) {
         return new MethodDelegation(
                 new InstrumentationDelegate.ForInstanceField(new TypeDescription.ForLoadedType(nonNull(type)), isValidIdentifier(fieldName)),
                 defaultParameterBinders(),
                 defaultDefaultsProvider(),
                 defaultAmbiguityResolver(),
                 defaultAssigner(),
-                new TypeDescription.ForLoadedType(type)
-                        .getReachableMethods()
+                methodLookupEngine.getReachableMethods(new TypeDescription.ForLoadedType(type))
                         .filter(not(isStatic().or(isPrivate()).or(isConstructor())))
         );
     }
@@ -294,6 +304,10 @@ public class MethodDelegation implements Instrumentation {
 
     private static Assigner defaultAssigner() {
         return new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE), false);
+    }
+
+    private static MethodLookupEngine defaultMethodLookupEngine() {
+        return new MethodLookupEngine.Default();
     }
 
     /**

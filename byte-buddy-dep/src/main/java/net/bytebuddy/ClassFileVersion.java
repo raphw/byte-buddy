@@ -40,7 +40,14 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      * The class file version of Java 8.
      */
     public static final ClassFileVersion JAVA_V8 = new ClassFileVersion(Opcodes.V1_7 + 1);
+
+    /**
+     * The system property for this JVM's Java version.
+     */
     private static final String JAVA_VERSION_PROPERTY = "java.version";
+    /**
+     * The version number that is represented by this class file version instance.
+     */
     private final int versionNumber;
 
     /**
@@ -101,6 +108,12 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
         return ClassFileVersion.forKnownJavaVersion(Integer.parseInt(versionString.substring(versionIndex[1] + 1, versionIndex[2])));
     }
 
+    /**
+     * Validates the version number.
+     *
+     * @param versionNumber The parsed version number.
+     * @return The same number.
+     */
     private static int validateVersionNumber(int versionNumber) {
         if (!(versionNumber > 0)) {
             throw new IllegalArgumentException("Class version " + versionNumber + " is not valid");

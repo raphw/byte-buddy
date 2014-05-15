@@ -7,11 +7,6 @@ import org.junit.Test;
 import org.mockito.asm.Type;
 
 import java.io.Serializable;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.HashSet;
-import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -369,33 +364,6 @@ public class TypeDescriptionForLoadedTypeTest {
         assertThat(integerType.getDescriptor(), is(Type.getDescriptor(Integer.class)));
         assertThat(serializableType.getDescriptor(), is(Type.getDescriptor(Serializable.class)));
         assertThat(objectArrayType.getDescriptor(), is(Type.getDescriptor(Object[].class)));
-    }
-
-    @Test
-    public void testGetReachableMethods() throws Exception {
-        assertThat(objectType.getReachableMethods().size(), is(Object.class.getDeclaredMethods().length
-                + Object.class.getDeclaredConstructors().length));
-        Set<String> signatures = new HashSet<String>();
-        for (Method method : Object.class.getDeclaredMethods()) {
-            if (!(Modifier.isAbstract(method.getModifiers()) || Modifier.isPrivate(method.getModifiers()))) {
-                signatures.add(method.getName() + Type.getMethodDescriptor(method));
-            }
-        }
-        for (Method method : Number.class.getDeclaredMethods()) {
-            if (!(Modifier.isAbstract(method.getModifiers()) || Modifier.isPrivate(method.getModifiers()))) {
-                signatures.add(method.getName() + Type.getMethodDescriptor(method));
-            }
-        }
-        for (Method method : Comparable.class.getDeclaredMethods()) {
-            signatures.add(method.getName() + Type.getMethodDescriptor(method));
-        }
-        for (Method method : Integer.class.getDeclaredMethods()) {
-            signatures.add(method.getName() + Type.getMethodDescriptor(method));
-        }
-        for (Constructor<?> constructor : Integer.class.getDeclaredConstructors()) {
-            signatures.add(constructor.getName() + Type.getConstructorDescriptor(constructor));
-        }
-        assertThat(integerType.getReachableMethods().size(), is(signatures.size()));
     }
 
     @Test

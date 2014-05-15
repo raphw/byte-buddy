@@ -7,20 +7,14 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
-import net.bytebuddy.instrumentation.method.matcher.MethodMatchers;
 import org.objectweb.asm.Type;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isMethod;
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.not;
 
 /**
  * Implementations of this interface represent a Java type, i.e. a class or interface.
@@ -189,14 +183,6 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
     MethodList getDeclaredMethods();
 
     /**
-     * Returns a list of all reachable methods of this type, i.e. a list of all methods with unique signatures that can
-     * be called from within this type.
-     *
-     * @return A list of all reachable methods.
-     */
-    MethodList getReachableMethods();
-
-    /**
      * Returns the package internalName of the type described by this instance.
      *
      * @return The package internalName of the type described by this instance.
@@ -223,25 +209,6 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
         @Override
         public String getInternalName() {
             return getName().replace('.', '/');
-        }
-
-        @Override
-        public MethodList getReachableMethods() {
-            List<MethodDescription> methodDescriptions = new ArrayList<MethodDescription>();
-            MethodMatcher uniqueSignatureFilter = new UniqueSignatureFilter();
-            methodDescriptions.addAll(getDeclaredMethods().filter(uniqueSignatureFilter));
-            MethodMatcher subclassFilter = not(MethodMatchers.isPrivate())
-                    .and(isMethod())
-                    .and(not(MethodMatchers.isStatic()))
-                    .and(not(MethodMatchers.isPackagePrivate()).or(MethodMatchers.isVisibleTo(this)))
-                    .and(uniqueSignatureFilter);
-            if (getSupertype() != null) {
-                methodDescriptions.addAll(getSupertype().getReachableMethods().filter(subclassFilter));
-            }
-            for (TypeDescription anInterface : getInterfaces()) {
-                methodDescriptions.addAll(anInterface.getReachableMethods().filter(uniqueSignatureFilter));
-            }
-            return new MethodList.Explicit(methodDescriptions);
         }
 
         @Override

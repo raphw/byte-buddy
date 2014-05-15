@@ -98,6 +98,10 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
      */
     int getParameterOffset(int parameterIndex);
 
+    boolean isDefaultMethod();
+
+    boolean isInvokableOn(TypeDescription typeDescription);
+
     /**
      * An abstract base implementation of a method description.
      */
@@ -148,6 +152,17 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
                 }
             }
             throw new IllegalArgumentException(this + " does not have a parameter of index " + parameterIndex);
+        }
+
+        @Override
+        public boolean isDefaultMethod() {
+            return !isAbstract() && getDeclaringType().isInterface();
+        }
+
+        @Override
+        public boolean isInvokableOn(TypeDescription typeDescription) {
+            return typeDescription.equals(getDeclaringType())
+                    || (!(isStatic() || isPrivate() || isConstructor()) && getDeclaringType().isAssignableFrom(typeDescription));
         }
 
         @Override

@@ -6,6 +6,7 @@ import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
+import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.method.bytecode.stack.Duplication;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
@@ -59,8 +60,9 @@ public class SubclassInstrumentationContextDelegate
      *                                    instrumented type.
      */
     public SubclassInstrumentationContextDelegate(InstrumentedType instrumentedType,
+                                                  MethodLookupEngine methodLookupEngine,
                                                   BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
-        this(instrumentedType, bridgeMethodResolverFactory, DEFAULT_PREFIX);
+        this(instrumentedType, methodLookupEngine, bridgeMethodResolverFactory, DEFAULT_PREFIX);
     }
 
     /**
@@ -72,12 +74,13 @@ public class SubclassInstrumentationContextDelegate
      * @param prefix                      The prefix to be used for the delegation methods.
      */
     public SubclassInstrumentationContextDelegate(InstrumentedType instrumentedType,
+                                                  MethodLookupEngine methodLookupEngine,
                                                   BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                                                   String prefix) {
         this.prefix = prefix;
         this.instrumentedType = instrumentedType;
         random = new Random();
-        MethodList reachableMethods = instrumentedType.getReachableMethods();
+        MethodList reachableMethods = methodLookupEngine.getReachableMethods(instrumentedType);
         bridgeMethodResolver = bridgeMethodResolverFactory.make(reachableMethods);
         this.reachableMethods = new HashMap<String, MethodDescription>(reachableMethods.size());
         for (MethodDescription methodDescription : reachableMethods) {

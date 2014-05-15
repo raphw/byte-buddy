@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
+import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.MockitoRule;
 import org.hamcrest.CoreMatchers;
@@ -33,9 +34,10 @@ public class BridgeMethodResolverSimpleTest {
     @Test
     public void testFindsBridgeMethodSingleStep() throws Exception {
         TypeDescription target = new TypeDescription.ForLoadedType(Bar.class);
-        MethodList relevantMethods = target.getReachableMethods().filter(not(isConstructor().or(isDeclaredBy(Object.class))));
+        MethodList reachableMethods = new MethodLookupEngine.Default().getReachableMethods(target);
+        MethodList relevantMethods = reachableMethods.filter(not(isConstructor().or(isDeclaredBy(Object.class))));
         assertThat(relevantMethods.size(), is(2));
-        BridgeMethodResolver bridgeMethodResolver = new BridgeMethodResolver.Simple(target.getReachableMethods(), conflictHandler);
+        BridgeMethodResolver bridgeMethodResolver = new BridgeMethodResolver.Simple(reachableMethods, conflictHandler);
         assertThat(bridgeMethodResolver.resolve(relevantMethods.filter(isBridge()).getOnly()),
                 is(relevantMethods.filter(not(isBridge())).getOnly()));
         verifyZeroInteractions(conflictHandler);
@@ -44,9 +46,10 @@ public class BridgeMethodResolverSimpleTest {
     @Test
     public void testFindsBridgeMethodTwoStep() throws Exception {
         TypeDescription target = new TypeDescription.ForLoadedType(Qux.class);
-        MethodList relevantMethods = target.getReachableMethods().filter(not(isConstructor().or(isDeclaredBy(Object.class))));
+        MethodList reachableMethods = new MethodLookupEngine.Default().getReachableMethods(target);
+        MethodList relevantMethods = reachableMethods.filter(not(isConstructor().or(isDeclaredBy(Object.class))));
         assertThat(relevantMethods.size(), is(3));
-        BridgeMethodResolver bridgeMethodResolver = new BridgeMethodResolver.Simple(target.getReachableMethods(), conflictHandler);
+        BridgeMethodResolver bridgeMethodResolver = new BridgeMethodResolver.Simple(reachableMethods, conflictHandler);
         for (MethodDescription methodDescription : relevantMethods.filter(isBridge())) {
             assertThat(bridgeMethodResolver.resolve(methodDescription), is(relevantMethods.filter(not(isBridge())).getOnly()));
         }
@@ -56,12 +59,13 @@ public class BridgeMethodResolverSimpleTest {
     @Test
     public void testFindsBridgeMethodConflictResolver() throws Exception {
         TypeDescription target = new TypeDescription.ForLoadedType(Baz.class);
-        MethodList relevantMethods = target.getReachableMethods().filter(not(isConstructor().or(isDeclaredBy(Object.class))));
+        MethodList reachableMethods = new MethodLookupEngine.Default().getReachableMethods(target);
+        MethodList relevantMethods = reachableMethods.filter(not(isConstructor().or(isDeclaredBy(Object.class))));
         assertThat(relevantMethods.size(), is(3));
         when(conflictHandler.choose(any(MethodDescription.class), any(MethodList.class))).thenReturn(bridgeTarget);
         when(bridgeTarget.isResolved()).thenReturn(true);
         when(bridgeTarget.extract()).thenReturn(methodDescription);
-        BridgeMethodResolver bridgeMethodResolver = new BridgeMethodResolver.Simple(target.getReachableMethods(), conflictHandler);
+        BridgeMethodResolver bridgeMethodResolver = new BridgeMethodResolver.Simple(reachableMethods, conflictHandler);
         assertThat(bridgeMethodResolver.resolve(relevantMethods.filter(isBridge()).getOnly()), is(methodDescription));
         verify(conflictHandler).choose(relevantMethods.filter(isBridge()).getOnly(), relevantMethods.filter(not(isBridge())));
         verifyNoMoreInteractions(conflictHandler);

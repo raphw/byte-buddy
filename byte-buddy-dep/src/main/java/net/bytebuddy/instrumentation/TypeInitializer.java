@@ -58,6 +58,7 @@ public interface TypeInitializer {
         private final String fieldName;
         private final T value;
         private final boolean makeAccessible;
+
         /**
          * Creates a new {@link net.bytebuddy.instrumentation.TypeInitializer} for setting a static field.
          *

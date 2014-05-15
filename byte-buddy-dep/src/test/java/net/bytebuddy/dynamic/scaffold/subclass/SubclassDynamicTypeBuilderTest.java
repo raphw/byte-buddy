@@ -13,6 +13,7 @@ import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
@@ -93,6 +94,7 @@ public class SubclassDynamicTypeBuilderTest {
                 new ClassVisitorWrapper.Chain(),
                 new FieldRegistry.Default(),
                 new MethodRegistry.Default(),
+                MethodLookupEngine.Default.Factory.INSTANCE,
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ConstructorStrategy.Default.IMITATE_SUPER_TYPE)
@@ -125,6 +127,7 @@ public class SubclassDynamicTypeBuilderTest {
                 new ClassVisitorWrapper.Chain(),
                 new FieldRegistry.Default(),
                 new MethodRegistry.Default(),
+                MethodLookupEngine.Default.Factory.INSTANCE,
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ConstructorStrategy.Default.IMITATE_SUPER_TYPE)
@@ -163,6 +166,7 @@ public class SubclassDynamicTypeBuilderTest {
                 new ClassVisitorWrapper.Chain(),
                 new FieldRegistry.Default(),
                 new MethodRegistry.Default(),
+                MethodLookupEngine.Default.Factory.INSTANCE,
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ConstructorStrategy.Default.IMITATE_SUPER_TYPE)
@@ -208,6 +212,7 @@ public class SubclassDynamicTypeBuilderTest {
                 new ClassVisitorWrapper.Chain(),
                 new FieldRegistry.Default(),
                 new MethodRegistry.Default(),
+                MethodLookupEngine.Default.Factory.INSTANCE,
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ConstructorStrategy.Default.IMITATE_SUPER_TYPE)
@@ -249,6 +254,7 @@ public class SubclassDynamicTypeBuilderTest {
                 new ClassVisitorWrapper.Chain(),
                 new FieldRegistry.Default(),
                 new MethodRegistry.Default(),
+                MethodLookupEngine.Default.Factory.INSTANCE,
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS)
@@ -319,6 +325,7 @@ public class SubclassDynamicTypeBuilderTest {
                 new ClassVisitorWrapper.Chain(),
                 new FieldRegistry.Default(),
                 new MethodRegistry.Default(),
+                MethodLookupEngine.Default.Factory.INSTANCE,
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS);
