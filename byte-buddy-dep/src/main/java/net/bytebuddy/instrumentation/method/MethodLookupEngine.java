@@ -145,6 +145,11 @@ public interface MethodLookupEngine {
         }
 
         @Override
+        public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
+            return false;
+        }
+
+        @Override
         public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
             return null;
         }
@@ -179,12 +184,6 @@ public interface MethodLookupEngine {
             return CONFLICTING_INTERFACE_MODIFIER;
         }
 
-        /**
-         * {@inheritDoc}
-         *
-         * @param targetType
-         * @return
-         */
         @Override
         public boolean isSpecializableFor(TypeDescription targetType) {
             MethodDescription invokableMethod = null;

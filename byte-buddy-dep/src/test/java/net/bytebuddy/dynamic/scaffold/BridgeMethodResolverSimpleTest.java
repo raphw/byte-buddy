@@ -9,9 +9,11 @@ import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
+import static net.bytebuddy.utility.CustomHamcrestMatchers.containsAllOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Matchers.any;
@@ -67,7 +69,10 @@ public class BridgeMethodResolverSimpleTest {
         when(bridgeTarget.extract()).thenReturn(methodDescription);
         BridgeMethodResolver bridgeMethodResolver = new BridgeMethodResolver.Simple(reachableMethods, conflictHandler);
         assertThat(bridgeMethodResolver.resolve(relevantMethods.filter(isBridge()).getOnly()), is(methodDescription));
-        verify(conflictHandler).choose(relevantMethods.filter(isBridge()).getOnly(), relevantMethods.filter(not(isBridge())));
+        ArgumentCaptor<MethodList> capturedConflictHandlerCandidates = ArgumentCaptor.forClass(MethodList.class);
+        verify(conflictHandler).choose(eq(relevantMethods.filter(isBridge()).getOnly()), capturedConflictHandlerCandidates.capture());
+        assertThat(capturedConflictHandlerCandidates.getValue().size(), is(2));
+        assertThat(capturedConflictHandlerCandidates.getValue(), containsAllOf(relevantMethods.filter(not(isBridge()))));
         verifyNoMoreInteractions(conflictHandler);
         verify(bridgeTarget).isResolved();
         verify(bridgeTarget).extract();
