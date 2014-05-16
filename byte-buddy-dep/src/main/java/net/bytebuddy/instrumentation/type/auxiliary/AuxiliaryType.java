@@ -4,7 +4,7 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.ModifierContributor;
 import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.modifier.SyntheticState;
 import net.bytebuddy.modifier.TypeVisibility;
 
@@ -54,11 +54,12 @@ public interface AuxiliaryType {
                 BY_SIGNATURE {
                     @Override
                     public MethodDescription resolve(MethodDescription targetMethod,
-                                                     TypeDescription instrumentedType,
-                                                     Map<String, MethodDescription> reachableMethods) {
-                        MethodDescription resolvedMethod = reachableMethods.get(targetMethod.getUniqueSignature());
+                                                     MethodLookupEngine.Finding finding,
+                                                     Map<String, MethodDescription> invokableMethods) {
+                        MethodDescription resolvedMethod = invokableMethods.get(targetMethod.getUniqueSignature());
                         if (resolvedMethod == null) {
-                            throw new IllegalArgumentException(String.format("Method %s is not reachable from %s", targetMethod, instrumentedType));
+                            throw new IllegalArgumentException(String.format("Method %s is not reachable from %s",
+                                    targetMethod, finding.getLookedUpType()));
                         }
                         return resolvedMethod;
                     }
@@ -67,7 +68,7 @@ public interface AuxiliaryType {
                 EXACT {
                     @Override
                     public MethodDescription resolve(MethodDescription targetMethod,
-                                                     TypeDescription instrumentedType,
+                                                     MethodLookupEngine.Finding finding,
                                                      Map<String, MethodDescription> reachableMethods) {
                         return targetMethod;
                     }
@@ -75,7 +76,7 @@ public interface AuxiliaryType {
             }
 
             MethodDescription resolve(MethodDescription targetMethod,
-                                      TypeDescription instrumentedType,
+                                      MethodLookupEngine.Finding finding,
                                       Map<String, MethodDescription> reachableMethods);
         }
 

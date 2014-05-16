@@ -5,7 +5,6 @@ import net.bytebuddy.dynamic.scaffold.TypeWriter;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.method.bytecode.stack.Duplication;
@@ -16,7 +15,6 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.constant.TextConstant
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess;
-import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
 import org.objectweb.asm.MethodVisitor;
@@ -46,47 +44,42 @@ public class SubclassInstrumentationContextDelegate
     private final String prefix;
     private final Random random;
     private final BridgeMethodResolver bridgeMethodResolver;
-    private final InstrumentedType instrumentedType;
     private final List<MethodDescription> orderedAccessorMethods;
     private final Map<MethodDescription, MethodDescription> knownTargetMethodsToAccessorMethod;
     private final Map<MethodDescription, Entry> registeredAccessorMethodToTargetMethodCall;
-    private final Map<String, MethodDescription> reachableMethods;
+    private final Map<String, MethodDescription> invokableMethodsBySignature;
+    private final MethodLookupEngine.Finding methodLookupEngineFinding;
 
     /**
      * Creates a new delegate with a default prefix.
      *
-     * @param instrumentedType            The instrumented type that is subject of the instrumentation.
-     * @param methodLookupEngine          The method lookup engine to query for reachable methods.
+     * @param methodLookupEngineFinding   The finding for the relevant type's method lookup.
      * @param bridgeMethodResolverFactory A factory that is used for creating a bridge method resolver for the given
      *                                    instrumented type.
      */
-    public SubclassInstrumentationContextDelegate(InstrumentedType instrumentedType,
-                                                  MethodLookupEngine methodLookupEngine,
+    public SubclassInstrumentationContextDelegate(MethodLookupEngine.Finding methodLookupEngineFinding,
                                                   BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
-        this(instrumentedType, methodLookupEngine, bridgeMethodResolverFactory, DEFAULT_PREFIX);
+        this(methodLookupEngineFinding, bridgeMethodResolverFactory, DEFAULT_PREFIX);
     }
 
     /**
      * Creates a new delegate.
      *
-     * @param instrumentedType            The instrumented type that is subject of the instrumentation.
-     * @param methodLookupEngine          The method lookup engine to query for reachable methods.
+     * @param methodLookupEngineFinding   The finding for the relevant type's method lookup.
      * @param bridgeMethodResolverFactory A factory that is used for creating a bridge method resolver for the given
      *                                    instrumented type.
      * @param prefix                      The prefix to be used for the delegation methods.
      */
-    public SubclassInstrumentationContextDelegate(InstrumentedType instrumentedType,
-                                                  MethodLookupEngine methodLookupEngine,
+    public SubclassInstrumentationContextDelegate(MethodLookupEngine.Finding methodLookupEngineFinding,
                                                   BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                                                   String prefix) {
         this.prefix = prefix;
-        this.instrumentedType = instrumentedType;
         random = new Random();
-        MethodList reachableMethods = methodLookupEngine.getReachableMethods(instrumentedType);
-        bridgeMethodResolver = bridgeMethodResolverFactory.make(reachableMethods);
-        this.reachableMethods = new HashMap<String, MethodDescription>(reachableMethods.size());
-        for (MethodDescription methodDescription : reachableMethods) {
-            this.reachableMethods.put(methodDescription.getUniqueSignature(), methodDescription);
+        this.methodLookupEngineFinding = methodLookupEngineFinding;
+        bridgeMethodResolver = bridgeMethodResolverFactory.make(methodLookupEngineFinding.getInvokableMethods());
+        this.invokableMethodsBySignature = new HashMap<String, MethodDescription>(methodLookupEngineFinding.getInvokableMethods().size());
+        for (MethodDescription methodDescription : methodLookupEngineFinding.getInvokableMethods()) {
+            this.invokableMethodsBySignature.put(methodDescription.getUniqueSignature(), methodDescription);
         }
         orderedAccessorMethods = new ArrayList<MethodDescription>();
         knownTargetMethodsToAccessorMethod = new HashMap<MethodDescription, MethodDescription>();
@@ -95,25 +88,26 @@ public class SubclassInstrumentationContextDelegate
 
     @Override
     public String name(AuxiliaryType auxiliaryType) {
-        return String.format("%s$%s$%d", instrumentedType.getName(), DEFAULT_PREFIX, Math.abs(random.nextInt()));
+        return String.format("%s$%s$%d", methodLookupEngineFinding.getLookedUpType().getName(),
+                DEFAULT_PREFIX, Math.abs(random.nextInt()));
     }
 
     @Override
     public MethodDescription requireAccessorMethodFor(MethodDescription targetMethod, LookupMode lookupMode) {
-        targetMethod = lookupMode.resolve(targetMethod, instrumentedType, reachableMethods);
+        targetMethod = lookupMode.resolve(targetMethod, methodLookupEngineFinding, invokableMethodsBySignature);
         MethodDescription accessorMethod = knownTargetMethodsToAccessorMethod.get(targetMethod);
         if (accessorMethod != null) {
             return accessorMethod;
         }
         String name = String.format("%s$%s$%d", targetMethod.getInternalName(), prefix, Math.abs(random.nextInt()));
         accessorMethod = new MethodDescription.Latent(name,
-                instrumentedType,
+                methodLookupEngineFinding.getLookedUpType(),
                 targetMethod.getReturnType(),
                 targetMethod.getParameterTypes(),
                 (targetMethod.isStatic() ? Opcodes.ACC_STATIC : 0) | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL);
         knownTargetMethodsToAccessorMethod.put(targetMethod, accessorMethod);
-        Entry methodCall = targetMethod.isSpecializableFor(instrumentedType.getSupertype())
-                ? new SameSignatureMethodCall(bridgeMethodResolver.resolve(targetMethod), instrumentedType)
+        Entry methodCall = targetMethod.isSpecializableFor(methodLookupEngineFinding.getLookedUpType().getSupertype())
+                ? new SameSignatureMethodCall(bridgeMethodResolver.resolve(targetMethod), methodLookupEngineFinding.getLookedUpType())
                 : AbstractMethodCall.INSTANCE;
         registeredAccessorMethodToTargetMethodCall.put(accessorMethod, methodCall);
         orderedAccessorMethods.add(accessorMethod);
@@ -143,10 +137,9 @@ public class SubclassInstrumentationContextDelegate
     @Override
     public String toString() {
         return "SubclassInstrumentationContextDelegate{" +
-                "instrumentedType=" + instrumentedType +
+                "prefix='" + prefix + '\'' +
+                ", methodLookupEngineFinding=" + methodLookupEngineFinding +
                 ", bridgeMethodResolver=" + bridgeMethodResolver +
-                ", prefix='" + prefix + '\'' +
-                ", random=" + random +
                 ", knownTargetMethodsToAccessorMethod=" + knownTargetMethodsToAccessorMethod +
                 '}';
     }

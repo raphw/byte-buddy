@@ -26,14 +26,16 @@ public interface MethodLookupEngine {
      * be contained in its most specific version. In the process, class methods must shadow interface methods of
      * identical signature. As an only deviation from the JVM's {@link Class#getMethods()}, methods of identical
      * signature of incompatible interfaces must only be returned once. These methods should be represented by some
-     * sort of virtual method description which is fully aware of its state. All virtually invoked methods must be
+     * sort of virtual method description which is fully aware of its state. All virtually invokable methods must be
      * contained in this lookup. Static methods, constructors and private methods must however only be contained
      * for the actual class's type.
+     * <p>&nbsp;</p>
+     * The
      *
-     * @param typeDescription The type for which all reachable methods should be looked up.
-     * @return A list of unique, reachable methods for the given type.
+     * @param typeDescription The type for which all invokable methods should be looked up.
+     * @return The looked up methods for the given type.
      */
-    MethodList getReachableMethods(TypeDescription typeDescription);
+    Finding process(TypeDescription typeDescription);
 
     /**
      * A factory for creating a {@link net.bytebuddy.instrumentation.method.MethodLookupEngine}.
@@ -46,6 +48,72 @@ public interface MethodLookupEngine {
          * @return A {@link net.bytebuddy.instrumentation.method.MethodLookupEngine}.
          */
         MethodLookupEngine make(ClassFileVersion classFileVersion);
+    }
+
+    static interface Finding {
+
+        TypeDescription getLookedUpType();
+
+        static class Default implements Finding {
+
+            private final TypeDescription lookedUpType;
+            private final MethodList invokableMethods;
+            private final Map<MethodDescription, TypeDescription> invokableDefaultMethods;
+
+            public Default(TypeDescription lookedUpType,
+                           MethodList invokableMethods,
+                           Map<MethodDescription, TypeDescription> invokableDefaultMethods) {
+                this.lookedUpType = lookedUpType;
+                this.invokableMethods = invokableMethods;
+                this.invokableDefaultMethods = invokableDefaultMethods;
+            }
+
+            @Override
+            public TypeDescription getLookedUpType() {
+                return lookedUpType;
+            }
+
+            @Override
+            public MethodList getInvokableMethods() {
+                return invokableMethods;
+            }
+
+            @Override
+            public Map<MethodDescription, TypeDescription> getInvokableDefaultMethods() {
+                return invokableDefaultMethods;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                Default aDefault = (Default) other;
+                return invokableDefaultMethods.equals(aDefault.invokableDefaultMethods)
+                        && invokableMethods.equals(aDefault.invokableMethods)
+                        && lookedUpType.equals(aDefault.lookedUpType);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = lookedUpType.hashCode();
+                result = 31 * result + invokableMethods.hashCode();
+                result = 31 * result + invokableDefaultMethods.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "MethodLookupEngine.Finding.Default{" +
+                        "lookedUpType=" + lookedUpType +
+                        ", invokableMethods=" + invokableMethods +
+                        ", invokableDefaultMethods=" + invokableDefaultMethods +
+                        '}';
+            }
+        }
+
+        MethodList getInvokableMethods();
+
+        Map<MethodDescription, TypeDescription> getInvokableDefaultMethods();
     }
 
     /**
@@ -203,7 +271,7 @@ public interface MethodLookupEngine {
         @Override
         public String toString() {
             return "MethodLookupEngine.ConflictingInterfaceMethod{" +
-                    "virtualHost=" + virtualHost +
+                    "mostSpecificType=" + virtualHost +
                     ", methodDescriptions=" + methodDescriptions +
                     '}';
         }
@@ -217,48 +285,48 @@ public interface MethodLookupEngine {
         /**
          * The cache of prior look-ups.
          */
-        protected final Map<TypeDescription, MethodList> reachableMethods;
+        protected final Map<TypeDescription, Finding> priorFindings;
 
         /**
          * Creates a new instance of a caching lookup engine.
          */
         protected AbstractCachingBase() {
-            reachableMethods = new HashMap<TypeDescription, MethodList>();
+            priorFindings = new HashMap<TypeDescription, Finding>();
         }
 
         @Override
-        public MethodList getReachableMethods(TypeDescription typeDescription) {
-            MethodList result = reachableMethods.get(typeDescription);
+        public Finding process(TypeDescription typeDescription) {
+            Finding result = priorFindings.get(typeDescription);
             if (result == null) {
-                result = doGetReachableMethods(typeDescription);
-                reachableMethods.put(typeDescription, result);
+                result = doGetInvokableMethods(typeDescription);
+                priorFindings.put(typeDescription, result);
             }
             return result;
         }
 
         /**
-         * Retrieves the reachable methods for a non-cached method.
+         * Retrieves the invokable methods for a non-cached method.
          *
-         * @param typeDescription The type for which all reachable methods should be looked up.
-         * @return A list of reachable methods which are added to the cache and returned to the requester.
+         * @param typeDescription The type for which all invokable methods should be looked up.
+         * @return The looked up methods for the given type.
          */
-        protected abstract MethodList doGetReachableMethods(TypeDescription typeDescription);
+        protected abstract Finding doGetInvokableMethods(TypeDescription typeDescription);
 
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && reachableMethods.equals(((AbstractCachingBase) other).reachableMethods);
+                    && priorFindings.equals(((AbstractCachingBase) other).priorFindings);
         }
 
         @Override
         public int hashCode() {
-            return reachableMethods.hashCode();
+            return priorFindings.hashCode();
         }
 
         @Override
         public String toString() {
             return "MethodLookupEngine." + getClass().getSimpleName() + "{" +
-                    ", reachableMethods=" + reachableMethods +
+                    ", priorFindings=" + priorFindings +
                     '}';
         }
     }
@@ -278,6 +346,7 @@ public interface MethodLookupEngine {
                                      Collection<TypeDescription> interfaceTypes,
                                      Collection<TypeDescription> defaultMethodRelevantInterfaceTypes) {
                     methodBucket.pushInterfacesAndExtractDefaultMethods(defaultMethodRelevantInterfaceTypes);
+                    interfaceTypes.removeAll(defaultMethodRelevantInterfaceTypes);
                 }
             },
             DISABLED {
@@ -301,7 +370,7 @@ public interface MethodLookupEngine {
         }
 
         @Override
-        protected MethodList doGetReachableMethods(TypeDescription typeDescription) {
+        protected Finding doGetInvokableMethods(TypeDescription typeDescription) {
             MethodBucket methodBucket = new MethodBucket(typeDescription);
             Set<TypeDescription> interfaces = new HashSet<TypeDescription>();
             TypeList defaultMethodRelevantInterfaces = typeDescription.getInterfaces();
@@ -311,7 +380,7 @@ public interface MethodLookupEngine {
             }
             defaultMethodLookup.apply(methodBucket, interfaces, defaultMethodRelevantInterfaces);
             methodBucket.pushInterfaces(interfaces);
-            return methodBucket.toMethodList();
+            return methodBucket.toFinding();
         }
 
         /**
@@ -422,23 +491,23 @@ public interface MethodLookupEngine {
              */
             private final Set<TypeDescription> processedTypes;
 
-            private final Map<MethodDescription, TypeDescription> defaultMethods;
+            private final Map<MethodDescription, TypeDescription> defaultInvokableMethods;
 
-            private final TypeDescription virtualHost;
+            private final TypeDescription mostSpecificType;
 
             private final MethodMatcher virtualMethodMatcher;
 
             /**
              * Creates a new mutable method bucket.
              */
-            private MethodBucket(TypeDescription hostingType) {
-                this.virtualHost = hostingType;
+            private MethodBucket(TypeDescription mostSpecificType) {
+                this.mostSpecificType = mostSpecificType;
                 classMethods = new HashMap<String, MethodDescription>();
                 interfaceMethods = new HashMap<String, MethodDescription>();
                 processedTypes = new HashSet<TypeDescription>();
-                defaultMethods = new HashMap<MethodDescription, TypeDescription>();
-                virtualMethodMatcher = isMethod().and(not(isPrivate().or(isStatic()).or(isPackagePrivate().and(not(isVisibleTo(hostingType))))));
-                pushClass(hostingType, any());
+                defaultInvokableMethods = new HashMap<MethodDescription, TypeDescription>();
+                virtualMethodMatcher = isMethod().and(not(isPrivate().or(isStatic()).or(isPackagePrivate().and(not(isVisibleTo(mostSpecificType))))));
+                pushClass(mostSpecificType, any());
             }
 
             private void pushClass(TypeDescription typeDescription) {
@@ -536,12 +605,12 @@ public interface MethodLookupEngine {
                             locallyProcessedMethods.add(uniqueSignature);
                             MethodDescription conflictingMethod = interfaceMethods.get(uniqueSignature);
                             if (conflictingMethod != null && !conflictingMethod.getDeclaringType().isAssignableFrom(typeDescription)) {
-                                methodDescription = ConflictingInterfaceMethod.of(virtualHost, conflictingMethod, methodDescription);
+                                methodDescription = ConflictingInterfaceMethod.of(mostSpecificType, conflictingMethod, methodDescription);
                             }
                             interfaceMethods.put(uniqueSignature, methodDescription);
                         }
                         if (defaultMethodLookup.isEnabled(typeDescription) && methodDescription.isDefaultMethod()) {
-                            defaultMethods.put(methodDescription, defaultMethodLookup.locateDispatcherType(methodDescription, typeDescription));
+                            defaultInvokableMethods.put(methodDescription, defaultMethodLookup.locateDispatcherType(methodDescription, typeDescription));
                         }
                     }
                     for (TypeDescription interfaceType : typeDescription.getInterfaces()) {
@@ -550,21 +619,22 @@ public interface MethodLookupEngine {
                 }
             }
 
-            private MethodList toMethodList() {
-                List<MethodDescription> methodDescriptions = new ArrayList<MethodDescription>(classMethods.size() + interfaceMethods.size());
-                methodDescriptions.addAll(classMethods.values());
-                methodDescriptions.addAll(interfaceMethods.values());
-                return new MethodList.Explicit(methodDescriptions);
+            private Finding toFinding() {
+                List<MethodDescription> invokableMethods = new ArrayList<MethodDescription>(classMethods.size() + interfaceMethods.size());
+                invokableMethods.addAll(classMethods.values());
+                invokableMethods.addAll(interfaceMethods.values());
+                return new Finding.Default(mostSpecificType,
+                        new MethodList.Explicit(invokableMethods),
+                        Collections.unmodifiableMap(defaultInvokableMethods));
             }
 
             @Override
             public String toString() {
                 return "MethodBucket{" +
+                        ", mostSpecificType=" + mostSpecificType +
                         "classMethods=" + classMethods +
                         ", interfaceMethods=" + interfaceMethods +
                         ", processedTypes=" + processedTypes +
-                        ", virtualHost=" + virtualHost +
-                        ", virtualMethodMatcher=" + virtualMethodMatcher +
                         '}';
             }
         }

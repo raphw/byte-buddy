@@ -366,9 +366,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 interfaceTypes,
                 modifiers,
                 namingStrategy));
-        MethodLookupEngine methodLookupEngine = methodLookupEngineFactory.make(classFileVersion);
-        SubclassInstrumentationContextDelegate contextDelegate = new SubclassInstrumentationContextDelegate(instrumentedType,
-                methodLookupEngine,
+        MethodLookupEngine.Finding finding = methodLookupEngineFactory.make(classFileVersion).process(instrumentedType);
+        SubclassInstrumentationContextDelegate contextDelegate = new SubclassInstrumentationContextDelegate(finding,
                 bridgeMethodResolverFactory);
         Instrumentation.Context instrumentationContext = new Instrumentation.Context.Default(classFileVersion, contextDelegate, contextDelegate);
         MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.compile(instrumentedType, MethodRegistry.Compiled.Entry.Skip.INSTANCE);
@@ -380,8 +379,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 .write(instrumentedType.getDeclaredFields(),
                         fieldRegistry.compile(instrumentedType, TypeWriter.FieldPool.Entry.NoOp.INSTANCE))
                 .methods()
-                .write(methodLookupEngine.getReachableMethods(instrumentedType)
-                                .filter(isOverridable().and(not(ignoredMethods)).or(isDeclaredBy(instrumentedType))),
+                .write(finding.getInvokableMethods().filter(isOverridable().and(not(ignoredMethods)).or(isDeclaredBy(instrumentedType))),
                         compiledMethodRegistry
                 )
                 .write(contextDelegate.getProxiedMethods(), contextDelegate)

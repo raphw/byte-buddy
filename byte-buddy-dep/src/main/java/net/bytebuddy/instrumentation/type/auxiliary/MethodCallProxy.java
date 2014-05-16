@@ -29,10 +29,7 @@ import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.modifier.MemberVisibility;
 import org.objectweb.asm.MethodVisitor;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
@@ -154,11 +151,13 @@ public class MethodCallProxy implements AuxiliaryType {
         }
 
         @Override
-        public MethodList getReachableMethods(TypeDescription typeDescription) {
+        public Finding process(TypeDescription typeDescription) {
             List<MethodDescription> methodDescriptions = new ArrayList<MethodDescription>(3);
             methodDescriptions.addAll(methodList);
             methodDescriptions.addAll(typeDescription.getDeclaredMethods());
-            return new MethodList.Explicit(methodDescriptions);
+            return new Finding.Default(typeDescription,
+                    new MethodList.Explicit(methodDescriptions),
+                    Collections.<MethodDescription, TypeDescription>emptyMap());
         }
 
         @Override

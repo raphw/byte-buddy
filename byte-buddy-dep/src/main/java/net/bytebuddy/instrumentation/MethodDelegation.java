@@ -197,7 +197,8 @@ public class MethodDelegation implements Instrumentation {
                 defaultDefaultsProvider(),
                 defaultAmbiguityResolver(),
                 defaultAssigner(),
-                methodLookupEngine.getReachableMethods(new TypeDescription.ForLoadedType(delegate.getClass()))
+                methodLookupEngine.process(new TypeDescription.ForLoadedType(delegate.getClass()))
+                        .getInvokableMethods()
                         .filter(not(isStatic().or(isPrivate()).or(isConstructor())))
         );
     }
@@ -239,7 +240,8 @@ public class MethodDelegation implements Instrumentation {
                 defaultDefaultsProvider(),
                 defaultAmbiguityResolver(),
                 defaultAssigner(),
-                methodLookupEngine.getReachableMethods(new TypeDescription.ForLoadedType(delegate.getClass()))
+                methodLookupEngine.process(new TypeDescription.ForLoadedType(delegate.getClass()))
+                        .getInvokableMethods()
                         .filter(not(isStatic().or(isPrivate()).or(isConstructor())))
         );
     }
@@ -284,7 +286,8 @@ public class MethodDelegation implements Instrumentation {
                 defaultDefaultsProvider(),
                 defaultAmbiguityResolver(),
                 defaultAssigner(),
-                methodLookupEngine.getReachableMethods(new TypeDescription.ForLoadedType(type))
+                methodLookupEngine.process(new TypeDescription.ForLoadedType(type))
+                        .getInvokableMethods()
                         .filter(not(isStatic().or(isPrivate()).or(isConstructor())))
         );
     }

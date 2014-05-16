@@ -56,7 +56,7 @@ public class SubclassInstrumentationContextDelegateTest {
     @Mock
     private MethodList methodList;
     @Mock
-    private MethodLookupEngine methodLookupEngine;
+    private MethodLookupEngine.Finding methodLookupEngineFinding;
 
     private SubclassInstrumentationContextDelegate delegate;
 
@@ -81,12 +81,12 @@ public class SubclassInstrumentationContextDelegateTest {
         when(superType.isAssignableFrom(superType)).thenReturn(true);
         when(secondMethodReturnType.getStackSize()).thenReturn(StackSize.ZERO);
         when(instrumentedType.detach()).thenReturn(instrumentedType);
-        when(methodLookupEngine.getReachableMethods(instrumentedType)).thenReturn(methodList);
+        when(methodLookupEngineFinding.getInvokableMethods()).thenReturn(methodList);
+        when(methodLookupEngineFinding.getLookedUpType()).thenReturn(instrumentedType);
         when(instrumentedType.getSupertype()).thenReturn(superType);
         when(methodList.filter(isBridge())).thenReturn(new MethodList.Empty());
         when(methodList.iterator()).thenReturn(Arrays.asList(firstMethod, secondMethod, toStringMethod).iterator());
-        delegate = new SubclassInstrumentationContextDelegate(instrumentedType,
-                methodLookupEngine,
+        delegate = new SubclassInstrumentationContextDelegate(methodLookupEngineFinding,
                 BridgeMethodResolver.Simple.Factory.FAIL_FAST,
                 FOO);
     }
