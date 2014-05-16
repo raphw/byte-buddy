@@ -36,7 +36,7 @@ public class BridgeMethodResolverSimpleTest {
     @Test
     public void testFindsBridgeMethodSingleStep() throws Exception {
         TypeDescription target = new TypeDescription.ForLoadedType(Bar.class);
-        MethodList reachableMethods = new MethodLookupEngine.Default().getReachableMethods(target);
+        MethodList reachableMethods = new MethodLookupEngine.Default(false).getReachableMethods(target);
         MethodList relevantMethods = reachableMethods.filter(not(isConstructor().or(isDeclaredBy(Object.class))));
         assertThat(relevantMethods.size(), is(2));
         BridgeMethodResolver bridgeMethodResolver = new BridgeMethodResolver.Simple(reachableMethods, conflictHandler);
@@ -48,7 +48,7 @@ public class BridgeMethodResolverSimpleTest {
     @Test
     public void testFindsBridgeMethodTwoStep() throws Exception {
         TypeDescription target = new TypeDescription.ForLoadedType(Qux.class);
-        MethodList reachableMethods = new MethodLookupEngine.Default().getReachableMethods(target);
+        MethodList reachableMethods = new MethodLookupEngine.Default(false).getReachableMethods(target);
         MethodList relevantMethods = reachableMethods.filter(not(isConstructor().or(isDeclaredBy(Object.class))));
         assertThat(relevantMethods.size(), is(3));
         BridgeMethodResolver bridgeMethodResolver = new BridgeMethodResolver.Simple(reachableMethods, conflictHandler);
@@ -61,7 +61,7 @@ public class BridgeMethodResolverSimpleTest {
     @Test
     public void testFindsBridgeMethodConflictResolver() throws Exception {
         TypeDescription target = new TypeDescription.ForLoadedType(Baz.class);
-        MethodList reachableMethods = new MethodLookupEngine.Default().getReachableMethods(target);
+        MethodList reachableMethods = new MethodLookupEngine.Default(false).getReachableMethods(target);
         MethodList relevantMethods = reachableMethods.filter(not(isConstructor().or(isDeclaredBy(Object.class))));
         assertThat(relevantMethods.size(), is(3));
         when(conflictHandler.choose(any(MethodDescription.class), any(MethodList.class))).thenReturn(bridgeTarget);

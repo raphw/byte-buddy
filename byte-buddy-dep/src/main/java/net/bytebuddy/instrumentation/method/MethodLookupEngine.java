@@ -1,5 +1,6 @@
 package net.bytebuddy.instrumentation.method;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
@@ -44,7 +45,7 @@ public interface MethodLookupEngine {
          *
          * @return A {@link net.bytebuddy.instrumentation.method.MethodLookupEngine}.
          */
-        MethodLookupEngine make();
+        MethodLookupEngine make(ClassFileVersion classFileVersion);
     }
 
     /**
@@ -270,10 +271,16 @@ public interface MethodLookupEngine {
      */
     static class Default extends AbstractCachingBase {
 
+        private final boolean defaultMethodLookup;
+
+        public Default(boolean defaultMethodLookup) {
+            this.defaultMethodLookup = defaultMethodLookup;
+        }
+
         @Override
         protected MethodList doGetReachableMethods(TypeDescription typeDescription) {
-            MethodBucket methodBucket = new MethodBucket(typeDescription);
-            Set<TypeDescription> interfaces = new HashSet<TypeDescription>(typeDescription.getInterfaces());
+            MethodBucket methodBucket = new MethodBucket(typeDescription, defaultMethodLookup);
+            Set<TypeDescription> interfaces = new HashSet<TypeDescription>();
             while ((typeDescription = typeDescription.getSupertype()) != null) {
                 methodBucket.pushClass(typeDescription);
                 interfaces.addAll(typeDescription.getInterfaces());
@@ -294,8 +301,8 @@ public interface MethodLookupEngine {
             INSTANCE;
 
             @Override
-            public MethodLookupEngine make() {
-                return new Default();
+            public MethodLookupEngine make(ClassFileVersion classFileVersion) {
+                return new Default(classFileVersion.isSupportsDefaultMethods());
             }
         }
 
@@ -321,6 +328,58 @@ public interface MethodLookupEngine {
          */
         private static class MethodBucket {
 
+            private static interface DefaultMethodLookup {
+
+                boolean isEnabled(TypeDescription typeDescription);
+
+                TypeDescription locateDispatcherType(MethodDescription methodDescription,
+                                                     TypeDescription typeDescription);
+
+                static enum Disabled implements DefaultMethodLookup {
+
+                    INSTANCE;
+
+                    @Override
+                    public boolean isEnabled(TypeDescription typeDescription) {
+                        return false;
+                    }
+
+                    @Override
+                    public TypeDescription locateDispatcherType(MethodDescription methodDescription, TypeDescription typeDescription) {
+                        throw new IllegalStateException();
+                    }
+                }
+
+                static class Enabled implements DefaultMethodLookup {
+
+                    private final Set<TypeDescription> hostingTypeInterfaces;
+
+                    public Enabled(Collection<? extends TypeDescription> hostingTypeInterfaces) {
+                        this.hostingTypeInterfaces = new HashSet<TypeDescription>(hostingTypeInterfaces);
+                    }
+
+                    @Override
+                    public boolean isEnabled(TypeDescription typeDescription) {
+                        return true;
+                    }
+
+                    @Override
+                    public TypeDescription locateDispatcherType(MethodDescription methodDescription,
+                                                                TypeDescription typeDescription) {
+                        return hostingTypeInterfaces.contains(typeDescription)
+                                ? methodDescription.getDeclaringType()
+                                : typeDescription;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "MethodBucket.DefaultMethodLookup.Enabled{" +
+                                "hostingTypeInterfaces=" + hostingTypeInterfaces +
+                                '}';
+                    }
+                }
+            }
+
             /**
              * A map of class methods by their unique signature, represented as strings.
              */
@@ -336,24 +395,31 @@ public interface MethodLookupEngine {
              */
             private final Set<TypeDescription> processedTypes;
 
+            private final Map<MethodDescription, TypeDescription> defaultMethods;
+
             private final TypeDescription virtualHost;
 
-            private final MethodMatcher superTypeMatcher;
+            private final MethodMatcher virtualMethodMatcher;
 
             /**
              * Creates a new mutable method bucket.
              */
-            private MethodBucket(TypeDescription hostingType) {
+            private MethodBucket(TypeDescription hostingType, boolean defaultMethodLookup) {
                 this.virtualHost = hostingType;
                 classMethods = new HashMap<String, MethodDescription>();
                 interfaceMethods = new HashMap<String, MethodDescription>();
                 processedTypes = new HashSet<TypeDescription>();
-                superTypeMatcher = isMethod().and(not(isPrivate().or(isStatic()).or(isPackagePrivate().and(not(isVisibleTo(hostingType))))));
+                defaultMethods = new HashMap<MethodDescription, TypeDescription>();
+                virtualMethodMatcher = isMethod().and(not(isPrivate().or(isStatic()).or(isPackagePrivate().and(not(isVisibleTo(hostingType))))));
                 pushClass(hostingType, any());
+                TypeList hostingTypeInterfaces = hostingType.getInterfaces();
+                pushInterfaces(hostingTypeInterfaces, defaultMethodLookup
+                        ? new DefaultMethodLookup.Enabled(hostingTypeInterfaces)
+                        : DefaultMethodLookup.Disabled.INSTANCE);
             }
 
             private void pushClass(TypeDescription typeDescription) {
-                pushClass(typeDescription, superTypeMatcher);
+                pushClass(typeDescription, virtualMethodMatcher);
             }
 
             /**
@@ -382,9 +448,14 @@ public interface MethodLookupEngine {
              *                         filtered automatically.
              */
             private void pushInterfaces(Collection<? extends TypeDescription> typeDescriptions) {
+                pushInterfaces(typeDescriptions, DefaultMethodLookup.Disabled.INSTANCE);
+            }
+
+            private void pushInterfaces(Collection<? extends TypeDescription> typeDescriptions,
+                                        DefaultMethodLookup defaultMethodLookup) {
                 Set<String> processedMethods = new HashSet<String>(classMethods.keySet());
                 for (TypeDescription interfaceTypeDescription : typeDescriptions) {
-                    pushInterface(interfaceTypeDescription, processedMethods);
+                    pushInterface(interfaceTypeDescription, processedMethods, defaultMethodLookup);
                 }
             }
 
@@ -427,10 +498,12 @@ public interface MethodLookupEngine {
              * @param typeDescription  The interface type to process.
              * @param processedMethods A set of unique method signatures that were already processed.
              */
-            private void pushInterface(TypeDescription typeDescription, Set<String> processedMethods) {
+            private void pushInterface(TypeDescription typeDescription,
+                                       Set<String> processedMethods,
+                                       DefaultMethodLookup defaultMethodLookup) {
                 Set<String> locallyProcessedMethods = new HashSet<String>(processedMethods);
                 if (processedTypes.add(typeDescription)) {
-                    for (MethodDescription methodDescription : typeDescription.getDeclaredMethods().filter(superTypeMatcher)) {
+                    for (MethodDescription methodDescription : typeDescription.getDeclaredMethods().filter(virtualMethodMatcher)) {
                         String uniqueSignature = methodDescription.getUniqueSignature();
                         if (!processedMethods.contains(uniqueSignature)) {
                             locallyProcessedMethods.add(uniqueSignature);
@@ -440,9 +513,14 @@ public interface MethodLookupEngine {
                             }
                             interfaceMethods.put(uniqueSignature, methodDescription);
                         }
+                        if (defaultMethodLookup.isEnabled(typeDescription)) {
+                            if (methodDescription.isDefaultMethod()) {
+                                defaultMethods.put(methodDescription, defaultMethodLookup.locateDispatcherType(methodDescription, typeDescription));
+                            }
+                        }
                     }
                     for (TypeDescription interfaceType : typeDescription.getInterfaces()) {
-                        pushInterface(interfaceType, locallyProcessedMethods);
+                        pushInterface(interfaceType, locallyProcessedMethods, defaultMethodLookup);
                     }
                 }
             }
@@ -461,7 +539,7 @@ public interface MethodLookupEngine {
                         ", interfaceMethods=" + interfaceMethods +
                         ", processedTypes=" + processedTypes +
                         ", virtualHost=" + virtualHost +
-                        ", superTypeMatcher=" + superTypeMatcher +
+                        ", virtualMethodMatcher=" + virtualMethodMatcher +
                         '}';
             }
         }

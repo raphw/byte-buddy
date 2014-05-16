@@ -1,5 +1,6 @@
 package net.bytebuddy.instrumentation.method;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.hamcrest.CoreMatchers;
@@ -24,7 +25,7 @@ public class MethodLookupEngineDefaultTest {
 
     @Before
     public void setUp() throws Exception {
-        methodLookupEngine = MethodLookupEngine.Default.Factory.INSTANCE.make();
+        methodLookupEngine = MethodLookupEngine.Default.Factory.INSTANCE.make(ClassFileVersion.JAVA_V8);
     }
 
     @Test
@@ -148,9 +149,9 @@ public class MethodLookupEngineDefaultTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        assertThat(methodLookupEngine.hashCode(), is(new MethodLookupEngine.Default().hashCode()));
-        assertThat(methodLookupEngine, is((MethodLookupEngine) new MethodLookupEngine.Default()));
-        MethodLookupEngine otherEngine = new MethodLookupEngine.Default();
+        assertThat(methodLookupEngine.hashCode(), is(new MethodLookupEngine.Default(true).hashCode()));
+        assertThat(methodLookupEngine, is((MethodLookupEngine) new MethodLookupEngine.Default(true)));
+        MethodLookupEngine otherEngine = new MethodLookupEngine.Default(true);
         otherEngine.getReachableMethods(new TypeDescription.ForLoadedType(Object.class));
         assertThat(methodLookupEngine.hashCode(), CoreMatchers.not(is(otherEngine.hashCode())));
         assertThat(methodLookupEngine, CoreMatchers.not(is(otherEngine)));

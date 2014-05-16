@@ -147,10 +147,10 @@ public interface Instrumentation {
             }
 
             @Override
-            public MethodDescription requireAccessorMethodFor(MethodDescription targetMethod) {
+            public MethodDescription requireAccessorMethodFor(MethodDescription targetMethod, LookupMode lookupMode) {
                 MethodDescription accessorMethod = registeredAccessorMethods.get(targetMethod);
                 if (accessorMethod == null) {
-                    accessorMethod = methodAccessorFactory.requireAccessorMethodFor(targetMethod);
+                    accessorMethod = methodAccessorFactory.requireAccessorMethodFor(targetMethod, lookupMode);
                     registeredAccessorMethods.put(targetMethod, accessorMethod);
                 }
                 return accessorMethod;

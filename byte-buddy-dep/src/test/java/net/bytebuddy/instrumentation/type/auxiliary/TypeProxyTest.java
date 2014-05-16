@@ -28,6 +28,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
 
 @RunWith(Parameterized.class)
@@ -83,7 +84,8 @@ public class TypeProxyTest {
 
     @SuppressWarnings("unchecked")
     private <T> Class<T> makeProxyType(Class<T> proxyType, Class<?> instrumentedType) {
-        when(methodAccessorFactory.requireAccessorMethodFor(any(MethodDescription.class))).then(new SameSignatureAnswer());
+        when(methodAccessorFactory.requireAccessorMethodFor(any(MethodDescription.class),
+                eq(AuxiliaryType.MethodAccessorFactory.LookupMode.Default.BY_SIGNATURE))).then(new SameSignatureAnswer());
         String auxiliaryTypeName = instrumentedType.getName() + "$" + QUX;
         DynamicType dynamicType = new TypeProxy(
                 new TypeDescription.ForLoadedType(proxyType),

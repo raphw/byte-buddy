@@ -4,12 +4,14 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.ModifierContributor;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.modifier.SyntheticState;
 import net.bytebuddy.modifier.TypeVisibility;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * An auxiliary type that provides services to the instrumentation of another type. Implementations should provide
@@ -45,6 +47,38 @@ public interface AuxiliaryType {
      */
     static interface MethodAccessorFactory {
 
+        static interface LookupMode {
+
+            static enum Default implements LookupMode {
+
+                BY_SIGNATURE {
+                    @Override
+                    public MethodDescription resolve(MethodDescription targetMethod,
+                                                     TypeDescription instrumentedType,
+                                                     Map<String, MethodDescription> reachableMethods) {
+                        MethodDescription resolvedMethod = reachableMethods.get(targetMethod.getUniqueSignature());
+                        if (resolvedMethod == null) {
+                            throw new IllegalArgumentException(String.format("Method %s is not reachable from %s", targetMethod, instrumentedType));
+                        }
+                        return resolvedMethod;
+                    }
+                },
+
+                EXACT {
+                    @Override
+                    public MethodDescription resolve(MethodDescription targetMethod,
+                                                     TypeDescription instrumentedType,
+                                                     Map<String, MethodDescription> reachableMethods) {
+                        return targetMethod;
+                    }
+                }
+            }
+
+            MethodDescription resolve(MethodDescription targetMethod,
+                                      TypeDescription instrumentedType,
+                                      Map<String, MethodDescription> reachableMethods);
+        }
+
         /**
          * Requests a new accessor method for the requested method. If such a method cannot be created, an exception
          * will be thrown.
@@ -52,6 +86,6 @@ public interface AuxiliaryType {
          * @param targetMethod The target method for which an accessor method is required.
          * @return A new accessor method.
          */
-        MethodDescription requireAccessorMethodFor(MethodDescription targetMethod);
+        MethodDescription requireAccessorMethodFor(MethodDescription targetMethod, LookupMode lookupMode);
     }
 }

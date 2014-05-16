@@ -322,7 +322,8 @@ public class TypeProxy implements AuxiliaryType {
             public Size apply(MethodVisitor methodVisitor,
                               Context instrumentationContext,
                               MethodDescription instrumentedMethod) {
-                MethodDescription proxyMethod = methodAccessorFactory.requireAccessorMethodFor(instrumentedMethod);
+                MethodDescription proxyMethod = methodAccessorFactory.requireAccessorMethodFor(instrumentedMethod,
+                        MethodAccessorFactory.LookupMode.Default.BY_SIGNATURE);
                 StackManipulation.Size stackSize = new StackManipulation.Compound(
                         MethodVariableAccess.forType(instrumentedType).loadFromIndex(0),
                         fieldLoadingInstruction,

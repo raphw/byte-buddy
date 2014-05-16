@@ -53,8 +53,10 @@ public class InstrumentationContextDefaultTest {
         when(firstDynamic.getDescription()).thenReturn(firstDescription);
         when(secondDynamic.getDescription()).thenReturn(secondDescription);
         when(auxiliaryTypeNamingStrategy.name(any(AuxiliaryType.class))).thenReturn(FOO, BAR);
-        when(methodAccessorFactory.requireAccessorMethodFor(firstMethod)).thenReturn(firstProxyMethod);
-        when(methodAccessorFactory.requireAccessorMethodFor(secondMethod)).thenReturn(secondProxyMethod);
+        when(methodAccessorFactory.requireAccessorMethodFor(firstMethod,
+                AuxiliaryType.MethodAccessorFactory.LookupMode.Default.BY_SIGNATURE)).thenReturn(firstProxyMethod);
+        when(methodAccessorFactory.requireAccessorMethodFor(secondMethod,
+                AuxiliaryType.MethodAccessorFactory.LookupMode.Default.BY_SIGNATURE)).thenReturn(secondProxyMethod);
     }
 
     @Test
@@ -91,11 +93,16 @@ public class InstrumentationContextDefaultTest {
 
     @Test
     public void testMethodProxyFactory() throws Exception {
-        assertThat(defaultContext.requireAccessorMethodFor(firstMethod), is(firstProxyMethod));
-        assertThat(defaultContext.requireAccessorMethodFor(secondMethod), is(secondProxyMethod));
-        assertThat(defaultContext.requireAccessorMethodFor(firstMethod), is(firstProxyMethod));
-        verify(methodAccessorFactory).requireAccessorMethodFor(firstMethod);
-        verify(methodAccessorFactory).requireAccessorMethodFor(secondMethod);
+        assertThat(defaultContext.requireAccessorMethodFor(firstMethod,
+                AuxiliaryType.MethodAccessorFactory.LookupMode.Default.BY_SIGNATURE), is(firstProxyMethod));
+        assertThat(defaultContext.requireAccessorMethodFor(secondMethod,
+                AuxiliaryType.MethodAccessorFactory.LookupMode.Default.BY_SIGNATURE), is(secondProxyMethod));
+        assertThat(defaultContext.requireAccessorMethodFor(firstMethod,
+                AuxiliaryType.MethodAccessorFactory.LookupMode.Default.BY_SIGNATURE), is(firstProxyMethod));
+        verify(methodAccessorFactory).requireAccessorMethodFor(firstMethod,
+                AuxiliaryType.MethodAccessorFactory.LookupMode.Default.BY_SIGNATURE);
+        verify(methodAccessorFactory).requireAccessorMethodFor(secondMethod,
+                AuxiliaryType.MethodAccessorFactory.LookupMode.Default.BY_SIGNATURE);
         verifyNoMoreInteractions(methodAccessorFactory);
         verifyZeroInteractions(auxiliaryTypeNamingStrategy);
         verifyZeroInteractions(classFileVersion);

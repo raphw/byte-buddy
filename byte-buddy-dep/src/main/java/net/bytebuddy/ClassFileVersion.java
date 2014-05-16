@@ -130,6 +130,10 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
         return versionNumber;
     }
 
+    public boolean isSupportsDefaultMethods() {
+        return versionNumber > Opcodes.V1_7;
+    }
+
     @Override
     public int compareTo(ClassFileVersion other) {
         return versionNumber < other.versionNumber ? -1 : versionNumber == other.versionNumber ? 0 : 1;

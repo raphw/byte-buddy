@@ -100,7 +100,8 @@ public class MethodCallProxy implements AuxiliaryType {
     public DynamicType make(String auxiliaryTypeName,
                             ClassFileVersion classFileVersion,
                             MethodAccessorFactory methodAccessorFactory) {
-        MethodDescription accessorMethod = methodAccessorFactory.requireAccessorMethodFor(targetMethod);
+        MethodDescription accessorMethod = methodAccessorFactory.requireAccessorMethodFor(targetMethod,
+                MethodAccessorFactory.LookupMode.Default.EXACT);
         LinkedHashMap<String, TypeDescription> parameterFields = extractFields(accessorMethod);
         Instrumentation methodCall = new MethodCall(accessorMethod, assigner);
         DynamicType.Builder<?> builder = new ByteBuddy(classFileVersion)
@@ -161,7 +162,7 @@ public class MethodCallProxy implements AuxiliaryType {
         }
 
         @Override
-        public MethodLookupEngine make() {
+        public MethodLookupEngine make(ClassFileVersion classFileVersion) {
             return this;
         }
     }

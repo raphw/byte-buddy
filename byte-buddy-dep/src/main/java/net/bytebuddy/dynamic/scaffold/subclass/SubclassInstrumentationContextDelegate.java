@@ -99,11 +99,8 @@ public class SubclassInstrumentationContextDelegate
     }
 
     @Override
-    public MethodDescription requireAccessorMethodFor(MethodDescription targetMethod) {
-        targetMethod = reachableMethods.get(targetMethod.getUniqueSignature());
-        if (targetMethod == null) {
-            throw new IllegalArgumentException("Method is not reachable from instrumented type");
-        }
+    public MethodDescription requireAccessorMethodFor(MethodDescription targetMethod, LookupMode lookupMode) {
+        targetMethod = lookupMode.resolve(targetMethod, instrumentedType, reachableMethods);
         MethodDescription accessorMethod = knownTargetMethodsToAccessorMethod.get(targetMethod);
         if (accessorMethod != null) {
             return accessorMethod;

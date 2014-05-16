@@ -17,6 +17,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -97,12 +98,15 @@ public class SubclassInstrumentationContextDelegateTest {
 
     @Test
     public void testProxyMethodRegistration() throws Exception {
-        MethodDescription firstProxyMethod = delegate.requireAccessorMethodFor(firstMethod);
+        MethodDescription firstProxyMethod = delegate.requireAccessorMethodFor(firstMethod,
+                AuxiliaryType.MethodAccessorFactory.LookupMode.Default.BY_SIGNATURE);
         assertThat(firstProxyMethod.isStatic(), is(false));
         assertThat(firstProxyMethod, not(is(firstMethod)));
-        MethodDescription secondProxyMethod = delegate.requireAccessorMethodFor(secondMethod);
+        MethodDescription secondProxyMethod = delegate.requireAccessorMethodFor(secondMethod,
+                AuxiliaryType.MethodAccessorFactory.LookupMode.Default.BY_SIGNATURE);
         assertThat(secondProxyMethod, not(is(secondMethod)));
-        assertThat(delegate.requireAccessorMethodFor(firstMethod), is(firstProxyMethod));
+        assertThat(delegate.requireAccessorMethodFor(firstMethod,
+                AuxiliaryType.MethodAccessorFactory.LookupMode.Default.BY_SIGNATURE), is(firstProxyMethod));
         Iterator<MethodDescription> iterator = delegate.getProxiedMethods().iterator();
         assertThat(iterator.hasNext(), is(true));
         MethodDescription next = iterator.next();
@@ -135,7 +139,7 @@ public class SubclassInstrumentationContextDelegateTest {
         when(instrumentedType.getInterfaces()).thenReturn(interfaceTypes);
         Instrumentation.Context instrumentationContext = mock(Instrumentation.Context.class);
         MethodDescription proxyMethod = delegate.requireAccessorMethodFor(objectType.getDeclaredMethods()
-                .filter(named(TO_STRING)).getOnly());
+                .filter(named(TO_STRING)).getOnly(), AuxiliaryType.MethodAccessorFactory.LookupMode.Default.EXACT);
         TypeWriter.InGeneralPhase<?> typeWriter = new TypeWriter.Builder<Object>(instrumentedType,
                 instrumentationContext,
                 ClassFileVersion.forCurrentJavaVersion())

@@ -366,7 +366,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 interfaceTypes,
                 modifiers,
                 namingStrategy));
-        MethodLookupEngine methodLookupEngine = methodLookupEngineFactory.make();
+        MethodLookupEngine methodLookupEngine = methodLookupEngineFactory.make(classFileVersion);
         SubclassInstrumentationContextDelegate contextDelegate = new SubclassInstrumentationContextDelegate(instrumentedType,
                 methodLookupEngine,
                 bridgeMethodResolverFactory);

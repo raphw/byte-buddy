@@ -335,7 +335,7 @@ public class MethodDelegation implements Instrumentation {
     }
 
     private static MethodLookupEngine defaultMethodLookupEngine() {
-        return new MethodLookupEngine.Default();
+        return new MethodLookupEngine.Default(false);
     }
 
     /**

@@ -35,7 +35,8 @@ public class AbstractMethodCallProxyTest {
     protected Class<?> proxyOnlyDeclaredMethodOf(Class<?> proxyTarget) throws Exception {
         MethodDescription proxyMethod = new TypeDescription.ForLoadedType(proxyTarget)
                 .getDeclaredMethods().filter(not(isConstructor())).getOnly();
-        when(methodAccessorFactory.requireAccessorMethodFor(targetMethod)).thenReturn(proxyMethod);
+        when(methodAccessorFactory.requireAccessorMethodFor(eq(targetMethod),
+                any(AuxiliaryType.MethodAccessorFactory.LookupMode.class))).thenReturn(proxyMethod);
         String auxiliaryTypeName = getClass().getName() + "$" + proxyTarget.getSimpleName() + "$Proxy";
         DynamicType dynamicType = new MethodCallProxy(targetMethod).make(auxiliaryTypeName,
                 ClassFileVersion.forCurrentJavaVersion(),
@@ -43,7 +44,8 @@ public class AbstractMethodCallProxyTest {
         DynamicType.Unloaded<?> unloaded = (DynamicType.Unloaded<?>) dynamicType;
         Class<?> auxiliaryType = unloaded.load(getClass().getClassLoader(), ClassLoadingStrategy.Default.INJECTION).getLoaded();
         assertThat(auxiliaryType.getName(), is(auxiliaryTypeName));
-        verify(methodAccessorFactory).requireAccessorMethodFor(targetMethod);
+        verify(methodAccessorFactory).requireAccessorMethodFor(targetMethod,
+                AuxiliaryType.MethodAccessorFactory.LookupMode.Default.EXACT);
         verifyNoMoreInteractions(methodAccessorFactory);
         verifyZeroInteractions(targetMethod);
         assertThat(auxiliaryType.getModifiers(), is(Opcodes.ACC_SYNTHETIC));
