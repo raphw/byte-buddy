@@ -103,7 +103,8 @@ public class PrimitiveUnboxingDelegateDirectTest {
         verify(methodVisitor).visitMethodInsn(Opcodes.INVOKEVIRTUAL,
                 wrapperTypeDescription.getInternalName(),
                 unboxingMethodName,
-                unboxingMethodDescriptor);
+                unboxingMethodDescriptor,
+                false);
         verifyNoMoreInteractions(methodVisitor);
         verifyZeroInteractions(chainedAssigner);
         verifyZeroInteractions(this.stackManipulation);
@@ -121,7 +122,8 @@ public class PrimitiveUnboxingDelegateDirectTest {
         verify(methodVisitor).visitMethodInsn(Opcodes.INVOKEVIRTUAL,
                 wrapperTypeDescription.getInternalName(),
                 unboxingMethodName,
-                unboxingMethodDescriptor);
+                unboxingMethodDescriptor,
+                false);
         verifyNoMoreInteractions(methodVisitor);
         verify(chainedAssigner).assign(referenceTypeDescription, new TypeDescription.ForLoadedType(wrapperType), true);
         verifyNoMoreInteractions(chainedAssigner);

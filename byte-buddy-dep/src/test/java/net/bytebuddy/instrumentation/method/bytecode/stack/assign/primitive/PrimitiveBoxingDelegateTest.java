@@ -106,7 +106,8 @@ public class PrimitiveBoxingDelegateTest {
         verify(methodVisitor).visitMethodInsn(Opcodes.INVOKESTATIC,
                 referenceTypeDescription.getInternalName(),
                 VALUE_OF,
-                boxingMethodDescriptor);
+                boxingMethodDescriptor,
+                false);
         verifyNoMoreInteractions(methodVisitor);
         verify(stackManipulation, atLeast(1)).isValid();
         verify(stackManipulation).apply(methodVisitor, instrumentationContext);

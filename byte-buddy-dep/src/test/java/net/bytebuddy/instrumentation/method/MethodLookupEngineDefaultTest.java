@@ -149,9 +149,11 @@ public class MethodLookupEngineDefaultTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        assertThat(methodLookupEngine.hashCode(), is(new MethodLookupEngine.Default(true).hashCode()));
-        assertThat(methodLookupEngine, is((MethodLookupEngine) new MethodLookupEngine.Default(true)));
-        MethodLookupEngine otherEngine = new MethodLookupEngine.Default(true);
+        assertThat(methodLookupEngine.hashCode(),
+                is(new MethodLookupEngine.Default(MethodLookupEngine.Default.DefaultMethodLookup.ENABLED).hashCode()));
+        assertThat(methodLookupEngine,
+                is((MethodLookupEngine) new MethodLookupEngine.Default(MethodLookupEngine.Default.DefaultMethodLookup.ENABLED)));
+        MethodLookupEngine otherEngine = new MethodLookupEngine.Default(MethodLookupEngine.Default.DefaultMethodLookup.ENABLED);
         otherEngine.getReachableMethods(new TypeDescription.ForLoadedType(Object.class));
         assertThat(methodLookupEngine.hashCode(), CoreMatchers.not(is(otherEngine.hashCode())));
         assertThat(methodLookupEngine, CoreMatchers.not(is(otherEngine)));

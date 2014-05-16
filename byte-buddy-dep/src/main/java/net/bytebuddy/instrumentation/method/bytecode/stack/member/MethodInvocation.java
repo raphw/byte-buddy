@@ -116,7 +116,8 @@ public enum MethodInvocation {
             methodVisitor.visitMethodInsn(invocationOpcode,
                     typeDescription.getInternalName(),
                     methodDescription.getInternalName(),
-                    methodDescription.getDescriptor());
+                    methodDescription.getDescriptor(),
+                    typeDescription.isInterface());
             return size;
         }
 

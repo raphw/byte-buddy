@@ -76,50 +76,57 @@ public class MethodInvocationTest {
     @Test
     public void testStaticMethodInvocation() throws Exception {
         when(methodDescription.isStatic()).thenReturn(true);
-        assertInvocation(MethodInvocation.invoke(methodDescription), Opcodes.INVOKESTATIC, FOO);
+        assertInvocation(MethodInvocation.invoke(methodDescription), Opcodes.INVOKESTATIC, FOO, false);
     }
 
     @Test
     public void testStaticPrivateMethodInvocation() throws Exception {
         when(methodDescription.isStatic()).thenReturn(true);
         when(methodDescription.isPrivate()).thenReturn(true);
-        assertInvocation(MethodInvocation.invoke(methodDescription), Opcodes.INVOKESTATIC, FOO);
+        assertInvocation(MethodInvocation.invoke(methodDescription), Opcodes.INVOKESTATIC, FOO, false);
     }
 
     @Test
     public void testPrivateMethodInvocation() throws Exception {
         when(methodDescription.isPrivate()).thenReturn(true);
-        assertInvocation(MethodInvocation.invoke(methodDescription), Opcodes.INVOKESPECIAL, FOO);
+        assertInvocation(MethodInvocation.invoke(methodDescription), Opcodes.INVOKESPECIAL, FOO, false);
     }
 
     @Test
     public void testConstructorMethodInvocation() throws Exception {
         when(methodDescription.isConstructor()).thenReturn(true);
-        assertInvocation(MethodInvocation.invoke(methodDescription), Opcodes.INVOKESPECIAL, FOO);
+        assertInvocation(MethodInvocation.invoke(methodDescription), Opcodes.INVOKESPECIAL, FOO, false);
     }
 
     @Test
     public void testPublicMethodInvocation() throws Exception {
-        assertInvocation(MethodInvocation.invoke(methodDescription), Opcodes.INVOKEVIRTUAL, FOO);
+        assertInvocation(MethodInvocation.invoke(methodDescription), Opcodes.INVOKEVIRTUAL, FOO, false);
     }
 
     @Test
     public void testInterfaceMethodInvocation() throws Exception {
         when(declaringType.isInterface()).thenReturn(true);
-        assertInvocation(MethodInvocation.invoke(methodDescription), Opcodes.INVOKEINTERFACE, FOO);
+        assertInvocation(MethodInvocation.invoke(methodDescription), Opcodes.INVOKEINTERFACE, FOO, true);
+    }
+
+    @Test
+    public void testStaticInterfaceMethodInvocation() throws Exception {
+        when(declaringType.isInterface()).thenReturn(true);
+        when(methodDescription.isStatic()).thenReturn(true);
+        assertInvocation(MethodInvocation.invoke(methodDescription), Opcodes.INVOKESTATIC, FOO, true);
     }
 
     @Test
     public void testDefaultInterfaceMethodInvocation() throws Exception {
         when(methodDescription.isDefaultMethod()).thenReturn(true);
         when(declaringType.isInterface()).thenReturn(true);
-        assertInvocation(MethodInvocation.invoke(methodDescription), Opcodes.INVOKESPECIAL, FOO);
+        assertInvocation(MethodInvocation.invoke(methodDescription), Opcodes.INVOKESPECIAL, FOO, true);
     }
 
     @Test
     public void testExplicitlySpecialMethodInvocation() throws Exception {
         when(methodDescription.isSpecializableFor(otherType)).thenReturn(true);
-        assertInvocation(MethodInvocation.invoke(methodDescription).special(otherType), Opcodes.INVOKESPECIAL, BAZ);
+        assertInvocation(MethodInvocation.invoke(methodDescription).special(otherType), Opcodes.INVOKESPECIAL, BAZ, false);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -130,14 +137,14 @@ public class MethodInvocationTest {
     @Test
     public void testExplicitlyVirtualMethodInvocation() throws Exception {
         when(declaringType.isAssignableFrom(otherType)).thenReturn(true);
-        assertInvocation(MethodInvocation.invoke(methodDescription).virtual(otherType), Opcodes.INVOKEVIRTUAL, BAZ);
+        assertInvocation(MethodInvocation.invoke(methodDescription).virtual(otherType), Opcodes.INVOKEVIRTUAL, BAZ, false);
     }
 
     @Test
     public void testExplicitlyVirtualMethodInvocationOfInterface() throws Exception {
         when(declaringType.isAssignableFrom(otherType)).thenReturn(true);
         when(otherType.isInterface()).thenReturn(true);
-        assertInvocation(MethodInvocation.invoke(methodDescription).virtual(otherType), Opcodes.INVOKEINTERFACE, BAZ);
+        assertInvocation(MethodInvocation.invoke(methodDescription).virtual(otherType), Opcodes.INVOKEINTERFACE, BAZ, true);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -158,12 +165,15 @@ public class MethodInvocationTest {
         MethodInvocation.invoke(methodDescription).virtual(otherType);
     }
 
-    private void assertInvocation(StackManipulation stackManipulation, int opcode, String typeName) {
+    private void assertInvocation(StackManipulation stackManipulation,
+                                  int opcode,
+                                  String typeName,
+                                  boolean interfaceInvocation) {
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, instrumentationContext);
         assertThat(size.getSizeImpact(), is(expectedSize));
         assertThat(size.getMaximalSize(), is(Math.max(0, expectedSize)));
-        verify(methodVisitor).visitMethodInsn(opcode, typeName, BAR, QUX);
+        verify(methodVisitor).visitMethodInsn(opcode, typeName, BAR, QUX, interfaceInvocation);
         verifyNoMoreInteractions(methodVisitor);
     }
 }

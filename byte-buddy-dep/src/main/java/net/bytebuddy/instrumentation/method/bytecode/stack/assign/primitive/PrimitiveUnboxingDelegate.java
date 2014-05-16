@@ -133,7 +133,11 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
 
     @Override
     public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-        methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, wrapperTypeName, unboxingMethodName, unboxingMethodDescriptor);
+        methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
+                wrapperTypeName,
+                unboxingMethodName,
+                unboxingMethodDescriptor,
+                false);
         return size;
     }
 

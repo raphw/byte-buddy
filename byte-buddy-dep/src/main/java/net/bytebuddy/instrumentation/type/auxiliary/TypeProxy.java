@@ -428,7 +428,8 @@ public class TypeProxy implements AuxiliaryType {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
                         REFLECTION_FACTORY_INTERNAL_NAME,
                         GET_REFLECTION_FACTORY_METHOD_NAME,
-                        GET_REFLECTION_FACTORY_METHOD_DESCRIPTOR);
+                        GET_REFLECTION_FACTORY_METHOD_DESCRIPTOR,
+                        false);
                 methodVisitor.visitLdcInsn(Type.getType(instrumentedType.getDescriptor()));
                 methodVisitor.visitLdcInsn(Type.getType(JAVA_LANG_OBJECT_DESCRIPTOR));
                 methodVisitor.visitInsn(Opcodes.ICONST_0);
@@ -436,16 +437,19 @@ public class TypeProxy implements AuxiliaryType {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
                         JAVA_LANG_CLASS_INTERNAL_NAME,
                         GET_DECLARED_CONSTRUCTOR_METHOD_NAME,
-                        GET_DECLARED_CONSTRUCTOR_METHOD_DESCRIPTOR);
+                        GET_DECLARED_CONSTRUCTOR_METHOD_DESCRIPTOR,
+                        false);
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
                         REFLECTION_FACTORY_INTERNAL_NAME,
                         NEW_CONSTRUCTOR_FOR_SERIALIZATION_METHOD_NAME,
-                        NEW_CONSTRUCTOR_FOR_SERIALIZATION_METHOD_DESCRIPTOR);
+                        NEW_CONSTRUCTOR_FOR_SERIALIZATION_METHOD_DESCRIPTOR,
+                        false);
                 methodVisitor.visitInsn(Opcodes.ICONST_0);
                 methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, JAVA_LANG_OBJECT_INTERNAL_NAME);
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, JAVA_LANG_CONSTRUCTOR_INTERNAL_NAME,
                         NEW_INSTANCE_METHOD_NAME,
-                        NEW_INSTANCE_METHOD_DESCRIPTOR);
+                        NEW_INSTANCE_METHOD_DESCRIPTOR,
+                        false);
                 methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, instrumentedType.getInternalName());
                 methodVisitor.visitInsn(Opcodes.ARETURN);
                 return new Size(4, 0);

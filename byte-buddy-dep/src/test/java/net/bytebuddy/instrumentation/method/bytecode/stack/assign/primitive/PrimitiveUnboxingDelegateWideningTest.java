@@ -100,7 +100,8 @@ public class PrimitiveUnboxingDelegateWideningTest {
         verify(methodVisitor).visitMethodInsn(Opcodes.INVOKEVIRTUAL,
                 Type.getInternalName(referenceType),
                 unboxingMethodName,
-                unboxingMethodDescriptor);
+                unboxingMethodDescriptor,
+                false);
         verify(methodVisitor).visitInsn(wideningOpcode);
         verifyNoMoreInteractions(methodVisitor);
     }

@@ -126,7 +126,11 @@ public enum PrimitiveBoxingDelegate {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-            methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, wrapperTypeName, boxingMethodName, boxingMethodDescriptor);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
+                    wrapperTypeName,
+                    boxingMethodName,
+                    boxingMethodDescriptor,
+                    false);
             return size.aggregate(stackManipulation.apply(methodVisitor, instrumentationContext));
         }
     }

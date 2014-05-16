@@ -71,7 +71,8 @@ public abstract class MethodConstant implements StackManipulation {
         methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
                 CLASS_TYPE_INTERNAL_NAME,
                 getMethodName(),
-                getDescriptor());
+                getDescriptor(),
+                false);
         return new Size(1, argumentSize.getMaximalSize());
     }
 

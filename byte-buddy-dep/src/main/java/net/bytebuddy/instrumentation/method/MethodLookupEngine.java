@@ -271,20 +271,45 @@ public interface MethodLookupEngine {
      */
     static class Default extends AbstractCachingBase {
 
-        private final boolean defaultMethodLookup;
+        public static enum DefaultMethodLookup {
+            ENABLED {
+                @Override
+                protected void apply(MethodBucket methodBucket,
+                                     Collection<TypeDescription> interfaceTypes,
+                                     Collection<TypeDescription> defaultMethodRelevantInterfaceTypes) {
+                    methodBucket.pushInterfacesAndExtractDefaultMethods(defaultMethodRelevantInterfaceTypes);
+                }
+            },
+            DISABLED {
+                @Override
+                protected void apply(MethodBucket methodBucket,
+                                     Collection<TypeDescription> interfaceTypes,
+                                     Collection<TypeDescription> defaultMethodRelevantInterfaceTypes) {
+                    interfaceTypes.addAll(defaultMethodRelevantInterfaceTypes);
+                }
+            };
 
-        public Default(boolean defaultMethodLookup) {
+            protected abstract void apply(MethodBucket methodBucket,
+                                          Collection<TypeDescription> interfaceTypes,
+                                          Collection<TypeDescription> defaultMethodRelevantInterfaceTypes);
+        }
+
+        private final DefaultMethodLookup defaultMethodLookup;
+
+        public Default(DefaultMethodLookup defaultMethodLookup) {
             this.defaultMethodLookup = defaultMethodLookup;
         }
 
         @Override
         protected MethodList doGetReachableMethods(TypeDescription typeDescription) {
-            MethodBucket methodBucket = new MethodBucket(typeDescription, defaultMethodLookup);
+            MethodBucket methodBucket = new MethodBucket(typeDescription);
             Set<TypeDescription> interfaces = new HashSet<TypeDescription>();
+            TypeList defaultMethodRelevantInterfaces = typeDescription.getInterfaces();
             while ((typeDescription = typeDescription.getSupertype()) != null) {
                 methodBucket.pushClass(typeDescription);
                 interfaces.addAll(typeDescription.getInterfaces());
             }
+            defaultMethodLookup.apply(methodBucket, interfaces, defaultMethodRelevantInterfaces);
             methodBucket.pushInterfaces(interfaces);
             return methodBucket.toMethodList();
         }
@@ -302,7 +327,9 @@ public interface MethodLookupEngine {
 
             @Override
             public MethodLookupEngine make(ClassFileVersion classFileVersion) {
-                return new Default(classFileVersion.isSupportsDefaultMethods());
+                return new Default(classFileVersion.isSupportsDefaultMethods()
+                        ? DefaultMethodLookup.ENABLED
+                        : DefaultMethodLookup.DISABLED);
             }
         }
 
@@ -335,7 +362,7 @@ public interface MethodLookupEngine {
                 TypeDescription locateDispatcherType(MethodDescription methodDescription,
                                                      TypeDescription typeDescription);
 
-                static enum Disabled implements DefaultMethodLookup {
+                static enum Disabled implements MethodBucket.DefaultMethodLookup {
 
                     INSTANCE;
 
@@ -350,7 +377,7 @@ public interface MethodLookupEngine {
                     }
                 }
 
-                static class Enabled implements DefaultMethodLookup {
+                static class Enabled implements MethodBucket.DefaultMethodLookup {
 
                     private final Set<TypeDescription> hostingTypeInterfaces;
 
@@ -404,7 +431,7 @@ public interface MethodLookupEngine {
             /**
              * Creates a new mutable method bucket.
              */
-            private MethodBucket(TypeDescription hostingType, boolean defaultMethodLookup) {
+            private MethodBucket(TypeDescription hostingType) {
                 this.virtualHost = hostingType;
                 classMethods = new HashMap<String, MethodDescription>();
                 interfaceMethods = new HashMap<String, MethodDescription>();
@@ -412,10 +439,6 @@ public interface MethodLookupEngine {
                 defaultMethods = new HashMap<MethodDescription, TypeDescription>();
                 virtualMethodMatcher = isMethod().and(not(isPrivate().or(isStatic()).or(isPackagePrivate().and(not(isVisibleTo(hostingType))))));
                 pushClass(hostingType, any());
-                TypeList hostingTypeInterfaces = hostingType.getInterfaces();
-                pushInterfaces(hostingTypeInterfaces, defaultMethodLookup
-                        ? new DefaultMethodLookup.Enabled(hostingTypeInterfaces)
-                        : DefaultMethodLookup.Disabled.INSTANCE);
             }
 
             private void pushClass(TypeDescription typeDescription) {
@@ -449,6 +472,10 @@ public interface MethodLookupEngine {
              */
             private void pushInterfaces(Collection<? extends TypeDescription> typeDescriptions) {
                 pushInterfaces(typeDescriptions, DefaultMethodLookup.Disabled.INSTANCE);
+            }
+
+            private void pushInterfacesAndExtractDefaultMethods(Collection<? extends TypeDescription> typeDescriptions) {
+                pushInterfaces(typeDescriptions, new DefaultMethodLookup.Enabled(typeDescriptions));
             }
 
             private void pushInterfaces(Collection<? extends TypeDescription> typeDescriptions,
@@ -513,10 +540,8 @@ public interface MethodLookupEngine {
                             }
                             interfaceMethods.put(uniqueSignature, methodDescription);
                         }
-                        if (defaultMethodLookup.isEnabled(typeDescription)) {
-                            if (methodDescription.isDefaultMethod()) {
-                                defaultMethods.put(methodDescription, defaultMethodLookup.locateDispatcherType(methodDescription, typeDescription));
-                            }
+                        if (defaultMethodLookup.isEnabled(typeDescription) && methodDescription.isDefaultMethod()) {
+                            defaultMethods.put(methodDescription, defaultMethodLookup.locateDispatcherType(methodDescription, typeDescription));
                         }
                     }
                     for (TypeDescription interfaceType : typeDescription.getInterfaces()) {

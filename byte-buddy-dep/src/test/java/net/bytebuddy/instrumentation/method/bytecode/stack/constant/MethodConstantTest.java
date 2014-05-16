@@ -63,7 +63,8 @@ public class MethodConstantTest {
         verify(methodVisitor).visitMethodInsn(Opcodes.INVOKEVIRTUAL,
                 Type.getInternalName(Class.class),
                 "getDeclaredMethod",
-                "(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;");
+                "(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;",
+                false);
     }
 
     @Test
@@ -75,6 +76,7 @@ public class MethodConstantTest {
         verify(methodVisitor).visitMethodInsn(Opcodes.INVOKEVIRTUAL,
                 Type.getInternalName(Class.class),
                 "getDeclaredConstructor",
-                "([Ljava/lang/Class;)Ljava/lang/reflect/Constructor;");
+                "([Ljava/lang/Class;)Ljava/lang/reflect/Constructor;",
+                false);
     }
 }
