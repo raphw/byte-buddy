@@ -50,6 +50,10 @@ public interface MethodLookupEngine {
         MethodLookupEngine make(ClassFileVersion classFileVersion);
     }
 
+    /**
+     * A finding contains a class's extracted invokable methods which were computed by a
+     * {@link net.bytebuddy.instrumentation.method.MethodLookupEngine}.
+     */
     static interface Finding {
 
         TypeDescription getLookedUpType();
