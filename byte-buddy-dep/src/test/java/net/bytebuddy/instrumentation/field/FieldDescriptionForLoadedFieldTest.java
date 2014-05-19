@@ -1,7 +1,7 @@
 package net.bytebuddy.instrumentation.field;
 
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.utility.PackagePrivateField;
+import net.bytebuddy.test.packaging.PackagePrivateField;
 import org.junit.Before;
 import org.junit.Test;
 

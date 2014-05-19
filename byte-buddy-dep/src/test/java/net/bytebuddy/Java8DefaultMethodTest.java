@@ -19,10 +19,10 @@ public class Java8DefaultMethodTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
-    private static final String DEFAULT_METHOD_INTERFACE = "net.bytebuddy.test.precompiled.DefaultMethodInterface";
+    private static final String DEFAULT_METHOD_INTERFACE = "net.bytebuddy.test.precompiled.SingleDefaultMethodInterface";
 
     private static final Object STATIC_FIELD = null;
-    private static final String INTERFACE_STATIC_FIELD_NAME = "MARKER";
+    private static final String INTERFACE_STATIC_FIELD_NAME = "FOO";
 
     @Rule
     public MethodRule java8Rule = new Java8Rule();
@@ -34,7 +34,7 @@ public class Java8DefaultMethodTest {
 
     @Before
     public void setUp() throws Exception {
-        classLoader = new PrecompiledTypeClassLoader(getClass().getClassLoader(), DEFAULT_METHOD_INTERFACE);
+        classLoader = new PrecompiledTypeClassLoader(getClass().getClassLoader());
         interfaceType = classLoader.loadClass(DEFAULT_METHOD_INTERFACE);
         interfaceMarker = interfaceType.getDeclaredField(INTERFACE_STATIC_FIELD_NAME).get(STATIC_FIELD);
         interfaceMethod = interfaceType.getDeclaredMethod(FOO);

@@ -1,4 +1,4 @@
-package net.bytebuddy.utility;
+package net.bytebuddy.test.packaging;
 
 @SuppressWarnings("unused")
 public class PackagePrivateType {

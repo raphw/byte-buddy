@@ -1,7 +1,7 @@
 package net.bytebuddy.instrumentation.method;
 
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.utility.PackagePrivateConstructor;
+import net.bytebuddy.test.packaging.PackagePrivateConstructor;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.asm.Type;

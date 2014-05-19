@@ -25,7 +25,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <code.level>1.8</code.level>
+        <code.level>1.6</code.level>
         <cobertura.exclude.benchmark.generated>
             net/bytebuddy/benchmark/generated/**/*.class
         </cobertura.exclude.benchmark.generated>

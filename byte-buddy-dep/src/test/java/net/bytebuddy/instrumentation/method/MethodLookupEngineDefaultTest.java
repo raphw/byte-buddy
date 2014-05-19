@@ -3,10 +3,13 @@ package net.bytebuddy.instrumentation.method;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.test.precompiled.*;
+import net.bytebuddy.utility.Java8Rule;
+import net.bytebuddy.utility.PrecompiledTypeClassLoader;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 
 import java.util.Set;
 
@@ -20,17 +23,42 @@ import static org.junit.Assert.assertEquals;
 
 public class MethodLookupEngineDefaultTest {
 
-    private static final String TO_STRING = "toString", FOO = "foo";
+    private static final String TO_STRING = "toString", FOO = "foo", PREFIX = "net.bytebuddy.test.precompiled.";
+
+    private static final String SINGLE_DEFAULT_METHOD_ABSTRACT_OVERRIDING_CLASS = PREFIX + "SingleDefaultMethodAbstractOverridingClass",
+            SINGLE_DEFAULT_METHOD_ABSTRACT_OVERRIDING_INTERFACE = PREFIX + "SingleDefaultMethodAbstractOverridingInterface",
+            SINGLE_DEFAULT_METHOD_AMBIGUOUS_ABSTRACT_OVERRIDING_CLASS = PREFIX + "SingleDefaultMethodAmbiguousAbstractOverridingClass",
+            SINGLE_DEFAULT_METHOD_AMBIGUOUS_INHERITANCE_CLASS = PREFIX + "SingleDefaultMethodAmbiguousInheritanceClass",
+            SINGLE_DEFAULT_METHOD_AMBIGUOUS_INHERITANCE_INTERFACE = PREFIX + "SingleDefaultMethodAmbiguousInheritanceInterface",
+            SINGLE_DEFAULT_METHOD_AMBIGUOUS_MANIFEST_OVERRIDING_CLASS = PREFIX + "SingleDefaultMethodAmbiguousManifestOverridingClass",
+            SINGLE_DEFAULT_METHOD_CLASS = PREFIX + "SingleDefaultMethodClass",
+            SINGLE_DEFAULT_METHOD_CONFLICTING_CLASS = PREFIX + "SingleDefaultMethodConflictingClass",
+            SINGLE_DEFAULT_METHOD_CONFLICTING_INTERFACE = PREFIX + "SingleDefaultMethodConflictingInterface",
+            SINGLE_DEFAULT_METHOD_INTERFACE = PREFIX + "SingleDefaultMethodInterface",
+            SINGLE_DEFAULT_METHOD_MANIFEST_OVERRIDING_CLASS = PREFIX + "SingleDefaultMethodManifestOverridingClass",
+            SINGLE_DEFAULT_METHOD_MANIFEST_OVERRIDING_INTERFACE = PREFIX + "SingleDefaultMethodManifestOverridingInterface",
+            SINGLE_DEFAULT_METHOD_NON_OVERRIDING_CLASS = PREFIX + "SingleDefaultMethodNonOverridingClass",
+            SINGLE_DEFAULT_METHOD_NON_OVERRIDING_INTERFACE = PREFIX + "SingleDefaultMethodNonOverridingInterface",
+            SINGLE_DEFAULT_METHOD_OVERRIDING_CLASS = PREFIX + "SingleDefaultMethodOverridingClass";
+
+    @Rule
+    public MethodRule java8Rule = new Java8Rule();
 
     private MethodLookupEngine methodLookupEngine;
+    private ClassLoader classLoader;
 
     private static MethodMatcher isVirtualTo(TypeDescription typeDescription) {
         return isMethod().and(not(isPrivate().or(isStatic()).or(isPackagePrivate().and(not(isVisibleTo(typeDescription))))));
     }
 
+    private TypeDescription findType(String name) throws Exception {
+        return new TypeDescription.ForLoadedType(Class.forName(name, true, classLoader));
+    }
+
     @Before
     public void setUp() throws Exception {
         methodLookupEngine = MethodLookupEngine.Default.Factory.INSTANCE.make(ClassFileVersion.JAVA_V8);
+        classLoader = new PrecompiledTypeClassLoader(getClass().getClassLoader());
     }
 
     @Test
@@ -179,9 +207,10 @@ public class MethodLookupEngineDefaultTest {
     }
 
     @Test
+    @Java8Rule.Enforce
     public void testTrivialDefaultMethodLookup() throws Exception {
-        TypeDescription singleDefaultMethodClass = new TypeDescription.ForLoadedType(SingleDefaultMethodClass.class);
-        TypeDescription singleDefaultMethodInterface = new TypeDescription.ForLoadedType(SingleDefaultMethodInterface.class);
+        TypeDescription singleDefaultMethodClass = findType(SINGLE_DEFAULT_METHOD_CLASS);
+        TypeDescription singleDefaultMethodInterface = findType(SINGLE_DEFAULT_METHOD_INTERFACE);
         MethodLookupEngine.Finding finding = methodLookupEngine.process(singleDefaultMethodClass);
         assertThat(finding.getLookedUpType(), is(singleDefaultMethodClass));
         assertThat(finding.getInvokableDefaultMethods().size(), is(1));
@@ -193,9 +222,10 @@ public class MethodLookupEngineDefaultTest {
     }
 
     @Test
+    @Java8Rule.Enforce
     public void testOverridingDefaultMethodLookup() throws Exception {
-        TypeDescription singleDefaultMethodClass = new TypeDescription.ForLoadedType(SingleDefaultMethodOverridingClass.class);
-        TypeDescription singleDefaultMethodInterface = new TypeDescription.ForLoadedType(SingleDefaultMethodInterface.class);
+        TypeDescription singleDefaultMethodClass = findType(SINGLE_DEFAULT_METHOD_OVERRIDING_CLASS);
+        TypeDescription singleDefaultMethodInterface = findType(SINGLE_DEFAULT_METHOD_INTERFACE);
         MethodLookupEngine.Finding finding = methodLookupEngine.process(singleDefaultMethodClass);
         assertThat(finding.getLookedUpType(), is(singleDefaultMethodClass));
         assertThat(finding.getInvokableDefaultMethods().size(), is(1));
@@ -207,10 +237,11 @@ public class MethodLookupEngineDefaultTest {
     }
 
     @Test
+    @Java8Rule.Enforce
     public void testConflictingDefaultMethodLookup() throws Exception {
-        TypeDescription singleDefaultMethodClass = new TypeDescription.ForLoadedType(SingleDefaultMethodConflictingClass.class);
-        TypeDescription singleDefaultMethodInterface = new TypeDescription.ForLoadedType(SingleDefaultMethodInterface.class);
-        TypeDescription singleConflictingDefaultMethodInterface = new TypeDescription.ForLoadedType(SingleDefaultMethodConflictingInterface.class);
+        TypeDescription singleDefaultMethodClass = findType(SINGLE_DEFAULT_METHOD_CONFLICTING_CLASS);
+        TypeDescription singleDefaultMethodInterface = findType(SINGLE_DEFAULT_METHOD_INTERFACE);
+        TypeDescription singleConflictingDefaultMethodInterface = findType(SINGLE_DEFAULT_METHOD_CONFLICTING_INTERFACE);
         MethodLookupEngine.Finding finding = methodLookupEngine.process(singleDefaultMethodClass);
         assertThat(finding.getLookedUpType(), is(singleDefaultMethodClass));
         assertThat(finding.getInvokableDefaultMethods().size(), is(2));
@@ -226,18 +257,20 @@ public class MethodLookupEngineDefaultTest {
     }
 
     @Test
+    @Java8Rule.Enforce
     public void testAbstractOverridingDefaultMethodLookup() throws Exception {
-        TypeDescription singleDefaultMethodAbstractOverridingClass = new TypeDescription.ForLoadedType(SingleDefaultMethodAbstractOverridingClass.class);
+        TypeDescription singleDefaultMethodAbstractOverridingClass = findType(SINGLE_DEFAULT_METHOD_ABSTRACT_OVERRIDING_CLASS);
         MethodLookupEngine.Finding finding = methodLookupEngine.process(singleDefaultMethodAbstractOverridingClass);
         assertThat(finding.getLookedUpType(), is(singleDefaultMethodAbstractOverridingClass));
         assertThat(finding.getInvokableDefaultMethods().size(), is(1));
-        assertThat(finding.getInvokableDefaultMethods().get(new TypeDescription.ForLoadedType(SingleDefaultMethodAbstractOverridingInterface.class)).size(), is(0));
+        assertThat(finding.getInvokableDefaultMethods().get(findType(SINGLE_DEFAULT_METHOD_ABSTRACT_OVERRIDING_INTERFACE)).size(), is(0));
     }
 
     @Test
+    @Java8Rule.Enforce
     public void testManifestOverridingDefaultMethodLookup() throws Exception {
-        TypeDescription singleDefaultMethodManifestOverridingClass = new TypeDescription.ForLoadedType(SingleDefaultMethodManifestOverridingClass.class);
-        TypeDescription singleDefaultMethodManifestOverridingInterface = new TypeDescription.ForLoadedType(SingleDefaultMethodManifestOverridingInterface.class);
+        TypeDescription singleDefaultMethodManifestOverridingClass = findType(SINGLE_DEFAULT_METHOD_MANIFEST_OVERRIDING_CLASS);
+        TypeDescription singleDefaultMethodManifestOverridingInterface = findType(SINGLE_DEFAULT_METHOD_MANIFEST_OVERRIDING_INTERFACE);
         MethodLookupEngine.Finding finding = methodLookupEngine.process(singleDefaultMethodManifestOverridingClass);
         assertThat(finding.getLookedUpType(), is(singleDefaultMethodManifestOverridingClass));
         assertThat(finding.getInvokableDefaultMethods().size(), is(1));
@@ -247,10 +280,11 @@ public class MethodLookupEngineDefaultTest {
     }
 
     @Test
+    @Java8Rule.Enforce
     public void testNonOverridenDefaultMethodLookup() throws Exception {
-        TypeDescription singleDefaultMethodNonOverridingClass = new TypeDescription.ForLoadedType(SingleDefaultMethodNonOverridingClass.class);
-        TypeDescription singleDefaultMethodNonOverridingInterface = new TypeDescription.ForLoadedType(SingleDefaultMethodNonOverridingInterface.class);
-        TypeDescription singleDefaultMethodInterface = new TypeDescription.ForLoadedType(SingleDefaultMethodInterface.class);
+        TypeDescription singleDefaultMethodNonOverridingClass = findType(SINGLE_DEFAULT_METHOD_NON_OVERRIDING_CLASS);
+        TypeDescription singleDefaultMethodNonOverridingInterface = findType(SINGLE_DEFAULT_METHOD_NON_OVERRIDING_INTERFACE);
+        TypeDescription singleDefaultMethodInterface = findType(SINGLE_DEFAULT_METHOD_INTERFACE);
         MethodLookupEngine.Finding finding = methodLookupEngine.process(singleDefaultMethodNonOverridingClass);
         assertThat(finding.getLookedUpType(), is(singleDefaultMethodNonOverridingClass));
         MethodDescription interfaceMethod = singleDefaultMethodInterface.getDeclaredMethods().getOnly();
@@ -262,11 +296,12 @@ public class MethodLookupEngineDefaultTest {
     }
 
     @Test
+    @Java8Rule.Enforce
     public void testAmbiguousNonOverridingDefaultMethodLookup() throws Exception {
-        TypeDescription singleDefaultMethodAmbiguousInheritanceClass = new TypeDescription.ForLoadedType(SingleDefaultMethodAmbiguousInheritanceClass.class);
-        TypeDescription singleDefaultMethodNonOverridingInterface = new TypeDescription.ForLoadedType(SingleDefaultMethodNonOverridingInterface.class);
-        TypeDescription singleDefaultMethodAmbiguousInheritanceInterface = new TypeDescription.ForLoadedType(SingleDefaultMethodAmbiguousInheritanceInterface.class);
-        TypeDescription singleDefaultMethodInterface = new TypeDescription.ForLoadedType(SingleDefaultMethodInterface.class);
+        TypeDescription singleDefaultMethodAmbiguousInheritanceClass = findType(SINGLE_DEFAULT_METHOD_AMBIGUOUS_INHERITANCE_CLASS);
+        TypeDescription singleDefaultMethodNonOverridingInterface = findType(SINGLE_DEFAULT_METHOD_NON_OVERRIDING_INTERFACE);
+        TypeDescription singleDefaultMethodAmbiguousInheritanceInterface = findType(SINGLE_DEFAULT_METHOD_AMBIGUOUS_INHERITANCE_INTERFACE);
+        TypeDescription singleDefaultMethodInterface = findType(SINGLE_DEFAULT_METHOD_INTERFACE);
         MethodLookupEngine.Finding finding = methodLookupEngine.process(singleDefaultMethodAmbiguousInheritanceClass);
         assertThat(finding.getLookedUpType(), is(singleDefaultMethodAmbiguousInheritanceClass));
         MethodDescription interfaceMethod = singleDefaultMethodInterface.getDeclaredMethods().getOnly();
@@ -279,11 +314,12 @@ public class MethodLookupEngineDefaultTest {
     }
 
     @Test
+    @Java8Rule.Enforce
     public void testAmbiguousAbstractOverridingDefaultMethodLookup() throws Exception {
-        TypeDescription singleDefaultMethodAmbiguousAbstractOverridingClass = new TypeDescription.ForLoadedType(SingleDefaultMethodAmbiguousAbstractOverridingClass.class);
-        TypeDescription singleDefaultMethodNonOverridingInterface = new TypeDescription.ForLoadedType(SingleDefaultMethodNonOverridingInterface.class);
-        TypeDescription singleDefaultMethodAbstractOverridingInterface = new TypeDescription.ForLoadedType(SingleDefaultMethodAbstractOverridingInterface.class);
-        TypeDescription singleDefaultMethodInterface = new TypeDescription.ForLoadedType(SingleDefaultMethodInterface.class);
+        TypeDescription singleDefaultMethodAmbiguousAbstractOverridingClass = findType(SINGLE_DEFAULT_METHOD_AMBIGUOUS_ABSTRACT_OVERRIDING_CLASS);
+        TypeDescription singleDefaultMethodNonOverridingInterface = findType(SINGLE_DEFAULT_METHOD_NON_OVERRIDING_INTERFACE);
+        TypeDescription singleDefaultMethodAbstractOverridingInterface = findType(SINGLE_DEFAULT_METHOD_ABSTRACT_OVERRIDING_INTERFACE);
+        TypeDescription singleDefaultMethodInterface = findType(SINGLE_DEFAULT_METHOD_INTERFACE);
         MethodLookupEngine.Finding finding = methodLookupEngine.process(singleDefaultMethodAmbiguousAbstractOverridingClass);
         assertThat(finding.getLookedUpType(), is(singleDefaultMethodAmbiguousAbstractOverridingClass));
         MethodDescription interfaceMethod = singleDefaultMethodInterface.getDeclaredMethods().getOnly();
@@ -294,11 +330,12 @@ public class MethodLookupEngineDefaultTest {
     }
 
     @Test
+    @Java8Rule.Enforce
     public void testAmbiguousManifestOverridingDefaultMethodLookup() throws Exception {
-        TypeDescription singleDefaultMethodAmbiguousManifestOverridingClass = new TypeDescription.ForLoadedType(SingleDefaultMethodAmbiguousManifestOverridingClass.class);
-        TypeDescription singleDefaultMethodNonOverridingInterface = new TypeDescription.ForLoadedType(SingleDefaultMethodNonOverridingInterface.class);
-        TypeDescription singleDefaultMethodManifestOverridingInterface = new TypeDescription.ForLoadedType(SingleDefaultMethodManifestOverridingInterface.class);
-        TypeDescription singleDefaultMethodInterface = new TypeDescription.ForLoadedType(SingleDefaultMethodInterface.class);
+        TypeDescription singleDefaultMethodAmbiguousManifestOverridingClass = findType(SINGLE_DEFAULT_METHOD_AMBIGUOUS_MANIFEST_OVERRIDING_CLASS);
+        TypeDescription singleDefaultMethodNonOverridingInterface = findType(SINGLE_DEFAULT_METHOD_NON_OVERRIDING_INTERFACE);
+        TypeDescription singleDefaultMethodManifestOverridingInterface = findType(SINGLE_DEFAULT_METHOD_MANIFEST_OVERRIDING_INTERFACE);
+        TypeDescription singleDefaultMethodInterface = findType(SINGLE_DEFAULT_METHOD_INTERFACE);
         MethodLookupEngine.Finding finding = methodLookupEngine.process(singleDefaultMethodAmbiguousManifestOverridingClass);
         assertThat(finding.getLookedUpType(), is(singleDefaultMethodAmbiguousManifestOverridingClass));
         MethodDescription interfaceMethod = singleDefaultMethodInterface.getDeclaredMethods().getOnly();
@@ -311,6 +348,7 @@ public class MethodLookupEngineDefaultTest {
     }
 
     @Test
+    @Java8Rule.Enforce
     public void testHashCodeEquals() throws Exception {
         assertThat(methodLookupEngine.hashCode(),
                 is(new MethodLookupEngine.Default(MethodLookupEngine.Default.DefaultMethodLookup.ENABLED).hashCode()));

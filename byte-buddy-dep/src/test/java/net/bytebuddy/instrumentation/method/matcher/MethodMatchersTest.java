@@ -1,7 +1,7 @@
 package net.bytebuddy.instrumentation.method.matcher;
 
 import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.utility.PackagePrivateMethod;
+import net.bytebuddy.test.packaging.PackagePrivateMethod;
 import org.junit.Before;
 import org.junit.Test;
 

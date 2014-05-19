@@ -1,6 +1,6 @@
 package net.bytebuddy.instrumentation;
 
-import net.bytebuddy.utility.PackagePrivateMethod;
+import net.bytebuddy.test.packaging.PackagePrivateMethod;
 import org.junit.Test;
 
 public class MethodDelegationExceptionTest extends AbstractInstrumentationTest {

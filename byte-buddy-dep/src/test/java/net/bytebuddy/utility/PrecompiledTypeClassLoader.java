@@ -2,32 +2,20 @@ package net.bytebuddy.utility;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
 
 public class PrecompiledTypeClassLoader extends ClassLoader {
 
     private static final int BUFFER_SIZE = 2 << 12;
 
-    private static final String SUFFIX = ".class.raw";
+    private static final String SUFFIX = ".class";
 
-    private final Map<String, URL> precompiledType;
-
-    public PrecompiledTypeClassLoader(ClassLoader parent, String... types) {
+    public PrecompiledTypeClassLoader(ClassLoader parent) {
         super(parent);
-        this.precompiledType = new HashMap<String, URL>(types.length);
-        for (String type : types) {
-            URL resource = parent.getResource(type + SUFFIX);
-            if (resource == null) {
-                throw new IllegalArgumentException("Cannot locate " + type);
-            }
-            precompiledType.put(type, resource);
-        }
     }
 
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
-        URL resource = precompiledType.remove(name);
+        URL resource = getSystemResource(name.replace('.', '/') + SUFFIX);
         if (resource != null) {
             byte[] binaryRepresentation = new byte[BUFFER_SIZE];
             int readLength;

@@ -1,7 +1,7 @@
 package net.bytebuddy.instrumentation.type;
 
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
-import net.bytebuddy.utility.PackagePrivateType;
+import net.bytebuddy.test.packaging.PackagePrivateType;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.asm.Type;
