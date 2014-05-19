@@ -157,7 +157,7 @@ public class MethodCallProxy implements AuxiliaryType {
             methodDescriptions.addAll(typeDescription.getDeclaredMethods());
             return new Finding.Default(typeDescription,
                     new MethodList.Explicit(methodDescriptions),
-                    Collections.<MethodDescription, TypeDescription>emptyMap());
+                    Collections.<TypeDescription, Set<MethodDescription>>emptyMap());
         }
 
         @Override

@@ -47,7 +47,20 @@ public interface AuxiliaryType {
      */
     static interface MethodAccessorFactory {
 
+        /**
+         * Requests a new accessor method for the requested method. If such a method cannot be created, an exception
+         * will be thrown.
+         *
+         * @param targetMethod The target method for which an accessor method is required.
+         * @return A new accessor method.
+         */
+        MethodDescription requireAccessorMethodFor(MethodDescription targetMethod, LookupMode lookupMode);
+
         static interface LookupMode {
+
+            MethodDescription resolve(MethodDescription targetMethod,
+                                      MethodLookupEngine.Finding finding,
+                                      Map<String, MethodDescription> reachableMethods);
 
             static enum Default implements LookupMode {
 
@@ -74,19 +87,6 @@ public interface AuxiliaryType {
                     }
                 }
             }
-
-            MethodDescription resolve(MethodDescription targetMethod,
-                                      MethodLookupEngine.Finding finding,
-                                      Map<String, MethodDescription> reachableMethods);
         }
-
-        /**
-         * Requests a new accessor method for the requested method. If such a method cannot be created, an exception
-         * will be thrown.
-         *
-         * @param targetMethod The target method for which an accessor method is required.
-         * @return A new accessor method.
-         */
-        MethodDescription requireAccessorMethodFor(MethodDescription targetMethod, LookupMode lookupMode);
     }
 }

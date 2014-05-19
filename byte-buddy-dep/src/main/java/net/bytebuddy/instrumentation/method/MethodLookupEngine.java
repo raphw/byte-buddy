@@ -58,15 +58,19 @@ public interface MethodLookupEngine {
 
         TypeDescription getLookedUpType();
 
+        MethodList getInvokableMethods();
+
+        Map<TypeDescription, Set<MethodDescription>> getInvokableDefaultMethods();
+
         static class Default implements Finding {
 
             private final TypeDescription lookedUpType;
             private final MethodList invokableMethods;
-            private final Map<MethodDescription, TypeDescription> invokableDefaultMethods;
+            private final Map<TypeDescription, Set<MethodDescription>> invokableDefaultMethods;
 
             public Default(TypeDescription lookedUpType,
                            MethodList invokableMethods,
-                           Map<MethodDescription, TypeDescription> invokableDefaultMethods) {
+                           Map<TypeDescription, Set<MethodDescription>> invokableDefaultMethods) {
                 this.lookedUpType = lookedUpType;
                 this.invokableMethods = invokableMethods;
                 this.invokableDefaultMethods = invokableDefaultMethods;
@@ -83,7 +87,7 @@ public interface MethodLookupEngine {
             }
 
             @Override
-            public Map<MethodDescription, TypeDescription> getInvokableDefaultMethods() {
+            public Map<TypeDescription, Set<MethodDescription>> getInvokableDefaultMethods() {
                 return invokableDefaultMethods;
             }
 
@@ -109,15 +113,11 @@ public interface MethodLookupEngine {
             public String toString() {
                 return "MethodLookupEngine.Finding.Default{" +
                         "lookedUpType=" + lookedUpType +
-                        ", invokableMethods=" + invokableMethods +
+                        ", defaultMethods=" + invokableMethods +
                         ", invokableDefaultMethods=" + invokableDefaultMethods +
                         '}';
             }
         }
-
-        MethodList getInvokableMethods();
-
-        Map<MethodDescription, TypeDescription> getInvokableDefaultMethods();
     }
 
     /**
@@ -343,30 +343,6 @@ public interface MethodLookupEngine {
      */
     static class Default extends AbstractCachingBase {
 
-        public static enum DefaultMethodLookup {
-            ENABLED {
-                @Override
-                protected void apply(MethodBucket methodBucket,
-                                     Collection<TypeDescription> interfaceTypes,
-                                     Collection<TypeDescription> defaultMethodRelevantInterfaceTypes) {
-                    methodBucket.pushInterfacesAndExtractDefaultMethods(defaultMethodRelevantInterfaceTypes);
-                    interfaceTypes.removeAll(defaultMethodRelevantInterfaceTypes);
-                }
-            },
-            DISABLED {
-                @Override
-                protected void apply(MethodBucket methodBucket,
-                                     Collection<TypeDescription> interfaceTypes,
-                                     Collection<TypeDescription> defaultMethodRelevantInterfaceTypes) {
-                    interfaceTypes.addAll(defaultMethodRelevantInterfaceTypes);
-                }
-            };
-
-            protected abstract void apply(MethodBucket methodBucket,
-                                          Collection<TypeDescription> interfaceTypes,
-                                          Collection<TypeDescription> defaultMethodRelevantInterfaceTypes);
-        }
-
         private final DefaultMethodLookup defaultMethodLookup;
 
         public Default(DefaultMethodLookup defaultMethodLookup) {
@@ -382,9 +358,38 @@ public interface MethodLookupEngine {
                 methodBucket.pushClass(typeDescription);
                 interfaces.addAll(typeDescription.getInterfaces());
             }
-            defaultMethodLookup.apply(methodBucket, interfaces, defaultMethodRelevantInterfaces);
+            Map<TypeDescription, Set<MethodDescription>> defaultMethods = defaultMethodLookup.apply(methodBucket,
+                    interfaces,
+                    defaultMethodRelevantInterfaces);
             methodBucket.pushInterfaces(interfaces);
-            return methodBucket.toFinding();
+            return new Finding.Default(methodBucket.getMostSpecificType(),
+                    methodBucket.extractInvokableMethods(),
+                    defaultMethods);
+        }
+
+        public static enum DefaultMethodLookup {
+            ENABLED {
+                @Override
+                public Map<TypeDescription, Set<MethodDescription>> apply(MethodBucket methodBucket,
+                                                                          Collection<TypeDescription> interfaces,
+                                                                          Collection<TypeDescription> defaultMethodRelevantInterfaces) {
+                    interfaces.removeAll(defaultMethodRelevantInterfaces);
+                    return Collections.unmodifiableMap(methodBucket.pushInterfacesAndExtractDefaultMethods(defaultMethodRelevantInterfaces));
+                }
+            },
+            DISABLED {
+                @Override
+                public Map<TypeDescription, Set<MethodDescription>> apply(MethodBucket methodBucket,
+                                                                          Collection<TypeDescription> interfaces,
+                                                                          Collection<TypeDescription> defaultMethodRelevantInterfaces) {
+                    interfaces.addAll(defaultMethodRelevantInterfaces);
+                    return Collections.emptyMap();
+                }
+            };
+
+            public abstract Map<TypeDescription, Set<MethodDescription>> apply(MethodBucket methodBucket,
+                                                                               Collection<TypeDescription> interfaces,
+                                                                               Collection<TypeDescription> defaultMethodRelevantInterfaces);
         }
 
         /**
@@ -428,77 +433,19 @@ public interface MethodLookupEngine {
          */
         private static class MethodBucket {
 
-            private static interface DefaultMethodLookup {
-
-                boolean isEnabled(TypeDescription typeDescription);
-
-                TypeDescription locateDispatcherType(MethodDescription methodDescription,
-                                                     TypeDescription typeDescription);
-
-                static enum Disabled implements MethodBucket.DefaultMethodLookup {
-
-                    INSTANCE;
-
-                    @Override
-                    public boolean isEnabled(TypeDescription typeDescription) {
-                        return false;
-                    }
-
-                    @Override
-                    public TypeDescription locateDispatcherType(MethodDescription methodDescription, TypeDescription typeDescription) {
-                        throw new IllegalStateException();
-                    }
-                }
-
-                static class Enabled implements MethodBucket.DefaultMethodLookup {
-
-                    private final Set<TypeDescription> hostingTypeInterfaces;
-
-                    public Enabled(Collection<? extends TypeDescription> hostingTypeInterfaces) {
-                        this.hostingTypeInterfaces = new HashSet<TypeDescription>(hostingTypeInterfaces);
-                    }
-
-                    @Override
-                    public boolean isEnabled(TypeDescription typeDescription) {
-                        return true;
-                    }
-
-                    @Override
-                    public TypeDescription locateDispatcherType(MethodDescription methodDescription,
-                                                                TypeDescription typeDescription) {
-                        return hostingTypeInterfaces.contains(typeDescription)
-                                ? methodDescription.getDeclaringType()
-                                : typeDescription;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "MethodBucket.DefaultMethodLookup.Enabled{" +
-                                "hostingTypeInterfaces=" + hostingTypeInterfaces +
-                                '}';
-                    }
-                }
-            }
-
             /**
              * A map of class methods by their unique signature, represented as strings.
              */
             private final Map<String, MethodDescription> classMethods;
-
             /**
              * A map of interface methods by their unique signature, represented as strings.
              */
             private final Map<String, MethodDescription> interfaceMethods;
-
             /**
              * A marker pool of types that were already pushed into this bucket.
              */
             private final Set<TypeDescription> processedTypes;
-
-            private final Map<MethodDescription, TypeDescription> defaultInvokableMethods;
-
             private final TypeDescription mostSpecificType;
-
             private final MethodMatcher virtualMethodMatcher;
 
             /**
@@ -509,7 +456,6 @@ public interface MethodLookupEngine {
                 classMethods = new HashMap<String, MethodDescription>();
                 interfaceMethods = new HashMap<String, MethodDescription>();
                 processedTypes = new HashSet<TypeDescription>();
-                defaultInvokableMethods = new HashMap<MethodDescription, TypeDescription>();
                 virtualMethodMatcher = isMethod().and(not(isPrivate().or(isStatic()).or(isPackagePrivate().and(not(isVisibleTo(mostSpecificType))))));
                 pushClass(mostSpecificType, any());
             }
@@ -547,8 +493,10 @@ public interface MethodLookupEngine {
                 pushInterfaces(typeDescriptions, DefaultMethodLookup.Disabled.INSTANCE);
             }
 
-            private void pushInterfacesAndExtractDefaultMethods(Collection<? extends TypeDescription> typeDescriptions) {
-                pushInterfaces(typeDescriptions, new DefaultMethodLookup.Enabled(typeDescriptions));
+            private Map<TypeDescription, Set<MethodDescription>> pushInterfacesAndExtractDefaultMethods(Collection<? extends TypeDescription> typeDescriptions) {
+                DefaultMethodLookup.Enabled defaultMethodLookup = new DefaultMethodLookup.Enabled(typeDescriptions);
+                pushInterfaces(typeDescriptions, defaultMethodLookup);
+                return defaultMethodLookup.materialize();
             }
 
             private void pushInterfaces(Collection<? extends TypeDescription> typeDescriptions,
@@ -595,41 +543,43 @@ public interface MethodLookupEngine {
              * again since it was already marked as processed by adding it to
              * {@link net.bytebuddy.instrumentation.method.MethodLookupEngine.Default.MethodBucket#processedTypes}.
              *
-             * @param typeDescription  The interface type to process.
-             * @param processedMethods A set of unique method signatures that were already processed.
+             * @param typeDescription             The interface type to process.
+             * @param processedMethodsInHierarchy A set of unique method signatures that were already processed.
              */
             private void pushInterface(TypeDescription typeDescription,
-                                       Set<String> processedMethods,
+                                       Set<String> processedMethodsInHierarchy,
                                        DefaultMethodLookup defaultMethodLookup) {
-                Set<String> locallyProcessedMethods = new HashSet<String>(processedMethods);
+                Set<String> locallyProcessedMethods = new HashSet<String>(processedMethodsInHierarchy);
                 if (processedTypes.add(typeDescription)) {
+                    defaultMethodLookup.begin(typeDescription);
                     for (MethodDescription methodDescription : typeDescription.getDeclaredMethods().filter(virtualMethodMatcher)) {
                         String uniqueSignature = methodDescription.getUniqueSignature();
-                        if (!processedMethods.contains(uniqueSignature)) {
-                            locallyProcessedMethods.add(uniqueSignature);
+                        if (locallyProcessedMethods.add(uniqueSignature)) {
                             MethodDescription conflictingMethod = interfaceMethods.get(uniqueSignature);
+                            MethodDescription resolvedMethod = methodDescription;
                             if (conflictingMethod != null && !conflictingMethod.getDeclaringType().isAssignableFrom(typeDescription)) {
-                                methodDescription = ConflictingInterfaceMethod.of(mostSpecificType, conflictingMethod, methodDescription);
+                                resolvedMethod = ConflictingInterfaceMethod.of(mostSpecificType, conflictingMethod, methodDescription);
                             }
-                            interfaceMethods.put(uniqueSignature, methodDescription);
+                            interfaceMethods.put(uniqueSignature, resolvedMethod);
                         }
-                        if (defaultMethodLookup.isEnabled(typeDescription) && methodDescription.isDefaultMethod()) {
-                            defaultInvokableMethods.put(methodDescription, defaultMethodLookup.locateDispatcherType(methodDescription, typeDescription));
-                        }
+                        defaultMethodLookup.register(methodDescription);
                     }
                     for (TypeDescription interfaceType : typeDescription.getInterfaces()) {
                         pushInterface(interfaceType, locallyProcessedMethods, defaultMethodLookup);
                     }
+                    defaultMethodLookup.complete(typeDescription);
                 }
             }
 
-            private Finding toFinding() {
+            private MethodList extractInvokableMethods() {
                 List<MethodDescription> invokableMethods = new ArrayList<MethodDescription>(classMethods.size() + interfaceMethods.size());
                 invokableMethods.addAll(classMethods.values());
                 invokableMethods.addAll(interfaceMethods.values());
-                return new Finding.Default(mostSpecificType,
-                        new MethodList.Explicit(invokableMethods),
-                        Collections.unmodifiableMap(defaultInvokableMethods));
+                return new MethodList.Explicit(invokableMethods);
+            }
+
+            private TypeDescription getMostSpecificType() {
+                return mostSpecificType;
             }
 
             @Override
@@ -640,6 +590,85 @@ public interface MethodLookupEngine {
                         ", interfaceMethods=" + interfaceMethods +
                         ", processedTypes=" + processedTypes +
                         '}';
+            }
+
+            private static interface DefaultMethodLookup {
+
+                void begin(TypeDescription typeDescription);
+
+                void register(MethodDescription methodDescription);
+
+                void complete(TypeDescription typeDescription);
+
+                static enum Disabled implements MethodBucket.DefaultMethodLookup {
+
+                    INSTANCE;
+
+                    @Override
+                    public void begin(TypeDescription typeDescription) {
+
+                    }
+
+                    @Override
+                    public void register(MethodDescription methodDescription) {
+
+                    }
+
+                    @Override
+                    public void complete(TypeDescription typeDescription) {
+
+                    }
+                }
+
+                static class Enabled implements MethodBucket.DefaultMethodLookup {
+
+                    private final Collection<? extends TypeDescription> declaredInterfaceTypes;
+                    private final Map<TypeDescription, Set<MethodDescription>> defaultMethods;
+                    private final Map<TypeDescription, Set<String>> methodDeclarations;
+
+                    public Enabled(Collection<? extends TypeDescription> declaredInterfaceTypes) {
+                        this.declaredInterfaceTypes = declaredInterfaceTypes;
+                        defaultMethods = new HashMap<TypeDescription, Set<MethodDescription>>();
+                        methodDeclarations = new HashMap<TypeDescription, Set<String>>();
+                    }
+
+                    @Override
+                    public void begin(TypeDescription typeDescription) {
+                        defaultMethods.put(typeDescription, new HashSet<MethodDescription>());
+                        methodDeclarations.put(typeDescription, new HashSet<String>());
+                    }
+
+                    @Override
+                    public void register(MethodDescription methodDescription) {
+                        methodDeclarations.get(methodDescription.getDeclaringType()).add(methodDescription.getUniqueSignature());
+                        if (methodDescription.isDefaultMethod()) {
+                            defaultMethods.get(methodDescription.getDeclaringType()).add(methodDescription);
+                        }
+                    }
+
+                    @Override
+                    public void complete(TypeDescription typeDescription) {
+                        Set<String> methodDeclarations = this.methodDeclarations.get(typeDescription);
+                        Set<MethodDescription> defaultMethods = this.defaultMethods.get(typeDescription);
+                        for (TypeDescription interfaceType : typeDescription.getInterfaces()) {
+                            for (MethodDescription methodDescription : this.defaultMethods.get(interfaceType)) {
+                                if (!methodDeclarations.contains(methodDescription.getUniqueSignature())) {
+                                    defaultMethods.add(methodDescription);
+                                }
+                            }
+                        }
+                    }
+
+                    public Map<TypeDescription, Set<MethodDescription>> materialize() {
+                        Iterator<TypeDescription> iterator = defaultMethods.keySet().iterator();
+                        while (iterator.hasNext()) {
+                            if (!declaredInterfaceTypes.contains(iterator.next())) {
+                                iterator.remove();
+                            }
+                        }
+                        return Collections.unmodifiableMap(defaultMethods);
+                    }
+                }
             }
         }
     }
