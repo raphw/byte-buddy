@@ -1852,7 +1852,7 @@ enum SumInstrumentation implements Instrumentation {
   }
 
   @Override
-  public ByteCodeAppender appender(TypeDescription instrumentedType) {
+  public ByteCodeAppender appender(Target instrumentationTarget) {
     return SumMethod.INSTANCE;
   }
 }
@@ -1954,11 +1954,11 @@ enum ToStringAssigner implements Assigner {
                                   TypeDescription targetType,
                                   boolean considerRuntimeType) {
     if (!sourceType.isPrimitive() && targetType.represents(String.class)) {
-      MethodDescription toStringMethod = sourceType
-        .getReachableMethods()
-        .filter(named("toString").and(takesArguments(0)).and(returns(String.class)))
+      MethodDescription toStringMethod = new TypeDescription.ForLoadedType(Object.class)
+        .getDeclaredMethods()
+        .filter(named("toString"))
         .getOnly();
-      return MethodInvocation.invoke(toStringMethod);
+      return MethodInvocation.invoke(toStringMethod).virtual(sourceType);
     } else {
       return IllegalStackManipulation.INSTANCE;
     }
@@ -1970,9 +1970,9 @@ enum ToStringAssigner implements Assigner {
     The above implementation first validates that the input value is not of a primitive type and that the target
     variable type is of a <code>String</code> type. If these conditions are not fulfilled, the <code>Assigner</code>
     emits an <code>IllegalStackManipulation</code> to render the attempted assignment invalid. Otherwise, we identify
-    the source type's <code>toString</code> method by its unique signature. We then use Byte Buddy's
-    <code>MethodInvocation</code> in order to create a <code>StackManipulation</code> that calls this method on the
-    source value. We can now integrate this custom <code>Assigner</code> with for example Byte Buddy's
+    the <code>Object</code> type's <code>toString</code> method by its name. We then use Byte Buddy's
+    <code>MethodInvocation</code> to create a <code>StackManipulation</code> that calls this method virtually on the
+    source type. Finally, we can integrate this custom <code>Assigner</code> with for example Byte Buddy's
     <code>FixedValue</code> instrumentation as follows:
 </p>
 
