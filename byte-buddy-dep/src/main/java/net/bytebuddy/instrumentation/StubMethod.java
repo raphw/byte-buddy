@@ -6,7 +6,6 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.constant.DefaultValue;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
-import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 
 /**
@@ -33,7 +32,7 @@ public enum StubMethod implements Instrumentation, ByteCodeAppender {
     }
 
     @Override
-    public ByteCodeAppender appender(TypeDescription instrumentedType) {
+    public ByteCodeAppender appender(Target instrumentationTarget) {
         return this;
     }
 

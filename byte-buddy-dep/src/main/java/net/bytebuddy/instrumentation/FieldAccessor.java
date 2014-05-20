@@ -461,8 +461,8 @@ public abstract class FieldAccessor implements Instrumentation {
         }
 
         @Override
-        public ByteCodeAppender appender(TypeDescription instrumentedType) {
-            return new Appender(fieldLocatorFactory.make(instrumentedType));
+        public ByteCodeAppender appender(Target instrumentationTarget) {
+            return new Appender(fieldLocatorFactory.make(instrumentationTarget.getTypeDescription()));
         }
 
         @Override
@@ -571,8 +571,8 @@ public abstract class FieldAccessor implements Instrumentation {
         }
 
         @Override
-        public ByteCodeAppender appender(TypeDescription instrumentedType) {
-            return new Appender(fieldLocatorFactory.make(instrumentedType));
+        public ByteCodeAppender appender(Target instrumentationTarget) {
+            return new Appender(fieldLocatorFactory.make(instrumentationTarget.getTypeDescription()));
         }
 
         @Override

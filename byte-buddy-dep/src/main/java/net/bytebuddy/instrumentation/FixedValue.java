@@ -279,7 +279,7 @@ public abstract class FixedValue implements Instrumentation {
         }
 
         @Override
-        public ByteCodeAppender appender(TypeDescription instrumentedType) {
+        public ByteCodeAppender appender(Target instrumentationTarget) {
             return this;
         }
 
@@ -371,8 +371,8 @@ public abstract class FixedValue implements Instrumentation {
         }
 
         @Override
-        public ByteCodeAppender appender(TypeDescription instrumentedType) {
-            return new StaticFieldByteCodeAppender(instrumentedType);
+        public ByteCodeAppender appender(Target instrumentationTarget) {
+            return new StaticFieldByteCodeAppender(instrumentationTarget.getTypeDescription());
         }
 
         @Override

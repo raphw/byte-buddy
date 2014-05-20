@@ -369,10 +369,11 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         MethodLookupEngine.Finding finding = methodLookupEngineFactory.make(classFileVersion).process(instrumentedType);
         SubclassInstrumentationContextDelegate contextDelegate = new SubclassInstrumentationContextDelegate(finding,
                 bridgeMethodResolverFactory);
-        Instrumentation.Context instrumentationContext = new Instrumentation.Context.Default(classFileVersion, contextDelegate, contextDelegate);
-        MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.compile(instrumentedType, MethodRegistry.Compiled.Entry.Skip.INSTANCE);
+        MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.compile(instrumentedType,
+                contextDelegate,
+                MethodRegistry.Compiled.Entry.Skip.INSTANCE);
         instrumentedType = compiledMethodRegistry.getInstrumentedType();
-        return new TypeWriter.Builder<T>(instrumentedType, instrumentationContext, classFileVersion)
+        return new TypeWriter.Builder<T>(instrumentedType, new Instrumentation.Context.Default(classFileVersion, contextDelegate, contextDelegate), classFileVersion)
                 .build(classVisitorWrapperChain)
                 .attributeType(attributeAppender)
                 .fields()

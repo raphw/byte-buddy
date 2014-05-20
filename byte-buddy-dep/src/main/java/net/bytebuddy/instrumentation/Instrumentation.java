@@ -32,10 +32,10 @@ public interface Instrumentation {
 
     /**
      * During the preparation phase of an instrumentation, implementations are eligible to adding fields or methods
-     * to the currently instrumented type. All methods that are added by this instrumentation are required to be implemented
-     * by the {@link net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender} that is emitted
+     * to the currently instrumented type. All methods that are added by this instrumentation are required to be
+     * implemented by the {@link net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender} that is emitted
      * on the call to
-     * {@link net.bytebuddy.instrumentation.Instrumentation#appender(net.bytebuddy.instrumentation.type.TypeDescription)}
+     * {@link net.bytebuddy.instrumentation.Instrumentation#appender(net.bytebuddy.instrumentation.Instrumentation.Target)}
      * call. On this method call, type initializers can also be added to the instrumented type.
      *
      * @param instrumentedType The instrumented type that is the basis of the ongoing instrumentation.
@@ -46,12 +46,12 @@ public interface Instrumentation {
     /**
      * Creates a byte code appender that determines the implementation of the instrumented type's methods.
      *
-     * @param instrumentedType The instrumented type that is to be created.
+     * @param instrumentationTarget The target of the current instrumentation.
      * @return A byte code appender for implementing methods delegated to this instrumentation. This byte code appender
      * is also responsible for handling methods that were added by this instrumentation on the call to
      * {@link net.bytebuddy.instrumentation.Instrumentation#prepare(net.bytebuddy.instrumentation.type.InstrumentedType)}.
      */
-    ByteCodeAppender appender(TypeDescription instrumentedType);
+    ByteCodeAppender appender(Target instrumentationTarget);
 
     /**
      * An instrumentation for an abstract method that does not append any code and will throw an exception if it is
@@ -70,7 +70,7 @@ public interface Instrumentation {
         }
 
         @Override
-        public ByteCodeAppender appender(TypeDescription instrumentedType) {
+        public ByteCodeAppender appender(Target instrumentationTarget) {
             return this;
         }
 
@@ -86,7 +86,81 @@ public interface Instrumentation {
     }
 
     /**
-     * The context for an instrumentation application.
+     * The target of an instrumentation. Instrumentation targets must be immutable and can be queried without altering
+     * the instrumentation result. An instrumentation target provides information on the type that is to be created
+     * where it is the implementation's responsibility to cache expensive computations, especially such computations
+     * that require reflective look-up.
+     */
+    static interface Target {
+
+        /**
+         * A default implementation of a {@link net.bytebuddy.instrumentation.Instrumentation.Target}.
+         */
+        static class Default implements Target {
+
+            private final TypeDescription typeDescription;
+
+            /**
+             * Creates a new default {@link net.bytebuddy.instrumentation.Instrumentation.Target}.
+             *
+             * @param typeDescription A description of the instrumented type.
+             */
+            public Default(TypeDescription typeDescription) {
+                this.typeDescription = typeDescription;
+            }
+
+            @Override
+            public TypeDescription getTypeDescription() {
+                return typeDescription;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && typeDescription.equals(((Default) other).typeDescription);
+            }
+
+            @Override
+            public int hashCode() {
+                return typeDescription.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "Instrumentation.Target.Default{" +
+                        "typeDescription=" + typeDescription +
+                        '}';
+            }
+        }
+
+        /**
+         * Returns a description of the instrumented type.
+         *
+         * @return A description of the instrumented type.
+         */
+        TypeDescription getTypeDescription();
+
+        /**
+         * A factory for creating an {@link net.bytebuddy.instrumentation.Instrumentation.Target}.
+         */
+        static interface Factory {
+
+            /**
+             * Creates an {@link net.bytebuddy.instrumentation.Instrumentation.Target} for the given instrumented
+             * type's description.
+             *
+             * @param typeDescription The type description for which the instrumentation target should be created.
+             * @return An {@link net.bytebuddy.instrumentation.Instrumentation.Target} for the given type description.
+             */
+            Target make(TypeDescription typeDescription);
+        }
+    }
+
+    /**
+     * The context for an instrumentation application. An instrumentation context represents a mutable data structure
+     * and all queries are irrevocable. Calling methods on an instrumentation context should be considered equally
+     * sensitive as calling a {@link org.objectweb.asm.MethodVisitor}. As such, an instrumentation context and a
+     * {@link org.objectweb.asm.MethodVisitor} are complementary for creating an new Java type.
      */
     static interface Context {
 
@@ -219,11 +293,11 @@ public interface Instrumentation {
         }
 
         @Override
-        public ByteCodeAppender appender(TypeDescription instrumentedType) {
+        public ByteCodeAppender appender(Target instrumentationTarget) {
             ByteCodeAppender[] byteCodeAppender = new ByteCodeAppender[instrumentation.length];
             int index = 0;
             for (Instrumentation instrumentation : this.instrumentation) {
-                byteCodeAppender[index++] = instrumentation.appender(instrumentedType);
+                byteCodeAppender[index++] = instrumentation.appender(instrumentationTarget);
             }
             return new ByteCodeAppender.Compound(byteCodeAppender);
         }

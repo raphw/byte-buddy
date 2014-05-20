@@ -66,7 +66,7 @@ public class SubclassDynamicTypeBuilderTest {
                 return (InstrumentedType) invocation.getArguments()[0];
             }
         });
-        when(instrumentation.appender(any(TypeDescription.class))).thenReturn(byteCodeAppender);
+        when(instrumentation.appender(any(Instrumentation.Target.class))).thenReturn(byteCodeAppender);
         when(byteCodeAppender.appendsCode()).thenReturn(true);
         when(byteCodeAppender.apply(any(MethodVisitor.class), any(Instrumentation.Context.class), any(MethodDescription.class)))
                 .thenAnswer(new Answer<ByteCodeAppender.Size>() {
@@ -192,7 +192,7 @@ public class SubclassDynamicTypeBuilderTest {
         assertThat(loaded.getDeclaredConstructors().length, is(1));
         assertThat(loaded.getDeclaredConstructor().newInstance(), notNullValue());
         verify(instrumentation).prepare(any(InstrumentedType.class));
-        verify(instrumentation).appender(any(TypeDescription.class));
+        verify(instrumentation).appender(any(Instrumentation.Target.class));
         verifyNoMoreInteractions(instrumentation);
         verify(byteCodeAppender).appendsCode();
         verify(byteCodeAppender).apply(any(MethodVisitor.class), any(Instrumentation.Context.class), any(MethodDescription.class));

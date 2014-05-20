@@ -8,6 +8,7 @@ import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.utility.MockitoRule;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -32,6 +33,8 @@ public class SuperMethodCallPreparationAndExceptionTest {
     @Mock
     private TypeDescription typeDescription, superType, returnType, declaringType;
     @Mock
+    private Instrumentation.Target instrumentationTarget;
+    @Mock
     private MethodVisitor methodVisitor;
     @Mock
     private Instrumentation.Context instrumentationContext;
@@ -42,6 +45,11 @@ public class SuperMethodCallPreparationAndExceptionTest {
     @Mock
     private TypeList methodParameters;
 
+    @Before
+    public void setUp() throws Exception {
+        when(instrumentationTarget.getTypeDescription()).thenReturn(typeDescription);
+    }
+
     @Test
     public void testPreparation() throws Exception {
         assertThat(SuperMethodCall.INSTANCE.prepare(instrumentedType), is(instrumentedType));
@@ -51,7 +59,7 @@ public class SuperMethodCallPreparationAndExceptionTest {
     @Test(expected = IllegalArgumentException.class)
     public void testNoSuperType() throws Exception {
         when(typeDescription.getSupertype()).thenReturn(null);
-        SuperMethodCall.INSTANCE.appender(typeDescription);
+        SuperMethodCall.INSTANCE.appender(instrumentationTarget);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -60,7 +68,7 @@ public class SuperMethodCallPreparationAndExceptionTest {
         when(methodDescription.isConstructor()).thenReturn(true);
         when(superType.getDeclaredMethods()).thenReturn(superTypeMethods);
         when(superTypeMethods.filter(any(MethodMatcher.class))).thenReturn(superTypeMethods);
-        SuperMethodCall.INSTANCE.appender(typeDescription).apply(methodVisitor, instrumentationContext, methodDescription);
+        SuperMethodCall.INSTANCE.appender(instrumentationTarget).apply(methodVisitor, instrumentationContext, methodDescription);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -73,7 +81,7 @@ public class SuperMethodCallPreparationAndExceptionTest {
         when(returnType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(superType.getDeclaredMethods()).thenReturn(superTypeMethods);
         when(superTypeMethods.filter(any(MethodMatcher.class))).thenReturn(superTypeMethods);
-        SuperMethodCall.INSTANCE.appender(typeDescription).apply(methodVisitor, instrumentationContext, methodDescription);
+        SuperMethodCall.INSTANCE.appender(instrumentationTarget).apply(methodVisitor, instrumentationContext, methodDescription);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -87,6 +95,6 @@ public class SuperMethodCallPreparationAndExceptionTest {
         when(returnType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(superType.getDeclaredMethods()).thenReturn(superTypeMethods);
         when(superTypeMethods.filter(any(MethodMatcher.class))).thenReturn(superTypeMethods);
-        SuperMethodCall.INSTANCE.appender(typeDescription).apply(methodVisitor, instrumentationContext, methodDescription);
+        SuperMethodCall.INSTANCE.appender(instrumentationTarget).apply(methodVisitor, instrumentationContext, methodDescription);
     }
 }

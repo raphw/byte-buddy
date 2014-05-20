@@ -362,7 +362,7 @@ public class ByteBuddyTest {
         }
 
         @Override
-        public ByteCodeAppender appender(TypeDescription instrumentedType) {
+        public ByteCodeAppender appender(Target instrumentationTarget) {
             return SumMethod.INSTANCE;
         }
     }

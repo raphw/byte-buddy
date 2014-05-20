@@ -159,8 +159,8 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
         }
 
         @Override
-        public ByteCodeAppender appender(TypeDescription instrumentedType) {
-            return new Appender(instrumentedType);
+        public ByteCodeAppender appender(Target instrumentationTarget) {
+            return new Appender(instrumentationTarget.getTypeDescription());
         }
 
         @Override
@@ -247,8 +247,8 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
         }
 
         @Override
-        public ByteCodeAppender appender(TypeDescription instrumentedType) {
-            return new Appender(instrumentedType);
+        public ByteCodeAppender appender(Target instrumentationTarget) {
+            return new Appender(instrumentationTarget.getTypeDescription());
         }
 
         @Override

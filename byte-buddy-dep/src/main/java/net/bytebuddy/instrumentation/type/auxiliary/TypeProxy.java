@@ -277,8 +277,8 @@ public class TypeProxy implements AuxiliaryType {
         }
 
         @Override
-        public ByteCodeAppender appender(TypeDescription instrumentedType) {
-            return new Appender(instrumentedType);
+        public ByteCodeAppender appender(Target instrumentationTarget) {
+            return new Appender(instrumentationTarget.getTypeDescription());
         }
 
         private TypeProxy getTypeProxy() {
@@ -368,8 +368,8 @@ public class TypeProxy implements AuxiliaryType {
         }
 
         @Override
-        public ByteCodeAppender appender(TypeDescription instrumentedType) {
-            return new Appender(instrumentedType);
+        public ByteCodeAppender appender(Target instrumentationTarget) {
+            return new Appender(instrumentationTarget.getTypeDescription());
         }
 
         private TypeProxy getTypeProxy() {

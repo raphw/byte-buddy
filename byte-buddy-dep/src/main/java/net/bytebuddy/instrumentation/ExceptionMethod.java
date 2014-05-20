@@ -72,7 +72,7 @@ public class ExceptionMethod implements Instrumentation, ByteCodeAppender {
     }
 
     @Override
-    public ByteCodeAppender appender(TypeDescription instrumentedType) {
+    public ByteCodeAppender appender(Target instrumentationTarget) {
         return this;
     }
 

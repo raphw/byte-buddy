@@ -130,8 +130,13 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
         return versionNumber;
     }
 
+    /**
+     * Checks if this class file version supports interface default methods. Such methods were introduced by Java 8.
+     *
+     * @return {@code true} if this class file version supports interface default methods.
+     */
     public boolean isSupportsDefaultMethods() {
-        return versionNumber > Opcodes.V1_7;
+        return versionNumber > Opcodes.V1_7 && versionNumber != Opcodes.V1_1;
     }
 
     @Override

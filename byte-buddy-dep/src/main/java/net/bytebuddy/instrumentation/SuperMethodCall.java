@@ -36,11 +36,11 @@ public enum SuperMethodCall implements Instrumentation {
     }
 
     @Override
-    public ByteCodeAppender appender(TypeDescription instrumentedType) {
-        if (instrumentedType.getSupertype() == null) {
+    public ByteCodeAppender appender(Target instrumentationTarget) {
+        if (instrumentationTarget.getTypeDescription().getSupertype() == null) {
             throw new IllegalArgumentException("The object type does not have a super type");
         }
-        return new SuperMethodCallAppender(instrumentedType.getSupertype());
+        return new SuperMethodCallAppender(instrumentationTarget.getTypeDescription().getSupertype());
     }
 
     private static class SuperMethodCallAppender implements ByteCodeAppender {

@@ -50,22 +50,20 @@ public interface MethodRegistry {
      * retrieval of a compiled entry for a known method. Additionally, a fallback entry is to be supplied which is
      * returned if a requested method is not known to the compiled method registry.
      *
-     * @param instrumentedType The instrumented type for which this field registry is to be compiled.
-     * @param fallback         The fallback field attribute appender factory that serves as a fallback for unknown methods.
+     * @param instrumentedType             The instrumented type for which this field registry is to be compiled.
+     * @param instrumentationTargetFactory A factory for creating an {@link net.bytebuddy.instrumentation.Instrumentation.Target}.
+     * @param fallback                     The fallback field attribute appender factory that serves as a fallback for unknown methods.
      * @return A compiled method registry representing the methods that were registered with this method registry.
      */
-    Compiled compile(InstrumentedType instrumentedType, TypeWriter.MethodPool.Entry fallback);
+    Compiled compile(InstrumentedType instrumentedType,
+                     Instrumentation.Target.Factory instrumentationTargetFactory,
+                     TypeWriter.MethodPool.Entry fallback);
 
     /**
      * Represents a compiled {@link net.bytebuddy.dynamic.scaffold.MethodRegistry}.
      */
     static interface Compiled extends TypeWriter.MethodPool {
 
-        /**
-         * Returns the instrumented type that is the result of the compilation of this method registry.
-         *
-         * @return The instrumented type that is the result of this registry's compilation.
-         */
         InstrumentedType getInstrumentedType();
     }
 
@@ -157,10 +155,14 @@ public interface MethodRegistry {
         }
 
         @Override
-        public MethodRegistry.Compiled compile(InstrumentedType instrumentedType, MethodRegistry.Compiled.Entry fallback) {
+        public MethodRegistry.Compiled compile(InstrumentedType instrumentedType,
+                                               Instrumentation.Target.Factory instrumentationTargetFactory,
+                                               MethodRegistry.Compiled.Entry fallback) {
             List<Entry> additionalEntries = new LinkedList<Entry>();
             instrumentedType = prepareInstrumentedType(instrumentedType, additionalEntries);
-            return new Compiled(instrumentedType, compileEntries(additionalEntries, instrumentedType), fallback);
+            return new Compiled(instrumentedType,
+                    compileEntries(additionalEntries, instrumentationTargetFactory.make(instrumentedType)),
+                    fallback);
         }
 
         private InstrumentedType prepareInstrumentedType(InstrumentedType instrumentedType, List<Entry> additionalEntries) {
@@ -184,25 +186,25 @@ public interface MethodRegistry {
         }
 
         private List<Compiled.Entry> compileEntries(List<Entry> additionalEntries,
-                                                    TypeDescription instrumentedType) {
+                                                    Instrumentation.Target instrumentationTarget) {
             Map<Instrumentation, ByteCodeAppender> byteCodeAppenders = new HashMap<Instrumentation, ByteCodeAppender>(entries.size());
             List<Compiled.Entry> compiledEntries = new LinkedList<Compiled.Entry>();
             for (Entry entry : entries) {
                 // Make sure that the instrumentation's byte code appender was not yet created.
                 if (!byteCodeAppenders.containsKey(entry.instrumentation)) {
-                    byteCodeAppenders.put(entry.instrumentation, entry.instrumentation.appender(instrumentedType));
+                    byteCodeAppenders.put(entry.instrumentation, entry.instrumentation.appender(instrumentationTarget));
                 }
-                compiledEntries.add(new Compiled.Entry(entry.latentMethodMatcher.manifest(instrumentedType),
+                compiledEntries.add(new Compiled.Entry(entry.latentMethodMatcher.manifest(instrumentationTarget.getTypeDescription()),
                         byteCodeAppenders.get(entry.instrumentation),
-                        entry.attributeAppenderFactory.make(instrumentedType)));
+                        entry.attributeAppenderFactory.make(instrumentationTarget.getTypeDescription())));
             }
             // All additional entries must belong to instrumentations that were already registered. The method
             // matchers must be added at the beginning of the compiled entry queue.
             for (Entry entry : additionalEntries) {
                 compiledEntries.add(AT_BEGINNING,
-                        new Compiled.Entry(entry.latentMethodMatcher.manifest(instrumentedType),
+                        new Compiled.Entry(entry.latentMethodMatcher.manifest(instrumentationTarget.getTypeDescription()),
                                 byteCodeAppenders.get(entry.instrumentation),
-                                entry.attributeAppenderFactory.make(instrumentedType))
+                                entry.attributeAppenderFactory.make(instrumentationTarget.getTypeDescription()))
                 );
             }
             return new ArrayList<Compiled.Entry>(compiledEntries);

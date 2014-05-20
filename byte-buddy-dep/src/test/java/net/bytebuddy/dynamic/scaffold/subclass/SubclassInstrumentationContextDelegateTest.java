@@ -48,6 +48,8 @@ public class SubclassInstrumentationContextDelegateTest {
     @Mock
     private InstrumentedType instrumentedType;
     @Mock
+    private Instrumentation.Target instrumentationTarget;
+    @Mock
     private MethodDescription firstMethod, secondMethod;
     @Mock
     private TypeDescription firstMethodReturnType, secondMethodReturnType, superType;
@@ -80,6 +82,7 @@ public class SubclassInstrumentationContextDelegateTest {
                 .getDeclaredMethods().filter(named(TO_STRING)).getOnly();
         when(superType.isAssignableFrom(superType)).thenReturn(true);
         when(secondMethodReturnType.getStackSize()).thenReturn(StackSize.ZERO);
+        when(instrumentationTarget.getTypeDescription()).thenReturn(instrumentedType);
         when(instrumentedType.detach()).thenReturn(instrumentedType);
         when(methodLookupEngineFinding.getInvokableMethods()).thenReturn(methodList);
         when(methodLookupEngineFinding.getLookedUpType()).thenReturn(instrumentedType);
@@ -148,7 +151,7 @@ public class SubclassInstrumentationContextDelegateTest {
         TypeWriter.MethodPool.Entry entry = mock(TypeWriter.MethodPool.Entry.class);
         when(entry.isDefineMethod()).thenReturn(true);
         when(entry.getAttributeAppender()).thenReturn(MethodAttributeAppender.NoOp.INSTANCE);
-        ByteCodeAppender superMethodCallAppender = SuperMethodCall.INSTANCE.appender(instrumentedType);
+        ByteCodeAppender superMethodCallAppender = SuperMethodCall.INSTANCE.appender(instrumentationTarget);
         when(entry.getByteCodeAppender()).thenReturn(superMethodCallAppender);
         when(constructorPool.target(any(MethodDescription.class))).thenReturn(entry);
         Class<?> loaded = typeWriter

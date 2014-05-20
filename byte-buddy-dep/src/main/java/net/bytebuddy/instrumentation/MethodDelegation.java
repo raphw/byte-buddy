@@ -448,19 +448,19 @@ public class MethodDelegation implements Instrumentation {
     }
 
     @Override
-    public ByteCodeAppender appender(TypeDescription instrumentedType) {
-        MethodList methodList = this.methodList.filter(isVisibleTo(instrumentedType));
+    public ByteCodeAppender appender(Target instrumentationTarget) {
+        MethodList methodList = this.methodList.filter(isVisibleTo(instrumentationTarget.getTypeDescription()));
         if (methodList.size() == 0) {
-            throw new IllegalStateException("No bindable method is visible to " + instrumentedType);
+            throw new IllegalStateException("No bindable method is visible to " + instrumentationTarget.getTypeDescription());
         }
-        return new MethodDelegationByteCodeAppender(instrumentationDelegate.getPreparingStackAssignment(instrumentedType),
-                instrumentedType,
+        return new MethodDelegationByteCodeAppender(instrumentationDelegate.getPreparingStackAssignment(instrumentationTarget.getTypeDescription()),
+                instrumentationTarget.getTypeDescription(),
                 methodList,
                 new MethodDelegationBinder.Processor(new TargetMethodAnnotationDrivenBinder(
                         parameterBinders,
                         defaultsProvider,
                         assigner,
-                        instrumentationDelegate.getMethodInvoker(instrumentedType)
+                        instrumentationDelegate.getMethodInvoker(instrumentationTarget.getTypeDescription())
                 ), ambiguityResolver)
         );
     }

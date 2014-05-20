@@ -18,6 +18,8 @@ public class InstrumentationForAbstractMethodTest {
     @Mock
     private InstrumentedType instrumentedType;
     @Mock
+    private Instrumentation.Target instrumentationTarget;
+    @Mock
     private Instrumentation.Context instrumentationContext;
     @Mock
     private MethodVisitor methodVisitor;
@@ -26,12 +28,12 @@ public class InstrumentationForAbstractMethodTest {
 
     @Test
     public void testAppendsCode() throws Exception {
-        assertThat(Instrumentation.ForAbstractMethod.INSTANCE.appender(instrumentedType).appendsCode(), is(false));
+        assertThat(Instrumentation.ForAbstractMethod.INSTANCE.appender(instrumentationTarget).appendsCode(), is(false));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testAppender() throws Exception {
-        Instrumentation.ForAbstractMethod.INSTANCE.appender(instrumentedType)
+        Instrumentation.ForAbstractMethod.INSTANCE.appender(instrumentationTarget)
                 .apply(methodVisitor, instrumentationContext, methodDescription);
     }
 

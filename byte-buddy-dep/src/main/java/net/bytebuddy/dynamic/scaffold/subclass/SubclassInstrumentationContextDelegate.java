@@ -32,6 +32,7 @@ import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.takesA
 public class SubclassInstrumentationContextDelegate
         implements AuxiliaryType.MethodAccessorFactory,
         Instrumentation.Context.Default.AuxiliaryTypeNamingStrategy,
+        Instrumentation.Target.Factory,
         TypeWriter.MethodPool {
 
     /**
@@ -112,6 +113,11 @@ public class SubclassInstrumentationContextDelegate
         registeredAccessorMethodToTargetMethodCall.put(accessorMethod, methodCall);
         orderedAccessorMethods.add(accessorMethod);
         return accessorMethod;
+    }
+
+    @Override
+    public Instrumentation.Target make(TypeDescription typeDescription) {
+        return new Instrumentation.Target.Default(typeDescription);
     }
 
     /**

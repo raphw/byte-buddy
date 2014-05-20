@@ -25,6 +25,8 @@ public class InstrumentationCompoundTest {
     @Mock
     private InstrumentedType instrumentedType;
     @Mock
+    private Instrumentation.Target instrumentationTarget;
+    @Mock
     private ByteCodeAppender byteCodeAppender;
 
     private Instrumentation compound;
@@ -47,11 +49,11 @@ public class InstrumentationCompoundTest {
 
     @Test
     public void testAppend() throws Exception {
-        when(first.appender(instrumentedType)).thenReturn(byteCodeAppender);
-        when(second.appender(instrumentedType)).thenReturn(byteCodeAppender);
-        assertThat(compound.appender(instrumentedType), notNullValue());
-        verify(first).appender(instrumentedType);
-        verify(second).appender(instrumentedType);
+        when(first.appender(instrumentationTarget)).thenReturn(byteCodeAppender);
+        when(second.appender(instrumentationTarget)).thenReturn(byteCodeAppender);
+        assertThat(compound.appender(instrumentationTarget), notNullValue());
+        verify(first).appender(instrumentationTarget);
+        verify(second).appender(instrumentationTarget);
         verifyNoMoreInteractions(first);
         verifyNoMoreInteractions(second);
     }
