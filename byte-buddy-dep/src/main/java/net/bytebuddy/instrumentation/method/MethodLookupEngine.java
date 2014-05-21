@@ -282,66 +282,12 @@ public interface MethodLookupEngine {
     }
 
     /**
-     * An abstract implementation of a method lookup engine which maintains a cache of prior look-ups.
-     */
-    abstract static class AbstractCachingBase implements MethodLookupEngine {
-
-        /**
-         * The cache of prior look-ups.
-         */
-        protected final Map<TypeDescription, Finding> priorFindings;
-
-        /**
-         * Creates a new instance of a caching lookup engine.
-         */
-        protected AbstractCachingBase() {
-            priorFindings = new HashMap<TypeDescription, Finding>();
-        }
-
-        @Override
-        public Finding process(TypeDescription typeDescription) {
-            Finding result = priorFindings.get(typeDescription);
-            if (result == null) {
-                result = doGetInvokableMethods(typeDescription);
-                priorFindings.put(typeDescription, result);
-            }
-            return result;
-        }
-
-        /**
-         * Retrieves the invokable methods for a non-cached method.
-         *
-         * @param typeDescription The type for which all invokable methods should be looked up.
-         * @return The looked up methods for the given type.
-         */
-        protected abstract Finding doGetInvokableMethods(TypeDescription typeDescription);
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && priorFindings.equals(((AbstractCachingBase) other).priorFindings);
-        }
-
-        @Override
-        public int hashCode() {
-            return priorFindings.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "MethodLookupEngine." + getClass().getSimpleName() + "{" +
-                    ", priorFindings=" + priorFindings +
-                    '}';
-        }
-    }
-
-    /**
      * A default implementation of a method lookup engine. This engine queries each type and interface for its
      * declared methods and adds them in the same order as the would be returned by calling {@link Class#getMethods()}.
      * However, conflicting interface methods are represented by
      * {@link net.bytebuddy.instrumentation.method.MethodLookupEngine.ConflictingInterfaceMethod} instances.
      */
-    static class Default extends AbstractCachingBase {
+    static class Default implements MethodLookupEngine {
 
         private final DefaultMethodLookup defaultMethodLookup;
 
@@ -350,7 +296,7 @@ public interface MethodLookupEngine {
         }
 
         @Override
-        protected Finding doGetInvokableMethods(TypeDescription typeDescription) {
+        public Finding process(TypeDescription typeDescription) {
             MethodBucket methodBucket = new MethodBucket(typeDescription);
             Set<TypeDescription> interfaces = new HashSet<TypeDescription>();
             TypeList defaultMethodRelevantInterfaces = typeDescription.getInterfaces();
@@ -670,6 +616,24 @@ public interface MethodLookupEngine {
                     }
                 }
             }
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && defaultMethodLookup == ((Default) other).defaultMethodLookup;
+        }
+
+        @Override
+        public int hashCode() {
+            return defaultMethodLookup.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "MethodLookupEngine.Default{" +
+                    "defaultMethodLookup=" + defaultMethodLookup +
+                    '}';
         }
     }
 }
