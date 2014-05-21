@@ -27,6 +27,48 @@ public interface StackManipulation {
     Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext);
 
     /**
+     * Canonical representation of an illegal stack manipulation.
+     */
+    static enum Illegal implements StackManipulation {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        @Override
+        public boolean isValid() {
+            return false;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+            throw new IllegalStateException();
+        }
+    }
+
+    /**
+     * Canonical representation of a legal stack manipulation which does not require any action.
+     */
+    static enum LegalTrivial implements StackManipulation {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        @Override
+        public boolean isValid() {
+            return true;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+            return StackSize.ZERO.toIncreasingSize();
+        }
+    }
+
+    /**
      * A description of the size change that is imposed by some
      * {@link net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation}.
      */
@@ -147,36 +189,6 @@ public interface StackManipulation {
         @Override
         public String toString() {
             return "StackManipulation.Compound{" + Arrays.asList(stackManipulation) + "}";
-        }
-    }
-
-    static enum Illegal implements StackManipulation {
-
-        INSTANCE;
-
-        @Override
-        public boolean isValid() {
-            return false;
-        }
-
-        @Override
-        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-            throw new IllegalStateException();
-        }
-    }
-
-    static enum LegalTrivial implements StackManipulation {
-
-        INSTANCE;
-
-        @Override
-        public boolean isValid() {
-            return true;
-        }
-
-        @Override
-        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-            return StackSize.ZERO.toIncreasingSize();
         }
     }
 }

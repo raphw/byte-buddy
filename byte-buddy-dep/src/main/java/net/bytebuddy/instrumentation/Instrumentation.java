@@ -94,6 +94,28 @@ public interface Instrumentation {
     static interface Target {
 
         /**
+         * Returns a description of the instrumented type.
+         *
+         * @return A description of the instrumented type.
+         */
+        TypeDescription getTypeDescription();
+
+        /**
+         * A factory for creating an {@link net.bytebuddy.instrumentation.Instrumentation.Target}.
+         */
+        static interface Factory {
+
+            /**
+             * Creates an {@link net.bytebuddy.instrumentation.Instrumentation.Target} for the given instrumented
+             * type's description.
+             *
+             * @param typeDescription The type description for which the instrumentation target should be created.
+             * @return An {@link net.bytebuddy.instrumentation.Instrumentation.Target} for the given type description.
+             */
+            Target make(TypeDescription typeDescription);
+        }
+
+        /**
          * A default implementation of a {@link net.bytebuddy.instrumentation.Instrumentation.Target}.
          */
         static class Default implements Target {
@@ -131,28 +153,6 @@ public interface Instrumentation {
                         "typeDescription=" + typeDescription +
                         '}';
             }
-        }
-
-        /**
-         * Returns a description of the instrumented type.
-         *
-         * @return A description of the instrumented type.
-         */
-        TypeDescription getTypeDescription();
-
-        /**
-         * A factory for creating an {@link net.bytebuddy.instrumentation.Instrumentation.Target}.
-         */
-        static interface Factory {
-
-            /**
-             * Creates an {@link net.bytebuddy.instrumentation.Instrumentation.Target} for the given instrumented
-             * type's description.
-             *
-             * @param typeDescription The type description for which the instrumentation target should be created.
-             * @return An {@link net.bytebuddy.instrumentation.Instrumentation.Target} for the given type description.
-             */
-            Target make(TypeDescription typeDescription);
         }
     }
 

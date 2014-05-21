@@ -354,10 +354,10 @@ public class MethodLookupEngineDefaultTest {
                 is(new MethodLookupEngine.Default(MethodLookupEngine.Default.DefaultMethodLookup.ENABLED).hashCode()));
         assertThat(methodLookupEngine,
                 is((MethodLookupEngine) new MethodLookupEngine.Default(MethodLookupEngine.Default.DefaultMethodLookup.ENABLED)));
-        MethodLookupEngine otherEngine = new MethodLookupEngine.Default(MethodLookupEngine.Default.DefaultMethodLookup.ENABLED);
-        otherEngine.process(new TypeDescription.ForLoadedType(Object.class));
-        assertThat(methodLookupEngine.hashCode(), CoreMatchers.not(is(otherEngine.hashCode())));
-        assertThat(methodLookupEngine, CoreMatchers.not(is(otherEngine)));
+        assertThat(methodLookupEngine.hashCode(),
+                CoreMatchers.not(is(new MethodLookupEngine.Default(MethodLookupEngine.Default.DefaultMethodLookup.DISABLED).hashCode())));
+        assertThat(methodLookupEngine,
+                CoreMatchers.not(is((MethodLookupEngine) new MethodLookupEngine.Default(MethodLookupEngine.Default.DefaultMethodLookup.DISABLED))));
     }
 
     private static interface SingleMethodInterface {

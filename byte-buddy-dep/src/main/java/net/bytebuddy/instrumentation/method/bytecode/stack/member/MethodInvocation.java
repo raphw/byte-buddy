@@ -145,5 +145,27 @@ public enum MethodInvocation {
         public MethodInvocation getImplicitInvocationType() {
             return MethodInvocation.this;
         }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && methodDescription.equals(((Invocation) other).methodDescription)
+                    && MethodInvocation.this.equals(((Invocation) other).getImplicitInvocationType())
+                    && typeDescription.equals(((Invocation) other).typeDescription);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * (31 * MethodInvocation.this.hashCode() + typeDescription.hashCode()) + methodDescription.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "MethodInvocation.Invocation{" +
+                    "typeDescription=" + typeDescription +
+                    ", methodDescription=" + methodDescription +
+                    ", size=" + size +
+                    '}';
+        }
     }
 }

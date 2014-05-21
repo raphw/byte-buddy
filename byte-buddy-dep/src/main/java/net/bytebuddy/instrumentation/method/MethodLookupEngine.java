@@ -313,6 +313,24 @@ public interface MethodLookupEngine {
                     defaultMethods);
         }
 
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && defaultMethodLookup == ((Default) other).defaultMethodLookup;
+        }
+
+        @Override
+        public int hashCode() {
+            return defaultMethodLookup.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "MethodLookupEngine.Default{" +
+                    "defaultMethodLookup=" + defaultMethodLookup +
+                    '}';
+        }
+
         public static enum DefaultMethodLookup {
             ENABLED {
                 @Override
@@ -616,24 +634,6 @@ public interface MethodLookupEngine {
                     }
                 }
             }
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && defaultMethodLookup == ((Default) other).defaultMethodLookup;
-        }
-
-        @Override
-        public int hashCode() {
-            return defaultMethodLookup.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "MethodLookupEngine.Default{" +
-                    "defaultMethodLookup=" + defaultMethodLookup +
-                    '}';
         }
     }
 }
