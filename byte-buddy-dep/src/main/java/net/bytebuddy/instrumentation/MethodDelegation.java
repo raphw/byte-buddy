@@ -10,7 +10,6 @@ import net.bytebuddy.instrumentation.method.bytecode.bind.MostSpecificTypeResolv
 import net.bytebuddy.instrumentation.method.bytecode.bind.ParameterLengthResolver;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.*;
 import net.bytebuddy.instrumentation.method.bytecode.stack.Duplication;
-import net.bytebuddy.instrumentation.method.bytecode.stack.LegalTrivialStackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.TypeCreation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
@@ -547,7 +546,7 @@ public class MethodDelegation implements Instrumentation {
 
             @Override
             public StackManipulation getPreparingStackAssignment(TypeDescription instrumentedType) {
-                return LegalTrivialStackManipulation.INSTANCE;
+                return StackManipulation.LegalTrivial.INSTANCE;
             }
 
             @Override

@@ -2,7 +2,6 @@ package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
-import net.bytebuddy.instrumentation.method.bytecode.stack.LegalTrivialStackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.primitive.PrimitiveTypeAwareAssigner;
@@ -204,7 +203,7 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
                         instrumentationContext,
                         instrumentedMethod,
                         instrumentedType,
-                        LegalTrivialStackManipulation.INSTANCE);
+                        StackManipulation.LegalTrivial.INSTANCE);
             }
 
             private InvocationHandlerAdapter getInvocationHandlerAdapter() {

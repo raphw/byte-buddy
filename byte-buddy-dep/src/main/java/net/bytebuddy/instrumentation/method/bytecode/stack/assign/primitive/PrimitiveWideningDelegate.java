@@ -1,8 +1,6 @@
 package net.bytebuddy.instrumentation.method.bytecode.stack.assign.primitive;
 
 import net.bytebuddy.instrumentation.Instrumentation;
-import net.bytebuddy.instrumentation.method.bytecode.stack.IllegalStackManipulation;
-import net.bytebuddy.instrumentation.method.bytecode.stack.LegalTrivialStackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
@@ -18,23 +16,23 @@ public enum PrimitiveWideningDelegate {
     /**
      * The widening delegate for {@code boolean} values.
      */
-    BOOLEAN(LegalTrivialStackManipulation.INSTANCE,                                                // to boolean
-            IllegalStackManipulation.INSTANCE,                                                     // to byte
-            IllegalStackManipulation.INSTANCE,                                                     // to short
-            IllegalStackManipulation.INSTANCE,                                                     // to character
-            IllegalStackManipulation.INSTANCE,                                                     // to integer
-            IllegalStackManipulation.INSTANCE,                                                     // to long
-            IllegalStackManipulation.INSTANCE,                                                     // to float
-            IllegalStackManipulation.INSTANCE),                                                    // to double
+    BOOLEAN(StackManipulation.LegalTrivial.INSTANCE,                                                // to boolean
+            StackManipulation.Illegal.INSTANCE,                                                     // to byte
+            StackManipulation.Illegal.INSTANCE,                                                     // to short
+            StackManipulation.Illegal.INSTANCE,                                                     // to character
+            StackManipulation.Illegal.INSTANCE,                                                     // to integer
+            StackManipulation.Illegal.INSTANCE,                                                     // to long
+            StackManipulation.Illegal.INSTANCE,                                                     // to float
+            StackManipulation.Illegal.INSTANCE),                                                    // to double
 
     /**
      * The widening delegate for {@code byte} values.
      */
-    BYTE(IllegalStackManipulation.INSTANCE,                                                        // to boolean
-            LegalTrivialStackManipulation.INSTANCE,                                                // to byte
-            LegalTrivialStackManipulation.INSTANCE,                                                // to short
-            IllegalStackManipulation.INSTANCE,                                                     // to character
-            LegalTrivialStackManipulation.INSTANCE,                                                // to integer
+    BYTE(StackManipulation.Illegal.INSTANCE,                                                        // to boolean
+            StackManipulation.LegalTrivial.INSTANCE,                                                // to byte
+            StackManipulation.LegalTrivial.INSTANCE,                                                // to short
+            StackManipulation.Illegal.INSTANCE,                                                     // to character
+            StackManipulation.LegalTrivial.INSTANCE,                                                // to integer
             new WideningStackManipulation(Opcodes.I2L, StackSize.SINGLE.toIncreasingSize()),        // to long
             new WideningStackManipulation(Opcodes.I2F, StackSize.ZERO.toIncreasingSize()),          // to float
             new WideningStackManipulation(Opcodes.I2L, StackSize.SINGLE.toIncreasingSize())),       // to double
@@ -42,11 +40,11 @@ public enum PrimitiveWideningDelegate {
     /**
      * The widening delegate for {@code short} values.
      */
-    SHORT(IllegalStackManipulation.INSTANCE,                                                       // to boolean
-            IllegalStackManipulation.INSTANCE,                                                     // to byte
-            LegalTrivialStackManipulation.INSTANCE,                                                // to short
-            IllegalStackManipulation.INSTANCE,                                                     // to character
-            LegalTrivialStackManipulation.INSTANCE,                                                // to integer
+    SHORT(StackManipulation.Illegal.INSTANCE,                                                       // to boolean
+            StackManipulation.Illegal.INSTANCE,                                                     // to byte
+            StackManipulation.LegalTrivial.INSTANCE,                                                // to short
+            StackManipulation.Illegal.INSTANCE,                                                     // to character
+            StackManipulation.LegalTrivial.INSTANCE,                                                // to integer
             new WideningStackManipulation(Opcodes.I2L, StackSize.SINGLE.toIncreasingSize()),        // to long
             new WideningStackManipulation(Opcodes.I2F, StackSize.ZERO.toIncreasingSize()),          // to float
             new WideningStackManipulation(Opcodes.I2D, StackSize.SINGLE.toIncreasingSize())),       // to double
@@ -54,11 +52,11 @@ public enum PrimitiveWideningDelegate {
     /**
      * The widening delegate for {@code char} values.
      */
-    CHARACTER(IllegalStackManipulation.INSTANCE,                                                   // to boolean
-            IllegalStackManipulation.INSTANCE,                                                     // to byte
-            IllegalStackManipulation.INSTANCE,                                                     // to short
-            LegalTrivialStackManipulation.INSTANCE,                                                // to character
-            LegalTrivialStackManipulation.INSTANCE,                                                // to integer
+    CHARACTER(StackManipulation.Illegal.INSTANCE,                                                   // to boolean
+            StackManipulation.Illegal.INSTANCE,                                                     // to byte
+            StackManipulation.Illegal.INSTANCE,                                                     // to short
+            StackManipulation.LegalTrivial.INSTANCE,                                                // to character
+            StackManipulation.LegalTrivial.INSTANCE,                                                // to integer
             new WideningStackManipulation(Opcodes.I2L, StackSize.SINGLE.toIncreasingSize()),        // to long
             new WideningStackManipulation(Opcodes.I2F, StackSize.ZERO.toIncreasingSize()),          // to float
             new WideningStackManipulation(Opcodes.I2D, StackSize.SINGLE.toIncreasingSize())),       // to double
@@ -66,11 +64,11 @@ public enum PrimitiveWideningDelegate {
     /**
      * The widening delegate for {@code int} values.
      */
-    INTEGER(IllegalStackManipulation.INSTANCE,                                                     // to boolean
-            IllegalStackManipulation.INSTANCE,                                                     // to byte
-            IllegalStackManipulation.INSTANCE,                                                     // to short
-            IllegalStackManipulation.INSTANCE,                                                     // to character
-            LegalTrivialStackManipulation.INSTANCE,                                                // to integer
+    INTEGER(StackManipulation.Illegal.INSTANCE,                                                     // to boolean
+            StackManipulation.Illegal.INSTANCE,                                                     // to byte
+            StackManipulation.Illegal.INSTANCE,                                                     // to short
+            StackManipulation.Illegal.INSTANCE,                                                     // to character
+            StackManipulation.LegalTrivial.INSTANCE,                                                // to integer
             new WideningStackManipulation(Opcodes.I2L, StackSize.SINGLE.toIncreasingSize()),        // to long
             new WideningStackManipulation(Opcodes.I2F, StackSize.ZERO.toIncreasingSize()),          // to float
             new WideningStackManipulation(Opcodes.I2D, StackSize.SINGLE.toIncreasingSize())),       // to double
@@ -78,38 +76,38 @@ public enum PrimitiveWideningDelegate {
     /**
      * The widening delegate for {@code long} values.
      */
-    LONG(IllegalStackManipulation.INSTANCE,                                                        // to boolean
-            IllegalStackManipulation.INSTANCE,                                                     // to byte
-            IllegalStackManipulation.INSTANCE,                                                     // to short
-            IllegalStackManipulation.INSTANCE,                                                     // to character
-            IllegalStackManipulation.INSTANCE,                                                     // to integer
-            LegalTrivialStackManipulation.INSTANCE,                                                // to long
+    LONG(StackManipulation.Illegal.INSTANCE,                                                        // to boolean
+            StackManipulation.Illegal.INSTANCE,                                                     // to byte
+            StackManipulation.Illegal.INSTANCE,                                                     // to short
+            StackManipulation.Illegal.INSTANCE,                                                     // to character
+            StackManipulation.Illegal.INSTANCE,                                                     // to integer
+            StackManipulation.LegalTrivial.INSTANCE,                                                // to long
             new WideningStackManipulation(Opcodes.L2F, StackSize.SINGLE.toDecreasingSize()),        // to float
             new WideningStackManipulation(Opcodes.L2D, StackSize.ZERO.toIncreasingSize())),         // to double
 
     /**
      * The widening delegate for {@code float} values.
      */
-    FLOAT(IllegalStackManipulation.INSTANCE,                                                       // to boolean
-            IllegalStackManipulation.INSTANCE,                                                     // to byte
-            IllegalStackManipulation.INSTANCE,                                                     // to short
-            IllegalStackManipulation.INSTANCE,                                                     // to character
-            IllegalStackManipulation.INSTANCE,                                                     // to integer
-            IllegalStackManipulation.INSTANCE,                                                     // to long
-            LegalTrivialStackManipulation.INSTANCE,                                                // to float
+    FLOAT(StackManipulation.Illegal.INSTANCE,                                                       // to boolean
+            StackManipulation.Illegal.INSTANCE,                                                     // to byte
+            StackManipulation.Illegal.INSTANCE,                                                     // to short
+            StackManipulation.Illegal.INSTANCE,                                                     // to character
+            StackManipulation.Illegal.INSTANCE,                                                     // to integer
+            StackManipulation.Illegal.INSTANCE,                                                     // to long
+            StackManipulation.LegalTrivial.INSTANCE,                                                // to float
             new WideningStackManipulation(Opcodes.F2D, StackSize.SINGLE.toIncreasingSize())),       // to double
 
     /**
      * The widening delegate for {@code double} values.
      */
-    DOUBLE(IllegalStackManipulation.INSTANCE,                                                      // to boolean
-            IllegalStackManipulation.INSTANCE,                                                     // to byte
-            IllegalStackManipulation.INSTANCE,                                                     // to short
-            IllegalStackManipulation.INSTANCE,                                                     // to character
-            IllegalStackManipulation.INSTANCE,                                                     // to integer
-            IllegalStackManipulation.INSTANCE,                                                     // to long
-            IllegalStackManipulation.INSTANCE,                                                     // to float
-            LegalTrivialStackManipulation.INSTANCE);                                               // to double
+    DOUBLE(StackManipulation.Illegal.INSTANCE,                                                      // to boolean
+            StackManipulation.Illegal.INSTANCE,                                                     // to byte
+            StackManipulation.Illegal.INSTANCE,                                                     // to short
+            StackManipulation.Illegal.INSTANCE,                                                     // to character
+            StackManipulation.Illegal.INSTANCE,                                                     // to integer
+            StackManipulation.Illegal.INSTANCE,                                                     // to long
+            StackManipulation.Illegal.INSTANCE,                                                     // to float
+            StackManipulation.LegalTrivial.INSTANCE);                                               // to double
     private final StackManipulation toBooleanStackManipulation;
     private final StackManipulation toByteStackManipulation;
     private final StackManipulation toShortStackManipulation;

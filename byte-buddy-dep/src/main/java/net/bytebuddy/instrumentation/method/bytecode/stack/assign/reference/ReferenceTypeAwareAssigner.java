@@ -1,8 +1,6 @@
 package net.bytebuddy.instrumentation.method.bytecode.stack.assign.reference;
 
 import net.bytebuddy.instrumentation.Instrumentation;
-import net.bytebuddy.instrumentation.method.bytecode.stack.IllegalStackManipulation;
-import net.bytebuddy.instrumentation.method.bytecode.stack.LegalTrivialStackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
@@ -25,16 +23,16 @@ public enum ReferenceTypeAwareAssigner implements Assigner {
     public StackManipulation assign(TypeDescription sourceType, TypeDescription targetType, boolean considerRuntimeType) {
         if (sourceType.isPrimitive() || targetType.isPrimitive()) {
             if (sourceType.equals(targetType)) {
-                return LegalTrivialStackManipulation.INSTANCE;
+                return StackManipulation.LegalTrivial.INSTANCE;
             } else {
-                return IllegalStackManipulation.INSTANCE;
+                return StackManipulation.Illegal.INSTANCE;
             }
         } else if (targetType.isAssignableFrom(sourceType)) {
-            return LegalTrivialStackManipulation.INSTANCE;
+            return StackManipulation.LegalTrivial.INSTANCE;
         } else if (considerRuntimeType) {
             return new DownCastStackManipulation(targetType);
         } else {
-            return IllegalStackManipulation.INSTANCE;
+            return StackManipulation.Illegal.INSTANCE;
         }
     }
 

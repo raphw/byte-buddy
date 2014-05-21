@@ -1,7 +1,6 @@
 package net.bytebuddy.instrumentation.method.bytecode.stack.constant;
 
 import net.bytebuddy.instrumentation.Instrumentation;
-import net.bytebuddy.instrumentation.method.bytecode.stack.LegalTrivialStackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
@@ -35,7 +34,7 @@ public enum DefaultValue implements StackManipulation {
     /**
      * The default value of a {@code void} which resembles a no-op manipulation.
      */
-    VOID(LegalTrivialStackManipulation.INSTANCE),
+    VOID(StackManipulation.LegalTrivial.INSTANCE),
 
     /**
      * The default value of a reference type which resembles the {@code null} reference.

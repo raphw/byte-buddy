@@ -4,7 +4,6 @@ import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
-import net.bytebuddy.instrumentation.method.bytecode.stack.LegalTrivialStackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.primitive.PrimitiveTypeAwareAssigner;
@@ -152,7 +151,7 @@ public abstract class FieldAccessor implements Instrumentation {
         }
         StackManipulation.Size stackSize = new StackManipulation.Compound(
                 fieldDescription.isStatic()
-                        ? LegalTrivialStackManipulation.INSTANCE
+                        ? StackManipulation.LegalTrivial.INSTANCE
                         : MethodVariableAccess.REFERENCE.loadFromIndex(0),
                 fieldAccess,
                 MethodReturn.returning(methodDescription.getReturnType())

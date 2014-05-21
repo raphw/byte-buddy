@@ -149,4 +149,34 @@ public interface StackManipulation {
             return "StackManipulation.Compound{" + Arrays.asList(stackManipulation) + "}";
         }
     }
+
+    static enum Illegal implements StackManipulation {
+
+        INSTANCE;
+
+        @Override
+        public boolean isValid() {
+            return false;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+            throw new IllegalStateException();
+        }
+    }
+
+    static enum LegalTrivial implements StackManipulation {
+
+        INSTANCE;
+
+        @Override
+        public boolean isValid() {
+            return true;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+            return StackSize.ZERO.toIncreasingSize();
+        }
+    }
 }

@@ -1,7 +1,7 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
-import net.bytebuddy.instrumentation.method.bytecode.stack.IllegalStackManipulation;
+import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import org.junit.Before;
@@ -77,7 +77,7 @@ public class ThisAnnotationBinderTest extends AbstractAnnotationBinderTest<This>
         when(target.getParameterTypes()).thenReturn(typeList);
         when(target.getParameterAnnotations()).thenReturn(new Annotation[1][0]);
         when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean()))
-                .thenReturn(IllegalStackManipulation.INSTANCE);
+                .thenReturn(StackManipulation.Illegal.INSTANCE);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
                 .bind(annotation, 0, source, target, instrumentedType, assigner);
         assertThat(parameterBinding.isValid(), is(false));

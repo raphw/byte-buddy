@@ -1,8 +1,6 @@
 package net.bytebuddy.instrumentation.method.bytecode.stack.assign.primitive;
 
 import net.bytebuddy.instrumentation.Instrumentation;
-import net.bytebuddy.instrumentation.method.bytecode.stack.IllegalStackManipulation;
-import net.bytebuddy.instrumentation.method.bytecode.stack.LegalTrivialStackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
@@ -43,9 +41,9 @@ public class VoidAwareAssigner implements Assigner {
     @Override
     public StackManipulation assign(TypeDescription sourceType, TypeDescription targetType, boolean considerRuntimeType) {
         if (sourceType.represents(void.class) && targetType.represents(void.class)) {
-            return LegalTrivialStackManipulation.INSTANCE;
+            return StackManipulation.LegalTrivial.INSTANCE;
         } else if (sourceType.represents(void.class) /* && subType != void.class */) {
-            return returnDefaultValue ? DefaultValue.of(targetType) : IllegalStackManipulation.INSTANCE;
+            return returnDefaultValue ? DefaultValue.of(targetType) : StackManipulation.Illegal.INSTANCE;
         } else if (/* superType != void.class && */ targetType.represents(void.class)) {
             return ValueRemovingStackManipulation.of(sourceType);
         } else /* superType != void.class && subType != void.class */ {
