@@ -55,6 +55,8 @@ public class MethodCallProxy implements AuxiliaryType {
     /**
      * Creates a new method call proxy for a given method and uses a default assigner for assigning the method's return
      * value to either the {@link java.util.concurrent.Callable#call()} or {@link Runnable#run()} method returns.
+     *
+     * @param specialMethodInvocation The special method invocation which should be invoked by this method call proxy.
      */
     public MethodCallProxy(Instrumentation.SpecialMethodInvocation specialMethodInvocation) {
         this(specialMethodInvocation, new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE), true));
@@ -63,9 +65,10 @@ public class MethodCallProxy implements AuxiliaryType {
     /**
      * Creates a new method call proxy for a given method.
      *
-     * @param assigner An assigner for assigning the target method's return value to either the
-     *                 {@link java.util.concurrent.Callable#call()} or {@link Runnable#run()}} methods' return
-     *                 values.
+     * @param specialMethodInvocation The special method invocation which should be invoked by this method call proxy.
+     * @param assigner                An assigner for assigning the target method's return value to either the
+     *                                {@link java.util.concurrent.Callable#call()} or {@link Runnable#run()}} methods'
+     *                                return values.
      */
     public MethodCallProxy(Instrumentation.SpecialMethodInvocation specialMethodInvocation, Assigner assigner) {
         this.specialMethodInvocation = specialMethodInvocation;
@@ -176,6 +179,9 @@ public class MethodCallProxy implements AuxiliaryType {
          * Creates an operand stack assignment that creates a
          * {@link net.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy} for the
          * {@code targetMethod} and pushes this proxy object onto the stack.
+         *
+         * @param specialMethodInvocation The special method invocation which should be invoked by the created method
+         *                                call proxy.
          */
         public AssignableSignatureCall(Instrumentation.SpecialMethodInvocation specialMethodInvocation) {
             this.specialMethodInvocation = specialMethodInvocation;

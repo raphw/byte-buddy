@@ -88,10 +88,37 @@ public interface Instrumentation {
         }
     }
 
+    /**
+     * Represents an type-specific method invocation on the current instrumented type which is not legal from outside
+     * the type such as a super method or default method invocation. Legal instances of special method invocations must
+     * be equal to one another if they represent the same invocation target.
+     */
     static interface SpecialMethodInvocation extends StackManipulation {
 
+        /**
+         * Returns the method that represents this special method invocation. This method can be different even for
+         * equal special method invocations, dependant on the method that was used to request such an invocation by the
+         * means of a {@link net.bytebuddy.instrumentation.Instrumentation.Target}.
+         *
+         * @return The method description that describes this instances invocation target.
+         */
+        MethodDescription getMethodDescription();
+
+        /**
+         * Returns the target type the represented method is invoked on.
+         *
+         * @return The type the represented method is invoked on.
+         */
+        TypeDescription getTypeDescription();
+
+        /**
+         * A canonical implementation of an illegal {@link net.bytebuddy.instrumentation.Instrumentation.SpecialMethodInvocation}.
+         */
         static enum Illegal implements SpecialMethodInvocation {
 
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
             @Override
@@ -108,13 +135,28 @@ public interface Instrumentation {
             public MethodDescription getMethodDescription() {
                 throw new IllegalStateException();
             }
+
+            @Override
+            public TypeDescription getTypeDescription() {
+                throw new IllegalStateException();
+            }
         }
 
+        /**
+         * A canonical implementation of a legal {@link net.bytebuddy.instrumentation.Instrumentation.SpecialMethodInvocation}.
+         */
         static class Legal implements SpecialMethodInvocation {
 
             private final MethodDescription methodDescription;
             private final TypeDescription typeDescription;
 
+            /**
+             * Creates a new legal special method invocation.
+             *
+             * @param methodDescription The method that represents the special method invocation.
+             * @param typeDescription   The type on which the method should be invoked on by an {@code INVOKESPECIAL}
+             *                          invocation.
+             */
             public Legal(MethodDescription methodDescription, TypeDescription typeDescription) {
                 this.methodDescription = methodDescription;
                 this.typeDescription = typeDescription;
@@ -123,6 +165,11 @@ public interface Instrumentation {
             @Override
             public MethodDescription getMethodDescription() {
                 return methodDescription;
+            }
+
+            @Override
+            public TypeDescription getTypeDescription() {
+                return typeDescription;
             }
 
             @Override
@@ -141,11 +188,11 @@ public interface Instrumentation {
             public boolean equals(Object other) {
                 if (this == other) return true;
                 if (other == null || getClass() != other.getClass()) return false;
-                Legal aLegal = (Legal) other;
-                return typeDescription.equals(aLegal.typeDescription)
-                        && methodDescription.getInternalName().equals(aLegal.methodDescription.getInternalName())
-                        && methodDescription.getParameterTypes().equals(aLegal.methodDescription.getParameterTypes())
-                        && methodDescription.getReturnType().equals(aLegal.methodDescription.getReturnType());
+                SpecialMethodInvocation specialMethodInvocation = (SpecialMethodInvocation) other;
+                return typeDescription.equals(specialMethodInvocation.getTypeDescription())
+                        && methodDescription.getInternalName().equals(specialMethodInvocation.getMethodDescription().getInternalName())
+                        && methodDescription.getParameterTypes().equals(specialMethodInvocation.getMethodDescription().getParameterTypes())
+                        && methodDescription.getReturnType().equals(specialMethodInvocation.getMethodDescription().getReturnType());
             }
 
             @Override
@@ -159,16 +206,12 @@ public interface Instrumentation {
 
             @Override
             public String toString() {
-                return "Instrumentation.SpecialMethodInvocation.Default{" +
+                return "Instrumentation.SpecialMethodInvocation.Legal{" +
                         "typeDescription=" + typeDescription +
-                        ", methodName=" + methodDescription.getInternalName() +
-                        ", methodParameterTypes=" + methodDescription.getParameterTypes() +
-                        ", methodReturnType=" + methodDescription.getReturnType() +
+                        ", methodDescription=" + methodDescription +
                         '}';
             }
         }
-
-        MethodDescription getMethodDescription();
     }
 
     /**
@@ -178,6 +221,17 @@ public interface Instrumentation {
      * that require reflective look-up.
      */
     static interface Target {
+
+        /**
+         * Returns a description of the instrumented type.
+         *
+         * @return A description of the instrumented type.
+         */
+        TypeDescription getTypeDescription();
+
+        SpecialMethodInvocation invokeSuper(MethodDescription methodDescription, MethodLookup methodLookup);
+
+        SpecialMethodInvocation invokeDefault(TypeDescription targetType, String uniqueMethodSignature);
 
         static enum MethodLookup {
 
@@ -201,11 +255,25 @@ public interface Instrumentation {
                                                          BridgeMethodResolver bridgeMethodResolver);
         }
 
+        /**
+         * A factory for creating an {@link net.bytebuddy.instrumentation.Instrumentation.Target}.
+         */
+        static interface Factory {
+
+            /**
+             * Creates an {@link net.bytebuddy.instrumentation.Instrumentation.Target} for the given instrumented
+             * type's description.
+             *
+             * @return An {@link net.bytebuddy.instrumentation.Instrumentation.Target} for the given type description.
+             */
+            Target make(MethodLookupEngine.Finding methodLookupEngineFinding);
+        }
+
         abstract static class AbstractBase implements Target {
 
             protected final TypeDescription typeDescription;
-            private final Map<TypeDescription, Map<String, MethodDescription>> defaultMethods;
-            private final BridgeMethodResolver bridgeMethodResolver;
+            protected final Map<TypeDescription, Map<String, MethodDescription>> defaultMethods;
+            protected final BridgeMethodResolver bridgeMethodResolver;
 
             protected AbstractBase(MethodLookupEngine.Finding finding,
                                    BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
@@ -247,31 +315,23 @@ public interface Instrumentation {
                 return Instrumentation.SpecialMethodInvocation.Illegal.INSTANCE;
             }
 
-        }
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                AbstractBase that = (AbstractBase) other;
+                return bridgeMethodResolver.equals(that.bridgeMethodResolver)
+                        && defaultMethods.equals(that.defaultMethods)
+                        && typeDescription.equals(that.typeDescription);
+            }
 
-        /**
-         * Returns a description of the instrumented type.
-         *
-         * @return A description of the instrumented type.
-         */
-        TypeDescription getTypeDescription();
-
-        SpecialMethodInvocation invokeSuper(MethodDescription methodDescription, MethodLookup methodLookup);
-
-        SpecialMethodInvocation invokeDefault(TypeDescription targetType, String uniqueMethodSignature);
-
-        /**
-         * A factory for creating an {@link net.bytebuddy.instrumentation.Instrumentation.Target}.
-         */
-        static interface Factory {
-
-            /**
-             * Creates an {@link net.bytebuddy.instrumentation.Instrumentation.Target} for the given instrumented
-             * type's description.
-             *
-             * @return An {@link net.bytebuddy.instrumentation.Instrumentation.Target} for the given type description.
-             */
-            Target make(MethodLookupEngine.Finding methodLookupEngineFinding);
+            @Override
+            public int hashCode() {
+                int result = typeDescription.hashCode();
+                result = 31 * result + defaultMethods.hashCode();
+                result = 31 * result + bridgeMethodResolver.hashCode();
+                return result;
+            }
         }
     }
 

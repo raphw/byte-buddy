@@ -53,6 +53,7 @@ public interface MethodRegistry {
      * returned if a requested method is not known to the compiled method registry.
      *
      * @param instrumentedType             The instrumented type for which this field registry is to be compiled.
+     * @param methodLookupEngine           The method lookup engine to be used for analyzing the instrumented type.
      * @param instrumentationTargetFactory A factory for creating an {@link net.bytebuddy.instrumentation.Instrumentation.Target}.
      * @param fallback                     The fallback field attribute appender factory that serves as a fallback for unknown methods.
      * @return A compiled method registry representing the methods that were registered with this method registry.

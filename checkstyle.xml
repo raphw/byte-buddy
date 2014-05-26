@@ -18,7 +18,7 @@
 
         <!-- Checkstyle has a bug that disallows @return in annotation methods,enable on demand -->
         <!--<module name="JavadocMethod">-->
-        <!--<property name="scope" value="protected"/>-->
+            <!--<property name="scope" value="protected"/>-->
         <!--</module>-->
         <module name="JavadocType">
             <property name="scope" value="protected"/>

@@ -5,14 +5,12 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.ModifierContributor;
 import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.modifier.SyntheticState;
 import net.bytebuddy.modifier.TypeVisibility;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * An auxiliary type that provides services to the instrumentation of another type. Implementations should provide
@@ -41,58 +39,22 @@ public interface AuxiliaryType {
                      ClassFileVersion classFileVersion,
                      MethodAccessorFactory methodAccessorFactory);
 
-    static interface MethodAccessorFactory {
-
-        MethodDescription registerAccessorFor(Instrumentation.SpecialMethodInvocation specialMethodInvocation);
-    }
-
     /**
      * A factory for creating method proxies for an auxiliary type. Such proxies are required to allow a type to
      * call methods of a second type that are usually not accessible for the first type. This strategy is also adapted
      * by the Java compiler that creates accessor methods for example to implement inner classes.
      */
-    static interface MethodAccessorFactory2 {
+    static interface MethodAccessorFactory {
 
         /**
-         * Requests a new accessor method for the requested method. If such a method cannot be created, an exception
-         * will be thrown.
+         * Registers an accessor method for a
+         * {@link net.bytebuddy.instrumentation.Instrumentation.SpecialMethodInvocation} which cannot be triggered
+         * invoked directly from outside a type. The method is registered on the instrumented type with package-private
+         * visibility, similarly to a Java compiler accessor method.
          *
-         * @param targetMethod The target method for which an accessor method is required.
-         * @return A new accessor method.
+         * @param specialMethodInvocation The special method invocation.
+         * @return The accessor method for invoking the special method invocation.
          */
-        MethodDescription requireAccessorMethodFor(MethodDescription targetMethod, LookupMode lookupMode);
-
-        static interface LookupMode {
-
-            MethodDescription resolve(MethodDescription targetMethod,
-                                      MethodLookupEngine.Finding finding,
-                                      Map<String, MethodDescription> reachableMethods);
-
-            static enum Default implements LookupMode {
-
-                BY_SIGNATURE {
-                    @Override
-                    public MethodDescription resolve(MethodDescription targetMethod,
-                                                     MethodLookupEngine.Finding finding,
-                                                     Map<String, MethodDescription> invokableMethods) {
-                        MethodDescription resolvedMethod = invokableMethods.get(targetMethod.getUniqueSignature());
-                        if (resolvedMethod == null) {
-                            throw new IllegalArgumentException(String.format("Method %s is not reachable from %s",
-                                    targetMethod, finding.getTypeDescription()));
-                        }
-                        return resolvedMethod;
-                    }
-                },
-
-                EXACT {
-                    @Override
-                    public MethodDescription resolve(MethodDescription targetMethod,
-                                                     MethodLookupEngine.Finding finding,
-                                                     Map<String, MethodDescription> reachableMethods) {
-                        return targetMethod;
-                    }
-                }
-            }
-        }
+        MethodDescription registerAccessorFor(Instrumentation.SpecialMethodInvocation specialMethodInvocation);
     }
 }

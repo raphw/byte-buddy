@@ -53,8 +53,9 @@ public class TypeProxy implements AuxiliaryType {
     /**
      * Creates a new type proxy.
      *
-     * @param proxiedType     The type this proxy should implement which can either be a non-final class or an interface.
-     * @param ignoreFinalizer {@code true} if any finalizer methods should be ignored for proxying.
+     * @param proxiedType           The type this proxy should implement which can either be a non-final class or an interface.
+     * @param instrumentationTarget The instrumentation target this type proxy is created for.
+     * @param ignoreFinalizer       {@code true} if any finalizer methods should be ignored for proxying.
      */
     public TypeProxy(TypeDescription proxiedType, Instrumentation.Target instrumentationTarget, boolean ignoreFinalizer) {
         this.proxiedType = proxiedType;
@@ -121,6 +122,7 @@ public class TypeProxy implements AuxiliaryType {
          * Creates a new stack operation for creating a type proxy by calling one of its constructors.
          *
          * @param proxiedType           The type for the type proxy to subclass or implement.
+         * @param instrumentationTarget The instrumentation target this type proxy is created for.
          * @param constructorParameters The parameter types of the constructor that should be called.
          * @param ignoreFinalizer       {@code true} if any finalizers should be ignored for the delegation.
          */
@@ -205,8 +207,9 @@ public class TypeProxy implements AuxiliaryType {
         /**
          * Creates a new stack operation for reflectively creating a type proxy for the given arguments.
          *
-         * @param proxiedType     The type for the type proxy to subclass or implement.
-         * @param ignoreFinalizer {@code true} {@code true} if any finalizer methods should be ignored for proxying.
+         * @param proxiedType           The type for the type proxy to subclass or implement.
+         * @param instrumentationTarget The instrumentation target this type proxy is created for.
+         * @param ignoreFinalizer       {@code true} {@code true} if any finalizer methods should be ignored for proxying.
          */
         public ByReflectionFactory(TypeDescription proxiedType,
                                    Instrumentation.Target instrumentationTarget,
