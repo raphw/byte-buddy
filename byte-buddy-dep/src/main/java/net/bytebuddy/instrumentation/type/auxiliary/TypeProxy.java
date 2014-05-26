@@ -47,20 +47,18 @@ public class TypeProxy implements AuxiliaryType {
      */
     public static final String INSTANCE_FIELD = "target";
     private final TypeDescription proxiedType;
-    private final TypeDescription instrumentedType;
+    private final Instrumentation.Target instrumentationTarget;
     private final boolean ignoreFinalizer;
 
     /**
      * Creates a new type proxy.
      *
-     * @param proxiedType      The type this proxy should implement which can either be a non-final class or an interface.
-     * @param instrumentedType The type on which all accessor methods are invoked, i.e. the type for which this type proxy
-     *                         is a proxy for.
-     * @param ignoreFinalizer  {@code true} if any finalizer methods should be ignored for proxying.
+     * @param proxiedType     The type this proxy should implement which can either be a non-final class or an interface.
+     * @param ignoreFinalizer {@code true} if any finalizer methods should be ignored for proxying.
      */
-    public TypeProxy(TypeDescription proxiedType, TypeDescription instrumentedType, boolean ignoreFinalizer) {
+    public TypeProxy(TypeDescription proxiedType, Instrumentation.Target instrumentationTarget, boolean ignoreFinalizer) {
         this.proxiedType = proxiedType;
-        this.instrumentedType = instrumentedType;
+        this.instrumentationTarget = instrumentationTarget;
         this.ignoreFinalizer = ignoreFinalizer;
     }
 
@@ -86,14 +84,14 @@ public class TypeProxy implements AuxiliaryType {
         if (other == null || getClass() != other.getClass()) return false;
         TypeProxy typeProxy = (TypeProxy) other;
         return ignoreFinalizer == typeProxy.ignoreFinalizer
-                && instrumentedType.equals(typeProxy.instrumentedType)
+                && instrumentationTarget.equals(typeProxy.instrumentationTarget)
                 && proxiedType.equals(typeProxy.proxiedType);
     }
 
     @Override
     public int hashCode() {
         int result = proxiedType.hashCode();
-        result = 31 * result + instrumentedType.hashCode();
+        result = 31 * result + instrumentationTarget.hashCode();
         result = 31 * result + (ignoreFinalizer ? 1 : 0);
         return result;
     }
@@ -102,7 +100,7 @@ public class TypeProxy implements AuxiliaryType {
     public String toString() {
         return "TypeProxy{" +
                 "proxiedType=" + proxiedType +
-                ", instrumentedType=" + instrumentedType +
+                ", instrumentationTarget=" + instrumentationTarget +
                 ", ignoreFinalizer=" + ignoreFinalizer +
                 '}';
     }
@@ -115,7 +113,7 @@ public class TypeProxy implements AuxiliaryType {
     public static class ByConstructor implements StackManipulation {
 
         private final TypeDescription proxiedType;
-        private final TypeDescription instrumentedType;
+        private final Instrumentation.Target instrumentationTarget;
         private final List<TypeDescription> constructorParameters;
         private final boolean ignoreFinalizer;
 
@@ -123,16 +121,15 @@ public class TypeProxy implements AuxiliaryType {
          * Creates a new stack operation for creating a type proxy by calling one of its constructors.
          *
          * @param proxiedType           The type for the type proxy to subclass or implement.
-         * @param instrumentedType      The instrumented type which is the target of the method calls of the {@code proxiedType}.
          * @param constructorParameters The parameter types of the constructor that should be called.
          * @param ignoreFinalizer       {@code true} if any finalizers should be ignored for the delegation.
          */
         public ByConstructor(TypeDescription proxiedType,
-                             TypeDescription instrumentedType,
+                             Instrumentation.Target instrumentationTarget,
                              List<TypeDescription> constructorParameters,
                              boolean ignoreFinalizer) {
             this.proxiedType = proxiedType;
-            this.instrumentedType = instrumentedType;
+            this.instrumentationTarget = instrumentationTarget;
             this.constructorParameters = constructorParameters;
             this.ignoreFinalizer = ignoreFinalizer;
         }
@@ -144,7 +141,7 @@ public class TypeProxy implements AuxiliaryType {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-            TypeDescription proxyType = instrumentationContext.register(new TypeProxy(proxiedType, instrumentedType, ignoreFinalizer));
+            TypeDescription proxyType = instrumentationContext.register(new TypeProxy(proxiedType, instrumentationTarget, ignoreFinalizer));
             StackManipulation[] constructorValue = new StackManipulation[constructorParameters.size()];
             int index = 0;
             for (TypeDescription parameterType : constructorParameters) {
@@ -157,7 +154,7 @@ public class TypeProxy implements AuxiliaryType {
                     MethodInvocation.invoke(proxyType.getDeclaredMethods()
                             .filter(isConstructor().and(takesArguments(constructorParameters))).getOnly()),
                     Duplication.SINGLE,
-                    MethodVariableAccess.forType(instrumentedType).loadFromIndex(0),
+                    MethodVariableAccess.forType(instrumentationTarget.getTypeDescription()).loadFromIndex(0),
                     FieldAccess.forField(proxyType.getDeclaredFields().named(INSTANCE_FIELD)).putter()
             ).apply(methodVisitor, instrumentationContext);
         }
@@ -169,14 +166,14 @@ public class TypeProxy implements AuxiliaryType {
             ByConstructor that = (ByConstructor) other;
             return ignoreFinalizer == that.ignoreFinalizer
                     && constructorParameters.equals(that.constructorParameters)
-                    && instrumentedType.equals(that.instrumentedType)
+                    && instrumentationTarget.equals(that.instrumentationTarget)
                     && proxiedType.equals(that.proxiedType);
         }
 
         @Override
         public int hashCode() {
             int result = proxiedType.hashCode();
-            result = 31 * result + instrumentedType.hashCode();
+            result = 31 * result + instrumentationTarget.hashCode();
             result = 31 * result + constructorParameters.hashCode();
             result = 31 * result + (ignoreFinalizer ? 1 : 0);
             return result;
@@ -186,7 +183,7 @@ public class TypeProxy implements AuxiliaryType {
         public String toString() {
             return "TypeProxy.ByConstructor{" +
                     "proxiedType=" + proxiedType +
-                    ", instrumentedType=" + instrumentedType +
+                    ", instrumentationTarget=" + instrumentationTarget +
                     ", constructorParameters=" + constructorParameters +
                     ", ignoreFinalizer=" + ignoreFinalizer +
                     '}';
@@ -202,19 +199,20 @@ public class TypeProxy implements AuxiliaryType {
     public static class ByReflectionFactory implements StackManipulation {
 
         private final TypeDescription proxiedType;
-        private final TypeDescription instrumentedType;
+        private final Instrumentation.Target instrumentationTarget;
         private final boolean ignoreFinalizer;
 
         /**
          * Creates a new stack operation for reflectively creating a type proxy for the given arguments.
          *
-         * @param proxiedType      The type for the type proxy to subclass or implement.
-         * @param instrumentedType The instrumented type which is the target of the method calls of the {@code proxiedType}.
-         * @param ignoreFinalizer  {@code true} {@code true} if any finalizer methods should be ignored for proxying.
+         * @param proxiedType     The type for the type proxy to subclass or implement.
+         * @param ignoreFinalizer {@code true} {@code true} if any finalizer methods should be ignored for proxying.
          */
-        public ByReflectionFactory(TypeDescription proxiedType, TypeDescription instrumentedType, boolean ignoreFinalizer) {
+        public ByReflectionFactory(TypeDescription proxiedType,
+                                   Instrumentation.Target instrumentationTarget,
+                                   boolean ignoreFinalizer) {
             this.proxiedType = proxiedType;
-            this.instrumentedType = instrumentedType;
+            this.instrumentationTarget = instrumentationTarget;
             this.ignoreFinalizer = ignoreFinalizer;
         }
 
@@ -225,12 +223,12 @@ public class TypeProxy implements AuxiliaryType {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-            TypeDescription proxyType = instrumentationContext.register(new TypeProxy(proxiedType, instrumentedType, ignoreFinalizer));
+            TypeDescription proxyType = instrumentationContext.register(new TypeProxy(proxiedType, instrumentationTarget, ignoreFinalizer));
             return new Compound(
                     MethodInvocation.invoke(proxyType.getDeclaredMethods()
                             .filter(named(REFLECTION_METHOD).and(takesArguments(0))).getOnly()),
                     Duplication.SINGLE,
-                    MethodVariableAccess.forType(instrumentedType).loadFromIndex(0),
+                    MethodVariableAccess.forType(instrumentationTarget.getTypeDescription()).loadFromIndex(0),
                     FieldAccess.forField(proxyType.getDeclaredFields().named(INSTANCE_FIELD)).putter()
             ).apply(methodVisitor, instrumentationContext);
         }
@@ -241,14 +239,14 @@ public class TypeProxy implements AuxiliaryType {
             if (other == null || getClass() != other.getClass()) return false;
             ByReflectionFactory that = (ByReflectionFactory) other;
             return ignoreFinalizer == that.ignoreFinalizer
-                    && instrumentedType.equals(that.instrumentedType)
+                    && instrumentationTarget.equals(that.instrumentationTarget)
                     && proxiedType.equals(that.proxiedType);
         }
 
         @Override
         public int hashCode() {
             int result = proxiedType.hashCode();
-            result = 31 * result + instrumentedType.hashCode();
+            result = 31 * result + instrumentationTarget.hashCode();
             result = 31 * result + (ignoreFinalizer ? 1 : 0);
             return result;
         }
@@ -257,7 +255,7 @@ public class TypeProxy implements AuxiliaryType {
         public String toString() {
             return "TypeProxy.ByReflectionFactory{" +
                     "proxiedType=" + proxiedType +
-                    ", instrumentedType=" + instrumentedType +
+                    ", instrumentationTarget=" + instrumentationTarget +
                     ", ignoreFinalizer=" + ignoreFinalizer +
                     '}';
         }
@@ -273,7 +271,9 @@ public class TypeProxy implements AuxiliaryType {
 
         @Override
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
-            return instrumentedType.withField(INSTANCE_FIELD, TypeProxy.this.instrumentedType, Opcodes.ACC_SYNTHETIC);
+            return instrumentedType.withField(INSTANCE_FIELD,
+                    TypeProxy.this.instrumentationTarget.getTypeDescription(),
+                    Opcodes.ACC_SYNTHETIC);
         }
 
         @Override
@@ -309,7 +309,7 @@ public class TypeProxy implements AuxiliaryType {
 
             private final StackManipulation fieldLoadingInstruction;
 
-            public Appender(TypeDescription instrumentedType) {
+            private Appender(TypeDescription instrumentedType) {
                 fieldLoadingInstruction = FieldAccess.forField(instrumentedType.getDeclaredFields().named(INSTANCE_FIELD)).getter();
             }
 
@@ -322,10 +322,10 @@ public class TypeProxy implements AuxiliaryType {
             public Size apply(MethodVisitor methodVisitor,
                               Context instrumentationContext,
                               MethodDescription instrumentedMethod) {
-                MethodDescription proxyMethod = methodAccessorFactory.requireAccessorMethodFor(instrumentedMethod,
-                        MethodAccessorFactory.LookupMode.Default.BY_SIGNATURE);
+                MethodDescription proxyMethod = methodAccessorFactory.registerAccessorFor(instrumentationTarget
+                        .invokeSuper(instrumentedMethod, Target.MethodLookup.RESOLVE_BRIDGES));
                 StackManipulation.Size stackSize = new StackManipulation.Compound(
-                        MethodVariableAccess.forType(instrumentedType).loadFromIndex(0),
+                        MethodVariableAccess.forType(instrumentationTarget.getTypeDescription()).loadFromIndex(0),
                         fieldLoadingInstruction,
                         MethodVariableAccess.loadArguments(instrumentedMethod),
                         MethodInvocation.invoke(proxyMethod),
@@ -352,7 +352,7 @@ public class TypeProxy implements AuxiliaryType {
 
             @Override
             public String toString() {
-                return "Appender{" +
+                return "TypeProxy.Appender{" +
                         "methodCall=" + MethodCall.this +
                         "fieldLoadingInstruction=" + fieldLoadingInstruction +
                         '}';

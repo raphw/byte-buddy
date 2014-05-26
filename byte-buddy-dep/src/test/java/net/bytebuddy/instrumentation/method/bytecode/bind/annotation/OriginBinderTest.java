@@ -40,7 +40,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     public void testClassBinding() throws Exception {
         when(targetType.represents(Class.class)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
-                .bind(annotation, INDEX, source, target, instrumentedType, assigner);
+                .bind(annotation, INDEX, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
     }
 
@@ -48,12 +48,12 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     public void testMethodBinding() throws Exception {
         when(targetType.represents(Method.class)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
-                .bind(annotation, INDEX, source, target, instrumentedType, assigner);
+                .bind(annotation, INDEX, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testIllegalBinding() throws Exception {
-        Origin.Binder.INSTANCE.bind(annotation, INDEX, source, target, instrumentedType, assigner);
+        Origin.Binder.INSTANCE.bind(annotation, INDEX, source, target, instrumentationTarget, assigner);
     }
 }

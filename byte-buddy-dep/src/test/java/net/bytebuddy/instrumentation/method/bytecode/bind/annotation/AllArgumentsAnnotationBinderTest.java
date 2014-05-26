@@ -63,7 +63,7 @@ public class AllArgumentsAnnotationBinderTest extends AbstractAnnotationBinderTe
         when(targetTypeList.size()).thenReturn(2);
         when(target.getParameterAnnotations()).thenReturn(targetAnnotations);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = AllArguments.Binder.INSTANCE
-                .bind(annotation, 1, source, target, instrumentedType, assigner);
+                .bind(annotation, 1, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
         verify(source, atLeast(1)).getParameterTypes();
         verify(source, atLeast(1)).isStatic();
@@ -86,7 +86,7 @@ public class AllArgumentsAnnotationBinderTest extends AbstractAnnotationBinderTe
         when(targetTypeList.size()).thenReturn(2);
         when(target.getParameterAnnotations()).thenReturn(new Annotation[2][0]);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = AllArguments.Binder.INSTANCE
-                .bind(annotation, 1, source, target, instrumentedType, assigner);
+                .bind(annotation, 1, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(false));
         verify(source, atLeast(1)).getParameterTypes();
         verify(source, atLeast(1)).isStatic();
@@ -101,6 +101,6 @@ public class AllArgumentsAnnotationBinderTest extends AbstractAnnotationBinderTe
         TypeDescription targetType = mock(TypeDescription.class);
         when(targetType.isArray()).thenReturn(false);
         when(targetTypeList.get(0)).thenReturn(targetType);
-        AllArguments.Binder.INSTANCE.bind(annotation, 0, source, target, instrumentedType, assigner);
+        AllArguments.Binder.INSTANCE.bind(annotation, 0, source, target, instrumentationTarget, assigner);
     }
 }

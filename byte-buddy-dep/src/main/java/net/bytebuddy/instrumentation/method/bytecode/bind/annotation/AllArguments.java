@@ -1,5 +1,6 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
+import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
@@ -55,7 +56,7 @@ public @interface AllArguments {
                                                                int targetParameterIndex,
                                                                MethodDescription source,
                                                                MethodDescription target,
-                                                               TypeDescription instrumentedType,
+                                                               Instrumentation.Target instrumentationTarget,
                                                                Assigner assigner) {
             TypeDescription targetType = target.getParameterTypes().get(targetParameterIndex);
             if (!targetType.isArray()) {

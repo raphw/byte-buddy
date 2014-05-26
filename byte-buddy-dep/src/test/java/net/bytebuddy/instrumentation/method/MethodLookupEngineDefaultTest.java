@@ -65,7 +65,7 @@ public class MethodLookupEngineDefaultTest {
     public void testTrivialLookup() throws Exception {
         TypeDescription objectType = new TypeDescription.ForLoadedType(Object.class);
         MethodLookupEngine.Finding finding = methodLookupEngine.process(objectType);
-        assertThat(finding.getLookedUpType(), is(objectType));
+        assertThat(finding.getTypeDescription(), is(objectType));
         assertThat(finding.getInvokableMethods().size(), is(objectType.getDeclaredMethods().size()));
         assertThat(finding.getInvokableMethods(), containsAllOf(objectType.getDeclaredMethods()));
         assertThat(finding.getInvokableDefaultMethods().size(), is(0));
@@ -76,7 +76,7 @@ public class MethodLookupEngineDefaultTest {
         TypeDescription objectType = new TypeDescription.ForLoadedType(Object.class);
         TypeDescription classOverridingToString = new TypeDescription.ForLoadedType(ClassOverridingToString.class);
         MethodLookupEngine.Finding finding = methodLookupEngine.process(classOverridingToString);
-        assertThat(finding.getLookedUpType(), is(classOverridingToString));
+        assertThat(finding.getTypeDescription(), is(classOverridingToString));
         assertThat(finding.getInvokableMethods(), containsAllOf(classOverridingToString.getDeclaredMethods()));
         assertThat(finding.getInvokableMethods(), containsAllOf(objectType.getDeclaredMethods()
                 .filter(isVirtualTo(classOverridingToString)).filter(not(named(TO_STRING)))));
@@ -91,7 +91,7 @@ public class MethodLookupEngineDefaultTest {
         TypeDescription abstractSingleInterfaceClass = new TypeDescription.ForLoadedType(AbstractSingleInterfaceClass.class);
         TypeDescription singleMethodInterface = new TypeDescription.ForLoadedType(SingleMethodInterface.class);
         MethodLookupEngine.Finding finding = methodLookupEngine.process(abstractSingleInterfaceClass);
-        assertThat(finding.getLookedUpType(), is(abstractSingleInterfaceClass));
+        assertThat(finding.getTypeDescription(), is(abstractSingleInterfaceClass));
         assertThat(finding.getInvokableMethods(), containsAllOf(abstractSingleInterfaceClass.getDeclaredMethods()));
         assertThat(finding.getInvokableMethods(), containsAllOf(objectType.getDeclaredMethods().filter(isVirtualTo(abstractSingleInterfaceClass))));
         assertThat(finding.getInvokableMethods(), containsAllOf(singleMethodInterface.getDeclaredMethods()));
@@ -107,7 +107,7 @@ public class MethodLookupEngineDefaultTest {
         TypeDescription objectType = new TypeDescription.ForLoadedType(Object.class);
         TypeDescription singleInterfaceClass = new TypeDescription.ForLoadedType(SingleInterfaceClass.class);
         MethodLookupEngine.Finding finding = methodLookupEngine.process(singleInterfaceClass);
-        assertThat(finding.getLookedUpType(), is(singleInterfaceClass));
+        assertThat(finding.getTypeDescription(), is(singleInterfaceClass));
         assertThat(finding.getInvokableMethods(), containsAllOf(singleInterfaceClass.getDeclaredMethods()));
         assertThat(finding.getInvokableMethods(), containsAllOf(objectType.getDeclaredMethods().filter(isVirtualTo(singleInterfaceClass))));
         assertThat(finding.getInvokableMethods().size(), is(singleInterfaceClass.getDeclaredMethods().size()
@@ -122,7 +122,7 @@ public class MethodLookupEngineDefaultTest {
         TypeDescription singleMethodOverridingInterface = new TypeDescription.ForLoadedType(SingleMethodOverridingInterface.class);
         TypeDescription abstractSingleMethodOverridingClass = new TypeDescription.ForLoadedType(AbstractSingleMethodOverridingClass.class);
         MethodLookupEngine.Finding finding = methodLookupEngine.process(abstractSingleMethodOverridingClass);
-        assertThat(finding.getLookedUpType(), is(abstractSingleMethodOverridingClass));
+        assertThat(finding.getTypeDescription(), is(abstractSingleMethodOverridingClass));
         assertThat(finding.getInvokableMethods(), containsAllOf(abstractSingleMethodOverridingClass.getDeclaredMethods()));
         assertThat(finding.getInvokableMethods(), containsAllOf(singleMethodOverridingInterface.getDeclaredMethods()));
         assertThat(finding.getInvokableMethods(), containsAllOf(objectType.getDeclaredMethods().filter(isVirtualTo(abstractSingleMethodOverridingClass))));
@@ -139,7 +139,7 @@ public class MethodLookupEngineDefaultTest {
         TypeDescription singleMethodOverridingInterface = new TypeDescription.ForLoadedType(SingleMethodOverridingInterface.class);
         TypeDescription abstractFoldedInterfaceClass = new TypeDescription.ForLoadedType(AbstractFoldedInterfaceClass.class);
         MethodLookupEngine.Finding finding = methodLookupEngine.process(abstractFoldedInterfaceClass);
-        assertThat(finding.getLookedUpType(), is(abstractFoldedInterfaceClass));
+        assertThat(finding.getTypeDescription(), is(abstractFoldedInterfaceClass));
         assertThat(finding.getInvokableMethods(), containsAllOf(abstractFoldedInterfaceClass.getDeclaredMethods()));
         assertThat(finding.getInvokableMethods(), containsAllOf(singleMethodOverridingInterface.getDeclaredMethods()));
         assertThat(finding.getInvokableMethods(), containsAllOf(objectType.getDeclaredMethods().filter(isVirtualTo(abstractFoldedInterfaceClass))));
@@ -156,7 +156,7 @@ public class MethodLookupEngineDefaultTest {
         TypeDescription singleMethodOverridingInterface = new TypeDescription.ForLoadedType(SingleMethodOverridingInterface.class);
         TypeDescription abstractFoldedReverseInterfaceClass = new TypeDescription.ForLoadedType(AbstractFoldedReverseInterfaceClass.class);
         MethodLookupEngine.Finding finding = methodLookupEngine.process(abstractFoldedReverseInterfaceClass);
-        assertThat(finding.getLookedUpType(), is(abstractFoldedReverseInterfaceClass));
+        assertThat(finding.getTypeDescription(), is(abstractFoldedReverseInterfaceClass));
         assertThat(finding.getInvokableMethods(), containsAllOf(abstractFoldedReverseInterfaceClass.getDeclaredMethods()));
         assertThat(finding.getInvokableMethods(), containsAllOf(singleMethodOverridingInterface.getDeclaredMethods()));
         assertThat(finding.getInvokableMethods(), containsAllOf(objectType.getDeclaredMethods().filter(isVirtualTo(abstractFoldedReverseInterfaceClass))));
@@ -174,7 +174,7 @@ public class MethodLookupEngineDefaultTest {
         TypeDescription additionalMethodInterface = new TypeDescription.ForLoadedType(AdditionalMethodInterface.class);
         TypeDescription abstractAdditionalMethodInterfaceClass = new TypeDescription.ForLoadedType(AbstractAdditionalMethodInterfaceClass.class);
         MethodLookupEngine.Finding finding = methodLookupEngine.process(abstractAdditionalMethodInterfaceClass);
-        assertThat(finding.getLookedUpType(), is(abstractAdditionalMethodInterfaceClass));
+        assertThat(finding.getTypeDescription(), is(abstractAdditionalMethodInterfaceClass));
         assertThat(finding.getInvokableMethods(), containsAllOf(abstractAdditionalMethodInterfaceClass.getDeclaredMethods()));
         assertThat(finding.getInvokableMethods(), containsAllOf(singleMethodOverridingInterface.getDeclaredMethods()));
         assertThat(finding.getInvokableMethods(), containsAllOf(additionalMethodInterface.getDeclaredMethods()));
@@ -192,7 +192,7 @@ public class MethodLookupEngineDefaultTest {
         TypeDescription objectType = new TypeDescription.ForLoadedType(Object.class);
         TypeDescription conflictingInterfaceClass = new TypeDescription.ForLoadedType(ConflictingInterfaceClass.class);
         MethodLookupEngine.Finding finding = methodLookupEngine.process(conflictingInterfaceClass);
-        assertThat(finding.getLookedUpType(), is(conflictingInterfaceClass));
+        assertThat(finding.getTypeDescription(), is(conflictingInterfaceClass));
         assertThat(finding.getInvokableMethods(), containsAllOf(conflictingInterfaceClass.getDeclaredMethods()));
         assertThat(finding.getInvokableMethods(), containsAllOf(objectType.getDeclaredMethods().filter(isVirtualTo(conflictingInterfaceClass))));
         assertThat(finding.getInvokableMethods().size(), is(conflictingInterfaceClass.getDeclaredMethods().size()
@@ -212,7 +212,7 @@ public class MethodLookupEngineDefaultTest {
         TypeDescription singleDefaultMethodClass = findType(SINGLE_DEFAULT_METHOD_CLASS);
         TypeDescription singleDefaultMethodInterface = findType(SINGLE_DEFAULT_METHOD_INTERFACE);
         MethodLookupEngine.Finding finding = methodLookupEngine.process(singleDefaultMethodClass);
-        assertThat(finding.getLookedUpType(), is(singleDefaultMethodClass));
+        assertThat(finding.getTypeDescription(), is(singleDefaultMethodClass));
         assertThat(finding.getInvokableDefaultMethods().size(), is(1));
         MethodDescription interfaceMethod = singleDefaultMethodInterface.getDeclaredMethods().getOnly();
         Set<MethodDescription> discoveredDefaultMethods = finding.getInvokableDefaultMethods().get(singleDefaultMethodInterface);
@@ -227,7 +227,7 @@ public class MethodLookupEngineDefaultTest {
         TypeDescription singleDefaultMethodClass = findType(SINGLE_DEFAULT_METHOD_OVERRIDING_CLASS);
         TypeDescription singleDefaultMethodInterface = findType(SINGLE_DEFAULT_METHOD_INTERFACE);
         MethodLookupEngine.Finding finding = methodLookupEngine.process(singleDefaultMethodClass);
-        assertThat(finding.getLookedUpType(), is(singleDefaultMethodClass));
+        assertThat(finding.getTypeDescription(), is(singleDefaultMethodClass));
         assertThat(finding.getInvokableDefaultMethods().size(), is(1));
         MethodDescription interfaceMethod = singleDefaultMethodInterface.getDeclaredMethods().getOnly();
         Set<MethodDescription> discoveredDefaultMethods = finding.getInvokableDefaultMethods().get(singleDefaultMethodInterface);
@@ -243,7 +243,7 @@ public class MethodLookupEngineDefaultTest {
         TypeDescription singleDefaultMethodInterface = findType(SINGLE_DEFAULT_METHOD_INTERFACE);
         TypeDescription singleConflictingDefaultMethodInterface = findType(SINGLE_DEFAULT_METHOD_CONFLICTING_INTERFACE);
         MethodLookupEngine.Finding finding = methodLookupEngine.process(singleDefaultMethodClass);
-        assertThat(finding.getLookedUpType(), is(singleDefaultMethodClass));
+        assertThat(finding.getTypeDescription(), is(singleDefaultMethodClass));
         assertThat(finding.getInvokableDefaultMethods().size(), is(2));
         MethodDescription firstInterfaceMethod = singleDefaultMethodInterface.getDeclaredMethods().getOnly();
         MethodDescription secondInterfaceMethod = singleConflictingDefaultMethodInterface.getDeclaredMethods().getOnly();
@@ -261,7 +261,7 @@ public class MethodLookupEngineDefaultTest {
     public void testAbstractOverridingDefaultMethodLookup() throws Exception {
         TypeDescription singleDefaultMethodAbstractOverridingClass = findType(SINGLE_DEFAULT_METHOD_ABSTRACT_OVERRIDING_CLASS);
         MethodLookupEngine.Finding finding = methodLookupEngine.process(singleDefaultMethodAbstractOverridingClass);
-        assertThat(finding.getLookedUpType(), is(singleDefaultMethodAbstractOverridingClass));
+        assertThat(finding.getTypeDescription(), is(singleDefaultMethodAbstractOverridingClass));
         assertThat(finding.getInvokableDefaultMethods().size(), is(1));
         assertThat(finding.getInvokableDefaultMethods().get(findType(SINGLE_DEFAULT_METHOD_ABSTRACT_OVERRIDING_INTERFACE)).size(), is(0));
     }
@@ -272,7 +272,7 @@ public class MethodLookupEngineDefaultTest {
         TypeDescription singleDefaultMethodManifestOverridingClass = findType(SINGLE_DEFAULT_METHOD_MANIFEST_OVERRIDING_CLASS);
         TypeDescription singleDefaultMethodManifestOverridingInterface = findType(SINGLE_DEFAULT_METHOD_MANIFEST_OVERRIDING_INTERFACE);
         MethodLookupEngine.Finding finding = methodLookupEngine.process(singleDefaultMethodManifestOverridingClass);
-        assertThat(finding.getLookedUpType(), is(singleDefaultMethodManifestOverridingClass));
+        assertThat(finding.getTypeDescription(), is(singleDefaultMethodManifestOverridingClass));
         assertThat(finding.getInvokableDefaultMethods().size(), is(1));
         assertThat(finding.getInvokableDefaultMethods().get(singleDefaultMethodManifestOverridingInterface).size(), is(1));
         assertThat(finding.getInvokableDefaultMethods().get(singleDefaultMethodManifestOverridingInterface),
@@ -286,7 +286,7 @@ public class MethodLookupEngineDefaultTest {
         TypeDescription singleDefaultMethodNonOverridingInterface = findType(SINGLE_DEFAULT_METHOD_NON_OVERRIDING_INTERFACE);
         TypeDescription singleDefaultMethodInterface = findType(SINGLE_DEFAULT_METHOD_INTERFACE);
         MethodLookupEngine.Finding finding = methodLookupEngine.process(singleDefaultMethodNonOverridingClass);
-        assertThat(finding.getLookedUpType(), is(singleDefaultMethodNonOverridingClass));
+        assertThat(finding.getTypeDescription(), is(singleDefaultMethodNonOverridingClass));
         MethodDescription interfaceMethod = singleDefaultMethodInterface.getDeclaredMethods().getOnly();
         assertThat(finding.getInvokableMethods(), hasItem(interfaceMethod));
         assertThat(finding.getInvokableDefaultMethods().size(), is(1));
@@ -303,7 +303,7 @@ public class MethodLookupEngineDefaultTest {
         TypeDescription singleDefaultMethodAmbiguousInheritanceInterface = findType(SINGLE_DEFAULT_METHOD_AMBIGUOUS_INHERITANCE_INTERFACE);
         TypeDescription singleDefaultMethodInterface = findType(SINGLE_DEFAULT_METHOD_INTERFACE);
         MethodLookupEngine.Finding finding = methodLookupEngine.process(singleDefaultMethodAmbiguousInheritanceClass);
-        assertThat(finding.getLookedUpType(), is(singleDefaultMethodAmbiguousInheritanceClass));
+        assertThat(finding.getTypeDescription(), is(singleDefaultMethodAmbiguousInheritanceClass));
         MethodDescription interfaceMethod = singleDefaultMethodInterface.getDeclaredMethods().getOnly();
         assertThat(finding.getInvokableMethods(), hasItem(interfaceMethod));
         assertThat(finding.getInvokableDefaultMethods().size(), is(2));
@@ -321,7 +321,7 @@ public class MethodLookupEngineDefaultTest {
         TypeDescription singleDefaultMethodAbstractOverridingInterface = findType(SINGLE_DEFAULT_METHOD_ABSTRACT_OVERRIDING_INTERFACE);
         TypeDescription singleDefaultMethodInterface = findType(SINGLE_DEFAULT_METHOD_INTERFACE);
         MethodLookupEngine.Finding finding = methodLookupEngine.process(singleDefaultMethodAmbiguousAbstractOverridingClass);
-        assertThat(finding.getLookedUpType(), is(singleDefaultMethodAmbiguousAbstractOverridingClass));
+        assertThat(finding.getTypeDescription(), is(singleDefaultMethodAmbiguousAbstractOverridingClass));
         MethodDescription interfaceMethod = singleDefaultMethodInterface.getDeclaredMethods().getOnly();
         assertThat(finding.getInvokableDefaultMethods().size(), is(2));
         assertThat(finding.getInvokableDefaultMethods().get(singleDefaultMethodNonOverridingInterface).size(), is(1));
@@ -337,7 +337,7 @@ public class MethodLookupEngineDefaultTest {
         TypeDescription singleDefaultMethodManifestOverridingInterface = findType(SINGLE_DEFAULT_METHOD_MANIFEST_OVERRIDING_INTERFACE);
         TypeDescription singleDefaultMethodInterface = findType(SINGLE_DEFAULT_METHOD_INTERFACE);
         MethodLookupEngine.Finding finding = methodLookupEngine.process(singleDefaultMethodAmbiguousManifestOverridingClass);
-        assertThat(finding.getLookedUpType(), is(singleDefaultMethodAmbiguousManifestOverridingClass));
+        assertThat(finding.getTypeDescription(), is(singleDefaultMethodAmbiguousManifestOverridingClass));
         MethodDescription interfaceMethod = singleDefaultMethodInterface.getDeclaredMethods().getOnly();
         assertThat(finding.getInvokableDefaultMethods().size(), is(2));
         assertThat(finding.getInvokableDefaultMethods().get(singleDefaultMethodNonOverridingInterface).size(), is(1));

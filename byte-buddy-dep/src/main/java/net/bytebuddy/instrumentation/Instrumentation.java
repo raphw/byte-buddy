@@ -1,9 +1,12 @@
 package net.bytebuddy.instrumentation;
 
-import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
+import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocation;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
@@ -85,6 +88,89 @@ public interface Instrumentation {
         }
     }
 
+    static interface SpecialMethodInvocation extends StackManipulation {
+
+        static enum Illegal implements SpecialMethodInvocation {
+
+            INSTANCE;
+
+            @Override
+            public boolean isValid() {
+                return false;
+            }
+
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Context instrumentationContext) {
+                throw new IllegalStateException();
+            }
+
+            @Override
+            public MethodDescription getMethodDescription() {
+                throw new IllegalStateException();
+            }
+        }
+
+        static class Legal implements SpecialMethodInvocation {
+
+            private final MethodDescription methodDescription;
+            private final TypeDescription typeDescription;
+
+            public Legal(MethodDescription methodDescription, TypeDescription typeDescription) {
+                this.methodDescription = methodDescription;
+                this.typeDescription = typeDescription;
+            }
+
+            @Override
+            public MethodDescription getMethodDescription() {
+                return methodDescription;
+            }
+
+            @Override
+            public boolean isValid() {
+                return true;
+            }
+
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Context instrumentationContext) {
+                return MethodInvocation.invoke(methodDescription)
+                        .special(typeDescription)
+                        .apply(methodVisitor, instrumentationContext);
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                Legal aLegal = (Legal) other;
+                return typeDescription.equals(aLegal.typeDescription)
+                        && methodDescription.getInternalName().equals(aLegal.methodDescription.getInternalName())
+                        && methodDescription.getParameterTypes().equals(aLegal.methodDescription.getParameterTypes())
+                        && methodDescription.getReturnType().equals(aLegal.methodDescription.getReturnType());
+            }
+
+            @Override
+            public int hashCode() {
+                int result = methodDescription.getInternalName().hashCode();
+                result = 31 * result + methodDescription.getParameterTypes().hashCode();
+                result = 31 * result + methodDescription.getReturnType().hashCode();
+                result = 31 * result + typeDescription.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "Instrumentation.SpecialMethodInvocation.Default{" +
+                        "typeDescription=" + typeDescription +
+                        ", methodName=" + methodDescription.getInternalName() +
+                        ", methodParameterTypes=" + methodDescription.getParameterTypes() +
+                        ", methodReturnType=" + methodDescription.getReturnType() +
+                        '}';
+            }
+        }
+
+        MethodDescription getMethodDescription();
+    }
+
     /**
      * The target of an instrumentation. Instrumentation targets must be immutable and can be queried without altering
      * the instrumentation result. An instrumentation target provides information on the type that is to be created
@@ -93,12 +179,86 @@ public interface Instrumentation {
      */
     static interface Target {
 
+        static enum MethodLookup {
+
+            EXACT {
+                @Override
+                protected MethodDescription resolve(MethodDescription methodDescription,
+                                                    BridgeMethodResolver bridgeMethodResolver) {
+                    return methodDescription;
+                }
+            },
+
+            RESOLVE_BRIDGES {
+                @Override
+                protected MethodDescription resolve(MethodDescription methodDescription,
+                                                    BridgeMethodResolver bridgeMethodResolver) {
+                    return bridgeMethodResolver.resolve(methodDescription);
+                }
+            };
+
+            protected abstract MethodDescription resolve(MethodDescription methodDescription,
+                                                         BridgeMethodResolver bridgeMethodResolver);
+        }
+
+        abstract static class AbstractBase implements Target {
+
+            protected final TypeDescription typeDescription;
+            private final Map<TypeDescription, Map<String, MethodDescription>> defaultMethods;
+            private final BridgeMethodResolver bridgeMethodResolver;
+
+            protected AbstractBase(MethodLookupEngine.Finding finding,
+                                   BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
+                bridgeMethodResolver = bridgeMethodResolverFactory.make(finding.getInvokableMethods());
+                typeDescription = finding.getTypeDescription();
+                defaultMethods = new HashMap<TypeDescription, Map<String, MethodDescription>>(finding.getInvokableDefaultMethods().size());
+                for (Map.Entry<TypeDescription, Set<MethodDescription>> entry : finding.getInvokableDefaultMethods().entrySet()) {
+                    Map<String, MethodDescription> defaultMethods = new HashMap<String, MethodDescription>(entry.getValue().size());
+                    for (MethodDescription methodDescription : entry.getValue()) {
+                        defaultMethods.put(methodDescription.getUniqueSignature(), methodDescription);
+                    }
+                    this.defaultMethods.put(entry.getKey(), defaultMethods);
+                }
+            }
+
+            @Override
+            public TypeDescription getTypeDescription() {
+                return typeDescription;
+            }
+
+            @Override
+            public Instrumentation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription,
+                                                                       MethodLookup methodLookup) {
+                return invokeSuper(methodLookup.resolve(methodDescription, bridgeMethodResolver));
+            }
+
+            protected abstract Instrumentation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription);
+
+            @Override
+            public Instrumentation.SpecialMethodInvocation invokeDefault(TypeDescription targetType,
+                                                                         String uniqueMethodSignature) {
+                Map<String, MethodDescription> defaultMethods = this.defaultMethods.get(targetType);
+                if (defaultMethods != null) {
+                    MethodDescription defaultMethod = defaultMethods.get(uniqueMethodSignature);
+                    if (defaultMethod != null) {
+                        return new Instrumentation.SpecialMethodInvocation.Legal(defaultMethod, targetType);
+                    }
+                }
+                return Instrumentation.SpecialMethodInvocation.Illegal.INSTANCE;
+            }
+
+        }
+
         /**
          * Returns a description of the instrumented type.
          *
          * @return A description of the instrumented type.
          */
         TypeDescription getTypeDescription();
+
+        SpecialMethodInvocation invokeSuper(MethodDescription methodDescription, MethodLookup methodLookup);
+
+        SpecialMethodInvocation invokeDefault(TypeDescription targetType, String uniqueMethodSignature);
 
         /**
          * A factory for creating an {@link net.bytebuddy.instrumentation.Instrumentation.Target}.
@@ -109,50 +269,9 @@ public interface Instrumentation {
              * Creates an {@link net.bytebuddy.instrumentation.Instrumentation.Target} for the given instrumented
              * type's description.
              *
-             * @param typeDescription The type description for which the instrumentation target should be created.
              * @return An {@link net.bytebuddy.instrumentation.Instrumentation.Target} for the given type description.
              */
-            Target make(TypeDescription typeDescription);
-        }
-
-        /**
-         * A default implementation of a {@link net.bytebuddy.instrumentation.Instrumentation.Target}.
-         */
-        static class Default implements Target {
-
-            private final TypeDescription typeDescription;
-
-            /**
-             * Creates a new default {@link net.bytebuddy.instrumentation.Instrumentation.Target}.
-             *
-             * @param typeDescription A description of the instrumented type.
-             */
-            public Default(TypeDescription typeDescription) {
-                this.typeDescription = typeDescription;
-            }
-
-            @Override
-            public TypeDescription getTypeDescription() {
-                return typeDescription;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && typeDescription.equals(((Default) other).typeDescription);
-            }
-
-            @Override
-            public int hashCode() {
-                return typeDescription.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "Instrumentation.Target.Default{" +
-                        "typeDescription=" + typeDescription +
-                        '}';
-            }
+            Target make(MethodLookupEngine.Finding methodLookupEngineFinding);
         }
     }
 
@@ -173,92 +292,9 @@ public interface Instrumentation {
          */
         TypeDescription register(AuxiliaryType auxiliaryType);
 
-        /**
-         * Returns a list of auxiliary types that are currently registered for the instrumentation for this context.
-         *
-         * @return A list containing all auxiliary types currently registered.
-         */
-        List<DynamicType> getRegisteredAuxiliaryTypes();
+        static interface ExtractableView extends Context {
 
-        /**
-         * A convenience implementation of an instrumentation context that allows for a better composition
-         * of the instrumentation context implementation.
-         */
-        static class Default implements Context, AuxiliaryType.MethodAccessorFactory {
-
-            private final ClassFileVersion classFileVersion;
-            private final AuxiliaryTypeNamingStrategy auxiliaryTypeNamingStrategy;
-            private final AuxiliaryType.MethodAccessorFactory methodAccessorFactory;
-            private final Map<AuxiliaryType, DynamicType> auxiliaryTypes;
-            private final Map<MethodDescription, MethodDescription> registeredAccessorMethods;
-
-            /**
-             * Creates a new default instrumentation context.
-             *
-             * @param classFileVersion            The class file version for auxiliary types.
-             * @param auxiliaryTypeNamingStrategy The naming strategy for auxiliary types that are registered.
-             * @param methodAccessorFactory       A factory for creating method proxies for the currently instrumented
-             *                                    type.
-             */
-            public Default(ClassFileVersion classFileVersion,
-                           AuxiliaryTypeNamingStrategy auxiliaryTypeNamingStrategy,
-                           AuxiliaryType.MethodAccessorFactory methodAccessorFactory) {
-                this.classFileVersion = classFileVersion;
-                this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
-                this.methodAccessorFactory = methodAccessorFactory;
-                auxiliaryTypes = new HashMap<AuxiliaryType, DynamicType>();
-                registeredAccessorMethods = new HashMap<MethodDescription, MethodDescription>();
-            }
-
-            @Override
-            public TypeDescription register(AuxiliaryType auxiliaryType) {
-                DynamicType dynamicType = auxiliaryTypes.get(auxiliaryType);
-                if (dynamicType == null) {
-                    dynamicType = auxiliaryType.make(auxiliaryTypeNamingStrategy.name(auxiliaryType), classFileVersion, this);
-                    auxiliaryTypes.put(auxiliaryType, dynamicType);
-                }
-                return dynamicType.getDescription();
-            }
-
-            @Override
-            public MethodDescription requireAccessorMethodFor(MethodDescription targetMethod, LookupMode lookupMode) {
-                MethodDescription accessorMethod = registeredAccessorMethods.get(targetMethod);
-                if (accessorMethod == null) {
-                    accessorMethod = methodAccessorFactory.requireAccessorMethodFor(targetMethod, lookupMode);
-                    registeredAccessorMethods.put(targetMethod, accessorMethod);
-                }
-                return accessorMethod;
-            }
-
-            @Override
-            public List<DynamicType> getRegisteredAuxiliaryTypes() {
-                return Collections.unmodifiableList(new ArrayList<DynamicType>(auxiliaryTypes.values()));
-            }
-
-            @Override
-            public String toString() {
-                return "Default{" +
-                        "classFileVersion=" + classFileVersion +
-                        ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
-                        ", methodAccessorFactory=" + methodAccessorFactory +
-                        ", auxiliaryTypes=" + auxiliaryTypes +
-                        ", registeredAccessorMethods=" + registeredAccessorMethods +
-                        '}';
-            }
-
-            /**
-             * Representation of a naming strategy for an auxiliary type.
-             */
-            public static interface AuxiliaryTypeNamingStrategy {
-
-                /**
-                 * NAmes an auxiliary type.
-                 *
-                 * @param auxiliaryType The auxiliary type to name.
-                 * @return The fully qualified name for the given auxiliary type.
-                 */
-                String name(AuxiliaryType auxiliaryType);
-            }
+            List<? extends DynamicType> getRegisteredAuxiliaryTypes();
         }
     }
 

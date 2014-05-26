@@ -1,5 +1,6 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
+import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
@@ -25,7 +26,7 @@ public class NextUnboundAsDefaultBinderTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeDescription typeDescription;
+    private Instrumentation.Target instrumentationTarget;
     @Mock
     private MethodDescription source, target;
     @Mock
@@ -40,7 +41,7 @@ public class NextUnboundAsDefaultBinderTest {
 
     @After
     public void tearDown() throws Exception {
-        verifyZeroInteractions(typeDescription);
+        verifyZeroInteractions(instrumentationTarget);
     }
 
     @Test
@@ -48,7 +49,7 @@ public class NextUnboundAsDefaultBinderTest {
         when(source.getParameterTypes()).thenReturn(typeList);
         when(target.getParameterAnnotations()).thenReturn(new Annotation[0][0]);
         Iterator<Argument> iterator = Argument.NextUnboundAsDefaultsProvider.INSTANCE
-                .makeIterator(typeDescription, source, target);
+                .makeIterator(instrumentationTarget, source, target);
         assertThat(iterator.hasNext(), is(true));
         assertThat(iterator.next().value(), is(0));
         assertThat(iterator.hasNext(), is(true));
@@ -62,7 +63,7 @@ public class NextUnboundAsDefaultBinderTest {
     public void testIteratorRemoval() throws Exception {
         when(target.getParameterAnnotations()).thenReturn(new Annotation[0][0]);
         Iterator<Argument> iterator = Argument.NextUnboundAsDefaultsProvider.INSTANCE
-                .makeIterator(typeDescription, source, target);
+                .makeIterator(instrumentationTarget, source, target);
         assertThat(iterator.hasNext(), is(true));
         iterator.remove();
         assertThat(iterator.hasNext(), is(true));
@@ -78,7 +79,7 @@ public class NextUnboundAsDefaultBinderTest {
         doReturn(Argument.class).when(indexZeroArgument).annotationType();
         when(target.getParameterAnnotations()).thenReturn(new Annotation[][]{{indexZeroArgument}, {}});
         Iterator<Argument> iterator = Argument.NextUnboundAsDefaultsProvider.INSTANCE
-                .makeIterator(typeDescription, source, target);
+                .makeIterator(instrumentationTarget, source, target);
         assertThat(iterator.hasNext(), is(true));
         assertThat(iterator.next().value(), is(1));
         assertThat(iterator.hasNext(), is(false));
@@ -93,7 +94,7 @@ public class NextUnboundAsDefaultBinderTest {
         doReturn(Argument.class).when(indexOneArgument).annotationType();
         when(target.getParameterAnnotations()).thenReturn(new Annotation[][]{{indexOneArgument}, {}});
         Iterator<Argument> iterator = Argument.NextUnboundAsDefaultsProvider.INSTANCE
-                .makeIterator(typeDescription, source, target);
+                .makeIterator(instrumentationTarget, source, target);
         assertThat(iterator.hasNext(), is(true));
         assertThat(iterator.next().value(), is(0));
         assertThat(iterator.hasNext(), is(false));
@@ -111,7 +112,7 @@ public class NextUnboundAsDefaultBinderTest {
         doReturn(Argument.class).when(indexOneArgument).annotationType();
         when(target.getParameterAnnotations()).thenReturn(new Annotation[][]{{indexOneArgument}, {indexZeroArgument}});
         Iterator<Argument> iterator = Argument.NextUnboundAsDefaultsProvider.INSTANCE
-                .makeIterator(typeDescription, source, target);
+                .makeIterator(instrumentationTarget, source, target);
         assertThat(iterator.hasNext(), is(false));
         verify(source, atLeast(1)).getParameterTypes();
         verify(target, atLeast(1)).getParameterAnnotations();

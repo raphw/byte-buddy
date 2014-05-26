@@ -1,5 +1,6 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
+import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
@@ -27,6 +28,8 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
     @Mock
     protected MethodDescription source, target;
     @Mock
+    protected Instrumentation.Target instrumentationTarget;
+    @Mock
     protected TypeDescription instrumentedType;
     @Mock
     protected Assigner assigner;
@@ -46,5 +49,6 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
         when(target.getParameterTypes()).thenReturn(targetTypeList);
         when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean()))
                 .thenReturn(stackManipulation);
+        when(instrumentationTarget.getTypeDescription()).thenReturn(instrumentedType);
     }
 }

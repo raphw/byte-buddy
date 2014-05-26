@@ -47,7 +47,7 @@ public class ThisAnnotationBinderTest extends AbstractAnnotationBinderTest<This>
         when(target.getParameterTypes()).thenReturn(typeList);
         when(target.getParameterAnnotations()).thenReturn(new Annotation[1][0]);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
-                .bind(annotation, 0, source, target, instrumentedType, assigner);
+                .bind(annotation, 0, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
         verify(assigner).assign(instrumentedType, parameterType, false);
         verifyNoMoreInteractions(assigner);
@@ -63,7 +63,7 @@ public class ThisAnnotationBinderTest extends AbstractAnnotationBinderTest<This>
         doReturn(RuntimeType.class).when(runtimeType).annotationType();
         when(target.getParameterAnnotations()).thenReturn(new Annotation[][]{{runtimeType}});
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
-                .bind(annotation, 0, source, target, instrumentedType, assigner);
+                .bind(annotation, 0, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
         verify(assigner).assign(instrumentedType, parameterType, true);
         verifyNoMoreInteractions(assigner);
@@ -79,7 +79,7 @@ public class ThisAnnotationBinderTest extends AbstractAnnotationBinderTest<This>
         when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean()))
                 .thenReturn(StackManipulation.Illegal.INSTANCE);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
-                .bind(annotation, 0, source, target, instrumentedType, assigner);
+                .bind(annotation, 0, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(false));
         verify(assigner).assign(instrumentedType, parameterType, false);
         verifyNoMoreInteractions(assigner);
@@ -91,13 +91,13 @@ public class ThisAnnotationBinderTest extends AbstractAnnotationBinderTest<This>
     public void testPrimitiveType() throws Exception {
         when(parameterType.isPrimitive()).thenReturn(true);
         when(target.getParameterTypes()).thenReturn(typeList);
-        This.Binder.INSTANCE.bind(annotation, 0, source, target, instrumentedType, assigner);
+        This.Binder.INSTANCE.bind(annotation, 0, source, target, instrumentationTarget, assigner);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testArrayType() throws Exception {
         when(parameterType.isArray()).thenReturn(true);
         when(target.getParameterTypes()).thenReturn(typeList);
-        This.Binder.INSTANCE.bind(annotation, 0, source, target, instrumentedType, assigner);
+        This.Binder.INSTANCE.bind(annotation, 0, source, target, instrumentationTarget, assigner);
     }
 }

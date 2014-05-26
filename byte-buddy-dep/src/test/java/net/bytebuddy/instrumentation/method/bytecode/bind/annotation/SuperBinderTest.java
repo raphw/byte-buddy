@@ -31,7 +31,7 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
         super.setUp();
         when(targetTypeList.get(INDEX)).thenReturn(targetType);
         when(annotation.strategy()).thenReturn(instantiation);
-        when(instantiation.proxyFor(targetType, instrumentedType, annotation)).thenReturn(stackManipulation);
+        when(instantiation.proxyFor(targetType, instrumentationTarget, annotation)).thenReturn(stackManipulation);
         when(annotation.constructorParameters()).thenReturn(new Class<?>[0]);
     }
 
@@ -45,15 +45,15 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
         when(stackManipulation.isValid()).thenReturn(true);
         when(instrumentedType.isAssignableTo(targetType)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Super.Binder.INSTANCE
-                .bind(annotation, INDEX, source, target, instrumentedType, assigner);
+                .bind(annotation, INDEX, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
-        verify(instantiation).proxyFor(targetType, instrumentedType, annotation);
+        verify(instantiation).proxyFor(targetType, instrumentationTarget, annotation);
     }
 
     @Test
     public void testIllegalBinding() throws Exception {
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Super.Binder.INSTANCE
-                .bind(annotation, INDEX, source, target, instrumentedType, assigner);
+                .bind(annotation, INDEX, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(false));
     }
 }

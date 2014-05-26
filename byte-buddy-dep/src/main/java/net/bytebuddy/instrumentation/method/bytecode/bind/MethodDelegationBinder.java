@@ -23,13 +23,13 @@ public interface MethodDelegationBinder {
     /**
      * Attempts a binding of a source method to a given target method.
      *
-     * @param instrumentedType The type which is subject to instrumentation and onto which this binding
-     *                         is to be applied.
-     * @param source           The method that is to be bound to the {@code target} method.
-     * @param target           The method that is to be invoked as a delegate.
+     * @param instrumentationTarget The target of the current instrumentation onto which this binding
+     *                              is to be applied.
+     * @param source                The method that is to be bound to the {@code target} method.
+     * @param target                The method that is to be invoked as a delegate.
      * @return A binding representing this attempt to bind the {@code source} method to the {@code target} method.
      */
-    MethodBinding bind(TypeDescription instrumentedType, MethodDescription source, MethodDescription target);
+    MethodBinding bind(Instrumentation.Target instrumentationTarget, MethodDescription source, MethodDescription target);
 
     /**
      * Implementations are used as delegates for invoking a method that was bound
@@ -629,28 +629,27 @@ public interface MethodDelegationBinder {
         }
 
         /**
-         * @param instrumentedType The instrumented type that is target of binding the {@code source} method
-         *                         to a delegate method.
-         * @param source           The source method that is to be bound.
-         * @param targets          All possible targets for the delegation binding that are to be considered.
+         * @param instrumentationTarget The instrumentation target for binding the {@code source} method to.
+         * @param source                The source method that is to be bound.
+         * @param targets               All possible targets for the delegation binding that are to be considered.
          * @return The best binding that was identified. If no such binding can be identified, an exception is thrown.
          */
-        public MethodBinding process(TypeDescription instrumentedType,
+        public MethodBinding process(Instrumentation.Target instrumentationTarget,
                                      MethodDescription source,
                                      Iterable<? extends MethodDescription> targets) {
-            List<MethodBinding> possibleDelegations = bind(instrumentedType, source, targets);
+            List<MethodBinding> possibleDelegations = bind(instrumentationTarget, source, targets);
             if (possibleDelegations.size() == 0) {
                 throw new IllegalArgumentException("No method can be bound to " + source);
             }
             return resolve(source, possibleDelegations);
         }
 
-        private List<MethodBinding> bind(TypeDescription instrumentedType,
+        private List<MethodBinding> bind(Instrumentation.Target instrumentationTarget,
                                          MethodDescription source,
                                          Iterable<? extends MethodDescription> targets) {
             List<MethodBinding> possibleDelegations = new LinkedList<MethodBinding>();
             for (MethodDescription target : targets) {
-                MethodBinding methodBinding = methodDelegationBinder.bind(instrumentedType, source, target);
+                MethodBinding methodBinding = methodDelegationBinder.bind(instrumentationTarget, source, target);
                 if (methodBinding.isValid()) {
                     possibleDelegations.add(methodBinding);
                 }

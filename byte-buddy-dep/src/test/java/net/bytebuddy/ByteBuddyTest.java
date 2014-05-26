@@ -398,7 +398,7 @@ public class ByteBuddyTest {
                                                                int targetParameterIndex,
                                                                MethodDescription source,
                                                                MethodDescription target,
-                                                               TypeDescription instrumentedType,
+                                                               Instrumentation.Target instrumentationTarget,
                                                                Assigner assigner) {
             if (!target.getParameterTypes().get(targetParameterIndex).represents(String.class)) {
                 throw new IllegalStateException(target + " makes wrong use of StringValue");

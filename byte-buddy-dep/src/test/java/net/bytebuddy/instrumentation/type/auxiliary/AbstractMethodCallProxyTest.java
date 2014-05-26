@@ -3,6 +3,7 @@ package net.bytebuddy.instrumentation.type.auxiliary;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.MockitoRule;
@@ -28,26 +29,24 @@ public class AbstractMethodCallProxyTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private MethodDescription targetMethod;
+    private Instrumentation.SpecialMethodInvocation specialMethodInvocation;
     @Mock
     private AuxiliaryType.MethodAccessorFactory methodAccessorFactory;
 
     protected Class<?> proxyOnlyDeclaredMethodOf(Class<?> proxyTarget) throws Exception {
         MethodDescription proxyMethod = new TypeDescription.ForLoadedType(proxyTarget)
                 .getDeclaredMethods().filter(not(isConstructor())).getOnly();
-        when(methodAccessorFactory.requireAccessorMethodFor(eq(targetMethod),
-                any(AuxiliaryType.MethodAccessorFactory.LookupMode.class))).thenReturn(proxyMethod);
+        when(methodAccessorFactory.registerAccessorFor(eq(specialMethodInvocation))).thenReturn(proxyMethod);
         String auxiliaryTypeName = getClass().getName() + "$" + proxyTarget.getSimpleName() + "$Proxy";
-        DynamicType dynamicType = new MethodCallProxy(targetMethod).make(auxiliaryTypeName,
+        DynamicType dynamicType = new MethodCallProxy(specialMethodInvocation).make(auxiliaryTypeName,
                 ClassFileVersion.forCurrentJavaVersion(),
                 methodAccessorFactory);
         DynamicType.Unloaded<?> unloaded = (DynamicType.Unloaded<?>) dynamicType;
         Class<?> auxiliaryType = unloaded.load(getClass().getClassLoader(), ClassLoadingStrategy.Default.INJECTION).getLoaded();
         assertThat(auxiliaryType.getName(), is(auxiliaryTypeName));
-        verify(methodAccessorFactory).requireAccessorMethodFor(targetMethod,
-                AuxiliaryType.MethodAccessorFactory.LookupMode.Default.EXACT);
+        verify(methodAccessorFactory).registerAccessorFor(specialMethodInvocation);
         verifyNoMoreInteractions(methodAccessorFactory);
-        verifyZeroInteractions(targetMethod);
+        verifyZeroInteractions(specialMethodInvocation);
         assertThat(auxiliaryType.getModifiers(), is(Opcodes.ACC_SYNTHETIC));
         assertThat(Callable.class.isAssignableFrom(auxiliaryType), is(true));
         assertThat(Runnable.class.isAssignableFrom(auxiliaryType), is(true));

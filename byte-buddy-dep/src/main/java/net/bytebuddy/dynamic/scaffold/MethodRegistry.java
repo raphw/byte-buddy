@@ -1,9 +1,11 @@
 package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.instrumentation.Instrumentation;
+import net.bytebuddy.instrumentation.TypeInitializer;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
+import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
@@ -56,6 +58,7 @@ public interface MethodRegistry {
      * @return A compiled method registry representing the methods that were registered with this method registry.
      */
     Compiled compile(InstrumentedType instrumentedType,
+                     MethodLookupEngine methodLookupEngine,
                      Instrumentation.Target.Factory instrumentationTargetFactory,
                      TypeWriter.MethodPool.Entry fallback);
 
@@ -64,7 +67,9 @@ public interface MethodRegistry {
      */
     static interface Compiled extends TypeWriter.MethodPool {
 
-        InstrumentedType getInstrumentedType();
+        MethodLookupEngine.Finding getFinding();
+
+        TypeInitializer getTypeInitializer();
     }
 
     /**
@@ -156,12 +161,15 @@ public interface MethodRegistry {
 
         @Override
         public MethodRegistry.Compiled compile(InstrumentedType instrumentedType,
+                                               MethodLookupEngine methodLookupEngine,
                                                Instrumentation.Target.Factory instrumentationTargetFactory,
                                                MethodRegistry.Compiled.Entry fallback) {
             List<Entry> additionalEntries = new LinkedList<Entry>();
             instrumentedType = prepareInstrumentedType(instrumentedType, additionalEntries);
-            return new Compiled(instrumentedType,
-                    compileEntries(additionalEntries, instrumentationTargetFactory.make(instrumentedType)),
+            MethodLookupEngine.Finding finding = methodLookupEngine.process(instrumentedType.detach());
+            return new Compiled(finding,
+                    instrumentedType.getTypeInitializer(),
+                    compileEntries(additionalEntries, instrumentationTargetFactory.make(finding)),
                     fallback);
         }
 
@@ -228,14 +236,17 @@ public interface MethodRegistry {
 
         private static class Compiled implements MethodRegistry.Compiled {
 
-            private final InstrumentedType instrumentedType;
+            private final MethodLookupEngine.Finding finding;
+            private final TypeInitializer typeInitializer;
             private final List<Entry> entries;
             private final MethodRegistry.Compiled.Entry fallback;
 
-            private Compiled(InstrumentedType instrumentedType,
+            private Compiled(MethodLookupEngine.Finding finding,
+                             TypeInitializer typeInitializer,
                              List<Entry> entries,
                              MethodRegistry.Compiled.Entry fallback) {
-                this.instrumentedType = instrumentedType;
+                this.finding = finding;
+                this.typeInitializer = typeInitializer;
                 this.entries = entries;
                 this.fallback = fallback;
             }
@@ -251,8 +262,13 @@ public interface MethodRegistry {
             }
 
             @Override
-            public InstrumentedType getInstrumentedType() {
-                return instrumentedType;
+            public MethodLookupEngine.Finding getFinding() {
+                return finding;
+            }
+
+            @Override
+            public TypeInitializer getTypeInitializer() {
+                return typeInitializer;
             }
 
             @Override
@@ -262,12 +278,14 @@ public interface MethodRegistry {
                 Compiled compiled = (Compiled) other;
                 return entries.equals(compiled.entries)
                         && fallback.equals(compiled.fallback)
-                        && instrumentedType.equals(compiled.instrumentedType);
+                        && finding.equals(compiled.finding)
+                        && typeInitializer.equals(compiled.typeInitializer);
             }
 
             @Override
             public int hashCode() {
-                int result = instrumentedType.hashCode();
+                int result = finding.hashCode();
+                result = 31 * result + typeInitializer.hashCode();
                 result = 31 * result + entries.hashCode();
                 result = 31 * result + fallback.hashCode();
                 return result;
@@ -276,7 +294,8 @@ public interface MethodRegistry {
             @Override
             public String toString() {
                 return "MethodRegistry.Default.Compiled{" +
-                        "instrumentedType=" + instrumentedType +
+                        "finding=" + finding +
+                        ", typeInitializer=" + typeInitializer +
                         ", entries=" + entries +
                         ", fallback=" + fallback +
                         '}';

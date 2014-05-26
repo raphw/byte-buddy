@@ -49,29 +49,26 @@ import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
 public class MethodCallProxy implements AuxiliaryType {
 
     private static final String FIELD_NAME_PREFIX = "argument";
-    private final MethodDescription targetMethod;
+    private final Instrumentation.SpecialMethodInvocation specialMethodInvocation;
     private final Assigner assigner;
 
     /**
      * Creates a new method call proxy for a given method and uses a default assigner for assigning the method's return
      * value to either the {@link java.util.concurrent.Callable#call()} or {@link Runnable#run()} method returns.
-     *
-     * @param targetMethod The method to be proxied.
      */
-    public MethodCallProxy(MethodDescription targetMethod) {
-        this(targetMethod, new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE), true));
+    public MethodCallProxy(Instrumentation.SpecialMethodInvocation specialMethodInvocation) {
+        this(specialMethodInvocation, new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE), true));
     }
 
     /**
      * Creates a new method call proxy for a given method.
      *
-     * @param targetMethod The method to be proxied.
-     * @param assigner     An assigner for assigning the target method's return value to either the
-     *                     {@link java.util.concurrent.Callable#call()} or {@link Runnable#run()}} methods' return
-     *                     values.
+     * @param assigner An assigner for assigning the target method's return value to either the
+     *                 {@link java.util.concurrent.Callable#call()} or {@link Runnable#run()}} methods' return
+     *                 values.
      */
-    public MethodCallProxy(MethodDescription targetMethod, Assigner assigner) {
-        this.targetMethod = targetMethod;
+    public MethodCallProxy(Instrumentation.SpecialMethodInvocation specialMethodInvocation, Assigner assigner) {
+        this.specialMethodInvocation = specialMethodInvocation;
         this.assigner = assigner;
     }
 
@@ -97,8 +94,7 @@ public class MethodCallProxy implements AuxiliaryType {
     public DynamicType make(String auxiliaryTypeName,
                             ClassFileVersion classFileVersion,
                             MethodAccessorFactory methodAccessorFactory) {
-        MethodDescription accessorMethod = methodAccessorFactory.requireAccessorMethodFor(targetMethod,
-                MethodAccessorFactory.LookupMode.Default.EXACT);
+        MethodDescription accessorMethod = methodAccessorFactory.registerAccessorFor(specialMethodInvocation);
         LinkedHashMap<String, TypeDescription> parameterFields = extractFields(accessorMethod);
         Instrumentation methodCall = new MethodCall(accessorMethod, assigner);
         DynamicType.Builder<?> builder = new ByteBuddy(classFileVersion)
@@ -121,18 +117,18 @@ public class MethodCallProxy implements AuxiliaryType {
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
                 && assigner.equals(((MethodCallProxy) other).assigner)
-                && targetMethod.equals(((MethodCallProxy) other).targetMethod);
+                && specialMethodInvocation.equals(((MethodCallProxy) other).specialMethodInvocation);
     }
 
     @Override
     public int hashCode() {
-        return 31 * targetMethod.hashCode() + assigner.hashCode();
+        return 31 * specialMethodInvocation.hashCode() + assigner.hashCode();
     }
 
     @Override
     public String toString() {
         return "MethodCallProxy{" +
-                "targetMethod=" + targetMethod +
+                "specialMethodInvocation=" + specialMethodInvocation +
                 ", assigner=" + assigner +
                 '}';
     }
@@ -174,17 +170,15 @@ public class MethodCallProxy implements AuxiliaryType {
      */
     public static class AssignableSignatureCall implements StackManipulation {
 
-        private final MethodDescription targetMethod;
+        private final Instrumentation.SpecialMethodInvocation specialMethodInvocation;
 
         /**
          * Creates an operand stack assignment that creates a
          * {@link net.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy} for the
          * {@code targetMethod} and pushes this proxy object onto the stack.
-         *
-         * @param targetMethod The target method for which the proxy should be created.
          */
-        public AssignableSignatureCall(MethodDescription targetMethod) {
-            this.targetMethod = targetMethod;
+        public AssignableSignatureCall(Instrumentation.SpecialMethodInvocation specialMethodInvocation) {
+            this.specialMethodInvocation = specialMethodInvocation;
         }
 
         @Override
@@ -194,11 +188,11 @@ public class MethodCallProxy implements AuxiliaryType {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-            TypeDescription auxiliaryType = instrumentationContext.register(new MethodCallProxy(targetMethod));
+            TypeDescription auxiliaryType = instrumentationContext.register(new MethodCallProxy(specialMethodInvocation));
             return new Compound(
                     TypeCreation.forType(auxiliaryType),
                     Duplication.SINGLE,
-                    MethodVariableAccess.loadThisReferenceAndArguments(targetMethod),
+                    MethodVariableAccess.loadThisReferenceAndArguments(specialMethodInvocation.getMethodDescription()),
                     MethodInvocation.invoke(auxiliaryType.getDeclaredMethods().filter(isConstructor()).getOnly())
             ).apply(methodVisitor, instrumentationContext);
         }
@@ -206,17 +200,17 @@ public class MethodCallProxy implements AuxiliaryType {
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && targetMethod.equals(((AssignableSignatureCall) other).targetMethod);
+                    && specialMethodInvocation.equals(((AssignableSignatureCall) other).specialMethodInvocation);
         }
 
         @Override
         public int hashCode() {
-            return targetMethod.hashCode();
+            return specialMethodInvocation.hashCode();
         }
 
         @Override
         public String toString() {
-            return "MethodCallProxy.AssignableSignatureCall{targetMethod=" + targetMethod + '}';
+            return "MethodCallProxy.AssignableSignatureCall{specialMethodInvocation=" + specialMethodInvocation + '}';
         }
     }
 

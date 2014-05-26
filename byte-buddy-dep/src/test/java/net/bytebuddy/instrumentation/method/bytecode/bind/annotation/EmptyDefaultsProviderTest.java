@@ -1,7 +1,7 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
+import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -21,15 +21,16 @@ public class EmptyDefaultsProviderTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeDescription typeDescription;
+    private Instrumentation.Target instrumentationTarget;
     @Mock
     private MethodDescription left, right;
 
     @Test(expected = NoSuchElementException.class)
     public void testEmptyIteration() throws Exception {
-        Iterator<?> iterator = TargetMethodAnnotationDrivenBinder.DefaultsProvider.Empty.INSTANCE.makeIterator(typeDescription, left, right);
+        Iterator<?> iterator = TargetMethodAnnotationDrivenBinder.DefaultsProvider.Empty.INSTANCE
+                .makeIterator(instrumentationTarget, left, right);
         assertThat(iterator.hasNext(), is(false));
-        verifyZeroInteractions(typeDescription);
+        verifyZeroInteractions(instrumentationTarget);
         verifyZeroInteractions(left);
         verifyZeroInteractions(right);
         iterator.next();

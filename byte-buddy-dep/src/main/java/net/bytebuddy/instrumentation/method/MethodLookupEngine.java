@@ -56,7 +56,7 @@ public interface MethodLookupEngine {
      */
     static interface Finding {
 
-        TypeDescription getLookedUpType();
+        TypeDescription getTypeDescription();
 
         MethodList getInvokableMethods();
 
@@ -77,7 +77,7 @@ public interface MethodLookupEngine {
             }
 
             @Override
-            public TypeDescription getLookedUpType() {
+            public TypeDescription getTypeDescription() {
                 return lookedUpType;
             }
 

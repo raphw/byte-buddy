@@ -1,10 +1,10 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
+import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
-import net.bytebuddy.instrumentation.type.TypeDescription;
 
 import java.lang.annotation.Annotation;
 import java.util.*;
@@ -42,7 +42,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
     }
 
     @Override
-    public MethodBinding bind(TypeDescription instrumentedType, MethodDescription source, MethodDescription target) {
+    public MethodBinding bind(Instrumentation.Target instrumentationTarget, MethodDescription source, MethodDescription target) {
         if (IgnoreForBinding.Verifier.check(target)) {
             return MethodBinding.Illegal.INSTANCE;
         }
@@ -54,7 +54,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
             return MethodBinding.Illegal.INSTANCE;
         }
         MethodBinding.Builder methodDelegationBindingBuilder = new MethodBinding.Builder(methodInvoker, target);
-        Iterator<? extends Annotation> defaults = defaultsProvider.makeIterator(instrumentedType, source, target);
+        Iterator<? extends Annotation> defaults = defaultsProvider.makeIterator(instrumentationTarget, source, target);
         for (int targetParameterIndex = 0;
              targetParameterIndex < target.getParameterTypes().size();
              targetParameterIndex++) {
@@ -63,7 +63,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                     .handle(targetParameterIndex,
                             source,
                             target,
-                            instrumentedType,
+                            instrumentationTarget,
                             assigner);
             if (!parameterBinding.isValid() || !methodDelegationBindingBuilder.append(parameterBinding)) {
                 return MethodBinding.Illegal.INSTANCE;
@@ -120,19 +120,19 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         /**
          * Creates a parameter binding for the given target parameter.
          *
-         * @param annotation           The annotation that was cause for the delegation to this argument binder.
-         * @param targetParameterIndex The index of the target method's parameter to be bound.
-         * @param source               The source method that is bound to the {@code target} method.
-         * @param target               Tge target method that is subject to be bound by the {@code source} method.
-         * @param instrumentedType     The instrumented type that is subject to this binding.
-         * @param assigner             An assigner that can be used for applying the binding.
+         * @param annotation            The annotation that was cause for the delegation to this argument binder.
+         * @param targetParameterIndex  The index of the target method's parameter to be bound.
+         * @param source                The source method that is bound to the {@code target} method.
+         * @param target                Tge target method that is subject to be bound by the {@code source} method.
+         * @param instrumentationTarget The target of the current instrumentation that is subject to this binding.
+         * @param assigner              An assigner that can be used for applying the binding.
          * @return A parameter binding for the requested target method parameter.
          */
         ParameterBinding<?> bind(T annotation,
                                  int targetParameterIndex,
                                  MethodDescription source,
                                  MethodDescription target,
-                                 TypeDescription instrumentedType,
+                                 Instrumentation.Target instrumentationTarget,
                                  Assigner assigner);
     }
 
@@ -149,12 +149,14 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          * Creates an iterator from which a value is pulled each time no processable annotation is found on a
          * method parameter.
          *
-         * @param typeDescription A description of the type that is instrumented.
-         * @param source          The source method that is bound to the {@code target} method.
-         * @param target          Tge target method that is subject to be bound by the {@code source} method.
+         * @param instrumentationTarget The target of the current instrumentation.
+         * @param source                The source method that is bound to the {@code target} method.
+         * @param target                Tge target method that is subject to be bound by the {@code source} method.
          * @return An iterator that supplies default annotations for
          */
-        Iterator<T> makeIterator(TypeDescription typeDescription, MethodDescription source, MethodDescription target);
+        Iterator<T> makeIterator(Instrumentation.Target instrumentationTarget,
+                                 MethodDescription source,
+                                 MethodDescription target);
 
         /**
          * A defaults provider that does not supply any defaults. If this defaults provider is used, a target
@@ -168,7 +170,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
             INSTANCE;
 
             @Override
-            public Iterator<Annotation> makeIterator(TypeDescription typeDescription,
+            public Iterator<Annotation> makeIterator(Instrumentation.Target instrumentationTarget,
                                                      MethodDescription source,
                                                      MethodDescription target) {
                 return EmptyIterator.INSTANCE;
@@ -264,7 +266,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
             ParameterBinding<?> handle(int targetParameterIndex,
                                        MethodDescription source,
                                        MethodDescription target,
-                                       TypeDescription typeDescription,
+                                       Instrumentation.Target instrumentationTarget,
                                        Assigner assigner);
 
             static enum Unbound implements Handler {
@@ -275,7 +277,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 public ParameterBinding<?> handle(int targetParameterIndex,
                                                   MethodDescription source,
                                                   MethodDescription target,
-                                                  TypeDescription typeDescription,
+                                                  Instrumentation.Target instrumentationTarget,
                                                   Assigner assigner) {
                     return ParameterBinding.Illegal.INSTANCE;
                 }
@@ -295,13 +297,13 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 public ParameterBinding<?> handle(int targetParameterIndex,
                                                   MethodDescription source,
                                                   MethodDescription target,
-                                                  TypeDescription typeDescription,
+                                                  Instrumentation.Target instrumentationTarget,
                                                   Assigner assigner) {
                     return parameterBinder.bind(annotation,
                             targetParameterIndex,
                             source,
                             target,
-                            typeDescription,
+                            instrumentationTarget,
                             assigner);
                 }
 

@@ -453,7 +453,7 @@ public class MethodDelegation implements Instrumentation {
             throw new IllegalStateException("No bindable method is visible to " + instrumentationTarget.getTypeDescription());
         }
         return new MethodDelegationByteCodeAppender(instrumentationDelegate.getPreparingStackAssignment(instrumentationTarget.getTypeDescription()),
-                instrumentationTarget.getTypeDescription(),
+                instrumentationTarget,
                 methodList,
                 new MethodDelegationBinder.Processor(new TargetMethodAnnotationDrivenBinder(
                         parameterBinders,
@@ -738,16 +738,16 @@ public class MethodDelegation implements Instrumentation {
     private static class MethodDelegationByteCodeAppender implements ByteCodeAppender {
 
         private final StackManipulation preparingStackAssignment;
-        private final TypeDescription instrumentedType;
+        private final Target instrumentationTarget;
         private final Iterable<? extends MethodDescription> targetMethods;
         private final MethodDelegationBinder.Processor processor;
 
         private MethodDelegationByteCodeAppender(StackManipulation preparingStackAssignment,
-                                                 TypeDescription instrumentedType,
+                                                 Target instrumentationTarget,
                                                  Iterable<? extends MethodDescription> targetMethods,
                                                  MethodDelegationBinder.Processor processor) {
             this.preparingStackAssignment = preparingStackAssignment;
-            this.instrumentedType = instrumentedType;
+            this.instrumentationTarget = instrumentationTarget;
             this.targetMethods = targetMethods;
             this.processor = processor;
         }
@@ -761,7 +761,7 @@ public class MethodDelegation implements Instrumentation {
         public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
             StackManipulation.Size stackSize = new StackManipulation.Compound(
                     preparingStackAssignment,
-                    processor.process(instrumentedType, instrumentedMethod, targetMethods),
+                    processor.process(instrumentationTarget, instrumentedMethod, targetMethods),
                     MethodReturn.returning(instrumentedMethod.getReturnType())
             ).apply(methodVisitor, instrumentationContext);
             return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
@@ -772,7 +772,7 @@ public class MethodDelegation implements Instrumentation {
             if (this == other) return true;
             if (other == null || getClass() != other.getClass()) return false;
             MethodDelegationByteCodeAppender that = (MethodDelegationByteCodeAppender) other;
-            return instrumentedType.equals(that.instrumentedType)
+            return instrumentationTarget.equals(that.instrumentationTarget)
                     && preparingStackAssignment.equals(that.preparingStackAssignment)
                     && processor.equals(that.processor)
                     && targetMethods.equals(that.targetMethods);
@@ -781,7 +781,7 @@ public class MethodDelegation implements Instrumentation {
         @Override
         public int hashCode() {
             int result = preparingStackAssignment.hashCode();
-            result = 31 * result + instrumentedType.hashCode();
+            result = 31 * result + instrumentationTarget.hashCode();
             result = 31 * result + targetMethods.hashCode();
             result = 31 * result + processor.hashCode();
             return result;
@@ -791,7 +791,7 @@ public class MethodDelegation implements Instrumentation {
         public String toString() {
             return "MethodDelegationByteCodeAppender{" +
                     "preparingStackAssignment=" + preparingStackAssignment +
-                    ", instrumentedType=" + instrumentedType +
+                    ", instrumentationTarget=" + instrumentationTarget +
                     ", targetMethods=" + targetMethods +
                     ", processor=" + processor +
                     '}';

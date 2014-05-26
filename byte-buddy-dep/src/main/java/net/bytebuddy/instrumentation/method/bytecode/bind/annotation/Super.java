@@ -1,6 +1,7 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
 import net.bytebuddy.dynamic.TargetType;
+import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
@@ -83,7 +84,7 @@ public @interface Super {
         CONSTRUCTOR {
             @Override
             protected StackManipulation proxyFor(TypeDescription parameterType,
-                                                 TypeDescription instrumentedType,
+                                                 Instrumentation.Target instrumentationTarget,
                                                  Super annotation) {
                 List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(annotation.constructorParameters().length);
                 for (Class<?> constructorParameter : annotation.constructorParameters()) {
@@ -91,7 +92,7 @@ public @interface Super {
                             ? TargetType.DESCRIPTION
                             : new TypeDescription.ForLoadedType(constructorParameter));
                 }
-                return new TypeProxy.ByConstructor(parameterType, instrumentedType, typeDescriptions, annotation.ignoreFinalizer());
+                return new TypeProxy.ByConstructor(parameterType, instrumentationTarget, typeDescriptions, annotation.ignoreFinalizer());
             }
         },
 
@@ -102,23 +103,23 @@ public @interface Super {
         UNSAFE {
             @Override
             protected StackManipulation proxyFor(TypeDescription parameterType,
-                                                 TypeDescription instrumentedType,
+                                                 Instrumentation.Target instrumentationTarget,
                                                  Super annotation) {
-                return new TypeProxy.ByReflectionFactory(parameterType, instrumentedType, annotation.ignoreFinalizer());
+                return new TypeProxy.ByReflectionFactory(parameterType, instrumentationTarget, annotation.ignoreFinalizer());
             }
         };
 
         /**
          * Creates a stack manipulation which loads a {@code super}-call proxy onto the stack.
          *
-         * @param parameterType    The type of the parameter that was annotated with
-         *                         {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Super}
-         * @param instrumentedType The instrumented type that is currently created.
-         * @param annotation       The annotation that caused this method call.
+         * @param parameterType         The type of the parameter that was annotated with
+         *                              {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Super}
+         * @param instrumentationTarget The instrumentation target for the currently created type.
+         * @param annotation            The annotation that caused this method call.
          * @return A stack manipulation representing this instance's instantiation strategy.
          */
         protected abstract StackManipulation proxyFor(TypeDescription parameterType,
-                                                      TypeDescription instrumentedType,
+                                                      Instrumentation.Target instrumentationTarget,
                                                       Super annotation);
     }
 
@@ -146,15 +147,15 @@ public @interface Super {
                                                                int targetParameterIndex,
                                                                MethodDescription source,
                                                                MethodDescription target,
-                                                               TypeDescription instrumentedType,
+                                                               Instrumentation.Target instrumentationTarget,
                                                                Assigner assigner) {
             TypeDescription parameterType = target.getParameterTypes().get(targetParameterIndex);
-            if (source.isStatic() || !instrumentedType.isAssignableTo(parameterType)) {
+            if (source.isStatic() || !instrumentationTarget.getTypeDescription().isAssignableTo(parameterType)) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             } else {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(annotation
                         .strategy()
-                        .proxyFor(parameterType, instrumentedType, annotation));
+                        .proxyFor(parameterType, instrumentationTarget, annotation));
             }
         }
     }

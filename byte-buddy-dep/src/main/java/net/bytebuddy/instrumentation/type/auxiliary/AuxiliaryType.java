@@ -2,6 +2,7 @@ package net.bytebuddy.instrumentation.type.auxiliary;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.ModifierContributor;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
@@ -40,12 +41,17 @@ public interface AuxiliaryType {
                      ClassFileVersion classFileVersion,
                      MethodAccessorFactory methodAccessorFactory);
 
+    static interface MethodAccessorFactory {
+
+        MethodDescription registerAccessorFor(Instrumentation.SpecialMethodInvocation specialMethodInvocation);
+    }
+
     /**
      * A factory for creating method proxies for an auxiliary type. Such proxies are required to allow a type to
      * call methods of a second type that are usually not accessible for the first type. This strategy is also adapted
      * by the Java compiler that creates accessor methods for example to implement inner classes.
      */
-    static interface MethodAccessorFactory {
+    static interface MethodAccessorFactory2 {
 
         /**
          * Requests a new accessor method for the requested method. If such a method cannot be created, an exception
@@ -72,7 +78,7 @@ public interface AuxiliaryType {
                         MethodDescription resolvedMethod = invokableMethods.get(targetMethod.getUniqueSignature());
                         if (resolvedMethod == null) {
                             throw new IllegalArgumentException(String.format("Method %s is not reachable from %s",
-                                    targetMethod, finding.getLookedUpType()));
+                                    targetMethod, finding.getTypeDescription()));
                         }
                         return resolvedMethod;
                     }

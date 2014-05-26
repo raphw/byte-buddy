@@ -18,7 +18,7 @@ public class SameThreadCoModifiableIterableTest {
     public void testIteration() throws Exception {
         List<String> list = new ArrayList<String>();
         list.addAll(Arrays.asList(FOO, BAR));
-        Iterable<String> iterable = new TypeWriter.SameThreadCoModifiableIterable<String>(list);
+        Iterable<String> iterable = new TypeExtensionDelegate.SameThreadCoModifiableIterable<String>(list);
         Iterator<String> iterator = iterable.iterator();
         assertThat(iterator.hasNext(), is(true));
         assertThat(iterator.next(), is(FOO));
@@ -37,7 +37,7 @@ public class SameThreadCoModifiableIterableTest {
     public void testCannotRemoveElement() throws Exception {
         List<String> list = new ArrayList<String>();
         list.addAll(Arrays.asList(FOO, BAR));
-        Iterable<String> iterable = new TypeWriter.SameThreadCoModifiableIterable<String>(list);
+        Iterable<String> iterable = new TypeExtensionDelegate.SameThreadCoModifiableIterable<String>(list);
         Iterator<String> iterator = iterable.iterator();
         iterator.remove();
     }
@@ -45,7 +45,7 @@ public class SameThreadCoModifiableIterableTest {
     @Test(expected = IndexOutOfBoundsException.class)
     public void testIteratorOverflow() throws Exception {
         List<String> list = new ArrayList<String>();
-        Iterable<String> iterable = new TypeWriter.SameThreadCoModifiableIterable<String>(list);
+        Iterable<String> iterable = new TypeExtensionDelegate.SameThreadCoModifiableIterable<String>(list);
         Iterator<String> iterator = iterable.iterator();
         assertThat(iterator.hasNext(), is(false));
         iterator.next();

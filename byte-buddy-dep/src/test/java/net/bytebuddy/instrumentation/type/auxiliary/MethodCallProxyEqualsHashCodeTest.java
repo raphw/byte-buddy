@@ -1,6 +1,6 @@
 package net.bytebuddy.instrumentation.type.auxiliary;
 
-import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -17,7 +17,7 @@ public class MethodCallProxyEqualsHashCodeTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private MethodDescription first, second;
+    private Instrumentation.SpecialMethodInvocation first, second;
 
     @Test
     public void testEqualsHashCode() throws Exception {

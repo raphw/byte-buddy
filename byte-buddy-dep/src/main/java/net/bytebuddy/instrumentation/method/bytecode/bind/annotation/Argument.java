@@ -1,5 +1,6 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
+import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MostSpecificTypeResolver;
@@ -146,7 +147,7 @@ public @interface Argument {
                                                                int targetParameterIndex,
                                                                MethodDescription source,
                                                                MethodDescription target,
-                                                               TypeDescription instrumentedType,
+                                                               Instrumentation.Target instrumentationTarget,
                                                                Assigner assigner) {
             if (argument.value() < 0) {
                 throw new IllegalArgumentException(String.format("Argument annotation on %d's argument virtual " +
@@ -194,7 +195,9 @@ public @interface Argument {
         }
 
         @Override
-        public Iterator<Argument> makeIterator(TypeDescription typeDescription, MethodDescription source, MethodDescription target) {
+        public Iterator<Argument> makeIterator(Instrumentation.Target instrumentationTarget,
+                                               MethodDescription source,
+                                               MethodDescription target) {
             return new NextUnboundArgumentIterator(makeFreeIndexList(source, target));
         }
 

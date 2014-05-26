@@ -72,7 +72,7 @@ public class ArgumentAnnotationBinderTest extends AbstractAnnotationBinderTest<A
         when(target.getParameterTypes()).thenReturn(targetParameters);
         when(target.getParameterAnnotations()).thenReturn(annotations);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Argument.Binder.INSTANCE
-                .bind(annotation, targetIndex, source, target, instrumentedType, assigner);
+                .bind(annotation, targetIndex, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
         Object expectedToken = new MostSpecificTypeResolver.ParameterIndexToken(sourceIndex);
         if (bindingMechanic == Argument.BindingMechanic.UNIQUE) {
@@ -98,7 +98,7 @@ public class ArgumentAnnotationBinderTest extends AbstractAnnotationBinderTest<A
         when(typeList.size()).thenReturn(0);
         when(source.getParameterTypes()).thenReturn(typeList);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Argument.Binder.INSTANCE
-                .bind(annotation, targetIndex, source, target, instrumentedType, assigner);
+                .bind(annotation, targetIndex, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(false));
         verify(annotation, atLeast(1)).value();
         verify(source, atLeast(1)).getParameterTypes();
@@ -108,6 +108,6 @@ public class ArgumentAnnotationBinderTest extends AbstractAnnotationBinderTest<A
     @Test(expected = IllegalArgumentException.class)
     public void testNegativeAnnotationValue() throws Exception {
         when(annotation.value()).thenReturn(-1);
-        Argument.Binder.INSTANCE.bind(annotation, 0, source, target, instrumentedType, assigner);
+        Argument.Binder.INSTANCE.bind(annotation, 0, source, target, instrumentationTarget, assigner);
     }
 }

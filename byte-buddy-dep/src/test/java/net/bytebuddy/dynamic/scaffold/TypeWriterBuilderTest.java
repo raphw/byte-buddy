@@ -12,7 +12,6 @@ import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
-import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.utility.MockitoRule;
@@ -43,13 +42,13 @@ public class TypeWriterBuilderTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private InstrumentedType instrumentedType;
+    private TypeDescription instrumentedType;
     @Mock
     private TypeDescription superType;
     @Mock
     private TypeList emptyTypeList;
     @Mock
-    private Instrumentation.Context instrumentationContext;
+    private Instrumentation.Context.ExtractableView instrumentationContext;
     @Mock
     private ClassVisitorWrapper classVisitorWrapper;
     @Mock
@@ -85,8 +84,6 @@ public class TypeWriterBuilderTest {
         when(instrumentedType.getInternalName()).thenReturn(FOO);
         when(instrumentedType.getName()).thenReturn(FOO);
         when(instrumentedType.getInterfaces()).thenReturn(emptyTypeList);
-        when(instrumentedType.getTypeInitializer()).thenReturn(typeInitializer);
-        when(instrumentedType.detach()).thenReturn(instrumentedType);
         when(emptyTypeList.toInternalNames()).thenReturn(null);
         when(firstField.getModifiers()).thenReturn(Opcodes.ACC_PUBLIC);
         when(firstField.getInternalName()).thenReturn(BAR);
@@ -137,6 +134,7 @@ public class TypeWriterBuilderTest {
             }
         });
         typeWriter = new TypeWriter.Builder<Object>(instrumentedType,
+                typeInitializer,
                 instrumentationContext,
                 ClassFileVersion.forCurrentJavaVersion()).build(classVisitorWrapper);
         verify(classVisitorWrapper).wrap(any(ClassWriter.class));
@@ -182,7 +180,6 @@ public class TypeWriterBuilderTest {
         assertThat(loaded.getName(), is(FOO));
         assertEquals(Object.class, loaded.getSuperclass());
         assertThat(Modifier.isPublic(loaded.getModifiers()), is(true));
-        verify(instrumentedType).detach();
         if (fields) {
             assertThat(loaded.getDeclaredFields().length, is(2));
             assertEquals(Object.class, loaded.getDeclaredField(BAR).getType());

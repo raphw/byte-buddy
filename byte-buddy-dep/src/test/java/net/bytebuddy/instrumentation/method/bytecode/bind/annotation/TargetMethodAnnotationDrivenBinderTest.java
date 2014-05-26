@@ -44,7 +44,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
     @Mock
     private TargetMethodAnnotationDrivenBinder.MethodInvoker methodInvoker;
     @Mock
-    private TypeDescription typeDescription;
+    private Instrumentation.Target instrumentationTarget;
     @Mock
     private MethodDescription source, target;
     @Mock
@@ -72,7 +72,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 anyInt(),
                 any(MethodDescription.class),
                 any(MethodDescription.class),
-                any(TypeDescription.class),
+                any(Instrumentation.Target.class),
                 any(Assigner.class)))
                 .thenReturn(parameterBinding);
         return parameterBinding;
@@ -82,7 +82,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
     private static Iterator<Annotation> prepareDefaultProvider(TargetMethodAnnotationDrivenBinder.DefaultsProvider<?> defaultsProvider,
                                                                List<? extends Annotation> defaultIteratorValues) {
         Iterator<Annotation> annotationIterator = mock(Iterator.class);
-        when(defaultsProvider.makeIterator(any(TypeDescription.class), any(MethodDescription.class), any(MethodDescription.class)))
+        when(defaultsProvider.makeIterator(any(Instrumentation.Target.class), any(MethodDescription.class), any(MethodDescription.class)))
                 .thenReturn((Iterator) annotationIterator);
         OngoingStubbing<Boolean> iteratorConditionStubbing = when(annotationIterator.hasNext());
         for (Annotation defaultIteratorValue : defaultIteratorValues) {
@@ -147,9 +147,9 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 defaultsProvider,
                 assigner,
                 methodInvoker);
-        assertThat(methodDelegationBinder.bind(typeDescription, source, target).isValid(), is(false));
+        assertThat(methodDelegationBinder.bind(instrumentationTarget, source, target).isValid(), is(false));
         verifyZeroInteractions(assigner);
-        verifyZeroInteractions(typeDescription);
+        verifyZeroInteractions(instrumentationTarget);
         verifyZeroInteractions(defaultsProvider);
         verifyZeroInteractions(source);
     }
@@ -164,7 +164,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 defaultsProvider,
                 assigner,
                 methodInvoker);
-        assertThat(methodDelegationBinder.bind(typeDescription, source, target).isValid(), is(false));
+        assertThat(methodDelegationBinder.bind(instrumentationTarget, source, target).isValid(), is(false));
         verify(assigner).assign(targetTypeDescription, sourceTypeDescription, false);
         verifyNoMoreInteractions(assigner);
         verifyZeroInteractions(methodInvoker);
@@ -185,7 +185,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 defaultsProvider,
                 assigner,
                 methodInvoker);
-        assertThat(methodDelegationBinder.bind(typeDescription, source, target).isValid(), is(false));
+        assertThat(methodDelegationBinder.bind(instrumentationTarget, source, target).isValid(), is(false));
         verify(assigner).assign(targetTypeDescription, sourceTypeDescription, true);
         verifyNoMoreInteractions(assigner);
         verifyZeroInteractions(methodInvoker);
@@ -215,7 +215,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 defaultsProvider,
                 assigner,
                 methodInvoker);
-        MethodDelegationBinder.MethodBinding methodBinding = methodDelegationBinder.bind(typeDescription, source, target);
+        MethodDelegationBinder.MethodBinding methodBinding = methodDelegationBinder.bind(instrumentationTarget, source, target);
         assertThat(methodBinding.isValid(), is(false));
         assertThat(methodBinding.getTarget(), is(target));
         verifyZeroInteractions(firstBinding);
@@ -250,7 +250,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 defaultsProvider,
                 assigner,
                 methodInvoker);
-        MethodDelegationBinder.MethodBinding methodBinding = methodDelegationBinder.bind(typeDescription, source, target);
+        MethodDelegationBinder.MethodBinding methodBinding = methodDelegationBinder.bind(instrumentationTarget, source, target);
         assertThat(methodBinding.isValid(), is(true));
         assertThat(methodBinding.getTarget(), is(target));
         assertThat(methodBinding.getTargetParameterIndex(new Key(FOO)), is(1));
@@ -273,7 +273,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 1,
                 source,
                 target,
-                typeDescription,
+                instrumentationTarget,
                 assigner);
         verifyNoMoreInteractions(firstParameterBinder);
         verify(secondParameterBinder, atLeast(1)).getHandledType();
@@ -281,7 +281,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 0,
                 source,
                 target,
-                typeDescription,
+                instrumentationTarget,
                 assigner);
         verifyNoMoreInteractions(secondParameterBinder);
         verify(defaultsIterator, times(2)).hasNext();
@@ -321,7 +321,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 defaultsProvider,
                 assigner,
                 methodInvoker);
-        assertThat(methodDelegationBinder.bind(typeDescription, source, target).isValid(), is(false));
+        assertThat(methodDelegationBinder.bind(instrumentationTarget, source, target).isValid(), is(false));
         verify(firstParameterBinder, atLeast(1)).getHandledType();
         verifyNoMoreInteractions(firstParameterBinder);
         verify(secondParameterBinder, atLeast(1)).getHandledType();
@@ -329,7 +329,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 0,
                 source,
                 target,
-                typeDescription,
+                instrumentationTarget,
                 assigner);
         verifyNoMoreInteractions(secondParameterBinder);
         verify(defaultsIterator, times(2)).hasNext();
@@ -371,7 +371,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 defaultsProvider,
                 assigner,
                 methodInvoker);
-        MethodDelegationBinder.MethodBinding methodBinding = methodDelegationBinder.bind(typeDescription, source, target);
+        MethodDelegationBinder.MethodBinding methodBinding = methodDelegationBinder.bind(instrumentationTarget, source, target);
         assertThat(methodBinding.isValid(), is(true));
         assertThat(methodBinding.getTarget(), is(target));
         assertThat(methodBinding.getTargetParameterIndex(new Key(FOO)), is(1));
@@ -394,7 +394,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 1,
                 source,
                 target,
-                typeDescription,
+                instrumentationTarget,
                 assigner);
         verifyNoMoreInteractions(firstParameterBinder);
         verify(secondParameterBinder, atLeast(1)).getHandledType();
@@ -402,7 +402,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 0,
                 source,
                 target,
-                typeDescription,
+                instrumentationTarget,
                 assigner);
         verifyNoMoreInteractions(secondParameterBinder);
         verifyZeroInteractions(defaultsIterator);
@@ -440,7 +440,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 defaultsProvider,
                 assigner,
                 methodInvoker);
-        MethodDelegationBinder.MethodBinding methodBinding = methodDelegationBinder.bind(typeDescription, source, target);
+        MethodDelegationBinder.MethodBinding methodBinding = methodDelegationBinder.bind(instrumentationTarget, source, target);
         assertThat(methodBinding.isValid(), is(true));
         assertThat(methodBinding.getTarget(), is(target));
         assertThat(methodBinding.getTargetParameterIndex(new Key(FOO)), is(1));
@@ -463,7 +463,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 1,
                 source,
                 target,
-                typeDescription,
+                instrumentationTarget,
                 assigner);
         verifyNoMoreInteractions(firstParameterBinder);
         verify(secondParameterBinder, atLeast(1)).getHandledType();
@@ -471,7 +471,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 0,
                 source,
                 target,
-                typeDescription,
+                instrumentationTarget,
                 assigner);
         verifyNoMoreInteractions(secondParameterBinder);
         verify(defaultsIterator).hasNext();

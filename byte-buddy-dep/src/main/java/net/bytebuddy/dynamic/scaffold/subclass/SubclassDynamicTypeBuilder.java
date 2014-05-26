@@ -4,10 +4,7 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
-import net.bytebuddy.dynamic.scaffold.FieldRegistry;
-import net.bytebuddy.dynamic.scaffold.MethodRegistry;
-import net.bytebuddy.dynamic.scaffold.TypeWriter;
+import net.bytebuddy.dynamic.scaffold.*;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.ModifierContributor;
 import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
@@ -17,7 +14,6 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.method.matcher.JunctionMethodMatcher;
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
-import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 
@@ -361,29 +357,28 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public DynamicType.Unloaded<T> make() {
-        InstrumentedType instrumentedType = applyRecordedMembersTo(new SubclassInstumentedType(classFileVersion,
-                superType,
-                interfaceTypes,
-                modifiers,
-                namingStrategy));
-        MethodLookupEngine.Finding finding = methodLookupEngineFactory.make(classFileVersion).process(instrumentedType);
-        SubclassInstrumentationContextDelegate contextDelegate = new SubclassInstrumentationContextDelegate(finding,
-                bridgeMethodResolverFactory);
-        MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.compile(instrumentedType,
-                contextDelegate,
-                MethodRegistry.Compiled.Entry.Skip.INSTANCE);
-        instrumentedType = compiledMethodRegistry.getInstrumentedType();
-        return new TypeWriter.Builder<T>(instrumentedType, new Instrumentation.Context.Default(classFileVersion, contextDelegate, contextDelegate), classFileVersion)
+        MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.compile(
+                applyRecordedMembersTo(new SubclassInstumentedType(classFileVersion,
+                        superType,
+                        interfaceTypes,
+                        modifiers,
+                        namingStrategy)),
+                methodLookupEngineFactory.make(classFileVersion),
+                new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory),
+                MethodRegistry.Compiled.Entry.Skip.INSTANCE
+        );
+        MethodLookupEngine.Finding finding = compiledMethodRegistry.getFinding();
+        TypeExtensionDelegate typeExtensionDelegate = new TypeExtensionDelegate(finding.getTypeDescription(), classFileVersion);
+        return new TypeWriter.Builder<T>(finding.getTypeDescription(), compiledMethodRegistry.getTypeInitializer(), typeExtensionDelegate, classFileVersion)
                 .build(classVisitorWrapperChain)
                 .attributeType(attributeAppender)
                 .fields()
-                .write(instrumentedType.getDeclaredFields(),
-                        fieldRegistry.compile(instrumentedType, TypeWriter.FieldPool.Entry.NoOp.INSTANCE))
+                .write(finding.getTypeDescription().getDeclaredFields(),
+                        fieldRegistry.compile(finding.getTypeDescription(), TypeWriter.FieldPool.Entry.NoOp.INSTANCE))
                 .methods()
-                .write(finding.getInvokableMethods().filter(isOverridable().and(not(ignoredMethods)).or(isDeclaredBy(instrumentedType))),
-                        compiledMethodRegistry
-                )
-                .write(contextDelegate.getProxiedMethods(), contextDelegate)
+                .write(finding.getInvokableMethods().filter(isOverridable().and(not(ignoredMethods)).or(isDeclaredBy(finding.getTypeDescription()))),
+                        compiledMethodRegistry)
+                .write(typeExtensionDelegate.getRegisteredAccessors(), typeExtensionDelegate)
                 .make();
     }
 

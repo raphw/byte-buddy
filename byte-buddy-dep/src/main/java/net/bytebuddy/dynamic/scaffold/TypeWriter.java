@@ -4,18 +4,16 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.Instrumentation;
+import net.bytebuddy.instrumentation.TypeInitializer;
 import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
-import net.bytebuddy.instrumentation.type.InstrumentedType;
+import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.modifier.MethodManifestation;
 import org.objectweb.asm.*;
-
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * A type writer allows an easier creation of a dynamic type by enforcing the writing order
@@ -318,73 +316,28 @@ public interface TypeWriter<T> {
     }
 
     /**
-     * An iterable view of a list that can be modified within the same thread without breaking
-     * the iterator. Instead, the iterator will continue its iteration over the additional entries
-     * that were prepended to the list.
-     *
-     * @param <S> The type of the list elements.
-     */
-    static class SameThreadCoModifiableIterable<S> implements Iterable<S> {
-
-        private final List<? extends S> elements;
-
-        /**
-         * Creates a new iterable view.
-         *
-         * @param elements The elements to be represented by this view.
-         */
-        public SameThreadCoModifiableIterable(List<? extends S> elements) {
-            this.elements = elements;
-        }
-
-        @Override
-        public Iterator<S> iterator() {
-            return new SameThreadCoModifiableIterator();
-        }
-
-        private class SameThreadCoModifiableIterator implements Iterator<S> {
-
-            private int index = 0;
-
-            @Override
-            public boolean hasNext() {
-                return index < elements.size();
-            }
-
-            @Override
-            public S next() {
-                return elements.get(index++);
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-        }
-    }
-
-    /**
      * A builder that creates a new type writer for given arguments.
      *
      * @param <T> The best known loaded type for the dynamically created type.
      */
     static class Builder<T> {
 
-        private final InstrumentedType instrumentedType;
-        private final Instrumentation.Context instrumentationContext;
+        private final TypeDescription typeDescription;
+        private final TypeInitializer typeInitializer;
+        private final Instrumentation.Context.ExtractableView instrumentationContext;
         private final ClassFileVersion classFileVersion;
 
         /**
          * Creates a new builder for a given instrumented type.
          *
-         * @param instrumentedType       The instrumented type to be written.
-         * @param instrumentationContext The instrumentation context for this instrumentation.
-         * @param classFileVersion       The class format version for the type that is written.
+         * @param classFileVersion The class format version for the type that is written.
          */
-        public Builder(InstrumentedType instrumentedType,
-                       Instrumentation.Context instrumentationContext,
+        public Builder(TypeDescription typeDescription,
+                       TypeInitializer typeInitializer,
+                       Instrumentation.Context.ExtractableView instrumentationContext,
                        ClassFileVersion classFileVersion) {
-            this.instrumentedType = instrumentedType;
+            this.typeDescription = typeDescription;
+            this.typeInitializer = typeInitializer;
             this.instrumentationContext = instrumentationContext;
             this.classFileVersion = classFileVersion;
         }
@@ -409,11 +362,11 @@ public interface TypeWriter<T> {
             ClassWriter classWriter = new ClassWriter(ASM_MANUAL_FLAG);
             ClassVisitor classVisitor = classVisitorWrapper.wrap(classWriter);
             classVisitor.visit(classFileVersion.getVersionNumber(),
-                    instrumentedType.getModifiers(),
-                    instrumentedType.getInternalName(),
+                    typeDescription.getModifiers(),
+                    typeDescription.getInternalName(),
                     null,
-                    instrumentedType.getSupertype() == null ? null : instrumentedType.getSupertype().getInternalName(),
-                    instrumentedType.getInterfaces().toInternalNames());
+                    typeDescription.getSupertype() == null ? null : typeDescription.getSupertype().getInternalName(),
+                    typeDescription.getInterfaces().toInternalNames());
             return new GeneralPhaseTypeWriter<T>(classWriter, classVisitor);
         }
 
@@ -430,9 +383,9 @@ public interface TypeWriter<T> {
             @Override
             public DynamicType.Unloaded<S> make() {
                 classVisitor.visitEnd();
-                return new DynamicType.Default.Unloaded<S>(instrumentedType.detach(),
+                return new DynamicType.Default.Unloaded<S>(typeDescription,
                         classWriter.toByteArray(),
-                        instrumentedType.getTypeInitializer(),
+                        typeInitializer,
                         instrumentationContext.getRegisteredAuxiliaryTypes());
             }
         }
@@ -445,7 +398,7 @@ public interface TypeWriter<T> {
 
             @Override
             public InGeneralPhase<S> attributeType(TypeAttributeAppender typeAttributeAppender) {
-                typeAttributeAppender.apply(classVisitor, instrumentedType);
+                typeAttributeAppender.apply(classVisitor, typeDescription);
                 return this;
             }
 
@@ -476,7 +429,7 @@ public interface TypeWriter<T> {
                             null);
                     fieldPool.target(fieldDescription)
                             .getFieldAppenderFactory()
-                            .make(instrumentedType)
+                            .make(typeDescription)
                             .apply(fieldVisitor, fieldDescription);
                     fieldVisitor.visitEnd();
                 }
