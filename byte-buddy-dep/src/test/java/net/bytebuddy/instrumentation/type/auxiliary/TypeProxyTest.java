@@ -5,12 +5,10 @@ import net.bytebuddy.dynamic.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocation;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.CallTraceable;
 import net.bytebuddy.utility.MockitoRule;
 import org.hamcrest.Matcher;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -28,6 +26,8 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
 
+import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isMethod;
+import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.nameEndsWithIgnoreCase;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -63,16 +63,15 @@ public class TypeProxyTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {BAR, new Class<?>[0], new Object[0], nullValue()},
-//                {TO_STRING, new Class<?>[0], new Object[0], is(TO_STRING)},
-//                {EQUALS, new Class<?>[]{Object.class}, new Object[]{EQUALS}, is(EQUALS_RESULT)},
-//                {HASH_CODE, new Class<?>[0], new Object[0], is(HASH_CODE_RESULT)},
-//                {CLONE, new Class<?>[0], new Object[0], is(CLONE)}
+                {TO_STRING, new Class<?>[0], new Object[0], is(TO_STRING)},
+                {EQUALS, new Class<?>[]{Object.class}, new Object[]{EQUALS}, is(EQUALS_RESULT)},
+                {HASH_CODE, new Class<?>[0], new Object[0], is(HASH_CODE_RESULT)},
+                {CLONE, new Class<?>[0], new Object[0], is(CLONE)}
         });
     }
 
     @Test
     @SuppressWarnings("unchecked")
-    @Ignore
     public void testMethodOfTypeProxy() throws Exception {
         Class<Foo> proxy = makeProxyType(Foo.class, Bar.class);
         Field field = proxy.getDeclaredField(TypeProxy.INSTANCE_FIELD);
@@ -93,9 +92,9 @@ public class TypeProxyTest {
         TypeDescription instrumentedTypeDescription = new TypeDescription.ForLoadedType(instrumentedType);
         when(instrumentationTarget.getTypeDescription()).thenReturn(instrumentedTypeDescription);
         when(instrumentationTarget.invokeSuper(any(MethodDescription.class), any(Instrumentation.Target.MethodLookup.class)))
-                .then(new SameMethodAsSpecialInvocation(instrumentedTypeDescription));
+                .then(new FakeSpecialMethodInvocation(instrumentedTypeDescription));
         when(methodAccessorFactory.registerAccessorFor(any(Instrumentation.SpecialMethodInvocation.class)))
-                .then(new AnswerWithRepresentedMethod());
+                .then(new AnswerWithFakeAccessorMethod());
         String auxiliaryTypeName = instrumentedType.getName() + "$" + QUX;
         DynamicType dynamicType = new TypeProxy(
                 new TypeDescription.ForLoadedType(proxyType),
@@ -150,57 +149,56 @@ public class TypeProxyTest {
         }
     }
 
-    private static class SameMethodAsSpecialInvocation implements Answer<Instrumentation.SpecialMethodInvocation> {
+    private static class FakeSpecialMethodInvocation implements Answer<Instrumentation.SpecialMethodInvocation> {
+
+        private static class Container implements Instrumentation.SpecialMethodInvocation {
+
+            private final MethodDescription proxiedAccessor;
+
+            private Container(MethodDescription proxiedAccessor) {
+                this.proxiedAccessor = proxiedAccessor;
+            }
+
+            @Override
+            public MethodDescription getMethodDescription() {
+                return proxiedAccessor;
+            }
+
+            @Override
+            public TypeDescription getTypeDescription() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public boolean isValid() {
+                return true;
+            }
+
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+                throw new UnsupportedOperationException();
+            }
+        }
 
         private final TypeDescription instrumentedType;
 
-        public SameMethodAsSpecialInvocation(TypeDescription instrumentedType) {
+        private FakeSpecialMethodInvocation(TypeDescription instrumentedType) {
             this.instrumentedType = instrumentedType;
         }
 
         @Override
         public Instrumentation.SpecialMethodInvocation answer(InvocationOnMock invocation) throws Throwable {
-            return new VirtualSpecialMethodInvocation((MethodDescription) invocation.getArguments()[0], instrumentedType);
+            MethodDescription accessedMethod = (MethodDescription) invocation.getArguments()[0];
+            return new Container(instrumentedType.getDeclaredMethods()
+                    .filter(isMethod().and(nameEndsWithIgnoreCase(accessedMethod.getName()))).getOnly());
         }
     }
 
-    private static class VirtualSpecialMethodInvocation implements Instrumentation.SpecialMethodInvocation {
-
-        private final MethodDescription methodDescription;
-        private final TypeDescription typeDescription;
-
-        private VirtualSpecialMethodInvocation(MethodDescription methodDescription, TypeDescription typeDescription) {
-            this.methodDescription = methodDescription;
-            this.typeDescription = typeDescription;
-        }
-
-        @Override
-        public MethodDescription getMethodDescription() {
-            return methodDescription;
-        }
-
-        @Override
-        public TypeDescription getTypeDescription() {
-            return typeDescription;
-        }
-
-        @Override
-        public boolean isValid() {
-            return true;
-        }
-
-        @Override
-        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-            return MethodInvocation.invoke(methodDescription).virtual(typeDescription)
-                    .apply(methodVisitor, instrumentationContext);
-        }
-    }
-
-    private static class AnswerWithRepresentedMethod implements Answer<MethodDescription> {
+    private static class AnswerWithFakeAccessorMethod implements Answer<MethodDescription> {
 
         @Override
         public MethodDescription answer(InvocationOnMock invocation) throws Throwable {
-            return ((Instrumentation.SpecialMethodInvocation) invocation.getArguments()[0]).getMethodDescription();
+            return ((FakeSpecialMethodInvocation.Container) invocation.getArguments()[0]).getMethodDescription();
         }
     }
 }
