@@ -5,6 +5,7 @@ import net.bytebuddy.dynamic.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocation;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.CallTraceable;
 import net.bytebuddy.utility.MockitoRule;
@@ -18,6 +19,7 @@ import org.junit.runners.Parameterized;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Constructor;
@@ -91,7 +93,7 @@ public class TypeProxyTest {
         TypeDescription instrumentedTypeDescription = new TypeDescription.ForLoadedType(instrumentedType);
         when(instrumentationTarget.getTypeDescription()).thenReturn(instrumentedTypeDescription);
         when(instrumentationTarget.invokeSuper(any(MethodDescription.class), any(Instrumentation.Target.MethodLookup.class)))
-                .then(new AnswerWithSpecialInvocation(instrumentedTypeDescription));
+                .then(new SameMethodAsSpecialInvocation(instrumentedTypeDescription));
         when(methodAccessorFactory.registerAccessorFor(any(Instrumentation.SpecialMethodInvocation.class)))
                 .then(new AnswerWithRepresentedMethod());
         String auxiliaryTypeName = instrumentedType.getName() + "$" + QUX;
@@ -148,17 +150,49 @@ public class TypeProxyTest {
         }
     }
 
-    private static class AnswerWithSpecialInvocation implements Answer<Instrumentation.SpecialMethodInvocation> {
+    private static class SameMethodAsSpecialInvocation implements Answer<Instrumentation.SpecialMethodInvocation> {
 
         private final TypeDescription instrumentedType;
 
-        public AnswerWithSpecialInvocation(TypeDescription instrumentedType) {
+        public SameMethodAsSpecialInvocation(TypeDescription instrumentedType) {
             this.instrumentedType = instrumentedType;
         }
 
         @Override
         public Instrumentation.SpecialMethodInvocation answer(InvocationOnMock invocation) throws Throwable {
-            return new Instrumentation.SpecialMethodInvocation.Legal((MethodDescription) invocation.getArguments()[0], instrumentedType);
+            return new VirtualSpecialMethodInvocation((MethodDescription) invocation.getArguments()[0], instrumentedType);
+        }
+    }
+
+    private static class VirtualSpecialMethodInvocation implements Instrumentation.SpecialMethodInvocation {
+
+        private final MethodDescription methodDescription;
+        private final TypeDescription typeDescription;
+
+        private VirtualSpecialMethodInvocation(MethodDescription methodDescription, TypeDescription typeDescription) {
+            this.methodDescription = methodDescription;
+            this.typeDescription = typeDescription;
+        }
+
+        @Override
+        public MethodDescription getMethodDescription() {
+            return methodDescription;
+        }
+
+        @Override
+        public TypeDescription getTypeDescription() {
+            return typeDescription;
+        }
+
+        @Override
+        public boolean isValid() {
+            return true;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+            return MethodInvocation.invoke(methodDescription).virtual(typeDescription)
+                    .apply(methodVisitor, instrumentationContext);
         }
     }
 

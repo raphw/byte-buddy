@@ -233,26 +233,32 @@ public interface Instrumentation {
 
         SpecialMethodInvocation invokeDefault(TypeDescription targetType, String uniqueMethodSignature);
 
-        static enum MethodLookup {
+        static interface MethodLookup {
 
-            EXACT {
-                @Override
-                protected MethodDescription resolve(MethodDescription methodDescription,
-                                                    BridgeMethodResolver bridgeMethodResolver) {
-                    return methodDescription;
+            MethodDescription resolve(MethodDescription methodDescription,
+                                      Map<String, MethodDescription> invokableMethods,
+                                      BridgeMethodResolver bridgeMethodResolver);
+
+            static enum Default implements MethodLookup {
+
+                EXACT {
+                    @Override
+                    public MethodDescription resolve(MethodDescription methodDescription,
+                                                     Map<String, MethodDescription> invokableMethods,
+                                                     BridgeMethodResolver bridgeMethodResolver) {
+                        return methodDescription;
+                    }
+                },
+
+                FOR_SUPER_TYPE {
+                    @Override
+                    public MethodDescription resolve(MethodDescription methodDescription,
+                                                     Map<String, MethodDescription> invokableMethods,
+                                                     BridgeMethodResolver bridgeMethodResolver) {
+                        return bridgeMethodResolver.resolve(invokableMethods.get(methodDescription.getUniqueSignature()));
+                    }
                 }
-            },
-
-            RESOLVE_BRIDGES {
-                @Override
-                protected MethodDescription resolve(MethodDescription methodDescription,
-                                                    BridgeMethodResolver bridgeMethodResolver) {
-                    return bridgeMethodResolver.resolve(methodDescription);
-                }
-            };
-
-            protected abstract MethodDescription resolve(MethodDescription methodDescription,
-                                                         BridgeMethodResolver bridgeMethodResolver);
+            }
         }
 
         /**
@@ -272,6 +278,7 @@ public interface Instrumentation {
         abstract static class AbstractBase implements Target {
 
             protected final TypeDescription typeDescription;
+            protected final Map<String, MethodDescription> invokableMethods;
             protected final Map<TypeDescription, Map<String, MethodDescription>> defaultMethods;
             protected final BridgeMethodResolver bridgeMethodResolver;
 
@@ -279,6 +286,10 @@ public interface Instrumentation {
                                    BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
                 bridgeMethodResolver = bridgeMethodResolverFactory.make(finding.getInvokableMethods());
                 typeDescription = finding.getTypeDescription();
+                invokableMethods = new HashMap<String, MethodDescription>(finding.getInvokableMethods().size());
+                for (MethodDescription methodDescription : finding.getInvokableMethods()) {
+                    invokableMethods.put(methodDescription.getUniqueSignature(), methodDescription);
+                }
                 defaultMethods = new HashMap<TypeDescription, Map<String, MethodDescription>>(finding.getInvokableDefaultMethods().size());
                 for (Map.Entry<TypeDescription, Set<MethodDescription>> entry : finding.getInvokableDefaultMethods().entrySet()) {
                     Map<String, MethodDescription> defaultMethods = new HashMap<String, MethodDescription>(entry.getValue().size());
@@ -297,7 +308,7 @@ public interface Instrumentation {
             @Override
             public Instrumentation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription,
                                                                        MethodLookup methodLookup) {
-                return invokeSuper(methodLookup.resolve(methodDescription, bridgeMethodResolver));
+                return invokeSuper(methodLookup.resolve(methodDescription, invokableMethods, bridgeMethodResolver));
             }
 
             protected abstract Instrumentation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription);

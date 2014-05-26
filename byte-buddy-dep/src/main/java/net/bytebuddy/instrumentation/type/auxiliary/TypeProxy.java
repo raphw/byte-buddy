@@ -11,6 +11,7 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.method.bytecode.stack.Duplication;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import net.bytebuddy.instrumentation.method.bytecode.stack.Throw;
 import net.bytebuddy.instrumentation.method.bytecode.stack.TypeCreation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.constant.DefaultValue;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.FieldAccess;
@@ -104,6 +105,33 @@ public class TypeProxy implements AuxiliaryType {
                 ", instrumentationTarget=" + instrumentationTarget +
                 ", ignoreFinalizer=" + ignoreFinalizer +
                 '}';
+    }
+
+    private static enum AbstractMethodErrorThrow implements StackManipulation {
+
+        INSTANCE;
+
+        private final StackManipulation implementation;
+
+        private AbstractMethodErrorThrow() {
+            TypeDescription abstractMethodError = new TypeDescription.ForLoadedType(AbstractMethodError.class);
+            MethodDescription constructor = abstractMethodError.getDeclaredMethods()
+                    .filter(isConstructor().and(takesArguments(0))).getOnly();
+            implementation = new Compound(TypeCreation.forType(abstractMethodError),
+                    Duplication.SINGLE,
+                    MethodInvocation.invoke(constructor),
+                    Throw.INSTANCE);
+        }
+
+        @Override
+        public boolean isValid() {
+            return implementation.isValid();
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+            return implementation.apply(methodVisitor, instrumentationContext);
+        }
     }
 
     /**
@@ -325,16 +353,17 @@ public class TypeProxy implements AuxiliaryType {
             public Size apply(MethodVisitor methodVisitor,
                               Context instrumentationContext,
                               MethodDescription instrumentedMethod) {
-                MethodDescription proxyMethod = methodAccessorFactory.registerAccessorFor(instrumentationTarget
-                        .invokeSuper(instrumentedMethod, Target.MethodLookup.RESOLVE_BRIDGES));
-                StackManipulation.Size stackSize = new StackManipulation.Compound(
-                        MethodVariableAccess.forType(instrumentationTarget.getTypeDescription()).loadFromIndex(0),
-                        fieldLoadingInstruction,
-                        MethodVariableAccess.loadArguments(instrumentedMethod),
-                        MethodInvocation.invoke(proxyMethod),
-                        MethodReturn.returning(instrumentedMethod.getReturnType())
-                ).apply(methodVisitor, instrumentationContext);
+                StackManipulation.Size stackSize = implementAccess(instrumentationTarget.invokeSuper(instrumentedMethod,
+                        Target.MethodLookup.Default.FOR_SUPER_TYPE), fieldLoadingInstruction)
+                        .apply(methodVisitor, instrumentationContext);
                 return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
+            }
+
+            private StackManipulation implementAccess(Instrumentation.SpecialMethodInvocation specialMethodInvocation,
+                                                      StackManipulation fieldLoadingInstruction) {
+                return specialMethodInvocation.isValid()
+                        ? new AccessorMethodInvocation(specialMethodInvocation)
+                        : AbstractMethodErrorThrow.INSTANCE;
             }
 
             private MethodCall getMethodCall() {
@@ -359,6 +388,32 @@ public class TypeProxy implements AuxiliaryType {
                         "methodCall=" + MethodCall.this +
                         "fieldLoadingInstruction=" + fieldLoadingInstruction +
                         '}';
+            }
+
+            private class AccessorMethodInvocation implements StackManipulation {
+
+                private final SpecialMethodInvocation specialMethodInvocation;
+
+                private AccessorMethodInvocation(SpecialMethodInvocation specialMethodInvocation) {
+                    this.specialMethodInvocation = specialMethodInvocation;
+                }
+
+                @Override
+                public boolean isValid() {
+                    return true;
+                }
+
+                @Override
+                public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+                    MethodDescription proxyMethod = methodAccessorFactory.registerAccessorFor(specialMethodInvocation);
+                    return new StackManipulation.Compound(
+                            MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                            fieldLoadingInstruction,
+                            MethodVariableAccess.loadArguments(proxyMethod),
+                            MethodInvocation.invoke(proxyMethod),
+                            MethodReturn.returning(proxyMethod.getReturnType())
+                    ).apply(methodVisitor, instrumentationContext);
+                }
             }
         }
     }
