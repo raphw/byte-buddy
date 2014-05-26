@@ -20,6 +20,7 @@ import java.util.Arrays;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
@@ -57,12 +58,6 @@ public class SuperMethodCallPreparationAndExceptionTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testNoSuperType() throws Exception {
-        when(typeDescription.getSupertype()).thenReturn(null);
-        SuperMethodCall.INSTANCE.appender(instrumentationTarget);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
     public void testConstructor() throws Exception {
         when(typeDescription.getSupertype()).thenReturn(superType);
         when(methodDescription.isConstructor()).thenReturn(true);
@@ -71,7 +66,7 @@ public class SuperMethodCallPreparationAndExceptionTest {
         SuperMethodCall.INSTANCE.appender(instrumentationTarget).apply(methodVisitor, instrumentationContext, methodDescription);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = IllegalStateException.class)
     public void testStaticMethod() throws Exception {
         when(typeDescription.getSupertype()).thenReturn(superType);
         when(methodDescription.isStatic()).thenReturn(true);
@@ -81,10 +76,12 @@ public class SuperMethodCallPreparationAndExceptionTest {
         when(returnType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(superType.getDeclaredMethods()).thenReturn(superTypeMethods);
         when(superTypeMethods.filter(any(MethodMatcher.class))).thenReturn(superTypeMethods);
+        when(instrumentationTarget.invokeSuper(eq(methodDescription), any(Instrumentation.Target.MethodLookup.class)))
+                .thenReturn(Instrumentation.SpecialMethodInvocation.Illegal.INSTANCE);
         SuperMethodCall.INSTANCE.appender(instrumentationTarget).apply(methodVisitor, instrumentationContext, methodDescription);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = IllegalStateException.class)
     public void testNoSuper() throws Exception {
         when(typeDescription.getSupertype()).thenReturn(superType);
         when(methodDescription.getParameterTypes()).thenReturn(methodParameters);
@@ -95,6 +92,8 @@ public class SuperMethodCallPreparationAndExceptionTest {
         when(returnType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(superType.getDeclaredMethods()).thenReturn(superTypeMethods);
         when(superTypeMethods.filter(any(MethodMatcher.class))).thenReturn(superTypeMethods);
+        when(instrumentationTarget.invokeSuper(eq(methodDescription), any(Instrumentation.Target.MethodLookup.class)))
+                .thenReturn(Instrumentation.SpecialMethodInvocation.Illegal.INSTANCE);
         SuperMethodCall.INSTANCE.appender(instrumentationTarget).apply(methodVisitor, instrumentationContext, methodDescription);
     }
 }

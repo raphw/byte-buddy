@@ -4,11 +4,9 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
-import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
-import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.hasSameByteCodeSignatureAs;
@@ -37,18 +35,15 @@ public enum SuperMethodCall implements Instrumentation {
 
     @Override
     public ByteCodeAppender appender(Target instrumentationTarget) {
-        if (instrumentationTarget.getTypeDescription().getSupertype() == null) {
-            throw new IllegalArgumentException("The object type does not have a super type");
-        }
-        return new SuperMethodCallAppender(instrumentationTarget.getTypeDescription().getSupertype());
+        return new Appender(instrumentationTarget);
     }
 
-    private static class SuperMethodCallAppender implements ByteCodeAppender {
+    private static class Appender implements ByteCodeAppender {
 
-        private final TypeDescription targetType;
+        private final Target instrumentationTarget;
 
-        private SuperMethodCallAppender(TypeDescription targetType) {
-            this.targetType = targetType;
+        private Appender(Target instrumentationTarget) {
+            this.instrumentationTarget = instrumentationTarget;
         }
 
         @Override
@@ -62,7 +57,8 @@ public enum SuperMethodCall implements Instrumentation {
                           MethodDescription instrumentedMethod) {
             MethodDescription targetMethod;
             if (instrumentedMethod.isConstructor()) {
-                MethodList methodList = targetType.getDeclaredMethods().filter(hasSameByteCodeSignatureAs(instrumentedMethod));
+                MethodList methodList = instrumentationTarget.getTypeDescription().getSupertype()
+                        .getDeclaredMethods().filter(hasSameByteCodeSignatureAs(instrumentedMethod));
                 if (methodList.size() == 0) {
                     throw new IllegalArgumentException("There is no super constructor resembling " + instrumentedMethod);
                 }
@@ -71,27 +67,27 @@ public enum SuperMethodCall implements Instrumentation {
                 targetMethod = instrumentedMethod;
             }
             StackManipulation.Size stackSize = new StackManipulation.Compound(
-                    MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
-                    MethodInvocation.invoke(targetMethod).special(targetType),
-                    MethodReturn.returning(instrumentedMethod.getReturnType())
+                    MethodVariableAccess.loadThisReferenceAndArguments(targetMethod),
+                    instrumentationTarget.invokeSuper(targetMethod, Target.MethodLookup.Default.EXACT),
+                    MethodReturn.returning(targetMethod.getReturnType())
             ).apply(methodVisitor, instrumentationContext);
-            return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
+            return new Size(stackSize.getMaximalSize(), targetMethod.getStackSize());
         }
 
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && targetType.equals(((SuperMethodCallAppender) other).targetType);
+                    && instrumentationTarget.equals(((Appender) other).instrumentationTarget);
         }
 
         @Override
         public int hashCode() {
-            return targetType.hashCode();
+            return instrumentationTarget.hashCode();
         }
 
         @Override
         public String toString() {
-            return "SuperMethodCallAppender{targetType=" + targetType + '}';
+            return "SuperMethodCall.Appender{instrumentationTarget=" + instrumentationTarget + '}';
         }
     }
 }
