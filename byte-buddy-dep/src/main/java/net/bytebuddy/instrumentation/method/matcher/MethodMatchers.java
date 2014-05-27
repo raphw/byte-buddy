@@ -526,6 +526,14 @@ public final class MethodMatchers {
         return new DeclaringTypeMethodMatcher(type);
     }
 
+    public static JunctionMethodMatcher isDeclaredBySubtypeOf(TypeDescription type) {
+        return new DeclaringSubTypeMethodMatcher(type);
+    }
+
+    public static JunctionMethodMatcher isDeclaredBySubtypeOf(Class<?> type) {
+        return new DeclaringSubTypeMethodMatcher(type);
+    }
+
     /**
      * Matches methods that represent a Java bean setter, i.e. have signature that resembles
      * {@code void set...(T type)}.
@@ -1353,7 +1361,7 @@ public final class MethodMatchers {
 
         @Override
         public String toString() {
-            return "visibleTo(" + typeDescription + ')';
+            return "visibleTo(" + typeDescription.getName() + ')';
         }
     }
 
@@ -1387,7 +1395,41 @@ public final class MethodMatchers {
 
         @Override
         public String toString() {
-            return "declaredBy(" + declaringType + ')';
+            return "declaredBy(" + declaringType.getName() + ')';
+        }
+    }
+
+    private static class DeclaringSubTypeMethodMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        private final TypeDescription minimumSuperType;
+
+        private DeclaringSubTypeMethodMatcher(Class<?> declaringType) {
+            this.minimumSuperType = new TypeDescription.ForLoadedType(declaringType);
+        }
+
+        private DeclaringSubTypeMethodMatcher(TypeDescription declaringType) {
+            this.minimumSuperType = declaringType;
+        }
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.getDeclaringType().isAssignableTo(minimumSuperType);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return this == o || !(o == null || getClass() != o.getClass())
+                    && minimumSuperType.equals(((DeclaringTypeMethodMatcher) o).declaringType);
+        }
+
+        @Override
+        public int hashCode() {
+            return minimumSuperType.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "declaredBySubtypeOf(" + minimumSuperType.getName() + ')';
         }
     }
 
@@ -1417,7 +1459,7 @@ public final class MethodMatchers {
 
         @Override
         public String toString() {
-            return "isAnnotatedBy(" + annotationType + ')';
+            return "isAnnotatedBy(" + annotationType.getName() + ')';
         }
     }
 

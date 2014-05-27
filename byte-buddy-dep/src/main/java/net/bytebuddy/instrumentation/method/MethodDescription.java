@@ -23,6 +23,8 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
      */
     static final String CONSTRUCTOR_INTERNAL_NAME = "<init>";
 
+    static final String STATIC_INITIALIZER_INTERNAL_NAME = "<clinit>";
+
     /**
      * Returns a description of the return type of the method described by this instance.
      *
@@ -485,7 +487,7 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
 
         @Override
         public boolean isConstructor() {
-            return CONSTRUCTOR_INTERNAL_NAME.equals(internalName);
+            return CONSTRUCTOR_INTERNAL_NAME.equals(internalName) || STATIC_INITIALIZER_INTERNAL_NAME.equals(internalName);
         }
 
         @Override

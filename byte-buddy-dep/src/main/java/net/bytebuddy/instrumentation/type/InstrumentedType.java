@@ -464,7 +464,7 @@ public interface InstrumentedType extends TypeDescription {
 
             @Override
             public boolean isConstructor() {
-                return CONSTRUCTOR_INTERNAL_NAME.equals(internalName);
+                return CONSTRUCTOR_INTERNAL_NAME.equals(internalName) || STATIC_INITIALIZER_INTERNAL_NAME.equals(internalName);
             }
 
             @Override
