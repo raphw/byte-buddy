@@ -34,9 +34,9 @@ public class MethodDelegationSuperTest extends AbstractInstrumentationTest {
 
     @Test
     public void testBridgeMethodResolution() throws Exception {
-        DynamicType.Loaded<Bar> loaded = instrument(Bar.class, MethodDelegation.to(Baz.class));
+        DynamicType.Loaded<Bar> loaded = instrument(Bar.class, MethodDelegation.to(GenericBaz.class));
         Bar instance = loaded.getLoaded().newInstance();
-        assertThat(instance.qux(), is(BAR + QUX));
+        assertThat(instance.qux(BAR), is(BAR + QUX));
     }
 
     @Test(expected = AbstractMethodError.class)
@@ -79,17 +79,31 @@ public class MethodDelegationSuperTest extends AbstractInstrumentationTest {
         }
     }
 
-    public static class Bar extends Foo {
-
-        @Override
-        public String qux() {
-            return BAR;
-        }
-    }
-
     public static abstract class FooBarQuxBaz implements Qux {
 
         @Override
         public abstract Object qux();
+    }
+
+    public static class GenericBase<T> {
+
+        public T qux(T value) {
+            return value;
+        }
+    }
+
+    public static class Bar extends GenericBase<String> {
+
+        @Override
+        public String qux(String value) {
+            return super.qux(value);
+        }
+    }
+
+    public static class GenericBaz {
+
+        public static String baz(@Super GenericBase<String> foo, String value) {
+            return foo.qux(value) + QUX;
+        }
     }
 }

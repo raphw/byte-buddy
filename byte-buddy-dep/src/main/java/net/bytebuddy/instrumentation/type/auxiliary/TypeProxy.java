@@ -353,16 +353,16 @@ public class TypeProxy implements AuxiliaryType {
             public Size apply(MethodVisitor methodVisitor,
                               Context instrumentationContext,
                               MethodDescription instrumentedMethod) {
-                StackManipulation.Size stackSize = implementAccess(instrumentationTarget.invokeSuper(instrumentedMethod,
-                        Target.MethodLookup.Default.FOR_SUPER_TYPE), fieldLoadingInstruction)
+                StackManipulation.Size stackSize = implementAccess(instrumentedMethod,
+                        instrumentationTarget.invokeSuper(instrumentedMethod, Target.MethodLookup.Default.FOR_SUPER_TYPE))
                         .apply(methodVisitor, instrumentationContext);
                 return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
             }
 
-            private StackManipulation implementAccess(Instrumentation.SpecialMethodInvocation specialMethodInvocation,
-                                                      StackManipulation fieldLoadingInstruction) {
+            private StackManipulation implementAccess(MethodDescription instrumentedMethod,
+                                                      Instrumentation.SpecialMethodInvocation specialMethodInvocation) {
                 return specialMethodInvocation.isValid()
-                        ? new AccessorMethodInvocation(specialMethodInvocation)
+                        ? new AccessorMethodInvocation(instrumentedMethod, specialMethodInvocation)
                         : AbstractMethodErrorThrow.INSTANCE;
             }
 
@@ -392,9 +392,12 @@ public class TypeProxy implements AuxiliaryType {
 
             private class AccessorMethodInvocation implements StackManipulation {
 
+                private final MethodDescription instrumentedMethod;
                 private final SpecialMethodInvocation specialMethodInvocation;
 
-                private AccessorMethodInvocation(SpecialMethodInvocation specialMethodInvocation) {
+                private AccessorMethodInvocation(MethodDescription instrumentedMethod,
+                                                 SpecialMethodInvocation specialMethodInvocation) {
+                    this.instrumentedMethod = instrumentedMethod;
                     this.specialMethodInvocation = specialMethodInvocation;
                 }
 
@@ -409,9 +412,9 @@ public class TypeProxy implements AuxiliaryType {
                     return new StackManipulation.Compound(
                             MethodVariableAccess.REFERENCE.loadFromIndex(0),
                             fieldLoadingInstruction,
-                            MethodVariableAccess.loadArguments(proxyMethod),
+                            MethodVariableAccess.forBridgeMethodInvocation(instrumentedMethod, proxyMethod),
                             MethodInvocation.invoke(proxyMethod),
-                            MethodReturn.returning(proxyMethod.getReturnType())
+                            MethodReturn.returning(instrumentedMethod.getReturnType())
                     ).apply(methodVisitor, instrumentationContext);
                 }
             }
