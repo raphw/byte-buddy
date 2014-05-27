@@ -15,8 +15,6 @@ import java.util.concurrent.Callable;
 @Target(ElementType.PARAMETER)
 public @interface DefaultCall {
 
-    static final Class<?> IMPLICIT_TARGET = void.class;
-
     Class<?> targetType() default void.class;
 
     static enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<DefaultCall> {
@@ -49,7 +47,7 @@ public @interface DefaultCall {
         }
 
         private static MethodLocator locate(Class<?> type) {
-            return type == IMPLICIT_TARGET
+            return type == void.class
                     ? MethodLocator.Implicit.INSTANCE
                     : new MethodLocator.Explicit(type);
         }
