@@ -3,12 +3,21 @@ package net.bytebuddy.dynamic.scaffold.subclass;
 import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
+import net.bytebuddy.instrumentation.type.TypeList;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isConstructor;
 
 /**
  * An instrumentation target for creating a subclass of a given type.
  */
 public class SubclassInstrumentationTarget extends Instrumentation.Target.AbstractBase {
+
+    private final Map<TypeList, MethodDescription> superConstructors;
 
     /**
      * Creates a new subclass instrumentation target.
@@ -19,10 +28,21 @@ public class SubclassInstrumentationTarget extends Instrumentation.Target.Abstra
     protected SubclassInstrumentationTarget(MethodLookupEngine.Finding finding,
                                             BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
         super(finding, bridgeMethodResolverFactory);
+        MethodList superConstructors = finding.getTypeDescription().getSupertype().getDeclaredMethods().filter(isConstructor());
+        this.superConstructors = new HashMap<TypeList, MethodDescription>(superConstructors.size());
+        for (MethodDescription superConstructor : superConstructors) {
+            this.superConstructors.put(superConstructor.getParameterTypes(), superConstructor);
+        }
     }
 
     @Override
     protected Instrumentation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription) {
+        if (methodDescription.isConstructor()) {
+            methodDescription = this.superConstructors.get(methodDescription.getParameterTypes());
+            if (methodDescription == null) {
+                return Instrumentation.SpecialMethodInvocation.Illegal.INSTANCE;
+            }
+        }
         return methodDescription.isSpecializableFor(typeDescription.getSupertype())
                 ? new Instrumentation.SpecialMethodInvocation.Legal(methodDescription, typeDescription.getSupertype())
                 : Instrumentation.SpecialMethodInvocation.Illegal.INSTANCE;
