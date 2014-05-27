@@ -168,7 +168,7 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
 
         @Override
         public boolean isDefaultMethod() {
-            return !isAbstract() && getDeclaringType().isInterface();
+            return !isAbstract() && !isBridge() && getDeclaringType().isInterface();
         }
 
         @Override

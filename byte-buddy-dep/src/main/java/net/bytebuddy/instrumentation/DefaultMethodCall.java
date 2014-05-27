@@ -17,15 +17,10 @@ import java.util.Set;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.isInterface;
 
+/**
+ * A
+ */
 public class DefaultMethodCall implements Instrumentation {
-
-    public static Instrumentation preferring(Class<?>... prioritizedInterface) {
-        return new DefaultMethodCall(new TypeList.ForLoadedType(prioritizedInterface));
-    }
-
-    public static Instrumentation unambiguousOnly() {
-        return new DefaultMethodCall(new TypeList.Empty());
-    }
 
     private final List<TypeDescription> preferredInterfaces;
 
@@ -34,6 +29,14 @@ public class DefaultMethodCall implements Instrumentation {
             isInterface(typeDescription);
         }
         this.preferredInterfaces = preferredInterfaces;
+    }
+
+    public static Instrumentation preferring(Class<?>... prioritizedInterface) {
+        return new DefaultMethodCall(new TypeList.ForLoadedType(prioritizedInterface));
+    }
+
+    public static Instrumentation unambiguousOnly() {
+        return new DefaultMethodCall(new TypeList.Empty());
     }
 
     @Override

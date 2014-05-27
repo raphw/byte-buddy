@@ -151,6 +151,19 @@ public class TypeProxyTest {
 
     private static class FakeSpecialMethodInvocation implements Answer<Instrumentation.SpecialMethodInvocation> {
 
+        private final TypeDescription instrumentedType;
+
+        private FakeSpecialMethodInvocation(TypeDescription instrumentedType) {
+            this.instrumentedType = instrumentedType;
+        }
+
+        @Override
+        public Instrumentation.SpecialMethodInvocation answer(InvocationOnMock invocation) throws Throwable {
+            MethodDescription accessedMethod = (MethodDescription) invocation.getArguments()[0];
+            return new Container(instrumentedType.getDeclaredMethods()
+                    .filter(isMethod().and(nameEndsWithIgnoreCase(accessedMethod.getName()))).getOnly());
+        }
+
         private static class Container implements Instrumentation.SpecialMethodInvocation {
 
             private final MethodDescription proxiedAccessor;
@@ -178,19 +191,6 @@ public class TypeProxyTest {
             public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
                 throw new UnsupportedOperationException();
             }
-        }
-
-        private final TypeDescription instrumentedType;
-
-        private FakeSpecialMethodInvocation(TypeDescription instrumentedType) {
-            this.instrumentedType = instrumentedType;
-        }
-
-        @Override
-        public Instrumentation.SpecialMethodInvocation answer(InvocationOnMock invocation) throws Throwable {
-            MethodDescription accessedMethod = (MethodDescription) invocation.getArguments()[0];
-            return new Container(instrumentedType.getDeclaredMethods()
-                    .filter(isMethod().and(nameEndsWithIgnoreCase(accessedMethod.getName()))).getOnly());
         }
     }
 

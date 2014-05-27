@@ -137,6 +137,39 @@ public enum MethodVariableAccess {
         return new ArgumentLoadingStackManipulation(variableOffset);
     }
 
+    private static interface TypeCastingHandler {
+
+        StackManipulation wrapNext(StackManipulation variableAccess, TypeDescription parameterType);
+
+        static enum NoOp implements TypeCastingHandler {
+
+            INSTANCE;
+
+            @Override
+            public StackManipulation wrapNext(StackManipulation variableAccess, TypeDescription parameterType) {
+                return variableAccess;
+            }
+        }
+
+        static class ForBridgeTarget implements TypeCastingHandler {
+
+            private final Iterator<TypeDescription> typeIterator;
+
+            public ForBridgeTarget(MethodDescription targetMethod) {
+                typeIterator = targetMethod.getParameterTypes().iterator();
+            }
+
+            @Override
+            public StackManipulation wrapNext(StackManipulation variableAccess, TypeDescription parameterType) {
+                TypeDescription targetParameterType = typeIterator.next();
+                return targetParameterType.equals(parameterType)
+                        ? variableAccess
+                        : new StackManipulation.Compound(variableAccess, new DownCasting(targetParameterType));
+            }
+        }
+
+    }
+
     private class ArgumentLoadingStackManipulation implements StackManipulation {
 
         private final int variableIndex;
@@ -187,39 +220,6 @@ public enum MethodVariableAccess {
         public String toString() {
             return "MethodVariableAccess.ArgumentLoadingStackManipulation{variableIndex=" + variableIndex + '}';
         }
-    }
-
-    private static interface TypeCastingHandler {
-
-        StackManipulation wrapNext(StackManipulation variableAccess, TypeDescription parameterType);
-
-        static enum NoOp implements TypeCastingHandler {
-
-            INSTANCE;
-
-            @Override
-            public StackManipulation wrapNext(StackManipulation variableAccess, TypeDescription parameterType) {
-                return variableAccess;
-            }
-        }
-
-        static class ForBridgeTarget implements TypeCastingHandler {
-
-            private final Iterator<TypeDescription> typeIterator;
-
-            public ForBridgeTarget(MethodDescription targetMethod) {
-                typeIterator = targetMethod.getParameterTypes().iterator();
-            }
-
-            @Override
-            public StackManipulation wrapNext(StackManipulation variableAccess, TypeDescription parameterType) {
-                TypeDescription targetParameterType = typeIterator.next();
-                return targetParameterType.equals(parameterType)
-                        ? variableAccess
-                        : new StackManipulation.Compound(variableAccess, new DownCasting(targetParameterType));
-            }
-        }
-
     }
 }
 
