@@ -113,4 +113,42 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
                 classLoader,
                 not(isDeclaredBy(Object.class)));
     }
+
+    @Test
+    @Java8Rule.Enforce
+    public void testDeclaredAndImplementedMethod() throws Exception {
+        DynamicType.Loaded<?> loaded = instrument(classLoader.loadClass(SINGLE_DEFAULT_METHOD_CLASS),
+                DefaultMethodCall.unambiguousOnly(),
+                classLoader,
+                not(isDeclaredBy(Object.class)),
+                classLoader.loadClass(SINGLE_DEFAULT_METHOD));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        Method method = loaded.getLoaded().getDeclaredMethod(FOO);
+        Object instance = loaded.getLoaded().newInstance();
+        assertThat(method.invoke(instance), is((Object) FOO));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    @Java8Rule.Enforce
+    public void testDeclaredAndImplementedAmbiguousMethodThrowsException() throws Exception {
+        instrument(classLoader.loadClass(SINGLE_DEFAULT_METHOD_CLASS),
+                DefaultMethodCall.unambiguousOnly(),
+                classLoader,
+                not(isDeclaredBy(Object.class)),
+                classLoader.loadClass(SINGLE_DEFAULT_METHOD), classLoader.loadClass(CONFLICTING_INTERFACE));
+    }
+
+    @Test
+    @Java8Rule.Enforce
+    public void testDeclaredAndImplementedAmbiguousMethodWithPreference() throws Exception {
+        DynamicType.Loaded<?> loaded = instrument(classLoader.loadClass(SINGLE_DEFAULT_METHOD_CLASS),
+                DefaultMethodCall.preferring(classLoader.loadClass(SINGLE_DEFAULT_METHOD)),
+                classLoader,
+                not(isDeclaredBy(Object.class)),
+                classLoader.loadClass(SINGLE_DEFAULT_METHOD), classLoader.loadClass(CONFLICTING_INTERFACE));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        Method method = loaded.getLoaded().getDeclaredMethod(FOO);
+        Object instance = loaded.getLoaded().newInstance();
+        assertThat(method.invoke(instance), is((Object) FOO));
+    }
 }

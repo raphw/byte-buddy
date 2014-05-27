@@ -29,6 +29,16 @@ public class MethodDelegationSuperCallTest extends AbstractInstrumentationTest {
         assertThat(instance.bar(), is(FOO));
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testAbstractMethodNonBindable() throws Exception {
+        instrument(Qux.class, MethodDelegation.to(CallableClass.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testWrongTypeThrowsException() throws Exception {
+        instrument(Bar.class, MethodDelegation.to(IllegalAnnotation.class));
+    }
+
     public static class Foo {
 
         public String value = BAR;
@@ -56,6 +66,18 @@ public class MethodDelegationSuperCallTest extends AbstractInstrumentationTest {
 
         public static String bar(@SuperCall Callable<String> callable) throws Exception {
             return callable.call();
+        }
+    }
+
+    public static abstract class Qux {
+
+        public abstract String bar();
+    }
+
+    public static class IllegalAnnotation {
+
+        public static String bar(@SuperCall String value) throws Exception {
+            return value;
         }
     }
 }

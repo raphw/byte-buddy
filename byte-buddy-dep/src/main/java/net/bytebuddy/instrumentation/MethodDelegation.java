@@ -316,7 +316,8 @@ public class MethodDelegation implements Instrumentation {
                 Origin.Binder.INSTANCE,
                 This.Binder.INSTANCE,
                 Super.Binder.INSTANCE,
-                SuperCall.Binder.INSTANCE);
+                SuperCall.Binder.INSTANCE,
+                DefaultCall.Binder.INSTANCE);
     }
 
     private static TargetMethodAnnotationDrivenBinder.DefaultsProvider<?> defaultDefaultsProvider() {

@@ -46,7 +46,7 @@ import java.util.List;
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.PARAMETER, ElementType.METHOD})
+@Target(ElementType.PARAMETER)
 public @interface Super {
 
     /**

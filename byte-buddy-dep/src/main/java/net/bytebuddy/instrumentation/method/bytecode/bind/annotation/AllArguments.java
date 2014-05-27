@@ -29,7 +29,7 @@ import java.util.List;
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.PARAMETER})
+@Target(ElementType.PARAMETER)
 public @interface AllArguments {
 
     /**

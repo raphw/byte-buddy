@@ -42,7 +42,9 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
     }
 
     @Override
-    public MethodBinding bind(Instrumentation.Target instrumentationTarget, MethodDescription source, MethodDescription target) {
+    public MethodBinding bind(Instrumentation.Target instrumentationTarget,
+                              MethodDescription source,
+                              MethodDescription target) {
         if (IgnoreForBinding.Verifier.check(target)) {
             return MethodBinding.Illegal.INSTANCE;
         }

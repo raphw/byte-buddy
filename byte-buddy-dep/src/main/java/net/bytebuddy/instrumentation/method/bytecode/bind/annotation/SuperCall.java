@@ -25,7 +25,7 @@ import java.util.concurrent.Callable;
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.PARAMETER, ElementType.METHOD})
+@Target(ElementType.PARAMETER)
 public @interface SuperCall {
 
     /**
@@ -56,14 +56,13 @@ public @interface SuperCall {
                                                                Assigner assigner) {
             TypeDescription targetType = target.getParameterTypes().get(targetParameterIndex);
             if (!targetType.represents(Runnable.class) && !targetType.represents(Callable.class) && !targetType.represents(Object.class)) {
-                throw new IllegalStateException("A method call proxy can only be assigned to Runnable or Callable types: " + target);
-            } else {
-                Instrumentation.SpecialMethodInvocation specialMethodInvocation = instrumentationTarget.invokeSuper(source,
-                        Instrumentation.Target.MethodLookup.Default.EXACT);
-                return specialMethodInvocation.isValid()
-                        ? new MethodDelegationBinder.ParameterBinding.Anonymous(new MethodCallProxy.AssignableSignatureCall(specialMethodInvocation))
-                        : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
+                throw new IllegalStateException("A super method call proxy can only be assigned to Runnable or Callable types: " + target);
             }
+            Instrumentation.SpecialMethodInvocation specialMethodInvocation = instrumentationTarget.invokeSuper(source,
+                    Instrumentation.Target.MethodLookup.Default.EXACT);
+            return specialMethodInvocation.isValid()
+                    ? new MethodDelegationBinder.ParameterBinding.Anonymous(new MethodCallProxy.AssignableSignatureCall(specialMethodInvocation))
+                    : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
         }
     }
 }

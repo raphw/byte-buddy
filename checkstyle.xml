@@ -20,15 +20,15 @@
         <!--<module name="JavadocMethod">-->
         <!--<property name="scope" value="protected"/>-->
         <!--</module>-->
-        <module name="JavadocType">
-            <property name="scope" value="protected"/>
-        </module>
-        <module name="JavadocVariable">
-            <property name="scope" value="protected"/>
-        </module>
-        <module name="JavadocStyle">
-            <property name="scope" value="protected"/>
-        </module>
+        <!--<module name="JavadocType">-->
+            <!--<property name="scope" value="protected"/>-->
+        <!--</module>-->
+        <!--<module name="JavadocVariable">-->
+            <!--<property name="scope" value="protected"/>-->
+        <!--</module>-->
+        <!--<module name="JavadocStyle">-->
+            <!--<property name="scope" value="protected"/>-->
+        <!--</module>-->
 
         <module name="ConstantName"/>
         <module name="LocalFinalVariableName"/>
