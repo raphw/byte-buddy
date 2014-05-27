@@ -6,7 +6,6 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.instrumentation.Instrumentation;
-import net.bytebuddy.instrumentation.ModifierContributor;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.method.bytecode.stack.Duplication;
@@ -72,7 +71,7 @@ public class TypeProxy implements AuxiliaryType {
         return new ByteBuddy(classFileVersion)
                 .subclass(proxiedType, ConstructorStrategy.Default.IMITATE_SUPER_TYPE)
                 .name(auxiliaryTypeName)
-                .modifiers(DEFAULT_TYPE_MODIFIER.toArray(new ModifierContributor.ForType[DEFAULT_TYPE_MODIFIER.size()]))
+                .modifiers(DEFAULT_TYPE_MODIFIER)
                 .method(finalizerMatcher)
                 .intercept(new MethodCall(methodAccessorFactory))
                 .defineMethod(REFLECTION_METHOD, TargetType.DESCRIPTION, Collections.<TypeDescription>emptyList(), Ownership.STATIC)

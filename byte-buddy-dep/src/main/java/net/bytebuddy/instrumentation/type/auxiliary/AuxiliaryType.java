@@ -8,10 +8,6 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.modifier.SyntheticState;
 import net.bytebuddy.modifier.TypeVisibility;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
 /**
  * An auxiliary type that provides services to the instrumentation of another type. Implementations should provide
  * meaningful {@code equals(Object)} and {@code hashCode()} implementations in order to avoid multiple creations
@@ -20,10 +16,9 @@ import java.util.List;
 public interface AuxiliaryType {
 
     /**
-     * The default type access of an auxiliary type.
+     * The default type access of an auxiliary type. This array must not be mutated.
      */
-    static final List<ModifierContributor.ForType> DEFAULT_TYPE_MODIFIER = Collections.unmodifiableList(
-            Arrays.<ModifierContributor.ForType>asList(TypeVisibility.PACKAGE_PRIVATE, SyntheticState.SYNTHETIC));
+    static final ModifierContributor.ForType[] DEFAULT_TYPE_MODIFIER = {TypeVisibility.PACKAGE_PRIVATE, SyntheticState.SYNTHETIC};
 
     /**
      * Creates a new auxiliary type.

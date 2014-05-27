@@ -5,7 +5,6 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.instrumentation.Instrumentation;
-import net.bytebuddy.instrumentation.ModifierContributor;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
@@ -104,7 +103,7 @@ public class MethodCallProxy implements AuxiliaryType {
                 .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
                 .methodLookupEngine(ProxyMethodLookupEngine.INSTANCE)
                 .name(auxiliaryTypeName)
-                .modifiers(DEFAULT_TYPE_MODIFIER.toArray(new ModifierContributor.ForType[DEFAULT_TYPE_MODIFIER.size()]))
+                .modifiers(DEFAULT_TYPE_MODIFIER)
                 .implement(Runnable.class)
                 .implement(Callable.class)
                 .method(not(isDeclaredBy(Object.class))).intercept(methodCall)
