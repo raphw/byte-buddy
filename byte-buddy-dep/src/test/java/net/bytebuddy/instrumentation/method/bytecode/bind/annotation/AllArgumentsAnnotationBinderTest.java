@@ -53,6 +53,7 @@ public class AllArgumentsAnnotationBinderTest extends AbstractAnnotationBinderTe
     }
 
     private void testLegalBinding(Annotation[][] targetAnnotations, boolean considerRuntimeType) throws Exception {
+        when(annotation.value()).thenReturn(AllArguments.Binding.STRICT);
         when(stackManipulation.isValid()).thenReturn(true);
         when(sourceTypeList.iterator()).thenReturn(Arrays.asList(firstSourceType, secondSourceType).iterator());
         when(source.isStatic()).thenReturn(false);
@@ -76,6 +77,7 @@ public class AllArgumentsAnnotationBinderTest extends AbstractAnnotationBinderTe
 
     @Test
     public void testIllegalBinding() throws Exception {
+        when(annotation.value()).thenReturn(AllArguments.Binding.STRICT);
         when(stackManipulation.isValid()).thenReturn(false);
         when(sourceTypeList.iterator()).thenReturn(Arrays.asList(firstSourceType, secondSourceType).iterator());
         when(source.isStatic()).thenReturn(false);
