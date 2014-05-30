@@ -32,6 +32,24 @@ import java.util.List;
 @Target(ElementType.PARAMETER)
 public @interface AllArguments {
 
+    Binding value() default Binding.STRICT;
+
+    public static enum Binding {
+
+        STRICT(true),
+        SLACK(false);
+
+        private final boolean strict;
+
+        private Binding(boolean strict) {
+            this.strict = strict;
+        }
+
+        protected boolean isStrict() {
+            return strict;
+        }
+    }
+
     /**
      * A binder for handling the
      * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.AllArguments}
@@ -60,7 +78,7 @@ public @interface AllArguments {
                                                                Assigner assigner) {
             TypeDescription targetType = target.getParameterTypes().get(targetParameterIndex);
             if (!targetType.isArray()) {
-                throw new IllegalStateException("Expected an array type for " + targetType);
+                throw new IllegalStateException("Expected an array type for all argument annotation on " + source);
             }
             ArrayFactory arrayFactory = ArrayFactory.targeting(targetType.getComponentType());
             List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(source.getParameterTypes().size());
@@ -71,11 +89,11 @@ public @interface AllArguments {
                         MethodVariableAccess.forType(sourceParameter).loadFromIndex(offset),
                         assigner.assign(sourceParameter, arrayFactory.getComponentType(), considerRuntimeType));
                 if (stackManipulation.isValid()) {
-                    offset += sourceParameter.getStackSize().getSize();
                     stackManipulations.add(stackManipulation);
-                } else {
+                } else if (annotation.value().isStrict()) {
                     return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
                 }
+                offset += sourceParameter.getStackSize().getSize();
             }
             return new MethodDelegationBinder.ParameterBinding.Anonymous(arrayFactory.withValues(stackManipulations));
         }

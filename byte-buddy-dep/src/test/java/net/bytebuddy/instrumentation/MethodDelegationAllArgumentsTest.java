@@ -10,10 +10,10 @@ import static org.hamcrest.core.Is.is;
 public class MethodDelegationAllArgumentsTest extends AbstractInstrumentationTest {
 
     private static final int FOO = 42, BAR = 21;
-    private static final String QUX = "qux", BAZ = "baz";
+    private static final String QUX = "qux", BAZ = "baz", FOOBAR = "foobar";
 
     @Test
-    public void testAllArguments() throws Exception {
+    public void testStrictBindable() throws Exception {
         DynamicType.Loaded<Foo> loaded = instrument(Foo.class, MethodDelegation.to(Bar.class));
         Foo instance = loaded.getLoaded().newInstance();
         assertThat(instance.foo(FOO, BAR), is((Object) (QUX + FOO + BAR)));
@@ -30,6 +30,39 @@ public class MethodDelegationAllArgumentsTest extends AbstractInstrumentationTes
 
         public static String qux(@AllArguments int[] args) {
             return QUX + args[0] + args[1];
+        }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testStrictNonBindableThrowsException() throws Exception {
+        instrument(Qux.class, MethodDelegation.to(BazStrict.class));
+    }
+
+    @Test
+    public void testSlackNonBindable() throws Exception {
+        DynamicType.Loaded<Qux> loaded = instrument(Qux.class, MethodDelegation.to(BazSlack.class));
+        Qux instance = loaded.getLoaded().newInstance();
+        assertThat(instance.foo(FOOBAR, BAZ), is((Object) (QUX + BAZ)));
+    }
+
+    public static class Qux {
+
+        public Object foo(Object o, String s) {
+            return null;
+        }
+    }
+
+    public static class BazStrict {
+
+        public static String qux(@AllArguments String[] args) {
+            return QUX + args[0] + args[1];
+        }
+    }
+
+    public static class BazSlack {
+
+        public static String qux(@AllArguments(AllArguments.Binding.SLACK) String[] args) {
+            return QUX + args[0];
         }
     }
 }
