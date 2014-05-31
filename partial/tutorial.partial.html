@@ -1361,10 +1361,10 @@ new ByteBuddy()
 
 <p>
     where a <code>ConstructorStrategy</code> is responsible for creating a set of predefined constructors for any given
-    class. Besides the above strategy which copies each constructor of a dynamic type's direct super class, there exist
-    two other predefined strategies: one that does not create any constructor at all and one that creates a default
-    constructor which is invoking the direct super class's default constructor and throws an exception if no such
-    constructor exists.
+    class. Besides the above strategy which copies each visible constructor of a dynamic type's direct super class,
+    there exist three other predefined strategies: one that does not create any constructor at all, one that creates a
+    default constructor which is invoking the direct super class's default constructor and throws an exception if no
+    such constructor exists and one that only imitates public constructors of the super type.
 </p>
 
 <p>
