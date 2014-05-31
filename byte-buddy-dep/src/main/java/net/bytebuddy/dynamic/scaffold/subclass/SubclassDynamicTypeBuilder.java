@@ -44,6 +44,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     private final MethodLookupEngine.Factory methodLookupEngineFactory;
     private final FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory;
     private final MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory;
+    private final ConstructorStrategy constructorStrategy;
 
     /**
      * Creates a new immutable type builder for a subclassing a loaded class.
@@ -81,8 +82,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                       FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                                       MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
                                       ConstructorStrategy constructorStrategy) {
-        super(Collections.<FieldToken>emptyList(),
-                new MethodTokenListForConstructors(constructorStrategy.extractConstructors(superType)));
+        super(Collections.<FieldToken>emptyList(), Collections.<MethodToken>emptyList());
         this.classFileVersion = classFileVersion;
         this.namingStrategy = namingStrategy;
         this.superType = superType;
@@ -96,7 +96,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         this.methodLookupEngineFactory = methodLookupEngineFactory;
         this.defaultFieldAttributeAppenderFactory = defaultFieldAttributeAppenderFactory;
         this.defaultMethodAttributeAppenderFactory = defaultMethodAttributeAppenderFactory;
-        this.methodRegistry = constructorStrategy.inject(methodRegistry, defaultMethodAttributeAppenderFactory);
+        this.methodRegistry = methodRegistry;
+        this.constructorStrategy = constructorStrategy;
     }
 
     /**
@@ -138,7 +139,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                          FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                                          MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
                                          List<FieldToken> fieldTokens,
-                                         List<MethodToken> methodTokens) {
+                                         List<MethodToken> methodTokens,
+                                         ConstructorStrategy constructorStrategy) {
         super(fieldTokens, methodTokens);
         this.classFileVersion = classFileVersion;
         this.namingStrategy = namingStrategy;
@@ -154,6 +156,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         this.methodLookupEngineFactory = methodLookupEngineFactory;
         this.defaultFieldAttributeAppenderFactory = defaultFieldAttributeAppenderFactory;
         this.defaultMethodAttributeAppenderFactory = defaultMethodAttributeAppenderFactory;
+        this.constructorStrategy = constructorStrategy;
     }
 
     @Override
@@ -173,7 +176,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
                 fieldTokens,
-                methodTokens);
+                methodTokens,
+                constructorStrategy);
     }
 
     @Override
@@ -198,7 +202,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
                 fieldTokens,
-                methodTokens);
+                methodTokens,
+                constructorStrategy);
     }
 
     @Override
@@ -218,7 +223,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
                 fieldTokens,
-                methodTokens);
+                methodTokens,
+                constructorStrategy);
     }
 
     @Override
@@ -238,7 +244,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
                 fieldTokens,
-                methodTokens);
+                methodTokens,
+                constructorStrategy);
     }
 
     @Override
@@ -258,7 +265,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
                 fieldTokens,
-                methodTokens);
+                methodTokens,
+                constructorStrategy);
     }
 
     @Override
@@ -283,7 +291,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
                 fieldTokens,
-                methodTokens);
+                methodTokens,
+                constructorStrategy);
     }
 
     @Override
@@ -303,7 +312,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
                 fieldTokens,
-                methodTokens);
+                methodTokens,
+                constructorStrategy);
     }
 
     @Override
@@ -357,16 +367,18 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public DynamicType.Unloaded<T> make() {
-        MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.compile(
-                applyRecordedMembersTo(new SubclassInstumentedType(classFileVersion,
-                        superType,
-                        interfaceTypes,
-                        modifiers,
-                        namingStrategy)),
-                methodLookupEngineFactory.make(classFileVersion),
-                new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory),
-                MethodRegistry.Compiled.Entry.Skip.INSTANCE
-        );
+        MethodRegistry.Compiled compiledMethodRegistry = constructorStrategy
+                .inject(methodRegistry, defaultMethodAttributeAppenderFactory)
+                .compile(
+                        applyRecordedMembersTo(new SubclassInstrumentedType(classFileVersion,
+                                superType,
+                                interfaceTypes,
+                                modifiers,
+                                namingStrategy)),
+                        methodLookupEngineFactory.make(classFileVersion),
+                        new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory),
+                        MethodRegistry.Compiled.Entry.Skip.INSTANCE
+                );
         MethodLookupEngine.Finding finding = compiledMethodRegistry.getFinding();
         TypeExtensionDelegate typeExtensionDelegate = new TypeExtensionDelegate(finding.getTypeDescription(), classFileVersion);
         return new TypeWriter.Builder<T>(finding.getTypeDescription(), compiledMethodRegistry.getTypeInitializer(), typeExtensionDelegate, classFileVersion)
@@ -497,7 +509,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                     defaultFieldAttributeAppenderFactory,
                     defaultMethodAttributeAppenderFactory,
                     join(fieldTokens, fieldToken),
-                    methodTokens);
+                    methodTokens,
+                    constructorStrategy);
         }
 
         @Override
@@ -697,7 +710,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                     defaultFieldAttributeAppenderFactory,
                     defaultMethodAttributeAppenderFactory,
                     fieldTokens,
-                    methodTokens);
+                    methodTokens,
+                    constructorStrategy);
         }
 
         @Override
@@ -793,7 +807,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                     defaultFieldAttributeAppenderFactory,
                     defaultMethodAttributeAppenderFactory,
                     fieldTokens,
-                    methodTokens);
+                    methodTokens,
+                    constructorStrategy);
         }
 
         @Override

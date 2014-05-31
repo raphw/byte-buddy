@@ -16,13 +16,13 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsNot.not;
 
-public class SubclassInstumentedTypeTest extends AbstractInstrumentedTypeTest {
+public class SubclassInstrumentedTypeTest extends AbstractInstrumentedTypeTest {
 
     private static final String FOO = "foo", BAR = "bar", FOOBAR = FOO + "." + BAR;
 
     @Override
     protected InstrumentedType makePlainInstrumentedType() {
-        return new SubclassInstumentedType(
+        return new SubclassInstrumentedType(
                 ClassFileVersion.forCurrentJavaVersion(),
                 new TypeDescription.ForLoadedType(Object.class),
                 new TypeList.ForLoadedType(Collections.<Class<?>>singletonList(Serializable.class)),

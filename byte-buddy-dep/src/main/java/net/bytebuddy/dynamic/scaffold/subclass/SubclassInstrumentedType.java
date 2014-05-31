@@ -22,7 +22,7 @@ import static net.bytebuddy.utility.ByteBuddyCommons.isValidTypeName;
 /**
  * Represents a type instrumentation that creates a new type based on a loaded superclass.
  */
-public class SubclassInstumentedType
+public class SubclassInstrumentedType
         extends InstrumentedType.AbstractBase
         implements NamingStrategy.UnnamedType {
 
@@ -41,11 +41,11 @@ public class SubclassInstumentedType
      * @param modifiers        The modifiers for this instrumentation.
      * @param namingStrategy   The naming strategy to be applied for this instrumentation.
      */
-    public SubclassInstumentedType(ClassFileVersion classFileVersion,
-                                   TypeDescription superClass,
-                                   List<TypeDescription> interfaces,
-                                   int modifiers,
-                                   NamingStrategy namingStrategy) {
+    public SubclassInstrumentedType(ClassFileVersion classFileVersion,
+                                    TypeDescription superClass,
+                                    List<TypeDescription> interfaces,
+                                    int modifiers,
+                                    NamingStrategy namingStrategy) {
         this.classFileVersion = classFileVersion;
         this.superClass = superClass;
         this.interfaces = interfaces;
@@ -65,14 +65,14 @@ public class SubclassInstumentedType
      * @param methodDescriptions A list of method descriptions to be applied for this instrumentation.
      * @param typeInitializer    A type initializer to be applied for this instrumentation.
      */
-    protected SubclassInstumentedType(ClassFileVersion classFileVersion,
-                                      TypeDescription superClass,
-                                      List<TypeDescription> interfaces,
-                                      int modifiers,
-                                      String name,
-                                      List<? extends FieldDescription> fieldDescriptions,
-                                      List<? extends MethodDescription> methodDescriptions,
-                                      TypeInitializer typeInitializer) {
+    protected SubclassInstrumentedType(ClassFileVersion classFileVersion,
+                                       TypeDescription superClass,
+                                       List<TypeDescription> interfaces,
+                                       int modifiers,
+                                       String name,
+                                       List<? extends FieldDescription> fieldDescriptions,
+                                       List<? extends MethodDescription> methodDescriptions,
+                                       TypeInitializer typeInitializer) {
         super(typeInitializer, name, fieldDescriptions, methodDescriptions);
         this.classFileVersion = classFileVersion;
         this.superClass = superClass;
@@ -91,7 +91,7 @@ public class SubclassInstumentedType
         }
         List<FieldDescription> fieldDescriptions = new ArrayList<FieldDescription>(this.fieldDescriptions);
         fieldDescriptions.add(additionalField);
-        return new SubclassInstumentedType(classFileVersion,
+        return new SubclassInstrumentedType(classFileVersion,
                 superClass,
                 interfaces,
                 this.modifiers,
@@ -117,7 +117,7 @@ public class SubclassInstumentedType
         }
         List<MethodDescription> methodDescriptions = new ArrayList<MethodDescription>(this.methodDescriptions);
         methodDescriptions.add(additionalMethod);
-        return new SubclassInstumentedType(classFileVersion,
+        return new SubclassInstrumentedType(classFileVersion,
                 superClass,
                 interfaces,
                 this.modifiers,
@@ -129,7 +129,7 @@ public class SubclassInstumentedType
 
     @Override
     public InstrumentedType withInitializer(TypeInitializer typeInitializer) {
-        return new SubclassInstumentedType(classFileVersion,
+        return new SubclassInstrumentedType(classFileVersion,
                 superClass,
                 interfaces,
                 modifiers,
@@ -141,7 +141,7 @@ public class SubclassInstumentedType
 
     @Override
     public TypeDescription detach() {
-        return new SubclassInstumentedType(classFileVersion,
+        return new SubclassInstrumentedType(classFileVersion,
                 superClass,
                 interfaces,
                 modifiers,
