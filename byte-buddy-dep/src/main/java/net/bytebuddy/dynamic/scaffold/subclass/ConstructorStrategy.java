@@ -20,11 +20,11 @@ public interface ConstructorStrategy {
      * Extracts constructors for a given super type. The extracted constructor signatures will then be imitated by the
      * created dynamic type.
      *
-     * @param superType The super type from which constructors are to be extracted.
+     * @param instrumentedType The type for which the constructors should be created.
      * @return A list of constructor descriptions which will be mimicked by the instrumented type of which
      * the {@code superType} is the direct super type of the instrumented type.
      */
-    MethodList extractConstructors(TypeDescription superType);
+    MethodList extractConstructors(TypeDescription instrumentedType);
 
     /**
      * Returns a method registry that is capable of creating byte code for the constructors that were
@@ -64,39 +64,45 @@ public interface ConstructorStrategy {
          */
         DEFAULT_CONSTRUCTOR {
             @Override
-            public MethodList extractConstructors(TypeDescription superType) {
-                MethodList methodList = superType.getDeclaredMethods().filter(isConstructor().and(takesArguments(0)));
+            public MethodList extractConstructors(TypeDescription instrumentedType) {
+                MethodList methodList = instrumentedType.getSupertype()
+                        .getDeclaredMethods()
+                        .filter(isConstructor().and(takesArguments(0)).and(isVisibleTo(instrumentedType)));
                 if (methodList.size() == 1) {
                     return methodList;
                 } else {
-                    throw new IllegalArgumentException(superType + " does not declare a visible default constructor");
+                    throw new IllegalArgumentException(String.format("%s does not declare a default constructor that " +
+                            "is visible to %s", instrumentedType.getSupertype(), instrumentedType));
                 }
             }
         },
 
         /**
-         * This strategy is adding all constructors of the super type which are making direct calls to their super
-         * constructor of same signature. Only {@code public} or {@code protected} constructors are considered by this
-         * strategy.
+         * This strategy is adding all constructors of the instrumented type's super type where each constructor is
+         * directly invoking its signature-equivalent super type constructor. Only constructors that are visible to the
+         * instrumented type are added, i.e. package-private constructors are only added if the super type is defined
+         * in the same package as the instrumented type and private constructors are always skipped.
          */
         IMITATE_SUPER_TYPE {
             @Override
-            public MethodList extractConstructors(TypeDescription superType) {
-                return superType.getDeclaredMethods().filter(isConstructor().and(isPublic().or(isProtected())));
+            public MethodList extractConstructors(TypeDescription instrumentedType) {
+                return instrumentedType.getSupertype()
+                        .getDeclaredMethods()
+                        .filter(isConstructor().and(isVisibleTo(instrumentedType)));
             }
         },
 
         /**
-         * This strategy is similar to the {@link net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy.Default#IMITATE_SUPER_TYPE}
-         * strategy but defines any constructor of the super type. This includes package-private and {@code private}
-         * constructors which might not be visible to its sub type. If such constructors were added, it is a user's
-         * responsibility to define a sub type to be in the correct package and to change the implementation of
-         * private constructors to call another visible constructor.
+         * This strategy is adding all constructors of the instrumented type's super type where each constructor is
+         * directly invoking its signature-equivalent super type constructor. Only {@code public} constructors are
+         * added.
          */
-        IMITATE_SUPER_TYPE_FULLY {
+        IMITATE_SUPER_TYPE_PUBLIC {
             @Override
-            public MethodList extractConstructors(TypeDescription superType) {
-                return superType.getDeclaredMethods().filter(isConstructor());
+            public MethodList extractConstructors(TypeDescription instrumentedType) {
+                return instrumentedType.getSupertype()
+                        .getDeclaredMethods()
+                        .filter(isConstructor().and(isPublic()));
             }
         };
 
@@ -108,7 +114,7 @@ public interface ConstructorStrategy {
                     return methodRegistry;
                 case DEFAULT_CONSTRUCTOR:
                 case IMITATE_SUPER_TYPE:
-                case IMITATE_SUPER_TYPE_FULLY:
+                case IMITATE_SUPER_TYPE_PUBLIC:
                     return methodRegistry.prepend(new MethodRegistry.LatentMethodMatcher.Simple(isConstructor()),
                             SuperMethodCall.INSTANCE,
                             defaultMethodAttributeAppenderFactory);

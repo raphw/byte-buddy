@@ -14,6 +14,7 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.method.matcher.JunctionMethodMatcher;
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
+import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 
@@ -370,11 +371,13 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         MethodRegistry.Compiled compiledMethodRegistry = constructorStrategy
                 .inject(methodRegistry, defaultMethodAttributeAppenderFactory)
                 .compile(
-                        applyRecordedMembersTo(new SubclassInstrumentedType(classFileVersion,
-                                superType,
-                                interfaceTypes,
-                                modifiers,
-                                namingStrategy)),
+                        applyConstructorStrategy(
+                                constructorStrategy,
+                                applyRecordedMembersTo(new SubclassInstrumentedType(classFileVersion,
+                                        superType,
+                                        interfaceTypes,
+                                        modifiers,
+                                        namingStrategy))),
                         methodLookupEngineFactory.make(classFileVersion),
                         new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory),
                         MethodRegistry.Compiled.Entry.Skip.INSTANCE
@@ -392,6 +395,17 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                         compiledMethodRegistry)
                 .write(typeExtensionDelegate.getRegisteredAccessors(), typeExtensionDelegate)
                 .make();
+    }
+
+    private InstrumentedType applyConstructorStrategy(ConstructorStrategy constructorStrategy, InstrumentedType instrumentedType) {
+        for (MethodDescription methodDescription : constructorStrategy.extractConstructors(instrumentedType)) {
+            instrumentedType = instrumentedType.withMethod(methodDescription.getInternalName(),
+                    methodDescription.getReturnType(),
+                    methodDescription.getParameterTypes(),
+                    methodDescription.getExceptionTypes(),
+                    methodDescription.getModifiers());
+        }
+        return instrumentedType;
     }
 
     @Override
@@ -452,34 +466,6 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 ", defaultFieldAttributeAppenderFactory=" + defaultFieldAttributeAppenderFactory +
                 ", defaultMethodAttributeAppenderFactory=" + defaultMethodAttributeAppenderFactory +
                 '}';
-    }
-
-    private static class MethodTokenListForConstructors extends AbstractList<MethodToken> {
-
-        private final List<? extends MethodDescription> constructor;
-
-        public MethodTokenListForConstructors(List<? extends MethodDescription> constructor) {
-            this.constructor = constructor;
-        }
-
-        @Override
-        public MethodToken get(int index) {
-            return new MethodToken(MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
-                    new TypeDescription.ForLoadedType(void.class),
-                    constructor.get(index).getParameterTypes(),
-                    constructor.get(index).getExceptionTypes(),
-                    constructor.get(index).getModifiers());
-        }
-
-        @Override
-        public int size() {
-            return constructor.size();
-        }
-
-        @Override
-        public String toString() {
-            return "MethodTokenListForConstructors{constructor=" + constructor + '}';
-        }
     }
 
     private class SubclassFieldAnnotationTarget<S> extends AbstractDelegatingBuilder<S> implements FieldAnnotationTarget<S> {

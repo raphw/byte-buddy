@@ -3,7 +3,8 @@ package net.bytebuddy.dynamic.scaffold.subclass;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
-import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.instrumentation.method.MethodList;
+import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -26,53 +27,66 @@ public class ConstructorStrategyDefaultTest {
     private MethodRegistry methodRegistry;
     @Mock
     private MethodAttributeAppender.Factory methodAttributeAppenderFactory;
-    private TypeDescription stringType;
-    private TypeDescription fooType;
+    @Mock
+    private InstrumentedType instrumentedType, superType;
+    @Mock
+    private MethodList methodList, filteredMethodList;
 
     @Before
     public void setUp() throws Exception {
-        when(methodRegistry.append(any(MethodRegistry.LatentMethodMatcher.class),
+        when(methodRegistry.prepend(any(MethodRegistry.LatentMethodMatcher.class),
                 any(Instrumentation.class),
                 any(MethodAttributeAppender.Factory.class))).thenReturn(methodRegistry);
-        stringType = new TypeDescription.ForLoadedType(String.class);
-        fooType = new TypeDescription.ForLoadedType(Foo.class);
+        when(instrumentedType.getSupertype()).thenReturn(superType);
+        when(superType.getDeclaredMethods()).thenReturn(methodList);
     }
 
     @Test
     public void testNoConstructorsStrategy() throws Exception {
-        assertThat(ConstructorStrategy.Default.NO_CONSTRUCTORS.extractConstructors(stringType).size(), is(0));
+        assertThat(ConstructorStrategy.Default.NO_CONSTRUCTORS.extractConstructors(instrumentedType).size(), is(0));
         assertThat(ConstructorStrategy.Default.NO_CONSTRUCTORS.inject(methodRegistry, methodAttributeAppenderFactory), is(methodRegistry));
         verifyZeroInteractions(methodRegistry);
+        verifyZeroInteractions(instrumentedType);
     }
 
     @Test
     public void testImitateSuperTypeStrategy() throws Exception {
-        assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE.extractConstructors(stringType),
-                is(stringType.getDeclaredMethods().filter(isConstructor().and(isProtected().or(isPublic())))));
+        when(methodList.filter(isConstructor().and(isVisibleTo(instrumentedType)))).thenReturn(filteredMethodList);
+        assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE.extractConstructors(instrumentedType), is(filteredMethodList));
         assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE.inject(methodRegistry, methodAttributeAppenderFactory), is(methodRegistry));
-        verify(methodRegistry).append(any(MethodRegistry.LatentMethodMatcher.class), any(Instrumentation.class), eq(methodAttributeAppenderFactory));
+        verify(methodRegistry).prepend(any(MethodRegistry.LatentMethodMatcher.class), any(Instrumentation.class), eq(methodAttributeAppenderFactory));
         verifyNoMoreInteractions(methodRegistry);
+        verify(instrumentedType, atLeastOnce()).getSupertype();
+        verifyNoMoreInteractions(instrumentedType);
+    }
+
+    @Test
+    public void testImitateSuperTypePublicStrategy() throws Exception {
+        when(methodList.filter(isConstructor().and(isPublic()))).thenReturn(filteredMethodList);
+        assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE_PUBLIC.extractConstructors(instrumentedType), is(filteredMethodList));
+        assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE_PUBLIC.inject(methodRegistry, methodAttributeAppenderFactory), is(methodRegistry));
+        verify(methodRegistry).prepend(any(MethodRegistry.LatentMethodMatcher.class), any(Instrumentation.class), eq(methodAttributeAppenderFactory));
+        verifyNoMoreInteractions(methodRegistry);
+        verify(instrumentedType, atLeastOnce()).getSupertype();
+        verifyNoMoreInteractions(instrumentedType);
     }
 
     @Test
     public void testDefaultConstructorStrategy() throws Exception {
-        assertThat(ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.extractConstructors(stringType),
-                is(stringType.getDeclaredMethods().filter(isConstructor().and(takesArguments(0)).and(isProtected().or(isPublic())))));
+        when(methodList.filter(isConstructor().and(takesArguments(0)).and(isVisibleTo(instrumentedType)))).thenReturn(filteredMethodList);
+        when(filteredMethodList.size()).thenReturn(1);
+        assertThat(ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.extractConstructors(instrumentedType), is(filteredMethodList));
         assertThat(ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.inject(methodRegistry, methodAttributeAppenderFactory), is(methodRegistry));
-        verify(methodRegistry).append(any(MethodRegistry.LatentMethodMatcher.class), any(Instrumentation.class), eq(methodAttributeAppenderFactory));
+        verify(methodRegistry).prepend(any(MethodRegistry.LatentMethodMatcher.class), any(Instrumentation.class), eq(methodAttributeAppenderFactory));
         verifyNoMoreInteractions(methodRegistry);
+        verify(instrumentedType, atLeastOnce()).getSupertype();
+        verifyNoMoreInteractions(instrumentedType);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testDefaultConstructorStrategyNoDefault() throws Exception {
-        ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.extractConstructors(fooType);
-    }
-
-    @SuppressWarnings("unused")
-    private static class Foo {
-
-        public Foo(Void v) {
-            /* empty */
-        }
+        when(methodList.filter(isConstructor().and(takesArguments(0)).and(isVisibleTo(instrumentedType)))).thenReturn(filteredMethodList);
+        when(filteredMethodList.size()).thenReturn(0);
+        ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.extractConstructors(instrumentedType);
     }
 }
