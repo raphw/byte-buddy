@@ -50,41 +50,55 @@ public interface ConstructorStrategy {
          * is legal by Java byte code requirements. However, if no constructor is added manually if this strategy is
          * applied, the type is not constructable without using JVM non-public functionality.
          */
-        NO_CONSTRUCTORS,
+        NO_CONSTRUCTORS {
+            @Override
+            public MethodList extractConstructors(TypeDescription superType) {
+                return new MethodList.Empty();
+            }
+        },
 
         /**
          * This strategy is adding a default constructor that calls it's super types default constructor. If no such
-         * constructor is defined, an {@link IllegalArgumentException} is thrown. Only {@code public} or
-         * {@code protected} constructors are considered by this strategy.
+         * constructor is defined, an {@link IllegalArgumentException} is thrown. Note that the default constructor
+         * needs to be visible to its sub type for this strategy to work.
          */
-        DEFAULT_CONSTRUCTOR,
+        DEFAULT_CONSTRUCTOR {
+            @Override
+            public MethodList extractConstructors(TypeDescription superType) {
+                MethodList methodList = superType.getDeclaredMethods().filter(isConstructor().and(takesArguments(0)));
+                if (methodList.size() == 1) {
+                    return methodList;
+                } else {
+                    throw new IllegalArgumentException(superType + " does not declare a visible default constructor");
+                }
+            }
+        },
 
         /**
          * This strategy is adding all constructors of the super type which are making direct calls to their super
          * constructor of same signature. Only {@code public} or {@code protected} constructors are considered by this
          * strategy.
          */
-        IMITATE_SUPER_TYPE;
-
-        @Override
-        public MethodList extractConstructors(TypeDescription superType) {
-            switch (this) {
-                case NO_CONSTRUCTORS:
-                    return new MethodList.Empty();
-                case DEFAULT_CONSTRUCTOR:
-                    MethodList methodList = superType.getDeclaredMethods()
-                            .filter(isConstructor().and(takesArguments(0)).and(isPublic().or(isProtected())));
-                    if (methodList.size() == 1) {
-                        return methodList;
-                    } else {
-                        throw new IllegalArgumentException(superType + " does not declare a default constructor");
-                    }
-                case IMITATE_SUPER_TYPE:
-                    return superType.getDeclaredMethods().filter(isConstructor().and(isPublic().or(isProtected())));
-                default:
-                    throw new AssertionError();
+        IMITATE_SUPER_TYPE {
+            @Override
+            public MethodList extractConstructors(TypeDescription superType) {
+                return superType.getDeclaredMethods().filter(isConstructor().and(isPublic().or(isProtected())));
             }
-        }
+        },
+
+        /**
+         * This strategy is similar to the {@link net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy.Default#IMITATE_SUPER_TYPE}
+         * strategy but defines any constructor of the super type. This includes package-private and {@code private}
+         * constructors which might not be visible to its sub type. If such constructors were added, it is a user's
+         * responsibility to define a sub type to be in the correct package and to change the implementation of
+         * private constructors to call another visible constructor.
+         */
+        IMITATE_SUPER_TYPE_FULLY {
+            @Override
+            public MethodList extractConstructors(TypeDescription superType) {
+                return superType.getDeclaredMethods().filter(isConstructor());
+            }
+        };
 
         @Override
         public MethodRegistry inject(MethodRegistry methodRegistry,
@@ -94,6 +108,7 @@ public interface ConstructorStrategy {
                     return methodRegistry;
                 case DEFAULT_CONSTRUCTOR:
                 case IMITATE_SUPER_TYPE:
+                case IMITATE_SUPER_TYPE_FULLY:
                     return methodRegistry.append(new MethodRegistry.LatentMethodMatcher.Simple(isConstructor()),
                             SuperMethodCall.INSTANCE,
                             defaultMethodAttributeAppenderFactory);

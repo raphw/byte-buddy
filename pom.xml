@@ -35,7 +35,7 @@
         <distribution.bintray>https://api.bintray.com/maven/raphw/maven/ByteBuddy</distribution.bintray>
         <shade.source>org.objectweb.asm</shade.source>
         <shade.target>net.bytebuddy.jar.asm</shade.target>
-        <version.asm>5.0.2</version.asm>
+        <version.asm>5.0.3</version.asm>
         <version.junit>4.11</version.junit>
         <version.mockito>1.9.5</version.mockito>
         <version.plugin.compiler>3.1</version.plugin.compiler>
