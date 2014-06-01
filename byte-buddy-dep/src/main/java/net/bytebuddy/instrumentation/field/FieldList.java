@@ -24,6 +24,9 @@ public interface FieldList extends List<FieldDescription> {
      */
     static class ForLoadedField extends AbstractList<FieldDescription> implements FieldList {
 
+        /**
+         * The loaded fields this field list represents.
+         */
         private final Field[] field;
 
         /**
@@ -61,6 +64,9 @@ public interface FieldList extends List<FieldDescription> {
      */
     static class Explicit extends AbstractList<FieldDescription> implements FieldList {
 
+        /**
+         * The list of field descriptions this list represents.
+         */
         private final List<? extends FieldDescription> fieldDescriptions;
 
         /**

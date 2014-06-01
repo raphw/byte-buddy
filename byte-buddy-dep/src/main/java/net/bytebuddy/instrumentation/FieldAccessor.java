@@ -37,6 +37,7 @@ public abstract class FieldAccessor implements Instrumentation {
      * The assigner to use.
      */
     protected final Assigner assigner;
+
     /**
      * {@code true} if the runtime type of the field's value should be considered when a field
      * is accessed.
@@ -75,10 +76,20 @@ public abstract class FieldAccessor implements Instrumentation {
         return new ForBeanProperty(defaultAssigner(), defaultConsiderRuntimeType());
     }
 
+    /**
+     * Returns the default assigner that is to be used if no explicit assigner is specified.
+     *
+     * @return The default assigner that is to be used if no explicit assigner is specified.
+     */
     private static Assigner defaultAssigner() {
         return new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE);
     }
 
+    /**
+     * Returns the default value for considering the runtime type when using an assigner.
+     *
+     * @return The default value for considering the runtime type when using an assigner.
+     */
     private static boolean defaultConsiderRuntimeType() {
         return false;
     }
@@ -140,6 +151,16 @@ public abstract class FieldAccessor implements Instrumentation {
         );
     }
 
+    /**
+     * A generic implementation of the application of a {@link net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender}.
+     *
+     * @param methodVisitor          The method visitor to write any instructions to.
+     * @param instrumentationContext The instrumentation context of the current instrumentation.
+     * @param fieldDescription       The description of the field to access.
+     * @param methodDescription      The method that is target of the instrumentation.
+     * @param fieldAccess            The manipulation that represents the field access.
+     * @return A suitable {@link net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender}.
+     */
     private ByteCodeAppender.Size apply(MethodVisitor methodVisitor,
                                         Instrumentation.Context instrumentationContext,
                                         FieldDescription fieldDescription,
@@ -297,6 +318,9 @@ public abstract class FieldAccessor implements Instrumentation {
          */
         static class ForGivenType implements FieldLocator, Factory {
 
+            /**
+             * The target type for which a field should be accessed.
+             */
             private final TypeDescription targetType;
 
             /**
@@ -406,6 +430,9 @@ public abstract class FieldAccessor implements Instrumentation {
      */
     protected static class ForBeanProperty extends FieldAccessor implements OwnerTypeLocatable {
 
+        /**
+         * A factory for creating a field locator for implementing this field accessor.
+         */
         private final FieldLocator.Factory fieldLocatorFactory;
 
         /**
@@ -498,8 +525,19 @@ public abstract class FieldAccessor implements Instrumentation {
      */
     protected static class ForNamedField extends FieldAccessor implements FieldDefinable {
 
+        /**
+         * The name of the field that is accessed.
+         */
         private final String fieldName;
+
+        /**
+         * The preparation handler for implementing this field accessor.
+         */
         private final PreparationHandler preparationHandler;
+
+        /**
+         * The field locator factory for implementing this field accessor.
+         */
         private final FieldLocator.Factory fieldLocatorFactory;
 
         /**
@@ -608,12 +646,27 @@ public abstract class FieldAccessor implements Instrumentation {
                     '}';
         }
 
+        /**
+         * A preparation handler is responsible for defining a field value on an instrumentation, if necessary.
+         */
         private static interface PreparationHandler {
 
+            /**
+             * Prepares the instrumented type.
+             *
+             * @param instrumentedType The instrumented type to be prepared.
+             * @return The readily prepared instrumented type.
+             */
             InstrumentedType prepare(InstrumentedType instrumentedType);
 
+            /**
+             * A non-operational preparation handler that does not alter the field.
+             */
             static enum NoOp implements PreparationHandler {
 
+                /**
+                 * The singleton instance.
+                 */
                 INSTANCE;
 
                 @Override
@@ -622,12 +675,33 @@ public abstract class FieldAccessor implements Instrumentation {
                 }
             }
 
+            /**
+             * A preparation handler that actually defines a field on an instrumented type.
+             */
             static class FieldDefiner implements PreparationHandler {
 
+                /**
+                 * The name of the field that is defined by this preparation handler.
+                 */
                 private final String name;
+
+                /**
+                 * The type of the field that is to be defined.
+                 */
                 private final TypeDescription typeDescription;
+
+                /**
+                 * The modifier of the field that is to be defined.
+                 */
                 private final int modifiers;
 
+                /**
+                 * Creates a new preparation handler that defines a given field.
+                 *
+                 * @param name        The name of the field that is defined by this preparation handler.
+                 * @param type        The type of the field that is to be defined.
+                 * @param contributor The modifier of the field that is to be defined.
+                 */
                 public FieldDefiner(String name, Class<?> type, ModifierContributor.ForField... contributor) {
                     this.name = isValidIdentifier(name);
                     typeDescription = new TypeDescription.ForLoadedType(type);
@@ -676,6 +750,9 @@ public abstract class FieldAccessor implements Instrumentation {
      */
     protected class Appender implements ByteCodeAppender {
 
+        /**
+         * The field locator for implementing this appender.
+         */
         private final FieldLocator fieldLocator;
 
         /**

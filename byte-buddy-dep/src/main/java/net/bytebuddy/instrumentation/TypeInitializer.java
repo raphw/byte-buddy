@@ -54,9 +54,24 @@ public interface TypeInitializer {
      */
     static class ForStaticField<T> implements TypeInitializer, Serializable {
 
+        /**
+         * A value for accessing a static field.
+         */
         private static final Object STATIC_FIELD = null;
+
+        /**
+         * The name of the field.
+         */
         private final String fieldName;
+
+        /**
+         * The value of the field.
+         */
         private final T value;
+
+        /**
+         * Determines if the field needs to be made accessible for setting it.
+         */
         private final boolean makeAccessible;
 
         /**
@@ -105,7 +120,7 @@ public interface TypeInitializer {
                 }
                 field.set(STATIC_FIELD, value);
             } catch (IllegalAccessException e) {
-                throw new IllegalArgumentException(String.format("could not access field %s on %s", fieldName, type), e);
+                throw new IllegalArgumentException(String.format("Could not access field %s on %s", fieldName, type), e);
             } catch (NoSuchFieldException e) {
                 throw new IllegalStateException(String.format("There is no field %s defined for %s", fieldName, type), e);
             }
@@ -117,10 +132,10 @@ public interface TypeInitializer {
         }
 
         @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            ForStaticField that = (ForStaticField) o;
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            ForStaticField that = (ForStaticField) other;
             return makeAccessible == that.makeAccessible
                     && fieldName.equals(that.fieldName)
                     && value.equals(that.value);
@@ -149,6 +164,9 @@ public interface TypeInitializer {
      */
     static class Compound implements TypeInitializer, Serializable {
 
+        /**
+         * The type initializers that are represented by this compound type initializer.
+         */
         private final TypeInitializer[] typeInitializer;
 
         /**
@@ -187,9 +205,9 @@ public interface TypeInitializer {
         }
 
         @Override
-        public boolean equals(Object o) {
-            return this == o || !(o == null || getClass() != o.getClass())
-                    && Arrays.equals(typeInitializer, ((Compound) o).typeInitializer);
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && Arrays.equals(typeInitializer, ((Compound) other).typeInitializer);
         }
 
         @Override

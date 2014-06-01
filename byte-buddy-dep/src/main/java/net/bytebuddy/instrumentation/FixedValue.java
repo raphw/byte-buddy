@@ -27,6 +27,7 @@ public abstract class FixedValue implements Instrumentation {
      * The assigner that is used for assigning the fixed value to a method's return type.
      */
     protected final Assigner assigner;
+
     /**
      * Determines if the runtime type of a fixed value should be considered for the assignment to a return type.
      */
@@ -164,10 +165,20 @@ public abstract class FixedValue implements Instrumentation {
         return new ForStaticField(fieldName, fixedValue, defaultAssigner(), defaultConsiderRuntimeType());
     }
 
+    /**
+     * Returns the default assigner that is to be used if no other assigner was explicitly specified.
+     *
+     * @return The default assigner that is to be used if no other assigner was explicitly specified.
+     */
     private static Assigner defaultAssigner() {
         return new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE), false);
     }
 
+    /**
+     * Determines if the runtime type should be considered by the given assigner by default.
+     *
+     * @return {@code true} if the runtime type should be considered by the given assigner by default.
+     */
     private static boolean defaultConsiderRuntimeType() {
         return false;
     }
@@ -238,7 +249,14 @@ public abstract class FixedValue implements Instrumentation {
      */
     protected static class ForPoolValue extends FixedValue implements AssignerConfigurable, ByteCodeAppender {
 
+        /**
+         * The stack manipulation which is responsible for loading the fixed value onto the operand stack.
+         */
         private final StackManipulation valueLoadInstruction;
+
+        /**
+         * The type of the fixed value.
+         */
         private final TypeDescription loadedType;
 
         /**
@@ -259,6 +277,17 @@ public abstract class FixedValue implements Instrumentation {
             this(valueLoadInstruction, new TypeDescription.ForLoadedType(loadedType), assigner, considerRuntimeType);
         }
 
+        /**
+         * Creates a new constant pool fixed value instrumentation.
+         *
+         * @param valueLoadInstruction The instruction that is responsible for loading the constant pool value onto the
+         *                             operand stack.
+         * @param loadedType           A type description representing the loaded type.
+         * @param assigner             The assigner to use for assigning the fixed value to the return type of the
+         *                             instrumented value.
+         * @param considerRuntimeType  If {@code true}, the runtime type of the given value will be considered for
+         *                             assigning the return type.
+         */
         private ForPoolValue(StackManipulation valueLoadInstruction,
                              TypeDescription loadedType,
                              Assigner assigner,
@@ -322,9 +351,24 @@ public abstract class FixedValue implements Instrumentation {
      */
     protected static class ForStaticField extends FixedValue implements AssignerConfigurable {
 
+        /**
+         * The prefix of the static field that is created for storing the fixed value.
+         */
         private static final String PREFIX = "fixedValue";
+
+        /**
+         * The name of the field in which the fixed value is stored.
+         */
         private final String fieldName;
+
+        /**
+         * The value that is to be stored in the static field.
+         */
         private final Object fixedValue;
+
+        /**
+         * The type if the field for storing the fixed value.
+         */
         private final TypeDescription fieldType;
 
         /**
@@ -398,10 +442,21 @@ public abstract class FixedValue implements Instrumentation {
                     '}';
         }
 
+        /**
+         * A byte code appender for returning the fixed value that was stored in a static field.
+         */
         private class StaticFieldByteCodeAppender implements ByteCodeAppender {
 
+            /**
+             * The stack manipulation that loads the fixed value onto the operand stack.
+             */
             private final StackManipulation fieldGetAccess;
 
+            /**
+             * Creates a new byte code appender for returning a value of a static field from an instrumented method.
+             *
+             * @param instrumentedType The instrumented type that is subject of the instrumentation.
+             */
             private StaticFieldByteCodeAppender(TypeDescription instrumentedType) {
                 fieldGetAccess = FieldAccess.forField(instrumentedType.getDeclaredFields().named(fieldName)).getter();
             }

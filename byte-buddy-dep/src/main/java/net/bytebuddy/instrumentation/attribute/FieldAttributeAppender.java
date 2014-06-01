@@ -63,6 +63,9 @@ public interface FieldAttributeAppender {
          */
         static class Compound implements Factory {
 
+            /**
+             * The factories that this compound factory represents in their application order.
+             */
             private final Factory[] factory;
 
             /**
@@ -109,6 +112,9 @@ public interface FieldAttributeAppender {
      */
     static class ForAnnotation implements FieldAttributeAppender, Factory {
 
+        /**
+         * The annotations that this appender appends.
+         */
         private final Annotation[] annotation;
 
         /**
@@ -157,6 +163,9 @@ public interface FieldAttributeAppender {
      */
     static class ForLoadedField implements FieldAttributeAppender, Factory {
 
+        /**
+         * The field from which the annotations should be copied.
+         */
         private final Field field;
 
         /**
@@ -205,6 +214,9 @@ public interface FieldAttributeAppender {
      */
     static class Compound implements FieldAttributeAppender {
 
+        /**
+         * The field attribute appenders this appender represents in their application order.
+         */
         private final FieldAttributeAppender[] fieldAttributeAppender;
 
         /**

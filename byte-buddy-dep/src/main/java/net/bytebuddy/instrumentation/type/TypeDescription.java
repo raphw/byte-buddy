@@ -6,15 +6,12 @@ import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
-import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import org.objectweb.asm.Type;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Implementations of this interface represent a Java type, i.e. a class or interface.
@@ -226,21 +223,6 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
         public int hashCode() {
             return getName().hashCode();
         }
-
-        private static class UniqueSignatureFilter implements MethodMatcher {
-
-            private final Set<String> foundSignatures = new HashSet<String>();
-
-            @Override
-            public boolean matches(MethodDescription methodDescription) {
-                return foundSignatures.add(methodDescription.getUniqueSignature());
-            }
-
-            @Override
-            public String toString() {
-                return "UniqueSignatureFilter{foundSignatures=" + foundSignatures + '}';
-            }
-        }
     }
 
     /**
@@ -248,6 +230,9 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
      */
     static class ForLoadedType extends AbstractTypeDescription {
 
+        /**
+         * The loaded type this instance represents.
+         */
         private final Class<?> type;
 
         /**

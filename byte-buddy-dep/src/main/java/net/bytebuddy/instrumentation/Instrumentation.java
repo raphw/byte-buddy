@@ -261,18 +261,53 @@ public interface Instrumentation {
          */
         TypeDescription getTypeDescription();
 
+        /**
+         * Creates a special method invocation for invoking the super method of the given method.
+         *
+         * @param methodDescription The method that is to be invoked specially.
+         * @param methodLookup      The lookup for this method which mainly serves to avoid bridge method invocation.
+         * @return The corresponding special method invocation which might be illegal if the requested invocation is
+         * not legal.
+         */
         SpecialMethodInvocation invokeSuper(MethodDescription methodDescription, MethodLookup methodLookup);
 
+        /**
+         * Creates a special method invocation for invoking a default method.
+         *
+         * @param targetType            The interface on which the default method is to be invoked.
+         * @param uniqueMethodSignature The unique method signature as defined by
+         *                              {@link net.bytebuddy.instrumentation.method.MethodDescription#getUniqueSignature()}
+         *                              of the method that is to be invoked.
+         * @return The corresponding special method invocation which might be illegal if the requested invocation is
+         * not legal.
+         */
         SpecialMethodInvocation invokeDefault(TypeDescription targetType, String uniqueMethodSignature);
 
+        /**
+         * A strategy for looking up a method.
+         */
         static interface MethodLookup {
 
+            /**
+             * Resolves the target method that is actually invoked.
+             *
+             * @param methodDescription    The method that is to be invoked specially.
+             * @param invokableMethods     A map of all invokable methods on the instrumented type.
+             * @param bridgeMethodResolver The bridge method resolver for this type.
+             * @return The target method that is actually invoked.
+             */
             MethodDescription resolve(MethodDescription methodDescription,
                                       Map<String, MethodDescription> invokableMethods,
                                       BridgeMethodResolver bridgeMethodResolver);
 
+            /**
+             * Default implementations of a {@link net.bytebuddy.instrumentation.Instrumentation.Target.MethodLookup}.
+             */
             static enum Default implements MethodLookup {
 
+                /**
+                 * An exact method lookup which directly invokes the given method.
+                 */
                 EXACT {
                     @Override
                     public MethodDescription resolve(MethodDescription methodDescription,
@@ -282,7 +317,11 @@ public interface Instrumentation {
                     }
                 },
 
-                FOR_SUPER_TYPE {
+                /**
+                 * Looks up a most specific method by a method signature. All bridge methods are resolved by this
+                 * lookup.
+                 */
+                MOST_SPECIFIC {
                     @Override
                     public MethodDescription resolve(MethodDescription methodDescription,
                                                      Map<String, MethodDescription> invokableMethods,
@@ -307,13 +346,39 @@ public interface Instrumentation {
             Target make(MethodLookupEngine.Finding methodLookupEngineFinding);
         }
 
+        /**
+         * An abstract base implementation for an {@link net.bytebuddy.instrumentation.Instrumentation.Target}.
+         */
         abstract static class AbstractBase implements Target {
 
+            /**
+             * The type that is subject to instrumentation.
+             */
             protected final TypeDescription typeDescription;
+
+            /**
+             * A map of invokable methods by their unique signature.
+             */
             protected final Map<String, MethodDescription> invokableMethods;
+
+            /**
+             * A map of default methods by their unique signature.
+             */
             protected final Map<TypeDescription, Map<String, MethodDescription>> defaultMethods;
+
+            /**
+             * A bridge method resolver for the given instrumented type.
+             */
             protected final BridgeMethodResolver bridgeMethodResolver;
 
+            /**
+             * Creates a new instrumentation target.
+             *
+             * @param finding                     A finding of a {@link net.bytebuddy.instrumentation.method.MethodLookupEngine}
+             *                                    for the instrumented type.
+             * @param bridgeMethodResolverFactory A factory for creating a
+             *                                    {@link net.bytebuddy.dynamic.scaffold.BridgeMethodResolver}.
+             */
             protected AbstractBase(MethodLookupEngine.Finding finding,
                                    BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
                 bridgeMethodResolver = bridgeMethodResolverFactory.make(finding.getInvokableMethods());
@@ -343,6 +408,12 @@ public interface Instrumentation {
                 return invokeSuper(methodLookup.resolve(methodDescription, invokableMethods, bridgeMethodResolver));
             }
 
+            /**
+             * Invokes the fully resolved method to be invoked by a super method call.
+             *
+             * @param methodDescription The method that is to be invoked specially.
+             * @return A special method invocation for calling the super method.
+             */
             protected abstract Instrumentation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription);
 
             @Override
@@ -395,8 +466,18 @@ public interface Instrumentation {
          */
         TypeDescription register(AuxiliaryType auxiliaryType);
 
+        /**
+         * Represents an extractable view of an {@link net.bytebuddy.instrumentation.Instrumentation.Context} which
+         * allows the retrieval of any registered auxiliary type.
+         */
         static interface ExtractableView extends Context {
 
+            /**
+             * Returns any {@link net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType} that was registered
+             * with this {@link net.bytebuddy.instrumentation.Instrumentation.Context}.
+             *
+             * @return A list of all manifested registered auxiliary types.
+             */
             List<? extends DynamicType> getRegisteredAuxiliaryTypes();
         }
     }
@@ -412,6 +493,9 @@ public interface Instrumentation {
      */
     static class Compound implements Instrumentation {
 
+        /**
+         * All instrumentations that are represented by this compound instrumentation.
+         */
         private final Instrumentation[] instrumentation;
 
         /**

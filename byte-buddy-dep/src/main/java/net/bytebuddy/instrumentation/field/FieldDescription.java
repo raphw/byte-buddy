@@ -59,6 +59,9 @@ public interface FieldDescription extends ModifierReviewable, ByteCodeElement, D
      */
     static class ForLoadedField extends AbstractFieldDescription {
 
+        /**
+         * The represented loaded field.
+         */
         private final Field field;
 
         /**

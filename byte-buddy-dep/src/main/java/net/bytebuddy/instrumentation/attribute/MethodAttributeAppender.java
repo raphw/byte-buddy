@@ -99,6 +99,9 @@ public interface MethodAttributeAppender {
          */
         static class Compound implements Factory {
 
+            /**
+             * The factories this compound factory represents in their application order.
+             */
             private final Factory[] factory;
 
             /**
@@ -145,7 +148,14 @@ public interface MethodAttributeAppender {
      */
     static class ForAnnotation implements MethodAttributeAppender, Factory {
 
+        /**
+         * the annotations this method attribute appender is writing to its target.
+         */
         private final Annotation[] annotation;
+
+        /**
+         * The target to which the annotations are written to.
+         */
         private final Target target;
 
         /**
@@ -203,12 +213,30 @@ public interface MethodAttributeAppender {
                     '}';
         }
 
+        /**
+         * Represents the target on which this method attribute appender should write its annotations to.
+         */
         private static interface Target {
 
+            /**
+             * Materializes the target for a given creation process.
+             *
+             * @param methodVisitor     The method visitor to which the attributes that are represented by this
+             *                          attribute appender are written to.
+             * @param methodDescription The description of the method for which the given method visitor creates an
+             *                          instrumentation for.
+             * @return The target of the annotation appender this target represents.
+             */
             AnnotationAppender.Target make(MethodVisitor methodVisitor, MethodDescription methodDescription);
 
+            /**
+             * A method attribute appender target for writing annotations directly onto the method.
+             */
             static enum OnMethod implements Target {
 
+                /**
+                 * The singleton instance.
+                 */
                 INSTANCE;
 
                 @Override
@@ -217,10 +245,21 @@ public interface MethodAttributeAppender {
                 }
             }
 
+            /**
+             * A method attribute appender target for writing annotations onto a given method parameter.
+             */
             static class OnMethodParameter implements Target {
 
+                /**
+                 * The index of the parameter to write the annotation to.
+                 */
                 private final int parameterIndex;
 
+                /**
+                 * Creates a target for a method attribute appender for a method parameter of the given index.
+                 *
+                 * @param parameterIndex The index of the target parameter.
+                 */
                 public OnMethodParameter(int parameterIndex) {
                     this.parameterIndex = parameterIndex;
                 }
@@ -235,9 +274,9 @@ public interface MethodAttributeAppender {
                 }
 
                 @Override
-                public boolean equals(Object o) {
-                    return this == o || !(o == null || getClass() != o.getClass())
-                            && parameterIndex == ((OnMethodParameter) o).parameterIndex;
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && parameterIndex == ((OnMethodParameter) other).parameterIndex;
                 }
 
                 @Override
@@ -261,6 +300,9 @@ public interface MethodAttributeAppender {
      */
     static class ForLoadedMethod implements MethodAttributeAppender, Factory {
 
+        /**
+         * The method of which the annotations are to be copied.
+         */
         private final Method method;
 
         /**
@@ -311,6 +353,9 @@ public interface MethodAttributeAppender {
      */
     static class ForLoadedConstructor implements MethodAttributeAppender, Factory {
 
+        /**
+         * The constructor for which the annotations are to be copied.
+         */
         private final Constructor<?> constructor;
 
         /**
@@ -359,6 +404,9 @@ public interface MethodAttributeAppender {
      */
     static class Compound implements MethodAttributeAppender {
 
+        /**
+         * The method attribute appenders this compound appender represents in their application order.
+         */
         private final MethodAttributeAppender[] methodAttributeAppender;
 
         /**

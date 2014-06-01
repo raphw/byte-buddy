@@ -83,10 +83,12 @@ public interface InstrumentedType extends TypeDescription {
          * The type initializer for this instrumented type.
          */
         protected final TypeInitializer typeInitializer;
+
         /**
          * A list of field descriptions registered for this instrumented type.
          */
         protected final List<FieldDescription> fieldDescriptions;
+
         /**
          * A list of method descriptions registered for this instrumented type.
          */
@@ -126,6 +128,14 @@ public interface InstrumentedType extends TypeDescription {
             }
         }
 
+        /**
+         * Checks if a specific type is assignable to another type where the source type must be a super
+         * type of the target type.
+         *
+         * @param sourceType The source type to which another type is to be assigned to.
+         * @param targetType The target type that is to be assigned to the source type.
+         * @return {@code true} if the target type is assignable to the source type.
+         */
         private static boolean isAssignable(TypeDescription sourceType, TypeDescription targetType) {
             // Means that '[sourceType] var = ([targetType]) val;' is a valid assignment. This is true, if:
             // (1) Both types are equal.
@@ -149,6 +159,14 @@ public interface InstrumentedType extends TypeDescription {
             return false;
         }
 
+        /**
+         * Substitutes an <i>outdated</i> reference to the instrumented type with a reference to <i>this</i>.
+         *
+         * @param instrumentedTypeName The name of this instrumented type.
+         * @param typeDescription      The type description to be checked to represent this instrumented type.
+         * @return This type, if the type description represents the name of the instrumented type or the given
+         * instrumented type if this is not the case.
+         */
         private TypeDescription withSubstitutedSelfReference(String instrumentedTypeName, TypeDescription typeDescription) {
             return typeDescription.getInternalName().equals(instrumentedTypeName) ? this : typeDescription;
         }
@@ -298,8 +316,19 @@ public interface InstrumentedType extends TypeDescription {
          */
         protected class FieldToken extends FieldDescription.AbstractFieldDescription {
 
+            /**
+             * The name of the field token.
+             */
             private final String name;
+
+            /**
+             * The type of the field.
+             */
             private final TypeDescription fieldType;
+
+            /**
+             * The modifiers of the field.
+             */
             private final int modifiers;
 
             /**
@@ -315,6 +344,12 @@ public interface InstrumentedType extends TypeDescription {
                 this.modifiers = modifiers;
             }
 
+            /**
+             * Creates a new field for the enclosing instrumented type.
+             *
+             * @param typeInternalName The internal name of the enclosing instrumented type.
+             * @param fieldDescription The field description to copy.
+             */
             private FieldToken(String typeInternalName, FieldDescription fieldDescription) {
                 name = fieldDescription.getName();
                 fieldType = withSubstitutedSelfReference(typeInternalName, fieldDescription.getFieldType());
@@ -401,10 +436,29 @@ public interface InstrumentedType extends TypeDescription {
          */
         protected class MethodToken extends MethodDescription.AbstractMethodDescription {
 
+            /**
+             * The internal name of the represented method.
+             */
             private final String internalName;
+
+            /**
+             * The return type of the represented method.
+             */
             private final TypeDescription returnType;
+
+            /**
+             * The parameter types of the represented method.
+             */
             private final List<TypeDescription> parameterTypes;
+
+            /**
+             * The exception types of the represented method.
+             */
             private final List<TypeDescription> exceptionTypes;
+
+            /**
+             * The modifiers of the represented method.
+             */
             private final int modifiers;
 
             /**
@@ -428,6 +482,12 @@ public interface InstrumentedType extends TypeDescription {
                 this.modifiers = modifiers;
             }
 
+            /**
+             * Creates a new method or constructor for the enclosing instrumented type.
+             *
+             * @param typeInternalName  The internal internalName of the enclosing instrumented type.
+             * @param methodDescription The method description to copy.
+             */
             private MethodToken(String typeInternalName, MethodDescription methodDescription) {
                 internalName = methodDescription.getInternalName();
                 returnType = withSubstitutedSelfReference(typeInternalName, methodDescription.getReturnType());

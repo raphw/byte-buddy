@@ -1,15 +1,12 @@
 package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import org.objectweb.asm.MethodVisitor;
-
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.hasSameByteCodeSignatureAs;
 
 /**
  * This instrumentation will create a new method which simply calls its super method. If no such method is defined,
@@ -38,10 +35,21 @@ public enum SuperMethodCall implements Instrumentation {
         return new Appender(instrumentationTarget);
     }
 
+    /**
+     * An appender for implementing a {@link net.bytebuddy.instrumentation.SuperMethodCall}.
+     */
     private static class Appender implements ByteCodeAppender {
 
+        /**
+         * The target of the current instrumentation.
+         */
         private final Target instrumentationTarget;
 
+        /**
+         * Creates a new appender.
+         *
+         * @param instrumentationTarget The instrumentation target of the current type creation.
+         */
         private Appender(Target instrumentationTarget) {
             this.instrumentationTarget = instrumentationTarget;
         }
@@ -55,23 +63,16 @@ public enum SuperMethodCall implements Instrumentation {
         public Size apply(MethodVisitor methodVisitor,
                           Instrumentation.Context instrumentationContext,
                           MethodDescription instrumentedMethod) {
-            MethodDescription targetMethod;
-            if (instrumentedMethod.isConstructor()) {
-                MethodList methodList = instrumentationTarget.getTypeDescription().getSupertype()
-                        .getDeclaredMethods().filter(hasSameByteCodeSignatureAs(instrumentedMethod));
-                if (methodList.size() == 0) {
-                    throw new IllegalArgumentException("There is no super constructor resembling " + instrumentedMethod);
-                }
-                targetMethod = methodList.getOnly();
-            } else {
-                targetMethod = instrumentedMethod;
+            StackManipulation superMethodCall = instrumentationTarget.invokeSuper(instrumentedMethod, Target.MethodLookup.Default.EXACT);
+            if (!superMethodCall.isValid()) {
+                throw new IllegalArgumentException("Cannot call super method of " + instrumentedMethod);
             }
             StackManipulation.Size stackSize = new StackManipulation.Compound(
-                    MethodVariableAccess.loadThisReferenceAndArguments(targetMethod),
-                    instrumentationTarget.invokeSuper(targetMethod, Target.MethodLookup.Default.EXACT),
-                    MethodReturn.returning(targetMethod.getReturnType())
+                    MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
+                    superMethodCall,
+                    MethodReturn.returning(instrumentedMethod.getReturnType())
             ).apply(methodVisitor, instrumentationContext);
-            return new Size(stackSize.getMaximalSize(), targetMethod.getStackSize());
+            return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
         }
 
         @Override

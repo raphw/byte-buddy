@@ -22,7 +22,14 @@ import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.takesA
  */
 public class ExceptionMethod implements Instrumentation, ByteCodeAppender {
 
+    /**
+     * The type of the exception that is thrown.
+     */
     private final TypeDescription throwableType;
+
+    /**
+     * The construction delegation which is responsible for creating the exception to be thrown.
+     */
     private final ConstructionDelegate constructionDelegate;
 
     /**
@@ -130,24 +137,31 @@ public class ExceptionMethod implements Instrumentation, ByteCodeAppender {
          */
         static class ForDefaultConstructor implements ConstructionDelegate {
 
-            private final TypeDescription targetType;
+            /**
+             * The type of the exception that is to be thrown.
+             */
+            private final TypeDescription exceptionType;
+
+            /**
+             * The constructor that is used for creating the exception.
+             */
             private final MethodDescription targetConstructor;
 
             /**
              * Creates a new construction delegate that calls a default constructor.
              *
-             * @param targetType The type of the isThrowable.
+             * @param exceptionType The type of the isThrowable.
              */
-            public ForDefaultConstructor(TypeDescription targetType) {
-                this.targetType = targetType;
-                this.targetConstructor = targetType.getDeclaredMethods()
+            public ForDefaultConstructor(TypeDescription exceptionType) {
+                this.exceptionType = exceptionType;
+                this.targetConstructor = exceptionType.getDeclaredMethods()
                         .filter(isConstructor().and(takesArguments(0))).getOnly();
             }
 
             @Override
             public StackManipulation make() {
                 return new StackManipulation.Compound(
-                        TypeCreation.forType(targetType),
+                        TypeCreation.forType(exceptionType),
                         Duplication.SINGLE,
                         MethodInvocation.invoke(targetConstructor));
             }
@@ -155,18 +169,18 @@ public class ExceptionMethod implements Instrumentation, ByteCodeAppender {
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && targetType.equals(((ForDefaultConstructor) other).targetType);
+                        && exceptionType.equals(((ForDefaultConstructor) other).exceptionType);
             }
 
             @Override
             public int hashCode() {
-                return targetType.hashCode();
+                return exceptionType.hashCode();
             }
 
             @Override
             public String toString() {
                 return "ExceptionMethod.ConstructionDelegate.ForDefaultConstructor{" +
-                        "targetType=" + targetType +
+                        "exceptionType=" + exceptionType +
                         ", targetConstructor=" + targetConstructor +
                         '}';
             }
@@ -177,19 +191,30 @@ public class ExceptionMethod implements Instrumentation, ByteCodeAppender {
          */
         static class ForStringConstructor implements ConstructionDelegate {
 
-            private final TypeDescription targetType;
+            /**
+             * The type of the exception that is to be thrown.
+             */
+            private final TypeDescription exceptionType;
+
+            /**
+             * The constructor that is used for creating the exception.
+             */
             private final MethodDescription targetConstructor;
+
+            /**
+             * The {@link java.lang.String} that is to be passed to the exception's constructor.
+             */
             private final String message;
 
             /**
              * Creates a new construction delegate that calls a constructor by handing it the given string.
              *
-             * @param targetType The type of the isThrowable.
-             * @param message    The string that is handed to the constructor.
+             * @param exceptionType The type of the isThrowable.
+             * @param message       The string that is handed to the constructor.
              */
-            public ForStringConstructor(TypeDescription targetType, String message) {
-                this.targetType = targetType;
-                this.targetConstructor = targetType.getDeclaredMethods()
+            public ForStringConstructor(TypeDescription exceptionType, String message) {
+                this.exceptionType = exceptionType;
+                this.targetConstructor = exceptionType.getDeclaredMethods()
                         .filter(isConstructor().and(takesArguments(String.class))).getOnly();
                 this.message = message;
             }
@@ -197,7 +222,7 @@ public class ExceptionMethod implements Instrumentation, ByteCodeAppender {
             @Override
             public StackManipulation make() {
                 return new StackManipulation.Compound(
-                        TypeCreation.forType(targetType),
+                        TypeCreation.forType(exceptionType),
                         Duplication.SINGLE,
                         new TextConstant(message),
                         MethodInvocation.invoke(targetConstructor));
@@ -207,18 +232,18 @@ public class ExceptionMethod implements Instrumentation, ByteCodeAppender {
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
                         && message.equals(((ForStringConstructor) other).message)
-                        && targetType.equals(((ForStringConstructor) other).targetType);
+                        && exceptionType.equals(((ForStringConstructor) other).exceptionType);
             }
 
             @Override
             public int hashCode() {
-                return 31 * targetType.hashCode() + message.hashCode();
+                return 31 * exceptionType.hashCode() + message.hashCode();
             }
 
             @Override
             public String toString() {
                 return "ExceptionMethod.ConstructionDelegate.ForStringConstructor{" +
-                        "targetType=" + targetType +
+                        "exceptionType=" + exceptionType +
                         ", targetConstructor=" + targetConstructor +
                         ", message='" + message + '\'' +
                         '}';

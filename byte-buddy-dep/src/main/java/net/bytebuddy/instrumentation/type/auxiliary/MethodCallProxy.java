@@ -47,8 +47,20 @@ import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
  */
 public class MethodCallProxy implements AuxiliaryType {
 
+    /**
+     * The prefix of the fields holding the original method invocation's arguments.
+     */
     private static final String FIELD_NAME_PREFIX = "argument";
+
+    /**
+     * The special method invocation to invoke from the auxiliary type.
+     */
     private final Instrumentation.SpecialMethodInvocation specialMethodInvocation;
+
+    /**
+     * The assigner to use for invoking a bridge method target where the parameter and return types need to be
+     * assigned.
+     */
     private final Assigner assigner;
 
     /**
@@ -74,6 +86,13 @@ public class MethodCallProxy implements AuxiliaryType {
         this.assigner = assigner;
     }
 
+    /**
+     * Creates a linked hash map of field names to their types where each field represents a parameter of the method.
+     *
+     * @param methodDescription The method to extract into fields.
+     * @return A map of fields in the order they need to be loaded onto the operand stack for invoking the original
+     * method, including a reference to the instance of the instrumented type that is invoked if applicable.
+     */
     private static LinkedHashMap<String, TypeDescription> extractFields(MethodDescription methodDescription) {
         TypeList parameterTypes = methodDescription.getParameterTypes();
         LinkedHashMap<String, TypeDescription> typeDescriptions =
@@ -88,6 +107,12 @@ public class MethodCallProxy implements AuxiliaryType {
         return typeDescriptions;
     }
 
+    /**
+     * Creates a field name for a method parameter of a given index.
+     *
+     * @param index The index for which the field name is to be created.
+     * @return The name for the given parameter.
+     */
     private static String fieldName(int index) {
         return String.format("%s%d", FIELD_NAME_PREFIX, index);
     }
@@ -108,7 +133,7 @@ public class MethodCallProxy implements AuxiliaryType {
                 .implement(Callable.class)
                 .method(not(isDeclaredBy(Object.class))).intercept(methodCall)
                 .defineConstructor(new ArrayList<TypeDescription>(parameterFields.values()))
-                .intercept(new ConstructorCall());
+                .intercept(ConstructorCall.INSTANCE);
         for (Map.Entry<String, TypeDescription> field : parameterFields.entrySet()) {
             builder = builder.defineField(field.getKey(), field.getValue(), MemberVisibility.PRIVATE);
         }
@@ -135,12 +160,26 @@ public class MethodCallProxy implements AuxiliaryType {
                 '}';
     }
 
+    /**
+     * A method lookup engine with hard-coded information about the methods to be implemented by a
+     * {@link net.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy}. This avoids a reflective lookup
+     * of these methods what improves the runtime performance of this lookup.
+     */
     private static enum ProxyMethodLookupEngine implements MethodLookupEngine, MethodLookupEngine.Factory {
 
+        /**
+         * The singleton instance.
+         */
         INSTANCE;
 
+        /**
+         * The list of methods to be returned by this method lookup engine.
+         */
         private final MethodList methodList;
 
+        /**
+         * Creates this singleton proxy method lookup engine.
+         */
         private ProxyMethodLookupEngine() {
             List<MethodDescription> methodDescriptions = new ArrayList<MethodDescription>(2);
             methodDescriptions.addAll(new MethodList.ForLoadedType(Runnable.class));
@@ -172,6 +211,9 @@ public class MethodCallProxy implements AuxiliaryType {
      */
     public static class AssignableSignatureCall implements StackManipulation {
 
+        /**
+         * The special method invocation to be proxied by this stack manipulation.
+         */
         private final Instrumentation.SpecialMethodInvocation specialMethodInvocation;
 
         /**
@@ -219,11 +261,27 @@ public class MethodCallProxy implements AuxiliaryType {
         }
     }
 
+    /**
+     * An instrumentation for implementing a method of a {@link net.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy}.
+     */
     private static class MethodCall implements Instrumentation {
 
+        /**
+         * The method that is accessed by the implemented method.
+         */
         private final MethodDescription accessorMethod;
+
+        /**
+         * The assigner to be used for invoking the accessor method.
+         */
         private final Assigner assigner;
 
+        /**
+         * Creates a new method call instrumentation.
+         *
+         * @param accessorMethod The method that is accessed by the implemented method.
+         * @param assigner       The assigner to be used for invoking the accessor method.
+         */
         private MethodCall(MethodDescription accessorMethod, Assigner assigner) {
             this.accessorMethod = accessorMethod;
             this.assigner = assigner;
@@ -240,9 +298,9 @@ public class MethodCallProxy implements AuxiliaryType {
         }
 
         @Override
-        public boolean equals(Object o) {
-            return this == o || !(o == null || getClass() != o.getClass())
-                    && accessorMethod.equals(((MethodCall) o).accessorMethod);
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && accessorMethod.equals(((MethodCall) other).accessorMethod);
         }
 
         @Override
@@ -252,13 +310,24 @@ public class MethodCallProxy implements AuxiliaryType {
 
         @Override
         public String toString() {
-            return "MethodCall{accessorMethod=" + accessorMethod + '}';
+            return "MethodCallProxy.MethodCall{accessorMethod=" + accessorMethod + '}';
         }
 
+        /**
+         * The appender for implementing the {@link net.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy.MethodCall}.
+         */
         private class Appender implements ByteCodeAppender {
 
+            /**
+             * The instrumented type that is implemented.
+             */
             private final TypeDescription instrumentedType;
 
+            /**
+             * Creates a new appender.
+             *
+             * @param instrumentedType The instrumented type to be implemented.
+             */
             private Appender(TypeDescription instrumentedType) {
                 this.instrumentedType = instrumentedType;
             }
@@ -286,6 +355,11 @@ public class MethodCallProxy implements AuxiliaryType {
                 return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
             }
 
+            /**
+             * Returns the outer instance.
+             *
+             * @return The outer instance.
+             */
             private MethodCall getMethodCall() {
                 return MethodCall.this;
             }
@@ -304,7 +378,7 @@ public class MethodCallProxy implements AuxiliaryType {
 
             @Override
             public String toString() {
-                return "Appender{" +
+                return "MethodCallProxy.MethodCall.Appender{" +
                         "methodCall=" + MethodCall.this +
                         ", instrumentedType=" + instrumentedType +
                         '}';
@@ -312,7 +386,15 @@ public class MethodCallProxy implements AuxiliaryType {
         }
     }
 
-    private static class ConstructorCall implements Instrumentation {
+    /**
+     * An instrumentation for implementing a constructor of a {@link net.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy}.
+     */
+    private static enum ConstructorCall implements Instrumentation {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
 
         @Override
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
@@ -324,20 +406,21 @@ public class MethodCallProxy implements AuxiliaryType {
             return new Appender(instrumentationTarget.getTypeDescription());
         }
 
-        @Override
-        public boolean equals(Object other) {
-            return other != null && other.getClass() == getClass();
-        }
+        /**
+         * The appender for implementing the {@link net.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy.ConstructorCall}.
+         */
+        private static class Appender implements ByteCodeAppender {
 
-        @Override
-        public int hashCode() {
-            return 31;
-        }
-
-        private class Appender implements ByteCodeAppender {
-
+            /**
+             * The instrumented type being created.
+             */
             private final TypeDescription instrumentedType;
 
+            /**
+             * Creates a new appender.
+             *
+             * @param instrumentedType The instrumented type that is being created.
+             */
             private Appender(TypeDescription instrumentedType) {
                 this.instrumentedType = instrumentedType;
             }
@@ -370,15 +453,10 @@ public class MethodCallProxy implements AuxiliaryType {
                 return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
             }
 
-            private ConstructorCall getConstructorCall() {
-                return ConstructorCall.this;
-            }
-
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && instrumentedType.equals(((Appender) other).instrumentedType)
-                        && ConstructorCall.this.equals(((Appender) other).getConstructorCall());
+                        && instrumentedType.equals(((Appender) other).instrumentedType);
             }
 
             @Override
@@ -388,10 +466,7 @@ public class MethodCallProxy implements AuxiliaryType {
 
             @Override
             public String toString() {
-                return "Appender{" +
-                        "constructorCall=" + ConstructorCall.this +
-                        ", instrumentedType=" + instrumentedType +
-                        '}';
+                return "MethodCallProxy.ConstructorCall.Appender{instrumentedType=" + instrumentedType + '}';
             }
         }
     }

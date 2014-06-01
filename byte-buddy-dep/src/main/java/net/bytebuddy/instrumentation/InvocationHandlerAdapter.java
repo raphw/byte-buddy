@@ -32,11 +32,16 @@ import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
  */
 public abstract class InvocationHandlerAdapter implements Instrumentation {
 
+    /**
+     * The prefix for field that are created for storing the instrumented value.
+     */
     private static final String PREFIX = "invocationHandler";
+
     /**
      * The name of the field for storing an invocation handler.
      */
     protected final String fieldName;
+
     /**
      * The assigner that is used for assigning the return invocation handler's return value to the
      * intercepted method's return value.
@@ -89,6 +94,12 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
         return new ForInstanceDelegation(isValidIdentifier(fieldName));
     }
 
+    /**
+     * Returns a list of stack manipulations that loads all arguments of an instrumented method.
+     *
+     * @param instrumentedMethod The method that is instrumented.
+     * @return A list of stack manipulation that loads all arguments of an instrumented method.
+     */
     private static List<StackManipulation> argumentValuesOf(MethodDescription instrumentedMethod) {
         TypeList parameterTypes = instrumentedMethod.getParameterTypes();
         List<StackManipulation> instruction = new ArrayList<StackManipulation>(parameterTypes.size());
@@ -141,10 +152,24 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
         return 31 * fieldName.hashCode();
     }
 
+    /**
+     * An implementation of an {@link net.bytebuddy.instrumentation.InvocationHandlerAdapter} that delegates method
+     * invocations to an adapter that is stored in a static field.
+     */
     private static class ForStaticDelegation extends InvocationHandlerAdapter {
 
+        /**
+         * The invocation handler to which method interceptions are to be delegated.
+         */
         private final InvocationHandler invocationHandler;
 
+        /**
+         * Creates a new invocation handler adapter for delegating invocations to an invocation handler that is stored
+         * in a static field.
+         *
+         * @param invocationHandler The invocation handler to which all method calls are delegated.
+         * @param fieldName         The name of the field.
+         */
         private ForStaticDelegation(InvocationHandler invocationHandler, String fieldName) {
             super(fieldName);
             this.invocationHandler = invocationHandler;
@@ -182,10 +207,21 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
                     '}';
         }
 
+        /**
+         * An appender for implementing the {@link net.bytebuddy.instrumentation.InvocationHandlerAdapter.ForStaticDelegation}.
+         */
         private class Appender implements ByteCodeAppender {
 
+            /**
+             * The instrumented type for which the methods are being intercepted.
+             */
             private final TypeDescription instrumentedType;
 
+            /**
+             * Creates a new appender.
+             *
+             * @param instrumentedType The type that is instrumented.
+             */
             private Appender(TypeDescription instrumentedType) {
                 this.instrumentedType = instrumentedType;
             }
@@ -206,6 +242,11 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
                         StackManipulation.LegalTrivial.INSTANCE);
             }
 
+            /**
+             * Returns the outer class.
+             *
+             * @return The outer class of this instance.
+             */
             private InvocationHandlerAdapter getInvocationHandlerAdapter() {
                 return ForStaticDelegation.this;
             }
@@ -232,8 +273,18 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
         }
     }
 
+    /**
+     * An implementation of an {@link net.bytebuddy.instrumentation.InvocationHandlerAdapter} that delegates method
+     * invocations to an adapter that is stored in an instance field.
+     */
     private static class ForInstanceDelegation extends InvocationHandlerAdapter {
 
+        /**
+         * Creates a new invocation handler adapter for delegating invocations to an invocation handler that is stored
+         * in an instance field.
+         *
+         * @param fieldName The name of the field.
+         */
         private ForInstanceDelegation(String fieldName) {
             super(fieldName);
         }
@@ -257,10 +308,21 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
                     '}';
         }
 
+        /**
+         * An appender for implementing the {@link net.bytebuddy.instrumentation.InvocationHandlerAdapter.ForInstanceDelegation}.
+         */
         private class Appender implements ByteCodeAppender {
 
+            /**
+             * The type that is subject of the instrumentation.
+             */
             private final TypeDescription instrumentedType;
 
+            /**
+             * Creates a new appender.
+             *
+             * @param instrumentedType The type that is instrumented.
+             */
             private Appender(TypeDescription instrumentedType) {
                 this.instrumentedType = instrumentedType;
             }
@@ -286,6 +348,11 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
                         && ForInstanceDelegation.this.equals(((Appender) other).getInvocationHandlerAdapter());
             }
 
+            /**
+             * Returns the outer class.
+             *
+             * @return The outer class.
+             */
             private InvocationHandlerAdapter getInvocationHandlerAdapter() {
                 return ForInstanceDelegation.this;
             }

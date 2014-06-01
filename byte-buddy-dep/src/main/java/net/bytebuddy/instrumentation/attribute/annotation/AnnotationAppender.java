@@ -45,9 +45,22 @@ public interface AnnotationAppender {
          */
         INVISIBLE(false, true);
 
+        /**
+         * {@code true} if this annotation is visible at runtime.
+         */
         private final boolean visible;
+
+        /**
+         * {@code true} if this annotation is added to a compiled class.
+         */
         private final boolean suppressed;
 
+        /**
+         * Creates a new annotation visibility representation.
+         *
+         * @param visible    {@code true} if this annotation is visible at runtime.
+         * @param suppressed {@code true} if this annotation is added to a compiled class.
+         */
         private AnnotationVisibility(boolean visible, boolean suppressed) {
             this.visible = visible;
             this.suppressed = suppressed;
@@ -113,6 +126,9 @@ public interface AnnotationAppender {
          */
         static class OnType implements Target {
 
+            /**
+             * The class visitor to write the annotation to.
+             */
             private final ClassVisitor classVisitor;
 
             /**
@@ -131,9 +147,7 @@ public interface AnnotationAppender {
 
             @Override
             public String toString() {
-                return "OnType{" +
-                        "classVisitor=" + classVisitor +
-                        '}';
+                return "AnnotationAppender.Target.OnType{classVisitor=" + classVisitor + '}';
             }
         }
 
@@ -142,6 +156,9 @@ public interface AnnotationAppender {
          */
         static class OnMethod implements Target {
 
+            /**
+             * The method visitor to write the annotation to.
+             */
             private final MethodVisitor methodVisitor;
 
             /**
@@ -160,9 +177,7 @@ public interface AnnotationAppender {
 
             @Override
             public String toString() {
-                return "OnMethod{" +
-                        "methodVisitor=" + methodVisitor +
-                        '}';
+                return "AnnotationAppender.Target.OnMethod{methodVisitor=" + methodVisitor + '}';
             }
         }
 
@@ -171,7 +186,14 @@ public interface AnnotationAppender {
          */
         static class OnMethodParameter implements Target {
 
+            /**
+             * The method visitor to write the annotation to.
+             */
             private final MethodVisitor methodVisitor;
+
+            /**
+             * The method parameter index to write the annotation to.
+             */
             private final int parameterIndex;
 
             /**
@@ -192,7 +214,7 @@ public interface AnnotationAppender {
 
             @Override
             public String toString() {
-                return "OnMethodParameter{" +
+                return "AnnotationAppender.Target.OnMethodParameter{" +
                         "methodVisitor=" + methodVisitor +
                         ", parameterIndex=" + parameterIndex +
                         '}';
@@ -204,6 +226,9 @@ public interface AnnotationAppender {
          */
         static class OnField implements Target {
 
+            /**
+             * The field visitor to write the annotation to.
+             */
             private final FieldVisitor fieldVisitor;
 
             /**
@@ -222,7 +247,7 @@ public interface AnnotationAppender {
 
             @Override
             public String toString() {
-                return "OnField{" +
+                return "AnnotationAppender.Target.OnField{" +
                         "fieldVisitor=" + fieldVisitor +
                         '}';
             }
@@ -235,8 +260,14 @@ public interface AnnotationAppender {
      */
     static class Default implements AnnotationAppender {
 
+        /**
+         * A constant for informing ASM over ignoring a given name.
+         */
         private static final String ASM_IGNORE_NAME = null;
 
+        /**
+         * The target onto which an annotation write process is to be applied.
+         */
         private final Target target;
 
         /**
@@ -262,11 +293,27 @@ public interface AnnotationAppender {
             return this;
         }
 
+        /**
+         * Tries to append a given annotation by reflectively reading an annotation.
+         *
+         * @param annotation The annotation to be written.
+         * @param visible    {@code true} if this annotation should be treated as visible at runtime.
+         * @throws InvocationTargetException In case that the annotation cannot be read.
+         * @throws IllegalAccessException    In case that an annotation cannot be accessed.
+         */
         private void tryAppend(Annotation annotation, boolean visible)
                 throws InvocationTargetException, IllegalAccessException {
             handle(target.visit(Type.getDescriptor(annotation.annotationType()), visible), annotation);
         }
 
+        /**
+         * Handles the writing of a single annotation to an annotation visitor.
+         *
+         * @param annotationVisitor The annotation visitor the write process is to be applied on.
+         * @param annotation        The annotation to be written.
+         * @throws InvocationTargetException In case that the annotation cannot be read.
+         * @throws IllegalAccessException    In case that an annotation cannot be accessed.
+         */
         private void handle(AnnotationVisitor annotationVisitor, Annotation annotation)
                 throws InvocationTargetException, IllegalAccessException {
             for (Method method : annotation.annotationType().getDeclaredMethods()) {
@@ -275,6 +322,16 @@ public interface AnnotationAppender {
             annotationVisitor.visitEnd();
         }
 
+        /**
+         * Performs the writing of a given annotation value to an annotation visitor.
+         *
+         * @param annotationVisitor The annotation visitor the write process is to be applied on.
+         * @param valueType         The type of the annotation value.
+         * @param name              The name of the annotation type.
+         * @param value             The annotation's value.
+         * @throws InvocationTargetException In case that the annotation cannot be read.
+         * @throws IllegalAccessException    In case that an annotation cannot be accessed.
+         */
         private void apply(AnnotationVisitor annotationVisitor, Class<?> valueType, String name, Object value)
                 throws InvocationTargetException, IllegalAccessException {
             if (valueType.isAnnotation()) {

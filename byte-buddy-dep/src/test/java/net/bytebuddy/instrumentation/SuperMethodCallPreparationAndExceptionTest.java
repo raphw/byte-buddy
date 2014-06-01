@@ -63,10 +63,12 @@ public class SuperMethodCallPreparationAndExceptionTest {
         when(methodDescription.isConstructor()).thenReturn(true);
         when(superType.getDeclaredMethods()).thenReturn(superTypeMethods);
         when(superTypeMethods.filter(any(MethodMatcher.class))).thenReturn(superTypeMethods);
+        when(instrumentationTarget.invokeSuper(methodDescription, Instrumentation.Target.MethodLookup.Default.EXACT))
+                .thenReturn(Instrumentation.SpecialMethodInvocation.Illegal.INSTANCE);
         SuperMethodCall.INSTANCE.appender(instrumentationTarget).apply(methodVisitor, instrumentationContext, methodDescription);
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testStaticMethod() throws Exception {
         when(typeDescription.getSupertype()).thenReturn(superType);
         when(methodDescription.isStatic()).thenReturn(true);
@@ -81,7 +83,7 @@ public class SuperMethodCallPreparationAndExceptionTest {
         SuperMethodCall.INSTANCE.appender(instrumentationTarget).apply(methodVisitor, instrumentationContext, methodDescription);
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testNoSuper() throws Exception {
         when(typeDescription.getSupertype()).thenReturn(superType);
         when(methodDescription.getParameterTypes()).thenReturn(methodParameters);

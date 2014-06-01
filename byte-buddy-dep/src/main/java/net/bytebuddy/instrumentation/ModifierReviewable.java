@@ -261,8 +261,14 @@ public interface ModifierReviewable {
             return matchesMask(Opcodes.ACC_VARARGS);
         }
 
+        /**
+         * Checks if a mask is matched by this instance.
+         *
+         * @param mask The mask to check.
+         * @return {@code true} if the mask is matched.
+         */
         private boolean matchesMask(int mask) {
-            return (getModifiers() & mask) != 0;
+            return (getModifiers() & mask) == mask;
         }
     }
 }

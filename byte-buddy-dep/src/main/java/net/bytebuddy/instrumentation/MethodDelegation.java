@@ -105,13 +105,43 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
  */
 public class MethodDelegation implements Instrumentation {
 
+    /**
+     * The error message for the exception to be thrown if no method for delegation can be identified.
+     */
     private static final String NO_METHODS_ERROR_MESSAGE = "The target type does not define any methods for delegation";
+
+    /**
+     * The instrumentation delegate for this method delegation.
+     */
     private final InstrumentationDelegate instrumentationDelegate;
+
+    /**
+     * A list of {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.TargetMethodAnnotationDrivenBinder.ParameterBinder}s
+     * to be used by this method delegation.
+     */
     private final List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders;
+
+    /**
+     * The {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.TargetMethodAnnotationDrivenBinder.DefaultsProvider}
+     * to be used by this method delegation.
+     */
     private final TargetMethodAnnotationDrivenBinder.DefaultsProvider<?> defaultsProvider;
+
+    /**
+     * The {@link net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.AmbiguityResolver}
+     * to be used by this method delegation.
+     */
     private final MethodDelegationBinder.AmbiguityResolver ambiguityResolver;
+
+    /**
+     * The {@link net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner} to be used by this method delegation.
+     */
     private final Assigner assigner;
-    private final MethodList methodList;
+
+    /**
+     * A list of methods to be considered as target by this method delegation.
+     */
+    private final MethodList targetMethodCandidates;
 
     /**
      * Creates a new method delegation.
@@ -121,7 +151,7 @@ public class MethodDelegation implements Instrumentation {
      * @param defaultsProvider        The defaults provider to use by this method delegator.
      * @param ambiguityResolver       The ambiguity resolver to use by this method delegator.
      * @param assigner                The assigner to be supplied by this method delegator.
-     * @param methodList              A list of methods that should be considered as possible binding targets by
+     * @param targetMethodCandidates  A list of methods that should be considered as possible binding targets by
      *                                this method delegator.
      */
     protected MethodDelegation(InstrumentationDelegate instrumentationDelegate,
@@ -129,13 +159,13 @@ public class MethodDelegation implements Instrumentation {
                                TargetMethodAnnotationDrivenBinder.DefaultsProvider<?> defaultsProvider,
                                MethodDelegationBinder.AmbiguityResolver ambiguityResolver,
                                Assigner assigner,
-                               MethodList methodList) {
+                               MethodList targetMethodCandidates) {
         this.instrumentationDelegate = instrumentationDelegate;
         this.parameterBinders = parameterBinders;
         this.defaultsProvider = defaultsProvider;
         this.ambiguityResolver = ambiguityResolver;
         this.assigner = assigner;
-        this.methodList = isNotEmpty(methodList, NO_METHODS_ERROR_MESSAGE);
+        this.targetMethodCandidates = isNotEmpty(targetMethodCandidates, NO_METHODS_ERROR_MESSAGE);
     }
 
     /**
@@ -310,6 +340,11 @@ public class MethodDelegation implements Instrumentation {
         );
     }
 
+    /**
+     * Returns the default parameter binders to be used if not explicitly specified.
+     *
+     * @return The default parameter binders to be used if not explicitly specified.
+     */
     private static List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> defaultParameterBinders() {
         return Arrays.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>asList(Argument.Binder.INSTANCE,
                 AllArguments.Binder.INSTANCE,
@@ -320,10 +355,20 @@ public class MethodDelegation implements Instrumentation {
                 DefaultCall.Binder.INSTANCE);
     }
 
+    /**
+     * Returns the defaults provider that is to be used if no other is specified explicitly.
+     *
+     * @return The defaults provider that is to be used if no other is specified explicitly.
+     */
     private static TargetMethodAnnotationDrivenBinder.DefaultsProvider<?> defaultDefaultsProvider() {
         return Argument.NextUnboundAsDefaultsProvider.INSTANCE;
     }
 
+    /**
+     * Returns the ambiguity resolver that is to be used if no other is specified explicitly.
+     *
+     * @return The ambiguity resolver that is to be used if no other is specified explicitly.
+     */
     private static MethodDelegationBinder.AmbiguityResolver defaultAmbiguityResolver() {
         return MethodDelegationBinder.AmbiguityResolver.Chain.of(
                 BindingPriority.Resolver.INSTANCE,
@@ -333,10 +378,20 @@ public class MethodDelegation implements Instrumentation {
         );
     }
 
+    /**
+     * Returns the assigner that is to be used if no other is specified explicitly.
+     *
+     * @return The assigner that is to be used if no other is specified explicitly.
+     */
     private static Assigner defaultAssigner() {
         return new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE), false);
     }
 
+    /**
+     * Returns the method lookup engine that is to be used if no other is specified explicitly.
+     *
+     * @return The method lookup engine that is to be used if no other is specified explicitly.
+     */
     private static MethodLookupEngine defaultMethodLookupEngine() {
         return new MethodLookupEngine.Default(MethodLookupEngine.Default.DefaultMethodLookup.DISABLED);
     }
@@ -353,7 +408,7 @@ public class MethodDelegation implements Instrumentation {
                 defaultsProvider,
                 ambiguityResolver,
                 assigner,
-                methodList);
+                targetMethodCandidates);
     }
 
     /**
@@ -368,7 +423,7 @@ public class MethodDelegation implements Instrumentation {
                 defaultsProvider,
                 ambiguityResolver,
                 assigner,
-                methodList);
+                targetMethodCandidates);
     }
 
     /**
@@ -383,7 +438,7 @@ public class MethodDelegation implements Instrumentation {
                 nonNull(defaultsProvider),
                 ambiguityResolver,
                 assigner,
-                methodList);
+                targetMethodCandidates);
     }
 
     /**
@@ -409,7 +464,7 @@ public class MethodDelegation implements Instrumentation {
                 defaultsProvider,
                 MethodDelegationBinder.AmbiguityResolver.Chain.of(nonNull(ambiguityResolver)),
                 assigner,
-                methodList);
+                targetMethodCandidates);
     }
 
     /**
@@ -424,7 +479,7 @@ public class MethodDelegation implements Instrumentation {
                 defaultsProvider,
                 ambiguityResolver,
                 nonNull(assigner),
-                methodList);
+                targetMethodCandidates);
     }
 
     /**
@@ -439,7 +494,7 @@ public class MethodDelegation implements Instrumentation {
                 defaultsProvider,
                 ambiguityResolver,
                 assigner,
-                isNotEmpty(methodList.filter(nonNull(methodMatcher)), NO_METHODS_ERROR_MESSAGE));
+                isNotEmpty(targetMethodCandidates.filter(nonNull(methodMatcher)), NO_METHODS_ERROR_MESSAGE));
     }
 
     @Override
@@ -449,7 +504,7 @@ public class MethodDelegation implements Instrumentation {
 
     @Override
     public ByteCodeAppender appender(Target instrumentationTarget) {
-        MethodList methodList = this.methodList.filter(isVisibleTo(instrumentationTarget.getTypeDescription()));
+        MethodList methodList = this.targetMethodCandidates.filter(isVisibleTo(instrumentationTarget.getTypeDescription()));
         if (methodList.size() == 0) {
             throw new IllegalStateException("No bindable method is visible to " + instrumentationTarget.getTypeDescription());
         }
@@ -474,7 +529,7 @@ public class MethodDelegation implements Instrumentation {
                 && assigner.equals(that.assigner)
                 && defaultsProvider.equals(that.defaultsProvider)
                 && instrumentationDelegate.equals(that.instrumentationDelegate)
-                && methodList.equals(that.methodList)
+                && targetMethodCandidates.equals(that.targetMethodCandidates)
                 && parameterBinders.equals(that.parameterBinders);
     }
 
@@ -485,7 +540,7 @@ public class MethodDelegation implements Instrumentation {
         result = 31 * result + defaultsProvider.hashCode();
         result = 31 * result + ambiguityResolver.hashCode();
         result = 31 * result + assigner.hashCode();
-        result = 31 * result + methodList.hashCode();
+        result = 31 * result + targetMethodCandidates.hashCode();
         return result;
     }
 
@@ -497,7 +552,7 @@ public class MethodDelegation implements Instrumentation {
                 ", defaultsProvider=" + defaultsProvider +
                 ", ambiguityResolver=" + ambiguityResolver +
                 ", assigner=" + assigner +
-                ", methodList=" + methodList +
+                ", targetMethodCandidates=" + targetMethodCandidates +
                 '}';
     }
 
@@ -736,13 +791,42 @@ public class MethodDelegation implements Instrumentation {
         }
     }
 
+    /**
+     * The appender for implementing a {@link net.bytebuddy.instrumentation.MethodDelegation}.
+     */
     private static class MethodDelegationByteCodeAppender implements ByteCodeAppender {
 
+        /**
+         * The stack manipulation that is responsible for loading a potential target instance onto the stack
+         * on which the target method is invoked.
+         */
         private final StackManipulation preparingStackAssignment;
+
+        /**
+         * The instrumentation target of this instrumentation.
+         */
         private final Target instrumentationTarget;
+
+        /**
+         * The method candidates to consider for delegating the invocation to.
+         */
         private final Iterable<? extends MethodDescription> targetMethods;
+
+        /**
+         * The method delegation binder processor which is responsible for implementing the method delegation.
+         */
         private final MethodDelegationBinder.Processor processor;
 
+        /**
+         * Creates a new appender.
+         *
+         * @param preparingStackAssignment The stack manipulation that is responsible for loading a potential target
+         *                                 instance onto the stack on which the target method is invoked.
+         * @param instrumentationTarget    The instrumentation target of this instrumentation.
+         * @param targetMethods            The method candidates to consider for delegating the invocation to.
+         * @param processor                The method delegation binder processor which is responsible for implementing
+         *                                 the method delegation.
+         */
         private MethodDelegationByteCodeAppender(StackManipulation preparingStackAssignment,
                                                  Target instrumentationTarget,
                                                  Iterable<? extends MethodDescription> targetMethods,
@@ -759,7 +843,9 @@ public class MethodDelegation implements Instrumentation {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
+        public Size apply(MethodVisitor methodVisitor,
+                          Context instrumentationContext,
+                          MethodDescription instrumentedMethod) {
             StackManipulation.Size stackSize = new StackManipulation.Compound(
                     preparingStackAssignment,
                     processor.process(instrumentationTarget, instrumentedMethod, targetMethods),

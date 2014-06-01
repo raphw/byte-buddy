@@ -32,6 +32,9 @@ public interface TypeList extends List<TypeDescription> {
      */
     static class ForLoadedType extends AbstractList<TypeDescription> implements TypeList {
 
+        /**
+         * The loaded types this type list represents.
+         */
         private final Class<?>[] type;
 
         /**
@@ -43,6 +46,11 @@ public interface TypeList extends List<TypeDescription> {
             this.type = type;
         }
 
+        /**
+         * Creates a new type list for an array of loaded types.
+         *
+         * @param types The types to be represented by this list.
+         */
         public ForLoadedType(List<Class<?>> types) {
             type = types.toArray(new Class<?>[types.size()]);
         }
@@ -78,6 +86,9 @@ public interface TypeList extends List<TypeDescription> {
      */
     static class Explicit extends AbstractList<TypeDescription> implements TypeList {
 
+        /**
+         * The list of type descriptions this list represents.
+         */
         private final List<? extends TypeDescription> typeDescriptions;
 
         /**

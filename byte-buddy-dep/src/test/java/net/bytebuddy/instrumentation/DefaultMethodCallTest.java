@@ -3,11 +3,13 @@ package net.bytebuddy.instrumentation;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.utility.Java8Rule;
 import net.bytebuddy.utility.PrecompiledTypeClassLoader;
+import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 
+import java.io.Serializable;
 import java.lang.reflect.Method;
 
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isDeclaredBy;
@@ -76,7 +78,7 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
                                       Object expectedResult,
                                       Class<?>... preferredInterfaces) throws Exception {
         DynamicType.Loaded<?> loaded = instrument(Object.class,
-                DefaultMethodCall.preferring(preferredInterfaces),
+                DefaultMethodCall.prioritize(preferredInterfaces),
                 classLoader,
                 not(isDeclaredBy(Object.class)),
                 preferredInterface, secondInterface);
@@ -90,7 +92,7 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
     @Java8Rule.Enforce
     public void testUnrelatedPreferredDefaultMethodThrowsException() throws Exception {
         instrument(Object.class,
-                DefaultMethodCall.preferring(classLoader.loadClass(NON_OVERRIDING_INTERFACE)),
+                DefaultMethodCall.prioritize(classLoader.loadClass(NON_OVERRIDING_INTERFACE)),
                 classLoader,
                 not(isDeclaredBy(Object.class)),
                 classLoader.loadClass(SINGLE_DEFAULT_METHOD), classLoader.loadClass(CONFLICTING_INTERFACE));
@@ -109,7 +111,7 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
     @Java8Rule.Enforce
     public void testNonDeclaredPreferredDefaultMethodThrowsException() throws Exception {
         instrument(classLoader.loadClass(SINGLE_DEFAULT_METHOD_CLASS),
-                DefaultMethodCall.preferring(classLoader.loadClass(SINGLE_DEFAULT_METHOD)),
+                DefaultMethodCall.prioritize(classLoader.loadClass(SINGLE_DEFAULT_METHOD)),
                 classLoader,
                 not(isDeclaredBy(Object.class)));
     }
@@ -142,7 +144,7 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
     @Java8Rule.Enforce
     public void testDeclaredAndImplementedAmbiguousMethodWithPreference() throws Exception {
         DynamicType.Loaded<?> loaded = instrument(classLoader.loadClass(SINGLE_DEFAULT_METHOD_CLASS),
-                DefaultMethodCall.preferring(classLoader.loadClass(SINGLE_DEFAULT_METHOD)),
+                DefaultMethodCall.prioritize(classLoader.loadClass(SINGLE_DEFAULT_METHOD)),
                 classLoader,
                 not(isDeclaredBy(Object.class)),
                 classLoader.loadClass(SINGLE_DEFAULT_METHOD), classLoader.loadClass(CONFLICTING_INTERFACE));
@@ -150,5 +152,15 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
         Method method = loaded.getLoaded().getDeclaredMethod(FOO);
         Object instance = loaded.getLoaded().newInstance();
         assertThat(method.invoke(instance), is((Object) FOO));
+    }
+
+    @Test
+    public void testHashCodeEquals() throws Exception {
+        assertThat(DefaultMethodCall.unambiguousOnly().hashCode(), is(DefaultMethodCall.unambiguousOnly().hashCode()));
+        assertThat(DefaultMethodCall.unambiguousOnly(), is(DefaultMethodCall.unambiguousOnly()));
+        assertThat(DefaultMethodCall.unambiguousOnly().hashCode(),
+                CoreMatchers.not(is(DefaultMethodCall.prioritize(Serializable.class).hashCode())));
+        assertThat(DefaultMethodCall.unambiguousOnly(),
+                CoreMatchers.not(is(DefaultMethodCall.prioritize(Serializable.class))));
     }
 }

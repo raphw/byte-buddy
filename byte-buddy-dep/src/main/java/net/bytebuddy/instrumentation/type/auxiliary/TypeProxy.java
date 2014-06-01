@@ -46,8 +46,20 @@ public class TypeProxy implements AuxiliaryType {
      * The name of the field that stores the delegation instance.
      */
     public static final String INSTANCE_FIELD = "target";
+
+    /**
+     * The type that is proxied, i.e. the original instrumented type this proxy is created for.
+     */
     private final TypeDescription proxiedType;
+
+    /**
+     * The instrumentation target of the proxied type.
+     */
     private final Instrumentation.Target instrumentationTarget;
+
+    /**
+     * {@code true} if the finalizer method should not be instrumented.
+     */
     private final boolean ignoreFinalizer;
 
     /**
@@ -75,7 +87,7 @@ public class TypeProxy implements AuxiliaryType {
                 .method(finalizerMatcher)
                 .intercept(new MethodCall(methodAccessorFactory))
                 .defineMethod(REFLECTION_METHOD, TargetType.DESCRIPTION, Collections.<TypeDescription>emptyList(), Ownership.STATIC)
-                .intercept(new SilentConstruction())
+                .intercept(SilentConstruction.INSTANCE)
                 .make();
     }
 
@@ -106,12 +118,24 @@ public class TypeProxy implements AuxiliaryType {
                 '}';
     }
 
+    /**
+     * A stack manipulation that throws an abstract method error in case that a given super method cannot be invoked.
+     */
     private static enum AbstractMethodErrorThrow implements StackManipulation {
 
+        /**
+         * The singleton instance.
+         */
         INSTANCE;
 
+        /**
+         * The stack manipulation that throws the abstract method error.
+         */
         private final StackManipulation implementation;
 
+        /**
+         * Creates the singleton instance.
+         */
         private AbstractMethodErrorThrow() {
             TypeDescription abstractMethodError = new TypeDescription.ForLoadedType(AbstractMethodError.class);
             MethodDescription constructor = abstractMethodError.getDeclaredMethods()
@@ -291,10 +315,21 @@ public class TypeProxy implements AuxiliaryType {
         }
     }
 
+    /**
+     * An instrumentation for implementing a method call of a {@link net.bytebuddy.instrumentation.type.auxiliary.TypeProxy}.
+     */
     private class MethodCall implements Instrumentation {
 
+        /**
+         * The method accessor factory to query for the super method invocation.
+         */
         private final MethodAccessorFactory methodAccessorFactory;
 
+        /**
+         * Creates a new method call instrumentation.
+         *
+         * @param methodAccessorFactory The method accessor factory to query for the super method invocation.
+         */
         private MethodCall(MethodAccessorFactory methodAccessorFactory) {
             this.methodAccessorFactory = methodAccessorFactory;
         }
@@ -311,6 +346,11 @@ public class TypeProxy implements AuxiliaryType {
             return new Appender(instrumentationTarget.getTypeDescription());
         }
 
+        /**
+         * Returns the outer instance.
+         *
+         * @return The outer instance.
+         */
         private TypeProxy getTypeProxy() {
             return TypeProxy.this;
         }
@@ -335,10 +375,21 @@ public class TypeProxy implements AuxiliaryType {
                     '}';
         }
 
+        /**
+         * Implementation of a byte code appender for a {@link net.bytebuddy.instrumentation.type.auxiliary.TypeProxy.MethodCall}.
+         */
         private class Appender implements ByteCodeAppender {
 
+            /**
+             * The stack manipulation for loading the proxied instance onto the stack.
+             */
             private final StackManipulation fieldLoadingInstruction;
 
+            /**
+             * Creates a new appender.
+             *
+             * @param instrumentedType The instrumented type that is proxied by the enclosing instrumentation.
+             */
             private Appender(TypeDescription instrumentedType) {
                 fieldLoadingInstruction = FieldAccess.forField(instrumentedType.getDeclaredFields().named(INSTANCE_FIELD)).getter();
             }
@@ -353,11 +404,18 @@ public class TypeProxy implements AuxiliaryType {
                               Context instrumentationContext,
                               MethodDescription instrumentedMethod) {
                 StackManipulation.Size stackSize = implementAccess(instrumentedMethod,
-                        instrumentationTarget.invokeSuper(instrumentedMethod, Target.MethodLookup.Default.FOR_SUPER_TYPE))
+                        instrumentationTarget.invokeSuper(instrumentedMethod, Target.MethodLookup.Default.MOST_SPECIFIC))
                         .apply(methodVisitor, instrumentationContext);
                 return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
             }
 
+            /**
+             * Returns the actual implementation of a method based on the legality of the special method invocation.
+             *
+             * @param instrumentedMethod      The instrumented method.
+             * @param specialMethodInvocation The special method invocation to proxy by the implemented method.
+             * @return A stack manipulation that represents the invocation of the special method invocation.
+             */
             private StackManipulation implementAccess(MethodDescription instrumentedMethod,
                                                       Instrumentation.SpecialMethodInvocation specialMethodInvocation) {
                 return specialMethodInvocation.isValid()
@@ -365,6 +423,11 @@ public class TypeProxy implements AuxiliaryType {
                         : AbstractMethodErrorThrow.INSTANCE;
             }
 
+            /**
+             * Returns the outer instance.
+             *
+             * @return The outer instance.
+             */
             private MethodCall getMethodCall() {
                 return MethodCall.this;
             }
@@ -383,15 +446,25 @@ public class TypeProxy implements AuxiliaryType {
 
             @Override
             public String toString() {
-                return "TypeProxy.Appender{" +
+                return "TypeProxy.MethodCall.Appender{" +
                         "methodCall=" + MethodCall.this +
                         "fieldLoadingInstruction=" + fieldLoadingInstruction +
                         '}';
             }
 
+            /**
+             * Stack manipulation for invoking an accessor method.
+             */
             private class AccessorMethodInvocation implements StackManipulation {
 
+                /**
+                 * The instrumented method that is implemented.
+                 */
                 private final MethodDescription instrumentedMethod;
+
+                /**
+                 * The special method invocation that is invoked by this accessor method invocation.
+                 */
                 private final SpecialMethodInvocation specialMethodInvocation;
 
                 private AccessorMethodInvocation(MethodDescription instrumentedMethod,
@@ -416,11 +489,57 @@ public class TypeProxy implements AuxiliaryType {
                             MethodReturn.returning(instrumentedMethod.getReturnType())
                     ).apply(methodVisitor, instrumentationContext);
                 }
+
+                /**
+                 * Returns the outer instance.
+                 *
+                 * @return The outer instance.
+                 */
+                private Appender getAppender() {
+                    return Appender.this;
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    AccessorMethodInvocation that = (AccessorMethodInvocation) other;
+                    return Appender.this.equals(that.getAppender())
+                            && instrumentedMethod.equals(that.instrumentedMethod)
+                            && specialMethodInvocation.equals(that.specialMethodInvocation);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = Appender.this.hashCode();
+                    result = 31 * result + instrumentedMethod.hashCode();
+                    result = 31 * result + specialMethodInvocation.hashCode();
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeProxy.MethodCall.Appender.AccessorMethodInvocation{" +
+                            "appender=" + Appender.this +
+                            ", instrumentedMethod=" + instrumentedMethod +
+                            ", specialMethodInvocation=" + specialMethodInvocation +
+                            '}';
+                }
             }
         }
     }
 
-    private class SilentConstruction implements Instrumentation {
+    /**
+     * An implementation of a <i>silent construction</i> of a given type by using the non-standardized
+     * {@link sun.reflect.ReflectionFactory}. This way, a constructor invocation can be avoided. However, this comes
+     * at the cost of potentially breaking compatibility as the reflection factory is not standardized.
+     */
+    private enum SilentConstruction implements Instrumentation {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
 
         @Override
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
@@ -432,48 +551,88 @@ public class TypeProxy implements AuxiliaryType {
             return new Appender(instrumentationTarget.getTypeDescription());
         }
 
-        private TypeProxy getTypeProxy() {
-            return TypeProxy.this;
-        }
+        /**
+         * The appender for implementing a {@link net.bytebuddy.instrumentation.type.auxiliary.TypeProxy.SilentConstruction}.
+         */
+        private static class Appender implements ByteCodeAppender {
 
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && TypeProxy.this.equals(((SilentConstruction) other).getTypeProxy());
-        }
-
-        @Override
-        public int hashCode() {
-            return TypeProxy.this.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "TypeProxy.SilentConstruction{typeProxy=" + TypeProxy.this + "}";
-        }
-
-        private class Appender implements ByteCodeAppender {
-
+            /**
+             * The internal name of the reflection factory class.
+             */
             public static final String REFLECTION_FACTORY_INTERNAL_NAME = "sun/reflect/ReflectionFactory";
+
+            /**
+             * The name of the factory method for getting hold of an instance of the reflection factory class.
+             */
             public static final String GET_REFLECTION_FACTORY_METHOD_NAME = "getReflectionFactory";
+
+            /**
+             * The descriptor of the factory method for getting hold of an instance of the reflection factory class.
+             */
             public static final String GET_REFLECTION_FACTORY_METHOD_DESCRIPTOR = "()Lsun/reflect/ReflectionFactory;";
+
+            /**
+             * The name of the method for creating a new serialization constructor.
+             */
             public static final String NEW_CONSTRUCTOR_FOR_SERIALIZATION_METHOD_NAME = "newConstructorForSerialization";
+
+            /**
+             * The descriptor of the method for creating a new serialization constructor.
+             */
             public static final String NEW_CONSTRUCTOR_FOR_SERIALIZATION_METHOD_DESCRIPTOR =
                     "(Ljava/lang/Class;Ljava/lang/reflect/Constructor;)Ljava/lang/reflect/Constructor;";
 
+            /**
+             * The descriptor of the {@link java.lang.Object} class.
+             */
             public static final String JAVA_LANG_OBJECT_DESCRIPTOR = "Ljava/lang/Object;";
+
+            /**
+             * The internal name of the {@link java.lang.Object} class.
+             */
             public static final String JAVA_LANG_OBJECT_INTERNAL_NAME = "java/lang/Object";
+
+            /**
+             * The internal name of the {@link java.lang.reflect.Constructor} class.
+             */
             public static final String JAVA_LANG_CONSTRUCTOR_INTERNAL_NAME = "java/lang/reflect/Constructor";
+
+            /**
+             * The internal name of the {@link java.lang.reflect.Constructor#newInstance(Object...)} method.
+             */
             public static final String NEW_INSTANCE_METHOD_NAME = "newInstance";
+
+            /**
+             * The descriptor of the {@link java.lang.reflect.Constructor#newInstance(Object...)} method.
+             */
             public static final String NEW_INSTANCE_METHOD_DESCRIPTOR = "([Ljava/lang/Object;)Ljava/lang/Object;";
 
+            /**
+             * The internal name of the {@link java.lang.Class} class.
+             */
             public static final String JAVA_LANG_CLASS_INTERNAL_NAME = "java/lang/Class";
+
+            /**
+             * The internal name of the {@link Class#getDeclaredClasses()} method.
+             */
             public static final String GET_DECLARED_CONSTRUCTOR_METHOD_NAME = "getDeclaredConstructor";
+
+            /**
+             * The descriptor of the {@link Class#getDeclaredClasses()} method.
+             */
             public static final String GET_DECLARED_CONSTRUCTOR_METHOD_DESCRIPTOR =
                     "([Ljava/lang/Class;)Ljava/lang/reflect/Constructor;";
 
+            /**
+             * The instrumented type that this factory method is created for.
+             */
             private final TypeDescription instrumentedType;
 
+            /**
+             * Creates a new appender.
+             *
+             * @param instrumentedType The instrumented type that the factory method is created for.
+             */
             private Appender(TypeDescription instrumentedType) {
                 this.instrumentedType = instrumentedType;
             }
@@ -515,28 +674,20 @@ public class TypeProxy implements AuxiliaryType {
                 return new Size(4, 0);
             }
 
-            private SilentConstruction getSilentConstruction() {
-                return SilentConstruction.this;
-            }
-
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && instrumentedType.equals(((Appender) other).instrumentedType)
-                        && SilentConstruction.this.equals(((Appender) other).getSilentConstruction());
+                        && instrumentedType.equals(((Appender) other).instrumentedType);
             }
 
             @Override
             public int hashCode() {
-                return 31 * SilentConstruction.this.hashCode() + instrumentedType.hashCode();
+                return instrumentedType.hashCode();
             }
 
             @Override
             public String toString() {
-                return "TypeProxy.SilentConstruction.Appender{" +
-                        "silentConstruction=" + SilentConstruction.this +
-                        "instrumentedType=" + instrumentedType +
-                        '}';
+                return "TypeProxy.SilentConstruction.Appender{instrumentedType=" + instrumentedType + '}';
             }
         }
     }

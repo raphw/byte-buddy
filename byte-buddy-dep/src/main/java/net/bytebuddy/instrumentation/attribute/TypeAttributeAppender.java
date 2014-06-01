@@ -64,6 +64,9 @@ public interface TypeAttributeAppender {
      */
     static class ForAnnotation implements TypeAttributeAppender {
 
+        /**
+         * The annotations to write to the given type.
+         */
         private final Annotation[] annotation;
 
         /**
@@ -85,9 +88,9 @@ public interface TypeAttributeAppender {
         }
 
         @Override
-        public boolean equals(Object o) {
-            return this == o || !(o == null || getClass() != o.getClass())
-                    && Arrays.equals(annotation, ((ForAnnotation) o).annotation);
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && Arrays.equals(annotation, ((ForAnnotation) other).annotation);
         }
 
         @Override
@@ -106,6 +109,9 @@ public interface TypeAttributeAppender {
      */
     static class ForLoadedType implements TypeAttributeAppender {
 
+        /**
+         * The class of which the annotations are to be copied.
+         */
         private final Class<?> type;
 
         /**
@@ -148,6 +154,9 @@ public interface TypeAttributeAppender {
      */
     static class Compound implements TypeAttributeAppender {
 
+        /**
+         * The type attribute appenders this compound appender represents in their application order.
+         */
         private final TypeAttributeAppender[] typeAttributeAppender;
 
         /**
