@@ -68,8 +68,22 @@ public interface MethodRegistry {
      */
     static interface Compiled extends TypeWriter.MethodPool {
 
+        /**
+         * Returns the result of a method lookup on the fully prepared instrumented type. The lookup is performed
+         * on the fully preferred type after any {@link net.bytebuddy.instrumentation.Instrumentation} was able
+         * to register any methods.
+         *
+         * @return The result of a method lookup
+         */
         MethodLookupEngine.Finding getFinding();
 
+        /**
+         * Returns the {@link net.bytebuddy.instrumentation.TypeInitializer} of the instrumented type that is currently
+         * under construction. This type initializer is only extracted after any
+         * {@link net.bytebuddy.instrumentation.Instrumentation} could register their own type initializers.
+         *
+         * @return The type initializer of the currently created instrumented type.
+         */
         TypeInitializer getTypeInitializer();
     }
 
@@ -93,6 +107,9 @@ public interface MethodRegistry {
          */
         static class Simple implements LatentMethodMatcher {
 
+            /**
+             * The method matcher that is represented by this instance.
+             */
             private final MethodMatcher methodMatcher;
 
             /**
@@ -110,9 +127,9 @@ public interface MethodRegistry {
             }
 
             @Override
-            public boolean equals(Object o) {
-                return this == o || !(o == null || getClass() != o.getClass())
-                        && methodMatcher.equals(((Simple) o).methodMatcher);
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && methodMatcher.equals(((Simple) other).methodMatcher);
             }
 
             @Override
@@ -132,7 +149,14 @@ public interface MethodRegistry {
      */
     static class Default implements MethodRegistry {
 
+        /**
+         * A pointer for the first index of a list.
+         */
         private static final int AT_BEGINNING = 0;
+
+        /**
+         * The entries of method instrumentations that were registered for creating this instance.
+         */
         private final List<Entry> entries;
 
         /**
@@ -142,6 +166,12 @@ public interface MethodRegistry {
             entries = Collections.emptyList();
         }
 
+        /**
+         * Creates a new default {@link net.bytebuddy.dynamic.scaffold.MethodRegistry} with a given list of
+         * registered entries.
+         *
+         * @param entries The entries of this method registry.
+         */
         private Default(List<Entry> entries) {
             this.entries = entries;
         }
@@ -174,6 +204,15 @@ public interface MethodRegistry {
                     fallback);
         }
 
+        /**
+         * Prepares an instrumented type in the course of compilation.
+         *
+         * @param instrumentedType  The instrumented type for which this field registry is to be compiled.
+         * @param additionalEntries A set of additional entries that are not registered explicitly by a user but
+         *                          intend to capture synthetic method matchers that are meant to intercept methods
+         *                          that were registered by an {@link net.bytebuddy.instrumentation.Instrumentation}.
+         * @return The fully prepared instrumented type.
+         */
         private InstrumentedType prepareInstrumentedType(InstrumentedType instrumentedType, List<Entry> additionalEntries) {
             Set<Instrumentation> instrumentations = new HashSet<Instrumentation>(entries.size());
             for (Entry entry : entries) {
@@ -182,7 +221,11 @@ public interface MethodRegistry {
                     MethodList beforePreparation = instrumentedType.getDeclaredMethods();
                     instrumentedType = entry.instrumentation.prepare(instrumentedType);
                     // If an instrumentation adds methods to the instrumented type, those methods should be
-                    // handled by this instrumentation. Thus a
+                    // handled by this instrumentation. Thus an additional matcher that matches these exact methods
+                    // is registered, in case that the instrumentation actually added methods. These matcher must be
+                    // prepended to any other entry such that they become of higher precedence to manually registered
+                    // method interceptions. Otherwise, those user interceptions could match the methods that were
+                    // added by the instrumentation.
                     if (beforePreparation.size() < instrumentedType.getDeclaredMethods().size()) {
                         additionalEntries.add(new Entry(
                                 new ListDifferenceMethodMatcher(beforePreparation, instrumentedType.getDeclaredMethods()),
@@ -194,6 +237,16 @@ public interface MethodRegistry {
             return instrumentedType;
         }
 
+        /**
+         * Compiles all entries of this method registry.
+         *
+         * @param additionalEntries     A set of additional entries that are not registered explicitly by a user but
+         *                              intend to capture synthetic method matchers that are meant to intercept methods
+         *                              that were registered by an {@link net.bytebuddy.instrumentation.Instrumentation}.
+         * @param instrumentationTarget The target of the instrumentation this method registry is compiled for.
+         * @return A list of the compiled entries of this instance in the same order as they are given where the
+         * additional entries are prepended to the list.
+         */
         private List<Compiled.Entry> compileEntries(List<Entry> additionalEntries,
                                                     Instrumentation.Target instrumentationTarget) {
             Map<Instrumentation, ByteCodeAppender> byteCodeAppenders = new HashMap<Instrumentation, ByteCodeAppender>(entries.size());
@@ -235,13 +288,43 @@ public interface MethodRegistry {
             return "MethodRegistry.Default{entries=" + entries + '}';
         }
 
+        /**
+         * A compiled default method registry.
+         */
         private static class Compiled implements MethodRegistry.Compiled {
 
+            /**
+             * The finding of a method lookup engine that was applied on the fully prepared instrumented type
+             * this method registry was compiled for.
+             */
             private final MethodLookupEngine.Finding finding;
+
+            /**
+             * The type initializer of the fully prepared instrumented type this compiled method registry represents.
+             */
             private final TypeInitializer typeInitializer;
+
+            /**
+             * The list of all compiled entries of this compiled method registry.
+             */
             private final List<Entry> entries;
+
+            /**
+             * The fallback entry to apply for any method that is not matched by any of the registered compiled entries.
+             */
             private final MethodRegistry.Compiled.Entry fallback;
 
+            /**
+             * Creates a compiled default method registry.
+             *
+             * @param finding         The finding of a method lookup engine that was applied on the fully prepared
+             *                        instrumented type this method registry was compiled for.
+             * @param typeInitializer The type initializer of the fully prepared instrumented type this compiled method
+             *                        registry represents.
+             * @param entries         The list of all compiled entries of this compiled method registry.
+             * @param fallback        The fallback entry to apply for any method that is not matched by any of the
+             *                        registered compiled entries.
+             */
             private Compiled(MethodLookupEngine.Finding finding,
                              TypeInitializer typeInitializer,
                              List<Entry> entries,
@@ -302,12 +385,33 @@ public interface MethodRegistry {
                         '}';
             }
 
+            /**
+             * An entry of a compiled default method registry.
+             */
             private static class Entry implements MethodRegistry.Compiled.Entry, MethodMatcher {
 
+                /**
+                 * The method matcher that represents this compiled entry.
+                 */
                 private final MethodMatcher methodMatcher;
+
+                /**
+                 * The byte code appender that represents this compiled entry.
+                 */
                 private final ByteCodeAppender byteCodeAppender;
+
+                /**
+                 * The method attribute appender that represents this compiled entry.
+                 */
                 private final MethodAttributeAppender attributeAppender;
 
+                /**
+                 * Creates an entry of a compiled default method registry.
+                 *
+                 * @param methodMatcher     The method matcher to be wrapped by this instance.
+                 * @param byteCodeAppender  The byte code appender that represents this compiled entry.
+                 * @param attributeAppender The method attribute appender that represents this compiled entry.
+                 */
                 private Entry(MethodMatcher methodMatcher,
                               ByteCodeAppender byteCodeAppender,
                               MethodAttributeAppender attributeAppender) {
@@ -365,12 +469,36 @@ public interface MethodRegistry {
             }
         }
 
+        /**
+         * A registration within a method registry, consisting of a latent method matcher, an instrumentation that
+         * is to be applied on any method that is matched by the method matcher that is extracted from the latent
+         * matcher's manifestation and a method attribute appender factory that is applied to any intercepted method.
+         */
         private static class Entry {
 
+            /**
+             * The latent method matcher that is representing this entry.
+             */
             private final LatentMethodMatcher latentMethodMatcher;
+
+            /**
+             * The instrumentation that is representing this entry.
+             */
             private final Instrumentation instrumentation;
+
+            /**
+             * The method attribute appender factory that is representing this entry.
+             */
             private final MethodAttributeAppender.Factory attributeAppenderFactory;
 
+            /**
+             * Creates a new entry.
+             *
+             * @param latentMethodMatcher      A latent method matcher that represents this method matching.
+             * @param instrumentation          The instrumentation that is responsible for implementing this method.
+             * @param attributeAppenderFactory The attribute appender factory that is responsible for implementing
+             *                                 this method.
+             */
             private Entry(LatentMethodMatcher latentMethodMatcher,
                           Instrumentation instrumentation,
                           MethodAttributeAppender.Factory attributeAppenderFactory) {
@@ -407,10 +535,23 @@ public interface MethodRegistry {
             }
         }
 
+        /**
+         * A method matcher that matches methods that are found in only one of two lists.
+         */
         private static class ListDifferenceMethodMatcher implements MethodMatcher, LatentMethodMatcher {
 
+            /**
+             * The methods that are matched by this instance.
+             */
             private final MethodList matchedMethods;
 
+            /**
+             * Creates a new list difference method matcher.
+             *
+             * @param beforeMethods A list of methods that should not be matched.
+             * @param afterMethods  The same list after adding additional methods. The order of the methods in
+             *                      this list must not be altered.
+             */
             private ListDifferenceMethodMatcher(MethodList beforeMethods, MethodList afterMethods) {
                 matchedMethods = afterMethods.subList(beforeMethods.size(), afterMethods.size());
             }

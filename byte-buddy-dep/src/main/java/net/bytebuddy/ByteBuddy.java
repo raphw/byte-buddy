@@ -41,6 +41,7 @@ public class ByteBuddy {
      * The default prefix for the default {@link net.bytebuddy.NamingStrategy}.
      */
     private static final String BYTE_BUDDY_DEFAULT_PREFIX = "ByteBuddy";
+
     /**
      * The class file version of the current configuration.
      */

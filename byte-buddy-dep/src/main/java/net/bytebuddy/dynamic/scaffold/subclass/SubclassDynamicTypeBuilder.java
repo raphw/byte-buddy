@@ -19,7 +19,10 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 
 import java.lang.annotation.Annotation;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
 import static net.bytebuddy.utility.ByteBuddyCommons.*;
@@ -426,7 +429,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 && methodLookupEngineFactory.equals(that.methodLookupEngineFactory)
                 && methodRegistry.equals(that.methodRegistry)
                 && namingStrategy.equals(that.namingStrategy)
-                && superType.equals(that.superType);
+                && superType.equals(that.superType)
+                && constructorStrategy.equals(that.constructorStrategy);
     }
 
     @Override
@@ -445,6 +449,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         result = 31 * result + methodLookupEngineFactory.hashCode();
         result = 31 * result + defaultFieldAttributeAppenderFactory.hashCode();
         result = 31 * result + defaultMethodAttributeAppenderFactory.hashCode();
+        result = 31 * result + constructorStrategy.hashCode();
         return result;
     }
 
@@ -465,6 +470,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 ", methodLookupEngineFactory=" + methodLookupEngineFactory +
                 ", defaultFieldAttributeAppenderFactory=" + defaultFieldAttributeAppenderFactory +
                 ", defaultMethodAttributeAppenderFactory=" + defaultMethodAttributeAppenderFactory +
+                ", constructorStrategy=" + constructorStrategy +
                 '}';
     }
 

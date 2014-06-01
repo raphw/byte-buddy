@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsCollectionContaining.hasItem;
@@ -55,5 +56,18 @@ public class DynamicTypeDefaultLoadedTest {
         assertThat(dynamicType.getLoadedAuxiliaryTypes().size(), is(1));
         assertThat(dynamicType.getLoadedAuxiliaryTypes().keySet(), hasItem(auxiliaryTypeDescription));
         assertEquals(AUXILIARY_TYPE, dynamicType.getLoadedAuxiliaryTypes().get(auxiliaryTypeDescription));
+    }
+
+    @Test
+    public void testHashCodeEquals() throws Exception {
+        assertThat(dynamicType.hashCode(), is(dynamicType.hashCode()));
+        assertThat(dynamicType, is(((DynamicType) dynamicType)));
+        DynamicType other = new DynamicType.Default.Loaded<Object>(auxiliaryTypeDescription,
+                new byte[0],
+                auxiliaryTypeInitializer,
+                Collections.<DynamicType>emptyList(),
+                Collections.<TypeDescription, Class<?>>emptyMap());
+        assertThat(dynamicType.hashCode(), not(is(other.hashCode())));
+        assertThat(dynamicType, not(is(other)));
     }
 }

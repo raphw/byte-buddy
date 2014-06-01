@@ -22,7 +22,8 @@ import org.objectweb.asm.Opcodes;
 
 import java.util.Arrays;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
+import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isDeclaredBy;
+import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isSynthetic;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public abstract class AbstractInstrumentationTest {

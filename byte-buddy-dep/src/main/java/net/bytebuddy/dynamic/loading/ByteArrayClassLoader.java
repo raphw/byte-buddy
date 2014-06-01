@@ -52,4 +52,9 @@ public class ByteArrayClassLoader extends ClassLoader {
         }
         return super.findClass(name);
     }
+
+    @Override
+    public String toString() {
+        return "ByteArrayClassLoader{typeDefinitions=" + typeDefinitions + " (unloaded)}";
+    }
 }

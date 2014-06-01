@@ -129,9 +129,9 @@ public class MethodInvocationTest {
         assertInvocation(MethodInvocation.invoke(methodDescription).special(otherType), Opcodes.INVOKESPECIAL, BAZ, false);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testIllegalSpecialMethodInvocation() throws Exception {
-        MethodInvocation.invoke(methodDescription).special(otherType);
+        assertThat(MethodInvocation.invoke(methodDescription).special(otherType).isValid(), is(false));
     }
 
     @Test
@@ -147,22 +147,22 @@ public class MethodInvocationTest {
         assertInvocation(MethodInvocation.invoke(methodDescription).virtual(otherType), Opcodes.INVOKEINTERFACE, BAZ, true);
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testStaticVirtualInvocation() throws Exception {
         when(methodDescription.isStatic()).thenReturn(true);
-        MethodInvocation.invoke(methodDescription).virtual(otherType);
+        assertThat(MethodInvocation.invoke(methodDescription).virtual(otherType).isValid(), is(false));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testPrivateVirtualInvocation() throws Exception {
         when(methodDescription.isPrivate()).thenReturn(true);
-        MethodInvocation.invoke(methodDescription).virtual(otherType);
+        assertThat(MethodInvocation.invoke(methodDescription).virtual(otherType).isValid(), is(false));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testConstructorVirtualInvocation() throws Exception {
         when(methodDescription.isConstructor()).thenReturn(true);
-        MethodInvocation.invoke(methodDescription).virtual(otherType);
+        assertThat(MethodInvocation.invoke(methodDescription).virtual(otherType).isValid(), is(false));
     }
 
     private void assertInvocation(StackManipulation stackManipulation,

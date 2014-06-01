@@ -13,7 +13,10 @@ public final class TargetType {
      */
     public static final TypeDescription DESCRIPTION = new TypeDescription.ForLoadedType(TargetType.class);
 
+    /**
+     * As the {@link net.bytebuddy.dynamic.TargetType} is only to be used as a marker, its constructor is hidden.
+     */
     private TargetType() {
-        throw new AssertionError("This is a place holder type that should not be instantiated");
+        throw new UnsupportedOperationException("This is a place holder type that should not be instantiated");
     }
 }

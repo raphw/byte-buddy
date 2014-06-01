@@ -94,6 +94,9 @@ public interface TypeWriter<T> {
              */
             static class Simple implements Entry {
 
+                /**
+                 * The field attribute appender factory that is represented by this entry.
+                 */
                 private final FieldAttributeAppender.Factory attributeAppenderFactory;
 
                 /**
@@ -108,6 +111,22 @@ public interface TypeWriter<T> {
                 @Override
                 public FieldAttributeAppender.Factory getFieldAppenderFactory() {
                     return attributeAppenderFactory;
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && attributeAppenderFactory.equals(((Simple) other).attributeAppenderFactory);
+                }
+
+                @Override
+                public int hashCode() {
+                    return attributeAppenderFactory.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeWriter.FieldPool.Entry.Simple{attributeAppenderFactory=" + attributeAppenderFactory + '}';
                 }
             }
         }
@@ -192,9 +211,22 @@ public interface TypeWriter<T> {
              */
             static class Simple implements Entry {
 
+                /**
+                 * The byte code appender that is represented by this entry.
+                 */
                 private final ByteCodeAppender byteCodeAppender;
+
+                /**
+                 * The method attribute appender that is represented by this entry.
+                 */
                 private final MethodAttributeAppender methodAttributeAppender;
 
+                /**
+                 * Creates a new simple entry of a method pool.
+                 *
+                 * @param byteCodeAppender        The byte code appender that is represented by this entry.
+                 * @param methodAttributeAppender The method attribute appender that is represented by this entry.
+                 */
                 public Simple(ByteCodeAppender byteCodeAppender, MethodAttributeAppender methodAttributeAppender) {
                     this.byteCodeAppender = byteCodeAppender;
                     this.methodAttributeAppender = methodAttributeAppender;
@@ -216,10 +248,10 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
-                public boolean equals(Object o) {
-                    return this == o || !(o == null || getClass() != o.getClass())
-                            && byteCodeAppender.equals(((Simple) o).byteCodeAppender)
-                            && methodAttributeAppender.equals(((Simple) o).methodAttributeAppender);
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && byteCodeAppender.equals(((Simple) other).byteCodeAppender)
+                            && methodAttributeAppender.equals(((Simple) other).methodAttributeAppender);
                 }
 
                 @Override
@@ -239,21 +271,11 @@ public interface TypeWriter<T> {
     }
 
     /**
-     * Describes a type writer currently in the general phase, i.e. in the phase before fields or methods
-     * are written to the type.
+     * Describes a phase that can transition into a phase for writing fields to a type.
      *
      * @param <T> The best known loaded type for the dynamically created type.
      */
-    static interface InGeneralPhase<T> extends TypeWriter<T> {
-
-        /**
-         * Writes an attribute to the type that is created by this type writer.
-         *
-         * @param typeAttributeAppender The type attribute appender to be applied to the type that is represented by
-         *                              this type writer.
-         * @return This type writer.
-         */
-        InGeneralPhase<T> attributeType(TypeAttributeAppender typeAttributeAppender);
+    static interface FieldPhaseTransitional<T> {
 
         /**
          * Moves to the field phase.
@@ -261,6 +283,14 @@ public interface TypeWriter<T> {
          * @return This type writer in its field phase.
          */
         InFieldPhase<T> fields();
+    }
+
+    /**
+     * Describes a phase that can transition into a phase for writing methods to a type.
+     *
+     * @param <T> The best known loaded type for the dynamically created type.
+     */
+    static interface MethodPhaseTransitional<T> {
 
         /**
          * Moves to the method phase.
@@ -271,12 +301,30 @@ public interface TypeWriter<T> {
     }
 
     /**
+     * Describes a type writer currently in the general phase, i.e. in the phase before fields or methods
+     * are written to the type.
+     *
+     * @param <T> The best known loaded type for the dynamically created type.
+     */
+    static interface InGeneralPhase<T> extends TypeWriter<T>, FieldPhaseTransitional<T>, MethodPhaseTransitional<T> {
+
+        /**
+         * Writes an attribute to the type that is created by this type writer.
+         *
+         * @param typeAttributeAppender The type attribute appender to be applied to the type that is represented by
+         *                              this type writer.
+         * @return This type writer.
+         */
+        InGeneralPhase<T> attributeType(TypeAttributeAppender typeAttributeAppender);
+    }
+
+    /**
      * Describes a type writer currently in the field phase, i.e. in the phase before methods are applied but
      * after any type meta information are written to the type.
      *
      * @param <T> The best known loaded type for the dynamically created type.
      */
-    static interface InFieldPhase<T> extends TypeWriter<T> {
+    static interface InFieldPhase<T> extends TypeWriter<T>, MethodPhaseTransitional<T> {
 
         /**
          * Adds a number of fields as described by the argument to the type that is created by this type
@@ -287,13 +335,6 @@ public interface TypeWriter<T> {
          * @return This type writer.
          */
         InFieldPhase<T> write(Iterable<? extends FieldDescription> fieldDescriptions, FieldPool fieldPool);
-
-        /**
-         * Moves to the method phase.
-         *
-         * @return This type writer in its method phase.
-         */
-        InMethodPhase<T> methods();
     }
 
     /**
@@ -322,26 +363,52 @@ public interface TypeWriter<T> {
      */
     static class Builder<T> {
 
-        private final TypeDescription typeDescription;
+        /**
+         * The type description of the instrumented type that is represented by this builder.
+         */
+        private final TypeDescription instrumentedType;
+
+        /**
+         * The type initializer of the instrumented type that is represented by this builder.
+         */
         private final TypeInitializer typeInitializer;
+
+        /**
+         * An extractable view of the instrumentation context that is represented by this builder.
+         */
         private final Instrumentation.Context.ExtractableView instrumentationContext;
+
+        /**
+         * The class file version this instrumented type is to be written in by this builder.
+         */
         private final ClassFileVersion classFileVersion;
 
         /**
-         * Creates a new builder for a given instrumented type.
+         * Creates a new builder.
          *
-         * @param classFileVersion The class format version for the type that is written.
+         * @param instrumentedType       The type description of the instrumented type that is to be created.
+         * @param typeInitializer        The type initializer of the instrumented type that is to be created.
+         * @param instrumentationContext An extractable view of the instrumentation context.
+         * @param classFileVersion       The class file version this instrumented type is to be written in.
          */
-        public Builder(TypeDescription typeDescription,
+        public Builder(TypeDescription instrumentedType,
                        TypeInitializer typeInitializer,
                        Instrumentation.Context.ExtractableView instrumentationContext,
                        ClassFileVersion classFileVersion) {
-            this.typeDescription = typeDescription;
+            this.instrumentedType = instrumentedType;
             this.typeInitializer = typeInitializer;
             this.instrumentationContext = instrumentationContext;
             this.classFileVersion = classFileVersion;
         }
 
+        /**
+         * Alters the modifiers of a method to reflect the actual implementation of a method to be {@code abstract}
+         * if a method is not implemented or to be non-abstract if it is implemented.
+         *
+         * @param methodDescription The method being processed.
+         * @param appendsCode       {@code true} if the method does append code, i.e. is non-abstract.
+         * @return The filter modifiers of this method depending on whether it is {@code abstract} or not.
+         */
         private static int overrideModifiers(MethodDescription methodDescription, boolean appendsCode) {
             if (appendsCode && (methodDescription.isAbstract() || methodDescription.isNative())) {
                 return methodDescription.getModifiers() & ~MethodManifestation.ABSTRACTION_MASK;
@@ -362,61 +429,51 @@ public interface TypeWriter<T> {
             ClassWriter classWriter = new ClassWriter(ASM_MANUAL_FLAG);
             ClassVisitor classVisitor = classVisitorWrapper.wrap(classWriter);
             classVisitor.visit(classFileVersion.getVersionNumber(),
-                    typeDescription.getModifiers(),
-                    typeDescription.getInternalName(),
+                    instrumentedType.getModifiers(),
+                    instrumentedType.getInternalName(),
                     null,
-                    typeDescription.getSupertype() == null ? null : typeDescription.getSupertype().getInternalName(),
-                    typeDescription.getInterfaces().toInternalNames());
-            return new GeneralPhaseTypeWriter<T>(classWriter, classVisitor);
+                    instrumentedType.getSupertype() == null ? null : instrumentedType.getSupertype().getInternalName(),
+                    instrumentedType.getInterfaces().toInternalNames());
+            return new Handler<T>(classWriter, classVisitor);
         }
 
-        private abstract class AbstractTypeWriter<S> implements TypeWriter<S> {
+        @Override
+        public String toString() {
+            return "TypeWriter.Builder{" +
+                    "instrumentedType=" + instrumentedType +
+                    ", typeInitializer=" + typeInitializer +
+                    ", instrumentationContext=" + instrumentationContext +
+                    ", classFileVersion=" + classFileVersion +
+                    '}';
+        }
 
+        /**
+         * An implementation of a handler that is capable of writing a type while enforcing the order that is required
+         * by the ASM library that is used for carrying out this task.
+         *
+         * @param <S> The most specific type of the class that is being created by this type writer.
+         */
+        private class Handler<S> implements TypeWriter<S>, InGeneralPhase<S>, InFieldPhase<S>, InMethodPhase<S> {
+
+            /**
+             * The class writer that is writing the class.
+             */
             protected final ClassWriter classWriter;
+
+            /**
+             * The top most class visitor any
+             */
             protected final ClassVisitor classVisitor;
 
-            protected AbstractTypeWriter(ClassWriter classWriter, ClassVisitor classVisitor) {
+            /**
+             * Creates a new handler.
+             *
+             * @param classWriter  the class writer that is writing the currently created type.
+             * @param classVisitor The top-most class visitor that all instructions are delegated to.
+             */
+            protected Handler(ClassWriter classWriter, ClassVisitor classVisitor) {
                 this.classWriter = classWriter;
                 this.classVisitor = classVisitor;
-            }
-
-            @Override
-            public DynamicType.Unloaded<S> make() {
-                classVisitor.visitEnd();
-                return new DynamicType.Default.Unloaded<S>(typeDescription,
-                        classWriter.toByteArray(),
-                        typeInitializer,
-                        instrumentationContext.getRegisteredAuxiliaryTypes());
-            }
-        }
-
-        private class GeneralPhaseTypeWriter<S> extends AbstractTypeWriter<S> implements InGeneralPhase<S> {
-
-            private GeneralPhaseTypeWriter(ClassWriter classWriter, ClassVisitor classVisitor) {
-                super(classWriter, classVisitor);
-            }
-
-            @Override
-            public InGeneralPhase<S> attributeType(TypeAttributeAppender typeAttributeAppender) {
-                typeAttributeAppender.apply(classVisitor, typeDescription);
-                return this;
-            }
-
-            @Override
-            public InFieldPhase<S> fields() {
-                return new FieldPhaseTypeWriter<S>(classWriter, classVisitor);
-            }
-
-            @Override
-            public InMethodPhase<S> methods() {
-                return new MethodPhaseTypeWriter<S>(classWriter, classVisitor);
-            }
-        }
-
-        private class FieldPhaseTypeWriter<S> extends AbstractTypeWriter<S> implements InFieldPhase<S> {
-
-            private FieldPhaseTypeWriter(ClassWriter classWriter, ClassVisitor classVisitor) {
-                super(classWriter, classVisitor);
             }
 
             @Override
@@ -429,7 +486,7 @@ public interface TypeWriter<T> {
                             null);
                     fieldPool.target(fieldDescription)
                             .getFieldAppenderFactory()
-                            .make(typeDescription)
+                            .make(instrumentedType)
                             .apply(fieldVisitor, fieldDescription);
                     fieldVisitor.visitEnd();
                 }
@@ -437,15 +494,19 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            public InMethodPhase<S> methods() {
-                return new MethodPhaseTypeWriter<S>(classWriter, classVisitor);
+            public InGeneralPhase<S> attributeType(TypeAttributeAppender typeAttributeAppender) {
+                typeAttributeAppender.apply(classVisitor, instrumentedType);
+                return this;
             }
-        }
 
-        private class MethodPhaseTypeWriter<S> extends AbstractTypeWriter<S> implements InMethodPhase<S> {
+            @Override
+            public InFieldPhase<S> fields() {
+                return this;
+            }
 
-            private MethodPhaseTypeWriter(ClassWriter classWriter, ClassVisitor classVisitor) {
-                super(classWriter, classVisitor);
+            @Override
+            public InMethodPhase<S> methods() {
+                return this;
             }
 
             @Override
@@ -472,6 +533,24 @@ public interface TypeWriter<T> {
                     }
                 }
                 return this;
+            }
+
+            @Override
+            public DynamicType.Unloaded<S> make() {
+                classVisitor.visitEnd();
+                return new DynamicType.Default.Unloaded<S>(instrumentedType,
+                        classWriter.toByteArray(),
+                        typeInitializer,
+                        instrumentationContext.getRegisteredAuxiliaryTypes());
+            }
+
+            @Override
+            public String toString() {
+                return "TypeWriter.Builder.Handler{" +
+                        "builder=" + Builder.this +
+                        ", classWriter=" + classWriter +
+                        ", classVisitor=" + classVisitor +
+                        '}';
             }
         }
     }

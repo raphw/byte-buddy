@@ -124,7 +124,7 @@ public enum MethodInvocation {
         @Override
         public StackManipulation virtual(TypeDescription invocationTarget) {
             if (methodDescription.isPrivate() || methodDescription.isConstructor() || methodDescription.isStatic()) {
-                throw new IllegalStateException("Cannot invoke " + methodDescription + " virtually");
+                return Illegal.INSTANCE;
             }
             if (invocationTarget.isInterface()) {
                 return INTERFACE.new Invocation(methodDescription, invocationTarget);
@@ -136,7 +136,7 @@ public enum MethodInvocation {
         @Override
         public StackManipulation special(TypeDescription invocationTarget) {
             if (!methodDescription.isSpecializableFor(invocationTarget)) {
-                throw new IllegalArgumentException("Cannot invoke " + invocationTarget + " on " + methodDescription);
+                return Illegal.INSTANCE;
             }
             return SPECIAL.new Invocation(methodDescription, invocationTarget);
         }

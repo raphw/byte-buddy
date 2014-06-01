@@ -143,12 +143,41 @@ public interface Instrumentation {
         }
 
         /**
-         * A canonical implementation of a legal {@link net.bytebuddy.instrumentation.Instrumentation.SpecialMethodInvocation}.
+         * A canonical implementation of a {@link net.bytebuddy.instrumentation.Instrumentation.SpecialMethodInvocation}.
          */
-        static class Legal implements SpecialMethodInvocation {
+        static class Simple implements SpecialMethodInvocation {
 
+            /**
+             * Creates a special method invocation for a given invocation target.
+             *
+             * @param methodDescription The method that represents the special method invocation.
+             * @param typeDescription   The type on which the method should be invoked on by an {@code INVOKESPECIAL}
+             *                          invocation.
+             * @return A special method invocation representing a legal invocation if the method can be invoked
+             * specially on the target type or an illegal invocation if this is not possible.
+             */
+            public static SpecialMethodInvocation of(MethodDescription methodDescription,
+                                                     TypeDescription typeDescription) {
+                StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription).special(typeDescription);
+                return stackManipulation.isValid()
+                        ? new Simple(methodDescription, typeDescription, stackManipulation)
+                        : SpecialMethodInvocation.Illegal.INSTANCE;
+            }
+
+            /**
+             * The method description that is represented by this legal special method invocation.
+             */
             private final MethodDescription methodDescription;
+
+            /**
+             * The type description that is represented by this legal special method invocation.
+             */
             private final TypeDescription typeDescription;
+
+            /**
+             * A stack manipulation representing the method's invocation on the type description.
+             */
+            private final StackManipulation stackManipulation;
 
             /**
              * Creates a new legal special method invocation.
@@ -156,10 +185,14 @@ public interface Instrumentation {
              * @param methodDescription The method that represents the special method invocation.
              * @param typeDescription   The type on which the method should be invoked on by an {@code INVOKESPECIAL}
              *                          invocation.
+             * @param stackManipulation The stack manipulation that represents this special method invocation.
              */
-            public Legal(MethodDescription methodDescription, TypeDescription typeDescription) {
+            private Simple(MethodDescription methodDescription,
+                           TypeDescription typeDescription,
+                           StackManipulation stackManipulation) {
                 this.methodDescription = methodDescription;
                 this.typeDescription = typeDescription;
+                this.stackManipulation = stackManipulation;
             }
 
             @Override
@@ -174,14 +207,12 @@ public interface Instrumentation {
 
             @Override
             public boolean isValid() {
-                return true;
+                return stackManipulation.isValid();
             }
 
             @Override
             public Size apply(MethodVisitor methodVisitor, Context instrumentationContext) {
-                return MethodInvocation.invoke(methodDescription)
-                        .special(typeDescription)
-                        .apply(methodVisitor, instrumentationContext);
+                return stackManipulation.apply(methodVisitor, instrumentationContext);
             }
 
             @Override
@@ -189,7 +220,8 @@ public interface Instrumentation {
                 if (this == other) return true;
                 if (other == null || getClass() != other.getClass()) return false;
                 SpecialMethodInvocation specialMethodInvocation = (SpecialMethodInvocation) other;
-                return typeDescription.equals(specialMethodInvocation.getTypeDescription())
+                return isValid() == specialMethodInvocation.isValid()
+                        && typeDescription.equals(specialMethodInvocation.getTypeDescription())
                         && methodDescription.getInternalName().equals(specialMethodInvocation.getMethodDescription().getInternalName())
                         && methodDescription.getParameterTypes().equals(specialMethodInvocation.getMethodDescription().getParameterTypes())
                         && methodDescription.getReturnType().equals(specialMethodInvocation.getMethodDescription().getReturnType());
@@ -320,7 +352,7 @@ public interface Instrumentation {
                 if (defaultMethods != null) {
                     MethodDescription defaultMethod = defaultMethods.get(uniqueMethodSignature);
                     if (defaultMethod != null) {
-                        return new Instrumentation.SpecialMethodInvocation.Legal(defaultMethod, targetType);
+                        return SpecialMethodInvocation.Simple.of(defaultMethod, targetType);
                     }
                 }
                 return Instrumentation.SpecialMethodInvocation.Illegal.INSTANCE;

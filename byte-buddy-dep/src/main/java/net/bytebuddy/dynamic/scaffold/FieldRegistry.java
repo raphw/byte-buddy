@@ -27,7 +27,8 @@ public interface FieldRegistry {
      * @param attributeAppenderFactory The field attribute appender factory to be registered for this field.
      * @return A new field registry that knows about the new field registration.
      */
-    FieldRegistry include(LatentFieldMatcher latentFieldMatcher, FieldAttributeAppender.Factory attributeAppenderFactory);
+    FieldRegistry include(LatentFieldMatcher latentFieldMatcher,
+                          FieldAttributeAppender.Factory attributeAppenderFactory);
 
     /**
      * Once all entries for a field registry were registered, a field registry can be compiled in order to allow the

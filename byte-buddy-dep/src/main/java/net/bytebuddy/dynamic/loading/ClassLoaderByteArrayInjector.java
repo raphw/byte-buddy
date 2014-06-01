@@ -24,7 +24,11 @@ public class ClassLoaderByteArrayInjector {
         try {
             Method findLoadedClassMethod = ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class);
             findLoadedClassMethod.setAccessible(true);
-            Method loadByteArrayMethod = ClassLoader.class.getDeclaredMethod("defineClass", String.class, byte[].class, int.class, int.class);
+            Method loadByteArrayMethod = ClassLoader.class.getDeclaredMethod("defineClass",
+                    String.class,
+                    byte[].class,
+                    int.class,
+                    int.class);
             loadByteArrayMethod.setAccessible(true);
             reflectionStore = new ReflectionStore.Resolved(findLoadedClassMethod, loadByteArrayMethod);
         } catch (Exception e) {
@@ -75,6 +79,11 @@ public class ClassLoaderByteArrayInjector {
         }
     }
 
+    @Override
+    public String toString() {
+        return "ClassLoaderByteArrayInjector{classLoader=" + classLoader + '}';
+    }
+
     /**
      * A storage for method representations in order to access a class loader reflectively.
      */
@@ -103,7 +112,6 @@ public class ClassLoaderByteArrayInjector {
              * The method for finding a class on a class loader.
              */
             private final Method findLoadedClassMethod;
-
             /**
              * The method for loading a class into a class loader.
              */
@@ -128,20 +136,6 @@ public class ClassLoaderByteArrayInjector {
             @Override
             public Method getLoadByteArrayMethod() {
                 return loadByteArrayMethod;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && findLoadedClassMethod.equals(((Resolved) other).findLoadedClassMethod)
-                        && loadByteArrayMethod.equals(((Resolved) other).loadByteArrayMethod);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = findLoadedClassMethod.hashCode();
-                result = 31 * result + loadByteArrayMethod.hashCode();
-                return result;
             }
 
             @Override
@@ -180,17 +174,6 @@ public class ClassLoaderByteArrayInjector {
             @Override
             public Method getLoadByteArrayMethod() {
                 throw exception;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && exception.equals(((Faulty) other).exception);
-            }
-
-            @Override
-            public int hashCode() {
-                return exception.hashCode();
             }
 
             @Override

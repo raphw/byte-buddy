@@ -26,15 +26,54 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
         AuxiliaryType.MethodAccessorFactory,
         TypeWriter.MethodPool {
 
+    /**
+     * The default name suffix to be appended to an accessor method.
+     */
     private static final String DEFAULT_ACCESSOR_METHOD_SUFFIX = "accessor";
+
+    /**
+     * The instrumented type that this instance represents.
+     */
     private final TypeDescription instrumentedType;
+
+    /**
+     * The class file version that the instrumented type is written in.
+     */
     private final ClassFileVersion classFileVersion;
+
+    /**
+     * The name suffix to be appended to an accessor method.
+     */
     private final String accessorMethodSuffix;
+
+    /**
+     * The naming strategy for naming auxiliary types that are registered.
+     */
     private final AuxiliaryTypeNamingStrategy auxiliaryTypeNamingStrategy;
+
+    /**
+     * A mapping of special method invocations to their accessor methods that each invoke their mapped invocation.
+     */
     private final Map<Instrumentation.SpecialMethodInvocation, MethodDescription> registeredAccessorMethods;
+
+    /**
+     * An list of accessor methods in the order of their registration.
+     */
     private final List<MethodDescription> orderedAccessorMethods;
+
+    /**
+     * A map of accessor methods to a method pool entry that represents their implementation.
+     */
     private final Map<MethodDescription, TypeWriter.MethodPool.Entry> accessorMethodEntries;
+
+    /**
+     * A map of registered auxiliary types to their dynamic type representation.
+     */
     private final Map<AuxiliaryType, DynamicType> auxiliaryTypes;
+
+    /**
+     * An instance for supporting the creation of random values.
+     */
     private final Random random;
 
     /**
@@ -44,7 +83,8 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
      * @param instrumentedType The description of the type that is currently subject of creation.
      * @param classFileVersion The class file version of the created class.
      */
-    public TypeExtensionDelegate(TypeDescription instrumentedType, ClassFileVersion classFileVersion) {
+    public TypeExtensionDelegate(TypeDescription instrumentedType,
+                                 ClassFileVersion classFileVersion) {
         this(instrumentedType,
                 classFileVersion,
                 DEFAULT_ACCESSOR_METHOD_SUFFIX,
@@ -79,7 +119,7 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
     public MethodDescription registerAccessorFor(Instrumentation.SpecialMethodInvocation specialMethodInvocation) {
         MethodDescription accessorMethod = registeredAccessorMethods.get(specialMethodInvocation);
         if (accessorMethod == null) {
-            String name = String.format("%s$%s$%d", specialMethodInvocation.getMethodDescription().getName(),
+            String name = String.format("%s$%s$%d", specialMethodInvocation.getMethodDescription().getInternalName(),
                     accessorMethodSuffix,
                     Math.abs(random.nextInt()));
             accessorMethod = new MethodDescription.Latent(name,
@@ -92,6 +132,12 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
         return accessorMethod;
     }
 
+    /**
+     * Registers a new accessor method.
+     *
+     * @param specialMethodInvocation The special method invocation that the accessor method should invoke.
+     * @param accessorMethod          The accessor method for this invocation.
+     */
     private void registerAccessor(Instrumentation.SpecialMethodInvocation specialMethodInvocation,
                                   MethodDescription accessorMethod) {
         registeredAccessorMethods.put(specialMethodInvocation, accessorMethod);
@@ -136,6 +182,21 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
         return new ArrayList<DynamicType>(auxiliaryTypes.values());
     }
 
+    @Override
+    public String toString() {
+        return "TypeExtensionDelegate{" +
+                "instrumentedType=" + instrumentedType +
+                ", classFileVersion=" + classFileVersion +
+                ", accessorMethodSuffix='" + accessorMethodSuffix + '\'' +
+                ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
+                ", registeredAccessorMethods=" + registeredAccessorMethods +
+                ", orderedAccessorMethods=" + orderedAccessorMethods +
+                ", accessorMethodEntries=" + accessorMethodEntries +
+                ", auxiliaryTypes=" + auxiliaryTypes +
+                ", random=" + random +
+                '}';
+    }
+
     /**
      * Representation of a naming strategy for an auxiliary type.
      */
@@ -156,7 +217,14 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
          */
         static class SuffixingRandom implements AuxiliaryTypeNamingStrategy {
 
+            /**
+             * The suffix to append to the instrumented type for creating names for the auxiliary types.
+             */
             private final String suffix;
+
+            /**
+             * An instance for creating random values.
+             */
             private final Random random;
 
             /**
@@ -187,9 +255,7 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
 
             @Override
             public String toString() {
-                return "TypeExtensionDelegate.AuxiliaryTypeNamingStrategySuffixingRandom{" +
-                        "suffix='" + suffix + '\'' +
-                        '}';
+                return "TypeExtensionDelegate.AuxiliaryTypeNamingStrategySuffixingRandom{suffix='" + suffix + '\'' + '}';
             }
         }
     }
@@ -203,6 +269,9 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
      */
     public static class SameThreadCoModifiableIterable<S> implements Iterable<S> {
 
+        /**
+         * A possibly mutable list of the elements this iterable represents.
+         */
         private final List<? extends S> elements;
 
         /**
@@ -215,12 +284,23 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
         }
 
         @Override
-        public Iterator<S> iterator() {
-            return new SameThreadCoModifiableIterator();
+        public java.util.Iterator<S> iterator() {
+            return new Iterator();
         }
 
-        private class SameThreadCoModifiableIterator implements Iterator<S> {
+        @Override
+        public String toString() {
+            return "TypeExtensionDelegate.SameThreadCoModifiableIterable{elements=" + elements + '}';
+        }
 
+        /**
+         * The iterator over a {@link net.bytebuddy.dynamic.scaffold.TypeExtensionDelegate.SameThreadCoModifiableIterable}.
+         */
+        private class Iterator implements java.util.Iterator<S> {
+
+            /**
+             * The current index of this iteration.
+             */
             private int index = 0;
 
             @Override
@@ -237,13 +317,34 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
             public void remove() {
                 throw new UnsupportedOperationException();
             }
+
+            @Override
+            public String toString() {
+                return "TypeExtensionDelegate.SameThreadCoModifiableIterable.Iterator{" +
+                        "iterable=" + SameThreadCoModifiableIterable.this +
+                        ", index=" + index +
+                        '}';
+            }
         }
     }
 
+    /**
+     * An implementation of a {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Entry} for implementing
+     * an accessor method.
+     */
     private static class AccessorMethodDelegation implements TypeWriter.MethodPool.Entry, ByteCodeAppender {
 
+        /**
+         * The stack manipulation that represents the requested special method invocation.
+         */
         private final StackManipulation accessorMethodInvocation;
 
+        /**
+         * Creates a new accessor method delegation.
+         *
+         * @param accessorMethodInvocation The stack manipulation that represents the requested special method
+         *                                 invocation.
+         */
         private AccessorMethodDelegation(StackManipulation accessorMethodInvocation) {
             this.accessorMethodInvocation = accessorMethodInvocation;
         }
@@ -293,7 +394,7 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
 
         @Override
         public String toString() {
-            return "AccessorMethodDelegation{accessorMethodInvocation=" + accessorMethodInvocation + '}';
+            return "TypeExtensionDelegate.AccessorMethodDelegation{accessorMethodInvocation=" + accessorMethodInvocation + '}';
         }
     }
 }

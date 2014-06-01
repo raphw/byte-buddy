@@ -457,6 +457,7 @@ public interface DynamicType {
              * This builder's currently registered field tokens.
              */
             protected final List<FieldToken> fieldTokens;
+
             /**
              * This builder's currently registered method tokens.
              */
@@ -554,20 +555,24 @@ public interface DynamicType {
                  * The internal name of the method.
                  */
                 protected final String internalName;
+
                 /**
                  * A description of the return type of the method or a type describing the
                  * {@link net.bytebuddy.dynamic.TargetType} placeholder.
                  */
                 protected final TypeDescription returnType;
+
                 /**
                  * A list of parameter type descriptions for the method which might be represented by the
                  * {@link net.bytebuddy.dynamic.TargetType} placeholder.
                  */
                 protected final List<TypeDescription> parameterTypes;
+
                 /**
                  * A list of exception type descriptions for the method.
                  */
                 protected final List<TypeDescription> exceptionTypes;
+
                 /**
                  * A list of modifiers of the method.
                  */
@@ -872,7 +877,9 @@ public interface DynamicType {
                 }
 
                 @Override
-                public FieldAnnotationTarget<U> defineField(String name, TypeDescription fieldTypeDescription, ModifierContributor.ForField... modifier) {
+                public FieldAnnotationTarget<U> defineField(String name,
+                                                            TypeDescription fieldTypeDescription,
+                                                            ModifierContributor.ForField... modifier) {
                     return materialize().defineField(name, fieldTypeDescription, modifier);
                 }
 
@@ -985,18 +992,22 @@ public interface DynamicType {
          * The file name extension for Java class files.
          */
         private static final String CLASS_FILE_EXTENSION = ".class";
+
         /**
          * A type description of this dynamic type.
          */
         protected final TypeDescription typeDescription;
+
         /**
          * The byte array representing this dynamic type.
          */
         protected final byte[] binaryRepresentation;
+
         /**
          * The type initializer for this dynamic type.
          */
         protected final TypeInitializer typeInitializer;
+
         /**
          * A list of auxiliary types for this dynamic type.
          */
@@ -1075,6 +1086,27 @@ public interface DynamicType {
                 savedFiles.putAll(auxiliaryType.saveIn(folder));
             }
             return savedFiles;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            Default aDefault = (Default) other;
+            return auxiliaryTypes.equals(aDefault.auxiliaryTypes)
+                    && Arrays.equals(binaryRepresentation, aDefault.binaryRepresentation)
+                    && typeDescription.equals(aDefault.typeDescription)
+                    && typeInitializer.equals(aDefault.typeInitializer);
+
+        }
+
+        @Override
+        public int hashCode() {
+            int result = typeDescription.hashCode();
+            result = 31 * result + Arrays.hashCode(binaryRepresentation);
+            result = 31 * result + typeInitializer.hashCode();
+            result = 31 * result + auxiliaryTypes.hashCode();
+            return result;
         }
 
         @Override
@@ -1191,12 +1223,24 @@ public interface DynamicType {
             }
 
             @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && super.equals(other) && loadedTypes.equals(((Default.Loaded) other).loadedTypes);
+            }
+
+            @Override
+            public int hashCode() {
+                return 31 * super.hashCode() + loadedTypes.hashCode();
+            }
+
+            @Override
             public String toString() {
                 return "DynamicType.Default.Loaded{" +
                         "typeDescription='" + typeDescription + '\'' +
                         ", binaryRepresentation=" + Arrays.toString(binaryRepresentation) +
                         ", typeInitializer=" + typeInitializer +
                         ", auxiliaryTypes=" + auxiliaryTypes +
+                        ", loadedTypes=" + loadedTypes +
                         '}';
             }
         }

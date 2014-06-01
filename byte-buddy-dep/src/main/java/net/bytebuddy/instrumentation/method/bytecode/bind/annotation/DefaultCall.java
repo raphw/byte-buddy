@@ -24,6 +24,12 @@ public @interface DefaultCall {
          */
         INSTANCE;
 
+        private static MethodLocator locate(Class<?> type) {
+            return type == void.class
+                    ? MethodLocator.Implicit.INSTANCE
+                    : new MethodLocator.Explicit(type);
+        }
+
         @Override
         public Class<DefaultCall> getHandledType() {
             return DefaultCall.class;
@@ -46,13 +52,10 @@ public @interface DefaultCall {
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
         }
 
-        private static MethodLocator locate(Class<?> type) {
-            return type == void.class
-                    ? MethodLocator.Implicit.INSTANCE
-                    : new MethodLocator.Explicit(type);
-        }
-
         private static interface MethodLocator {
+
+            Instrumentation.SpecialMethodInvocation resolve(Instrumentation.Target instrumentationTarget,
+                                                            MethodDescription source);
 
             static enum Implicit implements MethodLocator {
 
@@ -92,9 +95,6 @@ public @interface DefaultCall {
                     return instrumentationTarget.invokeDefault(typeDescription, source.getUniqueSignature());
                 }
             }
-
-            Instrumentation.SpecialMethodInvocation resolve(Instrumentation.Target instrumentationTarget,
-                                                            MethodDescription source);
         }
     }
 }

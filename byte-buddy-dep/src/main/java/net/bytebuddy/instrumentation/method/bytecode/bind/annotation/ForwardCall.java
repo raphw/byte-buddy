@@ -25,6 +25,12 @@ public @interface ForwardCall {
 
     static class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<ForwardCall> {
 
+        private final MethodDescription methodDescription;
+
+        private Binder(MethodDescription methodDescription) {
+            this.methodDescription = methodDescription;
+        }
+
         public static TargetMethodAnnotationDrivenBinder.ParameterBinder<ForwardCall> compile(Class<?> type) {
             TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
             MethodList methodList = typeDescription.getDeclaredMethods().filter(not(isStatic()));
@@ -38,12 +44,6 @@ public @interface ForwardCall {
                         "non-static method with a single non-primitive argument");
             }
             return new Binder(methodList.getOnly());
-        }
-
-        private final MethodDescription methodDescription;
-
-        private Binder(MethodDescription methodDescription) {
-            this.methodDescription = methodDescription;
         }
 
         @Override
@@ -72,14 +72,6 @@ public @interface ForwardCall {
                 this.targetMethod = targetMethod;
             }
 
-            @Override
-            public DynamicType make(String auxiliaryTypeName,
-                                    ClassFileVersion classFileVersion,
-                                    MethodAccessorFactory methodAccessorFactory) {
-                extractFields(targetMethod);
-                return null;
-            }
-
             private static LinkedHashMap<String, TypeDescription> extractFields(MethodDescription methodDescription) {
                 TypeList parameterTypes = methodDescription.getParameterTypes();
                 LinkedHashMap<String, TypeDescription> typeDescriptions = new LinkedHashMap<String, TypeDescription>(parameterTypes.size());
@@ -92,6 +84,14 @@ public @interface ForwardCall {
 
             private static String fieldName(int index) {
                 return String.format("%s%d", FIELD_NAME_PREFIX, index);
+            }
+
+            @Override
+            public DynamicType make(String auxiliaryTypeName,
+                                    ClassFileVersion classFileVersion,
+                                    MethodAccessorFactory methodAccessorFactory) {
+                extractFields(targetMethod);
+                return null;
             }
 
             private class MethodCall implements Instrumentation {

@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Random;
 
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Matchers.any;
@@ -134,5 +135,17 @@ public class DynamicTypeDefaultTest {
             assertThat(folder.delete(), is(true));
         }
         verify(auxiliaryType).saveIn(folder);
+    }
+
+    @Test
+    public void testHashCodeEquals() throws Exception {
+        assertThat(dynamicType.hashCode(), is(dynamicType.hashCode()));
+        assertThat(dynamicType, is(dynamicType));
+        DynamicType other = new DynamicType.Default(auxiliaryTypeDescription,
+                binaryRepresentation,
+                auxiliaryTypeInitializer,
+                Collections.<DynamicType>emptyList());
+        assertThat(dynamicType.hashCode(), not(is(other.hashCode())));
+        assertThat(dynamicType, not(is(other)));
     }
 }

@@ -219,30 +219,31 @@ public interface BridgeMethodResolver {
                 /**
                  * A strategy that fails immediately when an ambiguous resolution is discovered.
                  */
-                FAIL_FAST,
+                FAIL_FAST {
+                    @Override
+                    public BridgeTarget choose(MethodDescription bridgeMethod, MethodList targetCandidates) {
+                        throw new IllegalStateException("Could not resolve bridge method " + bridgeMethod
+                                + " with multiple potential targets " + targetCandidates);
+                    }
+                },
 
                 /**
                  * A strategy that fails when an ambiguous resolution is attempted to be used.
                  */
-                FAIL_ON_REQUEST,
+                FAIL_ON_REQUEST {
+                    @Override
+                    public BridgeTarget choose(MethodDescription bridgeMethod, MethodList targetCandidates) {
+                        return BridgeTarget.Unknown.INSTANCE;
+                    }
+                },
 
                 /**
                  * A strategy that calls the unresolved bridge method when its target resolution is ambigous.
                  */
-                CALL_BRIDGE;
-
-                @Override
-                public BridgeTarget choose(MethodDescription bridgeMethod, MethodList targetCandidates) {
-                    switch (this) {
-                        case FAIL_FAST:
-                            throw new IllegalStateException("Could not resolve bridge method " + bridgeMethod
-                                    + " with multiple potential targets " + targetCandidates);
-                        case FAIL_ON_REQUEST:
-                            return BridgeTarget.Unknown.INSTANCE;
-                        case CALL_BRIDGE:
-                            return new BridgeTarget.Resolved(bridgeMethod);
-                        default:
-                            throw new AssertionError();
+                CALL_BRIDGE {
+                    @Override
+                    public BridgeTarget choose(MethodDescription bridgeMethod, MethodList targetCandidates) {
+                        return new BridgeTarget.Resolved(bridgeMethod);
                     }
                 }
             }

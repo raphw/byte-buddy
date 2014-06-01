@@ -31,49 +31,47 @@ public interface ClassLoadingStrategy {
 
         /**
          * This strategy creates a new {@link net.bytebuddy.dynamic.loading.ByteArrayClassLoader} with the given
-         * class loader as its parent. The byte array class loader is aware of a given number of types and can
-         * natively load the given classes. This allows to load classes with cyclic dependencies since the byte
-         * array class loader is queried on each encountered unknown class. Due to the encapsulation of the
+         * class loader as its parent. The byte array class loader is aware of a any dynamically created type and can
+         * natively load the given classes. This allows to load classes with cyclic load-time dependencies since the
+         * byte array class loader is queried on each encountered unknown class. Due to the encapsulation of the
          * classes that were loaded by a byte array class loader, this strategy will lead to the unloading of these
          * classes once this class loader, its classes or any instances of these classes become unreachable.
          */
-        WRAPPER,
+        WRAPPER {
+            @Override
+            public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+                Map<TypeDescription, Class<?>> loadedTypes = new LinkedHashMap<TypeDescription, Class<?>>(types.size());
+                classLoader = new ByteArrayClassLoader(types, classLoader);
+                for (TypeDescription typeDescription : types.keySet()) {
+                    try {
+                        loadedTypes.put(typeDescription, classLoader.loadClass(typeDescription.getName()));
+                    } catch (ClassNotFoundException e) {
+                        throw new RuntimeException("Cannot load class " + typeDescription, e);
+                    }
+                }
+                return loadedTypes;
+            }
+        },
 
         /**
-         * This strategy creates a new class loader but inject all classes into the given {@link java.lang.ClassLoader}
-         * by reflective access. This prevents the loading of classes with cyclic dependencies but avoids the creation
-         * of an additional class loader. The advantage of this strategy is that the loaded classes will have
+         * This strategy does not create a new class loader but injects all classes into the given {@link java.lang.ClassLoader}
+         * by reflective access. This prevents the loading of classes with cyclic load-time dependencies but avoids the
+         * creation of an additional class loader. The advantage of this strategy is that the loaded classes will have
          * package-private access to other classes within their package of the class loader into which they are
          * injected what is not permitted when the wrapper class loader is used. This strategy is implemented using a
          * {@link net.bytebuddy.dynamic.loading.ClassLoaderByteArrayInjector}. Note that this strategy usually yields
          * a better runtime performance.
          */
-        INJECTION;
-
-        @Override
-        public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
-            Map<TypeDescription, Class<?>> loadedTypes = new LinkedHashMap<TypeDescription, Class<?>>(types.size());
-            switch (this) {
-                case WRAPPER:
-                    classLoader = new ByteArrayClassLoader(types, classLoader);
-                    for (TypeDescription typeDescription : types.keySet()) {
-                        try {
-                            loadedTypes.put(typeDescription, classLoader.loadClass(typeDescription.getName()));
-                        } catch (ClassNotFoundException e) {
-                            throw new RuntimeException("Cannot load class " + typeDescription, e);
-                        }
-                    }
-                    break;
-                case INJECTION:
-                    ClassLoaderByteArrayInjector classLoaderByteArrayInjector = new ClassLoaderByteArrayInjector(classLoader);
-                    for (Map.Entry<TypeDescription, byte[]> entry : types.entrySet()) {
-                        loadedTypes.put(entry.getKey(), classLoaderByteArrayInjector.inject(entry.getKey().getName(), entry.getValue()));
-                    }
-                    break;
-                default:
-                    throw new AssertionError();
+        INJECTION {
+            @Override
+            public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+                Map<TypeDescription, Class<?>> loadedTypes = new LinkedHashMap<TypeDescription, Class<?>>(types.size());
+                ClassLoaderByteArrayInjector classLoaderByteArrayInjector = new ClassLoaderByteArrayInjector(classLoader);
+                for (Map.Entry<TypeDescription, byte[]> entry : types.entrySet()) {
+                    loadedTypes.put(entry.getKey(), classLoaderByteArrayInjector.inject(entry.getKey().getName(), entry.getValue()));
+                }
+                return loadedTypes;
             }
-            return loadedTypes;
         }
     }
 }

@@ -19,6 +19,18 @@ public class MethodDelegationAllArgumentsTest extends AbstractInstrumentationTes
         assertThat(instance.foo(FOO, BAR), is((Object) (QUX + FOO + BAR)));
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testStrictNonBindableThrowsException() throws Exception {
+        instrument(Qux.class, MethodDelegation.to(BazStrict.class));
+    }
+
+    @Test
+    public void testSlackNonBindable() throws Exception {
+        DynamicType.Loaded<Qux> loaded = instrument(Qux.class, MethodDelegation.to(BazSlack.class));
+        Qux instance = loaded.getLoaded().newInstance();
+        assertThat(instance.foo(FOOBAR, BAZ), is((Object) (QUX + BAZ)));
+    }
+
     public static class Foo {
 
         public Object foo(int i1, Integer i2) {
@@ -31,18 +43,6 @@ public class MethodDelegationAllArgumentsTest extends AbstractInstrumentationTes
         public static String qux(@AllArguments int[] args) {
             return QUX + args[0] + args[1];
         }
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testStrictNonBindableThrowsException() throws Exception {
-        instrument(Qux.class, MethodDelegation.to(BazStrict.class));
-    }
-
-    @Test
-    public void testSlackNonBindable() throws Exception {
-        DynamicType.Loaded<Qux> loaded = instrument(Qux.class, MethodDelegation.to(BazSlack.class));
-        Qux instance = loaded.getLoaded().newInstance();
-        assertThat(instance.foo(FOOBAR, BAZ), is((Object) (QUX + BAZ)));
     }
 
     public static class Qux {

@@ -17,6 +17,10 @@ import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isCons
  */
 public class SubclassInstrumentationTarget extends Instrumentation.Target.AbstractBase {
 
+    /**
+     * The constructor of the super type, mapped by the constructor parameters of each constructor which is
+     * sufficient for a constructor's unique identification.
+     */
     private final Map<TypeList, MethodDescription> superConstructors;
 
     /**
@@ -43,9 +47,7 @@ public class SubclassInstrumentationTarget extends Instrumentation.Target.Abstra
                 return Instrumentation.SpecialMethodInvocation.Illegal.INSTANCE;
             }
         }
-        return methodDescription.isSpecializableFor(typeDescription.getSupertype())
-                ? new Instrumentation.SpecialMethodInvocation.Legal(methodDescription, typeDescription.getSupertype())
-                : Instrumentation.SpecialMethodInvocation.Illegal.INSTANCE;
+        return Instrumentation.SpecialMethodInvocation.Simple.of(methodDescription, typeDescription.getSupertype());
     }
 
     @Override
