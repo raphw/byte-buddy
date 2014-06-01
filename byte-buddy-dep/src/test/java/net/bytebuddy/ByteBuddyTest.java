@@ -27,11 +27,9 @@ import static org.mockito.Mockito.*;
 
 public class ByteBuddyTest {
 
+    private static final int MASK = Opcodes.ACC_PUBLIC;
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
-
-    private static final int MASK = Opcodes.ACC_PUBLIC;
-
     @Mock
     private TypeAttributeAppender typeAttributeAppender;
     @Mock

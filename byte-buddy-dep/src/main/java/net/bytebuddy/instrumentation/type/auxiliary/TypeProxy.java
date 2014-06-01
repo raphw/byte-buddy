@@ -158,6 +158,169 @@ public class TypeProxy implements AuxiliaryType {
     }
 
     /**
+     * An implementation of a <i>silent construction</i> of a given type by using the non-standardized
+     * {@link sun.reflect.ReflectionFactory}. This way, a constructor invocation can be avoided. However, this comes
+     * at the cost of potentially breaking compatibility as the reflection factory is not standardized.
+     */
+    private enum SilentConstruction implements Instrumentation {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        @Override
+        public InstrumentedType prepare(InstrumentedType instrumentedType) {
+            return instrumentedType;
+        }
+
+        @Override
+        public ByteCodeAppender appender(Target instrumentationTarget) {
+            return new Appender(instrumentationTarget.getTypeDescription());
+        }
+
+        /**
+         * The appender for implementing a {@link net.bytebuddy.instrumentation.type.auxiliary.TypeProxy.SilentConstruction}.
+         */
+        private static class Appender implements ByteCodeAppender {
+
+            /**
+             * The internal name of the reflection factory class.
+             */
+            public static final String REFLECTION_FACTORY_INTERNAL_NAME = "sun/reflect/ReflectionFactory";
+
+            /**
+             * The name of the factory method for getting hold of an instance of the reflection factory class.
+             */
+            public static final String GET_REFLECTION_FACTORY_METHOD_NAME = "getReflectionFactory";
+
+            /**
+             * The descriptor of the factory method for getting hold of an instance of the reflection factory class.
+             */
+            public static final String GET_REFLECTION_FACTORY_METHOD_DESCRIPTOR = "()Lsun/reflect/ReflectionFactory;";
+
+            /**
+             * The name of the method for creating a new serialization constructor.
+             */
+            public static final String NEW_CONSTRUCTOR_FOR_SERIALIZATION_METHOD_NAME = "newConstructorForSerialization";
+
+            /**
+             * The descriptor of the method for creating a new serialization constructor.
+             */
+            public static final String NEW_CONSTRUCTOR_FOR_SERIALIZATION_METHOD_DESCRIPTOR =
+                    "(Ljava/lang/Class;Ljava/lang/reflect/Constructor;)Ljava/lang/reflect/Constructor;";
+
+            /**
+             * The descriptor of the {@link java.lang.Object} class.
+             */
+            public static final String JAVA_LANG_OBJECT_DESCRIPTOR = "Ljava/lang/Object;";
+
+            /**
+             * The internal name of the {@link java.lang.Object} class.
+             */
+            public static final String JAVA_LANG_OBJECT_INTERNAL_NAME = "java/lang/Object";
+
+            /**
+             * The internal name of the {@link java.lang.reflect.Constructor} class.
+             */
+            public static final String JAVA_LANG_CONSTRUCTOR_INTERNAL_NAME = "java/lang/reflect/Constructor";
+
+            /**
+             * The internal name of the {@link java.lang.reflect.Constructor#newInstance(Object...)} method.
+             */
+            public static final String NEW_INSTANCE_METHOD_NAME = "newInstance";
+
+            /**
+             * The descriptor of the {@link java.lang.reflect.Constructor#newInstance(Object...)} method.
+             */
+            public static final String NEW_INSTANCE_METHOD_DESCRIPTOR = "([Ljava/lang/Object;)Ljava/lang/Object;";
+
+            /**
+             * The internal name of the {@link java.lang.Class} class.
+             */
+            public static final String JAVA_LANG_CLASS_INTERNAL_NAME = "java/lang/Class";
+
+            /**
+             * The internal name of the {@link Class#getDeclaredClasses()} method.
+             */
+            public static final String GET_DECLARED_CONSTRUCTOR_METHOD_NAME = "getDeclaredConstructor";
+
+            /**
+             * The descriptor of the {@link Class#getDeclaredClasses()} method.
+             */
+            public static final String GET_DECLARED_CONSTRUCTOR_METHOD_DESCRIPTOR =
+                    "([Ljava/lang/Class;)Ljava/lang/reflect/Constructor;";
+
+            /**
+             * The instrumented type that this factory method is created for.
+             */
+            private final TypeDescription instrumentedType;
+
+            /**
+             * Creates a new appender.
+             *
+             * @param instrumentedType The instrumented type that the factory method is created for.
+             */
+            private Appender(TypeDescription instrumentedType) {
+                this.instrumentedType = instrumentedType;
+            }
+
+            @Override
+            public boolean appendsCode() {
+                return true;
+            }
+
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
+                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
+                        REFLECTION_FACTORY_INTERNAL_NAME,
+                        GET_REFLECTION_FACTORY_METHOD_NAME,
+                        GET_REFLECTION_FACTORY_METHOD_DESCRIPTOR,
+                        false);
+                methodVisitor.visitLdcInsn(Type.getType(instrumentedType.getDescriptor()));
+                methodVisitor.visitLdcInsn(Type.getType(JAVA_LANG_OBJECT_DESCRIPTOR));
+                methodVisitor.visitInsn(Opcodes.ICONST_0);
+                methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, JAVA_LANG_CLASS_INTERNAL_NAME);
+                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
+                        JAVA_LANG_CLASS_INTERNAL_NAME,
+                        GET_DECLARED_CONSTRUCTOR_METHOD_NAME,
+                        GET_DECLARED_CONSTRUCTOR_METHOD_DESCRIPTOR,
+                        false);
+                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
+                        REFLECTION_FACTORY_INTERNAL_NAME,
+                        NEW_CONSTRUCTOR_FOR_SERIALIZATION_METHOD_NAME,
+                        NEW_CONSTRUCTOR_FOR_SERIALIZATION_METHOD_DESCRIPTOR,
+                        false);
+                methodVisitor.visitInsn(Opcodes.ICONST_0);
+                methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, JAVA_LANG_OBJECT_INTERNAL_NAME);
+                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, JAVA_LANG_CONSTRUCTOR_INTERNAL_NAME,
+                        NEW_INSTANCE_METHOD_NAME,
+                        NEW_INSTANCE_METHOD_DESCRIPTOR,
+                        false);
+                methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, instrumentedType.getInternalName());
+                methodVisitor.visitInsn(Opcodes.ARETURN);
+                return new Size(4, 0);
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && instrumentedType.equals(((Appender) other).instrumentedType);
+            }
+
+            @Override
+            public int hashCode() {
+                return instrumentedType.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "TypeProxy.SilentConstruction.Appender{instrumentedType=" + instrumentedType + '}';
+            }
+        }
+    }
+
+    /**
      * Loads a type proxy onto the operand stack which is created by calling one of its constructors. When this
      * stack manipulation is applied, an instance of the instrumented type must lie on top of the operand stack.
      * All constructor parameters will be assigned their default values when this stack operation is applied.
@@ -525,169 +688,6 @@ public class TypeProxy implements AuxiliaryType {
                             ", specialMethodInvocation=" + specialMethodInvocation +
                             '}';
                 }
-            }
-        }
-    }
-
-    /**
-     * An implementation of a <i>silent construction</i> of a given type by using the non-standardized
-     * {@link sun.reflect.ReflectionFactory}. This way, a constructor invocation can be avoided. However, this comes
-     * at the cost of potentially breaking compatibility as the reflection factory is not standardized.
-     */
-    private enum SilentConstruction implements Instrumentation {
-
-        /**
-         * The singleton instance.
-         */
-        INSTANCE;
-
-        @Override
-        public InstrumentedType prepare(InstrumentedType instrumentedType) {
-            return instrumentedType;
-        }
-
-        @Override
-        public ByteCodeAppender appender(Target instrumentationTarget) {
-            return new Appender(instrumentationTarget.getTypeDescription());
-        }
-
-        /**
-         * The appender for implementing a {@link net.bytebuddy.instrumentation.type.auxiliary.TypeProxy.SilentConstruction}.
-         */
-        private static class Appender implements ByteCodeAppender {
-
-            /**
-             * The internal name of the reflection factory class.
-             */
-            public static final String REFLECTION_FACTORY_INTERNAL_NAME = "sun/reflect/ReflectionFactory";
-
-            /**
-             * The name of the factory method for getting hold of an instance of the reflection factory class.
-             */
-            public static final String GET_REFLECTION_FACTORY_METHOD_NAME = "getReflectionFactory";
-
-            /**
-             * The descriptor of the factory method for getting hold of an instance of the reflection factory class.
-             */
-            public static final String GET_REFLECTION_FACTORY_METHOD_DESCRIPTOR = "()Lsun/reflect/ReflectionFactory;";
-
-            /**
-             * The name of the method for creating a new serialization constructor.
-             */
-            public static final String NEW_CONSTRUCTOR_FOR_SERIALIZATION_METHOD_NAME = "newConstructorForSerialization";
-
-            /**
-             * The descriptor of the method for creating a new serialization constructor.
-             */
-            public static final String NEW_CONSTRUCTOR_FOR_SERIALIZATION_METHOD_DESCRIPTOR =
-                    "(Ljava/lang/Class;Ljava/lang/reflect/Constructor;)Ljava/lang/reflect/Constructor;";
-
-            /**
-             * The descriptor of the {@link java.lang.Object} class.
-             */
-            public static final String JAVA_LANG_OBJECT_DESCRIPTOR = "Ljava/lang/Object;";
-
-            /**
-             * The internal name of the {@link java.lang.Object} class.
-             */
-            public static final String JAVA_LANG_OBJECT_INTERNAL_NAME = "java/lang/Object";
-
-            /**
-             * The internal name of the {@link java.lang.reflect.Constructor} class.
-             */
-            public static final String JAVA_LANG_CONSTRUCTOR_INTERNAL_NAME = "java/lang/reflect/Constructor";
-
-            /**
-             * The internal name of the {@link java.lang.reflect.Constructor#newInstance(Object...)} method.
-             */
-            public static final String NEW_INSTANCE_METHOD_NAME = "newInstance";
-
-            /**
-             * The descriptor of the {@link java.lang.reflect.Constructor#newInstance(Object...)} method.
-             */
-            public static final String NEW_INSTANCE_METHOD_DESCRIPTOR = "([Ljava/lang/Object;)Ljava/lang/Object;";
-
-            /**
-             * The internal name of the {@link java.lang.Class} class.
-             */
-            public static final String JAVA_LANG_CLASS_INTERNAL_NAME = "java/lang/Class";
-
-            /**
-             * The internal name of the {@link Class#getDeclaredClasses()} method.
-             */
-            public static final String GET_DECLARED_CONSTRUCTOR_METHOD_NAME = "getDeclaredConstructor";
-
-            /**
-             * The descriptor of the {@link Class#getDeclaredClasses()} method.
-             */
-            public static final String GET_DECLARED_CONSTRUCTOR_METHOD_DESCRIPTOR =
-                    "([Ljava/lang/Class;)Ljava/lang/reflect/Constructor;";
-
-            /**
-             * The instrumented type that this factory method is created for.
-             */
-            private final TypeDescription instrumentedType;
-
-            /**
-             * Creates a new appender.
-             *
-             * @param instrumentedType The instrumented type that the factory method is created for.
-             */
-            private Appender(TypeDescription instrumentedType) {
-                this.instrumentedType = instrumentedType;
-            }
-
-            @Override
-            public boolean appendsCode() {
-                return true;
-            }
-
-            @Override
-            public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
-                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
-                        REFLECTION_FACTORY_INTERNAL_NAME,
-                        GET_REFLECTION_FACTORY_METHOD_NAME,
-                        GET_REFLECTION_FACTORY_METHOD_DESCRIPTOR,
-                        false);
-                methodVisitor.visitLdcInsn(Type.getType(instrumentedType.getDescriptor()));
-                methodVisitor.visitLdcInsn(Type.getType(JAVA_LANG_OBJECT_DESCRIPTOR));
-                methodVisitor.visitInsn(Opcodes.ICONST_0);
-                methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, JAVA_LANG_CLASS_INTERNAL_NAME);
-                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-                        JAVA_LANG_CLASS_INTERNAL_NAME,
-                        GET_DECLARED_CONSTRUCTOR_METHOD_NAME,
-                        GET_DECLARED_CONSTRUCTOR_METHOD_DESCRIPTOR,
-                        false);
-                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-                        REFLECTION_FACTORY_INTERNAL_NAME,
-                        NEW_CONSTRUCTOR_FOR_SERIALIZATION_METHOD_NAME,
-                        NEW_CONSTRUCTOR_FOR_SERIALIZATION_METHOD_DESCRIPTOR,
-                        false);
-                methodVisitor.visitInsn(Opcodes.ICONST_0);
-                methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, JAVA_LANG_OBJECT_INTERNAL_NAME);
-                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, JAVA_LANG_CONSTRUCTOR_INTERNAL_NAME,
-                        NEW_INSTANCE_METHOD_NAME,
-                        NEW_INSTANCE_METHOD_DESCRIPTOR,
-                        false);
-                methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, instrumentedType.getInternalName());
-                methodVisitor.visitInsn(Opcodes.ARETURN);
-                return new Size(4, 0);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && instrumentedType.equals(((Appender) other).instrumentedType);
-            }
-
-            @Override
-            public int hashCode() {
-                return instrumentedType.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "TypeProxy.SilentConstruction.Appender{instrumentedType=" + instrumentedType + '}';
             }
         }
     }

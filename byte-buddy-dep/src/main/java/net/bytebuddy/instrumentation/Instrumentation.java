@@ -148,32 +148,13 @@ public interface Instrumentation {
         static class Simple implements SpecialMethodInvocation {
 
             /**
-             * Creates a special method invocation for a given invocation target.
-             *
-             * @param methodDescription The method that represents the special method invocation.
-             * @param typeDescription   The type on which the method should be invoked on by an {@code INVOKESPECIAL}
-             *                          invocation.
-             * @return A special method invocation representing a legal invocation if the method can be invoked
-             * specially on the target type or an illegal invocation if this is not possible.
-             */
-            public static SpecialMethodInvocation of(MethodDescription methodDescription,
-                                                     TypeDescription typeDescription) {
-                StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription).special(typeDescription);
-                return stackManipulation.isValid()
-                        ? new Simple(methodDescription, typeDescription, stackManipulation)
-                        : SpecialMethodInvocation.Illegal.INSTANCE;
-            }
-
-            /**
              * The method description that is represented by this legal special method invocation.
              */
             private final MethodDescription methodDescription;
-
             /**
              * The type description that is represented by this legal special method invocation.
              */
             private final TypeDescription typeDescription;
-
             /**
              * A stack manipulation representing the method's invocation on the type description.
              */
@@ -193,6 +174,23 @@ public interface Instrumentation {
                 this.methodDescription = methodDescription;
                 this.typeDescription = typeDescription;
                 this.stackManipulation = stackManipulation;
+            }
+
+            /**
+             * Creates a special method invocation for a given invocation target.
+             *
+             * @param methodDescription The method that represents the special method invocation.
+             * @param typeDescription   The type on which the method should be invoked on by an {@code INVOKESPECIAL}
+             *                          invocation.
+             * @return A special method invocation representing a legal invocation if the method can be invoked
+             * specially on the target type or an illegal invocation if this is not possible.
+             */
+            public static SpecialMethodInvocation of(MethodDescription methodDescription,
+                                                     TypeDescription typeDescription) {
+                StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription).special(typeDescription);
+                return stackManipulation.isValid()
+                        ? new Simple(methodDescription, typeDescription, stackManipulation)
+                        : SpecialMethodInvocation.Illegal.INSTANCE;
             }
 
             @Override
