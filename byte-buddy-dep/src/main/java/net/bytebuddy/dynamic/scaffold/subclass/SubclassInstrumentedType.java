@@ -20,16 +20,35 @@ import java.util.List;
 import static net.bytebuddy.utility.ByteBuddyCommons.isValidTypeName;
 
 /**
- * Represents a type instrumentation that creates a new type based on a loaded superclass.
+ * Represents a type instrumentation that creates a new type based on a given superclass.
  */
 public class SubclassInstrumentedType
         extends InstrumentedType.AbstractBase
         implements NamingStrategy.UnnamedType {
 
+    /**
+     * The class file version of this type.
+     */
     private final ClassFileVersion classFileVersion;
+
+    /**
+     * The super class of this type.
+     */
     private final TypeDescription superClass;
+
+    /**
+     * The interfaces that are represented by this type.
+     */
     private final List<TypeDescription> interfaces;
+
+    /**
+     * The modifiers of this type.
+     */
     private final int modifiers;
+
+    /**
+     * The non-internal name of this type.
+     */
     private final String name;
 
     /**
@@ -219,7 +238,7 @@ public class SubclassInstrumentedType
 
     @Override
     public String toString() {
-        return "SubclassInstumentedType{" +
+        return "SubclassInstrumentedType{" +
                 "classFileVersion=" + classFileVersion +
                 ", superClass=" + superClass +
                 ", interfaces=" + interfaces +

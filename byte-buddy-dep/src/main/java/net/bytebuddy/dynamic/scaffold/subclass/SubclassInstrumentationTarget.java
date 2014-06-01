@@ -51,8 +51,8 @@ public class SubclassInstrumentationTarget extends Instrumentation.Target.Abstra
     }
 
     @Override
-    public boolean equals(Object o) {
-        return this == o || !(o == null || getClass() != o.getClass()) && super.equals(o);
+    public boolean equals(Object other) {
+        return this == other || !(other == null || getClass() != other.getClass()) && super.equals(other);
     }
 
     @Override

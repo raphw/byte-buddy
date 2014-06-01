@@ -74,8 +74,8 @@ public class InstrumentationSpecialMethodInvocationSimpleTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        assertThat(specialMethodInvocation.hashCode(), is(specialMethodInvocation.hashCode()));
-        assertThat(specialMethodInvocation, is(specialMethodInvocation));
+        assertThat(specialMethodInvocation.hashCode(), is(Instrumentation.SpecialMethodInvocation.Simple.of(methodDescription, typeDescription).hashCode()));
+        assertThat(specialMethodInvocation, is(Instrumentation.SpecialMethodInvocation.Simple.of(methodDescription, typeDescription)));
         MethodDescription otherMethodDescription = mock(MethodDescription.class);
         when(otherMethodDescription.getInternalName()).thenReturn(FOO);
         when(otherMethodDescription.getParameterTypes()).thenReturn(parameterTypes);
