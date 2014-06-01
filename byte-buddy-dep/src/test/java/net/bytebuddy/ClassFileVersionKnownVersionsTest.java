@@ -32,7 +32,7 @@ public class ClassFileVersionKnownVersionsTest {
                 {5, Opcodes.V1_5},
                 {6, Opcodes.V1_6},
                 {7, Opcodes.V1_7},
-                {8, Opcodes.V1_7 + 1},
+                {8, Opcodes.V1_8},
         });
     }
 

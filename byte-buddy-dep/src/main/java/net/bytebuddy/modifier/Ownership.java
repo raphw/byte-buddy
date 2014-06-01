@@ -19,8 +19,16 @@ public enum Ownership implements ModifierContributor.ForField, ModifierContribut
      */
     STATIC(Opcodes.ACC_STATIC);
 
+    /**
+     * The mask the modifier contributor.
+     */
     private final int mask;
 
+    /**
+     * Creates a new ownership representation.
+     *
+     * @param mask The modifier mask of this instance.
+     */
     private Ownership(int mask) {
         this.mask = mask;
     }

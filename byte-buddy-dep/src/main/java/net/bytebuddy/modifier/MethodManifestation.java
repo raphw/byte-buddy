@@ -40,8 +40,16 @@ public enum MethodManifestation implements ModifierContributor.ForMethod {
      */
     public static final int ABSTRACTION_MASK = Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE;
 
+    /**
+     * The mask the modifier contributor.
+     */
     private final int mask;
 
+    /**
+     * Creates a new method manifestation.
+     *
+     * @param mask The modifier mask of this instance.
+     */
     private MethodManifestation(int mask) {
         this.mask = mask;
     }

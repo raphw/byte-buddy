@@ -29,7 +29,7 @@ public class NamingStrategyTest {
     public void testPrefixingRandomNonConflictingPackage() throws Exception {
         when(unnamedType.getSuperClass()).thenReturn(new TypeDescription.ForLoadedType(MethodVisitor.class));
         NamingStrategy namingStrategy = new NamingStrategy.SuffixingRandom(FOO);
-        assertThat(namingStrategy.getName(unnamedType), startsWith(MethodVisitor.class.getName() + "$$" + FOO + "$$"));
+        assertThat(namingStrategy.name(unnamedType), startsWith(MethodVisitor.class.getName() + "$$" + FOO + "$$"));
         verify(unnamedType, atLeast(1)).getSuperClass();
         verifyNoMoreInteractions(unnamedType);
     }
@@ -38,7 +38,7 @@ public class NamingStrategyTest {
     public void testPrefixingRandomConflictingPackage() throws Exception {
         when(unnamedType.getSuperClass()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
         NamingStrategy namingStrategy = new NamingStrategy.SuffixingRandom(FOO, BAR);
-        assertThat(namingStrategy.getName(unnamedType), startsWith(BAR + "." + Object.class.getName() + "$$" + FOO + "$$"));
+        assertThat(namingStrategy.name(unnamedType), startsWith(BAR + "." + Object.class.getName() + "$$" + FOO + "$$"));
         verify(unnamedType, atLeast(1)).getSuperClass();
         verifyNoMoreInteractions(unnamedType);
     }
@@ -54,7 +54,7 @@ public class NamingStrategyTest {
     @Test
     public void testFixed() throws Exception {
         NamingStrategy namingStrategy = new NamingStrategy.Fixed(FOO);
-        assertThat(namingStrategy.getName(unnamedType), is(FOO));
+        assertThat(namingStrategy.name(unnamedType), is(FOO));
         verifyZeroInteractions(unnamedType);
     }
 

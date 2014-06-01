@@ -28,7 +28,7 @@ public class ByteBuddyHashCodeEqualsTest {
     @Test
     public void testHashCodeEquals() throws Exception {
         assertThat(new ByteBuddy().hashCode(), is(new ByteBuddy().hashCode()));
-        assertThat(new ByteBuddy(), equalTo(new ByteBuddy()));
+        assertThat(new ByteBuddy(), is(new ByteBuddy()));
         assertThat(new ByteBuddy().withModifiers(TypeManifestation.FINAL).hashCode(), is(new ByteBuddy().withModifiers(TypeManifestation.FINAL).hashCode()));
         assertThat(new ByteBuddy().withModifiers(TypeManifestation.FINAL), equalTo(new ByteBuddy().withModifiers(TypeManifestation.FINAL)));
         assertThat(new ByteBuddy().hashCode(), not(is(new ByteBuddy().withImplementing(Serializable.class).hashCode())));

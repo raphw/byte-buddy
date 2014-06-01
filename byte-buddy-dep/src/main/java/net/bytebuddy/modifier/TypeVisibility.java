@@ -18,8 +18,16 @@ public enum TypeVisibility implements ModifierContributor.ForType {
      */
     PACKAGE_PRIVATE(EMPTY_MASK);
 
+    /**
+     * The mask the modifier contributor.
+     */
     private final int mask;
 
+    /**
+     * Creates a new type visibility representation.
+     *
+     * @param mask The modifier mask of this instance.
+     */
     private TypeVisibility(int mask) {
         this.mask = mask;
     }

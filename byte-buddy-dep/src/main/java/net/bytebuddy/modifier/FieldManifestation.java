@@ -23,8 +23,16 @@ public enum FieldManifestation implements ModifierContributor.ForField {
      */
     VOLATILE(Opcodes.ACC_VOLATILE);
 
+    /**
+     * The mask the modifier contributor.
+     */
     private final int mask;
 
+    /**
+     * Creates a new field manifestation.
+     *
+     * @param mask The modifier mask of this instance.
+     */
     private FieldManifestation(int mask) {
         this.mask = mask;
     }

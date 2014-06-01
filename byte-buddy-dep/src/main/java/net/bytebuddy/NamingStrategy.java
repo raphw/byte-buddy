@@ -1,9 +1,9 @@
 package net.bytebuddy;
 
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.modifier.MemberVisibility;
 import net.bytebuddy.modifier.SyntheticState;
 import net.bytebuddy.modifier.TypeManifestation;
+import net.bytebuddy.modifier.TypeVisibility;
 
 import java.util.Collection;
 import java.util.Random;
@@ -25,7 +25,7 @@ public interface NamingStrategy {
      * @param unnamedType An unnamed type that is to be named.
      * @return A valid identifier for a Java type.
      */
-    String getName(UnnamedType unnamedType);
+    String name(UnnamedType unnamedType);
 
     /**
      * An description of a type which is to be named.
@@ -51,7 +51,7 @@ public interface NamingStrategy {
          *
          * @return The visibility of this unnamed type.
          */
-        MemberVisibility getVisibility();
+        TypeVisibility getVisibility();
 
         /**
          * Returns the manifestation of this unnamed type.
@@ -86,11 +86,31 @@ public interface NamingStrategy {
      */
     static class SuffixingRandom implements NamingStrategy {
 
+        /**
+         * The package prefix of the {@code java.lang} package for which the definition of non-bootstrap
+         * types is illegal.
+         */
         private static final String JAVA_LANG_PACKAGE = "java.lang.";
+
+        /**
+         * The default package for defining types that are renamed to not be contained in the
+         * {@link net.bytebuddy.NamingStrategy.SuffixingRandom#JAVA_LANG_PACKAGE} package.
+         */
         private static final String BYTE_BUDDY_RENAME_PACKAGE = "net.bytebuddy.renamed";
 
+        /**
+         * The suffix to attach to a super type name.
+         */
         private final String suffix;
+
+        /**
+         * The renaming location for types of the {@link net.bytebuddy.NamingStrategy.SuffixingRandom#JAVA_LANG_PACKAGE}.
+         */
         private final String javaLangPackagePrefix;
+
+        /**
+         * An instance for creating random values.
+         */
         private final Random random;
 
         /**
@@ -118,7 +138,7 @@ public interface NamingStrategy {
         }
 
         @Override
-        public String getName(UnnamedType unnamedType) {
+        public String name(UnnamedType unnamedType) {
             String superClassName = unnamedType.getSuperClass().getName();
             if (superClassName.startsWith(JAVA_LANG_PACKAGE)) {
                 superClassName = javaLangPackagePrefix + "." + superClassName;
@@ -160,6 +180,9 @@ public interface NamingStrategy {
      */
     static class Fixed implements NamingStrategy {
 
+        /**
+         * The fixed type name.
+         */
         private final String name;
 
         /**
@@ -172,7 +195,7 @@ public interface NamingStrategy {
         }
 
         @Override
-        public String getName(UnnamedType unnamedType) {
+        public String name(UnnamedType unnamedType) {
             return name;
         }
 

@@ -28,8 +28,16 @@ public enum MemberVisibility implements ModifierContributor.ForMethod, ModifierC
      */
     PRIVATE(Opcodes.ACC_PRIVATE);
 
+    /**
+     * The mask the modifier contributor.
+     */
     private final int mask;
 
+    /**
+     * Creates a new member visibility representation.
+     *
+     * @param mask The modifier mask of this instance.
+     */
     private MemberVisibility(int mask) {
         this.mask = mask;
     }

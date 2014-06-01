@@ -39,7 +39,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     /**
      * The class file version of Java 8.
      */
-    public static final ClassFileVersion JAVA_V8 = new ClassFileVersion(Opcodes.V1_7 + 1);
+    public static final ClassFileVersion JAVA_V8 = new ClassFileVersion(Opcodes.V1_8);
 
     /**
      * The system property for this JVM's Java version.

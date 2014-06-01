@@ -18,8 +18,16 @@ public enum SyntheticState implements ModifierContributor.ForType, ModifierContr
      */
     NON_SYNTHETIC(EMPTY_MASK);
 
+    /**
+     * The mask the modifier contributor.
+     */
     private final int mask;
 
+    /**
+     * Creates a new synthetic state representation.
+     *
+     * @param mask The modifier mask of this instance.
+     */
     private SyntheticState(int mask) {
         this.mask = mask;
     }

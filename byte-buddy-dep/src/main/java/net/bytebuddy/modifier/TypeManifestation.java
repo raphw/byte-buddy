@@ -38,8 +38,16 @@ public enum TypeManifestation implements ModifierContributor.ForType {
      */
     ABSTRACT_ENUM(Opcodes.ACC_ENUM | Opcodes.ACC_ABSTRACT);
 
+    /**
+     * The mask the modifier contributor.
+     */
     private final int mask;
 
+    /**
+     * Creates a new type manifestation.
+     *
+     * @param mask The modifier mask of this instance.
+     */
     private TypeManifestation(int mask) {
         this.mask = mask;
     }

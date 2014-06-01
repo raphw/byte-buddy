@@ -22,8 +22,16 @@ public enum SuperFlag implements ModifierContributor.ForType {
      */
     UNDEFINED(EMPTY_MASK);
 
+    /**
+     * The mask the modifier contributor.
+     */
     private final int mask;
 
+    /**
+     * Creates a new super flag representation.
+     *
+     * @param mask The modifier mask of this instance.
+     */
     private SuperFlag(int mask) {
         this.mask = mask;
     }
@@ -31,5 +39,24 @@ public enum SuperFlag implements ModifierContributor.ForType {
     @Override
     public int getMask() {
         return mask;
+    }
+
+    /**
+     * Checks if the super flag is set.
+     *
+     * @return {@code true} if the state is set.
+     */
+    public boolean isSuperFlag() {
+        return this == DEFINED;
+    }
+
+    /**
+     * Creates a super flag from a boolean value indicating if a type should carry this flag.
+     *
+     * @param isSuperFlag {@code true} if the type is supposed to carry the flag.
+     * @return The corresponding super flag state.
+     */
+    public static SuperFlag is(boolean isSuperFlag) {
+        return isSuperFlag ? DEFINED : UNDEFINED;
     }
 }

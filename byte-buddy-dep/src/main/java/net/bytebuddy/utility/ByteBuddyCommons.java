@@ -51,6 +51,9 @@ public final class ByteBuddyCommons {
     public static final int METHOD_MODIFIER_MASK = MEMBER_MODIFIER_MASK | Modifier.ABSTRACT | Modifier.SYNCHRONIZED
             | Modifier.NATIVE | Modifier.STRICT | Opcodes.ACC_BRIDGE | Opcodes.ACC_VARARGS;
 
+    /**
+     * A collection of all keywords of the Java programming language.
+     */
     private static final Set<String> JAVA_KEYWORDS = Collections.unmodifiableSet(
             new HashSet<String>(Arrays.asList(
                     "abstract", "assert", "boolean", "break", "byte", "case",
@@ -64,6 +67,9 @@ public final class ByteBuddyCommons {
                     "true", "try", "void", "volatile", "while"))
     );
 
+    /**
+     * This utility class is not supposed to be instantiated.
+     */
     private ByteBuddyCommons() {
         throw new UnsupportedOperationException();
     }

@@ -8,9 +8,9 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
-import net.bytebuddy.modifier.MemberVisibility;
 import net.bytebuddy.modifier.SyntheticState;
 import net.bytebuddy.modifier.TypeManifestation;
+import net.bytebuddy.modifier.TypeVisibility;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Modifier;
@@ -69,7 +69,7 @@ public class SubclassInstrumentedType
         this.superClass = superClass;
         this.interfaces = interfaces;
         this.modifiers = modifiers;
-        this.name = isValidTypeName(namingStrategy.getName(this));
+        this.name = isValidTypeName(namingStrategy.name(this));
     }
 
     /**
@@ -200,15 +200,11 @@ public class SubclassInstrumentedType
     }
 
     @Override
-    public MemberVisibility getVisibility() {
+    public TypeVisibility getVisibility() {
         if ((modifiers & Modifier.PUBLIC) != 0) {
-            return MemberVisibility.PUBLIC;
-        } else if ((modifiers & Modifier.PROTECTED) != 0) {
-            return MemberVisibility.PROTECTED;
-        } else if ((modifiers & Modifier.PRIVATE) != 0) {
-            return MemberVisibility.PROTECTED;
+            return TypeVisibility.PUBLIC;
         } else {
-            return MemberVisibility.PACKAGE_PRIVATE;
+            return TypeVisibility.PACKAGE_PRIVATE;
         }
     }
 

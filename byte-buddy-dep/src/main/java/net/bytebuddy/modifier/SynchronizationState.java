@@ -17,8 +17,16 @@ public enum SynchronizationState implements ModifierContributor.ForMethod {
      */
     SYNCHRONIZED(Opcodes.ACC_SYNCHRONIZED);
 
+    /**
+     * The mask the modifier contributor.
+     */
     private final int mask;
 
+    /**
+     * Creates a new synchronization state representation.
+     *
+     * @param mask The modifier mask of this instance.
+     */
     private SynchronizationState(int mask) {
         this.mask = mask;
     }
