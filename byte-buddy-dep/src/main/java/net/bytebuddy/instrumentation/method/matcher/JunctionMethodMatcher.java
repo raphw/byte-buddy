@@ -48,6 +48,9 @@ public interface JunctionMethodMatcher extends MethodMatcher {
      */
     static class Conjunction extends AbstractBase {
 
+        /**
+         * The method matchers that are represented by this conjunction.
+         */
         private final MethodMatcher left, right;
 
         /**
@@ -90,6 +93,9 @@ public interface JunctionMethodMatcher extends MethodMatcher {
      */
     static class Disjunction extends AbstractBase {
 
+        /**
+         * The method matchers that are represented by this disjunction.
+         */
         private final MethodMatcher left, right;
 
         /**
@@ -117,7 +123,7 @@ public interface JunctionMethodMatcher extends MethodMatcher {
 
         @Override
         public int hashCode() {
-            return 31 * left.hashCode() + right.hashCode();
+            return 27 * left.hashCode() + right.hashCode();
         }
 
         @Override

@@ -580,6 +580,16 @@ public class MethodMatchersTest {
     }
 
     @Test
+    public void testIsDeclaredBySubTypeOf() throws Exception {
+        assertThat(MethodMatchers.isDeclaredBySubtypeOf(TestModifier.class).matches(testModifier$finalize), is(true));
+        assertThat(MethodMatchers.isDeclaredBySubtypeOf(Object.class).matches(testModifier$finalize), is(true));
+        assertThat(MethodMatchers.isDeclaredBySubtypeOf(TestModifier.class).matches(testClassExtension$fooBar), is(false));
+        assertThat(MethodMatchers.isDeclaredBySubtypeOf(Object.class).matches(testClassExtension$fooBar), is(true));
+        assertThat(MethodMatchers.isDeclaredBySubtypeOf(TestModifier.class).matches(testClassBase$foo), is(false));
+        assertThat(MethodMatchers.isDeclaredBySubtypeOf(Object.class).matches(testClassBase$foo), is(true));
+    }
+
+    @Test
     public void testDeclarationMatcherHashCodeEquals() throws Exception {
         assertThat(MethodMatchers.isDeclaredBy(Object.class).hashCode(), is(MethodMatchers.isDeclaredBy(Object.class).hashCode()));
         assertThat(MethodMatchers.isDeclaredBy(Object.class), is(MethodMatchers.isDeclaredBy(Object.class)));

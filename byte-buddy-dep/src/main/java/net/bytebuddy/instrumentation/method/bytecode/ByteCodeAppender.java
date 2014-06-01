@@ -43,7 +43,14 @@ public interface ByteCodeAppender {
      */
     static class Size {
 
+        /**
+         * The size of the operand stack.
+         */
         private final int operandStackSize;
+
+        /**
+         * The size of the local variable array.
+         */
         private final int localVariableSize;
 
         /**
@@ -106,6 +113,9 @@ public interface ByteCodeAppender {
      */
     static class Compound implements ByteCodeAppender {
 
+        /**
+         * The byte code appenders that are represented by this compound appender in their application order.
+         */
         private final ByteCodeAppender[] byteCodeAppender;
 
         /**

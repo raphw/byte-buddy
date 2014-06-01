@@ -23,6 +23,9 @@ import java.util.List;
  */
 public final class MethodMatchers {
 
+    /**
+     * Non-invokable constructor for this utility class.
+     */
     private MethodMatchers() {
         throw new UnsupportedOperationException();
     }
@@ -526,10 +529,22 @@ public final class MethodMatchers {
         return new DeclaringTypeMethodMatcher(type);
     }
 
+    /**
+     * Selects methods that are declared by any subtype of the given type.
+     *
+     * @param type The type to be matched against all declaring types of a method.
+     * @return A method matcher that is matching any methods that are declared by a super type of the given type.
+     */
     public static JunctionMethodMatcher isDeclaredBySubtypeOf(TypeDescription type) {
         return new DeclaringSubTypeMethodMatcher(type);
     }
 
+    /**
+     * Selects methods that are declared by any subtype of the given type.
+     *
+     * @param type The type to be matched against all declaring types of a method.
+     * @return A method matcher that is matching any methods that are declared by a super type of the given type.
+     */
     public static JunctionMethodMatcher isDeclaredBySubtypeOf(Class<?> type) {
         return new DeclaringSubTypeMethodMatcher(type);
     }
