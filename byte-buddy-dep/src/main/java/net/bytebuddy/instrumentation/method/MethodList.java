@@ -36,6 +36,9 @@ public interface MethodList extends List<MethodDescription> {
      */
     static class ForLoadedType extends AbstractList<MethodDescription> implements MethodList {
 
+        /**
+         * The loaded type that is represented by this method list.
+         */
         private final Class<?> type;
 
         /**
@@ -104,6 +107,9 @@ public interface MethodList extends List<MethodDescription> {
      */
     static class Explicit extends AbstractList<MethodDescription> implements MethodList {
 
+        /**
+         * The list of methods that is represented by this method list.
+         */
         private final List<? extends MethodDescription> methodDescriptions;
 
         /**

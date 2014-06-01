@@ -56,18 +56,58 @@ public interface MethodLookupEngine {
      */
     static interface Finding {
 
+        /**
+         * Returns the type description for which the finding was created.
+         *
+         * @return The type description for which the finding was created.
+         */
         TypeDescription getTypeDescription();
 
+        /**
+         * Returns a list of methods that can be invoked on the analyzed type.
+         *
+         * @return A list of methods that can be invoked on the analyzed type.
+         */
         MethodList getInvokableMethods();
 
+        /**
+         * Returns a map of interfaces that are eligible for default method invocation on the type this finding
+         * was created for.
+         *
+         * @return A map of interfaces that are eligible for default method invocation on the type this finding
+         * was created for.
+         */
         Map<TypeDescription, Set<MethodDescription>> getInvokableDefaultMethods();
 
+        /**
+         * A default implementation of a {@link net.bytebuddy.instrumentation.method.MethodLookupEngine.Finding}.
+         */
         static class Default implements Finding {
 
+            /**
+             * The type that was analyzed for creating this finding.
+             */
             private final TypeDescription lookedUpType;
+
+            /**
+             * A list of methods that are invokable on this type.
+             */
             private final MethodList invokableMethods;
+
+            /**
+             * A map of interfaces that are eligible for default method invocation on the type this finding
+             * was created for.
+             */
             private final Map<TypeDescription, Set<MethodDescription>> invokableDefaultMethods;
 
+            /**
+             * Creates a default of a {@link net.bytebuddy.instrumentation.method.MethodLookupEngine.Finding}.
+             *
+             * @param lookedUpType            The type that was analyzed for creating this finding.
+             * @param invokableMethods        A list of methods that are invokable on this type.
+             * @param invokableDefaultMethods A map of interfaces that are eligible for default method invocation on
+             *                                the type this finding was created for.
+             */
             public Default(TypeDescription lookedUpType,
                            MethodList invokableMethods,
                            Map<TypeDescription, Set<MethodDescription>> invokableDefaultMethods) {
@@ -126,8 +166,20 @@ public interface MethodLookupEngine {
      */
     static class ConflictingInterfaceMethod extends MethodDescription.AbstractMethodDescription {
 
+        /**
+         * The modifiers for a conflicting interface method.
+         */
         private static final int CONFLICTING_INTERFACE_MODIFIER = Opcodes.ACC_ABSTRACT | Opcodes.ACC_PUBLIC;
+
+        /**
+         * The virtual host of this conflicting interface method. Usually the instrumented type for which a
+         * method lookup is performed.
+         */
         private final TypeDescription virtualHost;
+
+        /**
+         * The method descriptions that are represented by this instance.
+         */
         private final List<MethodDescription> methodDescriptions;
 
         /**
@@ -275,7 +327,7 @@ public interface MethodLookupEngine {
         @Override
         public String toString() {
             return "MethodLookupEngine.ConflictingInterfaceMethod{" +
-                    "mostSpecificType=" + virtualHost +
+                    "typeOfInterest=" + virtualHost +
                     ", methodDescriptions=" + methodDescriptions +
                     '}';
         }
@@ -289,8 +341,16 @@ public interface MethodLookupEngine {
      */
     static class Default implements MethodLookupEngine {
 
+        /**
+         * Determines if default method lookup is enabled.
+         */
         private final DefaultMethodLookup defaultMethodLookup;
 
+        /**
+         * Creates a new default method lookup engine.
+         *
+         * @param defaultMethodLookup Determines if default method lookup is enabled.
+         */
         public Default(DefaultMethodLookup defaultMethodLookup) {
             this.defaultMethodLookup = defaultMethodLookup;
         }
@@ -308,7 +368,7 @@ public interface MethodLookupEngine {
                     interfaces,
                     defaultMethodRelevantInterfaces);
             methodBucket.pushInterfaces(interfaces);
-            return new Finding.Default(methodBucket.getMostSpecificType(),
+            return new Finding.Default(methodBucket.getTypeOfInterest(),
                     methodBucket.extractInvokableMethods(),
                     defaultMethods);
         }
@@ -331,7 +391,16 @@ public interface MethodLookupEngine {
                     '}';
         }
 
+        /**
+         * Determines if default methods are extracted when analyzing a given type. This might not be relevant in
+         * some contexts and is normally fully irrelevant when writing types in class file formats that do not
+         * support default methods.
+         */
         public static enum DefaultMethodLookup {
+
+            /**
+             * Enables the extraction of default methods.
+             */
             ENABLED {
                 @Override
                 public Map<TypeDescription, Set<MethodDescription>> apply(MethodBucket methodBucket,
@@ -341,6 +410,10 @@ public interface MethodLookupEngine {
                     return Collections.unmodifiableMap(methodBucket.pushInterfacesAndExtractDefaultMethods(defaultMethodRelevantInterfaces));
                 }
             },
+
+            /**
+             * Disables the extraction of default methods.
+             */
             DISABLED {
                 @Override
                 public Map<TypeDescription, Set<MethodDescription>> apply(MethodBucket methodBucket,
@@ -351,6 +424,15 @@ public interface MethodLookupEngine {
                 }
             };
 
+            /**
+             * Applies default method extraction.
+             *
+             * @param methodBucket                    The method bucket that is used for performing a method extraction.
+             * @param interfaces                      The interfaces of the instrumented type.
+             * @param defaultMethodRelevantInterfaces The interfaces of the instrumented type that are relevant for
+             *                                        default method extraction.
+             * @return A map containing all extracted default methods.
+             */
             public abstract Map<TypeDescription, Set<MethodDescription>> apply(MethodBucket methodBucket,
                                                                                Collection<TypeDescription> interfaces,
                                                                                Collection<TypeDescription> defaultMethodRelevantInterfaces);
@@ -401,29 +483,50 @@ public interface MethodLookupEngine {
              * A map of class methods by their unique signature, represented as strings.
              */
             private final Map<String, MethodDescription> classMethods;
+
             /**
              * A map of interface methods by their unique signature, represented as strings.
              */
             private final Map<String, MethodDescription> interfaceMethods;
+
             /**
              * A marker pool of types that were already pushed into this bucket.
              */
             private final Set<TypeDescription> processedTypes;
-            private final TypeDescription mostSpecificType;
+
+            /**
+             * The most specific type for which this method bucket extracts methods. This type is the only type
+             * for which all methods are extracted since any method that are declared by this type fully belong
+             * to it. Any other super type or interface type only inherit their virtual members to this type.
+             */
+            private final TypeDescription typeOfInterest;
+
+            /**
+             * A method matcher that matches any method that is inherited by the
+             * {@link net.bytebuddy.instrumentation.method.MethodLookupEngine.Default.MethodBucket#typeOfInterest}.
+             */
             private final MethodMatcher virtualMethodMatcher;
 
             /**
              * Creates a new mutable method bucket.
+             *
+             * @param typeOfInterest The type for which a type extraction is performed.
              */
-            private MethodBucket(TypeDescription mostSpecificType) {
-                this.mostSpecificType = mostSpecificType;
+            private MethodBucket(TypeDescription typeOfInterest) {
+                this.typeOfInterest = typeOfInterest;
                 classMethods = new HashMap<String, MethodDescription>();
                 interfaceMethods = new HashMap<String, MethodDescription>();
                 processedTypes = new HashSet<TypeDescription>();
-                virtualMethodMatcher = isMethod().and(not(isPrivate().or(isStatic()).or(isPackagePrivate().and(not(isVisibleTo(mostSpecificType))))));
-                pushClass(mostSpecificType, any());
+                virtualMethodMatcher = isMethod().and(not(isPrivate().or(isStatic()).or(isPackagePrivate().and(not(isVisibleTo(typeOfInterest))))));
+                pushClass(typeOfInterest, any());
             }
 
+            /**
+             * Pushes a new class into the bucket where all virtual methods relatively to the type of interest are
+             * extracted.
+             *
+             * @param typeDescription The class for which all virtual members are to be extracted.
+             */
             private void pushClass(TypeDescription typeDescription) {
                 pushClass(typeDescription, virtualMethodMatcher);
             }
@@ -457,12 +560,29 @@ public interface MethodLookupEngine {
                 pushInterfaces(typeDescriptions, DefaultMethodLookup.Disabled.INSTANCE);
             }
 
+            /**
+             * Pushes a collection of interfaces into the bucket which are additionally researched for invokable default
+             * methods.
+             *
+             * @param typeDescriptions A collection of interfaces to push into the bucket. Duplicates will be
+             *                         filtered automatically. All interfaces will additionally be analyzed for
+             *                         default methods.
+             * @return A map of all extracted default methods where each interface is mapped to its invokable default
+             * methods.
+             */
             private Map<TypeDescription, Set<MethodDescription>> pushInterfacesAndExtractDefaultMethods(Collection<? extends TypeDescription> typeDescriptions) {
                 DefaultMethodLookup.Enabled defaultMethodLookup = new DefaultMethodLookup.Enabled(typeDescriptions);
                 pushInterfaces(typeDescriptions, defaultMethodLookup);
                 return defaultMethodLookup.materialize();
             }
 
+            /**
+             * Pushes a collection of interfaces into the bucket.
+             *
+             * @param typeDescriptions    A collection of interfaces to push into the bucket. Duplicates will be
+             *                            filtered automatically.
+             * @param defaultMethodLookup An implementation for looking up default methods for these interfaces.
+             */
             private void pushInterfaces(Collection<? extends TypeDescription> typeDescriptions,
                                         DefaultMethodLookup defaultMethodLookup) {
                 Set<String> processedMethods = new HashSet<String>(classMethods.keySet());
@@ -522,7 +642,7 @@ public interface MethodLookupEngine {
                             MethodDescription conflictingMethod = interfaceMethods.get(uniqueSignature);
                             MethodDescription resolvedMethod = methodDescription;
                             if (conflictingMethod != null && !conflictingMethod.getDeclaringType().isAssignableFrom(typeDescription)) {
-                                resolvedMethod = ConflictingInterfaceMethod.of(mostSpecificType, conflictingMethod, methodDescription);
+                                resolvedMethod = ConflictingInterfaceMethod.of(typeOfInterest, conflictingMethod, methodDescription);
                             }
                             interfaceMethods.put(uniqueSignature, resolvedMethod);
                         }
@@ -535,6 +655,11 @@ public interface MethodLookupEngine {
                 }
             }
 
+            /**
+             * Extracts all currently registered invokable methods from this bucket.
+             *
+             * @return A list of all invokable methods that were pushed into this bucket.
+             */
             private MethodList extractInvokableMethods() {
                 List<MethodDescription> invokableMethods = new ArrayList<MethodDescription>(classMethods.size() + interfaceMethods.size());
                 invokableMethods.addAll(classMethods.values());
@@ -542,30 +667,79 @@ public interface MethodLookupEngine {
                 return new MethodList.Explicit(invokableMethods);
             }
 
-            private TypeDescription getMostSpecificType() {
-                return mostSpecificType;
+            /**
+             * Returns the type of interest.
+             *
+             * @return The type of interest.
+             */
+            private TypeDescription getTypeOfInterest() {
+                return typeOfInterest;
             }
 
             @Override
             public String toString() {
                 return "MethodBucket{" +
-                        ", mostSpecificType=" + mostSpecificType +
-                        "classMethods=" + classMethods +
+                        "typeOfInterest=" + typeOfInterest +
+                        ", classMethods=" + classMethods +
                         ", interfaceMethods=" + interfaceMethods +
                         ", processedTypes=" + processedTypes +
                         '}';
             }
 
+            /**
+             * A strategy for looking up default methods. Any strategy implements different callback methods while
+             * a type is queried for its methods. There are certain guarantees given to the strategy:
+             * <ol>
+             * <li>The analysis of a type is always announced by calling the
+             * {@link net.bytebuddy.instrumentation.method.MethodLookupEngine.Default.MethodBucket.DefaultMethodLookup#begin(net.bytebuddy.instrumentation.type.TypeDescription)}
+             * callback. This method is invoked before any method is registered for this type.
+             * </li>
+             * <li>
+             * Any method that is discovered for a given type is announced by the
+             * {@link net.bytebuddy.instrumentation.method.MethodLookupEngine.Default.MethodBucket.DefaultMethodLookup#register(MethodDescription)}
+             * callback.
+             * </li>
+             * <li>
+             * Once all methods are announced, the
+             * {@link net.bytebuddy.instrumentation.method.MethodLookupEngine.Default.MethodBucket.DefaultMethodLookup#complete(net.bytebuddy.instrumentation.type.TypeDescription)}
+             * is invoked. This callback is not invoked before all super interfaces of the registered interface was
+             * fully processed by all these three phases.
+             * </li>
+             * </ol>
+             */
             private static interface DefaultMethodLookup {
 
+                /**
+                 * Announces the begin of the analysis of a given type.
+                 *
+                 * @param typeDescription The type to analyze.
+                 */
                 void begin(TypeDescription typeDescription);
 
+                /**
+                 * Announces the begin of the analysis of a given type.
+                 *
+                 * @param methodDescription Announces a new method to be discovered for the last announced type.
+                 */
                 void register(MethodDescription methodDescription);
 
+                /**
+                 * Announces that a type was fully analyzed, including all of its super interfaces.
+                 *
+                 * @param typeDescription The type which was fully processed.
+                 */
                 void complete(TypeDescription typeDescription);
 
+                /**
+                 * A non-operative implementation of a
+                 * {@link net.bytebuddy.instrumentation.method.MethodLookupEngine.Default.MethodBucket.DefaultMethodLookup}
+                 * that does not extract any default interfaces.
+                 */
                 static enum Disabled implements MethodBucket.DefaultMethodLookup {
 
+                    /**
+                     * The singleton instance.
+                     */
                     INSTANCE;
 
                     @Override
@@ -584,13 +758,36 @@ public interface MethodLookupEngine {
                     }
                 }
 
+                /**
+                 * A canonical implementation of an enabled
+                 * {@link net.bytebuddy.instrumentation.method.MethodLookupEngine.Default.MethodBucket.DefaultMethodLookup}.
+                 */
                 static class Enabled implements MethodBucket.DefaultMethodLookup {
 
+                    /**
+                     * The declared interfaces of an instrumented type that are to be extracted by this default
+                     * method lookup.
+                     */
                     private final Collection<? extends TypeDescription> declaredInterfaceTypes;
+
+                    /**
+                     * A mapping of interfaces to the default method that can be invoked on the given interface.
+                     */
                     private final Map<TypeDescription, Set<MethodDescription>> defaultMethods;
+
+                    /**
+                     * A mapping of interfaces to all methods that are declared on a given interface where
+                     * the methods are not necessarily default methods.
+                     */
                     private final Map<TypeDescription, Set<String>> methodDeclarations;
 
-                    public Enabled(Collection<? extends TypeDescription> declaredInterfaceTypes) {
+                    /**
+                     * Creates a new mutable canonical implementation of a default method lookup.
+                     *
+                     * @param declaredInterfaceTypes The interfaces that were declared by a type and that
+                     *                               should finally be extracted by this default method lookup.
+                     */
+                    protected Enabled(Collection<? extends TypeDescription> declaredInterfaceTypes) {
                         this.declaredInterfaceTypes = declaredInterfaceTypes;
                         defaultMethods = new HashMap<TypeDescription, Set<MethodDescription>>();
                         methodDeclarations = new HashMap<TypeDescription, Set<String>>();
@@ -623,13 +820,15 @@ public interface MethodLookupEngine {
                         }
                     }
 
-                    public Map<TypeDescription, Set<MethodDescription>> materialize() {
-                        Iterator<TypeDescription> iterator = defaultMethods.keySet().iterator();
-                        while (iterator.hasNext()) {
-                            if (!declaredInterfaceTypes.contains(iterator.next())) {
-                                iterator.remove();
-                            }
-                        }
+                    /**
+                     * Returns a map of all default method interfaces that were extracted by this default method lookup.
+                     * Once this method is called, this instance must not longer be used.
+                     *
+                     * @return A map of all default method interfaces pointing to all default methods that are invokable
+                     * on the corresponding default method interface.
+                     */
+                    protected Map<TypeDescription, Set<MethodDescription>> materialize() {
+                        defaultMethods.keySet().retainAll(declaredInterfaceTypes);
                         return Collections.unmodifiableMap(defaultMethods);
                     }
                 }

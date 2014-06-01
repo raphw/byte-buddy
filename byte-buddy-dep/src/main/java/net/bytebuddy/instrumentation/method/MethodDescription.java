@@ -19,10 +19,13 @@ import java.util.List;
 public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, DeclaredInType, AnnotatedElement {
 
     /**
-     * The internal internalName of a Java constructor.
+     * The internal name of a Java constructor.
      */
     static final String CONSTRUCTOR_INTERNAL_NAME = "<init>";
 
+    /**
+     * The internal name of a Java static initializer.
+     */
     static final String STATIC_INITIALIZER_INTERNAL_NAME = "<clinit>";
 
     /**
@@ -202,6 +205,9 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
      */
     static class ForLoadedConstructor extends AbstractMethodDescription {
 
+        /**
+         * The loaded constructor that is represented by this instance.
+         */
         private final Constructor<?> constructor;
 
         /**
@@ -227,7 +233,6 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         public TypeList getParameterTypes() {
             return new TypeList.ForLoadedType(constructor.getParameterTypes());
         }
-
 
         @Override
         public Annotation[][] getParameterAnnotations() {
@@ -320,6 +325,9 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
      */
     static class ForLoadedMethod extends AbstractMethodDescription {
 
+        /**
+         * The loaded method that is represented by this instance.
+         */
         private final Method method;
 
         /**
@@ -438,10 +446,29 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
      */
     static class Latent extends AbstractMethodDescription {
 
+        /**
+         * the internal name of this method.
+         */
         private final String internalName;
+
+        /**
+         * The type that is declaring this method.
+         */
         private final TypeDescription declaringType;
+
+        /**
+         * The return type of this method.
+         */
         private final TypeDescription returnType;
+
+        /**
+         * The parameter types of this methods.
+         */
         private final List<TypeDescription> parameterTypes;
+
+        /**
+         * The modifiers of this method.
+         */
         private final int modifiers;
 
         /**
