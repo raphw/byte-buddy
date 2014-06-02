@@ -108,15 +108,67 @@ public enum PrimitiveWideningDelegate {
             StackManipulation.Illegal.INSTANCE,                                                     // to long
             StackManipulation.Illegal.INSTANCE,                                                     // to float
             StackManipulation.LegalTrivial.INSTANCE);                                               // to double
+
+    /**
+     * A stack manipulation that widens the type that is represented by this instance to a {@code boolean}.
+     */
     private final StackManipulation toBooleanStackManipulation;
+
+    /**
+     * A stack manipulation that widens the type that is represented by this instance to a {@code byte}.
+     */
     private final StackManipulation toByteStackManipulation;
+
+    /**
+     * A stack manipulation that widens the type that is represented by this instance to a {@code short}.
+     */
     private final StackManipulation toShortStackManipulation;
+
+    /**
+     * A stack manipulation that widens the type that is represented by this instance to a {@code char}.
+     */
     private final StackManipulation toCharacterStackManipulation;
+
+    /**
+     * A stack manipulation that widens the type that is represented by this instance to a {@code int}.
+     */
     private final StackManipulation toIntegerStackManipulation;
+
+    /**
+     * A stack manipulation that widens the type that is represented by this instance to a {@code long}.
+     */
     private final StackManipulation toLongStackManipulation;
+
+    /**
+     * A stack manipulation that widens the type that is represented by this instance to a {@code float}.
+     */
     private final StackManipulation toFloatStackManipulation;
+
+    /**
+     * A stack manipulation that widens the type that is represented by this instance to a {@code double}.
+     */
     private final StackManipulation toDoubleStackManipulation;
 
+    /**
+     * Creates a new primitive widening delegate
+     *
+     * @param toBooleanStackManipulation   A stack manipulation that widens the type that is represented by this
+     *                                     instance to a {@code boolean}.
+     * @param toByteStackManipulation      A stack manipulation that widens the type that is represented by this
+     *                                     instance to a {@code byte}.
+     * @param toShortStackManipulation     A stack manipulation that widens the type that is represented by this
+     *                                     instance to a {@code short}.
+     * @param toCharacterStackManipulation A stack manipulation that widens the type that is represented by this
+     *                                     instance to a {@code char}.
+     * @param toIntegerStackManipulation   A stack manipulation that widens the type that is represented by this
+     *                                     instance to a {@code int}.
+     * @param toLongStackManipulation      A stack manipulation that widens the type that is represented by this
+     *                                     instance to a {@code long}.
+     * @param toFloatStackManipulation     A stack manipulation that widens the type that is represented by this
+     *                                     instance to a {@code float}.
+     * @param toDoubleStackManipulation    A stack manipulation that widens the type that is represented by this
+     *                                     instance to a {@code double}.
+     */
     private PrimitiveWideningDelegate(StackManipulation toBooleanStackManipulation,
                                       StackManipulation toByteStackManipulation,
                                       StackManipulation toShortStackManipulation,
@@ -191,13 +243,29 @@ public enum PrimitiveWideningDelegate {
         }
     }
 
+    /**
+     * A stack manipulation that widens a primitive type into a more general primitive type.
+     */
     private static class WideningStackManipulation implements StackManipulation {
 
-        private final int conversionInstruction;
+        /**
+         * The opcode for executing the conversion.
+         */
+        private final int conversionOpcode;
+
+        /**
+         * The size change of applying the conversion.
+         */
         private final Size size;
 
-        public WideningStackManipulation(int conversionInstruction, Size size) {
-            this.conversionInstruction = conversionInstruction;
+        /**
+         * Creates a new widening stack manipulation.
+         *
+         * @param conversionOpcode The opcode for executing the conversion.
+         * @param size             The size change of applying the conversion.
+         */
+        public WideningStackManipulation(int conversionOpcode, Size size) {
+            this.conversionOpcode = conversionOpcode;
             this.size = size;
         }
 
@@ -208,8 +276,28 @@ public enum PrimitiveWideningDelegate {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-            methodVisitor.visitInsn(conversionInstruction);
+            methodVisitor.visitInsn(conversionOpcode);
             return size;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && conversionOpcode == ((WideningStackManipulation) other).conversionOpcode
+                    && size.equals(((WideningStackManipulation) other).size);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * conversionOpcode + size.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "PrimitiveWideningDelegate.WideningStackManipulation{" +
+                    "conversionOpcode=" + conversionOpcode +
+                    ", size=" + size +
+                    '}';
         }
     }
 }

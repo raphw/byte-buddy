@@ -21,9 +21,21 @@ public enum LongConstant implements StackManipulation {
      */
     ONE(Opcodes.LCONST_1);
 
+    /**
+     * The size impact of loading a {@code double} constant onto the operand stack.
+     */
     private static final Size SIZE = StackSize.DOUBLE.toIncreasingSize();
+
+    /**
+     * The shortcut opcode for loading a {@code long} constant.
+     */
     private final int opcode;
 
+    /**
+     * Creates a new shortcut operation for loading a common {@code long} onto the operand stack.
+     *
+     * @param opcode The shortcut opcode for loading a {@code long} constant.
+     */
     private LongConstant(int opcode) {
         this.opcode = opcode;
     }
@@ -57,10 +69,21 @@ public enum LongConstant implements StackManipulation {
         return SIZE;
     }
 
+    /**
+     * A stack manipulation for loading a {@code long} value from a class's constant pool onto the operand stack.
+     */
     private static class ConstantPool implements StackManipulation {
 
+        /**
+         * The {@code long} value to be loaded onto the operand stack.
+         */
         private final long value;
 
+        /**
+         * Creates a new constant pool load operation.
+         *
+         * @param value The {@code long} value to be loaded onto the operand stack.
+         */
         private ConstantPool(long value) {
             this.value = value;
         }

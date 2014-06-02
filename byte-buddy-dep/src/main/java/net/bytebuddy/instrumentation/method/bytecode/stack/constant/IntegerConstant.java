@@ -49,9 +49,21 @@ public enum IntegerConstant implements StackManipulation {
      */
     FIVE(Opcodes.ICONST_5);
 
+    /**
+     * The size impact of loading an {@code int} value onto the operand stack.
+     */
     private static final Size SIZE = StackSize.SINGLE.toIncreasingSize();
+
+    /**
+     * The shortcut opcode for loading a common {@code int}-compatible JVM value onto the operand stack.
+     */
     private final int opcode;
 
+    /**
+     * Creates a new JVM-integer constant loading stack manipulation for a given shortcut opcode.
+     *
+     * @param opcode The shortcut opcode for loading a common {@code int}-compatible JVM value onto the operand stack.
+     */
     private IntegerConstant(int opcode) {
         this.opcode = opcode;
     }
@@ -112,10 +124,22 @@ public enum IntegerConstant implements StackManipulation {
         return SIZE;
     }
 
+    /**
+     * A stack manipulation that loads a JVM-integer value by a {@code BIPUSH} operation which is
+     * legal for single byte integer values.
+     */
     private static class SingleBytePush implements StackManipulation {
 
+        /**
+         * The single byte value to be loaded onto the operand stack.
+         */
         private final byte value;
 
+        /**
+         * Creates a new {@code BIPUSH} stack manipulation for the given value.
+         *
+         * @param value The single byte value to be loaded onto the operand stack.
+         */
         private SingleBytePush(byte value) {
             this.value = value;
         }
@@ -148,10 +172,22 @@ public enum IntegerConstant implements StackManipulation {
         }
     }
 
+    /**
+     * A stack manipulation that loads a JVM-integer value by a {@code SIPUSH} operation which is
+     * legal for up to two byte integer values.
+     */
     private static class TwoBytePush implements StackManipulation {
 
+        /**
+         * The two byte value to be loaded onto the operand stack.
+         */
         private final short value;
 
+        /**
+         * Creates a new {@code SIPUSH} stack manipulation for the given value.
+         *
+         * @param value The two byte value to be loaded onto the operand stack.
+         */
         private TwoBytePush(short value) {
             this.value = value;
         }
@@ -184,10 +220,21 @@ public enum IntegerConstant implements StackManipulation {
         }
     }
 
+    /**
+     * A stack manipulation that loads a JVM-integer value from a constant pool value onto the operand stack.
+     */
     private static class ConstantPoolValue implements StackManipulation {
 
+        /**
+         * The JVM-integer value to load onto the operand stack.
+         */
         private final int value;
 
+        /**
+         * Creates a new constant pool loading operation for a given JVM-integer.
+         *
+         * @param value The JVM-integer value to load onto the operand stack.
+         */
         private ConstantPoolValue(int value) {
             this.value = value;
         }

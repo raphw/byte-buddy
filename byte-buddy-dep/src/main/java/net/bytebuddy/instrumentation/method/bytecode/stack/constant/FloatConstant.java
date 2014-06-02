@@ -26,9 +26,21 @@ public enum FloatConstant implements StackManipulation {
      */
     TWO(Opcodes.FCONST_2);
 
+    /**
+     * The size impact of loading a {@code float} constant onto the operand stack.
+     */
     private static final Size SIZE = StackSize.SINGLE.toIncreasingSize();
+
+    /**
+     * The shortcut opcode for loading a {@code float} constant.
+     */
     private final int opcode;
 
+    /**
+     * Creates a new shortcut operation for loading a common {@code float} onto the operand stack.
+     *
+     * @param opcode The shortcut opcode for loading a {@code float} constant.
+     */
     private FloatConstant(int opcode) {
         this.opcode = opcode;
     }
@@ -64,10 +76,21 @@ public enum FloatConstant implements StackManipulation {
         return SIZE;
     }
 
+    /**
+     * A stack manipulation for loading a {@code float} value from a class's constant pool onto the operand stack.
+     */
     private static class ConstantPool implements StackManipulation {
 
+        /**
+         * The {@code float} value to be loaded onto the operand stack.
+         */
         private final float value;
 
+        /**
+         * Creates a new constant pool load operation.
+         *
+         * @param value The {@code float} value to be loaded onto the operand stack.
+         */
         private ConstantPool(float value) {
             this.value = value;
         }

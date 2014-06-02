@@ -85,10 +85,10 @@ public class ArrayFactory implements CollectionFactory {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ArrayFactory that = (ArrayFactory) o;
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+        ArrayFactory that = (ArrayFactory) other;
         return arrayCreator.equals(that.arrayCreator)
                 && componentType.equals(that.componentType)
                 && sizeDecrease.equals(that.sizeDecrease);

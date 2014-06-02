@@ -31,8 +31,17 @@ public enum MethodInvocation {
      * A specialized virtual method invocation.
      */
     SPECIAL(Opcodes.INVOKESPECIAL);
+
+    /**
+     * The opcode for invoking a method.
+     */
     private final int invocationOpcode;
 
+    /**
+     * Creates a new type of method invocation.
+     *
+     * @param callOpcode The opcode for invoking a method.
+     */
     private MethodInvocation(int callOpcode) {
         this.invocationOpcode = callOpcode;
     }
@@ -88,16 +97,41 @@ public enum MethodInvocation {
         MethodInvocation getImplicitInvocationType();
     }
 
+    /**
+     * An implementation of a method invoking stack manipulation.
+     */
     private class Invocation implements WithImplicitInvocationTargetType {
 
+        /**
+         * The method to be invoked.
+         */
         private final TypeDescription typeDescription;
+
+        /**
+         * The type on which this method is to be invoked.
+         */
         private final MethodDescription methodDescription;
+
+        /**
+         * The operand stack size implication of applying this invocation.
+         */
         private final Size size;
 
+        /**
+         * Creates an invocation of a given method on its declaring type as an invocation target.
+         *
+         * @param methodDescription The method to be invoked.
+         */
         private Invocation(MethodDescription methodDescription) {
             this(methodDescription, methodDescription.getDeclaringType());
         }
 
+        /**
+         * Creates an invocation of a given method on a given invocation target type.
+         *
+         * @param methodDescription The method to be invoked.
+         * @param typeDescription   The type on which this method is to be invoked.
+         */
         private Invocation(MethodDescription methodDescription, TypeDescription typeDescription) {
             this.typeDescription = typeDescription;
             this.methodDescription = methodDescription;
@@ -148,15 +182,24 @@ public enum MethodInvocation {
 
         @Override
         public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && methodDescription.equals(((Invocation) other).methodDescription)
-                    && MethodInvocation.this.equals(((Invocation) other).getImplicitInvocationType())
-                    && typeDescription.equals(((Invocation) other).typeDescription);
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            Invocation that = (Invocation) other;
+            return MethodInvocation.this.equals(((Invocation) other).getImplicitInvocationType())
+                    && methodDescription.getInternalName().equals(that.methodDescription.getInternalName())
+                    && methodDescription.getReturnType().equals(((Invocation) other).methodDescription.getReturnType())
+                    && methodDescription.getParameterTypes().equals(((Invocation) other).methodDescription.getParameterTypes())
+                    && typeDescription.equals(that.typeDescription);
         }
 
         @Override
         public int hashCode() {
-            return 31 * (31 * MethodInvocation.this.hashCode() + typeDescription.hashCode()) + methodDescription.hashCode();
+            int result = typeDescription.hashCode();
+            result = 31 * result + MethodInvocation.this.hashCode();
+            result = 31 * result + methodDescription.getInternalName().hashCode();
+            result = 31 * result + methodDescription.getParameterTypes().hashCode();
+            result = 31 * result + methodDescription.getReturnType().hashCode();
+            return result;
         }
 
         @Override

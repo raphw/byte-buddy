@@ -21,10 +21,31 @@ public enum FieldAccess {
      * The representation of field access to an instance field.
      */
     INSTANCE(Opcodes.PUTFIELD, Opcodes.GETFIELD, StackSize.SINGLE);
+
+    /**
+     * The opcode for setting a field value.
+     */
     private final int putterOpcode;
+
+    /**
+     * The opcode for getting a field value.
+     */
     private final int getterOpcode;
+
+    /**
+     * The amount of operand slots this field access operation consumes when it is applied before eventually
+     * adding new values onto the operand stack.
+     */
     private final int targetSizeChange;
 
+    /**
+     * Creates a new field access.
+     *
+     * @param putterOpcode     The opcode for setting a field value.
+     * @param getterOpcode     The opcode for getting a field value.
+     * @param targetSizeChange The amount of operand slots this field access operation consumes when it is applied
+     *                         before eventually adding new values onto the operand stack.
+     */
     private FieldAccess(int putterOpcode, int getterOpcode, StackSize targetSizeChange) {
         this.putterOpcode = putterOpcode;
         this.getterOpcode = getterOpcode;
@@ -72,10 +93,21 @@ public enum FieldAccess {
         FieldDescription getDefinedField();
     }
 
+    /**
+     * A dispatcher for implementing a read or write access on a field.
+     */
     private class AccessDispatcher implements Defined {
 
+        /**
+         * A description of the accessed field.
+         */
         private final FieldDescription fieldDescription;
 
+        /**
+         * Creates a new access dispatcher.
+         *
+         * @param fieldDescription A description of the accessed field.
+         */
         private AccessDispatcher(FieldDescription fieldDescription) {
             this.fieldDescription = fieldDescription;
         }
@@ -111,6 +143,9 @@ public enum FieldAccess {
             return "FieldAccess.AccessDispatcher{fieldDescription=" + fieldDescription + '}';
         }
 
+        /**
+         * An abstract base implementation for accessing a field value.
+         */
         private abstract class AbstractFieldInstruction implements StackManipulation {
 
             @Override
@@ -127,13 +162,25 @@ public enum FieldAccess {
                 return resolveSize(fieldDescription.getFieldType().getStackSize());
             }
 
+            /**
+             * Returns the opcode for implementing the field access.
+             *
+             * @return The opcode for implementing the field access.
+             */
             protected abstract int getOpcode();
 
+            /**
+             * Resolves the actual size of this field access operation.
+             *
+             * @param fieldSize The size of the accessed field.
+             * @return The size of the field access operation based on the field's size.
+             */
             protected abstract Size resolveSize(StackSize fieldSize);
-
-
         }
 
+        /**
+         * A reading field access operation.
+         */
         private class FieldGetInstruction extends AbstractFieldInstruction {
 
             @Override
@@ -163,11 +210,19 @@ public enum FieldAccess {
                 return "FieldAccess.AccessDispatcher.FieldGetInstruction{fieldDescription=" + fieldDescription + '}';
             }
 
+            /**
+             * Returns the outer instance.
+             *
+             * @return The outer instance.
+             */
             private AccessDispatcher getAccessDispatcher() {
                 return AccessDispatcher.this;
             }
         }
 
+        /**
+         * A writing field access operation.
+         */
         private class FieldPutInstruction extends AbstractFieldInstruction {
 
             @Override
@@ -196,6 +251,11 @@ public enum FieldAccess {
                 return "FieldAccess.AccessDispatcher.FieldPutInstruction{fieldDescription=" + fieldDescription + '}';
             }
 
+            /**
+             * Returns the outer instance.
+             *
+             * @return The outer instance.
+             */
             private AccessDispatcher getAccessDispatcher() {
                 return AccessDispatcher.this;
             }

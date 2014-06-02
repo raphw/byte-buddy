@@ -24,9 +24,23 @@ public enum Duplication implements StackManipulation {
      * A duplication of a double-sized stack value.
      */
     DOUBLE(StackSize.DOUBLE, Opcodes.DUP2);
+
+    /**
+     * The size representing the impact of applying the duplication onto the operand stack.
+     */
     private final Size size;
+
+    /**
+     * The opcode that represents the manipulation.
+     */
     private final int opcode;
 
+    /**
+     * Creates a new duplication.
+     *
+     * @param stackSize The size representing the impact of applying the duplication onto the operand stack.
+     * @param opcode    The opcode that represents the manipulation.
+     */
     private Duplication(StackSize stackSize, int opcode) {
         size = stackSize.toIncreasingSize();
         this.opcode = opcode;

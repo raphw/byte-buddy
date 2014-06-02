@@ -9,16 +9,26 @@ public enum StackSize {
      * An empty stack size.
      */
     ZERO(0),
+
     /**
      * A single slot stack size.
      */
     SINGLE(1),
+
     /**
      * A double slot stack size which is required by {@code long} and {@code double} values.
      */
     DOUBLE(2);
+
+    /**
+     * The size of the stack this instance represents.
+     */
     private final int size;
 
+    /**
+     * Creates a new stack size.
+     * @param size The size of the stack this instance represents.
+     */
     private StackSize(int size) {
         this.size = size;
     }

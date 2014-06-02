@@ -779,48 +779,108 @@ public final class MethodMatchers {
         return new BooleanMethodMatcher(false);
     }
 
+    /**
+     * Each match mode represents a way of comparing two strings to another.
+     */
     private static enum MatchMode {
 
+        /**
+         * Checks if two strings equal and respects casing differences.
+         */
         EQUALS_FULLY("named"),
+
+        /**
+         * Checks if two strings equal without respecting casing differences.
+         */
         EQUALS_FULLY_IGNORE_CASE("namedIgnoreCase"),
+
+        /**
+         * Checks if a string starts with the a second string with respecting casing differences.
+         */
         STARTS_WITH("startsWith"),
+
+        /**
+         * Checks if a string starts with a second string without respecting casing differences.
+         */
         STARTS_WITH_IGNORE_CASE("startsWithIgnoreCase"),
+
+        /**
+         * Checks if a string ends with a second string with respecting casing differences.
+         */
         ENDS_WITH("endsWith"),
+
+        /**
+         * Checks if a string ends with a second string without respecting casing differences.
+         */
         ENDS_WITH_IGNORE_CASE("endsWithIgnoreCase"),
+
+        /**
+         * Checks if a string contains another string with respecting casing differences.
+         */
         CONTAINS("contains"),
+
+        /**
+         * Checks if a string contains another string without respecting casing differences.
+         */
         CONTAINS_IGNORE_CASE("containsIgnoreCase"),
+
+        /**
+         * Checks if a string can be matched by a regular expression.
+         */
         MATCHES("matches");
 
+        /**
+         * A description of the string for providing meaningful {@link Object#toString()} implementations for
+         * method matchers that rely on a match mode.
+         */
         private final String description;
 
+        /**
+         * Creates a new match mode.
+         *
+         * @param description The description of this mode for providing meaningful {@link Object#toString()}
+         *                    implementations.
+         */
         private MatchMode(String description) {
             this.description = description;
         }
 
+        /**
+         * Returns the description of this match mode.
+         *
+         * @return The description of this match mode.
+         */
         private String getDescription() {
             return description;
         }
 
-        private boolean matches(String left, String right) {
+        /**
+         * Matches a string against another string.
+         *
+         * @param comparisonTarget The target of the comparison against which the source string is compared.
+         * @param comparisonSource The source which is subject of the comparison to another string.
+         * @return {@code true} if the source matches the target.
+         */
+        private boolean matches(String comparisonTarget, String comparisonSource) {
             switch (this) {
                 case EQUALS_FULLY:
-                    return right.equals(left);
+                    return comparisonSource.equals(comparisonTarget);
                 case EQUALS_FULLY_IGNORE_CASE:
-                    return right.equalsIgnoreCase(left);
+                    return comparisonSource.equalsIgnoreCase(comparisonTarget);
                 case STARTS_WITH:
-                    return right.startsWith(left);
+                    return comparisonSource.startsWith(comparisonTarget);
                 case STARTS_WITH_IGNORE_CASE:
-                    return right.toLowerCase().startsWith(left.toLowerCase());
+                    return comparisonSource.toLowerCase().startsWith(comparisonTarget.toLowerCase());
                 case ENDS_WITH:
-                    return right.endsWith(left);
+                    return comparisonSource.endsWith(comparisonTarget);
                 case ENDS_WITH_IGNORE_CASE:
-                    return right.toLowerCase().endsWith(left.toLowerCase());
+                    return comparisonSource.toLowerCase().endsWith(comparisonTarget.toLowerCase());
                 case CONTAINS:
-                    return right.contains(left);
+                    return comparisonSource.contains(comparisonTarget);
                 case CONTAINS_IGNORE_CASE:
-                    return right.toLowerCase().contains(left.toLowerCase());
+                    return comparisonSource.toLowerCase().contains(comparisonTarget.toLowerCase());
                 case MATCHES:
-                    return right.matches(left);
+                    return comparisonSource.matches(comparisonTarget);
                 default:
                     throw new AssertionError("Unknown match mode: " + this);
             }

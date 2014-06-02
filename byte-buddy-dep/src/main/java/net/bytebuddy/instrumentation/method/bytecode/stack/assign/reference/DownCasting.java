@@ -7,11 +7,25 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+/**
+ * A stack manipulation for a type down casting. Such castings are not implicit but must be performed explicitly.
+ */
 public class DownCasting implements StackManipulation {
 
+    /**
+     * The internal name of the target type of the casting.
+     */
     private final String targetTypeInternalName;
 
+    /**
+     * Creates a new type casting.
+     *
+     * @param targetType The type to which the uppermost stack value should be casted.
+     */
     public DownCasting(TypeDescription targetType) {
+        if (targetType.isPrimitive()) {
+            throw new IllegalArgumentException("Cannot cast to primitive type " + targetType);
+        }
         this.targetTypeInternalName = targetType.getInternalName();
     }
 

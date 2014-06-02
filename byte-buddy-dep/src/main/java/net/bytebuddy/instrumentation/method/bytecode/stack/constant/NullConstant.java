@@ -16,6 +16,9 @@ public enum NullConstant implements StackManipulation {
      */
     INSTANCE;
 
+    /**
+     * The size impact of loading the {@code null} reference onto the operand stack.
+     */
     private static final Size SIZE = StackSize.SINGLE.toIncreasingSize();
 
     @Override

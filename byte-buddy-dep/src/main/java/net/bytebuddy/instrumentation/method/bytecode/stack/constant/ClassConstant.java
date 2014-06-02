@@ -12,6 +12,9 @@ import org.objectweb.asm.Type;
  */
 public class ClassConstant implements StackManipulation {
 
+    /**
+     * The type which should be loaded onto the operand stack as a class value.
+     */
     private final TypeDescription typeDescription;
 
     /**

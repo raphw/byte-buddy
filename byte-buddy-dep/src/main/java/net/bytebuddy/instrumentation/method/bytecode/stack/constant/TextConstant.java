@@ -10,8 +10,14 @@ import org.objectweb.asm.MethodVisitor;
  */
 public class TextConstant implements StackManipulation {
 
+    /**
+     * The size impact of loading a {@link String} onto the operand stack.
+     */
     private static final Size SIZE = StackSize.SINGLE.toIncreasingSize();
 
+    /**
+     * The text value to load onto the operand stack.
+     */
     private final String text;
 
     /**

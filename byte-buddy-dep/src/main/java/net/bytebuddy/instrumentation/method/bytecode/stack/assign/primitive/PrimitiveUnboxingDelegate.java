@@ -16,56 +16,95 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
     /**
      * The unboxing delegate for {@code Boolean} types.
      */
-    BOOLEAN("java/lang/Boolean", StackSize.ZERO, Boolean.class, boolean.class, "booleanValue", "()Z"),
+    BOOLEAN(Boolean.class, boolean.class, StackSize.ZERO, "booleanValue", "()Z"),
+
     /**
      * The unboxing delegate for {@code Byte} types.
      */
-    BYTE("java/lang/Byte", StackSize.ZERO, Byte.class, byte.class, "byteValue", "()B"),
+    BYTE(Byte.class, byte.class, StackSize.ZERO, "byteValue", "()B"),
+
     /**
      * The unboxing delegate for {@code Short} types.
      */
-    SHORT("java/lang/Short", StackSize.ZERO, Short.class, short.class, "shortValue", "()S"),
+    SHORT(Short.class, short.class, StackSize.ZERO, "shortValue", "()S"),
+
     /**
      * The unboxing delegate for {@code Character} types.
      */
-    CHARACTER("java/lang/Character", StackSize.ZERO, Character.class, char.class, "charValue", "()C"),
+    CHARACTER(Character.class, char.class, StackSize.ZERO, "charValue", "()C"),
+
     /**
      * The unboxing delegate for {@code Integer} types.
      */
-    INTEGER("java/lang/Integer", StackSize.ZERO, Integer.class, int.class, "intValue", "()I"),
+    INTEGER(Integer.class, int.class, StackSize.ZERO, "intValue", "()I"),
+
     /**
      * The unboxing delegate for {@code Long} types.
      */
-    LONG("java/lang/Long", StackSize.SINGLE, Long.class, long.class, "longValue", "()J"),
+    LONG(Long.class, long.class, StackSize.SINGLE, "longValue", "()J"),
+
     /**
      * The unboxing delegate for {@code Float} types.
      */
-    FLOAT("java/lang/Float", StackSize.ZERO, Float.class, float.class, "floatValue", "()F"),
+    FLOAT(Float.class, float.class, StackSize.ZERO, "floatValue", "()F"),
+
     /**
      * The unboxing delegate for {@code Double} types.
      */
-    DOUBLE("java/lang/Double", StackSize.SINGLE, Double.class, double.class, "doubleValue", "()D");
-    private final String wrapperTypeName;
-    private final Size size;
+    DOUBLE(Double.class, double.class, StackSize.SINGLE, "doubleValue", "()D");
+
+    /**
+     * The wrapper type of the represented primitive type.
+     */
     private final TypeDescription wrapperType;
+
+    /**
+     * The represented primitive type.
+     */
     private final TypeDescription primitiveType;
+
+    /**
+     * The size increase after a wrapper type was unwrapped.
+     */
+    private final Size size;
+
+    /**
+     * The name of the method for unboxing a wrapper value to its primitive value.
+     */
     private final String unboxingMethodName;
+
+    /**
+     * The descriptor of the method for unboxing a wrapper value to its primitive value.
+     */
     private final String unboxingMethodDescriptor;
 
-    private PrimitiveUnboxingDelegate(String wrapperTypeName,
-                                      StackSize sizeIncrease,
-                                      Class<?> wrapperType,
+    /**
+     * Creates a new primitive unboxing delegate.
+     *
+     * @param wrapperType              The wrapper type of the represented primitive type.
+     * @param primitiveType            The represented primitive type.
+     * @param sizeDifference           The size difference between the wrapper type and its primitive value.
+     * @param unboxingMethodName       The name of the method for unboxing a wrapper value to its primitive value.
+     * @param unboxingMethodDescriptor The descriptor of the method for unboxing a wrapper value to its primitive value.
+     */
+    private PrimitiveUnboxingDelegate(Class<?> wrapperType,
                                       Class<?> primitiveType,
+                                      StackSize sizeDifference,
                                       String unboxingMethodName,
                                       String unboxingMethodDescriptor) {
-        this.wrapperTypeName = wrapperTypeName;
-        this.size = sizeIncrease.toIncreasingSize();
+        this.size = sizeDifference.toIncreasingSize();
         this.wrapperType = new TypeDescription.ForLoadedType(wrapperType);
         this.primitiveType = new TypeDescription.ForLoadedType(primitiveType);
         this.unboxingMethodName = unboxingMethodName;
         this.unboxingMethodDescriptor = unboxingMethodDescriptor;
     }
 
+    /**
+     * Locates a primitive unboxing delegate for a given primitive type.
+     *
+     * @param typeDescription A description of the primitive type.
+     * @return A corresponding primitive unboxing delegate.
+     */
     private static PrimitiveUnboxingDelegate forPrimitive(TypeDescription typeDescription) {
         if (typeDescription.represents(boolean.class)) {
             return BOOLEAN;
@@ -134,36 +173,11 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
     @Override
     public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
         methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-                wrapperTypeName,
+                wrapperType.getInternalName(),
                 unboxingMethodName,
                 unboxingMethodDescriptor,
                 false);
         return size;
-    }
-
-    private static enum ExplicitlyTypedUnboxingResponsible implements UnboxingResponsible {
-
-        BOOLEAN(PrimitiveUnboxingDelegate.BOOLEAN),
-        BYTE(PrimitiveUnboxingDelegate.BYTE),
-        SHORT(PrimitiveUnboxingDelegate.SHORT),
-        CHARACTER(PrimitiveUnboxingDelegate.CHARACTER),
-        INTEGER(PrimitiveUnboxingDelegate.INTEGER),
-        LONG(PrimitiveUnboxingDelegate.LONG),
-        FLOAT(PrimitiveUnboxingDelegate.FLOAT),
-        DOUBLE(PrimitiveUnboxingDelegate.DOUBLE);
-
-        private final PrimitiveUnboxingDelegate primitiveUnboxingDelegate;
-
-        private ExplicitlyTypedUnboxingResponsible(PrimitiveUnboxingDelegate primitiveUnboxingDelegate) {
-            this.primitiveUnboxingDelegate = primitiveUnboxingDelegate;
-        }
-
-        @Override
-        public StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, boolean considerRuntimeType) {
-            return new Compound(
-                    primitiveUnboxingDelegate,
-                    PrimitiveWideningDelegate.forPrimitive(primitiveUnboxingDelegate.primitiveType).widenTo(targetType));
-        }
     }
 
     /**
@@ -184,10 +198,97 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
         StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, boolean considerRuntimeType);
     }
 
+    /**
+     * An explicitly types unboxing responsible is applied for directly unboxing a wrapper type.
+     */
+    private static enum ExplicitlyTypedUnboxingResponsible implements UnboxingResponsible {
+
+        /**
+         * An unboxing responsible for unboxing a {@link java.lang.Boolean} type.
+         */
+        BOOLEAN(PrimitiveUnboxingDelegate.BOOLEAN),
+
+        /**
+         * An unboxing responsible for unboxing a {@link java.lang.Byte} type.
+         */
+        BYTE(PrimitiveUnboxingDelegate.BYTE),
+
+        /**
+         * An unboxing responsible for unboxing a {@link java.lang.Short} type.
+         */
+        SHORT(PrimitiveUnboxingDelegate.SHORT),
+
+        /**
+         * An unboxing responsible for unboxing a {@link java.lang.Character} type.
+         */
+        CHARACTER(PrimitiveUnboxingDelegate.CHARACTER),
+
+        /**
+         * An unboxing responsible for unboxing a {@link java.lang.Integer} type.
+         */
+        INTEGER(PrimitiveUnboxingDelegate.INTEGER),
+
+        /**
+         * An unboxing responsible for unboxing a {@link java.lang.Long} type.
+         */
+        LONG(PrimitiveUnboxingDelegate.LONG),
+
+        /**
+         * An unboxing responsible for unboxing a {@link java.lang.Float} type.
+         */
+        FLOAT(PrimitiveUnboxingDelegate.FLOAT),
+
+        /**
+         * An unboxing responsible for unboxing a {@link java.lang.Double} type.
+         */
+        DOUBLE(PrimitiveUnboxingDelegate.DOUBLE);
+
+        /**
+         * The primitive unboxing delegate for handling the given wrapper type.
+         */
+        private final PrimitiveUnboxingDelegate primitiveUnboxingDelegate;
+
+        /**
+         * Creates a new explicitly typed unboxing responsible.
+         *
+         * @param primitiveUnboxingDelegate The primitive unboxing delegate for handling the given wrapper type.
+         */
+        private ExplicitlyTypedUnboxingResponsible(PrimitiveUnboxingDelegate primitiveUnboxingDelegate) {
+            this.primitiveUnboxingDelegate = primitiveUnboxingDelegate;
+        }
+
+        @Override
+        public StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, boolean considerRuntimeType) {
+            return new Compound(
+                    primitiveUnboxingDelegate,
+                    PrimitiveWideningDelegate.forPrimitive(primitiveUnboxingDelegate.primitiveType).widenTo(targetType));
+        }
+
+        @Override
+        public String toString() {
+            return "PrimitiveUnboxingDelegate.ExplicitlyTypedUnboxingResponsible{" +
+                    "primitiveUnboxingDelegate=" + primitiveUnboxingDelegate +
+                    '}';
+        }
+    }
+
+    /**
+     * An unboxing responsible for an implicitly typed value. This implementation is applied for source types that
+     * were not found to be of a given wrapper type. Instead, this unboxing responsible tries to assign the
+     * source type to the primitive target type's wrapper type before performing an unboxing operation.
+     */
     private static class ImplicitlyTypedUnboxingResponsible implements UnboxingResponsible {
 
+        /**
+         * The original type which should be unboxed but is not of any known wrapper type.
+         */
         private final TypeDescription originalType;
 
+        /**
+         * Creates a new implicitly typed unboxing responsible.
+         *
+         * @param originalType The original type which should be unboxed but is not of any known wrapper type.
+         */
         private ImplicitlyTypedUnboxingResponsible(TypeDescription originalType) {
             this.originalType = originalType;
         }
@@ -198,6 +299,11 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
             return new Compound(
                     assigner.assign(originalType, primitiveUnboxingDelegate.wrapperType, considerRuntimeType),
                     primitiveUnboxingDelegate);
+        }
+
+        @Override
+        public String toString() {
+            return "PrimitiveUnboxingDelegate.ImplicitlyTypedUnboxingResponsible{originalType=" + originalType + '}';
         }
     }
 }

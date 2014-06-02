@@ -10,6 +10,9 @@ import org.objectweb.asm.Opcodes;
  */
 public class TypeCreation implements StackManipulation {
 
+    /**
+     * The type that is being created.
+     */
     private final TypeDescription typeDescription;
 
     /**

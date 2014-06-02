@@ -16,56 +16,77 @@ public enum PrimitiveBoxingDelegate {
     /**
      * The boxing delegate for {@code boolean} values.
      */
-    BOOLEAN("java/lang/Boolean", StackSize.ZERO, Boolean.class, "valueOf", "(Z)Ljava/lang/Boolean;"),
+    BOOLEAN(Boolean.class, StackSize.ZERO, "valueOf", "(Z)Ljava/lang/Boolean;"),
 
     /**
      * The boxing delegate for {@code byte} values.
      */
-    BYTE("java/lang/Byte", StackSize.ZERO, Byte.class, "valueOf", "(B)Ljava/lang/Byte;"),
+    BYTE(Byte.class, StackSize.ZERO, "valueOf", "(B)Ljava/lang/Byte;"),
 
     /**
      * The boxing delegate for {@code short} values.
      */
-    SHORT("java/lang/Short", StackSize.ZERO, Short.class, "valueOf", "(S)Ljava/lang/Short;"),
+    SHORT(Short.class, StackSize.ZERO, "valueOf", "(S)Ljava/lang/Short;"),
 
     /**
      * The boxing delegate for {@code char} values.
      */
-    CHARACTER("java/lang/Character", StackSize.ZERO, Character.class, "valueOf", "(C)Ljava/lang/Character;"),
+    CHARACTER(Character.class, StackSize.ZERO, "valueOf", "(C)Ljava/lang/Character;"),
 
     /**
      * The boxing delegate for {@code int} values.
      */
-    INTEGER("java/lang/Integer", StackSize.ZERO, Integer.class, "valueOf", "(I)Ljava/lang/Integer;"),
+    INTEGER(Integer.class, StackSize.ZERO, "valueOf", "(I)Ljava/lang/Integer;"),
 
     /**
      * The boxing delegate for {@code long} values.
      */
-    LONG("java/lang/Long", StackSize.SINGLE, Long.class, "valueOf", "(J)Ljava/lang/Long;"),
+    LONG(Long.class, StackSize.SINGLE, "valueOf", "(J)Ljava/lang/Long;"),
 
     /**
      * The boxing delegate for {@code float} values.
      */
-    FLOAT("java/lang/Float", StackSize.ZERO, Float.class, "valueOf", "(F)Ljava/lang/Float;"),
+    FLOAT(Float.class, StackSize.ZERO, "valueOf", "(F)Ljava/lang/Float;"),
 
     /**
      * The boxing delegate for {@code double} values.
      */
-    DOUBLE("java/lang/Double", StackSize.SINGLE, Double.class, "valueOf", "(D)Ljava/lang/Double;");
-    private final String wrapperTypeName;
-    private final StackManipulation.Size size;
+    DOUBLE(Double.class, StackSize.SINGLE, "valueOf", "(D)Ljava/lang/Double;");
+
+    /**
+     * A description of a wrapper type.
+     */
     private final TypeDescription wrapperType;
+
+    /**
+     * The size decrease after a primitive type was wrapped.
+     */
+    private final StackManipulation.Size size;
+
+    /**
+     * The name of the method for boxing a primitive value as its wrapper type.
+     */
     private final String boxingMethodName;
+
+    /**
+     * The descriptor of the method for boxing a primitive value as its wrapper type.
+     */
     private final String boxingMethodDescriptor;
 
-    private PrimitiveBoxingDelegate(String wrapperTypeName,
-                                    StackSize sizeDecrease,
-                                    Class<?> wrapperType,
+    /**
+     * Creates a new primitive boxing delegate.
+     *
+     * @param wrapperType            A description of a wrapper type.
+     * @param sizeDifference         The size difference between a primitive type and its wrapper type.
+     * @param boxingMethodName       The name of the method for boxing a primitive value as its wrapper type.
+     * @param boxingMethodDescriptor The descriptor of the method for boxing a primitive value as its wrapper type.
+     */
+    private PrimitiveBoxingDelegate(Class<?> wrapperType,
+                                    StackSize sizeDifference,
                                     String boxingMethodName,
                                     String boxingMethodDescriptor) {
-        this.wrapperTypeName = wrapperTypeName;
-        this.size = sizeDecrease.toDecreasingSize();
         this.wrapperType = new TypeDescription.ForLoadedType(wrapperType);
+        this.size = sizeDifference.toDecreasingSize();
         this.boxingMethodName = boxingMethodName;
         this.boxingMethodDescriptor = boxingMethodDescriptor;
     }
@@ -111,10 +132,22 @@ public enum PrimitiveBoxingDelegate {
         return new BoxingStackManipulation(chainedAssigner.assign(wrapperType, targetType, considerRuntimeType));
     }
 
+    /**
+     * A stack manipulation for boxing a primitive type into its wrapper type.
+     */
     private class BoxingStackManipulation implements StackManipulation {
 
+        /**
+         * A stack manipulation that is applied after the boxing of the top-most value on the operand stack.
+         */
         private final StackManipulation stackManipulation;
 
+        /**
+         * Creates a new boxing stack manipulation.
+         *
+         * @param stackManipulation A stack manipulation that is applied after the boxing of the top-most value on
+         *                          the operand stack.
+         */
         public BoxingStackManipulation(StackManipulation stackManipulation) {
             this.stackManipulation = stackManipulation;
         }
@@ -127,7 +160,7 @@ public enum PrimitiveBoxingDelegate {
         @Override
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
             methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
-                    wrapperTypeName,
+                    wrapperType.getInternalName(),
                     boxingMethodName,
                     boxingMethodDescriptor,
                     false);

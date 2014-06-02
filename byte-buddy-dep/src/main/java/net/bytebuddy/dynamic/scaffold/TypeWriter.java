@@ -261,7 +261,7 @@ public interface TypeWriter<T> {
 
                 @Override
                 public String toString() {
-                    return "Default{" +
+                    return "TypeWriter.MethodPool.Entry.Simple{" +
                             "byteCodeAppender=" + byteCodeAppender +
                             ", methodAttributeAppender=" + methodAttributeAppender +
                             '}';

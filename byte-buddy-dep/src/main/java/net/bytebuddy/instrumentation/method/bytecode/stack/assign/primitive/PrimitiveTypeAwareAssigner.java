@@ -21,6 +21,10 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
  */
 public class PrimitiveTypeAwareAssigner implements Assigner {
 
+    /**
+     * Another assigner that is aware of assigning reference types. This assigner is queried for assigning
+     * non-primitive types or for assigning a boxed type to another non-primitive type.
+     */
     private final Assigner referenceTypeAwareAssigner;
 
     /**

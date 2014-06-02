@@ -5,7 +5,6 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.collection.ArrayFactory;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.instrumentation.type.TypeList;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -19,7 +18,11 @@ import java.util.List;
  */
 public abstract class MethodConstant implements StackManipulation {
 
+    /**
+     * The internal name of the {@link Class} type.
+     */
     private static final String CLASS_TYPE_INTERNAL_NAME = "java/lang/Class";
+
     /**
      * A description of the method to be loaded onto the stack.
      */
@@ -49,7 +52,14 @@ public abstract class MethodConstant implements StackManipulation {
         }
     }
 
-    private static List<StackManipulation> typeConstantsFor(TypeList parameterTypes) {
+    /**
+     * Returns a list of type constant load operations for the given list of parameters.
+     *
+     * @param parameterTypes A list of all type descriptions that should be represented as type constant
+     *                       load operations.
+     * @return A corresponding list of type constant load operations.
+     */
+    private static List<StackManipulation> typeConstantsFor(List<TypeDescription> parameterTypes) {
         List<StackManipulation> typeConstants = new ArrayList<StackManipulation>(parameterTypes.size());
         for (TypeDescription parameterType : parameterTypes) {
             typeConstants.add(new ClassConstant(parameterType));
@@ -114,12 +124,29 @@ public abstract class MethodConstant implements StackManipulation {
         return "MethodConstant{methodDescription=" + methodDescription + '}';
     }
 
+    /**
+     * Creates a {@link net.bytebuddy.instrumentation.method.bytecode.stack.constant.MethodConstant} for loading
+     * a {@link java.lang.reflect.Method} instance onto the operand stack.
+     */
     private static class ForMethod extends MethodConstant {
 
+        /**
+         * The name of the {@link java.lang.Class#getDeclaredMethod(String, Class[])} method.
+         */
         private static final String GET_DECLARED_METHOD_NAME = "getDeclaredMethod";
+
+        /**
+         * The descriptor of the {@link java.lang.Class#getDeclaredMethod(String, Class[])} method.
+         */
         private static final String GET_DECLARED_METHOD_DESCRIPTOR =
                 "(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;";
 
+        /**
+         * Creates a new {@link net.bytebuddy.instrumentation.method.bytecode.stack.constant.MethodConstant} for
+         * creating a {@link java.lang.reflect.Method} instance.
+         *
+         * @param methodDescription The method to be loaded onto the stack.
+         */
         private ForMethod(MethodDescription methodDescription) {
             super(methodDescription);
         }
@@ -142,12 +169,29 @@ public abstract class MethodConstant implements StackManipulation {
         }
     }
 
+    /**
+     * Creates a {@link net.bytebuddy.instrumentation.method.bytecode.stack.constant.MethodConstant} for loading
+     * a {@link java.lang.reflect.Constructor} instance onto the operand stack.
+     */
     private static class ForConstructor extends MethodConstant {
 
+        /**
+         * The name of the {@link java.lang.Class#getDeclaredMethod(String, Class[])} method.
+         */
         private static final String GET_DECLARED_CONSTRUCTOR_NAME = "getDeclaredConstructor";
+
+        /**
+         * The descriptor of the {@link java.lang.Class#getDeclaredMethod(String, Class[])} method.
+         */
         private static final String GET_DECLARED_CONSTRUCTOR_DESCRIPTOR =
                 "([Ljava/lang/Class;)Ljava/lang/reflect/Constructor;";
 
+        /**
+         * Creates a new {@link net.bytebuddy.instrumentation.method.bytecode.stack.constant.MethodConstant} for
+         * creating a {@link java.lang.reflect.Constructor} instance.
+         *
+         * @param methodDescription The constructor to be loaded onto the stack.
+         */
         private ForConstructor(MethodDescription methodDescription) {
             super(methodDescription);
         }

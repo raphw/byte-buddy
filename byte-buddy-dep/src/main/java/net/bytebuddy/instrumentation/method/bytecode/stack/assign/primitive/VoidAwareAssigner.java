@@ -22,7 +22,15 @@ import org.objectweb.asm.Opcodes;
  */
 public class VoidAwareAssigner implements Assigner {
 
+    /**
+     * An assigner that is capable of handling assignments that do not involve {@code void} types.
+     */
     private final Assigner nonVoidAwareAssigner;
+
+    /**
+     * If {@code true}, this assigner handles an assignment of a {@code void} type to a non-{@code void} type
+     * as the creation of a default value. Note that this does not reassemble the behavior of the Java compiler.
+     */
     private final boolean returnDefaultValue;
 
     /**
@@ -68,19 +76,49 @@ public class VoidAwareAssigner implements Assigner {
         return "VoidAwareAssigner{chained=" + nonVoidAwareAssigner + ", returnDefaultValue=" + returnDefaultValue + '}';
     }
 
+    /**
+     * A stack manipulation that removes a value from the operand stack.
+     */
     private static enum ValueRemovingStackManipulation implements StackManipulation {
 
-        POP_ONE_FRAME(Opcodes.POP, StackSize.SINGLE.toDecreasingSize()),
-        POP_TWO_FRAMES(Opcodes.POP2, StackSize.DOUBLE.toDecreasingSize());
-        private final int removalOpCode;
+        /**
+         * Removes the top-most value from the operand stack.
+         */
+        POP_ONE_FRAME(Opcodes.POP, StackSize.SINGLE),
+
+        /**
+         * Removes the two top-most values from the operand stack.
+         */
+        POP_TWO_FRAMES(Opcodes.POP2, StackSize.DOUBLE);
+
+        /**
+         * The opcode for instructing the removal.
+         */
+        private final int removalOpcode;
+
+        /**
+         * The size reduction of the operand stack that is implied by this operation.
+         */
         private final Size sizeChange;
 
-        private ValueRemovingStackManipulation(int removalOpCode, Size sizeChange) {
-            this.removalOpCode = removalOpCode;
-            this.sizeChange = sizeChange;
+        /**
+         * Creates a new value removing stack manipulation.
+         *
+         * @param removalOpcode The opcode for instructing the removal.
+         * @param sizeChange    The size reduction of the operand stack that is implied by this operation.
+         */
+        private ValueRemovingStackManipulation(int removalOpcode, StackSize sizeChange) {
+            this.removalOpcode = removalOpcode;
+            this.sizeChange = sizeChange.toDecreasingSize();
         }
 
-        public static ValueRemovingStackManipulation of(TypeDescription typeDescription) {
+        /**
+         * Identifies a suitable stack manipulation for removing a given type from the operand stack.
+         *
+         * @param typeDescription The type to remove from the stack.
+         * @return A stack manipulation to remove from the stack.
+         */
+        public static StackManipulation of(TypeDescription typeDescription) {
             if (typeDescription.represents(long.class) || typeDescription.represents(double.class)) {
                 return POP_TWO_FRAMES;
             } else if (typeDescription.represents(void.class)) {
@@ -97,7 +135,7 @@ public class VoidAwareAssigner implements Assigner {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-            methodVisitor.visitInsn(removalOpCode);
+            methodVisitor.visitInsn(removalOpcode);
             return sizeChange;
         }
     }

@@ -40,13 +40,26 @@ public enum MethodVariableAccess {
      * The accessor handler for a reference type.
      */
     REFERENCE(Opcodes.ALOAD, 17, StackSize.SINGLE);
+
+    /**
+     * The opcode for loading this variable.
+     */
     private final int loadOpcode;
-    private final int loadOpcodeShortcutIndex;
+
+    /**
+     * The offset for any shortcut opcode that allows to load a variable from a low range index, such as
+     * {@code ALOAD_0}, {@code ILOAD_0} etc.
+     */
+    private final int loadOpcodeShortcutOffset;
+
+    /**
+     * The size impact of this stack manipulation.
+     */
     private final StackManipulation.Size size;
 
-    private MethodVariableAccess(int loadOpcode, int loadOpcodeShortcutIndex, StackSize stackSize) {
+    private MethodVariableAccess(int loadOpcode, int loadOpcodeShortcutOffset, StackSize stackSize) {
         this.loadOpcode = loadOpcode;
-        this.loadOpcodeShortcutIndex = loadOpcodeShortcutIndex;
+        this.loadOpcodeShortcutOffset = loadOpcodeShortcutOffset;
         this.size = stackSize.toIncreasingSize();
     }
 
@@ -97,11 +110,30 @@ public enum MethodVariableAccess {
         return loadArguments(methodDescription, TypeCastingHandler.NoOp.INSTANCE, false);
     }
 
+    /**
+     * Creates a stack manipulation for loading all parameters of a Java bridge method onto the operand stack where
+     * all variables of the bridge method are casted to the parameter types of the target method. For legally
+     * applying this manipulation, the bridge method's parameters must all be super types of the target method.
+     * The resulting stack manipulation does not load the {@code this} reference onto the operand stack.
+     *
+     * @param bridgeMethod The bridge method that is invoking its target method.
+     * @param targetMethod The target of the bridge method.
+     * @return A stack manipulation that loads all parameters of the bridge method onto the stack while type casting
+     * the parameters to the value of its target method.
+     */
     public static StackManipulation forBridgeMethodInvocation(MethodDescription bridgeMethod,
                                                               MethodDescription targetMethod) {
         return loadArguments(bridgeMethod, new TypeCastingHandler.ForBridgeTarget(targetMethod), false);
     }
 
+    /**
+     * Loads all arguments of a given method onto the stack.
+     *
+     * @param methodDescription    The method for which all method arguments should be loaded onto the stack.
+     * @param typeCastingHandler   A handler for applying type castings, if required.
+     * @param includeThisReference {@code true} if the {@code this} references should also be loaded onto the stack.
+     * @return A stack manipulation representing the specified variable loading.
+     */
     private static StackManipulation loadArguments(MethodDescription methodDescription,
                                                    TypeCastingHandler typeCastingHandler,
                                                    boolean includeThisReference) {
@@ -137,12 +169,33 @@ public enum MethodVariableAccess {
         return new ArgumentLoadingStackManipulation(variableOffset);
     }
 
+    /**
+     * A handler for optionally applying a type casting for each method parameter that is loaded onto the operand
+     * stack.
+     */
     private static interface TypeCastingHandler {
 
+        /**
+         * Returns the given stack manipulation while possibly wrapping the operation by a type casting
+         * if this is required.
+         *
+         * @param variableAccess The stack manipulation that represents the variable access.
+         * @param parameterType  The type of the loaded variable that is represented by the stack manipulation.
+         * @return A stack manipulation that represents the given variable access and potentially an additional
+         * type casting.
+         */
         StackManipulation wrapNext(StackManipulation variableAccess, TypeDescription parameterType);
 
+        /**
+         * A non-operative implementation of a
+         * {@link net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess.TypeCastingHandler}
+         * that merely returns the given stack manipulation.
+         */
         static enum NoOp implements TypeCastingHandler {
 
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
             @Override
@@ -151,10 +204,22 @@ public enum MethodVariableAccess {
             }
         }
 
+        /**
+         * A {@link net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess.TypeCastingHandler}
+         * that casts all parameters that are loaded for a method to their target method's type.
+         */
         static class ForBridgeTarget implements TypeCastingHandler {
 
+            /**
+             * An iterator over all parameter types of the target method.
+             */
             private final Iterator<TypeDescription> typeIterator;
 
+            /**
+             * Creates a new type casting handler for a bridge method.
+             *
+             * @param targetMethod The target of the bridge method.
+             */
             public ForBridgeTarget(MethodDescription targetMethod) {
                 typeIterator = targetMethod.getParameterTypes().iterator();
             }
@@ -166,14 +231,30 @@ public enum MethodVariableAccess {
                         ? variableAccess
                         : new StackManipulation.Compound(variableAccess, new DownCasting(targetParameterType));
             }
+
+            @Override
+            public String toString() {
+                return "MethodVariableAccess.TypeCastingHandler.ForBridgeTarget{typeIterator=" + typeIterator + '}';
+            }
         }
 
     }
 
+    /**
+     * A stack manipulation for loading a variable of a method's local variable array onto the operand stack.
+     */
     private class ArgumentLoadingStackManipulation implements StackManipulation {
 
+        /**
+         * The index of the local variable array from which the variable should be loaded.
+         */
         private final int variableIndex;
 
+        /**
+         * Creates a new argument loading stack manipulation.
+         *
+         * @param variableIndex The index of the local variable array from which the variable should be loaded.
+         */
         private ArgumentLoadingStackManipulation(int variableIndex) {
             this.variableIndex = variableIndex;
         }
@@ -187,16 +268,16 @@ public enum MethodVariableAccess {
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
             switch (variableIndex) {
                 case 0:
-                    methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutIndex);
+                    methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutOffset);
                     break;
                 case 1:
-                    methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutIndex + 1);
+                    methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutOffset + 1);
                     break;
                 case 2:
-                    methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutIndex + 2);
+                    methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutOffset + 2);
                     break;
                 case 3:
-                    methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutIndex + 3);
+                    methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutOffset + 3);
                     break;
                 default:
                     methodVisitor.visitVarInsn(loadOpcode, variableIndex);
@@ -205,15 +286,25 @@ public enum MethodVariableAccess {
             return size;
         }
 
+        /**
+         * Returns the outer instance.
+         *
+         * @return The outer instance.
+         */
+        private MethodVariableAccess getMethodVariableAccess() {
+            return MethodVariableAccess.this;
+        }
+
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
+                    && MethodVariableAccess.this == ((ArgumentLoadingStackManipulation) other).getMethodVariableAccess()
                     && variableIndex == ((ArgumentLoadingStackManipulation) other).variableIndex;
         }
 
         @Override
         public int hashCode() {
-            return variableIndex;
+            return MethodVariableAccess.this.hashCode() + 31 * variableIndex;
         }
 
         @Override

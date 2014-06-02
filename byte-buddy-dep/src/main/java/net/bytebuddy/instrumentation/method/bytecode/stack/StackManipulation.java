@@ -74,7 +74,17 @@ public interface StackManipulation {
      */
     static class Size {
 
+        /**
+         * The impact of any size operation onto the operand stack. This value can be negative if more values
+         * were consumed from the stack than added to it.
+         */
         private final int sizeImpact;
+
+        /**
+         * The maximal size of stack slots this stack manipulation ever requires. If an operation for example pushes
+         * five values onto the stack and subsequently consumes three operations, this value should still be five
+         * to express that a stack operation requires at least five slots in order to be applicable.
+         */
         private final int maximalSize;
 
         /**
@@ -118,6 +128,14 @@ public interface StackManipulation {
             return aggregate(other.sizeImpact, other.maximalSize);
         }
 
+        /**
+         * Aggregates a size change with this stack manipulation size.
+         *
+         * @param sizeChange         The change in size the other operation implies.
+         * @param interimMaximalSize The interim maximal size of the operand stack that the other operation requires
+         *                           at least to function.
+         * @return The aggregated size.
+         */
         private Size aggregate(int sizeChange, int interimMaximalSize) {
             return new Size(sizeImpact + sizeChange, Math.max(maximalSize, sizeImpact + interimMaximalSize));
         }
@@ -145,6 +163,9 @@ public interface StackManipulation {
      */
     static class Compound implements StackManipulation {
 
+        /**
+         * The stack manipulations this compound operation represents in their application order.
+         */
         private final StackManipulation[] stackManipulation;
 
         /**

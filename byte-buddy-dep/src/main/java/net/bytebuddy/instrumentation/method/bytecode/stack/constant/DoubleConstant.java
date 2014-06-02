@@ -21,9 +21,21 @@ public enum DoubleConstant implements StackManipulation {
      */
     ONE(Opcodes.DCONST_1);
 
+    /**
+     * The size impact of loading a {@code double} constant onto the operand stack.
+     */
     private static final StackManipulation.Size SIZE = StackSize.DOUBLE.toIncreasingSize();
+
+    /**
+     * The shortcut opcode for loading a {@code double} constant.
+     */
     private final int opcode;
 
+    /**
+     * Creates a new shortcut operation for loading a common {@code double} onto the operand stack.
+     *
+     * @param opcode The shortcut opcode for loading a {@code double} constant.
+     */
     private DoubleConstant(int opcode) {
         this.opcode = opcode;
     }
@@ -57,10 +69,21 @@ public enum DoubleConstant implements StackManipulation {
         return SIZE;
     }
 
+    /**
+     * A stack manipulation for loading a {@code double} value from a class's constant pool onto the operand stack.
+     */
     private static class ConstantPool implements StackManipulation {
 
+        /**
+         * The {@code double} value to be loaded onto the operand stack.
+         */
         private final double value;
 
+        /**
+         * Creates a new constant pool load operation.
+         *
+         * @param value The {@code double} value to be loaded onto the operand stack.
+         */
         private ConstantPool(double value) {
             this.value = value;
         }

@@ -41,9 +41,23 @@ public enum MethodReturn implements StackManipulation {
      * The method return handler for returning a reference type.
      */
     ANY_REFERENCE(Opcodes.ARETURN, StackSize.SINGLE);
+
+    /**
+     * The opcode of this operation.
+     */
     private final int returnOpcode;
+
+    /**
+     * The operand stack size change that is implied by this operation.
+     */
     private final Size size;
 
+    /**
+     * Creates a new method return manipulation.
+     *
+     * @param returnOpcode The opcode of this operation.
+     * @param stackSize    The operand stack size change that is implied by this operation.
+     */
     private MethodReturn(int returnOpcode, StackSize stackSize) {
         this.returnOpcode = returnOpcode;
         size = stackSize.toDecreasingSize();

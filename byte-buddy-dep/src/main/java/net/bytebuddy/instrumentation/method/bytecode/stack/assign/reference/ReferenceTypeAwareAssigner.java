@@ -16,7 +16,9 @@ public enum ReferenceTypeAwareAssigner implements Assigner {
     INSTANCE;
 
     @Override
-    public StackManipulation assign(TypeDescription sourceType, TypeDescription targetType, boolean considerRuntimeType) {
+    public StackManipulation assign(TypeDescription sourceType,
+                                    TypeDescription targetType,
+                                    boolean considerRuntimeType) {
         if (sourceType.isPrimitive() || targetType.isPrimitive()) {
             if (sourceType.equals(targetType)) {
                 return StackManipulation.LegalTrivial.INSTANCE;
