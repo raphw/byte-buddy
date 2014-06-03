@@ -461,7 +461,7 @@ public interface TypeWriter<T> {
             protected final ClassWriter classWriter;
 
             /**
-             * The top most class visitor any
+             * The top most class visitor that is presented to any entity that is writing the instrumented type.
              */
             protected final ClassVisitor classVisitor;
 

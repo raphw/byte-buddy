@@ -34,20 +34,81 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
  */
 public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<T> {
 
+    /**
+     * The class file version specified for this builder.
+     */
     private final ClassFileVersion classFileVersion;
+
+    /**
+     * The naming strategy specified for this builder.
+     */
     private final NamingStrategy namingStrategy;
+
+    /**
+     * The type description specified for this builder.
+     */
     private final TypeDescription superType;
+
+    /**
+     * The interface types to implement as specified for this builder.
+     */
     private final List<TypeDescription> interfaceTypes;
+
+    /**
+     * The modifiers specified for this builder.
+     */
     private final int modifiers;
+
+    /**
+     * The type attribute appender specified for this builder.
+     */
     private final TypeAttributeAppender attributeAppender;
+
+    /**
+     * The method matcher for ignored method specified for this builder.
+     */
     private final MethodMatcher ignoredMethods;
+
+    /**
+     * The bridge method resolver factory specified for this builder.
+     */
     private final BridgeMethodResolver.Factory bridgeMethodResolverFactory;
+
+    /**
+     * The class visitor wrapper chain that is applied on created types by this builder.
+     */
     private final ClassVisitorWrapper.Chain classVisitorWrapperChain;
+
+    /**
+     * The field registry of this builder.
+     */
     private final FieldRegistry fieldRegistry;
+
+    /**
+     * The method registry of this builder.
+     */
     private final MethodRegistry methodRegistry;
+
+    /**
+     * The method lookup engine factory to be used by this builder.
+     */
     private final MethodLookupEngine.Factory methodLookupEngineFactory;
+
+    /**
+     * The default field attribute appender factory that is automatically added to any field that is
+     * registered on this builder.
+     */
     private final FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory;
+
+    /**
+     * The default method attribute appender factory that is automatically added to any field method is
+     * registered on this builder.
+     */
     private final MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory;
+
+    /**
+     * The constructor strategy that is applied by this builder.
+     */
     private final ConstructorStrategy constructorStrategy;
 
     /**
@@ -127,6 +188,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      *                                              dynamic type.
      * @param methodTokens                          A list of method representations that were added explicitly to this
      *                                              dynamic type.
+     * @param constructorStrategy                   The strategy for creating constructors during the final definition
+     *                                              phase of this dynamic type.
      */
     protected SubclassDynamicTypeBuilder(ClassFileVersion classFileVersion,
                                          NamingStrategy namingStrategy,
@@ -321,6 +384,27 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     }
 
     @Override
+    public DynamicType.Builder<T> bridgeMethodResolverFactory(BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
+        return new SubclassDynamicTypeBuilder<T>(classFileVersion,
+                namingStrategy,
+                superType,
+                interfaceTypes,
+                modifiers,
+                attributeAppender,
+                ignoredMethods,
+                nonNull(bridgeMethodResolverFactory),
+                classVisitorWrapperChain,
+                fieldRegistry,
+                methodRegistry,
+                methodLookupEngineFactory,
+                defaultFieldAttributeAppenderFactory,
+                defaultMethodAttributeAppenderFactory,
+                fieldTokens,
+                methodTokens,
+                constructorStrategy);
+    }
+
+    @Override
     public FieldAnnotationTarget<T> defineField(String name,
                                                 TypeDescription fieldType,
                                                 ModifierContributor.ForField... modifier) {
@@ -375,7 +459,6 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 .inject(methodRegistry, defaultMethodAttributeAppenderFactory)
                 .compile(
                         applyConstructorStrategy(
-                                constructorStrategy,
                                 applyRecordedMembersTo(new SubclassInstrumentedType(classFileVersion,
                                         superType,
                                         interfaceTypes,
@@ -400,7 +483,13 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 .make();
     }
 
-    private InstrumentedType applyConstructorStrategy(ConstructorStrategy constructorStrategy, InstrumentedType instrumentedType) {
+    /**
+     * Applies this builder's constructor strategy to the given instrumented type.
+     *
+     * @param instrumentedType The instrumented type to apply the constructor onto.
+     * @return The instrumented type with the constructor strategy applied onto.
+     */
+    private InstrumentedType applyConstructorStrategy(InstrumentedType instrumentedType) {
         for (MethodDescription methodDescription : constructorStrategy.extractConstructors(instrumentedType)) {
             instrumentedType = instrumentedType.withMethod(methodDescription.getInternalName(),
                     methodDescription.getReturnType(),
@@ -474,11 +563,30 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 '}';
     }
 
+    /**
+     * A {@link net.bytebuddy.dynamic.DynamicType.Builder} for which a field was recently defined such that attributes
+     * can be added to this recently defined field.
+     *
+     * @param <S> The best known loaded type representing the built dynamic type.
+     */
     private class SubclassFieldAnnotationTarget<S> extends AbstractDelegatingBuilder<S> implements FieldAnnotationTarget<S> {
 
+        /**
+         * A token representing the field that was recently defined.
+         */
         private final FieldToken fieldToken;
+
+        /**
+         * The attribute appender factory that was defined for this field token.
+         */
         private final FieldAttributeAppender.Factory attributeAppenderFactory;
 
+        /**
+         * Creates a new subclass field annotation target.
+         *
+         * @param fieldToken               A token representing the field that was recently defined.
+         * @param attributeAppenderFactory The attribute appender factory that was defined for this field token.
+         */
         private SubclassFieldAnnotationTarget(FieldToken fieldToken, FieldAttributeAppender.Factory attributeAppenderFactory) {
             this.fieldToken = fieldToken;
             this.attributeAppenderFactory = attributeAppenderFactory;
@@ -544,16 +652,43 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                     '}';
         }
 
+        /**
+         * Returns the outer instance.
+         *
+         * @return The outer instance.
+         */
         private SubclassDynamicTypeBuilder<?> getSubclassDynamicTypeBuilder() {
             return SubclassDynamicTypeBuilder.this;
         }
     }
 
+    /**
+     * A {@link net.bytebuddy.dynamic.DynamicType.Builder.MatchedMethodInterception} for which a method was recently
+     * identified or defined such that an {@link net.bytebuddy.instrumentation.Instrumentation} for these methods can
+     * now be defined.
+     *
+     * @param <S> The best known loaded type representing the built dynamic type.
+     */
     private class SubclassMatchedMethodInterception<S> implements MatchedMethodInterception<S> {
 
+        /**
+         * A latent method matcher that identifies the methods that are supposed to be intercepted by the later
+         * defined instrumentation.
+         */
         private final MethodRegistry.LatentMethodMatcher latentMethodMatcher;
+
+        /**
+         * A list of all method tokens that were previously defined.
+         */
         private final List<MethodToken> methodTokens;
 
+        /**
+         * Creates a new subclass matched method interception.
+         *
+         * @param latentMethodMatcher A latent method matcher that identifies the methods that are supposed to be
+         *                            intercepted by the later defined instrumentation.
+         * @param methodTokens        A list of all method tokens that were previously defined.
+         */
         private SubclassMatchedMethodInterception(MethodRegistry.LatentMethodMatcher latentMethodMatcher,
                                                   List<MethodToken> methodTokens) {
             this.latentMethodMatcher = latentMethodMatcher;
@@ -601,15 +736,34 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                     '}';
         }
 
+        /**
+         * Returns the outer instance.
+         *
+         * @return The outer instance.
+         */
         private SubclassDynamicTypeBuilder<?> getSubclassDynamicTypeBuilder() {
             return SubclassDynamicTypeBuilder.this;
         }
     }
 
+    /**
+     * A {@link net.bytebuddy.dynamic.DynamicType.Builder.ExceptionDeclarableMethodInterception} which allows the
+     * definition of exceptions for a recently defined method.
+     *
+     * @param <S> The best known loaded type representing the built dynamic type.
+     */
     private class SubclassExceptionDeclarableMethodInterception<S> implements ExceptionDeclarableMethodInterception<S> {
 
+        /**
+         * The method token for which exceptions can be defined additionally.
+         */
         private final MethodToken methodToken;
 
+        /**
+         * Creates a new subclass exception declarable method interception.
+         *
+         * @param methodToken The method token to define on the currently constructed method.
+         */
         private SubclassExceptionDeclarableMethodInterception(MethodToken methodToken) {
             this.methodToken = methodToken;
         }
@@ -638,6 +792,12 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
             return materialize(methodToken).withoutCode();
         }
 
+        /**
+         * Materializes the given method definition and returns an instance for defining an implementation.
+         *
+         * @param methodToken The method token to define on the currently constructed type.
+         * @return A subclass matched method interception that represents the materialized method.
+         */
         private SubclassMatchedMethodInterception<S> materialize(MethodToken methodToken) {
             return new SubclassMatchedMethodInterception<S>(methodToken, join(methodTokens, methodToken));
         }
@@ -663,18 +823,54 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                     '}';
         }
 
+        /**
+         * Returns the outer instance.
+         *
+         * @return The outer instance.
+         */
         private SubclassDynamicTypeBuilder<?> getSubclassDynamicTypeBuilder() {
             return SubclassDynamicTypeBuilder.this;
         }
     }
 
+    /**
+     * A {@link net.bytebuddy.dynamic.DynamicType.Builder.MethodAnnotationTarget} which allows the definition of
+     * annotations for a recently identified method.
+     *
+     * @param <S> The best known loaded type representing the built dynamic type.
+     */
     private class SubclassMethodAnnotationTarget<S> extends AbstractDelegatingBuilder<S> implements MethodAnnotationTarget<S> {
 
-        private final List<MethodToken> methodTokens;
+        /**
+         * A latent method matcher that identifies the methods that are supposed to be intercepted by the later
+         * defined instrumentation.
+         */
         private final MethodRegistry.LatentMethodMatcher latentMethodMatcher;
+
+        /**
+         * A list of all method tokens that were previously defined.
+         */
+        private final List<MethodToken> methodTokens;
+
+        /**
+         * The instrumentation that is to be applied to the matched methods.
+         */
         private final Instrumentation instrumentation;
+
+        /**
+         * The method attribute appender factory to be applied to the matched methods.
+         */
         private final MethodAttributeAppender.Factory attributeAppenderFactory;
 
+        /**
+         * Creates a new subclass method annotation target.
+         *
+         * @param methodTokens             A latent method matcher that identifies the methods that are supposed to be
+         *                                 intercepted by the later defined instrumentation.
+         * @param latentMethodMatcher      A list of all method tokens that were previously defined.
+         * @param instrumentation          The instrumentation that is to be applied to the matched methods.
+         * @param attributeAppenderFactory The method attribute appender factory to be applied to the matched methods.
+         */
         private SubclassMethodAnnotationTarget(List<MethodToken> methodTokens,
                                                MethodRegistry.LatentMethodMatcher latentMethodMatcher,
                                                Instrumentation instrumentation,
@@ -759,15 +955,33 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                     '}';
         }
 
+        /**
+         * Returns the outer instance.
+         *
+         * @return The outer instance.
+         */
         private SubclassDynamicTypeBuilder<?> getSubclassDynamicTypeBuilder() {
             return SubclassDynamicTypeBuilder.this;
         }
     }
 
+    /**
+     * Allows for the direct implementation of an interface after its implementation was specified.
+     *
+     * @param <S> The best known loaded type representing the built dynamic type.
+     */
     private class SubclassOptionalMatchedMethodInterception<S> extends AbstractDelegatingBuilder<S> implements OptionalMatchedMethodInterception<S> {
 
+        /**
+         * The interface to implement.
+         */
         private TypeDescription interfaceType;
 
+        /**
+         * Creates a new subclass optional matched method interception.
+         *
+         * @param interfaceType The interface to implement.
+         */
         private SubclassOptionalMatchedMethodInterception(TypeDescription interfaceType) {
             this.interfaceType = interfaceType;
         }
@@ -818,6 +1032,11 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
             return 31 * SubclassDynamicTypeBuilder.this.hashCode() + interfaceType.hashCode();
         }
 
+        /**
+         * Returns the outer instance.
+         *
+         * @return The outer instance.
+         */
         private SubclassDynamicTypeBuilder<?> getSubclassDynamicTypeBuilder() {
             return SubclassDynamicTypeBuilder.this;
         }

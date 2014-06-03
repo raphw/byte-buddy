@@ -580,6 +580,14 @@ public class MethodMatchersTest {
     }
 
     @Test
+    public void testDeclarationMatcherHashCodeEquals() throws Exception {
+        assertThat(MethodMatchers.isDeclaredBy(Object.class).hashCode(), is(MethodMatchers.isDeclaredBy(Object.class).hashCode()));
+        assertThat(MethodMatchers.isDeclaredBy(Object.class), is(MethodMatchers.isDeclaredBy(Object.class)));
+        assertThat(MethodMatchers.isDeclaredBy(Object.class).hashCode(), not(is(MethodMatchers.isDeclaredBy(String.class).hashCode())));
+        assertThat(MethodMatchers.isDeclaredBy(Object.class), not(is(MethodMatchers.isDeclaredBy(String.class))));
+    }
+
+    @Test
     public void testIsDeclaredBySubTypeOf() throws Exception {
         assertThat(MethodMatchers.isDeclaredBySubtypeOf(TestModifier.class).matches(testModifier$finalize), is(true));
         assertThat(MethodMatchers.isDeclaredBySubtypeOf(Object.class).matches(testModifier$finalize), is(true));
@@ -590,11 +598,29 @@ public class MethodMatchersTest {
     }
 
     @Test
-    public void testDeclarationMatcherHashCodeEquals() throws Exception {
-        assertThat(MethodMatchers.isDeclaredBy(Object.class).hashCode(), is(MethodMatchers.isDeclaredBy(Object.class).hashCode()));
-        assertThat(MethodMatchers.isDeclaredBy(Object.class), is(MethodMatchers.isDeclaredBy(Object.class)));
-        assertThat(MethodMatchers.isDeclaredBy(Object.class).hashCode(), not(is(MethodMatchers.isDeclaredBy(String.class).hashCode())));
-        assertThat(MethodMatchers.isDeclaredBy(Object.class), not(is(MethodMatchers.isDeclaredBy(String.class))));
+    public void testSubTypeDeclarationMatcherHashCodeEquals() throws Exception {
+        assertThat(MethodMatchers.isDeclaredBySubtypeOf(Object.class).hashCode(), is(MethodMatchers.isDeclaredBySubtypeOf(Object.class).hashCode()));
+        assertThat(MethodMatchers.isDeclaredBySubtypeOf(Object.class), is(MethodMatchers.isDeclaredBySubtypeOf(Object.class)));
+        assertThat(MethodMatchers.isDeclaredBySubtypeOf(Object.class).hashCode(), not(is(MethodMatchers.isDeclaredBySubtypeOf(String.class).hashCode())));
+        assertThat(MethodMatchers.isDeclaredBySubtypeOf(Object.class), not(is(MethodMatchers.isDeclaredBySubtypeOf(String.class))));
+    }
+
+    @Test
+    public void testIsDeclaredBySuperTypeOf() throws Exception {
+        assertThat(MethodMatchers.isDeclaredBySuperTypeOf(TestModifier.class).matches(testModifier$finalize), is(true));
+        assertThat(MethodMatchers.isDeclaredBySuperTypeOf(Object.class).matches(testModifier$finalize), is(false));
+        assertThat(MethodMatchers.isDeclaredBySuperTypeOf(TestModifier.class).matches(testClassExtension$fooBar), is(false));
+        assertThat(MethodMatchers.isDeclaredBySuperTypeOf(Object.class).matches(testClassExtension$fooBar), is(false));
+        assertThat(MethodMatchers.isDeclaredBySuperTypeOf(TestModifier.class).matches(testClassBase$foo), is(false));
+        assertThat(MethodMatchers.isDeclaredBySubtypeOf(Object.class).matches(testClassBase$foo), is(true));
+    }
+
+    @Test
+    public void testSuperTypeDeclarationMatcherHashCodeEquals() throws Exception {
+        assertThat(MethodMatchers.isDeclaredBySuperTypeOf(Object.class).hashCode(), is(MethodMatchers.isDeclaredBySuperTypeOf(Object.class).hashCode()));
+        assertThat(MethodMatchers.isDeclaredBySuperTypeOf(Object.class), is(MethodMatchers.isDeclaredBySuperTypeOf(Object.class)));
+        assertThat(MethodMatchers.isDeclaredBySuperTypeOf(Object.class).hashCode(), not(is(MethodMatchers.isDeclaredBySuperTypeOf(String.class).hashCode())));
+        assertThat(MethodMatchers.isDeclaredBySuperTypeOf(Object.class), not(is(MethodMatchers.isDeclaredBySuperTypeOf(String.class))));
     }
 
     @Test

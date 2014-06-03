@@ -251,6 +251,9 @@ public abstract class FieldAccessor implements Instrumentation {
          */
         static class ForInstrumentedTypeHierarchy implements FieldLocator {
 
+            /**
+             * The instrumented type for which a field is located.
+             */
             private final TypeDescription instrumentedType;
 
             /**
@@ -556,6 +559,16 @@ public abstract class FieldAccessor implements Instrumentation {
             fieldLocatorFactory = FieldLocator.ForInstrumentedTypeHierarchy.Factory.INSTANCE;
         }
 
+        /**
+         * reates a field accessor instrumentation for a field of a given name.
+         *
+         * @param fieldName           The name of the field.
+         * @param preparationHandler  The preparation handler for potentially defining a field.
+         * @param fieldLocatorFactory A factory that will produce a field locator that will be used to find locate
+         *                            a field to be accessed.
+         * @param assigner            The assigner to use.
+         * @param considerRuntimeType {@code true} if a field value's runtime type should be considered.
+         */
         private ForNamedField(String fieldName,
                               PreparationHandler preparationHandler,
                               FieldLocator.Factory fieldLocatorFactory,
@@ -788,6 +801,11 @@ public abstract class FieldAccessor implements Instrumentation {
             }
         }
 
+        /**
+         * Returns the outer instance.
+         *
+         * @return The outer instance.
+         */
         private FieldAccessor getFieldAccessor() {
             return FieldAccessor.this;
         }

@@ -15,9 +15,24 @@ import java.util.*;
  */
 public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinder {
 
+    /**
+     * The processor for performing an actual method delegation.
+     */
     private final DelegationProcessor delegationProcessor;
+
+    /**
+     * The provider for annotations to be supplied for binding of non-annotated parameters.
+     */
     private final DefaultsProvider<?> defaultsProvider;
+
+    /**
+     * An user-supplied assigner to use for variable assignments.
+     */
     private final Assigner assigner;
+
+    /**
+     * A delegate for actually invoking a method.
+     */
     private final MethodInvoker methodInvoker;
 
     /**
@@ -62,7 +77,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
              targetParameterIndex++) {
             ParameterBinding<?> parameterBinding = delegationProcessor
                     .handler(target.getParameterAnnotations()[targetParameterIndex], defaults)
-                    .handle(targetParameterIndex,
+                    .bind(targetParameterIndex,
                             source,
                             target,
                             instrumentationTarget,
@@ -178,8 +193,14 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 return EmptyIterator.INSTANCE;
             }
 
+            /**
+             * A trivial iterator without any elements.
+             */
             private static enum EmptyIterator implements Iterator<Annotation> {
 
+                /**
+                 * The singleton instance.
+                 */
                 INSTANCE;
 
                 @Override
@@ -200,10 +221,27 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         }
     }
 
+    /**
+     * A delegation processor is a helper class for a
+     * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.TargetMethodAnnotationDrivenBinder}
+     * for performing its actual logic. By outsourcing this logic to this helper class, a cleaner implementation
+     * can be provided.
+     */
     private static class DelegationProcessor {
 
+        /**
+         * A map of registered annotation types to the binder that is responsible for binding a parameter
+         * that is annotated with the given annotation.
+         */
         private final Map<Class<? extends Annotation>, ParameterBinder<?>> argumentBinders;
 
+        /**
+         * Creates a new delegation processor.
+         *
+         * @param parameterBinders A list of parameter binder delegates. Each such delegate is responsible for creating
+         *                         a {@link net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.ParameterBinding}
+         *                         for a specific annotation.
+         */
         private DelegationProcessor(List<ParameterBinder<?>> parameterBinders) {
             Map<Class<? extends Annotation>, ParameterBinder<?>> argumentBinderMap = new HashMap<Class<? extends Annotation>, ParameterBinder<?>>();
             for (ParameterBinder<?> parameterBinder : parameterBinders) {
@@ -214,6 +252,14 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
             this.argumentBinders = Collections.unmodifiableMap(argumentBinderMap);
         }
 
+        /**
+         * Locates a handler which is responsible for processing the given parameter. If no explicit handler can
+         * be located, a fallback handler is provided.
+         *
+         * @param annotation The annotations of the parameter for which a handler should be provided.
+         * @param defaults   The defaults provider to be queried if no explicit handler mapping could be found.
+         * @return A handler for processing the parameter with the given annotations.
+         */
         private Handler handler(Annotation[] annotation, Iterator<? extends Annotation> defaults) {
             Handler handler = null;
             for (Annotation anAnnotation : annotation) {
@@ -221,7 +267,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 if (parameterBinder != null && handler != null) {
                     throw new IllegalStateException("Ambiguous binding for parameter annotated with two handled annotation types");
                 } else if (parameterBinder != null /* && handler == null */) {
-                    handler = makeDelegate(parameterBinder, anAnnotation);
+                    handler = makeHandler(parameterBinder, anAnnotation);
                 }
             }
             if (handler == null) { // No handler was found: attempt using defaults provider.
@@ -231,7 +277,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                     if (parameterBinder == null) {
                         return Handler.Unbound.INSTANCE;
                     } else {
-                        handler = makeDelegate(parameterBinder, defaultAnnotation);
+                        handler = makeHandler(parameterBinder, defaultAnnotation);
                     }
                 } else {
                     return Handler.Unbound.INSTANCE;
@@ -240,8 +286,15 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
             return handler;
         }
 
+        /**
+         * Creates a handler for a given annotation.
+         *
+         * @param parameterBinder The parameter binder that should process an annotation.
+         * @param annotation      An annotation instance that can be understood by this parameter binder.
+         * @return A handler for processing the given annotation.
+         */
         @SuppressWarnings("unchecked")
-        private Handler makeDelegate(ParameterBinder<?> parameterBinder, Annotation annotation) {
+        private Handler makeHandler(ParameterBinder<?> parameterBinder, Annotation annotation) {
             return new Handler.Bound<Annotation>((ParameterBinder<Annotation>) parameterBinder, annotation);
         }
 
@@ -263,62 +316,89 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                     '}';
         }
 
+        /**
+         * A handler is responsible for processing a parameter's binding.
+         */
         private static interface Handler {
 
-            ParameterBinding<?> handle(int targetParameterIndex,
-                                       MethodDescription source,
-                                       MethodDescription target,
-                                       Instrumentation.Target instrumentationTarget,
-                                       Assigner assigner);
+            /**
+             * Handles a parameter binding.
+             *
+             * @param targetParameterIndex  The index of the target method's parameter to be bound.
+             * @param source                The source method that is bound to the {@code target} method.
+             * @param target                The target method that is subject to be bound by the {@code source} method.
+             * @param instrumentationTarget The target of the current instrumentation.
+             * @param assigner              An assigner that can be used for applying the binding.
+             * @return A parameter binding that reflects the given arguments.
+             */
+            ParameterBinding<?> bind(int targetParameterIndex,
+                                     MethodDescription source,
+                                     MethodDescription target,
+                                     Instrumentation.Target instrumentationTarget,
+                                     Assigner assigner);
 
+            /**
+             * An unbound handler is a fallback for returning an illegal binding for parameters for which no parameter
+             * binder could be located.
+             */
             static enum Unbound implements Handler {
 
+                /**
+                 * The singleton instance.
+                 */
                 INSTANCE;
 
                 @Override
-                public ParameterBinding<?> handle(int targetParameterIndex,
-                                                  MethodDescription source,
-                                                  MethodDescription target,
-                                                  Instrumentation.Target instrumentationTarget,
-                                                  Assigner assigner) {
+                public ParameterBinding<?> bind(int targetParameterIndex,
+                                                MethodDescription source,
+                                                MethodDescription target,
+                                                Instrumentation.Target instrumentationTarget,
+                                                Assigner assigner) {
                     return ParameterBinding.Illegal.INSTANCE;
                 }
             }
 
+            /**
+             * A bound handler represents an unambiguous parameter binder that was located for a given array of
+             * annotations.
+             *
+             * @param <T> The annotation type of a given handler.
+             */
             static class Bound<T extends Annotation> implements Handler {
 
+                /**
+                 * The parameter binder that is actually responsible for binding the parameter.
+                 */
                 private final ParameterBinder<T> parameterBinder;
+
+                /**
+                 * The annotation value that lead to the binding of this handler.
+                 */
                 private final T annotation;
 
+                /**
+                 * Creates a new bound handler.
+                 *
+                 * @param parameterBinder The parameter binder that is actually responsible for binding the parameter.
+                 * @param annotation      The annotation value that lead to the binding of this handler.
+                 */
                 public Bound(ParameterBinder<T> parameterBinder, T annotation) {
                     this.parameterBinder = parameterBinder;
                     this.annotation = annotation;
                 }
 
                 @Override
-                public ParameterBinding<?> handle(int targetParameterIndex,
-                                                  MethodDescription source,
-                                                  MethodDescription target,
-                                                  Instrumentation.Target instrumentationTarget,
-                                                  Assigner assigner) {
+                public ParameterBinding<?> bind(int targetParameterIndex,
+                                                MethodDescription source,
+                                                MethodDescription target,
+                                                Instrumentation.Target instrumentationTarget,
+                                                Assigner assigner) {
                     return parameterBinder.bind(annotation,
                             targetParameterIndex,
                             source,
                             target,
                             instrumentationTarget,
                             assigner);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && annotation.equals(((Bound) other).annotation)
-                            && parameterBinder.equals(((Bound) other).parameterBinder);
-                }
-
-                @Override
-                public int hashCode() {
-                    return 31 * parameterBinder.hashCode() + annotation.hashCode();
                 }
 
                 @Override

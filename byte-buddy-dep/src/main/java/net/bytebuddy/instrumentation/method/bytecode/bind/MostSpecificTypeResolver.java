@@ -32,6 +32,16 @@ public enum MostSpecificTypeResolver implements MethodDelegationBinder.Ambiguity
      */
     INSTANCE;
 
+    /**
+     * Resolves two bindings by comparing their binding of similar arguments and determining their most specific types.
+     *
+     * @param sourceParameterType The parameter type of the source method
+     * @param leftParameterIndex  The index of the parameter of the left method.
+     * @param left                The left method's parameter binding.
+     * @param rightParameterIndex The index of the parameter of the right method.
+     * @param right               The right method's parameter binding.
+     * @return A resolution according to the given parameters.
+     */
     private static Resolution resolveRivalBinding(TypeDescription sourceParameterType,
                                                   int leftParameterIndex,
                                                   MethodDelegationBinder.MethodBinding left,
@@ -62,6 +72,14 @@ public enum MostSpecificTypeResolver implements MethodDelegationBinder.Ambiguity
         }
     }
 
+    /**
+     * Resolves the most specific method by their score. A method's score is calculated by the absolute number of
+     * parameters that were bound by using an explicit {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument}
+     * annotation.
+     *
+     * @param boundParameterScore The difference of the scores of the left and the right method.
+     * @return A resolution according to this score.
+     */
     private static Resolution resolveByScore(int boundParameterScore) {
         if (boundParameterScore == 0) {
             return Resolution.AMBIGUOUS;
@@ -101,22 +119,71 @@ public enum MostSpecificTypeResolver implements MethodDelegationBinder.Ambiguity
         return resolution == Resolution.UNKNOWN ? resolveByScore(leftExtra - rightExtra) : resolution;
     }
 
+    /**
+     * A representation of the precedence of a most specific primitive type in the Java programming language.
+     */
     private static enum PrimitiveTypePrecedence {
 
+        /**
+         * The specifity {@code boolean} type.
+         */
         BOOLEAN(0),
+
+        /**
+         * The specifity {@code byte} type.
+         */
         BYTE(1),
+
+        /**
+         * The specifity {@code short} type.
+         */
         SHORT(2),
+
+        /**
+         * The specifity {@code int} type.
+         */
         INTEGER(3),
+
+        /**
+         * The specifity {@code char} type.
+         */
         CHARACTER(4),
+
+        /**
+         * The specifity {@code long} type.
+         */
         LONG(5),
+
+        /**
+         * The specifity {@code float} type.
+         */
         FLOAT(6),
+
+        /**
+         * The specifity {@code double} type.
+         */
         DOUBLE(7);
+
+        /**
+         * A score representing the specifity where a higher score represents a less specific type.
+         */
         private final int score;
 
+        /**
+         * Creates a new primitive type precedence.
+         *
+         * @param score A score representing the specifity where a higher score represents a less specific type.
+         */
         private PrimitiveTypePrecedence(int score) {
             this.score = score;
         }
 
+        /**
+         * Locates the primitive type precedence for a given type.
+         *
+         * @param typeDescription The non-void, primitive type for which the precedence should be located.
+         * @return The corresponding primitive type precedence.
+         */
         public static PrimitiveTypePrecedence forPrimitive(TypeDescription typeDescription) {
             if (typeDescription.represents(boolean.class)) {
                 return BOOLEAN;
@@ -139,6 +206,16 @@ public enum MostSpecificTypeResolver implements MethodDelegationBinder.Ambiguity
             }
         }
 
+        /**
+         * Resolves the least specific type of two primitive type precedence with this instance representing a
+         * {@link net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.AmbiguityResolver.Resolution#LEFT}
+         * resolution and the argument type representing the
+         * {@link net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.AmbiguityResolver.Resolution#RIGHT}
+         * resolution.
+         *
+         * @param right Another primitive type precedence against which this precedence should be resolved.
+         * @return The resolution of
+         */
         public Resolution resolve(PrimitiveTypePrecedence right) {
             if (score - right.score == 0) {
                 return Resolution.UNKNOWN;
@@ -157,6 +234,9 @@ public enum MostSpecificTypeResolver implements MethodDelegationBinder.Ambiguity
      */
     public static class ParameterIndexToken {
 
+        /**
+         * The parameter index that is represented by this token.
+         */
         private final int parameterIndex;
 
         /**

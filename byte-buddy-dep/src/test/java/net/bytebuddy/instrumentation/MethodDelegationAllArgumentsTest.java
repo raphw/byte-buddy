@@ -61,7 +61,7 @@ public class MethodDelegationAllArgumentsTest extends AbstractInstrumentationTes
 
     public static class BazSlack {
 
-        public static String qux(@AllArguments(AllArguments.Binding.SLACK) String[] args) {
+        public static String qux(@AllArguments(AllArguments.Assignment.SLACK) String[] args) {
             return QUX + args[0];
         }
     }

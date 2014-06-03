@@ -12,6 +12,7 @@ import org.mockito.Mock;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
@@ -141,5 +142,16 @@ public class MethodDelegationBinderProcessorTest {
         verify(ambiguityResolver).resolve(source, boundDelegation, boundDelegation);
         verify(ambiguityResolver, times(2)).resolve(source, boundDelegation, dominantBoundDelegation);
         verifyNoMoreInteractions(ambiguityResolver);
+    }
+
+    @Test
+    public void testHashCodeEquals() throws Exception {
+        MethodDelegationBinder.Processor processor = new MethodDelegationBinder.Processor(methodDelegationBinder, ambiguityResolver);
+        MethodDelegationBinder.Processor equal = new MethodDelegationBinder.Processor(methodDelegationBinder, ambiguityResolver);
+        assertThat(processor.hashCode(), is(equal.hashCode()));
+        assertThat(processor, is(equal));
+        MethodDelegationBinder.Processor unequal = new MethodDelegationBinder.Processor(methodDelegationBinder, mock(MethodDelegationBinder.AmbiguityResolver.class));
+        assertThat(processor.hashCode(), not(is(unequal.hashCode())));
+        assertThat(processor, not(is(unequal)));
     }
 }

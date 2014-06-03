@@ -105,7 +105,7 @@ public @interface Argument {
         };
 
         /**
-         * Creates the binding that is requrest
+         * Creates a binding that corresponds to this binding mechanic.
          *
          * @param sourceType           The source type to be bound.
          * @param targetType           The target type the {@code sourceType} is to be bound to.
@@ -178,6 +178,16 @@ public @interface Argument {
          */
         INSTANCE;
 
+        /**
+         * Creates a list of all parameter indices of a source method that are not explicitly referenced
+         * by any {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument} annotation on
+         * the target method.
+         *
+         * @param source The source method.
+         * @param target The target method.
+         * @return An iterator over all parameter indices of the source method that are not explicitly referenced
+         * by the target method in increasing order.
+         */
         private static Iterator<Integer> makeFreeIndexList(MethodDescription source, MethodDescription target) {
             LinkedHashSet<Integer> results = new LinkedHashSet<Integer>(source.getParameterTypes().size());
             for (int sourceIndex = 0; sourceIndex < source.getParameterTypes().size(); sourceIndex++) {
@@ -201,34 +211,23 @@ public @interface Argument {
             return new NextUnboundArgumentIterator(makeFreeIndexList(source, target));
         }
 
-        private static class DefaultArgument implements Argument {
-
-            private final int parameterIndex;
-
-            private DefaultArgument(int parameterIndex) {
-                this.parameterIndex = parameterIndex;
-            }
-
-            @Override
-            public int value() {
-                return parameterIndex;
-            }
-
-            @Override
-            public BindingMechanic bindingMechanic() {
-                return BindingMechanic.UNIQUE;
-            }
-
-            @Override
-            public Class<Argument> annotationType() {
-                return Argument.class;
-            }
-        }
-
+        /**
+         * An iterator that creates {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument}
+         * annotations for any non-referenced index of the source method.
+         */
         private static class NextUnboundArgumentIterator implements Iterator<Argument> {
 
+            /**
+             * An iterator over all free indices.
+             */
             private final Iterator<Integer> iterator;
 
+            /**
+             * Creates a new iterator for {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument}
+             * annotations of non-referenced parameter indices of the source method.
+             *
+             * @param iterator An iterator of free indices of the source method.
+             */
             private NextUnboundArgumentIterator(Iterator<Integer> iterator) {
                 this.iterator = iterator;
             }
@@ -246,6 +245,47 @@ public @interface Argument {
             @Override
             public void remove() {
                 iterator.remove();
+            }
+
+            /**
+             * A default implementation of an {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument}
+             * annotation.
+             */
+            private static class DefaultArgument implements Argument {
+
+                /**
+                 * The index of the source method parameter to be bound.
+                 */
+                private final int parameterIndex;
+
+                /**
+                 * Creates a new instance of an argument annotation.
+                 *
+                 * @param parameterIndex The index of the source method parameter to be bound.
+                 */
+                private DefaultArgument(int parameterIndex) {
+                    this.parameterIndex = parameterIndex;
+                }
+
+                @Override
+                public int value() {
+                    return parameterIndex;
+                }
+
+                @Override
+                public BindingMechanic bindingMechanic() {
+                    return BindingMechanic.UNIQUE;
+                }
+
+                @Override
+                public Class<Argument> annotationType() {
+                    return Argument.class;
+                }
+
+                @Override
+                public String toString() {
+                    return "Argument.NextUnboundAsDefaultsProvider.DefaultArgument{parameterIndex=" + parameterIndex + '}';
+                }
             }
         }
     }

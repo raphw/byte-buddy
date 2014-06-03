@@ -57,6 +57,14 @@ public enum MethodVariableAccess {
      */
     private final StackManipulation.Size size;
 
+    /**
+     * Creates a new method variable access for a given JVM type.
+     *
+     * @param loadOpcode               The opcode for loading this variable.
+     * @param loadOpcodeShortcutOffset The offset for any shortcut opcode that allows to load a variable from a low
+     *                                 range index, such as {@code ALOAD_0}, {@code ILOAD_0} etc.
+     * @param stackSize                The size of the JVM type.
+     */
     private MethodVariableAccess(int loadOpcode, int loadOpcodeShortcutOffset, StackSize stackSize) {
         this.loadOpcode = loadOpcode;
         this.loadOpcodeShortcutOffset = loadOpcodeShortcutOffset;

@@ -327,9 +327,24 @@ public class TypeProxy implements AuxiliaryType {
      */
     public static class ByConstructor implements StackManipulation {
 
+        /**
+         * The type for the type proxy to subclass or implement.
+         */
         private final TypeDescription proxiedType;
+
+        /**
+         * The instrumentation target this type proxy is created for.
+         */
         private final Instrumentation.Target instrumentationTarget;
+
+        /**
+         * The parameter types of the constructor that should be called.
+         */
         private final List<TypeDescription> constructorParameters;
+
+        /**
+         * {@code true} if any finalizers should be ignored for the delegation.
+         */
         private final boolean ignoreFinalizer;
 
         /**
@@ -414,8 +429,19 @@ public class TypeProxy implements AuxiliaryType {
      */
     public static class ByReflectionFactory implements StackManipulation {
 
+        /**
+         * The type for which a proxy type is created.
+         */
         private final TypeDescription proxiedType;
+
+        /**
+         * The instrumentation target of the proxied type.
+         */
         private final Instrumentation.Target instrumentationTarget;
+
+        /**
+         * {@code true} {@code true} if any finalizer methods should be ignored for proxying.
+         */
         private final boolean ignoreFinalizer;
 
         /**
@@ -423,7 +449,7 @@ public class TypeProxy implements AuxiliaryType {
          *
          * @param proxiedType           The type for the type proxy to subclass or implement.
          * @param instrumentationTarget The instrumentation target this type proxy is created for.
-         * @param ignoreFinalizer       {@code true} {@code true} if any finalizer methods should be ignored for proxying.
+         * @param ignoreFinalizer       {@code true} if any finalizer methods should be ignored for proxying.
          */
         public ByReflectionFactory(TypeDescription proxiedType,
                                    Instrumentation.Target instrumentationTarget,
@@ -630,6 +656,13 @@ public class TypeProxy implements AuxiliaryType {
                  */
                 private final SpecialMethodInvocation specialMethodInvocation;
 
+                /**
+                 * Creates a new accessor method invocation.
+                 *
+                 * @param instrumentedMethod      The instrumented method that is implemented.
+                 * @param specialMethodInvocation The special method invocation that is invoked by this accessor
+                 *                                method invocation.
+                 */
                 private AccessorMethodInvocation(MethodDescription instrumentedMethod,
                                                  SpecialMethodInvocation specialMethodInvocation) {
                     this.instrumentedMethod = instrumentedMethod;

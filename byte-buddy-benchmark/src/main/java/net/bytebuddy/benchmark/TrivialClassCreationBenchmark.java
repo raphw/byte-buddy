@@ -30,6 +30,13 @@ public class TrivialClassCreationBenchmark {
      */
     public static final Class<?> BASE_CLASS = Object.class;
 
+    /**
+     * Creates a new class loader. By using a fresh class loader for each creation, we avoid name space issues.
+     * A class loader's creation is part of the benchmark but since any test creates a class loader exactly once,
+     * the benchmark remains valid.
+     *
+     * @return A new class loader.
+     */
     private static ClassLoader newClassLoader() {
         return new URLClassLoader(new URL[0]);
     }

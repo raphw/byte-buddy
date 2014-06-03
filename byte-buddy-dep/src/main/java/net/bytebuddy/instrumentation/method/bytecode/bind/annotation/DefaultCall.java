@@ -10,13 +10,42 @@ import net.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy;
 import java.lang.annotation.*;
 import java.util.concurrent.Callable;
 
+/**
+ * A parameter with this annotation is assigned a proxy for invoking a default method that fits the intercepted method.
+ * If no suitable default method for the intercepted method can be identified, the target method with the annotated
+ * parameter is considered to be unbindable.
+ *
+ * @see net.bytebuddy.instrumentation.MethodDelegation
+ * @see TargetMethodAnnotationDrivenBinder
+ */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
 public @interface DefaultCall {
 
+    /**
+     * If this parameter is not explicitly set, a parameter with the
+     * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.DefaultCall} is only bound to a
+     * source method if this source method directly represents an unambiguous, invokable default method. On the other
+     * hand, if a method is not defined unambiguously by an interface, not setting this parameter will exclude
+     * the target method with the annotated parameter from a binding to the source method.
+     * <p>&nbsp;</p>
+     * If this parameter is however set to an explicit interface type, a default method is always invoked on this given
+     * type as long as this type defines a method with a compatible signature. If this is not the case, the target
+     * method with the annotated parameter is not longer considered as a possible binding candidate of a source method.
+     *
+     * @return The target interface that a default method invocation is to be defined upon. If no such explicit target
+     * is set, this parameter should not be defined as the predefined {@code void} type encodes an implicit resolution.
+     */
     Class<?> targetType() default void.class;
 
+    /**
+     * A binder for handling the
+     * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.DefaultCall}
+     * annotation.
+     *
+     * @see TargetMethodAnnotationDrivenBinder
+     */
     static enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<DefaultCall> {
 
         /**
@@ -24,10 +53,17 @@ public @interface DefaultCall {
          */
         INSTANCE;
 
-        private static MethodLocator locate(Class<?> type) {
+        /**
+         * Defines a locator for looking up the suitable default method to an annotation.
+         *
+         * @param type The {@link DefaultCall#targetType()} value where the {@code void} type encodes an implicit
+         *             lookup.
+         * @return A suitable default method locator.
+         */
+        private static DefaultMethodLocator locate(Class<?> type) {
             return type == void.class
-                    ? MethodLocator.Implicit.INSTANCE
-                    : new MethodLocator.Explicit(type);
+                    ? DefaultMethodLocator.Implicit.INSTANCE
+                    : new DefaultMethodLocator.Explicit(type);
         }
 
         @Override
@@ -52,13 +88,31 @@ public @interface DefaultCall {
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
         }
 
-        private static interface MethodLocator {
+        /**
+         * A default method locator is responsible for looking up a default method to a given source method.
+         */
+        private static interface DefaultMethodLocator {
 
+            /**
+             * Locates the correct default method to a given source method.
+             *
+             * @param instrumentationTarget The current instrumentation target.
+             * @param source                The source method for which a default method should be looked up.
+             * @return A special method invocation of the default method or an illegal special method invocation,
+             * if no suitable invocation could be located.
+             */
             Instrumentation.SpecialMethodInvocation resolve(Instrumentation.Target instrumentationTarget,
                                                             MethodDescription source);
 
-            static enum Implicit implements MethodLocator {
+            /**
+             * An implicit default method locator that only permits the invocation of a default method if the source
+             * method itself represents a method that was defined on a default method interface.
+             */
+            static enum Implicit implements DefaultMethodLocator {
 
+                /**
+                 * The singleton instance.
+                 */
                 INSTANCE;
 
                 @Override
@@ -74,14 +128,27 @@ public @interface DefaultCall {
                             specialMethodInvocation = instrumentationTarget.invokeDefault(candidate, uniqueSignature);
                         }
                     }
-                    return specialMethodInvocation;
+                    return specialMethodInvocation != null
+                            ? specialMethodInvocation
+                            : Instrumentation.SpecialMethodInvocation.Illegal.INSTANCE;
                 }
             }
 
-            static class Explicit implements MethodLocator {
+            /**
+             * An explicit default method locator attempts to look up a default method in the specified interface type.
+             */
+            static class Explicit implements DefaultMethodLocator {
 
+                /**
+                 * A description of the type on which the default method should be invoked.
+                 */
                 private final TypeDescription typeDescription;
 
+                /**
+                 * Creates a new explicit default method locator.
+                 *
+                 * @param type The actual target interface as explicitly defined by {@link DefaultCall#targetType()}.
+                 */
                 public Explicit(Class<?> type) {
                     typeDescription = new TypeDescription.ForLoadedType(type);
                 }
@@ -93,6 +160,11 @@ public @interface DefaultCall {
                         throw new IllegalStateException(source + " method carries default method call parameter on non-interface type");
                     }
                     return instrumentationTarget.invokeDefault(typeDescription, source.getUniqueSignature());
+                }
+
+                @Override
+                public String toString() {
+                    return "Binder.DefaultMethodLocator.Explicit{typeDescription=" + typeDescription + '}';
                 }
             }
         }

@@ -21,7 +21,6 @@ import java.util.concurrent.Callable;
  *
  * @see net.bytebuddy.instrumentation.MethodDelegation
  * @see TargetMethodAnnotationDrivenBinder
- * @see net.bytebuddy.instrumentation.method.bytecode.bind.annotation.RuntimeType
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

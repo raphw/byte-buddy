@@ -16,14 +16,14 @@ import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
-public class ArgumentAnnotationBinderTest extends AbstractAnnotationBinderTest<Argument> {
+public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
 
     @Mock
     TypeDescription sourceType, targetType;
     @Mock
     private TypeList sourceParameters, targetParameters;
 
-    public ArgumentAnnotationBinderTest() {
+    public ArgumentBinderTest() {
         super(Argument.class);
     }
 

@@ -21,9 +21,9 @@ import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
-public @interface ForwardCall {
+public @interface Pipe {
 
-    static class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<ForwardCall> {
+    static class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Pipe> {
 
         private final MethodDescription methodDescription;
 
@@ -31,7 +31,7 @@ public @interface ForwardCall {
             this.methodDescription = methodDescription;
         }
 
-        public static TargetMethodAnnotationDrivenBinder.ParameterBinder<ForwardCall> compile(Class<?> type) {
+        public static TargetMethodAnnotationDrivenBinder.ParameterBinder<Pipe> compile(Class<?> type) {
             TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
             MethodList methodList = typeDescription.getDeclaredMethods().filter(not(isStatic()));
             if (!typeDescription.isInterface()
@@ -47,12 +47,12 @@ public @interface ForwardCall {
         }
 
         @Override
-        public Class<ForwardCall> getHandledType() {
-            return ForwardCall.class;
+        public Class<Pipe> getHandledType() {
+            return Pipe.class;
         }
 
         @Override
-        public MethodDelegationBinder.ParameterBinding<?> bind(ForwardCall annotation,
+        public MethodDelegationBinder.ParameterBinding<?> bind(Pipe annotation,
                                                                int targetParameterIndex,
                                                                MethodDescription source,
                                                                MethodDescription target,
@@ -60,7 +60,6 @@ public @interface ForwardCall {
                                                                Assigner assigner) {
             return null;
         }
-
 
         private static class ForwardingType implements AuxiliaryType {
 

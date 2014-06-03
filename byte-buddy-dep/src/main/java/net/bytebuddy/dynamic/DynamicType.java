@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.ClassVisitorWrapper;
+import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.dynamic.scaffold.FieldRegistry;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.instrumentation.Instrumentation;
@@ -173,6 +174,17 @@ public interface DynamicType {
          * @return A builder that will apply the given ASM class visitor.
          */
         Builder<T> classVisitor(ClassVisitorWrapper classVisitorWrapper);
+
+        /**
+         * Defines a bridge method resolver factory to be applied to this type creation. A bridge method resolver is
+         * responsible for determining the target method that is invoked by a bridge method. This way, a super method
+         * invocation is resolved by invoking the actual super method instead of the bridge method which would in turn
+         * resolve the actual method virtually.
+         *
+         * @param bridgeMethodResolverFactory The bridge method resolver factory that is to be used.
+         * @return A builder that will apply the given bridge method resolver factory.
+         */
+        Builder<T> bridgeMethodResolverFactory(BridgeMethodResolver.Factory bridgeMethodResolverFactory);
 
         /**
          * Defines the use of a specific factory for a {@link net.bytebuddy.instrumentation.method.MethodLookupEngine}.
@@ -867,6 +879,11 @@ public interface DynamicType {
                 @Override
                 public Builder<U> methodLookupEngine(MethodLookupEngine.Factory methodLookupEngineFactory) {
                     return materialize().methodLookupEngine(methodLookupEngineFactory);
+                }
+
+                @Override
+                public Builder<U> bridgeMethodResolverFactory(BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
+                    return materialize().bridgeMethodResolverFactory(bridgeMethodResolverFactory);
                 }
 
                 @Override

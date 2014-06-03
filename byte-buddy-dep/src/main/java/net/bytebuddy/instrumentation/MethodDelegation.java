@@ -46,17 +46,25 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
  * This annotation will bind the {@code n}-th parameter of {@code Foo#bar} to that parameter of {@code Qux#baz}that
  * is annotated with this annotation where {@code n} is the obligatory argument of the {@code @Argument} annotation.</li>
  * <li>{@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.AllArguments}:
- * This annotation will assign a collection of all parameter of {@code Foo#bar} to that parameter of {@code Qux#baz}
+ * This annotation will assign a collection of all parameters of {@code Foo#bar} to that parameter of {@code Qux#baz}
  * that is annotated with {@code AllArguments}.</li>
  * <li>{@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.This}: A parameter
  * of {@code Qux#baz} that is annotated with {@code This} will be assigned the instance that is instrumented for
  * a non-static method.</li>
  * <li>{@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.SuperCall}: A parameter
  * of {@code Qux#baz} that is annotated with {@code SuperCall} will be assigned an instance of a type implementing both
- * {@link java.lang.Runnable} and {@link java.util.concurrent.Callable} which will return the instrumented method on the
+ * {@link java.lang.Runnable} and {@link java.util.concurrent.Callable} which will invoke the instrumented method on the
  * invocation of either interface's method. The call is made using the original arguments of the method invocation.
- * The return value is only returned for the {@link java.util.concurrent.Callable#call()} method which additionally
- * requires to catch any unchecked exceptions that might be thrown by the original method's implementation.</li>
+ * The return value is only emitted for the {@link java.util.concurrent.Callable#call()} method which additionally
+ * requires to catch any unchecked exceptions that might be thrown by the original method's implementation. If a
+ * source method is abstract, using this annotation excludes the method with this parameter annotation from being bound
+ * to this source method.
+ * </li>
+ * <li>{@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.DefaultCall}:
+ * This annotation is similar to the {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.SuperCall}
+ * annotation but it invokes a default method that is compatible to this method. If a source method does not represent
+ * a default method, using this annotation excludes the method with this parameter annotation from being bound to this
+ * source method.</li>
  * <li>{@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Origin}: A parameter of
  * {@code Qux#baz} that is annotated with {@code Origin} is assigned a reference to either a {@link java.lang.reflect.Method}
  * or a {@link java.lang.Class} instance. A {@code Method}-typed parameter is assigned a reference to the original method that
@@ -616,9 +624,19 @@ public class MethodDelegation implements Instrumentation {
          */
         static class ForStaticFieldInstance implements InstrumentationDelegate {
 
+            /**
+             * The name prefix for the {@code static} field that is containing the delegation target.
+             */
             private static final String PREFIX = "methodDelegate";
 
+            /**
+             * The name of the field that is containing the delegation target.
+             */
             private final String fieldName;
+
+            /**
+             * The delegation target.
+             */
             private final Object delegate;
 
             /**
@@ -686,7 +704,14 @@ public class MethodDelegation implements Instrumentation {
          */
         static class ForInstanceField implements InstrumentationDelegate {
 
+            /**
+             * The name of the instance field that is containing the target of the method delegation.
+             */
             private final String fieldName;
+
+            /**
+             * The type of the method delegation target.
+             */
             private final TypeDescription fieldType;
 
             /**
@@ -743,6 +768,9 @@ public class MethodDelegation implements Instrumentation {
          */
         static class ForConstruction implements InstrumentationDelegate {
 
+            /**
+             * The type that is to be constructed.
+             */
             private final TypeDescription typeDescription;
 
             /**

@@ -2,7 +2,7 @@ package net.bytebuddy.benchmark;
 
 import net.bytebuddy.benchmark.specimen.ExampleInterface;
 import org.openjdk.jmh.annotations.*;
-import org.openjdk.jmh.logic.BlackHole;
+import org.openjdk.jmh.infra.Blackhole;
 
 import java.util.concurrent.TimeUnit;
 
@@ -14,19 +14,69 @@ import java.util.concurrent.TimeUnit;
 @State(Scope.Benchmark)
 public class StubInvocationBenchmark {
 
+    /**
+     * A generic {@link String} value.
+     */
     private static final String STRING_VALUE = "foo";
+
+    /**
+     * A generic {@code boolean} value.
+     */
     private static final boolean BOOLEAN_VALUE = true;
+
+    /**
+     * A generic {@code byte} value.
+     */
     private static final byte BYTE_VALUE = 42;
+
+    /**
+     * A generic {@code short} value.
+     */
     private static final short SHORT_VALUE = 42;
+
+    /**
+     * A generic {@code char} value.
+     */
     private static final char CHAR_VALUE = '@';
+
+    /**
+     * A generic {@code int} value.
+     */
     private static final int INT_VALUE = 42;
+
+    /**
+     * A generic {@code long} value.
+     */
     private static final long LONG_VALUE = 42L;
+
+    /**
+     * A generic {@code float} value.
+     */
     private static final float FLOAT_VALUE = 42f;
+
+    /**
+     * A generic {@code double} value.
+     */
     private static final double DOUBLE_VALUE = 42d;
 
+    /**
+     * An instance created by Byte Buddy for performing benchmarks on.
+     */
     private ExampleInterface byteBuddyInstance;
+
+    /**
+     * An instance created by cglib for performing benchmarks on.
+     */
     private ExampleInterface cglibInstance;
+
+    /**
+     * An instance created by javassist for performing benchmarks on.
+     */
     private ExampleInterface javassistInstance;
+
+    /**
+     * An instance created by the JDK proxy for performing benchmarks on.
+     */
     private ExampleInterface jdkProxyInstance;
 
     /**
@@ -53,7 +103,7 @@ public class StubInvocationBenchmark {
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MICROSECONDS)
     @OperationsPerInvocation(20)
-    public void benchmarkByteBuddy(BlackHole blackHole) {
+    public void benchmarkByteBuddy(Blackhole blackHole) {
         blackHole.consume(byteBuddyInstance.method(BOOLEAN_VALUE));
         blackHole.consume(byteBuddyInstance.method(BYTE_VALUE));
         blackHole.consume(byteBuddyInstance.method(SHORT_VALUE));
@@ -85,7 +135,7 @@ public class StubInvocationBenchmark {
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MICROSECONDS)
     @OperationsPerInvocation(20)
-    public void benchmarkCglib(BlackHole blackHole) {
+    public void benchmarkCglib(Blackhole blackHole) {
         blackHole.consume(cglibInstance.method(BOOLEAN_VALUE));
         blackHole.consume(cglibInstance.method(BYTE_VALUE));
         blackHole.consume(cglibInstance.method(SHORT_VALUE));
@@ -117,7 +167,7 @@ public class StubInvocationBenchmark {
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MICROSECONDS)
     @OperationsPerInvocation(20)
-    public void benchmarkJavassist(BlackHole blackHole) {
+    public void benchmarkJavassist(Blackhole blackHole) {
         blackHole.consume(javassistInstance.method(BOOLEAN_VALUE));
         blackHole.consume(javassistInstance.method(BYTE_VALUE));
         blackHole.consume(javassistInstance.method(SHORT_VALUE));
@@ -149,7 +199,7 @@ public class StubInvocationBenchmark {
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MICROSECONDS)
     @OperationsPerInvocation(20)
-    public void benchmarkJdkProxy(BlackHole blackHole) {
+    public void benchmarkJdkProxy(Blackhole blackHole) {
         blackHole.consume(jdkProxyInstance.method(BOOLEAN_VALUE));
         blackHole.consume(jdkProxyInstance.method(BYTE_VALUE));
         blackHole.consume(jdkProxyInstance.method(SHORT_VALUE));

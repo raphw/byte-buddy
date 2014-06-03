@@ -41,6 +41,13 @@ public @interface BindingPriority {
          */
         INSTANCE;
 
+        /**
+         * Resolves the explicitly stated binding priority of a method or returns the default value if no such
+         * explicit information can be found.
+         *
+         * @param bindingPriority The annotation of the method or {@code null} if no such annotation was found.
+         * @return The factual priority of the method under investigation.
+         */
         private static double resolve(BindingPriority bindingPriority) {
             return bindingPriority == null ? DEFAULT : bindingPriority.value();
         }

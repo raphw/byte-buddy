@@ -150,7 +150,7 @@ public enum PrimitiveWideningDelegate {
     private final StackManipulation toDoubleStackManipulation;
 
     /**
-     * Creates a new primitive widening delegate
+     * Creates a new primitive widening delegate.
      *
      * @param toBooleanStackManipulation   A stack manipulation that widens the type that is represented by this
      *                                     instance to a {@code boolean}.

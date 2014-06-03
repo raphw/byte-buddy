@@ -16,9 +16,20 @@ import java.util.List;
  */
 public class ArrayFactory implements CollectionFactory {
 
-    private static final StackManipulation.Size SIZE = StackSize.ZERO.toDecreasingSize();
+    /**
+     * The component type of the array this array factory is creating.
+     */
     private final TypeDescription componentType;
+
+    /**
+     * The array creator delegate that supplies suitable opcodes for the creation of an array and the storage of
+     * values inside it.
+     */
     private final ArrayCreator arrayCreator;
+
+    /**
+     * The decrease of stack size after each value storage operation.
+     */
     private final StackManipulation.Size sizeDecrease;
 
     /**
@@ -48,6 +59,12 @@ public class ArrayFactory implements CollectionFactory {
         return new ArrayFactory(componentType, makeArrayCreatorFor(componentType));
     }
 
+    /**
+     * Creates a suitable array creator for the given component type.
+     *
+     * @param componentType The component type of the array to be created.
+     * @return A suitable array creator.
+     */
     private static ArrayCreator makeArrayCreatorFor(TypeDescription componentType) {
         if (componentType.isPrimitive()) {
             if (componentType.represents(boolean.class)) {
@@ -118,6 +135,12 @@ public class ArrayFactory implements CollectionFactory {
     protected static interface ArrayCreator extends StackManipulation {
 
         /**
+         * The creation of an array consumes one slot on the operand stack and adds a new value to it.
+         * Therefore, the operand stack's size is not altered.
+         */
+        static final StackManipulation.Size ARRAY_CREATION_SIZE_CHANGE = StackSize.ZERO.toDecreasingSize();
+
+        /**
          * The opcode instruction for storing a value of the component type inside an array.
          *
          * @return The correct storage opcode for the represented type.
@@ -129,18 +152,62 @@ public class ArrayFactory implements CollectionFactory {
          */
         static enum Primitive implements ArrayCreator {
 
+            /**
+             * An array creator for creating {@code boolean[]} arrays.
+             */
             BOOLEAN(Opcodes.T_BOOLEAN, Opcodes.BASTORE),
+
+            /**
+             * An array creator for creating {@code byte[]} arrays.
+             */
             BYTE(Opcodes.T_BYTE, Opcodes.BASTORE),
+
+            /**
+             * An array creator for creating {@code short[]} arrays.
+             */
             SHORT(Opcodes.T_SHORT, Opcodes.SASTORE),
+
+            /**
+             * An array creator for creating {@code char[]} arrays.
+             */
             CHARACTER(Opcodes.T_CHAR, Opcodes.CASTORE),
+
+            /**
+             * An array creator for creating {@code int[]} arrays.
+             */
             INTEGER(Opcodes.T_INT, Opcodes.IASTORE),
+
+            /**
+             * An array creator for creating {@code long[]} arrays.
+             */
             LONG(Opcodes.T_LONG, Opcodes.LASTORE),
+
+            /**
+             * An array creator for creating {@code float[]} arrays.
+             */
             FLOAT(Opcodes.T_FLOAT, Opcodes.FASTORE),
+
+            /**
+             * An array creator for creating {@code double[]} arrays.
+             */
             DOUBLE(Opcodes.T_DOUBLE, Opcodes.DASTORE);
 
+            /**
+             * The opcode for creating an array of this type.
+             */
             private final int creationOpcode;
+
+            /**
+             * The opcode for storing a value in an array of this type.
+             */
             private final int storageOpcode;
 
+            /**
+             * Creates a new primitive array creator.
+             *
+             * @param creationOpcode The opcode for creating an array of this type.
+             * @param storageOpcode  The opcode for storing a value in an array of this type.
+             */
             private Primitive(int creationOpcode, int storageOpcode) {
                 this.creationOpcode = creationOpcode;
                 this.storageOpcode = storageOpcode;
@@ -154,7 +221,7 @@ public class ArrayFactory implements CollectionFactory {
             @Override
             public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
                 methodVisitor.visitIntInsn(Opcodes.NEWARRAY, creationOpcode);
-                return SIZE;
+                return ARRAY_CREATION_SIZE_CHANGE;
             }
 
             @Override
@@ -168,8 +235,16 @@ public class ArrayFactory implements CollectionFactory {
          */
         static class Reference implements ArrayCreator {
 
+            /**
+             * The internal name of this array's non-primitive component type.
+             */
             private final String internalTypeName;
 
+            /**
+             * Creates a new array creator for a reference type.
+             *
+             * @param referenceType The internal name of this array's non-primitive component type.
+             */
             private Reference(TypeDescription referenceType) {
                 this.internalTypeName = referenceType.getInternalName();
             }
@@ -182,20 +257,49 @@ public class ArrayFactory implements CollectionFactory {
             @Override
             public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
                 methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, internalTypeName);
-                return SIZE;
+                return ARRAY_CREATION_SIZE_CHANGE;
             }
 
             @Override
             public int getStorageOpcode() {
                 return Opcodes.AASTORE;
             }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && internalTypeName.equals(((Reference) other).internalTypeName);
+            }
+
+            @Override
+            public int hashCode() {
+                return internalTypeName.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "ArrayFactory.ArrayCreator.Reference{" +
+                        "internalTypeName='" + internalTypeName + '\'' +
+                        '}';
+            }
         }
     }
 
+    /**
+     * A stack manipulation for creating an array as defined by the enclosing array factory.
+     */
     private class ArrayStackManipulation implements StackManipulation {
 
+        /**
+         * A list of value load instructions that are to be stored inside the created array.
+         */
         private final List<StackManipulation> stackManipulations;
 
+        /**
+         * Creates a new array loading instruction.
+         *
+         * @param stackManipulations A list of value load instructions that are to be stored inside the created array.
+         */
         public ArrayStackManipulation(List<StackManipulation> stackManipulations) {
             this.stackManipulations = stackManipulations;
         }
@@ -225,6 +329,35 @@ public class ArrayFactory implements CollectionFactory {
                 size = size.aggregate(sizeDecrease);
             }
             return size;
+        }
+
+        /**
+         * Returns the outer instance.
+         *
+         * @return The outer instance.
+         */
+        private ArrayFactory getArrayFactory() {
+            return ArrayFactory.this;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && ArrayFactory.this.equals(((ArrayStackManipulation) other).getArrayFactory())
+                    && stackManipulations.equals(((ArrayStackManipulation) other).stackManipulations);
+        }
+
+        @Override
+        public int hashCode() {
+            return stackManipulations.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "ArrayFactory.ArrayStackManipulation{" +
+                    "arrayFactory=" + ArrayFactory.this +
+                    "stackManipulations=" + stackManipulations +
+                    '}';
         }
     }
 }

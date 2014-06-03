@@ -26,6 +26,9 @@ public @interface RuntimeType {
      */
     static final class Verifier {
 
+        /**
+         * As this is merely a utility method, the constructor is not supposed to be invoked.
+         */
         private Verifier() {
             throw new UnsupportedOperationException();
         }

@@ -20,9 +20,14 @@ import java.util.List;
  * <li>Array</li>
  * </ul>
  * <p>&nbsp;</p>
- * If the parameters of the source method are not assignable to the collection's component type, the method with
- * the annotated parameter will not be considered as a possible binding target for the source method.
+ * By default, this annotation applies a
+ * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.AllArguments.Assignment#STRICT}
+ * assignment of the source method's parameters to the array. This implies that parameters that are not assignable to
+ * the annotated array's component type make the method with this parameter unbindable. To avoid this, you can
+ * use a {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.AllArguments.Assignment#SLACK} assignment
+ * which simply skips non-assignable values instead.
  *
+ * @see net.bytebuddy.instrumentation.method.bytecode.bind.annotation.AllArguments.Assignment
  * @see net.bytebuddy.instrumentation.MethodDelegation
  * @see TargetMethodAnnotationDrivenBinder
  * @see net.bytebuddy.instrumentation.method.bytecode.bind.annotation.RuntimeType
@@ -32,19 +37,54 @@ import java.util.List;
 @Target(ElementType.PARAMETER)
 public @interface AllArguments {
 
-    Binding value() default Binding.STRICT;
+    /**
+     * Defines the type of {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.AllArguments.Assignment}
+     * type that is applied for filling the annotated array with values.
+     *
+     * @return The assignment handling to be applied for the annotated parameter.
+     */
+    Assignment value() default Assignment.STRICT;
 
-    public static enum Binding {
+    /**
+     * A directive for how an {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.AllArguments}
+     * annotation on an array is to be interpreted.
+     */
+    public static enum Assignment {
 
+        /**
+         * A strict assignment attempts to include <b>all</b> parameter values of the source method. If only one of these
+         * parameters is not assignable to the component type of the annotated array, the method is considered as
+         * non-bindable.
+         */
         STRICT(true),
+
+        /**
+         * Other than a {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.AllArguments.Assignment#STRICT}
+         * assignment, a slack assignment simply ignores non-bindable parameters and does not include them in the target
+         * array. In the most extreme case where no source method parameter is assignable to the component type
+         * of the annotated array, the array that is assigned to the target parameter is empty.
+         */
         SLACK(false);
 
+        /**
+         * Determines if this assignment is strict.
+         */
         private final boolean strict;
 
-        private Binding(boolean strict) {
+        /**
+         * Creates a new assignment type.
+         *
+         * @param strict {@code true} if this assignment is strict.
+         */
+        private Assignment(boolean strict) {
             this.strict = strict;
         }
 
+        /**
+         * Returns {@code true} if this assignment is strict.
+         *
+         * @return {@code true} if this assignment is strict.
+         */
         protected boolean isStrict() {
             return strict;
         }

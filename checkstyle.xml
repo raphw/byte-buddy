@@ -16,19 +16,11 @@
 
     <module name="TreeWalker">
 
-        <!-- Checkstyle has a bug that disallows @return in annotation methods,enable on demand -->
-        <!--<module name="JavadocMethod">-->
-        <!--<property name="scope" value="protected"/>-->
-        <!--</module>-->
-        <!--<module name="JavadocType">-->
-        <!--<property name="scope" value="protected"/>-->
-        <!--</module>-->
-        <!--<module name="JavadocVariable">-->
-        <!--<property name="scope" value="protected"/>-->
-        <!--</module>-->
-        <!--<module name="JavadocStyle">-->
-        <!--<property name="scope" value="protected"/>-->
-        <!--</module>-->
+        <!-- Checkstyle has a bug that disallows @return in annotation methods, enable only on demand -->
+        <!--<module name="JavadocMethod"/>-->
+        <!--<module name="JavadocType"/>-->
+        <!--<module name="JavadocVariable"/>-->
+        <module name="JavadocStyle"/>
 
         <module name="ConstantName"/>
         <module name="LocalFinalVariableName"/>

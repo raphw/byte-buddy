@@ -45,6 +45,7 @@ public interface MethodLookupEngine {
         /**
          * Returns a {@link net.bytebuddy.instrumentation.method.MethodLookupEngine}.
          *
+         * @param classFileVersion The class file version of the created type.
          * @return A {@link net.bytebuddy.instrumentation.method.MethodLookupEngine}.
          */
         MethodLookupEngine make(ClassFileVersion classFileVersion);
@@ -537,6 +538,8 @@ public interface MethodLookupEngine {
              * classes must be pushed first in order to respect method overrides.
              *
              * @param typeDescription The (non-interface) class to push into the bucket.
+             * @param methodMatcher   The method matcher for filtering methods of interest that are declared by the
+             *                        given type.
              */
             private void pushClass(TypeDescription typeDescription, MethodMatcher methodMatcher) {
                 if (processedTypes.add(typeDescription)) {
@@ -629,6 +632,7 @@ public interface MethodLookupEngine {
              *
              * @param typeDescription             The interface type to process.
              * @param processedMethodsInHierarchy A set of unique method signatures that were already processed.
+             * @param defaultMethodLookup         A processor for performing a lookup of default methods.
              */
             private void pushInterface(TypeDescription typeDescription,
                                        Set<String> processedMethodsInHierarchy,

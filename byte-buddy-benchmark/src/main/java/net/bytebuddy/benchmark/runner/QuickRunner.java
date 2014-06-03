@@ -12,8 +12,14 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
  */
 public class QuickRunner {
 
+    /**
+     * A wildcard for the identification of a benchmark by JMH.
+     */
     private static final String WILDCARD = ".*";
 
+    /**
+     * This class is not supposed to be constructed.
+     */
     private QuickRunner() {
         throw new UnsupportedOperationException();
     }

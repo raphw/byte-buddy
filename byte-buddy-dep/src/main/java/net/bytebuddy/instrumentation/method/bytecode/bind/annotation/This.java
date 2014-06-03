@@ -38,6 +38,9 @@ public @interface This {
          */
         INSTANCE;
 
+        /**
+         * The index of the {@code this} reference of method variable arrays of non-static methods.
+         */
         private static final int THIS_REFERENCE_INDEX = 0;
 
         @Override

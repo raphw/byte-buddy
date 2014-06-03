@@ -5,7 +5,7 @@ import net.bytebuddy.dynamic.ClassLoadingStrategy;
 import net.bytebuddy.instrumentation.MethodDelegation;
 import net.bytebuddy.modifier.MemberVisibility;
 import org.junit.Before;
-import org.openjdk.jmh.logic.BlackHole;
+import org.openjdk.jmh.infra.Blackhole;
 
 import java.lang.reflect.Method;
 import java.util.Collections;
@@ -20,19 +20,19 @@ public abstract class AbstractBlackHoleTest {
 
     private static final String BLACK_HOLE_METHOD = "_jmh_tryInit_";
 
-    protected BlackHole blackHole;
+    protected Blackhole blackHole;
 
     @Before
     public void setUpBlackHole() throws Exception {
         Class<?> blackHoleGenerator = new ByteBuddy()
                 .subclass(Object.class)
                 .name(String.format("C%d$generated", Math.abs(new Random().nextInt())))
-                .defineMethod(BLACK_HOLE_METHOD, BlackHole.class, Collections.<Class<?>>emptyList(), MemberVisibility.PUBLIC)
-                .intercept(MethodDelegation.construct(BlackHole.class))
+                .defineMethod(BLACK_HOLE_METHOD, Blackhole.class, Collections.<Class<?>>emptyList(), MemberVisibility.PUBLIC)
+                .intercept(MethodDelegation.construct(Blackhole.class))
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         Method method = blackHoleGenerator.getDeclaredMethod(BLACK_HOLE_METHOD);
-        blackHole = (BlackHole) method.invoke(blackHoleGenerator.newInstance());
+        blackHole = (Blackhole) method.invoke(blackHoleGenerator.newInstance());
     }
 }

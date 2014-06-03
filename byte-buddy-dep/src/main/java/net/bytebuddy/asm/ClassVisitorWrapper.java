@@ -67,7 +67,7 @@ public interface ClassVisitorWrapper {
 
         /**
          * Adds a {@code ClassVisitorWrapper} to the <b>end</b> of the chain such that the wrapped
-         * ASM {@code ClassVisitor} will be applied after the other class visitors
+         * ASM {@code ClassVisitor} will be applied after the other class visitors.
          *
          * @param classVisitorWrapper The {@code ClassVisitorWrapper} to add to the end of the chain.
          * @return A new chain incorporating the {@code ClassVisitorWrapper}.

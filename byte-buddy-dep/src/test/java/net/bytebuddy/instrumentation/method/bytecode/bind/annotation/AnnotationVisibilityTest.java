@@ -32,7 +32,9 @@ public class AnnotationVisibilityTest {
                 {RuntimeType.class},
                 {Super.class},
                 {SuperCall.class},
-                {This.class}
+                {DefaultCall.class},
+                {This.class},
+                {Pipe.class}
         });
     }
 
