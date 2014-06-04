@@ -806,47 +806,92 @@ public final class MethodMatchers {
         /**
          * Checks if two strings equal and respects casing differences.
          */
-        EQUALS_FULLY("named"),
+        EQUALS_FULLY("named") {
+            @Override
+            protected boolean matches(String comparisonTarget, String comparisonSource) {
+                return comparisonSource.equals(comparisonTarget);
+            }
+        },
 
         /**
          * Checks if two strings equal without respecting casing differences.
          */
-        EQUALS_FULLY_IGNORE_CASE("namedIgnoreCase"),
+        EQUALS_FULLY_IGNORE_CASE("namedIgnoreCase") {
+            @Override
+            protected boolean matches(String comparisonTarget, String comparisonSource) {
+                return comparisonSource.equalsIgnoreCase(comparisonTarget);
+            }
+        },
 
         /**
          * Checks if a string starts with the a second string with respecting casing differences.
          */
-        STARTS_WITH("startsWith"),
+        STARTS_WITH("startsWith") {
+            @Override
+            protected boolean matches(String comparisonTarget, String comparisonSource) {
+                return comparisonSource.startsWith(comparisonTarget);
+            }
+        },
 
         /**
          * Checks if a string starts with a second string without respecting casing differences.
          */
-        STARTS_WITH_IGNORE_CASE("startsWithIgnoreCase"),
+        STARTS_WITH_IGNORE_CASE("startsWithIgnoreCase") {
+            @Override
+            protected boolean matches(String comparisonTarget, String comparisonSource) {
+                return comparisonSource.toLowerCase().startsWith(comparisonTarget.toLowerCase());
+            }
+        },
 
         /**
          * Checks if a string ends with a second string with respecting casing differences.
          */
-        ENDS_WITH("endsWith"),
+        ENDS_WITH("endsWith") {
+            @Override
+            protected boolean matches(String comparisonTarget, String comparisonSource) {
+                return comparisonSource.endsWith(comparisonTarget);
+            }
+        },
 
         /**
          * Checks if a string ends with a second string without respecting casing differences.
          */
-        ENDS_WITH_IGNORE_CASE("endsWithIgnoreCase"),
+        ENDS_WITH_IGNORE_CASE("endsWithIgnoreCase") {
+            @Override
+            protected boolean matches(String comparisonTarget, String comparisonSource) {
+                return comparisonSource.toLowerCase().endsWith(comparisonTarget.toLowerCase());
+            }
+        },
 
         /**
          * Checks if a string contains another string with respecting casing differences.
          */
-        CONTAINS("contains"),
+        CONTAINS("contains") {
+            @Override
+            protected boolean matches(String comparisonTarget, String comparisonSource) {
+                return comparisonSource.contains(comparisonTarget);
+            }
+        },
 
         /**
          * Checks if a string contains another string without respecting casing differences.
          */
-        CONTAINS_IGNORE_CASE("containsIgnoreCase"),
+        CONTAINS_IGNORE_CASE("containsIgnoreCase") {
+            @Override
+            protected boolean matches(String comparisonTarget, String comparisonSource) {
+                return comparisonSource.toLowerCase().contains(comparisonTarget.toLowerCase());
+            }
+        },
 
         /**
          * Checks if a string can be matched by a regular expression.
          */
-        MATCHES("matches");
+        MATCHES("matches") {
+            @Override
+            protected boolean matches(String comparisonTarget, String comparisonSource) {
+                return comparisonSource.matches(comparisonTarget);
+            }
+        };
 
         /**
          * A description of the string for providing meaningful {@link Object#toString()} implementations for
@@ -880,30 +925,7 @@ public final class MethodMatchers {
          * @param comparisonSource The source which is subject of the comparison to another string.
          * @return {@code true} if the source matches the target.
          */
-        private boolean matches(String comparisonTarget, String comparisonSource) {
-            switch (this) {
-                case EQUALS_FULLY:
-                    return comparisonSource.equals(comparisonTarget);
-                case EQUALS_FULLY_IGNORE_CASE:
-                    return comparisonSource.equalsIgnoreCase(comparisonTarget);
-                case STARTS_WITH:
-                    return comparisonSource.startsWith(comparisonTarget);
-                case STARTS_WITH_IGNORE_CASE:
-                    return comparisonSource.toLowerCase().startsWith(comparisonTarget.toLowerCase());
-                case ENDS_WITH:
-                    return comparisonSource.endsWith(comparisonTarget);
-                case ENDS_WITH_IGNORE_CASE:
-                    return comparisonSource.toLowerCase().endsWith(comparisonTarget.toLowerCase());
-                case CONTAINS:
-                    return comparisonSource.contains(comparisonTarget);
-                case CONTAINS_IGNORE_CASE:
-                    return comparisonSource.toLowerCase().contains(comparisonTarget.toLowerCase());
-                case MATCHES:
-                    return comparisonSource.matches(comparisonTarget);
-                default:
-                    throw new AssertionError("Unknown match mode: " + this);
-            }
-        }
+        protected abstract boolean matches(String comparisonTarget, String comparisonSource);
     }
 
     /**

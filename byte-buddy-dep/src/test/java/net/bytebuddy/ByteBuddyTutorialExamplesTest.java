@@ -16,7 +16,12 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocati
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.utility.Java8Rule;
+import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.PrecompiledTypeClassLoader;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -24,6 +29,7 @@ import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -35,6 +41,12 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class ByteBuddyTutorialExamplesTest {
+
+    private static final String DEFAULT_METHOD_INTERFACE = "net.bytebuddy.test.precompiled.SingleDefaultMethodInterface";
+    private static final String CONFLICTING_DEFAULT_METHOD_INTERFACE = "net.bytebuddy.test.precompiled.SingleDefaultMethodConflictingInterface";
+
+    @Rule
+    public TestRule mockitoRule = new MockitoRule(this);
 
     @SuppressWarnings("unused")
     private static void println(String s) {
@@ -197,6 +209,24 @@ public class ByteBuddyTutorialExamplesTest {
     @Test
     public void testFieldsAndMethodsMethodSuperCallExplicit() throws Exception {
         assertThat(new LoggingMemoryDatabase().load("qux"), is(Arrays.asList("qux: foo", "qux: bar")));
+    }
+
+    @Test
+    @Java8Rule.Enforce
+    public void testFieldsAndMEthodMethodDefaultCall() throws Exception {
+        // This test differs from the tutorial by only conditionally expressing the Java 8 types.
+        ClassLoader classLoader = new PrecompiledTypeClassLoader(getClass().getClassLoader());
+        Object instance = new ByteBuddy(ClassFileVersion.JAVA_V8)
+                .subclass(Object.class)
+                .implement(classLoader.loadClass(DEFAULT_METHOD_INTERFACE))
+                .implement(classLoader.loadClass(CONFLICTING_DEFAULT_METHOD_INTERFACE))
+                .method(named("foo")).intercept(DefaultMethodCall.prioritize(classLoader.loadClass(DEFAULT_METHOD_INTERFACE)))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded()
+                .newInstance();
+        Method method = instance.getClass().getMethod("foo");
+        assertThat(method.invoke(instance), is((Object) "foo"));
     }
 
     @Test
