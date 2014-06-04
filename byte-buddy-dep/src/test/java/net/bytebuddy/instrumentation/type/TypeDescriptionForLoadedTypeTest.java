@@ -1,5 +1,6 @@
 package net.bytebuddy.instrumentation.type;
 
+import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.test.packaging.PackagePrivateType;
 import org.junit.Before;
@@ -382,6 +383,40 @@ public class TypeDescriptionForLoadedTypeTest {
         assertThat(objectType.isVisibleTo(integerType), is(true));
         assertThat(objectType.isVisibleTo(new TypeDescription.ForLoadedType(PackagePrivateType.TYPE)), is(true));
         assertThat(new TypeDescription.ForLoadedType(PackagePrivateType.TYPE).isVisibleTo(objectType), is(false));
+    }
+
+    @Test
+    public void testEnclosingMethod() throws Exception {
+        class Foo {
+            /* empty */
+        }
+        assertThat(new TypeDescription.ForLoadedType(Foo.class).getEnclosingMethod(),
+                is((MethodDescription) new MethodDescription.ForLoadedMethod(TypeDescriptionForLoadedTypeTest.class
+                        .getDeclaredMethod("testEnclosingMethod"))));
+    }
+
+    @Test
+    public void testEnclosingType() throws Exception {
+        class Foo {
+            class Bar {
+            /* empty */
+            }
+        }
+        assertThat(new TypeDescription.ForLoadedType(Foo.Bar.class).getEnclosingClass(),
+                is((TypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
+        assertThat(new TypeDescription.ForLoadedType(Foo.Bar.class).getDeclaringType(),
+                is((TypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
+    }
+
+    @Test
+    public void testGeneralProperties() throws Exception {
+        assertThat(objectType.getCanonicalName(), is(Object.class.getCanonicalName()));
+        assertThat(objectType.isAnonymousClass(), is(Object.class.isAnonymousClass()));
+        assertThat(objectType.isLocalClass(), is(Object.class.isLocalClass()));
+        assertThat(objectType.isMemberClass(), is(Object.class.isMemberClass()));
+        assertThat(objectType.isAnnotation(), is(Object.class.isAnnotation()));
+        assertThat(objectType.isSynthetic(), is(Object.class.isSynthetic()));
+        assertThat(objectType.isInstance(new Object()), is(true));
     }
 
     @Test

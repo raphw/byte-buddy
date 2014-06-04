@@ -2,6 +2,7 @@ package net.bytebuddy.instrumentation.method.bytecode.stack;
 
 import org.junit.Test;
 
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -32,5 +33,13 @@ public class StackManipulationSizeTest {
         StackManipulation.Size merged = first.aggregate(second);
         assertThat(merged.getSizeImpact(), is(-2));
         assertThat(merged.getMaximalSize(), is(4));
+    }
+
+    @Test
+    public void testHashCodeEquals() throws Exception {
+        assertThat(new StackManipulation.Size(0, 0).hashCode(), is(new StackManipulation.Size(0, 0).hashCode()));
+        assertThat(new StackManipulation.Size(0, 0), is(new StackManipulation.Size(0, 0)));
+        assertThat(new StackManipulation.Size(0, 0).hashCode(), not(is(new StackManipulation.Size(0, 1).hashCode())));
+        assertThat(new StackManipulation.Size(0, 0), not(is(new StackManipulation.Size(0, 1))));
     }
 }

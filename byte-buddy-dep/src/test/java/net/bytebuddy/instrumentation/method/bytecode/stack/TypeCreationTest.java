@@ -11,6 +11,9 @@ import org.mockito.Mock;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
 public class TypeCreationTest {
@@ -56,5 +59,13 @@ public class TypeCreationTest {
     public void testTypeCreationAbstract() throws Exception {
         when(typeDescription.isAbstract()).thenReturn(true);
         TypeCreation.forType(typeDescription);
+    }
+
+    @Test
+    public void testHashCodeEquals() throws Exception {
+        assertThat(TypeCreation.forType(typeDescription).hashCode(), is(TypeCreation.forType(typeDescription).hashCode()));
+        assertThat(TypeCreation.forType(typeDescription), is(TypeCreation.forType(typeDescription)));
+        assertThat(TypeCreation.forType(typeDescription).hashCode(), not(is(TypeCreation.forType(mock(TypeDescription.class)).hashCode())));
+        assertThat(TypeCreation.forType(typeDescription), not(is(TypeCreation.forType(mock(TypeDescription.class)))));
     }
 }

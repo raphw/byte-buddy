@@ -181,24 +181,6 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
     }
 
     /**
-     * Implementations represent an unboxing delegate that is able to perform the unboxing operation.
-     */
-    public static interface UnboxingResponsible {
-
-        /**
-         * Attempts to unbox the represented type in order to assign the unboxed value to the given target type
-         * while using the assigner that is provided by the method call.
-         *
-         * @param targetType          The type that is the desired outcome of the assignment.
-         * @param assigner            The assigner used to assign the unboxed type to the target type.
-         * @param considerRuntimeType If {@code true}, unsafe castings are allowed for this assignment.
-         * @return A stack manipulation representing this assignment if such an assignment is possible. An illegal
-         * assignment otherwise.
-         */
-        StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, boolean considerRuntimeType);
-    }
-
-    /**
      * An explicitly types unboxing responsible is applied for directly unboxing a wrapper type.
      */
     private static enum ExplicitlyTypedUnboxingResponsible implements UnboxingResponsible {
@@ -270,6 +252,24 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
                     "primitiveUnboxingDelegate=" + primitiveUnboxingDelegate +
                     '}';
         }
+    }
+
+    /**
+     * Implementations represent an unboxing delegate that is able to perform the unboxing operation.
+     */
+    public static interface UnboxingResponsible {
+
+        /**
+         * Attempts to unbox the represented type in order to assign the unboxed value to the given target type
+         * while using the assigner that is provided by the method call.
+         *
+         * @param targetType          The type that is the desired outcome of the assignment.
+         * @param assigner            The assigner used to assign the unboxed type to the target type.
+         * @param considerRuntimeType If {@code true}, unsafe castings are allowed for this assignment.
+         * @return A stack manipulation representing this assignment if such an assignment is possible. An illegal
+         * assignment otherwise.
+         */
+        StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, boolean considerRuntimeType);
     }
 
     /**

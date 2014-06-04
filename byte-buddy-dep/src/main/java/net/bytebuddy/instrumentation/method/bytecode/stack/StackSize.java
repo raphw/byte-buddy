@@ -27,6 +27,7 @@ public enum StackSize {
 
     /**
      * Creates a new stack size.
+     *
      * @param size The size of the stack this instance represents.
      */
     private StackSize(int size) {
