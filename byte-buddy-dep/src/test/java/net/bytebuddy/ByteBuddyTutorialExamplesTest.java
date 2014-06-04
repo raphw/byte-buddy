@@ -17,11 +17,10 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.Java8Rule;
-import net.bytebuddy.utility.MockitoRule;
 import net.bytebuddy.utility.PrecompiledTypeClassLoader;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
+import org.junit.rules.MethodRule;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -46,7 +45,7 @@ public class ByteBuddyTutorialExamplesTest {
     private static final String CONFLICTING_DEFAULT_METHOD_INTERFACE = "net.bytebuddy.test.precompiled.SingleDefaultMethodConflictingInterface";
 
     @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
+    public MethodRule java8Rule = new Java8Rule();
 
     @SuppressWarnings("unused")
     private static void println(String s) {
