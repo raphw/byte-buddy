@@ -1164,6 +1164,19 @@ class Interceptor {
 </p>
 
 <p>
+    As an equivalent to <code>@SuperCall</code>, Byte Buddy comes with a <code>@DefaultCall</code> annotation which
+    allows the invocation of a default method instead of calling a method's super method. A method with this parameter
+    annotation is only considered for binding if the intercepted method is as a matter of fact declared as a default
+    method by an interface that is directly implemented by the instrumented type. Similarly, a <code>@SuperCall</code>
+    annotation prevents a method's binding if the instrumented method does not define a non-abstract super method. If
+    you however want to invoke a default method on a specific type, you can specify the <code>@DefaultCall</code>'s
+    <code>targetType</code> property with a specific interface. With this specification, Byte Buddy injects a proxy
+    instance which invokes the given interface type's default method, if such a method exists. Otherwise, the target
+    method with the parameter annotation is not considered as a delegation target. Obviously, default method invocation
+    is only available for classes that are defined in a byte code level from Java 8.
+</p>
+
+<p>
     So far, we have seen a great deal of the <code>MethodDelegation</code> instrumentation. But before we proceed,
     we want to take a more detailed look on how Byte Buddy selects a target method. We already described how Byte
     Buddy resolves a <i>most specific</i> method by comparing parameter types but there is more to it. After Byte Buddy
@@ -1379,6 +1392,58 @@ new ByteBuddy()
     custom <code>ConstructorStrategy</code> or by defining an individual constructor within Byte Buddy's domain specific
     language using the <code>defineConstructor</code> method. Furthermore, we are planing to add new features to Byte
     Buddy for defining more complex constructors out of the box.
+</p>
+
+<h4>Calling a default method</h4>
+
+<p>
+    With its version 8 release, the Java programming language introduced
+    <a href="http://docs.oracle.com/javase/tutorial/java/IandI/defaultmethods.html">default methods for interfaces</a>.
+    In Java, a default method invocation is expressed by a similar syntax to the invocation of a super method. As an
+    only disparity, a default method invocation names the interface that defines the method. This is necessary because
+    a default method invocation can be ambiguous if two interfaces define a method with identical signature.
+    Accordingly, Byte Buddy's <code>DefaultMethodCall</code> instrumentation takes a list of <i>prioritized</i>
+    interfaces. When intercepting a method, the <code>DefaultMethodCall</code> invokes a default method on the
+    first-mentioned interface. As an example, assume that we wanted to implement the two following interfaces:
+</p>
+
+<pre class="prettyprint">
+interface First {
+  default String qux() { return "FOO"; }
+}
+interface Second {
+  default String qux() { return "BAR"; }
+}
+</pre>
+
+<p>
+    If we now created a class that implements both interfaces and implemented the <code>qux</code> method to call a
+    default method, this invocation could express both a call of the default method defined on the <code>First</code>
+    or the <code>Second</code> interface. However, by specifying the <code>DefaultMethodCall</code> to prioritize the
+    <code>First</code> interface, Byte Buddy would know that it should invoke this latter interface's method instead of
+    the alternative.
+</p>
+
+<pre class="prettyprint">
+new ByteBuddy(ClassFileVersion.JAVA_V8)
+  .subclass(Object.class)
+  .implement(First.class)
+  .implement(Second.class)
+  .method(named("qux")).intercept(DefaultMethodCall.prioritize(First.class))
+  .make()
+</pre>
+
+<p>
+    Note that Java class that are defined in a version before Java 8 do not support default methods. Furthermore, you
+    should be aware that Byte Buddy imposes weaker requirements on the invokability of a default method compared to the
+    Java programming language. Byte Buddy only requires a default method's interface to be implemented by the
+    most-specific class in a type's hierarchy. Other than the Java programming language, it does not require this
+    interface to be the most specific interface that is implemented by any super class. Finally, if you do not expect
+    a ambiguous default method definitions, you can always use <code>DefaultMethodCall.unambiguousOnly()</code> for
+    receiving an instrumentation which throws an exception on the discovery of an ambiguous default method invocation.
+    This same behavior is displayed by a prioritizing <code>DefaultMethodCall</code> where a default method call is
+    ambiguous between non-prioritized interfaces and no prioritized interface was found to define a method with a
+    compatible signature.
 </p>
 
 <h4>Accessing fields</h4>
