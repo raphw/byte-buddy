@@ -1173,7 +1173,7 @@ class Interceptor {
     <code>targetType</code> property with a specific interface. With this specification, Byte Buddy injects a proxy
     instance which invokes the given interface type's default method, if such a method exists. Otherwise, the target
     method with the parameter annotation is not considered as a delegation target. Obviously, default method invocation
-    is only available for classes that are defined in a byte code level from Java 8.
+    is only available for classes that are defined in a class file version equal to Java 8 or newer.
 </p>
 
 <p>
@@ -1435,16 +1435,16 @@ new ByteBuddy(ClassFileVersion.JAVA_V8)
 </pre>
 
 <p>
-    Note that Java class that are defined in a version before Java 8 do not support default methods. Furthermore, you
-    should be aware that Byte Buddy imposes weaker requirements on the invokability of a default method compared to the
-    Java programming language. Byte Buddy only requires a default method's interface to be implemented by the
-    most-specific class in a type's hierarchy. Other than the Java programming language, it does not require this
-    interface to be the most specific interface that is implemented by any super class. Finally, if you do not expect
-    a ambiguous default method definitions, you can always use <code>DefaultMethodCall.unambiguousOnly()</code> for
-    receiving an instrumentation which throws an exception on the discovery of an ambiguous default method invocation.
-    This same behavior is displayed by a prioritizing <code>DefaultMethodCall</code> where a default method call is
-    ambiguous between non-prioritized interfaces and no prioritized interface was found to define a method with a
-    compatible signature.
+    Note that any Java class that is defined in a class file version before Java 8 does not support default methods.
+    Furthermore, you should be aware that Byte Buddy imposes weaker requirements on the invokability of a default
+    method compared to the Java programming language. Byte Buddy only requires a default method's interface to be
+    implemented by the most-specific class in a type's hierarchy. Other than the Java programming language, it does not
+    require this interface to be the most specific interface that is implemented by any super class. Finally, if you do
+    not expect a ambiguous default method definitions, you can always use
+    <code>DefaultMethodCall.unambiguousOnly()</code> for receiving an instrumentation which throws an exception on the
+    discovery of an ambiguous default method invocation. This same behavior is displayed by a prioritizing
+    <code>DefaultMethodCall</code> where a default method call is ambiguous between non-prioritized interfaces and no
+    prioritized interface was found to define a method with a compatible signature.
 </p>
 
 <h4>Accessing fields</h4>
