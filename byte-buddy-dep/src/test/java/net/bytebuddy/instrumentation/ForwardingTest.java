@@ -64,6 +64,11 @@ public class ForwardingTest extends AbstractInstrumentationTest {
         assertThat(Forwarding.to(foo), not(is(Forwarding.to(new Foo()))));
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testDifferentInstanceForwardingThrowsException() throws Exception {
+        instrument(Foo.class, Forwarding.toStaticField(FOO, Qux.class));
+    }
+
     public static class Foo {
 
         public String foo() {
@@ -77,5 +82,9 @@ public class ForwardingTest extends AbstractInstrumentationTest {
         public String foo() {
             return BAR;
         }
+    }
+
+    public static class Qux {
+        /* empty */
     }
 }

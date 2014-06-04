@@ -23,14 +23,17 @@ public class Forwarding implements Instrumentation {
      * The prefix of any implicit field name for storing a delegate..
      */
     private static final String FIELD_PREFIX = "delegate";
+
     /**
      * The name of the field.
      */
     protected final String fieldName;
+
     /**
      * The type of the field.
      */
     protected final TypeDescription fieldType;
+
     /**
      * A handler for preparing the instrumented type and the field invocation operation.
      */
@@ -304,6 +307,32 @@ public class Forwarding implements Instrumentation {
                     MethodReturn.returning(instrumentedMethod.getReturnType())
             ).apply(methodVisitor, instrumentationContext);
             return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && delegateLoadingInstruction.equals(((Appender) other).delegateLoadingInstruction)
+                    && Forwarding.this.equals(((Appender) other).getForwarding());
+        }
+
+        /**
+         * Returns the outer instance.
+         *
+         * @return The outer instance.
+         */
+        private Forwarding getForwarding() {
+            return Forwarding.this;
+        }
+
+        @Override
+        public int hashCode() {
+            return Forwarding.this.hashCode() + 31 * delegateLoadingInstruction.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "Forwarding.Appender{delegateLoadingInstruction=" + delegateLoadingInstruction + '}';
         }
     }
 }
