@@ -1589,6 +1589,12 @@ UserType userType = (UserType) factory.makeInstance();
         exception.
     </span></li>
     <li><span>
+        The <code>Forwarding</code> instrumentation allows to simply forward a method call to another instance
+        of the same type as the declaring type of an intercepted method. The same result can be achieved using a
+        <code>MethodDelegation</code>. However, by <code>Forwarding</code> a simpler delegation model is applied
+        which can cover use cases where no target method discovery is required.
+    </span></li>
+    <li><span>
         The <code>InvocationHandlerAdapter</code> allows to use existing <code>InvocationHandler</code>s from the
         for the <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Proxy.html">proxy classes</a>
         that ship with the Java Class Library.
