@@ -248,8 +248,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     }
 
     @Override
-    public OptionalMatchedMethodInterception<T> implement(TypeDescription interfaceType) {
-        return new SubclassOptionalMatchedMethodInterception<T>(isInterface(interfaceType));
+    public OptionalMatchedMethodInterception<T> implement(TypeDescription... interfaceType) {
+        return new SubclassOptionalMatchedMethodInterception<T>(interfaceType);
     }
 
     @Override
@@ -973,27 +973,27 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     private class SubclassOptionalMatchedMethodInterception<S> extends AbstractDelegatingBuilder<S> implements OptionalMatchedMethodInterception<S> {
 
         /**
-         * The interface to implement.
+         * A list of all interfaces to implement.
          */
-        private TypeDescription interfaceType;
+        private TypeDescription[] interfaceType;
 
         /**
          * Creates a new subclass optional matched method interception.
          *
-         * @param interfaceType The interface to implement.
+         * @param interfaceType An array of all interfaces to implement.
          */
-        private SubclassOptionalMatchedMethodInterception(TypeDescription interfaceType) {
+        private SubclassOptionalMatchedMethodInterception(TypeDescription[] interfaceType) {
             this.interfaceType = interfaceType;
         }
 
         @Override
         public MethodAnnotationTarget<S> intercept(Instrumentation instrumentation) {
-            return materialize().method(isDeclaredBy(interfaceType)).intercept(instrumentation);
+            return materialize().method(isDeclaredByAny(interfaceType)).intercept(instrumentation);
         }
 
         @Override
         public MethodAnnotationTarget<S> withoutCode() {
-            return materialize().method(isDeclaredBy(interfaceType)).withoutCode();
+            return materialize().method(isDeclaredByAny(interfaceType)).withoutCode();
         }
 
         @Override
@@ -1001,7 +1001,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
             return new SubclassDynamicTypeBuilder<S>(classFileVersion,
                     namingStrategy,
                     superType,
-                    join(interfaceTypes, isInterface(interfaceType)),
+                    join(interfaceTypes, isInterface(Arrays.asList(interfaceType))),
                     modifiers,
                     attributeAppender,
                     ignoredMethods,
@@ -1023,13 +1023,13 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
             if (this == other) return true;
             if (other == null || getClass() != other.getClass()) return false;
             SubclassOptionalMatchedMethodInterception<?> that = (SubclassOptionalMatchedMethodInterception<?>) other;
-            return interfaceType.equals(that.interfaceType)
+            return Arrays.equals(interfaceType, that.interfaceType)
                     && SubclassDynamicTypeBuilder.this.equals(that.getSubclassDynamicTypeBuilder());
         }
 
         @Override
         public int hashCode() {
-            return 31 * SubclassDynamicTypeBuilder.this.hashCode() + interfaceType.hashCode();
+            return 31 * SubclassDynamicTypeBuilder.this.hashCode() + Arrays.hashCode(interfaceType);
         }
 
         /**
@@ -1045,7 +1045,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         public String toString() {
             return "SubclassOptionalMatchedMethodInterception{" +
                     "base=" + SubclassDynamicTypeBuilder.this +
-                    "interfaceType=" + interfaceType +
+                    "interfaceType=" + Arrays.toString(interfaceType) +
                     '}';
         }
     }

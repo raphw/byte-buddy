@@ -13,6 +13,7 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 import org.mockito.asm.Opcodes;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 
@@ -24,7 +25,7 @@ import static org.mockito.Mockito.when;
 
 public class ByteBuddyCommonsTest {
 
-    private static final String FOO = "foo", BAR = "bar", QUX = "qux", FOOBAR = "foo.bar", PUBLIC = "public";
+    private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz", FOOBAR = "foo.bar", PUBLIC = "public";
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -63,31 +64,44 @@ public class ByteBuddyCommonsTest {
     }
 
     @Test
-    public void testClassIsImplementable() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Object.class);
-        assertThat(isImplementable(typeDescription), is(typeDescription));
+    public void testIsInterfaceList() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Runnable.class);
+        TypeDescription otherTypeDescription = new TypeDescription.ForLoadedType(Serializable.class);
+        assertThat(isInterface(Arrays.asList(typeDescription, otherTypeDescription)),
+                is(Arrays.asList(typeDescription, otherTypeDescription)));
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testFinalClassIsImplementableThrowsException() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(String.class);
-        isImplementable(typeDescription);
+    public void testIsInterfaceListThrowsException() throws Exception {
+        isInterface(Arrays.asList(new TypeDescription.ForLoadedType(Runnable.class), new TypeDescription.ForLoadedType(Object.class)));
     }
 
     @Test
-    public void testInterfaceIsImplementable() throws Exception {
+    public void testClassIsExtendable() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Object.class);
+        assertThat(isExtendable(typeDescription), is(typeDescription));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testFinalClassIsExtendableThrowsException() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(String.class);
+        isExtendable(typeDescription);
+    }
+
+    @Test
+    public void testInterfaceIsExtendable() throws Exception {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(Runnable.class);
-        assertThat(isImplementable(typeDescription), is(typeDescription));
+        assertThat(isExtendable(typeDescription), is(typeDescription));
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testPrimitiveIsImplementableThrowsException() throws Exception {
-        isImplementable(new TypeDescription.ForLoadedType(int.class));
+    public void testPrimitiveIsExtendableThrowsException() throws Exception {
+        isExtendable(new TypeDescription.ForLoadedType(int.class));
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testArrayIsImplementableThrowsException() throws Exception {
-        isImplementable(new TypeDescription.ForLoadedType(Object[].class));
+    public void testArrayIsExtendableThrowsException() throws Exception {
+        isExtendable(new TypeDescription.ForLoadedType(Object[].class));
     }
 
     @Test
@@ -98,6 +112,11 @@ public class ByteBuddyCommonsTest {
     @Test
     public void testJoinElementAndList() throws Exception {
         assertThat(join(FOO, Arrays.asList(BAR, QUX)), is(Arrays.asList(FOO, BAR, QUX)));
+    }
+
+    @Test
+    public void testJoinListAndList() throws Exception {
+        assertThat(join(Arrays.asList(FOO, BAR), Arrays.asList(QUX, BAZ)), is(Arrays.asList(FOO, BAR, QUX, BAZ)));
     }
 
     @Test
@@ -119,7 +138,6 @@ public class ByteBuddyCommonsTest {
     public void testIsValidIdentifierAsKeywordThrowsException() throws Exception {
         isValidIdentifier(PUBLIC);
     }
-
 
     @Test
     public void testIsValidTypeName() throws Exception {

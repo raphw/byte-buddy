@@ -4,7 +4,9 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Super;
 import org.junit.Test;
 
-import static org.hamcrest.CoreMatchers.is;
+import java.io.Serializable;
+
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class MethodDelegationSuperTest extends AbstractInstrumentationTest {
@@ -45,6 +47,13 @@ public class MethodDelegationSuperTest extends AbstractInstrumentationTest {
         loaded.getLoaded().newInstance().qux();
     }
 
+    @Test
+    public void testSerializableProxy() throws Exception {
+        DynamicType.Loaded<Foo> loaded = instrument(Foo.class, MethodDelegation.to(SerializationCheck.class));
+        Foo instance = loaded.getLoaded().newInstance();
+        assertThat(instance.qux(), is((Object) (FOO + QUX)));
+    }
+
     public static interface Qux {
 
         Object qux();
@@ -61,6 +70,7 @@ public class MethodDelegationSuperTest extends AbstractInstrumentationTest {
     public static class Baz {
 
         public static String baz(@Super Foo foo) {
+            assertThat(foo, not(instanceOf(Serializable.class)));
             return foo.qux() + QUX;
         }
     }
@@ -68,6 +78,7 @@ public class MethodDelegationSuperTest extends AbstractInstrumentationTest {
     public static class FooBar {
 
         public static String baz(@Super Qux foo) {
+            assertThat(foo, not(instanceOf(Serializable.class)));
             return foo.qux() + QUX;
         }
     }
@@ -75,6 +86,7 @@ public class MethodDelegationSuperTest extends AbstractInstrumentationTest {
     public static class QuxBaz {
 
         public static String baz(@Super(strategy = Super.Instantiation.UNSAFE) Foo foo) {
+            assertThat(foo, not(instanceOf(Serializable.class)));
             return foo.qux() + QUX;
         }
     }
@@ -103,7 +115,16 @@ public class MethodDelegationSuperTest extends AbstractInstrumentationTest {
     public static class GenericBaz {
 
         public static String baz(@Super GenericBase<String> foo, String value) {
+            assertThat(foo, not(instanceOf(Serializable.class)));
             return foo.qux(value) + QUX;
         }
+    }
+
+    public static class SerializationCheck {
+        public static String baz(@Super(serializableProxy = true) Foo foo) {
+            assertThat(foo, instanceOf(Serializable.class));
+            return foo.qux() + QUX;
+        }
+
     }
 }

@@ -28,10 +28,11 @@ import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.modifier.MemberVisibility;
 import org.objectweb.asm.MethodVisitor;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.Callable;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
+import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isConstructor;
 
 /**
  * A method call proxy represents a class that is compiled against a particular method which can then be called whenever
@@ -58,6 +59,11 @@ public class MethodCallProxy implements AuxiliaryType {
     private final Instrumentation.SpecialMethodInvocation specialMethodInvocation;
 
     /**
+     * Determines if the generated proxy should be serializableProxy.
+     */
+    private final boolean serializableProxy;
+
+    /**
      * The assigner to use for invoking a bridge method target where the parameter and return types need to be
      * assigned.
      */
@@ -68,21 +74,29 @@ public class MethodCallProxy implements AuxiliaryType {
      * value to either the {@link java.util.concurrent.Callable#call()} or {@link Runnable#run()} method returns.
      *
      * @param specialMethodInvocation The special method invocation which should be invoked by this method call proxy.
+     * @param serializableProxy       Determines if the generated proxy should be serializableProxy.
      */
-    public MethodCallProxy(Instrumentation.SpecialMethodInvocation specialMethodInvocation) {
-        this(specialMethodInvocation, new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE), true));
+    public MethodCallProxy(Instrumentation.SpecialMethodInvocation specialMethodInvocation,
+                           boolean serializableProxy) {
+        this(specialMethodInvocation,
+                serializableProxy,
+                new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE), true));
     }
 
     /**
      * Creates a new method call proxy for a given method.
      *
      * @param specialMethodInvocation The special method invocation which should be invoked by this method call proxy.
+     * @param serializableProxy       Determines if the generated proxy should be serializableProxy.
      * @param assigner                An assigner for assigning the target method's return value to either the
      *                                {@link java.util.concurrent.Callable#call()} or {@link Runnable#run()}} methods'
      *                                return values.
      */
-    public MethodCallProxy(Instrumentation.SpecialMethodInvocation specialMethodInvocation, Assigner assigner) {
+    public MethodCallProxy(Instrumentation.SpecialMethodInvocation specialMethodInvocation,
+                           boolean serializableProxy,
+                           Assigner assigner) {
         this.specialMethodInvocation = specialMethodInvocation;
+        this.serializableProxy = serializableProxy;
         this.assigner = assigner;
     }
 
@@ -123,15 +137,13 @@ public class MethodCallProxy implements AuxiliaryType {
                             MethodAccessorFactory methodAccessorFactory) {
         MethodDescription accessorMethod = methodAccessorFactory.registerAccessorFor(specialMethodInvocation);
         LinkedHashMap<String, TypeDescription> parameterFields = extractFields(accessorMethod);
-        Instrumentation methodCall = new MethodCall(accessorMethod, assigner);
         DynamicType.Builder<?> builder = new ByteBuddy(classFileVersion)
                 .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
                 .methodLookupEngine(ProxyMethodLookupEngine.INSTANCE)
                 .name(auxiliaryTypeName)
                 .modifiers(DEFAULT_TYPE_MODIFIER)
-                .implement(Runnable.class)
-                .implement(Callable.class)
-                .method(not(isDeclaredBy(Object.class))).intercept(methodCall)
+                .implement(Runnable.class, Callable.class).intercept(new MethodCall(accessorMethod, assigner))
+                .implement(serializableProxy ? new Class<?>[]{Serializable.class} : new Class<?>[0])
                 .defineConstructor(new ArrayList<TypeDescription>(parameterFields.values()))
                 .intercept(ConstructorCall.INSTANCE);
         for (Map.Entry<String, TypeDescription> field : parameterFields.entrySet()) {
@@ -142,20 +154,27 @@ public class MethodCallProxy implements AuxiliaryType {
 
     @Override
     public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && assigner.equals(((MethodCallProxy) other).assigner)
-                && specialMethodInvocation.equals(((MethodCallProxy) other).specialMethodInvocation);
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+        MethodCallProxy that = (MethodCallProxy) other;
+        return serializableProxy == that.serializableProxy
+                && assigner.equals(that.assigner)
+                && specialMethodInvocation.equals(that.specialMethodInvocation);
     }
 
     @Override
     public int hashCode() {
-        return 31 * specialMethodInvocation.hashCode() + assigner.hashCode();
+        int result = specialMethodInvocation.hashCode();
+        result = 31 * result + (serializableProxy ? 1 : 0);
+        result = 31 * result + assigner.hashCode();
+        return result;
     }
 
     @Override
     public String toString() {
         return "MethodCallProxy{" +
                 "specialMethodInvocation=" + specialMethodInvocation +
+                ", serializableProxy=" + serializableProxy +
                 ", assigner=" + assigner +
                 '}';
     }
@@ -302,15 +321,23 @@ public class MethodCallProxy implements AuxiliaryType {
         private final Instrumentation.SpecialMethodInvocation specialMethodInvocation;
 
         /**
+         * Determines if the generated proxy should be serializableProxy.
+         */
+        private final boolean serializable;
+
+        /**
          * Creates an operand stack assignment that creates a
          * {@link net.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy} for the
          * {@code targetMethod} and pushes this proxy object onto the stack.
          *
          * @param specialMethodInvocation The special method invocation which should be invoked by the created method
          *                                call proxy.
+         * @param serializable            Determines if the generated proxy should be serializableProxy.
          */
-        public AssignableSignatureCall(Instrumentation.SpecialMethodInvocation specialMethodInvocation) {
+        public AssignableSignatureCall(Instrumentation.SpecialMethodInvocation specialMethodInvocation,
+                                       boolean serializable) {
             this.specialMethodInvocation = specialMethodInvocation;
+            this.serializable = serializable;
         }
 
         @Override
@@ -320,7 +347,8 @@ public class MethodCallProxy implements AuxiliaryType {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-            TypeDescription auxiliaryType = instrumentationContext.register(new MethodCallProxy(specialMethodInvocation));
+            TypeDescription auxiliaryType = instrumentationContext
+                    .register(new MethodCallProxy(specialMethodInvocation, serializable));
             return new Compound(
                     TypeCreation.forType(auxiliaryType),
                     Duplication.SINGLE,
@@ -332,17 +360,21 @@ public class MethodCallProxy implements AuxiliaryType {
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
+                    && serializable == ((AssignableSignatureCall) other).serializable
                     && specialMethodInvocation.equals(((AssignableSignatureCall) other).specialMethodInvocation);
         }
 
         @Override
         public int hashCode() {
-            return specialMethodInvocation.hashCode();
+            return 31 * specialMethodInvocation.hashCode() + (serializable ? 1 : 0);
         }
 
         @Override
         public String toString() {
-            return "MethodCallProxy.AssignableSignatureCall{specialMethodInvocation=" + specialMethodInvocation + '}';
+            return "MethodCallProxy.AssignableSignatureCall{" +
+                    "specialMethodInvocation=" + specialMethodInvocation +
+                    ", serializableProxy=" + serializable +
+                    '}';
         }
     }
 

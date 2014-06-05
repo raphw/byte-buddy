@@ -2,10 +2,13 @@ package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.SuperCall;
+import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
+import java.io.Serializable;
 import java.util.concurrent.Callable;
 
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -25,6 +28,13 @@ public class MethodDelegationSuperCallTest extends AbstractInstrumentationTest {
     @Test
     public void testCallableSuperCall() throws Exception {
         DynamicType.Loaded<Bar> loaded = instrument(Bar.class, MethodDelegation.to(CallableClass.class));
+        Bar instance = loaded.getLoaded().newInstance();
+        assertThat(instance.bar(), is(FOO));
+    }
+
+    @Test
+    public void testSerializableProxy() throws Exception {
+        DynamicType.Loaded<Bar> loaded = instrument(Bar.class, MethodDelegation.to(SerializationCheck.class));
         Bar instance = loaded.getLoaded().newInstance();
         assertThat(instance.bar(), is(FOO));
     }
@@ -51,6 +61,7 @@ public class MethodDelegationSuperCallTest extends AbstractInstrumentationTest {
     public static class RunnableClass {
 
         public static void foo(@SuperCall Runnable runnable) {
+            assertThat(runnable, CoreMatchers.not(instanceOf(Serializable.class)));
             runnable.run();
         }
     }
@@ -65,6 +76,7 @@ public class MethodDelegationSuperCallTest extends AbstractInstrumentationTest {
     public static class CallableClass {
 
         public static String bar(@SuperCall Callable<String> callable) throws Exception {
+            assertThat(callable, CoreMatchers.not(instanceOf(Serializable.class)));
             return callable.call();
         }
     }
@@ -78,6 +90,14 @@ public class MethodDelegationSuperCallTest extends AbstractInstrumentationTest {
 
         public static String bar(@SuperCall String value) throws Exception {
             return value;
+        }
+    }
+
+    public static class SerializationCheck {
+
+        public static String bar(@SuperCall(serializableProxy = true) Callable<String> callable) throws Exception {
+            assertThat(callable, instanceOf(Serializable.class));
+            return callable.call();
         }
     }
 }

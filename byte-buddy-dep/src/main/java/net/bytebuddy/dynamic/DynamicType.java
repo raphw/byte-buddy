@@ -110,7 +110,7 @@ public interface DynamicType {
          * @param interfaceType The interface to implement.
          * @return A builder which will create a dynamic type that implements the given interface.
          */
-        OptionalMatchedMethodInterception<T> implement(Class<?> interfaceType);
+        OptionalMatchedMethodInterception<T> implement(Class<?>... interfaceType);
 
         /**
          * Adds an interface to be implemented the created type.
@@ -118,7 +118,7 @@ public interface DynamicType {
          * @param interfaceType A description of the interface to implement.
          * @return A builder which will create a dynamic type that implements the given interface.
          */
-        OptionalMatchedMethodInterception<T> implement(TypeDescription interfaceType);
+        OptionalMatchedMethodInterception<T> implement(TypeDescription... interfaceType);
 
         /**
          * Names the currently created dynamic type by a fixed name.
@@ -521,8 +521,13 @@ public interface DynamicType {
             }
 
             @Override
-            public OptionalMatchedMethodInterception<S> implement(Class<?> interfaceType) {
-                return implement(new TypeDescription.ForLoadedType(interfaceType));
+            public OptionalMatchedMethodInterception<S> implement(Class<?>... interfaceType) {
+                TypeDescription[] typeDescription = new TypeDescription[interfaceType.length];
+                int index = 0;
+                for (Class<?> type : interfaceType) {
+                    typeDescription[index++] = new TypeDescription.ForLoadedType(type);
+                }
+                return implement(typeDescription);
             }
 
             @Override
@@ -837,12 +842,12 @@ public interface DynamicType {
                 }
 
                 @Override
-                public OptionalMatchedMethodInterception<U> implement(Class<?> interfaceType) {
+                public OptionalMatchedMethodInterception<U> implement(Class<?>... interfaceType) {
                     return materialize().implement(interfaceType);
                 }
 
                 @Override
-                public OptionalMatchedMethodInterception<U> implement(TypeDescription interfaceType) {
+                public OptionalMatchedMethodInterception<U> implement(TypeDescription... interfaceType) {
                     return materialize().implement(interfaceType);
                 }
 

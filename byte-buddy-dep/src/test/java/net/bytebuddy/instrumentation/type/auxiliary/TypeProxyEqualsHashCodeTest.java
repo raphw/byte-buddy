@@ -26,57 +26,57 @@ public class TypeProxyEqualsHashCodeTest {
 
     @Test
     public void testEqualsHashCode() throws Exception {
-        assertThat(new TypeProxy(first, instrumentationTarget, true).hashCode(),
-                is(new TypeProxy(first, instrumentationTarget, true).hashCode()));
-        assertThat(new TypeProxy(first, instrumentationTarget, true),
-                is(new TypeProxy(first, instrumentationTarget, true)));
-        assertThat(new TypeProxy(first, instrumentationTarget, true).hashCode(),
-                not(is(new TypeProxy(first, instrumentationTarget, false).hashCode())));
-        assertThat(new TypeProxy(first, instrumentationTarget, true),
-                not(is(new TypeProxy(first, instrumentationTarget, false))));
-        assertThat(new TypeProxy(first, instrumentationTarget, true).hashCode(),
-                not(is(new TypeProxy(second, instrumentationTarget, true).hashCode())));
-        assertThat(new TypeProxy(first, instrumentationTarget, true),
-                not(is(new TypeProxy(second, instrumentationTarget, true))));
+        assertThat(new TypeProxy(first, instrumentationTarget, true, false).hashCode(),
+                is(new TypeProxy(first, instrumentationTarget, true, false).hashCode()));
+        assertThat(new TypeProxy(first, instrumentationTarget, true, false),
+                is(new TypeProxy(first, instrumentationTarget, true, false)));
+        assertThat(new TypeProxy(first, instrumentationTarget, true, false).hashCode(),
+                not(is(new TypeProxy(first, instrumentationTarget, false, false).hashCode())));
+        assertThat(new TypeProxy(first, instrumentationTarget, true, false),
+                not(is(new TypeProxy(first, instrumentationTarget, false, false))));
+        assertThat(new TypeProxy(first, instrumentationTarget, true, false).hashCode(),
+                not(is(new TypeProxy(second, instrumentationTarget, true, false).hashCode())));
+        assertThat(new TypeProxy(first, instrumentationTarget, true, false),
+                not(is(new TypeProxy(second, instrumentationTarget, true, false))));
     }
 
     @Test
     public void testByConstructorEqualsHashCode() throws Exception {
-        assertThat(new TypeProxy.ByConstructor(first, instrumentationTarget, Collections.<TypeDescription>emptyList(), true).hashCode(),
-                is(new TypeProxy.ByConstructor(first, instrumentationTarget, Collections.<TypeDescription>emptyList(), true).hashCode()));
-        assertThat(new TypeProxy.ByConstructor(first, instrumentationTarget, Collections.<TypeDescription>emptyList(), true),
-                is(new TypeProxy.ByConstructor(first, instrumentationTarget, Collections.<TypeDescription>emptyList(), true)));
-        assertThat(new TypeProxy.ByConstructor(first, instrumentationTarget, Collections.<TypeDescription>emptyList(), true).hashCode(),
-                not(is(new TypeProxy.ByConstructor(first, instrumentationTarget, Collections.<TypeDescription>emptyList(), false).hashCode())));
-        assertThat(new TypeProxy.ByConstructor(first, instrumentationTarget, Collections.<TypeDescription>emptyList(), true),
-                not(is(new TypeProxy.ByConstructor(first, instrumentationTarget, Collections.<TypeDescription>emptyList(), false))));
-        assertThat(new TypeProxy.ByConstructor(first, instrumentationTarget, Collections.<TypeDescription>emptyList(), true).hashCode(),
-                not(is(new TypeProxy.ByConstructor(first, instrumentationTarget, Collections.<TypeDescription>emptyList(), false).hashCode())));
-        assertThat(new TypeProxy.ByConstructor(first, instrumentationTarget, Collections.<TypeDescription>emptyList(), true),
-                not(is(new TypeProxy.ByConstructor(first, instrumentationTarget, Collections.<TypeDescription>emptyList(), false))));
-        assertThat(new TypeProxy.ByConstructor(first, instrumentationTarget, Collections.<TypeDescription>emptyList(), true).hashCode(),
-                not(is(new TypeProxy.ByConstructor(second, instrumentationTarget, Collections.<TypeDescription>emptyList(), true).hashCode())));
-        assertThat(new TypeProxy.ByConstructor(first, instrumentationTarget, Collections.<TypeDescription>emptyList(), true),
-                not(is(new TypeProxy.ByConstructor(second, instrumentationTarget, Collections.<TypeDescription>emptyList(), true))));
+        assertThat(new TypeProxy.ByConstructor(first, instrumentationTarget, Collections.<TypeDescription>emptyList(), true, false).hashCode(),
+                is(new TypeProxy.ByConstructor(first, instrumentationTarget, Collections.<TypeDescription>emptyList(), true, false).hashCode()));
+        assertThat(new TypeProxy.ByConstructor(first, instrumentationTarget, Collections.<TypeDescription>emptyList(), true, false),
+                is(new TypeProxy.ByConstructor(first, instrumentationTarget, Collections.<TypeDescription>emptyList(), true, false)));
+        assertThat(new TypeProxy.ByConstructor(first, instrumentationTarget, Collections.<TypeDescription>emptyList(), true, false).hashCode(),
+                not(is(new TypeProxy.ByConstructor(first, instrumentationTarget, Collections.<TypeDescription>emptyList(), false, false).hashCode())));
+        assertThat(new TypeProxy.ByConstructor(first, instrumentationTarget, Collections.<TypeDescription>emptyList(), true, false),
+                not(is(new TypeProxy.ByConstructor(first, instrumentationTarget, Collections.<TypeDescription>emptyList(), false, false))));
+        assertThat(new TypeProxy.ByConstructor(first, instrumentationTarget, Collections.<TypeDescription>emptyList(), true, false).hashCode(),
+                not(is(new TypeProxy.ByConstructor(first, instrumentationTarget, Collections.<TypeDescription>emptyList(), false, false).hashCode())));
+        assertThat(new TypeProxy.ByConstructor(first, instrumentationTarget, Collections.<TypeDescription>emptyList(), true, false),
+                not(is(new TypeProxy.ByConstructor(first, instrumentationTarget, Collections.<TypeDescription>emptyList(), false, false))));
+        assertThat(new TypeProxy.ByConstructor(first, instrumentationTarget, Collections.<TypeDescription>emptyList(), true, false).hashCode(),
+                not(is(new TypeProxy.ByConstructor(second, instrumentationTarget, Collections.<TypeDescription>emptyList(), true, false).hashCode())));
+        assertThat(new TypeProxy.ByConstructor(first, instrumentationTarget, Collections.<TypeDescription>emptyList(), true, false),
+                not(is(new TypeProxy.ByConstructor(second, instrumentationTarget, Collections.<TypeDescription>emptyList(), true, false))));
     }
 
     @Test
     public void testByReflectionFactoryEqualsHashCode() throws Exception {
-        assertThat(new TypeProxy.ByReflectionFactory(first, instrumentationTarget, true).hashCode(),
-                is(new TypeProxy.ByReflectionFactory(first, instrumentationTarget, true).hashCode()));
-        assertThat(new TypeProxy.ByReflectionFactory(first, instrumentationTarget, true),
-                is(new TypeProxy.ByReflectionFactory(first, instrumentationTarget, true)));
-        assertThat(new TypeProxy.ByReflectionFactory(first, instrumentationTarget, true).hashCode(),
-                not(is(new TypeProxy.ByReflectionFactory(first, instrumentationTarget, false).hashCode())));
-        assertThat(new TypeProxy.ByReflectionFactory(first, instrumentationTarget, true),
-                not(is(new TypeProxy.ByReflectionFactory(first, instrumentationTarget, false))));
-        assertThat(new TypeProxy.ByReflectionFactory(first, instrumentationTarget, true).hashCode(),
-                not(is(new TypeProxy.ByReflectionFactory(first, instrumentationTarget, false).hashCode())));
-        assertThat(new TypeProxy.ByReflectionFactory(first, instrumentationTarget, true),
-                not(is(new TypeProxy.ByReflectionFactory(first, instrumentationTarget, false))));
-        assertThat(new TypeProxy.ByReflectionFactory(first, instrumentationTarget, true).hashCode(),
-                not(is(new TypeProxy.ByReflectionFactory(second, instrumentationTarget, true).hashCode())));
-        assertThat(new TypeProxy.ByReflectionFactory(first, instrumentationTarget, true),
-                not(is(new TypeProxy.ByReflectionFactory(second, instrumentationTarget, true))));
+        assertThat(new TypeProxy.ByReflectionFactory(first, instrumentationTarget, true, false).hashCode(),
+                is(new TypeProxy.ByReflectionFactory(first, instrumentationTarget, true, false).hashCode()));
+        assertThat(new TypeProxy.ByReflectionFactory(first, instrumentationTarget, true, false),
+                is(new TypeProxy.ByReflectionFactory(first, instrumentationTarget, true, false)));
+        assertThat(new TypeProxy.ByReflectionFactory(first, instrumentationTarget, true, false).hashCode(),
+                not(is(new TypeProxy.ByReflectionFactory(first, instrumentationTarget, false, false).hashCode())));
+        assertThat(new TypeProxy.ByReflectionFactory(first, instrumentationTarget, true, false),
+                not(is(new TypeProxy.ByReflectionFactory(first, instrumentationTarget, false, false))));
+        assertThat(new TypeProxy.ByReflectionFactory(first, instrumentationTarget, true, false).hashCode(),
+                not(is(new TypeProxy.ByReflectionFactory(first, instrumentationTarget, false, false).hashCode())));
+        assertThat(new TypeProxy.ByReflectionFactory(first, instrumentationTarget, true, false),
+                not(is(new TypeProxy.ByReflectionFactory(first, instrumentationTarget, false, false))));
+        assertThat(new TypeProxy.ByReflectionFactory(first, instrumentationTarget, true, false).hashCode(),
+                not(is(new TypeProxy.ByReflectionFactory(second, instrumentationTarget, true, false).hashCode())));
+        assertThat(new TypeProxy.ByReflectionFactory(first, instrumentationTarget, true, false),
+                not(is(new TypeProxy.ByReflectionFactory(second, instrumentationTarget, true, false))));
     }
 }

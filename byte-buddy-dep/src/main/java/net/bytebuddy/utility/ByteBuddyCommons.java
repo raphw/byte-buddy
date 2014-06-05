@@ -102,12 +102,26 @@ public final class ByteBuddyCommons {
     }
 
     /**
+     * Validates if a list of type only contains interfaces.
+     *
+     * @param types The types to validate.
+     * @param <T>   The list's type.
+     * @return The input value.
+     */
+    public static <T extends TypeDescription> List<T> isInterface(List<T> types) {
+        for (TypeDescription typeDescription : types) {
+            isInterface(typeDescription);
+        }
+        return types;
+    }
+
+    /**
      * Validates that a type can be implemented, i.e. is not an array or a primitive.
      *
      * @param type The type to be validated.
      * @return The input value.
      */
-    public static TypeDescription isImplementable(TypeDescription type) {
+    public static TypeDescription isExtendable(TypeDescription type) {
         if (nonNull(type).isArray() || type.isPrimitive()) {
             throw new IllegalArgumentException(type + " is not implementable");
         } else if (type.isFinal()) {
@@ -143,6 +157,21 @@ public final class ByteBuddyCommons {
         List<T> result = new ArrayList<T>(list.size() + 1);
         result.add(element);
         result.addAll(list);
+        return result;
+    }
+
+    /**
+     * Joins two lists.
+     *
+     * @param leftList  The left list.
+     * @param rightList The right list.
+     * @param <T>       The most specific common type of both lists.
+     * @return A combination of both lists.
+     */
+    public static <T> List<T> join(List<? extends T> leftList, List<? extends T> rightList) {
+        List<T> result = new ArrayList<T>(leftList.size() + rightList.size());
+        result.addAll(leftList);
+        result.addAll(rightList);
         return result;
     }
 

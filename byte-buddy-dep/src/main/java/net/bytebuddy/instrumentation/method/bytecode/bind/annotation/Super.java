@@ -64,6 +64,14 @@ public @interface Super {
     boolean ignoreFinalizer() default true;
 
     /**
+     * Determines if the generated proxy should be forced to be {@link java.io.Serializable}. If the annotated type
+     * already is serializable, such an explicit specification is not required.
+     *
+     * @return {@code true} if the generated proxy should be {@link java.io.Serializable}.
+     */
+    boolean serializableProxy() default false;
+
+    /**
      * Defines the parameter types of the constructor to be called for the created {@code super}-call proxy type.
      *
      * @return The parameter types of the constructor to be called.
@@ -92,7 +100,11 @@ public @interface Super {
                             ? TargetType.DESCRIPTION
                             : new TypeDescription.ForLoadedType(constructorParameter));
                 }
-                return new TypeProxy.ByConstructor(parameterType, instrumentationTarget, typeDescriptions, annotation.ignoreFinalizer());
+                return new TypeProxy.ByConstructor(parameterType,
+                        instrumentationTarget,
+                        typeDescriptions,
+                        annotation.ignoreFinalizer(),
+                        annotation.serializableProxy());
             }
         },
 
@@ -105,7 +117,10 @@ public @interface Super {
             protected StackManipulation proxyFor(TypeDescription parameterType,
                                                  Instrumentation.Target instrumentationTarget,
                                                  Super annotation) {
-                return new TypeProxy.ByReflectionFactory(parameterType, instrumentationTarget, annotation.ignoreFinalizer());
+                return new TypeProxy.ByReflectionFactory(parameterType,
+                        instrumentationTarget,
+                        annotation.ignoreFinalizer(),
+                        annotation.serializableProxy());
             }
         };
 

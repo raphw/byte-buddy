@@ -25,6 +25,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
@@ -63,16 +64,26 @@ public class TypeProxy implements AuxiliaryType {
     private final boolean ignoreFinalizer;
 
     /**
+     * Determines if the proxy should be serializable.
+     */
+    private final boolean serializableProxy;
+
+    /**
      * Creates a new type proxy.
      *
      * @param proxiedType           The type this proxy should implement which can either be a non-final class or an interface.
      * @param instrumentationTarget The instrumentation target this type proxy is created for.
      * @param ignoreFinalizer       {@code true} if any finalizer methods should be ignored for proxying.
+     * @param serializableProxy     Determines if the proxy should be serializable.
      */
-    public TypeProxy(TypeDescription proxiedType, Instrumentation.Target instrumentationTarget, boolean ignoreFinalizer) {
+    public TypeProxy(TypeDescription proxiedType,
+                     Instrumentation.Target instrumentationTarget,
+                     boolean ignoreFinalizer,
+                     boolean serializableProxy) {
         this.proxiedType = proxiedType;
         this.instrumentationTarget = instrumentationTarget;
         this.ignoreFinalizer = ignoreFinalizer;
+        this.serializableProxy = serializableProxy;
     }
 
     @Override
@@ -84,6 +95,7 @@ public class TypeProxy implements AuxiliaryType {
                 .subclass(proxiedType, ConstructorStrategy.Default.IMITATE_SUPER_TYPE)
                 .name(auxiliaryTypeName)
                 .modifiers(DEFAULT_TYPE_MODIFIER)
+                .implement(serializableProxy ? new Class<?>[]{Serializable.class} : new Class<?>[0])
                 .method(finalizerMatcher)
                 .intercept(new MethodCall(methodAccessorFactory))
                 .defineMethod(REFLECTION_METHOD, TargetType.DESCRIPTION, Collections.<TypeDescription>emptyList(), Ownership.STATIC)
@@ -97,6 +109,7 @@ public class TypeProxy implements AuxiliaryType {
         if (other == null || getClass() != other.getClass()) return false;
         TypeProxy typeProxy = (TypeProxy) other;
         return ignoreFinalizer == typeProxy.ignoreFinalizer
+                && serializableProxy == typeProxy.serializableProxy
                 && instrumentationTarget.equals(typeProxy.instrumentationTarget)
                 && proxiedType.equals(typeProxy.proxiedType);
     }
@@ -106,6 +119,7 @@ public class TypeProxy implements AuxiliaryType {
         int result = proxiedType.hashCode();
         result = 31 * result + instrumentationTarget.hashCode();
         result = 31 * result + (ignoreFinalizer ? 1 : 0);
+        result = 31 * result + (serializableProxy ? 1 : 0);
         return result;
     }
 
@@ -115,6 +129,7 @@ public class TypeProxy implements AuxiliaryType {
                 "proxiedType=" + proxiedType +
                 ", instrumentationTarget=" + instrumentationTarget +
                 ", ignoreFinalizer=" + ignoreFinalizer +
+                ", serializableProxy=" + serializableProxy +
                 '}';
     }
 
@@ -348,21 +363,29 @@ public class TypeProxy implements AuxiliaryType {
         private final boolean ignoreFinalizer;
 
         /**
+         * Determines if the proxy should be serializable.
+         */
+        private final boolean serializableProxy;
+
+        /**
          * Creates a new stack operation for creating a type proxy by calling one of its constructors.
          *
          * @param proxiedType           The type for the type proxy to subclass or implement.
          * @param instrumentationTarget The instrumentation target this type proxy is created for.
          * @param constructorParameters The parameter types of the constructor that should be called.
          * @param ignoreFinalizer       {@code true} if any finalizers should be ignored for the delegation.
+         * @param serializableProxy     Determines if the proxy should be serializable.
          */
         public ByConstructor(TypeDescription proxiedType,
                              Instrumentation.Target instrumentationTarget,
                              List<TypeDescription> constructorParameters,
-                             boolean ignoreFinalizer) {
+                             boolean ignoreFinalizer,
+                             boolean serializableProxy) {
             this.proxiedType = proxiedType;
             this.instrumentationTarget = instrumentationTarget;
             this.constructorParameters = constructorParameters;
             this.ignoreFinalizer = ignoreFinalizer;
+            this.serializableProxy = serializableProxy;
         }
 
         @Override
@@ -372,7 +395,8 @@ public class TypeProxy implements AuxiliaryType {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-            TypeDescription proxyType = instrumentationContext.register(new TypeProxy(proxiedType, instrumentationTarget, ignoreFinalizer));
+            TypeDescription proxyType = instrumentationContext
+                    .register(new TypeProxy(proxiedType, instrumentationTarget, ignoreFinalizer, serializableProxy));
             StackManipulation[] constructorValue = new StackManipulation[constructorParameters.size()];
             int index = 0;
             for (TypeDescription parameterType : constructorParameters) {
@@ -396,6 +420,7 @@ public class TypeProxy implements AuxiliaryType {
             if (other == null || getClass() != other.getClass()) return false;
             ByConstructor that = (ByConstructor) other;
             return ignoreFinalizer == that.ignoreFinalizer
+                    && serializableProxy == that.serializableProxy
                     && constructorParameters.equals(that.constructorParameters)
                     && instrumentationTarget.equals(that.instrumentationTarget)
                     && proxiedType.equals(that.proxiedType);
@@ -407,6 +432,7 @@ public class TypeProxy implements AuxiliaryType {
             result = 31 * result + instrumentationTarget.hashCode();
             result = 31 * result + constructorParameters.hashCode();
             result = 31 * result + (ignoreFinalizer ? 1 : 0);
+            result = 31 * result + (serializableProxy ? 1 : 0);
             return result;
         }
 
@@ -417,6 +443,7 @@ public class TypeProxy implements AuxiliaryType {
                     ", instrumentationTarget=" + instrumentationTarget +
                     ", constructorParameters=" + constructorParameters +
                     ", ignoreFinalizer=" + ignoreFinalizer +
+                    ", serializableProxy=" + serializableProxy +
                     '}';
         }
     }
@@ -445,18 +472,26 @@ public class TypeProxy implements AuxiliaryType {
         private final boolean ignoreFinalizer;
 
         /**
+         * Determines if the proxy should be serializable.
+         */
+        private final boolean serializableProxy;
+
+        /**
          * Creates a new stack operation for reflectively creating a type proxy for the given arguments.
          *
          * @param proxiedType           The type for the type proxy to subclass or implement.
          * @param instrumentationTarget The instrumentation target this type proxy is created for.
          * @param ignoreFinalizer       {@code true} if any finalizer methods should be ignored for proxying.
+         * @param serializableProxy     Determines if the proxy should be serializable.
          */
         public ByReflectionFactory(TypeDescription proxiedType,
                                    Instrumentation.Target instrumentationTarget,
-                                   boolean ignoreFinalizer) {
+                                   boolean ignoreFinalizer,
+                                   boolean serializableProxy) {
             this.proxiedType = proxiedType;
             this.instrumentationTarget = instrumentationTarget;
             this.ignoreFinalizer = ignoreFinalizer;
+            this.serializableProxy = serializableProxy;
         }
 
         @Override
@@ -466,7 +501,8 @@ public class TypeProxy implements AuxiliaryType {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-            TypeDescription proxyType = instrumentationContext.register(new TypeProxy(proxiedType, instrumentationTarget, ignoreFinalizer));
+            TypeDescription proxyType = instrumentationContext
+                    .register(new TypeProxy(proxiedType, instrumentationTarget, ignoreFinalizer, serializableProxy));
             return new Compound(
                     MethodInvocation.invoke(proxyType.getDeclaredMethods()
                             .filter(named(REFLECTION_METHOD).and(takesArguments(0))).getOnly()),
@@ -491,6 +527,7 @@ public class TypeProxy implements AuxiliaryType {
             int result = proxiedType.hashCode();
             result = 31 * result + instrumentationTarget.hashCode();
             result = 31 * result + (ignoreFinalizer ? 1 : 0);
+            result = 31 * result + (serializableProxy ? 1 : 0);
             return result;
         }
 
@@ -500,6 +537,7 @@ public class TypeProxy implements AuxiliaryType {
                     "proxiedType=" + proxiedType +
                     ", instrumentationTarget=" + instrumentationTarget +
                     ", ignoreFinalizer=" + ignoreFinalizer +
+                    ", serializableProxy=" + serializableProxy +
                     '}';
         }
     }

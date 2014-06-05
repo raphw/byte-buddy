@@ -19,6 +19,7 @@ import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.modifier.TypeManifestation;
 
 import java.lang.annotation.Annotation;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -338,7 +339,7 @@ public class ByteBuddy {
      * @return A dynamic type builder for this configuration that extends or implements the given type description.
      */
     public <T> DynamicType.Builder<T> subclass(TypeDescription superType, ConstructorStrategy constructorStrategy) {
-        TypeDescription actualSuperType = isImplementable(superType);
+        TypeDescription actualSuperType = isExtendable(superType);
         List<TypeDescription> interfaceTypes = this.interfaceTypes;
         if (nonNull(superType).isInterface()) {
             actualSuperType = new TypeDescription.ForLoadedType(Object.class);
@@ -477,8 +478,13 @@ public class ByteBuddy {
      * @return This configuration where any dynamic type that is created by the resulting configuration will
      * implement the given interface.
      */
-    public OptionalMethodInterception withImplementing(Class<?> type) {
-        return withImplementing(new TypeDescription.ForLoadedType(nonNull(type)));
+    public OptionalMethodInterception withImplementing(Class<?>... type) {
+        TypeDescription[] typeDescription = new TypeDescription[type.length];
+        int index = 0;
+        for (Class<?> aType : type) {
+            typeDescription[index++] = new TypeDescription.ForLoadedType(aType);
+        }
+        return withImplementing(typeDescription);
     }
 
     /**
@@ -488,10 +494,10 @@ public class ByteBuddy {
      * @return The same configuration where any dynamic type that is created by the resulting configuration will
      * implement the given interface.
      */
-    public OptionalMethodInterception withImplementing(TypeDescription type) {
+    public OptionalMethodInterception withImplementing(TypeDescription... type) {
         return new OptionalMethodInterception(classFileVersion,
                 namingStrategy,
-                join(interfaceTypes, isInterface(nonNull(type))),
+                join(interfaceTypes, isInterface(Arrays.asList(type))),
                 ignoredMethods,
                 bridgeMethodResolverFactory,
                 classVisitorWrapperChain,
@@ -501,7 +507,7 @@ public class ByteBuddy {
                 methodLookupEngineFactory,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
-                isDeclaredBy(type));
+                isDeclaredByAny(type));
     }
 
     /**
@@ -1112,12 +1118,12 @@ public class ByteBuddy {
         }
 
         @Override
-        public OptionalMethodInterception withImplementing(Class<?> type) {
+        public OptionalMethodInterception withImplementing(Class<?>... type) {
             return materialize().withImplementing(type);
         }
 
         @Override
-        public OptionalMethodInterception withImplementing(TypeDescription type) {
+        public OptionalMethodInterception withImplementing(TypeDescription... type) {
             return materialize().withImplementing(type);
         }
 

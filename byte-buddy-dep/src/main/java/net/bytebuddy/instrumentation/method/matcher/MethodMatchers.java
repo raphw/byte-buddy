@@ -569,6 +569,35 @@ public final class MethodMatchers {
     }
 
     /**
+     * Creates a method matcher that matches any method that is declared by any of the given types.
+     *
+     * @param typeDescription A list of types to match.
+     * @return A method matcher that matches any of the given types.
+     */
+    public static JunctionMethodMatcher isDeclaredByAny(Class<?>... typeDescription) {
+        TypeDescription[] typeDescriptions = new TypeDescription[typeDescription.length];
+        int index = 0;
+        for (Class<?> type : typeDescription) {
+            typeDescriptions[index++] = new TypeDescription.ForLoadedType(type);
+        }
+        return isDeclaredByAny(typeDescriptions);
+    }
+
+    /**
+     * Creates a method matcher that matches any method that is declared by any of the given types.
+     *
+     * @param typeDescription A list of types to match.
+     * @return A method matcher that matches any of the given types.
+     */
+    public static JunctionMethodMatcher isDeclaredByAny(TypeDescription... typeDescription) {
+        JunctionMethodMatcher methodMatcher = none();
+        for (TypeDescription type : typeDescription) {
+            methodMatcher = methodMatcher.or(isDeclaredBy(type));
+        }
+        return methodMatcher;
+    }
+
+    /**
      * Matches methods that represent a Java bean setter, i.e. have signature that resembles
      * {@code void set...(T type)}.
      *
@@ -768,6 +797,24 @@ public final class MethodMatchers {
      */
     public static JunctionMethodMatcher isFinalizer() {
         return named("finalize").and(takesArguments(0)).and(returns(void.class));
+    }
+
+    /**
+     * Matches the {@link Object#hashCode()} method, independently of the method being overridden.
+     *
+     * @return A matcher for matching the hash code method.
+     */
+    public static JunctionMethodMatcher isHashCode() {
+        return named("hashCode").and(takesArguments(0)).and(returns(int.class));
+    }
+
+    /**
+     * Matches the {@link Object#equals(Object)}} method, independently of the method being overridden.
+     *
+     * @return A matcher for matching the equals method.
+     */
+    public static JunctionMethodMatcher isEquals() {
+        return named("equals").and(takesArguments(Object.class)).and(returns(boolean.class));
     }
 
     /**

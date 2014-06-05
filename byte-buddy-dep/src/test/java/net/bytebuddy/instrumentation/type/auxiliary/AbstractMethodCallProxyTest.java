@@ -38,7 +38,7 @@ public class AbstractMethodCallProxyTest {
                 .getDeclaredMethods().filter(not(isConstructor())).getOnly();
         when(methodAccessorFactory.registerAccessorFor(eq(specialMethodInvocation))).thenReturn(proxyMethod);
         String auxiliaryTypeName = getClass().getName() + "$" + proxyTarget.getSimpleName() + "$Proxy";
-        DynamicType dynamicType = new MethodCallProxy(specialMethodInvocation).make(auxiliaryTypeName,
+        DynamicType dynamicType = new MethodCallProxy(specialMethodInvocation, false).make(auxiliaryTypeName,
                 ClassFileVersion.forCurrentJavaVersion(),
                 methodAccessorFactory);
         DynamicType.Unloaded<?> unloaded = (DynamicType.Unloaded<?>) dynamicType;

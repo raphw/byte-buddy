@@ -6,6 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.concurrent.ExecutionException;
@@ -624,6 +625,14 @@ public class MethodMatchersTest {
     }
 
     @Test
+    public void isDeclaredByAny() throws Exception {
+        assertThat(MethodMatchers.isDeclaredByAny(TestModifier.class, Serializable.class).matches(testModifier$finalize), is(true));
+        assertThat(MethodMatchers.isDeclaredByAny(Serializable.class, TestModifier.class).matches(testModifier$finalize), is(true));
+        assertThat(MethodMatchers.isDeclaredByAny(TestModifier.class, Serializable.class).matches(testClassExtension$fooBar), is(false));
+        assertThat(MethodMatchers.isDeclaredByAny(TestModifier.class, Serializable.class).matches(testClassBase$foo), is(false));
+    }
+
+    @Test
     public void testSetter() throws Exception {
         assertThat(MethodMatchers.isSetter().matches(testBean$setter), is(true));
         assertThat(MethodMatchers.isSetter().matches(testBean$getter), is(false));
@@ -724,6 +733,20 @@ public class MethodMatchersTest {
         assertThat(MethodMatchers.isFinalizer().matches(testClassBase$foo), is(false));
         assertThat(MethodMatchers.isFinalizer().matches(object$finalize), is(true));
         assertThat(MethodMatchers.isFinalizer().matches(testModifier$finalize), is(true));
+    }
+
+    @Test
+    public void testIsHashCode() throws Exception {
+        assertThat(MethodMatchers.isHashCode().matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("hashCode"))), is(true));
+        assertThat(MethodMatchers.isHashCode().matches(new MethodDescription.ForLoadedMethod(Integer.class.getDeclaredMethod("hashCode"))), is(true));
+        assertThat(MethodMatchers.isHashCode().matches(testClassBase$foo), is(false));
+    }
+
+    @Test
+    public void testIsEquals() throws Exception {
+        assertThat(MethodMatchers.isEquals().matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("equals", Object.class))), is(true));
+        assertThat(MethodMatchers.isEquals().matches(new MethodDescription.ForLoadedMethod(Integer.class.getDeclaredMethod("equals", Object.class))), is(true));
+        assertThat(MethodMatchers.isEquals().matches(testClassBase$foo), is(false));
     }
 
     @Test

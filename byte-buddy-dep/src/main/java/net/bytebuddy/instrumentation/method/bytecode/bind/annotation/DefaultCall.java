@@ -40,6 +40,13 @@ public @interface DefaultCall {
     Class<?> targetType() default void.class;
 
     /**
+     * Determines if the generated proxy should be {@link java.io.Serializable}.
+     *
+     * @return {@code true} if the generated proxy should be {@link java.io.Serializable}.
+     */
+    boolean serializableProxy() default false;
+
+    /**
      * A binder for handling the
      * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.DefaultCall}
      * annotation.
@@ -84,7 +91,7 @@ public @interface DefaultCall {
             }
             Instrumentation.SpecialMethodInvocation specialMethodInvocation = locate(annotation.targetType()).resolve(instrumentationTarget, source);
             return specialMethodInvocation.isValid()
-                    ? new MethodDelegationBinder.ParameterBinding.Anonymous(new MethodCallProxy.AssignableSignatureCall(specialMethodInvocation))
+                    ? new MethodDelegationBinder.ParameterBinding.Anonymous(new MethodCallProxy.AssignableSignatureCall(specialMethodInvocation, annotation.serializableProxy()))
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
         }
 

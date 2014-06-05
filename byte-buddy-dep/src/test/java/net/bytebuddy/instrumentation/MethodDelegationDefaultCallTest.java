@@ -4,16 +4,19 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.DefaultCall;
 import net.bytebuddy.utility.Java8Rule;
 import net.bytebuddy.utility.PrecompiledTypeClassLoader;
+import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 
+import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
 
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isDeclaredBy;
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.not;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -108,9 +111,22 @@ public class MethodDelegationDefaultCallTest extends AbstractInstrumentationTest
                 classLoader.loadClass(SINGLE_DEFAULT_METHOD));
     }
 
+    @Test
+    public void testSerializableProxy() throws Exception {
+        DynamicType.Loaded<?> loaded = instrument(Object.class,
+                MethodDelegation.to(SerializationCheck.class),
+                classLoader,
+                not(isDeclaredBy(Object.class)),
+                classLoader.loadClass(SINGLE_DEFAULT_METHOD));
+        Object instance = loaded.getLoaded().newInstance();
+        Method method = loaded.getLoaded().getMethod(FOO);
+        assertThat(method.invoke(instance), is((Object) FOO));
+    }
+
     public static class RunnableClass {
 
         public static Object foo(@DefaultCall Runnable runnable) {
+            assertThat(runnable, CoreMatchers.not(instanceOf(Serializable.class)));
             runnable.run();
             return QUX;
         }
@@ -119,6 +135,7 @@ public class MethodDelegationDefaultCallTest extends AbstractInstrumentationTest
     public static class CallableClass {
 
         public static String bar(@DefaultCall Callable<String> callable) throws Exception {
+            assertThat(callable, CoreMatchers.not(instanceOf(Serializable.class)));
             return callable.call();
         }
     }
@@ -127,6 +144,14 @@ public class MethodDelegationDefaultCallTest extends AbstractInstrumentationTest
 
         public static String bar(@DefaultCall String value) throws Exception {
             return value;
+        }
+    }
+
+    public static class SerializationCheck {
+
+        public static String bar(@DefaultCall(serializableProxy = true) Callable<String> callable) throws Exception {
+            assertThat(callable, instanceOf(Serializable.class));
+            return callable.call();
         }
     }
 }

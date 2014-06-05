@@ -99,7 +99,8 @@ public class TypeProxyTest {
         DynamicType dynamicType = new TypeProxy(
                 new TypeDescription.ForLoadedType(proxyType),
                 instrumentationTarget,
-                true).make(auxiliaryTypeName, ClassFileVersion.forCurrentJavaVersion(), methodAccessorFactory);
+                true,
+                false).make(auxiliaryTypeName, ClassFileVersion.forCurrentJavaVersion(), methodAccessorFactory);
         DynamicType.Unloaded<?> unloaded = (DynamicType.Unloaded<?>) dynamicType;
         Class<?> auxiliaryType = unloaded.load(getClass().getClassLoader(), ClassLoadingStrategy.Default.INJECTION).getLoaded();
         assertThat(auxiliaryType.getName(), is(auxiliaryTypeName));
