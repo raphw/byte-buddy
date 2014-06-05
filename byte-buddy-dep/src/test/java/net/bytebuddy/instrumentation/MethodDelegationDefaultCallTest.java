@@ -112,6 +112,7 @@ public class MethodDelegationDefaultCallTest extends AbstractInstrumentationTest
     }
 
     @Test
+    @Java8Rule.Enforce
     public void testSerializableProxy() throws Exception {
         DynamicType.Loaded<?> loaded = instrument(Object.class,
                 MethodDelegation.to(SerializationCheck.class),
