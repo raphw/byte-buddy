@@ -22,7 +22,7 @@ public class Forwarding implements Instrumentation {
     /**
      * The prefix of any implicit field name for storing a delegate..
      */
-    private static final String FIELD_PREFIX = "delegate";
+    private static final String FIELD_PREFIX = "forwarding";
 
     /**
      * The name of the field.

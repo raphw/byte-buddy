@@ -232,6 +232,21 @@ public class MethodCallProxy implements AuxiliaryType {
          */
         INSTANCE;
 
+        /**
+         * A reference of the {@link Object} type default constructor.
+         */
+        private final MethodDescription objectTypeDefaultConstructor;
+
+        /**
+         * Creates the constructor call singleton.
+         */
+        private ConstructorCall() {
+            this.objectTypeDefaultConstructor = new TypeDescription.ForLoadedType(Object.class)
+                    .getDeclaredMethods()
+                    .filter(isConstructor())
+                    .getOnly();
+        }
+
         @Override
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType;
@@ -245,7 +260,7 @@ public class MethodCallProxy implements AuxiliaryType {
         /**
          * The appender for implementing the {@link net.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy.ConstructorCall}.
          */
-        private static class Appender implements ByteCodeAppender {
+        private class Appender implements ByteCodeAppender {
 
             /**
              * The instrumented type being created.
@@ -275,14 +290,15 @@ public class MethodCallProxy implements AuxiliaryType {
                 for (FieldDescription fieldDescription : fieldList) {
                     fieldLoading[index] = new StackManipulation.Compound(
                             thisReference,
-                            MethodVariableAccess.forType(fieldDescription.getFieldType()).loadFromIndex(instrumentedMethod.getParameterOffset(index)),
+                            MethodVariableAccess.forType(fieldDescription.getFieldType())
+                                    .loadFromIndex(instrumentedMethod.getParameterOffset(index)),
                             FieldAccess.forField(fieldDescription).putter()
                     );
                     index++;
                 }
                 StackManipulation.Size stackSize = new StackManipulation.Compound(
                         thisReference,
-                        MethodInvocation.invoke(instrumentedType.getSupertype().getDeclaredMethods().filter(isConstructor()).getOnly()),
+                        MethodInvocation.invoke(objectTypeDefaultConstructor),
                         new StackManipulation.Compound(fieldLoading),
                         MethodReturn.VOID
                 ).apply(methodVisitor, instrumentationContext);
@@ -417,17 +433,21 @@ public class MethodCallProxy implements AuxiliaryType {
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && accessorMethod.equals(((MethodCall) other).accessorMethod);
+                    && accessorMethod.equals(((MethodCall) other).accessorMethod)
+                    && assigner.equals(((MethodCall) other).assigner);
         }
 
         @Override
         public int hashCode() {
-            return accessorMethod.hashCode();
+            return accessorMethod.hashCode() + 31 * assigner.hashCode();
         }
 
         @Override
         public String toString() {
-            return "MethodCallProxy.MethodCall{accessorMethod=" + accessorMethod + '}';
+            return "MethodCallProxy.MethodCall{" +
+                    "accessorMethod=" + accessorMethod +
+                    ", assigner=" + assigner +
+                    '}';
         }
 
         /**
@@ -455,7 +475,9 @@ public class MethodCallProxy implements AuxiliaryType {
             }
 
             @Override
-            public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
+            public Size apply(MethodVisitor methodVisitor,
+                              Context instrumentationContext,
+                              MethodDescription instrumentedMethod) {
                 StackManipulation thisReference = MethodVariableAccess.forType(instrumentedType).loadFromIndex(0);
                 FieldList fieldList = instrumentedType.getDeclaredFields();
                 StackManipulation[] fieldLoading = new StackManipulation[fieldList.size()];

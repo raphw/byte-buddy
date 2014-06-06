@@ -1,7 +1,9 @@
 package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.RuntimeType;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.SuperCall;
+import net.bytebuddy.utility.CallTraceable;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
@@ -30,6 +32,21 @@ public class MethodDelegationSuperCallTest extends AbstractInstrumentationTest {
         DynamicType.Loaded<Bar> loaded = instrument(Bar.class, MethodDelegation.to(CallableClass.class));
         Bar instance = loaded.getLoaded().newInstance();
         assertThat(instance.bar(), is(FOO));
+    }
+
+    @Test
+    public void testVoidToNonVoidSuperCall() throws Exception {
+        DynamicType.Loaded<VoidTest> loaded = instrument(VoidTest.class, MethodDelegation.to(NonVoidTarget.class));
+        VoidTest instance = loaded.getLoaded().newInstance();
+        instance.foo();
+        instance.assertOnlyCall(FOO);
+    }
+
+    @Test
+    public void testRuntimeTypeSuperCall() throws Exception {
+        DynamicType.Loaded<RuntimeTypeTest> loaded = instrument(RuntimeTypeTest.class, MethodDelegation.to(RuntimeTypeTarget.class));
+        RuntimeTypeTest instance = loaded.getLoaded().newInstance();
+        assertThat(instance.foo(), is(FOO));
     }
 
     @Test
@@ -84,6 +101,36 @@ public class MethodDelegationSuperCallTest extends AbstractInstrumentationTest {
     public static abstract class Qux {
 
         public abstract String bar();
+    }
+
+    public static class VoidTest extends CallTraceable {
+
+        public void foo() {
+            register(FOO);
+        }
+    }
+
+    public static class NonVoidTarget {
+
+        @RuntimeType
+        public static Object foo(@SuperCall Callable<?> zuper) throws Exception {
+            return zuper.call();
+        }
+    }
+
+    public static class RuntimeTypeTest {
+
+        public String foo() {
+            return FOO;
+        }
+    }
+
+    public static class RuntimeTypeTarget {
+
+        @RuntimeType
+        public static Object foo(@SuperCall Callable<?> zuper) throws Exception {
+            return zuper.call();
+        }
     }
 
     public static class IllegalAnnotation {

@@ -69,6 +69,11 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
  * {@code Qux#baz} that is annotated with {@code Origin} is assigned a reference to either a {@link java.lang.reflect.Method}
  * or a {@link java.lang.Class} instance. A {@code Method}-typed parameter is assigned a reference to the original method that
  * is overriden. A {@code Class}-typed parameter is assigned the type of the caller.</li>
+ * <li>{@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Pipe}: A parameter that is annotated
+ * with this annotation is assigned a proxy for forwarding the source method invocation to another instance of the
+ * same type as the declaring type of the intercepted method. <b>This annotation needs to be installed and explicitly
+ * registered before it can be used.</b> See the {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Pipe}
+ * annotation's documentation for further information on how this can be done.</li>
  * </ul>
  * If a method is not annotated with any of the above methods, it will be treated as if it was annotated
  * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument} using the next
