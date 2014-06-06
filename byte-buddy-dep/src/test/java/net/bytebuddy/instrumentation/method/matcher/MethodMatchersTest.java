@@ -2,6 +2,7 @@ package net.bytebuddy.instrumentation.method.matcher;
 
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.test.packaging.PackagePrivateMethod;
+import org.hamcrest.MatcherAssert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -9,11 +10,14 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.util.concurrent.ExecutionException;
 
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.*;
 
 public class MethodMatchersTest {
 
@@ -775,6 +779,20 @@ public class MethodMatchersTest {
         assertThat(MethodMatchers.any(), not(is(MethodMatchers.none())));
         assertThat(MethodMatchers.none().hashCode(), not(is(MethodMatchers.any().hashCode())));
         assertThat(MethodMatchers.none(), not(is(MethodMatchers.any())));
+    }
+
+    @Test
+    public void testConstructorIsHidden() throws Exception {
+        MatcherAssert.assertThat(MethodMatchers.class.getDeclaredConstructors().length, is(1));
+        Constructor<?> constructor = MethodMatchers.class.getDeclaredConstructor();
+        MatcherAssert.assertThat(Modifier.isPrivate(constructor.getModifiers()), is(true));
+        constructor.setAccessible(true);
+        try {
+            constructor.newInstance();
+            fail();
+        } catch (InvocationTargetException e) {
+            assertEquals(UnsupportedOperationException.class, e.getCause().getClass());
+        }
     }
 
     @Retention(RetentionPolicy.RUNTIME)

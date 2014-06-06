@@ -9,6 +9,7 @@ import net.bytebuddy.dynamic.scaffold.FieldRegistry;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.SuperMethodCall;
+import net.bytebuddy.instrumentation.TypeInitializer;
 import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
@@ -48,25 +49,27 @@ import static org.mockito.Mockito.*;
 
 public class SubclassDynamicTypeBuilderTest {
 
-    private static final String FOO = "foo", BAR = "bar";
+    private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private Instrumentation instrumentation;
+    private Instrumentation simpleInstrumentation, preparingInstrumentation;
     @Mock
     private ByteCodeAppender byteCodeAppender;
+    @Mock
+    private TypeInitializer typeInitializer;
 
     @Before
     public void setUp() throws Exception {
-        when(instrumentation.prepare(any(InstrumentedType.class))).thenAnswer(new Answer<InstrumentedType>() {
+        when(simpleInstrumentation.prepare(any(InstrumentedType.class))).then(new Answer<InstrumentedType>() {
             @Override
             public InstrumentedType answer(InvocationOnMock invocation) throws Throwable {
                 return (InstrumentedType) invocation.getArguments()[0];
             }
         });
-        when(instrumentation.appender(any(Instrumentation.Target.class))).thenReturn(byteCodeAppender);
+        when(simpleInstrumentation.appender(any(Instrumentation.Target.class))).thenReturn(byteCodeAppender);
         when(byteCodeAppender.appendsCode()).thenReturn(true);
         when(byteCodeAppender.apply(any(MethodVisitor.class), any(Instrumentation.Context.class), any(MethodDescription.class)))
                 .thenAnswer(new Answer<ByteCodeAppender.Size>() {
@@ -79,6 +82,22 @@ public class SubclassDynamicTypeBuilderTest {
                         return new ByteCodeAppender.Size(1, methodDescription.getStackSize());
                     }
                 });
+        when(preparingInstrumentation.prepare(any(InstrumentedType.class))).then(new Answer<InstrumentedType>() {
+            @Override
+            public InstrumentedType answer(InvocationOnMock invocation) throws Throwable {
+                return ((InstrumentedType) invocation.getArguments()[0])
+                        .withField(BAZ,
+                                new TypeDescription.ForLoadedType(Object.class),
+                                0)
+                        .withMethod(QUX,
+                                new TypeDescription.ForLoadedType(int.class),
+                                Collections.<TypeDescription>emptyList(),
+                                Collections.<TypeDescription>emptyList(),
+                                0)
+                        .withInitializer(typeInitializer);
+            }
+        });
+        when(preparingInstrumentation.appender(any(Instrumentation.Target.class))).thenReturn(byteCodeAppender);
     }
 
     @Test
@@ -171,7 +190,7 @@ public class SubclassDynamicTypeBuilderTest {
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ConstructorStrategy.Default.IMITATE_SUPER_TYPE)
                 .defineMethod(BAR, int.class, Arrays.<Class<?>>asList(long.class, Object.class), MemberVisibility.PUBLIC)
-                .intercept(instrumentation)
+                .intercept(simpleInstrumentation)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -191,9 +210,9 @@ public class SubclassDynamicTypeBuilderTest {
         assertThat(method.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(loaded.getDeclaredConstructors().length, is(1));
         assertThat(loaded.getDeclaredConstructor().newInstance(), notNullValue());
-        verify(instrumentation).prepare(any(InstrumentedType.class));
-        verify(instrumentation).appender(any(Instrumentation.Target.class));
-        verifyNoMoreInteractions(instrumentation);
+        verify(simpleInstrumentation).prepare(any(InstrumentedType.class));
+        verify(simpleInstrumentation).appender(any(Instrumentation.Target.class));
+        verifyNoMoreInteractions(simpleInstrumentation);
         verify(byteCodeAppender).appendsCode();
         verify(byteCodeAppender).apply(any(MethodVisitor.class), any(Instrumentation.Context.class), any(MethodDescription.class));
         verifyNoMoreInteractions(byteCodeAppender);
@@ -282,6 +301,57 @@ public class SubclassDynamicTypeBuilderTest {
     }
 
     @Test
+    public void testSubclassWithDefinedInstrumentationPreparation() throws Exception {
+        Class<?> loaded = new SubclassDynamicTypeBuilder<Object>(ClassFileVersion.forCurrentJavaVersion(),
+                new NamingStrategy.Fixed(FOO),
+                new TypeDescription.ForLoadedType(Object.class),
+                new TypeList.ForLoadedType(Arrays.<Class<?>>asList(Serializable.class)),
+                Opcodes.ACC_PUBLIC,
+                TypeAttributeAppender.NoOp.INSTANCE,
+                none(),
+                BridgeMethodResolver.Simple.Factory.FAIL_FAST,
+                new ClassVisitorWrapper.Chain(),
+                new FieldRegistry.Default(),
+                new MethodRegistry.Default(),
+                MethodLookupEngine.Default.Factory.INSTANCE,
+                FieldAttributeAppender.NoOp.INSTANCE,
+                MethodAttributeAppender.NoOp.INSTANCE,
+                ConstructorStrategy.Default.IMITATE_SUPER_TYPE)
+                .defineMethod(BAR, int.class, Arrays.<Class<?>>asList(long.class, Object.class), MemberVisibility.PUBLIC)
+                .intercept(preparingInstrumentation)
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(loaded.getName(), is(FOO));
+        assertThat(loaded.getModifiers(), is(Opcodes.ACC_PUBLIC));
+        assertEquals(Object.class, loaded.getSuperclass());
+        assertThat(loaded.getInterfaces().length, is(1));
+        assertThat(loaded.getClassLoader().getParent(), is(getClass().getClassLoader()));
+        assertEquals(Serializable.class, loaded.getInterfaces()[0]);
+        assertThat(loaded.getDeclaredAnnotations().length, is(0));
+        assertThat(loaded.getDeclaredFields().length, is(1));
+        Field field = loaded.getDeclaredField(BAZ);
+        assertThat(field.getModifiers(), is(0));
+        assertThat(loaded.getDeclaredMethods().length, is(2));
+        Method method = loaded.getDeclaredMethod(BAR, long.class, Object.class);
+        assertThat(method.getDeclaredAnnotations().length, is(0));
+        assertEquals(int.class, method.getReturnType());
+        assertThat(method.getModifiers(), is(Opcodes.ACC_PUBLIC));
+        Method preparedMethod = loaded.getDeclaredMethod(QUX);
+        assertThat(preparedMethod.getDeclaredAnnotations().length, is(0));
+        assertEquals(int.class, preparedMethod.getReturnType());
+        assertThat(preparedMethod.getModifiers(), is(0));
+        assertThat(loaded.getDeclaredConstructors().length, is(1));
+        assertThat(loaded.getDeclaredConstructor().newInstance(), notNullValue());
+        verify(preparingInstrumentation).prepare(any(InstrumentedType.class));
+        verify(preparingInstrumentation).appender(any(Instrumentation.Target.class));
+        verifyNoMoreInteractions(preparingInstrumentation);
+        verify(byteCodeAppender, times(2)).appendsCode();
+        verify(byteCodeAppender, times(2)).apply(any(MethodVisitor.class), any(Instrumentation.Context.class), any(MethodDescription.class));
+        verifyNoMoreInteractions(byteCodeAppender);
+    }
+
+    @Test
     public void testHashCodeEquals() throws Exception {
         assertThat(makeSimple(Opcodes.ACC_PUBLIC).hashCode(), is(makeSimple(Opcodes.ACC_PUBLIC).hashCode()));
         assertThat(makeSimple(Opcodes.ACC_PUBLIC), is(makeSimple(Opcodes.ACC_PUBLIC)));
@@ -308,9 +378,9 @@ public class SubclassDynamicTypeBuilderTest {
         assertThat(makeSimple(Opcodes.ACC_PUBLIC).defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList()).withoutCode(),
                 is(makeSimple(Opcodes.ACC_PUBLIC).defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList()).withoutCode()));
         assertThat(makeSimple(Opcodes.ACC_PUBLIC).defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList()).withoutCode().hashCode(),
-                not(is(makeSimple(Opcodes.ACC_PUBLIC).defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList()).intercept(instrumentation).hashCode())));
+                not(is(makeSimple(Opcodes.ACC_PUBLIC).defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList()).intercept(simpleInstrumentation).hashCode())));
         assertThat(makeSimple(Opcodes.ACC_PUBLIC).defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList()).withoutCode(),
-                not(is(makeSimple(Opcodes.ACC_PUBLIC).defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList()).intercept(instrumentation))));
+                not(is(makeSimple(Opcodes.ACC_PUBLIC).defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList()).intercept(simpleInstrumentation))));
     }
 
     private SubclassDynamicTypeBuilder<Object> makeSimple(int modifiers) {

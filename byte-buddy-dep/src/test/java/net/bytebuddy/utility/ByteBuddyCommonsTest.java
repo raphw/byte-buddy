@@ -14,6 +14,9 @@ import org.mockito.Mock;
 import org.mockito.asm.Opcodes;
 
 import java.io.Serializable;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.List;
 
@@ -21,6 +24,8 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsSame.sameInstance;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
 
 public class ByteBuddyCommonsTest {
@@ -196,5 +201,19 @@ public class ByteBuddyCommonsTest {
     @Test(expected = IllegalArgumentException.class)
     public void testIsThrowableForNonThrowables() throws Exception {
         isThrowable(Arrays.asList(first, second));
+    }
+
+    @Test
+    public void testConstructorIsHidden() throws Exception {
+        assertThat(ByteBuddyCommons.class.getDeclaredConstructors().length, is(1));
+        Constructor<?> constructor = ByteBuddyCommons.class.getDeclaredConstructor();
+        assertThat(Modifier.isPrivate(constructor.getModifiers()), is(true));
+        constructor.setAccessible(true);
+        try {
+            constructor.newInstance();
+            fail();
+        } catch (InvocationTargetException e) {
+            assertEquals(UnsupportedOperationException.class, e.getCause().getClass());
+        }
     }
 }
