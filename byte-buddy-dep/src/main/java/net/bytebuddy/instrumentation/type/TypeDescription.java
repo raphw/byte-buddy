@@ -194,6 +194,13 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
     StackSize getStackSize();
 
     /**
+     * Checks if this type is defined in a sealed package.
+     *
+     * @return {@code true} if the class is defined in a sealed package.
+     */
+    boolean isSealed();
+
+    /**
      * An abstract base implementation of a type description.
      */
     abstract static class AbstractTypeDescription extends AbstractModifierReviewable implements TypeDescription {
@@ -417,6 +424,11 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
         @Override
         public Annotation[] getDeclaredAnnotations() {
             return type.getDeclaredAnnotations();
+        }
+
+        @Override
+        public boolean isSealed() {
+            return type.getPackage().isSealed();
         }
 
         @Override

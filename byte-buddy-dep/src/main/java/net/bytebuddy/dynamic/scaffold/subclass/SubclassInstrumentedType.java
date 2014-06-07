@@ -233,6 +233,11 @@ public class SubclassInstrumentedType
     }
 
     @Override
+    public boolean isSealed() {
+        return false;
+    }
+
+    @Override
     public String toString() {
         return "SubclassInstrumentedType{" +
                 "classFileVersion=" + classFileVersion +

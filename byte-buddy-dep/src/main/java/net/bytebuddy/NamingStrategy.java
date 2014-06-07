@@ -84,7 +84,8 @@ public interface NamingStrategy {
      * </ol>
      * Between all these elements, a {@code $} sign is included into the name to improve readability. As an exception,
      * types that subclass classes from the {@code java.**} packages are prefixed with a given package. This is
-     * necessary as it is illegal to define non-bootstrap classes in this name space.
+     * necessary as it is illegal to define non-bootstrap classes in this name space. The same strategy is applied
+     * when subclassing a signed type which is equally illegal.
      */
     static class SuffixingRandom implements NamingStrategy {
 
@@ -142,7 +143,7 @@ public interface NamingStrategy {
         @Override
         public String name(UnnamedType unnamedType) {
             String superClassName = unnamedType.getSuperClass().getName();
-            if (superClassName.startsWith(JAVA_PACKAGE)) {
+            if (superClassName.startsWith(JAVA_PACKAGE) || unnamedType.getSuperClass().isSealed()) {
                 superClassName = javaLangPackagePrefix + "." + superClassName;
             }
             return String.format("%s$%s$%d", superClassName, suffix, Math.abs(random.nextInt()));

@@ -11,13 +11,14 @@ import org.mockito.Mock;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
 
-public class ClassConstantTest {
+public class ClassConstantReferenceTest {
 
-    private static final String FOO = "foo";
+    private static final String FOO = "Lfoo;";
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -32,13 +33,24 @@ public class ClassConstantTest {
     @Test
     public void testClassConstant() throws Exception {
         when(typeDescription.getDescriptor()).thenReturn(FOO);
-        StackManipulation.Size size = new ClassConstant(typeDescription).apply(methodVisitor, instrumentationContext);
+        StackManipulation stackManipulation = ClassConstant.of(typeDescription);
+        assertThat(stackManipulation.isValid(), is(true));
+        StackManipulation.Size size = stackManipulation.apply(methodVisitor, instrumentationContext);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
         verify(typeDescription).getDescriptor();
+        verify(typeDescription, times(9)).represents(any(Class.class));
         verifyNoMoreInteractions(typeDescription);
         verify(methodVisitor).visitLdcInsn(Type.getType(FOO));
         verifyNoMoreInteractions(methodVisitor);
         verifyZeroInteractions(instrumentationContext);
+    }
+
+    @Test
+    public void testHashCodeEquals() throws Exception {
+        assertThat(ClassConstant.of(typeDescription).hashCode(), is(ClassConstant.of(typeDescription).hashCode()));
+        assertThat(ClassConstant.of(typeDescription), is(ClassConstant.of(typeDescription)));
+        assertThat(ClassConstant.of(typeDescription).hashCode(), not(is(ClassConstant.of(mock(TypeDescription.class)).hashCode())));
+        assertThat(ClassConstant.of(typeDescription), not(is(ClassConstant.of(mock(TypeDescription.class)))));
     }
 }

@@ -62,7 +62,7 @@ public abstract class MethodConstant implements StackManipulation {
     private static List<StackManipulation> typeConstantsFor(List<TypeDescription> parameterTypes) {
         List<StackManipulation> typeConstants = new ArrayList<StackManipulation>(parameterTypes.size());
         for (TypeDescription parameterType : parameterTypes) {
-            typeConstants.add(new ClassConstant(parameterType));
+            typeConstants.add(ClassConstant.of(parameterType));
         }
         return typeConstants;
     }

@@ -57,7 +57,7 @@ public @interface Origin {
                                                                Assigner assigner) {
             TypeDescription parameterType = target.getParameterTypes().get(targetParameterIndex);
             if (parameterType.represents(Class.class)) {
-                return new MethodDelegationBinder.ParameterBinding.Anonymous(new ClassConstant(instrumentationTarget.getTypeDescription()));
+                return new MethodDelegationBinder.ParameterBinding.Anonymous(ClassConstant.of(instrumentationTarget.getTypeDescription()));
             } else if (parameterType.represents(Method.class)) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(MethodConstant.forMethod(source));
             } else {
