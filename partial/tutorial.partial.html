@@ -1180,6 +1180,65 @@ class Interceptor {
 </p>
 
 <p>
+    We already mentioned that you can define and register custom annotations with any <code>MethodDelegation</code>.
+    Byte Buddy comes with one annotation that is ready for use but still needs to be <i>installed</i> and registered
+    explicitly. By using the <code>@Pipe</code> annotation, you can forward an intercepted method invocation to another
+    instance. The <code>@Pipe</code> annotation is not preregistered with the <code>MethodDelegation</code> because
+    the Java class library does not come with a suitable interface type before Java 8 which defines the
+    <code>Function</code> type. Therefore, you need to explicitly provide a type with a single non-static method which
+    takes an <code>Object</code> as its argument and returns another <code>Object</code> as a result. Note that you
+    can still use a generic type as long as the method types are bound by the <code>Object</code> type. Of course,
+    if you are using Java 8, the <code>Function</code> type is a feasible option. When invoking the method on the
+    parameter's argument, Byte Buddy casts the parameter to the method's declaring type and invokes the intercepted
+    method with the same arguments as the original method call. Before we look at an example, let us however define
+    a custom type which you can use with Java 5 and upwards:
+</p>
+
+<pre class="prettyprint">
+interface Forwarder&lt;T, S&gt; {
+  T to(S target);
+}
+</pre>
+
+<p>
+    Using this type, we can now implement a new solution to logging access of the above <code>MemoryDatabase</code>
+    by forwarding a method invocation to an existing instance:
+</p>
+
+<pre class="prettyprint">
+class ForwardingLoggerInterceptor {
+
+  private final MemoryDatabase memoryDatabase; // constructor omitted
+
+  public List&lt;String&gt; log(@Pipe Forwarder&lt;List&lt;String&gt;, MemoryDatabase&gt; pipe) {
+    System.out.println("Calling database");
+    try {
+      return pipe.to(memoryDatabase);
+    } finally {
+      System.out.println("Returned from database");
+    }
+  }
+}
+
+MemoryDatabase loggingDatabase = new ByteBuddy()
+  .subclass(MemoryDatabase.class)
+  .method(named("load")).intercept(MethodDelegation
+    .to(new ForwardingLoggerInterceptor(new MemoryDatabase()))
+    .appendParameterBinder(Pipe.Binder.install(Forwarder.class)))
+  .make()
+  .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+  .getLoaded()
+  .newInstance();
+</pre>
+
+<p>
+    In the above example, we only forward the invocation to another instance that we create locally. However,
+    the advantage over intercepting a method by subclassing a type, is that this approach allows to enhance an
+    already existing instance. Furthermore, you would normally register an interceptor on the instance level instead
+    of registering a static interceptor on the class level.
+</p>
+
+<p>
     So far, we have seen a great deal of the <code>MethodDelegation</code> instrumentation. But before we proceed,
     we want to take a more detailed look on how Byte Buddy selects a target method. We already described how Byte
     Buddy resolves a <i>most specific</i> method by comparing parameter types but there is more to it. After Byte Buddy
