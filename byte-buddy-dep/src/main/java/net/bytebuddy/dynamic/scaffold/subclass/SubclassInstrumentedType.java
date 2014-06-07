@@ -171,7 +171,7 @@ public class SubclassInstrumentedType
 
     @Override
     public TypeDescription getSupertype() {
-        return superClass;
+        return isInterface() ? null : superClass;
     }
 
     @Override
