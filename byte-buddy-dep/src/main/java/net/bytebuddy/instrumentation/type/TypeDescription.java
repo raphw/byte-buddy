@@ -428,7 +428,7 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
 
         @Override
         public boolean isSealed() {
-            return type.getPackage().isSealed();
+            return type.getPackage() != null && type.getPackage().isSealed();
         }
 
         @Override
