@@ -308,12 +308,12 @@ public class MethodDelegation implements Instrumentation {
      * @param fieldName The name of the field.
      * @return A method delegation that intercepts method calls by delegating to method calls on the given instance.
      */
-    public static MethodDelegation instanceField(Class<?> type, String fieldName) {
-        return instanceField(type, fieldName, defaultMethodLookupEngine());
+    public static MethodDelegation toInstanceField(Class<?> type, String fieldName) {
+        return toInstanceField(type, fieldName, defaultMethodLookupEngine());
     }
 
     /**
-     * Identical to {@link net.bytebuddy.instrumentation.MethodDelegation#instanceField(Class, String)} but uses an
+     * Identical to {@link net.bytebuddy.instrumentation.MethodDelegation#toInstanceField(Class, String)} but uses an
      * explicit {@link net.bytebuddy.instrumentation.method.MethodLookupEngine}.
      *
      * @param type               The type of the delegate and the field.
@@ -321,7 +321,7 @@ public class MethodDelegation implements Instrumentation {
      * @param methodLookupEngine The method lookup engine to use.
      * @return A method delegation that intercepts method calls by delegating to method calls on the given instance.
      */
-    public static MethodDelegation instanceField(Class<?> type, String fieldName, MethodLookupEngine methodLookupEngine) {
+    public static MethodDelegation toInstanceField(Class<?> type, String fieldName, MethodLookupEngine methodLookupEngine) {
         return new MethodDelegation(
                 new InstrumentationDelegate.ForInstanceField(new TypeDescription.ForLoadedType(nonNull(type)), isValidIdentifier(fieldName)),
                 defaultParameterBinders(),
@@ -341,7 +341,7 @@ public class MethodDelegation implements Instrumentation {
      * @param type The type that should be constructed by the instrumented methods.
      * @return An instrumentation that creates instances of the given type as its result.
      */
-    public static MethodDelegation construct(Class<?> type) {
+    public static MethodDelegation toConstructor(Class<?> type) {
         return new MethodDelegation(new InstrumentationDelegate.ForConstruction(new TypeDescription.ForLoadedType(type)),
                 defaultParameterBinders(),
                 defaultDefaultsProvider(),

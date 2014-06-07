@@ -74,7 +74,7 @@ public class MethodDelegationConstructionTest<T extends CallTraceable>
     @Test
     @SuppressWarnings("unchecked")
     public void testConstruction() throws Exception {
-        DynamicType.Loaded<T> loaded = instrument(sourceType, MethodDelegation.construct(targetType));
+        DynamicType.Loaded<T> loaded = instrument(sourceType, MethodDelegation.toConstructor(targetType));
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));

@@ -105,7 +105,7 @@ public class MethodDelegationTest<T extends CallTraceable>
     @Test
     @SuppressWarnings("unchecked")
     public void testInstanceFieldBinding() throws Exception {
-        DynamicType.Loaded<T> loaded = instrument(sourceType, MethodDelegation.instanceField(targetType, FIELD_NAME).filter(isDeclaredBy(targetType)));
+        DynamicType.Loaded<T> loaded = instrument(sourceType, MethodDelegation.toInstanceField(targetType, FIELD_NAME).filter(isDeclaredBy(targetType)));
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));

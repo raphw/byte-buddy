@@ -273,14 +273,14 @@ public class ByteBuddyTutorialExamplesTest {
         ByteBuddy byteBuddy = new ByteBuddy();
         Class<? extends UserType> dynamicUserType = byteBuddy
                 .subclass(UserType.class)
-                .method(not(isDeclaredBy(Object.class))).intercept(MethodDelegation.instanceField(Interceptor2.class, "interceptor"))
+                .method(not(isDeclaredBy(Object.class))).intercept(MethodDelegation.toInstanceField(Interceptor2.class, "interceptor"))
                 .implement(InterceptionAccessor.class).intercept(FieldAccessor.ofBeanProperty())
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         InstanceCreator factory = byteBuddy
                 .subclass(InstanceCreator.class)
-                .method(not(isDeclaredBy(Object.class))).intercept(MethodDelegation.construct(dynamicUserType))
+                .method(not(isDeclaredBy(Object.class))).intercept(MethodDelegation.toConstructor(dynamicUserType))
                 .make()
                 .load(dynamicUserType.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded().newInstance();

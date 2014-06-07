@@ -28,7 +28,7 @@ public abstract class AbstractBlackHoleTest {
                 .subclass(Object.class)
                 .name(String.format("C%d$generated", Math.abs(new Random().nextInt())))
                 .defineMethod(BLACK_HOLE_METHOD, Blackhole.class, Collections.<Class<?>>emptyList(), MemberVisibility.PUBLIC)
-                .intercept(MethodDelegation.construct(Blackhole.class))
+                .intercept(MethodDelegation.toConstructor(Blackhole.class))
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();

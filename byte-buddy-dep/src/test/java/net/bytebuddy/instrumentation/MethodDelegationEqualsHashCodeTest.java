@@ -36,20 +36,20 @@ public class MethodDelegationEqualsHashCodeTest {
 
     @Test
     public void testInstanceFieldDelegation() throws Exception {
-        assertThat(MethodDelegation.instanceField(Foo.class, FOO).hashCode(), is(MethodDelegation.instanceField(Foo.class, FOO).hashCode()));
-        assertThat(MethodDelegation.instanceField(Foo.class, FOO), is(MethodDelegation.instanceField(Foo.class, FOO)));
-        assertThat(MethodDelegation.instanceField(Foo.class, FOO).hashCode(), not(is(MethodDelegation.instanceField(Bar.class, FOO).hashCode())));
-        assertThat(MethodDelegation.instanceField(Foo.class, FOO), not(is(MethodDelegation.instanceField(Bar.class, FOO))));
-        assertThat(MethodDelegation.instanceField(Foo.class, FOO).hashCode(), not(is(MethodDelegation.instanceField(Foo.class, BAR).hashCode())));
-        assertThat(MethodDelegation.instanceField(Foo.class, FOO), not(is(MethodDelegation.instanceField(Foo.class, BAR))));
+        assertThat(MethodDelegation.toInstanceField(Foo.class, FOO).hashCode(), is(MethodDelegation.toInstanceField(Foo.class, FOO).hashCode()));
+        assertThat(MethodDelegation.toInstanceField(Foo.class, FOO), is(MethodDelegation.toInstanceField(Foo.class, FOO)));
+        assertThat(MethodDelegation.toInstanceField(Foo.class, FOO).hashCode(), not(is(MethodDelegation.toInstanceField(Bar.class, FOO).hashCode())));
+        assertThat(MethodDelegation.toInstanceField(Foo.class, FOO), not(is(MethodDelegation.toInstanceField(Bar.class, FOO))));
+        assertThat(MethodDelegation.toInstanceField(Foo.class, FOO).hashCode(), not(is(MethodDelegation.toInstanceField(Foo.class, BAR).hashCode())));
+        assertThat(MethodDelegation.toInstanceField(Foo.class, FOO), not(is(MethodDelegation.toInstanceField(Foo.class, BAR))));
     }
 
     @Test
     public void testConstructorDelegation() throws Exception {
-        assertThat(MethodDelegation.construct(Foo.class).hashCode(), is(MethodDelegation.construct(Foo.class).hashCode()));
-        assertThat(MethodDelegation.construct(Foo.class), is(MethodDelegation.construct(Foo.class)));
-        assertThat(MethodDelegation.construct(Foo.class).hashCode(), not(is(MethodDelegation.construct(Bar.class).hashCode())));
-        assertThat(MethodDelegation.construct(Foo.class), not(is(MethodDelegation.construct(Bar.class))));
+        assertThat(MethodDelegation.toConstructor(Foo.class).hashCode(), is(MethodDelegation.toConstructor(Foo.class).hashCode()));
+        assertThat(MethodDelegation.toConstructor(Foo.class), is(MethodDelegation.toConstructor(Foo.class)));
+        assertThat(MethodDelegation.toConstructor(Foo.class).hashCode(), not(is(MethodDelegation.toConstructor(Bar.class).hashCode())));
+        assertThat(MethodDelegation.toConstructor(Foo.class), not(is(MethodDelegation.toConstructor(Bar.class))));
     }
 
     public static class Foo {
