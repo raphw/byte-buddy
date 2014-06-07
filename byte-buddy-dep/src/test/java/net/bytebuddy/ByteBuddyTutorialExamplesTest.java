@@ -268,29 +268,6 @@ public class ByteBuddyTutorialExamplesTest {
         assertThat(loggingDatabase.load("qux"), is(Arrays.asList("qux: foo", "qux: bar")));
     }
 
-    public interface Forwarder<T, S> {
-
-        T to(S target);
-    }
-
-    public class ForwardingLoggerInterceptor {
-
-        private final MemoryDatabase memoryDatabase;
-
-        public ForwardingLoggerInterceptor(MemoryDatabase memoryDatabase) {
-            this.memoryDatabase = memoryDatabase;
-        }
-
-        public List<String> log(@Pipe Forwarder<List<String>, MemoryDatabase> pipe) {
-            println("Calling database");
-            try {
-                return pipe.to(memoryDatabase);
-            } finally {
-                println("Returned from database");
-            }
-        }
-    }
-
     @Test
     public void testFieldsAndMethodsFieldAccess() throws Exception {
         ByteBuddy byteBuddy = new ByteBuddy();
@@ -473,6 +450,11 @@ public class ByteBuddyTutorialExamplesTest {
             StackManipulation constant = new TextConstant(annotation.value());
             return new MethodDelegationBinder.ParameterBinding.Anonymous(constant);
         }
+    }
+
+    public interface Forwarder<T, S> {
+
+        T to(S target);
     }
 
     @Retention(RetentionPolicy.RUNTIME)
@@ -675,6 +657,24 @@ public class ByteBuddyTutorialExamplesTest {
 
         public static String makeString(@StringValue("Hello!") String value) {
             return value;
+        }
+    }
+
+    public class ForwardingLoggerInterceptor {
+
+        private final MemoryDatabase memoryDatabase;
+
+        public ForwardingLoggerInterceptor(MemoryDatabase memoryDatabase) {
+            this.memoryDatabase = memoryDatabase;
+        }
+
+        public List<String> log(@Pipe Forwarder<List<String>, MemoryDatabase> pipe) {
+            println("Calling database");
+            try {
+                return pipe.to(memoryDatabase);
+            } finally {
+                println("Returned from database");
+            }
         }
     }
 

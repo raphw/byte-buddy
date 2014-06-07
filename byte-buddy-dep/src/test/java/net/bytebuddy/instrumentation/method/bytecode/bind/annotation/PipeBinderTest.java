@@ -23,6 +23,7 @@ public class PipeBinderTest extends AbstractAnnotationBinderTest<Pipe> {
     private MethodDescription targetMethod;
     @Mock
     private TypeDescription targetMethodType;
+
     public PipeBinderTest() {
         super(Pipe.class);
     }
