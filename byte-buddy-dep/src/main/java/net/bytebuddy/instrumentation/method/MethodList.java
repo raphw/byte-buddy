@@ -37,43 +37,49 @@ public interface MethodList extends List<MethodDescription> {
     static class ForLoadedType extends AbstractList<MethodDescription> implements MethodList {
 
         /**
-         * The loaded type that is represented by this method list.
+         * The loaded methods that are represented by this method list.
          */
-        private final Class<?> type;
+        private final Method[] methods;
+
+        /**
+         * The loaded constructors that are represented by this method list.
+         */
+        private final Constructor<?>[] constructors;
 
         /**
          * Creates a new list for a loaded type. Method descriptions are created on demand.
          *
-         * @param type The type of interest.
+         * @param type The type to be represented by this method list.
          */
         public ForLoadedType(Class<?> type) {
-            this.type = type;
+            methods = type.getDeclaredMethods();
+            constructors = type.getDeclaredConstructors();
         }
 
         @Override
         public MethodDescription get(int index) {
-            if (index < type.getDeclaredConstructors().length) {
-                return new MethodDescription.ForLoadedConstructor(type.getDeclaredConstructors()[index]);
+            if (index < constructors.length) {
+                return new MethodDescription.ForLoadedConstructor(constructors[index]);
             } else {
-                return new MethodDescription.ForLoadedMethod(type.getDeclaredMethods()[index - type.getDeclaredConstructors().length]);
+                return new MethodDescription.ForLoadedMethod(methods[index - constructors.length]);
             }
         }
 
         @Override
         public int size() {
-            return type.getDeclaredMethods().length + type.getDeclaredConstructors().length;
+            return constructors.length + methods.length;
         }
 
         @Override
         public MethodList filter(MethodMatcher methodMatcher) {
             List<MethodDescription> result = new ArrayList<MethodDescription>(size());
-            for (Method method : type.getDeclaredMethods()) {
+            for (Method method : methods) {
                 MethodDescription methodDescription = new MethodDescription.ForLoadedMethod(method);
                 if (methodMatcher.matches(methodDescription)) {
                     result.add(methodDescription);
                 }
             }
-            for (Constructor<?> constructor : type.getDeclaredConstructors()) {
+            for (Constructor<?> constructor : constructors) {
                 MethodDescription methodDescription = new MethodDescription.ForLoadedConstructor(constructor);
                 if (methodMatcher.matches(methodDescription)) {
                     result.add(methodDescription);
@@ -87,7 +93,7 @@ public interface MethodList extends List<MethodDescription> {
             if (size() == 1) {
                 return get(0);
             } else {
-                throw new IllegalStateException("Expected to find exactly one method but found " + type.getDeclaredMethods().length);
+                throw new IllegalStateException("Expected to find exactly one method but found " + size() + " methods");
             }
         }
 
@@ -98,7 +104,10 @@ public interface MethodList extends List<MethodDescription> {
 
         @Override
         public String toString() {
-            return "MethodList.ForLoadedType{type=" + type + '}';
+            return "MethodList.ForLoadedType{" +
+                    "methods=" + Arrays.toString(methods) +
+                    ", constructors=" + Arrays.toString(constructors) +
+                    '}';
         }
     }
 
