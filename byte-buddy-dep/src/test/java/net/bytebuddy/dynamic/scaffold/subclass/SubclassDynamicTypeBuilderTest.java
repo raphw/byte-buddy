@@ -349,6 +349,8 @@ public class SubclassDynamicTypeBuilderTest {
         verify(byteCodeAppender, times(2)).appendsCode();
         verify(byteCodeAppender, times(2)).apply(any(MethodVisitor.class), any(Instrumentation.Context.class), any(MethodDescription.class));
         verifyNoMoreInteractions(byteCodeAppender);
+        verify(typeInitializer).onLoad(loaded);
+        verifyNoMoreInteractions(typeInitializer);
     }
 
     @Test

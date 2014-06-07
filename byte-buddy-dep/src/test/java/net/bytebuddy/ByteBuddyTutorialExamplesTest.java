@@ -254,6 +254,44 @@ public class ByteBuddyTutorialExamplesTest {
     }
 
     @Test
+    public void testFieldsAndMethodsForwarding() throws Exception {
+        MemoryDatabase memoryDatabase = new MemoryDatabase();
+        MemoryDatabase loggingDatabase = new ByteBuddy()
+                .subclass(MemoryDatabase.class)
+                .method(named("load")).intercept(MethodDelegation
+                        .to(new ForwardingLoggerInterceptor(memoryDatabase))
+                        .appendParameterBinder(Pipe.Binder.install(Forwarder.class)))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded()
+                .newInstance();
+        assertThat(loggingDatabase.load("qux"), is(Arrays.asList("qux: foo", "qux: bar")));
+    }
+
+    public interface Forwarder<T, S> {
+
+        T to(S target);
+    }
+
+    public class ForwardingLoggerInterceptor {
+
+        private final MemoryDatabase memoryDatabase;
+
+        public ForwardingLoggerInterceptor(MemoryDatabase memoryDatabase) {
+            this.memoryDatabase = memoryDatabase;
+        }
+
+        public List<String> log(@Pipe Forwarder<List<String>, MemoryDatabase> pipe) {
+            println("Calling database");
+            try {
+                return pipe.to(memoryDatabase);
+            } finally {
+                println("Returned from database");
+            }
+        }
+    }
+
+    @Test
     public void testFieldsAndMethodsFieldAccess() throws Exception {
         ByteBuddy byteBuddy = new ByteBuddy();
         Class<? extends UserType> dynamicUserType = byteBuddy
