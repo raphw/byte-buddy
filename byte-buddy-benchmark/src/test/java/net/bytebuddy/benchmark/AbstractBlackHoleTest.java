@@ -3,7 +3,7 @@ package net.bytebuddy.benchmark;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.ClassLoadingStrategy;
 import net.bytebuddy.instrumentation.MethodDelegation;
-import net.bytebuddy.modifier.MemberVisibility;
+import net.bytebuddy.modifier.Visibility;
 import org.junit.Before;
 import org.openjdk.jmh.infra.Blackhole;
 
@@ -27,7 +27,7 @@ public abstract class AbstractBlackHoleTest {
         Class<?> blackHoleGenerator = new ByteBuddy()
                 .subclass(Object.class)
                 .name(String.format("C%d$generated", Math.abs(new Random().nextInt())))
-                .defineMethod(BLACK_HOLE_METHOD, Blackhole.class, Collections.<Class<?>>emptyList(), MemberVisibility.PUBLIC)
+                .defineMethod(BLACK_HOLE_METHOD, Blackhole.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
                 .intercept(MethodDelegation.toConstructor(Blackhole.class))
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)

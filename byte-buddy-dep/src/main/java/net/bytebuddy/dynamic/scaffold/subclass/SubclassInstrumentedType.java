@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic.scaffold.subclass;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
+import net.bytebuddy.instrumentation.ModifierContributor;
 import net.bytebuddy.instrumentation.TypeInitializer;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
@@ -10,7 +11,8 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.modifier.SyntheticState;
 import net.bytebuddy.modifier.TypeManifestation;
-import net.bytebuddy.modifier.TypeVisibility;
+import net.bytebuddy.modifier.Visibility;
+import net.bytebuddy.utility.ByteBuddyCommons;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Modifier;
@@ -200,11 +202,18 @@ public class SubclassInstrumentedType
     }
 
     @Override
-    public TypeVisibility getVisibility() {
-        if ((modifiers & Modifier.PUBLIC) != 0) {
-            return TypeVisibility.PUBLIC;
-        } else {
-            return TypeVisibility.PACKAGE_PRIVATE;
+    public Visibility getVisibility() {
+        switch (modifiers & ByteBuddyCommons.VISIBILITY_MODIFIER_MASK) {
+            case Opcodes.ACC_PUBLIC:
+                return Visibility.PUBLIC;
+            case Opcodes.ACC_PROTECTED:
+                return Visibility.PROTECTED;
+            case Opcodes.ACC_PRIVATE:
+                return Visibility.PRIVATE;
+            case ModifierContributor.EMPTY_MASK:
+                return Visibility.PACKAGE_PRIVATE;
+            default:
+                throw new IllegalStateException("Ambiguous modifier: " + modifiers);
         }
     }
 

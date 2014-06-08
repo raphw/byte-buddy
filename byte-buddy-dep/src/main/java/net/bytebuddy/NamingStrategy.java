@@ -3,7 +3,7 @@ package net.bytebuddy;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.modifier.SyntheticState;
 import net.bytebuddy.modifier.TypeManifestation;
-import net.bytebuddy.modifier.TypeVisibility;
+import net.bytebuddy.modifier.Visibility;
 
 import java.util.Collection;
 import java.util.Random;
@@ -51,7 +51,7 @@ public interface NamingStrategy {
          *
          * @return The visibility of this unnamed type.
          */
-        TypeVisibility getVisibility();
+        Visibility getVisibility();
 
         /**
          * Returns the manifestation of this unnamed type.

@@ -13,14 +13,9 @@ import java.util.*;
 public final class ByteBuddyCommons {
 
     /**
-     * A mask for modifiers that represent a method's or field's visibility.
+     * A mask for modifiers that represent a type's, method's or field's visibility.
      */
-    public static final int MEMBER_VISIBILITY_MODIFIER_MASK = Modifier.PUBLIC | Modifier.PROTECTED | Modifier.PRIVATE;
-
-    /**
-     * A mask for modifiers that represent a type's visibility.
-     */
-    public static final int TYPE_VISIBILITY_MODIFIER_MASK = Modifier.PUBLIC | Modifier.PROTECTED | Modifier.PRIVATE;
+    public static final int VISIBILITY_MODIFIER_MASK = Modifier.PUBLIC | Modifier.PROTECTED | Modifier.PRIVATE;
 
     /**
      * A mask for modifiers that are represented by types and members.
@@ -30,14 +25,14 @@ public final class ByteBuddyCommons {
     /**
      * A mask for modifiers that represents types.
      */
-    public static final int TYPE_MODIFIER_MASK = TYPE_VISIBILITY_MODIFIER_MASK | GENERAL_MODIFIER_MASK
+    public static final int TYPE_MODIFIER_MASK = VISIBILITY_MODIFIER_MASK | GENERAL_MODIFIER_MASK
             | Modifier.ABSTRACT | Modifier.FINAL | Modifier.INTERFACE | Modifier.STRICT | Opcodes.ACC_ANNOTATION
             | Opcodes.ACC_ENUM | Opcodes.ACC_STRICT | Opcodes.ACC_SUPER;
 
     /**
      * A mask for modifiers that represents type members.
      */
-    public static final int MEMBER_MODIFIER_MASK = MEMBER_VISIBILITY_MODIFIER_MASK | TYPE_MODIFIER_MASK
+    public static final int MEMBER_MODIFIER_MASK = VISIBILITY_MODIFIER_MASK | TYPE_MODIFIER_MASK
             | Modifier.FINAL | Modifier.SYNCHRONIZED | Modifier.STATIC;
 
     /**

@@ -4,7 +4,7 @@ import net.bytebuddy.instrumentation.ModifierContributor;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.modifier.FieldManifestation;
-import net.bytebuddy.modifier.MemberVisibility;
+import net.bytebuddy.modifier.Visibility;
 import net.bytebuddy.modifier.Ownership;
 import org.junit.Before;
 import org.junit.Rule;
@@ -170,7 +170,7 @@ public class ByteBuddyCommonsTest {
         assertThat(resolveModifierContributors(ByteBuddyCommons.FIELD_MODIFIER_MASK,
                 FieldManifestation.FINAL,
                 Ownership.STATIC,
-                MemberVisibility.PRIVATE), is(Opcodes.ACC_FINAL | Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE));
+                Visibility.PRIVATE), is(Opcodes.ACC_FINAL | Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE));
     }
 
     @Test(expected = IllegalArgumentException.class)

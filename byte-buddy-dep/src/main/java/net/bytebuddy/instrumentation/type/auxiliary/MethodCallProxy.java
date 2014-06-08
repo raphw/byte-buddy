@@ -25,7 +25,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariable
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
-import net.bytebuddy.modifier.MemberVisibility;
+import net.bytebuddy.modifier.Visibility;
 import org.objectweb.asm.MethodVisitor;
 
 import java.io.Serializable;
@@ -147,7 +147,7 @@ public class MethodCallProxy implements AuxiliaryType {
                 .defineConstructor(new ArrayList<TypeDescription>(parameterFields.values()))
                 .intercept(ConstructorCall.INSTANCE);
         for (Map.Entry<String, TypeDescription> field : parameterFields.entrySet()) {
-            builder = builder.defineField(field.getKey(), field.getValue(), MemberVisibility.PRIVATE);
+            builder = builder.defineField(field.getKey(), field.getValue(), Visibility.PRIVATE);
         }
         return builder.make();
     }

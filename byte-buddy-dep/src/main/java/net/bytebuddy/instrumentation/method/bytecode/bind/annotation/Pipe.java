@@ -24,7 +24,7 @@ import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
-import net.bytebuddy.modifier.MemberVisibility;
+import net.bytebuddy.modifier.Visibility;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -304,7 +304,7 @@ public @interface Pipe {
                         .defineConstructor(new ArrayList<TypeDescription>(parameterFields.values()))
                         .intercept(ConstructorCall.INSTANCE);
                 for (Map.Entry<String, TypeDescription> field : parameterFields.entrySet()) {
-                    builder = builder.defineField(field.getKey(), field.getValue(), MemberVisibility.PRIVATE);
+                    builder = builder.defineField(field.getKey(), field.getValue(), Visibility.PRIVATE);
                 }
                 return builder.make();
             }
