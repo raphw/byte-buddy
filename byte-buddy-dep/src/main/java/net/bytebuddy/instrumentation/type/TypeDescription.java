@@ -217,7 +217,9 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
 
         @Override
         public boolean isVisibleTo(TypeDescription typeDescription) {
-            return isPublic() || typeDescription.getPackageName().equals(getPackageName());
+            return isPublic()
+                    || (isPackagePrivate() && typeDescription.getPackageName().equals(getPackageName()))
+                    || (isProtected() && getEnclosingClass() != null && getEnclosingClass().isAssignableFrom(typeDescription));
         }
 
         @Override
