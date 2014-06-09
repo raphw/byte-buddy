@@ -203,9 +203,9 @@ public interface DynamicType {
          * @param modifier  The modifiers for this method.
          * @return An interception delegate that exclusively matches the new method.
          */
-        FieldAnnotationTarget<T> defineField(String name,
-                                             Class<?> fieldType,
-                                             ModifierContributor.ForField... modifier);
+        FieldValueTarget<T> defineField(String name,
+                                        Class<?> fieldType,
+                                        ModifierContributor.ForField... modifier);
 
         /**
          * Defines a new field for this type.
@@ -216,9 +216,9 @@ public interface DynamicType {
          * @param modifier             The modifiers for this method.
          * @return An interception delegate that exclusively matches the new method.
          */
-        FieldAnnotationTarget<T> defineField(String name,
-                                             TypeDescription fieldTypeDescription,
-                                             ModifierContributor.ForField... modifier);
+        FieldValueTarget<T> defineField(String name,
+                                        TypeDescription fieldTypeDescription,
+                                        ModifierContributor.ForField... modifier);
 
         /**
          * Defines a new method for this type.
@@ -429,9 +429,81 @@ public interface DynamicType {
         }
 
         /**
+         * A builder to which a field was just added such that default values can be defined for the field. Default
+         * values must only be defined for {@code static} fields of a primitive type or of the {@link java.lang.String}
+         * type.
+         *
+         * @param <S> The most specific known type of the dynamic type, usually the type itself, an interface or the
+         *            direct super class.
+         */
+        static interface FieldValueTarget<S> extends FieldAnnotationTarget<S> {
+
+            /**
+             * Defines a {@code boolean} value to become the optional default value for the recently defined
+             * {@code static} field. Defining such a boolean default value is only legal for fields that are
+             * represented as an integer within the Java virtual machine. These types are the {@code boolean} type,
+             * the {@code byte} type, the {@code short} type, the {@code char} type and the {@code int} type.
+             *
+             * @param value The value to be defined as a default value for the recently defined field.
+             * @return A field annotation target for the currently defined field.
+             */
+            FieldAnnotationTarget<S> value(boolean value);
+
+            /**
+             * Defines an {@code int} value to be become the optional default value for the recently defined
+             * {@code static} field. Defining such an integer default value is only legal for fields that are
+             * represented as an integer within the Java virtual machine. These types are the {@code boolean} type,
+             * the {@code byte} type, the {@code short} type, the {@code char} type and the {@code int} type. Be aware
+             * that values will overflow if a value is defined for a field type without the capacity of storing this
+             * value.
+             *
+             * @param value The value to be defined as a default value for the recently defined field.
+             * @return A field annotation target for the currently defined field.
+             */
+            FieldAnnotationTarget<S> value(int value);
+
+            /**
+             * Defined a default value for a {@code long}-typed {@code static} field. This is only legal if the
+             * defined field is also of type {@code long}.
+             *
+             * @param value The value to be defined as a default value for the recently defined field.
+             * @return A field annotation target for the currently defined field.
+             */
+            FieldAnnotationTarget<S> value(long value);
+
+            /**
+             * Defined a default value for a {@code float}-typed {@code static} field. This is only legal if the
+             * defined field is also of type {@code float}.
+             *
+             * @param value The value to be defined as a default value for the recently defined field.
+             * @return A field annotation target for the currently defined field.
+             */
+            FieldAnnotationTarget<S> value(float value);
+
+            /**
+             * Defined a default value for a {@code double}-typed {@code static} field. This is only legal if the
+             * defined field is also of type {@code double}.
+             *
+             * @param value The value to be defined as a default value for the recently defined field.
+             * @return A field annotation target for the currently defined field.
+             */
+            FieldAnnotationTarget<S> value(double value);
+
+            /**
+             * Defined a default value for a {@link java.lang.String}-typed {@code static} field. This is only legal if
+             * the defined field is also of type {@link java.lang.String}. The string must not be {@code null}.
+             *
+             * @param value The value to be defined as a default value for the recently defined field.
+             * @return A field annotation target for the currently defined field.
+             */
+            FieldAnnotationTarget<S> value(String value);
+        }
+
+        /**
          * A builder to which a field was just added such that attribute changes can be applied to this field.
          *
-         * @param <S> The most specific known type of the dynamic type, usually the type itself, an interface or the direct super class.
+         * @param <S> The most specific known type of the dynamic type, usually the type itself, an interface or the
+         *            direct super class.
          */
         static interface FieldAnnotationTarget<S> extends Builder<S> {
 
@@ -531,9 +603,9 @@ public interface DynamicType {
             }
 
             @Override
-            public FieldAnnotationTarget<S> defineField(String name,
-                                                        Class<?> fieldType,
-                                                        ModifierContributor.ForField... modifier) {
+            public FieldValueTarget<S> defineField(String name,
+                                                   Class<?> fieldType,
+                                                   ModifierContributor.ForField... modifier) {
                 return defineField(name, new TypeDescription.ForLoadedType(fieldType), modifier);
             }
 
@@ -892,16 +964,16 @@ public interface DynamicType {
                 }
 
                 @Override
-                public FieldAnnotationTarget<U> defineField(String name,
-                                                            Class<?> fieldType,
-                                                            ModifierContributor.ForField... modifier) {
+                public FieldValueTarget<U> defineField(String name,
+                                                       Class<?> fieldType,
+                                                       ModifierContributor.ForField... modifier) {
                     return materialize().defineField(name, fieldType, modifier);
                 }
 
                 @Override
-                public FieldAnnotationTarget<U> defineField(String name,
-                                                            TypeDescription fieldTypeDescription,
-                                                            ModifierContributor.ForField... modifier) {
+                public FieldValueTarget<U> defineField(String name,
+                                                       TypeDescription fieldTypeDescription,
+                                                       ModifierContributor.ForField... modifier) {
                     return materialize().defineField(name, fieldTypeDescription, modifier);
                 }
 

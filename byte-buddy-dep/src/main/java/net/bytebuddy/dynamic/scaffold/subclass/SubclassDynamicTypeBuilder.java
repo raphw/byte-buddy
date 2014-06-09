@@ -17,6 +17,7 @@ import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import org.objectweb.asm.Opcodes;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -405,13 +406,13 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     }
 
     @Override
-    public FieldAnnotationTarget<T> defineField(String name,
-                                                TypeDescription fieldType,
-                                                ModifierContributor.ForField... modifier) {
+    public FieldValueTarget<T> defineField(String name,
+                                           TypeDescription fieldType,
+                                           ModifierContributor.ForField... modifier) {
         FieldToken fieldToken = new FieldToken(isValidIdentifier(name),
                 nonNull(fieldType),
                 resolveModifierContributors(FIELD_MODIFIER_MASK, nonNull(modifier)));
-        return new SubclassFieldAnnotationTarget<T>(fieldToken, defaultFieldAttributeAppenderFactory);
+        return new SubclassFieldValueTarget<T>(fieldToken, defaultFieldAttributeAppenderFactory);
     }
 
     @Override
@@ -569,7 +570,12 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      *
      * @param <S> The best known loaded type representing the built dynamic type.
      */
-    private class SubclassFieldAnnotationTarget<S> extends AbstractDelegatingBuilder<S> implements FieldAnnotationTarget<S> {
+    private class SubclassFieldValueTarget<S> extends AbstractDelegatingBuilder<S> implements FieldValueTarget<S> {
+
+        /**
+         * Representations of {@code boolean} values as JVM integers.
+         */
+        private static final int NUMERIC_BOOLEAN_TRUE = 1, NUMERIC_BOOLEAN_FALSE = 0;
 
         /**
          * A token representing the field that was recently defined.
@@ -582,14 +588,36 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         private final FieldAttributeAppender.Factory attributeAppenderFactory;
 
         /**
-         * Creates a new subclass field annotation target.
+         * The default value that is to be defined for the recently defined field or {@code null} if no such
+         * value is to be defined. Default values must only be defined for {@code static} fields of primitive types
+         * or of the {@link java.lang.String} type.
+         */
+        private final Object defaultValue;
+
+        /**
+         * Creates a new subclass field annotation target for a field without a default value.
          *
          * @param fieldToken               A token representing the field that was recently defined.
          * @param attributeAppenderFactory The attribute appender factory that was defined for this field token.
          */
-        private SubclassFieldAnnotationTarget(FieldToken fieldToken, FieldAttributeAppender.Factory attributeAppenderFactory) {
+        private SubclassFieldValueTarget(FieldToken fieldToken,
+                                         FieldAttributeAppender.Factory attributeAppenderFactory) {
+            this(fieldToken, attributeAppenderFactory, null);
+        }
+
+        /**
+         * Creates a new subclass field annotation target.
+         *
+         * @param fieldToken               A token representing the field that was recently defined.
+         * @param attributeAppenderFactory The attribute appender factory that was defined for this field token.
+         * @param defaultValue             The default value to define for the recently defined field.
+         */
+        private SubclassFieldValueTarget(FieldToken fieldToken,
+                                         FieldAttributeAppender.Factory attributeAppenderFactory,
+                                         Object defaultValue) {
             this.fieldToken = fieldToken;
             this.attributeAppenderFactory = attributeAppenderFactory;
+            this.defaultValue = defaultValue;
         }
 
         @Override
@@ -603,7 +631,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                     ignoredMethods,
                     bridgeMethodResolverFactory,
                     classVisitorWrapperChain,
-                    fieldRegistry.include(fieldToken, attributeAppenderFactory),
+                    fieldRegistry.include(fieldToken, attributeAppenderFactory, defaultValue),
                     methodRegistry,
                     methodLookupEngineFactory,
                     defaultFieldAttributeAppenderFactory,
@@ -614,8 +642,73 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         }
 
         @Override
+        public FieldAnnotationTarget<S> value(boolean value) {
+            return value(value ? NUMERIC_BOOLEAN_TRUE : NUMERIC_BOOLEAN_FALSE);
+        }
+
+        @Override
+        public FieldAnnotationTarget<S> value(int value) {
+            return makeFieldAnnotationTarget(isValid(value,
+                    boolean.class,
+                    byte.class,
+                    short.class,
+                    char.class,
+                    int.class));
+        }
+
+        @Override
+        public FieldAnnotationTarget<S> value(long value) {
+            return makeFieldAnnotationTarget(isValid(value, long.class));
+        }
+
+        @Override
+        public FieldAnnotationTarget<S> value(float value) {
+            return makeFieldAnnotationTarget(isValid(value, float.class));
+        }
+
+        @Override
+        public FieldAnnotationTarget<S> value(double value) {
+            return makeFieldAnnotationTarget(isValid(value, double.class));
+        }
+
+        @Override
+        public FieldAnnotationTarget<S> value(String value) {
+            return makeFieldAnnotationTarget(isValid(value, String.class));
+        }
+
+        /**
+         * Asserts the field's type to be one of the given legal types.
+         *
+         * @param defaultValue The default value to define for the recently defined field.
+         * @param legalType    The types of which at least one should be considered to be legal for the field
+         *                     that is represented by this instance.
+         * @return The given default value.
+         */
+        private Object isValid(Object defaultValue, Class<?>... legalType) {
+            for (Class<?> type : legalType) {
+                if (fieldToken.getFieldType().represents(type)) {
+                    return defaultValue;
+                }
+            }
+            throw new IllegalStateException("The default");
+        }
+
+        /**
+         * Creates a field annotation target for the given default value.
+         *
+         * @param defaultValue The default value to define for the recently defined field.
+         * @return The resulting field annotation target.
+         */
+        private FieldAnnotationTarget<S> makeFieldAnnotationTarget(Object defaultValue) {
+            if ((fieldToken.getModifiers() & Opcodes.ACC_STATIC) == 0) {
+                throw new IllegalStateException("Default field values can only be set for static fields");
+            }
+            return new SubclassFieldValueTarget<S>(fieldToken, attributeAppenderFactory, defaultValue);
+        }
+
+        @Override
         public FieldAnnotationTarget<S> attribute(FieldAttributeAppender.Factory attributeAppenderFactory) {
-            return new SubclassFieldAnnotationTarget<S>(fieldToken,
+            return new SubclassFieldValueTarget<S>(fieldToken,
                     new FieldAttributeAppender.Factory.Compound(this.attributeAppenderFactory, attributeAppenderFactory));
         }
 
@@ -629,8 +722,9 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         public boolean equals(Object other) {
             if (this == other) return true;
             if (other == null || getClass() != other.getClass()) return false;
-            SubclassFieldAnnotationTarget that = (SubclassFieldAnnotationTarget) other;
+            SubclassFieldValueTarget that = (SubclassFieldValueTarget<?>) other;
             return attributeAppenderFactory.equals(that.attributeAppenderFactory)
+                    && !(defaultValue != null ? !defaultValue.equals(that.defaultValue) : that.defaultValue != null)
                     && fieldToken.equals(that.fieldToken)
                     && SubclassDynamicTypeBuilder.this.equals(that.getSubclassDynamicTypeBuilder());
         }
@@ -639,6 +733,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         public int hashCode() {
             int result = fieldToken.hashCode();
             result = 31 * result + attributeAppenderFactory.hashCode();
+            result = 31 * result + (defaultValue != null ? defaultValue.hashCode() : 0);
             result = 31 * result + SubclassDynamicTypeBuilder.this.hashCode();
             return result;
         }
@@ -649,6 +744,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                     "base=" + SubclassDynamicTypeBuilder.this +
                     ", fieldToken=" + fieldToken +
                     ", attributeAppenderFactory=" + attributeAppenderFactory +
+                    ", defaultValue=" + defaultValue +
                     '}';
         }
 

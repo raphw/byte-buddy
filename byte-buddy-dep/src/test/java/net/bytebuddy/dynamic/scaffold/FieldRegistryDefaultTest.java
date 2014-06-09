@@ -52,12 +52,12 @@ public class FieldRegistryDefaultTest {
     @Test
     public void testKnownFieldRegistered() throws Exception {
         assertThat(new FieldRegistry.Default()
-                .include(latentFieldMatcher, distinct)
+                .include(latentFieldMatcher, distinct, null)
                 .compile(instrumentedType, fallback)
                 .target(knownField)
                 .getFieldAppenderFactory(), is(distinct));
         assertThat(new FieldRegistry.Default()
-                .include(latentFieldMatcher, distinct)
+                .include(latentFieldMatcher, distinct, null)
                 .compile(instrumentedType, fallback)
                 .target(unknownField), is(fallback));
     }
@@ -66,8 +66,10 @@ public class FieldRegistryDefaultTest {
     public void testHashCodeEquals() throws Exception {
         assertThat(new FieldRegistry.Default().hashCode(), is(new FieldRegistry.Default().hashCode()));
         assertThat(new FieldRegistry.Default(), is(new FieldRegistry.Default()));
-        assertThat(new FieldRegistry.Default().include(latentFieldMatcher, distinct).hashCode(), not(is(new FieldRegistry.Default().hashCode())));
-        assertThat(new FieldRegistry.Default().include(latentFieldMatcher, distinct), not(is((FieldRegistry) new FieldRegistry.Default())));
+        assertThat(new FieldRegistry.Default().include(latentFieldMatcher, distinct, null).hashCode(),
+                not(is(new FieldRegistry.Default().hashCode())));
+        assertThat(new FieldRegistry.Default().include(latentFieldMatcher, distinct, null),
+                not(is((FieldRegistry) new FieldRegistry.Default())));
     }
 
     @Test
@@ -76,9 +78,9 @@ public class FieldRegistryDefaultTest {
                 is(new FieldRegistry.Default().compile(instrumentedType, fallback).hashCode()));
         assertThat(new FieldRegistry.Default().compile(instrumentedType, fallback),
                 is(new FieldRegistry.Default().compile(instrumentedType, fallback)));
-        assertThat(new FieldRegistry.Default().include(latentFieldMatcher, distinct).compile(instrumentedType, fallback).hashCode(),
+        assertThat(new FieldRegistry.Default().include(latentFieldMatcher, distinct, null).compile(instrumentedType, fallback).hashCode(),
                 not(is(new FieldRegistry.Default().hashCode())));
-        assertThat(new FieldRegistry.Default().include(latentFieldMatcher, distinct).compile(instrumentedType, fallback),
+        assertThat(new FieldRegistry.Default().include(latentFieldMatcher, distinct, null).compile(instrumentedType, fallback),
                 not(is(new FieldRegistry.Default().compile(instrumentedType, fallback))));
     }
 }

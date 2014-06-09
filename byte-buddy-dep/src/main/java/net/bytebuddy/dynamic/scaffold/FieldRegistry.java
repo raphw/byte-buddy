@@ -25,10 +25,12 @@ public interface FieldRegistry {
      *
      * @param latentFieldMatcher       The field matcher uniquely identifying the field to be registered.
      * @param attributeAppenderFactory The field attribute appender factory to be registered for this field.
+     * @param defaultValue             The field's default value or {@code null} if no such default value is set.
      * @return A new field registry that knows about the new field registration.
      */
     FieldRegistry include(LatentFieldMatcher latentFieldMatcher,
-                          FieldAttributeAppender.Factory attributeAppenderFactory);
+                          FieldAttributeAppender.Factory attributeAppenderFactory,
+                          Object defaultValue);
 
     /**
      * Once all entries for a field registry were registered, a field registry can be compiled in order to allow the
@@ -106,9 +108,11 @@ public interface FieldRegistry {
         }
 
         @Override
-        public FieldRegistry include(LatentFieldMatcher latentFieldMatcher, FieldAttributeAppender.Factory attributeAppenderFactory) {
+        public FieldRegistry include(LatentFieldMatcher latentFieldMatcher,
+                                     FieldAttributeAppender.Factory attributeAppenderFactory,
+                                     Object defaultValue) {
             Map<String, TypeWriter.FieldPool.Entry> entries = new HashMap<String, TypeWriter.FieldPool.Entry>(this.entries);
-            TypeWriter.FieldPool.Entry entry = new TypeWriter.FieldPool.Entry.Simple(attributeAppenderFactory);
+            TypeWriter.FieldPool.Entry entry = new TypeWriter.FieldPool.Entry.Simple(attributeAppenderFactory, defaultValue);
             if (entries.put(latentFieldMatcher.getFieldName(), entry) != null) {
                 throw new IllegalArgumentException("the field name " + latentFieldMatcher.getFieldName() + " is already registered");
             }

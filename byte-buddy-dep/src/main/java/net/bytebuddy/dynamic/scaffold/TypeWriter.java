@@ -70,6 +70,14 @@ public interface TypeWriter<T> {
             FieldAttributeAppender.Factory getFieldAppenderFactory();
 
             /**
+             * Returns the default value for the field that is represented by this entry. This value might be
+             * {@code null} if no such value is set.
+             *
+             * @return The default value for the field that is represented by this entry.
+             */
+            Object getDefaultValue();
+
+            /**
              * A default implementation of a compiled field registry that simply returns a no-op
              * {@link net.bytebuddy.instrumentation.attribute.FieldAttributeAppender.Factory}
              * for any field.
@@ -84,6 +92,11 @@ public interface TypeWriter<T> {
                 @Override
                 public FieldAttributeAppender.Factory getFieldAppenderFactory() {
                     return FieldAttributeAppender.NoOp.INSTANCE;
+                }
+
+                @Override
+                public Object getDefaultValue() {
+                    return null;
                 }
             }
 
@@ -100,12 +113,20 @@ public interface TypeWriter<T> {
                 private final FieldAttributeAppender.Factory attributeAppenderFactory;
 
                 /**
+                 * The field's default value or {@code null} if no default value is set.
+                 */
+                private final Object defaultValue;
+
+                /**
                  * Creates a new simple entry for a given attribute appender factory.
                  *
                  * @param attributeAppenderFactory The attribute appender factory to be returned.
+                 * @param defaultValue             The field's default value or {@code null} if no default value is
+                 *                                 set.
                  */
-                public Simple(FieldAttributeAppender.Factory attributeAppenderFactory) {
+                public Simple(FieldAttributeAppender.Factory attributeAppenderFactory, Object defaultValue) {
                     this.attributeAppenderFactory = attributeAppenderFactory;
+                    this.defaultValue = defaultValue;
                 }
 
                 @Override
@@ -114,19 +135,30 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
+                public Object getDefaultValue() {
+                    return defaultValue;
+                }
+
+                @Override
                 public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && attributeAppenderFactory.equals(((Simple) other).attributeAppenderFactory);
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    Simple simple = (Simple) other;
+                    return attributeAppenderFactory.equals(simple.attributeAppenderFactory)
+                            && !(defaultValue != null ? !defaultValue.equals(simple.defaultValue) : simple.defaultValue != null);
                 }
 
                 @Override
                 public int hashCode() {
-                    return attributeAppenderFactory.hashCode();
+                    return 31 * attributeAppenderFactory.hashCode() + (defaultValue != null ? defaultValue.hashCode() : 0);
                 }
 
                 @Override
                 public String toString() {
-                    return "TypeWriter.FieldPool.Entry.Simple{attributeAppenderFactory=" + attributeAppenderFactory + '}';
+                    return "TypeWriter.FieldPool.Entry.Simple{" +
+                            "attributeAppenderFactory=" + attributeAppenderFactory +
+                            ", defaultValue=" + defaultValue +
+                            '}';
                 }
             }
         }
@@ -479,13 +511,13 @@ public interface TypeWriter<T> {
             @Override
             public InFieldPhase<S> write(Iterable<? extends FieldDescription> fieldDescriptions, FieldPool fieldPool) {
                 for (FieldDescription fieldDescription : fieldDescriptions) {
+                    FieldPool.Entry entry = fieldPool.target(fieldDescription);
                     FieldVisitor fieldVisitor = classVisitor.visitField(fieldDescription.getModifiers(),
                             fieldDescription.getInternalName(),
                             fieldDescription.getDescriptor(),
                             null,
-                            null);
-                    fieldPool.target(fieldDescription)
-                            .getFieldAppenderFactory()
+                            entry.getDefaultValue());
+                    entry.getFieldAppenderFactory()
                             .make(instrumentedType)
                             .apply(fieldVisitor, fieldDescription);
                     fieldVisitor.visitEnd();

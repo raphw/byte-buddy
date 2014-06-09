@@ -19,6 +19,7 @@ import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.modifier.Ownership;
 import net.bytebuddy.modifier.Visibility;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
@@ -48,6 +49,25 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 public class SubclassDynamicTypeBuilderTest {
+
+    private static final String BOOLEAN_FIELD = "booleanField";
+    private static final String BYTE_FIELD = "byteField";
+    private static final String SHORT_FIELD = "shortField";
+    private static final String CHARACTER_FIELD = "charField";
+    private static final String INTEGER_FIELD = "intField";
+    private static final String LONG_FIELD = "longField";
+    private static final String FLOAT_FIELD = "floatField";
+    private static final String DOUBLE_FIELD = "doubleField";
+    private static final String STRING_FIELD = "stringField";
+
+    private static final boolean BOOLEAN_VALUE = true;
+    private static final byte BYTE_VALUE = 42;
+    private static final short SHORT_VALUE = 42;
+    private static final char CHARACTER_VALUE = '@';
+    private static final int INTEGER_VALUE = 42;
+    private static final long LONG_VALUE = 42L;
+    private static final float FLOAT_VALUE = 42f;
+    private static final double DOUBLE_VALUE = 42d;
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
 
@@ -351,6 +371,64 @@ public class SubclassDynamicTypeBuilderTest {
         verifyNoMoreInteractions(byteCodeAppender);
         verify(typeInitializer).onLoad(loaded);
         verifyNoMoreInteractions(typeInitializer);
+    }
+
+    @Test
+    public void testFieldWithDefaultValue() throws Exception {
+        Class<?> loaded = new SubclassDynamicTypeBuilder<Object>(ClassFileVersion.forCurrentJavaVersion(),
+                new NamingStrategy.Fixed(FOO),
+                new TypeDescription.ForLoadedType(Object.class),
+                new TypeList.ForLoadedType(Arrays.<Class<?>>asList(Serializable.class)),
+                Opcodes.ACC_PUBLIC,
+                TypeAttributeAppender.NoOp.INSTANCE,
+                none(),
+                BridgeMethodResolver.Simple.Factory.FAIL_FAST,
+                new ClassVisitorWrapper.Chain(),
+                new FieldRegistry.Default(),
+                new MethodRegistry.Default(),
+                MethodLookupEngine.Default.Factory.INSTANCE,
+                FieldAttributeAppender.NoOp.INSTANCE,
+                MethodAttributeAppender.NoOp.INSTANCE,
+                ConstructorStrategy.Default.IMITATE_SUPER_TYPE)
+                .defineField(BOOLEAN_FIELD, boolean.class, Ownership.STATIC).value(BOOLEAN_VALUE)
+                .defineField(BYTE_FIELD, byte.class, Ownership.STATIC).value(BYTE_VALUE)
+                .defineField(SHORT_FIELD, short.class, Ownership.STATIC).value(SHORT_VALUE)
+                .defineField(CHARACTER_FIELD, char.class, Ownership.STATIC).value(CHARACTER_VALUE)
+                .defineField(INTEGER_FIELD, int.class, Ownership.STATIC).value(INTEGER_VALUE)
+                .defineField(LONG_FIELD, long.class, Ownership.STATIC).value(LONG_VALUE)
+                .defineField(FLOAT_FIELD, float.class, Ownership.STATIC).value(FLOAT_VALUE)
+                .defineField(DOUBLE_FIELD, double.class, Ownership.STATIC).value(DOUBLE_VALUE)
+                .defineField(STRING_FIELD, String.class, Ownership.STATIC).value(FOO)
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Field booleanField = loaded.getDeclaredField(BOOLEAN_FIELD);
+        booleanField.setAccessible(true);
+        assertThat(booleanField.get(null), is((Object) BOOLEAN_VALUE));
+        Field byteField = loaded.getDeclaredField(BYTE_FIELD);
+        byteField.setAccessible(true);
+        assertThat(byteField.get(null), is((Object) BYTE_VALUE));
+        Field shortField = loaded.getDeclaredField(SHORT_FIELD);
+        shortField.setAccessible(true);
+        assertThat(shortField.get(null), is((Object) SHORT_VALUE));
+        Field characterField = loaded.getDeclaredField(CHARACTER_FIELD);
+        characterField.setAccessible(true);
+        assertThat(characterField.get(null), is((Object) CHARACTER_VALUE));
+        Field integerField = loaded.getDeclaredField(INTEGER_FIELD);
+        integerField.setAccessible(true);
+        assertThat(integerField.get(null), is((Object) INTEGER_VALUE));
+        Field longField = loaded.getDeclaredField(LONG_FIELD);
+        longField.setAccessible(true);
+        assertThat(longField.get(null), is((Object) LONG_VALUE));
+        Field floatField = loaded.getDeclaredField(FLOAT_FIELD);
+        floatField.setAccessible(true);
+        assertThat(floatField.get(null), is((Object) FLOAT_VALUE));
+        Field doubleField = loaded.getDeclaredField(DOUBLE_FIELD);
+        doubleField.setAccessible(true);
+        assertThat(doubleField.get(null), is((Object) DOUBLE_VALUE));
+        Field stringField = loaded.getDeclaredField(STRING_FIELD);
+        stringField.setAccessible(true);
+        assertThat(stringField.get(null), is((Object) FOO));
     }
 
     @Test
