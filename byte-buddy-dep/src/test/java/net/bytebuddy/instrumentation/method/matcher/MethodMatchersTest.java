@@ -78,6 +78,9 @@ public class MethodMatchersTest {
     private MethodDescription packagePrivateMethod;
     private MethodDescription visibilityBridgeMethod;
     private MethodDescription noVisibilityBridgeMethod;
+    private MethodDescription genericBaseMethod;
+    private MethodDescription genericExtensionBridgeMethod;
+    private MethodDescription genericExtensionBridgeTargetMethod;
 
     @Before
     public void setUp() throws Exception {
@@ -125,6 +128,10 @@ public class MethodMatchersTest {
 
         visibilityBridgeMethod = new MethodDescription.ForLoadedMethod(VisibilityBridgeExtension.class.getDeclaredMethod(FOO_METHOD_NAME));
         noVisibilityBridgeMethod = new MethodDescription.ForLoadedMethod(VisibilityBridgeExtension.class.getDeclaredMethod(BAR_METHOD_NAME));
+
+        genericBaseMethod = new MethodDescription.ForLoadedMethod(GenericBaseClass.class.getDeclaredMethod(FOO_METHOD_NAME, Object.class));
+        genericExtensionBridgeMethod = new MethodDescription.ForLoadedMethod(GenericExtension.class.getDeclaredMethod(FOO_METHOD_NAME, Object.class));
+        genericExtensionBridgeTargetMethod = new MethodDescription.ForLoadedMethod(GenericExtension.class.getDeclaredMethod(FOO_METHOD_NAME, String.class));
     }
 
     @Test
@@ -312,6 +319,9 @@ public class MethodMatchersTest {
     public void testIsBridge() throws Exception {
         assertThat(MethodMatchers.isBridge().matches(testClassBase$compareTo$synth), is(true));
         assertThat(MethodMatchers.isBridge().matches(testClassBase$compareTo), is(false));
+        assertThat(MethodMatchers.isBridge().matches(genericBaseMethod), is(false));
+        assertThat(MethodMatchers.isBridge().matches(genericExtensionBridgeMethod), is(true));
+        assertThat(MethodMatchers.isBridge().matches(genericExtensionBridgeTargetMethod), is(false));
     }
 
     @Test
@@ -693,6 +703,7 @@ public class MethodMatchersTest {
         assertThat(MethodMatchers.isVisibilityBridge().matches(visibilityBridgeMethod), is(true));
         assertThat(MethodMatchers.isVisibilityBridge().matches(noVisibilityBridgeMethod), is(false));
         assertThat(MethodMatchers.isVisibilityBridge().matches(testClassBase$compareTo$synth), is(false));
+        assertThat(MethodMatchers.isVisibilityBridge().matches(genericExtensionBridgeMethod), is(false));
     }
 
     @Test
@@ -947,6 +958,23 @@ public class MethodMatchersTest {
         @Override
         public void bar() {
             /* empty */
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class GenericBaseClass<T> {
+
+        T foo(T value) {
+            return value;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class GenericExtension extends GenericBaseClass<String> {
+
+        @Override
+        String foo(String value) {
+            return value;
         }
     }
 }
