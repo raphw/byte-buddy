@@ -439,6 +439,101 @@ public interface DynamicType {
         static interface FieldValueTarget<S> extends FieldAnnotationTarget<S> {
 
             /**
+             * A validator for assuring that a given value can be represented by a given primitive type.
+             */
+            static enum NumericRangeValidator {
+
+                /**
+                 * A validator for {@code boolean} values.
+                 */
+                BOOLEAN(0, 1),
+
+                /**
+                 * A validator for {@code byte} values.
+                 */
+                BYTE(Byte.MIN_VALUE, Byte.MAX_VALUE),
+
+                /**
+                 * A validator for {@code short} values.
+                 */
+                SHORT(Short.MIN_VALUE, Short.MAX_VALUE),
+
+                /**
+                 * A validator for {@code char} values.
+                 */
+                CHARACTER(Character.MIN_VALUE, Character.MAX_VALUE),
+
+                /**
+                 * A validator for {@code int} values.
+                 */
+                INTEGER(Integer.MIN_VALUE, Integer.MAX_VALUE),
+
+                /**
+                 * A validator for {@code long} values.
+                 */
+                LONG(Integer.MIN_VALUE, Integer.MAX_VALUE) {
+                    @Override
+                    public Object validate(int value) {
+                        return (long) value;
+                    }
+                };
+
+                /**
+                 * Identifies the correct validator for a given type description.
+                 *
+                 * @param typeDescription The type of a field for which a default value should be validated.
+                 * @return The corresponding numeric range validator.
+                 */
+                public static NumericRangeValidator of(TypeDescription typeDescription) {
+                    if (typeDescription.represents(boolean.class)) {
+                        return BOOLEAN;
+                    } else if (typeDescription.represents(byte.class)) {
+                        return BYTE;
+                    } else if (typeDescription.represents(short.class)) {
+                        return SHORT;
+                    } else if (typeDescription.represents(char.class)) {
+                        return CHARACTER;
+                    } else if (typeDescription.represents(int.class)) {
+                        return INTEGER;
+                    } else if (typeDescription.represents(long.class)) {
+                        return LONG;
+                    } else {
+                        throw new IllegalStateException(String.format("A field of type %s does not permit an " +
+                                "integer-typed default value", typeDescription));
+                    }
+                }
+
+                /**
+                 * The minimum and maximum values for an {@code int} value for the represented primitive value.
+                 */
+                private final int minimum, maximum;
+
+                /**
+                 * Creates a new numeric range validator.
+                 *
+                 * @param minimum The minimum {@code int} value that can be represented by this primitive type.
+                 * @param maximum The maximum {@code int} value that can be represented by this primitive type.
+                 */
+                private NumericRangeValidator(int minimum, int maximum) {
+                    this.minimum = minimum;
+                    this.maximum = maximum;
+                }
+
+                /**
+                 * Validates and wraps a given {@code int} value for the represented numeric range.
+                 *
+                 * @param value The value to be validated for a given numeric range.
+                 * @return The wrapped value after validation.
+                 */
+                public Object validate(int value) {
+                    if (value < minimum || value > maximum) {
+                        throw new IllegalArgumentException(String.format("The value %d overflows for %s", value, this));
+                    }
+                    return value;
+                }
+            }
+
+            /**
              * Defines a {@code boolean} value to become the optional default value for the recently defined
              * {@code static} field. Defining such a boolean default value is only legal for fields that are
              * represented as an integer within the Java virtual machine. These types are the {@code boolean} type,
@@ -453,9 +548,8 @@ public interface DynamicType {
              * Defines an {@code int} value to be become the optional default value for the recently defined
              * {@code static} field. Defining such an integer default value is only legal for fields that are
              * represented as an integer within the Java virtual machine. These types are the {@code boolean} type,
-             * the {@code byte} type, the {@code short} type, the {@code char} type and the {@code int} type. Be aware
-             * that values will overflow if a value is defined for a field type without the capacity of storing this
-             * value.
+             * the {@code byte} type, the {@code short} type, the {@code char} type and the {@code int} type. By
+             * extension, integer types can also be defined for {@code long} types and are automatically converted.
              *
              * @param value The value to be defined as a default value for the recently defined field.
              * @return A field annotation target for the currently defined field.

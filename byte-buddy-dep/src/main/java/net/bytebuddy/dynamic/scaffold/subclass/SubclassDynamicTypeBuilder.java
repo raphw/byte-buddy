@@ -648,12 +648,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
         @Override
         public FieldAnnotationTarget<S> value(int value) {
-            return makeFieldAnnotationTarget(isValid(value,
-                    boolean.class,
-                    byte.class,
-                    short.class,
-                    char.class,
-                    int.class));
+            return makeFieldAnnotationTarget(NumericRangeValidator.of(fieldToken.getFieldType()).validate(value));
         }
 
         @Override
@@ -677,20 +672,19 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         }
 
         /**
-         * Asserts the field's type to be one of the given legal types.
+         * Asserts the field's type to be of a given legal types.
          *
          * @param defaultValue The default value to define for the recently defined field.
-         * @param legalType    The types of which at least one should be considered to be legal for the field
-         *                     that is represented by this instance.
+         * @param legalType    The type of which this default value needs to be in order to be legal.
          * @return The given default value.
          */
-        private Object isValid(Object defaultValue, Class<?>... legalType) {
-            for (Class<?> type : legalType) {
-                if (fieldToken.getFieldType().represents(type)) {
-                    return defaultValue;
-                }
+        private Object isValid(Object defaultValue, Class<?> legalType) {
+            if (fieldToken.getFieldType().represents(legalType)) {
+                return defaultValue;
+            } else {
+                throw new IllegalStateException(String.format("The given value %s was not of the required type %s",
+                        defaultValue, legalType));
             }
-            throw new IllegalStateException("The default");
         }
 
         /**
