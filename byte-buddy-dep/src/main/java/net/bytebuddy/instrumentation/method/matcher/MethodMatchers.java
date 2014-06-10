@@ -1973,8 +1973,8 @@ public final class MethodMatchers {
         }
 
         @Override
-        public boolean equals(Object obj) {
-            return obj != null && obj.getClass() == getClass();
+        public boolean equals(Object other) {
+            return other != null && other.getClass() == getClass();
         }
 
         @Override
