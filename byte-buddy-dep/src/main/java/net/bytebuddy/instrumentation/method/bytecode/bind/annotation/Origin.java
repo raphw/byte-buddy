@@ -6,6 +6,7 @@ import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import net.bytebuddy.instrumentation.method.bytecode.stack.constant.ClassConstant;
 import net.bytebuddy.instrumentation.method.bytecode.stack.constant.MethodConstant;
+import net.bytebuddy.instrumentation.method.bytecode.stack.constant.TextConstant;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 
 import java.lang.annotation.*;
@@ -19,6 +20,18 @@ import java.lang.reflect.Method;
  * to the method it intercepts.</li>
  * <li>If the annotated parameter is of type {@link java.lang.Class}, the parameter is assigned a reference of the
  * type of the instrumented type.</li>
+ * <li>If the annotated parameter is of type {@link java.lang.String}, the parameter is assigned a string describing
+ * a unique method signature of the method it intercepts. This string is a concatenation of:
+ * <ul><li>The method's name</li>
+ * <li>The <i>(</i> symbol</li>
+ * <li>A list of the method's parameters'
+ * <a href=http://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.3>descriptors</a></li>
+ * <li>The <i>)</i> symbol</li>
+ * <li>The <a href=http://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.3>descriptor</a> of the
+ * method's return type</li></ul>
+ * This unique signature allows the unambiguous identification of a particular class's methods while avoid the rather
+ * expensive creation of a {@link java.lang.reflect.Method} instance.
+ * </li>
  * </ol>
  * Any other parameter type will cause an {@link java.lang.IllegalStateException}.
  *
@@ -60,6 +73,8 @@ public @interface Origin {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(ClassConstant.of(instrumentationTarget.getTypeDescription()));
             } else if (parameterType.represents(Method.class)) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(MethodConstant.forMethod(source));
+            } else if (parameterType.represents(String.class)) {
+                return new MethodDelegationBinder.ParameterBinding.Anonymous(new TextConstant(source.getUniqueSignature()));
             } else {
                 throw new IllegalStateException("The " + target + " method's " + targetParameterIndex +
                         " is annotated with a Origin annotation with an argument not representing a Class" +

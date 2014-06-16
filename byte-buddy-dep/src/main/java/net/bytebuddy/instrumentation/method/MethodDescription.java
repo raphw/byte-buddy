@@ -286,7 +286,7 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
 
         @Override
         public String getInternalName() {
-            return CONSTRUCTOR_INTERNAL_NAME;
+            return CONSTRUCTOR_INTERNAL_NAME; // Note that loaded constructors are never static.
         }
 
         @Override

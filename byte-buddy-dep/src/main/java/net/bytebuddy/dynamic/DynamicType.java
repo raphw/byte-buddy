@@ -18,6 +18,7 @@ import net.bytebuddy.instrumentation.method.matcher.MethodMatchers;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import org.objectweb.asm.Opcodes;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -26,6 +27,7 @@ import java.lang.annotation.Annotation;
 import java.util.*;
 
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
+import static net.bytebuddy.utility.ByteBuddyCommons.isEmpty;
 
 /**
  * A dynamic type that is created at runtime, usually as the result of applying a
@@ -756,18 +758,39 @@ public interface DynamicType {
                 protected final List<TypeDescription> exceptionTypes;
 
                 /**
-                 * A list of modifiers of the method.
+                 * The modifiers of the method.
                  */
                 protected final int modifiers;
 
                 /**
+                 * Creates a new method token representing a constructor to implement for the built dynamic type.
+                 *
+                 * @param parameterTypes A list of parameters for the constructor.
+                 * @param exceptionTypes A list of exception types that are declared for the constructor.
+                 * @param modifiers      The modifiers of the constructor.
+                 */
+                public MethodToken(List<? extends TypeDescription> parameterTypes,
+                                   List<? extends TypeDescription> exceptionTypes,
+                                   int modifiers) {
+                    this((modifiers & Opcodes.ACC_STATIC) != 0
+                                    ? MethodDescription.STATIC_INITIALIZER_INTERNAL_NAME
+                                    : MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
+                            new TypeDescription.ForLoadedType(void.class),
+                            (modifiers & Opcodes.ACC_STATIC) != 0
+                                    ? isEmpty(parameterTypes, "A static constructor must not define parameters")
+                                    : parameterTypes,
+                            exceptionTypes,
+                            modifiers);
+                }
+
+                /**
                  * Creates a new method token representing a method to implement for the built dynamic type.
                  *
-                 * @param internalName   The internal internalName of the method.
+                 * @param internalName   The internal name of the method.
                  * @param returnType     The return type of the method.
                  * @param parameterTypes A list of parameters for the method.
                  * @param exceptionTypes A list of exception types that are declared for the method.
-                 * @param modifiers      The modifers of the method.
+                 * @param modifiers      The modifiers of the method.
                  */
                 public MethodToken(String internalName,
                                    TypeDescription returnType,
@@ -783,7 +806,10 @@ public interface DynamicType {
 
                 @Override
                 public MethodMatcher manifest(TypeDescription instrumentedType) {
-                    return (MethodDescription.CONSTRUCTOR_INTERNAL_NAME.equals(internalName) ? isConstructor() : named(internalName))
+                    return (MethodDescription.CONSTRUCTOR_INTERNAL_NAME.equals(internalName)
+                            || MethodDescription.STATIC_INITIALIZER_INTERNAL_NAME.equals(internalName)
+                            ? isConstructor()
+                            : named(internalName))
                             .and(MethodMatchers.returns(resolveReturnType(instrumentedType)))
                             .and(takesArguments(resolveParameterTypes(instrumentedType)));
                 }

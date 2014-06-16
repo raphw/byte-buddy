@@ -52,6 +52,14 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
         assertThat(parameterBinding.isValid(), is(true));
     }
 
+    @Test
+    public void testStringBinding() throws Exception {
+        when(targetType.represents(String.class)).thenReturn(true);
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
+                .bind(annotation, INDEX, source, target, instrumentationTarget, assigner);
+        assertThat(parameterBinding.isValid(), is(true));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testIllegalBinding() throws Exception {
         Origin.Binder.INSTANCE.bind(annotation, INDEX, source, target, instrumentationTarget, assigner);

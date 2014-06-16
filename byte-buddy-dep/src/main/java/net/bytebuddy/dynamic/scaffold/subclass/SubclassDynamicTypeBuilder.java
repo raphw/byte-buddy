@@ -409,10 +409,11 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     public FieldValueTarget<T> defineField(String name,
                                            TypeDescription fieldType,
                                            ModifierContributor.ForField... modifier) {
-        FieldToken fieldToken = new FieldToken(isValidIdentifier(name),
-                nonNull(fieldType),
-                resolveModifierContributors(FIELD_MODIFIER_MASK, nonNull(modifier)));
-        return new SubclassFieldValueTarget<T>(fieldToken, defaultFieldAttributeAppenderFactory);
+        return new SubclassFieldValueTarget<T>(
+                new FieldToken(isValidIdentifier(name),
+                        nonNull(fieldType),
+                        resolveModifierContributors(FIELD_MODIFIER_MASK, nonNull(modifier))),
+                defaultFieldAttributeAppenderFactory);
     }
 
     @Override
@@ -420,23 +421,19 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                                                  TypeDescription returnType,
                                                                  List<? extends TypeDescription> parameterTypes,
                                                                  ModifierContributor.ForMethod... modifier) {
-        MethodToken methodToken = new MethodToken(isValidIdentifier(name),
+        return new SubclassExceptionDeclarableMethodInterception<T>(new MethodToken(isValidIdentifier(name),
                 nonNull(returnType),
                 nonNull(parameterTypes),
                 Collections.<TypeDescription>emptyList(),
-                resolveModifierContributors(METHOD_MODIFIER_MASK, nonNull(modifier)));
-        return new SubclassExceptionDeclarableMethodInterception<T>(methodToken);
+                resolveModifierContributors(METHOD_MODIFIER_MASK, nonNull(modifier))));
     }
 
     @Override
     public ExceptionDeclarableMethodInterception<T> defineConstructor(List<? extends TypeDescription> parameterTypes,
                                                                       ModifierContributor.ForMethod... modifier) {
-        MethodToken methodToken = new MethodToken(MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
-                new TypeDescription.ForLoadedType(void.class),
-                nonNull(parameterTypes),
+        return new SubclassExceptionDeclarableMethodInterception<T>(new MethodToken(nonNull(parameterTypes),
                 Collections.<TypeDescription>emptyList(),
-                resolveModifierContributors(METHOD_MODIFIER_MASK, nonNull(modifier)));
-        return new SubclassExceptionDeclarableMethodInterception<T>(methodToken);
+                resolveModifierContributors(METHOD_MODIFIER_MASK, nonNull(modifier))));
     }
 
     @Override

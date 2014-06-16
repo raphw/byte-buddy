@@ -225,6 +225,21 @@ public final class ByteBuddyCommons {
     }
 
     /**
+     * Validates that a collection is empty.
+     *
+     * @param collection       The collection to be validated.
+     * @param exceptionMessage The message of the exception that is thrown if the collection does contain an element.
+     * @param <T>              The type of the collection.
+     * @return The same collection that was validated.
+     */
+    public static <T extends Collection<?>> T isEmpty(T collection, String exceptionMessage) {
+        if (collection.size() > 0) {
+            throw new IllegalArgumentException(exceptionMessage);
+        }
+        return collection;
+    }
+
+    /**
      * Validates a mask against a number of modifier contributors and merges their contributions to a modifier.
      *
      * @param mask                The mask to validate against.

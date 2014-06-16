@@ -18,6 +18,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.*;
@@ -163,6 +164,17 @@ public class ByteBuddyCommonsTest {
     @Test(expected = IllegalArgumentException.class)
     public void testIsNotEmptyThrowsException() throws Exception {
         isNotEmpty(Arrays.<String>asList(), FOO);
+    }
+
+    @Test
+    public void testIsEmpty() throws Exception {
+        List<String> list = Collections.emptyList();
+        assertThat(isEmpty(list, FOO), sameInstance(list));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testIsEmptyThrowsException() throws Exception {
+        isEmpty(Arrays.asList(BAR), FOO);
     }
 
     @Test
