@@ -979,9 +979,16 @@ void foo(Object o1, @Argument(0) Object o2, Object o3)
         instance's fields.
     </span></li>
     <li><span>
-        Parameters that are annotated with <code>@Origin</code> must either be of type <code>Method</code> or
-        <code>Class</code>. Depending on the parameter's type, it is assigned a method reference to the original
-        method that is now instrumented or a reference to the dynamic class.
+        Parameters that are annotated with <code>@Origin</code> must be of used on any of the types <code>Method</code>,
+        <code>Class</code> or <code>String</code>. Depending on the parameter's type, it is assigned a
+        <code>Method</code> reference to the original method that is now instrumented or a reference to the
+        dynamically created <code>Class</code>. If the annotated parameter is a <code>String</code>, the parameter
+        is assigned a unique identifier for the instrumented method which consists of the method's name, a concatenation
+        of the method's parameters'
+        <a href="http://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html">descriptors</a> enclosed in braces and
+        the method's return type's descriptor. In general, we recommend the use of these <code>String</code> values as
+        method identifiers wherever possible and discourage the use of <code>Method</code> objects as their lookup
+        introduces a significant runtime overhead.
     </span></li>
 </ul>
 
