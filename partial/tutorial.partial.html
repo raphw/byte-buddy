@@ -988,7 +988,8 @@ void foo(Object o1, @Argument(0) Object o2, Object o3)
         <a href="http://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html">descriptors</a> enclosed in braces and
         the method's return type's descriptor. In general, we recommend the use of these <code>String</code> values as
         method identifiers wherever possible and discourage the use of <code>Method</code> objects as their lookup
-        introduces a significant runtime overhead.
+        introduces a significant runtime overhead. Instead of using reflection for invoking an intercepted method,
+        we recommend the use of the <code>@Pipe</code> annotation which is discussed later in this section.
     </span></li>
 </ul>
 
