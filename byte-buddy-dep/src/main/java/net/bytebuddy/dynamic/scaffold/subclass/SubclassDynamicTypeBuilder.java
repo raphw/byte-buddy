@@ -471,13 +471,15 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         return new TypeWriter.Builder<T>(finding.getTypeDescription(), compiledMethodRegistry.getTypeInitializer(), typeExtensionDelegate, classFileVersion)
                 .build(classVisitorWrapperChain)
                 .attributeType(attributeAppender)
-                .fields()
-                .write(finding.getTypeDescription().getDeclaredFields(),
+                .members()
+                .writeFields(finding.getTypeDescription().getDeclaredFields(),
                         fieldRegistry.compile(finding.getTypeDescription(), TypeWriter.FieldPool.Entry.NoOp.INSTANCE))
-                .methods()
-                .write(finding.getInvokableMethods().filter(isOverridable().and(not(ignoredMethods)).or(isDeclaredBy(finding.getTypeDescription()))),
+                .writeMethods(finding.getInvokableMethods()
+                                .filter(isOverridable()
+                                        .and(not(ignoredMethods))
+                                        .or(isDeclaredBy(finding.getTypeDescription()))),
                         compiledMethodRegistry)
-                .write(typeExtensionDelegate.getRegisteredAccessors(), typeExtensionDelegate)
+                .writeMethods(typeExtensionDelegate.getRegisteredAccessors(), typeExtensionDelegate)
                 .make();
     }
 

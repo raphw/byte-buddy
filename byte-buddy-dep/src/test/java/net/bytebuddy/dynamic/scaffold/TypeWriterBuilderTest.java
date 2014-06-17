@@ -149,16 +149,16 @@ public class TypeWriterBuilderTest {
     }
 
     @Test
-    public void testFieldPhase() throws Exception {
-        assertDynamicType(typeWriter.fields().write(Arrays.asList(firstField, secondField), compiledFieldRegistry).make(), true, false);
+    public void testFieldWriting() throws Exception {
+        assertDynamicType(typeWriter.members().writeFields(Arrays.asList(firstField, secondField), compiledFieldRegistry).make(), true, false);
         verify(compiledFieldRegistry).target(firstField);
         verify(compiledFieldRegistry).target(secondField);
         verifyNoMoreInteractions(compiledFieldRegistry);
     }
 
     @Test
-    public void testMethodPhase() throws Exception {
-        assertDynamicType(typeWriter.methods().write(Arrays.asList(simpleMethod, fromAbstractMethod, toAbstractMethod, skippedMethod),
+    public void testMethodWriting() throws Exception {
+        assertDynamicType(typeWriter.members().writeMethods(Arrays.asList(simpleMethod, fromAbstractMethod, toAbstractMethod, skippedMethod),
                 compiledMethodRegistry).make(), false, true);
         verify(compiledMethodRegistry).target(simpleMethod);
         verify(compiledMethodRegistry).target(fromAbstractMethod);
@@ -168,9 +168,9 @@ public class TypeWriterBuilderTest {
     }
 
     @Test
-    public void testFieldAndMethodPhase() throws Exception {
-        assertDynamicType(typeWriter.fields().write(Arrays.asList(firstField, secondField), compiledFieldRegistry)
-                .methods().write(Arrays.asList(simpleMethod, fromAbstractMethod, toAbstractMethod, skippedMethod),
+    public void testFieldAndMethodWriting() throws Exception {
+        assertDynamicType(typeWriter.members().writeFields(Arrays.asList(firstField, secondField), compiledFieldRegistry)
+                .writeMethods(Arrays.asList(simpleMethod, fromAbstractMethod, toAbstractMethod, skippedMethod),
                         compiledMethodRegistry).make(), true, true);
     }
 

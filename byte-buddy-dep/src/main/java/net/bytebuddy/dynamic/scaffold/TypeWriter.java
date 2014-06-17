@@ -303,33 +303,18 @@ public interface TypeWriter<T> {
     }
 
     /**
-     * Describes a phase that can transition into a phase for writing fields to a type.
+     * Describes a phase that can transition into a phase for writing members of a type.
      *
      * @param <T> The best known loaded type for the dynamically created type.
      */
-    static interface FieldPhaseTransitional<T> {
+    static interface MemberPhaseTransitional<T> {
 
         /**
-         * Moves to the field phase.
+         * Moves to the member phase.
          *
-         * @return This type writer in its field phase.
+         * @return This type writer in its member phase.
          */
-        InFieldPhase<T> fields();
-    }
-
-    /**
-     * Describes a phase that can transition into a phase for writing methods to a type.
-     *
-     * @param <T> The best known loaded type for the dynamically created type.
-     */
-    static interface MethodPhaseTransitional<T> {
-
-        /**
-         * Moves to the method phase.
-         *
-         * @return This type writer in its method phase.
-         */
-        InMethodPhase<T> methods();
+        InMemberPhase<T> members();
     }
 
     /**
@@ -338,7 +323,7 @@ public interface TypeWriter<T> {
      *
      * @param <T> The best known loaded type for the dynamically created type.
      */
-    static interface InGeneralPhase<T> extends TypeWriter<T>, FieldPhaseTransitional<T>, MethodPhaseTransitional<T> {
+    static interface InGeneralPhase<T> extends TypeWriter<T>, MemberPhaseTransitional<T> {
 
         /**
          * Writes an attribute to the type that is created by this type writer.
@@ -351,12 +336,11 @@ public interface TypeWriter<T> {
     }
 
     /**
-     * Describes a type writer currently in the field phase, i.e. in the phase before methods are applied but
-     * after any type meta information are written to the type.
+     * Describes a type writer currently in the member phase, i.e. in the phase after all type attributes are applied.
      *
      * @param <T> The best known loaded type for the dynamically created type.
      */
-    static interface InFieldPhase<T> extends TypeWriter<T>, MethodPhaseTransitional<T> {
+    static interface InMemberPhase<T> extends TypeWriter<T> {
 
         /**
          * Adds a number of fields as described by the argument to the type that is created by this type
@@ -366,16 +350,7 @@ public interface TypeWriter<T> {
          * @param fieldPool         The field pool that is queried for finding annotations for written fields.
          * @return This type writer.
          */
-        InFieldPhase<T> write(Iterable<? extends FieldDescription> fieldDescriptions, FieldPool fieldPool);
-    }
-
-    /**
-     * Describes a type writer currently in the method phase, i.e. in the phase after any type meta information
-     * is added to a type and after its fields are written.
-     *
-     * @param <T> The best known loaded type for the dynamically created type.
-     */
-    static interface InMethodPhase<T> extends TypeWriter<T> {
+        InMemberPhase<T> writeFields(Iterable<? extends FieldDescription> fieldDescriptions, FieldPool fieldPool);
 
         /**
          * Adds a number of methods as described by the argument to the type that is created by this type
@@ -385,7 +360,7 @@ public interface TypeWriter<T> {
          * @param methodPool         The method pool that is queried for creating implementations for these methods.
          * @return This type writer.
          */
-        InMethodPhase<T> write(Iterable<? extends MethodDescription> methodDescriptions, MethodPool methodPool);
+        InMemberPhase<T> writeMethods(Iterable<? extends MethodDescription> methodDescriptions, MethodPool methodPool);
     }
 
     /**
@@ -485,7 +460,7 @@ public interface TypeWriter<T> {
          *
          * @param <S> The most specific type of the class that is being created by this type writer.
          */
-        private class Handler<S> implements TypeWriter<S>, InGeneralPhase<S>, InFieldPhase<S>, InMethodPhase<S> {
+        private class Handler<S> implements TypeWriter<S>, InGeneralPhase<S>, InMemberPhase<S> {
 
             /**
              * The class writer that is writing the class.
@@ -509,7 +484,19 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            public InFieldPhase<S> write(Iterable<? extends FieldDescription> fieldDescriptions, FieldPool fieldPool) {
+            public InGeneralPhase<S> attributeType(TypeAttributeAppender typeAttributeAppender) {
+                typeAttributeAppender.apply(classVisitor, instrumentedType);
+                return this;
+            }
+
+            @Override
+            public InMemberPhase<S> members() {
+                return this;
+            }
+
+            @Override
+            public InMemberPhase<S> writeFields(Iterable<? extends FieldDescription> fieldDescriptions,
+                                                FieldPool fieldPool) {
                 for (FieldDescription fieldDescription : fieldDescriptions) {
                     FieldPool.Entry entry = fieldPool.target(fieldDescription);
                     FieldVisitor fieldVisitor = classVisitor.visitField(fieldDescription.getModifiers(),
@@ -526,23 +513,8 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            public InGeneralPhase<S> attributeType(TypeAttributeAppender typeAttributeAppender) {
-                typeAttributeAppender.apply(classVisitor, instrumentedType);
-                return this;
-            }
-
-            @Override
-            public InFieldPhase<S> fields() {
-                return this;
-            }
-
-            @Override
-            public InMethodPhase<S> methods() {
-                return this;
-            }
-
-            @Override
-            public InMethodPhase<S> write(Iterable<? extends MethodDescription> methodDescriptions, MethodPool methodPool) {
+            public InMemberPhase<S> writeMethods(Iterable<? extends MethodDescription> methodDescriptions,
+                                                 MethodPool methodPool) {
                 for (MethodDescription methodDescription : methodDescriptions) {
                     MethodPool.Entry entry = methodPool.target(methodDescription);
                     if (entry.isDefineMethod()) {
