@@ -202,7 +202,7 @@ Buddy aims for being easy to use by providing a domain-specific language for cre
 generation can be done by writing readable code and without any knowledge of Java's class file format. If you want
 to learn more about Byte Buddy can find such an [tutorial on Byte Buddy's web page](http://bytebuddy.net/#/tutorial).
 Furthermore, Byte Buddy comes with a [detailed in-code documentation](http://bytebuddy.net/javadoc/) and extensive 
-test case coverage which can also serve as code examples. When using Byte Buddy, make also sure to read the
+test case coverage which can also serve as example code. When using Byte Buddy, make also sure to read the
 information below on maintaining a project dependency.
 
 Dependency and API evolution
