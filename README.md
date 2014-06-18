@@ -19,19 +19,20 @@ possible and as a result, Byte Buddy does not leave any trace in the classes tha
 the generated classes can exist without requiring Byte Buddy on the class path. Because of this feature, Byte Buddy’s
 mascot was chosen to be a ghost.
 
-Byte Buddy is written in Java 6 but supports the generation of classes for any Java version. Byte Buddy is a light-weight
-library and only depends on the visitor API of the Java byte code parser library [ASM](http://asm.ow2.org/) which does
-itself [not require any further dependencies](http://search.maven.org/remotecontent?filepath=org/ow2/asm/asm/4.2/asm-4.2.pom).
+Byte Buddy is written in Java 6 but supports the generation of classes for any Java version. Byte Buddy is a
+light-weight library and only depends on the visitor API of the Java byte code parser library 
+[ASM](http://asm.ow2.org/) which does itself 
+[not require any further dependencies](http://search.maven.org/remotecontent?filepath=org/ow2/asm/asm/4.2/asm-4.2.pom).
 
 At first sight, runtime code generation can appear to be some sort of black magic that should be avoided and only
 few developers write applications that explicitly generate code during their runtime. However, this picture changes when
-creating libraries that need to interact with arbitrary code and unknown type hierarchies. In this context,
-a library implementer must often choose between either requiring a user to implement library-proprietary interfaces
-or to generate code at runtime when the user’s type hierarchy becomes first known to the library. Many known libraries
+creating libraries that need to interact with arbitrary code and types that are unknown at compile time. In this
+context, a library implementer must often choose between either requiring a user to implement library-proprietary
+interfaces or to generate code at runtime when the user’s types becomes first known to the library. Many known libraries
 such as for example *Spring* or *Hibernate* choose the latter approach which is popular among their users under the term
 of using [*Plain Old Java Objects*](http://en.wikipedia.org/wiki/Plain_Old_Java_Object). As a result, code generation
 has become an ubiquitous concept in the Java space. Byte Buddy is an attempt to innovate the runtime creation of Java
-types in order to provide a better tool set to those relying on such functionality.
+types in order to provide a better tool set to those relying on code generation.
 
 [![Download](https://api.bintray.com/packages/raphw/maven/ByteBuddy/images/download.png)](https://bintray.com/raphw/maven/ByteBuddy/_latestVersion)
 
@@ -51,24 +52,24 @@ Class<?> dynamicType = new ByteBuddy()
 assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
 ```
 
-The default `ByteBuddy` configuration which is used in the above example will create a Java class in the version of
-the class file format that is related by the version of the processing Java virtual machine. As hopefully obvious from
+The default `ByteBuddy` configuration which is used in the above example creatse a Java class in the newest version of
+the class file format that is understood by the processing Java virtual machine. As hopefully obvious from
 the example code, the created type will extend the `Object` class and intercept its `toString` method which should
-return a fixed value of `Hello World!`. The method to be intercepted is identified by a method matcher. In the
-example, a predefined method matcher `named(String)` is used which identifies a method by its exact name. Byte Buddy
-comes with numerous predefined and well-tested method matchers which are collected in the `MethodMatchers` class. The
-creation of custom matchers is however as simple as implementing the
+return a fixed value of `Hello World!`. The method to be intercepted is identified by a so-called method matcher. In 
+the above example, a predefined method matcher `named(String)` is used which identifies a method by its exact name. 
+Byte Buddy comes with numerous predefined and well-tested method matchers which are collected in the `MethodMatchers`
+class. The creation of custom matchers is however as simple as implementing the
 ([functional](http://docs.oracle.com/javase/8/docs/api/java/lang/FunctionalInterface.html)) `MethodMatcher` interface.
 
-For implementing the `toString` method, the `FixedValue` class defines a constant return value for the intercepted method.
-Defining a constant value is only one example of many method interceptors that ship with Byte Buddy. By implementing the
-`Instrumentation` interface, a method could however even be defined by custom byte code.
+For implementing the `toString` method, the `FixedValue` class defines a constant return value for the intercepted
+method. Defining a constant value is only one example of many method interceptors that ship with Byte Buddy. By
+implementing the `Instrumentation` interface, a method could however even be defined by custom byte code.
 
 Finally, the described Java class is created and then loaded into the Java virtual machine. For this purpose, a target
-class loader is required as well as a class loading strategy where we choose a wrapper strategy. The latter creates a new
-child class loader which wraps the given class loader and only knows about the newly created dynamic type. Eventually, we
-can convince ourselves of the result by calling the `toString` method on an instance of the created class and finding
-the return value to represent the constant value we expected.
+class loader is required as well as a class loading strategy where we choose a wrapper strategy. The latter creates a
+new child class loader which wraps the given class loader and only knows about the newly created dynamic type.
+Eventually, we can convince ourselves of the result by calling the `toString` method on an instance of the created 
+class and finding the return value to represent the constant value we expected.
 
 A more complex example
 ----------------------
@@ -76,11 +77,12 @@ A more complex example
 Of course, a *Hello World example* is a too simple use case for evaluating the quality of a code generation library.
 In reality, a user of such a library wants to perform more complex manipulations such as introducing additional
 logic to a compiled Java program. Using Byte Buddy, doing so is however not much harder and the following example
-will give a taste of how method calls can be intercepted.
+gives a taste of how method calls can be intercepted.
 
-For this demonstration, we will make up a simple pseudo domain where `Account` objects can be used for transferring money
-to a given recipient where the latter is represented by a simple string. Furthermore, we want to express that the direct
-transfer of money by calling the `transfer` method is somewhat unsafe which is why we annotate the method with `@Unsafe`.
+For this demonstration, we will make up a simple pseudo domain where `Account` objects can be used for transferring
+money to a given recipient where the latter is represented by a simple string. Furthermore, we want to express that 
+the direct transfer of money by calling the `transfer` method is somewhat unsafe which is why we annotate the 
+method with `@Unsafe`.
 
 ```java
 @Retention(RetentionPolicy.RUNTIME)
@@ -195,13 +197,13 @@ ship with ByteBuddy and were not yet mentioned. One of them allows the implement
 Where to go from here?
 ----------------------
 
-Byte Buddy is a comprehensive library that tackles the rather complex matter of code generation. In the two above
-examples, we only scratched the surface of Byte Buddy's capabilities. However, for using some of the more low-level
-features of this library, a basic understanding of Java byte code is required. A tutorial of this depth is better
-suited for another format than a GitHub readme file. You can find such an
-[tutorial on Byte Buddy's web page](http://bytebuddy.net/#/tutorial). Furthermore, Byte Buddy comes with a
-[detailed in-code documentation](http://bytebuddy.net/javadoc/) and extensive test case coverage. When using Byte
-Buddy, make sure to read the information on maintaining a project dependency below.
+Byte Buddy is a comprehensive library and we only scratched the surface of Byte Buddy's capabilities. However, Byte
+Buddy aims for being easy to use by providing a domain-specific language for creating classes. Most runtime code
+generation can be done by writing readable code and without any knowledge of Java's class file format. If you want
+to learn more about Byte Buddy can find such an [tutorial on Byte Buddy's web page](http://bytebuddy.net/#/tutorial).
+Furthermore, Byte Buddy comes with a [detailed in-code documentation](http://bytebuddy.net/javadoc/) and extensive 
+test case coverage which can also serve as code examples. When using Byte Buddy, make also sure to read the
+information below on maintaining a project dependency.
 
 Dependency and API evolution
 ----------------------------
@@ -246,8 +248,8 @@ License and development
 
 Byte Buddy is licensed under the liberal and business-friendly
 [*Apache Licence, Version 2.0*](http://www.apache.org/licenses/LICENSE-2.0.html) and is freely available on this GitHub
-page. Byte Buddy will be released on Maven Central once the mentioned tutorial is finished. The project is built using
-<a href="http://maven.apache.org/">Maven</a>. From your shell, this might look something like this:
+page. Byte Buddy is further released on Maven Central. The project is built using
+<a href="http://maven.apache.org/">Maven</a>. From your shell, building the project would look something like this:
 
 ```shell
 git clone https://github.com/raphw/byte-buddy.git
@@ -255,12 +257,13 @@ cd byte-buddy
 mvn package
 ```
 
-from your shell and Byte Buddy is cloned and built on your machine. Byte Buddy is currently tested for the
+By these commands, Byte Buddy is cloned from GitHub and built on your machine. Byte Buddy is currently tested for the
 [*OpenJDK*](http://openjdk.java.net/) versions 6 and 7 and the *Oracle JDK* versions 7 and 8 using Travis CI. Please
 use GitHub's [issue tracker](https://github.com/raphw/byte-buddy/issues) for reporting bugs. When committing code,
 please provide test cases that prove the functionality of your features or that demonstrate a bug fix. Furthermore,
 make sure you are not breaking any existing test cases. If possible, please take the time to write some documentation.
-For feature requests or general feedback, you can also use the [issue tracker](https://github.com/raphw/byte-buddy/issues)
-or contact us on [our mailing list](https://groups.google.com/forum/#!forum/byte-buddy).
+For feature requests or general feedback, you can also use the 
+[issue tracker](https://github.com/raphw/byte-buddy/issues) or contact us on 
+[our mailing list](https://groups.google.com/forum/#!forum/byte-buddy).
 
 [![Build Status](https://travis-ci.org/raphw/byte-buddy.png)](https://travis-ci.org/raphw/byte-buddy) [![Coverage Status](https://coveralls.io/repos/raphw/byte-buddy/badge.png?branch=master)](https://coveralls.io/r/raphw/byte-buddy?branch=master)
