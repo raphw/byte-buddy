@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic;
 
-import net.bytebuddy.instrumentation.TypeInitializer;
+import net.bytebuddy.instrumentation.LoadedTypeInitializer;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
@@ -29,7 +29,7 @@ public class DynamicTypeDefaultUnloadedTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeInitializer mainTypeInitializer, auxiliaryTypeInitializer;
+    private LoadedTypeInitializer mainLoadedTypeInitializer, auxiliaryLoadedTypeInitializer;
     @Mock
     private DynamicType auxiliaryType;
     @Mock
@@ -51,7 +51,7 @@ public class DynamicTypeDefaultUnloadedTest {
         auxiliaryTypeByte = new byte[]{4, 5, 6};
         unloaded = new DynamicType.Default.Unloaded<Object>(typeDescription,
                 binaryRepresentation,
-                mainTypeInitializer,
+                mainLoadedTypeInitializer,
                 Collections.singletonList(auxiliaryType));
         Map<TypeDescription, Class<?>> loadedTypes = new HashMap<TypeDescription, Class<?>>();
         loadedTypes.put(typeDescription, MAIN_TYPE);
@@ -59,7 +59,7 @@ public class DynamicTypeDefaultUnloadedTest {
         when(classLoadingStrategy.load(any(ClassLoader.class), any(LinkedHashMap.class))).thenReturn(loadedTypes);
         when(auxiliaryType.getDescription()).thenReturn(auxiliaryTypeDescription);
         when(auxiliaryType.getBytes()).thenReturn(auxiliaryTypeByte);
-        when(auxiliaryType.getTypeInitializers()).thenReturn(Collections.singletonMap(auxiliaryTypeDescription, auxiliaryTypeInitializer));
+        when(auxiliaryType.getTypeInitializers()).thenReturn(Collections.singletonMap(auxiliaryTypeDescription, auxiliaryLoadedTypeInitializer));
         when(auxiliaryType.getRawAuxiliaryTypes()).thenReturn(Collections.<TypeDescription, byte[]>emptyMap());
     }
 
@@ -77,7 +77,7 @@ public class DynamicTypeDefaultUnloadedTest {
         assertEquals(MAIN_TYPE, loaded.getLoaded());
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(1));
         assertEquals(AUXILIARY_TYPE, loaded.getLoadedAuxiliaryTypes().get(auxiliaryTypeDescription));
-        verify(mainTypeInitializer).onLoad(MAIN_TYPE);
-        verify(auxiliaryTypeInitializer).onLoad(AUXILIARY_TYPE);
+        verify(mainLoadedTypeInitializer).onLoad(MAIN_TYPE);
+        verify(auxiliaryLoadedTypeInitializer).onLoad(AUXILIARY_TYPE);
     }
 }

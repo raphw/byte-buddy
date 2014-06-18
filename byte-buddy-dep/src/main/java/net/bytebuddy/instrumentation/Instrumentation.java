@@ -21,7 +21,7 @@ import java.util.*;
  * <ol>
  * <li>The instrumentation is able to prepare an instrumented type by adding fields and/or helper methods that are
  * required for the methods implemented by this instrumentation. Furthermore,
- * {@link net.bytebuddy.instrumentation.TypeInitializer}s can be registered for an instrumented
+ * {@link LoadedTypeInitializer}s can be registered for an instrumented
  * type.</li>
  * <li>An instrumentation is required to supply a byte code appender that is responsible for providing the byte code
  * to the instrumented methods that were delegated to this instrumentation. This byte code appender will also

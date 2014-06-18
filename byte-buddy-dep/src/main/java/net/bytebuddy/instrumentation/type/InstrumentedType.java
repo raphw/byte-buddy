@@ -1,6 +1,6 @@
 package net.bytebuddy.instrumentation.type;
 
-import net.bytebuddy.instrumentation.TypeInitializer;
+import net.bytebuddy.instrumentation.LoadedTypeInitializer;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
@@ -50,20 +50,20 @@ public interface InstrumentedType extends TypeDescription {
 
     /**
      * Creates a new instrumented type that includes the given
-     * {@link net.bytebuddy.instrumentation.TypeInitializer}.
+     * {@link net.bytebuddy.instrumentation.LoadedTypeInitializer}.
      *
-     * @param typeInitializer The type initializer to include.
+     * @param loadedTypeInitializer The type initializer to include.
      * @return A new instrumented type that is equal to this instrumented type but with the additional type initializer.
      */
-    InstrumentedType withInitializer(TypeInitializer typeInitializer);
+    InstrumentedType withInitializer(LoadedTypeInitializer loadedTypeInitializer);
 
     /**
-     * Returns the {@link net.bytebuddy.instrumentation.TypeInitializer}s that were registered
+     * Returns the {@link net.bytebuddy.instrumentation.LoadedTypeInitializer}s that were registered
      * for this instrumented type.
      *
      * @return The registered type initializers for this instrumented type.
      */
-    TypeInitializer getTypeInitializer();
+    LoadedTypeInitializer getLoadedTypeInitializer();
 
     /**
      * Creates a <i>compressed</i> version of this instrumented type which only needs to fulfil the
@@ -82,7 +82,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * The type initializer for this instrumented type.
          */
-        protected final TypeInitializer typeInitializer;
+        protected final LoadedTypeInitializer loadedTypeInitializer;
 
         /**
          * A list of field descriptions registered for this instrumented type.
@@ -98,7 +98,7 @@ public interface InstrumentedType extends TypeDescription {
          * Creates a new instrumented type with a no-op type initializer and without registered fields or methods.
          */
         protected AbstractBase() {
-            typeInitializer = TypeInitializer.NoOp.INSTANCE;
+            loadedTypeInitializer = LoadedTypeInitializer.NoOp.INSTANCE;
             fieldDescriptions = Collections.emptyList();
             methodDescriptions = Collections.emptyList();
         }
@@ -108,16 +108,16 @@ public interface InstrumentedType extends TypeDescription {
          * descriptions will be replaced by new instances where type descriptions with the internalName of this type as given by
          * {@code typeInternalName} are replaced by references to {@code this}.
          *
-         * @param typeInitializer    A type initializer for this instrumented type.
+         * @param loadedTypeInitializer    A type initializer for this instrumented type.
          * @param typeInternalName   The internal internalName of this instrumented type.
          * @param fieldDescriptions  A list of field descriptions for this instrumented type.
          * @param methodDescriptions A list of method descriptions for this instrumented type.
          */
-        protected AbstractBase(TypeInitializer typeInitializer,
+        protected AbstractBase(LoadedTypeInitializer loadedTypeInitializer,
                                String typeInternalName,
                                List<? extends FieldDescription> fieldDescriptions,
                                List<? extends MethodDescription> methodDescriptions) {
-            this.typeInitializer = typeInitializer;
+            this.loadedTypeInitializer = loadedTypeInitializer;
             this.fieldDescriptions = new ArrayList<FieldDescription>(fieldDescriptions.size());
             for (FieldDescription fieldDescription : fieldDescriptions) {
                 this.fieldDescriptions.add(new FieldToken(typeInternalName, fieldDescription));
@@ -307,8 +307,8 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public TypeInitializer getTypeInitializer() {
-            return typeInitializer;
+        public LoadedTypeInitializer getLoadedTypeInitializer() {
+            return loadedTypeInitializer;
         }
 
         /**

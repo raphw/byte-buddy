@@ -4,7 +4,7 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.Instrumentation;
-import net.bytebuddy.instrumentation.TypeInitializer;
+import net.bytebuddy.instrumentation.LoadedTypeInitializer;
 import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
@@ -378,7 +378,7 @@ public interface TypeWriter<T> {
         /**
          * The type initializer of the instrumented type that is represented by this builder.
          */
-        private final TypeInitializer typeInitializer;
+        private final LoadedTypeInitializer loadedTypeInitializer;
 
         /**
          * An extractable view of the instrumentation context that is represented by this builder.
@@ -394,16 +394,16 @@ public interface TypeWriter<T> {
          * Creates a new builder.
          *
          * @param instrumentedType       The type description of the instrumented type that is to be created.
-         * @param typeInitializer        The type initializer of the instrumented type that is to be created.
+         * @param loadedTypeInitializer        The type initializer of the instrumented type that is to be created.
          * @param instrumentationContext An extractable view of the instrumentation context.
          * @param classFileVersion       The class file version this instrumented type is to be written in.
          */
         public Builder(TypeDescription instrumentedType,
-                       TypeInitializer typeInitializer,
+                       LoadedTypeInitializer loadedTypeInitializer,
                        Instrumentation.Context.ExtractableView instrumentationContext,
                        ClassFileVersion classFileVersion) {
             this.instrumentedType = instrumentedType;
-            this.typeInitializer = typeInitializer;
+            this.loadedTypeInitializer = loadedTypeInitializer;
             this.instrumentationContext = instrumentationContext;
             this.classFileVersion = classFileVersion;
         }
@@ -448,7 +448,7 @@ public interface TypeWriter<T> {
         public String toString() {
             return "TypeWriter.Builder{" +
                     "instrumentedType=" + instrumentedType +
-                    ", typeInitializer=" + typeInitializer +
+                    ", typeInitializer=" + loadedTypeInitializer +
                     ", instrumentationContext=" + instrumentationContext +
                     ", classFileVersion=" + classFileVersion +
                     '}';
@@ -544,7 +544,7 @@ public interface TypeWriter<T> {
                 classVisitor.visitEnd();
                 return new DynamicType.Default.Unloaded<S>(instrumentedType,
                         classWriter.toByteArray(),
-                        typeInitializer,
+                        loadedTypeInitializer,
                         instrumentationContext.getRegisteredAuxiliaryTypes());
             }
 

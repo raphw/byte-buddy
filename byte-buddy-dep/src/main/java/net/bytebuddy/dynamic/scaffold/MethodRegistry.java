@@ -1,7 +1,7 @@
 package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.instrumentation.Instrumentation;
-import net.bytebuddy.instrumentation.TypeInitializer;
+import net.bytebuddy.instrumentation.LoadedTypeInitializer;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
@@ -78,13 +78,13 @@ public interface MethodRegistry {
         MethodLookupEngine.Finding getFinding();
 
         /**
-         * Returns the {@link net.bytebuddy.instrumentation.TypeInitializer} of the instrumented type that is currently
+         * Returns the {@link net.bytebuddy.instrumentation.LoadedTypeInitializer} of the instrumented type that is currently
          * under construction. This type initializer is only extracted after any
          * {@link net.bytebuddy.instrumentation.Instrumentation} could register their own type initializers.
          *
          * @return The type initializer of the currently created instrumented type.
          */
-        TypeInitializer getTypeInitializer();
+        LoadedTypeInitializer getLoadedTypeInitializer();
     }
 
     /**
@@ -199,7 +199,7 @@ public interface MethodRegistry {
             instrumentedType = prepareInstrumentedType(instrumentedType, additionalEntries);
             MethodLookupEngine.Finding finding = methodLookupEngine.process(instrumentedType.detach());
             return new Compiled(finding,
-                    instrumentedType.getTypeInitializer(),
+                    instrumentedType.getLoadedTypeInitializer(),
                     compileEntries(additionalEntries, instrumentationTargetFactory.make(finding)),
                     fallback);
         }
@@ -302,7 +302,7 @@ public interface MethodRegistry {
             /**
              * The type initializer of the fully prepared instrumented type this compiled method registry represents.
              */
-            private final TypeInitializer typeInitializer;
+            private final LoadedTypeInitializer loadedTypeInitializer;
 
             /**
              * The list of all compiled entries of this compiled method registry.
@@ -319,18 +319,18 @@ public interface MethodRegistry {
              *
              * @param finding         The finding of a method lookup engine that was applied on the fully prepared
              *                        instrumented type this method registry was compiled for.
-             * @param typeInitializer The type initializer of the fully prepared instrumented type this compiled method
+             * @param loadedTypeInitializer The type initializer of the fully prepared instrumented type this compiled method
              *                        registry represents.
              * @param entries         The list of all compiled entries of this compiled method registry.
              * @param fallback        The fallback entry to apply for any method that is not matched by any of the
              *                        registered compiled entries.
              */
             private Compiled(MethodLookupEngine.Finding finding,
-                             TypeInitializer typeInitializer,
+                             LoadedTypeInitializer loadedTypeInitializer,
                              List<Entry> entries,
                              MethodRegistry.Compiled.Entry fallback) {
                 this.finding = finding;
-                this.typeInitializer = typeInitializer;
+                this.loadedTypeInitializer = loadedTypeInitializer;
                 this.entries = entries;
                 this.fallback = fallback;
             }
@@ -351,8 +351,8 @@ public interface MethodRegistry {
             }
 
             @Override
-            public TypeInitializer getTypeInitializer() {
-                return typeInitializer;
+            public LoadedTypeInitializer getLoadedTypeInitializer() {
+                return loadedTypeInitializer;
             }
 
             @Override
@@ -363,13 +363,13 @@ public interface MethodRegistry {
                 return entries.equals(compiled.entries)
                         && fallback.equals(compiled.fallback)
                         && finding.equals(compiled.finding)
-                        && typeInitializer.equals(compiled.typeInitializer);
+                        && loadedTypeInitializer.equals(compiled.loadedTypeInitializer);
             }
 
             @Override
             public int hashCode() {
                 int result = finding.hashCode();
-                result = 31 * result + typeInitializer.hashCode();
+                result = 31 * result + loadedTypeInitializer.hashCode();
                 result = 31 * result + entries.hashCode();
                 result = 31 * result + fallback.hashCode();
                 return result;
@@ -379,7 +379,7 @@ public interface MethodRegistry {
             public String toString() {
                 return "MethodRegistry.Default.Compiled{" +
                         "finding=" + finding +
-                        ", typeInitializer=" + typeInitializer +
+                        ", typeInitializer=" + loadedTypeInitializer +
                         ", entries=" + entries +
                         ", fallback=" + fallback +
                         '}';

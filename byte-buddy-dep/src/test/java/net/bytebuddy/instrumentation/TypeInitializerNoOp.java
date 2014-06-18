@@ -9,6 +9,6 @@ public class TypeInitializerNoOp {
 
     @Test
     public void testIsNotAlive() throws Exception {
-        assertThat(TypeInitializer.NoOp.INSTANCE.isAlive(), is(false));
+        assertThat(LoadedTypeInitializer.NoOp.INSTANCE.isAlive(), is(false));
     }
 }

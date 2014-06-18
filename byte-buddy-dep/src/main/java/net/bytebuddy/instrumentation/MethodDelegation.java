@@ -670,7 +670,7 @@ public class MethodDelegation implements Instrumentation {
                 return instrumentedType.withField(fieldName,
                         new TypeDescription.ForLoadedType(delegate.getClass()),
                         Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC)
-                        .withInitializer(TypeInitializer.ForStaticField.nonAccessible(fieldName, delegate));
+                        .withInitializer(LoadedTypeInitializer.ForStaticField.nonAccessible(fieldName, delegate));
             }
 
             @Override

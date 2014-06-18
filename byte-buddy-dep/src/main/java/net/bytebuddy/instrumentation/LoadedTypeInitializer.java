@@ -6,10 +6,10 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Implementations of this type explicitly initialize a type. Usually, such implementations inject context into an
- * instrumented type which cannot be defined by the means of the Java class file format.
+ * Implementations of this interface explicitly initialize a loaded type. Usually, such implementations inject runtime
+ * context into an instrumented type which cannot be defined by the means of the Java class file format.
  */
-public interface TypeInitializer {
+public interface LoadedTypeInitializer {
 
     /**
      * Callback that is invoked on the creation of an instrumented type. If the type initializer is alive, this
@@ -20,7 +20,9 @@ public interface TypeInitializer {
     void onLoad(Class<?> type);
 
     /**
-     * Indicates if this initializer is alive and needs to be invoked.
+     * Indicates if this initializer is alive and needs to be invoked. This is only meant as a mark. A type initializer
+     * that is not alive might still be called and must therefore not throw an exception but rather provide an
+     * empty implementation.
      *
      * @return {@code true} if this initializer is alive.
      */
@@ -29,7 +31,7 @@ public interface TypeInitializer {
     /**
      * A type initializer that does not do anything.
      */
-    static enum NoOp implements TypeInitializer {
+    static enum NoOp implements LoadedTypeInitializer {
 
         /**
          * The singleton instance.
@@ -52,7 +54,7 @@ public interface TypeInitializer {
      *
      * @param <T> The type of the value that is set as a value to the field.
      */
-    static class ForStaticField<T> implements TypeInitializer, Serializable {
+    static class ForStaticField<T> implements LoadedTypeInitializer, Serializable {
 
         /**
          * A value for accessing a static field.
@@ -75,7 +77,7 @@ public interface TypeInitializer {
         private final boolean makeAccessible;
 
         /**
-         * Creates a new {@link net.bytebuddy.instrumentation.TypeInitializer} for setting a static field.
+         * Creates a new {@link LoadedTypeInitializer} for setting a static field.
          *
          * @param fieldName      the name of the field.
          * @param value          The value to be set.
@@ -88,26 +90,26 @@ public interface TypeInitializer {
         }
 
         /**
-         * Creates a {@link net.bytebuddy.instrumentation.TypeInitializer} for given field name and value where the
+         * Creates a {@link LoadedTypeInitializer} for given field name and value where the
          * field is accessible by reflection.
          *
          * @param fieldName The name of the field.
          * @param value     The value to set.
-         * @return A corresponding {@link net.bytebuddy.instrumentation.TypeInitializer}.
+         * @return A corresponding {@link LoadedTypeInitializer}.
          */
-        public static TypeInitializer accessible(String fieldName, Object value) {
+        public static LoadedTypeInitializer accessible(String fieldName, Object value) {
             return new ForStaticField<Object>(fieldName, value, false);
         }
 
         /**
-         * Creates a {@link net.bytebuddy.instrumentation.TypeInitializer} for given field name and value where the
+         * Creates a {@link LoadedTypeInitializer} for given field name and value where the
          * field is not accessible by reflection and needs to be prepared accordingly.
          *
          * @param fieldName The name of the field.
          * @param value     The value to set.
-         * @return A corresponding {@link net.bytebuddy.instrumentation.TypeInitializer}.
+         * @return A corresponding {@link LoadedTypeInitializer}.
          */
-        public static TypeInitializer nonAccessible(String fieldName, Object value) {
+        public static LoadedTypeInitializer nonAccessible(String fieldName, Object value) {
             return new ForStaticField<Object>(fieldName, value, true);
         }
 
@@ -162,20 +164,20 @@ public interface TypeInitializer {
     /**
      * A compound type initializer that combines several type initializers.
      */
-    static class Compound implements TypeInitializer, Serializable {
+    static class Compound implements LoadedTypeInitializer, Serializable {
 
         /**
          * The type initializers that are represented by this compound type initializer.
          */
-        private final TypeInitializer[] typeInitializer;
+        private final LoadedTypeInitializer[] loadedTypeInitializer;
 
         /**
          * Creates a new compound type initializer.
          *
-         * @param typeInitializer A number of type initializers in their invocation order.
+         * @param loadedTypeInitializer A number of type initializers in their invocation order.
          */
-        public Compound(TypeInitializer... typeInitializer) {
-            this.typeInitializer = typeInitializer;
+        public Compound(LoadedTypeInitializer... loadedTypeInitializer) {
+            this.loadedTypeInitializer = loadedTypeInitializer;
         }
 
         /**
@@ -183,21 +185,21 @@ public interface TypeInitializer {
          *
          * @param typeInitializers A number of type initializers in their invocation order.
          */
-        public Compound(List<? extends TypeInitializer> typeInitializers) {
-            this.typeInitializer = typeInitializers.toArray(new TypeInitializer[typeInitializers.size()]);
+        public Compound(List<? extends LoadedTypeInitializer> typeInitializers) {
+            this.loadedTypeInitializer = typeInitializers.toArray(new LoadedTypeInitializer[typeInitializers.size()]);
         }
 
         @Override
         public void onLoad(Class<?> type) {
-            for (TypeInitializer typeInitializer : this.typeInitializer) {
-                typeInitializer.onLoad(type);
+            for (LoadedTypeInitializer loadedTypeInitializer : this.loadedTypeInitializer) {
+                loadedTypeInitializer.onLoad(type);
             }
         }
 
         @Override
         public boolean isAlive() {
-            for (TypeInitializer typeInitializer : this.typeInitializer) {
-                if (typeInitializer.isAlive()) {
+            for (LoadedTypeInitializer loadedTypeInitializer : this.loadedTypeInitializer) {
+                if (loadedTypeInitializer.isAlive()) {
                     return true;
                 }
             }
@@ -207,17 +209,17 @@ public interface TypeInitializer {
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && Arrays.equals(typeInitializer, ((Compound) other).typeInitializer);
+                    && Arrays.equals(loadedTypeInitializer, ((Compound) other).loadedTypeInitializer);
         }
 
         @Override
         public int hashCode() {
-            return Arrays.hashCode(typeInitializer);
+            return Arrays.hashCode(loadedTypeInitializer);
         }
 
         @Override
         public String toString() {
-            return "TypeInitializer.Compound{typeInitializer=" + Arrays.toString(typeInitializer) + '}';
+            return "TypeInitializer.Compound{typeInitializer=" + Arrays.toString(loadedTypeInitializer) + '}';
         }
     }
 }

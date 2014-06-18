@@ -214,7 +214,7 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType
                     .withField(fieldName, new TypeDescription.ForLoadedType(InvocationHandler.class), Opcodes.ACC_STATIC)
-                    .withInitializer(TypeInitializer.ForStaticField.nonAccessible(fieldName, invocationHandler));
+                    .withInitializer(LoadedTypeInitializer.ForStaticField.nonAccessible(fieldName, invocationHandler));
         }
 
         @Override

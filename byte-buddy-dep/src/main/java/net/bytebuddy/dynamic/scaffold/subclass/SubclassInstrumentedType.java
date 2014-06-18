@@ -2,8 +2,8 @@ package net.bytebuddy.dynamic.scaffold.subclass;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
+import net.bytebuddy.instrumentation.LoadedTypeInitializer;
 import net.bytebuddy.instrumentation.ModifierContributor;
-import net.bytebuddy.instrumentation.TypeInitializer;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
@@ -84,7 +84,7 @@ public class SubclassInstrumentedType
      * @param name               The name of this instrumented type.
      * @param fieldDescriptions  A list of field descriptions to be applied for this instrumentation.
      * @param methodDescriptions A list of method descriptions to be applied for this instrumentation.
-     * @param typeInitializer    A type initializer to be applied for this instrumentation.
+     * @param loadedTypeInitializer    A type initializer to be applied for this instrumentation.
      */
     protected SubclassInstrumentedType(ClassFileVersion classFileVersion,
                                        TypeDescription superClass,
@@ -93,8 +93,8 @@ public class SubclassInstrumentedType
                                        String name,
                                        List<? extends FieldDescription> fieldDescriptions,
                                        List<? extends MethodDescription> methodDescriptions,
-                                       TypeInitializer typeInitializer) {
-        super(typeInitializer, name, fieldDescriptions, methodDescriptions);
+                                       LoadedTypeInitializer loadedTypeInitializer) {
+        super(loadedTypeInitializer, name, fieldDescriptions, methodDescriptions);
         this.classFileVersion = classFileVersion;
         this.superClass = superClass;
         this.interfaces = interfaces;
@@ -119,7 +119,7 @@ public class SubclassInstrumentedType
                 this.name,
                 fieldDescriptions,
                 methodDescriptions,
-                typeInitializer);
+                loadedTypeInitializer);
     }
 
     @Override
@@ -145,11 +145,11 @@ public class SubclassInstrumentedType
                 name,
                 fieldDescriptions,
                 methodDescriptions,
-                typeInitializer);
+                loadedTypeInitializer);
     }
 
     @Override
-    public InstrumentedType withInitializer(TypeInitializer typeInitializer) {
+    public InstrumentedType withInitializer(LoadedTypeInitializer loadedTypeInitializer) {
         return new SubclassInstrumentedType(classFileVersion,
                 superClass,
                 interfaces,
@@ -157,7 +157,7 @@ public class SubclassInstrumentedType
                 name,
                 fieldDescriptions,
                 methodDescriptions,
-                new TypeInitializer.Compound(this.typeInitializer, typeInitializer));
+                new LoadedTypeInitializer.Compound(this.loadedTypeInitializer, loadedTypeInitializer));
     }
 
     @Override
@@ -168,7 +168,7 @@ public class SubclassInstrumentedType
                 modifiers,
                 name, fieldDescriptions,
                 methodDescriptions,
-                TypeInitializer.NoOp.INSTANCE);
+                LoadedTypeInitializer.NoOp.INSTANCE);
     }
 
     @Override

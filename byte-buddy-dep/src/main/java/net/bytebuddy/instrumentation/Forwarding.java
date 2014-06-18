@@ -240,7 +240,7 @@ public class Forwarding implements Instrumentation {
             public InstrumentedType prepare(InstrumentedType instrumentedType, String fieldName, TypeDescription fieldType) {
                 return instrumentedType
                         .withField(fieldName, fieldType, Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC)
-                        .withInitializer(new TypeInitializer.ForStaticField<Object>(fieldName, target, true));
+                        .withInitializer(new LoadedTypeInitializer.ForStaticField<Object>(fieldName, target, true));
             }
 
             @Override

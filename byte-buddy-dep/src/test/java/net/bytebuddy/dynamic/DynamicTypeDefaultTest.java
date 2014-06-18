@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic;
 
-import net.bytebuddy.instrumentation.TypeInitializer;
+import net.bytebuddy.instrumentation.LoadedTypeInitializer;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
@@ -31,7 +31,7 @@ public class DynamicTypeDefaultTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeInitializer mainTypeInitializer, auxiliaryTypeInitializer;
+    private LoadedTypeInitializer mainLoadedTypeInitializer, auxiliaryLoadedTypeInitializer;
     @Mock
     private DynamicType auxiliaryType;
     @Mock
@@ -73,14 +73,14 @@ public class DynamicTypeDefaultTest {
         auxiliaryTypeBinaryRepresentation = new byte[]{4, 5, 6};
         dynamicType = new DynamicType.Default(typeDescription,
                 binaryRepresentation,
-                mainTypeInitializer,
+                mainLoadedTypeInitializer,
                 Collections.singletonList(auxiliaryType));
         when(typeDescription.getName()).thenReturn(FOO);
         when(auxiliaryType.saveIn(any(File.class))).thenReturn(Collections.<TypeDescription, File>emptyMap());
         when(auxiliaryTypeDescription.getName()).thenReturn(BAR);
         when(auxiliaryType.getDescription()).thenReturn(auxiliaryTypeDescription);
         when(auxiliaryType.getBytes()).thenReturn(auxiliaryTypeBinaryRepresentation);
-        when(auxiliaryType.getTypeInitializers()).thenReturn(Collections.singletonMap(auxiliaryTypeDescription, auxiliaryTypeInitializer));
+        when(auxiliaryType.getTypeInitializers()).thenReturn(Collections.singletonMap(auxiliaryTypeDescription, auxiliaryLoadedTypeInitializer));
         when(auxiliaryType.getRawAuxiliaryTypes()).thenReturn(Collections.<TypeDescription, byte[]>emptyMap());
     }
 
@@ -107,21 +107,21 @@ public class DynamicTypeDefaultTest {
 
     @Test
     public void testTypeInitializersAliveMain() throws Exception {
-        when(mainTypeInitializer.isAlive()).thenReturn(true);
+        when(mainLoadedTypeInitializer.isAlive()).thenReturn(true);
         assertThat(dynamicType.hasAliveTypeInitializers(), is(true));
     }
 
     @Test
     public void testTypeInitializersAliveAuxiliary() throws Exception {
-        when(auxiliaryTypeInitializer.isAlive()).thenReturn(true);
+        when(auxiliaryLoadedTypeInitializer.isAlive()).thenReturn(true);
         assertThat(dynamicType.hasAliveTypeInitializers(), is(true));
     }
 
     @Test
     public void testTypeInitializers() throws Exception {
         assertThat(dynamicType.getTypeInitializers().size(), is(2));
-        assertThat(dynamicType.getTypeInitializers().get(typeDescription), is(mainTypeInitializer));
-        assertThat(dynamicType.getTypeInitializers().get(auxiliaryTypeDescription), is(auxiliaryTypeInitializer));
+        assertThat(dynamicType.getTypeInitializers().get(typeDescription), is(mainLoadedTypeInitializer));
+        assertThat(dynamicType.getTypeInitializers().get(auxiliaryTypeDescription), is(auxiliaryLoadedTypeInitializer));
     }
 
     @Test
@@ -143,7 +143,7 @@ public class DynamicTypeDefaultTest {
         assertThat(dynamicType, is(dynamicType));
         DynamicType other = new DynamicType.Default(auxiliaryTypeDescription,
                 binaryRepresentation,
-                auxiliaryTypeInitializer,
+                auxiliaryLoadedTypeInitializer,
                 Collections.<DynamicType>emptyList());
         assertThat(dynamicType.hashCode(), not(is(other.hashCode())));
         assertThat(dynamicType, not(is(other)));

@@ -411,7 +411,7 @@ public abstract class FixedValue implements Instrumentation {
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType
                     .withField(fieldName, fieldType, Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC)
-                    .withInitializer(TypeInitializer.ForStaticField.nonAccessible(fieldName, fixedValue));
+                    .withInitializer(LoadedTypeInitializer.ForStaticField.nonAccessible(fieldName, fixedValue));
         }
 
         @Override

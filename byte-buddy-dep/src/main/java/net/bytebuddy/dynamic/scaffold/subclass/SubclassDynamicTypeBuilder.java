@@ -468,7 +468,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 );
         MethodLookupEngine.Finding finding = compiledMethodRegistry.getFinding();
         TypeExtensionDelegate typeExtensionDelegate = new TypeExtensionDelegate(finding.getTypeDescription(), classFileVersion);
-        return new TypeWriter.Builder<T>(finding.getTypeDescription(), compiledMethodRegistry.getTypeInitializer(), typeExtensionDelegate, classFileVersion)
+        return new TypeWriter.Builder<T>(finding.getTypeDescription(), compiledMethodRegistry.getLoadedTypeInitializer(), typeExtensionDelegate, classFileVersion)
                 .build(classVisitorWrapperChain)
                 .attributeType(attributeAppender)
                 .members()

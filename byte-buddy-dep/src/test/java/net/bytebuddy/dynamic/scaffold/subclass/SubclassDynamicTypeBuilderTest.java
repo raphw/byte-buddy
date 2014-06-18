@@ -8,8 +8,8 @@ import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.dynamic.scaffold.FieldRegistry;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.instrumentation.Instrumentation;
+import net.bytebuddy.instrumentation.LoadedTypeInitializer;
 import net.bytebuddy.instrumentation.SuperMethodCall;
-import net.bytebuddy.instrumentation.TypeInitializer;
 import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
@@ -79,7 +79,7 @@ public class SubclassDynamicTypeBuilderTest {
     @Mock
     private ByteCodeAppender byteCodeAppender;
     @Mock
-    private TypeInitializer typeInitializer;
+    private LoadedTypeInitializer loadedTypeInitializer;
 
     @Before
     public void setUp() throws Exception {
@@ -114,7 +114,7 @@ public class SubclassDynamicTypeBuilderTest {
                                 Collections.<TypeDescription>emptyList(),
                                 Collections.<TypeDescription>emptyList(),
                                 0)
-                        .withInitializer(typeInitializer);
+                        .withInitializer(loadedTypeInitializer);
             }
         });
         when(preparingInstrumentation.appender(any(Instrumentation.Target.class))).thenReturn(byteCodeAppender);
@@ -369,8 +369,8 @@ public class SubclassDynamicTypeBuilderTest {
         verify(byteCodeAppender, times(2)).appendsCode();
         verify(byteCodeAppender, times(2)).apply(any(MethodVisitor.class), any(Instrumentation.Context.class), any(MethodDescription.class));
         verifyNoMoreInteractions(byteCodeAppender);
-        verify(typeInitializer).onLoad(loaded);
-        verifyNoMoreInteractions(typeInitializer);
+        verify(loadedTypeInitializer).onLoad(loaded);
+        verifyNoMoreInteractions(loadedTypeInitializer);
     }
 
     @Test

@@ -5,7 +5,7 @@ import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.dynamic.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.Instrumentation;
-import net.bytebuddy.instrumentation.TypeInitializer;
+import net.bytebuddy.instrumentation.LoadedTypeInitializer;
 import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
@@ -72,7 +72,7 @@ public class TypeWriterBuilderTest {
     @Mock
     private ByteCodeAppender emptyImplementationByteCodeAppender, abstractImplementationByteCodeAppender;
     @Mock
-    private TypeInitializer typeInitializer;
+    private LoadedTypeInitializer loadedTypeInitializer;
 
     private TypeWriter.InGeneralPhase<?> typeWriter;
 
@@ -134,7 +134,7 @@ public class TypeWriterBuilderTest {
             }
         });
         typeWriter = new TypeWriter.Builder<Object>(instrumentedType,
-                typeInitializer,
+                loadedTypeInitializer,
                 instrumentationContext,
                 ClassFileVersion.forCurrentJavaVersion()).build(classVisitorWrapper);
         verify(classVisitorWrapper).wrap(any(ClassWriter.class));

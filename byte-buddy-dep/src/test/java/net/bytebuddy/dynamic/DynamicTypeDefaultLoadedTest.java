@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic;
 
-import net.bytebuddy.instrumentation.TypeInitializer;
+import net.bytebuddy.instrumentation.LoadedTypeInitializer;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
@@ -29,7 +29,7 @@ public class DynamicTypeDefaultLoadedTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeInitializer mainTypeInitializer, auxiliaryTypeInitializer;
+    private LoadedTypeInitializer mainLoadedTypeInitializer, auxiliaryLoadedTypeInitializer;
     @Mock
     private TypeDescription mainTypeDescription, auxiliaryTypeDescription;
 
@@ -43,7 +43,7 @@ public class DynamicTypeDefaultLoadedTest {
         DynamicType auxiliaryType = mock(DynamicType.class);
         dynamicType = new DynamicType.Default.Loaded<Object>(mainTypeDescription,
                 new byte[0],
-                mainTypeInitializer,
+                mainLoadedTypeInitializer,
                 Collections.singletonList(auxiliaryType),
                 loadedTypes);
         when(auxiliaryType.getDescription()).thenReturn(mainTypeDescription);
@@ -64,7 +64,7 @@ public class DynamicTypeDefaultLoadedTest {
         assertThat(dynamicType, is(((DynamicType) dynamicType)));
         DynamicType other = new DynamicType.Default.Loaded<Object>(auxiliaryTypeDescription,
                 new byte[0],
-                auxiliaryTypeInitializer,
+                auxiliaryLoadedTypeInitializer,
                 Collections.<DynamicType>emptyList(),
                 Collections.<TypeDescription, Class<?>>emptyMap());
         assertThat(dynamicType.hashCode(), not(is(other.hashCode())));

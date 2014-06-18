@@ -6,8 +6,8 @@ import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.dynamic.scaffold.FieldRegistry;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.instrumentation.Instrumentation;
+import net.bytebuddy.instrumentation.LoadedTypeInitializer;
 import net.bytebuddy.instrumentation.ModifierContributor;
-import net.bytebuddy.instrumentation.TypeInitializer;
 import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
@@ -64,7 +64,7 @@ public interface DynamicType {
      *
      * @return A mapping of all types' descriptions to their type initializers.
      */
-    Map<TypeDescription, TypeInitializer> getTypeInitializers();
+    Map<TypeDescription, LoadedTypeInitializer> getTypeInitializers();
 
     /**
      * Checks if a dynamic type requires some form of explicit type initialization, either for itself or for one
@@ -1217,7 +1217,7 @@ public interface DynamicType {
         /**
          * The type initializer for this dynamic type.
          */
-        protected final TypeInitializer typeInitializer;
+        protected final LoadedTypeInitializer loadedTypeInitializer;
 
         /**
          * A list of auxiliary types for this dynamic type.
@@ -1229,16 +1229,16 @@ public interface DynamicType {
          *
          * @param typeDescription      A description of this dynamic type.
          * @param binaryRepresentation A byte array containing the binary representation of this dynamic type.
-         * @param typeInitializer      The type initializer of this dynamic type.
+         * @param loadedTypeInitializer      The type initializer of this dynamic type.
          * @param auxiliaryTypes       The auxiliary type required for this dynamic type.
          */
         public Default(TypeDescription typeDescription,
                        byte[] binaryRepresentation,
-                       TypeInitializer typeInitializer,
+                       LoadedTypeInitializer loadedTypeInitializer,
                        List<? extends DynamicType> auxiliaryTypes) {
             this.typeDescription = typeDescription;
             this.binaryRepresentation = binaryRepresentation;
-            this.typeInitializer = typeInitializer;
+            this.loadedTypeInitializer = loadedTypeInitializer;
             this.auxiliaryTypes = auxiliaryTypes;
         }
 
@@ -1248,19 +1248,19 @@ public interface DynamicType {
         }
 
         @Override
-        public Map<TypeDescription, TypeInitializer> getTypeInitializers() {
-            Map<TypeDescription, TypeInitializer> classLoadingCallbacks = new HashMap<TypeDescription, TypeInitializer>();
+        public Map<TypeDescription, LoadedTypeInitializer> getTypeInitializers() {
+            Map<TypeDescription, LoadedTypeInitializer> classLoadingCallbacks = new HashMap<TypeDescription, LoadedTypeInitializer>();
             for (DynamicType auxiliaryType : auxiliaryTypes) {
                 classLoadingCallbacks.putAll(auxiliaryType.getTypeInitializers());
             }
-            classLoadingCallbacks.put(typeDescription, typeInitializer);
+            classLoadingCallbacks.put(typeDescription, loadedTypeInitializer);
             return classLoadingCallbacks;
         }
 
         @Override
         public boolean hasAliveTypeInitializers() {
-            for (TypeInitializer typeInitializer : getTypeInitializers().values()) {
-                if (typeInitializer.isAlive()) {
+            for (LoadedTypeInitializer loadedTypeInitializer : getTypeInitializers().values()) {
+                if (loadedTypeInitializer.isAlive()) {
                     return true;
                 }
             }
@@ -1307,7 +1307,7 @@ public interface DynamicType {
             return auxiliaryTypes.equals(aDefault.auxiliaryTypes)
                     && Arrays.equals(binaryRepresentation, aDefault.binaryRepresentation)
                     && typeDescription.equals(aDefault.typeDescription)
-                    && typeInitializer.equals(aDefault.typeInitializer);
+                    && loadedTypeInitializer.equals(aDefault.loadedTypeInitializer);
 
         }
 
@@ -1315,7 +1315,7 @@ public interface DynamicType {
         public int hashCode() {
             int result = typeDescription.hashCode();
             result = 31 * result + Arrays.hashCode(binaryRepresentation);
-            result = 31 * result + typeInitializer.hashCode();
+            result = 31 * result + loadedTypeInitializer.hashCode();
             result = 31 * result + auxiliaryTypes.hashCode();
             return result;
         }
@@ -1325,7 +1325,7 @@ public interface DynamicType {
             return "DynamicType.Default{" +
                     "typeDescription='" + typeDescription + '\'' +
                     ", binaryRepresentation=" + Arrays.toString(binaryRepresentation) +
-                    ", typeInitializer=" + typeInitializer +
+                    ", typeInitializer=" + loadedTypeInitializer +
                     ", auxiliaryTypes=" + auxiliaryTypes +
                     '}';
         }
@@ -1343,14 +1343,14 @@ public interface DynamicType {
              *
              * @param typeDescription A description of this dynamic type.
              * @param typeByte        An array of byte of the binary representation of this dynamic type.
-             * @param typeInitializer The type initializer of this dynamic type.
+             * @param loadedTypeInitializer The type initializer of this dynamic type.
              * @param auxiliaryTypes  The auxiliary types that are required for this dynamic type.
              */
             public Unloaded(TypeDescription typeDescription,
                             byte[] typeByte,
-                            TypeInitializer typeInitializer,
+                            LoadedTypeInitializer loadedTypeInitializer,
                             List<? extends DynamicType> auxiliaryTypes) {
-                super(typeDescription, typeByte, typeInitializer, auxiliaryTypes);
+                super(typeDescription, typeByte, loadedTypeInitializer, auxiliaryTypes);
             }
 
             @Override
@@ -1359,7 +1359,7 @@ public interface DynamicType {
                 types.put(typeDescription, binaryRepresentation);
                 return new Default.Loaded<T>(typeDescription,
                         binaryRepresentation,
-                        typeInitializer,
+                        loadedTypeInitializer,
                         auxiliaryTypes,
                         initialize(classLoadingStrategy.load(classLoader, types)));
             }
@@ -1371,7 +1371,7 @@ public interface DynamicType {
              * @return A new hash map that contains the same classes as those given.
              */
             private Map<TypeDescription, Class<?>> initialize(Map<TypeDescription, Class<?>> uninitialized) {
-                Map<TypeDescription, TypeInitializer> typeInitializers = getTypeInitializers();
+                Map<TypeDescription, LoadedTypeInitializer> typeInitializers = getTypeInitializers();
                 for (Map.Entry<TypeDescription, Class<?>> entry : uninitialized.entrySet()) {
                     typeInitializers.get(entry.getKey()).onLoad(entry.getValue());
                 }
@@ -1383,7 +1383,7 @@ public interface DynamicType {
                 return "DynamicType.Default.Unloaded{" +
                         "typeDescription='" + typeDescription + '\'' +
                         ", binaryRepresentation=" + Arrays.toString(binaryRepresentation) +
-                        ", typeInitializer=" + typeInitializer +
+                        ", typeInitializer=" + loadedTypeInitializer +
                         ", auxiliaryTypes=" + auxiliaryTypes +
                         '}';
             }
@@ -1407,16 +1407,16 @@ public interface DynamicType {
              *
              * @param typeDescription A description of this dynamic type.
              * @param typeByte        An array of byte of the binary representation of this dynamic type.
-             * @param typeInitializer The type initializer of this dynamic type.
+             * @param loadedTypeInitializer The type initializer of this dynamic type.
              * @param auxiliaryTypes  The auxiliary types that are required for this dynamic type.
              * @param loadedTypes     A map of loaded types for this dynamic type and all its auxiliary types.
              */
             protected Loaded(TypeDescription typeDescription,
                              byte[] typeByte,
-                             TypeInitializer typeInitializer,
+                             LoadedTypeInitializer loadedTypeInitializer,
                              List<? extends DynamicType> auxiliaryTypes,
                              Map<TypeDescription, Class<?>> loadedTypes) {
-                super(typeDescription, typeByte, typeInitializer, auxiliaryTypes);
+                super(typeDescription, typeByte, loadedTypeInitializer, auxiliaryTypes);
                 this.loadedTypes = loadedTypes;
             }
 
@@ -1449,7 +1449,7 @@ public interface DynamicType {
                 return "DynamicType.Default.Loaded{" +
                         "typeDescription='" + typeDescription + '\'' +
                         ", binaryRepresentation=" + Arrays.toString(binaryRepresentation) +
-                        ", typeInitializer=" + typeInitializer +
+                        ", typeInitializer=" + loadedTypeInitializer +
                         ", auxiliaryTypes=" + auxiliaryTypes +
                         ", loadedTypes=" + loadedTypes +
                         '}';

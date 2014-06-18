@@ -14,7 +14,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
 
-public class TypeInitializerCompoundTest {
+public class LoadedTypeInitializerCompoundTest {
 
     private static final Class<?> TYPE = Object.class;
 
@@ -22,17 +22,17 @@ public class TypeInitializerCompoundTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeInitializer first, second;
+    private LoadedTypeInitializer first, second;
     @Mock
     private InstrumentedType instrumentedType;
     @Mock
     private ByteCodeAppender byteCodeAppender;
 
-    private TypeInitializer compound;
+    private LoadedTypeInitializer compound;
 
     @Before
     public void setUp() throws Exception {
-        compound = new TypeInitializer.Compound(first, second);
+        compound = new LoadedTypeInitializer.Compound(first, second);
     }
 
     @Test
@@ -63,9 +63,9 @@ public class TypeInitializerCompoundTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        assertThat(new TypeInitializer.Compound(first, second).hashCode(), is(new TypeInitializer.Compound(first, second).hashCode()));
-        assertThat(new TypeInitializer.Compound(first, second), is(new TypeInitializer.Compound(first, second)));
-        assertThat(new TypeInitializer.Compound(first, second).hashCode(), not(is(new TypeInitializer.Compound(second, first).hashCode())));
-        assertThat(new TypeInitializer.Compound(first, second), not(is(new TypeInitializer.Compound(second, first))));
+        assertThat(new LoadedTypeInitializer.Compound(first, second).hashCode(), is(new LoadedTypeInitializer.Compound(first, second).hashCode()));
+        assertThat(new LoadedTypeInitializer.Compound(first, second), is(new LoadedTypeInitializer.Compound(first, second)));
+        assertThat(new LoadedTypeInitializer.Compound(first, second).hashCode(), not(is(new LoadedTypeInitializer.Compound(second, first).hashCode())));
+        assertThat(new LoadedTypeInitializer.Compound(first, second), not(is(new LoadedTypeInitializer.Compound(second, first))));
     }
 }

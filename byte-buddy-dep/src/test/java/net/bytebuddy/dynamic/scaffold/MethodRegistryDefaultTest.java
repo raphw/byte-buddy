@@ -1,7 +1,7 @@
 package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.instrumentation.Instrumentation;
-import net.bytebuddy.instrumentation.TypeInitializer;
+import net.bytebuddy.instrumentation.LoadedTypeInitializer;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
@@ -63,7 +63,7 @@ public class MethodRegistryDefaultTest {
     @Mock
     private MethodLookupEngine.Finding basicFinding, extendedFinding;
     @Mock
-    private TypeInitializer typeInitializer;
+    private LoadedTypeInitializer loadedTypeInitializer;
 
     @Before
     public void setUp() throws Exception {
@@ -100,8 +100,8 @@ public class MethodRegistryDefaultTest {
         when(extendingInstrumentation.appender(any(Instrumentation.Target.class))).thenReturn(simpleByteCodeAppender);
         when(basicInstrumentedType.detach()).thenReturn(basicInstrumentedType);
         when(extendedInstrumentedType.detach()).thenReturn(extendedInstrumentedType);
-        when(basicInstrumentedType.getTypeInitializer()).thenReturn(typeInitializer);
-        when(extendedInstrumentedType.getTypeInitializer()).thenReturn(typeInitializer);
+        when(basicInstrumentedType.getLoadedTypeInitializer()).thenReturn(loadedTypeInitializer);
+        when(extendedInstrumentedType.getLoadedTypeInitializer()).thenReturn(loadedTypeInitializer);
     }
 
     @Test
