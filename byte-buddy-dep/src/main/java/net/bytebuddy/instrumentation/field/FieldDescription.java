@@ -183,6 +183,11 @@ public interface FieldDescription extends ModifierReviewable, ByteCodeElement, D
         }
 
         @Override
+        public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
+            return false;
+        }
+
+        @Override
         public Annotation[] getDeclaredAnnotations() {
             return new Annotation[0];
         }
