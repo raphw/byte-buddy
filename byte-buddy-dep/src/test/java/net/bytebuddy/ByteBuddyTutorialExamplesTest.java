@@ -212,7 +212,7 @@ public class ByteBuddyTutorialExamplesTest {
 
     @Test
     @Java8Rule.Enforce
-    public void testFieldsAndMEthodMethodDefaultCall() throws Exception {
+    public void testFieldsAndMethodMethodDefaultCall() throws Exception {
         // This test differs from the tutorial by only conditionally expressing the Java 8 types.
         ClassLoader classLoader = new PrecompiledTypeClassLoader(getClass().getClassLoader());
         Object instance = new ByteBuddy(ClassFileVersion.JAVA_V8)

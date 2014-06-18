@@ -49,13 +49,22 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
     protected final Assigner assigner;
 
     /**
+     * Determines if the {@link java.lang.reflect.Method} instances that are handed to the intercepted methods are
+     * cached in {@code static} fields.
+     */
+    protected final boolean cacheMethods;
+
+    /**
      * Creates a new invocation handler for a given field.
      *
-     * @param fieldName The name of the field.
+     * @param fieldName    The name of the field.
+     * @param cacheMethods Determines if the {@link java.lang.reflect.Method} instances that are handed to the
+     *                     intercepted methods are cached in {@code static} fields.
      */
-    protected InvocationHandlerAdapter(String fieldName) {
+    protected InvocationHandlerAdapter(String fieldName, boolean cacheMethods) {
         this.fieldName = fieldName;
-        this.assigner = new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE), true);
+        this.cacheMethods = cacheMethods;
+        assigner = new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE), true);
     }
 
     /**
@@ -65,7 +74,7 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
      * @param invocationHandler The invocation handler to which all method calls are delegated.
      * @return An instrumentation that delegates all method interceptions to the given invocation handler.
      */
-    public static Instrumentation of(InvocationHandler invocationHandler) {
+    public static InvocationHandlerAdapter of(InvocationHandler invocationHandler) {
         return of(invocationHandler, String.format("%s$%d", PREFIX, Math.abs(invocationHandler.hashCode())));
     }
 
@@ -77,8 +86,8 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
      * @param fieldName         The name of the field.
      * @return An instrumentation that delegates all method interceptions to the given invocation handler.
      */
-    public static Instrumentation of(InvocationHandler invocationHandler, String fieldName) {
-        return new ForStaticDelegation(nonNull(invocationHandler), isValidIdentifier(fieldName));
+    public static InvocationHandlerAdapter of(InvocationHandler invocationHandler, String fieldName) {
+        return new ForStaticDelegation(nonNull(invocationHandler), isValidIdentifier(fieldName), false);
     }
 
     /**
@@ -90,8 +99,8 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
      * @param fieldName The name of the field.
      * @return An instrumentation that delegates all method interceptions to an instance field of the given name.
      */
-    public static Instrumentation of(String fieldName) {
-        return new ForInstanceDelegation(isValidIdentifier(fieldName));
+    public static InvocationHandlerAdapter toInstanceField(String fieldName) {
+        return new ForInstanceDelegation(isValidIdentifier(fieldName), false);
     }
 
     /**
@@ -110,6 +119,22 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
         }
         return instruction;
     }
+
+    /**
+     * By default, any {@link java.lang.reflect.Method} instance that is handed over to an
+     * {@link java.lang.reflect.InvocationHandler} is created on each invocation of the method.
+     * {@link java.lang.reflect.Method} look-ups are normally cached by its defining {@link java.lang.Class} what
+     * makes a repeated look-up of a method little expensive. However, because {@link java.lang.reflect.Method}
+     * instances are mutable by their {@link java.lang.reflect.AccessibleObject} contact, any looked-up instance
+     * needs to be copied by its defining {@link java.lang.Class} before exposing it. This can cause performance
+     * deficits when a method is for example called repeatedly in a loop. By enabling the method cache, this
+     * performance penalty can be avoided by caching a single {@link java.lang.reflect.Method} instance for
+     * any intercepted method as a {@code static} field in the instrumented type.
+     *
+     * @return A similar invocation handler adapter which caches any {@link java.lang.reflect.Method} instance
+     * in form of a {@code static} field.
+     */
+    public abstract Instrumentation withMethodCache();
 
     /**
      * Applies an instrumentation that delegates to a invocation handler.
@@ -132,7 +157,9 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
                 preparingManipulation,
                 FieldAccess.forField(instrumentedType.getDeclaredFields().named(fieldName)).getter(),
                 MethodVariableAccess.forType(objectType).loadFromIndex(0),
-                MethodConstant.forMethod(instrumentedMethod),
+                cacheMethods
+                        ? MethodConstant.forMethod(instrumentedMethod).cached()
+                        : MethodConstant.forMethod(instrumentedMethod),
                 ArrayFactory.targeting(objectType).withValues(argumentValuesOf(instrumentedMethod)),
                 MethodInvocation.invoke(invocationHandlerType.getDeclaredMethods().getOnly()),
                 assigner.assign(objectType, instrumentedMethod.getReturnType(), true),
@@ -144,12 +171,13 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
+                && cacheMethods == ((InvocationHandlerAdapter) other).cacheMethods
                 && fieldName.equals(((InvocationHandlerAdapter) other).fieldName);
     }
 
     @Override
     public int hashCode() {
-        return 31 * fieldName.hashCode();
+        return 31 * fieldName.hashCode() + (cacheMethods ? 1 : 0);
     }
 
     /**
@@ -169,10 +197,17 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
          *
          * @param invocationHandler The invocation handler to which all method calls are delegated.
          * @param fieldName         The name of the field.
+         * @param cacheMethods      Determines if the {@link java.lang.reflect.Method} instances that are handed to the
+         *                          intercepted methods are cached in {@code static} fields.
          */
-        private ForStaticDelegation(InvocationHandler invocationHandler, String fieldName) {
-            super(fieldName);
+        private ForStaticDelegation(InvocationHandler invocationHandler, String fieldName, boolean cacheMethods) {
+            super(fieldName, cacheMethods);
             this.invocationHandler = invocationHandler;
+        }
+
+        @Override
+        public Instrumentation withMethodCache() {
+            return new ForStaticDelegation(invocationHandler, fieldName, true);
         }
 
         @Override
@@ -203,6 +238,7 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
         public String toString() {
             return "InvocationHandlerAdapter.ForStaticDelegation{" +
                     "fieldName=" + fieldName +
+                    "cacheMethods=" + cacheMethods +
                     "invocationHandler=" + invocationHandler +
                     '}';
         }
@@ -283,10 +319,17 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
          * Creates a new invocation handler adapter for delegating invocations to an invocation handler that is stored
          * in an instance field.
          *
-         * @param fieldName The name of the field.
+         * @param fieldName    The name of the field.
+         * @param cacheMethods Determines if the {@link java.lang.reflect.Method} instances that are handed to the
+         *                     intercepted methods are cached in {@code static} fields.
          */
-        private ForInstanceDelegation(String fieldName) {
-            super(fieldName);
+        private ForInstanceDelegation(String fieldName, boolean cacheMethods) {
+            super(fieldName, cacheMethods);
+        }
+
+        @Override
+        public Instrumentation withMethodCache() {
+            return new ForInstanceDelegation(fieldName, true);
         }
 
         @Override
@@ -305,6 +348,7 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
         public String toString() {
             return "InvocationHandlerAdapter.ForInstanceDelegation{" +
                     "fieldName=" + fieldName +
+                    "cacheMethods=" + cacheMethods +
                     '}';
         }
 

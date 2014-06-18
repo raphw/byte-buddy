@@ -2,6 +2,7 @@ package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
+import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
@@ -467,6 +468,20 @@ public interface Instrumentation {
         TypeDescription register(AuxiliaryType auxiliaryType);
 
         /**
+         * Caches a single value by storing it in form of a {@code private}, {@code final} and {@code static} field.
+         * By caching values, expensive instance creations can be avoided and object identity can be preserved.
+         * The field is initiated in a generated class's static initializer.
+         *
+         * @param fieldValue A stack manipulation for creating the value that is to be cached in a {@code static} field.
+         *                   After executing the stack manipulation, exactly one value must be put onto the operand
+         *                   stack which is assignable to the given {@code fieldType}.
+         * @param fieldType  The type of the field for storing the cached value. This field's type determines the value
+         *                   that is put onto the operand stack by this method's returned stack manipulation.
+         * @return A description of a field that was defined on the instrumented type which contains the given value.
+         */
+        FieldDescription cache(StackManipulation fieldValue, TypeDescription fieldType);
+
+        /**
          * Represents an extractable view of an {@link net.bytebuddy.instrumentation.Instrumentation.Context} which
          * allows the retrieval of any registered auxiliary type.
          */
@@ -478,7 +493,14 @@ public interface Instrumentation {
              *
              * @return A list of all manifested registered auxiliary types.
              */
-            List<? extends DynamicType> getRegisteredAuxiliaryTypes();
+            List<DynamicType> getRegisteredAuxiliaryTypes();
+
+            /**
+             * Returns a list of the descriptions of all fields of registered field caches.
+             *
+             * @return A list of the descriptions of all fields of registered field caches.
+             */
+            List<FieldDescription> getRegisteredFieldCaches();
         }
     }
 

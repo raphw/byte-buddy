@@ -468,21 +468,32 @@ public final class MethodMatchers {
     }
 
     /**
-     * Selects methods that are not constructors.
+     * Selects methods that are not constructors or type initializers.
      *
-     * @return A new method matcher that matches methods but not constructors.
+     * @return A new method matcher that matches methods but not constructors or type initializers.
      */
     public static JunctionMethodMatcher isMethod() {
         return new IsMethodMethodMatcher();
     }
 
     /**
-     * Selects methods that are not constructors.
+     * Selects methods that are constructors.
      *
      * @return A new method matcher that matches constructors but not methods.
      */
     public static JunctionMethodMatcher isConstructor() {
-        return not(isMethod());
+        return new IsConstructorMethodMatcher();
+    }
+
+    /**
+     * Checks if a method is representing a type initializer. Note that a type initializer is neither regarded to be a
+     * method or a constructor and must therefore be intercepted by
+     * {@link net.bytebuddy.dynamic.DynamicType.Builder#invokable(MethodMatcher)}.
+     *
+     * @return A method matcher for the a type initializer.
+     */
+    public static JunctionMethodMatcher isTypeInitializer() {
+        return new TypeInitializerMethodMatcher();
     }
 
     /**
@@ -724,7 +735,9 @@ public final class MethodMatchers {
      * @return A matcher that selects methods with a compatible Java compiler signature.
      */
     public static JunctionMethodMatcher hasSameJavaCompilerSignatureAs(MethodDescription methodDescription) {
-        return (methodDescription.isConstructor() ? isConstructor() : named(methodDescription.getName()))
+        return methodDescription.isTypeInitializer()
+                ? isTypeInitializer()
+                : (methodDescription.isConstructor() ? isConstructor() : named(methodDescription.getName()))
                 .and(takesArguments(methodDescription.getParameterTypes()));
     }
 
@@ -755,7 +768,9 @@ public final class MethodMatchers {
      * @return A method matcher that determines if a method could be a bridge target for the given method.
      */
     public static JunctionMethodMatcher isBridgeMethodCompatibleTo(MethodDescription methodDescription) {
-        return (methodDescription.isConstructor() ? isConstructor() : named(methodDescription.getName()))
+        return methodDescription.isTypeInitializer()
+                ? none()
+                : (methodDescription.isConstructor() ? isConstructor() : named(methodDescription.getName()))
                 .and(returnsSubtypeOf(methodDescription.getReturnType()))
                 .and(takesArgumentsAsSubtypesOf(methodDescription.getParameterTypes()));
     }
@@ -1002,7 +1017,9 @@ public final class MethodMatchers {
 
         @Override
         public boolean matches(MethodDescription methodDescription) {
-            return !methodDescription.isConstructor() && matchMode.matches(name, methodDescription.getName());
+            return !methodDescription.isConstructor()
+                    && !methodDescription.isTypeInitializer()
+                    && matchMode.matches(name, methodDescription.getName());
         }
 
         @Override
@@ -1584,13 +1601,13 @@ public final class MethodMatchers {
     }
 
     /**
-     * Matches a method by representing an actual method instead of a constructor.
+     * Matches a method that is representing an actual method instead of a constructor or a type initializer.
      */
     private static class IsMethodMethodMatcher extends JunctionMethodMatcher.AbstractBase {
 
         @Override
         public boolean matches(MethodDescription methodDescription) {
-            return !methodDescription.isConstructor();
+            return methodDescription.isMethod();
         }
 
         @Override
@@ -1606,6 +1623,58 @@ public final class MethodMatchers {
         @Override
         public String toString() {
             return "isMethod()";
+        }
+    }
+
+    /**
+     * Matches a method that is representing a constructor.
+     */
+    private static class IsConstructorMethodMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.isConstructor();
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return other == this || other instanceof IsConstructorMethodMatcher;
+        }
+
+        @Override
+        public int hashCode() {
+            return 104;
+        }
+
+        @Override
+        public String toString() {
+            return "isConstructor()";
+        }
+    }
+
+    /**
+     * Matches a method that is representing a type initializer.
+     */
+    private static class TypeInitializerMethodMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.isTypeInitializer();
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return other == this || other instanceof TypeInitializerMethodMatcher;
+        }
+
+        @Override
+        public String toString() {
+            return "isTypeInitializer()";
+        }
+
+        @Override
+        public int hashCode() {
+            return 257;
         }
     }
 

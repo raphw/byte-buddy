@@ -261,6 +261,11 @@ public interface MethodLookupEngine {
         }
 
         @Override
+        public boolean isTypeInitializer() {
+            return false;
+        }
+
+        @Override
         public boolean represents(Method method) {
             return false;
         }

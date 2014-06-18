@@ -53,7 +53,9 @@ public enum MethodInvocation {
      * @return A stack manipulation with implicitly determined invocation type.
      */
     public static WithImplicitInvocationTargetType invoke(MethodDescription methodDescription) {
-        if (methodDescription.isStatic()) { // Check this property first, private static methods must use INVOKESTATIC
+        if (methodDescription.isTypeInitializer()) {
+            throw new IllegalArgumentException("Thy type initializer cannot be invoked explicitly");
+        } else if (methodDescription.isStatic()) { // Check this property first, private static methods must use INVOKESTATIC
             return STATIC.new Invocation(methodDescription);
         } else if (methodDescription.isPrivate() || methodDescription.isConstructor() || methodDescription.isDefaultMethod()) {
             return SPECIAL.new Invocation(methodDescription);

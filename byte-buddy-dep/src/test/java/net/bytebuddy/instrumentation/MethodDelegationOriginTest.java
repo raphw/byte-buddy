@@ -7,7 +7,7 @@ import org.junit.Test;
 
 import java.lang.reflect.Method;
 
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertEquals;
@@ -25,11 +25,23 @@ public class MethodDelegationOriginTest extends AbstractInstrumentationTest {
     }
 
     @Test
-    public void testOriginMethod() throws Exception {
+    public void testOriginMethodWithoutCache() throws Exception {
         DynamicType.Loaded<Foo> loaded = instrument(Foo.class, MethodDelegation.to(OriginMethod.class));
         Foo instance = loaded.getLoaded().newInstance();
-        assertThat(instance.foo(), instanceOf(Method.class));
-        assertThat(instance.foo(), is((Object) Foo.class.getDeclaredMethod(FOO)));
+        Object method = instance.foo();
+        assertThat(method, instanceOf(Method.class));
+        assertThat(method, is((Object) Foo.class.getDeclaredMethod(FOO)));
+        assertThat(method, not(sameInstance(instance.foo())));
+    }
+
+    @Test
+    public void testOriginMethodWithCache() throws Exception {
+        DynamicType.Loaded<Foo> loaded = instrument(Foo.class, MethodDelegation.to(OriginMethodWithCache.class));
+        Foo instance = loaded.getLoaded().newInstance();
+        Object method = instance.foo();
+        assertThat(method, instanceOf(Method.class));
+        assertThat(method, is((Object) Foo.class.getDeclaredMethod(FOO)));
+        assertThat(method, sameInstance(instance.foo()));
     }
 
     @Test
@@ -63,6 +75,13 @@ public class MethodDelegationOriginTest extends AbstractInstrumentationTest {
     public static class OriginMethod {
 
         public static Object foo(@Origin Method method) {
+            return method;
+        }
+    }
+
+    public static class OriginMethodWithCache {
+
+        public static Object foo(@Origin(cacheMethod = true) Method method) {
             return method;
         }
     }

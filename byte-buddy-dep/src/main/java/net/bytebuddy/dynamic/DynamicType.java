@@ -18,7 +18,6 @@ import net.bytebuddy.instrumentation.method.matcher.MethodMatchers;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
-import org.objectweb.asm.Opcodes;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -27,7 +26,6 @@ import java.lang.annotation.Annotation;
 import java.util.*;
 
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
-import static net.bytebuddy.utility.ByteBuddyCommons.isEmpty;
 
 /**
  * A dynamic type that is created at runtime, usually as the result of applying a
@@ -261,7 +259,10 @@ public interface DynamicType {
                                                               ModifierContributor.ForMethod... modifier);
 
         /**
-         * Defines a new constructor for this type.
+         * Defines a new constructor for this type. A constructor must not be {@code static}. Instead, a static type
+         * initializer is added automatically if such an initializer is required. See
+         * {@link net.bytebuddy.instrumentation.method.matcher.MethodMatchers#isTypeInitializer()} for a method
+         * matcher for the static constructor.
          * <p>&nbsp;</p>
          * Note that a constructor's implementation must call another constructor of the same class or a constructor of
          * its super class. This constructor call must be hardcoded inside of the constructor's method body. Before
@@ -277,7 +278,10 @@ public interface DynamicType {
                                                                    ModifierContributor.ForMethod... modifier);
 
         /**
-         * Defines a new constructor for this type.
+         * Defines a new constructor for this type. A constructor must not be {@code static}. Instead, a static type
+         * initializer is added automatically if such an initializer is required. See
+         * {@link net.bytebuddy.instrumentation.method.matcher.MethodMatchers#isTypeInitializer()} for a method
+         * matcher for the static constructor.
          * <p>&nbsp;</p>
          * Note that a constructor's implementation must call another constructor of the same class or a constructor of
          * its super class. This constructor call must be hardcoded inside of the constructor's method body. Before
@@ -288,6 +292,7 @@ public interface DynamicType {
          *                       represented by a description of {@link net.bytebuddy.dynamic.TargetType}.
          * @param modifier       The modifiers for this constructor.
          * @return An interception delegate that exclusively matches the new constructor.
+         * @see net.bytebuddy.instrumentation.method.matcher.MethodMatchers#isTypeInitializer()
          */
         ExceptionDeclarableMethodInterception<T> defineConstructor(List<? extends TypeDescription> parameterTypes,
                                                                    ModifierContributor.ForMethod... modifier);
@@ -772,13 +777,9 @@ public interface DynamicType {
                 public MethodToken(List<? extends TypeDescription> parameterTypes,
                                    List<? extends TypeDescription> exceptionTypes,
                                    int modifiers) {
-                    this((modifiers & Opcodes.ACC_STATIC) != 0
-                                    ? MethodDescription.STATIC_INITIALIZER_INTERNAL_NAME
-                                    : MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
+                    this(MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
                             new TypeDescription.ForLoadedType(void.class),
-                            (modifiers & Opcodes.ACC_STATIC) != 0
-                                    ? isEmpty(parameterTypes, "A static constructor must not define parameters")
-                                    : parameterTypes,
+                            parameterTypes,
                             exceptionTypes,
                             modifiers);
                 }
@@ -806,10 +807,7 @@ public interface DynamicType {
 
                 @Override
                 public MethodMatcher manifest(TypeDescription instrumentedType) {
-                    return (MethodDescription.CONSTRUCTOR_INTERNAL_NAME.equals(internalName)
-                            || MethodDescription.STATIC_INITIALIZER_INTERNAL_NAME.equals(internalName)
-                            ? isConstructor()
-                            : named(internalName))
+                    return MethodDescription.CONSTRUCTOR_INTERNAL_NAME.equals(internalName) ? isConstructor() : named(internalName)
                             .and(MethodMatchers.returns(resolveReturnType(instrumentedType)))
                             .and(takesArguments(resolveParameterTypes(instrumentedType)));
                 }

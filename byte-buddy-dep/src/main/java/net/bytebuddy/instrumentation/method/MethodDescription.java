@@ -4,6 +4,7 @@ import net.bytebuddy.instrumentation.ModifierReviewable;
 import net.bytebuddy.instrumentation.type.DeclaredInType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import java.lang.annotation.Annotation;
@@ -26,7 +27,7 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
     /**
      * The internal name of a Java static initializer.
      */
-    static final String STATIC_INITIALIZER_INTERNAL_NAME = "<clinit>";
+    static final String TYPE_INITIALIZER_INTERNAL_NAME = "<clinit>";
 
     /**
      * Returns a description of the return type of the method described by this instance.
@@ -57,11 +58,25 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
     TypeList getExceptionTypes();
 
     /**
-     * Specifies if this method description represents a constructor.
+     * Checks if this method description represents a constructor.
      *
      * @return {@code true} if this method description represents a constructor.
      */
     boolean isConstructor();
+
+    /**
+     * Checks if this method description represents a method, i.e. not a constructor or a type initializer.
+     *
+     * @return {@code true} if this method description represents a method.
+     */
+    boolean isMethod();
+
+    /**
+     * Checks if this method is a type initializer.
+     *
+     * @return {@code true} if this method description represents a type initializer.
+     */
+    boolean isTypeInitializer();
 
     /**
      * Verifies if a method description represents a given loaded method.
@@ -132,6 +147,11 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         @Override
         public int getStackSize() {
             return getParameterTypes().getStackSize() + (isStatic() ? 0 : 1);
+        }
+
+        @Override
+        public boolean isMethod() {
+            return !isConstructor() && !isTypeInitializer();
         }
 
         @Override
@@ -255,6 +275,11 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         }
 
         @Override
+        public boolean isTypeInitializer() {
+            return false;
+        }
+
+        @Override
         public boolean isBridge() {
             return false;
         }
@@ -286,7 +311,7 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
 
         @Override
         public String getInternalName() {
-            return CONSTRUCTOR_INTERNAL_NAME; // Note that loaded constructors are never static.
+            return CONSTRUCTOR_INTERNAL_NAME;
         }
 
         @Override
@@ -375,6 +400,11 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         }
 
         @Override
+        public boolean isTypeInitializer() {
+            return false;
+        }
+
+        @Override
         public boolean isBridge() {
             return method.isBridge();
         }
@@ -442,7 +472,7 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
 
     /**
      * A latent method description describes a method that is not attached to a declaring
-     * {@link net.bytebuddy.instrumentation.type.TypeDescription} but stands for itself.
+     * {@link net.bytebuddy.instrumentation.type.TypeDescription}.
      */
     static class Latent extends AbstractMethodDescription {
 
@@ -492,6 +522,20 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
             this.modifiers = modifiers;
         }
 
+        /**
+         * Creates a latent method description of a type initializer ({@code &lt;clinit&gt;}) for a given type.
+         *
+         * @param declaringType The type that for which a type initializer should be created.
+         * @return A method description of the type initializer of the given type.
+         */
+        public static MethodDescription typeInitializerOf(TypeDescription declaringType) {
+            return new Latent(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME,
+                    declaringType,
+                    new TypeDescription.ForLoadedType(void.class),
+                    new TypeList.Empty(),
+                    Opcodes.ACC_STATIC);
+        }
+
         @Override
         public TypeDescription getReturnType() {
             return returnType;
@@ -514,7 +558,12 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
 
         @Override
         public boolean isConstructor() {
-            return CONSTRUCTOR_INTERNAL_NAME.equals(internalName) || STATIC_INITIALIZER_INTERNAL_NAME.equals(internalName);
+            return CONSTRUCTOR_INTERNAL_NAME.equals(internalName);
+        }
+
+        @Override
+        public boolean isTypeInitializer() {
+            return TYPE_INITIALIZER_INTERNAL_NAME.equals(internalName);
         }
 
         @Override

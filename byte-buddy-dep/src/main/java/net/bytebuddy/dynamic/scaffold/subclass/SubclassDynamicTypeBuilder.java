@@ -433,7 +433,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                                                       ModifierContributor.ForMethod... modifier) {
         return new SubclassExceptionDeclarableMethodInterception<T>(new MethodToken(nonNull(parameterTypes),
                 Collections.<TypeDescription>emptyList(),
-                resolveModifierContributors(METHOD_MODIFIER_MASK, nonNull(modifier))));
+                resolveModifierContributors(METHOD_MODIFIER_MASK & ~Opcodes.ACC_STATIC, nonNull(modifier))));
     }
 
     @Override
@@ -479,7 +479,10 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                         .and(not(ignoredMethods))
                                         .or(isDeclaredBy(finding.getTypeDescription()))),
                         compiledMethodRegistry)
+                .writeMethods(Collections.singletonList(MethodDescription.Latent.typeInitializerOf(finding.getTypeDescription())),
+                        typeExtensionDelegate.wrapForTypeInitializerInterception(compiledMethodRegistry))
                 .writeMethods(typeExtensionDelegate.getRegisteredAccessors(), typeExtensionDelegate)
+                .writeFields(typeExtensionDelegate.getRegisteredFieldCaches(), typeExtensionDelegate)
                 .make();
     }
 

@@ -44,6 +44,24 @@ import java.lang.reflect.Method;
 public @interface Origin {
 
     /**
+     * If this value is set to {@code true} and the annotated parameter is a {@link java.lang.reflect.Method} type,
+     * the value that is assigned to this parameter is cached in a {@code static} field. Otherwise, the instance is
+     * looked up from its defining {@link java.lang.Class} on every invocation of the intercepted method.
+     * <p>&nbspM</p>
+     * {@link java.lang.reflect.Method} look-ups are normally cached by its defining {@link java.lang.Class} what
+     * makes a repeated look-up of a method little expensive. However, because {@link java.lang.reflect.Method}
+     * instances are mutable by their {@link java.lang.reflect.AccessibleObject} contact, any looked-up instance
+     * needs to be copied by its defining {@link java.lang.Class} before exposing it. This can cause performance
+     * deficits when a method is for example called repeatedly in a loop. By enabling the method cache, this
+     * performance penalty can be avoided by caching a single {@link java.lang.reflect.Method} instance for
+     * any intercepted method as a {@code static} field in the instrumented type.
+     *
+     * @return {@code true} if the annotated {@link java.lang.reflect.Method} parameter should be assigned a cached
+     * instance. For any other parameter type, this value is ignored.
+     */
+    boolean cacheMethod() default false;
+
+    /**
      * A binder for binding parameters that are annotated with
      * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Origin}.
      *
@@ -72,13 +90,15 @@ public @interface Origin {
             if (parameterType.represents(Class.class)) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(ClassConstant.of(instrumentationTarget.getTypeDescription()));
             } else if (parameterType.represents(Method.class)) {
-                return new MethodDelegationBinder.ParameterBinding.Anonymous(MethodConstant.forMethod(source));
+                return new MethodDelegationBinder.ParameterBinding.Anonymous(annotation.cacheMethod()
+                        ? MethodConstant.forMethod(source).cached()
+                        : MethodConstant.forMethod(source));
             } else if (parameterType.represents(String.class)) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(new TextConstant(source.getUniqueSignature()));
             } else {
                 throw new IllegalStateException("The " + target + " method's " + targetParameterIndex +
-                        " is annotated with a Origin annotation with an argument not representing a Class" +
-                        " or Method type");
+                        " parameter is annotated with a Origin annotation with an argument not representing a Class" +
+                        " Method or String type");
             }
         }
     }

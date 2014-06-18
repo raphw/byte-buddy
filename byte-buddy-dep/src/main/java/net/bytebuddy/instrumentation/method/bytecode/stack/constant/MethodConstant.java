@@ -4,17 +4,19 @@ import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.collection.ArrayFactory;
+import net.bytebuddy.instrumentation.method.bytecode.stack.member.FieldAccess;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Represents the creation of a {@link java.lang.reflect.Method} value which can be created from a given
- * set of constant pool values and can therefore be considered a constant in the broader meaing.
+ * set of constant pool values and can therefore be considered a constant in the broader meaning.
  */
 public abstract class MethodConstant implements StackManipulation {
 
@@ -44,8 +46,10 @@ public abstract class MethodConstant implements StackManipulation {
      * @param methodDescription The method to be loaded onto the stack.
      * @return A stack manipulation that assigns a method constant for the given method description.
      */
-    public static StackManipulation forMethod(MethodDescription methodDescription) {
-        if (methodDescription.isConstructor()) {
+    public static CanCache forMethod(MethodDescription methodDescription) {
+        if (methodDescription.isTypeInitializer()) {
+            throw new IllegalArgumentException("The type initializer cannot be represented by Java's reflection API");
+        } else if (methodDescription.isConstructor()) {
             return new ForConstructor(methodDescription);
         } else {
             return new ForMethod(methodDescription);
@@ -108,6 +112,16 @@ public abstract class MethodConstant implements StackManipulation {
      */
     protected abstract String getDescriptor();
 
+    /**
+     * Returns a cached version of this method constant as specified by
+     * {@link net.bytebuddy.instrumentation.method.bytecode.stack.constant.MethodConstant.Cached}.
+     *
+     * @return A cached version of this method constant.
+     */
+    public StackManipulation cached() {
+        return new Cached(this);
+    }
+
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
@@ -125,10 +139,27 @@ public abstract class MethodConstant implements StackManipulation {
     }
 
     /**
+     * Represents a {@link net.bytebuddy.instrumentation.method.bytecode.stack.constant.MethodConstant} that is
+     * directly loaded onto the operand stack without caching the value. Since the look-up of a Java method bares
+     * some costs that sometimes need to be avoided, such a stack manipulation offers a convenience method for
+     * defining this loading instruction as the retrieval of a field value that is initialized in the instrumented
+     * type's type initializer.
+     */
+    public static interface CanCache extends StackManipulation {
+
+        /**
+         * Returns this method constant as a cached version.
+         *
+         * @return A cached version of the method constant that is represented by this instance.
+         */
+        StackManipulation cached();
+    }
+
+    /**
      * Creates a {@link net.bytebuddy.instrumentation.method.bytecode.stack.constant.MethodConstant} for loading
      * a {@link java.lang.reflect.Method} instance onto the operand stack.
      */
-    private static class ForMethod extends MethodConstant {
+    private static class ForMethod extends MethodConstant implements CanCache {
 
         /**
          * The name of the {@link java.lang.Class#getDeclaredMethod(String, Class[])} method.
@@ -173,7 +204,7 @@ public abstract class MethodConstant implements StackManipulation {
      * Creates a {@link net.bytebuddy.instrumentation.method.bytecode.stack.constant.MethodConstant} for loading
      * a {@link java.lang.reflect.Constructor} instance onto the operand stack.
      */
-    private static class ForConstructor extends MethodConstant {
+    private static class ForConstructor extends MethodConstant implements CanCache {
 
         /**
          * The name of the {@link java.lang.Class#getDeclaredMethod(String, Class[])} method.
@@ -210,6 +241,58 @@ public abstract class MethodConstant implements StackManipulation {
         @Override
         protected String getDescriptor() {
             return GET_DECLARED_CONSTRUCTOR_DESCRIPTOR;
+        }
+    }
+
+    /**
+     * Represents a cached {@link net.bytebuddy.instrumentation.method.bytecode.stack.constant.MethodConstant}.
+     */
+    private static class Cached implements StackManipulation {
+
+        /**
+         * A description of the {@link java.lang.reflect.Method} type.
+         */
+        private static final TypeDescription METHOD_TYPE = new TypeDescription.ForLoadedType(Method.class);
+
+        /**
+         * The stack manipulation that is represented by this caching wrapper.
+         */
+        private final StackManipulation methodConstant;
+
+        /**
+         * Creates a new cached {@link net.bytebuddy.instrumentation.method.bytecode.stack.constant.MethodConstant}.
+         *
+         * @param methodConstant The method constant to store in the field cache.
+         */
+        private Cached(StackManipulation methodConstant) {
+            this.methodConstant = methodConstant;
+        }
+
+        @Override
+        public boolean isValid() {
+            return methodConstant.isValid();
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+            return FieldAccess.forField(instrumentationContext.cache(methodConstant, METHOD_TYPE)).getter()
+                    .apply(methodVisitor, instrumentationContext);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && methodConstant.equals(((Cached) other).methodConstant);
+        }
+
+        @Override
+        public int hashCode() {
+            return methodConstant.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "MethodConstant.Cached{methodConstant=" + methodConstant + '}';
         }
     }
 }
