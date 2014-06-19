@@ -245,8 +245,9 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
      */
     private void validateFieldCacheAccessibility() {
         if (!canRegisterFieldCache) {
-            throw new IllegalStateException("A field cache cannot be registered during the creation of a type initializer - " +
-                    "instead, the field cache should be registered in the method that requires the cached value");
+            throw new IllegalStateException("A field cache cannot be registered during or after the creation of a " +
+                    "type initializer - instead, the field cache should be registered in the method that requires " +
+                    "the cached value");
         }
     }
 

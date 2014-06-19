@@ -816,7 +816,7 @@ public final class MethodMatchers {
     /**
      * Matches the {@link Object#hashCode()} method, independently of the method being overridden.
      *
-     * @return A matcher for matching the hash code method.
+     * @return A matcher for matching the {@code hashCode} method.
      */
     public static JunctionMethodMatcher isHashCode() {
         return named("hashCode").and(takesArguments(0)).and(returns(int.class));
@@ -825,10 +825,19 @@ public final class MethodMatchers {
     /**
      * Matches the {@link Object#equals(Object)}} method, independently of the method being overridden.
      *
-     * @return A matcher for matching the equals method.
+     * @return A matcher for matching the {@code equals} method.
      */
     public static JunctionMethodMatcher isEquals() {
         return named("equals").and(takesArguments(Object.class)).and(returns(boolean.class));
+    }
+
+    /**
+     * Matches the {@link Object#toString()} method, independently of the method being overridden.
+     *
+     * @return A matcher for matching the {@code toString} method.
+     */
+    public static JunctionMethodMatcher isToString() {
+        return named("toString").and(takesArguments(0)).and(returns(String.class));
     }
 
     /**

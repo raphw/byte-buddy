@@ -4,7 +4,6 @@ import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.MockitoRule;
-import net.bytebuddy.utility.MoreOpcodes;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
@@ -12,6 +11,7 @@ import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mockito.Mock;
+import org.mockito.asm.Opcodes;
 import org.objectweb.asm.MethodVisitor;
 
 import java.util.Arrays;
@@ -22,10 +22,9 @@ import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
 
 @RunWith(Parameterized.class)
-public class MethodArgumentShortcutTest {
+public class MethodVariableAccessTest {
 
     private final TypeDescription typeDescription;
-    private final int index;
     private final int opcode;
     private final int size;
     @Rule
@@ -35,11 +34,10 @@ public class MethodArgumentShortcutTest {
     @Mock
     private Instrumentation.Context instrumentationContext;
 
-    public MethodArgumentShortcutTest(Class<?> type, int index, int opcode, int size) {
+    public MethodVariableAccessTest(Class<?> type, int opcode, int size) {
         this.typeDescription = mock(TypeDescription.class);
         when(typeDescription.isPrimitive()).thenReturn(type.isPrimitive());
         when(typeDescription.represents(type)).thenReturn(true);
-        this.index = index;
         this.opcode = opcode;
         this.size = size;
     }
@@ -47,26 +45,15 @@ public class MethodArgumentShortcutTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {Object.class, 0, MoreOpcodes.ALOAD_0, 1},
-                {Object.class, 1, MoreOpcodes.ALOAD_1, 1},
-                {Object.class, 2, MoreOpcodes.ALOAD_2, 1},
-                {Object.class, 3, MoreOpcodes.ALOAD_3, 1},
-                {int.class, 0, MoreOpcodes.ILOAD_0, 1},
-                {int.class, 1, MoreOpcodes.ILOAD_1, 1},
-                {int.class, 2, MoreOpcodes.ILOAD_2, 1},
-                {int.class, 3, MoreOpcodes.ILOAD_3, 1},
-                {long.class, 0, MoreOpcodes.LLOAD_0, 2},
-                {long.class, 1, MoreOpcodes.LLOAD_1, 2},
-                {long.class, 2, MoreOpcodes.LLOAD_2, 2},
-                {long.class, 3, MoreOpcodes.LLOAD_3, 2},
-                {double.class, 0, MoreOpcodes.DLOAD_0, 2},
-                {double.class, 1, MoreOpcodes.DLOAD_1, 2},
-                {double.class, 2, MoreOpcodes.DLOAD_2, 2},
-                {double.class, 3, MoreOpcodes.DLOAD_3, 2},
-                {float.class, 0, MoreOpcodes.FLOAD_0, 1},
-                {float.class, 1, MoreOpcodes.FLOAD_1, 1},
-                {float.class, 2, MoreOpcodes.FLOAD_2, 1},
-                {float.class, 3, MoreOpcodes.FLOAD_3, 1},
+                {Object.class, Opcodes.ALOAD, 1},
+                {boolean.class, Opcodes.ILOAD, 1},
+                {byte.class, Opcodes.ILOAD, 1},
+                {short.class, Opcodes.ILOAD, 1},
+                {char.class, Opcodes.ILOAD, 1},
+                {int.class, Opcodes.ILOAD, 1},
+                {long.class, Opcodes.LLOAD, 2},
+                {float.class, Opcodes.FLOAD, 1},
+                {double.class, Opcodes.DLOAD, 2},
         });
     }
 
@@ -76,13 +63,13 @@ public class MethodArgumentShortcutTest {
     }
 
     @Test
-    public void testShortCutReference() throws Exception {
-        StackManipulation stackManipulation = MethodVariableAccess.forType(typeDescription).loadFromIndex(index);
+    public void testLoading() throws Exception {
+        StackManipulation stackManipulation = MethodVariableAccess.forType(typeDescription).loadFromIndex(4);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, instrumentationContext);
         assertThat(size.getSizeImpact(), is(this.size));
         assertThat(size.getMaximalSize(), is(this.size));
-        verify(methodVisitor).visitInsn(opcode);
+        verify(methodVisitor).visitVarInsn(opcode, 4);
         verifyNoMoreInteractions(methodVisitor);
     }
 }

@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic.scaffold;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.Instrumentation;
+import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
@@ -35,13 +36,13 @@ import static org.mockito.Mockito.*;
 
 public class TypeExtensionDelegateTest {
 
-    private static final String FOO = "foo";
-
+    public static final String CACHED_VALUE = "cachedValue";
+    private static final String FOO = "foo", BAR = "bar", QUX = "qux";
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeDescription instrumentedType, returnType, parameterType, auxiliaryTypeDescription;
+    private TypeDescription instrumentedType, returnType, parameterType, auxiliaryTypeDescription, typeDescription;
     @Mock
     private TypeList parameterTypes;
     @Mock
@@ -54,6 +55,20 @@ public class TypeExtensionDelegateTest {
     private AuxiliaryType auxiliaryType;
     @Mock
     private DynamicType dynamicType;
+    @Mock
+    private StackManipulation stackManipulation;
+    @Mock
+    private TypeWriter.MethodPool methodPool;
+    @Mock
+    private TypeWriter.MethodPool.Entry methodPoolEntry;
+    @Mock
+    private MethodVisitor methodVisitor;
+    @Mock
+    private Instrumentation.Context instrumentationContext;
+    @Mock
+    private MethodAttributeAppender methodAttributeAppender;
+    @Mock
+    private ByteCodeAppender byteCodeAppender;
 
     private TypeExtensionDelegate typeExtensionDelegate;
 
@@ -90,6 +105,12 @@ public class TypeExtensionDelegateTest {
                 Matchers.any(AuxiliaryType.MethodAccessorFactory.class)))
                 .thenReturn(dynamicType);
         when(dynamicType.getDescription()).thenReturn(auxiliaryTypeDescription);
+        when(methodPool.target(Matchers.any(MethodDescription.class))).thenReturn(methodPoolEntry);
+        when(stackManipulation.apply(Matchers.any(MethodVisitor.class), Matchers.any(Instrumentation.Context.class)))
+                .thenReturn(new StackManipulation.Size(0, 0));
+        when(typeDescription.getStackSize()).thenReturn(StackSize.ZERO);
+        when(instrumentedType.getInternalName()).thenReturn(BAR);
+        when(typeDescription.getDescriptor()).thenReturn(QUX);
     }
 
     @Test
@@ -153,5 +174,85 @@ public class TypeExtensionDelegateTest {
         assertThat(typeExtensionDelegate.register(this.auxiliaryType), is(auxiliaryTypeDescription));
         assertThat(typeExtensionDelegate.getRegisteredAuxiliaryTypes().size(), is(1));
         assertThat(typeExtensionDelegate.getRegisteredAuxiliaryTypes(), hasItem(dynamicType));
+    }
+
+    @Test
+    public void testCacheFields() throws Exception {
+        typeExtensionDelegate.cache(stackManipulation, typeDescription);
+        assertThat(typeExtensionDelegate.getRegisteredFieldCaches().size(), is(1));
+        assertThat(typeExtensionDelegate.getRegisteredFieldCaches().get(0).getFieldType(), is(typeDescription));
+        assertThat(typeExtensionDelegate.getRegisteredFieldCaches().get(0).getDeclaringType(), is(instrumentedType));
+        assertThat(typeExtensionDelegate.getRegisteredFieldCaches().get(0).getModifiers(),
+                is(Opcodes.ACC_STATIC | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC));
+    }
+
+    @Test
+    public void testDoNotCacheFieldsOfDifferentType() throws Exception {
+        typeExtensionDelegate.cache(stackManipulation, typeDescription);
+        typeExtensionDelegate.cache(stackManipulation, returnType);
+        assertThat(typeExtensionDelegate.getRegisteredFieldCaches().size(), is(2));
+    }
+
+    @Test
+    public void testCacheFieldsMergesDuplicates() throws Exception {
+        typeExtensionDelegate.cache(stackManipulation, typeDescription);
+        typeExtensionDelegate.cache(stackManipulation, typeDescription);
+        assertThat(typeExtensionDelegate.getRegisteredFieldCaches().size(), is(1));
+        assertThat(typeExtensionDelegate.getRegisteredFieldCaches().get(0).getFieldType(), is(typeDescription));
+        assertThat(typeExtensionDelegate.getRegisteredFieldCaches().get(0).getDeclaringType(), is(instrumentedType));
+    }
+
+    @Test
+    public void testTypeInitializerWrapperOnNoOpWrappedEntry() throws Exception {
+        MethodDescription methodDescription = MethodDescription.Latent.typeInitializerOf(instrumentedType);
+        typeExtensionDelegate.cache(stackManipulation, typeDescription);
+        TypeWriter.MethodPool methodPool = typeExtensionDelegate.wrapForTypeInitializerInterception(this.methodPool);
+        TypeWriter.MethodPool.Entry entry = methodPool.target(methodDescription);
+        assertThat(entry.isDefineMethod(), is(true));
+        assertThat(entry.getByteCodeAppender().appendsCode(), is(true));
+        ByteCodeAppender.Size size = entry.getByteCodeAppender().apply(methodVisitor, instrumentationContext, methodDescription);
+        assertThat(size.getOperandStackSize(), is(0));
+        assertThat(size.getLocalVariableSize(), is(0));
+        verify(methodVisitor).visitFieldInsn(eq(Opcodes.PUTSTATIC), eq(BAR), Matchers.startsWith(CACHED_VALUE), eq(QUX));
+        verify(methodVisitor).visitInsn(Opcodes.RETURN);
+        verifyNoMoreInteractions(methodVisitor);
+        verifyZeroInteractions(instrumentationContext);
+    }
+
+    @Test
+    public void testTypeInitializerWrapperOnOperativeWrappedEntry() throws Exception {
+        when(methodPoolEntry.isDefineMethod()).thenReturn(true);
+        when(methodPoolEntry.getAttributeAppender()).thenReturn(methodAttributeAppender);
+        when(methodPoolEntry.getByteCodeAppender()).thenReturn(byteCodeAppender);
+        when(byteCodeAppender.appendsCode()).thenReturn(true);
+        when(byteCodeAppender.apply(Matchers.any(MethodVisitor.class), Matchers.any(Instrumentation.Context.class), Matchers.any(MethodDescription.class)))
+                .thenReturn(new ByteCodeAppender.Size(0, 0));
+        MethodDescription methodDescription = MethodDescription.Latent.typeInitializerOf(instrumentedType);
+        typeExtensionDelegate.cache(stackManipulation, typeDescription);
+        TypeWriter.MethodPool methodPool = typeExtensionDelegate.wrapForTypeInitializerInterception(this.methodPool);
+        TypeWriter.MethodPool.Entry entry = methodPool.target(methodDescription);
+        assertThat(entry.isDefineMethod(), is(true));
+        assertThat(entry.getByteCodeAppender().appendsCode(), is(true));
+        ByteCodeAppender.Size size = entry.getByteCodeAppender().apply(methodVisitor, instrumentationContext, methodDescription);
+        assertThat(size.getOperandStackSize(), is(0));
+        assertThat(size.getLocalVariableSize(), is(0));
+        verify(methodVisitor).visitFieldInsn(eq(Opcodes.PUTSTATIC), eq(BAR), Matchers.startsWith(CACHED_VALUE), eq(QUX));
+        verify(byteCodeAppender).apply(methodVisitor, instrumentationContext, methodDescription);
+        verifyNoMoreInteractions(byteCodeAppender);
+        verifyNoMoreInteractions(methodVisitor);
+        verifyZeroInteractions(instrumentationContext);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testCacheFieldAfterWrapThrowsException() throws Exception {
+        typeExtensionDelegate.wrapForTypeInitializerInterception(methodPool);
+        typeExtensionDelegate.cache(stackManipulation, typeDescription);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testTypeInitializerWrapperOnNonTypeInitializerThrowsException() throws Exception {
+        typeExtensionDelegate.cache(stackManipulation, typeDescription);
+        TypeWriter.MethodPool methodPool = typeExtensionDelegate.wrapForTypeInitializerInterception(this.methodPool);
+        methodPool.target(mock(MethodDescription.class));
     }
 }

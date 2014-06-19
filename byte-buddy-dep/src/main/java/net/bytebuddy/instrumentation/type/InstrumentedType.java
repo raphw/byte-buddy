@@ -61,7 +61,7 @@ public interface InstrumentedType extends TypeDescription {
      * Returns the {@link net.bytebuddy.instrumentation.LoadedTypeInitializer}s that were registered
      * for this instrumented type.
      *
-     * @return The registered type initializers for this instrumented type.
+     * @return The registered loaded type initializers for this instrumented type.
      */
     LoadedTypeInitializer getLoadedTypeInitializer();
 
@@ -80,7 +80,7 @@ public interface InstrumentedType extends TypeDescription {
     abstract static class AbstractBase extends AbstractTypeDescription implements InstrumentedType {
 
         /**
-         * The type initializer for this instrumented type.
+         * The loaded type initializer for this instrumented type.
          */
         protected final LoadedTypeInitializer loadedTypeInitializer;
 
@@ -95,7 +95,8 @@ public interface InstrumentedType extends TypeDescription {
         protected final List<MethodDescription> methodDescriptions;
 
         /**
-         * Creates a new instrumented type with a no-op type initializer and without registered fields or methods.
+         * Creates a new instrumented type with a no-op loaded type initializer and without registered fields or
+         * methods.
          */
         protected AbstractBase() {
             loadedTypeInitializer = LoadedTypeInitializer.NoOp.INSTANCE;
@@ -104,14 +105,14 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         /**
-         * Creates a new instrumented type with the given type initializer and field and methods. All field and method
-         * descriptions will be replaced by new instances where type descriptions with the internalName of this type as given by
-         * {@code typeInternalName} are replaced by references to {@code this}.
+         * Creates a new instrumented type with the given loaded type initializer and field and methods. All field and
+         * method descriptions will be replaced by new instances where type descriptions with the internalName of this
+         * type as given by {@code typeInternalName} are replaced by references to {@code this}.
          *
-         * @param loadedTypeInitializer    A type initializer for this instrumented type.
-         * @param typeInternalName   The internal internalName of this instrumented type.
-         * @param fieldDescriptions  A list of field descriptions for this instrumented type.
-         * @param methodDescriptions A list of method descriptions for this instrumented type.
+         * @param loadedTypeInitializer A loaded type initializer for this instrumented type.
+         * @param typeInternalName      The internal internalName of this instrumented type.
+         * @param fieldDescriptions     A list of field descriptions for this instrumented type.
+         * @param methodDescriptions    A list of method descriptions for this instrumented type.
          */
         protected AbstractBase(LoadedTypeInitializer loadedTypeInitializer,
                                String typeInternalName,

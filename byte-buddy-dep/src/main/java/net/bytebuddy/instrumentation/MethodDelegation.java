@@ -216,8 +216,9 @@ public class MethodDelegation implements Instrumentation {
      * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
      * for delegation.
      *
-     * @param delegate A delegate instance which will be injected by a type initializer and to which all intercepted
-     *                 method calls are delegated to.
+     * @param delegate A delegate instance which will be injected by a
+     *                 {@link net.bytebuddy.instrumentation.LoadedTypeInitializer}. All intercepted method calls are
+     *                 then delegated to this instance.
      * @return A method delegation instrumentation to the given instance methods.
      */
     public static MethodDelegation to(Object delegate) {
@@ -228,8 +229,9 @@ public class MethodDelegation implements Instrumentation {
      * Identical to {@link net.bytebuddy.instrumentation.MethodDelegation#to(Object)} but uses an explicit
      * {@link net.bytebuddy.instrumentation.method.MethodLookupEngine}.
      *
-     * @param delegate           A delegate instance which will be injected by a type initializer and to which all
-     *                           intercepted method calls are delegated to.
+     * @param delegate           A delegate instance which will be injected by a
+     *                           {@link net.bytebuddy.instrumentation.LoadedTypeInitializer}. All intercepted method
+     *                           calls are then delegated to this instance.
      * @param methodLookupEngine The method lookup engine to use.
      * @return A method delegation instrumentation to the given instance methods.
      */
@@ -256,8 +258,9 @@ public class MethodDelegation implements Instrumentation {
      * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
      * for delegation.
      *
-     * @param delegate  A delegate instance which will be injected by a type initializer and to which all intercepted
-     *                  method calls are delegated to.
+     * @param delegate  A delegate instance which will be injected by a
+     *                  {@link net.bytebuddy.instrumentation.LoadedTypeInitializer}. All intercepted method calls are
+     *                  then delegated to this instance.
      * @param fieldName The name of the field for storing the delegate instance.
      * @return A method delegation instrumentation to the given {@code static} methods.
      */

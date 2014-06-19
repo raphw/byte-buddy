@@ -216,9 +216,9 @@ public interface MethodLookupEngine {
          * @param discoveredMethod  The new discovered method. This method must not be a conflicting interface method.
          * @return A new method description that represents the conflicting methods.
          */
-        private static MethodDescription of(TypeDescription virtualHost,
-                                            MethodDescription conflictingMethod,
-                                            MethodDescription discoveredMethod) {
+        protected static MethodDescription of(TypeDescription virtualHost,
+                                              MethodDescription conflictingMethod,
+                                              MethodDescription discoveredMethod) {
             List<MethodDescription> methodDescriptions;
             if (conflictingMethod instanceof ConflictingInterfaceMethod) {
                 List<MethodDescription> known = ((ConflictingInterfaceMethod) conflictingMethod).methodDescriptions;

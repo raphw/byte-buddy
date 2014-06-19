@@ -1,6 +1,7 @@
 package net.bytebuddy.instrumentation.method.matcher;
 
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.test.packaging.PackagePrivateMethod;
 import org.hamcrest.MatcherAssert;
 import org.junit.Before;
@@ -555,6 +556,16 @@ public class MethodMatchersTest {
     }
 
     @Test
+    public void testIsMethodHashCodeEquals() throws Exception {
+        assertThat(MethodMatchers.isMethod().hashCode(), is(MethodMatchers.isMethod().hashCode()));
+        assertThat(MethodMatchers.isMethod(), is(MethodMatchers.isMethod()));
+        assertThat(MethodMatchers.isMethod().hashCode(), not(is(MethodMatchers.isConstructor().hashCode())));
+        assertThat(MethodMatchers.isMethod(), not(is(MethodMatchers.isConstructor())));
+        assertThat(MethodMatchers.isMethod().hashCode(), not(is(MethodMatchers.isTypeInitializer().hashCode())));
+        assertThat(MethodMatchers.isMethod(), not(is(MethodMatchers.isTypeInitializer())));
+    }
+
+    @Test
     public void testIsConstructor() throws Exception {
         assertThat(MethodMatchers.isConstructor().matches(testModifier$constructor), is(true));
         assertThat(MethodMatchers.isConstructor().matches(testClassBase$constructor), is(true));
@@ -563,11 +574,33 @@ public class MethodMatchersTest {
     }
 
     @Test
-    public void testIsMethodIsConstructorMatcherHashCodeEquals() throws Exception {
-        assertThat(MethodMatchers.isMethod().hashCode(), is(MethodMatchers.isMethod().hashCode()));
-        assertThat(MethodMatchers.isMethod(), is(MethodMatchers.isMethod()));
-        assertThat(MethodMatchers.isMethod().hashCode(), not(is(MethodMatchers.isConstructor().hashCode())));
-        assertThat(MethodMatchers.isMethod(), not(is(MethodMatchers.isConstructor())));
+    public void testIsConstructorHashCodeEquals() throws Exception {
+        assertThat(MethodMatchers.isConstructor().hashCode(), is(MethodMatchers.isConstructor().hashCode()));
+        assertThat(MethodMatchers.isConstructor(), is(MethodMatchers.isConstructor()));
+        assertThat(MethodMatchers.isConstructor().hashCode(), not(is(MethodMatchers.isMethod().hashCode())));
+        assertThat(MethodMatchers.isConstructor(), not(is(MethodMatchers.isMethod())));
+        assertThat(MethodMatchers.isConstructor().hashCode(), not(is(MethodMatchers.isTypeInitializer().hashCode())));
+        assertThat(MethodMatchers.isConstructor(), not(is(MethodMatchers.isTypeInitializer())));
+    }
+
+    @Test
+    public void testIsTypeInitializer() throws Exception {
+        assertThat(MethodMatchers.isTypeInitializer().matches(testModifier$constructor), is(false));
+        assertThat(MethodMatchers.isTypeInitializer().matches(testClassBase$constructor), is(false));
+        assertThat(MethodMatchers.isTypeInitializer().matches(testClassBase$foo), is(false));
+        assertThat(MethodMatchers.isTypeInitializer().matches(testClassBase$bar), is(false));
+        assertThat(MethodMatchers.isTypeInitializer().matches(MethodDescription.Latent
+                .typeInitializerOf(new TypeDescription.ForLoadedType(Object.class))), is(true));
+    }
+
+    @Test
+    public void testIsTypeInitializerHashCodeEquals() throws Exception {
+        assertThat(MethodMatchers.isTypeInitializer().hashCode(), is(MethodMatchers.isTypeInitializer().hashCode()));
+        assertThat(MethodMatchers.isTypeInitializer(), is(MethodMatchers.isTypeInitializer()));
+        assertThat(MethodMatchers.isTypeInitializer().hashCode(), not(is(MethodMatchers.isMethod().hashCode())));
+        assertThat(MethodMatchers.isTypeInitializer(), not(is(MethodMatchers.isMethod())));
+        assertThat(MethodMatchers.isTypeInitializer().hashCode(), not(is(MethodMatchers.isConstructor().hashCode())));
+        assertThat(MethodMatchers.isTypeInitializer(), not(is(MethodMatchers.isConstructor())));
     }
 
     @Test
@@ -762,6 +795,13 @@ public class MethodMatchersTest {
         assertThat(MethodMatchers.isEquals().matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("equals", Object.class))), is(true));
         assertThat(MethodMatchers.isEquals().matches(new MethodDescription.ForLoadedMethod(Integer.class.getDeclaredMethod("equals", Object.class))), is(true));
         assertThat(MethodMatchers.isEquals().matches(testClassBase$foo), is(false));
+    }
+
+    @Test
+    public void testIsToString() throws Exception {
+        assertThat(MethodMatchers.isToString().matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(true));
+        assertThat(MethodMatchers.isToString().matches(new MethodDescription.ForLoadedMethod(Integer.class.getDeclaredMethod("toString"))), is(true));
+        assertThat(MethodMatchers.isToString().matches(testClassBase$foo), is(false));
     }
 
     @Test

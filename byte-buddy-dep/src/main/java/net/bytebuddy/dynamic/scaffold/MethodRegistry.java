@@ -300,7 +300,8 @@ public interface MethodRegistry {
             private final MethodLookupEngine.Finding finding;
 
             /**
-             * The type initializer of the fully prepared instrumented type this compiled method registry represents.
+             * The loaded type initializer of the fully prepared instrumented type this compiled method
+             * registry represents.
              */
             private final LoadedTypeInitializer loadedTypeInitializer;
 
@@ -317,13 +318,13 @@ public interface MethodRegistry {
             /**
              * Creates a compiled default method registry.
              *
-             * @param finding         The finding of a method lookup engine that was applied on the fully prepared
-             *                        instrumented type this method registry was compiled for.
-             * @param loadedTypeInitializer The type initializer of the fully prepared instrumented type this compiled method
-             *                        registry represents.
-             * @param entries         The list of all compiled entries of this compiled method registry.
-             * @param fallback        The fallback entry to apply for any method that is not matched by any of the
-             *                        registered compiled entries.
+             * @param finding               The finding of a method lookup engine that was applied on the fully
+             *                              prepared instrumented type this method registry was compiled for.
+             * @param loadedTypeInitializer The type loaded type initializer of the fully prepared instrumented type
+             *                              this compiled method registry represents.
+             * @param entries               The list of all compiled entries of this compiled method registry.
+             * @param fallback              The fallback entry to apply for any method that is not matched by any of
+             *                              the registered compiled entries.
              */
             private Compiled(MethodLookupEngine.Finding finding,
                              LoadedTypeInitializer loadedTypeInitializer,

@@ -12,7 +12,7 @@ import java.util.List;
 public interface LoadedTypeInitializer {
 
     /**
-     * Callback that is invoked on the creation of an instrumented type. If the type initializer is alive, this
+     * Callback that is invoked on the creation of an instrumented type. If the loaded type initializer is alive, this
      * method should be implemented empty instead of throwing an exception.
      *
      * @param type The manifestation of the instrumented type.
@@ -20,16 +20,16 @@ public interface LoadedTypeInitializer {
     void onLoad(Class<?> type);
 
     /**
-     * Indicates if this initializer is alive and needs to be invoked. This is only meant as a mark. A type initializer
-     * that is not alive might still be called and must therefore not throw an exception but rather provide an
-     * empty implementation.
+     * Indicates if this initializer is alive and needs to be invoked. This is only meant as a mark. A loaded type
+     * initializer that is not alive might still be called and must therefore not throw an exception but rather
+     * provide an empty implementation.
      *
      * @return {@code true} if this initializer is alive.
      */
     boolean isAlive();
 
     /**
-     * A type initializer that does not do anything.
+     * A loaded type initializer that does not do anything.
      */
     static enum NoOp implements LoadedTypeInitializer {
 
@@ -153,7 +153,7 @@ public interface LoadedTypeInitializer {
 
         @Override
         public String toString() {
-            return "TypeInitializer.ForStaticField{" +
+            return "LoadedTypeInitializer.ForStaticField{" +
                     "fieldName='" + fieldName + '\'' +
                     ", value=" + value +
                     ", makeAccessible=" + makeAccessible +
@@ -162,31 +162,31 @@ public interface LoadedTypeInitializer {
     }
 
     /**
-     * A compound type initializer that combines several type initializers.
+     * A compound loaded type initializer that combines several type initializers.
      */
     static class Compound implements LoadedTypeInitializer, Serializable {
 
         /**
-         * The type initializers that are represented by this compound type initializer.
+         * The loaded type initializers that are represented by this compound type initializer.
          */
         private final LoadedTypeInitializer[] loadedTypeInitializer;
 
         /**
-         * Creates a new compound type initializer.
+         * Creates a new compound loaded type initializer.
          *
-         * @param loadedTypeInitializer A number of type initializers in their invocation order.
+         * @param loadedTypeInitializer A number of loaded type initializers in their invocation order.
          */
         public Compound(LoadedTypeInitializer... loadedTypeInitializer) {
             this.loadedTypeInitializer = loadedTypeInitializer;
         }
 
         /**
-         * Creates a new compound type initializer.
+         * Creates a new compound loaded type initializer.
          *
-         * @param typeInitializers A number of type initializers in their invocation order.
+         * @param loadedTypeInitializers A number of loaded type initializers in their invocation order.
          */
-        public Compound(List<? extends LoadedTypeInitializer> typeInitializers) {
-            this.loadedTypeInitializer = typeInitializers.toArray(new LoadedTypeInitializer[typeInitializers.size()]);
+        public Compound(List<? extends LoadedTypeInitializer> loadedTypeInitializers) {
+            this.loadedTypeInitializer = loadedTypeInitializers.toArray(new LoadedTypeInitializer[loadedTypeInitializers.size()]);
         }
 
         @Override
@@ -219,7 +219,7 @@ public interface LoadedTypeInitializer {
 
         @Override
         public String toString() {
-            return "TypeInitializer.Compound{typeInitializer=" + Arrays.toString(loadedTypeInitializer) + '}';
+            return "LoadedTypeInitializer.Compound{typeInitializer=" + Arrays.toString(loadedTypeInitializer) + '}';
         }
     }
 }

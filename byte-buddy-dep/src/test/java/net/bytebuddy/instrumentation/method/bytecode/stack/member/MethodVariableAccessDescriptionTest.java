@@ -22,7 +22,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
 
-public class MethodArgumentDescriptionTest {
+public class MethodVariableAccessDescriptionTest {
 
     private static final int PARAMETER_STACK_SIZE = 2;
 

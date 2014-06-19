@@ -77,14 +77,14 @@ public class SubclassInstrumentedType
     /**
      * Creates a new immutable type instrumentation for a loaded superclass.
      *
-     * @param classFileVersion   The class file version of this instrumentation.
-     * @param superClass         The superclass of this instrumentation.
-     * @param interfaces         A collection of loaded interfaces that are implemented by this instrumented class.
-     * @param modifiers          The modifiers for this instrumentation.
-     * @param name               The name of this instrumented type.
-     * @param fieldDescriptions  A list of field descriptions to be applied for this instrumentation.
-     * @param methodDescriptions A list of method descriptions to be applied for this instrumentation.
-     * @param loadedTypeInitializer    A type initializer to be applied for this instrumentation.
+     * @param classFileVersion      The class file version of this instrumentation.
+     * @param superClass            The superclass of this instrumentation.
+     * @param interfaces            A collection of loaded interfaces that are implemented by this instrumented class.
+     * @param modifiers             The modifiers for this instrumentation.
+     * @param name                  The name of this instrumented type.
+     * @param fieldDescriptions     A list of field descriptions to be applied for this instrumentation.
+     * @param methodDescriptions    A list of method descriptions to be applied for this instrumentation.
+     * @param loadedTypeInitializer A loaded type initializer to be applied for this instrumentation.
      */
     protected SubclassInstrumentedType(ClassFileVersion classFileVersion,
                                        TypeDescription superClass,

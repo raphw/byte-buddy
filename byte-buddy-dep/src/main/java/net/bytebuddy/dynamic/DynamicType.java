@@ -60,9 +60,9 @@ public interface DynamicType {
     Map<TypeDescription, byte[]> getRawAuxiliaryTypes();
 
     /**
-     * Returns a map of all type initializers for the main type and all auxiliary types, if any.
+     * Returns a map of all loaded type initializers for the main type and all auxiliary types, if any.
      *
-     * @return A mapping of all types' descriptions to their type initializers.
+     * @return A mapping of all types' descriptions to their loaded type initializers.
      */
     Map<TypeDescription, LoadedTypeInitializer> getTypeInitializers();
 
@@ -70,7 +70,7 @@ public interface DynamicType {
      * Checks if a dynamic type requires some form of explicit type initialization, either for itself or for one
      * of its auxiliary types, if any. This is the case when this dynamic type was defined to delegate method calls
      * to a specific instance which is stored in a field of the created type. If this class serialized, it could not
-     * be used without its type initializers since the field value represents a specific runtime context.
+     * be used without its loaded type initializers since the field value represents a specific runtime context.
      *
      * @return {@code true} if this type requires explicit type initialization.
      */
@@ -1215,7 +1215,7 @@ public interface DynamicType {
         protected final byte[] binaryRepresentation;
 
         /**
-         * The type initializer for this dynamic type.
+         * The loaded type initializer for this dynamic type.
          */
         protected final LoadedTypeInitializer loadedTypeInitializer;
 
@@ -1227,10 +1227,10 @@ public interface DynamicType {
         /**
          * Creates a new dynamic type.
          *
-         * @param typeDescription      A description of this dynamic type.
-         * @param binaryRepresentation A byte array containing the binary representation of this dynamic type.
-         * @param loadedTypeInitializer      The type initializer of this dynamic type.
-         * @param auxiliaryTypes       The auxiliary type required for this dynamic type.
+         * @param typeDescription       A description of this dynamic type.
+         * @param binaryRepresentation  A byte array containing the binary representation of this dynamic type.
+         * @param loadedTypeInitializer The loaded type initializer of this dynamic type.
+         * @param auxiliaryTypes        The auxiliary type required for this dynamic type.
          */
         public Default(TypeDescription typeDescription,
                        byte[] binaryRepresentation,
@@ -1341,10 +1341,10 @@ public interface DynamicType {
             /**
              * Creates a new unloaded representation of a dynamic type.
              *
-             * @param typeDescription A description of this dynamic type.
-             * @param typeByte        An array of byte of the binary representation of this dynamic type.
+             * @param typeDescription       A description of this dynamic type.
+             * @param typeByte              An array of byte of the binary representation of this dynamic type.
              * @param loadedTypeInitializer The type initializer of this dynamic type.
-             * @param auxiliaryTypes  The auxiliary types that are required for this dynamic type.
+             * @param auxiliaryTypes        The auxiliary types that are required for this dynamic type.
              */
             public Unloaded(TypeDescription typeDescription,
                             byte[] typeByte,
@@ -1365,7 +1365,7 @@ public interface DynamicType {
             }
 
             /**
-             * Runs all type initializers for all loaded classes.
+             * Runs all loaded type initializers for all loaded classes.
              *
              * @param uninitialized The uninitialized loaded classes mapped by their type description.
              * @return A new hash map that contains the same classes as those given.
@@ -1405,11 +1405,11 @@ public interface DynamicType {
             /**
              * Creates a new representation of a loaded dynamic type.
              *
-             * @param typeDescription A description of this dynamic type.
-             * @param typeByte        An array of byte of the binary representation of this dynamic type.
+             * @param typeDescription       A description of this dynamic type.
+             * @param typeByte              An array of byte of the binary representation of this dynamic type.
              * @param loadedTypeInitializer The type initializer of this dynamic type.
-             * @param auxiliaryTypes  The auxiliary types that are required for this dynamic type.
-             * @param loadedTypes     A map of loaded types for this dynamic type and all its auxiliary types.
+             * @param auxiliaryTypes        The auxiliary types that are required for this dynamic type.
+             * @param loadedTypes           A map of loaded types for this dynamic type and all its auxiliary types.
              */
             protected Loaded(TypeDescription typeDescription,
                              byte[] typeByte,

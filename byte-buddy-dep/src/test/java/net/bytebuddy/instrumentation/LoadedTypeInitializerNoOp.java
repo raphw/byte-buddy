@@ -5,7 +5,7 @@ import org.junit.Test;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class TypeInitializerNoOp {
+public class LoadedTypeInitializerNoOp {
 
     @Test
     public void testIsNotAlive() throws Exception {

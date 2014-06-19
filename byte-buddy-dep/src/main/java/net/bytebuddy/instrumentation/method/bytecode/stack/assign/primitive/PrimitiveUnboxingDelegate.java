@@ -302,6 +302,17 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
         }
 
         @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && originalType.equals(((ImplicitlyTypedUnboxingResponsible) other).originalType);
+        }
+
+        @Override
+        public int hashCode() {
+            return originalType.hashCode();
+        }
+
+        @Override
         public String toString() {
             return "PrimitiveUnboxingDelegate.ImplicitlyTypedUnboxingResponsible{originalType=" + originalType + '}';
         }

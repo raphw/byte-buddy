@@ -54,7 +54,7 @@ public enum MethodInvocation {
      */
     public static WithImplicitInvocationTargetType invoke(MethodDescription methodDescription) {
         if (methodDescription.isTypeInitializer()) {
-            throw new IllegalArgumentException("Thy type initializer cannot be invoked explicitly");
+            throw new IllegalArgumentException("The type initializer cannot be invoked explicitly");
         } else if (methodDescription.isStatic()) { // Check this property first, private static methods must use INVOKESTATIC
             return STATIC.new Invocation(methodDescription);
         } else if (methodDescription.isPrivate() || methodDescription.isConstructor() || methodDescription.isDefaultMethod()) {

@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.objectweb.asm.Opcodes;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -82,6 +83,17 @@ public class MethodDescriptionLatentTest {
     public void testGetParameterOffset() throws Exception {
         assertThat(latentMethod.getParameterOffset(0), is(1));
         assertThat(latentConstructor.getParameterOffset(0), is(1));
+    }
+
+    @Test
+    public void testTypeInitializer() throws Exception {
+        MethodDescription typeInitializer = MethodDescription.Latent.typeInitializerOf(declaringType);
+        assertThat(typeInitializer.getModifiers(), is(Opcodes.ACC_STATIC));
+        assertThat(typeInitializer.getExceptionTypes(), is(Collections.<TypeDescription>emptyList()));
+        assertThat(typeInitializer.getParameterTypes(), is(Collections.<TypeDescription>emptyList()));
+        assertThat(typeInitializer.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(void.class)));
+        assertThat(typeInitializer.isTypeInitializer(), is(true));
+        assertThat(typeInitializer.getInternalName(), is(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME));
     }
 
     @Test

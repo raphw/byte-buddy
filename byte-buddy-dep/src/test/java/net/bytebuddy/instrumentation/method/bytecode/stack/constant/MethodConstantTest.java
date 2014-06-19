@@ -1,12 +1,13 @@
 package net.bytebuddy.instrumentation.method.bytecode.stack.constant;
 
 import net.bytebuddy.instrumentation.Instrumentation;
+import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.utility.MockitoRule;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -16,15 +17,17 @@ import org.mockito.asm.Opcodes;
 import org.mockito.asm.Type;
 import org.objectweb.asm.MethodVisitor;
 
+import java.lang.reflect.Method;
 import java.util.Arrays;
 
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
 
 public class MethodConstantTest {
 
-    private static final String FOO = "foo", BAR = "bar", QUX = "qux";
+    private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -32,13 +35,15 @@ public class MethodConstantTest {
     @Mock
     private MethodDescription methodDescription;
     @Mock
-    private TypeDescription declaringType, parameterType;
+    private TypeDescription declaringType, parameterType, fieldType;
     @Mock
     private TypeList typeList;
     @Mock
     private MethodVisitor methodVisitor;
     @Mock
     private Instrumentation.Context instrumentationContext;
+    @Mock
+    private FieldDescription fieldDescription;
 
     @Before
     public void setUp() throws Exception {
@@ -48,11 +53,13 @@ public class MethodConstantTest {
         when(declaringType.getDescriptor()).thenReturn(BAR);
         when(typeList.iterator()).thenReturn(Arrays.asList(parameterType).iterator());
         when(parameterType.getDescriptor()).thenReturn(QUX);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        verifyZeroInteractions(instrumentationContext);
+        when(fieldDescription.getFieldType()).thenReturn(fieldType);
+        when(fieldDescription.isStatic()).thenReturn(true);
+        when(fieldType.getStackSize()).thenReturn(StackSize.SINGLE);
+        when(fieldDescription.getDeclaringType()).thenReturn(declaringType);
+        when(declaringType.getInternalName()).thenReturn(BAZ);
+        when(fieldDescription.getInternalName()).thenReturn(FOO);
+        when(fieldDescription.getDescriptor()).thenReturn(QUX);
     }
 
     @Test
@@ -65,6 +72,19 @@ public class MethodConstantTest {
                 "getDeclaredMethod",
                 "(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;",
                 false);
+        verifyZeroInteractions(instrumentationContext);
+    }
+
+    @Test
+    public void testMethodCached() throws Exception {
+        when(instrumentationContext.cache(any(StackManipulation.class), any(TypeDescription.class))).thenReturn(fieldDescription);
+        StackManipulation.Size size = MethodConstant.forMethod(methodDescription).cached().apply(methodVisitor, instrumentationContext);
+        assertThat(size.getSizeImpact(), is(1));
+        assertThat(size.getMaximalSize(), is(1));
+        verify(methodVisitor).visitFieldInsn(Opcodes.GETSTATIC, BAZ, FOO, QUX);
+        verifyNoMoreInteractions(methodVisitor);
+        verify(instrumentationContext).cache(MethodConstant.forMethod(methodDescription), new TypeDescription.ForLoadedType(Method.class));
+        verifyNoMoreInteractions(instrumentationContext);
     }
 
     @Test
@@ -78,5 +98,35 @@ public class MethodConstantTest {
                 "getDeclaredConstructor",
                 "([Ljava/lang/Class;)Ljava/lang/reflect/Constructor;",
                 false);
+        verifyZeroInteractions(instrumentationContext);
+    }
+
+    @Test
+    public void testConstructorCached() throws Exception {
+        when(methodDescription.isConstructor()).thenReturn(true);
+        when(instrumentationContext.cache(any(StackManipulation.class), any(TypeDescription.class))).thenReturn(fieldDescription);
+        StackManipulation.Size size = MethodConstant.forMethod(methodDescription).cached().apply(methodVisitor, instrumentationContext);
+        assertThat(size.getSizeImpact(), is(1));
+        assertThat(size.getMaximalSize(), is(1));
+        verify(methodVisitor).visitFieldInsn(Opcodes.GETSTATIC, BAZ, FOO, QUX);
+        verifyNoMoreInteractions(methodVisitor);
+        verify(instrumentationContext).cache(MethodConstant.forMethod(methodDescription), new TypeDescription.ForLoadedType(Method.class));
+        verifyNoMoreInteractions(instrumentationContext);
+    }
+
+    @Test
+    public void testHashCodeEquals() throws Exception {
+        assertThat(MethodConstant.forMethod(methodDescription).hashCode(), is(MethodConstant.forMethod(methodDescription).hashCode()));
+        assertThat(MethodConstant.forMethod(methodDescription), is(MethodConstant.forMethod(methodDescription)));
+        assertThat(MethodConstant.forMethod(methodDescription).hashCode(), not(is(MethodConstant.forMethod(mock(MethodDescription.class)).hashCode())));
+        assertThat(MethodConstant.forMethod(methodDescription), not(is(MethodConstant.forMethod(mock(MethodDescription.class)))));
+        assertThat(MethodConstant.forMethod(methodDescription).hashCode(), not(is(MethodConstant.forMethod(methodDescription).cached().hashCode())));
+        assertThat(MethodConstant.forMethod(methodDescription), not(is(MethodConstant.forMethod(methodDescription).cached())));
+        assertThat(MethodConstant.forMethod(methodDescription).cached().hashCode(), is(MethodConstant.forMethod(methodDescription).cached().hashCode()));
+        assertThat(MethodConstant.forMethod(methodDescription).cached(), is(MethodConstant.forMethod(methodDescription).cached()));
+        assertThat(MethodConstant.forMethod(methodDescription).cached().hashCode(), not(is(MethodConstant.forMethod(mock(MethodDescription.class)).cached().hashCode())));
+        assertThat(MethodConstant.forMethod(methodDescription).cached(), not(is(MethodConstant.forMethod(mock(MethodDescription.class)).cached())));
+        assertThat(MethodConstant.forMethod(methodDescription).cached().hashCode(), not(is(MethodConstant.forMethod(methodDescription).hashCode())));
+        assertThat(MethodConstant.forMethod(methodDescription).cached(), not(is((StackManipulation) MethodConstant.forMethod(methodDescription))));
     }
 }

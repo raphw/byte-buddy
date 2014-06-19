@@ -40,7 +40,7 @@ public interface Instrumentation {
      * implemented by the {@link net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender} that is emitted
      * on the call to
      * {@link net.bytebuddy.instrumentation.Instrumentation#appender(net.bytebuddy.instrumentation.Instrumentation.Target)}
-     * call. On this method call, type initializers can also be added to the instrumented type.
+     * call. On this method call, loaded type initializers can also be added to the instrumented type.
      *
      * @param instrumentedType The instrumented type that is the basis of the ongoing instrumentation.
      * @return The instrumented type with any applied changes, if any.

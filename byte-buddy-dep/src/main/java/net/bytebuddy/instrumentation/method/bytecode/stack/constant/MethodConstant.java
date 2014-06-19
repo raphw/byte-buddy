@@ -287,7 +287,7 @@ public abstract class MethodConstant implements StackManipulation {
 
         @Override
         public int hashCode() {
-            return methodConstant.hashCode();
+            return 31 * methodConstant.hashCode();
         }
 
         @Override

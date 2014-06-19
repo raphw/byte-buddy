@@ -376,7 +376,7 @@ public interface TypeWriter<T> {
         private final TypeDescription instrumentedType;
 
         /**
-         * The type initializer of the instrumented type that is represented by this builder.
+         * The loaded type initializer of the instrumented type that is represented by this builder.
          */
         private final LoadedTypeInitializer loadedTypeInitializer;
 
@@ -394,7 +394,7 @@ public interface TypeWriter<T> {
          * Creates a new builder.
          *
          * @param instrumentedType       The type description of the instrumented type that is to be created.
-         * @param loadedTypeInitializer        The type initializer of the instrumented type that is to be created.
+         * @param loadedTypeInitializer  The type initializer of the instrumented type that is to be created.
          * @param instrumentationContext An extractable view of the instrumentation context.
          * @param classFileVersion       The class file version this instrumented type is to be written in.
          */
