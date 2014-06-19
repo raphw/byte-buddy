@@ -47,7 +47,7 @@ public @interface Origin {
      * If this value is set to {@code true} and the annotated parameter is a {@link java.lang.reflect.Method} type,
      * the value that is assigned to this parameter is cached in a {@code static} field. Otherwise, the instance is
      * looked up from its defining {@link java.lang.Class} on every invocation of the intercepted method.
-     * <p>&nbspM</p>
+     * <p>&nbsp;</p>
      * {@link java.lang.reflect.Method} look-ups are normally cached by its defining {@link java.lang.Class} what
      * makes a repeated look-up of a method little expensive. However, because {@link java.lang.reflect.Method}
      * instances are mutable by their {@link java.lang.reflect.AccessibleObject} contact, any looked-up instance

@@ -22,6 +22,7 @@
         <shade.source>org.objectweb.asm</shade.source>
         <shade.target>net.bytebuddy.jar.asm</shade.target>
         <version.plugin.copy>0.2.5</version.plugin.copy>
+        <version.plugin.build-helper>1.8</version.plugin.build-helper>
     </properties>
 
     <dependencies>
@@ -89,52 +90,33 @@
                                             </file>
                                             <destFileName>byte-buddy-${project.version}-javadoc.jar</destFileName>
                                         </resource>
-                                        <resource>
-                                            <targetPath>${project.build.directory}</targetPath>
-                                            <file>
-                                                ${project.basedir}/../byte-buddy-dep/target/byte-buddy-dep-${project.version}-javadoc.jar.asc
-                                            </file>
-                                            <destFileName>byte-buddy-${project.version}-javadoc.jar.asc</destFileName>
-                                        </resource>
                                     </resources>
                                 </configuration>
                             </execution>
                         </executions>
                     </plugin>
-                    <!-- Because the javadoc files are copied manually, they must be installed manually as well -->
+                    <!-- Because the javadoc files are copied manually, they must be added as an artifact to the build process -->
                     <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-install-plugin</artifactId>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <version>${version.plugin.build-helper}</version>
                         <executions>
                             <execution>
-                                <id>install-javadoc</id>
-                                <phase>install</phase>
+                                <id>attach-artifacts</id>
+                                <phase>package</phase>
                                 <goals>
-                                    <goal>install-file</goal>
+                                    <goal>attach-artifact</goal>
                                 </goals>
                                 <configuration>
-                                    <groupId>${project.groupId}</groupId>
-                                    <artifactId>${project.artifactId}</artifactId>
-                                    <version>${project.version}</version>
-                                    <packaging>jar</packaging>
-                                    <classifier>javadoc</classifier>
-                                    <file>${project.build.directory}/byte-buddy-${project.version}-javadoc.jar</file>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>install-javadoc-asc</id>
-                                <phase>install</phase>
-                                <goals>
-                                    <goal>install-file</goal>
-                                </goals>
-                                <configuration>
-                                    <groupId>${project.groupId}</groupId>
-                                    <artifactId>${project.artifactId}</artifactId>
-                                    <version>${project.version}</version>
-                                    <packaging>jar.asc</packaging>
-                                    <classifier>javadoc</classifier>
-                                    <file>${project.build.directory}/byte-buddy-${project.version}-javadoc.jar.asc
-                                    </file>
+                                    <artifacts>
+                                        <artifact>
+                                            <file>
+                                                ${project.build.directory}/byte-buddy-${project.version}-javadoc.jar
+                                            </file>
+                                            <type>jar</type>
+                                            <classifier>javadoc</classifier>
+                                        </artifact>
+                                    </artifacts>
                                 </configuration>
                             </execution>
                         </executions>
