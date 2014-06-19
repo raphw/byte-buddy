@@ -1,6 +1,5 @@
 package net.bytebuddy.dynamic.scaffold.subclass;
 
-import jdk.nashorn.internal.codegen.types.Type;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.asm.ClassVisitorWrapper;
@@ -30,6 +29,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
+import org.mockito.asm.Type;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.objectweb.asm.MethodVisitor;
@@ -145,7 +145,7 @@ public class SubclassDynamicTypeBuilderTest {
                         methodVisitor.visitFieldInsn(Opcodes.PUTSTATIC,
                                 Type.getInternalName(Foo.class),
                                 FOO,
-                                Type.INT.getDescriptor());
+                                Type.getDescriptor(int.class));
                         methodVisitor.visitInsn(Opcodes.RETURN);
                         return new ByteCodeAppender.Size(1, methodDescription.getStackSize());
                     }
