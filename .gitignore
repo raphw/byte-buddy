@@ -22,3 +22,6 @@ build/
 
 #jRebel
 rebel.xml
+
+#Shade plugin
+byte-buddy/dependency-reduced-pom.xml

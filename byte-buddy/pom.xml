@@ -18,6 +18,14 @@
         This artifact is a build of Byte Buddy with all ASM dependencies repackaged into its own name space.
     </description>
 
+    <!--
+      Because of the Shade plugin, the variables of this POM are resolved with the current work station's values the
+      dependency reduced POM. The POM that is presented to the Shade plugin is already resolved which is why it is
+      not possible to prevent this behavior as the profiles are not removed form the POM. This does not effect the
+      usability of the POM for a dependency but might confuse users that read the POM. The Shade plugin also removes
+      this comment from deployment such that there is no easy way to explain this in the deployed POM.
+    -->
+
     <properties>
         <shade.source>org.objectweb.asm</shade.source>
         <shade.target>net.bytebuddy.jar.asm</shade.target>
