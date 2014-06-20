@@ -16,3 +16,8 @@ Added several bug fixes for existing features. Beyond that the following feature
  - Refactored the invocation of super methods to be created by an `Instrumentation.Target`. For a future release,
    this hopefully allows for class redefinitions using today's API for creating subclasses.
  - Upgraded to ASM 5.0.3.
+
+### 20. June 2014: Version 0.2.1
+
+Added proper support for defining class initializers. Added support for field caching from method instrumentations,
+mainly for allowing the reuse of `Method` instances for the `@Origin` annotation and the `InvocationHandlerAdapter`.
