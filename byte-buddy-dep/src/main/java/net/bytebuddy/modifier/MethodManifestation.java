@@ -33,7 +33,12 @@ public enum MethodManifestation implements ModifierContributor.ForMethod {
     /**
      * Modifier for a native and final method.
      */
-    FINAL_NATIVE(Opcodes.ACC_FINAL | Opcodes.ACC_NATIVE);
+    FINAL_NATIVE(Opcodes.ACC_FINAL | Opcodes.ACC_NATIVE),
+
+    /**
+     * Modifier for a bridge method.
+     */
+    BRIDGE(Opcodes.ACC_BRIDGE);
 
     /**
      * A mask for checking if a method implementation is not implemented in byte code.

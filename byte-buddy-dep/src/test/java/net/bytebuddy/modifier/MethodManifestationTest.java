@@ -19,9 +19,11 @@ public class MethodManifestationTest extends AbstractModifierContributorTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {MethodManifestation.PLAIN, 0},
+                {MethodManifestation.NATIVE, Opcodes.ACC_NATIVE},
                 {MethodManifestation.ABSTRACT, Opcodes.ACC_ABSTRACT},
                 {MethodManifestation.FINAL, Opcodes.ACC_FINAL},
                 {MethodManifestation.FINAL_NATIVE, Opcodes.ACC_FINAL | Opcodes.ACC_NATIVE},
+                {MethodManifestation.BRIDGE, Opcodes.ACC_BRIDGE}
         });
     }
 }
