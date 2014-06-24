@@ -2,7 +2,7 @@ package net.bytebuddy;
 
 import net.bytebuddy.dynamic.ClassLoadingStrategy;
 import net.bytebuddy.instrumentation.FixedValue;
-import net.bytebuddy.utility.Java8Rule;
+import net.bytebuddy.utility.JavaVersionRule;
 import net.bytebuddy.utility.PrecompiledTypeClassLoader;
 import org.junit.Before;
 import org.junit.Rule;
@@ -25,7 +25,7 @@ public class Java8DefaultMethodDiscoveryTest {
     private static final String INTERFACE_STATIC_FIELD_NAME = "FOO";
 
     @Rule
-    public MethodRule java8Rule = new Java8Rule();
+    public MethodRule java8Rule = new JavaVersionRule(8);
 
     private ClassLoader classLoader;
     private Object interfaceMarker;
@@ -41,7 +41,7 @@ public class Java8DefaultMethodDiscoveryTest {
     }
 
     @Test
-    @Java8Rule.Enforce
+    @JavaVersionRule.Enforce
     public void testDefaultMethodNonOverridden() throws Exception {
         Class<?> dynamicType = new ByteBuddy()
                 .subclass(interfaceType)
@@ -54,7 +54,7 @@ public class Java8DefaultMethodDiscoveryTest {
     }
 
     @Test
-    @Java8Rule.Enforce
+    @JavaVersionRule.Enforce
     public void testDefaultMethodOverridden() throws Exception {
         Class<?> dynamicType = new ByteBuddy()
                 .subclass(interfaceType)

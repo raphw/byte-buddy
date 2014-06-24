@@ -10,17 +10,17 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-public class Java8Rule implements MethodRule {
+public class JavaVersionRule implements MethodRule {
 
-    private final boolean java8OrHigher;
+    private final boolean supportsVersion;
 
-    public Java8Rule() {
-        java8OrHigher = ClassFileVersion.forCurrentJavaVersion().compareTo(ClassFileVersion.JAVA_V8) >= 0;
+    public JavaVersionRule(int javaVersion) {
+        supportsVersion = ClassFileVersion.forCurrentJavaVersion().compareTo(ClassFileVersion.forKnownJavaVersion(javaVersion)) >= 0;
     }
 
     @Override
     public Statement apply(Statement base, FrameworkMethod method, Object target) {
-        if (java8OrHigher || method.getAnnotation(Enforce.class) == null) {
+        if (supportsVersion || method.getAnnotation(Enforce.class) == null) {
             return base;
         } else {
             return new NoOpStatement();

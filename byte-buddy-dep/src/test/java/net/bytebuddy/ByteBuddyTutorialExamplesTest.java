@@ -16,7 +16,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocati
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.utility.Java8Rule;
+import net.bytebuddy.utility.JavaVersionRule;
 import net.bytebuddy.utility.PrecompiledTypeClassLoader;
 import org.junit.Rule;
 import org.junit.Test;
@@ -45,7 +45,7 @@ public class ByteBuddyTutorialExamplesTest {
     private static final String CONFLICTING_DEFAULT_METHOD_INTERFACE = "net.bytebuddy.test.precompiled.SingleDefaultMethodConflictingInterface";
 
     @Rule
-    public MethodRule java8Rule = new Java8Rule();
+    public MethodRule java8Rule = new JavaVersionRule(8);
 
     @SuppressWarnings("unused")
     private static void println(String s) {
@@ -211,7 +211,7 @@ public class ByteBuddyTutorialExamplesTest {
     }
 
     @Test
-    @Java8Rule.Enforce
+    @JavaVersionRule.Enforce
     public void testFieldsAndMethodMethodDefaultCall() throws Exception {
         // This test differs from the tutorial by only conditionally expressing the Java 8 types.
         ClassLoader classLoader = new PrecompiledTypeClassLoader(getClass().getClassLoader());

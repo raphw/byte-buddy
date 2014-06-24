@@ -1,7 +1,7 @@
 package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.utility.Java8Rule;
+import net.bytebuddy.utility.JavaVersionRule;
 import net.bytebuddy.utility.PrecompiledTypeClassLoader;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
@@ -27,7 +27,7 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
     private static final String NON_OVERRIDING_INTERFACE = "net.bytebuddy.test.precompiled.SingleDefaultMethodNonOverridingInterface";
 
     @Rule
-    public MethodRule java8Rule = new Java8Rule();
+    public MethodRule java8Rule = new JavaVersionRule(8);
 
     private ClassLoader classLoader;
 
@@ -37,7 +37,7 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
     }
 
     @Test
-    @Java8Rule.Enforce
+    @JavaVersionRule.Enforce
     public void testUnambiguousDefaultMethod() throws Exception {
         DynamicType.Loaded<?> loaded = instrument(Object.class,
                 DefaultMethodCall.unambiguousOnly(),
@@ -51,7 +51,7 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    @Java8Rule.Enforce
+    @JavaVersionRule.Enforce
     public void testAmbiguousDefaultMethodThrowsException() throws Exception {
         instrument(Object.class,
                 DefaultMethodCall.unambiguousOnly(),
@@ -61,7 +61,7 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
     }
 
     @Test
-    @Java8Rule.Enforce
+    @JavaVersionRule.Enforce
     public void testAmbiguousDefaultMethodWithExplicitPreference() throws Exception {
         Class<?> singleMethodInterface = classLoader.loadClass(SINGLE_DEFAULT_METHOD);
         Class<?> conflictingInterface = classLoader.loadClass(CONFLICTING_INTERFACE);
@@ -89,7 +89,7 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    @Java8Rule.Enforce
+    @JavaVersionRule.Enforce
     public void testUnrelatedPreferredDefaultMethodThrowsException() throws Exception {
         instrument(Object.class,
                 DefaultMethodCall.prioritize(classLoader.loadClass(NON_OVERRIDING_INTERFACE)),
@@ -99,7 +99,7 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    @Java8Rule.Enforce
+    @JavaVersionRule.Enforce
     public void testNonDeclaredDefaultMethodThrowsException() throws Exception {
         instrument(classLoader.loadClass(SINGLE_DEFAULT_METHOD_CLASS),
                 DefaultMethodCall.unambiguousOnly(),
@@ -108,7 +108,7 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    @Java8Rule.Enforce
+    @JavaVersionRule.Enforce
     public void testNonDeclaredPreferredDefaultMethodThrowsException() throws Exception {
         instrument(classLoader.loadClass(SINGLE_DEFAULT_METHOD_CLASS),
                 DefaultMethodCall.prioritize(classLoader.loadClass(SINGLE_DEFAULT_METHOD)),
@@ -117,7 +117,7 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
     }
 
     @Test
-    @Java8Rule.Enforce
+    @JavaVersionRule.Enforce
     public void testDeclaredAndImplementedMethod() throws Exception {
         DynamicType.Loaded<?> loaded = instrument(classLoader.loadClass(SINGLE_DEFAULT_METHOD_CLASS),
                 DefaultMethodCall.unambiguousOnly(),
@@ -131,7 +131,7 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    @Java8Rule.Enforce
+    @JavaVersionRule.Enforce
     public void testDeclaredAndImplementedAmbiguousMethodThrowsException() throws Exception {
         instrument(classLoader.loadClass(SINGLE_DEFAULT_METHOD_CLASS),
                 DefaultMethodCall.unambiguousOnly(),
@@ -141,7 +141,7 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
     }
 
     @Test
-    @Java8Rule.Enforce
+    @JavaVersionRule.Enforce
     public void testDeclaredAndImplementedAmbiguousMethodWithPreference() throws Exception {
         DynamicType.Loaded<?> loaded = instrument(classLoader.loadClass(SINGLE_DEFAULT_METHOD_CLASS),
                 DefaultMethodCall.prioritize(classLoader.loadClass(SINGLE_DEFAULT_METHOD)),
