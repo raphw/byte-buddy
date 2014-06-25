@@ -21,3 +21,7 @@ Added several bug fixes for existing features. Beyond that the following feature
 
 Added proper support for defining class initializers. Added support for field caching from method instrumentations,
 mainly for allowing the reuse of `Method` instances for the `@Origin` annotation and the `InvocationHandlerAdapter`.
+
+### Current snapshot version
+
+- Added basic support for Java 7 types `MethodHandle` and `MethodType` which are available from Java 7.

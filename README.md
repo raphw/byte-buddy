@@ -247,8 +247,8 @@ License and development
 -----------------------
 
 Byte Buddy is licensed under the liberal and business-friendly
-[*Apache Licence, Version 2.0*](http://www.apache.org/licenses/LICENSE-2.0.html) and is freely available on this GitHub
-page. Byte Buddy is further released on Maven Central. The project is built using
+[*Apache Licence, Version 2.0*](http://www.apache.org/licenses/LICENSE-2.0.html) and is freely available on this
+GitHub page. Byte Buddy is further released on Maven Central. The project is built using
 <a href="http://maven.apache.org/">Maven</a>. From your shell, building the project would look something like this:
 
 ```shell
