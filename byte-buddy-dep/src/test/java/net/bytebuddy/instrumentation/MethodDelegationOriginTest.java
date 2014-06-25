@@ -3,7 +3,12 @@ package net.bytebuddy.instrumentation;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Origin;
+import net.bytebuddy.utility.JavaVersionRule;
+import net.bytebuddy.utility.PrecompiledTypeClassLoader;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 
 import java.lang.reflect.Method;
 
@@ -14,7 +19,18 @@ import static org.junit.Assert.assertEquals;
 
 public class MethodDelegationOriginTest extends AbstractInstrumentationTest {
 
-    private static final String FOO = "foo";
+    private static final String FOO = "foo", TYPE = "TYPE";
+
+    private static final String ORIGIN_METHOD_HANDLE = "net.bytebuddy.test.precompiled.OriginMethodHandle";
+    private static final String ORIGIN_METHOD_TYPE = "net.bytebuddy.test.precompiled.OriginMethodType";
+    @Rule
+    public MethodRule java7Rule = new JavaVersionRule(7);
+    private ClassLoader classLoader;
+
+    @Before
+    public void setUp() throws Exception {
+        classLoader = new PrecompiledTypeClassLoader(getClass().getClassLoader());
+    }
 
     @Test
     public void testOriginClass() throws Exception {
@@ -51,6 +67,24 @@ public class MethodDelegationOriginTest extends AbstractInstrumentationTest {
         assertThat(instance.foo(), instanceOf(String.class));
         assertThat(instance.foo(),
                 is((Object) new MethodDescription.ForLoadedMethod(Foo.class.getDeclaredMethod(FOO)).getUniqueSignature()));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce
+    public void testOriginMethodHandle() throws Throwable {
+        Class<?> originMethodHandle = classLoader.loadClass(ORIGIN_METHOD_HANDLE);
+        DynamicType.Loaded<Foo> loaded = instrument(Foo.class, MethodDelegation.to(originMethodHandle));
+        Foo instance = loaded.getLoaded().newInstance();
+        assertThat(instance.foo(), instanceOf((Class<?>) originMethodHandle.getDeclaredField(TYPE).get(null)));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce
+    public void testOriginMethodType() throws Throwable {
+        Class<?> originMethodType = classLoader.loadClass(ORIGIN_METHOD_TYPE);
+        DynamicType.Loaded<Foo> loaded = instrument(Foo.class, MethodDelegation.to(originMethodType));
+        Foo instance = loaded.getLoaded().newInstance();
+        assertThat(instance.foo(), instanceOf((Class<?>) originMethodType.getDeclaredField(TYPE).get(null)));
     }
 
     @Test(expected = IllegalStateException.class)

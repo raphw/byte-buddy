@@ -19,7 +19,7 @@ public enum SyntheticState implements ModifierContributor.ForType, ModifierContr
     NON_SYNTHETIC(EMPTY_MASK);
 
     /**
-     * The mask the modifier contributor.
+     * The mask of the modifier contributor.
      */
     private final int mask;
 

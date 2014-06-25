@@ -11,9 +11,16 @@ import java.lang.reflect.Method;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
+
+    private static final String FOO = "foo";
+
+    private static final String METHOD_HANDLE_TYPE_INTERNAL_NAME = "java/lang/invoke/MethodHandle";
+
+    private static final String METHOD_TYPE_TYPE_INTERNAL_NAME = "java/lang/invoke/MethodType";
 
     private static final int INDEX = 0;
 
@@ -38,6 +45,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
 
     @Test
     public void testClassBinding() throws Exception {
+        when(targetType.getInternalName()).thenReturn(FOO);
         when(targetType.represents(Class.class)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
                 .bind(annotation, INDEX, source, target, instrumentationTarget, assigner);
@@ -46,6 +54,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
 
     @Test
     public void testMethodBinding() throws Exception {
+        when(targetType.getInternalName()).thenReturn(FOO);
         when(targetType.represents(Method.class)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
                 .bind(annotation, INDEX, source, target, instrumentationTarget, assigner);
@@ -54,7 +63,26 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
 
     @Test
     public void testStringBinding() throws Exception {
+        when(targetType.getInternalName()).thenReturn(FOO);
         when(targetType.represents(String.class)).thenReturn(true);
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
+                .bind(annotation, INDEX, source, target, instrumentationTarget, assigner);
+        assertThat(parameterBinding.isValid(), is(true));
+    }
+
+    @Test
+    public void testMethodHandleBinding() throws Exception {
+        when(targetType.getInternalName()).thenReturn(METHOD_HANDLE_TYPE_INTERNAL_NAME);
+        when(source.getDeclaringType()).thenReturn(mock(TypeDescription.class));
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
+                .bind(annotation, INDEX, source, target, instrumentationTarget, assigner);
+        assertThat(parameterBinding.isValid(), is(true));
+    }
+
+    @Test
+    public void testMethodTypeBinding() throws Exception {
+        when(targetType.getInternalName()).thenReturn(METHOD_TYPE_TYPE_INTERNAL_NAME);
+        when(source.getDescriptor()).thenReturn(FOO);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
                 .bind(annotation, INDEX, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
@@ -62,6 +90,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
 
     @Test(expected = IllegalStateException.class)
     public void testIllegalBinding() throws Exception {
+        when(targetType.getInternalName()).thenReturn(FOO);
         Origin.Binder.INSTANCE.bind(annotation, INDEX, source, target, instrumentationTarget, assigner);
     }
 }

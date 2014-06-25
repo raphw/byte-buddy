@@ -13,24 +13,24 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @RunWith(Parameterized.class)
-public class OwnershipTest extends AbstractModifierContributorTest {
+public class MethodArgumentsTest extends AbstractModifierContributorTest {
 
-    public OwnershipTest(ModifierContributor modifierContributor, int expectedModifier) {
+    public MethodArgumentsTest(ModifierContributor modifierContributor, int expectedModifier) {
         super(modifierContributor, expectedModifier);
     }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {Ownership.MEMBER, 0},
-                {Ownership.isStatic(false), 0},
-                {Ownership.STATIC, Opcodes.ACC_STATIC},
-                {Ownership.isStatic(true), Opcodes.ACC_STATIC},
+                {MethodArguments.PLAIN, 0},
+                {MethodArguments.isVarargs(false), 0},
+                {MethodArguments.VARARGS, Opcodes.ACC_VARARGS},
+                {MethodArguments.isVarargs(true), Opcodes.ACC_VARARGS},
         });
     }
 
     @Test
     public void testState() throws Exception {
-        assertThat(((Ownership) modifierContributor).isStatic(), is(expectedModifier != 0));
+        assertThat(((MethodArguments) modifierContributor).isVarargs(), is(expectedModifier != 0));
     }
 }

@@ -61,7 +61,9 @@ public abstract class FixedValue implements Instrumentation {
      * If possible, the constant pool value is substituted by a byte code instruction that creates the value. (This is
      * possible for integer types and types that are presented by integers inside the JVM ({@code boolean}, {@code byte},
      * {@code short}, {@code char}) and for the {@code null} value. Additionally, several common constants of
-     * the {@code float}, {@code double} and {@code long} types can be represented by opcode constants.
+     * the {@code float}, {@code double} and {@code long} types can be represented by opcode constants. Note that the
+     * Java 7 types {@link java.lang.invoke.MethodHandle} and {@link java.lang.invoke.MethodType} are are currently not
+     * supported for constant pool storage.
      *
      * @param fixedValue The fixed value to be returned by methods that are instrumented by this instrumentation.
      * @return An instrumentation for the given {@code fixedValue}.
