@@ -35,6 +35,7 @@ has become an ubiquitous concept in the Java space. Byte Buddy is an attempt to 
 types in order to provide a better tool set to those relying on code generation.
 
 [![Download](https://api.bintray.com/packages/raphw/maven/ByteBuddy/images/download.png)](https://bintray.com/raphw/maven/ByteBuddy/_latestVersion)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.bytebuddy/byte-buddy-parent/badge.svg)](https://maven-badges.herokuapp.com/maven-central/net.bytebuddy/byte-buddy-parent)
 
 Hello World
 -----------
