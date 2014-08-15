@@ -23,26 +23,26 @@ public interface InstrumentedType extends TypeDescription {
     /**
      * Creates a new instrumented type that includes a new field.
      *
-     * @param name      The internalName of the new field.
-     * @param fieldType A description of the type of the new field.
-     * @param modifiers The modifier of the new field.
+     * @param internalName The internal name of the new field.
+     * @param fieldType    A description of the type of the new field.
+     * @param modifiers    The modifier of the new field.
      * @return A new instrumented type that is equal to this instrumented type but with the additional field.
      */
-    InstrumentedType withField(String name,
+    InstrumentedType withField(String internalName,
                                TypeDescription fieldType,
                                int modifiers);
 
     /**
      * Creates a new instrumented type that includes a new method or constructor.
      *
-     * @param name           The internalName of the new field.
+     * @param internalName   The internal name of the new field.
      * @param returnType     A description of the return type of the new field.
      * @param parameterTypes A list of descriptions of the parameter types.
      * @param exceptionTypes A list of descriptions of the exception types that are declared by this method.
      * @param modifiers      The modifier of the new field.
      * @return A new instrumented type that is equal to this instrumented type but with the additional field.
      */
-    InstrumentedType withMethod(String name,
+    InstrumentedType withMethod(String internalName,
                                 TypeDescription returnType,
                                 List<? extends TypeDescription> parameterTypes,
                                 List<? extends TypeDescription> exceptionTypes,
@@ -110,22 +110,22 @@ public interface InstrumentedType extends TypeDescription {
          * type as given by {@code typeInternalName} are replaced by references to {@code this}.
          *
          * @param loadedTypeInitializer A loaded type initializer for this instrumented type.
-         * @param typeInternalName      The internal internalName of this instrumented type.
+         * @param typeName              The non-internal name of this instrumented type.
          * @param fieldDescriptions     A list of field descriptions for this instrumented type.
          * @param methodDescriptions    A list of method descriptions for this instrumented type.
          */
         protected AbstractBase(LoadedTypeInitializer loadedTypeInitializer,
-                               String typeInternalName,
+                               String typeName,
                                List<? extends FieldDescription> fieldDescriptions,
                                List<? extends MethodDescription> methodDescriptions) {
             this.loadedTypeInitializer = loadedTypeInitializer;
             this.fieldDescriptions = new ArrayList<FieldDescription>(fieldDescriptions.size());
             for (FieldDescription fieldDescription : fieldDescriptions) {
-                this.fieldDescriptions.add(new FieldToken(typeInternalName, fieldDescription));
+                this.fieldDescriptions.add(new FieldToken(typeName, fieldDescription));
             }
             this.methodDescriptions = new ArrayList<MethodDescription>(methodDescriptions.size());
             for (MethodDescription methodDescription : methodDescriptions) {
-                this.methodDescriptions.add(new MethodToken(typeInternalName, methodDescription));
+                this.methodDescriptions.add(new MethodToken(typeName, methodDescription));
             }
         }
 
@@ -163,13 +163,13 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * Substitutes an <i>outdated</i> reference to the instrumented type with a reference to <i>this</i>.
          *
-         * @param instrumentedTypeName The name of this instrumented type.
-         * @param typeDescription      The type description to be checked to represent this instrumented type.
+         * @param typeName        The non-internal name of this instrumented type.
+         * @param typeDescription The type description to be checked to represent this instrumented type.
          * @return This type, if the type description represents the name of the instrumented type or the given
          * instrumented type if this is not the case.
          */
-        private TypeDescription withSubstitutedSelfReference(String instrumentedTypeName, TypeDescription typeDescription) {
-            return typeDescription.getInternalName().equals(instrumentedTypeName) ? this : typeDescription;
+        private TypeDescription withSubstitutedSelfReference(String typeName, TypeDescription typeDescription) {
+            return typeDescription.getName().equals(typeName) ? this : typeDescription;
         }
 
         @Override
@@ -348,12 +348,12 @@ public interface InstrumentedType extends TypeDescription {
             /**
              * Creates a new field for the enclosing instrumented type.
              *
-             * @param typeInternalName The internal name of the enclosing instrumented type.
+             * @param typeName         The non-internal name of the enclosing instrumented type.
              * @param fieldDescription The field description to copy.
              */
-            private FieldToken(String typeInternalName, FieldDescription fieldDescription) {
+            private FieldToken(String typeName, FieldDescription fieldDescription) {
                 name = fieldDescription.getName();
-                fieldType = withSubstitutedSelfReference(typeInternalName, fieldDescription.getFieldType());
+                fieldType = withSubstitutedSelfReference(typeName, fieldDescription.getFieldType());
                 modifiers = fieldDescription.getModifiers();
             }
 
@@ -486,19 +486,19 @@ public interface InstrumentedType extends TypeDescription {
             /**
              * Creates a new method or constructor for the enclosing instrumented type.
              *
-             * @param typeInternalName  The internal internalName of the enclosing instrumented type.
+             * @param typeName          The non-internal name of the enclosing instrumented type.
              * @param methodDescription The method description to copy.
              */
-            private MethodToken(String typeInternalName, MethodDescription methodDescription) {
+            private MethodToken(String typeName, MethodDescription methodDescription) {
                 internalName = methodDescription.getInternalName();
-                returnType = withSubstitutedSelfReference(typeInternalName, methodDescription.getReturnType());
+                returnType = withSubstitutedSelfReference(typeName, methodDescription.getReturnType());
                 parameterTypes = new ArrayList<TypeDescription>(methodDescription.getParameterTypes().size());
                 for (TypeDescription typeDescription : methodDescription.getParameterTypes()) {
-                    parameterTypes.add(withSubstitutedSelfReference(typeInternalName, typeDescription));
+                    parameterTypes.add(withSubstitutedSelfReference(typeName, typeDescription));
                 }
                 exceptionTypes = new ArrayList<TypeDescription>(methodDescription.getExceptionTypes().size());
                 for (TypeDescription typeDescription : methodDescription.getExceptionTypes()) {
-                    exceptionTypes.add(withSubstitutedSelfReference(typeInternalName, typeDescription));
+                    exceptionTypes.add(withSubstitutedSelfReference(typeName, typeDescription));
                 }
                 modifiers = methodDescription.getModifiers();
             }

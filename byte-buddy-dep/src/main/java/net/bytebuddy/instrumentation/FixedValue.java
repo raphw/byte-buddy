@@ -46,6 +46,16 @@ public abstract class FixedValue implements Instrumentation {
     }
 
     /**
+     * Creates a fixed value instrumentation that returns {@code null} as a fixed value. This value is inlined into
+     * the method and does not create a field.
+     *
+     * @return An instrumentation that represents the {@code null} value.
+     */
+    public static Instrumentation nullValue() {
+        return value(null);
+    }
+
+    /**
      * Creates a fixed value instrumentation that returns a fixed value. If the value can be inlined into the created
      * class, i.e. can be added to the constant pool of a class, no explicit type initialization will be required for
      * the created dynamic class. Otherwise, a static field will be created in the dynamic type which will be initialized

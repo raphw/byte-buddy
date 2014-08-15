@@ -1,0 +1,153 @@
+package net.bytebuddy.dynamic.scaffold.inline;
+
+import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.NamingStrategy;
+import net.bytebuddy.instrumentation.LoadedTypeInitializer;
+import net.bytebuddy.instrumentation.field.FieldDescription;
+import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.type.InstrumentedType;
+import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.instrumentation.type.TypeList;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static net.bytebuddy.utility.ByteBuddyCommons.isValidTypeName;
+
+public class FlatInstrumentedType extends InstrumentedType.AbstractBase {
+
+    private final TypeDescription levelType;
+
+    private final String name;
+
+    private final int modifiers;
+
+    private final List<TypeDescription> interfaces;
+
+    public FlatInstrumentedType(ClassFileVersion classFileVersion,
+                                TypeDescription levelType,
+                                List<TypeDescription> interfaces,
+                                int modifiers,
+                                NamingStrategy namingStrategy) {
+        super(LoadedTypeInitializer.NoOp.INSTANCE,
+                levelType.getName(),
+                levelType.getDeclaredFields(),
+                levelType.getDeclaredMethods());
+        this.levelType = levelType;
+        this.modifiers = modifiers;
+        Set<TypeDescription> interfaceTypes = new HashSet<TypeDescription>(levelType.getInterfaces());
+        interfaceTypes.addAll(interfaces);
+        this.interfaces = new ArrayList<TypeDescription>(interfaceTypes);
+        this.name = isValidTypeName(namingStrategy.name(new NamingStrategy.UnnamedType.Default(levelType.getSupertype(),
+                interfaces,
+                modifiers,
+                classFileVersion)));
+    }
+
+    protected FlatInstrumentedType(TypeDescription levelType,
+                                   String name,
+                                   int modifiers,
+                                   List<TypeDescription> interfaces,
+                                   List<? extends FieldDescription> fieldDescriptions,
+                                   List<? extends MethodDescription> methodDescriptions,
+                                   LoadedTypeInitializer loadedTypeInitializer) {
+        super(loadedTypeInitializer, name, fieldDescriptions, methodDescriptions);
+        this.levelType = levelType;
+        this.name = name;
+        this.modifiers = modifiers;
+        this.interfaces = interfaces;
+    }
+
+    @Override
+    public InstrumentedType withField(String internalName,
+                                      TypeDescription fieldType,
+                                      int modifiers) {
+        FieldDescription additionalField = new FieldToken(internalName, fieldType, modifiers);
+        if (fieldDescriptions.contains(additionalField)) {
+            throw new IllegalArgumentException("Field " + additionalField + " is already defined on " + this);
+        }
+        List<FieldDescription> fieldDescriptions = new ArrayList<FieldDescription>(this.fieldDescriptions);
+        fieldDescriptions.add(additionalField);
+        return new FlatInstrumentedType(levelType,
+                name,
+                this.modifiers,
+                interfaces,
+                fieldDescriptions,
+                methodDescriptions,
+                loadedTypeInitializer);
+    }
+
+    @Override
+    public InstrumentedType withMethod(String internalName,
+                                       TypeDescription returnType,
+                                       List<? extends TypeDescription> parameterTypes,
+                                       List<? extends TypeDescription> exceptionTypes,
+                                       int modifiers) {
+        MethodDescription additionalMethod = new MethodToken(internalName,
+                returnType,
+                parameterTypes,
+                exceptionTypes,
+                modifiers);
+        if (methodDescriptions.contains(additionalMethod)) {
+            throw new IllegalArgumentException("Method " + additionalMethod + " is already defined on " + this);
+        }
+        List<MethodDescription> methodDescriptions = new ArrayList<MethodDescription>(this.methodDescriptions);
+        methodDescriptions.add(additionalMethod);
+        return new FlatInstrumentedType(levelType,
+                name,
+                this.modifiers,
+                interfaces,
+                fieldDescriptions,
+                methodDescriptions,
+                loadedTypeInitializer);
+    }
+
+    @Override
+    public InstrumentedType withInitializer(LoadedTypeInitializer loadedTypeInitializer) {
+        return new FlatInstrumentedType(levelType,
+                name,
+                modifiers,
+                interfaces,
+                fieldDescriptions,
+                methodDescriptions,
+                new LoadedTypeInitializer.Compound(this.loadedTypeInitializer, loadedTypeInitializer));
+    }
+
+    @Override
+    public TypeDescription detach() {
+        return new FlatInstrumentedType(levelType,
+                name,
+                modifiers,
+                interfaces,
+                fieldDescriptions,
+                methodDescriptions,
+                LoadedTypeInitializer.NoOp.INSTANCE);
+    }
+
+    @Override
+    public TypeDescription getSupertype() {
+        return levelType.getSupertype();
+    }
+
+    @Override
+    public TypeList getInterfaces() {
+        return new TypeList.Explicit(interfaces);
+    }
+
+    @Override
+    public boolean isSealed() {
+        return levelType.isSealed();
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public int getModifiers() {
+        return modifiers;
+    }
+}

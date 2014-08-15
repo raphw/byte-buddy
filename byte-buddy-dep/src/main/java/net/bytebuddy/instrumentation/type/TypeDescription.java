@@ -145,6 +145,15 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
     String getCanonicalName();
 
     /**
+     * Returns the generic signature of this type or {@code null} if no such signature is available.
+     * <p>&nbsp;</p>
+     * <b>Note</b>: Loaded classes do currently not provide such a signature.
+     *
+     * @return The generic signature of this type or {@code null} if no such signature is available.
+     */
+    String getGenericSignature();
+
+    /**
      * Checks if this type description represents an anonymous type.
      *
      * @return {@code true} if this type description represents an anonymous type.
@@ -213,6 +222,11 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
         @Override
         public String getInternalName() {
             return getName().replace('.', '/');
+        }
+
+        @Override
+        public String getGenericSignature() {
+            return null; // Currently, generics signatures supported poorly.
         }
 
         @Override

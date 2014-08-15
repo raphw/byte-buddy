@@ -28,6 +28,8 @@ public interface ByteCodeElement {
      */
     String getDescriptor();
 
+    String getGenericSignature();
+
     /**
      * Checks if this element is visible from a given type.
      *

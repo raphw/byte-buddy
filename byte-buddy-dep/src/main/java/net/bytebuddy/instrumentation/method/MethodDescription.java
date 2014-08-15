@@ -164,6 +164,11 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         }
 
         @Override
+        public String getGenericSignature() {
+            return null; // Currently, generic signatures are not supported.
+        }
+
+        @Override
         public boolean isVisibleTo(TypeDescription typeDescription) {
             return isPublic()
                     || typeDescription.equals(getDeclaringType())

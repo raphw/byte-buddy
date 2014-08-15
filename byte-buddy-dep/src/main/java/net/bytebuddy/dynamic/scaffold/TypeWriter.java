@@ -363,6 +363,10 @@ public interface TypeWriter<T> {
         InMemberPhase<T> writeMethods(Iterable<? extends MethodDescription> methodDescriptions, MethodPool methodPool);
     }
 
+    static interface InRedefinitionPhase<T> {
+
+    }
+
     /**
      * A builder that creates a new type writer for given arguments.
      *
@@ -433,12 +437,12 @@ public interface TypeWriter<T> {
          * @return A new type writer for the given type.
          */
         public InGeneralPhase<T> build(ClassVisitorWrapper classVisitorWrapper) {
-            ClassWriter classWriter = new ClassWriter(ASM_MANUAL_FLAG);
+            ClassWriter classWriter = new ClassWriter(ASM_MANUAL_FLAG); //TODO: Inject class reader if available
             ClassVisitor classVisitor = classVisitorWrapper.wrap(classWriter);
             classVisitor.visit(classFileVersion.getVersionNumber(),
                     instrumentedType.getModifiers(),
                     instrumentedType.getInternalName(),
-                    null,
+                    instrumentedType.getGenericSignature(),
                     instrumentedType.getSupertype() == null ? null : instrumentedType.getSupertype().getInternalName(),
                     instrumentedType.getInterfaces().toInternalNames());
             return new Handler<T>(classWriter, classVisitor);
@@ -502,7 +506,7 @@ public interface TypeWriter<T> {
                     FieldVisitor fieldVisitor = classVisitor.visitField(fieldDescription.getModifiers(),
                             fieldDescription.getInternalName(),
                             fieldDescription.getDescriptor(),
-                            null,
+                            fieldDescription.getGenericSignature(),
                             entry.getDefaultValue());
                     entry.getFieldAppenderFactory()
                             .make(instrumentedType)
@@ -523,7 +527,7 @@ public interface TypeWriter<T> {
                                 overrideModifiers(methodDescription, appendsCode),
                                 methodDescription.getInternalName(),
                                 methodDescription.getDescriptor(),
-                                null,
+                                methodDescription.getGenericSignature(),
                                 methodDescription.getExceptionTypes().toInternalNames());
                         entry.getAttributeAppender().apply(methodVisitor, methodDescription);
                         if (appendsCode) {

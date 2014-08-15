@@ -1,11 +1,16 @@
 package net.bytebuddy;
 
+import net.bytebuddy.instrumentation.ModifierContributor;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.modifier.SyntheticState;
 import net.bytebuddy.modifier.TypeManifestation;
 import net.bytebuddy.modifier.Visibility;
+import net.bytebuddy.utility.ByteBuddyCommons;
+import org.objectweb.asm.Opcodes;
 
+import java.lang.reflect.Modifier;
 import java.util.Collection;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -31,6 +36,77 @@ public interface NamingStrategy {
      * An description of a type which is to be named.
      */
     static interface UnnamedType {
+
+        static class Default implements UnnamedType {
+
+            private final TypeDescription superClass;
+
+            private final List<TypeDescription> interfaces;
+
+            private final int modifiers;
+
+            private final ClassFileVersion classFileVersion;
+
+            public Default(TypeDescription superClass,
+                           List<TypeDescription> interfaces,
+                           int modifiers,
+                           ClassFileVersion classFileVersion) {
+                this.superClass = superClass;
+                this.interfaces = interfaces;
+                this.modifiers = modifiers;
+                this.classFileVersion = classFileVersion;
+            }
+
+            @Override
+            public TypeDescription getSuperClass() {
+                return superClass;
+            }
+
+            @Override
+            public List<TypeDescription> getDeclaredInterfaces() {
+                return interfaces;
+            }
+
+            @Override
+            public Visibility getVisibility() {
+                switch (modifiers & ByteBuddyCommons.VISIBILITY_MODIFIER_MASK) {
+                    case Opcodes.ACC_PUBLIC:
+                        return Visibility.PUBLIC;
+                    case Opcodes.ACC_PROTECTED:
+                        return Visibility.PROTECTED;
+                    case Opcodes.ACC_PRIVATE:
+                        return Visibility.PRIVATE;
+                    case ModifierContributor.EMPTY_MASK:
+                        return Visibility.PACKAGE_PRIVATE;
+                    default:
+                        throw new IllegalStateException("Ambiguous modifier: " + modifiers);
+                }
+            }
+
+            @Override
+            public TypeManifestation getTypeManifestation() {
+                if ((modifiers & Modifier.FINAL) != 0) {
+                    return TypeManifestation.FINAL;
+                    // Note: Interfaces are abstract, the interface condition needs to be checked before abstraction.
+                } else if ((modifiers & Opcodes.ACC_INTERFACE) != 0) {
+                    return TypeManifestation.INTERFACE;
+                } else if ((modifiers & Opcodes.ACC_ABSTRACT) != 0) {
+                    return TypeManifestation.ABSTRACT;
+                } else {
+                    return TypeManifestation.PLAIN;
+                }
+            }
+
+            @Override
+            public SyntheticState getSyntheticState() {
+                return SyntheticState.is((modifiers & Opcodes.ACC_SYNTHETIC) != 0);
+            }
+
+            @Override
+            public ClassFileVersion getClassFileVersion() {
+                return classFileVersion;
+            }
+        }
 
         /**
          * Returns this unnamed type's super class.

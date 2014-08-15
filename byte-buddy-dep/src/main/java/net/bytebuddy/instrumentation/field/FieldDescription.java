@@ -38,6 +38,11 @@ public interface FieldDescription extends ModifierReviewable, ByteCodeElement, D
         }
 
         @Override
+        public String getGenericSignature() {
+            return null; // Currently, generics signatures supported poorly.
+        }
+
+        @Override
         public boolean isVisibleTo(TypeDescription typeDescription) {
             return isPublic()
                     || typeDescription.equals(getDeclaringType())

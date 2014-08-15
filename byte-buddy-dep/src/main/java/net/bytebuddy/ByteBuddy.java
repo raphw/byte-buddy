@@ -5,6 +5,8 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.dynamic.scaffold.FieldRegistry;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
+import net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator;
+import net.bytebuddy.dynamic.scaffold.inline.FlatDynamicTypeBuilder;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.dynamic.scaffold.subclass.SubclassDynamicTypeBuilder;
 import net.bytebuddy.instrumentation.Instrumentation;
@@ -360,6 +362,36 @@ public class ByteBuddy {
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
                 nonNull(constructorStrategy));
+    }
+
+    public <T> DynamicType.Builder<T> redefine(Class<?> levelType) {
+        return redefine(new TypeDescription.ForLoadedType(levelType), ClassFileLocator.ForClassPathType.INSTANCE);
+    }
+
+    public <T> DynamicType.Builder<T> redefine(Class<?> levelType, ClassFileLocator classFileLocator) {
+        return redefine(new TypeDescription.ForLoadedType(levelType), classFileLocator);
+    }
+
+    public <T> DynamicType.Builder<T> redefine(TypeDescription levelType) {
+        return redefine(levelType, ClassFileLocator.ForClassPathType.INSTANCE);
+    }
+
+    public <T> DynamicType.Builder<T> redefine(TypeDescription levelType, ClassFileLocator classFileLocator) {
+        return new FlatDynamicTypeBuilder<T>(classFileVersion,
+                namingStrategy,
+                nonNull(levelType),
+                interfaceTypes,
+                modifiers.resolve(levelType.getModifiers()),
+                typeAttributeAppender.resolve(new TypeAttributeAppender.ForType(levelType)),
+                ignoredMethods,
+                bridgeMethodResolverFactory,
+                classVisitorWrapperChain,
+                new FieldRegistry.Default(),
+                methodRegistry,
+                methodLookupEngineFactory,
+                defaultFieldAttributeAppenderFactory,
+                defaultMethodAttributeAppenderFactory,
+                nonNull(classFileLocator));
     }
 
     /**

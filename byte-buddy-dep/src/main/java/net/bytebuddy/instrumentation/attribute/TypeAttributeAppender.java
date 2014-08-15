@@ -105,47 +105,56 @@ public interface TypeAttributeAppender {
     }
 
     /**
-     * Writes all annotations that are found on a given loaded Java type as visible annotations to the target type.
+     * Writes all annotations that are declared for a given Java type to the target type.
      */
-    static class ForLoadedType implements TypeAttributeAppender {
+    static class ForType implements TypeAttributeAppender {
 
         /**
-         * The class of which the annotations are to be copied.
+         * The class of which the declared annotations are to be copied.
          */
-        private final Class<?> type;
+        private final TypeDescription typeDescription;
 
         /**
-         * Creates a new attribute appender that writes all annotations found on a given loaded type.
+         * Creates a new attribute appender that writes all annotations declared for the given loaded type.
          *
-         * @param type The loaded type
+         * @param type The loaded type.
          */
-        public ForLoadedType(Class<?> type) {
-            this.type = type;
+        public ForType(Class<?> type) {
+            typeDescription = new TypeDescription.ForLoadedType(type);
+        }
+
+        /**
+         * Creates a new attribute appender that writes all annotations declared for the given type description.
+         *
+         * @param typeDescription The type description.
+         */
+        public ForType(TypeDescription typeDescription) {
+            this.typeDescription = typeDescription;
         }
 
         @Override
         public void apply(ClassVisitor classVisitor, TypeDescription typeDescription) {
             AnnotationAppender annotationAppender =
                     new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor));
-            for (Annotation annotation : type.getAnnotations()) {
-                annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.RUNTIME);
+            for (Annotation annotation : this.typeDescription.getDeclaredAnnotations()) {
+                annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
             }
         }
 
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && type.equals(((ForLoadedType) other).type);
+                    && typeDescription.equals(((ForType) other).typeDescription);
         }
 
         @Override
         public int hashCode() {
-            return type.hashCode();
+            return typeDescription.hashCode();
         }
 
         @Override
         public String toString() {
-            return "TypeAttributeAppender.ForLoadedType{type=" + type + '}';
+            return "TypeAttributeAppender.ForType{typeDescription=" + typeDescription + '}';
         }
     }
 
