@@ -136,7 +136,8 @@ public class TypeWriterBuilderTest {
         typeWriter = new TypeWriter.Builder<Object>(instrumentedType,
                 loadedTypeInitializer,
                 instrumentationContext,
-                ClassFileVersion.forCurrentJavaVersion()).build(classVisitorWrapper);
+                ClassFileVersion.forCurrentJavaVersion(),
+                TypeWriter.Builder.ClassWriterProvider.CleanCopy.INSTANCE).build(classVisitorWrapper);
         verify(classVisitorWrapper).wrap(any(ClassWriter.class));
     }
 

@@ -16,16 +16,40 @@ import java.util.Set;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.isValidTypeName;
 
+/**
+ * An instrumented type which enhances a given type description by an extending redefinition.
+ */
 public class FlatInstrumentedType extends InstrumentedType.AbstractBase {
 
+    /**
+     * The type which is the base for this instrumented type.
+     */
     private final TypeDescription levelType;
 
+    /**
+     * The name of the instrumented type.
+     */
     private final String name;
 
+    /**
+     * The modifiers of the instrumented type.
+     */
     private final int modifiers;
 
+    /**
+     * The additional interfaces that this type should implement.
+     */
     private final List<TypeDescription> interfaces;
 
+    /**
+     * Creates a new flat instrumented type.
+     *
+     * @param classFileVersion The class file version for the given type.
+     * @param levelType        The name of the instrumented type.
+     * @param interfaces       The additional interfaces that this type should implement.
+     * @param modifiers        The name of the instrumented type.
+     * @param namingStrategy   The naming strategy to apply for the given type.
+     */
     public FlatInstrumentedType(ClassFileVersion classFileVersion,
                                 TypeDescription levelType,
                                 List<TypeDescription> interfaces,
@@ -46,10 +70,21 @@ public class FlatInstrumentedType extends InstrumentedType.AbstractBase {
                 classFileVersion)));
     }
 
+    /**
+     * Creates a new flat instrumented type.
+     *
+     * @param levelType         The name of the instrumented type.
+     * @param name              The name of the instrumented type.
+     * @param interfaces        The additional interfaces that this type should implement.
+     * @param modifiers         The name of the instrumented type.
+     * @param fieldDescriptions     A list of field descriptions for this instrumented type.
+     * @param methodDescriptions    A list of method descriptions for this instrumented type.
+     * @param loadedTypeInitializer A loaded type initializer for this instrumented type.
+     */
     protected FlatInstrumentedType(TypeDescription levelType,
                                    String name,
-                                   int modifiers,
                                    List<TypeDescription> interfaces,
+                                   int modifiers,
                                    List<? extends FieldDescription> fieldDescriptions,
                                    List<? extends MethodDescription> methodDescriptions,
                                    LoadedTypeInitializer loadedTypeInitializer) {
@@ -72,8 +107,8 @@ public class FlatInstrumentedType extends InstrumentedType.AbstractBase {
         fieldDescriptions.add(additionalField);
         return new FlatInstrumentedType(levelType,
                 name,
-                this.modifiers,
                 interfaces,
+                this.modifiers,
                 fieldDescriptions,
                 methodDescriptions,
                 loadedTypeInitializer);
@@ -97,8 +132,8 @@ public class FlatInstrumentedType extends InstrumentedType.AbstractBase {
         methodDescriptions.add(additionalMethod);
         return new FlatInstrumentedType(levelType,
                 name,
-                this.modifiers,
                 interfaces,
+                this.modifiers,
                 fieldDescriptions,
                 methodDescriptions,
                 loadedTypeInitializer);
@@ -108,8 +143,8 @@ public class FlatInstrumentedType extends InstrumentedType.AbstractBase {
     public InstrumentedType withInitializer(LoadedTypeInitializer loadedTypeInitializer) {
         return new FlatInstrumentedType(levelType,
                 name,
-                modifiers,
                 interfaces,
+                modifiers,
                 fieldDescriptions,
                 methodDescriptions,
                 new LoadedTypeInitializer.Compound(this.loadedTypeInitializer, loadedTypeInitializer));
@@ -119,8 +154,8 @@ public class FlatInstrumentedType extends InstrumentedType.AbstractBase {
     public TypeDescription detach() {
         return new FlatInstrumentedType(levelType,
                 name,
-                modifiers,
                 interfaces,
+                modifiers,
                 fieldDescriptions,
                 methodDescriptions,
                 LoadedTypeInitializer.NoOp.INSTANCE);

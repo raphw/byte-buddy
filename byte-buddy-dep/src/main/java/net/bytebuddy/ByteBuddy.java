@@ -364,21 +364,55 @@ public class ByteBuddy {
                 nonNull(constructorStrategy));
     }
 
-    public <T> DynamicType.Builder<T> redefine(Class<?> levelType) {
+    /**
+     * Creates a dynamic type builder for redefining of the given type. The given class must be found on the
+     * class path. Otherwise, the class file to the redefined class must be located explicitly by providing a locator
+     * by {@link net.bytebuddy.ByteBuddy#redefine(Class, net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator)}.
+     *
+     * @param levelType The type to redefine.
+     * @param <T>       The most specific known type that the created dynamic type represents.
+     * @return A dynamic type builder for this configuration that redefines the given type description.
+     */
+    public <T> DynamicType.Builder<T> redefine(Class<T> levelType) {
         return redefine(new TypeDescription.ForLoadedType(levelType), ClassFileLocator.ForClassPathType.INSTANCE);
     }
 
-    public <T> DynamicType.Builder<T> redefine(Class<?> levelType, ClassFileLocator classFileLocator) {
+    /**
+     * Creates a dynamic type builder for redefining of the given type.
+     *
+     * @param levelType        The type to redefine.
+     * @param classFileLocator A locator for finding a class file that represents a type.
+     * @param <T>              The most specific known type that the created dynamic type represents.
+     * @return A dynamic type builder for this configuration that redefines the given type description.
+     */
+    public <T> DynamicType.Builder<T> redefine(Class<T> levelType, ClassFileLocator classFileLocator) {
         return redefine(new TypeDescription.ForLoadedType(levelType), classFileLocator);
     }
 
+    /**
+     * Creates a dynamic type builder for redefining of the given type. The given class must be found on the
+     * class path. Otherwise, the class file to the redefined class must be located explicitly by providing a locator
+     * by {@link net.bytebuddy.ByteBuddy#redefine(Class, net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator)}.
+     *
+     * @param levelType The type to redefine.
+     * @param <T>       The most specific known type that the created dynamic type represents.
+     * @return A dynamic type builder for this configuration that redefines the given type description.
+     */
     public <T> DynamicType.Builder<T> redefine(TypeDescription levelType) {
         return redefine(levelType, ClassFileLocator.ForClassPathType.INSTANCE);
     }
 
+    /**
+     * Creates a dynamic type builder for redefining of the given type.
+     *
+     * @param levelType        The type to redefine.
+     * @param classFileLocator A locator for finding a class file that represents a type.
+     * @param <T>              The most specific known type that the created dynamic type represents.
+     * @return A dynamic type builder for this configuration that redefines the given type description.
+     */
     public <T> DynamicType.Builder<T> redefine(TypeDescription levelType, ClassFileLocator classFileLocator) {
         return new FlatDynamicTypeBuilder<T>(classFileVersion,
-                namingStrategy,
+                new NamingStrategy.Fixed(levelType.getName()),
                 nonNull(levelType),
                 interfaceTypes,
                 modifiers.resolve(levelType.getModifiers()),

@@ -202,7 +202,11 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 );
         MethodLookupEngine.Finding finding = compiledMethodRegistry.getFinding();
         TypeExtensionDelegate typeExtensionDelegate = new TypeExtensionDelegate(finding.getTypeDescription(), classFileVersion);
-        return new TypeWriter.Builder<T>(finding.getTypeDescription(), compiledMethodRegistry.getLoadedTypeInitializer(), typeExtensionDelegate, classFileVersion)
+        return new TypeWriter.Builder<T>(finding.getTypeDescription(),
+                compiledMethodRegistry.getLoadedTypeInitializer(),
+                typeExtensionDelegate,
+                classFileVersion,
+                TypeWriter.Builder.ClassWriterProvider.CleanCopy.INSTANCE)
                 .build(classVisitorWrapperChain)
                 .attributeType(attributeAppender)
                 .members()

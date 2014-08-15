@@ -37,16 +37,39 @@ public interface NamingStrategy {
      */
     static interface UnnamedType {
 
+        /**
+         * An unnamed type which is to be named by a naming strategy.
+         */
         static class Default implements UnnamedType {
 
+            /**
+             * The unnamed type's super class.
+             */
             private final TypeDescription superClass;
 
+            /**
+             * The unnamed type's interfaces.
+             */
             private final List<TypeDescription> interfaces;
 
+            /**
+             * The unnamed type's modifiers.
+             */
             private final int modifiers;
 
+            /**
+             * The class file version of the unnamed type.
+             */
             private final ClassFileVersion classFileVersion;
 
+            /**
+             * Creates a new unnamed type.
+             *
+             * @param superClass       The unnamed type's super class.
+             * @param interfaces       The unnamed type's interfaces.
+             * @param modifiers        The unnamed type's modifiers.
+             * @param classFileVersion The class file version of the unnamed type.
+             */
             public Default(TypeDescription superClass,
                            List<TypeDescription> interfaces,
                            int modifiers,
@@ -105,6 +128,36 @@ public interface NamingStrategy {
             @Override
             public ClassFileVersion getClassFileVersion() {
                 return classFileVersion;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                Default aDefault = (Default) other;
+                return modifiers == aDefault.modifiers
+                        && classFileVersion.equals(aDefault.classFileVersion)
+                        && interfaces.equals(aDefault.interfaces)
+                        && superClass.equals(aDefault.superClass);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = superClass.hashCode();
+                result = 31 * result + interfaces.hashCode();
+                result = 31 * result + modifiers;
+                result = 31 * result + classFileVersion.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "NamingStrategy.UnnamedType.Default{" +
+                        "superClass=" + superClass +
+                        ", interfaces=" + interfaces +
+                        ", modifiers=" + modifiers +
+                        ", classFileVersion=" + classFileVersion +
+                        '}';
             }
         }
 

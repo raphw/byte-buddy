@@ -363,10 +363,6 @@ public interface TypeWriter<T> {
         InMemberPhase<T> writeMethods(Iterable<? extends MethodDescription> methodDescriptions, MethodPool methodPool);
     }
 
-    static interface InRedefinitionPhase<T> {
-
-    }
-
     /**
      * A builder that creates a new type writer for given arguments.
      *
@@ -395,21 +391,29 @@ public interface TypeWriter<T> {
         private final ClassFileVersion classFileVersion;
 
         /**
+         * A provider for a {@link org.objectweb.asm.ClassWriter}.
+         */
+        private final ClassWriterProvider classWriterProvider;
+
+        /**
          * Creates a new builder.
          *
          * @param instrumentedType       The type description of the instrumented type that is to be created.
          * @param loadedTypeInitializer  The type initializer of the instrumented type that is to be created.
          * @param instrumentationContext An extractable view of the instrumentation context.
          * @param classFileVersion       The class file version this instrumented type is to be written in.
+         * @param classWriterProvider    A provider for a {@link org.objectweb.asm.ClassWriter}.
          */
         public Builder(TypeDescription instrumentedType,
                        LoadedTypeInitializer loadedTypeInitializer,
                        Instrumentation.Context.ExtractableView instrumentationContext,
-                       ClassFileVersion classFileVersion) {
+                       ClassFileVersion classFileVersion,
+                       ClassWriterProvider classWriterProvider) {
             this.instrumentedType = instrumentedType;
             this.loadedTypeInitializer = loadedTypeInitializer;
             this.instrumentationContext = instrumentationContext;
             this.classFileVersion = classFileVersion;
+            this.classWriterProvider = classWriterProvider;
         }
 
         /**
@@ -437,7 +441,7 @@ public interface TypeWriter<T> {
          * @return A new type writer for the given type.
          */
         public InGeneralPhase<T> build(ClassVisitorWrapper classVisitorWrapper) {
-            ClassWriter classWriter = new ClassWriter(ASM_MANUAL_FLAG); //TODO: Inject class reader if available
+            ClassWriter classWriter = classWriterProvider.make();
             ClassVisitor classVisitor = classVisitorWrapper.wrap(classWriter);
             classVisitor.visit(classFileVersion.getVersionNumber(),
                     instrumentedType.getModifiers(),
@@ -560,6 +564,66 @@ public interface TypeWriter<T> {
                         ", classVisitor=" + classVisitor +
                         '}';
             }
+        }
+
+        /**
+         * A provider for creating a {@link org.objectweb.asm.ClassWriter}.
+         */
+        public static interface ClassWriterProvider {
+
+            /**
+             * Creates a new {@link org.objectweb.asm.ClassWriter} without a predefined constant pool.
+             */
+            static enum CleanCopy implements ClassWriterProvider {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public ClassWriter make() {
+                    return new ClassWriter(ASM_MANUAL_FLAG);
+                }
+            }
+
+            /**
+             * Creates a new {@link org.objectweb.asm.ClassWriter} with a constant pool that is predefined by
+             * a given {@link org.objectweb.asm.ClassReader}'s constant pool.
+             */
+            static class ForClassReader implements ClassWriterProvider {
+
+                /**
+                 * The class reader for copying the constant pool from.
+                 */
+                private final ClassReader classReader;
+
+                /**
+                 * Creates a new class writer provider that copies a given class reader's constant pool.
+                 *
+                 * @param classReader The class reader to copy the constant pool from.
+                 */
+                public ForClassReader(ClassReader classReader) {
+                    this.classReader = classReader;
+                }
+
+                @Override
+                public ClassWriter make() {
+                    return new ClassWriter(classReader, ASM_MANUAL_FLAG);
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeWriter.ClassWriterProvider.ForClassReader{classReader=" + classReader + '}';
+                }
+            }
+
+            /**
+             * Creates a new {@link org.objectweb.asm.ClassWriter}.
+             *
+             * @return A new class writer.
+             */
+            ClassWriter make();
         }
     }
 }
