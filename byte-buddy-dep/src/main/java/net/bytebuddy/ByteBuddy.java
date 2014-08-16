@@ -374,7 +374,7 @@ public class ByteBuddy {
      * @return A dynamic type builder for this configuration that redefines the given type description.
      */
     public <T> DynamicType.Builder<T> redefine(Class<T> levelType) {
-        return redefine(new TypeDescription.ForLoadedType(levelType), ClassFileLocator.ForClassPathType.INSTANCE);
+        return redefine(new TypeDescription.ForLoadedType(levelType), ClassFileLocator.Compound.makeDefault());
     }
 
     /**
@@ -399,7 +399,7 @@ public class ByteBuddy {
      * @return A dynamic type builder for this configuration that redefines the given type description.
      */
     public <T> DynamicType.Builder<T> redefine(TypeDescription levelType) {
-        return redefine(levelType, ClassFileLocator.ForClassPathType.INSTANCE);
+        return redefine(levelType, ClassFileLocator.Compound.makeDefault());
     }
 
     /**
@@ -425,7 +425,39 @@ public class ByteBuddy {
                 methodLookupEngineFactory,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
-                nonNull(classFileLocator));
+                nonNull(classFileLocator),
+                FlatDynamicTypeBuilder.InstrumentationTargetFactoryProvider.ForSubclassInstrumentation.INSTANCE);
+    }
+
+    public <T> DynamicType.Builder<T> rebase(Class<T> levelType) {
+        return rebase(new TypeDescription.ForLoadedType(levelType), ClassFileLocator.Compound.makeDefault());
+    }
+
+    public <T> DynamicType.Builder<T> rebase(Class<T> levelType, ClassFileLocator classFileLocator) {
+        return rebase(new TypeDescription.ForLoadedType(levelType), classFileLocator);
+    }
+
+    public <T> DynamicType.Builder<T> rebase(TypeDescription levelType) {
+        return rebase(levelType, ClassFileLocator.Compound.makeDefault());
+    }
+
+    public <T> DynamicType.Builder<T> rebase(TypeDescription levelType, ClassFileLocator classFileLocator) {
+        return new FlatDynamicTypeBuilder<T>(classFileVersion,
+                new NamingStrategy.Fixed(levelType.getName()),
+                nonNull(levelType),
+                interfaceTypes,
+                modifiers.resolve(levelType.getModifiers()),
+                typeAttributeAppender.resolve(new TypeAttributeAppender.ForType(levelType)),
+                ignoredMethods,
+                bridgeMethodResolverFactory,
+                classVisitorWrapperChain,
+                new FieldRegistry.Default(),
+                methodRegistry,
+                methodLookupEngineFactory,
+                defaultFieldAttributeAppenderFactory,
+                defaultMethodAttributeAppenderFactory,
+                nonNull(classFileLocator),
+                FlatDynamicTypeBuilder.InstrumentationTargetFactoryProvider.ForRebaseInstrumentation.INSTANCE);
     }
 
     /**

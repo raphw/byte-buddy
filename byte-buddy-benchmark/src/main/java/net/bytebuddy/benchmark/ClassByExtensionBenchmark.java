@@ -11,8 +11,8 @@ import net.bytebuddy.instrumentation.SuperMethodCall;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.RuntimeType;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.SuperCall;
 import net.sf.cglib.proxy.*;
+import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
-import org.openjdk.jmh.annotations.GenerateMicroBenchmark;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
 
@@ -56,7 +56,7 @@ public class ClassByExtensionBenchmark {
      * @return The created instance, in order to avoid JIT removal.
      * @throws java.lang.Exception If the reflective invocation causes an exception.
      */
-    @GenerateMicroBenchmark
+    @Benchmark
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public ExampleClass benchmarkByteBuddyWithAnnotations() throws Exception {
@@ -77,7 +77,7 @@ public class ClassByExtensionBenchmark {
      * @return The created instance, in order to avoid JIT removal.
      * @throws java.lang.Exception If the reflective invocation causes an exception.
      */
-    @GenerateMicroBenchmark
+    @Benchmark
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public ExampleClass benchmarkByteBuddySpecialized() throws Exception {
@@ -96,7 +96,7 @@ public class ClassByExtensionBenchmark {
      *
      * @return The created instance, in order to avoid JIT removal.
      */
-    @GenerateMicroBenchmark
+    @Benchmark
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public ExampleClass benchmarkCglib() {
@@ -133,7 +133,7 @@ public class ClassByExtensionBenchmark {
      * @return The created instance, in order to avoid JIT removal.
      * @throws java.lang.Exception If the reflective invocation causes an exception.
      */
-    @GenerateMicroBenchmark
+    @Benchmark
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public ExampleClass benchmarkJavassist() throws Exception {

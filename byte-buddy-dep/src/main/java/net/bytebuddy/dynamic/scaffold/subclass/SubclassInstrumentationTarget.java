@@ -102,7 +102,7 @@ public class SubclassInstrumentationTarget extends Instrumentation.Target.Abstra
 
         @Override
         public int hashCode() {
-            return bridgeMethodResolverFactory.hashCode();
+            return 7 * bridgeMethodResolverFactory.hashCode();
         }
 
         @Override

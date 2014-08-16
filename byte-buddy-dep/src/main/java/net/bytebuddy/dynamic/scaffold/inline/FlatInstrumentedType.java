@@ -177,6 +177,11 @@ public class FlatInstrumentedType extends InstrumentedType.AbstractBase {
     }
 
     @Override
+    public ClassLoader getClassLoader() {
+        return levelType.getClassLoader();
+    }
+
+    @Override
     public String getName() {
         return name;
     }

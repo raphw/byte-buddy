@@ -210,6 +210,15 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
     boolean isSealed();
 
     /**
+     * Returns the {@link java.lang.ClassLoader} which is able to locate the byte code representation for
+     * this type description or {@code null} if no such information is available.
+     *
+     * @return The {@link java.lang.ClassLoader} which can locate this type's class file or {@code null} if
+     * no such {@link java.lang.ClassLoader} is available.
+     */
+    ClassLoader getClassLoader();
+
+    /**
      * An abstract base implementation of a type description.
      */
     abstract static class AbstractTypeDescription extends AbstractModifierReviewable implements TypeDescription {
@@ -445,6 +454,11 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
         @Override
         public boolean isSealed() {
             return type.getPackage() != null && type.getPackage().isSealed();
+        }
+
+        @Override
+        public ClassLoader getClassLoader() {
+            return type.getClassLoader();
         }
 
         @Override

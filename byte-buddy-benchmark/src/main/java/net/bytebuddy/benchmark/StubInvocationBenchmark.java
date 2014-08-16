@@ -99,7 +99,7 @@ public class StubInvocationBenchmark {
      *
      * @param blackHole A black hole for avoiding JIT erasure.
      */
-    @GenerateMicroBenchmark
+    @Benchmark
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MICROSECONDS)
     @OperationsPerInvocation(20)
@@ -131,7 +131,7 @@ public class StubInvocationBenchmark {
      *
      * @param blackHole A black hole for avoiding JIT erasure.
      */
-    @GenerateMicroBenchmark
+    @Benchmark
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MICROSECONDS)
     @OperationsPerInvocation(20)
@@ -163,7 +163,7 @@ public class StubInvocationBenchmark {
      *
      * @param blackHole A black hole for avoiding JIT erasure.
      */
-    @GenerateMicroBenchmark
+    @Benchmark
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MICROSECONDS)
     @OperationsPerInvocation(20)
@@ -195,7 +195,7 @@ public class StubInvocationBenchmark {
      *
      * @param blackHole A black hole for avoiding JIT erasure.
      */
-    @GenerateMicroBenchmark
+    @Benchmark
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MICROSECONDS)
     @OperationsPerInvocation(20)

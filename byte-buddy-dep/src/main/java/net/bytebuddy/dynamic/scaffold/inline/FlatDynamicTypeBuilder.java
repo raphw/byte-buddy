@@ -6,13 +6,17 @@ import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.*;
 import net.bytebuddy.dynamic.scaffold.subclass.SubclassInstrumentationTarget;
+import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import org.objectweb.asm.ClassReader;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -28,6 +32,8 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
      * A locator for finding a class file.
      */
     private final ClassFileLocator classFileLocator;
+
+    private final InstrumentationTargetFactoryProvider instrumentationTargetFactoryProvider;
 
     /**
      * Creates a new immutable type builder for enhancing a given class.
@@ -64,7 +70,8 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                                   MethodLookupEngine.Factory methodLookupEngineFactory,
                                   FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                                   MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
-                                  ClassFileLocator classFileLocator) {
+                                  ClassFileLocator classFileLocator,
+                                  InstrumentationTargetFactoryProvider instrumentationTargetFactoryProvider) {
         this(classFileVersion,
                 namingStrategy,
                 levelType,
@@ -80,7 +87,8 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                 defaultMethodAttributeAppenderFactory,
                 Collections.<FieldToken>emptyList(),
                 Collections.<MethodToken>emptyList(),
-                classFileLocator);
+                classFileLocator,
+                instrumentationTargetFactoryProvider);
     }
 
     /**
@@ -124,7 +132,8 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                                   MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
                                   List<FieldToken> fieldTokens,
                                   List<MethodToken> methodTokens,
-                                  ClassFileLocator classFileLocator) {
+                                  ClassFileLocator classFileLocator,
+                                  InstrumentationTargetFactoryProvider instrumentationTargetFactoryProvider) {
         super(classFileVersion,
                 namingStrategy,
                 levelType,
@@ -141,6 +150,7 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                 fieldTokens,
                 methodTokens);
         this.classFileLocator = classFileLocator;
+        this.instrumentationTargetFactoryProvider = instrumentationTargetFactoryProvider;
     }
 
     @Override
@@ -176,7 +186,8 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                 defaultMethodAttributeAppenderFactory,
                 fieldTokens,
                 methodTokens,
-                classFileLocator);
+                classFileLocator,
+                instrumentationTargetFactoryProvider);
     }
 
     @Override
@@ -188,30 +199,47 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                         modifiers,
                         namingStrategy)),
                 methodLookupEngineFactory.make(classFileVersion),
-                new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory),
+                instrumentationTargetFactoryProvider.makeFactory(bridgeMethodResolverFactory),
                 MethodRegistry.Compiled.Entry.Skip.INSTANCE);
         MethodLookupEngine.Finding finding = compiledMethodRegistry.getFinding();
         TypeExtensionDelegate typeExtensionDelegate = new TypeExtensionDelegate(finding.getTypeDescription(), classFileVersion);
-        new TypeWriter.Builder<T>(finding.getTypeDescription(),
-                compiledMethodRegistry.getLoadedTypeInitializer(),
-                typeExtensionDelegate,
-                classFileVersion,
-                TypeWriter.Builder.ClassWriterProvider.CleanCopy.INSTANCE);
+        try {
+            InputStream classFile = exists(classFileLocator.classFileFor(targetType));
+            try {
+                ClassReader classReader = new ClassReader(classFile);
+                new TypeWriter.Builder<T>(finding.getTypeDescription(),
+                        compiledMethodRegistry.getLoadedTypeInitializer(),
+                        typeExtensionDelegate,
+                        classFileVersion,
+                        new TypeWriter.Builder.ClassWriterProvider.ForClassReader(classReader));
+                // TODO: Implement the type's creation.
+            } finally {
+                classFile.close();
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+        return null;
+    }
 
-
-        return null; // TODO: Implement the type's creation.
+    private InputStream exists(InputStream classFile) {
+        if (classFile == null) {
+            throw new IllegalStateException(classFileLocator + " cannot locate a class file for " + targetType);
+        }
+        return classFile;
     }
 
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
                 && super.equals(other)
-                && classFileLocator.equals(((FlatDynamicTypeBuilder<?>) other).classFileLocator);
+                && classFileLocator.equals(((FlatDynamicTypeBuilder<?>) other).classFileLocator)
+                && instrumentationTargetFactoryProvider.equals(((FlatDynamicTypeBuilder<?>) other).instrumentationTargetFactoryProvider);
     }
 
     @Override
     public int hashCode() {
-        return 31 * super.hashCode() + classFileLocator.hashCode();
+        return 31 * (31 * super.hashCode() + classFileLocator.hashCode()) + instrumentationTargetFactoryProvider.hashCode();
     }
 
     @Override
@@ -232,6 +260,32 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                 ", defaultFieldAttributeAppenderFactory=" + defaultFieldAttributeAppenderFactory +
                 ", defaultMethodAttributeAppenderFactory=" + defaultMethodAttributeAppenderFactory +
                 ", classFileLocator=" + classFileLocator +
+                ", instrumentationTargetFactoryProvider=" + instrumentationTargetFactoryProvider +
                 '}';
+    }
+
+    public static interface InstrumentationTargetFactoryProvider {
+
+        static enum ForRebaseInstrumentation implements InstrumentationTargetFactoryProvider {
+
+            INSTANCE;
+
+            @Override
+            public Instrumentation.Target.Factory makeFactory(BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
+                return new RebaseInstrumentationTarget.Factory(bridgeMethodResolverFactory);
+            }
+        }
+
+        static enum ForSubclassInstrumentation implements InstrumentationTargetFactoryProvider {
+
+            INSTANCE;
+
+            @Override
+            public Instrumentation.Target.Factory makeFactory(BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
+                return new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory);
+            }
+        }
+
+        Instrumentation.Target.Factory makeFactory(BridgeMethodResolver.Factory bridgeMethodResolverFactory);
     }
 }

@@ -192,6 +192,11 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
     }
 
     @Override
+    public ClassLoader getClassLoader() {
+        return null;
+    }
+
+    @Override
     public String toString() {
         return "SubclassInstrumentedType{" +
                 "classFileVersion=" + classFileVersion +

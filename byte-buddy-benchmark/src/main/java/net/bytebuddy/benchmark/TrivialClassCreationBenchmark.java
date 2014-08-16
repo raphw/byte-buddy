@@ -6,8 +6,8 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.ClassLoadingStrategy;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.NoOp;
+import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
-import org.openjdk.jmh.annotations.GenerateMicroBenchmark;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
 
@@ -46,7 +46,7 @@ public class TrivialClassCreationBenchmark {
      *
      * @return The created instance, in order to avoid JIT removal.
      */
-    @GenerateMicroBenchmark
+    @Benchmark
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public Class<?> benchmarkByteBuddy() {
@@ -63,7 +63,7 @@ public class TrivialClassCreationBenchmark {
      *
      * @return The created instance, in order to avoid JIT removal.
      */
-    @GenerateMicroBenchmark
+    @Benchmark
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public Class<?> benchmarkCglib() {
@@ -80,7 +80,7 @@ public class TrivialClassCreationBenchmark {
      *
      * @return The created instance, in order to avoid JIT removal.
      */
-    @GenerateMicroBenchmark
+    @Benchmark
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public Class<?> benchmarkJavassist() {
@@ -106,7 +106,7 @@ public class TrivialClassCreationBenchmark {
      *
      * @return The created instance, in order to avoid JIT removal.
      */
-    @GenerateMicroBenchmark
+    @Benchmark
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public Class<?> benchmarkJdkProxy() {

@@ -11,8 +11,8 @@ import net.sf.cglib.proxy.CallbackHelper;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.FixedValue;
 import net.sf.cglib.proxy.NoOp;
+import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
-import org.openjdk.jmh.annotations.GenerateMicroBenchmark;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
 
@@ -101,7 +101,7 @@ public class ClassByImplementationBenchmark {
      * @return The created instance, in order to avoid JIT removal.
      * @throws java.lang.Exception If the reflective invocation causes an exception.
      */
-    @GenerateMicroBenchmark
+    @Benchmark
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public ExampleInterface benchmarkByteBuddy() throws Exception {
@@ -120,7 +120,7 @@ public class ClassByImplementationBenchmark {
      *
      * @return The created instance, in order to avoid JIT removal.
      */
-    @GenerateMicroBenchmark
+    @Benchmark
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public ExampleInterface benchmarkCglib() {
@@ -154,7 +154,7 @@ public class ClassByImplementationBenchmark {
      * @return The created instance, in order to avoid JIT removal.
      * @throws java.lang.Exception If the reflective invocation causes an exception.
      */
-    @GenerateMicroBenchmark
+    @Benchmark
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public ExampleInterface benchmarkJavassist() throws Exception {
@@ -212,7 +212,7 @@ public class ClassByImplementationBenchmark {
      * @return The created instance, in order to avoid JIT removal.
      * @throws java.lang.Exception If the reflective invocation causes an exception.
      */
-    @GenerateMicroBenchmark
+    @Benchmark
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public ExampleInterface benchmarkJdkProxy() throws Exception {
