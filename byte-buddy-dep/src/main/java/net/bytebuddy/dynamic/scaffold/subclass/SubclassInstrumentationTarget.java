@@ -90,8 +90,8 @@ public class SubclassInstrumentationTarget extends Instrumentation.Target.Abstra
         }
 
         @Override
-        public Instrumentation.Target make(MethodLookupEngine.Finding methodLookupEngineFinding) {
-            return new SubclassInstrumentationTarget(methodLookupEngineFinding, bridgeMethodResolverFactory);
+        public Instrumentation.Target make(MethodLookupEngine.Finding finding) {
+            return new SubclassInstrumentationTarget(finding, bridgeMethodResolverFactory);
         }
 
         @Override

@@ -12,7 +12,10 @@ import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
+import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
+import net.bytebuddy.instrumentation.type.auxiliary.TrivialType;
 import org.objectweb.asm.ClassReader;
 
 import java.io.IOException;
@@ -20,6 +23,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 /**
  * A dynamic type builder which enhances a given type without creating a subclass.
@@ -33,7 +37,7 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
      */
     private final ClassFileLocator classFileLocator;
 
-    private final InstrumentationTargetFactoryProvider instrumentationTargetFactoryProvider;
+    private final TargetHandler targetHandler;
 
     /**
      * Creates a new immutable type builder for enhancing a given class.
@@ -71,7 +75,7 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                                   FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                                   MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
                                   ClassFileLocator classFileLocator,
-                                  InstrumentationTargetFactoryProvider instrumentationTargetFactoryProvider) {
+                                  TargetHandler targetHandler) {
         this(classFileVersion,
                 namingStrategy,
                 levelType,
@@ -88,7 +92,7 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                 Collections.<FieldToken>emptyList(),
                 Collections.<MethodToken>emptyList(),
                 classFileLocator,
-                instrumentationTargetFactoryProvider);
+                targetHandler);
     }
 
     /**
@@ -133,7 +137,7 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                                   List<FieldToken> fieldTokens,
                                   List<MethodToken> methodTokens,
                                   ClassFileLocator classFileLocator,
-                                  InstrumentationTargetFactoryProvider instrumentationTargetFactoryProvider) {
+                                  TargetHandler targetHandler) {
         super(classFileVersion,
                 namingStrategy,
                 levelType,
@@ -150,7 +154,7 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                 fieldTokens,
                 methodTokens);
         this.classFileLocator = classFileLocator;
-        this.instrumentationTargetFactoryProvider = instrumentationTargetFactoryProvider;
+        this.targetHandler = targetHandler;
     }
 
     @Override
@@ -187,39 +191,41 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                 fieldTokens,
                 methodTokens,
                 classFileLocator,
-                instrumentationTargetFactoryProvider);
+                targetHandler);
     }
 
     @Override
     public DynamicType.Unloaded<T> make() {
-        MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.compile(
-                applyRecordedMembersTo(new FlatInstrumentedType(classFileVersion,
-                        targetType,
-                        interfaceTypes,
-                        modifiers,
-                        namingStrategy)),
+        InstrumentedType rawInstrumentedType = applyRecordedMembersTo(new FlatInstrumentedType(classFileVersion,
+                targetType,
+                interfaceTypes,
+                modifiers,
+                namingStrategy));
+        TargetHandler.Prepared prepared = targetHandler.prepare(ignoredMethods, classFileVersion, rawInstrumentedType);
+        MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.compile(rawInstrumentedType,
                 methodLookupEngineFactory.make(classFileVersion),
-                instrumentationTargetFactoryProvider.makeFactory(bridgeMethodResolverFactory),
-                MethodRegistry.Compiled.Entry.Skip.INSTANCE);
+                prepared.factory(bridgeMethodResolverFactory),
+                MethodRegistry.Compiled.Entry.Skip.INSTANCE); // TODO: Call redefined method entry
         MethodLookupEngine.Finding finding = compiledMethodRegistry.getFinding();
         TypeExtensionDelegate typeExtensionDelegate = new TypeExtensionDelegate(finding.getTypeDescription(), classFileVersion);
         try {
             InputStream classFile = exists(classFileLocator.classFileFor(targetType));
             try {
                 ClassReader classReader = new ClassReader(classFile);
-                new TypeWriter.Builder<T>(finding.getTypeDescription(),
+                // TODO: Implement the type's creation.
+                return new TypeWriter.Builder<T>(finding.getTypeDescription(),
                         compiledMethodRegistry.getLoadedTypeInitializer(),
                         typeExtensionDelegate,
                         classFileVersion,
-                        new TypeWriter.Builder.ClassWriterProvider.ForClassReader(classReader));
-                // TODO: Implement the type's creation.
+                        new TypeWriter.Builder.ClassWriterProvider.ForClassReader(classReader))
+                        .build(classVisitorWrapperChain)
+                        .make(prepared.auxiliaryTypes());
             } finally {
                 classFile.close();
             }
         } catch (IOException e) {
-            throw new IllegalStateException(e);
+            throw new IllegalStateException("Error when reading class file", e);
         }
-        return null;
     }
 
     private InputStream exists(InputStream classFile) {
@@ -234,12 +240,12 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
         return this == other || !(other == null || getClass() != other.getClass())
                 && super.equals(other)
                 && classFileLocator.equals(((FlatDynamicTypeBuilder<?>) other).classFileLocator)
-                && instrumentationTargetFactoryProvider.equals(((FlatDynamicTypeBuilder<?>) other).instrumentationTargetFactoryProvider);
+                && targetHandler.equals(((FlatDynamicTypeBuilder<?>) other).targetHandler);
     }
 
     @Override
     public int hashCode() {
-        return 31 * (31 * super.hashCode() + classFileLocator.hashCode()) + instrumentationTargetFactoryProvider.hashCode();
+        return 31 * (31 * super.hashCode() + classFileLocator.hashCode()) + targetHandler.hashCode();
     }
 
     @Override
@@ -260,32 +266,119 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                 ", defaultFieldAttributeAppenderFactory=" + defaultFieldAttributeAppenderFactory +
                 ", defaultMethodAttributeAppenderFactory=" + defaultMethodAttributeAppenderFactory +
                 ", classFileLocator=" + classFileLocator +
-                ", instrumentationTargetFactoryProvider=" + instrumentationTargetFactoryProvider +
+                ", targetHandler=" + targetHandler +
                 '}';
     }
 
-    public static interface InstrumentationTargetFactoryProvider {
+    public static interface TargetHandler {
 
-        static enum ForRebaseInstrumentation implements InstrumentationTargetFactoryProvider {
-
-            INSTANCE;
-
-            @Override
-            public Instrumentation.Target.Factory makeFactory(BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
-                return new RebaseInstrumentationTarget.Factory(bridgeMethodResolverFactory);
-            }
-        }
-
-        static enum ForSubclassInstrumentation implements InstrumentationTargetFactoryProvider {
+        static enum ForRebaseInstrumentation implements TargetHandler {
 
             INSTANCE;
 
             @Override
-            public Instrumentation.Target.Factory makeFactory(BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
-                return new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory);
+            public Prepared prepare(MethodMatcher ignoredMethods,
+                                    ClassFileVersion classFileVersion,
+                                    TypeDescription rawInstrumentedType) {
+                return new Prepared.ForRebaseInstrumentation(ignoredMethods,
+                        classFileVersion,
+                        rawInstrumentedType);
             }
         }
 
-        Instrumentation.Target.Factory makeFactory(BridgeMethodResolver.Factory bridgeMethodResolverFactory);
+        static enum ForSubclassInstrumentation implements TargetHandler {
+
+            INSTANCE;
+
+            @Override
+            public Prepared prepare(MethodMatcher ignoredMethods,
+                                    ClassFileVersion classFileVersion,
+                                    TypeDescription rawInstrumentedType) {
+                return Prepared.ForSubclassInstrumentation.INSTANCE;
+            }
+        }
+
+        Prepared prepare(MethodMatcher ignoredMethods,
+                         ClassFileVersion classFileVersion,
+                         TypeDescription rawInstrumentedType);
+
+        static interface Prepared {
+
+            static class ForRebaseInstrumentation implements Prepared {
+
+                private static final String SUFFIX = "trivial";
+
+                private final MethodMatcher ignoredMethods;
+
+                private final DynamicType auxiliaryType;
+
+                public ForRebaseInstrumentation(MethodMatcher ignoredMethods,
+                                                ClassFileVersion classFileVersion,
+                                                TypeDescription rawInstrumentedType) {
+                    this.ignoredMethods = ignoredMethods;
+                    auxiliaryType = TrivialType.INSTANCE.make(trivialTypeNameFor(rawInstrumentedType),
+                            classFileVersion,
+                            AuxiliaryType.MethodAccessorFactory.Illegal.INSTANCE);
+                }
+
+                private static String trivialTypeNameFor(TypeDescription rawInstrumentedType) {
+                    return String.format("%s$%s$%d",
+                            rawInstrumentedType.getInternalName(),
+                            SUFFIX,
+                            new Random().nextInt());
+                }
+
+                @Override
+                public Instrumentation.Target.Factory factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
+                    return new RebaseInstrumentationTarget.Factory(bridgeMethodResolverFactory,
+                            ignoredMethods,
+                            auxiliaryType.getDescription());
+                }
+
+                @Override
+                public DynamicType[] auxiliaryTypes() {
+                    return new DynamicType[]{auxiliaryType};
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && auxiliaryType.equals(((ForRebaseInstrumentation) other).auxiliaryType)
+                            && ignoredMethods.equals(((ForRebaseInstrumentation) other).ignoredMethods);
+                }
+
+                @Override
+                public int hashCode() {
+                    return 31 * ignoredMethods.hashCode() + auxiliaryType.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "FlatDynamicTypeBuilder.TargetHandler.Prepared.ForRebaseInstrumentation{" +
+                            "ignoredMethods=" + ignoredMethods +
+                            ", auxiliaryType=" + auxiliaryType +
+                            '}';
+                }
+            }
+
+            static enum ForSubclassInstrumentation implements Prepared {
+
+                INSTANCE;
+
+                @Override
+                public Instrumentation.Target.Factory factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
+                    return new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory);
+                }
+
+                @Override
+                public DynamicType[] auxiliaryTypes() {
+                    return new DynamicType[0];
+                }
+            }
+
+            Instrumentation.Target.Factory factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory);
+
+            DynamicType[] auxiliaryTypes();
+        }
     }
 }

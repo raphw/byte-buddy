@@ -41,6 +41,16 @@ public interface AuxiliaryType {
      */
     static interface MethodAccessorFactory {
 
+        static enum Illegal implements MethodAccessorFactory {
+
+            INSTANCE;
+
+            @Override
+            public MethodDescription registerAccessorFor(Instrumentation.SpecialMethodInvocation specialMethodInvocation) {
+                throw new IllegalStateException("It is illegal to register an accessor for this type");
+            }
+        }
+
         /**
          * Registers an accessor method for a
          * {@link net.bytebuddy.instrumentation.Instrumentation.SpecialMethodInvocation} which cannot be triggered

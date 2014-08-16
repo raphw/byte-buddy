@@ -426,7 +426,7 @@ public class ByteBuddy {
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
                 nonNull(classFileLocator),
-                FlatDynamicTypeBuilder.InstrumentationTargetFactoryProvider.ForSubclassInstrumentation.INSTANCE);
+                FlatDynamicTypeBuilder.TargetHandler.ForSubclassInstrumentation.INSTANCE);
     }
 
     public <T> DynamicType.Builder<T> rebase(Class<T> levelType) {
@@ -457,7 +457,7 @@ public class ByteBuddy {
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
                 nonNull(classFileLocator),
-                FlatDynamicTypeBuilder.InstrumentationTargetFactoryProvider.ForRebaseInstrumentation.INSTANCE);
+                FlatDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation.INSTANCE);
     }
 
     /**

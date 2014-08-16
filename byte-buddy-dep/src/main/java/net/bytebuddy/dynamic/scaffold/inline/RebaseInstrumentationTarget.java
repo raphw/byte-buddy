@@ -8,6 +8,7 @@ import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.constant.NullConstant;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocation;
+import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 
@@ -121,6 +122,32 @@ public class RebaseInstrumentationTarget extends SubclassInstrumentationTarget {
                     "typeDescription=" + typeDescription +
                     ", methodDescription=" + methodDescription +
                     '}';
+        }
+    }
+
+    public static class Factory implements Instrumentation.Target.Factory {
+
+        private final BridgeMethodResolver.Factory bridgeMethodResolverFactory;
+
+        private final MethodMatcher ignoredMethods;
+
+        private final TypeDescription placeholderType;
+
+        public Factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory,
+                       MethodMatcher ignoredMethods,
+                       TypeDescription placeholderType) {
+            this.bridgeMethodResolverFactory = bridgeMethodResolverFactory;
+            this.ignoredMethods = ignoredMethods;
+            this.placeholderType = placeholderType;
+        }
+
+        @Override
+        public Instrumentation.Target make(MethodLookupEngine.Finding finding) {
+            return new RebaseInstrumentationTarget(finding,
+                    bridgeMethodResolverFactory,
+                    new MethodFlatteningResolver.Default(finding.getTypeDescription().getDeclaredMethods(),
+                            ignoredMethods,
+                            placeholderType));
         }
     }
 }

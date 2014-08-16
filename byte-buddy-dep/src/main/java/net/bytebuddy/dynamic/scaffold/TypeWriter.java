@@ -15,6 +15,10 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.modifier.MethodManifestation;
 import org.objectweb.asm.*;
 
+import java.util.Arrays;
+
+import static net.bytebuddy.utility.ByteBuddyCommons.join;
+
 /**
  * A type writer allows an easier creation of a dynamic type by enforcing the writing order
  * (type, annotations, fields, methods) that is required by ASM in order to successfully creating a Java type.
@@ -34,11 +38,12 @@ public interface TypeWriter<T> {
     static final int ASM_MANUAL_FLAG = 0;
 
     /**
-     * Creates the dynamic type.
+     * Creates the {@link net.bytebuddy.dynamic.DynamicType} which is written by this type writer.
      *
+     * @param auxiliaryType Any additionally registered auxiliary types to register for the created dynamic type.
      * @return An unloaded dynamic type that is the outcome of the type writing
      */
-    DynamicType.Unloaded<T> make();
+    DynamicType.Unloaded<T> make(DynamicType... auxiliaryType);
 
     /**
      * An field pool that allows a lookup for how to implement a field.
@@ -561,12 +566,12 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            public DynamicType.Unloaded<S> make() {
+            public DynamicType.Unloaded<S> make(DynamicType... dynamicType) {
                 classVisitor.visitEnd();
                 return new DynamicType.Default.Unloaded<S>(instrumentedType,
                         classWriter.toByteArray(),
                         loadedTypeInitializer,
-                        instrumentationContext.getRegisteredAuxiliaryTypes());
+                        join(instrumentationContext.getRegisteredAuxiliaryTypes(), Arrays.asList(dynamicType)));
             }
 
             @Override

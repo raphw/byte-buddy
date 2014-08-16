@@ -342,11 +342,10 @@ public interface Instrumentation {
              * Creates an {@link net.bytebuddy.instrumentation.Instrumentation.Target} for the given instrumented
              * type's description.
              *
-             * @param methodLookupEngineFinding The finding of a method lookup engine on analyzing the
-             *                                  instrumented type.
+             * @param finding The finding of a method lookup engine on analyzing the instrumented type.
              * @return An {@link net.bytebuddy.instrumentation.Instrumentation.Target} for the given type description.
              */
-            Target make(MethodLookupEngine.Finding methodLookupEngineFinding);
+            Target make(MethodLookupEngine.Finding finding);
         }
 
         /**
