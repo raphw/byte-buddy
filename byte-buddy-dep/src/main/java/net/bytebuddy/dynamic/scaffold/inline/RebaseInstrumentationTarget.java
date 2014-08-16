@@ -13,23 +13,23 @@ import org.objectweb.asm.MethodVisitor;
 
 public class RebaseInstrumentationTarget extends SubclassInstrumentationTarget {
 
-    protected final MethodRedefinitionResolver methodRedefinitionResolver;
+    protected final MethodFlatteningResolver methodFlatteningResolver;
 
     protected RebaseInstrumentationTarget(MethodLookupEngine.Finding finding,
                                           BridgeMethodResolver.Factory bridgeMethodResolverFactory,
-                                          MethodRedefinitionResolver methodRedefinitionResolver) {
+                                          MethodFlatteningResolver methodFlatteningResolver) {
         super(finding, bridgeMethodResolverFactory);
-        this.methodRedefinitionResolver = methodRedefinitionResolver;
+        this.methodFlatteningResolver = methodFlatteningResolver;
     }
 
     @Override
     protected Instrumentation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription) {
         return methodDescription.getDeclaringType().equals(typeDescription)
-                ? invocationOf(methodRedefinitionResolver.resolve(methodDescription))
+                ? invocationOf(methodFlatteningResolver.resolve(methodDescription))
                 : super.invokeSuper(methodDescription);
     }
 
-    private Instrumentation.SpecialMethodInvocation invocationOf(MethodRedefinitionResolver.Resolution resolution) {
+    private Instrumentation.SpecialMethodInvocation invocationOf(MethodFlatteningResolver.Resolution resolution) {
         if (!resolution.isRedefined()) {
             throw new IllegalArgumentException("Cannot invoke non-redefined method " + resolution.getResolvedMethod());
         }
@@ -42,12 +42,12 @@ public class RebaseInstrumentationTarget extends SubclassInstrumentationTarget {
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
                 && super.equals(other)
-                && methodRedefinitionResolver.equals(((RebaseInstrumentationTarget) other).methodRedefinitionResolver);
+                && methodFlatteningResolver.equals(((RebaseInstrumentationTarget) other).methodFlatteningResolver);
     }
 
     @Override
     public int hashCode() {
-        return 31 * super.hashCode() + methodRedefinitionResolver.hashCode();
+        return 31 * super.hashCode() + methodFlatteningResolver.hashCode();
     }
 
     @Override
@@ -56,7 +56,7 @@ public class RebaseInstrumentationTarget extends SubclassInstrumentationTarget {
                 "typeDescription=" + typeDescription +
                 ", defaultMethods=" + defaultMethods +
                 ", bridgeMethodResolver=" + bridgeMethodResolver +
-                ", methodRedefinitionResolver=" + methodRedefinitionResolver +
+                ", methodRedefinitionResolver=" + methodFlatteningResolver +
                 '}';
     }
 

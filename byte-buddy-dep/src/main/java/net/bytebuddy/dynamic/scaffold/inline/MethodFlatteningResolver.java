@@ -11,11 +11,11 @@ import java.util.Map;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
-public interface MethodRedefinitionResolver {
+public interface MethodFlatteningResolver {
 
     static final int REDEFINE_METHOD_MODIFIER = Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
 
-    static class Default implements MethodRedefinitionResolver {
+    static class Default implements MethodFlatteningResolver {
 
         private final Map<MethodDescription, Resolution> resolutions;
 
@@ -62,7 +62,7 @@ public interface MethodRedefinitionResolver {
 
         @Override
         public String toString() {
-            return "MethodRedefinitionResolver.Default{resolutions=" + resolutions + '}';
+            return "MethodFlatteningResolver.Default{resolutions=" + resolutions + '}';
         }
     }
 
@@ -99,7 +99,7 @@ public interface MethodRedefinitionResolver {
 
             @Override
             public String toString() {
-                return "MethodRedefinitionResolver.Resolution.Preserved{methodDescription=" + methodDescription + '}';
+                return "MethodFlatteningResolver.Resolution.Preserved{methodDescription=" + methodDescription + '}';
             }
         }
 
@@ -134,7 +134,7 @@ public interface MethodRedefinitionResolver {
 
             @Override
             public String toString() {
-                return "MethodRedefinitionResolver.Resolution.Redefined{methodDescription=" + methodDescription + '}';
+                return "MethodFlatteningResolver.Resolution.Redefined{methodDescription=" + methodDescription + '}';
             }
         }
 
