@@ -361,6 +361,13 @@ public interface TypeWriter<T> {
          * @return This type writer.
          */
         InMemberPhase<T> writeMethods(Iterable<? extends MethodDescription> methodDescriptions, MethodPool methodPool);
+
+        InMemberPhase<T> writeRaw(RawInput rawInput);
+
+        static interface RawInput {
+
+            void apply(ClassVisitor classVisitor);
+        }
     }
 
     /**
@@ -544,6 +551,12 @@ public interface TypeWriter<T> {
                         methodVisitor.visitEnd();
                     }
                 }
+                return this;
+            }
+
+            @Override
+            public InMemberPhase<S> writeRaw(RawInput rawInput) {
+                rawInput.apply(classVisitor);
                 return this;
             }
 

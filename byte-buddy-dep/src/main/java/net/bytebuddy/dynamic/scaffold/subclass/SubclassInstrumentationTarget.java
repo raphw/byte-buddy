@@ -21,7 +21,7 @@ public class SubclassInstrumentationTarget extends Instrumentation.Target.Abstra
      * The constructor of the super type, mapped by the constructor parameters of each constructor which is
      * sufficient for a constructor's unique identification.
      */
-    private final Map<TypeList, MethodDescription> superConstructors;
+    protected final Map<TypeList, MethodDescription> superConstructors;
 
     /**
      * Creates a new subclass instrumentation target.

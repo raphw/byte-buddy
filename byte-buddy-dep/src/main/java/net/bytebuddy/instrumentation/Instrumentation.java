@@ -152,10 +152,12 @@ public interface Instrumentation {
              * The method description that is represented by this legal special method invocation.
              */
             private final MethodDescription methodDescription;
+
             /**
              * The type description that is represented by this legal special method invocation.
              */
             private final TypeDescription typeDescription;
+
             /**
              * A stack manipulation representing the method's invocation on the type description.
              */
