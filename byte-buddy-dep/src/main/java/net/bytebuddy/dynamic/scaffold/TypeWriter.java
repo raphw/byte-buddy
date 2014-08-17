@@ -189,6 +189,11 @@ public interface TypeWriter<T> {
          */
         static interface Entry {
 
+            static interface Factory {
+
+                Entry compile(Instrumentation.Target instrumentationTarget);
+            }
+
             /**
              * Determines if this entry requires a method to be defined for a given instrumentation.
              *
@@ -219,7 +224,7 @@ public interface TypeWriter<T> {
             /**
              * A skip entry that instructs to ignore a method.
              */
-            static enum Skip implements Entry {
+            static enum Skip implements Entry, Factory {
 
                 /**
                  * The singleton instance.
@@ -239,6 +244,11 @@ public interface TypeWriter<T> {
                 @Override
                 public MethodAttributeAppender getAttributeAppender() {
                     throw new IllegalStateException();
+                }
+
+                @Override
+                public Entry compile(Instrumentation.Target instrumentationTarget) {
+                    return this;
                 }
             }
 
@@ -355,7 +365,8 @@ public interface TypeWriter<T> {
          * @param fieldPool         The field pool that is queried for finding annotations for written fields.
          * @return This type writer.
          */
-        InMemberPhase<T> writeFields(Iterable<? extends FieldDescription> fieldDescriptions, FieldPool fieldPool);
+        InMemberPhase<T> writeFields(Iterable<? extends FieldDescription> fieldDescriptions,
+                                     FieldPool fieldPool);
 
         /**
          * Adds a number of methods as described by the argument to the type that is created by this type
@@ -365,7 +376,8 @@ public interface TypeWriter<T> {
          * @param methodPool         The method pool that is queried for creating implementations for these methods.
          * @return This type writer.
          */
-        InMemberPhase<T> writeMethods(Iterable<? extends MethodDescription> methodDescriptions, MethodPool methodPool);
+        InMemberPhase<T> writeMethods(Iterable<? extends MethodDescription> methodDescriptions,
+                                      MethodPool methodPool);
 
         InMemberPhase<T> writeRaw(RawInput rawInput);
 

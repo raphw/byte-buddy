@@ -45,6 +45,8 @@ public class MethodRegistryDefaultTest {
     @Mock
     private MethodDescription unknownMethod, knownMethod, instrumentationAppendedMethod;
     @Mock
+    private MethodRegistry.Compiled.Entry.Factory fallbackFactory;
+    @Mock
     private MethodRegistry.Compiled.Entry fallback;
     @Mock
     private MethodRegistry.LatentMethodMatcher latentMatchesKnownMethod;
@@ -67,6 +69,7 @@ public class MethodRegistryDefaultTest {
 
     @Before
     public void setUp() throws Exception {
+        when(fallbackFactory.compile(any(Instrumentation.Target.class))).thenReturn(fallback);
         when(latentMatchesKnownMethod.manifest(any(TypeDescription.class))).thenReturn(matchesKnownMethod);
         when(matchesKnownMethod.matches(knownMethod)).thenReturn(true);
         when(basicInstrumentedType.getDeclaredMethods()).thenReturn(basicMethodList);
@@ -107,7 +110,8 @@ public class MethodRegistryDefaultTest {
     @Test
     public void testFallbackReturnedForEmptyRegistry() throws Exception {
         assertThat(new MethodRegistry.Default()
-                        .compile(basicInstrumentedType, methodLookupEngine, instrumentationTargetFactory, fallback)
+                        .prepare(basicInstrumentedType)
+                        .compile(instrumentationTargetFactory, methodLookupEngine, fallbackFactory)
                         .target(unknownMethod),
                 is(fallback)
         );
@@ -117,7 +121,8 @@ public class MethodRegistryDefaultTest {
     public void testSingleEntryRegistry() throws Exception {
         MethodRegistry.Compiled compiled = new MethodRegistry.Default()
                 .prepend(latentMatchesKnownMethod, simpleInstrumentation, simpleAttributeAppenderFactory)
-                .compile(basicInstrumentedType, methodLookupEngine, instrumentationTargetFactory, fallback);
+                .prepare(basicInstrumentedType)
+                .compile(instrumentationTargetFactory, methodLookupEngine, fallbackFactory);
         assertThat(compiled.target(knownMethod).isDefineMethod(), is(true));
         assertThat(compiled.target(knownMethod).getAttributeAppender(), is(simpleAttributeAppender));
         assertThat(compiled.target(knownMethod).getByteCodeAppender(), is(simpleByteCodeAppender));
@@ -127,6 +132,8 @@ public class MethodRegistryDefaultTest {
         verifyNoMoreInteractions(simpleInstrumentation);
         verify(simpleAttributeAppenderFactory).make(basicInstrumentedType);
         verifyNoMoreInteractions(simpleAttributeAppenderFactory);
+        verify(fallbackFactory).compile(basicInstrumentationTarget);
+        verifyNoMoreInteractions(fallbackFactory);
     }
 
     @Test
@@ -134,7 +141,8 @@ public class MethodRegistryDefaultTest {
         MethodRegistry.Compiled compiled = new MethodRegistry.Default()
                 .prepend(latentMatchesKnownMethod, simpleInstrumentation, simpleAttributeAppenderFactory)
                 .prepend(latentMatchesKnownMethod, simpleInstrumentation, simpleAttributeAppenderFactory)
-                .compile(basicInstrumentedType, methodLookupEngine, instrumentationTargetFactory, fallback);
+                .prepare(basicInstrumentedType)
+                .compile(instrumentationTargetFactory, methodLookupEngine, fallbackFactory);
         assertThat(compiled.target(knownMethod).isDefineMethod(), is(true));
         assertThat(compiled.target(knownMethod).getAttributeAppender(), is(simpleAttributeAppender));
         assertThat(compiled.target(knownMethod).getByteCodeAppender(), is(simpleByteCodeAppender));
@@ -144,6 +152,8 @@ public class MethodRegistryDefaultTest {
         verifyNoMoreInteractions(simpleInstrumentation);
         verify(simpleAttributeAppenderFactory, times(2)).make(basicInstrumentedType);
         verifyNoMoreInteractions(simpleAttributeAppenderFactory);
+        verify(fallbackFactory).compile(basicInstrumentationTarget);
+        verifyNoMoreInteractions(fallbackFactory);
     }
 
     @Test
@@ -151,7 +161,8 @@ public class MethodRegistryDefaultTest {
         MethodRegistry.Compiled compiled = new MethodRegistry.Default()
                 .prepend(latentMatchesKnownMethod, otherInstrumentation, otherAttributeAppenderFactory)
                 .prepend(latentMatchesKnownMethod, simpleInstrumentation, simpleAttributeAppenderFactory)
-                .compile(basicInstrumentedType, methodLookupEngine, instrumentationTargetFactory, fallback);
+                .prepare(basicInstrumentedType)
+                .compile(instrumentationTargetFactory, methodLookupEngine, fallbackFactory);
         assertThat(compiled.target(knownMethod).isDefineMethod(), is(true));
         assertThat(compiled.target(knownMethod).getAttributeAppender(), is(simpleAttributeAppender));
         assertThat(compiled.target(knownMethod).getByteCodeAppender(), is(simpleByteCodeAppender));
@@ -166,6 +177,8 @@ public class MethodRegistryDefaultTest {
         verify(otherAttributeAppenderFactory).make(basicInstrumentedType);
         verifyNoMoreInteractions(otherInstrumentation);
         verifyNoMoreInteractions(otherAttributeAppenderFactory);
+        verify(fallbackFactory).compile(basicInstrumentationTarget);
+        verifyNoMoreInteractions(fallbackFactory);
     }
 
     @Test
@@ -173,7 +186,8 @@ public class MethodRegistryDefaultTest {
         MethodRegistry.Compiled compiled = new MethodRegistry.Default()
                 .append(latentMatchesKnownMethod, simpleInstrumentation, simpleAttributeAppenderFactory)
                 .append(latentMatchesKnownMethod, otherInstrumentation, otherAttributeAppenderFactory)
-                .compile(basicInstrumentedType, methodLookupEngine, instrumentationTargetFactory, fallback);
+                .prepare(basicInstrumentedType)
+                .compile(instrumentationTargetFactory, methodLookupEngine, fallbackFactory);
         assertThat(compiled.target(knownMethod).isDefineMethod(), is(true));
         assertThat(compiled.target(knownMethod).getAttributeAppender(), is(simpleAttributeAppender));
         assertThat(compiled.target(knownMethod).getByteCodeAppender(), is(simpleByteCodeAppender));
@@ -188,13 +202,16 @@ public class MethodRegistryDefaultTest {
         verify(otherAttributeAppenderFactory).make(basicInstrumentedType);
         verifyNoMoreInteractions(otherInstrumentation);
         verifyNoMoreInteractions(otherAttributeAppenderFactory);
+        verify(fallbackFactory).compile(basicInstrumentationTarget);
+        verifyNoMoreInteractions(fallbackFactory);
     }
 
     @Test
     public void testAppendedMethodsAreHandledByAppendingInstrumentation() throws Exception {
         MethodRegistry.Compiled compiled = new MethodRegistry.Default()
                 .append(latentMatchesKnownMethod, extendingInstrumentation, simpleAttributeAppenderFactory)
-                .compile(basicInstrumentedType, methodLookupEngine, instrumentationTargetFactory, fallback);
+                .prepare(basicInstrumentedType)
+                .compile(instrumentationTargetFactory, methodLookupEngine, fallbackFactory);
         assertThat(compiled.target(knownMethod).isDefineMethod(), is(true));
         assertThat(compiled.target(knownMethod).getAttributeAppender(), is(simpleAttributeAppender));
         assertThat(compiled.target(knownMethod).getByteCodeAppender(), is(simpleByteCodeAppender));
@@ -210,8 +227,9 @@ public class MethodRegistryDefaultTest {
         assertThat(compiled.target(instrumentationAppendedMethod).getAttributeAppender(),
                 is((MethodAttributeAppender) MethodAttributeAppender.NoOp.INSTANCE));
         verify(croppedMethodList, times(7) /* for 7 calls to compiled.target */).filter(any(MethodMatcher.class));
+        verify(fallbackFactory).compile(extendedInstrumentationTarget);
+        verifyNoMoreInteractions(fallbackFactory);
     }
-
 
     @Test
     public void testHashCodeEquals() throws Exception {
@@ -225,17 +243,34 @@ public class MethodRegistryDefaultTest {
 
     @Test
     public void testCompiledHashCodeEquals() throws Exception {
-        assertThat(new MethodRegistry.Default().compile(basicInstrumentedType, methodLookupEngine, instrumentationTargetFactory, fallback).hashCode(),
-                is(new MethodRegistry.Default().compile(basicInstrumentedType, methodLookupEngine, instrumentationTargetFactory, fallback).hashCode()));
-        assertThat(new MethodRegistry.Default().compile(basicInstrumentedType, methodLookupEngine, instrumentationTargetFactory, fallback),
-                is(new MethodRegistry.Default().compile(basicInstrumentedType, methodLookupEngine, instrumentationTargetFactory, fallback)));
-        assertThat(new MethodRegistry.Default().append(latentMatchesKnownMethod, simpleInstrumentation, simpleAttributeAppenderFactory)
-                        .compile(basicInstrumentedType, methodLookupEngine, instrumentationTargetFactory, fallback).hashCode(),
-                not(is(new MethodRegistry.Default().hashCode()))
-        );
-        assertThat(new MethodRegistry.Default().append(latentMatchesKnownMethod, simpleInstrumentation, simpleAttributeAppenderFactory)
-                        .compile(basicInstrumentedType, methodLookupEngine, instrumentationTargetFactory, fallback),
-                not(is(new MethodRegistry.Default().compile(basicInstrumentedType, methodLookupEngine, instrumentationTargetFactory, fallback)))
+        assertThat(new MethodRegistry.Default()
+                        .prepare(basicInstrumentedType)
+                        .compile(instrumentationTargetFactory, methodLookupEngine, fallbackFactory)
+                        .hashCode(),
+                is(new MethodRegistry.Default()
+                        .prepare(basicInstrumentedType)
+                        .compile(instrumentationTargetFactory, methodLookupEngine, fallbackFactory)
+                        .hashCode()));
+        assertThat(new MethodRegistry.Default()
+                        .prepare(basicInstrumentedType)
+                        .compile(instrumentationTargetFactory, methodLookupEngine, fallbackFactory),
+                is(new MethodRegistry.Default()
+                        .prepare(basicInstrumentedType)
+                        .compile(instrumentationTargetFactory, methodLookupEngine, fallbackFactory)));
+        assertThat(new MethodRegistry.Default()
+                        .append(latentMatchesKnownMethod, simpleInstrumentation, simpleAttributeAppenderFactory)
+                        .prepare(basicInstrumentedType)
+                        .compile(instrumentationTargetFactory, methodLookupEngine, fallbackFactory)
+                        .hashCode(),
+                not(is(new MethodRegistry.Default()
+                        .hashCode())));
+        assertThat(new MethodRegistry.Default()
+                        .append(latentMatchesKnownMethod, simpleInstrumentation, simpleAttributeAppenderFactory)
+                        .prepare(basicInstrumentedType)
+                        .compile(instrumentationTargetFactory, methodLookupEngine, fallbackFactory),
+                not(is(new MethodRegistry.Default()
+                        .prepare(basicInstrumentedType)
+                        .compile(instrumentationTargetFactory, methodLookupEngine, fallbackFactory)))
         );
     }
 }

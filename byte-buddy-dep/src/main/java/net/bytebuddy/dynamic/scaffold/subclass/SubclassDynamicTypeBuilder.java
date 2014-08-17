@@ -187,37 +187,36 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public DynamicType.Unloaded<T> make() {
-        MethodRegistry.Compiled compiledMethodRegistry = constructorStrategy
+        MethodRegistry.Prepared preparedMethodRegistry = constructorStrategy
                 .inject(methodRegistry, defaultMethodAttributeAppenderFactory)
-                .compile(
+                .prepare(
                         applyConstructorStrategy(
                                 applyRecordedMembersTo(new SubclassInstrumentedType(classFileVersion,
                                         targetType,
                                         interfaceTypes,
                                         modifiers,
-                                        namingStrategy))),
-                        methodLookupEngineFactory.make(classFileVersion),
-                        new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory),
-                        MethodRegistry.Compiled.Entry.Skip.INSTANCE
+                                        namingStrategy)))
                 );
-        MethodLookupEngine.Finding finding = compiledMethodRegistry.getFinding();
-        TypeExtensionDelegate typeExtensionDelegate = new TypeExtensionDelegate(finding.getTypeDescription(), classFileVersion);
-        return new TypeWriter.Builder<T>(finding.getTypeDescription(),
-                compiledMethodRegistry.getLoadedTypeInitializer(),
+        MethodRegistry.Compiled compiledMethodRegistry = preparedMethodRegistry.compile(new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory),
+                methodLookupEngineFactory.make(classFileVersion),
+                MethodRegistry.Compiled.Entry.Skip.INSTANCE);
+        TypeExtensionDelegate typeExtensionDelegate = new TypeExtensionDelegate(preparedMethodRegistry.getInstrumentedType(), classFileVersion);
+        return new TypeWriter.Builder<T>(preparedMethodRegistry.getInstrumentedType(),
+                preparedMethodRegistry.getLoadedTypeInitializer(),
                 typeExtensionDelegate,
                 classFileVersion,
                 TypeWriter.Builder.ClassWriterProvider.CleanCopy.INSTANCE)
                 .build(classVisitorWrapperChain)
                 .attributeType(attributeAppender)
                 .members()
-                .writeFields(finding.getTypeDescription().getDeclaredFields(),
-                        fieldRegistry.compile(finding.getTypeDescription(), TypeWriter.FieldPool.Entry.NoOp.INSTANCE))
-                .writeMethods(finding.getInvokableMethods()
+                .writeFields(preparedMethodRegistry.getInstrumentedType().getDeclaredFields(),
+                        fieldRegistry.compile(preparedMethodRegistry.getInstrumentedType(), TypeWriter.FieldPool.Entry.NoOp.INSTANCE))
+                .writeMethods(compiledMethodRegistry.getFinding().getInvokableMethods()
                                 .filter(isOverridable()
                                         .and(not(ignoredMethods))
-                                        .or(isDeclaredBy(finding.getTypeDescription()))),
+                                        .or(isDeclaredBy(preparedMethodRegistry.getInstrumentedType()))),
                         compiledMethodRegistry)
-                .writeMethods(Collections.singletonList(MethodDescription.Latent.typeInitializerOf(finding.getTypeDescription())),
+                .writeMethods(Collections.singletonList(MethodDescription.Latent.typeInitializerOf(preparedMethodRegistry.getInstrumentedType())),
                         typeExtensionDelegate.wrapForTypeInitializerInterception(compiledMethodRegistry))
                 .writeMethods(typeExtensionDelegate.getRegisteredAccessors(), typeExtensionDelegate)
                 .writeFields(typeExtensionDelegate.getRegisteredFieldCaches(), typeExtensionDelegate)

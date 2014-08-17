@@ -10,13 +10,18 @@ import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
+import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
+import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
+import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
+import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess;
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
-import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
 import net.bytebuddy.instrumentation.type.auxiliary.TrivialType;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.MethodVisitor;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -196,35 +201,36 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
 
     @Override
     public DynamicType.Unloaded<T> make() {
-        InstrumentedType rawInstrumentedType = applyRecordedMembersTo(new FlatInstrumentedType(classFileVersion,
-                targetType,
-                interfaceTypes,
-                modifiers,
-                namingStrategy));
-        TargetHandler.Prepared prepared = targetHandler.prepare(ignoredMethods, classFileVersion, rawInstrumentedType);
-        MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.compile(rawInstrumentedType,
+        MethodRegistry.Prepared preparedMethodRegistry = methodRegistry.prepare(
+                applyRecordedMembersTo(new FlatInstrumentedType(classFileVersion,
+                        targetType,
+                        interfaceTypes,
+                        modifiers,
+                        namingStrategy)));
+        TargetHandler.Prepared preparedTargetHandler = targetHandler.prepare(ignoredMethods,
+                classFileVersion,
+                preparedMethodRegistry.getInstrumentedType());
+        MethodRegistry.Compiled compiledMethodRegistry = preparedMethodRegistry.compile(preparedTargetHandler.factory(bridgeMethodResolverFactory),
                 methodLookupEngineFactory.make(classFileVersion),
-                prepared.factory(bridgeMethodResolverFactory),
-                MethodRegistry.Compiled.Entry.Skip.INSTANCE); // TODO: Call redefined method entry
-        MethodLookupEngine.Finding finding = compiledMethodRegistry.getFinding();
-        TypeExtensionDelegate typeExtensionDelegate = new TypeExtensionDelegate(finding.getTypeDescription(), classFileVersion);
+                MethodFlatteningDelegation.Factory.INSTANCE);
+        TypeExtensionDelegate typeExtensionDelegate = new TypeExtensionDelegate(preparedMethodRegistry.getInstrumentedType(), classFileVersion);
         try {
             InputStream classFile = exists(classFileLocator.classFileFor(targetType));
             try {
                 ClassReader classReader = new ClassReader(classFile);
                 // TODO: Implement the type's creation.
-                return new TypeWriter.Builder<T>(finding.getTypeDescription(),
-                        compiledMethodRegistry.getLoadedTypeInitializer(),
+                return new TypeWriter.Builder<T>(preparedMethodRegistry.getInstrumentedType(),
+                        preparedMethodRegistry.getLoadedTypeInitializer(),
                         typeExtensionDelegate,
                         classFileVersion,
                         new TypeWriter.Builder.ClassWriterProvider.ForClassReader(classReader))
                         .build(classVisitorWrapperChain)
-                        .make(prepared.auxiliaryTypes());
+                        .make(preparedTargetHandler.auxiliaryTypes());
             } finally {
                 classFile.close();
             }
         } catch (IOException e) {
-            throw new IllegalStateException("Error when reading class file", e);
+            throw new IllegalStateException("Error while reading class file", e);
         }
     }
 
@@ -270,6 +276,74 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                 '}';
     }
 
+    private static class MethodFlatteningDelegation implements TypeWriter.MethodPool.Entry, ByteCodeAppender {
+
+        private static enum Factory implements TypeWriter.MethodPool.Entry.Factory {
+
+            INSTANCE;
+
+            @Override
+            public TypeWriter.MethodPool.Entry compile(Instrumentation.Target instrumentationTarget) {
+                return new MethodFlatteningDelegation(instrumentationTarget);
+            }
+        }
+
+        private final Instrumentation.Target instrumentationTarget;
+
+        private MethodFlatteningDelegation(Instrumentation.Target instrumentationTarget) {
+            this.instrumentationTarget = instrumentationTarget;
+        }
+
+        @Override
+        public boolean isDefineMethod() {
+            return true;
+        }
+
+        @Override
+        public ByteCodeAppender getByteCodeAppender() {
+            return this;
+        }
+
+        @Override
+        public MethodAttributeAppender getAttributeAppender() {
+            return MethodAttributeAppender.ForInstrumentedMethod.INSTANCE;
+        }
+
+        @Override
+        public boolean appendsCode() {
+            return true;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor,
+                          Instrumentation.Context instrumentationContext,
+                          MethodDescription instrumentedMethod) {
+            return new Size(new StackManipulation.Compound(
+                    MethodVariableAccess.loadArguments(instrumentedMethod),
+                    instrumentationTarget.invokeSuper(instrumentedMethod, Instrumentation.Target.MethodLookup.Default.EXACT),
+                    MethodReturn.returning(instrumentedMethod.getReturnType())
+            ).apply(methodVisitor, instrumentationContext).getMaximalSize(), instrumentedMethod.getStackSize());
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            MethodFlatteningDelegation that = (MethodFlatteningDelegation) other;
+            return instrumentationTarget.equals(that.instrumentationTarget);
+        }
+
+        @Override
+        public int hashCode() {
+            return instrumentationTarget.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "FlatDynamicTypeBuilder.MethodFlatteningDelegation{instrumentationTarget=" + instrumentationTarget + '}';
+        }
+    }
+
     public static interface TargetHandler {
 
         static enum ForRebaseInstrumentation implements TargetHandler {
@@ -279,10 +353,10 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
             @Override
             public Prepared prepare(MethodMatcher ignoredMethods,
                                     ClassFileVersion classFileVersion,
-                                    TypeDescription rawInstrumentedType) {
+                                    TypeDescription instrumentedType) {
                 return new Prepared.ForRebaseInstrumentation(ignoredMethods,
                         classFileVersion,
-                        rawInstrumentedType);
+                        instrumentedType);
             }
         }
 
@@ -293,14 +367,14 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
             @Override
             public Prepared prepare(MethodMatcher ignoredMethods,
                                     ClassFileVersion classFileVersion,
-                                    TypeDescription rawInstrumentedType) {
+                                    TypeDescription instrumentedType) {
                 return Prepared.ForSubclassInstrumentation.INSTANCE;
             }
         }
 
         Prepared prepare(MethodMatcher ignoredMethods,
                          ClassFileVersion classFileVersion,
-                         TypeDescription rawInstrumentedType);
+                         TypeDescription instrumentedType);
 
         static interface Prepared {
 
@@ -314,9 +388,9 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
 
                 public ForRebaseInstrumentation(MethodMatcher ignoredMethods,
                                                 ClassFileVersion classFileVersion,
-                                                TypeDescription rawInstrumentedType) {
+                                                TypeDescription instrumentedType) {
                     this.ignoredMethods = ignoredMethods;
-                    auxiliaryType = TrivialType.INSTANCE.make(trivialTypeNameFor(rawInstrumentedType),
+                    auxiliaryType = TrivialType.INSTANCE.make(trivialTypeNameFor(instrumentedType),
                             classFileVersion,
                             AuxiliaryType.MethodAccessorFactory.Illegal.INSTANCE);
                 }
