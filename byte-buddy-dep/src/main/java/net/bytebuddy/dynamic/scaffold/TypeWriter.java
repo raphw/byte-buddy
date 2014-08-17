@@ -468,7 +468,7 @@ public interface TypeWriter<T> {
             ClassWriter classWriter = classWriterProvider.make();
             ClassVisitor classVisitor = classVisitorWrapper.wrap(classWriter);
             classVisitor.visit(classFileVersion.getVersionNumber(),
-                    instrumentedType.getModifiers(),
+                    instrumentedType.getActualModifiers(),
                     instrumentedType.getInternalName(),
                     instrumentedType.getGenericSignature(),
                     instrumentedType.getSupertype() == null ? null : instrumentedType.getSupertype().getInternalName(),

@@ -6,6 +6,7 @@ import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import java.lang.annotation.Annotation;
@@ -130,6 +131,8 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
      */
     TypeDescription getEnclosingClass();
 
+    int getActualModifiers();
+
     /**
      * Returns the simple internalName of this type.
      *
@@ -231,6 +234,17 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
         @Override
         public String getInternalName() {
             return getName().replace('.', '/');
+        }
+
+        @Override
+        public int getActualModifiers() {
+            if (isPrivate()) {
+                return getModifiers() & ~Opcodes.ACC_PRIVATE;
+            } else if (isProtected()) {
+                return getModifiers() & ~Opcodes.ACC_PROTECTED | Opcodes.ACC_PUBLIC;
+            } else {
+                return getModifiers();
+            }
         }
 
         @Override
