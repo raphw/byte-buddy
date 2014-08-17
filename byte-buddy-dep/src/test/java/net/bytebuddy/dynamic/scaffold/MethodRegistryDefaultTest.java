@@ -74,6 +74,7 @@ public class MethodRegistryDefaultTest {
         when(matchesKnownMethod.matches(knownMethod)).thenReturn(true);
         when(basicInstrumentedType.getDeclaredMethods()).thenReturn(basicMethodList);
         when(basicMethodList.size()).thenReturn(BASIC_SIZE);
+        when(basicFinding.getInvokableMethods()).thenReturn(basicMethodList);
         when(basicInstrumentationTarget.getTypeDescription()).thenReturn(basicInstrumentedType);
         when(extendedInstrumentationTarget.getTypeDescription()).thenReturn(extendedInstrumentedType);
         when(methodLookupEngine.process(basicInstrumentedType)).thenReturn(basicFinding);
@@ -82,6 +83,7 @@ public class MethodRegistryDefaultTest {
         when(instrumentationTargetFactory.make(extendedFinding)).thenReturn(extendedInstrumentationTarget);
         when(extendedInstrumentedType.getDeclaredMethods()).thenReturn(extendedMethodList);
         when(extendedMethodList.size()).thenReturn(EXTENDED_SIZE);
+        when(extendedFinding.getInvokableMethods()).thenReturn(extendedMethodList);
         when(extendedMethodList.subList(anyInt(), anyInt())).thenReturn(croppedMethodList);
         when(zeroSize.size()).thenReturn(0);
         when(singleSize.size()).thenReturn(1);

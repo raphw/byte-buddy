@@ -230,7 +230,7 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                         .members()
                         .writeFields(preparedMethodRegistry.getInstrumentedType().getDeclaredFields(), // TODO: Write only defined fields and copy rest on read
                                 fieldRegistry.compile(preparedMethodRegistry.getInstrumentedType(), TypeWriter.FieldPool.Entry.NoOp.INSTANCE))
-                        .writeMethods(compiledMethodRegistry.getFinding().getInvokableMethods()
+                        .writeMethods(compiledMethodRegistry.getInvokableMethods()
                                         .filter(isOverridable()
                                                 .or(isDeclaredBy(preparedMethodRegistry.getInstrumentedType()))
                                                 .and(not(ignoredMethods))),

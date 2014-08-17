@@ -1,7 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
-import net.bytebuddy.dynamic.scaffold.subclass.SubclassInstrumentationTarget;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
@@ -12,7 +11,7 @@ import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 
-public class RebaseInstrumentationTarget extends SubclassInstrumentationTarget {
+public class RebaseInstrumentationTarget extends Instrumentation.Target.AbstractBase {
 
     protected final MethodFlatteningResolver methodFlatteningResolver;
 
@@ -26,11 +25,11 @@ public class RebaseInstrumentationTarget extends SubclassInstrumentationTarget {
     @Override
     protected Instrumentation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription) {
         return methodDescription.getDeclaringType().equals(typeDescription)
-                ? invocationOf(methodFlatteningResolver.resolve(methodDescription))
-                : super.invokeSuper(methodDescription);
+                ? redefinedInvocationOf(methodFlatteningResolver.resolve(methodDescription))
+                : Instrumentation.SpecialMethodInvocation.Simple.of(methodDescription, typeDescription.getSupertype());
     }
 
-    private Instrumentation.SpecialMethodInvocation invocationOf(MethodFlatteningResolver.Resolution resolution) {
+    private Instrumentation.SpecialMethodInvocation redefinedInvocationOf(MethodFlatteningResolver.Resolution resolution) {
         if (!resolution.isRedefined()) {
             throw new IllegalArgumentException("Cannot invoke non-redefined method " + resolution.getResolvedMethod());
         }

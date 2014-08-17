@@ -65,7 +65,7 @@ public interface MethodRegistry {
      */
     static interface Compiled extends TypeWriter.MethodPool {
 
-        MethodLookupEngine.Finding getFinding();
+        MethodList getInvokableMethods();
     }
 
     /**
@@ -266,7 +266,7 @@ public interface MethodRegistry {
                                     entry.attributeAppenderFactory.make(instrumentationTarget.getTypeDescription()))
                     );
                 }
-                return new Compiled(finding,
+                return new Compiled(finding.getInvokableMethods(),
                         new ArrayList<Compiled.Entry>(compiledEntries),
                         fallback.compile(instrumentationTarget));
             }
@@ -304,11 +304,7 @@ public interface MethodRegistry {
 
         protected static class Compiled implements MethodRegistry.Compiled {
 
-            /**
-             * The finding of a method lookup engine that was applied on the fully prepared instrumented type
-             * this method registry was compiled for.
-             */
-            private final MethodLookupEngine.Finding finding;
+            private final MethodList invokableMethods;
 
             /**
              * The list of all compiled entries of this compiled method registry.
@@ -320,17 +316,17 @@ public interface MethodRegistry {
              */
             private final MethodRegistry.Compiled.Entry fallback;
 
-            private Compiled(MethodLookupEngine.Finding finding,
+            private Compiled(MethodList invokableMethods,
                              List<Entry> entries,
                              MethodRegistry.Compiled.Entry fallback) {
-                this.finding = finding;
+                this.invokableMethods = invokableMethods;
                 this.entries = entries;
                 this.fallback = fallback;
             }
 
             @Override
-            public MethodLookupEngine.Finding getFinding() {
-                return finding;
+            public MethodList getInvokableMethods() {
+                return invokableMethods;
             }
 
             @Override
@@ -350,12 +346,12 @@ public interface MethodRegistry {
                 Compiled compiled = (Compiled) other;
                 return entries.equals(compiled.entries)
                         && fallback.equals(compiled.fallback)
-                        && finding.equals(compiled.finding);
+                        && invokableMethods.equals(compiled.invokableMethods);
             }
 
             @Override
             public int hashCode() {
-                int result = finding.hashCode();
+                int result = invokableMethods.hashCode();
                 result = 31 * result + entries.hashCode();
                 result = 31 * result + fallback.hashCode();
                 return result;
@@ -364,7 +360,7 @@ public interface MethodRegistry {
             @Override
             public String toString() {
                 return "MethodRegistry.Default.Compiled{" +
-                        "finding=" + finding +
+                        "invokableMethods=" + invokableMethods +
                         ", entries=" + entries +
                         ", fallback=" + fallback +
                         '}';

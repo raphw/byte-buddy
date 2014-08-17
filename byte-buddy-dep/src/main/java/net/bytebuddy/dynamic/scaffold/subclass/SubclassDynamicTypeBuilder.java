@@ -211,7 +211,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 .members()
                 .writeFields(preparedMethodRegistry.getInstrumentedType().getDeclaredFields(),
                         fieldRegistry.compile(preparedMethodRegistry.getInstrumentedType(), TypeWriter.FieldPool.Entry.NoOp.INSTANCE))
-                .writeMethods(compiledMethodRegistry.getFinding().getInvokableMethods()
+                .writeMethods(compiledMethodRegistry.getInvokableMethods()
                                 .filter(isOverridable()
                                         .and(not(ignoredMethods))
                                         .or(isDeclaredBy(preparedMethodRegistry.getInstrumentedType()))),
