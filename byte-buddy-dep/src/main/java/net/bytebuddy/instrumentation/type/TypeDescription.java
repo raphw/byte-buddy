@@ -239,11 +239,11 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
         @Override
         public int getActualModifiers() {
             if (isPrivate()) {
-                return getModifiers() & ~Opcodes.ACC_PRIVATE;
+                return getModifiers() & ~(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC);
             } else if (isProtected()) {
-                return getModifiers() & ~Opcodes.ACC_PROTECTED | Opcodes.ACC_PUBLIC;
+                return getModifiers() & ~(Opcodes.ACC_PROTECTED | Opcodes.ACC_STATIC) | Opcodes.ACC_PUBLIC;
             } else {
-                return getModifiers();
+                return getModifiers() & ~Opcodes.ACC_STATIC;
             }
         }
 

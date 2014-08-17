@@ -16,6 +16,7 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -34,6 +35,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
 
+@Ignore("TypeWriter is to be replaced")
 public class TypeWriterBuilderTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
