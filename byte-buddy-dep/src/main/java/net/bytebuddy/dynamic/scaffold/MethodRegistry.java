@@ -66,8 +66,6 @@ public interface MethodRegistry {
     static interface Compiled extends TypeWriter.MethodPool {
 
         MethodLookupEngine.Finding getFinding();
-
-        Instrumentation.Target getInstrumentationTarget();
     }
 
     /**
@@ -269,7 +267,6 @@ public interface MethodRegistry {
                     );
                 }
                 return new Compiled(finding,
-                        instrumentationTarget,
                         new ArrayList<Compiled.Entry>(compiledEntries),
                         fallback.compile(instrumentationTarget));
             }
@@ -313,8 +310,6 @@ public interface MethodRegistry {
              */
             private final MethodLookupEngine.Finding finding;
 
-            private final Instrumentation.Target instrumentationTarget;
-
             /**
              * The list of all compiled entries of this compiled method registry.
              */
@@ -326,11 +321,9 @@ public interface MethodRegistry {
             private final MethodRegistry.Compiled.Entry fallback;
 
             private Compiled(MethodLookupEngine.Finding finding,
-                             Instrumentation.Target instrumentationTarget,
                              List<Entry> entries,
                              MethodRegistry.Compiled.Entry fallback) {
                 this.finding = finding;
-                this.instrumentationTarget = instrumentationTarget;
                 this.entries = entries;
                 this.fallback = fallback;
             }
@@ -338,11 +331,6 @@ public interface MethodRegistry {
             @Override
             public MethodLookupEngine.Finding getFinding() {
                 return finding;
-            }
-
-            @Override
-            public Instrumentation.Target getInstrumentationTarget() {
-                return instrumentationTarget;
             }
 
             @Override
@@ -361,7 +349,6 @@ public interface MethodRegistry {
                 if (other == null || getClass() != other.getClass()) return false;
                 Compiled compiled = (Compiled) other;
                 return entries.equals(compiled.entries)
-                        && instrumentationTarget.equals(compiled.instrumentationTarget)
                         && fallback.equals(compiled.fallback)
                         && finding.equals(compiled.finding);
             }
@@ -369,7 +356,6 @@ public interface MethodRegistry {
             @Override
             public int hashCode() {
                 int result = finding.hashCode();
-                result = 31 * result + instrumentationTarget.hashCode();
                 result = 31 * result + entries.hashCode();
                 result = 31 * result + fallback.hashCode();
                 return result;
@@ -379,7 +365,6 @@ public interface MethodRegistry {
             public String toString() {
                 return "MethodRegistry.Default.Compiled{" +
                         "finding=" + finding +
-                        ", instrumentationTarget=" + instrumentationTarget +
                         ", entries=" + entries +
                         ", fallback=" + fallback +
                         '}';

@@ -30,6 +30,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
+
 /**
  * A dynamic type builder which enhances a given type without creating a subclass.
  *
@@ -218,13 +220,26 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
             InputStream classFile = exists(classFileLocator.classFileFor(targetType));
             try {
                 ClassReader classReader = new ClassReader(classFile);
-                // TODO: Implement the type's creation.
                 return new TypeWriter.Builder<T>(preparedMethodRegistry.getInstrumentedType(),
                         preparedMethodRegistry.getLoadedTypeInitializer(),
                         typeExtensionDelegate,
                         classFileVersion,
                         new TypeWriter.Builder.ClassWriterProvider.ForClassReader(classReader))
                         .build(classVisitorWrapperChain)
+                        .attributeType(attributeAppender)
+                        .members()
+                        .writeFields(preparedMethodRegistry.getInstrumentedType().getDeclaredFields(), // TODO: Write only defined fields and copy rest on read
+                                fieldRegistry.compile(preparedMethodRegistry.getInstrumentedType(), TypeWriter.FieldPool.Entry.NoOp.INSTANCE))
+                        .writeMethods(compiledMethodRegistry.getFinding().getInvokableMethods()
+                                        .filter(isOverridable()
+                                                .or(isDeclaredBy(preparedMethodRegistry.getInstrumentedType()))
+                                                .and(not(ignoredMethods))),
+                                compiledMethodRegistry)
+                        .writeRaw(null) // TODO: ClassReader Runthrough!
+                                //.writeMethods(Collections.singletonList(MethodDescription.Latent.typeInitializerOf(preparedMethodRegistry.getInstrumentedType())),
+                                //        typeExtensionDelegate.wrapForTypeInitializerInterception(compiledMethodRegistry))
+                        .writeMethods(typeExtensionDelegate.getRegisteredAccessors(), typeExtensionDelegate)
+                        .writeFields(typeExtensionDelegate.getRegisteredFieldCaches(), typeExtensionDelegate)
                         .make(preparedTargetHandler.auxiliaryTypes());
             } finally {
                 classFile.close();
