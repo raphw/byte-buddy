@@ -25,15 +25,23 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
     @Override
     protected Instrumentation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription) {
         return methodDescription.getDeclaringType().equals(typeDescription)
-                ? redefinedInvocationOf(methodFlatteningResolver.resolve(methodDescription))
+                ? invokeSuper(methodFlatteningResolver.resolve(methodDescription))
                 : Instrumentation.SpecialMethodInvocation.Simple.of(methodDescription, typeDescription.getSupertype());
     }
 
-    private Instrumentation.SpecialMethodInvocation redefinedInvocationOf(MethodFlatteningResolver.Resolution resolution) {
-        if (!resolution.isRedefined()) {
-            throw new IllegalArgumentException("Cannot invoke non-redefined method " + resolution.getResolvedMethod());
-        }
-        return resolution.getResolvedMethod().isConstructor()
+    /**
+     * Defines a special method invocation on type level. This means that invoke super instructions are not explicitly
+     * dispatched on the super type but on the instrumented type. This allows to call methods non-virtually even though
+     * they are not defined on the super type. Redefined constructors are not renamed by are added an additional
+     * parameter of a type which is only used for this purpose. Additionally, a {@code null} value is loaded onto the
+     * stack when the special method invocation is applied in order to fill the operand stack with an additional caller
+     * argument. Non-constructor methods are renamed.
+     *
+     * @param resolution A proxied super method invocation on the instrumented type.
+     * @return A special method invocation on this proxied super method.
+     */
+    private Instrumentation.SpecialMethodInvocation invokeSuper(MethodFlatteningResolver.Resolution resolution) {
+        return resolution.isRedefined() && resolution.getResolvedMethod().isConstructor()
                 ? new RedefinedConstructorInvocation(resolution.getResolvedMethod(), typeDescription)
                 : Instrumentation.SpecialMethodInvocation.Simple.of(resolution.getResolvedMethod(), typeDescription);
     }

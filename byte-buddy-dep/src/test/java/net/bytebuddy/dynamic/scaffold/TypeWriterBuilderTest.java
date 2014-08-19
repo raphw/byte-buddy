@@ -60,8 +60,6 @@ public class TypeWriterBuilderTest {
     @Mock
     private TypeWriter.FieldPool.Entry fieldPoolEntry;
     @Mock
-    private FieldAttributeAppender.Factory fieldAttributeAppenderFactory;
-    @Mock
     private FieldAttributeAppender fieldAttributeAppender;
     @Mock
     private MethodDescription simpleMethod, toAbstractMethod, fromAbstractMethod, skippedMethod;
@@ -94,8 +92,7 @@ public class TypeWriterBuilderTest {
         when(secondField.getInternalName()).thenReturn(QUX);
         when(secondField.getDescriptor()).thenReturn(Type.getDescriptor(long.class));
         when(compiledFieldRegistry.target(any(FieldDescription.class))).thenReturn(fieldPoolEntry);
-        when(fieldPoolEntry.getFieldAppenderFactory()).thenReturn(fieldAttributeAppenderFactory);
-        when(fieldAttributeAppenderFactory.make(any(TypeDescription.class))).thenReturn(fieldAttributeAppender);
+        when(fieldPoolEntry.getFieldAppender()).thenReturn(fieldAttributeAppender);
         when(compiledMethodRegistry.target(simpleMethod)).thenReturn(emptyImplementation);
         when(compiledMethodRegistry.target(fromAbstractMethod)).thenReturn(emptyImplementation);
         when(emptyImplementation.isDefineMethod()).thenReturn(true);

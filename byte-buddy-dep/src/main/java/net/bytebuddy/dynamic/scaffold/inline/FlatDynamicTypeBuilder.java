@@ -5,6 +5,7 @@ import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.*;
+import net.bytebuddy.dynamic.scaffold.draft.Engine;
 import net.bytebuddy.dynamic.scaffold.subclass.SubclassInstrumentationTarget;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
@@ -20,17 +21,13 @@ import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
 import net.bytebuddy.instrumentation.type.auxiliary.TrivialType;
-import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
 
 /**
  * A dynamic type builder which enhances a given type without creating a subclass.
@@ -216,44 +213,16 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                 methodLookupEngineFactory.make(classFileVersion),
                 MethodFlatteningDelegation.Factory.INSTANCE);
         TypeExtensionDelegate typeExtensionDelegate = new TypeExtensionDelegate(preparedMethodRegistry.getInstrumentedType(), classFileVersion);
-        try {
-            InputStream classFile = exists(classFileLocator.classFileFor(targetType));
-            try {
-                ClassReader classReader = new ClassReader(classFile);
-                return new TypeWriter.Builder<T>(preparedMethodRegistry.getInstrumentedType(),
-                        preparedMethodRegistry.getLoadedTypeInitializer(),
-                        typeExtensionDelegate,
-                        classFileVersion,
-                        new TypeWriter.Builder.ClassWriterProvider.ForClassReader(classReader))
-                        .build(classVisitorWrapperChain)
-                        .attributeType(attributeAppender)
-                        .members()
-                        .writeFields(preparedMethodRegistry.getInstrumentedType().getDeclaredFields(), // TODO: Write only defined fields and copy rest on read
-                                fieldRegistry.compile(preparedMethodRegistry.getInstrumentedType(), TypeWriter.FieldPool.Entry.NoOp.INSTANCE))
-                        .writeMethods(compiledMethodRegistry.getInvokableMethods()
-                                        .filter(isOverridable()
-                                                .or(isDeclaredBy(preparedMethodRegistry.getInstrumentedType()))
-                                                .and(not(ignoredMethods))),
-                                compiledMethodRegistry)
-                        .writeRaw(null) // TODO: ClassReader Runthrough!
-                                //.writeMethods(Collections.singletonList(MethodDescription.Latent.typeInitializerOf(preparedMethodRegistry.getInstrumentedType())),
-                                //        typeExtensionDelegate.wrapForTypeInitializerInterception(compiledMethodRegistry))
-                        .writeMethods(typeExtensionDelegate.getRegisteredAccessors(), typeExtensionDelegate)
-                        .writeFields(typeExtensionDelegate.getRegisteredFieldCaches(), typeExtensionDelegate)
-                        .make(preparedTargetHandler.auxiliaryTypes());
-            } finally {
-                classFile.close();
-            }
-        } catch (IOException e) {
-            throw new IllegalStateException("Error while reading class file", e);
-        }
-    }
-
-    private InputStream exists(InputStream classFile) {
-        if (classFile == null) {
-            throw new IllegalStateException(classFileLocator + " cannot locate a class file for " + targetType);
-        }
-        return classFile;
+        new Engine.ForRedefinition(preparedMethodRegistry.getInstrumentedType(),
+                classFileVersion,
+                compiledMethodRegistry.getInvokableMethods(),
+                classVisitorWrapperChain,
+                attributeAppender,
+                fieldRegistry.prepare(preparedMethodRegistry.getInstrumentedType()).compile(TypeWriter.FieldPool.Entry.NoOp.INSTANCE),
+                compiledMethodRegistry,
+                new Engine.ForRedefinition.InputStreamProvider.ForClassFileLocator(targetType, classFileLocator),
+                null).create(typeExtensionDelegate);
+        return null;
     }
 
     @Override
@@ -321,7 +290,7 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
 
         @Override
         public MethodAttributeAppender getAttributeAppender() {
-            return MethodAttributeAppender.ForInstrumentedMethod.INSTANCE;
+            return MethodAttributeAppender.NoOp.INSTANCE;
         }
 
         @Override
@@ -338,6 +307,21 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                     instrumentationTarget.invokeSuper(instrumentedMethod, Instrumentation.Target.MethodLookup.Default.EXACT),
                     MethodReturn.returning(instrumentedMethod.getReturnType())
             ).apply(methodVisitor, instrumentationContext).getMaximalSize(), instrumentedMethod.getStackSize());
+        }
+
+        @Override
+        public void apply(ClassVisitor classVisitor,
+                          Instrumentation.Context instrumentationContext,
+                          MethodDescription methodDescription) {
+            MethodVisitor methodVisitor = classVisitor.visitMethod(methodDescription.getModifiers(),
+                    methodDescription.getInternalName(),
+                    methodDescription.getDescriptor(),
+                    methodDescription.getGenericSignature(),
+                    methodDescription.getExceptionTypes().toInternalNames());
+            methodVisitor.visitCode();
+            Size size = apply(methodVisitor, instrumentationContext, methodDescription);
+            methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
+            methodVisitor.visitEnd();
         }
 
         @Override

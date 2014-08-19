@@ -10,6 +10,8 @@ import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.MethodVisitor;
 
 import java.util.*;
 
@@ -169,9 +171,9 @@ public interface MethodRegistry {
             Set<Instrumentation> instrumentations = new HashSet<Instrumentation>(entries.size());
             for (Entry entry : entries) {
                 // Only call the preparation method of an instrumentation if the instrumentation was not yet prepared.
-                if (instrumentations.add(entry.instrumentation)) {
+                if (instrumentations.add(entry.getInstrumentation())) {
                     MethodList beforePreparation = instrumentedType.getDeclaredMethods();
-                    instrumentedType = entry.instrumentation.prepare(instrumentedType);
+                    instrumentedType = entry.getInstrumentation().prepare(instrumentedType);
                     // If an instrumentation adds methods to the instrumented type, those methods should be
                     // handled by this instrumentation. Thus an additional matcher that matches these exact methods
                     // is registered, in case that the instrumentation actually added methods. These matcher must be
@@ -181,7 +183,7 @@ public interface MethodRegistry {
                     if (beforePreparation.size() < instrumentedType.getDeclaredMethods().size()) {
                         additionalEntries.add(new Entry(
                                 new ListDifferenceMethodMatcher(beforePreparation, instrumentedType.getDeclaredMethods()),
-                                entry.instrumentation,
+                                entry.getInstrumentation(),
                                 MethodAttributeAppender.NoOp.INSTANCE));
                     }
                 }
@@ -250,20 +252,20 @@ public interface MethodRegistry {
                 List<Compiled.Entry> compiledEntries = new LinkedList<Compiled.Entry>();
                 for (Entry entry : entries) {
                     // Make sure that the instrumentation's byte code appender was not yet created.
-                    if (!byteCodeAppenders.containsKey(entry.instrumentation)) {
-                        byteCodeAppenders.put(entry.instrumentation, entry.instrumentation.appender(instrumentationTarget));
+                    if (!byteCodeAppenders.containsKey(entry.getInstrumentation())) {
+                        byteCodeAppenders.put(entry.getInstrumentation(), entry.getInstrumentation().appender(instrumentationTarget));
                     }
-                    compiledEntries.add(new Compiled.Entry(entry.latentMethodMatcher.manifest(instrumentationTarget.getTypeDescription()),
-                            byteCodeAppenders.get(entry.instrumentation),
-                            entry.attributeAppenderFactory.make(instrumentationTarget.getTypeDescription())));
+                    compiledEntries.add(new Compiled.Entry(entry.getLatentMethodMatcher().manifest(instrumentationTarget.getTypeDescription()),
+                            byteCodeAppenders.get(entry.getInstrumentation()),
+                            entry.getAttributeAppenderFactory().make(instrumentationTarget.getTypeDescription())));
                 }
                 // All additional entries must belong to instrumentations that were already registered. The method
                 // matchers must be added at the beginning of the compiled entry queue.
                 for (Entry entry : additionalEntries) {
                     compiledEntries.add(AT_BEGINNING,
-                            new Compiled.Entry(entry.latentMethodMatcher.manifest(instrumentationTarget.getTypeDescription()),
-                                    byteCodeAppenders.get(entry.instrumentation),
-                                    entry.attributeAppenderFactory.make(instrumentationTarget.getTypeDescription()))
+                            new Compiled.Entry(entry.getLatentMethodMatcher().manifest(instrumentationTarget.getTypeDescription()),
+                                    byteCodeAppenders.get(entry.getInstrumentation()),
+                                    entry.getAttributeAppenderFactory().make(instrumentationTarget.getTypeDescription()))
                     );
                 }
                 return new Compiled(finding.getInvokableMethods(),
@@ -417,6 +419,26 @@ public interface MethodRegistry {
                 }
 
                 @Override
+                public void apply(ClassVisitor classVisitor,
+                                  Instrumentation.Context instrumentationContext,
+                                  MethodDescription methodDescription) {
+                    MethodVisitor methodVisitor = classVisitor.visitMethod(methodDescription.getModifiers(),
+                            methodDescription.getInternalName(),
+                            methodDescription.getDescriptor(),
+                            methodDescription.getGenericSignature(),
+                            methodDescription.getExceptionTypes().toInternalNames());
+                    attributeAppender.apply(methodVisitor, methodDescription);
+                    if (byteCodeAppender.appendsCode()) {
+                        methodVisitor.visitCode();
+                        ByteCodeAppender.Size size = byteCodeAppender.apply(methodVisitor,
+                                instrumentationContext,
+                                methodDescription);
+                        methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
+                    }
+                    methodVisitor.visitEnd();
+                }
+
+                @Override
                 public boolean matches(MethodDescription methodDescription) {
                     return methodMatcher.matches(methodDescription);
                 }
@@ -533,6 +555,18 @@ public interface MethodRegistry {
                 this.latentMethodMatcher = latentMethodMatcher;
                 this.instrumentation = instrumentation;
                 this.attributeAppenderFactory = attributeAppenderFactory;
+            }
+
+            public LatentMethodMatcher getLatentMethodMatcher() {
+                return latentMethodMatcher;
+            }
+
+            public Instrumentation getInstrumentation() {
+                return instrumentation;
+            }
+
+            public MethodAttributeAppender.Factory getAttributeAppenderFactory() {
+                return attributeAppenderFactory;
             }
 
             @Override

@@ -41,7 +41,9 @@ public interface MethodFlatteningResolver {
                     methodDescription.getDeclaringType(),
                     methodDescription.getReturnType(),
                     methodDescription.getParameterTypes(),
-                    REDEFINE_METHOD_MODIFIER | (methodDescription.isStatic() ? Opcodes.ACC_STATIC : 0));
+                    REDEFINE_METHOD_MODIFIER
+                            | (methodDescription.isStatic() ? Opcodes.ACC_STATIC : 0)
+                            | (methodDescription.isNative() ? Opcodes.ACC_NATIVE : 0));
         }
 
         @Override
@@ -63,6 +65,16 @@ public interface MethodFlatteningResolver {
         @Override
         public String toString() {
             return "MethodFlatteningResolver.Default{resolutions=" + resolutions + '}';
+        }
+    }
+
+    static enum NoOp implements MethodFlatteningResolver {
+
+        INSTANCE;
+
+        @Override
+        public Resolution resolve(MethodDescription methodDescription) {
+            return new Resolution.Preserved(methodDescription);
         }
     }
 

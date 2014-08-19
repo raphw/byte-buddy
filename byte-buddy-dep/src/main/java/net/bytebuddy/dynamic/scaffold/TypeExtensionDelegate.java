@@ -13,6 +13,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -562,6 +563,21 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
                     MethodReturn.returning(instrumentedMethod.getReturnType())
             ).apply(methodVisitor, instrumentationContext);
             return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
+        }
+
+        @Override
+        public void apply(ClassVisitor classVisitor,
+                          Instrumentation.Context instrumentationContext,
+                          MethodDescription methodDescription) {
+            MethodVisitor methodVisitor = classVisitor.visitMethod(methodDescription.getModifiers(),
+                    methodDescription.getInternalName(),
+                    methodDescription.getDescriptor(),
+                    methodDescription.getGenericSignature(),
+                    methodDescription.getExceptionTypes().toInternalNames());
+            methodVisitor.visitCode();
+            Size size = apply(methodVisitor, instrumentationContext, methodDescription);
+            methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
+            methodVisitor.visitEnd();
         }
 
         @Override

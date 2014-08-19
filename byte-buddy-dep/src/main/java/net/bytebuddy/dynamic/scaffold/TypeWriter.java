@@ -68,11 +68,11 @@ public interface TypeWriter<T> {
         static interface Entry {
 
             /**
-             * Returns the field attribute appender factory for a given field.
+             * Returns the field attribute appender for a given field.
              *
-             * @return The attribute appender factory to be applied on the given field.
+             * @return The attribute appender to be applied on the given field.
              */
-            FieldAttributeAppender.Factory getFieldAppenderFactory();
+            FieldAttributeAppender getFieldAppender();
 
             /**
              * Returns the default value for the field that is represented by this entry. This value might be
@@ -81,6 +81,8 @@ public interface TypeWriter<T> {
              * @return The default value for the field that is represented by this entry.
              */
             Object getDefaultValue();
+
+            void apply(ClassVisitor classVisitor, FieldDescription fieldDescription);
 
             /**
              * A default implementation of a compiled field registry that simply returns a no-op
@@ -95,13 +97,22 @@ public interface TypeWriter<T> {
                 INSTANCE;
 
                 @Override
-                public FieldAttributeAppender.Factory getFieldAppenderFactory() {
+                public FieldAttributeAppender getFieldAppender() {
                     return FieldAttributeAppender.NoOp.INSTANCE;
                 }
 
                 @Override
                 public Object getDefaultValue() {
                     return null;
+                }
+
+                @Override
+                public void apply(ClassVisitor classVisitor, FieldDescription fieldDescription) {
+                    classVisitor.visitField(fieldDescription.getModifiers(),
+                            fieldDescription.getInternalName(),
+                            fieldDescription.getDescriptor(),
+                            fieldDescription.getGenericSignature(),
+                            null).visitEnd();
                 }
             }
 
@@ -115,7 +126,7 @@ public interface TypeWriter<T> {
                 /**
                  * The field attribute appender factory that is represented by this entry.
                  */
-                private final FieldAttributeAppender.Factory attributeAppenderFactory;
+                private final FieldAttributeAppender attributeAppender;
 
                 /**
                  * The field's default value or {@code null} if no default value is set.
@@ -125,18 +136,18 @@ public interface TypeWriter<T> {
                 /**
                  * Creates a new simple entry for a given attribute appender factory.
                  *
-                 * @param attributeAppenderFactory The attribute appender factory to be returned.
-                 * @param defaultValue             The field's default value or {@code null} if no default value is
-                 *                                 set.
+                 * @param attributeAppender The attribute appender to be returned.
+                 * @param defaultValue      The field's default value or {@code null} if no default value is
+                 *                          set.
                  */
-                public Simple(FieldAttributeAppender.Factory attributeAppenderFactory, Object defaultValue) {
-                    this.attributeAppenderFactory = attributeAppenderFactory;
+                public Simple(FieldAttributeAppender attributeAppender, Object defaultValue) {
+                    this.attributeAppender = attributeAppender;
                     this.defaultValue = defaultValue;
                 }
 
                 @Override
-                public FieldAttributeAppender.Factory getFieldAppenderFactory() {
-                    return attributeAppenderFactory;
+                public FieldAttributeAppender getFieldAppender() {
+                    return attributeAppender;
                 }
 
                 @Override
@@ -145,23 +156,34 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
+                public void apply(ClassVisitor classVisitor, FieldDescription fieldDescription) {
+                    FieldVisitor fieldVisitor = classVisitor.visitField(fieldDescription.getModifiers(),
+                            fieldDescription.getInternalName(),
+                            fieldDescription.getDescriptor(),
+                            fieldDescription.getGenericSignature(),
+                            defaultValue);
+                    attributeAppender.apply(fieldVisitor, fieldDescription);
+                    fieldVisitor.visitEnd();
+                }
+
+                @Override
                 public boolean equals(Object other) {
                     if (this == other) return true;
                     if (other == null || getClass() != other.getClass()) return false;
                     Simple simple = (Simple) other;
-                    return attributeAppenderFactory.equals(simple.attributeAppenderFactory)
+                    return attributeAppender.equals(simple.attributeAppender)
                             && !(defaultValue != null ? !defaultValue.equals(simple.defaultValue) : simple.defaultValue != null);
                 }
 
                 @Override
                 public int hashCode() {
-                    return 31 * attributeAppenderFactory.hashCode() + (defaultValue != null ? defaultValue.hashCode() : 0);
+                    return 31 * attributeAppender.hashCode() + (defaultValue != null ? defaultValue.hashCode() : 0);
                 }
 
                 @Override
                 public String toString() {
                     return "TypeWriter.FieldPool.Entry.Simple{" +
-                            "attributeAppenderFactory=" + attributeAppenderFactory +
+                            "attributeAppenderFactory=" + attributeAppender +
                             ", defaultValue=" + defaultValue +
                             '}';
                 }
@@ -221,6 +243,10 @@ public interface TypeWriter<T> {
              */
             MethodAttributeAppender getAttributeAppender();
 
+            void apply(ClassVisitor classVisitor,
+                       Instrumentation.Context instrumentationContext,
+                       MethodDescription methodDescription);
+
             /**
              * A skip entry that instructs to ignore a method.
              */
@@ -244,6 +270,13 @@ public interface TypeWriter<T> {
                 @Override
                 public MethodAttributeAppender getAttributeAppender() {
                     throw new IllegalStateException();
+                }
+
+                @Override
+                public void apply(ClassVisitor classVisitor,
+                                  Instrumentation.Context instrumentationContext,
+                                  MethodDescription methodDescription) {
+                    /* do nothing */
                 }
 
                 @Override
@@ -292,6 +325,24 @@ public interface TypeWriter<T> {
                 @Override
                 public MethodAttributeAppender getAttributeAppender() {
                     return methodAttributeAppender;
+                }
+
+                @Override
+                public void apply(ClassVisitor classVisitor,
+                                  Instrumentation.Context instrumentationContext,
+                                  MethodDescription methodDescription) {
+                    MethodVisitor methodVisitor = classVisitor.visitMethod(methodDescription.getModifiers(),
+                            methodDescription.getInternalName(),
+                            methodDescription.getDescriptor(),
+                            methodDescription.getGenericSignature(),
+                            methodDescription.getExceptionTypes().toInternalNames());
+                    methodAttributeAppender.apply(methodVisitor, methodDescription);
+                    if (byteCodeAppender.appendsCode()) {
+                        methodVisitor.visitCode();
+                        ByteCodeAppender.Size size = byteCodeAppender.apply(methodVisitor, instrumentationContext, methodDescription);
+                        methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
+                    }
+                    methodVisitor.visitEnd();
                 }
 
                 @Override
@@ -536,8 +587,7 @@ public interface TypeWriter<T> {
                             fieldDescription.getDescriptor(),
                             fieldDescription.getGenericSignature(),
                             entry.getDefaultValue());
-                    entry.getFieldAppenderFactory()
-                            .make(instrumentedType)
+                    entry.getFieldAppender()
                             .apply(fieldVisitor, fieldDescription);
                     fieldVisitor.visitEnd();
                 }

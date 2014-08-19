@@ -210,7 +210,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 .attributeType(attributeAppender)
                 .members()
                 .writeFields(preparedMethodRegistry.getInstrumentedType().getDeclaredFields(),
-                        fieldRegistry.compile(preparedMethodRegistry.getInstrumentedType(), TypeWriter.FieldPool.Entry.NoOp.INSTANCE))
+                        fieldRegistry.prepare(preparedMethodRegistry.getInstrumentedType()).compile(TypeWriter.FieldPool.Entry.NoOp.INSTANCE))
                 .writeMethods(compiledMethodRegistry.getInvokableMethods()
                                 .filter(isOverridable()
                                         .and(not(ignoredMethods))
