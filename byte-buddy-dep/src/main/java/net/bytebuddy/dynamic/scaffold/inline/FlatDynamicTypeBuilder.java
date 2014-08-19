@@ -16,6 +16,7 @@ import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess;
+import net.bytebuddy.instrumentation.method.matcher.JunctionMethodMatcher;
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
@@ -220,7 +221,8 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                         classFileVersion,
                         compiledMethodRegistry.getInvokableMethods().filter(isOverridable()
                                 .or(isDeclaredBy(preparedMethodRegistry.getInstrumentedType()))
-                                .and(not(ignoredMethods))),
+                                .and(not(ignoredMethods).or(isDeclaredBy(preparedMethodRegistry.getInstrumentedType())
+                                        .and(not(anyOf(targetType.getDeclaredMethods())))))),
                         classVisitorWrapperChain,
                         attributeAppender,
                         fieldRegistry.prepare(preparedMethodRegistry.getInstrumentedType()).compile(TypeWriter.FieldPool.Entry.NoOp.INSTANCE),
@@ -228,6 +230,14 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                         new TypeWriter.Engine.ForRedefinition.InputStreamProvider.ForClassFileLocator(targetType, classFileLocator),
                         null)) // TODO: Find new way for implementing method flattening resolver.
                 .make(new TypeExtensionDelegate(preparedMethodRegistry.getInstrumentedType(), classFileVersion));
+    }
+
+    private static MethodMatcher anyOf(List<MethodDescription> methodDescriptions) {
+        JunctionMethodMatcher methodMatcher = none();
+        for (MethodDescription methodDescription : methodDescriptions) {
+            methodMatcher = methodMatcher.or(is(methodDescription));
+        }
+        return methodMatcher;
     }
 
     @Override

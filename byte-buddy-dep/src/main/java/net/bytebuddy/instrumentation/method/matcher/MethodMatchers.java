@@ -705,10 +705,6 @@ public final class MethodMatchers {
         return new MethodByteCodeSignatureMethodMatcher(methodDescription);
     }
 
-    public static JunctionMethodMatcher hasUniqueSignature(String descriptor) {
-        return new UniqueSignatureMethodMatcher(descriptor);
-    }
-
     /**
      * Checks if a method has a Java compiler equal signature to another method which includes the name of the method
      * and the exact types and order of its parameters. The return type is not considered for equality.
@@ -2067,36 +2063,6 @@ public final class MethodMatchers {
         @Override
         public String toString() {
             return "isVisibilityBridge()";
-        }
-    }
-
-    private static class UniqueSignatureMethodMatcher extends JunctionMethodMatcher.AbstractBase {
-
-        private final String uniqueSignature;
-
-        private UniqueSignatureMethodMatcher(String uniqueSignature) {
-            this.uniqueSignature = uniqueSignature;
-        }
-
-        @Override
-        public boolean matches(MethodDescription methodDescription) {
-            return methodDescription.getUniqueSignature().equals(uniqueSignature);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && uniqueSignature.equals(((UniqueSignatureMethodMatcher) other).uniqueSignature);
-        }
-
-        @Override
-        public int hashCode() {
-            return uniqueSignature.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "hasUniqueSignature(" + uniqueSignature + ')';
         }
     }
 }
