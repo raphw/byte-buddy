@@ -65,6 +65,10 @@ public interface MethodRegistry {
      */
     static interface Compiled extends TypeWriter.MethodPool {
 
+        TypeDescription getInstrumentedType();
+
+        LoadedTypeInitializer getLoadedTypeInitializer();
+
         MethodList getInvokableMethods();
     }
 
@@ -266,7 +270,9 @@ public interface MethodRegistry {
                                     entry.getAttributeAppenderFactory().make(instrumentationTarget.getTypeDescription()))
                     );
                 }
-                return new Compiled(finding.getInvokableMethods(),
+                return new Compiled(instrumentedType,
+                        loadedTypeInitializer,
+                        finding.getInvokableMethods(),
                         new ArrayList<Compiled.Entry>(compiledEntries),
                         fallback.compile(instrumentationTarget));
             }
@@ -304,6 +310,10 @@ public interface MethodRegistry {
 
         protected static class Compiled implements MethodRegistry.Compiled {
 
+            private final TypeDescription instrumentedType;
+
+            private final LoadedTypeInitializer loadedTypeInitializer;
+
             private final MethodList invokableMethods;
 
             /**
@@ -316,12 +326,26 @@ public interface MethodRegistry {
              */
             private final MethodRegistry.Compiled.Entry fallback;
 
-            private Compiled(MethodList invokableMethods,
+            private Compiled(TypeDescription instrumentedType,
+                             LoadedTypeInitializer loadedTypeInitializer,
+                             MethodList invokableMethods,
                              List<Entry> entries,
                              MethodRegistry.Compiled.Entry fallback) {
+                this.instrumentedType = instrumentedType;
+                this.loadedTypeInitializer = loadedTypeInitializer;
                 this.invokableMethods = invokableMethods;
                 this.entries = entries;
                 this.fallback = fallback;
+            }
+
+            @Override
+            public TypeDescription getInstrumentedType() {
+                return instrumentedType;
+            }
+
+            @Override
+            public LoadedTypeInitializer getLoadedTypeInitializer() {
+                return loadedTypeInitializer;
             }
 
             @Override
@@ -346,12 +370,16 @@ public interface MethodRegistry {
                 Compiled compiled = (Compiled) other;
                 return entries.equals(compiled.entries)
                         && fallback.equals(compiled.fallback)
-                        && invokableMethods.equals(compiled.invokableMethods);
+                        && instrumentedType.equals(compiled.instrumentedType)
+                        && invokableMethods.equals(compiled.invokableMethods)
+                        && loadedTypeInitializer.equals(compiled.loadedTypeInitializer);
             }
 
             @Override
             public int hashCode() {
-                int result = invokableMethods.hashCode();
+                int result = instrumentedType.hashCode();
+                result = 31 * result + loadedTypeInitializer.hashCode();
+                result = 31 * result + invokableMethods.hashCode();
                 result = 31 * result + entries.hashCode();
                 result = 31 * result + fallback.hashCode();
                 return result;
@@ -360,7 +388,9 @@ public interface MethodRegistry {
             @Override
             public String toString() {
                 return "MethodRegistry.Default.Compiled{" +
-                        "invokableMethods=" + invokableMethods +
+                        "instrumentedType=" + instrumentedType +
+                        ", loadedTypeInitializer=" + loadedTypeInitializer +
+                        ", invokableMethods=" + invokableMethods +
                         ", entries=" + entries +
                         ", fallback=" + fallback +
                         '}';

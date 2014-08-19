@@ -214,22 +214,22 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
         MethodRegistry.Compiled compiledMethodRegistry = preparedMethodRegistry.compile(preparedTargetHandler.factory(bridgeMethodResolverFactory),
                 methodLookupEngineFactory.make(classFileVersion),
                 MethodFlatteningDelegation.Factory.INSTANCE);
-        return new TypeWriter.Default<T>(preparedMethodRegistry.getInstrumentedType(),
-                preparedMethodRegistry.getLoadedTypeInitializer(),
+        return new TypeWriter.Default<T>(compiledMethodRegistry.getInstrumentedType(),
+                compiledMethodRegistry.getLoadedTypeInitializer(),
                 preparedTargetHandler.getAuxiliaryTypes(),
-                new TypeWriter.Engine.ForRedefinition(preparedMethodRegistry.getInstrumentedType(),
+                new TypeWriter.Engine.ForRedefinition(compiledMethodRegistry.getInstrumentedType(),
                         classFileVersion,
                         compiledMethodRegistry.getInvokableMethods().filter(isOverridable()
-                                .or(isDeclaredBy(preparedMethodRegistry.getInstrumentedType()))
-                                .and(not(ignoredMethods).or(isDeclaredBy(preparedMethodRegistry.getInstrumentedType())
+                                .or(isDeclaredBy(compiledMethodRegistry.getInstrumentedType()))
+                                .and(not(ignoredMethods).or(isDeclaredBy(compiledMethodRegistry.getInstrumentedType())
                                         .and(not(anyOf(targetType.getDeclaredMethods())))))),
                         classVisitorWrapperChain,
                         attributeAppender,
-                        fieldRegistry.prepare(preparedMethodRegistry.getInstrumentedType()).compile(TypeWriter.FieldPool.Entry.NoOp.INSTANCE),
+                        fieldRegistry.prepare(compiledMethodRegistry.getInstrumentedType()).compile(TypeWriter.FieldPool.Entry.NoOp.INSTANCE),
                         compiledMethodRegistry,
                         new TypeWriter.Engine.ForRedefinition.InputStreamProvider.ForClassFileLocator(targetType, classFileLocator),
                         null)) // TODO: Find new way for implementing method flattening resolver.
-                .make(new TypeExtensionDelegate(preparedMethodRegistry.getInstrumentedType(), classFileVersion));
+                .make(new TypeExtensionDelegate(compiledMethodRegistry.getInstrumentedType(), classFileVersion));
     }
 
     private static MethodMatcher anyOf(List<MethodDescription> methodDescriptions) {

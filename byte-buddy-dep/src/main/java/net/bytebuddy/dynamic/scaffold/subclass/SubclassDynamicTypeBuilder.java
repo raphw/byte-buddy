@@ -187,7 +187,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public DynamicType.Unloaded<T> make() {
-        MethodRegistry.Prepared preparedMethodRegistry = constructorStrategy
+        MethodRegistry.Compiled compiledMethodRegistry = constructorStrategy
                 .inject(methodRegistry, defaultMethodAttributeAppenderFactory)
                 .prepare(
                         applyConstructorStrategy(
@@ -195,24 +195,23 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                         targetType,
                                         interfaceTypes,
                                         modifiers,
-                                        namingStrategy)))
-                );
-        MethodRegistry.Compiled compiledMethodRegistry = preparedMethodRegistry.compile(new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory),
-                methodLookupEngineFactory.make(classFileVersion),
-                MethodRegistry.Compiled.Entry.Skip.INSTANCE);
-        return new TypeWriter.Default<T>(preparedMethodRegistry.getInstrumentedType(),
-                preparedMethodRegistry.getLoadedTypeInitializer(),
+                                        namingStrategy))))
+                .compile(new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory),
+                        methodLookupEngineFactory.make(classFileVersion),
+                        MethodRegistry.Compiled.Entry.Skip.INSTANCE);
+        return new TypeWriter.Default<T>(compiledMethodRegistry.getInstrumentedType(),
+                compiledMethodRegistry.getLoadedTypeInitializer(),
                 Collections.<DynamicType>emptyList(),
-                new TypeWriter.Engine.ForCreation(preparedMethodRegistry.getInstrumentedType(),
+                new TypeWriter.Engine.ForCreation(compiledMethodRegistry.getInstrumentedType(),
                         classFileVersion,
                         compiledMethodRegistry.getInvokableMethods().filter(isOverridable()
                                 .and(not(ignoredMethods))
-                                .or(isDeclaredBy(preparedMethodRegistry.getInstrumentedType()))),
+                                .or(isDeclaredBy(compiledMethodRegistry.getInstrumentedType()))),
                         classVisitorWrapperChain,
                         attributeAppender,
-                        fieldRegistry.prepare(preparedMethodRegistry.getInstrumentedType()).compile(TypeWriter.FieldPool.Entry.NoOp.INSTANCE),
+                        fieldRegistry.prepare(compiledMethodRegistry.getInstrumentedType()).compile(TypeWriter.FieldPool.Entry.NoOp.INSTANCE),
                         compiledMethodRegistry))
-                .make(new TypeExtensionDelegate(preparedMethodRegistry.getInstrumentedType(), classFileVersion));
+                .make(new TypeExtensionDelegate(compiledMethodRegistry.getInstrumentedType(), classFileVersion));
     }
 
     /**
