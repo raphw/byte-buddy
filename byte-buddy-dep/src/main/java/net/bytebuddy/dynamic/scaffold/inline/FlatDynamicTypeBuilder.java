@@ -5,7 +5,6 @@ import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.*;
-import net.bytebuddy.dynamic.scaffold.draft.Engine;
 import net.bytebuddy.dynamic.scaffold.subclass.SubclassInstrumentationTarget;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
@@ -28,6 +27,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+
+import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
 
 /**
  * A dynamic type builder which enhances a given type without creating a subclass.
@@ -212,17 +213,21 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
         MethodRegistry.Compiled compiledMethodRegistry = preparedMethodRegistry.compile(preparedTargetHandler.factory(bridgeMethodResolverFactory),
                 methodLookupEngineFactory.make(classFileVersion),
                 MethodFlatteningDelegation.Factory.INSTANCE);
-        TypeExtensionDelegate typeExtensionDelegate = new TypeExtensionDelegate(preparedMethodRegistry.getInstrumentedType(), classFileVersion);
-        new Engine.ForRedefinition(preparedMethodRegistry.getInstrumentedType(),
-                classFileVersion,
-                compiledMethodRegistry.getInvokableMethods(),
-                classVisitorWrapperChain,
-                attributeAppender,
-                fieldRegistry.prepare(preparedMethodRegistry.getInstrumentedType()).compile(TypeWriter.FieldPool.Entry.NoOp.INSTANCE),
-                compiledMethodRegistry,
-                new Engine.ForRedefinition.InputStreamProvider.ForClassFileLocator(targetType, classFileLocator),
-                null).create(typeExtensionDelegate);
-        return null;
+        return new TypeWriter.Default<T>(preparedMethodRegistry.getInstrumentedType(),
+                preparedMethodRegistry.getLoadedTypeInitializer(),
+                preparedTargetHandler.getAuxiliaryTypes(),
+                new TypeWriter.Engine.ForRedefinition(preparedMethodRegistry.getInstrumentedType(),
+                        classFileVersion,
+                        compiledMethodRegistry.getInvokableMethods().filter(isOverridable()
+                                .or(isDeclaredBy(preparedMethodRegistry.getInstrumentedType()))
+                                .and(not(ignoredMethods))),
+                        classVisitorWrapperChain,
+                        attributeAppender,
+                        fieldRegistry.prepare(preparedMethodRegistry.getInstrumentedType()).compile(TypeWriter.FieldPool.Entry.NoOp.INSTANCE),
+                        compiledMethodRegistry,
+                        new TypeWriter.Engine.ForRedefinition.InputStreamProvider.ForClassFileLocator(targetType, classFileLocator),
+                        null)) // TODO: Find new way for implementing method flattening resolver.
+                .make(new TypeExtensionDelegate(preparedMethodRegistry.getInstrumentedType(), classFileVersion));
     }
 
     @Override
@@ -313,7 +318,7 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
         public void apply(ClassVisitor classVisitor,
                           Instrumentation.Context instrumentationContext,
                           MethodDescription methodDescription) {
-            MethodVisitor methodVisitor = classVisitor.visitMethod(methodDescription.getModifiers(),
+            MethodVisitor methodVisitor = classVisitor.visitMethod(methodDescription.getAdjustedModifiers(true),
                     methodDescription.getInternalName(),
                     methodDescription.getDescriptor(),
                     methodDescription.getGenericSignature(),
@@ -409,8 +414,8 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                 }
 
                 @Override
-                public DynamicType[] auxiliaryTypes() {
-                    return new DynamicType[]{auxiliaryType};
+                public List<DynamicType> getAuxiliaryTypes() {
+                    return Collections.singletonList(auxiliaryType);
                 }
 
                 @Override
@@ -444,14 +449,14 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                 }
 
                 @Override
-                public DynamicType[] auxiliaryTypes() {
-                    return new DynamicType[0];
+                public List<DynamicType> getAuxiliaryTypes() {
+                    return Collections.emptyList();
                 }
             }
 
             Instrumentation.Target.Factory factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory);
 
-            DynamicType[] auxiliaryTypes();
+            List<DynamicType> getAuxiliaryTypes();
         }
     }
 }

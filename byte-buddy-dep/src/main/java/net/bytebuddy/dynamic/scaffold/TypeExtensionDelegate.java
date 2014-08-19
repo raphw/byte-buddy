@@ -25,10 +25,7 @@ import java.util.*;
  * for defining any accessor methods on the accessed type. Note that this delegate represents a mutable structure
  * where registrations cannot be revoked.
  */
-public class TypeExtensionDelegate implements Instrumentation.Context.ExtractableView,
-        AuxiliaryType.MethodAccessorFactory,
-        TypeWriter.MethodPool,
-        TypeWriter.FieldPool {
+public class TypeExtensionDelegate implements Instrumentation.Context.ExtractableView, AuxiliaryType.MethodAccessorFactory {
 
     /**
      * The default name suffix to be appended to an accessor method.
@@ -71,11 +68,6 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
     private final Map<Instrumentation.SpecialMethodInvocation, MethodDescription> registeredAccessorMethods;
 
     /**
-     * An list of accessor methods in the order of their registration.
-     */
-    private final List<MethodDescription> orderedAccessorMethods;
-
-    /**
      * A map of accessor methods to a method pool entry that represents their implementation.
      */
     private final Map<MethodDescription, TypeWriter.MethodPool.Entry> accessorMethodEntries;
@@ -95,19 +87,6 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
      */
     private final Random random;
 
-    /**
-     * A marker that determines if this instance is still capable of defining field caches. Field caches need to
-     * be initiated explicitly in a class's type initializer. As a consequence, no field caches can be defined during
-     * or after the type initializer ({@code &gt;clinit&lt;} has been written to a given class. This marker is
-     * set to {@code false} once the
-     * {@link net.bytebuddy.dynamic.scaffold.TypeExtensionDelegate#wrapForTypeInitializerInterception(net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool)}
-     * is called. It is the responsibility of this instance's user to write the type initializer as late as possibly.
-     * <p>&nbsp;</p>
-     * This might appear to be a limitation of the library at first look. However, caching values in a type initializer
-     * does not make sense. The type initializer is invokes once at most once which makes field caching of values that
-     * are only used in this initializer unnecessary. Instead, field caches should only be defined in other methods
-     * or constructors.
-     */
     private boolean canRegisterFieldCache;
 
     /**
@@ -147,7 +126,6 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
         this.fieldCachePrefix = fieldCachePrefix;
         this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
         registeredAccessorMethods = new HashMap<Instrumentation.SpecialMethodInvocation, MethodDescription>();
-        orderedAccessorMethods = new LinkedList<MethodDescription>();
         accessorMethodEntries = new HashMap<MethodDescription, TypeWriter.MethodPool.Entry>();
         auxiliaryTypes = new HashMap<AuxiliaryType, DynamicType>();
         registeredFieldCacheEntries = new HashMap<FieldCacheEntry, FieldDescription>();
@@ -181,28 +159,7 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
     private void registerAccessor(Instrumentation.SpecialMethodInvocation specialMethodInvocation,
                                   MethodDescription accessorMethod) {
         registeredAccessorMethods.put(specialMethodInvocation, accessorMethod);
-        orderedAccessorMethods.add(accessorMethod);
         accessorMethodEntries.put(accessorMethod, new AccessorMethodDelegation(specialMethodInvocation));
-    }
-
-    /**
-     * Returns an iterable of the registered accessors. The returned iterator can be modified during a running
-     * iteration. This way, this instance can be used safely as an instrumentation context even for implementing
-     * the accessor methods.
-     *
-     * @return A co-modifiable iterable of all accessor methods that were registered on this instance.
-     */
-    public Iterable<MethodDescription> getRegisteredAccessors() {
-        return new SameThreadCoModifiableIterable<MethodDescription>(orderedAccessorMethods);
-    }
-
-    @Override
-    public TypeWriter.MethodPool.Entry target(MethodDescription methodDescription) {
-        TypeWriter.MethodPool.Entry targetMethodCall = accessorMethodEntries.get(methodDescription);
-        if (targetMethodCall == null) {
-            throw new IllegalArgumentException("Unknown accessor method: " + methodDescription);
-        }
-        return targetMethodCall;
     }
 
     @Override
@@ -253,26 +210,65 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
     }
 
     @Override
-    public List<FieldDescription> getRegisteredFieldCaches() {
-        return new ArrayList<FieldDescription>(registeredFieldCacheEntries.values());
-    }
-
-    @Override
-    public TypeWriter.FieldPool.Entry target(FieldDescription fieldDescription) {
-        return TypeWriter.FieldPool.Entry.NoOp.INSTANCE;
-    }
-
-    /**
-     * Wraps the given method pool in order to prepend any initializations of field caches. At the same time,
-     * invoking this method disables the field cache for further use as it is not possible to define further
-     * cached values from a type initializer once this initializer is written.
-     *
-     * @param methodPool The method pool that contains user interceptions which needs to be wrapped.
-     * @return A method pool that represents this user method pool but is capable of defining field caches.
-     */
-    public TypeWriter.MethodPool wrapForTypeInitializerInterception(TypeWriter.MethodPool methodPool) {
+    public void drain(ClassVisitor classVisitor, TypeWriter.MethodPool methodPool) {
         canRegisterFieldCache = false;
-        return new FieldCacheWritingMethodPool(methodPool);
+        MethodDescription typeInitializer = MethodDescription.Latent.typeInitializerOf(instrumentedType);
+        FieldCacheAppender.resolve(typeInitializer, methodPool.target(typeInitializer), registeredFieldCacheEntries)
+                .apply(classVisitor, this, typeInitializer);
+        for (FieldDescription fieldDescription : registeredFieldCacheEntries.values()) {
+            classVisitor.visitField(fieldDescription.getModifiers(),
+                    fieldDescription.getInternalName(),
+                    fieldDescription.getDescriptor(),
+                    fieldDescription.getGenericSignature(),
+                    null).visitEnd();
+        }
+        for (Map.Entry<MethodDescription, TypeWriter.MethodPool.Entry> entry : accessorMethodEntries.entrySet()) {
+            entry.getValue().apply(classVisitor, this, entry.getKey());
+        }
+    }
+
+    private static class FieldCacheAppender implements ByteCodeAppender {
+
+        public static TypeWriter.MethodPool.Entry resolve(MethodDescription typeInitializer,
+                                                          TypeWriter.MethodPool.Entry originalEntry,
+                                                          Map<FieldCacheEntry, FieldDescription> registeredFieldCacheEntries) {
+            boolean defineMethod = originalEntry.isDefineMethod();
+            return registeredFieldCacheEntries.size() == 0
+                    ? originalEntry
+                    : new TypeWriter.MethodPool.Entry.Simple(new Compound(new FieldCacheAppender(registeredFieldCacheEntries),
+                    defineMethod && originalEntry.getByteCodeAppender().appendsCode()
+                            ? originalEntry.getByteCodeAppender()
+                            : new Simple(MethodReturn.VOID)),
+                    defineMethod
+                            ? originalEntry.getAttributeAppender()
+                            : MethodAttributeAppender.NoOp.INSTANCE);
+        }
+
+        private final Map<FieldCacheEntry, FieldDescription> registeredFieldCacheEntries;
+
+        private FieldCacheAppender(Map<FieldCacheEntry, FieldDescription> registeredFieldCacheEntries) {
+            this.registeredFieldCacheEntries = registeredFieldCacheEntries;
+        }
+
+        @Override
+        public boolean appendsCode() {
+            return registeredFieldCacheEntries.size() > 0;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor,
+                          Instrumentation.Context instrumentationContext,
+                          MethodDescription instrumentedMethod) {
+            StackManipulation[] fieldInitialization = new StackManipulation[registeredFieldCacheEntries.size()];
+            int currentIndex = 0;
+            for (Map.Entry<FieldCacheEntry, FieldDescription> entry : registeredFieldCacheEntries.entrySet()) {
+                fieldInitialization[currentIndex++] = new StackManipulation
+                        .Compound(entry.getKey().getFieldValue(), FieldAccess.forField(entry.getValue()).putter());
+            }
+            StackManipulation.Size stackSize = new StackManipulation.Compound(fieldInitialization)
+                    .apply(methodVisitor, instrumentationContext);
+            return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
+        }
     }
 
     @Override
@@ -284,40 +280,12 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
                 ", fieldCachePrefix='" + fieldCachePrefix + '\'' +
                 ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
                 ", registeredAccessorMethods=" + registeredAccessorMethods +
-                ", orderedAccessorMethods=" + orderedAccessorMethods +
                 ", accessorMethodEntries=" + accessorMethodEntries +
                 ", auxiliaryTypes=" + auxiliaryTypes +
                 ", registeredFieldCacheEntries=" + registeredFieldCacheEntries +
                 ", random=" + random +
                 ", canRegisterFieldCache=" + canRegisterFieldCache +
                 '}';
-    }
-
-    /**
-     * A {@link net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender} for returning from the type
-     * initializer. This byte code appender is used as a default appender for the type initializer if no user-defined
-     * type initializer was defined.
-     */
-    private static enum TypeInitializerReturn implements ByteCodeAppender {
-
-        /**
-         * The singleton instance.
-         */
-        INSTANCE;
-
-        @Override
-        public boolean appendsCode() {
-            return true;
-        }
-
-        @Override
-        public Size apply(MethodVisitor methodVisitor,
-                          Instrumentation.Context instrumentationContext,
-                          MethodDescription instrumentedMethod) {
-            return new Size(MethodReturn.VOID.apply(methodVisitor, instrumentationContext).getMaximalSize(),
-                    instrumentedMethod.getStackSize());
-        }
-
     }
 
     /**
@@ -599,72 +567,6 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
         @Override
         public String toString() {
             return "TypeExtensionDelegate.AccessorMethodDelegation{accessorMethodInvocation=" + accessorMethodInvocation + '}';
-        }
-    }
-
-    /**
-     * A method pool that prepends the initialization of any field caches to the actual instrumentation of a dynamic
-     * type's type initializer, if any. If the wrapped method pool does not define an instrumentation for the type
-     * initializer, this method pool adds an appropriate return statement to the end of the type initializer.
-     */
-    private class FieldCacheWritingMethodPool implements TypeWriter.MethodPool, ByteCodeAppender {
-
-        /**
-         * The method pool that is wrapped by this instance.
-         */
-        private final TypeWriter.MethodPool wrappedMethodPool;
-
-        /**
-         * Creates a new field cache writing method pool that is to be applied only for type initializers.
-         *
-         * @param wrappedMethodPool The method pool that is wrapped by this instance.
-         */
-        private FieldCacheWritingMethodPool(TypeWriter.MethodPool wrappedMethodPool) {
-            this.wrappedMethodPool = wrappedMethodPool;
-        }
-
-        @Override
-        public Entry target(MethodDescription methodDescription) {
-            if (!methodDescription.isTypeInitializer()) {
-                throw new IllegalArgumentException(this + " must only be applied to a type initializer");
-            }
-            Entry wrappedEntry = wrappedMethodPool.target(methodDescription);
-            if (registeredFieldCacheEntries.isEmpty()) {
-                return wrappedEntry;
-            } else if (!wrappedEntry.isDefineMethod()) {
-                return new Entry.Simple(new ByteCodeAppender.Compound(this, TypeInitializerReturn.INSTANCE),
-                        MethodAttributeAppender.NoOp.INSTANCE);
-            } else {
-                return new Entry.Simple(new ByteCodeAppender.Compound(this, wrappedEntry.getByteCodeAppender()),
-                        wrappedEntry.getAttributeAppender());
-            }
-        }
-
-        @Override
-        public boolean appendsCode() {
-            return !registeredFieldCacheEntries.isEmpty();
-        }
-
-        @Override
-        public Size apply(MethodVisitor methodVisitor,
-                          Instrumentation.Context instrumentationContext,
-                          MethodDescription instrumentedMethod) {
-            StackManipulation[] fieldInitialization = new StackManipulation[registeredFieldCacheEntries.size()];
-            int currentIndex = 0;
-            for (Map.Entry<FieldCacheEntry, FieldDescription> entry : registeredFieldCacheEntries.entrySet()) {
-                fieldInitialization[currentIndex++] = new StackManipulation.Compound(entry.getKey().getFieldValue(),
-                        FieldAccess.forField(entry.getValue()).putter());
-            }
-            return new Size(new StackManipulation.Compound(fieldInitialization)
-                    .apply(methodVisitor, instrumentationContext).getMaximalSize(), instrumentedMethod.getStackSize());
-        }
-
-        @Override
-        public String toString() {
-            return "TypeExtensionDelegate.FieldCacheWritingMethodPool{" +
-                    "typeExtensionDelegate=" + TypeExtensionDelegate.this +
-                    "wrappedMethodPool=" + wrappedMethodPool +
-                    '}';
         }
     }
 }

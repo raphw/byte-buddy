@@ -2,6 +2,7 @@ package net.bytebuddy.instrumentation.method.bytecode;
 
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import org.objectweb.asm.MethodVisitor;
 
 import java.util.Arrays;
@@ -35,7 +36,9 @@ public interface ByteCodeAppender {
      * @param instrumentedMethod     The method that is the target of the instrumentation.
      * @return The required size for the applied byte code to run.
      */
-    Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext, MethodDescription instrumentedMethod);
+    Size apply(MethodVisitor methodVisitor,
+               Instrumentation.Context instrumentationContext,
+               MethodDescription instrumentedMethod);
 
     /**
      * An immutable description of both the operand stack size and the size of the local variable array that is
@@ -138,7 +141,9 @@ public interface ByteCodeAppender {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext, MethodDescription instrumentedMethod) {
+        public Size apply(MethodVisitor methodVisitor,
+                          Instrumentation.Context instrumentationContext,
+                          MethodDescription instrumentedMethod) {
             Size size = new Size(0, instrumentedMethod.getStackSize());
             for (ByteCodeAppender byteCodeAppender : this.byteCodeAppender) {
                 size = size.merge(byteCodeAppender.apply(methodVisitor, instrumentationContext, instrumentedMethod));
@@ -160,6 +165,44 @@ public interface ByteCodeAppender {
         @Override
         public String toString() {
             return "ByteCodeAppender.Compound{" + Arrays.toString(byteCodeAppender) + '}';
+        }
+    }
+
+    static class Simple implements ByteCodeAppender {
+
+        private final StackManipulation stackManipulation;
+
+        public Simple(StackManipulation stackManipulation) {
+            this.stackManipulation = stackManipulation;
+        }
+
+        @Override
+        public boolean appendsCode() {
+            return true;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor,
+                          Instrumentation.Context instrumentationContext,
+                          MethodDescription instrumentedMethod) {
+            return new Size(stackManipulation.apply(methodVisitor, instrumentationContext).getMaximalSize(),
+                    instrumentedMethod.getStackSize());
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && stackManipulation.equals(((Simple) other).stackManipulation);
+        }
+
+        @Override
+        public int hashCode() {
+            return stackManipulation.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "ByteCodeAppender.Simple{stackManipulation=" + stackManipulation + '}';
         }
     }
 }

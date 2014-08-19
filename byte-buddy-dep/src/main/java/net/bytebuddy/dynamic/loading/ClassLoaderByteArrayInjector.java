@@ -14,6 +14,8 @@ import java.lang.reflect.Method;
  */
 public class ClassLoaderByteArrayInjector {
 
+    private static final int FROM_BEGINNING = 0;
+
     /**
      * A storage for the reflection method representations that are obtained on loading this classes.
      */
@@ -68,7 +70,7 @@ public class ClassLoaderByteArrayInjector {
                     return (Class<?>) REFLECTION_STORE.getLoadByteArrayMethod().invoke(classLoader,
                             name,
                             binaryRepresentation,
-                            0,
+                            FROM_BEGINNING,
                             binaryRepresentation.length);
                 }
             }

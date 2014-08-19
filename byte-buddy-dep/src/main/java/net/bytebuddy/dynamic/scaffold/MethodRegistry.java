@@ -10,8 +10,6 @@ import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.MethodVisitor;
 
 import java.util.*;
 
@@ -371,22 +369,12 @@ public interface MethodRegistry {
             /**
              * An entry of a compiled default method registry.
              */
-            protected static class Entry implements MethodRegistry.Compiled.Entry, MethodMatcher {
+            protected static class Entry extends TypeWriter.MethodPool.Entry.Simple implements MethodMatcher {
 
                 /**
                  * The method matcher that represents this compiled entry.
                  */
                 private final MethodMatcher methodMatcher;
-
-                /**
-                 * The byte code appender that represents this compiled entry.
-                 */
-                private final ByteCodeAppender byteCodeAppender;
-
-                /**
-                 * The method attribute appender that represents this compiled entry.
-                 */
-                private final MethodAttributeAppender attributeAppender;
 
                 /**
                  * Creates an entry of a compiled default method registry.
@@ -398,44 +386,8 @@ public interface MethodRegistry {
                 protected Entry(MethodMatcher methodMatcher,
                                 ByteCodeAppender byteCodeAppender,
                                 MethodAttributeAppender attributeAppender) {
+                    super(byteCodeAppender, attributeAppender);
                     this.methodMatcher = methodMatcher;
-                    this.byteCodeAppender = byteCodeAppender;
-                    this.attributeAppender = attributeAppender;
-                }
-
-                @Override
-                public boolean isDefineMethod() {
-                    return true;
-                }
-
-                @Override
-                public ByteCodeAppender getByteCodeAppender() {
-                    return byteCodeAppender;
-                }
-
-                @Override
-                public MethodAttributeAppender getAttributeAppender() {
-                    return attributeAppender;
-                }
-
-                @Override
-                public void apply(ClassVisitor classVisitor,
-                                  Instrumentation.Context instrumentationContext,
-                                  MethodDescription methodDescription) {
-                    MethodVisitor methodVisitor = classVisitor.visitMethod(methodDescription.getModifiers(),
-                            methodDescription.getInternalName(),
-                            methodDescription.getDescriptor(),
-                            methodDescription.getGenericSignature(),
-                            methodDescription.getExceptionTypes().toInternalNames());
-                    attributeAppender.apply(methodVisitor, methodDescription);
-                    if (byteCodeAppender.appendsCode()) {
-                        methodVisitor.visitCode();
-                        ByteCodeAppender.Size size = byteCodeAppender.apply(methodVisitor,
-                                instrumentationContext,
-                                methodDescription);
-                        methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
-                    }
-                    methodVisitor.visitEnd();
                 }
 
                 @Override
@@ -445,28 +397,22 @@ public interface MethodRegistry {
 
                 @Override
                 public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    Entry entry = (Entry) other;
-                    return attributeAppender.equals(entry.attributeAppender)
-                            && byteCodeAppender.equals(entry.byteCodeAppender)
-                            && methodMatcher.equals(entry.methodMatcher);
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && super.equals(other)
+                            && methodMatcher.equals(((Entry) other).methodMatcher);
                 }
 
                 @Override
                 public int hashCode() {
-                    int result = methodMatcher.hashCode();
-                    result = 31 * result + byteCodeAppender.hashCode();
-                    result = 31 * result + attributeAppender.hashCode();
-                    return result;
+                    return 31 * super.hashCode() + methodMatcher.hashCode();
                 }
 
                 @Override
                 public String toString() {
                     return "MethodRegistry.Default.Compiled.Entry{" +
                             "methodMatcher=" + methodMatcher +
-                            ", byteCodeAppender=" + byteCodeAppender +
-                            ", attributeAppender=" + attributeAppender +
+                            ", byteCodeAppender=" + getByteCodeAppender() +
+                            ", attributeAppender=" + getAttributeAppender() +
                             '}';
                 }
             }

@@ -57,6 +57,8 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
      */
     TypeList getExceptionTypes();
 
+    int getAdjustedModifiers(boolean appendsCode);
+
     /**
      * Checks if this method description represents a constructor.
      *
@@ -166,6 +168,13 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         @Override
         public String getGenericSignature() {
             return null; // Currently, generic signatures are not supported.
+        }
+
+        @Override
+        public int getAdjustedModifiers(boolean appendsCode) {
+            return appendsCode
+                    ? getModifiers() & ~(Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE)
+                    : getModifiers() & ~Opcodes.ACC_NATIVE | Opcodes.ACC_ABSTRACT;
         }
 
         @Override

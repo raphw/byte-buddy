@@ -200,27 +200,19 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         MethodRegistry.Compiled compiledMethodRegistry = preparedMethodRegistry.compile(new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory),
                 methodLookupEngineFactory.make(classFileVersion),
                 MethodRegistry.Compiled.Entry.Skip.INSTANCE);
-        TypeExtensionDelegate typeExtensionDelegate = new TypeExtensionDelegate(preparedMethodRegistry.getInstrumentedType(), classFileVersion);
-        return new TypeWriter.Builder<T>(preparedMethodRegistry.getInstrumentedType(),
+        return new TypeWriter.Default<T>(preparedMethodRegistry.getInstrumentedType(),
                 preparedMethodRegistry.getLoadedTypeInitializer(),
-                typeExtensionDelegate,
-                classFileVersion,
-                TypeWriter.Builder.ClassWriterProvider.CleanCopy.INSTANCE)
-                .build(classVisitorWrapperChain)
-                .attributeType(attributeAppender)
-                .members()
-                .writeFields(preparedMethodRegistry.getInstrumentedType().getDeclaredFields(),
-                        fieldRegistry.prepare(preparedMethodRegistry.getInstrumentedType()).compile(TypeWriter.FieldPool.Entry.NoOp.INSTANCE))
-                .writeMethods(compiledMethodRegistry.getInvokableMethods()
-                                .filter(isOverridable()
-                                        .and(not(ignoredMethods))
-                                        .or(isDeclaredBy(preparedMethodRegistry.getInstrumentedType()))),
-                        compiledMethodRegistry)
-                .writeMethods(Collections.singletonList(MethodDescription.Latent.typeInitializerOf(preparedMethodRegistry.getInstrumentedType())),
-                        typeExtensionDelegate.wrapForTypeInitializerInterception(compiledMethodRegistry))
-                .writeMethods(typeExtensionDelegate.getRegisteredAccessors(), typeExtensionDelegate)
-                .writeFields(typeExtensionDelegate.getRegisteredFieldCaches(), typeExtensionDelegate)
-                .make();
+                Collections.<DynamicType>emptyList(),
+                new TypeWriter.Engine.ForCreation(preparedMethodRegistry.getInstrumentedType(),
+                        classFileVersion,
+                        compiledMethodRegistry.getInvokableMethods().filter(isOverridable()
+                                .and(not(ignoredMethods))
+                                .or(isDeclaredBy(preparedMethodRegistry.getInstrumentedType()))),
+                        classVisitorWrapperChain,
+                        attributeAppender,
+                        fieldRegistry.prepare(preparedMethodRegistry.getInstrumentedType()).compile(TypeWriter.FieldPool.Entry.NoOp.INSTANCE),
+                        compiledMethodRegistry))
+                .make(new TypeExtensionDelegate(preparedMethodRegistry.getInstrumentedType(), classFileVersion));
     }
 
     /**

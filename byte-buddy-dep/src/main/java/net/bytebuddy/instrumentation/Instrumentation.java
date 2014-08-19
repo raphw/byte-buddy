@@ -2,6 +2,7 @@ package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
+import net.bytebuddy.dynamic.scaffold.TypeWriter;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
@@ -11,6 +12,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocati
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 
 import java.util.*;
@@ -496,12 +498,7 @@ public interface Instrumentation {
              */
             List<DynamicType> getRegisteredAuxiliaryTypes();
 
-            /**
-             * Returns a list of the descriptions of all fields of registered field caches.
-             *
-             * @return A list of the descriptions of all fields of registered field caches.
-             */
-            List<FieldDescription> getRegisteredFieldCaches();
+            void drain(ClassVisitor classVisitor, TypeWriter.MethodPool methodPool);
         }
     }
 
