@@ -13,7 +13,10 @@ import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
+import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocation;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.instrumentation.type.TypeList;
 import org.objectweb.asm.*;
 
 import java.io.IOException;
@@ -21,6 +24,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
@@ -76,8 +80,6 @@ public interface TypeWriter<T> {
         byte[] create(Instrumentation.Context.ExtractableView instrumentationContext);
 
         static class ForRedefinition implements Engine {
-
-            // TODO: Class initializer
 
             public static interface InputStreamProvider {
 
@@ -182,6 +184,8 @@ public interface TypeWriter<T> {
                 private final Map<String, FieldDescription> declaredFields;
                 private final Map<String, MethodDescription> declarableMethods;
 
+                private Instrumentation.Context.ExtractableView.InjectedCode injectedCode;
+
                 public RedefinitionClassVisitor(ClassVisitor classVisitor,
                                                 Instrumentation.Context.ExtractableView instrumentationContext) {
                     super(ASM_API_VERSION, classVisitor);
@@ -195,6 +199,7 @@ public interface TypeWriter<T> {
                     for (MethodDescription methodDescription : invokableMethods) {
                         declarableMethods.put(methodDescription.getUniqueSignature(), methodDescription);
                     }
+                    injectedCode = Instrumentation.Context.ExtractableView.InjectedCode.None.INSTANCE;
                 }
 
                 @Override
@@ -230,8 +235,13 @@ public interface TypeWriter<T> {
                                                  String genericSignature,
                                                  String[] exceptionTypeInternalName) {
                     if (internalName.equals(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME)) {
-                        // TODO: Intercept class initializer.
-                        return null;
+                        TypeInitializerInjection injectedCode = new TypeInitializerInjection();
+                        this.injectedCode = injectedCode;
+                        return super.visitMethod(injectedCode.getInjectorProxyMethod().getModifiers(),
+                                injectedCode.getInjectorProxyMethod().getInternalName(),
+                                injectedCode.getInjectorProxyMethod().getDescriptor(),
+                                injectedCode.getInjectorProxyMethod().getGenericSignature(),
+                                injectedCode.getInjectorProxyMethod().getExceptionTypes().toInternalNames());
                     }
                     MethodDescription methodDescription = declarableMethods.remove(internalName + descriptor);
                     return methodDescription == null
@@ -239,8 +249,7 @@ public interface TypeWriter<T> {
                             : redefine(methodDescription, (modifiers & Opcodes.ACC_ABSTRACT) != 0);
                 }
 
-                private MethodVisitor redefine(MethodDescription methodDescription,
-                                               boolean nonAbstractOrigin) {
+                private MethodVisitor redefine(MethodDescription methodDescription, boolean nonAbstractOrigin) {
                     TypeWriter.MethodPool.Entry entry = methodPool.target(methodDescription);
                     MethodVisitor methodVisitor = super.visitMethod(methodDescription.getAdjustedModifiers(entry.isDefineMethod()
                                     && entry.getByteCodeAppender().appendsCode()),
@@ -263,7 +272,7 @@ public interface TypeWriter<T> {
                     for (MethodDescription methodDescription : declarableMethods.values()) {
                         methodPool.target(methodDescription).apply(cv, instrumentationContext, methodDescription);
                     }
-                    instrumentationContext.drain(cv, methodPool); // TODO: Wrap for calling original interceptor.
+                    instrumentationContext.drain(cv, methodPool, injectedCode);
                     super.visitEnd();
                 }
 
@@ -345,6 +354,38 @@ public interface TypeWriter<T> {
                         actualMethodVisitor.visitEnd();
                     }
                 }
+
+                private class TypeInitializerInjection implements Instrumentation.Context.ExtractableView.InjectedCode {
+
+                    private static final int TYPE_INITIALIZER_PROXY_MODIFIERS = Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
+
+                    private static final String TYPE_INITIALIZER_PROXY_PREFIX = "originalTypeInitializer";
+
+                    private final MethodDescription injectorProxyMethod;
+
+                    private TypeInitializerInjection() {
+                        injectorProxyMethod = new MethodDescription.Latent(
+                                String.format("%s$%d", TYPE_INITIALIZER_PROXY_PREFIX, Math.abs(new Random().nextInt())),
+                                instrumentedType,
+                                new TypeDescription.ForLoadedType(void.class),
+                                new TypeList.Empty(),
+                                TYPE_INITIALIZER_PROXY_MODIFIERS);
+                    }
+
+                    @Override
+                    public StackManipulation getInjectedCode() {
+                        return MethodInvocation.invoke(injectorProxyMethod);
+                    }
+
+                    @Override
+                    public boolean isInjected() {
+                        return true;
+                    }
+
+                    public MethodDescription getInjectorProxyMethod() {
+                        return injectorProxyMethod;
+                    }
+                }
             }
         }
 
@@ -391,7 +432,9 @@ public interface TypeWriter<T> {
                 for (MethodDescription methodDescription : invokableMethods) {
                     methodPool.target(methodDescription).apply(classVisitor, instrumentationContext, methodDescription);
                 }
-                instrumentationContext.drain(classVisitor, methodPool);
+                instrumentationContext.drain(classVisitor,
+                        methodPool,
+                        Instrumentation.Context.ExtractableView.InjectedCode.None.INSTANCE);
                 classVisitor.visitEnd();
                 return classWriter.toByteArray();
             }

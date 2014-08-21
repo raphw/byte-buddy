@@ -210,10 +210,10 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
     }
 
     @Override
-    public void drain(ClassVisitor classVisitor, TypeWriter.MethodPool methodPool) {
+    public void drain(ClassVisitor classVisitor, TypeWriter.MethodPool methodPool, InjectedCode injectedCode) {
         canRegisterFieldCache = false;
         MethodDescription typeInitializer = MethodDescription.Latent.typeInitializerOf(instrumentedType);
-        FieldCacheAppender.resolve(typeInitializer, methodPool.target(typeInitializer), registeredFieldCacheEntries)
+        FieldCacheAppender.resolve(methodPool.target(typeInitializer), registeredFieldCacheEntries, injectedCode)
                 .apply(classVisitor, this, typeInitializer);
         for (FieldDescription fieldDescription : registeredFieldCacheEntries.values()) {
             classVisitor.visitField(fieldDescription.getModifiers(),
@@ -229,13 +229,15 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
 
     private static class FieldCacheAppender implements ByteCodeAppender {
 
-        public static TypeWriter.MethodPool.Entry resolve(MethodDescription typeInitializer,
-                                                          TypeWriter.MethodPool.Entry originalEntry,
-                                                          Map<FieldCacheEntry, FieldDescription> registeredFieldCacheEntries) {
+        public static TypeWriter.MethodPool.Entry resolve(TypeWriter.MethodPool.Entry originalEntry,
+                                                          Map<FieldCacheEntry, FieldDescription> registeredFieldCacheEntries,
+                                                          InjectedCode injectedCode) {
             boolean defineMethod = originalEntry.isDefineMethod();
-            return registeredFieldCacheEntries.size() == 0
+            boolean injectCode = injectedCode.isInjected();
+            return registeredFieldCacheEntries.size() == 0 && !injectCode
                     ? originalEntry
                     : new TypeWriter.MethodPool.Entry.Simple(new Compound(new FieldCacheAppender(registeredFieldCacheEntries),
+                    new Simple(injectCode ? injectedCode.getInjectedCode() : StackManipulation.LegalTrivial.INSTANCE),
                     defineMethod && originalEntry.getByteCodeAppender().appendsCode()
                             ? originalEntry.getByteCodeAppender()
                             : new Simple(MethodReturn.VOID)),

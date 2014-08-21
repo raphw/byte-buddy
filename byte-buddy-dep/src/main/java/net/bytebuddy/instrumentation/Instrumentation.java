@@ -498,7 +498,29 @@ public interface Instrumentation {
              */
             List<DynamicType> getRegisteredAuxiliaryTypes();
 
-            void drain(ClassVisitor classVisitor, TypeWriter.MethodPool methodPool);
+            void drain(ClassVisitor classVisitor, TypeWriter.MethodPool methodPool, InjectedCode injectedCode);
+
+            static interface InjectedCode {
+
+                static enum None implements InjectedCode {
+
+                    INSTANCE;
+
+                    @Override
+                    public StackManipulation getInjectedCode() {
+                        throw new IllegalStateException();
+                    }
+
+                    @Override
+                    public boolean isInjected() {
+                        return false;
+                    }
+                }
+
+                StackManipulation getInjectedCode();
+
+                boolean isInjected();
+            }
         }
     }
 
