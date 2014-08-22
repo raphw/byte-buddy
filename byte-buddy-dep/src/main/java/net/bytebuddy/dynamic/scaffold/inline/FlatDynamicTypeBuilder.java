@@ -228,7 +228,7 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                         fieldRegistry.prepare(compiledMethodRegistry.getInstrumentedType()).compile(TypeWriter.FieldPool.Entry.NoOp.INSTANCE),
                         compiledMethodRegistry,
                         new TypeWriter.Engine.ForRedefinition.InputStreamProvider.ForClassFileLocator(targetType, classFileLocator),
-                        null)) // TODO: Find new way for implementing method flattening resolver.
+                        preparedTargetHandler.getMethodFlatteningResolver()))
                 .make(new TypeExtensionDelegate(compiledMethodRegistry.getInstrumentedType(), classFileVersion));
     }
 
@@ -392,21 +392,23 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
 
         static interface Prepared {
 
+            MethodFlatteningResolver getMethodFlatteningResolver();
+
             static class ForRebaseInstrumentation implements Prepared {
 
                 private static final String SUFFIX = "trivial";
 
-                private final MethodMatcher ignoredMethods;
+                private final MethodFlatteningResolver methodFlatteningResolver;
 
-                private final DynamicType auxiliaryType;
+                private final DynamicType placeholderType;
 
                 public ForRebaseInstrumentation(MethodMatcher ignoredMethods,
                                                 ClassFileVersion classFileVersion,
                                                 TypeDescription instrumentedType) {
-                    this.ignoredMethods = ignoredMethods;
-                    auxiliaryType = TrivialType.INSTANCE.make(trivialTypeNameFor(instrumentedType),
+                    placeholderType = TrivialType.INSTANCE.make(trivialTypeNameFor(instrumentedType),
                             classFileVersion,
                             AuxiliaryType.MethodAccessorFactory.Illegal.INSTANCE);
+                    this.methodFlatteningResolver = new MethodFlatteningResolver.Default(ignoredMethods, placeholderType.getDescription());
                 }
 
                 private static String trivialTypeNameFor(TypeDescription rawInstrumentedType) {
@@ -419,32 +421,36 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                 @Override
                 public Instrumentation.Target.Factory factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
                     return new RebaseInstrumentationTarget.Factory(bridgeMethodResolverFactory,
-                            ignoredMethods,
-                            auxiliaryType.getDescription());
+                            methodFlatteningResolver);
                 }
 
                 @Override
                 public List<DynamicType> getAuxiliaryTypes() {
-                    return Collections.singletonList(auxiliaryType);
+                    return Collections.singletonList(placeholderType);
+                }
+
+                @Override
+                public MethodFlatteningResolver getMethodFlatteningResolver() {
+                    return methodFlatteningResolver;
                 }
 
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && auxiliaryType.equals(((ForRebaseInstrumentation) other).auxiliaryType)
-                            && ignoredMethods.equals(((ForRebaseInstrumentation) other).ignoredMethods);
+                            && placeholderType.equals(((ForRebaseInstrumentation) other).placeholderType)
+                            && methodFlatteningResolver.equals(((ForRebaseInstrumentation) other).methodFlatteningResolver);
                 }
 
                 @Override
                 public int hashCode() {
-                    return 31 * ignoredMethods.hashCode() + auxiliaryType.hashCode();
+                    return 31 * methodFlatteningResolver.hashCode() + placeholderType.hashCode();
                 }
 
                 @Override
                 public String toString() {
                     return "FlatDynamicTypeBuilder.TargetHandler.Prepared.ForRebaseInstrumentation{" +
-                            "ignoredMethods=" + ignoredMethods +
-                            ", auxiliaryType=" + auxiliaryType +
+                            "methodFlatteningResolver=" + methodFlatteningResolver +
+                            ", placeholderType=" + placeholderType +
                             '}';
                 }
             }
@@ -452,6 +458,11 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
             static enum ForSubclassInstrumentation implements Prepared {
 
                 INSTANCE;
+
+                @Override
+                public MethodFlatteningResolver getMethodFlatteningResolver() {
+                    return MethodFlatteningResolver.NoOp.INSTANCE;
+                }
 
                 @Override
                 public Instrumentation.Target.Factory factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
@@ -462,6 +473,8 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                 public List<DynamicType> getAuxiliaryTypes() {
                     return Collections.emptyList();
                 }
+
+
             }
 
             Instrumentation.Target.Factory factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory);

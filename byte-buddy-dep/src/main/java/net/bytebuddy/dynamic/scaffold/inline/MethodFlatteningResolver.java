@@ -1,13 +1,11 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import net.bytebuddy.instrumentation.method.bytecode.stack.constant.NullConstant;
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.Opcodes;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
@@ -17,54 +15,56 @@ public interface MethodFlatteningResolver {
 
     static class Default implements MethodFlatteningResolver {
 
-        private final Map<MethodDescription, Resolution> resolutions;
+        private final MethodMatcher ignoredMethods;
 
-        public Default(List<MethodDescription> methodDescriptions,
-                       MethodMatcher ignoredMethods,
-                       TypeDescription placeholderType) {
-            resolutions = new HashMap<MethodDescription, Resolution>(methodDescriptions.size());
-            for (MethodDescription methodDescription : methodDescriptions) {
-                resolutions.put(methodDescription, ignoredMethods.matches(methodDescription)
-                        ? new Resolution.Preserved(methodDescription)
-                        : new Resolution.Redefined(redefine(methodDescription, placeholderType)));
-            }
+        private final TypeDescription placeholderType;
+
+        public Default(MethodMatcher ignoredMethods, TypeDescription placeholderType) {
+            this.ignoredMethods = ignoredMethods;
+            this.placeholderType = placeholderType;
         }
 
-        private static MethodDescription redefine(MethodDescription methodDescription, TypeDescription placeholderType) {
+        @Override
+        public Resolution resolve(MethodDescription methodDescription) {
+            return ignoredMethods.matches(methodDescription)
+                    ? new Resolution.Preserved(methodDescription)
+                    : redefine(methodDescription);
+        }
+
+        private Resolution redefine(MethodDescription methodDescription) {
             return methodDescription.isConstructor()
-                    ? new MethodDescription.Latent(methodDescription.getInternalName(),
+                    ? new Resolution.ForRedefinedConstructor(new MethodDescription.Latent(methodDescription.getInternalName(),
                     methodDescription.getDeclaringType(),
                     methodDescription.getReturnType(),
                     join(methodDescription.getParameterTypes(), placeholderType),
-                    REDEFINE_METHOD_MODIFIER)
-                    : new MethodDescription.Latent(methodDescription.getInternalName(),
+                    REDEFINE_METHOD_MODIFIER))
+                    : new Resolution.ForRedefinedMethod(new MethodDescription.Latent(methodDescription.getInternalName(),
                     methodDescription.getDeclaringType(),
                     methodDescription.getReturnType(),
                     methodDescription.getParameterTypes(),
                     REDEFINE_METHOD_MODIFIER
                             | (methodDescription.isStatic() ? Opcodes.ACC_STATIC : 0)
-                            | (methodDescription.isNative() ? Opcodes.ACC_NATIVE : 0));
-        }
-
-        @Override
-        public Resolution resolve(MethodDescription methodDescription) {
-            return resolutions.get(methodDescription);
+                            | (methodDescription.isNative() ? Opcodes.ACC_NATIVE : 0)));
         }
 
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && resolutions.equals(((Default) other).resolutions);
+                    && ignoredMethods.equals(((Default) other).ignoredMethods)
+                    && placeholderType.equals(((Default) other).placeholderType);
         }
 
         @Override
         public int hashCode() {
-            return resolutions.hashCode();
+            return 31 * ignoredMethods.hashCode() + placeholderType.hashCode();
         }
 
         @Override
         public String toString() {
-            return "MethodFlatteningResolver.Default{resolutions=" + resolutions + '}';
+            return "MethodFlatteningResolver.Default{" +
+                    "ignoredMethods=" + ignoredMethods +
+                    ", placeholderType=" + placeholderType +
+                    '}';
         }
     }
 
@@ -99,6 +99,11 @@ public interface MethodFlatteningResolver {
             }
 
             @Override
+            public StackManipulation getAdditionalArguments() {
+                throw new IllegalStateException();
+            }
+
+            @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
                         && methodDescription.equals(((Preserved) other).methodDescription);
@@ -115,11 +120,11 @@ public interface MethodFlatteningResolver {
             }
         }
 
-        static class Redefined implements Resolution {
+        static class ForRedefinedMethod implements Resolution {
 
             private final MethodDescription methodDescription;
 
-            public Redefined(MethodDescription methodDescription) {
+            public ForRedefinedMethod(MethodDescription methodDescription) {
                 this.methodDescription = methodDescription;
             }
 
@@ -134,9 +139,14 @@ public interface MethodFlatteningResolver {
             }
 
             @Override
+            public StackManipulation getAdditionalArguments() {
+                return StackManipulation.LegalTrivial.INSTANCE;
+            }
+
+            @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && methodDescription.equals(((Preserved) other).methodDescription);
+                        && methodDescription.equals(((ForRedefinedMethod) other).methodDescription);
             }
 
             @Override
@@ -146,13 +156,55 @@ public interface MethodFlatteningResolver {
 
             @Override
             public String toString() {
-                return "MethodFlatteningResolver.Resolution.Redefined{methodDescription=" + methodDescription + '}';
+                return "MethodFlatteningResolver.Resolution.ForRedefinedMethod{methodDescription=" + methodDescription + '}';
+            }
+        }
+
+        static class ForRedefinedConstructor implements Resolution {
+
+            private final MethodDescription methodDescription;
+
+            public ForRedefinedConstructor(MethodDescription methodDescription) {
+                this.methodDescription = methodDescription;
+            }
+
+            @Override
+            public boolean isRedefined() {
+                return true;
+            }
+
+            @Override
+            public MethodDescription getResolvedMethod() {
+                return methodDescription;
+            }
+
+            @Override
+            public StackManipulation getAdditionalArguments() {
+                return NullConstant.INSTANCE;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && methodDescription.equals(((ForRedefinedConstructor) other).methodDescription);
+            }
+
+            @Override
+            public int hashCode() {
+                return methodDescription.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "MethodFlatteningResolver.Resolution.ForRedefinedConstructor{methodDescription=" + methodDescription + '}';
             }
         }
 
         boolean isRedefined();
 
         MethodDescription getResolvedMethod();
+
+        StackManipulation getAdditionalArguments();
     }
 
     Resolution resolve(MethodDescription methodDescription);

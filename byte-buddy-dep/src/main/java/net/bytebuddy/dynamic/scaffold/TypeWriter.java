@@ -259,7 +259,7 @@ public interface TypeWriter<T> {
                             methodDescription.getExceptionTypes().toInternalNames());
                     entry.getAttributeAppender().apply(methodVisitor, methodDescription);
                     MethodFlatteningResolver.Resolution resolution = methodFlatteningResolver.resolve(methodDescription);
-                    return nonAbstractOrigin && resolution.isRedefined()
+                    return nonAbstractOrigin
                             ? new CodePreservingMethodVisitor(methodVisitor, entry.getByteCodeAppender(), methodDescription, this, resolution.getResolvedMethod())
                             : new AttributeObtainingMethodVisitor(methodVisitor, entry.getByteCodeAppender(), methodDescription);
                 }
@@ -317,6 +317,11 @@ public interface TypeWriter<T> {
                                 redirectionMethod.getGenericSignature(),
                                 redirectionMethod.getExceptionTypes().toInternalNames());
                         super.visitCode();
+                    }
+
+                    @Override
+                    public void visitMaxs(int maxStack, int maxLocals) {
+                        super.visitMaxs(maxStack, Math.max(maxLocals, redirectionMethod.getStackSize()));
                     }
                 }
 

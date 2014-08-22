@@ -5,9 +5,7 @@ import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
-import net.bytebuddy.instrumentation.method.bytecode.stack.constant.NullConstant;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocation;
-import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 
@@ -41,8 +39,8 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
      * @return A special method invocation on this proxied super method.
      */
     private Instrumentation.SpecialMethodInvocation invokeSuper(MethodFlatteningResolver.Resolution resolution) {
-        return resolution.isRedefined() && resolution.getResolvedMethod().isConstructor()
-                ? new RedefinedConstructorInvocation(resolution.getResolvedMethod(), typeDescription)
+        return resolution.isRedefined()
+                ? new RedefinedMethodSpecialMethodInvocation(resolution, typeDescription)
                 : Instrumentation.SpecialMethodInvocation.Simple.of(resolution.getResolvedMethod(), typeDescription);
     }
 
@@ -68,7 +66,7 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
                 '}';
     }
 
-    protected static class RedefinedConstructorInvocation implements Instrumentation.SpecialMethodInvocation {
+    protected static class RedefinedMethodSpecialMethodInvocation implements Instrumentation.SpecialMethodInvocation {
 
         private final MethodDescription methodDescription;
 
@@ -76,10 +74,10 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
 
         private final StackManipulation stackManipulation;
 
-        public RedefinedConstructorInvocation(MethodDescription methodDescription, TypeDescription typeDescription) {
-            this.methodDescription = methodDescription;
+        public RedefinedMethodSpecialMethodInvocation(MethodFlatteningResolver.Resolution resolution, TypeDescription typeDescription) {
+            this.methodDescription = resolution.getResolvedMethod();
             this.typeDescription = typeDescription;
-            stackManipulation = new Compound(NullConstant.INSTANCE, MethodInvocation.invoke(methodDescription));
+            stackManipulation = new Compound(resolution.getAdditionalArguments(), MethodInvocation.invoke(resolution.getResolvedMethod()));
         }
 
         @Override
@@ -136,25 +134,39 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
 
         private final BridgeMethodResolver.Factory bridgeMethodResolverFactory;
 
-        private final MethodMatcher ignoredMethods;
-
-        private final TypeDescription placeholderType;
+        private final MethodFlatteningResolver methodFlatteningResolver;
 
         public Factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory,
-                       MethodMatcher ignoredMethods,
-                       TypeDescription placeholderType) {
+                       MethodFlatteningResolver methodFlatteningResolver) {
             this.bridgeMethodResolverFactory = bridgeMethodResolverFactory;
-            this.ignoredMethods = ignoredMethods;
-            this.placeholderType = placeholderType;
+            this.methodFlatteningResolver = methodFlatteningResolver;
         }
 
         @Override
         public Instrumentation.Target make(MethodLookupEngine.Finding finding) {
             return new RebaseInstrumentationTarget(finding,
                     bridgeMethodResolverFactory,
-                    new MethodFlatteningResolver.Default(finding.getTypeDescription().getDeclaredMethods(),
-                            ignoredMethods,
-                            placeholderType));
+                    methodFlatteningResolver);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && bridgeMethodResolverFactory.equals(((Factory) other).bridgeMethodResolverFactory)
+                    && methodFlatteningResolver.equals(((Factory) other).methodFlatteningResolver);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * bridgeMethodResolverFactory.hashCode() + methodFlatteningResolver.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "RebaseInstrumentationTarget.Factory{" +
+                    "bridgeMethodResolverFactory=" + bridgeMethodResolverFactory +
+                    ", methodFlatteningResolver=" + methodFlatteningResolver +
+                    '}';
         }
     }
 }
