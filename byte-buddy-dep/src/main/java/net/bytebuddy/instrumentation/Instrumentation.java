@@ -193,7 +193,7 @@ public interface Instrumentation {
             public static SpecialMethodInvocation of(MethodDescription methodDescription,
                                                      TypeDescription typeDescription) {
                 StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription).special(typeDescription);
-                return stackManipulation.isValid()
+                return stackManipulation.isValid() && !methodDescription.isAbstract()
                         ? new Simple(methodDescription, typeDescription, stackManipulation)
                         : SpecialMethodInvocation.Illegal.INSTANCE;
             }

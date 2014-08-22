@@ -40,7 +40,7 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
      */
     private Instrumentation.SpecialMethodInvocation invokeSuper(MethodFlatteningResolver.Resolution resolution) {
         return resolution.isRedefined()
-                ? new RedefinedMethodSpecialMethodInvocation(resolution, typeDescription)
+                ? RedefinedMethodSpecialMethodInvocation.of(resolution, typeDescription)
                 : Instrumentation.SpecialMethodInvocation.Simple.of(resolution.getResolvedMethod(), typeDescription);
     }
 
@@ -74,7 +74,15 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
 
         private final StackManipulation stackManipulation;
 
-        public RedefinedMethodSpecialMethodInvocation(MethodFlatteningResolver.Resolution resolution, TypeDescription typeDescription) {
+        public static Instrumentation.SpecialMethodInvocation of(MethodFlatteningResolver.Resolution resolution,
+                                                                 TypeDescription typeDescription) {
+            return resolution.getResolvedMethod().isAbstract()
+                    ? Illegal.INSTANCE
+                    : new RedefinedMethodSpecialMethodInvocation(resolution, typeDescription);
+        }
+
+        private RedefinedMethodSpecialMethodInvocation(MethodFlatteningResolver.Resolution resolution,
+                                                       TypeDescription typeDescription) {
             this.methodDescription = resolution.getResolvedMethod();
             this.typeDescription = typeDescription;
             stackManipulation = new Compound(resolution.getAdditionalArguments(), MethodInvocation.invoke(resolution.getResolvedMethod()));

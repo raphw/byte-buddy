@@ -13,17 +13,15 @@ import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
-import net.bytebuddy.utility.DebuggingWrapper;
 import org.junit.Test;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.util.Textifier;
 
 import java.io.Serializable;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.Arrays;
 
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.none;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class FlatDynamicTypeBuilderTest {
 
@@ -32,6 +30,12 @@ public class FlatDynamicTypeBuilderTest {
     private static final String FOO = "foo";
 
     public static class Foo {
+
+        private final String foo;
+
+        public Foo() {
+            foo = FOO;
+        }
 
         public String foo() {
             return FOO;
@@ -56,10 +60,12 @@ public class FlatDynamicTypeBuilderTest {
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ClassFileLocator.Default.CLASS_PATH,
                 FlatDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation.INSTANCE)
-                .classVisitor(new DebuggingWrapper(System.out, new Textifier()))
+//                .classVisitor(new DebuggingWrapper(System.out, new Textifier()))
                 .make()
-                .load(new URLClassLoader(new URL[0], BOOTSTRAP_CLASS_LOADER), ClassLoadingStrategy.Default.WRAPPER)
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
+        assertThat(foo.getName(), is(FOO));
+//        assertThat(foo.getModifiers(), is(Opcodes.ACC_PUBLIC));
         foo.newInstance();
     }
 }

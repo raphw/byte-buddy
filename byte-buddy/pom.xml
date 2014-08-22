@@ -61,6 +61,15 @@
                                     <goal>shade</goal>
                                 </goals>
                                 <configuration>
+                                    <minimizeJar>true</minimizeJar>
+                                    <filters>
+                                        <filter>
+                                            <artifact>${project.groupId}:byte-buddy-dep</artifact>
+                                            <includes>
+                                                <include>**</include>
+                                            </includes>
+                                        </filter>
+                                    </filters>
                                     <shadedArtifactAttached>false</shadedArtifactAttached>
                                     <createDependencyReducedPom>true</createDependencyReducedPom>
                                     <createSourcesJar>true</createSourcesJar>

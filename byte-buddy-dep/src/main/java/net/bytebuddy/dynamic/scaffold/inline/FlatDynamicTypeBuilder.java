@@ -218,6 +218,7 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                 compiledMethodRegistry.getLoadedTypeInitializer(),
                 preparedTargetHandler.getAuxiliaryTypes(),
                 new TypeWriter.Engine.ForRedefinition(compiledMethodRegistry.getInstrumentedType(),
+                        targetType,
                         classFileVersion,
                         compiledMethodRegistry.getInvokableMethods().filter(isOverridable()
                                 .or(isDeclaredBy(compiledMethodRegistry.getInstrumentedType()))

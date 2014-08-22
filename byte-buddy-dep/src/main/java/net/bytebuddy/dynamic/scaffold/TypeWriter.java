@@ -19,6 +19,8 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.*;
+import org.objectweb.asm.commons.RemappingClassAdapter;
+import org.objectweb.asm.commons.SimpleRemapper;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -126,6 +128,7 @@ public interface TypeWriter<T> {
             }
 
             private final TypeDescription instrumentedType;
+            private final TypeDescription targetType;
             private final ClassFileVersion classFileVersion;
             private final List<? extends MethodDescription> invokableMethods;
             private final ClassVisitorWrapper classVisitorWrapper;
@@ -136,6 +139,7 @@ public interface TypeWriter<T> {
             private final MethodFlatteningResolver methodFlatteningResolver;
 
             public ForRedefinition(TypeDescription instrumentedType,
+                                   TypeDescription targetType,
                                    ClassFileVersion classFileVersion,
                                    List<? extends MethodDescription> invokableMethods,
                                    ClassVisitorWrapper classVisitorWrapper,
@@ -145,6 +149,7 @@ public interface TypeWriter<T> {
                                    InputStreamProvider inputStreamProvider,
                                    MethodFlatteningResolver methodFlatteningResolver) {
                 this.instrumentedType = instrumentedType;
+                this.targetType = targetType;
                 this.classFileVersion = classFileVersion;
                 this.invokableMethods = invokableMethods;
                 this.classVisitorWrapper = classVisitorWrapper;
@@ -173,8 +178,17 @@ public interface TypeWriter<T> {
                                     InputStream classFile) throws IOException {
                 ClassReader classReader = new ClassReader(classFile);
                 ClassWriter classWriter = new ClassWriter(classReader, ASM_MANUAL_FLAG);
-                classReader.accept(new RedefinitionClassVisitor(classVisitorWrapper.wrap(classWriter), instrumentationContext), ASM_MANUAL_FLAG);
+                classReader.accept(writeTo(classVisitorWrapper.wrap(classWriter), instrumentationContext), ASM_MANUAL_FLAG);
                 return classWriter.toByteArray();
+            }
+
+            private ClassVisitor writeTo(ClassVisitor classVisitor, Instrumentation.Context.ExtractableView instrumentationContext) {
+                String originalName = targetType.getInternalName();
+                String targetName = instrumentedType.getInternalName();
+                ClassVisitor targetClassVisitor = new RedefinitionClassVisitor(classVisitor, instrumentationContext);
+                return originalName.equals(targetName)
+                        ? targetClassVisitor
+                        : new RemappingClassAdapter(targetClassVisitor, new SimpleRemapper(originalName, targetName));
             }
 
             @Override
@@ -231,8 +245,8 @@ public interface TypeWriter<T> {
 
                 private Instrumentation.Context.ExtractableView.InjectedCode injectedCode;
 
-                public RedefinitionClassVisitor(ClassVisitor classVisitor,
-                                                Instrumentation.Context.ExtractableView instrumentationContext) {
+                protected RedefinitionClassVisitor(ClassVisitor classVisitor,
+                                                   Instrumentation.Context.ExtractableView instrumentationContext) {
                     super(ASM_API_VERSION, classVisitor);
                     this.instrumentationContext = instrumentationContext;
                     List<? extends FieldDescription> fieldDescriptions = instrumentedType.getDeclaredFields();
@@ -254,7 +268,7 @@ public interface TypeWriter<T> {
                                   String genericSignature,
                                   String superTypeInternalName,
                                   String[] interfaceTypeInternalName) {
-                    super.visit(classFileVersion.getVersionNumber(),
+                    super.visit(Math.max(classFileVersion.getVersionNumber(), classFileVersionNumber),
                             instrumentedType.getActualModifiers(),
                             instrumentedType.getInternalName(),
                             instrumentedType.getGenericSignature(),
