@@ -209,7 +209,7 @@ public interface TypeWriter<T> {
                                   String genericSignature,
                                   String superTypeInternalName,
                                   String[] interfaceTypeInternalName) {
-                    super.visit(classFileVersion.getVersionNumber(), // TODO: Make optional override
+                    super.visit(classFileVersion.getVersionNumber(),
                             instrumentedType.getActualModifiers(),
                             instrumentedType.getInternalName(),
                             instrumentedType.getGenericSignature(),
