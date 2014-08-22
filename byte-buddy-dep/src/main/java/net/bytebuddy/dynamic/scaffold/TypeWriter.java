@@ -303,15 +303,21 @@ public interface TypeWriter<T> {
                                 injectedCode.getInjectorProxyMethod().getExceptionTypes().toInternalNames());
                     }
                     MethodDescription methodDescription = declarableMethods.remove(internalName + descriptor);
-                    return methodDescription == null
+                    return methodDescription == null // Ignored method or not existent for the instrumented type.
                             ? super.visitMethod(modifiers, internalName, descriptor, genericSignature, exceptionTypeInternalName)
                             : redefine(methodDescription, (modifiers & Opcodes.ACC_ABSTRACT) != 0);
                 }
 
                 private MethodVisitor redefine(MethodDescription methodDescription, boolean abstractOrigin) {
                     TypeWriter.MethodPool.Entry entry = methodPool.target(methodDescription);
-                    MethodVisitor methodVisitor = super.visitMethod(methodDescription
-                                    .getAdjustedModifiers(entry.isDefineMethod() && entry.getByteCodeAppender().appendsCode()),
+                    if (!entry.isDefineMethod()) {
+                        return super.visitMethod(methodDescription.getModifiers(),
+                                methodDescription.getInternalName(),
+                                methodDescription.getDescriptor(),
+                                methodDescription.getGenericSignature(),
+                                methodDescription.getExceptionTypes().toInternalNames());
+                    }
+                    MethodVisitor methodVisitor = super.visitMethod(methodDescription.getAdjustedModifiers(entry.getByteCodeAppender().appendsCode()),
                             methodDescription.getInternalName(),
                             methodDescription.getDescriptor(),
                             methodDescription.getGenericSignature(),

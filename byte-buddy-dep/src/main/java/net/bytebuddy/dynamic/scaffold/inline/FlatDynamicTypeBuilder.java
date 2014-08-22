@@ -213,7 +213,7 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                 preparedMethodRegistry.getInstrumentedType());
         MethodRegistry.Compiled compiledMethodRegistry = preparedMethodRegistry.compile(preparedTargetHandler.factory(bridgeMethodResolverFactory),
                 methodLookupEngineFactory.make(classFileVersion),
-                MethodFlatteningDelegation.Factory.INSTANCE);
+                preparedTargetHandler.getMethodPoolEntryDefault());
         return new TypeWriter.Default<T>(compiledMethodRegistry.getInstrumentedType(),
                 compiledMethodRegistry.getLoadedTypeInitializer(),
                 preparedTargetHandler.getAuxiliaryTypes(),
@@ -276,91 +276,6 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                 '}';
     }
 
-    private static class MethodFlatteningDelegation implements TypeWriter.MethodPool.Entry, ByteCodeAppender {
-
-        private static enum Factory implements TypeWriter.MethodPool.Entry.Factory {
-
-            INSTANCE;
-
-            @Override
-            public TypeWriter.MethodPool.Entry compile(Instrumentation.Target instrumentationTarget) {
-                return new MethodFlatteningDelegation(instrumentationTarget);
-            }
-        }
-
-        private final Instrumentation.Target instrumentationTarget;
-
-        private MethodFlatteningDelegation(Instrumentation.Target instrumentationTarget) {
-            this.instrumentationTarget = instrumentationTarget;
-        }
-
-        @Override
-        public boolean isDefineMethod() {
-            return true;
-        }
-
-        @Override
-        public ByteCodeAppender getByteCodeAppender() {
-            return this;
-        }
-
-        @Override
-        public MethodAttributeAppender getAttributeAppender() {
-            return MethodAttributeAppender.NoOp.INSTANCE;
-        }
-
-        @Override
-        public boolean appendsCode() {
-            return true;
-        }
-
-        @Override
-        public Size apply(MethodVisitor methodVisitor,
-                          Instrumentation.Context instrumentationContext,
-                          MethodDescription instrumentedMethod) {
-            return new Size(new StackManipulation.Compound(
-                    MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
-                    instrumentedMethod.isTypeInitializer()
-                            ? StackManipulation.LegalTrivial.INSTANCE
-                            : instrumentationTarget.invokeSuper(instrumentedMethod, Instrumentation.Target.MethodLookup.Default.EXACT),
-                    MethodReturn.returning(instrumentedMethod.getReturnType())
-            ).apply(methodVisitor, instrumentationContext).getMaximalSize(), instrumentedMethod.getStackSize());
-        }
-
-        @Override
-        public void apply(ClassVisitor classVisitor,
-                          Instrumentation.Context instrumentationContext,
-                          MethodDescription methodDescription) {
-            MethodVisitor methodVisitor = classVisitor.visitMethod(methodDescription.getAdjustedModifiers(true),
-                    methodDescription.getInternalName(),
-                    methodDescription.getDescriptor(),
-                    methodDescription.getGenericSignature(),
-                    methodDescription.getExceptionTypes().toInternalNames());
-            methodVisitor.visitCode();
-            Size size = apply(methodVisitor, instrumentationContext, methodDescription);
-            methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
-            methodVisitor.visitEnd();
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            MethodFlatteningDelegation that = (MethodFlatteningDelegation) other;
-            return instrumentationTarget.equals(that.instrumentationTarget);
-        }
-
-        @Override
-        public int hashCode() {
-            return instrumentationTarget.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "FlatDynamicTypeBuilder.MethodFlatteningDelegation{instrumentationTarget=" + instrumentationTarget + '}';
-        }
-    }
-
     public static interface TargetHandler {
 
         static enum ForRebaseInstrumentation implements TargetHandler {
@@ -396,6 +311,8 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
         static interface Prepared {
 
             MethodFlatteningResolver getMethodFlatteningResolver();
+
+            TypeWriter.MethodPool.Entry.Factory getMethodPoolEntryDefault();
 
             static class ForRebaseInstrumentation implements Prepared {
 
@@ -438,6 +355,11 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                 }
 
                 @Override
+                public TypeWriter.MethodPool.Entry.Factory getMethodPoolEntryDefault() {
+                    return MethodFlatteningDelegation.Factory.INSTANCE;
+                }
+
+                @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
                             && placeholderType.equals(((ForRebaseInstrumentation) other).placeholderType)
@@ -456,6 +378,91 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                             ", placeholderType=" + placeholderType +
                             '}';
                 }
+
+                private static class MethodFlatteningDelegation implements TypeWriter.MethodPool.Entry, ByteCodeAppender {
+
+                    private static enum Factory implements TypeWriter.MethodPool.Entry.Factory {
+
+                        INSTANCE;
+
+                        @Override
+                        public TypeWriter.MethodPool.Entry compile(Instrumentation.Target instrumentationTarget) {
+                            return new MethodFlatteningDelegation(instrumentationTarget);
+                        }
+                    }
+
+                    private final Instrumentation.Target instrumentationTarget;
+
+                    private MethodFlatteningDelegation(Instrumentation.Target instrumentationTarget) {
+                        this.instrumentationTarget = instrumentationTarget;
+                    }
+
+                    @Override
+                    public boolean isDefineMethod() {
+                        return true;
+                    }
+
+                    @Override
+                    public ByteCodeAppender getByteCodeAppender() {
+                        return this;
+                    }
+
+                    @Override
+                    public MethodAttributeAppender getAttributeAppender() {
+                        return MethodAttributeAppender.NoOp.INSTANCE;
+                    }
+
+                    @Override
+                    public boolean appendsCode() {
+                        return true;
+                    }
+
+                    @Override
+                    public Size apply(MethodVisitor methodVisitor,
+                                      Instrumentation.Context instrumentationContext,
+                                      MethodDescription instrumentedMethod) {
+                        return new Size(new StackManipulation.Compound(
+                                MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
+                                instrumentedMethod.isTypeInitializer()
+                                        ? StackManipulation.LegalTrivial.INSTANCE
+                                        : instrumentationTarget.invokeSuper(instrumentedMethod, Instrumentation.Target.MethodLookup.Default.EXACT),
+                                MethodReturn.returning(instrumentedMethod.getReturnType())
+                        ).apply(methodVisitor, instrumentationContext).getMaximalSize(), instrumentedMethod.getStackSize());
+                    }
+
+                    @Override
+                    public void apply(ClassVisitor classVisitor,
+                                      Instrumentation.Context instrumentationContext,
+                                      MethodDescription methodDescription) {
+                        MethodVisitor methodVisitor = classVisitor.visitMethod(methodDescription.getAdjustedModifiers(true),
+                                methodDescription.getInternalName(),
+                                methodDescription.getDescriptor(),
+                                methodDescription.getGenericSignature(),
+                                methodDescription.getExceptionTypes().toInternalNames());
+                        methodVisitor.visitCode();
+                        Size size = apply(methodVisitor, instrumentationContext, methodDescription);
+                        methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
+                        methodVisitor.visitEnd();
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        MethodFlatteningDelegation that = (MethodFlatteningDelegation) other;
+                        return instrumentationTarget.equals(that.instrumentationTarget);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return instrumentationTarget.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "FlatDynamicTypeBuilder.MethodFlatteningDelegation{instrumentationTarget=" + instrumentationTarget + '}';
+                    }
+                }
             }
 
             static enum ForSubclassInstrumentation implements Prepared {
@@ -468,6 +475,11 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                 }
 
                 @Override
+                public TypeWriter.MethodPool.Entry.Factory getMethodPoolEntryDefault() {
+                    return TypeWriter.MethodPool.Entry.Skip.INSTANCE;
+                }
+
+                @Override
                 public Instrumentation.Target.Factory factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
                     return new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory);
                 }
@@ -476,8 +488,6 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                 public List<DynamicType> getAuxiliaryTypes() {
                     return Collections.emptyList();
                 }
-
-
             }
 
             Instrumentation.Target.Factory factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory);

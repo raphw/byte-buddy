@@ -68,4 +68,30 @@ public class FlatDynamicTypeBuilderTest {
 //        assertThat(foo.getModifiers(), is(Opcodes.ACC_PUBLIC));
         foo.newInstance();
     }
+
+    @Test
+    public void testPlainRedefinition() throws Exception {
+        Class<?> foo = new FlatDynamicTypeBuilder<Foo>(ClassFileVersion.forCurrentJavaVersion(),
+                new NamingStrategy.Fixed(FOO),
+                new TypeDescription.ForLoadedType(Foo.class),
+                new TypeList.ForLoadedType(Arrays.<Class<?>>asList(Serializable.class)),
+                Opcodes.ACC_PUBLIC,
+                TypeAttributeAppender.NoOp.INSTANCE,
+                none(),
+                BridgeMethodResolver.Simple.Factory.FAIL_FAST,
+                new ClassVisitorWrapper.Chain(),
+                new FieldRegistry.Default(),
+                new MethodRegistry.Default(),
+                MethodLookupEngine.Default.Factory.INSTANCE,
+                FieldAttributeAppender.NoOp.INSTANCE,
+                MethodAttributeAppender.NoOp.INSTANCE,
+                ClassFileLocator.Default.CLASS_PATH,
+                FlatDynamicTypeBuilder.TargetHandler.ForSubclassInstrumentation.INSTANCE)
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(foo.getName(), is(FOO));
+//        assertThat(foo.getModifiers(), is(Opcodes.ACC_PUBLIC));
+        foo.newInstance();
+    }
 }
