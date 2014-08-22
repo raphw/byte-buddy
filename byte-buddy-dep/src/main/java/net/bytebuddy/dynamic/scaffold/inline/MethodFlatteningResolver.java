@@ -5,6 +5,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.constant.NullConstant;
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.Opcodes;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
@@ -19,9 +20,12 @@ public interface MethodFlatteningResolver {
 
         private final TypeDescription placeholderType;
 
+        private final String seed;
+
         public Default(MethodMatcher ignoredMethods, TypeDescription placeholderType) {
             this.ignoredMethods = ignoredMethods;
             this.placeholderType = placeholderType;
+            seed = RandomString.make();
         }
 
         @Override
@@ -33,30 +37,26 @@ public interface MethodFlatteningResolver {
 
         private Resolution redefine(MethodDescription methodDescription) {
             return methodDescription.isConstructor()
-                    ? new Resolution.ForRedefinedConstructor(new MethodDescription.Latent(methodDescription.getInternalName(),
-                    methodDescription.getDeclaringType(),
-                    methodDescription.getReturnType(),
-                    join(methodDescription.getParameterTypes(), placeholderType),
-                    REDEFINE_METHOD_MODIFIER))
-                    : new Resolution.ForRedefinedMethod(new MethodDescription.Latent(methodDescription.getInternalName(),
-                    methodDescription.getDeclaringType(),
-                    methodDescription.getReturnType(),
-                    methodDescription.getParameterTypes(),
-                    REDEFINE_METHOD_MODIFIER
-                            | (methodDescription.isStatic() ? Opcodes.ACC_STATIC : 0)
-                            | (methodDescription.isNative() ? Opcodes.ACC_NATIVE : 0)));
+                    ? new Resolution.ForRedefinedConstructor(methodDescription, placeholderType)
+                    : new Resolution.ForRedefinedMethod(methodDescription, seed);
         }
 
         @Override
         public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && ignoredMethods.equals(((Default) other).ignoredMethods)
-                    && placeholderType.equals(((Default) other).placeholderType);
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            Default aDefault = (Default) other;
+            return seed.equals(aDefault.seed)
+                    && ignoredMethods.equals(aDefault.ignoredMethods)
+                    && placeholderType.equals(aDefault.placeholderType);
         }
 
         @Override
         public int hashCode() {
-            return 31 * ignoredMethods.hashCode() + placeholderType.hashCode();
+            int result = ignoredMethods.hashCode();
+            result = 31 * result + placeholderType.hashCode();
+            result = 31 * result + seed.hashCode();
+            return result;
         }
 
         @Override
@@ -64,6 +64,7 @@ public interface MethodFlatteningResolver {
             return "MethodFlatteningResolver.Default{" +
                     "ignoredMethods=" + ignoredMethods +
                     ", placeholderType=" + placeholderType +
+                    ", seed=" + seed +
                     '}';
         }
     }
@@ -122,10 +123,19 @@ public interface MethodFlatteningResolver {
 
         static class ForRedefinedMethod implements Resolution {
 
+            private static final String ORIGINAL_METHOD_NAME_SUFFIX = "original";
+
             private final MethodDescription methodDescription;
 
-            public ForRedefinedMethod(MethodDescription methodDescription) {
-                this.methodDescription = methodDescription;
+            public ForRedefinedMethod(MethodDescription methodDescription, String seed) {
+                this.methodDescription = new MethodDescription.Latent(
+                        String.format("%s$%s$%s", methodDescription.getInternalName(), ORIGINAL_METHOD_NAME_SUFFIX, seed),
+                        methodDescription.getDeclaringType(),
+                        methodDescription.getReturnType(),
+                        methodDescription.getParameterTypes(),
+                        REDEFINE_METHOD_MODIFIER
+                                | (methodDescription.isStatic() ? Opcodes.ACC_STATIC : 0)
+                                | (methodDescription.isNative() ? Opcodes.ACC_NATIVE : 0));
             }
 
             @Override
@@ -164,8 +174,12 @@ public interface MethodFlatteningResolver {
 
             private final MethodDescription methodDescription;
 
-            public ForRedefinedConstructor(MethodDescription methodDescription) {
-                this.methodDescription = methodDescription;
+            public ForRedefinedConstructor(MethodDescription methodDescription, TypeDescription placeholderType) {
+                this.methodDescription = new MethodDescription.Latent(methodDescription.getInternalName(),
+                        methodDescription.getDeclaringType(),
+                        methodDescription.getReturnType(),
+                        join(methodDescription.getParameterTypes(), placeholderType),
+                        REDEFINE_METHOD_MODIFIER);
             }
 
             @Override

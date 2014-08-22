@@ -21,13 +21,13 @@ import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
 import net.bytebuddy.instrumentation.type.auxiliary.TrivialType;
+import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
 
@@ -318,8 +318,10 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                           Instrumentation.Context instrumentationContext,
                           MethodDescription instrumentedMethod) {
             return new Size(new StackManipulation.Compound(
-                    MethodVariableAccess.loadArguments(instrumentedMethod),
-                    instrumentationTarget.invokeSuper(instrumentedMethod, Instrumentation.Target.MethodLookup.Default.EXACT),
+                    MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
+                    instrumentedMethod.isTypeInitializer()
+                            ? StackManipulation.LegalTrivial.INSTANCE
+                            : instrumentationTarget.invokeSuper(instrumentedMethod, Instrumentation.Target.MethodLookup.Default.EXACT),
                     MethodReturn.returning(instrumentedMethod.getReturnType())
             ).apply(methodVisitor, instrumentationContext).getMaximalSize(), instrumentedMethod.getStackSize());
         }
@@ -412,10 +414,10 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                 }
 
                 private static String trivialTypeNameFor(TypeDescription rawInstrumentedType) {
-                    return String.format("%s$%s$%d",
+                    return String.format("%s$%s$%s",
                             rawInstrumentedType.getInternalName(),
                             SUFFIX,
-                            new Random().nextInt());
+                            RandomString.make());
                 }
 
                 @Override

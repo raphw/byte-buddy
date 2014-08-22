@@ -847,7 +847,7 @@ public class ByteBuddy {
      *
      * @param <T> The type of the definable object.
      */
-    public static interface Definable<T> {
+    protected static interface Definable<T> {
 
         /**
          * Returns the value of this instance or the provided default value for an undefined definable.

@@ -4,12 +4,12 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.ClassLoadingStrategy;
 import net.bytebuddy.instrumentation.MethodDelegation;
 import net.bytebuddy.modifier.Visibility;
+import net.bytebuddy.utility.RandomString;
 import org.junit.Before;
 import org.openjdk.jmh.infra.Blackhole;
 
 import java.lang.reflect.Method;
 import java.util.Collections;
-import java.util.Random;
 
 /**
  * Unfortunately, the JMH is not very test friendly. Thus, we need to do some tricks to run test cases. Fortunately,
@@ -26,12 +26,12 @@ public abstract class AbstractBlackHoleTest {
     public void setUpBlackHole() throws Exception {
         Class<?> blackHoleGenerator = new ByteBuddy()
                 .subclass(Object.class)
-                .name(String.format("C%d$generated", Math.abs(new Random().nextInt())))
-                .defineMethod(BLACK_HOLE_METHOD, Blackhole.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
-                .intercept(MethodDelegation.toConstructor(Blackhole.class))
-                .make()
-                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
+                .name(String.format("C%s$generated", RandomString.make()))
+                        .defineMethod(BLACK_HOLE_METHOD, Blackhole.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                        .intercept(MethodDelegation.toConstructor(Blackhole.class))
+                        .make()
+                        .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                        .getLoaded();
         Method method = blackHoleGenerator.getDeclaredMethod(BLACK_HOLE_METHOD);
         blackHole = (Blackhole) method.invoke(blackHoleGenerator.newInstance());
     }

@@ -17,6 +17,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocation;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.*;
 
 import java.io.IOException;
@@ -24,7 +25,6 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
@@ -177,6 +177,51 @@ public interface TypeWriter<T> {
                 return classWriter.toByteArray();
             }
 
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                ForRedefinition that = (ForRedefinition) other;
+                return attributeAppender.equals(that.attributeAppender)
+                        && classFileVersion.equals(that.classFileVersion)
+                        && classVisitorWrapper.equals(that.classVisitorWrapper)
+                        && fieldPool.equals(that.fieldPool)
+                        && inputStreamProvider.equals(that.inputStreamProvider)
+                        && instrumentedType.equals(that.instrumentedType)
+                        && invokableMethods.equals(that.invokableMethods)
+                        && methodFlatteningResolver.equals(that.methodFlatteningResolver)
+                        && methodPool.equals(that.methodPool);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = instrumentedType.hashCode();
+                result = 31 * result + classFileVersion.hashCode();
+                result = 31 * result + invokableMethods.hashCode();
+                result = 31 * result + classVisitorWrapper.hashCode();
+                result = 31 * result + attributeAppender.hashCode();
+                result = 31 * result + fieldPool.hashCode();
+                result = 31 * result + methodPool.hashCode();
+                result = 31 * result + inputStreamProvider.hashCode();
+                result = 31 * result + methodFlatteningResolver.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "TypeWriter.Engine.ForRedefinition{" +
+                        "instrumentedType=" + instrumentedType +
+                        ", classFileVersion=" + classFileVersion +
+                        ", invokableMethods=" + invokableMethods +
+                        ", classVisitorWrapper=" + classVisitorWrapper +
+                        ", attributeAppender=" + attributeAppender +
+                        ", fieldPool=" + fieldPool +
+                        ", methodPool=" + methodPool +
+                        ", inputStreamProvider=" + inputStreamProvider +
+                        ", methodFlatteningResolver=" + methodFlatteningResolver +
+                        '}';
+            }
+
             protected class RedefinitionClassVisitor extends ClassVisitor {
 
                 private final Instrumentation.Context.ExtractableView instrumentationContext;
@@ -249,19 +294,18 @@ public interface TypeWriter<T> {
                             : redefine(methodDescription, (modifiers & Opcodes.ACC_ABSTRACT) != 0);
                 }
 
-                private MethodVisitor redefine(MethodDescription methodDescription, boolean nonAbstractOrigin) {
+                private MethodVisitor redefine(MethodDescription methodDescription, boolean abstractOrigin) {
                     TypeWriter.MethodPool.Entry entry = methodPool.target(methodDescription);
-                    MethodVisitor methodVisitor = super.visitMethod(methodDescription.getAdjustedModifiers(entry.isDefineMethod()
-                                    && entry.getByteCodeAppender().appendsCode()),
+                    MethodVisitor methodVisitor = super.visitMethod(methodDescription
+                                    .getAdjustedModifiers(entry.isDefineMethod() && entry.getByteCodeAppender().appendsCode()),
                             methodDescription.getInternalName(),
                             methodDescription.getDescriptor(),
                             methodDescription.getGenericSignature(),
                             methodDescription.getExceptionTypes().toInternalNames());
                     entry.getAttributeAppender().apply(methodVisitor, methodDescription);
-                    MethodFlatteningResolver.Resolution resolution = methodFlatteningResolver.resolve(methodDescription);
-                    return nonAbstractOrigin
-                            ? new CodePreservingMethodVisitor(methodVisitor, entry.getByteCodeAppender(), methodDescription, this, resolution.getResolvedMethod())
-                            : new AttributeObtainingMethodVisitor(methodVisitor, entry.getByteCodeAppender(), methodDescription);
+                    return abstractOrigin
+                            ? new AttributeObtainingMethodVisitor(methodVisitor, entry.getByteCodeAppender(), methodDescription)
+                            : new CodePreservingMethodVisitor(methodVisitor, entry.getByteCodeAppender(), methodDescription, this);
                 }
 
                 @Override
@@ -291,14 +335,13 @@ public interface TypeWriter<T> {
                     private CodePreservingMethodVisitor(MethodVisitor actualMethodVisitor,
                                                         ByteCodeAppender byteCodeAppender,
                                                         MethodDescription methodDescription,
-                                                        ClassVisitor classVisitor,
-                                                        MethodDescription redirectionMethod) {
+                                                        ClassVisitor classVisitor) {
                         super(ASM_API_VERSION, actualMethodVisitor);
                         this.actualMethodVisitor = actualMethodVisitor;
                         this.byteCodeAppender = byteCodeAppender;
                         this.methodDescription = methodDescription;
                         this.classVisitor = classVisitor;
-                        this.redirectionMethod = redirectionMethod;
+                        this.redirectionMethod = methodFlatteningResolver.resolve(methodDescription).getResolvedMethod();
                     }
 
                     @Override
@@ -323,6 +366,17 @@ public interface TypeWriter<T> {
                     public void visitMaxs(int maxStack, int maxLocals) {
                         super.visitMaxs(maxStack, Math.max(maxLocals, redirectionMethod.getStackSize()));
                     }
+
+                    @Override
+                    public String toString() {
+                        return "TypeWriter.Engine.ForRedefinition.RedefinitionClassVisitor.CodePreservingMethodVisitor{" +
+                                "actualMethodVisitor=" + actualMethodVisitor +
+                                ", byteCodeAppender=" + byteCodeAppender +
+                                ", methodDescription=" + methodDescription +
+                                ", classVisitor=" + classVisitor +
+                                ", redirectionMethod=" + redirectionMethod +
+                                '}';
+                    }
                 }
 
                 private class AttributeObtainingMethodVisitor extends MethodVisitor {
@@ -344,7 +398,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public void visitCode() {
-                        cv = null; // Ignore byte code instructions, if existent.
+                        mv = null; // Ignore byte code instructions, if existent.
                     }
 
                     @Override
@@ -358,6 +412,15 @@ public interface TypeWriter<T> {
                         }
                         actualMethodVisitor.visitEnd();
                     }
+
+                    @Override
+                    public String toString() {
+                        return "TypeWriter.Engine.ForRedefinition.RedefinitionClassVisitor.AttributeObtainingMethodVisitor{" +
+                                "actualMethodVisitor=" + actualMethodVisitor +
+                                ", byteCodeAppender=" + byteCodeAppender +
+                                ", methodDescription=" + methodDescription +
+                                '}';
+                    }
                 }
 
                 private class TypeInitializerInjection implements Instrumentation.Context.ExtractableView.InjectedCode {
@@ -370,7 +433,7 @@ public interface TypeWriter<T> {
 
                     private TypeInitializerInjection() {
                         injectorProxyMethod = new MethodDescription.Latent(
-                                String.format("%s$%d", TYPE_INITIALIZER_PROXY_PREFIX, Math.abs(new Random().nextInt())),
+                                String.format("%s$%s", TYPE_INITIALIZER_PROXY_PREFIX, RandomString.make()),
                                 instrumentedType,
                                 new TypeDescription.ForLoadedType(void.class),
                                 new TypeList.Empty(),
@@ -389,6 +452,13 @@ public interface TypeWriter<T> {
 
                     public MethodDescription getInjectorProxyMethod() {
                         return injectorProxyMethod;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypeWriter.Engine.ForRedefinition.RedefinitionClassVisitor.TypeInitializerInjection{" +
+                                "injectorProxyMethod=" + injectorProxyMethod +
+                                '}';
                     }
                 }
             }
@@ -442,6 +512,45 @@ public interface TypeWriter<T> {
                         Instrumentation.Context.ExtractableView.InjectedCode.None.INSTANCE);
                 classVisitor.visitEnd();
                 return classWriter.toByteArray();
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                ForCreation that = (ForCreation) other;
+                return attributeAppender.equals(that.attributeAppender)
+                        && classFileVersion.equals(that.classFileVersion)
+                        && classVisitorWrapper.equals(that.classVisitorWrapper)
+                        && fieldPool.equals(that.fieldPool)
+                        && instrumentedType.equals(that.instrumentedType)
+                        && invokableMethods.equals(that.invokableMethods)
+                        && methodPool.equals(that.methodPool);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = instrumentedType.hashCode();
+                result = 31 * result + classFileVersion.hashCode();
+                result = 31 * result + invokableMethods.hashCode();
+                result = 31 * result + classVisitorWrapper.hashCode();
+                result = 31 * result + attributeAppender.hashCode();
+                result = 31 * result + fieldPool.hashCode();
+                result = 31 * result + methodPool.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "TypeWriter.Engine.ForCreation{" +
+                        "instrumentedType=" + instrumentedType +
+                        ", classFileVersion=" + classFileVersion +
+                        ", invokableMethods=" + invokableMethods +
+                        ", classVisitorWrapper=" + classVisitorWrapper +
+                        ", attributeAppender=" + attributeAppender +
+                        ", fieldPool=" + fieldPool +
+                        ", methodPool=" + methodPool +
+                        '}';
             }
         }
     }

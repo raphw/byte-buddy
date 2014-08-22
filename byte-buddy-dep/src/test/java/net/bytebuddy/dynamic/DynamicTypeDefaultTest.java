@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic;
 import net.bytebuddy.instrumentation.LoadedTypeInitializer;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.RandomString;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -14,7 +15,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Random;
 
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -59,7 +59,7 @@ public class DynamicTypeDefaultTest {
     private static File makeTemporaryFolder() throws IOException {
         File file = File.createTempFile(TEMP, TEMP);
         try {
-            File folder = new File(file.getParentFile(), TEMP + Math.abs(new Random().nextInt()));
+            File folder = new File(file.getParentFile(), TEMP + RandomString.make());
             assertThat(folder.mkdir(), is(true));
             return folder;
         } finally {

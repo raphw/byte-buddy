@@ -15,39 +15,34 @@ public interface ClassFileLocator {
      */
     static final String CLASS_FILE_EXTENSION = ".class";
 
+    static enum Default implements ClassFileLocator {
+
+        CLASS_PATH {
+            @Override
+            public InputStream classFileFor(TypeDescription typeDescription) {
+                return ClassLoader.getSystemResourceAsStream(typeDescription.getInternalName() + CLASS_FILE_EXTENSION);
+            }
+        },
+
+        ATTACHED {
+            @Override
+            public InputStream classFileFor(TypeDescription typeDescription) {
+                ClassLoader classLoader = typeDescription.getClassLoader();
+                return classLoader != null
+                        ? classLoader.getResourceAsStream(typeDescription.getInternalName() + CLASS_FILE_EXTENSION)
+                        : null;
+            }
+        }
+    }
+
     /**
      * Locates a class file from the class path.
      */
-    static enum ForClassPath implements ClassFileLocator {
-
-        /**
-         * The singleton instance.
-         */
-        INSTANCE;
-
-        @Override
-        public InputStream classFileFor(TypeDescription typeDescription) {
-            return ClassLoader.getSystemResourceAsStream(typeDescription.getInternalName() + CLASS_FILE_EXTENSION);
-        }
-    }
-
-    static enum ForAttachedClassLoader implements ClassFileLocator {
-
-        INSTANCE;
-
-        @Override
-        public InputStream classFileFor(TypeDescription typeDescription) {
-            ClassLoader classLoader = typeDescription.getClassLoader();
-            return classLoader != null
-                    ? classLoader.getResourceAsStream(typeDescription.getInternalName() + CLASS_FILE_EXTENSION)
-                    : null;
-        }
-    }
 
     static class Compound implements ClassFileLocator {
 
         public static ClassFileLocator makeDefault() {
-            return new Compound(ForAttachedClassLoader.INSTANCE, ForClassPath.INSTANCE);
+            return new Compound(Default.ATTACHED, Default.CLASS_PATH);
         }
 
         private final ClassFileLocator[] classFileLocator;

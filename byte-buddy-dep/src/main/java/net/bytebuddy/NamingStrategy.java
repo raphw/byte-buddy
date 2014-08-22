@@ -6,12 +6,12 @@ import net.bytebuddy.modifier.SyntheticState;
 import net.bytebuddy.modifier.TypeManifestation;
 import net.bytebuddy.modifier.Visibility;
 import net.bytebuddy.utility.ByteBuddyCommons;
+import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.List;
-import java.util.Random;
 
 /**
  * A naming strategy for finding a fully qualified name for a Java type.
@@ -241,9 +241,9 @@ public interface NamingStrategy {
         private final String javaLangPackagePrefix;
 
         /**
-         * An instance for creating random values.
+         * An instance for creating random seed values.
          */
-        private final Random random;
+        private final RandomString randomString;
 
         /**
          * Creates an immutable naming strategy with a given suffix but moves types that subclass types within
@@ -266,7 +266,7 @@ public interface NamingStrategy {
         public SuffixingRandom(String suffix, String javaLangPackagePrefix) {
             this.suffix = suffix;
             this.javaLangPackagePrefix = javaLangPackagePrefix;
-            this.random = new Random();
+            randomString = new RandomString();
         }
 
         @Override
@@ -275,7 +275,7 @@ public interface NamingStrategy {
             if (superClassName.startsWith(JAVA_PACKAGE) || unnamedType.getSuperClass().isSealed()) {
                 superClassName = javaLangPackagePrefix + "." + superClassName;
             }
-            return String.format("%s$%s$%d", superClassName, suffix, Math.abs(random.nextInt()));
+            return String.format("%s$%s$%s", superClassName, suffix, randomString.nextString());
         }
 
         @Override
@@ -299,7 +299,7 @@ public interface NamingStrategy {
             return "NamingStrategy.SuffixingRandom{" +
                     "suffix='" + suffix + '\'' +
                     ", javaLangPackagePrefix='" + javaLangPackagePrefix + '\'' +
-                    ", random=" + random +
+                    ", randomString=" + randomString +
                     '}';
         }
     }
@@ -316,9 +316,9 @@ public interface NamingStrategy {
         private final String prefix;
 
         /**
-         * A random number generator.
+         * A seed generator.
          */
-        private final Random random;
+        private final RandomString randomString;
 
         /**
          * Creates a new prefixing random naming strategy.
@@ -327,12 +327,12 @@ public interface NamingStrategy {
          */
         public PrefixingRandom(String prefix) {
             this.prefix = prefix;
-            random = new Random();
+            randomString = new RandomString();
         }
 
         @Override
         public String name(UnnamedType unnamedType) {
-            return String.format("%s.%s$%d", prefix, unnamedType.getSuperClass().getName(), Math.abs(random.nextInt()));
+            return String.format("%s.%s$%s", prefix, unnamedType.getSuperClass().getName(), randomString.nextString());
         }
 
         @Override
@@ -350,7 +350,7 @@ public interface NamingStrategy {
         public String toString() {
             return "NamingStrategy.PrefixingRandom{" +
                     "prefix='" + prefix + '\'' +
-                    ", random=" + random +
+                    ", randomString=" + randomString +
                     '}';
         }
     }

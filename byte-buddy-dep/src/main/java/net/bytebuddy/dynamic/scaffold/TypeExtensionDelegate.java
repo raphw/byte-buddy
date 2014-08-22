@@ -13,6 +13,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
+import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -85,7 +86,7 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
     /**
      * An instance for supporting the creation of random values.
      */
-    private final Random random;
+    private final RandomString randomString;
 
     private boolean canRegisterFieldCache;
 
@@ -129,7 +130,7 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
         accessorMethodEntries = new HashMap<MethodDescription, TypeWriter.MethodPool.Entry>();
         auxiliaryTypes = new HashMap<AuxiliaryType, DynamicType>();
         registeredFieldCacheEntries = new HashMap<FieldCacheEntry, FieldDescription>();
-        random = new Random();
+        randomString = new RandomString();
         canRegisterFieldCache = true;
     }
 
@@ -137,9 +138,9 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
     public MethodDescription registerAccessorFor(Instrumentation.SpecialMethodInvocation specialMethodInvocation) {
         MethodDescription accessorMethod = registeredAccessorMethods.get(specialMethodInvocation);
         if (accessorMethod == null) {
-            String name = String.format("%s$%s$%d", specialMethodInvocation.getMethodDescription().getInternalName(),
+            String name = String.format("%s$%s$%s", specialMethodInvocation.getMethodDescription().getInternalName(),
                     accessorMethodSuffix,
-                    Math.abs(random.nextInt()));
+                    randomString.nextString());
             accessorMethod = new MethodDescription.Latent(name,
                     instrumentedType,
                     specialMethodInvocation.getMethodDescription().getReturnType(),
@@ -187,7 +188,7 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
             return fieldCache;
         }
         validateFieldCacheAccessibility();
-        fieldCache = new FieldDescription.Latent(String.format("%s$%d", fieldCachePrefix, Math.abs(random.nextInt())),
+        fieldCache = new FieldDescription.Latent(String.format("%s$%s", fieldCachePrefix, randomString.nextString()),
                 instrumentedType,
                 fieldType,
                 Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC);
@@ -285,7 +286,7 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
                 ", accessorMethodEntries=" + accessorMethodEntries +
                 ", auxiliaryTypes=" + auxiliaryTypes +
                 ", registeredFieldCacheEntries=" + registeredFieldCacheEntries +
-                ", random=" + random +
+                ", randomString=" + randomString +
                 ", canRegisterFieldCache=" + canRegisterFieldCache +
                 '}';
     }
@@ -318,7 +319,7 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
             /**
              * An instance for creating random values.
              */
-            private final Random random;
+            private final RandomString randomString;
 
             /**
              * Creates a new suffixing random naming strategy.
@@ -327,12 +328,12 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
              */
             public SuffixingRandom(String suffix) {
                 this.suffix = suffix;
-                random = new Random();
+                randomString = new RandomString();
             }
 
             @Override
             public String name(AuxiliaryType auxiliaryType, TypeDescription instrumentedType) {
-                return String.format("%s$%s$%d", instrumentedType.getName(), suffix, Math.abs(random.nextInt()));
+                return String.format("%s$%s$%s", instrumentedType.getName(), suffix, randomString.nextString());
             }
 
             @Override
