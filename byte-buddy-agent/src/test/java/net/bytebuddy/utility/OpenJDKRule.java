@@ -25,7 +25,7 @@ public class OpenJDKRule implements MethodRule {
 
     public OpenJDKRule() {
         System.out.println(System.getProperty(JAVA_VM_NAME_PROPERTY));
-        System.out.println(new File(System.getProperty(JAVA_HOME_PROPERTY).replace('\\', '/') + TOOLS_JAR_LOCATION).isFile());
+        System.out.println(new File(System.getProperty(JAVA_HOME_PROPERTY).replace('\\', '/') + TOOLS_JAR_LOCATION).canRead());
         openJDK = System.getProperty(JAVA_VM_NAME_PROPERTY).contains(HOT_SPOT)
                 && new File(System.getProperty(JAVA_HOME_PROPERTY).replace('\\', '/') + TOOLS_JAR_LOCATION).isFile();
     }
