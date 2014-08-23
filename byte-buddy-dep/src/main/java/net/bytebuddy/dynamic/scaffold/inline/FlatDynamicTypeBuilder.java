@@ -43,6 +43,9 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
      */
     private final ClassFileLocator classFileLocator;
 
+    /**
+     * The target handler to be used by this type builder.
+     */
     private final TargetHandler targetHandler;
 
     /**
@@ -65,6 +68,7 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
      * @param defaultMethodAttributeAppenderFactory The method attribute appender factory that should be applied by default
      *                                              if no specific appender was specified for a given method.
      * @param classFileLocator                      A locator for finding a class file.
+     * @param targetHandler                         The target handler to be used by this type builder.
      */
     public FlatDynamicTypeBuilder(ClassFileVersion classFileVersion,
                                   NamingStrategy namingStrategy,
@@ -125,6 +129,7 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
      * @param methodTokens                          A list of method representations that were added explicitly to this
      *                                              dynamic type.
      * @param classFileLocator                      A locator for finding a class file.
+     * @param targetHandler                         The target handler to be used by this type builder.
      */
     protected FlatDynamicTypeBuilder(ClassFileVersion classFileVersion,
                                      NamingStrategy namingStrategy,
@@ -233,6 +238,12 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                 .make(new TypeExtensionDelegate(compiledMethodRegistry.getInstrumentedType(), classFileVersion));
     }
 
+    /**
+     * Matches any method description of the list of given methods.
+     *
+     * @param methodDescriptions A list of method descriptions to match.
+     * @return A method matcher that matches the list of methods.
+     */
     private static MethodMatcher anyOf(List<MethodDescription> methodDescriptions) {
         JunctionMethodMatcher methodMatcher = none();
         for (MethodDescription methodDescription : methodDescriptions) {

@@ -49,6 +49,7 @@ public class MethodFlatteningResolverResolutionForRebasedMethodTest {
         when(methodDescription.getInternalName()).thenReturn(FOO);
         when(methodDescription.getDescriptor()).thenReturn(BAZ);
         when(typeDescription.getInternalName()).thenReturn(BAR);
+        when(typeDescription.getDescriptor()).thenReturn(BAR);
         when(methodNameTransformer.transform(FOO)).thenReturn(QUX);
         when(otherMethodNameTransformer.transform(FOO)).thenReturn(FOO + BAR);
     }
