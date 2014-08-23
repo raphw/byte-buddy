@@ -10,35 +10,75 @@ import org.objectweb.asm.Opcodes;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
+/**
+ * A method flattening resolver is responsible for mapping methods of an instrumented type to an alternative signature.
+ * This way a method can exist in two versions within a class:
+ * <ol>
+ * <li>The rebased method which represents the original implementation as it is present in a class file.</li>
+ * <li>An overriden method which implements user code which is still able to invoke the original, rebased method.</li>
+ * </ol>
+ */
 public interface MethodFlatteningResolver {
 
-    static final int REDEFINE_METHOD_MODIFIER = Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
+    /**
+     * The modifier that is used for rebased methods.
+     */
+    static final int REBASED_METHOD_MODIFIER = Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
 
+    /**
+     * A default implementation of a {@link net.bytebuddy.dynamic.scaffold.inline.MethodFlatteningResolver} which
+     * renames rebased methods and adds an additional constructor placeholder parameter to constructors. Ignored
+     * methods are never rebased.
+     */
     static class Default implements MethodFlatteningResolver {
 
+        /**
+         * Ignored methods which are never rebased.
+         */
         private final MethodMatcher ignoredMethods;
 
+        /**
+         * A placeholder type which is added to a rebased constructor.
+         */
         private final TypeDescription placeholderType;
 
-        private final String seed;
+        /**
+         * A transformer for renaming a rebased method.
+         */
+        private final MethodNameTransformer methodNameTransformer;
 
-        public Default(MethodMatcher ignoredMethods, TypeDescription placeholderType) {
+        /**
+         * Creates a default method flattening resolver.
+         *
+         * @param ignoredMethods        Ignored methods which are never rebased.
+         * @param placeholderType       A placeholder type which is added to a rebased constructor.
+         * @param methodNameTransformer A transformer for renaming a rebased method.
+         */
+        public Default(MethodMatcher ignoredMethods,
+                       TypeDescription placeholderType,
+                       MethodNameTransformer methodNameTransformer) {
             this.ignoredMethods = ignoredMethods;
             this.placeholderType = placeholderType;
-            seed = RandomString.make();
+            this.methodNameTransformer = methodNameTransformer;
         }
 
         @Override
         public Resolution resolve(MethodDescription methodDescription) {
             return ignoredMethods.matches(methodDescription)
                     ? new Resolution.Preserved(methodDescription)
-                    : redefine(methodDescription);
+                    : rebase(methodDescription);
         }
 
-        private Resolution redefine(MethodDescription methodDescription) {
+        /**
+         * Resolves a rebase method of a given method.
+         *
+         * @param methodDescription The method to rebase.
+         * @return The resolution for the given method.
+         */
+        private Resolution rebase(MethodDescription methodDescription) {
             return methodDescription.isConstructor()
                     ? new Resolution.ForRebasedConstructor(methodDescription, placeholderType)
-                    : new Resolution.ForRebasedMethod(methodDescription, seed);
+                    : new Resolution.ForRebasedMethod(methodDescription, methodNameTransformer);
         }
 
         @Override
@@ -46,16 +86,16 @@ public interface MethodFlatteningResolver {
             if (this == other) return true;
             if (other == null || getClass() != other.getClass()) return false;
             Default aDefault = (Default) other;
-            return seed.equals(aDefault.seed)
-                    && ignoredMethods.equals(aDefault.ignoredMethods)
-                    && placeholderType.equals(aDefault.placeholderType);
+            return ignoredMethods.equals(aDefault.ignoredMethods)
+                    && placeholderType.equals(aDefault.placeholderType)
+                    && methodNameTransformer.equals(aDefault.methodNameTransformer);
         }
 
         @Override
         public int hashCode() {
             int result = ignoredMethods.hashCode();
             result = 31 * result + placeholderType.hashCode();
-            result = 31 * result + seed.hashCode();
+            result = 31 * result + methodNameTransformer.hashCode();
             return result;
         }
 
@@ -64,13 +104,19 @@ public interface MethodFlatteningResolver {
             return "MethodFlatteningResolver.Default{" +
                     "ignoredMethods=" + ignoredMethods +
                     ", placeholderType=" + placeholderType +
-                    ", seed=" + seed +
+                    ", methodNameTransformer=" + methodNameTransformer +
                     '}';
         }
     }
 
+    /**
+     * A method flattening resolver that preserves any method in its original form.
+     */
     static enum NoOp implements MethodFlatteningResolver {
 
+        /**
+         * The singleton instance.
+         */
         INSTANCE;
 
         @Override
@@ -79,12 +125,98 @@ public interface MethodFlatteningResolver {
         }
     }
 
+    /**
+     * A method name transformer provides a unique mapping of a method's name to an alternative name.
+     *
+     * @see net.bytebuddy.dynamic.scaffold.inline.MethodFlatteningResolver
+     */
+    static interface MethodNameTransformer {
+
+        /**
+         * A method name transformer that adds a fixed suffix to an original method name.
+         */
+        static class Suffixing implements MethodNameTransformer {
+
+            /**
+             * The default suffix to add to an original method name.
+             */
+            private static final String DEFAULT_SUFFIX = "original";
+
+            /**
+             * The suffix to append to a method name.
+             */
+            private final String suffix;
+
+            /**
+             * The seed to append to a method name.
+             */
+            private final String seed;
+
+            /**
+             * Creates a new suffixing method name transformer which adds a default suffix and a random seed.
+             *
+             * @param randomString A provider for a random seed.
+             */
+            public Suffixing(RandomString randomString) {
+                this(randomString, DEFAULT_SUFFIX);
+            }
+
+            /**
+             * Creates a new suffixing method name transformer.
+             *
+             * @param randomString A provider for a random seed.
+             * @param suffix       The suffix to add to the method name before the seed.
+             */
+            public Suffixing(RandomString randomString, String suffix) {
+                this.suffix = suffix;
+                seed = randomString.nextString();
+            }
+
+            @Override
+            public String transform(String originalName) {
+                return String.format("%s$%s$%s", originalName, suffix, seed);
+            }
+
+            @Override
+            public String toString() {
+                return "MethodFlatteningResolver.MethodNameTransformer.RandomSuffixing{" +
+                        "suffix='" + suffix + '\'' +
+                        ", seed='" + seed + '\'' +
+                        '}';
+            }
+        }
+
+        /**
+         * Transforms a method's name to an alternative name. For a given argument, this mapper must always provide
+         * the same return value.
+         *
+         * @param originalName The original name.
+         * @return The alternative name.
+         */
+        String transform(String originalName);
+    }
+
+    /**
+     * A resolution for a method that was checked by a {@link net.bytebuddy.dynamic.scaffold.inline.MethodFlatteningResolver}.
+     */
     static interface Resolution {
 
+        /**
+         * A {@link net.bytebuddy.dynamic.scaffold.inline.MethodFlatteningResolver.Resolution} of a non-rebased method.
+         */
         static class Preserved implements Resolution {
 
+            /**
+             * The preserved method.
+             */
             private final MethodDescription methodDescription;
 
+            /**
+             * Creates a new {@link net.bytebuddy.dynamic.scaffold.inline.MethodFlatteningResolver.Resolution} for
+             * a non-rebased method.
+             *
+             * @param methodDescription The preserved method.
+             */
             public Preserved(MethodDescription methodDescription) {
                 this.methodDescription = methodDescription;
             }
@@ -101,7 +233,7 @@ public interface MethodFlatteningResolver {
 
             @Override
             public StackManipulation getAdditionalArguments() {
-                throw new IllegalStateException();
+                throw new IllegalStateException("A non-rebased method never requires additional arguments");
             }
 
             @Override
@@ -121,19 +253,30 @@ public interface MethodFlatteningResolver {
             }
         }
 
+        /**
+         * A {@link net.bytebuddy.dynamic.scaffold.inline.MethodFlatteningResolver.Resolution} of a rebased method.
+         */
         static class ForRebasedMethod implements Resolution {
 
-            private static final String ORIGINAL_METHOD_NAME_SUFFIX = "original";
-
+            /**
+             * The rebased method.
+             */
             private final MethodDescription methodDescription;
 
-            public ForRebasedMethod(MethodDescription methodDescription, String seed) {
+            /**
+             * Creates a {@link net.bytebuddy.dynamic.scaffold.inline.MethodFlatteningResolver.Resolution} for a
+             * rebased method.
+             *
+             * @param methodDescription     The original method that should be rebased.
+             * @param methodNameTransformer A transformer for renaming a rebased method.
+             */
+            public ForRebasedMethod(MethodDescription methodDescription, MethodNameTransformer methodNameTransformer) {
                 this.methodDescription = new MethodDescription.Latent(
-                        String.format("%s$%s$%s", methodDescription.getInternalName(), ORIGINAL_METHOD_NAME_SUFFIX, seed),
+                        methodNameTransformer.transform(methodDescription.getInternalName()),
                         methodDescription.getDeclaringType(),
                         methodDescription.getReturnType(),
                         methodDescription.getParameterTypes(),
-                        REDEFINE_METHOD_MODIFIER
+                        REBASED_METHOD_MODIFIER
                                 | (methodDescription.isStatic() ? Opcodes.ACC_STATIC : 0)
                                 | (methodDescription.isNative() ? Opcodes.ACC_NATIVE : 0));
             }
@@ -170,16 +313,29 @@ public interface MethodFlatteningResolver {
             }
         }
 
+        /**
+         * A {@link net.bytebuddy.dynamic.scaffold.inline.MethodFlatteningResolver.Resolution} of a rebased constructor.
+         */
         static class ForRebasedConstructor implements Resolution {
 
+            /**
+             * The rebased constructor.
+             */
             private final MethodDescription methodDescription;
 
+            /**
+             * Creates a {@link net.bytebuddy.dynamic.scaffold.inline.MethodFlatteningResolver.Resolution} for a
+             * rebased method.
+             *
+             * @param methodDescription The constructor to rebase.
+             * @param placeholderType   A placeholder type which is added to a rebased constructor.
+             */
             public ForRebasedConstructor(MethodDescription methodDescription, TypeDescription placeholderType) {
                 this.methodDescription = new MethodDescription.Latent(methodDescription.getInternalName(),
                         methodDescription.getDeclaringType(),
                         methodDescription.getReturnType(),
                         join(methodDescription.getParameterTypes(), placeholderType),
-                        REDEFINE_METHOD_MODIFIER);
+                        REBASED_METHOD_MODIFIER);
             }
 
             @Override
@@ -214,12 +370,35 @@ public interface MethodFlatteningResolver {
             }
         }
 
+        /**
+         * Checks if this resolution represents a rebased method.
+         *
+         * @return {@code true} if this resolution requires to rebase a method.
+         */
         boolean isRebased();
 
+        /**
+         * Returns the resolved method if this resolution represents a rebased method or the original method.
+         *
+         * @return The resolved method if this resolution represents a rebased method or the original method.
+         */
         MethodDescription getResolvedMethod();
 
+        /**
+         * A rebased method might require additional arguments in order to create a distinct signature. The
+         * stack manipulation that is returned from this method loads these arguments onto the operand stack. For
+         * a non-rebased method, this method throws an {@link java.lang.IllegalArgumentException}.
+         *
+         * @return A stack manipulation that loaded the additional arguments onto the stack, if any.
+         */
         StackManipulation getAdditionalArguments();
     }
 
+    /**
+     * Checks if a method is eligible for rebasing and resolves this possibly rebased method.
+     *
+     * @param methodDescription A description of the method to resolve.
+     * @return A resolution for the given method.
+     */
     Resolution resolve(MethodDescription methodDescription);
 }

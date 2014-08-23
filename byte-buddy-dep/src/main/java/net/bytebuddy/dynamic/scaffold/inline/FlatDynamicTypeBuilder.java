@@ -328,7 +328,9 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                     placeholderType = TrivialType.INSTANCE.make(trivialTypeNameFor(instrumentedType),
                             classFileVersion,
                             AuxiliaryType.MethodAccessorFactory.Illegal.INSTANCE);
-                    this.methodFlatteningResolver = new MethodFlatteningResolver.Default(ignoredMethods, placeholderType.getDescription());
+                    this.methodFlatteningResolver = new MethodFlatteningResolver.Default(ignoredMethods,
+                            placeholderType.getDescription(),
+                            new MethodFlatteningResolver.MethodNameTransformer.Suffixing(new RandomString()));
                 }
 
                 private static String trivialTypeNameFor(TypeDescription rawInstrumentedType) {
