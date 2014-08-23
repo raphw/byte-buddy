@@ -346,7 +346,7 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
 
                 private static String trivialTypeNameFor(TypeDescription rawInstrumentedType) {
                     return String.format("%s$%s$%s",
-                            rawInstrumentedType.getInternalName(),
+                            rawInstrumentedType.getName(),
                             SUFFIX,
                             RandomString.make());
                 }
