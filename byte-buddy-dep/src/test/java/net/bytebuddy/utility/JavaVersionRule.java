@@ -9,6 +9,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.logging.Logger;
 
 public class JavaVersionRule implements MethodRule {
 
@@ -35,7 +36,7 @@ public class JavaVersionRule implements MethodRule {
 
         @Override
         public void evaluate() throws Throwable {
-            /* do nothing */
+            Logger.getAnonymousLogger().warning("Ignored test case that requires a newer JVM version");
         }
     }
 }
