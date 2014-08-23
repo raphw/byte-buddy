@@ -21,6 +21,7 @@
         <module>byte-buddy</module>
         <module>byte-buddy-dep</module>
         <module>byte-buddy-benchmark</module>
+        <module>byte-buddy-agent</module>
     </modules>
 
     <properties>
