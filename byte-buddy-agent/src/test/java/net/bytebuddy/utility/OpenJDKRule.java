@@ -1,26 +1,35 @@
 package net.bytebuddy.utility;
 
-import net.bytebuddy.ClassFileVersion;
 import org.junit.rules.MethodRule;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.Statement;
 
+import java.io.File;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-public class JavaVersionRule implements MethodRule {
+public class OpenJDKRule implements MethodRule {
 
-    private final boolean supportsVersion;
+    public static final String JAVA_VM_NAME_PROPERTY = "java.vm.name";
 
-    public JavaVersionRule(int javaVersion) {
-        supportsVersion = ClassFileVersion.forCurrentJavaVersion().compareTo(ClassFileVersion.forKnownJavaVersion(javaVersion)) >= 0;
+    public static final String HOT_SPOT = "HotSpot";
+
+    public static final String JAVA_HOME_PROPERTY = "java.home";
+
+    public static final String TOOLS_JAR_LOCATION = "/../lib/tools.jar";
+
+    private final boolean openJDK;
+
+    public OpenJDKRule() {
+        openJDK = System.getProperty(JAVA_VM_NAME_PROPERTY).contains(HOT_SPOT)
+                && new File(System.getProperty(JAVA_HOME_PROPERTY).replace('\\', '/') + TOOLS_JAR_LOCATION).isFile();
     }
 
     @Override
     public Statement apply(Statement base, FrameworkMethod method, Object target) {
-        return supportsVersion || method.getAnnotation(Enforce.class) == null
+        return openJDK || method.getAnnotation(Enforce.class) == null
                 ? base
                 : new NoOpStatement();
     }

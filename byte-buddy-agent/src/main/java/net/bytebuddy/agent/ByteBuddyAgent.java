@@ -49,6 +49,10 @@ public class ByteBuddyAgent {
 
     public static final String CAN_SET_NATIVE_METHOD_PREFIX_PROPERTY = "Can-Set-Native-Method-Prefix";
 
+    public static final String JAVA_HOME_PROPERTY = "java.home";
+
+    public static final String TOOLS_JAR_LOCATION = "/../lib/tools.jar";
+
     public static Instrumentation installOnOpenJDK() throws Exception {
         Instrumentation instrumentation = doGetInstrumentation();
         if (instrumentation != null) {
@@ -64,7 +68,7 @@ public class ByteBuddyAgent {
 
     private static synchronized void doInstall() throws Exception {
         ClassLoader classLoader = new URLClassLoader(new URL[]{new URL("file:/"
-                + System.getProperty("java.home").replace('\\', '/') + "/../lib/tools.jar")}, BOOTSTRAP_CLASS_LOADER);
+                + System.getProperty(JAVA_HOME_PROPERTY).replace('\\', '/') + TOOLS_JAR_LOCATION)}, BOOTSTRAP_CLASS_LOADER);
         Class<?> virtualMachine = classLoader.loadClass(VIRTUAL_MACHINE_TYPE_NAME);
         String runtimeName = ManagementFactory.getRuntimeMXBean().getName();
         Object virtualMachineInstance = virtualMachine.getDeclaredMethod(ATTACH_METHOD_NAME, String.class)
