@@ -11,13 +11,15 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.logging.Logger;
 
+/**
+ * This rules assures that the running JVM is a JDK JVM with an existing
+ * <a href="https://blogs.oracle.com/CoreJavaTechTips/entry/the_attach_api">'tools.jar'</a>.
+ */
 public class ToolsJarRule implements MethodRule {
 
     public static final String JAVA_HOME_PROPERTY = "java.home";
 
     public static final String TOOLS_JAR_LOCATION = "/../lib/tools.jar";
-
-    public static final String VIRTUAL_MACHINE_TYPE = "com/sun/tools/attach/VirtualMachine.class";
 
     private final boolean toolsJarExists;
 
