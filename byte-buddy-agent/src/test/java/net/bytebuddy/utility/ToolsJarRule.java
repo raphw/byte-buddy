@@ -33,6 +33,7 @@ public class ToolsJarRule implements MethodRule {
             final Enumeration<JarEntry> entries = jarFile.entries();
             while (entries.hasMoreElements()) {
                 final JarEntry entry = entries.nextElement();
+                System.out.println(entry.getName());
                 if (entry.getName().equals(VIRTUAL_MACHINE_TYPE)) {
                     return true;
                 }
