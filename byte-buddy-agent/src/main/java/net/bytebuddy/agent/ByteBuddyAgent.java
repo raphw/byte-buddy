@@ -67,8 +67,8 @@ public class ByteBuddyAgent {
     }
 
     private static synchronized void doInstall() throws Exception {
-        ClassLoader classLoader = new URLClassLoader(new URL[]{new URL("file:/"
-                + System.getProperty(JAVA_HOME_PROPERTY).replace('\\', '/') + TOOLS_JAR_LOCATION)}, BOOTSTRAP_CLASS_LOADER);
+        ClassLoader classLoader = new URLClassLoader(new URL[]{new File(System.getProperty(JAVA_HOME_PROPERTY)
+                .replace('\\', '/') + TOOLS_JAR_LOCATION).toURI().toURL()}, BOOTSTRAP_CLASS_LOADER);
         Class<?> virtualMachine = classLoader.loadClass(VIRTUAL_MACHINE_TYPE_NAME);
         String runtimeName = ManagementFactory.getRuntimeMXBean().getName();
         Object virtualMachineInstance = virtualMachine.getDeclaredMethod(ATTACH_METHOD_NAME, String.class)

@@ -1,7 +1,6 @@
 package net.bytebuddy.agent;
 
 import net.bytebuddy.utility.ToolsJarRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -16,7 +15,7 @@ public class ByteBuddyAgentTest {
 
     @Test
     @ToolsJarRule.Enforce
-    @Ignore("Currently causing trouble on Jenkins")
+//    @Ignore("Currently causing trouble on Jenkins")
     public void testAgentInstallation() throws Exception {
         assertThat(ByteBuddyAgent.installOnOpenJDK(), notNullValue());
     }
