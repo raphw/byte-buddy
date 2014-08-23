@@ -42,14 +42,18 @@ public class ByteBuddyAgent {
     }
 
     public static Instrumentation installOnOpenJDK() throws Exception {
-        Instrumentation instrumentation = doGetInstrumentation();
-        if (instrumentation != null) {
-            return instrumentation;
-        }
         try {
-            doInstall();
-        } catch (Exception e) {
-            throw new IllegalStateException("The programmatic installation of the Byte Buddy agent is only possible on the OpenJDK", e);
+            Instrumentation instrumentation = doGetInstrumentation();
+            if (instrumentation != null) {
+                return instrumentation;
+            }
+        } catch (Exception ignored) {
+            try {
+                doInstall();
+            } catch (Exception e) {
+                throw new IllegalStateException("The programmatic installation of the Byte Buddy agent is only " +
+                        "possible on the OpenJDK and JDKs with a compatible 'tools.jar'", e);
+            }
         }
         return getInstrumentation();
     }
@@ -119,7 +123,7 @@ public class ByteBuddyAgent {
                     .getDeclaredField(INSTRUMENTATION_FIELD_NAME)
                     .get(STATIC_MEMBER);
         } catch (Exception e) {
-            throw new IllegalStateException("The Byte Buddy agent is not initialized", e);
+            throw new IllegalStateException("The Byte Buddy agent is not properly initialized", e);
         }
     }
 
