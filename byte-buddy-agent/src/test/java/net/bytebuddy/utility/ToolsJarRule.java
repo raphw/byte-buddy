@@ -4,30 +4,43 @@ import org.junit.rules.MethodRule;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.Statement;
 
-import java.io.File;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.Enumeration;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.logging.Logger;
 
-public class OpenJDKRule implements MethodRule {
-
-    public static final String JAVA_VM_NAME_PROPERTY = "java.vm.name";
-
-    public static final String HOT_SPOT = "HotSpot";
+public class ToolsJarRule implements MethodRule {
 
     public static final String JAVA_HOME_PROPERTY = "java.home";
 
     public static final String TOOLS_JAR_LOCATION = "/../lib/tools.jar";
 
+    public static final String VIRTUAL_MACHINE_TYPE = "com/sun/tools/attach/VirtualMachine.class";
+
     private final boolean openJDK;
 
-    public OpenJDKRule() {
-        System.out.println(System.getProperty(JAVA_VM_NAME_PROPERTY));
-        System.out.println(new File(System.getProperty(JAVA_HOME_PROPERTY).replace('\\', '/') + TOOLS_JAR_LOCATION).canRead());
-        openJDK = System.getProperty(JAVA_VM_NAME_PROPERTY).contains(HOT_SPOT)
-                && new File(System.getProperty(JAVA_HOME_PROPERTY).replace('\\', '/') + TOOLS_JAR_LOCATION).isFile();
+    public ToolsJarRule() {
+        openJDK = checkToolsJar();
+    }
+
+    private static boolean checkToolsJar() {
+        try {
+            JarFile jarFile = new JarFile(System.getProperty(JAVA_HOME_PROPERTY).replace('\\', '/') + TOOLS_JAR_LOCATION);
+            final Enumeration<JarEntry> entries = jarFile.entries();
+            while (entries.hasMoreElements()) {
+                final JarEntry entry = entries.nextElement();
+                if (entry.getName().equals(VIRTUAL_MACHINE_TYPE)) {
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            return false;
+        }
+        return false;
     }
 
     @Override
