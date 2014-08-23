@@ -9,10 +9,30 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocati
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 
+/**
+ * An instrumentation target for redefining a given type while preserving the original methods within the
+ * instrumented type.
+ * <p>&nbsp;</p>
+ * Super method calls are merely emulated by this {@link net.bytebuddy.instrumentation.Instrumentation.Target} in order
+ * to preserve Java's super call semantics a user would expect when invoking a {@code super}-prefixed method. This
+ * means that original methods are either moved to renamed {@code private} methods which are never dispatched
+ * virtually or they are invoked directly via the {@code INVOKESPECIAL} invocation to explicitly forbid a virtual
+ * dispatch.
+ */
 public class RebaseInstrumentationTarget extends Instrumentation.Target.AbstractBase {
 
+    /**
+     * A method flattening resolver to be used when calling a rebased method.
+     */
     protected final MethodFlatteningResolver methodFlatteningResolver;
 
+    /**
+     * Creates a rebase instrumentation target.
+     *
+     * @param finding                     The lookup of the instrumented type this instance should represent.
+     * @param bridgeMethodResolverFactory A factory for creating a bridge method resolver.
+     * @param methodFlatteningResolver    A method flattening resolver to be used when calling a rebased method.
+     */
     protected RebaseInstrumentationTarget(MethodLookupEngine.Finding finding,
                                           BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                                           MethodFlatteningResolver methodFlatteningResolver) {
@@ -39,8 +59,8 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
      * @return A special method invocation on this proxied super method.
      */
     private Instrumentation.SpecialMethodInvocation invokeSuper(MethodFlatteningResolver.Resolution resolution) {
-        return resolution.isRedefined()
-                ? RedefinedMethodSpecialMethodInvocation.of(resolution, typeDescription)
+        return resolution.isRebased()
+                ? RebasedMethodSpecialMethodInvocation.of(resolution, typeDescription)
                 : Instrumentation.SpecialMethodInvocation.Simple.of(resolution.getResolvedMethod(), typeDescription);
     }
 
@@ -66,26 +86,54 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
                 '}';
     }
 
-    protected static class RedefinedMethodSpecialMethodInvocation implements Instrumentation.SpecialMethodInvocation {
+    /**
+     * A {@link net.bytebuddy.instrumentation.Instrumentation.SpecialMethodInvocation} which invokes a rebased method
+     * as given by a {@link net.bytebuddy.dynamic.scaffold.inline.MethodFlatteningResolver}.
+     */
+    protected static class RebasedMethodSpecialMethodInvocation implements Instrumentation.SpecialMethodInvocation {
 
+        /**
+         * The method to invoke via a special method invocation.
+         */
         private final MethodDescription methodDescription;
 
-        private final TypeDescription typeDescription;
+        /**
+         * The instrumented type on which the method should be invoked on.
+         */
+        private final TypeDescription instrumentedType;
 
+        /**
+         * The stack manipulation to execute in order to invoke the rebased method.
+         */
         private final StackManipulation stackManipulation;
 
+        /**
+         * Creates a special method invocation for a rebased method if such an invocation is possible or otherwise
+         * returns an illegal special method invocation.
+         *
+         * @param resolution       The resolution of the rebased method.
+         * @param instrumentedType The instrumented type on which this method is to be invoked.
+         * @return A special method invocation for the given method.
+         */
         public static Instrumentation.SpecialMethodInvocation of(MethodFlatteningResolver.Resolution resolution,
-                                                                 TypeDescription typeDescription) {
+                                                                 TypeDescription instrumentedType) {
             return resolution.getResolvedMethod().isAbstract()
                     ? Illegal.INSTANCE
-                    : new RedefinedMethodSpecialMethodInvocation(resolution, typeDescription);
+                    : new RebasedMethodSpecialMethodInvocation(resolution, instrumentedType);
         }
 
-        private RedefinedMethodSpecialMethodInvocation(MethodFlatteningResolver.Resolution resolution,
-                                                       TypeDescription typeDescription) {
+        /**
+         * Creates a special method invocation for a rebased method.
+         *
+         * @param resolution       The resolution of the rebased method.
+         * @param instrumentedType The instrumented type on which this method is to be invoked.
+         */
+        private RebasedMethodSpecialMethodInvocation(MethodFlatteningResolver.Resolution resolution,
+                                                     TypeDescription instrumentedType) {
             this.methodDescription = resolution.getResolvedMethod();
-            this.typeDescription = typeDescription;
-            stackManipulation = new Compound(resolution.getAdditionalArguments(), MethodInvocation.invoke(resolution.getResolvedMethod()));
+            this.instrumentedType = instrumentedType;
+            stackManipulation = new Compound(resolution.getAdditionalArguments(),
+                    MethodInvocation.invoke(resolution.getResolvedMethod()).special(instrumentedType));
         }
 
         @Override
@@ -95,7 +143,7 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
 
         @Override
         public TypeDescription getTypeDescription() {
-            return typeDescription;
+            return instrumentedType;
         }
 
         @Override
@@ -114,7 +162,7 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
             if (other == null || getClass() != other.getClass()) return false;
             Instrumentation.SpecialMethodInvocation specialMethodInvocation = (Instrumentation.SpecialMethodInvocation) other;
             return isValid() == specialMethodInvocation.isValid()
-                    && typeDescription.equals(specialMethodInvocation.getTypeDescription())
+                    && instrumentedType.equals(specialMethodInvocation.getTypeDescription())
                     && methodDescription.getInternalName().equals(specialMethodInvocation.getMethodDescription().getInternalName())
                     && methodDescription.getParameterTypes().equals(specialMethodInvocation.getMethodDescription().getParameterTypes())
                     && methodDescription.getReturnType().equals(specialMethodInvocation.getMethodDescription().getReturnType());
@@ -125,25 +173,40 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
             int result = methodDescription.getInternalName().hashCode();
             result = 31 * result + methodDescription.getParameterTypes().hashCode();
             result = 31 * result + methodDescription.getReturnType().hashCode();
-            result = 31 * result + typeDescription.hashCode();
+            result = 31 * result + instrumentedType.hashCode();
             return result;
         }
 
         @Override
         public String toString() {
             return "RebaseInstrumentationTarget.RedefinedConstructorInvocation{" +
-                    "typeDescription=" + typeDescription +
+                    "instrumentedType=" + instrumentedType +
                     ", methodDescription=" + methodDescription +
                     '}';
         }
     }
 
+    /**
+     * A factory for creating a {@link net.bytebuddy.dynamic.scaffold.inline.RebaseInstrumentationTarget}.
+     */
     public static class Factory implements Instrumentation.Target.Factory {
 
+        /**
+         * A factory for creating a bridge method resolver.
+         */
         private final BridgeMethodResolver.Factory bridgeMethodResolverFactory;
 
+        /**
+         * A method flattening resolver to be used when calling a rebased method.
+         */
         private final MethodFlatteningResolver methodFlatteningResolver;
 
+        /**
+         * Creates a new factory for creating a {@link net.bytebuddy.dynamic.scaffold.inline.RebaseInstrumentationTarget}.
+         *
+         * @param bridgeMethodResolverFactory A factory for creating a bridge method resolver.
+         * @param methodFlatteningResolver    A method flattening resolver to be used when calling a rebased method.
+         */
         public Factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                        MethodFlatteningResolver methodFlatteningResolver) {
             this.bridgeMethodResolverFactory = bridgeMethodResolverFactory;

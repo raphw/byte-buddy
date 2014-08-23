@@ -61,7 +61,7 @@ public class SubclassInstrumentationTargetTest extends AbstractInstrumentationTa
     }
 
     @Test
-    public void testSpecializableMethodIsInvokable() throws Exception {
+    public void testSuperTypeMethodIsInvokable() throws Exception {
         when(superMethod.isSpecializableFor(superType)).thenReturn(true);
         Instrumentation.SpecialMethodInvocation specialMethodInvocation = instrumentationTarget.invokeSuper(superMethod, methodLookup);
         assertThat(specialMethodInvocation.isValid(), is(true));
@@ -78,7 +78,15 @@ public class SubclassInstrumentationTargetTest extends AbstractInstrumentationTa
     }
 
     @Test
-    public void testConstructorInvocation() throws Exception {
+    public void testAbstractSuperTypeMethodIsNotInvokable() throws Exception {
+        when(superMethod.isSpecializableFor(superType)).thenReturn(true);
+        when(superMethod.isAbstract()).thenReturn(true);
+        Instrumentation.SpecialMethodInvocation specialMethodInvocation = instrumentationTarget.invokeSuper(superMethod, methodLookup);
+        assertThat(specialMethodInvocation.isValid(), is(false));
+    }
+
+    @Test
+    public void testSuperConstructorIsInvokable() throws Exception {
         when(superMethod.isConstructor()).thenReturn(true);
         Instrumentation.SpecialMethodInvocation specialMethodInvocation = instrumentationTarget.invokeSuper(superMethod, methodLookup);
         assertThat(specialMethodInvocation.isValid(), is(true));

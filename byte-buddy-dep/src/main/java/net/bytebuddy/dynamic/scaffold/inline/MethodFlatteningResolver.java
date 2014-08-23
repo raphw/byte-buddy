@@ -37,8 +37,8 @@ public interface MethodFlatteningResolver {
 
         private Resolution redefine(MethodDescription methodDescription) {
             return methodDescription.isConstructor()
-                    ? new Resolution.ForRedefinedConstructor(methodDescription, placeholderType)
-                    : new Resolution.ForRedefinedMethod(methodDescription, seed);
+                    ? new Resolution.ForRebasedConstructor(methodDescription, placeholderType)
+                    : new Resolution.ForRebasedMethod(methodDescription, seed);
         }
 
         @Override
@@ -90,7 +90,7 @@ public interface MethodFlatteningResolver {
             }
 
             @Override
-            public boolean isRedefined() {
+            public boolean isRebased() {
                 return false;
             }
 
@@ -121,13 +121,13 @@ public interface MethodFlatteningResolver {
             }
         }
 
-        static class ForRedefinedMethod implements Resolution {
+        static class ForRebasedMethod implements Resolution {
 
             private static final String ORIGINAL_METHOD_NAME_SUFFIX = "original";
 
             private final MethodDescription methodDescription;
 
-            public ForRedefinedMethod(MethodDescription methodDescription, String seed) {
+            public ForRebasedMethod(MethodDescription methodDescription, String seed) {
                 this.methodDescription = new MethodDescription.Latent(
                         String.format("%s$%s$%s", methodDescription.getInternalName(), ORIGINAL_METHOD_NAME_SUFFIX, seed),
                         methodDescription.getDeclaringType(),
@@ -139,7 +139,7 @@ public interface MethodFlatteningResolver {
             }
 
             @Override
-            public boolean isRedefined() {
+            public boolean isRebased() {
                 return true;
             }
 
@@ -156,7 +156,7 @@ public interface MethodFlatteningResolver {
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && methodDescription.equals(((ForRedefinedMethod) other).methodDescription);
+                        && methodDescription.equals(((ForRebasedMethod) other).methodDescription);
             }
 
             @Override
@@ -170,11 +170,11 @@ public interface MethodFlatteningResolver {
             }
         }
 
-        static class ForRedefinedConstructor implements Resolution {
+        static class ForRebasedConstructor implements Resolution {
 
             private final MethodDescription methodDescription;
 
-            public ForRedefinedConstructor(MethodDescription methodDescription, TypeDescription placeholderType) {
+            public ForRebasedConstructor(MethodDescription methodDescription, TypeDescription placeholderType) {
                 this.methodDescription = new MethodDescription.Latent(methodDescription.getInternalName(),
                         methodDescription.getDeclaringType(),
                         methodDescription.getReturnType(),
@@ -183,7 +183,7 @@ public interface MethodFlatteningResolver {
             }
 
             @Override
-            public boolean isRedefined() {
+            public boolean isRebased() {
                 return true;
             }
 
@@ -200,7 +200,7 @@ public interface MethodFlatteningResolver {
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && methodDescription.equals(((ForRedefinedConstructor) other).methodDescription);
+                        && methodDescription.equals(((ForRebasedConstructor) other).methodDescription);
             }
 
             @Override
@@ -214,7 +214,7 @@ public interface MethodFlatteningResolver {
             }
         }
 
-        boolean isRedefined();
+        boolean isRebased();
 
         MethodDescription getResolvedMethod();
 

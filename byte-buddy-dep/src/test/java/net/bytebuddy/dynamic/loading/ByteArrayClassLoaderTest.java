@@ -12,13 +12,15 @@ import static org.hamcrest.core.Is.is;
 
 public class ByteArrayClassLoaderTest {
 
+    private static final ClassLoader BOOTSTRAP_CLASS_LOADER = null;
+
     private static final String BAR = "bar";
     private ClassLoader classLoader;
 
     @Before
     public void setUp() throws Exception {
         Map<String, byte[]> values = Collections.singletonMap(Foo.class.getName(), ClassFileExtraction.extract(Foo.class));
-        classLoader = new ByteArrayClassLoader(null /* null represents the bootstrap class loader */, values);
+        classLoader = new ByteArrayClassLoader(BOOTSTRAP_CLASS_LOADER, values);
     }
 
     @Test
