@@ -4,13 +4,11 @@ import org.junit.rules.MethodRule;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.Statement;
 
+import java.io.File;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.util.Enumeration;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 import java.util.logging.Logger;
 
 public class ToolsJarRule implements MethodRule {
@@ -24,24 +22,7 @@ public class ToolsJarRule implements MethodRule {
     private final boolean openJDK;
 
     public ToolsJarRule() {
-        openJDK = checkToolsJar();
-    }
-
-    private static boolean checkToolsJar() {
-        try {
-            JarFile jarFile = new JarFile(System.getProperty(JAVA_HOME_PROPERTY).replace('\\', '/') + TOOLS_JAR_LOCATION);
-            final Enumeration<JarEntry> entries = jarFile.entries();
-            while (entries.hasMoreElements()) {
-                final JarEntry entry = entries.nextElement();
-                System.out.println(entry.getName());
-                if (entry.getName().equals(VIRTUAL_MACHINE_TYPE)) {
-                    return true;
-                }
-            }
-        } catch (Exception e) {
-            return false;
-        }
-        return false;
+        openJDK = new File(System.getProperty(JAVA_HOME_PROPERTY).replace('\\', '/') + TOOLS_JAR_LOCATION).isFile();
     }
 
     @Override
