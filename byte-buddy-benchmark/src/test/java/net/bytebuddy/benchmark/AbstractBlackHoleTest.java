@@ -27,11 +27,11 @@ public abstract class AbstractBlackHoleTest {
         Class<?> blackHoleGenerator = new ByteBuddy()
                 .subclass(Object.class)
                 .name(String.format("C%s$generated", RandomString.make()))
-                        .defineMethod(BLACK_HOLE_METHOD, Blackhole.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
-                        .intercept(MethodDelegation.toConstructor(Blackhole.class))
-                        .make()
-                        .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
-                        .getLoaded();
+                .defineMethod(BLACK_HOLE_METHOD, Blackhole.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .intercept(MethodDelegation.toConstructor(Blackhole.class))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
         Method method = blackHoleGenerator.getDeclaredMethod(BLACK_HOLE_METHOD);
         blackHole = (Blackhole) method.invoke(blackHoleGenerator.newInstance());
     }

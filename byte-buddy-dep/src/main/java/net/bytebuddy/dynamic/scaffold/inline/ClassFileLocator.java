@@ -16,6 +16,16 @@ public interface ClassFileLocator {
     static final String CLASS_FILE_EXTENSION = ".class";
 
     /**
+     * Locates the class file for a given type and returns the file as an input stream. Any requested
+     * {@link java.io.InputStream} is closed automatically after it is processed. If no class file can be located,
+     * {@code null} is returned.
+     *
+     * @param typeDescription The description of the type for which a class file is to be located.
+     * @return An input stream representing the given type.
+     */
+    InputStream classFileFor(TypeDescription typeDescription);
+
+    /**
      * Default implementations for a {@link net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator}.
      */
     static enum Default implements ClassFileLocator {
@@ -51,17 +61,6 @@ public interface ClassFileLocator {
     static class Compound implements ClassFileLocator {
 
         /**
-         * Creates a default class file locator by chaining the
-         * {@link net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator.Default#ATTACHED} and the
-         * {@link net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator.Default#CLASS_PATH} class file locator.
-         *
-         * @return A default class file locator.
-         */
-        public static ClassFileLocator makeDefault() {
-            return new Compound(Default.ATTACHED, Default.CLASS_PATH);
-        }
-
-        /**
          * The {@link net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator}s which are represented by this compound
          * class file locator  in the order of their application.
          */
@@ -75,6 +74,17 @@ public interface ClassFileLocator {
          */
         public Compound(ClassFileLocator... classFileLocator) {
             this.classFileLocator = classFileLocator;
+        }
+
+        /**
+         * Creates a default class file locator by chaining the
+         * {@link net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator.Default#ATTACHED} and the
+         * {@link net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator.Default#CLASS_PATH} class file locator.
+         *
+         * @return A default class file locator.
+         */
+        public static ClassFileLocator makeDefault() {
+            return new Compound(Default.ATTACHED, Default.CLASS_PATH);
         }
 
         @Override
@@ -104,14 +114,4 @@ public interface ClassFileLocator {
             return "ClassFileLocator.Compound{classFileLocator=" + Arrays.toString(classFileLocator) + '}';
         }
     }
-
-    /**
-     * Locates the class file for a given type and returns the file as an input stream. Any requested
-     * {@link java.io.InputStream} is closed automatically after it is processed. If no class file can be located,
-     * {@code null} is returned.
-     *
-     * @param typeDescription The description of the type for which a class file is to be located.
-     * @return An input stream representing the given type.
-     */
-    InputStream classFileFor(TypeDescription typeDescription);
 }

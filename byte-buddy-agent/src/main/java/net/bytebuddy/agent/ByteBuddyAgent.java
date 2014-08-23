@@ -15,43 +15,31 @@ import java.util.logging.Logger;
 
 public class ByteBuddyAgent {
 
-    private static final int BUFFER_SIZE = 1024;
-
-    private static final int START_INDEX = 0, END_OF_FILE = -1;
-
-    private static final Object STATIC_MEMBER = null;
-
-    private static final ClassLoader BOOTSTRAP_CLASS_LOADER = null;
-
-    private static final String WITHOUT_ARGUMENTS = "";
-
-    private static final String AGENT_FILE_NAME = "byteBuddyAgent";
-
-    private static final String JAR_FILE_EXTENSION = ".jar";
-
-    private static final String CLASS_FILE_EXTENSION = ".class";
-
-    private static final String VIRTUAL_MACHINE_TYPE_NAME = "com.sun.tools.attach.VirtualMachine";
-
-    private static final String ATTACH_METHOD_NAME = "attach";
-
-    private static final String INSTRUMENTATION_FIELD_NAME = "instrumentation";
-
-    private static final String LOAD_AGENT_METHOD_NAME = "loadAgent";
-
-    private static final String DETACH_METHOD_NAME = "detach";
-
-    private static final String MANIFEST_VERSION_VALUE = "1.0";
-
     public static final String AGENT_CLASS_PROPERTY = "Agent-Class";
-
     public static final String CAN_REDEFINE_CLASSES_PROPERTY = "Can-Redefine-Classes";
-
     public static final String CAN_SET_NATIVE_METHOD_PREFIX_PROPERTY = "Can-Set-Native-Method-Prefix";
-
     public static final String JAVA_HOME_PROPERTY = "java.home";
-
     public static final String TOOLS_JAR_LOCATION = "/../lib/tools.jar";
+    private static final int BUFFER_SIZE = 1024;
+    private static final int START_INDEX = 0, END_OF_FILE = -1;
+    private static final Object STATIC_MEMBER = null;
+    private static final ClassLoader BOOTSTRAP_CLASS_LOADER = null;
+    private static final String WITHOUT_ARGUMENTS = "";
+    private static final String AGENT_FILE_NAME = "byteBuddyAgent";
+    private static final String JAR_FILE_EXTENSION = ".jar";
+    private static final String CLASS_FILE_EXTENSION = ".class";
+    private static final String VIRTUAL_MACHINE_TYPE_NAME = "com.sun.tools.attach.VirtualMachine";
+    private static final String ATTACH_METHOD_NAME = "attach";
+    private static final String INSTRUMENTATION_FIELD_NAME = "instrumentation";
+    private static final String LOAD_AGENT_METHOD_NAME = "loadAgent";
+    private static final String DETACH_METHOD_NAME = "detach";
+    private static final String MANIFEST_VERSION_VALUE = "1.0";
+    @SuppressWarnings("unused")
+    private static volatile Instrumentation instrumentation;
+
+    private ByteBuddyAgent() {
+        throw new UnsupportedOperationException();
+    }
 
     public static Instrumentation installOnOpenJDK() throws Exception {
         Instrumentation instrumentation = doGetInstrumentation();
@@ -86,21 +74,6 @@ public class ByteBuddyAgent {
         }
     }
 
-    public static class Installer {
-
-        public static void premain(String agentArguments, Instrumentation instrumentation) {
-            ByteBuddyAgent.instrumentation = instrumentation;
-        }
-
-        public static void agentmain(String agentArguments, Instrumentation instrumentation) {
-            ByteBuddyAgent.instrumentation = instrumentation;
-        }
-
-        private Installer() {
-            throw new UnsupportedOperationException();
-        }
-    }
-
     private static void saveAgentJar(File agentFile) throws Exception {
         InputStream inputStream = ByteBuddyAgent.Installer.class.getResourceAsStream('/'
                 + ByteBuddyAgent.Installer.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION);
@@ -130,9 +103,6 @@ public class ByteBuddyAgent {
         }
     }
 
-    @SuppressWarnings("unused")
-    private static volatile Instrumentation instrumentation;
-
     public static Instrumentation getInstrumentation() {
         Instrumentation instrumentation = doGetInstrumentation();
         if (instrumentation == null) {
@@ -153,7 +123,18 @@ public class ByteBuddyAgent {
         }
     }
 
-    private ByteBuddyAgent() {
-        throw new UnsupportedOperationException();
+    public static class Installer {
+
+        private Installer() {
+            throw new UnsupportedOperationException();
+        }
+
+        public static void premain(String agentArguments, Instrumentation instrumentation) {
+            ByteBuddyAgent.instrumentation = instrumentation;
+        }
+
+        public static void agentmain(String agentArguments, Instrumentation instrumentation) {
+            ByteBuddyAgent.instrumentation = instrumentation;
+        }
     }
 }

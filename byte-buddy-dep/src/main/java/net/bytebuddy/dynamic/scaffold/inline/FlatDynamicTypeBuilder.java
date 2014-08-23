@@ -168,6 +168,20 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
         this.targetHandler = targetHandler;
     }
 
+    /**
+     * Matches any method description of the list of given methods.
+     *
+     * @param methodDescriptions A list of method descriptions to match.
+     * @return A method matcher that matches the list of methods.
+     */
+    private static MethodMatcher anyOf(List<MethodDescription> methodDescriptions) {
+        JunctionMethodMatcher methodMatcher = none();
+        for (MethodDescription methodDescription : methodDescriptions) {
+            methodMatcher = methodMatcher.or(is(methodDescription));
+        }
+        return methodMatcher;
+    }
+
     @Override
     protected DynamicType.Builder<T> materialize(ClassFileVersion classFileVersion,
                                                  NamingStrategy namingStrategy,
@@ -238,20 +252,6 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                 .make(new TypeExtensionDelegate(compiledMethodRegistry.getInstrumentedType(), classFileVersion));
     }
 
-    /**
-     * Matches any method description of the list of given methods.
-     *
-     * @param methodDescriptions A list of method descriptions to match.
-     * @return A method matcher that matches the list of methods.
-     */
-    private static MethodMatcher anyOf(List<MethodDescription> methodDescriptions) {
-        JunctionMethodMatcher methodMatcher = none();
-        for (MethodDescription methodDescription : methodDescriptions) {
-            methodMatcher = methodMatcher.or(is(methodDescription));
-        }
-        return methodMatcher;
-    }
-
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
@@ -289,6 +289,10 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
 
     public static interface TargetHandler {
 
+        Prepared prepare(MethodMatcher ignoredMethods,
+                         ClassFileVersion classFileVersion,
+                         TypeDescription instrumentedType);
+
         static enum ForRebaseInstrumentation implements TargetHandler {
 
             INSTANCE;
@@ -315,15 +319,40 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
             }
         }
 
-        Prepared prepare(MethodMatcher ignoredMethods,
-                         ClassFileVersion classFileVersion,
-                         TypeDescription instrumentedType);
-
         static interface Prepared {
 
             MethodFlatteningResolver getMethodFlatteningResolver();
 
             TypeWriter.MethodPool.Entry.Factory getMethodPoolEntryDefault();
+
+            Instrumentation.Target.Factory factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory);
+
+            List<DynamicType> getAuxiliaryTypes();
+
+            static enum ForSubclassInstrumentation implements Prepared {
+
+                INSTANCE;
+
+                @Override
+                public MethodFlatteningResolver getMethodFlatteningResolver() {
+                    return MethodFlatteningResolver.NoOp.INSTANCE;
+                }
+
+                @Override
+                public TypeWriter.MethodPool.Entry.Factory getMethodPoolEntryDefault() {
+                    return TypeWriter.MethodPool.Entry.Skip.INSTANCE;
+                }
+
+                @Override
+                public Instrumentation.Target.Factory factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
+                    return new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory);
+                }
+
+                @Override
+                public List<DynamicType> getAuxiliaryTypes() {
+                    return Collections.emptyList();
+                }
+            }
 
             static class ForRebaseInstrumentation implements Prepared {
 
@@ -393,16 +422,6 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                 }
 
                 private static class MethodFlatteningDelegation implements TypeWriter.MethodPool.Entry, ByteCodeAppender {
-
-                    private static enum Factory implements TypeWriter.MethodPool.Entry.Factory {
-
-                        INSTANCE;
-
-                        @Override
-                        public TypeWriter.MethodPool.Entry compile(Instrumentation.Target instrumentationTarget) {
-                            return new MethodFlatteningDelegation(instrumentationTarget);
-                        }
-                    }
 
                     private final Instrumentation.Target instrumentationTarget;
 
@@ -475,37 +494,18 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                     public String toString() {
                         return "FlatDynamicTypeBuilder.MethodFlatteningDelegation{instrumentationTarget=" + instrumentationTarget + '}';
                     }
+
+                    private static enum Factory implements TypeWriter.MethodPool.Entry.Factory {
+
+                        INSTANCE;
+
+                        @Override
+                        public TypeWriter.MethodPool.Entry compile(Instrumentation.Target instrumentationTarget) {
+                            return new MethodFlatteningDelegation(instrumentationTarget);
+                        }
+                    }
                 }
             }
-
-            static enum ForSubclassInstrumentation implements Prepared {
-
-                INSTANCE;
-
-                @Override
-                public MethodFlatteningResolver getMethodFlatteningResolver() {
-                    return MethodFlatteningResolver.NoOp.INSTANCE;
-                }
-
-                @Override
-                public TypeWriter.MethodPool.Entry.Factory getMethodPoolEntryDefault() {
-                    return TypeWriter.MethodPool.Entry.Skip.INSTANCE;
-                }
-
-                @Override
-                public Instrumentation.Target.Factory factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
-                    return new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory);
-                }
-
-                @Override
-                public List<DynamicType> getAuxiliaryTypes() {
-                    return Collections.emptyList();
-                }
-            }
-
-            Instrumentation.Target.Factory factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory);
-
-            List<DynamicType> getAuxiliaryTypes();
         }
     }
 }

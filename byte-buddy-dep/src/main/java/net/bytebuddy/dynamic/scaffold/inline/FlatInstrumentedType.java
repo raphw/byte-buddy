@@ -73,10 +73,10 @@ public class FlatInstrumentedType extends InstrumentedType.AbstractBase {
     /**
      * Creates a new flat instrumented type.
      *
-     * @param levelType         The name of the instrumented type.
-     * @param name              The name of the instrumented type.
-     * @param interfaces        The additional interfaces that this type should implement.
-     * @param modifiers         The name of the instrumented type.
+     * @param levelType             The name of the instrumented type.
+     * @param name                  The name of the instrumented type.
+     * @param interfaces            The additional interfaces that this type should implement.
+     * @param modifiers             The name of the instrumented type.
      * @param fieldDescriptions     A list of field descriptions for this instrumented type.
      * @param methodDescriptions    A list of method descriptions for this instrumented type.
      * @param loadedTypeInitializer A loaded type initializer for this instrumented type.

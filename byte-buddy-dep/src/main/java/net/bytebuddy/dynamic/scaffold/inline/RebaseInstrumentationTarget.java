@@ -108,6 +108,20 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
         private final StackManipulation stackManipulation;
 
         /**
+         * Creates a special method invocation for a rebased method.
+         *
+         * @param resolution       The resolution of the rebased method.
+         * @param instrumentedType The instrumented type on which this method is to be invoked.
+         */
+        private RebasedMethodSpecialMethodInvocation(MethodFlatteningResolver.Resolution resolution,
+                                                     TypeDescription instrumentedType) {
+            this.methodDescription = resolution.getResolvedMethod();
+            this.instrumentedType = instrumentedType;
+            stackManipulation = new Compound(resolution.getAdditionalArguments(),
+                    MethodInvocation.invoke(resolution.getResolvedMethod()).special(instrumentedType));
+        }
+
+        /**
          * Creates a special method invocation for a rebased method if such an invocation is possible or otherwise
          * returns an illegal special method invocation.
          *
@@ -120,20 +134,6 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
             return resolution.getResolvedMethod().isAbstract()
                     ? Illegal.INSTANCE
                     : new RebasedMethodSpecialMethodInvocation(resolution, instrumentedType);
-        }
-
-        /**
-         * Creates a special method invocation for a rebased method.
-         *
-         * @param resolution       The resolution of the rebased method.
-         * @param instrumentedType The instrumented type on which this method is to be invoked.
-         */
-        private RebasedMethodSpecialMethodInvocation(MethodFlatteningResolver.Resolution resolution,
-                                                     TypeDescription instrumentedType) {
-            this.methodDescription = resolution.getResolvedMethod();
-            this.instrumentedType = instrumentedType;
-            stackManipulation = new Compound(resolution.getAdditionalArguments(),
-                    MethodInvocation.invoke(resolution.getResolvedMethod()).special(instrumentedType));
         }
 
         @Override

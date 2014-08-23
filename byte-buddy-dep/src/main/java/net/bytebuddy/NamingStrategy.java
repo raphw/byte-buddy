@@ -38,6 +38,48 @@ public interface NamingStrategy {
     static interface UnnamedType {
 
         /**
+         * Returns this unnamed type's super class.
+         *
+         * @return A description of the super class of the type to be named.
+         */
+        TypeDescription getSuperClass();
+
+        /**
+         * Returns a collection of descriptions of this unnamed type's directly implemented interfaces.
+         *
+         * @return A collection of implemented interfaces.
+         */
+        Collection<TypeDescription> getDeclaredInterfaces();
+
+        /**
+         * Returns the visibility of this unnamed type.
+         *
+         * @return The visibility of this unnamed type.
+         */
+        Visibility getVisibility();
+
+        /**
+         * Returns the manifestation of this unnamed type.
+         *
+         * @return The manifestation of this unnamed type.
+         */
+        TypeManifestation getTypeManifestation();
+
+        /**
+         * Returns the manifestation of this unnamed type.
+         *
+         * @return The manifestation of this unnamed type.
+         */
+        SyntheticState getSyntheticState();
+
+        /**
+         * Returns the class file version of this unnamed type.
+         *
+         * @return The class file version of this unnamed type.
+         */
+        ClassFileVersion getClassFileVersion();
+
+        /**
          * An unnamed type which is to be named by a naming strategy.
          */
         static class Default implements UnnamedType {
@@ -160,48 +202,6 @@ public interface NamingStrategy {
                         '}';
             }
         }
-
-        /**
-         * Returns this unnamed type's super class.
-         *
-         * @return A description of the super class of the type to be named.
-         */
-        TypeDescription getSuperClass();
-
-        /**
-         * Returns a collection of descriptions of this unnamed type's directly implemented interfaces.
-         *
-         * @return A collection of implemented interfaces.
-         */
-        Collection<TypeDescription> getDeclaredInterfaces();
-
-        /**
-         * Returns the visibility of this unnamed type.
-         *
-         * @return The visibility of this unnamed type.
-         */
-        Visibility getVisibility();
-
-        /**
-         * Returns the manifestation of this unnamed type.
-         *
-         * @return The manifestation of this unnamed type.
-         */
-        TypeManifestation getTypeManifestation();
-
-        /**
-         * Returns the manifestation of this unnamed type.
-         *
-         * @return The manifestation of this unnamed type.
-         */
-        SyntheticState getSyntheticState();
-
-        /**
-         * Returns the class file version of this unnamed type.
-         *
-         * @return The class file version of this unnamed type.
-         */
-        ClassFileVersion getClassFileVersion();
     }
 
     /**

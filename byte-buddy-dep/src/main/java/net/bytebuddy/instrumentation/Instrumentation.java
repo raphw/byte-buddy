@@ -502,6 +502,10 @@ public interface Instrumentation {
 
             static interface InjectedCode {
 
+                StackManipulation getInjectedCode();
+
+                boolean isInjected();
+
                 static enum None implements InjectedCode {
 
                     INSTANCE;
@@ -516,10 +520,6 @@ public interface Instrumentation {
                         return false;
                     }
                 }
-
-                StackManipulation getInjectedCode();
-
-                boolean isInjected();
             }
         }
     }

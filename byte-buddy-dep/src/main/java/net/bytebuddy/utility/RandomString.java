@@ -33,31 +33,10 @@ public class RandomString {
         }
         SYMBOL = symbol.toString().toCharArray();
     }
-
-    /**
-     * Creates a random {@link java.lang.String} of {@link net.bytebuddy.utility.RandomString#DEFAULT_LENGTH} length.
-     *
-     * @return A random {@link java.lang.String}.
-     */
-    public static String make() {
-        return make(DEFAULT_LENGTH);
-    }
-
-    /**
-     * Creates a random {@link java.lang.String} of the given {@code length}.
-     *
-     * @param length The length of the random {@link String}.
-     * @return A random {@link java.lang.String}.
-     */
-    public static String make(int length) {
-        return new RandomString(length).nextString();
-    }
-
     /**
      * A provider of random values.
      */
     private final Random random;
-
     /**
      * The length of the random strings that are created by this instance.
      */
@@ -82,6 +61,25 @@ public class RandomString {
         }
         this.length = length;
         random = new Random();
+    }
+
+    /**
+     * Creates a random {@link java.lang.String} of {@link net.bytebuddy.utility.RandomString#DEFAULT_LENGTH} length.
+     *
+     * @return A random {@link java.lang.String}.
+     */
+    public static String make() {
+        return make(DEFAULT_LENGTH);
+    }
+
+    /**
+     * Creates a random {@link java.lang.String} of the given {@code length}.
+     *
+     * @param length The length of the random {@link String}.
+     * @return A random {@link java.lang.String}.
+     */
+    public static String make(int length) {
+        return new RandomString(length).nextString();
     }
 
     /**

@@ -26,88 +26,12 @@ public interface MethodFlatteningResolver {
     static final int REBASED_METHOD_MODIFIER = Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
 
     /**
-     * A default implementation of a {@link net.bytebuddy.dynamic.scaffold.inline.MethodFlatteningResolver} which
-     * renames rebased methods and adds an additional constructor placeholder parameter to constructors. Ignored
-     * methods are never rebased.
+     * Checks if a method is eligible for rebasing and resolves this possibly rebased method.
+     *
+     * @param methodDescription A description of the method to resolve.
+     * @return A resolution for the given method.
      */
-    static class Default implements MethodFlatteningResolver {
-
-        /**
-         * Ignored methods which are never rebased.
-         */
-        private final MethodMatcher ignoredMethods;
-
-        /**
-         * A placeholder type which is added to a rebased constructor.
-         */
-        private final TypeDescription placeholderType;
-
-        /**
-         * A transformer for renaming a rebased method.
-         */
-        private final MethodNameTransformer methodNameTransformer;
-
-        /**
-         * Creates a default method flattening resolver.
-         *
-         * @param ignoredMethods        Ignored methods which are never rebased.
-         * @param placeholderType       A placeholder type which is added to a rebased constructor.
-         * @param methodNameTransformer A transformer for renaming a rebased method.
-         */
-        public Default(MethodMatcher ignoredMethods,
-                       TypeDescription placeholderType,
-                       MethodNameTransformer methodNameTransformer) {
-            this.ignoredMethods = ignoredMethods;
-            this.placeholderType = placeholderType;
-            this.methodNameTransformer = methodNameTransformer;
-        }
-
-        @Override
-        public Resolution resolve(MethodDescription methodDescription) {
-            return ignoredMethods.matches(methodDescription)
-                    ? new Resolution.Preserved(methodDescription)
-                    : rebase(methodDescription);
-        }
-
-        /**
-         * Resolves a rebase method of a given method.
-         *
-         * @param methodDescription The method to rebase.
-         * @return The resolution for the given method.
-         */
-        private Resolution rebase(MethodDescription methodDescription) {
-            return methodDescription.isConstructor()
-                    ? new Resolution.ForRebasedConstructor(methodDescription, placeholderType)
-                    : new Resolution.ForRebasedMethod(methodDescription, methodNameTransformer);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            Default aDefault = (Default) other;
-            return ignoredMethods.equals(aDefault.ignoredMethods)
-                    && placeholderType.equals(aDefault.placeholderType)
-                    && methodNameTransformer.equals(aDefault.methodNameTransformer);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = ignoredMethods.hashCode();
-            result = 31 * result + placeholderType.hashCode();
-            result = 31 * result + methodNameTransformer.hashCode();
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "MethodFlatteningResolver.Default{" +
-                    "ignoredMethods=" + ignoredMethods +
-                    ", placeholderType=" + placeholderType +
-                    ", methodNameTransformer=" + methodNameTransformer +
-                    '}';
-        }
-    }
+    Resolution resolve(MethodDescription methodDescription);
 
     /**
      * A method flattening resolver that preserves any method in its original form.
@@ -131,6 +55,15 @@ public interface MethodFlatteningResolver {
      * @see net.bytebuddy.dynamic.scaffold.inline.MethodFlatteningResolver
      */
     static interface MethodNameTransformer {
+
+        /**
+         * Transforms a method's name to an alternative name. For a given argument, this mapper must always provide
+         * the same return value.
+         *
+         * @param originalName The original name.
+         * @return The alternative name.
+         */
+        String transform(String originalName);
 
         /**
          * A method name transformer that adds a fixed suffix to an original method name.
@@ -185,21 +118,35 @@ public interface MethodFlatteningResolver {
                         '}';
             }
         }
-
-        /**
-         * Transforms a method's name to an alternative name. For a given argument, this mapper must always provide
-         * the same return value.
-         *
-         * @param originalName The original name.
-         * @return The alternative name.
-         */
-        String transform(String originalName);
     }
 
     /**
      * A resolution for a method that was checked by a {@link net.bytebuddy.dynamic.scaffold.inline.MethodFlatteningResolver}.
      */
     static interface Resolution {
+
+        /**
+         * Checks if this resolution represents a rebased method.
+         *
+         * @return {@code true} if this resolution requires to rebase a method.
+         */
+        boolean isRebased();
+
+        /**
+         * Returns the resolved method if this resolution represents a rebased method or the original method.
+         *
+         * @return The resolved method if this resolution represents a rebased method or the original method.
+         */
+        MethodDescription getResolvedMethod();
+
+        /**
+         * A rebased method might require additional arguments in order to create a distinct signature. The
+         * stack manipulation that is returned from this method loads these arguments onto the operand stack. For
+         * a non-rebased method, this method throws an {@link java.lang.IllegalArgumentException}.
+         *
+         * @return A stack manipulation that loaded the additional arguments onto the stack, if any.
+         */
+        StackManipulation getAdditionalArguments();
 
         /**
          * A {@link net.bytebuddy.dynamic.scaffold.inline.MethodFlatteningResolver.Resolution} of a non-rebased method.
@@ -369,36 +316,89 @@ public interface MethodFlatteningResolver {
                 return "MethodFlatteningResolver.Resolution.ForRedefinedConstructor{methodDescription=" + methodDescription + '}';
             }
         }
-
-        /**
-         * Checks if this resolution represents a rebased method.
-         *
-         * @return {@code true} if this resolution requires to rebase a method.
-         */
-        boolean isRebased();
-
-        /**
-         * Returns the resolved method if this resolution represents a rebased method or the original method.
-         *
-         * @return The resolved method if this resolution represents a rebased method or the original method.
-         */
-        MethodDescription getResolvedMethod();
-
-        /**
-         * A rebased method might require additional arguments in order to create a distinct signature. The
-         * stack manipulation that is returned from this method loads these arguments onto the operand stack. For
-         * a non-rebased method, this method throws an {@link java.lang.IllegalArgumentException}.
-         *
-         * @return A stack manipulation that loaded the additional arguments onto the stack, if any.
-         */
-        StackManipulation getAdditionalArguments();
     }
 
     /**
-     * Checks if a method is eligible for rebasing and resolves this possibly rebased method.
-     *
-     * @param methodDescription A description of the method to resolve.
-     * @return A resolution for the given method.
+     * A default implementation of a {@link net.bytebuddy.dynamic.scaffold.inline.MethodFlatteningResolver} which
+     * renames rebased methods and adds an additional constructor placeholder parameter to constructors. Ignored
+     * methods are never rebased.
      */
-    Resolution resolve(MethodDescription methodDescription);
+    static class Default implements MethodFlatteningResolver {
+
+        /**
+         * Ignored methods which are never rebased.
+         */
+        private final MethodMatcher ignoredMethods;
+
+        /**
+         * A placeholder type which is added to a rebased constructor.
+         */
+        private final TypeDescription placeholderType;
+
+        /**
+         * A transformer for renaming a rebased method.
+         */
+        private final MethodNameTransformer methodNameTransformer;
+
+        /**
+         * Creates a default method flattening resolver.
+         *
+         * @param ignoredMethods        Ignored methods which are never rebased.
+         * @param placeholderType       A placeholder type which is added to a rebased constructor.
+         * @param methodNameTransformer A transformer for renaming a rebased method.
+         */
+        public Default(MethodMatcher ignoredMethods,
+                       TypeDescription placeholderType,
+                       MethodNameTransformer methodNameTransformer) {
+            this.ignoredMethods = ignoredMethods;
+            this.placeholderType = placeholderType;
+            this.methodNameTransformer = methodNameTransformer;
+        }
+
+        @Override
+        public Resolution resolve(MethodDescription methodDescription) {
+            return ignoredMethods.matches(methodDescription)
+                    ? new Resolution.Preserved(methodDescription)
+                    : rebase(methodDescription);
+        }
+
+        /**
+         * Resolves a rebase method of a given method.
+         *
+         * @param methodDescription The method to rebase.
+         * @return The resolution for the given method.
+         */
+        private Resolution rebase(MethodDescription methodDescription) {
+            return methodDescription.isConstructor()
+                    ? new Resolution.ForRebasedConstructor(methodDescription, placeholderType)
+                    : new Resolution.ForRebasedMethod(methodDescription, methodNameTransformer);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            Default aDefault = (Default) other;
+            return ignoredMethods.equals(aDefault.ignoredMethods)
+                    && placeholderType.equals(aDefault.placeholderType)
+                    && methodNameTransformer.equals(aDefault.methodNameTransformer);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = ignoredMethods.hashCode();
+            result = 31 * result + placeholderType.hashCode();
+            result = 31 * result + methodNameTransformer.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "MethodFlatteningResolver.Default{" +
+                    "ignoredMethods=" + ignoredMethods +
+                    ", placeholderType=" + placeholderType +
+                    ", methodNameTransformer=" + methodNameTransformer +
+                    '}';
+        }
+    }
 }

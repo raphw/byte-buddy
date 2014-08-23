@@ -47,15 +47,6 @@ public class FlatInstrumentedTypeTest extends AbstractInstrumentedTypeTest {
                 new NamingStrategy.Fixed(FOOBAR));
     }
 
-    public static class Foo {
-
-        private Void foo;
-
-        public void foo() {
-            /* empty */
-        }
-    }
-
     @Test
     public void testTargetTypeMemberInheritance() throws Exception {
         TypeDescription typeDescription = new FlatInstrumentedType(
@@ -68,5 +59,14 @@ public class FlatInstrumentedTypeTest extends AbstractInstrumentedTypeTest {
         assertThat(typeDescription.getDeclaredMethods().filter(isConstructor()).size(), is(1));
         assertThat(typeDescription.getDeclaredMethods().filter(isMethod()).size(), is(1));
         assertThat(typeDescription.getDeclaredFields().size(), is(1));
+    }
+
+    public static class Foo {
+
+        private Void foo;
+
+        public void foo() {
+            /* empty */
+        }
     }
 }

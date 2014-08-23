@@ -19,15 +19,15 @@ public class ToolsJarRule implements MethodRule {
 
     public static final String VIRTUAL_MACHINE_TYPE = "com/sun/tools/attach/VirtualMachine.class";
 
-    private final boolean openJDK;
+    private final boolean toolsJarExists;
 
     public ToolsJarRule() {
-        openJDK = new File(System.getProperty(JAVA_HOME_PROPERTY).replace('\\', '/') + TOOLS_JAR_LOCATION).isFile();
+        toolsJarExists = new File(System.getProperty(JAVA_HOME_PROPERTY).replace('\\', '/') + TOOLS_JAR_LOCATION).isFile();
     }
 
     @Override
     public Statement apply(Statement base, FrameworkMethod method, Object target) {
-        return openJDK || method.getAnnotation(Enforce.class) == null
+        return toolsJarExists || method.getAnnotation(Enforce.class) == null
                 ? base
                 : new NoOpStatement();
     }

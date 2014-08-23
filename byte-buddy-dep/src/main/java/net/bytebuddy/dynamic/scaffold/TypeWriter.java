@@ -44,35 +44,6 @@ public interface TypeWriter<T> {
 
     DynamicType.Unloaded<T> make(Instrumentation.Context.ExtractableView instrumentationContext);
 
-    static class Default<S> implements TypeWriter<S> {
-
-        private final TypeDescription typeDescription;
-
-        private final LoadedTypeInitializer loadedTypeInitializer;
-
-        private final List<DynamicType> explicitAuxiliaryTypes;
-
-        private final Engine engine;
-
-        public Default(TypeDescription typeDescription,
-                       LoadedTypeInitializer loadedTypeInitializer,
-                       List<DynamicType> explicitAuxiliaryTypes,
-                       Engine engine) {
-            this.typeDescription = typeDescription;
-            this.loadedTypeInitializer = loadedTypeInitializer;
-            this.explicitAuxiliaryTypes = explicitAuxiliaryTypes;
-            this.engine = engine;
-        }
-
-        @Override
-        public DynamicType.Unloaded<S> make(Instrumentation.Context.ExtractableView instrumentationContext) {
-            return new DynamicType.Default.Unloaded<S>(typeDescription,
-                    engine.create(instrumentationContext),
-                    loadedTypeInitializer,
-                    join(explicitAuxiliaryTypes, instrumentationContext.getRegisteredAuxiliaryTypes()));
-        }
-    }
-
     static interface Engine {
 
         static final int ASM_MANUAL_FLAG = 0;
@@ -82,50 +53,6 @@ public interface TypeWriter<T> {
         byte[] create(Instrumentation.Context.ExtractableView instrumentationContext);
 
         static class ForRedefinition implements Engine {
-
-            public static interface InputStreamProvider {
-
-                static class ForClassFileLocator implements InputStreamProvider {
-
-                    private final TypeDescription originalType;
-
-                    private final ClassFileLocator classFileLocator;
-
-                    public ForClassFileLocator(TypeDescription originalType, ClassFileLocator classFileLocator) {
-                        this.originalType = originalType;
-                        this.classFileLocator = classFileLocator;
-                    }
-
-                    @Override
-                    public InputStream create() {
-                        return classFileLocator.classFileFor(originalType);
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && classFileLocator.equals(((ForClassFileLocator) other).classFileLocator)
-                                && originalType.equals(((ForClassFileLocator) other).originalType);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = originalType.hashCode();
-                        result = 31 * result + classFileLocator.hashCode();
-                        return result;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Engine.ForRedefinition.InputStreamProvider.ForClassFileLocator{" +
-                                "originalType=" + originalType +
-                                ", classFileLocator=" + classFileLocator +
-                                '}';
-                    }
-                }
-
-                InputStream create();
-            }
 
             private final TypeDescription instrumentedType;
             private final TypeDescription targetType;
@@ -137,7 +64,6 @@ public interface TypeWriter<T> {
             private final TypeWriter.MethodPool methodPool;
             private final InputStreamProvider inputStreamProvider;
             private final MethodFlatteningResolver methodFlatteningResolver;
-
             public ForRedefinition(TypeDescription instrumentedType,
                                    TypeDescription targetType,
                                    ClassFileVersion classFileVersion,
@@ -234,6 +160,50 @@ public interface TypeWriter<T> {
                         ", inputStreamProvider=" + inputStreamProvider +
                         ", methodFlatteningResolver=" + methodFlatteningResolver +
                         '}';
+            }
+
+            public static interface InputStreamProvider {
+
+                InputStream create();
+
+                static class ForClassFileLocator implements InputStreamProvider {
+
+                    private final TypeDescription originalType;
+
+                    private final ClassFileLocator classFileLocator;
+
+                    public ForClassFileLocator(TypeDescription originalType, ClassFileLocator classFileLocator) {
+                        this.originalType = originalType;
+                        this.classFileLocator = classFileLocator;
+                    }
+
+                    @Override
+                    public InputStream create() {
+                        return classFileLocator.classFileFor(originalType);
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && classFileLocator.equals(((ForClassFileLocator) other).classFileLocator)
+                                && originalType.equals(((ForClassFileLocator) other).originalType);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = originalType.hashCode();
+                        result = 31 * result + classFileLocator.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Engine.ForRedefinition.InputStreamProvider.ForClassFileLocator{" +
+                                "originalType=" + originalType +
+                                ", classFileLocator=" + classFileLocator +
+                                '}';
+                    }
+                }
             }
 
             protected class RedefinitionClassVisitor extends ClassVisitor {
@@ -741,11 +711,6 @@ public interface TypeWriter<T> {
          */
         static interface Entry {
 
-            static interface Factory {
-
-                Entry compile(Instrumentation.Target instrumentationTarget);
-            }
-
             /**
              * Determines if this entry requires a method to be defined for a given instrumentation.
              *
@@ -813,6 +778,11 @@ public interface TypeWriter<T> {
                 public Entry compile(Instrumentation.Target instrumentationTarget) {
                     return this;
                 }
+            }
+
+            static interface Factory {
+
+                Entry compile(Instrumentation.Target instrumentationTarget);
             }
 
             /**
@@ -896,6 +866,35 @@ public interface TypeWriter<T> {
                             '}';
                 }
             }
+        }
+    }
+
+    static class Default<S> implements TypeWriter<S> {
+
+        private final TypeDescription typeDescription;
+
+        private final LoadedTypeInitializer loadedTypeInitializer;
+
+        private final List<DynamicType> explicitAuxiliaryTypes;
+
+        private final Engine engine;
+
+        public Default(TypeDescription typeDescription,
+                       LoadedTypeInitializer loadedTypeInitializer,
+                       List<DynamicType> explicitAuxiliaryTypes,
+                       Engine engine) {
+            this.typeDescription = typeDescription;
+            this.loadedTypeInitializer = loadedTypeInitializer;
+            this.explicitAuxiliaryTypes = explicitAuxiliaryTypes;
+            this.engine = engine;
+        }
+
+        @Override
+        public DynamicType.Unloaded<S> make(Instrumentation.Context.ExtractableView instrumentationContext) {
+            return new DynamicType.Default.Unloaded<S>(typeDescription,
+                    engine.create(instrumentationContext),
+                    loadedTypeInitializer,
+                    join(explicitAuxiliaryTypes, instrumentationContext.getRegisteredAuxiliaryTypes()));
         }
     }
 }

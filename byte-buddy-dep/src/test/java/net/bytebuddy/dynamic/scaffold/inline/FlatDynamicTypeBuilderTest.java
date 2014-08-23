@@ -34,28 +34,6 @@ public class FlatDynamicTypeBuilderTest {
 
     private static final String FOOBAR = "foo.Bar", FOO = "foo";
 
-    @Retention(RetentionPolicy.RUNTIME)
-    public static @interface Bar {
-        /* example annotation */
-    }
-
-    @Bar
-    public static class Foo {
-
-        @Bar
-        private final String foo;
-
-        @Bar
-        public Foo() {
-            foo = FOO;
-        }
-
-        @Bar
-        public String foo() {
-            return FOO;
-        }
-    }
-
     @Test
     public void testPlainRebasing() throws Exception {
         Class<?> foo = new FlatDynamicTypeBuilder<Foo>(ClassFileVersion.forCurrentJavaVersion(),
@@ -136,5 +114,27 @@ public class FlatDynamicTypeBuilderTest {
         assertThat(foo.getDeclaredConstructor().getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(foo.getDeclaredConstructor().getAnnotation(Bar.class), notNullValue());
         assertThat(foo.getDeclaredMethod(FOO).invoke(foo.newInstance()), is((Object) FOO));
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    public static @interface Bar {
+        /* example annotation */
+    }
+
+    @Bar
+    public static class Foo {
+
+        @Bar
+        private final String foo;
+
+        @Bar
+        public Foo() {
+            foo = FOO;
+        }
+
+        @Bar
+        public String foo() {
+            return FOO;
+        }
     }
 }

@@ -18,7 +18,10 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This delegate offers a default implementation of an instrumentation context and a method accessor factory.
@@ -228,52 +231,6 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
         }
     }
 
-    private static class FieldCacheAppender implements ByteCodeAppender {
-
-        public static TypeWriter.MethodPool.Entry resolve(TypeWriter.MethodPool.Entry originalEntry,
-                                                          Map<FieldCacheEntry, FieldDescription> registeredFieldCacheEntries,
-                                                          InjectedCode injectedCode) {
-            boolean defineMethod = originalEntry.isDefineMethod();
-            boolean injectCode = injectedCode.isInjected();
-            return registeredFieldCacheEntries.size() == 0 && !injectCode
-                    ? originalEntry
-                    : new TypeWriter.MethodPool.Entry.Simple(new Compound(new FieldCacheAppender(registeredFieldCacheEntries),
-                    new Simple(injectCode ? injectedCode.getInjectedCode() : StackManipulation.LegalTrivial.INSTANCE),
-                    defineMethod && originalEntry.getByteCodeAppender().appendsCode()
-                            ? originalEntry.getByteCodeAppender()
-                            : new Simple(MethodReturn.VOID)),
-                    defineMethod
-                            ? originalEntry.getAttributeAppender()
-                            : MethodAttributeAppender.NoOp.INSTANCE);
-        }
-
-        private final Map<FieldCacheEntry, FieldDescription> registeredFieldCacheEntries;
-
-        private FieldCacheAppender(Map<FieldCacheEntry, FieldDescription> registeredFieldCacheEntries) {
-            this.registeredFieldCacheEntries = registeredFieldCacheEntries;
-        }
-
-        @Override
-        public boolean appendsCode() {
-            return registeredFieldCacheEntries.size() > 0;
-        }
-
-        @Override
-        public Size apply(MethodVisitor methodVisitor,
-                          Instrumentation.Context instrumentationContext,
-                          MethodDescription instrumentedMethod) {
-            StackManipulation[] fieldInitialization = new StackManipulation[registeredFieldCacheEntries.size()];
-            int currentIndex = 0;
-            for (Map.Entry<FieldCacheEntry, FieldDescription> entry : registeredFieldCacheEntries.entrySet()) {
-                fieldInitialization[currentIndex++] = new StackManipulation
-                        .Compound(entry.getKey().getFieldValue(), FieldAccess.forField(entry.getValue()).putter());
-            }
-            StackManipulation.Size stackSize = new StackManipulation.Compound(fieldInitialization)
-                    .apply(methodVisitor, instrumentationContext);
-            return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
-        }
-    }
-
     @Override
     public String toString() {
         return "TypeExtensionDelegate{" +
@@ -351,6 +308,52 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
             public String toString() {
                 return "TypeExtensionDelegate.AuxiliaryTypeNamingStrategySuffixingRandom{suffix='" + suffix + '\'' + '}';
             }
+        }
+    }
+
+    private static class FieldCacheAppender implements ByteCodeAppender {
+
+        private final Map<FieldCacheEntry, FieldDescription> registeredFieldCacheEntries;
+
+        private FieldCacheAppender(Map<FieldCacheEntry, FieldDescription> registeredFieldCacheEntries) {
+            this.registeredFieldCacheEntries = registeredFieldCacheEntries;
+        }
+
+        public static TypeWriter.MethodPool.Entry resolve(TypeWriter.MethodPool.Entry originalEntry,
+                                                          Map<FieldCacheEntry, FieldDescription> registeredFieldCacheEntries,
+                                                          InjectedCode injectedCode) {
+            boolean defineMethod = originalEntry.isDefineMethod();
+            boolean injectCode = injectedCode.isInjected();
+            return registeredFieldCacheEntries.size() == 0 && !injectCode
+                    ? originalEntry
+                    : new TypeWriter.MethodPool.Entry.Simple(new Compound(new FieldCacheAppender(registeredFieldCacheEntries),
+                    new Simple(injectCode ? injectedCode.getInjectedCode() : StackManipulation.LegalTrivial.INSTANCE),
+                    defineMethod && originalEntry.getByteCodeAppender().appendsCode()
+                            ? originalEntry.getByteCodeAppender()
+                            : new Simple(MethodReturn.VOID)),
+                    defineMethod
+                            ? originalEntry.getAttributeAppender()
+                            : MethodAttributeAppender.NoOp.INSTANCE);
+        }
+
+        @Override
+        public boolean appendsCode() {
+            return registeredFieldCacheEntries.size() > 0;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor,
+                          Instrumentation.Context instrumentationContext,
+                          MethodDescription instrumentedMethod) {
+            StackManipulation[] fieldInitialization = new StackManipulation[registeredFieldCacheEntries.size()];
+            int currentIndex = 0;
+            for (Map.Entry<FieldCacheEntry, FieldDescription> entry : registeredFieldCacheEntries.entrySet()) {
+                fieldInitialization[currentIndex++] = new StackManipulation
+                        .Compound(entry.getKey().getFieldValue(), FieldAccess.forField(entry.getValue()).putter());
+            }
+            StackManipulation.Size stackSize = new StackManipulation.Compound(fieldInitialization)
+                    .apply(methodVisitor, instrumentationContext);
+            return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
         }
     }
 
