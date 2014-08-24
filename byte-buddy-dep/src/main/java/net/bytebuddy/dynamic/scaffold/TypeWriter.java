@@ -64,6 +64,7 @@ public interface TypeWriter<T> {
             private final TypeWriter.MethodPool methodPool;
             private final InputStreamProvider inputStreamProvider;
             private final MethodFlatteningResolver methodFlatteningResolver;
+
             public ForRedefinition(TypeDescription instrumentedType,
                                    TypeDescription targetType,
                                    ClassFileVersion classFileVersion,

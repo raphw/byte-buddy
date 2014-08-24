@@ -41,6 +41,7 @@ public class ByteBuddyAgent {
         throw new UnsupportedOperationException();
     }
 
+    @SuppressWarnings("checkstyle")
     public static Instrumentation installOnOpenJDK() throws Exception {
         try {
             Instrumentation instrumentation = doGetInstrumentation();
@@ -48,7 +49,7 @@ public class ByteBuddyAgent {
                 return instrumentation;
             }
         } catch (Exception ignored) {
-            /* do nothing, but try to install agent */
+            // Ignore this exception as it only means that the agent type is not yet available on the class path.
         }
         try {
             doInstall();

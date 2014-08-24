@@ -33,6 +33,7 @@ public class RandomString {
         }
         SYMBOL = symbol.toString().toCharArray();
     }
+
     /**
      * A provider of random values.
      */

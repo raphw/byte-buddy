@@ -18,6 +18,14 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
     public static final String GET_INSTRUMENTATION_METHOD = "getInstrumentation";
 
     public static final Object STATIC_METHOD = null;
+    private final Instrumentation instrumentation;
+
+    public ClassReloadingStrategy(Instrumentation instrumentation) {
+        if (!instrumentation.isRedefineClassesSupported()) {
+            throw new IllegalArgumentException("Instrumentation does not support class redefinition: " + instrumentation);
+        }
+        this.instrumentation = instrumentation;
+    }
 
     public static ClassLoadingStrategy fromInstalledAgent() {
         try {
@@ -28,15 +36,6 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
         } catch (Exception e) {
             throw new IllegalStateException("The Byte Buddy agent is not installed or not accessible", e);
         }
-    }
-
-    private final Instrumentation instrumentation;
-
-    public ClassReloadingStrategy(Instrumentation instrumentation) {
-        if (!instrumentation.isRedefineClassesSupported()) {
-            throw new IllegalArgumentException("Does not support class redefinition: " + instrumentation);
-        }
-        this.instrumentation = instrumentation;
     }
 
     @Override
@@ -57,9 +56,9 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
         try {
             instrumentation.redefineClasses(classDefinitions.toArray(new ClassDefinition[classDefinitions.size()]));
         } catch (ClassNotFoundException e) {
-            throw new IllegalArgumentException(e);
+            throw new IllegalArgumentException("Could not find class to redefine", e);
         } catch (UnmodifiableClassException e) {
-            throw new IllegalStateException(e);
+            throw new IllegalStateException("Cannot redefine class", e);
         }
         return loadedClasses;
     }

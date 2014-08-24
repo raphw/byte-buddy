@@ -55,7 +55,6 @@
 
         <module name="ModifierOrder"/>
 
-        <module name="EmptyBlock"/>
         <module name="LeftCurly"/>
         <module name="RightCurly"/>
 
