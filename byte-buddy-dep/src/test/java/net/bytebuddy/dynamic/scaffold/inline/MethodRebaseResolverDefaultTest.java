@@ -71,6 +71,64 @@ public class MethodRebaseResolverDefaultTest {
     }
 
     @Test
+    public void testNonIgnoredStaticMethodIsRebased() throws Exception {
+        when(methodDescription.isStatic()).thenReturn(true);
+        MethodRebaseResolver.Resolution resolution = new MethodRebaseResolver.Default(methodMatcher, placeholderType, methodNameTransformer)
+                .resolve(methodDescription);
+        assertThat(resolution.isRebased(), is(true));
+        assertThat(resolution.getResolvedMethod().getInternalName(), is(BAR));
+        assertThat(resolution.getResolvedMethod().getModifiers(), is(MethodRebaseResolver.REBASED_METHOD_MODIFIER | Opcodes.ACC_STATIC));
+        assertThat(resolution.getResolvedMethod().getDeclaringType(), is(instrumentedType));
+        assertThat(resolution.getResolvedMethod().getParameterTypes(), is((TypeList) new TypeList.Empty()));
+        assertThat(resolution.getResolvedMethod().getReturnType(), is(returnType));
+        assertThat(resolution.getAdditionalArguments().isValid(), is(true));
+        StackManipulation.Size size = resolution.getAdditionalArguments().apply(methodVisitor, instrumentationContext);
+        assertThat(size.getSizeImpact(), is(0));
+        assertThat(size.getMaximalSize(), is(0));
+        verifyZeroInteractions(methodVisitor);
+        verifyZeroInteractions(instrumentationContext);
+    }
+
+    @Test
+    public void testNonIgnoredNativeMethodIsRebased() throws Exception {
+        when(methodDescription.isNative()).thenReturn(true);
+        MethodRebaseResolver.Resolution resolution = new MethodRebaseResolver.Default(methodMatcher, placeholderType, methodNameTransformer)
+                .resolve(methodDescription);
+        assertThat(resolution.isRebased(), is(true));
+        assertThat(resolution.getResolvedMethod().getInternalName(), is(BAR));
+        assertThat(resolution.getResolvedMethod().getModifiers(), is(MethodRebaseResolver.REBASED_METHOD_MODIFIER | Opcodes.ACC_NATIVE));
+        assertThat(resolution.getResolvedMethod().getDeclaringType(), is(instrumentedType));
+        assertThat(resolution.getResolvedMethod().getParameterTypes(), is((TypeList) new TypeList.Empty()));
+        assertThat(resolution.getResolvedMethod().getReturnType(), is(returnType));
+        assertThat(resolution.getAdditionalArguments().isValid(), is(true));
+        StackManipulation.Size size = resolution.getAdditionalArguments().apply(methodVisitor, instrumentationContext);
+        assertThat(size.getSizeImpact(), is(0));
+        assertThat(size.getMaximalSize(), is(0));
+        verifyZeroInteractions(methodVisitor);
+        verifyZeroInteractions(instrumentationContext);
+    }
+
+    @Test
+    public void testNonIgnoredStaticNativeMethodIsRebased() throws Exception {
+        when(methodDescription.isStatic()).thenReturn(true);
+        when(methodDescription.isNative()).thenReturn(true);
+        MethodRebaseResolver.Resolution resolution = new MethodRebaseResolver.Default(methodMatcher, placeholderType, methodNameTransformer)
+                .resolve(methodDescription);
+        assertThat(resolution.isRebased(), is(true));
+        assertThat(resolution.getResolvedMethod().getInternalName(), is(BAR));
+        assertThat(resolution.getResolvedMethod().getModifiers(), is(MethodRebaseResolver.REBASED_METHOD_MODIFIER | Opcodes.ACC_NATIVE | Opcodes.ACC_STATIC));
+        assertThat(resolution.getResolvedMethod().getDeclaringType(), is(instrumentedType));
+        assertThat(resolution.getResolvedMethod().getParameterTypes(), is((TypeList) new TypeList.Empty()));
+        assertThat(resolution.getResolvedMethod().getReturnType(), is(returnType));
+        assertThat(resolution.getAdditionalArguments().isValid(), is(true));
+        StackManipulation.Size size = resolution.getAdditionalArguments().apply(methodVisitor, instrumentationContext);
+        assertThat(size.getSizeImpact(), is(0));
+        assertThat(size.getMaximalSize(), is(0));
+        verifyZeroInteractions(methodVisitor);
+        verifyZeroInteractions(instrumentationContext);
+    }
+
+    @Test
     public void testNonIgnoredConstructorIsRebased() throws Exception {
         when(methodDescription.isConstructor()).thenReturn(true);
         MethodRebaseResolver.Resolution resolution = new MethodRebaseResolver.Default(methodMatcher, placeholderType, methodNameTransformer)

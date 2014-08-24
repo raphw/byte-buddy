@@ -67,6 +67,10 @@ public interface TypeWriter<T> {
          */
         byte[] create(Instrumentation.Context.ExtractableView instrumentationContext);
 
+        /**
+         * A type writer engine that copies the contents of a class file while allowing to override
+         * method implementations.
+         */
         static class ForRedefinition implements Engine {
 
             /**
@@ -189,7 +193,15 @@ public interface TypeWriter<T> {
                 return classWriter.toByteArray();
             }
 
-            private ClassVisitor writeTo(ClassVisitor classVisitor, Instrumentation.Context.ExtractableView instrumentationContext) {
+            /**
+             * Creates a class visitor which weaves all changes and additions on the fly.
+             *
+             * @param classVisitor           The class visitor to which this entry is to be written to.
+             * @param instrumentationContext The instrumentation context to use for implementing the class file.
+             * @return A class visitor which is capable of applying the changes.
+             */
+            private ClassVisitor writeTo(ClassVisitor classVisitor,
+                                         Instrumentation.Context.ExtractableView instrumentationContext) {
                 String originalName = targetType.getInternalName();
                 String targetName = instrumentedType.getInternalName();
                 ClassVisitor targetClassVisitor = new RedefinitionClassVisitor(classVisitor, instrumentationContext);
@@ -243,15 +255,39 @@ public interface TypeWriter<T> {
                         '}';
             }
 
+            /**
+             * A class visitor which is capable of applying a redefinition of an existing class file.
+             */
             protected class RedefinitionClassVisitor extends ClassVisitor {
 
+                /**
+                 * The instrumentation context for this class creation.
+                 */
                 private final Instrumentation.Context.ExtractableView instrumentationContext;
 
+                /**
+                 * A mutable map of all declared fields of the instrumented type by their names.
+                 */
                 private final Map<String, FieldDescription> declaredFields;
+
+                /**
+                 * A mutable map of all declarable methods of the instrumented type by their unique signatures.
+                 */
                 private final Map<String, MethodDescription> declarableMethods;
 
+                /**
+                 * A mutable reference for code that is to be injected into the actual type initializer, if any.
+                 * Usually, this represents an invocation of the actual type initializer that is found in the class
+                 * file which is relocated into a static method.
+                 */
                 private Instrumentation.Context.ExtractableView.InjectedCode injectedCode;
 
+                /**
+                 * Creates a class visitor which is capable of redefining an existent class on the fly.
+                 *
+                 * @param classVisitor           The underlying class visitor to which writes are delegated.
+                 * @param instrumentationContext The instrumentation context to use for implementing the class file.
+                 */
                 protected RedefinitionClassVisitor(ClassVisitor classVisitor,
                                                    Instrumentation.Context.ExtractableView instrumentationContext) {
                     super(ASM_API_VERSION, classVisitor);
@@ -315,6 +351,15 @@ public interface TypeWriter<T> {
                             : redefine(methodDescription, (modifiers & Opcodes.ACC_ABSTRACT) != 0);
                 }
 
+                /**
+                 * Redefines a given method if this is required by looking up a potential implementation from the
+                 * {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool}.
+                 *
+                 * @param methodDescription The method being considered for redefinition.
+                 * @param abstractOrigin    {@code true} if the original method is abstract, i.e. there is no implementation
+                 *                          to preserve.
+                 * @return A method visitor which is capable of consuming the original method.
+                 */
                 private MethodVisitor redefine(MethodDescription methodDescription, boolean abstractOrigin) {
                     TypeWriter.MethodPool.Entry entry = methodPool.target(methodDescription);
                     if (!entry.isDefineMethod()) {
@@ -332,7 +377,7 @@ public interface TypeWriter<T> {
                     entry.getAttributeAppender().apply(methodVisitor, methodDescription);
                     return abstractOrigin
                             ? new AttributeObtainingMethodVisitor(methodVisitor, entry.getByteCodeAppender(), methodDescription)
-                            : new CodePreservingMethodVisitor(methodVisitor, entry.getByteCodeAppender(), methodDescription, this);
+                            : new CodePreservingMethodVisitor(methodVisitor, entry.getByteCodeAppender(), methodDescription);
                 }
 
                 @Override
@@ -347,28 +392,47 @@ public interface TypeWriter<T> {
                     super.visitEnd();
                 }
 
+                /**
+                 * A method visitor that preserves the code of a method in the class file by copying it into a rebased
+                 * method while copying all attributes and annotations to the actual method.
+                 */
                 private class CodePreservingMethodVisitor extends MethodVisitor {
 
+                    /**
+                     * The method visitor of the actual method.
+                     */
                     private final MethodVisitor actualMethodVisitor;
 
+                    /**
+                     * The byte code appender to apply to the actual method.
+                     */
                     private final ByteCodeAppender byteCodeAppender;
 
+                    /**
+                     * A description of the actual method.
+                     */
                     private final MethodDescription methodDescription;
 
-                    private final ClassVisitor classVisitor;
+                    /**
+                     * The rebased method to which the original code is to be written to.
+                     */
+                    private final MethodDescription rebasedMethod;
 
-                    private final MethodDescription redirectionMethod;
-
+                    /**
+                     * Creates a code preserving method visitor.
+                     *
+                     * @param actualMethodVisitor The method visitor of the actual method.
+                     * @param byteCodeAppender    The byte code appender to apply to the actual method.
+                     * @param methodDescription   A description of the actual method.
+                     */
                     private CodePreservingMethodVisitor(MethodVisitor actualMethodVisitor,
                                                         ByteCodeAppender byteCodeAppender,
-                                                        MethodDescription methodDescription,
-                                                        ClassVisitor classVisitor) {
+                                                        MethodDescription methodDescription) {
                         super(ASM_API_VERSION, actualMethodVisitor);
                         this.actualMethodVisitor = actualMethodVisitor;
                         this.byteCodeAppender = byteCodeAppender;
                         this.methodDescription = methodDescription;
-                        this.classVisitor = classVisitor;
-                        this.redirectionMethod = methodRebaseResolver.resolve(methodDescription).getResolvedMethod();
+                        this.rebasedMethod = methodRebaseResolver.resolve(methodDescription).getResolvedMethod();
                     }
 
                     @Override
@@ -381,17 +445,17 @@ public interface TypeWriter<T> {
                             actualMethodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
                         }
                         actualMethodVisitor.visitEnd();
-                        mv = classVisitor.visitMethod(redirectionMethod.getModifiers(),
-                                redirectionMethod.getInternalName(),
-                                redirectionMethod.getDescriptor(),
-                                redirectionMethod.getGenericSignature(),
-                                redirectionMethod.getExceptionTypes().toInternalNames());
+                        mv = cv.visitMethod(rebasedMethod.getModifiers(),
+                                rebasedMethod.getInternalName(),
+                                rebasedMethod.getDescriptor(),
+                                rebasedMethod.getGenericSignature(),
+                                rebasedMethod.getExceptionTypes().toInternalNames());
                         super.visitCode();
                     }
 
                     @Override
                     public void visitMaxs(int maxStack, int maxLocals) {
-                        super.visitMaxs(maxStack, Math.max(maxLocals, redirectionMethod.getStackSize()));
+                        super.visitMaxs(maxStack, Math.max(maxLocals, rebasedMethod.getStackSize()));
                     }
 
                     @Override
@@ -400,20 +464,39 @@ public interface TypeWriter<T> {
                                 "actualMethodVisitor=" + actualMethodVisitor +
                                 ", byteCodeAppender=" + byteCodeAppender +
                                 ", methodDescription=" + methodDescription +
-                                ", classVisitor=" + classVisitor +
-                                ", redirectionMethod=" + redirectionMethod +
+                                ", rebasedMethod=" + rebasedMethod +
                                 '}';
                     }
                 }
 
+                /**
+                 * A method visitor that obtains all attributes and annotations of a method that is found in the
+                 * class file but discards all code.
+                 */
                 private class AttributeObtainingMethodVisitor extends MethodVisitor {
 
+                    /**
+                     * The method visitor to which the actual method is to be written to.
+                     */
                     private final MethodVisitor actualMethodVisitor;
 
+                    /**
+                     * The byte code appender to apply to the actual method.
+                     */
                     private final ByteCodeAppender byteCodeAppender;
 
+                    /**
+                     * A description of the method that is currently written.
+                     */
                     private final MethodDescription methodDescription;
 
+                    /**
+                     * Creates a new attribute obtaining method visitor.
+                     *
+                     * @param actualMethodVisitor The method visitor to which the actual method is to be written to.
+                     * @param byteCodeAppender    The byte code appender to apply to the actual method.
+                     * @param methodDescription   A description of the method that is currently written.
+                     */
                     public AttributeObtainingMethodVisitor(MethodVisitor actualMethodVisitor,
                                                            ByteCodeAppender byteCodeAppender,
                                                            MethodDescription methodDescription) {
@@ -450,14 +533,30 @@ public interface TypeWriter<T> {
                     }
                 }
 
+                /**
+                 * A code injection for the type initializer that invokes a method representing the original type initializer
+                 * which is copied to a static method.
+                 */
                 private class TypeInitializerInjection implements Instrumentation.Context.ExtractableView.InjectedCode {
 
+                    /**
+                     * The modifiers for the method that consumes the original type initializer.
+                     */
                     private static final int TYPE_INITIALIZER_PROXY_MODIFIERS = Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
 
+                    /**
+                     * A prefix for the name of the method that represents the original type initializer.
+                     */
                     private static final String TYPE_INITIALIZER_PROXY_PREFIX = "originalTypeInitializer";
 
+                    /**
+                     * The method to which the original type initializer code is to be written to.
+                     */
                     private final MethodDescription injectorProxyMethod;
 
+                    /**
+                     * Creates a new type initializer injection.
+                     */
                     private TypeInitializerInjection() {
                         injectorProxyMethod = new MethodDescription.Latent(
                                 String.format("%s$%s", TYPE_INITIALIZER_PROXY_PREFIX, RandomString.make()),
@@ -477,6 +576,11 @@ public interface TypeWriter<T> {
                         return true;
                     }
 
+                    /**
+                     * Returns the proxy method to which the original type initializer code is written to.
+                     *
+                     * @return A method description of this proxy method.
+                     */
                     public MethodDescription getInjectorProxyMethod() {
                         return injectorProxyMethod;
                     }
