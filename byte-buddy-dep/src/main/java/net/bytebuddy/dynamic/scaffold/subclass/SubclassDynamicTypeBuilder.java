@@ -202,6 +202,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         return new TypeWriter.Default<T>(compiledMethodRegistry.getInstrumentedType(),
                 compiledMethodRegistry.getLoadedTypeInitializer(),
                 Collections.<DynamicType>emptyList(),
+                classFileVersion,
                 new TypeWriter.Engine.ForCreation(compiledMethodRegistry.getInstrumentedType(),
                         classFileVersion,
                         compiledMethodRegistry.getInvokableMethods().filter(isOverridable()
@@ -211,7 +212,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                         attributeAppender,
                         fieldRegistry.prepare(compiledMethodRegistry.getInstrumentedType()).compile(TypeWriter.FieldPool.Entry.NoOp.INSTANCE),
                         compiledMethodRegistry))
-                .make(new TypeExtensionDelegate(compiledMethodRegistry.getInstrumentedType(), classFileVersion));
+                .make();
     }
 
     /**

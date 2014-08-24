@@ -26,9 +26,9 @@ public class RebaseInstrumentationTargetTest extends AbstractInstrumentationTarg
     private static final String BAR = "bar", BAZ = "baz", FOOBAR = "foobar", QUX = "qux";
 
     @Mock
-    private MethodFlatteningResolver methodFlatteningResolver;
+    private MethodRebaseResolver methodRebaseResolver;
     @Mock
-    private MethodFlatteningResolver.Resolution rebasedResolution, nonRebasedResolution;
+    private MethodRebaseResolver.Resolution rebasedResolution, nonRebasedResolution;
     @Mock
     private StackManipulation additionalArguments;
     @Mock
@@ -44,7 +44,7 @@ public class RebaseInstrumentationTargetTest extends AbstractInstrumentationTarg
         when(instrumentedType.getInternalName()).thenReturn(BAR);
         when(targetRebaseMethod.getDeclaringType()).thenReturn(instrumentedType);
         when(rebasedMethod.getDeclaringType()).thenReturn(instrumentedType);
-        when(methodFlatteningResolver.resolve(targetRebaseMethod)).thenReturn(rebasedResolution);
+        when(methodRebaseResolver.resolve(targetRebaseMethod)).thenReturn(rebasedResolution);
         when(rebasedResolution.isRebased()).thenReturn(true);
         when(rebasedResolution.getResolvedMethod()).thenReturn(rebasedMethod);
         when(rebasedMethod.getReturnType()).thenReturn(returnType);
@@ -68,7 +68,7 @@ public class RebaseInstrumentationTargetTest extends AbstractInstrumentationTarg
         when(nonRebasedMethod.getInternalName()).thenReturn(BAZ);
         when(nonRebasedMethod.getDescriptor()).thenReturn(FOOBAR);
         when(nonRebasedMethod.getParameterTypes()).thenReturn(parameterTypes);
-        when(methodFlatteningResolver.resolve(nonRebasedMethod)).thenReturn(nonRebasedResolution);
+        when(methodRebaseResolver.resolve(nonRebasedMethod)).thenReturn(nonRebasedResolution);
         when(nonRebasedResolution.isRebased()).thenReturn(false);
         when(nonRebasedResolution.getResolvedMethod()).thenReturn(nonRebasedMethod);
         super.setUp();
@@ -76,14 +76,14 @@ public class RebaseInstrumentationTargetTest extends AbstractInstrumentationTarg
 
     @Override
     protected Instrumentation.Target makeInstrumentationTarget() {
-        return new RebaseInstrumentationTarget(finding, bridgeMethodResolverFactory, methodFlatteningResolver);
+        return new RebaseInstrumentationTarget(finding, bridgeMethodResolverFactory, methodRebaseResolver);
     }
 
     @Test
     public void testRebasedMethodIsInvokable() throws Exception {
         Instrumentation.SpecialMethodInvocation specialMethodInvocation = instrumentationTarget.invokeSuper(targetRebaseMethod, methodLookup);
-        verify(methodFlatteningResolver).resolve(targetRebaseMethod);
-        verifyNoMoreInteractions(methodFlatteningResolver);
+        verify(methodRebaseResolver).resolve(targetRebaseMethod);
+        verifyNoMoreInteractions(methodRebaseResolver);
         assertThat(specialMethodInvocation.isValid(), is(true));
         verify(additionalArguments).isValid();
         assertThat(specialMethodInvocation.getMethodDescription(), is(rebasedMethod));
@@ -103,16 +103,16 @@ public class RebaseInstrumentationTargetTest extends AbstractInstrumentationTarg
         when(rebasedMethod.isAbstract()).thenReturn(true);
         Instrumentation.SpecialMethodInvocation specialMethodInvocation = instrumentationTarget.invokeSuper(targetRebaseMethod, methodLookup);
         assertThat(specialMethodInvocation.isValid(), is(false));
-        verify(methodFlatteningResolver).resolve(targetRebaseMethod);
-        verifyNoMoreInteractions(methodFlatteningResolver);
+        verify(methodRebaseResolver).resolve(targetRebaseMethod);
+        verifyNoMoreInteractions(methodRebaseResolver);
     }
 
     @Test
     public void testNonRebasedMethodIsInvokable() throws Exception {
         when(nonRebasedMethod.isSpecializableFor(instrumentedType)).thenReturn(true);
         Instrumentation.SpecialMethodInvocation specialMethodInvocation = instrumentationTarget.invokeSuper(nonRebasedMethod, methodLookup);
-        verify(methodFlatteningResolver).resolve(nonRebasedMethod);
-        verifyNoMoreInteractions(methodFlatteningResolver);
+        verify(methodRebaseResolver).resolve(nonRebasedMethod);
+        verifyNoMoreInteractions(methodRebaseResolver);
         assertThat(specialMethodInvocation.isValid(), is(true));
         assertThat(specialMethodInvocation.getMethodDescription(), is(nonRebasedMethod));
         assertThat(specialMethodInvocation.getTypeDescription(), is(instrumentedType));
@@ -131,8 +131,8 @@ public class RebaseInstrumentationTargetTest extends AbstractInstrumentationTarg
         when(nonRebasedMethod.isAbstract()).thenReturn(true);
         Instrumentation.SpecialMethodInvocation specialMethodInvocation = instrumentationTarget.invokeSuper(nonRebasedMethod, methodLookup);
         assertThat(specialMethodInvocation.isValid(), is(false));
-        verify(methodFlatteningResolver).resolve(nonRebasedMethod);
-        verifyNoMoreInteractions(methodFlatteningResolver);
+        verify(methodRebaseResolver).resolve(nonRebasedMethod);
+        verifyNoMoreInteractions(methodRebaseResolver);
     }
 
     @Test
@@ -150,7 +150,7 @@ public class RebaseInstrumentationTargetTest extends AbstractInstrumentationTarg
         verifyZeroInteractions(instrumentationContext);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
-        verifyZeroInteractions(methodFlatteningResolver);
+        verifyZeroInteractions(methodRebaseResolver);
     }
 
     @Test
@@ -159,16 +159,16 @@ public class RebaseInstrumentationTargetTest extends AbstractInstrumentationTarg
         when(superMethod.isAbstract()).thenReturn(true);
         Instrumentation.SpecialMethodInvocation specialMethodInvocation = instrumentationTarget.invokeSuper(superMethod, methodLookup);
         assertThat(specialMethodInvocation.isValid(), is(false));
-        verifyZeroInteractions(methodFlatteningResolver);
+        verifyZeroInteractions(methodRebaseResolver);
     }
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        assertThat(instrumentationTarget.hashCode(), is(new RebaseInstrumentationTarget(finding, bridgeMethodResolverFactory, methodFlatteningResolver).hashCode()));
-        assertThat(instrumentationTarget, is((Instrumentation.Target) new RebaseInstrumentationTarget(finding, bridgeMethodResolverFactory, methodFlatteningResolver)));
+        assertThat(instrumentationTarget.hashCode(), is(new RebaseInstrumentationTarget(finding, bridgeMethodResolverFactory, methodRebaseResolver).hashCode()));
+        assertThat(instrumentationTarget, is((Instrumentation.Target) new RebaseInstrumentationTarget(finding, bridgeMethodResolverFactory, methodRebaseResolver)));
         BridgeMethodResolver.Factory factory = mock(BridgeMethodResolver.Factory.class);
         when(factory.make(any(MethodList.class))).thenReturn(mock(BridgeMethodResolver.class));
-        Instrumentation.Target other = new RebaseInstrumentationTarget(finding, factory, methodFlatteningResolver);
+        Instrumentation.Target other = new RebaseInstrumentationTarget(finding, factory, methodRebaseResolver);
         assertThat(instrumentationTarget.hashCode(), not(is(other.hashCode())));
         assertThat(instrumentationTarget, not(is(other)));
     }

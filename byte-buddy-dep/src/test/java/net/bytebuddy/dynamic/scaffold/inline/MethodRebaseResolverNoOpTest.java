@@ -10,7 +10,7 @@ import org.mockito.Mock;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class MethodFlatteningResolverNoOpTest {
+public class MethodRebaseResolverNoOpTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -20,13 +20,13 @@ public class MethodFlatteningResolverNoOpTest {
 
     @Test
     public void testResolutionContainsCorrectData() throws Exception {
-        MethodFlatteningResolver.Resolution resolution = MethodFlatteningResolver.NoOp.INSTANCE.resolve(methodDescription);
+        MethodRebaseResolver.Resolution resolution = MethodRebaseResolver.NoOp.INSTANCE.resolve(methodDescription);
         assertThat(resolution.isRebased(), is(false));
         assertThat(resolution.getResolvedMethod(), is(methodDescription));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testAdditionalArgumentsAreIllegal() throws Exception {
-        MethodFlatteningResolver.NoOp.INSTANCE.resolve(methodDescription).getAdditionalArguments();
+        MethodRebaseResolver.NoOp.INSTANCE.resolve(methodDescription).getAdditionalArguments();
     }
 }

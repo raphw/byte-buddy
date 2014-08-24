@@ -30,7 +30,7 @@ public class RebaseInstrumentationTargetFactoryTest {
     @Mock
     private BridgeMethodResolver.Factory bridgeMethodResolverFactory;
     @Mock
-    private MethodFlatteningResolver methodFlatteningResolver;
+    private MethodRebaseResolver methodRebaseResolver;
     @Mock
     private MethodLookupEngine.Finding finding;
     @Mock
@@ -45,7 +45,7 @@ public class RebaseInstrumentationTargetFactoryTest {
         when(finding.getTypeDescription()).thenReturn(instrumentedType);
         when(instrumentedType.getSupertype()).thenReturn(superType);
         when(superType.getDeclaredMethods()).thenReturn(new MethodList.Empty());
-        factory = new RebaseInstrumentationTarget.Factory(bridgeMethodResolverFactory, methodFlatteningResolver);
+        factory = new RebaseInstrumentationTarget.Factory(bridgeMethodResolverFactory, methodRebaseResolver);
     }
 
     @Test
@@ -55,10 +55,10 @@ public class RebaseInstrumentationTargetFactoryTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        assertThat(factory.hashCode(), is(new RebaseInstrumentationTarget.Factory(bridgeMethodResolverFactory, methodFlatteningResolver).hashCode()));
-        assertThat(factory, is((Instrumentation.Target.Factory) new RebaseInstrumentationTarget.Factory(bridgeMethodResolverFactory, methodFlatteningResolver)));
+        assertThat(factory.hashCode(), is(new RebaseInstrumentationTarget.Factory(bridgeMethodResolverFactory, methodRebaseResolver).hashCode()));
+        assertThat(factory, is((Instrumentation.Target.Factory) new RebaseInstrumentationTarget.Factory(bridgeMethodResolverFactory, methodRebaseResolver)));
         BridgeMethodResolver.Factory otherFactory = mock(BridgeMethodResolver.Factory.class);
-        assertThat(factory.hashCode(), not(is(new RebaseInstrumentationTarget.Factory(otherFactory, methodFlatteningResolver).hashCode())));
-        assertThat(factory, not(is((Instrumentation.Target.Factory) new RebaseInstrumentationTarget.Factory(otherFactory, methodFlatteningResolver))));
+        assertThat(factory.hashCode(), not(is(new RebaseInstrumentationTarget.Factory(otherFactory, methodRebaseResolver).hashCode())));
+        assertThat(factory, not(is((Instrumentation.Target.Factory) new RebaseInstrumentationTarget.Factory(otherFactory, methodRebaseResolver))));
     }
 }

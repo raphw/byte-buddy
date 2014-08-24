@@ -12,7 +12,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 
-public class MethodFlatteningResolverResolutionPreservedTest {
+public class MethodRebaseResolverResolutionPreservedTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -22,7 +22,7 @@ public class MethodFlatteningResolverResolutionPreservedTest {
 
     @Test
     public void testPreservation() throws Exception {
-        MethodFlatteningResolver.Resolution resolution = new MethodFlatteningResolver.Resolution.Preserved(methodDescription);
+        MethodRebaseResolver.Resolution resolution = new MethodRebaseResolver.Resolution.Preserved(methodDescription);
         assertThat(resolution.isRebased(), is(false));
         assertThat(resolution.getResolvedMethod(), is(methodDescription));
         try {
@@ -35,13 +35,13 @@ public class MethodFlatteningResolverResolutionPreservedTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        assertThat(new MethodFlatteningResolver.Resolution.Preserved(methodDescription).hashCode(),
-                is(new MethodFlatteningResolver.Resolution.Preserved(methodDescription).hashCode()));
-        assertThat(new MethodFlatteningResolver.Resolution.Preserved(methodDescription),
-                is(new MethodFlatteningResolver.Resolution.Preserved(methodDescription)));
-        assertThat(new MethodFlatteningResolver.Resolution.Preserved(otherMethodDescription).hashCode(),
-                not(is(new MethodFlatteningResolver.Resolution.Preserved(methodDescription).hashCode())));
-        assertThat(new MethodFlatteningResolver.Resolution.Preserved(methodDescription),
-                not(is(new MethodFlatteningResolver.Resolution.Preserved(otherMethodDescription))));
+        assertThat(new MethodRebaseResolver.Resolution.Preserved(methodDescription).hashCode(),
+                is(new MethodRebaseResolver.Resolution.Preserved(methodDescription).hashCode()));
+        assertThat(new MethodRebaseResolver.Resolution.Preserved(methodDescription),
+                is(new MethodRebaseResolver.Resolution.Preserved(methodDescription)));
+        assertThat(new MethodRebaseResolver.Resolution.Preserved(otherMethodDescription).hashCode(),
+                not(is(new MethodRebaseResolver.Resolution.Preserved(methodDescription).hashCode())));
+        assertThat(new MethodRebaseResolver.Resolution.Preserved(methodDescription),
+                not(is(new MethodRebaseResolver.Resolution.Preserved(otherMethodDescription))));
     }
 }

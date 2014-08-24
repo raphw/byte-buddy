@@ -21,7 +21,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
-public class MethodFlatteningResolverResolutionForRebasedConstructorTest {
+public class MethodRebaseResolverResolutionForRebasedConstructorTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
 
@@ -54,11 +54,11 @@ public class MethodFlatteningResolverResolutionForRebasedConstructorTest {
 
     @Test
     public void testPreservation() throws Exception {
-        MethodFlatteningResolver.Resolution resolution = new MethodFlatteningResolver.Resolution.ForRebasedConstructor(methodDescription, placeholderType);
+        MethodRebaseResolver.Resolution resolution = new MethodRebaseResolver.Resolution.ForRebasedConstructor(methodDescription, placeholderType);
         assertThat(resolution.isRebased(), is(true));
         assertThat(resolution.getResolvedMethod().getDeclaringType(), is(typeDescription));
         assertThat(resolution.getResolvedMethod().getInternalName(), is(FOO));
-        assertThat(resolution.getResolvedMethod().getModifiers(), is(MethodFlatteningResolver.REBASED_METHOD_MODIFIER));
+        assertThat(resolution.getResolvedMethod().getModifiers(), is(MethodRebaseResolver.REBASED_METHOD_MODIFIER));
         assertThat(resolution.getResolvedMethod().getReturnType(), is(returnType));
         assertThat(resolution.getResolvedMethod().getParameterTypes(), is((TypeList) new TypeList.Explicit(Arrays.asList(parameterType, placeholderType))));
         StackManipulation.Size size = resolution.getAdditionalArguments().apply(methodVisitor, instrumentationContext);
@@ -71,13 +71,13 @@ public class MethodFlatteningResolverResolutionForRebasedConstructorTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        assertThat(new MethodFlatteningResolver.Resolution.ForRebasedConstructor(methodDescription, placeholderType).hashCode(),
-                is(new MethodFlatteningResolver.Resolution.ForRebasedConstructor(methodDescription, placeholderType).hashCode()));
-        assertThat(new MethodFlatteningResolver.Resolution.ForRebasedConstructor(methodDescription, placeholderType),
-                is(new MethodFlatteningResolver.Resolution.ForRebasedConstructor(methodDescription, placeholderType)));
-        assertThat(new MethodFlatteningResolver.Resolution.ForRebasedConstructor(methodDescription, placeholderType).hashCode(),
-                not(is(new MethodFlatteningResolver.Resolution.ForRebasedConstructor(methodDescription, otherPlaceHolderType).hashCode())));
-        assertThat(new MethodFlatteningResolver.Resolution.ForRebasedConstructor(methodDescription, placeholderType),
-                not(is(new MethodFlatteningResolver.Resolution.ForRebasedConstructor(methodDescription, otherPlaceHolderType))));
+        assertThat(new MethodRebaseResolver.Resolution.ForRebasedConstructor(methodDescription, placeholderType).hashCode(),
+                is(new MethodRebaseResolver.Resolution.ForRebasedConstructor(methodDescription, placeholderType).hashCode()));
+        assertThat(new MethodRebaseResolver.Resolution.ForRebasedConstructor(methodDescription, placeholderType),
+                is(new MethodRebaseResolver.Resolution.ForRebasedConstructor(methodDescription, placeholderType)));
+        assertThat(new MethodRebaseResolver.Resolution.ForRebasedConstructor(methodDescription, placeholderType).hashCode(),
+                not(is(new MethodRebaseResolver.Resolution.ForRebasedConstructor(methodDescription, otherPlaceHolderType).hashCode())));
+        assertThat(new MethodRebaseResolver.Resolution.ForRebasedConstructor(methodDescription, placeholderType),
+                not(is(new MethodRebaseResolver.Resolution.ForRebasedConstructor(methodDescription, otherPlaceHolderType))));
     }
 }

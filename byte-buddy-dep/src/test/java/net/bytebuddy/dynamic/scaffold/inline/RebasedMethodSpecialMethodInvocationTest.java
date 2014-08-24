@@ -27,7 +27,7 @@ public class RebasedMethodSpecialMethodInvocationTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private MethodFlatteningResolver.Resolution resolution;
+    private MethodRebaseResolver.Resolution resolution;
     @Mock
     private MethodDescription methodDescription;
     @Mock

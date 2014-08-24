@@ -11,14 +11,14 @@ import org.objectweb.asm.Opcodes;
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
 /**
- * A method flattening resolver is responsible for mapping methods of an instrumented type to an alternative signature.
+ * A method rebase resolver is responsible for mapping methods of an instrumented type to an alternative signature.
  * This way a method can exist in two versions within a class:
  * <ol>
  * <li>The rebased method which represents the original implementation as it is present in a class file.</li>
  * <li>An overriden method which implements user code which is still able to invoke the original, rebased method.</li>
  * </ol>
  */
-public interface MethodFlatteningResolver {
+public interface MethodRebaseResolver {
 
     /**
      * The modifier that is used for rebased methods.
@@ -34,9 +34,9 @@ public interface MethodFlatteningResolver {
     Resolution resolve(MethodDescription methodDescription);
 
     /**
-     * A method flattening resolver that preserves any method in its original form.
+     * A method rebase resolver that preserves any method in its original form.
      */
-    static enum NoOp implements MethodFlatteningResolver {
+    static enum NoOp implements MethodRebaseResolver {
 
         /**
          * The singleton instance.
@@ -52,7 +52,7 @@ public interface MethodFlatteningResolver {
     /**
      * A method name transformer provides a unique mapping of a method's name to an alternative name.
      *
-     * @see net.bytebuddy.dynamic.scaffold.inline.MethodFlatteningResolver
+     * @see MethodRebaseResolver
      */
     static interface MethodNameTransformer {
 
@@ -112,7 +112,7 @@ public interface MethodFlatteningResolver {
 
             @Override
             public String toString() {
-                return "MethodFlatteningResolver.MethodNameTransformer.RandomSuffixing{" +
+                return "MethodRebaseResolver.MethodNameTransformer.RandomSuffixing{" +
                         "suffix='" + suffix + '\'' +
                         ", seed='" + seed + '\'' +
                         '}';
@@ -121,7 +121,7 @@ public interface MethodFlatteningResolver {
     }
 
     /**
-     * A resolution for a method that was checked by a {@link net.bytebuddy.dynamic.scaffold.inline.MethodFlatteningResolver}.
+     * A resolution for a method that was checked by a {@link MethodRebaseResolver}.
      */
     static interface Resolution {
 
@@ -149,7 +149,7 @@ public interface MethodFlatteningResolver {
         StackManipulation getAdditionalArguments();
 
         /**
-         * A {@link net.bytebuddy.dynamic.scaffold.inline.MethodFlatteningResolver.Resolution} of a non-rebased method.
+         * A {@link MethodRebaseResolver.Resolution} of a non-rebased method.
          */
         static class Preserved implements Resolution {
 
@@ -159,7 +159,7 @@ public interface MethodFlatteningResolver {
             private final MethodDescription methodDescription;
 
             /**
-             * Creates a new {@link net.bytebuddy.dynamic.scaffold.inline.MethodFlatteningResolver.Resolution} for
+             * Creates a new {@link MethodRebaseResolver.Resolution} for
              * a non-rebased method.
              *
              * @param methodDescription The preserved method.
@@ -196,12 +196,12 @@ public interface MethodFlatteningResolver {
 
             @Override
             public String toString() {
-                return "MethodFlatteningResolver.Resolution.Preserved{methodDescription=" + methodDescription + '}';
+                return "MethodRebaseResolver.Resolution.Preserved{methodDescription=" + methodDescription + '}';
             }
         }
 
         /**
-         * A {@link net.bytebuddy.dynamic.scaffold.inline.MethodFlatteningResolver.Resolution} of a rebased method.
+         * A {@link MethodRebaseResolver.Resolution} of a rebased method.
          */
         static class ForRebasedMethod implements Resolution {
 
@@ -211,7 +211,7 @@ public interface MethodFlatteningResolver {
             private final MethodDescription methodDescription;
 
             /**
-             * Creates a {@link net.bytebuddy.dynamic.scaffold.inline.MethodFlatteningResolver.Resolution} for a
+             * Creates a {@link MethodRebaseResolver.Resolution} for a
              * rebased method.
              *
              * @param methodDescription     The original method that should be rebased.
@@ -256,12 +256,12 @@ public interface MethodFlatteningResolver {
 
             @Override
             public String toString() {
-                return "MethodFlatteningResolver.Resolution.ForRedefinedMethod{methodDescription=" + methodDescription + '}';
+                return "MethodRebaseResolver.Resolution.ForRedefinedMethod{methodDescription=" + methodDescription + '}';
             }
         }
 
         /**
-         * A {@link net.bytebuddy.dynamic.scaffold.inline.MethodFlatteningResolver.Resolution} of a rebased constructor.
+         * A {@link MethodRebaseResolver.Resolution} of a rebased constructor.
          */
         static class ForRebasedConstructor implements Resolution {
 
@@ -271,7 +271,7 @@ public interface MethodFlatteningResolver {
             private final MethodDescription methodDescription;
 
             /**
-             * Creates a {@link net.bytebuddy.dynamic.scaffold.inline.MethodFlatteningResolver.Resolution} for a
+             * Creates a {@link MethodRebaseResolver.Resolution} for a
              * rebased method.
              *
              * @param methodDescription The constructor to rebase.
@@ -313,17 +313,17 @@ public interface MethodFlatteningResolver {
 
             @Override
             public String toString() {
-                return "MethodFlatteningResolver.Resolution.ForRedefinedConstructor{methodDescription=" + methodDescription + '}';
+                return "MethodRebaseResolver.Resolution.ForRedefinedConstructor{methodDescription=" + methodDescription + '}';
             }
         }
     }
 
     /**
-     * A default implementation of a {@link net.bytebuddy.dynamic.scaffold.inline.MethodFlatteningResolver} which
+     * A default implementation of a {@link MethodRebaseResolver} which
      * renames rebased methods and adds an additional constructor placeholder parameter to constructors. Ignored
      * methods are never rebased.
      */
-    static class Default implements MethodFlatteningResolver {
+    static class Default implements MethodRebaseResolver {
 
         /**
          * Ignored methods which are never rebased.
@@ -341,7 +341,7 @@ public interface MethodFlatteningResolver {
         private final MethodNameTransformer methodNameTransformer;
 
         /**
-         * Creates a default method flattening resolver.
+         * Creates a default method rebase resolver.
          *
          * @param ignoredMethods        Ignored methods which are never rebased.
          * @param placeholderType       A placeholder type which is added to a rebased constructor.
@@ -394,7 +394,7 @@ public interface MethodFlatteningResolver {
 
         @Override
         public String toString() {
-            return "MethodFlatteningResolver.Default{" +
+            return "MethodRebaseResolver.Default{" +
                     "ignoredMethods=" + ignoredMethods +
                     ", placeholderType=" + placeholderType +
                     ", methodNameTransformer=" + methodNameTransformer +

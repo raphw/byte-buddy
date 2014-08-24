@@ -22,7 +22,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 
-public class FlatInstrumentedTypeTest extends AbstractInstrumentedTypeTest {
+public class InliningInstrumentedTypeTest extends AbstractInstrumentedTypeTest {
 
     private static final String FOO = "foo", BAR = "bar", FOOBAR = FOO + "." + BAR;
 
@@ -39,7 +39,7 @@ public class FlatInstrumentedTypeTest extends AbstractInstrumentedTypeTest {
 
     @Override
     protected InstrumentedType makePlainInstrumentedType() {
-        return new FlatInstrumentedType(
+        return new InliningInstrumentedType(
                 ClassFileVersion.forCurrentJavaVersion(),
                 targetType,
                 new TypeList.ForLoadedType(Collections.<Class<?>>singletonList(Serializable.class)),
@@ -49,7 +49,7 @@ public class FlatInstrumentedTypeTest extends AbstractInstrumentedTypeTest {
 
     @Test
     public void testTargetTypeMemberInheritance() throws Exception {
-        TypeDescription typeDescription = new FlatInstrumentedType(
+        TypeDescription typeDescription = new InliningInstrumentedType(
                 ClassFileVersion.forCurrentJavaVersion(),
                 new TypeDescription.ForLoadedType(Foo.class),
                 new TypeList.ForLoadedType(Collections.<Class<?>>singletonList(Serializable.class)),

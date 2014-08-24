@@ -21,7 +21,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-public class MethodFlatteningResolverResolutionForRebasedMethodTest {
+public class MethodRebaseResolverResolutionForRebasedMethodTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
 
@@ -31,7 +31,7 @@ public class MethodFlatteningResolverResolutionForRebasedMethodTest {
     @Mock
     private MethodDescription methodDescription;
     @Mock
-    private MethodFlatteningResolver.MethodNameTransformer methodNameTransformer, otherMethodNameTransformer;
+    private MethodRebaseResolver.MethodNameTransformer methodNameTransformer, otherMethodNameTransformer;
     @Mock
     private StackManipulation stackManipulation;
     @Mock
@@ -56,11 +56,11 @@ public class MethodFlatteningResolverResolutionForRebasedMethodTest {
 
     @Test
     public void testPreservation() throws Exception {
-        MethodFlatteningResolver.Resolution resolution = new MethodFlatteningResolver.Resolution.ForRebasedMethod(methodDescription, methodNameTransformer);
+        MethodRebaseResolver.Resolution resolution = new MethodRebaseResolver.Resolution.ForRebasedMethod(methodDescription, methodNameTransformer);
         assertThat(resolution.isRebased(), is(true));
         assertThat(resolution.getResolvedMethod().getDeclaringType(), is(typeDescription));
         assertThat(resolution.getResolvedMethod().getInternalName(), is(QUX));
-        assertThat(resolution.getResolvedMethod().getModifiers(), is(MethodFlatteningResolver.REBASED_METHOD_MODIFIER));
+        assertThat(resolution.getResolvedMethod().getModifiers(), is(MethodRebaseResolver.REBASED_METHOD_MODIFIER));
         assertThat(resolution.getResolvedMethod().getReturnType(), is(returnType));
         assertThat(resolution.getResolvedMethod().getParameterTypes(), is((TypeList) new TypeList.Explicit(Arrays.asList(parameterType))));
         StackManipulation.Size size = resolution.getAdditionalArguments().apply(methodVisitor, instrumentationContext);
@@ -72,13 +72,13 @@ public class MethodFlatteningResolverResolutionForRebasedMethodTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        assertThat(new MethodFlatteningResolver.Resolution.ForRebasedMethod(methodDescription, methodNameTransformer).hashCode(),
-                is(new MethodFlatteningResolver.Resolution.ForRebasedMethod(methodDescription, methodNameTransformer).hashCode()));
-        assertThat(new MethodFlatteningResolver.Resolution.ForRebasedMethod(methodDescription, methodNameTransformer),
-                is(new MethodFlatteningResolver.Resolution.ForRebasedMethod(methodDescription, methodNameTransformer)));
-        assertThat(new MethodFlatteningResolver.Resolution.ForRebasedMethod(methodDescription, methodNameTransformer).hashCode(),
-                not(is(new MethodFlatteningResolver.Resolution.ForRebasedMethod(methodDescription, otherMethodNameTransformer).hashCode())));
-        assertThat(new MethodFlatteningResolver.Resolution.ForRebasedMethod(methodDescription, methodNameTransformer),
-                not(is(new MethodFlatteningResolver.Resolution.ForRebasedMethod(methodDescription, otherMethodNameTransformer))));
+        assertThat(new MethodRebaseResolver.Resolution.ForRebasedMethod(methodDescription, methodNameTransformer).hashCode(),
+                is(new MethodRebaseResolver.Resolution.ForRebasedMethod(methodDescription, methodNameTransformer).hashCode()));
+        assertThat(new MethodRebaseResolver.Resolution.ForRebasedMethod(methodDescription, methodNameTransformer),
+                is(new MethodRebaseResolver.Resolution.ForRebasedMethod(methodDescription, methodNameTransformer)));
+        assertThat(new MethodRebaseResolver.Resolution.ForRebasedMethod(methodDescription, methodNameTransformer).hashCode(),
+                not(is(new MethodRebaseResolver.Resolution.ForRebasedMethod(methodDescription, otherMethodNameTransformer).hashCode())));
+        assertThat(new MethodRebaseResolver.Resolution.ForRebasedMethod(methodDescription, methodNameTransformer),
+                not(is(new MethodRebaseResolver.Resolution.ForRebasedMethod(methodDescription, otherMethodNameTransformer))));
     }
 }

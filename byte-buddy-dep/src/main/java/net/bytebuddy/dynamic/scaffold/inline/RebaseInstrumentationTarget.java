@@ -22,28 +22,28 @@ import org.objectweb.asm.MethodVisitor;
 public class RebaseInstrumentationTarget extends Instrumentation.Target.AbstractBase {
 
     /**
-     * A method flattening resolver to be used when calling a rebased method.
+     * A method rebase resolver to be used when calling a rebased method.
      */
-    protected final MethodFlatteningResolver methodFlatteningResolver;
+    protected final MethodRebaseResolver methodRebaseResolver;
 
     /**
      * Creates a rebase instrumentation target.
      *
      * @param finding                     The lookup of the instrumented type this instance should represent.
      * @param bridgeMethodResolverFactory A factory for creating a bridge method resolver.
-     * @param methodFlatteningResolver    A method flattening resolver to be used when calling a rebased method.
+     * @param methodRebaseResolver    A method rebase resolver to be used when calling a rebased method.
      */
     protected RebaseInstrumentationTarget(MethodLookupEngine.Finding finding,
                                           BridgeMethodResolver.Factory bridgeMethodResolverFactory,
-                                          MethodFlatteningResolver methodFlatteningResolver) {
+                                          MethodRebaseResolver methodRebaseResolver) {
         super(finding, bridgeMethodResolverFactory);
-        this.methodFlatteningResolver = methodFlatteningResolver;
+        this.methodRebaseResolver = methodRebaseResolver;
     }
 
     @Override
     protected Instrumentation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription) {
         return methodDescription.getDeclaringType().equals(typeDescription)
-                ? invokeSuper(methodFlatteningResolver.resolve(methodDescription))
+                ? invokeSuper(methodRebaseResolver.resolve(methodDescription))
                 : Instrumentation.SpecialMethodInvocation.Simple.of(methodDescription, typeDescription.getSupertype());
     }
 
@@ -58,7 +58,7 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
      * @param resolution A proxied super method invocation on the instrumented type.
      * @return A special method invocation on this proxied super method.
      */
-    private Instrumentation.SpecialMethodInvocation invokeSuper(MethodFlatteningResolver.Resolution resolution) {
+    private Instrumentation.SpecialMethodInvocation invokeSuper(MethodRebaseResolver.Resolution resolution) {
         return resolution.isRebased()
                 ? RebasedMethodSpecialMethodInvocation.of(resolution, typeDescription)
                 : Instrumentation.SpecialMethodInvocation.Simple.of(resolution.getResolvedMethod(), typeDescription);
@@ -68,12 +68,12 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
                 && super.equals(other)
-                && methodFlatteningResolver.equals(((RebaseInstrumentationTarget) other).methodFlatteningResolver);
+                && methodRebaseResolver.equals(((RebaseInstrumentationTarget) other).methodRebaseResolver);
     }
 
     @Override
     public int hashCode() {
-        return 31 * super.hashCode() + methodFlatteningResolver.hashCode();
+        return 31 * super.hashCode() + methodRebaseResolver.hashCode();
     }
 
     @Override
@@ -82,13 +82,13 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
                 "typeDescription=" + typeDescription +
                 ", defaultMethods=" + defaultMethods +
                 ", bridgeMethodResolver=" + bridgeMethodResolver +
-                ", methodRedefinitionResolver=" + methodFlatteningResolver +
+                ", methodRedefinitionResolver=" + methodRebaseResolver +
                 '}';
     }
 
     /**
      * A {@link net.bytebuddy.instrumentation.Instrumentation.SpecialMethodInvocation} which invokes a rebased method
-     * as given by a {@link net.bytebuddy.dynamic.scaffold.inline.MethodFlatteningResolver}.
+     * as given by a {@link MethodRebaseResolver}.
      */
     protected static class RebasedMethodSpecialMethodInvocation implements Instrumentation.SpecialMethodInvocation {
 
@@ -113,7 +113,7 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
          * @param resolution       The resolution of the rebased method.
          * @param instrumentedType The instrumented type on which this method is to be invoked.
          */
-        private RebasedMethodSpecialMethodInvocation(MethodFlatteningResolver.Resolution resolution,
+        private RebasedMethodSpecialMethodInvocation(MethodRebaseResolver.Resolution resolution,
                                                      TypeDescription instrumentedType) {
             this.methodDescription = resolution.getResolvedMethod();
             this.instrumentedType = instrumentedType;
@@ -129,7 +129,7 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
          * @param instrumentedType The instrumented type on which this method is to be invoked.
          * @return A special method invocation for the given method.
          */
-        public static Instrumentation.SpecialMethodInvocation of(MethodFlatteningResolver.Resolution resolution,
+        public static Instrumentation.SpecialMethodInvocation of(MethodRebaseResolver.Resolution resolution,
                                                                  TypeDescription instrumentedType) {
             return resolution.getResolvedMethod().isAbstract()
                     ? Illegal.INSTANCE
@@ -197,46 +197,46 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
         private final BridgeMethodResolver.Factory bridgeMethodResolverFactory;
 
         /**
-         * A method flattening resolver to be used when calling a rebased method.
+         * A method rebase resolver to be used when calling a rebased method.
          */
-        private final MethodFlatteningResolver methodFlatteningResolver;
+        private final MethodRebaseResolver methodRebaseResolver;
 
         /**
          * Creates a new factory for creating a {@link net.bytebuddy.dynamic.scaffold.inline.RebaseInstrumentationTarget}.
          *
          * @param bridgeMethodResolverFactory A factory for creating a bridge method resolver.
-         * @param methodFlatteningResolver    A method flattening resolver to be used when calling a rebased method.
+         * @param methodRebaseResolver    A method rebase resolver to be used when calling a rebased method.
          */
         public Factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory,
-                       MethodFlatteningResolver methodFlatteningResolver) {
+                       MethodRebaseResolver methodRebaseResolver) {
             this.bridgeMethodResolverFactory = bridgeMethodResolverFactory;
-            this.methodFlatteningResolver = methodFlatteningResolver;
+            this.methodRebaseResolver = methodRebaseResolver;
         }
 
         @Override
         public Instrumentation.Target make(MethodLookupEngine.Finding finding) {
             return new RebaseInstrumentationTarget(finding,
                     bridgeMethodResolverFactory,
-                    methodFlatteningResolver);
+                    methodRebaseResolver);
         }
 
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
                     && bridgeMethodResolverFactory.equals(((Factory) other).bridgeMethodResolverFactory)
-                    && methodFlatteningResolver.equals(((Factory) other).methodFlatteningResolver);
+                    && methodRebaseResolver.equals(((Factory) other).methodRebaseResolver);
         }
 
         @Override
         public int hashCode() {
-            return 31 * bridgeMethodResolverFactory.hashCode() + methodFlatteningResolver.hashCode();
+            return 31 * bridgeMethodResolverFactory.hashCode() + methodRebaseResolver.hashCode();
         }
 
         @Override
         public String toString() {
             return "RebaseInstrumentationTarget.Factory{" +
                     "bridgeMethodResolverFactory=" + bridgeMethodResolverFactory +
-                    ", methodFlatteningResolver=" + methodFlatteningResolver +
+                    ", methodRebaseResolver=" + methodRebaseResolver +
                     '}';
         }
     }

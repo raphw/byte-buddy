@@ -23,7 +23,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
 
-public class MethodFlatteningResolverDefaultTest {
+public class MethodRebaseResolverDefaultTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
@@ -35,7 +35,7 @@ public class MethodFlatteningResolverDefaultTest {
     @Mock
     private TypeDescription instrumentedType, placeholderType, returnType;
     @Mock
-    private MethodFlatteningResolver.MethodNameTransformer methodNameTransformer, otherMethodNameTransformer;
+    private MethodRebaseResolver.MethodNameTransformer methodNameTransformer, otherMethodNameTransformer;
     @Mock
     private MethodDescription methodDescription;
     @Mock
@@ -54,11 +54,11 @@ public class MethodFlatteningResolverDefaultTest {
 
     @Test
     public void testNonIgnoredMethodIsRebased() throws Exception {
-        MethodFlatteningResolver.Resolution resolution = new MethodFlatteningResolver.Default(methodMatcher, placeholderType, methodNameTransformer)
+        MethodRebaseResolver.Resolution resolution = new MethodRebaseResolver.Default(methodMatcher, placeholderType, methodNameTransformer)
                 .resolve(methodDescription);
         assertThat(resolution.isRebased(), is(true));
         assertThat(resolution.getResolvedMethod().getInternalName(), is(BAR));
-        assertThat(resolution.getResolvedMethod().getModifiers(), is(MethodFlatteningResolver.REBASED_METHOD_MODIFIER));
+        assertThat(resolution.getResolvedMethod().getModifiers(), is(MethodRebaseResolver.REBASED_METHOD_MODIFIER));
         assertThat(resolution.getResolvedMethod().getDeclaringType(), is(instrumentedType));
         assertThat(resolution.getResolvedMethod().getParameterTypes(), is((TypeList) new TypeList.Empty()));
         assertThat(resolution.getResolvedMethod().getReturnType(), is(returnType));
@@ -73,11 +73,11 @@ public class MethodFlatteningResolverDefaultTest {
     @Test
     public void testNonIgnoredConstructorIsRebased() throws Exception {
         when(methodDescription.isConstructor()).thenReturn(true);
-        MethodFlatteningResolver.Resolution resolution = new MethodFlatteningResolver.Default(methodMatcher, placeholderType, methodNameTransformer)
+        MethodRebaseResolver.Resolution resolution = new MethodRebaseResolver.Default(methodMatcher, placeholderType, methodNameTransformer)
                 .resolve(methodDescription);
         assertThat(resolution.isRebased(), is(true));
         assertThat(resolution.getResolvedMethod().getInternalName(), is(FOO));
-        assertThat(resolution.getResolvedMethod().getModifiers(), is(MethodFlatteningResolver.REBASED_METHOD_MODIFIER));
+        assertThat(resolution.getResolvedMethod().getModifiers(), is(MethodRebaseResolver.REBASED_METHOD_MODIFIER));
         assertThat(resolution.getResolvedMethod().getDeclaringType(), is(instrumentedType));
         assertThat(resolution.getResolvedMethod().getParameterTypes(), is((TypeList) new TypeList.Explicit(Arrays.asList(placeholderType))));
         assertThat(resolution.getResolvedMethod().getReturnType(), is(returnType));
@@ -93,7 +93,7 @@ public class MethodFlatteningResolverDefaultTest {
     @Test
     public void testIgnoredMethodIsNotRebased() throws Exception {
         when(methodMatcher.matches(methodDescription)).thenReturn(true);
-        MethodFlatteningResolver.Resolution resolution = new MethodFlatteningResolver.Default(methodMatcher, placeholderType, methodNameTransformer)
+        MethodRebaseResolver.Resolution resolution = new MethodRebaseResolver.Default(methodMatcher, placeholderType, methodNameTransformer)
                 .resolve(methodDescription);
         assertThat(resolution.isRebased(), is(false));
         assertThat(resolution.getResolvedMethod(), is(methodDescription));
@@ -107,13 +107,13 @@ public class MethodFlatteningResolverDefaultTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        assertThat(new MethodFlatteningResolver.Default(methodMatcher, placeholderType, methodNameTransformer).hashCode(),
-                is(new MethodFlatteningResolver.Default(methodMatcher, placeholderType, methodNameTransformer).hashCode()));
-        assertThat(new MethodFlatteningResolver.Default(methodMatcher, placeholderType, methodNameTransformer),
-                is(new MethodFlatteningResolver.Default(methodMatcher, placeholderType, methodNameTransformer)));
-        assertThat(new MethodFlatteningResolver.Default(methodMatcher, placeholderType, methodNameTransformer).hashCode(),
-                not(is(new MethodFlatteningResolver.Default(methodMatcher, placeholderType, otherMethodNameTransformer).hashCode())));
-        assertThat(new MethodFlatteningResolver.Default(methodMatcher, placeholderType, methodNameTransformer),
-                not(is(new MethodFlatteningResolver.Default(methodMatcher, placeholderType, otherMethodNameTransformer))));
+        assertThat(new MethodRebaseResolver.Default(methodMatcher, placeholderType, methodNameTransformer).hashCode(),
+                is(new MethodRebaseResolver.Default(methodMatcher, placeholderType, methodNameTransformer).hashCode()));
+        assertThat(new MethodRebaseResolver.Default(methodMatcher, placeholderType, methodNameTransformer),
+                is(new MethodRebaseResolver.Default(methodMatcher, placeholderType, methodNameTransformer)));
+        assertThat(new MethodRebaseResolver.Default(methodMatcher, placeholderType, methodNameTransformer).hashCode(),
+                not(is(new MethodRebaseResolver.Default(methodMatcher, placeholderType, otherMethodNameTransformer).hashCode())));
+        assertThat(new MethodRebaseResolver.Default(methodMatcher, placeholderType, methodNameTransformer),
+                not(is(new MethodRebaseResolver.Default(methodMatcher, placeholderType, otherMethodNameTransformer))));
     }
 }

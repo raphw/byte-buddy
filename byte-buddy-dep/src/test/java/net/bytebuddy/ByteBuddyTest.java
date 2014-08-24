@@ -96,8 +96,7 @@ public class ByteBuddyTest {
     }
 
     private void assertProperties(ByteBuddy byteBuddy) {
-        assertThat(byteBuddy.getTypeAttributeAppender().isDefined(), is(true));
-        assertThat(byteBuddy.getTypeAttributeAppender().resolve(mock(TypeAttributeAppender.class)), is(typeAttributeAppender));
+        assertThat(byteBuddy.getTypeAttributeAppender(), is(typeAttributeAppender));
         assertThat(byteBuddy.getClassFileVersion(), is(classFileVersion));
         assertThat(byteBuddy.getDefaultFieldAttributeAppenderFactory(), is(fieldAttributeAppenderFactory));
         assertThat(byteBuddy.getDefaultMethodAttributeAppenderFactory(), is(methodAttributeAppenderFactory));

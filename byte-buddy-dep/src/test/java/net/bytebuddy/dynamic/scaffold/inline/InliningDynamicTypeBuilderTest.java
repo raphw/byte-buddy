@@ -28,7 +28,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 
-public class FlatDynamicTypeBuilderTest {
+public class InliningDynamicTypeBuilderTest {
 
     private static final ClassLoader BOOTSTRAP_CLASS_LOADER = null;
 
@@ -36,7 +36,7 @@ public class FlatDynamicTypeBuilderTest {
 
     @Test
     public void testPlainRebasing() throws Exception {
-        Class<?> foo = new FlatDynamicTypeBuilder<Foo>(ClassFileVersion.forCurrentJavaVersion(),
+        Class<?> foo = new InliningDynamicTypeBuilder<Foo>(ClassFileVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOOBAR),
                 new TypeDescription.ForLoadedType(Foo.class),
                 new TypeList.ForLoadedType(Arrays.<Class<?>>asList(Serializable.class)),
@@ -51,7 +51,7 @@ public class FlatDynamicTypeBuilderTest {
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ClassFileLocator.Default.CLASS_PATH,
-                FlatDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation.INSTANCE)
+                InliningDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation.INSTANCE)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -67,19 +67,19 @@ public class FlatDynamicTypeBuilderTest {
         assertThat(foo.getDeclaredMethod(FOO).getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(foo.getDeclaredMethod(FOO).getAnnotation(Bar.class), notNullValue());
         assertThat(new MethodList.ForLoadedType(foo).filter(not(named(FOO)).and(isMethod()))
-                .getOnly().getModifiers(), is(MethodFlatteningResolver.REBASED_METHOD_MODIFIER));
+                .getOnly().getModifiers(), is(MethodRebaseResolver.REBASED_METHOD_MODIFIER));
         assertEquals(String.class, foo.getDeclaredMethod(FOO).getReturnType());
         assertThat(foo.getDeclaredConstructors().length, is(2));
         assertThat(foo.getDeclaredConstructor().getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(foo.getDeclaredConstructor().getAnnotation(Bar.class), notNullValue());
         assertThat(new MethodList.ForLoadedType(foo).filter(takesArguments(1).and(isConstructor()))
-                .getOnly().getModifiers(), is(MethodFlatteningResolver.REBASED_METHOD_MODIFIER));
+                .getOnly().getModifiers(), is(MethodRebaseResolver.REBASED_METHOD_MODIFIER));
         assertThat(foo.getDeclaredMethod(FOO).invoke(foo.newInstance()), is((Object) FOO));
     }
 
     @Test
     public void testPlainRedefinition() throws Exception {
-        Class<?> foo = new FlatDynamicTypeBuilder<Foo>(ClassFileVersion.forCurrentJavaVersion(),
+        Class<?> foo = new InliningDynamicTypeBuilder<Foo>(ClassFileVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOOBAR),
                 new TypeDescription.ForLoadedType(Foo.class),
                 new TypeList.ForLoadedType(Arrays.<Class<?>>asList(Serializable.class)),
@@ -94,7 +94,7 @@ public class FlatDynamicTypeBuilderTest {
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ClassFileLocator.Default.CLASS_PATH,
-                FlatDynamicTypeBuilder.TargetHandler.ForSubclassInstrumentation.INSTANCE)
+                InliningDynamicTypeBuilder.TargetHandler.ForSubclassInstrumentation.INSTANCE)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();

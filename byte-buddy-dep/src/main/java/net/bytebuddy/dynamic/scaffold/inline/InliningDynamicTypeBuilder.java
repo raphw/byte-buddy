@@ -4,7 +4,10 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.scaffold.*;
+import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
+import net.bytebuddy.dynamic.scaffold.FieldRegistry;
+import net.bytebuddy.dynamic.scaffold.MethodRegistry;
+import net.bytebuddy.dynamic.scaffold.TypeWriter;
 import net.bytebuddy.dynamic.scaffold.subclass.SubclassInstrumentationTarget;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
@@ -36,7 +39,7 @@ import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
  *
  * @param <T> The most specific type that is known to be represented by the enhanced type.
  */
-public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<T> {
+public class InliningDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<T> {
 
     /**
      * A locator for finding a class file.
@@ -70,22 +73,22 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
      * @param classFileLocator                      A locator for finding a class file.
      * @param targetHandler                         The target handler to be used by this type builder.
      */
-    public FlatDynamicTypeBuilder(ClassFileVersion classFileVersion,
-                                  NamingStrategy namingStrategy,
-                                  TypeDescription levelType,
-                                  List<? extends TypeDescription> interfaceTypes,
-                                  int modifiers,
-                                  TypeAttributeAppender attributeAppender,
-                                  MethodMatcher ignoredMethods,
-                                  BridgeMethodResolver.Factory bridgeMethodResolverFactory,
-                                  ClassVisitorWrapper.Chain classVisitorWrapperChain,
-                                  FieldRegistry fieldRegistry,
-                                  MethodRegistry methodRegistry,
-                                  MethodLookupEngine.Factory methodLookupEngineFactory,
-                                  FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
-                                  MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
-                                  ClassFileLocator classFileLocator,
-                                  TargetHandler targetHandler) {
+    public InliningDynamicTypeBuilder(ClassFileVersion classFileVersion,
+                                      NamingStrategy namingStrategy,
+                                      TypeDescription levelType,
+                                      List<? extends TypeDescription> interfaceTypes,
+                                      int modifiers,
+                                      TypeAttributeAppender attributeAppender,
+                                      MethodMatcher ignoredMethods,
+                                      BridgeMethodResolver.Factory bridgeMethodResolverFactory,
+                                      ClassVisitorWrapper.Chain classVisitorWrapperChain,
+                                      FieldRegistry fieldRegistry,
+                                      MethodRegistry methodRegistry,
+                                      MethodLookupEngine.Factory methodLookupEngineFactory,
+                                      FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
+                                      MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
+                                      ClassFileLocator classFileLocator,
+                                      TargetHandler targetHandler) {
         this(classFileVersion,
                 namingStrategy,
                 levelType,
@@ -131,24 +134,24 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
      * @param classFileLocator                      A locator for finding a class file.
      * @param targetHandler                         The target handler to be used by this type builder.
      */
-    protected FlatDynamicTypeBuilder(ClassFileVersion classFileVersion,
-                                     NamingStrategy namingStrategy,
-                                     TypeDescription levelType,
-                                     List<TypeDescription> interfaceTypes,
-                                     int modifiers,
-                                     TypeAttributeAppender attributeAppender,
-                                     MethodMatcher ignoredMethods,
-                                     BridgeMethodResolver.Factory bridgeMethodResolverFactory,
-                                     ClassVisitorWrapper.Chain classVisitorWrapperChain,
-                                     FieldRegistry fieldRegistry,
-                                     MethodRegistry methodRegistry,
-                                     MethodLookupEngine.Factory methodLookupEngineFactory,
-                                     FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
-                                     MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
-                                     List<FieldToken> fieldTokens,
-                                     List<MethodToken> methodTokens,
-                                     ClassFileLocator classFileLocator,
-                                     TargetHandler targetHandler) {
+    protected InliningDynamicTypeBuilder(ClassFileVersion classFileVersion,
+                                         NamingStrategy namingStrategy,
+                                         TypeDescription levelType,
+                                         List<TypeDescription> interfaceTypes,
+                                         int modifiers,
+                                         TypeAttributeAppender attributeAppender,
+                                         MethodMatcher ignoredMethods,
+                                         BridgeMethodResolver.Factory bridgeMethodResolverFactory,
+                                         ClassVisitorWrapper.Chain classVisitorWrapperChain,
+                                         FieldRegistry fieldRegistry,
+                                         MethodRegistry methodRegistry,
+                                         MethodLookupEngine.Factory methodLookupEngineFactory,
+                                         FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
+                                         MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
+                                         List<FieldToken> fieldTokens,
+                                         List<MethodToken> methodTokens,
+                                         ClassFileLocator classFileLocator,
+                                         TargetHandler targetHandler) {
         super(classFileVersion,
                 namingStrategy,
                 levelType,
@@ -199,7 +202,7 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                                                  MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
                                                  List<FieldToken> fieldTokens,
                                                  List<MethodToken> methodTokens) {
-        return new FlatDynamicTypeBuilder<T>(classFileVersion,
+        return new InliningDynamicTypeBuilder<T>(classFileVersion,
                 namingStrategy,
                 levelType,
                 interfaceTypes,
@@ -222,7 +225,7 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
     @Override
     public DynamicType.Unloaded<T> make() {
         MethodRegistry.Prepared preparedMethodRegistry = methodRegistry.prepare(
-                applyRecordedMembersTo(new FlatInstrumentedType(classFileVersion,
+                applyRecordedMembersTo(new InliningInstrumentedType(classFileVersion,
                         targetType,
                         interfaceTypes,
                         modifiers,
@@ -236,6 +239,7 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
         return new TypeWriter.Default<T>(compiledMethodRegistry.getInstrumentedType(),
                 compiledMethodRegistry.getLoadedTypeInitializer(),
                 preparedTargetHandler.getAuxiliaryTypes(),
+                classFileVersion,
                 new TypeWriter.Engine.ForRedefinition(compiledMethodRegistry.getInstrumentedType(),
                         targetType,
                         classFileVersion,
@@ -247,17 +251,17 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                         attributeAppender,
                         fieldRegistry.prepare(compiledMethodRegistry.getInstrumentedType()).compile(TypeWriter.FieldPool.Entry.NoOp.INSTANCE),
                         compiledMethodRegistry,
-                        new TypeWriter.Engine.ForRedefinition.InputStreamProvider.ForClassFileLocator(targetType, classFileLocator),
-                        preparedTargetHandler.getMethodFlatteningResolver()))
-                .make(new TypeExtensionDelegate(compiledMethodRegistry.getInstrumentedType(), classFileVersion));
+                        classFileLocator,
+                        preparedTargetHandler.getMethodRebaseResolver()))
+                .make();
     }
 
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
                 && super.equals(other)
-                && classFileLocator.equals(((FlatDynamicTypeBuilder<?>) other).classFileLocator)
-                && targetHandler.equals(((FlatDynamicTypeBuilder<?>) other).targetHandler);
+                && classFileLocator.equals(((InliningDynamicTypeBuilder<?>) other).classFileLocator)
+                && targetHandler.equals(((InliningDynamicTypeBuilder<?>) other).targetHandler);
     }
 
     @Override
@@ -267,7 +271,7 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
 
     @Override
     public String toString() {
-        return "FlatDynamicTypeBuilder{" +
+        return "RebaseDynamicTypeBuilder{" +
                 "classFileVersion=" + classFileVersion +
                 ", namingStrategy=" + namingStrategy +
                 ", levelType=" + targetType +
@@ -321,7 +325,7 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
 
         static interface Prepared {
 
-            MethodFlatteningResolver getMethodFlatteningResolver();
+            MethodRebaseResolver getMethodRebaseResolver();
 
             TypeWriter.MethodPool.Entry.Factory getMethodPoolEntryDefault();
 
@@ -334,8 +338,8 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                 INSTANCE;
 
                 @Override
-                public MethodFlatteningResolver getMethodFlatteningResolver() {
-                    return MethodFlatteningResolver.NoOp.INSTANCE;
+                public MethodRebaseResolver getMethodRebaseResolver() {
+                    return MethodRebaseResolver.NoOp.INSTANCE;
                 }
 
                 @Override
@@ -358,7 +362,7 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
 
                 private static final String SUFFIX = "trivial";
 
-                private final MethodFlatteningResolver methodFlatteningResolver;
+                private final MethodRebaseResolver methodRebaseResolver;
 
                 private final DynamicType placeholderType;
 
@@ -368,9 +372,9 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                     placeholderType = TrivialType.INSTANCE.make(trivialTypeNameFor(instrumentedType),
                             classFileVersion,
                             AuxiliaryType.MethodAccessorFactory.Illegal.INSTANCE);
-                    this.methodFlatteningResolver = new MethodFlatteningResolver.Default(ignoredMethods,
+                    this.methodRebaseResolver = new MethodRebaseResolver.Default(ignoredMethods,
                             placeholderType.getDescription(),
-                            new MethodFlatteningResolver.MethodNameTransformer.Suffixing(new RandomString()));
+                            new MethodRebaseResolver.MethodNameTransformer.Suffixing(new RandomString()));
                 }
 
                 private static String trivialTypeNameFor(TypeDescription rawInstrumentedType) {
@@ -383,7 +387,7 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                 @Override
                 public Instrumentation.Target.Factory factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
                     return new RebaseInstrumentationTarget.Factory(bridgeMethodResolverFactory,
-                            methodFlatteningResolver);
+                            methodRebaseResolver);
                 }
 
                 @Override
@@ -392,40 +396,40 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                 }
 
                 @Override
-                public MethodFlatteningResolver getMethodFlatteningResolver() {
-                    return methodFlatteningResolver;
+                public MethodRebaseResolver getMethodRebaseResolver() {
+                    return methodRebaseResolver;
                 }
 
                 @Override
                 public TypeWriter.MethodPool.Entry.Factory getMethodPoolEntryDefault() {
-                    return MethodFlatteningDelegation.Factory.INSTANCE;
+                    return MethodRebaseDelegation.Factory.INSTANCE;
                 }
 
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
                             && placeholderType.equals(((ForRebaseInstrumentation) other).placeholderType)
-                            && methodFlatteningResolver.equals(((ForRebaseInstrumentation) other).methodFlatteningResolver);
+                            && methodRebaseResolver.equals(((ForRebaseInstrumentation) other).methodRebaseResolver);
                 }
 
                 @Override
                 public int hashCode() {
-                    return 31 * methodFlatteningResolver.hashCode() + placeholderType.hashCode();
+                    return 31 * methodRebaseResolver.hashCode() + placeholderType.hashCode();
                 }
 
                 @Override
                 public String toString() {
-                    return "FlatDynamicTypeBuilder.TargetHandler.Prepared.ForRebaseInstrumentation{" +
-                            "methodFlatteningResolver=" + methodFlatteningResolver +
+                    return "RebaseDynamicTypeBuilder.TargetHandler.Prepared.ForRebaseInstrumentation{" +
+                            "methodRebaseResolver=" + methodRebaseResolver +
                             ", placeholderType=" + placeholderType +
                             '}';
                 }
 
-                private static class MethodFlatteningDelegation implements TypeWriter.MethodPool.Entry, ByteCodeAppender {
+                private static class MethodRebaseDelegation implements TypeWriter.MethodPool.Entry, ByteCodeAppender {
 
                     private final Instrumentation.Target instrumentationTarget;
 
-                    private MethodFlatteningDelegation(Instrumentation.Target instrumentationTarget) {
+                    private MethodRebaseDelegation(Instrumentation.Target instrumentationTarget) {
                         this.instrumentationTarget = instrumentationTarget;
                     }
 
@@ -481,7 +485,7 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
                     public boolean equals(Object other) {
                         if (this == other) return true;
                         if (other == null || getClass() != other.getClass()) return false;
-                        MethodFlatteningDelegation that = (MethodFlatteningDelegation) other;
+                        MethodRebaseDelegation that = (MethodRebaseDelegation) other;
                         return instrumentationTarget.equals(that.instrumentationTarget);
                     }
 
@@ -492,7 +496,7 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
 
                     @Override
                     public String toString() {
-                        return "FlatDynamicTypeBuilder.MethodFlatteningDelegation{instrumentationTarget=" + instrumentationTarget + '}';
+                        return "RebaseDynamicTypeBuilder.MethodRebaseDelegation{instrumentationTarget=" + instrumentationTarget + '}';
                     }
 
                     private static enum Factory implements TypeWriter.MethodPool.Entry.Factory {
@@ -501,7 +505,7 @@ public class FlatDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<
 
                         @Override
                         public TypeWriter.MethodPool.Entry compile(Instrumentation.Target instrumentationTarget) {
-                            return new MethodFlatteningDelegation(instrumentationTarget);
+                            return new MethodRebaseDelegation(instrumentationTarget);
                         }
                     }
                 }

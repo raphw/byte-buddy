@@ -4,7 +4,7 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator;
-import net.bytebuddy.dynamic.scaffold.inline.MethodFlatteningResolver;
+import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.LoadedTypeInitializer;
 import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
@@ -31,40 +31,108 @@ import java.util.Map;
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
 /**
- * A type writer allows an easier creation of a dynamic type by enforcing the writing order
- * (type, annotations, fields, methods) that is required by ASM in order to successfully creating a Java type.
- * <p>&nbsp;</p>
- * Note: This type represents a mutable data structure since it is a wrapper around an ASM
- * {@link org.objectweb.asm.ClassWriter}. Once a phase of this type writer is left the old instances must not longer
- * be used.
+ * A type writer is a utility for writing an actual class file using the ASM library.
  *
  * @param <T> The best known loaded type for the dynamically created type.
  */
 public interface TypeWriter<T> {
 
-    DynamicType.Unloaded<T> make(Instrumentation.Context.ExtractableView instrumentationContext);
+    /**
+     * Creates the dynamic type that is described by this type writer.
+     *
+     * @return An unloaded dynamic type that describes the created type.
+     */
+    DynamicType.Unloaded<T> make();
 
+    /**
+     * An engine that is responsible for writing the actual class file.
+     */
     static interface Engine {
 
+        /**
+         * A flag for ASM not to automatically compute any information such as operand stack sizes and stack map frames.
+         */
         static final int ASM_MANUAL_FLAG = 0;
 
+        /**
+         * The ASM API version to use.
+         */
         static final int ASM_API_VERSION = Opcodes.ASM5;
 
+        /**
+         * Creates the class file.
+         *
+         * @param instrumentationContext The instrumentation context to use for implementing the class file.
+         * @return A byte array representing the created class file.
+         */
         byte[] create(Instrumentation.Context.ExtractableView instrumentationContext);
 
         static class ForRedefinition implements Engine {
 
+            /**
+             * The instrumented type that is written.
+             */
             private final TypeDescription instrumentedType;
-            private final TypeDescription targetType;
-            private final ClassFileVersion classFileVersion;
-            private final List<? extends MethodDescription> invokableMethods;
-            private final ClassVisitorWrapper classVisitorWrapper;
-            private final TypeAttributeAppender attributeAppender;
-            private final TypeWriter.FieldPool fieldPool;
-            private final TypeWriter.MethodPool methodPool;
-            private final InputStreamProvider inputStreamProvider;
-            private final MethodFlatteningResolver methodFlatteningResolver;
 
+            /**
+             * The original type which is redefined.
+             */
+            private final TypeDescription targetType;
+
+            /**
+             * The specified class file version.
+             */
+            private final ClassFileVersion classFileVersion;
+
+            /**
+             * The methods that are to be considered for implementation.
+             */
+            private final List<? extends MethodDescription> invokableMethods;
+
+            /**
+             * A wrapper to apply to the actual class visitor.
+             */
+            private final ClassVisitorWrapper classVisitorWrapper;
+
+            /**
+             * The attribute appender to apply.
+             */
+            private final TypeAttributeAppender attributeAppender;
+
+            /**
+             * The field pool to use for writing fields.
+             */
+            private final TypeWriter.FieldPool fieldPool;
+
+            /**
+             * The method pool to use for writing methods.
+             */
+            private final TypeWriter.MethodPool methodPool;
+
+            /**
+             * A provider for creating an input stream.
+             */
+            private final ClassFileLocator classFileLocator;
+
+            /**
+             * A resolver for method rebasing.
+             */
+            private final MethodRebaseResolver methodRebaseResolver;
+
+            /**
+             * Creates a new type writer that reads a class file and weaves in user defined method implementations.
+             *
+             * @param instrumentedType     The instrumented type that is written.
+             * @param targetType           The original type which is redefined.
+             * @param classFileVersion     The specified class file version.
+             * @param invokableMethods     The methods that are to be considered for implementation.
+             * @param classVisitorWrapper  A wrapper to apply to the actual class visitor.
+             * @param attributeAppender    The attribute appender to apply.
+             * @param fieldPool            The field pool to use for writing fields.
+             * @param methodPool           The method pool to use for writing fields.
+             * @param classFileLocator     A provider for creating an input stream.
+             * @param methodRebaseResolver A resolver for method rebasing.
+             */
             public ForRedefinition(TypeDescription instrumentedType,
                                    TypeDescription targetType,
                                    ClassFileVersion classFileVersion,
@@ -73,8 +141,8 @@ public interface TypeWriter<T> {
                                    TypeAttributeAppender attributeAppender,
                                    TypeWriter.FieldPool fieldPool,
                                    TypeWriter.MethodPool methodPool,
-                                   InputStreamProvider inputStreamProvider,
-                                   MethodFlatteningResolver methodFlatteningResolver) {
+                                   ClassFileLocator classFileLocator,
+                                   MethodRebaseResolver methodRebaseResolver) {
                 this.instrumentedType = instrumentedType;
                 this.targetType = targetType;
                 this.classFileVersion = classFileVersion;
@@ -83,13 +151,17 @@ public interface TypeWriter<T> {
                 this.attributeAppender = attributeAppender;
                 this.fieldPool = fieldPool;
                 this.methodPool = methodPool;
-                this.inputStreamProvider = inputStreamProvider;
-                this.methodFlatteningResolver = methodFlatteningResolver;
+                this.classFileLocator = classFileLocator;
+                this.methodRebaseResolver = methodRebaseResolver;
             }
 
             @Override
             public byte[] create(Instrumentation.Context.ExtractableView instrumentationContext) {
-                InputStream classFile = inputStreamProvider.create();
+                InputStream classFile = classFileLocator.classFileFor(targetType);
+                if (classFile == null) {
+                    throw new IllegalArgumentException("Cannot locate the class file for "
+                            + targetType + " using " + classFileLocator);
+                }
                 try {
                     try {
                         return doCreate(instrumentationContext, classFile);
@@ -97,10 +169,18 @@ public interface TypeWriter<T> {
                         classFile.close();
                     }
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new RuntimeException("The class file could not be written", e);
                 }
             }
 
+            /**
+             * Performs the actual creation of a class file.
+             *
+             * @param instrumentationContext The instrumentation context to use for implementing the class file.
+             * @param classFile              An input stream representing the class file
+             * @return The byte array representing the created class.
+             * @throws IOException If the writing of the class file causes an error.
+             */
             private byte[] doCreate(Instrumentation.Context.ExtractableView instrumentationContext,
                                     InputStream classFile) throws IOException {
                 ClassReader classReader = new ClassReader(classFile);
@@ -127,10 +207,10 @@ public interface TypeWriter<T> {
                         && classFileVersion.equals(that.classFileVersion)
                         && classVisitorWrapper.equals(that.classVisitorWrapper)
                         && fieldPool.equals(that.fieldPool)
-                        && inputStreamProvider.equals(that.inputStreamProvider)
+                        && classFileLocator.equals(that.classFileLocator)
                         && instrumentedType.equals(that.instrumentedType)
                         && invokableMethods.equals(that.invokableMethods)
-                        && methodFlatteningResolver.equals(that.methodFlatteningResolver)
+                        && methodRebaseResolver.equals(that.methodRebaseResolver)
                         && methodPool.equals(that.methodPool);
             }
 
@@ -143,8 +223,8 @@ public interface TypeWriter<T> {
                 result = 31 * result + attributeAppender.hashCode();
                 result = 31 * result + fieldPool.hashCode();
                 result = 31 * result + methodPool.hashCode();
-                result = 31 * result + inputStreamProvider.hashCode();
-                result = 31 * result + methodFlatteningResolver.hashCode();
+                result = 31 * result + classFileLocator.hashCode();
+                result = 31 * result + methodRebaseResolver.hashCode();
                 return result;
             }
 
@@ -158,53 +238,9 @@ public interface TypeWriter<T> {
                         ", attributeAppender=" + attributeAppender +
                         ", fieldPool=" + fieldPool +
                         ", methodPool=" + methodPool +
-                        ", inputStreamProvider=" + inputStreamProvider +
-                        ", methodFlatteningResolver=" + methodFlatteningResolver +
+                        ", classFileLocator=" + classFileLocator +
+                        ", methodRebaseResolver=" + methodRebaseResolver +
                         '}';
-            }
-
-            public static interface InputStreamProvider {
-
-                InputStream create();
-
-                static class ForClassFileLocator implements InputStreamProvider {
-
-                    private final TypeDescription originalType;
-
-                    private final ClassFileLocator classFileLocator;
-
-                    public ForClassFileLocator(TypeDescription originalType, ClassFileLocator classFileLocator) {
-                        this.originalType = originalType;
-                        this.classFileLocator = classFileLocator;
-                    }
-
-                    @Override
-                    public InputStream create() {
-                        return classFileLocator.classFileFor(originalType);
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && classFileLocator.equals(((ForClassFileLocator) other).classFileLocator)
-                                && originalType.equals(((ForClassFileLocator) other).originalType);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = originalType.hashCode();
-                        result = 31 * result + classFileLocator.hashCode();
-                        return result;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Engine.ForRedefinition.InputStreamProvider.ForClassFileLocator{" +
-                                "originalType=" + originalType +
-                                ", classFileLocator=" + classFileLocator +
-                                '}';
-                    }
-                }
             }
 
             protected class RedefinitionClassVisitor extends ClassVisitor {
@@ -332,7 +368,7 @@ public interface TypeWriter<T> {
                         this.byteCodeAppender = byteCodeAppender;
                         this.methodDescription = methodDescription;
                         this.classVisitor = classVisitor;
-                        this.redirectionMethod = methodFlatteningResolver.resolve(methodDescription).getResolvedMethod();
+                        this.redirectionMethod = methodRebaseResolver.resolve(methodDescription).getResolvedMethod();
                     }
 
                     @Override
@@ -455,16 +491,57 @@ public interface TypeWriter<T> {
             }
         }
 
+        /**
+         * A type writer engine that creates a new dynamic type that is not based on an existent type.
+         */
         static class ForCreation implements Engine {
 
+            /**
+             * The instrumented type that is created.
+             */
             private final TypeDescription instrumentedType;
+
+            /**
+             * The class file version of the type that is to be written.
+             */
             private final ClassFileVersion classFileVersion;
+
+            /**
+             * The invokable methods to consider for implementation.
+             */
             private final List<? extends MethodDescription> invokableMethods;
+
+            /**
+             * The class visitor wrapper to apply to the ASM class writer.
+             */
             private final ClassVisitorWrapper classVisitorWrapper;
+
+            /**
+             * The attribute appender to apply.
+             */
             private final TypeAttributeAppender attributeAppender;
+
+            /**
+             * The field pool to use for writing fields.
+             */
             private final TypeWriter.FieldPool fieldPool;
+
+            /**
+             * The method pool to use for writing methods.
+             */
             private final TypeWriter.MethodPool methodPool;
 
+            /**
+             * Creates a new type writer engine for redefining an existent class file.
+             *
+             * @param instrumentedType    The instrumented type that is created.
+             * @param classFileVersion    The class file version of the type that is to be written.
+             * @param invokableMethods    The invokable methods to consider for implementation.
+             * @param classVisitorWrapper The class visitor wrapper to apply to the ASM class writer.
+             * @param attributeAppender   The attribute appender to apply.
+             * @param fieldPool           The field pool to use for writing fields.
+             * @param methodPool          The method pool to use for writing methods.
+             */
             public ForCreation(TypeDescription instrumentedType,
                                ClassFileVersion classFileVersion,
                                List<? extends MethodDescription> invokableMethods,
@@ -484,13 +561,13 @@ public interface TypeWriter<T> {
             @Override
             public byte[] create(Instrumentation.Context.ExtractableView instrumentationContext) {
                 ClassWriter classWriter = new ClassWriter(ASM_MANUAL_FLAG);
-                classWriter.visit(classFileVersion.getVersionNumber(),
+                ClassVisitor classVisitor = classVisitorWrapper.wrap(classWriter);
+                classVisitor.visit(classFileVersion.getVersionNumber(),
                         instrumentedType.getActualModifiers(),
                         instrumentedType.getInternalName(),
                         instrumentedType.getGenericSignature(),
                         instrumentedType.getSupertype().getInternalName(),
                         instrumentedType.getInterfaces().toInternalNames());
-                ClassVisitor classVisitor = classVisitorWrapper.wrap(classWriter);
                 attributeAppender.apply(classVisitor, instrumentedType);
                 for (FieldDescription fieldDescription : instrumentedType.getDeclaredFields()) {
                     fieldPool.target(fieldDescription).apply(classVisitor, fieldDescription);
@@ -583,6 +660,12 @@ public interface TypeWriter<T> {
              */
             Object getDefaultValue();
 
+            /**
+             * Writes this entry to a given class visitor.
+             *
+             * @param classVisitor     The class visitor to which this entry is to be written to.
+             * @param fieldDescription A description of the field that is to be written.
+             */
             void apply(ClassVisitor classVisitor, FieldDescription fieldDescription);
 
             /**
@@ -739,6 +822,13 @@ public interface TypeWriter<T> {
              */
             MethodAttributeAppender getAttributeAppender();
 
+            /**
+             * Writes the method that is represented by this entry to the provided class visitor.
+             *
+             * @param classVisitor           The class visitor to which this entry is to be written to.
+             * @param instrumentationContext The instrumentation context to use for writing this method.
+             * @param methodDescription      A description of the method that is to be written
+             */
             void apply(ClassVisitor classVisitor,
                        Instrumentation.Context instrumentationContext,
                        MethodDescription methodDescription);
@@ -781,8 +871,17 @@ public interface TypeWriter<T> {
                 }
             }
 
+            /**
+             * A factory for creating a {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Entry}.
+             */
             static interface Factory {
 
+                /**
+                 * Compiles a {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Entry}.
+                 *
+                 * @param instrumentationTarget The instrumentation target for which this factory is to be compiled.
+                 * @return A compiled entry for the given instrumentation target.
+                 */
                 Entry compile(Instrumentation.Target instrumentationTarget);
             }
 
@@ -870,32 +969,100 @@ public interface TypeWriter<T> {
         }
     }
 
+    /**
+     * A default implementation of a {@link net.bytebuddy.dynamic.scaffold.TypeWriter}.
+     *
+     * @param <S> The best known loaded type for the dynamically created type.
+     */
     static class Default<S> implements TypeWriter<S> {
 
-        private final TypeDescription typeDescription;
+        /**
+         * The instrumented type that is to be written.
+         */
+        private final TypeDescription instrumentedType;
 
+        /**
+         * The loaded type initializer of the instrumented type.
+         */
         private final LoadedTypeInitializer loadedTypeInitializer;
 
+        /**
+         * A list of explicit auxiliary types that are to be added to the created dynamic type.
+         */
         private final List<DynamicType> explicitAuxiliaryTypes;
 
+        /**
+         * The class file version of the written type.
+         */
+        private final ClassFileVersion classFileVersion;
+
+        /**
+         * An engine for writing the actual class file for the instrumented type.
+         */
         private final Engine engine;
 
-        public Default(TypeDescription typeDescription,
+        /**
+         * Creates a new immutable type writer.
+         *
+         * @param instrumentedType       The instrumented type that is to be written.
+         * @param loadedTypeInitializer  The loaded type initializer of the instrumented type.
+         * @param explicitAuxiliaryTypes A list of explicit auxiliary types that are to be added to the created
+         *                               dynamic type.
+         * @param engine                 An engine for writing the actual class file for the instrumented type.
+         */
+        public Default(TypeDescription instrumentedType,
                        LoadedTypeInitializer loadedTypeInitializer,
                        List<DynamicType> explicitAuxiliaryTypes,
+                       ClassFileVersion classFileVersion,
                        Engine engine) {
-            this.typeDescription = typeDescription;
+            this.instrumentedType = instrumentedType;
             this.loadedTypeInitializer = loadedTypeInitializer;
             this.explicitAuxiliaryTypes = explicitAuxiliaryTypes;
+            this.classFileVersion = classFileVersion;
             this.engine = engine;
         }
 
         @Override
-        public DynamicType.Unloaded<S> make(Instrumentation.Context.ExtractableView instrumentationContext) {
-            return new DynamicType.Default.Unloaded<S>(typeDescription,
+        public DynamicType.Unloaded<S> make() {
+            Instrumentation.Context.ExtractableView instrumentationContext = new TypeExtensionDelegate(instrumentedType,
+                    classFileVersion);
+            return new DynamicType.Default.Unloaded<S>(instrumentedType,
                     engine.create(instrumentationContext),
                     loadedTypeInitializer,
                     join(explicitAuxiliaryTypes, instrumentationContext.getRegisteredAuxiliaryTypes()));
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            Default aDefault = (Default) other;
+            return engine.equals(aDefault.engine)
+                    && explicitAuxiliaryTypes.equals(aDefault.explicitAuxiliaryTypes)
+                    && instrumentedType.equals(aDefault.instrumentedType)
+                    && classFileVersion.equals(aDefault.classFileVersion)
+                    && loadedTypeInitializer.equals(aDefault.loadedTypeInitializer);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = instrumentedType.hashCode();
+            result = 31 * result + loadedTypeInitializer.hashCode();
+            result = 31 * result + explicitAuxiliaryTypes.hashCode();
+            result = 31 * result + engine.hashCode();
+            result = 31 * result + classFileVersion.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "TypeWriter.Default{" +
+                    "instrumentedType=" + instrumentedType +
+                    ", loadedTypeInitializer=" + loadedTypeInitializer +
+                    ", explicitAuxiliaryTypes=" + explicitAuxiliaryTypes +
+                    ", classFileVersion=" + classFileVersion +
+                    ", engine=" + engine +
+                    '}';
         }
     }
 }
