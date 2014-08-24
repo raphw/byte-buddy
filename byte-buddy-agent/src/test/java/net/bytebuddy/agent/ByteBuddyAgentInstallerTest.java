@@ -32,7 +32,7 @@ public class ByteBuddyAgentInstallerTest {
 
     @After
     public void tearDown() throws Exception {
-        Field field = ByteBuddyAgent.class.getDeclaredField(INSTRUMENTATION);
+        Field field = ByteBuddyAgent.Installer.class.getDeclaredField(INSTRUMENTATION);
         field.setAccessible(true);
         field.set(STATIC_FIELD, null);
     }

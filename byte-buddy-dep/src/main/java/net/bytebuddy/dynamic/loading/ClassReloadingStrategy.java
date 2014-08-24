@@ -13,11 +13,12 @@ import java.util.Map;
 
 public class ClassReloadingStrategy implements ClassLoadingStrategy {
 
-    public static final String BYTE_BUDDY_AGENT_TYPE = "net.bytebuddy.agent.ByteBuddyAgent";
+    private static final String BYTE_BUDDY_AGENT_TYPE = "net.bytebuddy.agent.ByteBuddyAgent";
 
-    public static final String GET_INSTRUMENTATION_METHOD = "getInstrumentation";
+    private static final String GET_INSTRUMENTATION_METHOD = "getInstrumentation";
 
-    public static final Object STATIC_METHOD = null;
+    private static final Object STATIC_METHOD = null;
+
     private final Instrumentation instrumentation;
 
     public ClassReloadingStrategy(Instrumentation instrumentation) {

@@ -28,7 +28,7 @@ public class ByteBuddyAgentTest {
 
     @After
     public void tearDown() throws Exception {
-        Field field = ByteBuddyAgent.class.getDeclaredField(INSTRUMENTATION);
+        Field field = ByteBuddyAgent.Installer.class.getDeclaredField(INSTRUMENTATION);
         field.setAccessible(true);
         field.set(STATIC_FIELD, null);
     }
@@ -41,7 +41,7 @@ public class ByteBuddyAgentTest {
 
     @Test
     public void testInstrumentationExtraction() throws Exception {
-        Field field = ByteBuddyAgent.class.getDeclaredField(INSTRUMENTATION);
+        Field field = ByteBuddyAgent.Installer.class.getDeclaredField(INSTRUMENTATION);
         field.setAccessible(true);
         Instrumentation instrumentation = mock(Instrumentation.class);
         field.set(STATIC_FIELD, instrumentation);

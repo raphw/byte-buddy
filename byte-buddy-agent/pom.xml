@@ -43,7 +43,6 @@
                             <Premain-Class>${bytebuddy.agent}</Premain-Class>
                             <Agent-Class>${bytebuddy.agent}</Agent-Class>
                             <Can-Redefine-Classes>true</Can-Redefine-Classes>
-                            <Can-Set-Native-Method-Prefix>true</Can-Set-Native-Method-Prefix>
                         </manifestEntries>
                     </archive>
                 </configuration>
