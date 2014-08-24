@@ -31,7 +31,7 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
      *
      * @param finding                     The lookup of the instrumented type this instance should represent.
      * @param bridgeMethodResolverFactory A factory for creating a bridge method resolver.
-     * @param methodRebaseResolver    A method rebase resolver to be used when calling a rebased method.
+     * @param methodRebaseResolver        A method rebase resolver to be used when calling a rebased method.
      */
     protected RebaseInstrumentationTarget(MethodLookupEngine.Finding finding,
                                           BridgeMethodResolver.Factory bridgeMethodResolverFactory,
@@ -205,7 +205,7 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
          * Creates a new factory for creating a {@link net.bytebuddy.dynamic.scaffold.inline.RebaseInstrumentationTarget}.
          *
          * @param bridgeMethodResolverFactory A factory for creating a bridge method resolver.
-         * @param methodRebaseResolver    A method rebase resolver to be used when calling a rebased method.
+         * @param methodRebaseResolver        A method rebase resolver to be used when calling a rebased method.
          */
         public Factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                        MethodRebaseResolver methodRebaseResolver) {

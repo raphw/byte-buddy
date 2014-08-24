@@ -50,7 +50,7 @@ public class TypeWriterDefaultTest {
     }
 
     @Test
-    public void testName() throws Exception {
+    public void testDynamicTypeCreation() throws Exception {
         DynamicType dynamicType = new TypeWriter.Default<Object>(instrumentedType,
                 loadedTypeInitializer,
                 explicitAuxiliaryTypes,
