@@ -56,7 +56,9 @@ public interface ClassFileLocator {
     }
 
     /**
-     * A compound {@link net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator} that chains
+     * A compound {@link net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator} that chains several locators.
+     * Any class file locator is queried in the supplied order until one locator is able to provide an input
+     * stream of the class file.
      */
     static class Compound implements ClassFileLocator {
 

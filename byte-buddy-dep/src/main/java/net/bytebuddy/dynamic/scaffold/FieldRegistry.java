@@ -32,10 +32,25 @@ public interface FieldRegistry {
                           FieldAttributeAppender.Factory attributeAppenderFactory,
                           Object defaultValue);
 
+    /**
+     * Prepares the field registry for a given instrumented type.
+     *
+     * @param instrumentedType The instrumented type.
+     * @return A prepared field registry.
+     */
     Prepared prepare(TypeDescription instrumentedType);
 
+    /**
+     * A {@link net.bytebuddy.dynamic.scaffold.FieldRegistry} which was prepared for a given instrumented type.
+     */
     static interface Prepared {
 
+        /**
+         * Compiled the field registry.
+         *
+         * @param fallback The fallback entry for the compiled field registry.
+         * @return The compiled field registry.
+         */
         Compiled compile(TypeWriter.FieldPool.Entry fallback);
     }
 
@@ -112,7 +127,7 @@ public interface FieldRegistry {
         }
 
         @Override
-        public Prepared prepare(TypeDescription instrumentedType) {
+        public FieldRegistry.Prepared prepare(TypeDescription instrumentedType) {
             Map<String, TypeWriter.FieldPool.Entry> entries = new HashMap<String, TypeWriter.FieldPool.Entry>(this.entries.size());
             Map<FieldAttributeAppender.Factory, FieldAttributeAppender> attributeAppenders =
                     new HashMap<FieldAttributeAppender.Factory, FieldAttributeAppender>(this.entries.size());
@@ -143,21 +158,46 @@ public interface FieldRegistry {
             return "FieldRegistry.Default{entries=" + entries + '}';
         }
 
+        /**
+         * An entry of the default field registry.
+         */
         protected static class Entry {
 
+            /**
+             * The field attribute appender factory that is represented by this entry.
+             */
             private final FieldAttributeAppender.Factory attributeAppenderFactory;
 
+            /**
+             * The field's default value for this entry.
+             */
             private final Object defaultValue;
 
+            /**
+             * Creates a new entry.
+             *
+             * @param attributeAppenderFactory The field attribute appender factory that is represented by this entry.
+             * @param defaultValue             The field's default value for this entry.
+             */
             private Entry(FieldAttributeAppender.Factory attributeAppenderFactory, Object defaultValue) {
                 this.attributeAppenderFactory = attributeAppenderFactory;
                 this.defaultValue = defaultValue;
             }
 
+            /**
+             * Returns the field attribute appender factory.
+             *
+             * @return The field's attribute appender factory.
+             */
             public FieldAttributeAppender.Factory getAttributeAppenderFactory() {
                 return attributeAppenderFactory;
             }
 
+            /**
+             * Returns the default value.
+             *
+             * @return The default value.
+             */
             public Object getDefaultValue() {
                 return defaultValue;
             }
@@ -185,10 +225,21 @@ public interface FieldRegistry {
             }
         }
 
+        /**
+         * A prepared default field registry.
+         */
         protected static class Prepared implements FieldRegistry.Prepared {
 
+            /**
+             * A map of entries by field names.
+             */
             private final Map<String, TypeWriter.FieldPool.Entry> entries;
 
+            /**
+             * Creates a new prepared default field registry.
+             *
+             * @param entries A map of entries by field names.
+             */
             public Prepared(Map<String, TypeWriter.FieldPool.Entry> entries) {
                 this.entries = entries;
             }
@@ -220,10 +271,22 @@ public interface FieldRegistry {
          */
         protected static class Compiled implements FieldRegistry.Compiled {
 
+            /**
+             * A map of entries by field names.
+             */
             private final Map<String, Entry> entries;
 
+            /**
+             * The fallback entry.
+             */
             private final Entry fallback;
 
+            /**
+             * Creates a new compiled default field registry.
+             *
+             * @param entries  A map of entries by field names.
+             * @param fallback The fallback entry.
+             */
             public Compiled(Map<String, Entry> entries, Entry fallback) {
                 this.entries = entries;
                 this.fallback = fallback;

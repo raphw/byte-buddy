@@ -365,9 +365,17 @@ public class ByteBuddy {
     }
 
     /**
+     * <p>
      * Creates a dynamic type builder for redefining of the given type. The given class must be found on the
-     * class path. Otherwise, the class file to the redefined class must be located explicitly by providing a locator
-     * by {@link net.bytebuddy.ByteBuddy#redefine(Class, net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator)}.
+     * class path or by the class's {@link java.lang.ClassLoader}. Otherwise, the class file to the redefined class
+     * must be located explicitly by providing a locator by
+     * {@link net.bytebuddy.ByteBuddy#redefine(Class, net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator)}.
+     * </p>
+     * <p>
+     * <b>Note</b>: It is possible to experience unexpected errors in case that the provided {@code levelType} and the
+     * corresponding class file get out of sync, i.e. a type is redefined several times without providing an updated
+     * version of the class file.
+     * </p>
      *
      * @param levelType The type to redefine.
      * @param <T>       The most specific known type that the created dynamic type represents.
@@ -378,7 +386,14 @@ public class ByteBuddy {
     }
 
     /**
+     * <p>
      * Creates a dynamic type builder for redefining of the given type.
+     * </p>
+     * <p>
+     * <b>Note</b>: It is possible to experience unexpected errors in case that the provided {@code levelType} and the
+     * corresponding class file get out of sync, i.e. a type is redefined several times without providing an updated
+     * version of the class file.
+     * </p>
      *
      * @param levelType        The type to redefine.
      * @param classFileLocator A locator for finding a class file that represents a type.
@@ -390,9 +405,16 @@ public class ByteBuddy {
     }
 
     /**
+     * <p>
      * Creates a dynamic type builder for redefining of the given type. The given class must be found on the
      * class path. Otherwise, the class file to the redefined class must be located explicitly by providing a locator
      * by {@link net.bytebuddy.ByteBuddy#redefine(Class, net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator)}.
+     * </p>
+     * <p>
+     * <b>Note</b>: It is possible to experience unexpected errors in case that the provided {@code levelType} and the
+     * corresponding class file get out of sync, i.e. a type is redefined several times without providing an updated
+     * version of the class file.
+     * </p>
      *
      * @param levelType The type to redefine.
      * @param <T>       The most specific known type that the created dynamic type represents.
@@ -403,7 +425,14 @@ public class ByteBuddy {
     }
 
     /**
+     * <p>
      * Creates a dynamic type builder for redefining of the given type.
+     * </p>
+     * <p>
+     * <b>Note</b>: It is possible to experience unexpected errors in case that the provided {@code levelType} and the
+     * corresponding class file get out of sync, i.e. a type is redefined several times without providing an updated
+     * version of the class file.
+     * </p>
      *
      * @param levelType        The type to redefine.
      * @param classFileLocator A locator for finding a class file that represents a type.
@@ -429,18 +458,89 @@ public class ByteBuddy {
                 InliningDynamicTypeBuilder.TargetHandler.ForSubclassInstrumentation.INSTANCE);
     }
 
+    /**
+     * <p>
+     * Creates a dynamic type by weaving any changes into an already defined <i>level type</i>. The rebased type is
+     * created by adding methods to the <i>level type</i> where the original method implementations are copied to
+     * renamed, private methods within the created dynamic type and therefore remain invokable as super method calls.
+     * The result is a rebased type with subclass semantics. The given class must be found on the class path or
+     * by the provided class's {@link java.lang.ClassLoader}. Otherwise, the class file to the redefined class
+     * must be located explicitly by providing a locator by
+     * {@link net.bytebuddy.ByteBuddy#rebase(Class, net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator)}.
+     * </p>
+     * <p>
+     * <b>Note</b>: It is possible to experience unexpected errors in case that the provided {@code levelType} and the
+     * corresponding class file get out of sync, i.e. a type is rebased several times without updating the class file.
+     * </p>
+     *
+     * @param levelType The type which is to be rebased.
+     * @param <T>       The most specific known type that the created dynamic type represents.
+     * @return A dynamic type builder for this configuration that creates a rebased version of the given type.
+     */
     public <T> DynamicType.Builder<T> rebase(Class<T> levelType) {
         return rebase(new TypeDescription.ForLoadedType(levelType), ClassFileLocator.Compound.makeDefault());
     }
 
+    /**
+     * <p>
+     * Creates a dynamic type by weaving any changes into an already defined <i>level type</i>. The rebased type is
+     * created by adding methods to the <i>level type</i> where the original method implementations are copied to
+     * renamed, private methods within the created dynamic type and therefore remain invokable as super method calls.
+     * The result is a rebased type with subclass semantics.
+     * </p>
+     * <p>
+     * <b>Note</b>: It is possible to experience unexpected errors in case that the provided {@code levelType} and the
+     * corresponding class file get out of sync, i.e. a type is rebased several times without updating the class file.
+     * </p>
+     *
+     * @param levelType        The type which is to be rebased.
+     * @param classFileLocator A locator for finding a class file that represents a type.
+     * @param <T>              The most specific known type that the created dynamic type represents.
+     * @return A dynamic type builder for this configuration that creates a rebased version of the given type.
+     */
     public <T> DynamicType.Builder<T> rebase(Class<T> levelType, ClassFileLocator classFileLocator) {
         return rebase(new TypeDescription.ForLoadedType(levelType), classFileLocator);
     }
 
+    /**
+     * <p>
+     * Creates a dynamic type by weaving any changes into an already defined <i>level type</i>. The rebased type is
+     * created by adding methods to the <i>level type</i> where the original method implementations are copied to
+     * renamed, private methods within the created dynamic type and therefore remain invokable as super method calls.
+     * The result is a rebased type with subclass semantics. The given class must be found on the class path.
+     * Otherwise, the class file to the redefined class must be located explicitly by providing a locator by
+     * {@link net.bytebuddy.ByteBuddy#rebase(Class, net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator)}.
+     * </p>
+     * <p>
+     * <b>Note</b>: It is possible to experience unexpected errors in case that the provided {@code levelType} and the
+     * corresponding class file get out of sync, i.e. a type is rebased several times without updating the class file.
+     * </p>
+     *
+     * @param levelType The type which is to be rebased.
+     * @param <T>       The most specific known type that the created dynamic type represents.
+     * @return A dynamic type builder for this configuration that creates a rebased version of the given type.
+     */
     public <T> DynamicType.Builder<T> rebase(TypeDescription levelType) {
         return rebase(levelType, ClassFileLocator.Compound.makeDefault());
     }
 
+    /**
+     * <p>
+     * Creates a dynamic type by weaving any changes into an already defined <i>level type</i>. The rebased type is
+     * created by adding methods to the <i>level type</i> where the original method implementations are copied to
+     * renamed, private methods within the created dynamic type and therefore remain invokable as super method calls.
+     * The result is a rebased type with subclass semantics.
+     * </p>
+     * <p>
+     * <b>Note</b>: It is possible to experience unexpected errors in case that the provided {@code levelType} and the
+     * corresponding class file get out of sync, i.e. a type is rebased several times without updating the class file.
+     * </p>
+     *
+     * @param levelType        The type which is to be rebased.
+     * @param classFileLocator A locator for finding a class file that represents a type.
+     * @param <T>              The most specific known type that the created dynamic type represents.
+     * @return A dynamic type builder for this configuration that creates a rebased version of the given type.
+     */
     public <T> DynamicType.Builder<T> rebase(TypeDescription levelType, ClassFileLocator classFileLocator) {
         return new InliningDynamicTypeBuilder<T>(classFileVersion,
                 new NamingStrategy.Fixed(levelType.getName()),

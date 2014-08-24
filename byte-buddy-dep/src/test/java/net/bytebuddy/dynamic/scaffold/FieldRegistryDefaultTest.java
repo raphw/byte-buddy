@@ -80,6 +80,24 @@ public class FieldRegistryDefaultTest {
     }
 
     @Test
+    public void testPreparedHashCodeEquals() throws Exception {
+        assertThat(new FieldRegistry.Default().prepare(instrumentedType).hashCode(),
+                is(new FieldRegistry.Default().prepare(instrumentedType).hashCode()));
+        assertThat(new FieldRegistry.Default().prepare(instrumentedType),
+                is(new FieldRegistry.Default().prepare(instrumentedType)));
+        assertThat(new FieldRegistry.Default()
+                        .include(latentFieldMatcher, distinctFactory, null)
+                        .prepare(instrumentedType)
+                        .hashCode(),
+                not(is(new FieldRegistry.Default().hashCode())));
+        assertThat(new FieldRegistry.Default()
+                        .include(latentFieldMatcher, distinctFactory, null)
+                        .prepare(instrumentedType),
+                not(is(new FieldRegistry.Default()
+                        .prepare(instrumentedType))));
+    }
+
+    @Test
     public void testCompiledHashCodeEquals() throws Exception {
         assertThat(new FieldRegistry.Default().prepare(instrumentedType).compile(fallback).hashCode(),
                 is(new FieldRegistry.Default().prepare(instrumentedType).compile(fallback).hashCode()));

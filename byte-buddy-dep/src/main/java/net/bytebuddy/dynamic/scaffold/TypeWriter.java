@@ -1112,6 +1112,7 @@ public interface TypeWriter<T> {
          * @param loadedTypeInitializer  The loaded type initializer of the instrumented type.
          * @param explicitAuxiliaryTypes A list of explicit auxiliary types that are to be added to the created
          *                               dynamic type.
+         * @param classFileVersion       The class file version of the type that is to be written.
          * @param engine                 An engine for writing the actual class file for the instrumented type.
          */
         public Default(TypeDescription instrumentedType,

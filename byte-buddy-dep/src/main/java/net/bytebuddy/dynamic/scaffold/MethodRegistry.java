@@ -47,14 +47,44 @@ public interface MethodRegistry {
                           Instrumentation instrumentation,
                           MethodAttributeAppender.Factory attributeAppenderFactory);
 
+    /**
+     * Prepares this method registry for a given instrumented type.
+     *
+     * @param instrumentedType The instrumented type that is to be prepared.
+     * @return A prepared method registry.
+     */
     Prepared prepare(InstrumentedType instrumentedType);
 
+    /**
+     * A {@link net.bytebuddy.dynamic.scaffold.MethodRegistry} that was prepared for a given
+     * {@link net.bytebuddy.instrumentation.type.InstrumentedType}.
+     */
     static interface Prepared {
 
+        /**
+         * The readily prepared instrumented type with all optional members registered as they are required
+         * by this instances {@link net.bytebuddy.instrumentation.Instrumentation}s.
+         *
+         * @return The final instrumented type.
+         */
         TypeDescription getInstrumentedType();
 
+        /**
+         * The type initializer as it is required by this instance's
+         * {@link net.bytebuddy.instrumentation.Instrumentation}s.
+         *
+         * @return The final loaded type initializer.
+         */
         LoadedTypeInitializer getLoadedTypeInitializer();
 
+        /**
+         * Compiles this prepared method registry.
+         *
+         * @param instrumentationTargetFactory The instrumentation target factory to use for compilation.
+         * @param methodLookupEngine           The method lookup engine to use for compilation.
+         * @param fallback                     The fallback entry to use.
+         * @return A compiled method registry.
+         */
         Compiled compile(Instrumentation.Target.Factory instrumentationTargetFactory,
                          MethodLookupEngine methodLookupEngine,
                          TypeWriter.MethodPool.Entry.Factory fallback);
@@ -65,10 +95,27 @@ public interface MethodRegistry {
      */
     static interface Compiled extends TypeWriter.MethodPool {
 
+        /**
+         * The readily prepared instrumented type with all optional members registered as they are required
+         * by this instances {@link net.bytebuddy.instrumentation.Instrumentation}s.
+         *
+         * @return The final instrumented type.
+         */
         TypeDescription getInstrumentedType();
 
+        /**
+         * The type initializer as it is required by this instance's
+         * {@link net.bytebuddy.instrumentation.Instrumentation}s.
+         *
+         * @return The final loaded type initializer.
+         */
         LoadedTypeInitializer getLoadedTypeInitializer();
 
+        /**
+         * Returns a list of all methods that are invokable on the instrumented type.
+         *
+         * @return A list of all methods that are invokable on the instrumented type.
+         */
         MethodList getInvokableMethods();
     }
 
@@ -134,6 +181,9 @@ public interface MethodRegistry {
      */
     static class Default implements MethodRegistry {
 
+        /**
+         * A list of all entries in their registration order.
+         */
         private final List<Entry> entries;
 
         /**
@@ -212,18 +262,44 @@ public interface MethodRegistry {
             return "MethodRegistry.Default{entries=" + entries + '}';
         }
 
+        /**
+         * A prepared default method registry.
+         */
         protected static class Prepared implements MethodRegistry.Prepared {
 
+            /**
+             * A convenience index pointing to the first element of an array to improve the readability of the code.
+             */
             private static final int AT_BEGINNING = 0;
 
+            /**
+             * The instrumented type this method registry was prepared for.
+             */
             private final TypeDescription instrumentedType;
 
+            /**
+             * The loaded type initializer this method registry was prepared for.
+             */
             private final LoadedTypeInitializer loadedTypeInitializer;
 
+            /**
+             * All entries in their application order.
+             */
             private final List<Entry> entries;
 
+            /**
+             * All additional entries that were added during preparation.
+             */
             private final List<Entry> additionalEntries;
 
+            /**
+             * Creates a new prepared default method registry.
+             *
+             * @param instrumentedType      The instrumented type this method registry was prepared for.
+             * @param loadedTypeInitializer The loaded type initializer this method registry was prepared for.
+             * @param entries               All entries in their application order.
+             * @param additionalEntries     All additional entries that were added during preparation.
+             */
             protected Prepared(TypeDescription instrumentedType,
                                LoadedTypeInitializer loadedTypeInitializer,
                                List<Entry> entries,
@@ -308,12 +384,24 @@ public interface MethodRegistry {
             }
         }
 
+        /**
+         * A compiled default method registry.
+         */
         protected static class Compiled implements MethodRegistry.Compiled {
 
+            /**
+             * The instrumented type.
+             */
             private final TypeDescription instrumentedType;
 
+            /**
+             * The loaded type initializer.
+             */
             private final LoadedTypeInitializer loadedTypeInitializer;
 
+            /**
+             * A list of all methods that can be invoked on the instrumented type.
+             */
             private final MethodList invokableMethods;
 
             /**
@@ -326,11 +414,21 @@ public interface MethodRegistry {
              */
             private final MethodRegistry.Compiled.Entry fallback;
 
-            private Compiled(TypeDescription instrumentedType,
-                             LoadedTypeInitializer loadedTypeInitializer,
-                             MethodList invokableMethods,
-                             List<Entry> entries,
-                             MethodRegistry.Compiled.Entry fallback) {
+            /**
+             * Creates a new compiled default method registry.
+             *
+             * @param instrumentedType      The instrumented type.
+             * @param loadedTypeInitializer The loaded type initializer.
+             * @param invokableMethods      A list of all methods that can be invoked on the instrumented type.
+             * @param entries               The list of all compiled entries of this compiled method registry.
+             * @param fallback              The fallback entry to apply for any method that is not matched by any of
+             *                              the registered compiled entries.
+             */
+            protected Compiled(TypeDescription instrumentedType,
+                               LoadedTypeInitializer loadedTypeInitializer,
+                               MethodList invokableMethods,
+                               List<Entry> entries,
+                               MethodRegistry.Compiled.Entry fallback) {
                 this.instrumentedType = instrumentedType;
                 this.loadedTypeInitializer = loadedTypeInitializer;
                 this.invokableMethods = invokableMethods;
@@ -533,14 +631,29 @@ public interface MethodRegistry {
                 this.attributeAppenderFactory = attributeAppenderFactory;
             }
 
+            /**
+             * Returns this entry's latent method matcher.
+             *
+             * @return This entry's latent method matcher.
+             */
             public LatentMethodMatcher getLatentMethodMatcher() {
                 return latentMethodMatcher;
             }
 
+            /**
+             * Returns this entry's instrumentation.
+             *
+             * @return This entry's instrumentation.
+             */
             public Instrumentation getInstrumentation() {
                 return instrumentation;
             }
 
+            /**
+             * Returns this entry's attribute appender factory.
+             *
+             * @return This entry's attribute appender factory.
+             */
             public MethodAttributeAppender.Factory getAttributeAppenderFactory() {
                 return attributeAppenderFactory;
             }

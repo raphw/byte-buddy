@@ -57,7 +57,13 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
      */
     TypeList getExceptionTypes();
 
-    int getAdjustedModifiers(boolean appendsCode);
+    /**
+     * Returns this method modifier but adjusts its state of being abstract.
+     *
+     * @param nonAbstract {@code true} if the method should be treated as non-abstract.
+     * @return The adjusted modifiers.
+     */
+    int getAdjustedModifiers(boolean nonAbstract);
 
     /**
      * Checks if this method description represents a constructor.
@@ -171,8 +177,8 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         }
 
         @Override
-        public int getAdjustedModifiers(boolean appendsCode) {
-            return appendsCode
+        public int getAdjustedModifiers(boolean nonAbstract) {
+            return nonAbstract
                     ? getModifiers() & ~(Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE)
                     : getModifiers() & ~Opcodes.ACC_NATIVE | Opcodes.ACC_ABSTRACT;
         }

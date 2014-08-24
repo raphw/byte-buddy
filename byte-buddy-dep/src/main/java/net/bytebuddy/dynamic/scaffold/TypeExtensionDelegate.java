@@ -91,6 +91,11 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
      */
     private final RandomString randomString;
 
+    /**
+     * Signals if this type extension delegate is still capable of registering field cache entries. Such entries
+     * must be explicitly initialized in the instrumented type's type initializer such that no entries can be
+     * registered after the type initializer was written.
+     */
     private boolean canRegisterFieldCache;
 
     /**
@@ -311,14 +316,34 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
         }
     }
 
+    /**
+     * A byte code appender that writes the field cache entries to a given {@link org.objectweb.asm.MethodVisitor}.
+     */
     private static class FieldCacheAppender implements ByteCodeAppender {
 
+        /**
+         * The map of registered field cache entries.
+         */
         private final Map<FieldCacheEntry, FieldDescription> registeredFieldCacheEntries;
 
+        /**
+         * Creates a new field cache appender.
+         *
+         * @param registeredFieldCacheEntries A map of field cache entries to their field descriptions.
+         */
         private FieldCacheAppender(Map<FieldCacheEntry, FieldDescription> registeredFieldCacheEntries) {
             this.registeredFieldCacheEntries = registeredFieldCacheEntries;
         }
 
+        /**
+         * Resolves the actual method pool entry to be applied for a given set of field cache entries and the
+         * provided {@link net.bytebuddy.instrumentation.Instrumentation.Context.ExtractableView.InjectedCode}.
+         *
+         * @param originalEntry               The original entry that is provided by the user.
+         * @param registeredFieldCacheEntries A map of registered field cache entries.
+         * @param injectedCode                The explicitly supplied injected code.
+         * @return The entry to apply to the type initializer.
+         */
         public static TypeWriter.MethodPool.Entry resolve(TypeWriter.MethodPool.Entry originalEntry,
                                                           Map<FieldCacheEntry, FieldDescription> registeredFieldCacheEntries,
                                                           InjectedCode injectedCode) {
@@ -354,6 +379,22 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
             StackManipulation.Size stackSize = new StackManipulation.Compound(fieldInitialization)
                     .apply(methodVisitor, instrumentationContext);
             return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && registeredFieldCacheEntries.equals(((FieldCacheAppender) other).registeredFieldCacheEntries);
+        }
+
+        @Override
+        public int hashCode() {
+            return registeredFieldCacheEntries.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "TypeExtensionDelegate.FieldCacheAppender{registeredFieldCacheEntries=" + registeredFieldCacheEntries + '}';
         }
     }
 
@@ -420,74 +461,6 @@ public class TypeExtensionDelegate implements Instrumentation.Context.Extractabl
                     "fieldValue=" + fieldValue +
                     ", fieldType=" + fieldType +
                     '}';
-        }
-    }
-
-    /**
-     * An iterable view of a list that can be modified within the same thread without breaking
-     * the iterator. Instead, the iterator will continue its iteration over the additional entries
-     * that were prepended to the list.
-     *
-     * @param <S> The type of the list elements.
-     */
-    public static class SameThreadCoModifiableIterable<S> implements Iterable<S> {
-
-        /**
-         * A possibly mutable list of the elements this iterable represents.
-         */
-        private final List<? extends S> elements;
-
-        /**
-         * Creates a new iterable view.
-         *
-         * @param elements The elements to be represented by this view.
-         */
-        public SameThreadCoModifiableIterable(List<? extends S> elements) {
-            this.elements = elements;
-        }
-
-        @Override
-        public java.util.Iterator<S> iterator() {
-            return new Iterator();
-        }
-
-        @Override
-        public String toString() {
-            return "TypeExtensionDelegate.SameThreadCoModifiableIterable{elements=" + elements + '}';
-        }
-
-        /**
-         * The iterator over a {@link net.bytebuddy.dynamic.scaffold.TypeExtensionDelegate.SameThreadCoModifiableIterable}.
-         */
-        private class Iterator implements java.util.Iterator<S> {
-
-            /**
-             * The current index of this iteration.
-             */
-            private int index = 0;
-
-            @Override
-            public boolean hasNext() {
-                return index < elements.size();
-            }
-
-            @Override
-            public S next() {
-                return elements.get(index++);
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public String toString() {
-                return "TypeExtensionDelegate.SameThreadCoModifiableIterable.Iterator{" +
-                        "iterable=" + SameThreadCoModifiableIterable.this +
-                        ", index=" + index +
-                        '}';
-            }
         }
     }
 

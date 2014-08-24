@@ -28,6 +28,11 @@ public interface ByteCodeElement {
      */
     String getDescriptor();
 
+    /**
+     * Returns the generic signature of this byte code element.
+     *
+     * @return The generic signature or {@code null} if this element is not generic.
+     */
     String getGenericSignature();
 
     /**

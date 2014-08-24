@@ -168,12 +168,25 @@ public interface ByteCodeAppender {
         }
     }
 
+    /**
+     * A simple byte code appender that only represents a given array of
+     * {@link net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation}s.
+     */
     static class Simple implements ByteCodeAppender {
 
+        /**
+         * A compound stack manipulation to be applied for this byte code appender.
+         */
         private final StackManipulation stackManipulation;
 
-        public Simple(StackManipulation stackManipulation) {
-            this.stackManipulation = stackManipulation;
+        /**
+         * Creates a new simple byte code appender which represents the given stack manipulation.
+         *
+         * @param stackManipulation The stack manipulations to apply for this byte code appender in their application
+         *                          order.
+         */
+        public Simple(StackManipulation... stackManipulation) {
+            this.stackManipulation = new StackManipulation.Compound(stackManipulation);
         }
 
         @Override

@@ -52,8 +52,14 @@ public interface AuxiliaryType {
          */
         MethodDescription registerAccessorFor(Instrumentation.SpecialMethodInvocation specialMethodInvocation);
 
+        /**
+         * A method accessor factory that forbids any accessor registration.
+         */
         static enum Illegal implements MethodAccessorFactory {
 
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
             @Override

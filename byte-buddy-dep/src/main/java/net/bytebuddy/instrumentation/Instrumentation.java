@@ -498,16 +498,48 @@ public interface Instrumentation {
              */
             List<DynamicType> getRegisteredAuxiliaryTypes();
 
+            /**
+             * Writes any information that was registered with an {@link net.bytebuddy.instrumentation.Instrumentation.Context}
+             * to the provided class visitor. This contains any fields for value caching, any accessor method and it
+             * writes the type initializer. The type initializer must therefore never be written manually.
+             *
+             * @param classVisitor The class visitor to which the extractable view is to be written.
+             * @param methodPool   A method pool which is queried for any user code to add to the type initializer.
+             * @param injectedCode Potential code that is to be injected into the type initializer.
+             */
             void drain(ClassVisitor classVisitor, TypeWriter.MethodPool methodPool, InjectedCode injectedCode);
 
+            /**
+             * When draining an instrumentation context, a type initializer might be written to the created class
+             * file. If any code must be explicitly invoked from within the type initializer, this can be achieved
+             * by providing a code injection by this instance. The injected code is added after the class is set up but
+             * before any user code is run from within the type initializer.
+             */
             static interface InjectedCode {
 
+                /**
+                 * Returns the injected code. This method must only be called if there is actual code injected as
+                 * signaled by {@link net.bytebuddy.instrumentation.Instrumentation.Context.ExtractableView.InjectedCode#isInjected()}.
+                 *
+                 * @return A stack manipulation that represents the injected code.
+                 */
                 StackManipulation getInjectedCode();
 
+                /**
+                 * Checks if code is injected.
+                 *
+                 * @return {@code true} if code is injected.
+                 */
                 boolean isInjected();
 
+                /**
+                 * A canonical implementation of non-applicable injected code.
+                 */
                 static enum None implements InjectedCode {
 
+                    /**
+                     * The singleton instance.
+                     */
                     INSTANCE;
 
                     @Override

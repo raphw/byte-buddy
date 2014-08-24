@@ -12,8 +12,15 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 import java.util.Collections;
 import java.util.Set;
 
+/**
+ * A trivial type that extends {@link java.lang.Object} without defining any fields, methods or constructors.
+ * This type is meant to be used as a marker type only.
+ */
 public enum TrivialType implements AuxiliaryType, MethodLookupEngine.Factory, MethodLookupEngine {
 
+    /**
+     * The singleton instance.
+     */
     INSTANCE;
 
     @Override

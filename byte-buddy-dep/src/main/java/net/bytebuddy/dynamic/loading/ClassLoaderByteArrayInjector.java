@@ -14,6 +14,9 @@ import java.lang.reflect.Method;
  */
 public class ClassLoaderByteArrayInjector {
 
+    /**
+     * A convenience variable representing the first index of an array, to make the code more readable.
+     */
     private static final int FROM_BEGINNING = 0;
 
     /**
@@ -21,6 +24,10 @@ public class ClassLoaderByteArrayInjector {
      */
     private static final ReflectionStore REFLECTION_STORE;
 
+    /**
+     * Obtains the reflective instances used by this injector or a no-op instance that throws the exception
+     * that occurred when attempting to obtain the reflective member instances.
+     */
     static {
         ReflectionStore reflectionStore;
         try {

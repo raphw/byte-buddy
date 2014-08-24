@@ -291,14 +291,52 @@ public class InliningDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 '}';
     }
 
+    /**
+     * An inlining dynamic type builder's target handler is responsible to proving any information that is required
+     * for defining the type.
+     */
     public static interface TargetHandler {
 
+        /**
+         * Prepares this target handler to a given set of type creation properties.
+         *
+         * @param ignoredMethods   A matcher for determining methods that are to be ignored for instrumentation.
+         * @param classFileVersion The class file version for the created dynamic type.
+         * @param instrumentedType The instrumented type.
+         * @return A prepared target handler.
+         */
         Prepared prepare(MethodMatcher ignoredMethods,
                          ClassFileVersion classFileVersion,
                          TypeDescription instrumentedType);
 
+        /**
+         * Performs a subclass instrumentation which creates a redefinition of the given type by invoking the
+         * actual super method when redefining a method.
+         */
+        static enum ForSubclassInstrumentation implements TargetHandler {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public Prepared prepare(MethodMatcher ignoredMethods,
+                                    ClassFileVersion classFileVersion,
+                                    TypeDescription instrumentedType) {
+                return Prepared.ForSubclassInstrumentation.INSTANCE;
+            }
+        }
+
+        /**
+         * Performs a rebase instrumentation which creates a redefinition of the given type by rebasing the original
+         * code of redefined method and by invoking these methods when a super method should be invoked.
+         */
         static enum ForRebaseInstrumentation implements TargetHandler {
 
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
             @Override
@@ -311,30 +349,49 @@ public class InliningDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
             }
         }
 
-        static enum ForSubclassInstrumentation implements TargetHandler {
-
-            INSTANCE;
-
-            @Override
-            public Prepared prepare(MethodMatcher ignoredMethods,
-                                    ClassFileVersion classFileVersion,
-                                    TypeDescription instrumentedType) {
-                return Prepared.ForSubclassInstrumentation.INSTANCE;
-            }
-        }
-
+        /**
+         * A prepared {@link net.bytebuddy.dynamic.scaffold.inline.InliningDynamicTypeBuilder.TargetHandler}.
+         */
         static interface Prepared {
 
+            /**
+             * Returns the method rebase resolver to be used when creating the dynamic type.
+             *
+             * @return The method rebase resolver to be used when creating the dynamic type.
+             */
             MethodRebaseResolver getMethodRebaseResolver();
 
+            /**
+             * Returns the method pool entry that should be used as a default.
+             *
+             * @return The method pool entry that should be used as a default.
+             */
             TypeWriter.MethodPool.Entry.Factory getMethodPoolEntryDefault();
 
+            /**
+             * Creates an instrumentation target factory that is to be used when creating the type.
+             *
+             * @param bridgeMethodResolverFactory A bridge method resolver factory.
+             * @return An instrumentation target factory that is to be used when creating the type.
+             */
             Instrumentation.Target.Factory factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory);
 
+            /**
+             * Returns a list of explicitly registered auxiliary types.
+             *
+             * @return A list of explicitly registered auxiliary types.
+             */
             List<DynamicType> getAuxiliaryTypes();
 
+            /**
+             * A prepared target handler for an instrumentation that creates a redefinition of the given type by
+             * invoking the actual super method when redefining a method.
+             */
             static enum ForSubclassInstrumentation implements Prepared {
 
+                /**
+                 * The singleton instance.
+                 */
                 INSTANCE;
 
                 @Override
@@ -358,14 +415,35 @@ public class InliningDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 }
             }
 
+            /**
+             * A prepared target handler for an instrumentation that creates a redefinition of the given type by
+             * rebasing the original code of redefined method and by invoking these methods when a super method
+             * should be invoked.
+             */
             static class ForRebaseInstrumentation implements Prepared {
 
-                private static final String SUFFIX = "trivial";
+                /**
+                 * The suffix that is to be used when creating a placeholder type.
+                 */
+                private static final String SUFFIX = "placeholder";
 
+                /**
+                 * The method rebase resolver to use.
+                 */
                 private final MethodRebaseResolver methodRebaseResolver;
 
+                /**
+                 * The placeholder type to use.
+                 */
                 private final DynamicType placeholderType;
 
+                /**
+                 * Creates a new prepared target handler for a rebase instrumentation.
+                 *
+                 * @param ignoredMethods   The methods that should be ignored for rebasing.
+                 * @param classFileVersion The class file version for the created dynamic type.
+                 * @param instrumentedType The instrumented type.
+                 */
                 public ForRebaseInstrumentation(MethodMatcher ignoredMethods,
                                                 ClassFileVersion classFileVersion,
                                                 TypeDescription instrumentedType) {
@@ -377,9 +455,15 @@ public class InliningDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                             new MethodRebaseResolver.MethodNameTransformer.Suffixing(new RandomString()));
                 }
 
-                private static String trivialTypeNameFor(TypeDescription rawInstrumentedType) {
+                /**
+                 * Creates a trivial name for the instrumented type.
+                 *
+                 * @param instrumentedType The instrumented type.
+                 * @return A trivial name that is derived from the supplied instrumented type.
+                 */
+                private static String trivialTypeNameFor(TypeDescription instrumentedType) {
                     return String.format("%s$%s$%s",
-                            rawInstrumentedType.getName(),
+                            instrumentedType.getName(),
                             SUFFIX,
                             RandomString.make());
                 }
@@ -425,10 +509,21 @@ public class InliningDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                             '}';
                 }
 
+                /**
+                 * A method pool entry with a rebase implementation as its default behavior.
+                 */
                 private static class MethodRebaseDelegation implements TypeWriter.MethodPool.Entry, ByteCodeAppender {
 
+                    /**
+                     * The instrumentation target.
+                     */
                     private final Instrumentation.Target instrumentationTarget;
 
+                    /**
+                     * Creates a new method rebase delegation.
+                     *
+                     * @param instrumentationTarget The instrumentation target.
+                     */
                     private MethodRebaseDelegation(Instrumentation.Target instrumentationTarget) {
                         this.instrumentationTarget = instrumentationTarget;
                     }
@@ -499,8 +594,14 @@ public class InliningDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                         return "RebaseDynamicTypeBuilder.MethodRebaseDelegation{instrumentationTarget=" + instrumentationTarget + '}';
                     }
 
+                    /**
+                     * A factory for creating a method rebase delegation entry.
+                     */
                     private static enum Factory implements TypeWriter.MethodPool.Entry.Factory {
 
+                        /**
+                         * The singleton instance.
+                         */
                         INSTANCE;
 
                         @Override

@@ -1,6 +1,5 @@
 package net.bytebuddy.dynamic.scaffold;
 
-import jdk.internal.org.objectweb.asm.Type;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator;
@@ -23,6 +22,7 @@ import org.mockito.Mock;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -154,28 +154,6 @@ public class TypeWriterEngineForRedefinitionTest {
                 methodPool,
                 classFileLocator,
                 methodRebaseResolver).create(instrumentationContext);
-    }
-
-    @Retention(RetentionPolicy.RUNTIME)
-    public static @interface Bar {
-        /* empty */
-    }
-
-    @Bar
-    @SuppressWarnings("unused")
-    public static abstract class Foo {
-
-        private Void foo;
-
-        public abstract void foo();
-
-        public void bar() {
-            /* empty */
-        }
-
-        public void qux() {
-            /* empty */
-        }
     }
 
     @Test
@@ -312,5 +290,27 @@ public class TypeWriterEngineForRedefinitionTest {
                         methodPool,
                         classFileLocator,
                         otherMethodRebaseResolver))));
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    public static @interface Bar {
+        /* empty */
+    }
+
+    @Bar
+    @SuppressWarnings("unused")
+    public static abstract class Foo {
+
+        private Void foo;
+
+        public abstract void foo();
+
+        public void bar() {
+            /* empty */
+        }
+
+        public void qux() {
+            /* empty */
+        }
     }
 }

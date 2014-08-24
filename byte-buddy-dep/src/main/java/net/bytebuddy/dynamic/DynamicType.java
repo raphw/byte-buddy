@@ -2106,6 +2106,15 @@ public interface DynamicType {
                             methodTokens);
                 }
 
+                /**
+                 * Returns the outer instance.
+                 *
+                 * @return The outer instance.
+                 */
+                private DynamicType.Builder<?> getDynamicTypeBuilder() {
+                    return AbstractBase.this;
+                }
+
                 @Override
                 @SuppressWarnings("unchecked")
                 public boolean equals(Object other) {
@@ -2119,10 +2128,6 @@ public interface DynamicType {
                 @Override
                 public int hashCode() {
                     return 31 * AbstractBase.this.hashCode() + Arrays.hashCode(interfaceType);
-                }
-
-                private DynamicType.Builder<?> getDynamicTypeBuilder() {
-                    return AbstractBase.this;
                 }
 
                 @Override

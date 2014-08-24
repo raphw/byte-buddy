@@ -131,6 +131,12 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
      */
     TypeDescription getEnclosingClass();
 
+    /**
+     * Returns the type's actual modifiers as present in the class file. For example, a type cannot be {@code private}.
+     * but it modifiers might reflect this property nevertheless if a class was defined as a private inner class.
+     *
+     * @return The type's actual modifiers.
+     */
     int getActualModifiers();
 
     /**
