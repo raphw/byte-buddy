@@ -48,12 +48,13 @@ public class ByteBuddyAgent {
                 return instrumentation;
             }
         } catch (Exception ignored) {
-            try {
-                doInstall();
-            } catch (Exception e) {
-                throw new IllegalStateException("The programmatic installation of the Byte Buddy agent is only " +
-                        "possible on the OpenJDK and JDKs with a compatible 'tools.jar'", e);
-            }
+            /* do nothing, but try to install agent */
+        }
+        try {
+            doInstall();
+        } catch (Exception e) {
+            throw new IllegalStateException("The programmatic installation of the Byte Buddy agent is only " +
+                    "possible on the OpenJDK and JDKs with a compatible 'tools.jar'", e);
         }
         return getInstrumentation();
     }
