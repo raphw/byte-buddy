@@ -57,16 +57,16 @@ public class DynamicTypeDefaultUnloadedTest {
         loadedTypes.put(typeDescription, MAIN_TYPE);
         loadedTypes.put(auxiliaryTypeDescription, AUXILIARY_TYPE);
         when(classLoadingStrategy.load(any(ClassLoader.class), any(LinkedHashMap.class))).thenReturn(loadedTypes);
-        when(auxiliaryType.getDescription()).thenReturn(auxiliaryTypeDescription);
+        when(auxiliaryType.getTypeDescription()).thenReturn(auxiliaryTypeDescription);
         when(auxiliaryType.getBytes()).thenReturn(auxiliaryTypeByte);
-        when(auxiliaryType.getTypeInitializers()).thenReturn(Collections.singletonMap(auxiliaryTypeDescription, auxiliaryLoadedTypeInitializer));
+        when(auxiliaryType.getLoadedTypeInitializers()).thenReturn(Collections.singletonMap(auxiliaryTypeDescription, auxiliaryLoadedTypeInitializer));
         when(auxiliaryType.getRawAuxiliaryTypes()).thenReturn(Collections.<TypeDescription, byte[]>emptyMap());
     }
 
     @Test
     public void testQueries() throws Exception {
         DynamicType.Loaded<?> loaded = unloaded.load(classLoader, classLoadingStrategy);
-        assertThat(loaded.getDescription(), is(typeDescription));
+        assertThat(loaded.getTypeDescription(), is(typeDescription));
         assertThat(loaded.getBytes(), is(binaryRepresentation));
         assertThat(loaded.getRawAuxiliaryTypes(), is(Collections.singletonMap(auxiliaryTypeDescription, auxiliaryTypeByte)));
     }

@@ -28,9 +28,9 @@ public class TrivialTypeTest {
     @Test
     public void testCreation() throws Exception {
         DynamicType dynamicType = TrivialType.INSTANCE.make(FOO, classFileVersion, methodAccessorFactory);
-        assertThat(dynamicType.getDescription().getName(), is(FOO));
-        assertThat(dynamicType.getDescription().getModifiers(), is(Opcodes.ACC_SYNTHETIC));
+        assertThat(dynamicType.getTypeDescription().getName(), is(FOO));
+        assertThat(dynamicType.getTypeDescription().getModifiers(), is(Opcodes.ACC_SYNTHETIC));
         assertThat(dynamicType.getRawAuxiliaryTypes().size(), is(0));
-        assertThat(dynamicType.getTypeInitializers().get(dynamicType.getDescription()).isAlive(), is(false));
+        assertThat(dynamicType.getLoadedTypeInitializers().get(dynamicType.getTypeDescription()).isAlive(), is(false));
     }
 }

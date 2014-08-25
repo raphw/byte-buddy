@@ -46,7 +46,7 @@ public interface DynamicType {
      *
      * @return A description of this dynamic type.
      */
-    TypeDescription getDescription();
+    TypeDescription getTypeDescription();
 
     /**
      * Returns a byte array representing this dynamic type. This byte array might be reused by this dynamic type and
@@ -68,7 +68,7 @@ public interface DynamicType {
      *
      * @return A mapping of all types' descriptions to their loaded type initializers.
      */
-    Map<TypeDescription, LoadedTypeInitializer> getTypeInitializers();
+    Map<TypeDescription, LoadedTypeInitializer> getLoadedTypeInitializers();
 
     /**
      * Checks if a dynamic type requires some form of explicit type initialization, either for itself or for one
@@ -78,7 +78,7 @@ public interface DynamicType {
      *
      * @return {@code true} if this type requires explicit type initialization.
      */
-    boolean hasAliveTypeInitializers();
+    boolean hasAliveLoadedTypeInitializers();
 
     /**
      * Saves a dynamic type in a given folder using the Java class file format while respecting the naming conventions
@@ -2232,23 +2232,23 @@ public interface DynamicType {
         }
 
         @Override
-        public TypeDescription getDescription() {
+        public TypeDescription getTypeDescription() {
             return typeDescription;
         }
 
         @Override
-        public Map<TypeDescription, LoadedTypeInitializer> getTypeInitializers() {
+        public Map<TypeDescription, LoadedTypeInitializer> getLoadedTypeInitializers() {
             Map<TypeDescription, LoadedTypeInitializer> classLoadingCallbacks = new HashMap<TypeDescription, LoadedTypeInitializer>();
             for (DynamicType auxiliaryType : auxiliaryTypes) {
-                classLoadingCallbacks.putAll(auxiliaryType.getTypeInitializers());
+                classLoadingCallbacks.putAll(auxiliaryType.getLoadedTypeInitializers());
             }
             classLoadingCallbacks.put(typeDescription, loadedTypeInitializer);
             return classLoadingCallbacks;
         }
 
         @Override
-        public boolean hasAliveTypeInitializers() {
-            for (LoadedTypeInitializer loadedTypeInitializer : getTypeInitializers().values()) {
+        public boolean hasAliveLoadedTypeInitializers() {
+            for (LoadedTypeInitializer loadedTypeInitializer : getLoadedTypeInitializers().values()) {
                 if (loadedTypeInitializer.isAlive()) {
                     return true;
                 }
@@ -2265,7 +2265,7 @@ public interface DynamicType {
         public Map<TypeDescription, byte[]> getRawAuxiliaryTypes() {
             Map<TypeDescription, byte[]> auxiliaryTypes = new HashMap<TypeDescription, byte[]>();
             for (DynamicType auxiliaryType : this.auxiliaryTypes) {
-                auxiliaryTypes.put(auxiliaryType.getDescription(), auxiliaryType.getBytes());
+                auxiliaryTypes.put(auxiliaryType.getTypeDescription(), auxiliaryType.getBytes());
                 auxiliaryTypes.putAll(auxiliaryType.getRawAuxiliaryTypes());
             }
             return auxiliaryTypes;
@@ -2360,7 +2360,7 @@ public interface DynamicType {
              * @return A new hash map that contains the same classes as those given.
              */
             private Map<TypeDescription, Class<?>> initialize(Map<TypeDescription, Class<?>> uninitialized) {
-                Map<TypeDescription, LoadedTypeInitializer> typeInitializers = getTypeInitializers();
+                Map<TypeDescription, LoadedTypeInitializer> typeInitializers = getLoadedTypeInitializers();
                 for (Map.Entry<TypeDescription, Class<?>> entry : uninitialized.entrySet()) {
                     typeInitializers.get(entry.getKey()).onLoad(entry.getValue());
                 }

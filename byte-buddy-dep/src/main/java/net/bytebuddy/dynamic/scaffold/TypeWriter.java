@@ -24,6 +24,7 @@ import org.objectweb.asm.commons.SimpleRemapper;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -563,7 +564,8 @@ public interface TypeWriter<T> {
                                 instrumentedType,
                                 new TypeDescription.ForLoadedType(void.class),
                                 new TypeList.Empty(),
-                                TYPE_INITIALIZER_PROXY_MODIFIERS);
+                                TYPE_INITIALIZER_PROXY_MODIFIERS,
+                                Collections.<TypeDescription>emptyList());
                     }
 
                     @Override
@@ -1129,7 +1131,7 @@ public interface TypeWriter<T> {
 
         @Override
         public DynamicType.Unloaded<S> make() {
-            Instrumentation.Context.ExtractableView instrumentationContext = new TypeExtensionDelegate(instrumentedType,
+            Instrumentation.Context.ExtractableView instrumentationContext = new Instrumentation.Context.Default(instrumentedType,
                     classFileVersion);
             return new DynamicType.Default.Unloaded<S>(instrumentedType,
                     engine.create(instrumentationContext),

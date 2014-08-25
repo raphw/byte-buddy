@@ -10,7 +10,6 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 import org.objectweb.asm.Opcodes;
 
-import java.util.Arrays;
 import java.util.Collections;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -26,7 +25,7 @@ public class MethodDescriptionLatentTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeDescription declaringType, returnType, parameterType;
+    private TypeDescription declaringType, returnType, parameterType, exceptionType;
 
     private MethodDescription latentMethod, latentConstructor;
 
@@ -40,13 +39,15 @@ public class MethodDescriptionLatentTest {
         latentMethod = new MethodDescription.Latent(FOO,
                 declaringType,
                 returnType,
-                Arrays.asList(parameterType),
-                Opcodes.ACC_PUBLIC);
+                Collections.singletonList(parameterType),
+                Opcodes.ACC_PUBLIC,
+                Collections.singletonList(exceptionType));
         latentConstructor = new MethodDescription.Latent(MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
                 declaringType,
                 returnType,
-                Arrays.asList(parameterType),
-                Opcodes.ACC_PUBLIC);
+                Collections.singletonList(parameterType),
+                Opcodes.ACC_PUBLIC,
+                Collections.singletonList(exceptionType));
     }
 
     @Test
@@ -65,6 +66,12 @@ public class MethodDescriptionLatentTest {
     public void testGetDescriptor() throws Exception {
         assertThat(latentMethod.getDescriptor(), is(DESCRIPTOR));
         assertThat(latentConstructor.getDescriptor(), is(DESCRIPTOR));
+    }
+
+    @Test
+    public void testGetExceptionTypes() throws Exception {
+        assertThat(latentMethod.getExceptionTypes(), is(Collections.singletonList(exceptionType)));
+        assertThat(latentConstructor.getExceptionTypes(), is(Collections.singletonList(exceptionType)));
     }
 
     @Test

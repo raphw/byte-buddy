@@ -7,6 +7,7 @@ import net.bytebuddy.instrumentation.ModifierContributor;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.modifier.SyntheticState;
 import net.bytebuddy.modifier.Visibility;
+import org.objectweb.asm.Opcodes;
 
 /**
  * An auxiliary type that provides services to the instrumentation of another type. Implementations should provide
@@ -40,6 +41,11 @@ public interface AuxiliaryType {
      * by the Java compiler that creates accessor methods for example to implement inner classes.
      */
     static interface MethodAccessorFactory {
+
+        /**
+         * The modifier for accessor methods. Accessor methods might additionally be {@code static}.
+         */
+        static final int ACCESSOR_METHOD_MODIFIER = Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL;
 
         /**
          * Registers an accessor method for a

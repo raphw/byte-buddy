@@ -45,7 +45,7 @@ public class TypeWriterDefaultTest {
     public void setUp() throws Exception {
         explicitAuxiliaryTypes = Arrays.asList(firstAuxiliary);
         when(engine.create(any(Instrumentation.Context.ExtractableView.class))).thenReturn(MAIN);
-        when(firstAuxiliary.getDescription()).thenReturn(otherAuxiliaryDescription);
+        when(firstAuxiliary.getTypeDescription()).thenReturn(otherAuxiliaryDescription);
         when(firstAuxiliary.getBytes()).thenReturn(FIRST);
     }
 
@@ -57,8 +57,8 @@ public class TypeWriterDefaultTest {
                 classFileVersion,
                 engine).make();
         assertThat(dynamicType.getBytes(), is(MAIN));
-        assertThat(dynamicType.getDescription(), is(instrumentedType));
-        assertThat(dynamicType.getTypeInitializers().get(instrumentedType), is(loadedTypeInitializer));
+        assertThat(dynamicType.getTypeDescription(), is(instrumentedType));
+        assertThat(dynamicType.getLoadedTypeInitializers().get(instrumentedType), is(loadedTypeInitializer));
         assertThat(dynamicType.getRawAuxiliaryTypes().size(), is(1));
         assertThat(dynamicType.getRawAuxiliaryTypes().get(otherAuxiliaryDescription), is(FIRST));
     }

@@ -11,6 +11,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -514,12 +515,17 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         /**
          * The parameter types of this methods.
          */
-        private final List<TypeDescription> parameterTypes;
+        private final List<? extends TypeDescription> parameterTypes;
 
         /**
          * The modifiers of this method.
          */
         private final int modifiers;
+
+        /**
+         * This method's exception types.
+         */
+        private final List<? extends TypeDescription> exceptionTypes;
 
         /**
          * Creates an immutable latent method description.
@@ -529,17 +535,20 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
          * @param returnType     The return type of this method.
          * @param parameterTypes The parameter types of this method.
          * @param modifiers      The modifiers of this method.
+         * @param exceptionTypes The exception types of this method.
          */
         public Latent(String internalName,
                       TypeDescription declaringType,
                       TypeDescription returnType,
-                      List<TypeDescription> parameterTypes,
-                      int modifiers) {
+                      List<? extends TypeDescription> parameterTypes,
+                      int modifiers,
+                      List<? extends TypeDescription> exceptionTypes) {
             this.internalName = internalName;
             this.declaringType = declaringType;
             this.returnType = returnType;
             this.parameterTypes = parameterTypes;
             this.modifiers = modifiers;
+            this.exceptionTypes = exceptionTypes;
         }
 
         /**
@@ -553,7 +562,8 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
                     declaringType,
                     new TypeDescription.ForLoadedType(void.class),
                     new TypeList.Empty(),
-                    Opcodes.ACC_STATIC);
+                    Opcodes.ACC_STATIC,
+                    Collections.<TypeDescription>emptyList());
         }
 
         @Override
@@ -573,7 +583,7 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
 
         @Override
         public TypeList getExceptionTypes() {
-            return new TypeList.Empty();
+            return new TypeList.Explicit(exceptionTypes);
         }
 
         @Override
@@ -644,6 +654,7 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
                     ", returnType=" + returnType +
                     ", parameterTypes=" + parameterTypes +
                     ", modifiers=" + modifiers +
+                    ", exceptionTypes=" + exceptionTypes +
                     '}';
         }
     }

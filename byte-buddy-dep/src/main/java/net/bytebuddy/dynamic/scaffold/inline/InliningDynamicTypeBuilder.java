@@ -451,7 +451,7 @@ public class InliningDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                             classFileVersion,
                             AuxiliaryType.MethodAccessorFactory.Illegal.INSTANCE);
                     this.methodRebaseResolver = new MethodRebaseResolver.Default(ignoredMethods,
-                            placeholderType.getDescription(),
+                            placeholderType.getTypeDescription(),
                             new MethodRebaseResolver.MethodNameTransformer.Suffixing(new RandomString()));
                 }
 

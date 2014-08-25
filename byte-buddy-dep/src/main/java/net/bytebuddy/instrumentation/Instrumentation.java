@@ -1,19 +1,26 @@
 package net.bytebuddy.instrumentation;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.dynamic.scaffold.TypeWriter;
+import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import net.bytebuddy.instrumentation.method.bytecode.stack.member.FieldAccess;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocation;
+import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
+import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
+import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
 import java.util.*;
 
@@ -491,6 +498,11 @@ public interface Instrumentation {
         static interface ExtractableView extends Context {
 
             /**
+             * A default modifier for a field that serves as a cache.
+             */
+            static final int FIELD_CACHE_MODIFIER = Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC;
+
+            /**
              * Returns any {@link net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType} that was registered
              * with this {@link net.bytebuddy.instrumentation.Instrumentation.Context}.
              *
@@ -551,6 +563,533 @@ public interface Instrumentation {
                     public boolean isInjected() {
                         return false;
                     }
+                }
+            }
+        }
+
+        /**
+         * A default implementation of an {@link net.bytebuddy.instrumentation.Instrumentation.Context.ExtractableView}
+         * which serves as its own {@link net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType.MethodAccessorFactory}.
+         */
+        static class Default implements Instrumentation.Context.ExtractableView, AuxiliaryType.MethodAccessorFactory {
+
+            /**
+             * The default name suffix to be appended to an accessor method.
+             */
+            private static final String DEFAULT_ACCESSOR_METHOD_SUFFIX = "accessor";
+
+            /**
+             * The default name suffix to be prepended to a cache field.
+             */
+            private static final String DEFAULT_FIELD_CACHE_PREFIX = "cachedValue";
+
+            /**
+             * The instrumented type that this instance represents.
+             */
+            private final TypeDescription instrumentedType;
+
+            /**
+             * The class file version that the instrumented type is written in.
+             */
+            private final ClassFileVersion classFileVersion;
+
+            /**
+             * The name suffix to be appended to an accessor method.
+             */
+            private final String accessorMethodSuffix;
+
+            /**
+             * The name prefix to be prepended to a cache field.
+             */
+            private final String fieldCachePrefix;
+
+            /**
+             * The naming strategy for naming auxiliary types that are registered.
+             */
+            private final AuxiliaryTypeNamingStrategy auxiliaryTypeNamingStrategy;
+
+            /**
+             * A mapping of special method invocations to their accessor methods that each invoke their mapped invocation.
+             */
+            private final Map<Instrumentation.SpecialMethodInvocation, MethodDescription> registeredAccessorMethods;
+
+            /**
+             * A map of accessor methods to a method pool entry that represents their implementation.
+             */
+            private final Map<MethodDescription, TypeWriter.MethodPool.Entry> accessorMethodEntries;
+
+            /**
+             * A map of registered auxiliary types to their dynamic type representation.
+             */
+            private final Map<AuxiliaryType, DynamicType> auxiliaryTypes;
+
+            /**
+             * A map of already registered field caches to their field representation.
+             */
+            private final Map<FieldCacheEntry, FieldDescription> registeredFieldCacheEntries;
+
+            /**
+             * An instance for supporting the creation of random values.
+             */
+            private final RandomString randomString;
+
+            /**
+             * Signals if this type extension delegate is still capable of registering field cache entries. Such entries
+             * must be explicitly initialized in the instrumented type's type initializer such that no entries can be
+             * registered after the type initializer was written.
+             */
+            private boolean canRegisterFieldCache;
+
+            /**
+             * Creates a new delegate. This constructor implicitly defines default naming strategies for created accessor
+             * method and registered auxiliary types.
+             *
+             * @param instrumentedType The description of the type that is currently subject of creation.
+             * @param classFileVersion The class file version of the created class.
+             */
+            public Default(TypeDescription instrumentedType, ClassFileVersion classFileVersion) {
+                this(instrumentedType,
+                        classFileVersion,
+                        DEFAULT_ACCESSOR_METHOD_SUFFIX,
+                        DEFAULT_FIELD_CACHE_PREFIX,
+                        new AuxiliaryTypeNamingStrategy.SuffixingRandom(DEFAULT_ACCESSOR_METHOD_SUFFIX));
+            }
+
+            /**
+             * Creates a new delegate.
+             *
+             * @param instrumentedType            The description of the type that is currently subject of creation.
+             * @param classFileVersion            The class file version of the created class.
+             * @param accessorMethodSuffix        A suffix that is added to any accessor method where the method name is
+             *                                    prefixed by the accessed method's name.
+             * @param fieldCachePrefix            A prefix that is added to any field cache.
+             * @param auxiliaryTypeNamingStrategy The naming strategy for naming an auxiliary type.
+             */
+            public Default(TypeDescription instrumentedType,
+                           ClassFileVersion classFileVersion,
+                           String accessorMethodSuffix,
+                           String fieldCachePrefix,
+                           AuxiliaryTypeNamingStrategy auxiliaryTypeNamingStrategy) {
+                this.instrumentedType = instrumentedType;
+                this.classFileVersion = classFileVersion;
+                this.accessorMethodSuffix = accessorMethodSuffix;
+                this.fieldCachePrefix = fieldCachePrefix;
+                this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
+                registeredAccessorMethods = new HashMap<Instrumentation.SpecialMethodInvocation, MethodDescription>();
+                accessorMethodEntries = new HashMap<MethodDescription, TypeWriter.MethodPool.Entry>();
+                auxiliaryTypes = new HashMap<AuxiliaryType, DynamicType>();
+                registeredFieldCacheEntries = new HashMap<FieldCacheEntry, FieldDescription>();
+                randomString = new RandomString();
+                canRegisterFieldCache = true;
+            }
+
+            @Override
+            public MethodDescription registerAccessorFor(Instrumentation.SpecialMethodInvocation specialMethodInvocation) {
+                MethodDescription accessorMethod = registeredAccessorMethods.get(specialMethodInvocation);
+                if (accessorMethod == null) {
+                    String name = String.format("%s$%s$%s", specialMethodInvocation.getMethodDescription().getInternalName(),
+                            accessorMethodSuffix,
+                            randomString.nextString());
+                    accessorMethod = new MethodDescription.Latent(name,
+                            instrumentedType,
+                            specialMethodInvocation.getMethodDescription().getReturnType(),
+                            specialMethodInvocation.getMethodDescription().getParameterTypes(),
+                            ACCESSOR_METHOD_MODIFIER | (specialMethodInvocation.getMethodDescription().isStatic()
+                                    ? Opcodes.ACC_STATIC
+                                    : 0),
+                            specialMethodInvocation.getMethodDescription().getExceptionTypes());
+                    registerAccessor(specialMethodInvocation, accessorMethod);
+                }
+                return accessorMethod;
+            }
+
+            /**
+             * Registers a new accessor method.
+             *
+             * @param specialMethodInvocation The special method invocation that the accessor method should invoke.
+             * @param accessorMethod          The accessor method for this invocation.
+             */
+            private void registerAccessor(Instrumentation.SpecialMethodInvocation specialMethodInvocation,
+                                          MethodDescription accessorMethod) {
+                registeredAccessorMethods.put(specialMethodInvocation, accessorMethod);
+                accessorMethodEntries.put(accessorMethod, new AccessorMethodDelegation(specialMethodInvocation));
+            }
+
+            @Override
+            public TypeDescription register(AuxiliaryType auxiliaryType) {
+                DynamicType dynamicType = auxiliaryTypes.get(auxiliaryType);
+                if (dynamicType == null) {
+                    dynamicType = auxiliaryType.make(auxiliaryTypeNamingStrategy.name(auxiliaryType, instrumentedType),
+                            classFileVersion,
+                            this);
+                    auxiliaryTypes.put(auxiliaryType, dynamicType);
+                }
+                return dynamicType.getTypeDescription();
+            }
+
+            @Override
+            public List<DynamicType> getRegisteredAuxiliaryTypes() {
+                return new ArrayList<DynamicType>(auxiliaryTypes.values());
+            }
+
+            @Override
+            public FieldDescription cache(StackManipulation fieldValue, TypeDescription fieldType) {
+                FieldCacheEntry fieldCacheEntry = new FieldCacheEntry(fieldValue, fieldType);
+                FieldDescription fieldCache = registeredFieldCacheEntries.get(fieldCacheEntry);
+                if (fieldCache != null) {
+                    return fieldCache;
+                }
+                validateFieldCacheAccessibility();
+                fieldCache = new FieldDescription.Latent(String.format("%s$%s", fieldCachePrefix, randomString.nextString()),
+                        instrumentedType,
+                        fieldType,
+                        FIELD_CACHE_MODIFIER);
+                registeredFieldCacheEntries.put(fieldCacheEntry, fieldCache);
+                return fieldCache;
+            }
+
+            /**
+             * Validates that the field cache is still accessible. Once the type initializer of a class is written, no
+             * additional field caches can be defined. See
+             * {@link net.bytebuddy.instrumentation.Instrumentation.Context.Default#canRegisterFieldCache} for a more
+             * detailed explanation of this validation.
+             */
+            private void validateFieldCacheAccessibility() {
+                if (!canRegisterFieldCache) {
+                    throw new IllegalStateException("A field cache cannot be registered during or after the creation of a " +
+                            "type initializer - instead, the field cache should be registered in the method that requires " +
+                            "the cached value");
+                }
+            }
+
+            @Override
+            public void drain(ClassVisitor classVisitor, TypeWriter.MethodPool methodPool, InjectedCode injectedCode) {
+                canRegisterFieldCache = false;
+                MethodDescription typeInitializer = MethodDescription.Latent.typeInitializerOf(instrumentedType);
+                FieldCacheAppender.resolve(methodPool.target(typeInitializer), registeredFieldCacheEntries, injectedCode)
+                        .apply(classVisitor, this, typeInitializer);
+                for (FieldDescription fieldDescription : registeredFieldCacheEntries.values()) {
+                    classVisitor.visitField(fieldDescription.getModifiers(),
+                            fieldDescription.getInternalName(),
+                            fieldDescription.getDescriptor(),
+                            fieldDescription.getGenericSignature(),
+                            null).visitEnd();
+                }
+                for (Map.Entry<MethodDescription, TypeWriter.MethodPool.Entry> entry : accessorMethodEntries.entrySet()) {
+                    entry.getValue().apply(classVisitor, this, entry.getKey());
+                }
+            }
+
+            @Override
+            public String toString() {
+                return "TypeExtensionDelegate{" +
+                        "instrumentedType=" + instrumentedType +
+                        ", classFileVersion=" + classFileVersion +
+                        ", accessorMethodSuffix='" + accessorMethodSuffix + '\'' +
+                        ", fieldCachePrefix='" + fieldCachePrefix + '\'' +
+                        ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
+                        ", registeredAccessorMethods=" + registeredAccessorMethods +
+                        ", accessorMethodEntries=" + accessorMethodEntries +
+                        ", auxiliaryTypes=" + auxiliaryTypes +
+                        ", registeredFieldCacheEntries=" + registeredFieldCacheEntries +
+                        ", randomString=" + randomString +
+                        ", canRegisterFieldCache=" + canRegisterFieldCache +
+                        '}';
+            }
+
+            /**
+             * Representation of a naming strategy for an auxiliary type.
+             */
+            public static interface AuxiliaryTypeNamingStrategy {
+
+                /**
+                 * NAmes an auxiliary type.
+                 *
+                 * @param auxiliaryType    The auxiliary type to name.
+                 * @param instrumentedType The instrumented type for which an auxiliary type is registered.
+                 * @return The fully qualified name for the given auxiliary type.
+                 */
+                String name(AuxiliaryType auxiliaryType, TypeDescription instrumentedType);
+
+                /**
+                 * A naming strategy for an auxiliary type which returns the instrumented type's name with a fixed extension
+                 * and a random number as a suffix. All generated names will be in the same package as the instrumented type.
+                 */
+                static class SuffixingRandom implements AuxiliaryTypeNamingStrategy {
+
+                    /**
+                     * The suffix to append to the instrumented type for creating names for the auxiliary types.
+                     */
+                    private final String suffix;
+
+                    /**
+                     * An instance for creating random values.
+                     */
+                    private final RandomString randomString;
+
+                    /**
+                     * Creates a new suffixing random naming strategy.
+                     *
+                     * @param suffix The suffix to extend to the instrumented type.
+                     */
+                    public SuffixingRandom(String suffix) {
+                        this.suffix = suffix;
+                        randomString = new RandomString();
+                    }
+
+                    @Override
+                    public String name(AuxiliaryType auxiliaryType, TypeDescription instrumentedType) {
+                        return String.format("%s$%s$%s", instrumentedType.getName(), suffix, randomString.nextString());
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && suffix.equals(((SuffixingRandom) other).suffix);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return suffix.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypeExtensionDelegate.AuxiliaryTypeNamingStrategySuffixingRandom{suffix='" + suffix + '\'' + '}';
+                    }
+                }
+            }
+
+            /**
+             * A byte code appender that writes the field cache entries to a given {@link org.objectweb.asm.MethodVisitor}.
+             */
+            private static class FieldCacheAppender implements ByteCodeAppender {
+
+                /**
+                 * The map of registered field cache entries.
+                 */
+                private final Map<FieldCacheEntry, FieldDescription> registeredFieldCacheEntries;
+
+                /**
+                 * Creates a new field cache appender.
+                 *
+                 * @param registeredFieldCacheEntries A map of field cache entries to their field descriptions.
+                 */
+                private FieldCacheAppender(Map<FieldCacheEntry, FieldDescription> registeredFieldCacheEntries) {
+                    this.registeredFieldCacheEntries = registeredFieldCacheEntries;
+                }
+
+                /**
+                 * Resolves the actual method pool entry to be applied for a given set of field cache entries and the
+                 * provided {@link net.bytebuddy.instrumentation.Instrumentation.Context.ExtractableView.InjectedCode}.
+                 *
+                 * @param originalEntry               The original entry that is provided by the user.
+                 * @param registeredFieldCacheEntries A map of registered field cache entries.
+                 * @param injectedCode                The explicitly supplied injected code.
+                 * @return The entry to apply to the type initializer.
+                 */
+                public static TypeWriter.MethodPool.Entry resolve(TypeWriter.MethodPool.Entry originalEntry,
+                                                                  Map<FieldCacheEntry, FieldDescription> registeredFieldCacheEntries,
+                                                                  InjectedCode injectedCode) {
+                    boolean defineMethod = originalEntry.isDefineMethod();
+                    boolean injectCode = injectedCode.isInjected();
+                    return registeredFieldCacheEntries.size() == 0 && !injectCode
+                            ? originalEntry
+                            : new TypeWriter.MethodPool.Entry.Simple(new Compound(new FieldCacheAppender(registeredFieldCacheEntries),
+                            new Simple(injectCode ? injectedCode.getInjectedCode() : StackManipulation.LegalTrivial.INSTANCE),
+                            defineMethod && originalEntry.getByteCodeAppender().appendsCode()
+                                    ? originalEntry.getByteCodeAppender()
+                                    : new Simple(MethodReturn.VOID)),
+                            defineMethod
+                                    ? originalEntry.getAttributeAppender()
+                                    : MethodAttributeAppender.NoOp.INSTANCE);
+                }
+
+                @Override
+                public boolean appendsCode() {
+                    return registeredFieldCacheEntries.size() > 0;
+                }
+
+                @Override
+                public Size apply(MethodVisitor methodVisitor,
+                                  Instrumentation.Context instrumentationContext,
+                                  MethodDescription instrumentedMethod) {
+                    StackManipulation[] fieldInitialization = new StackManipulation[registeredFieldCacheEntries.size()];
+                    int currentIndex = 0;
+                    for (Map.Entry<FieldCacheEntry, FieldDescription> entry : registeredFieldCacheEntries.entrySet()) {
+                        fieldInitialization[currentIndex++] = new StackManipulation
+                                .Compound(entry.getKey().getFieldValue(), FieldAccess.forField(entry.getValue()).putter());
+                    }
+                    StackManipulation.Size stackSize = new StackManipulation.Compound(fieldInitialization)
+                            .apply(methodVisitor, instrumentationContext);
+                    return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && registeredFieldCacheEntries.equals(((FieldCacheAppender) other).registeredFieldCacheEntries);
+                }
+
+                @Override
+                public int hashCode() {
+                    return registeredFieldCacheEntries.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeExtensionDelegate.FieldCacheAppender{registeredFieldCacheEntries=" + registeredFieldCacheEntries + '}';
+                }
+            }
+
+            /**
+             * A field cache entry for uniquely identifying a cached field. A cached field is described by the stack
+             * manipulation that loads the field's value onto the operand stack and the type of the field.
+             */
+            private static class FieldCacheEntry {
+
+                /**
+                 * The field value that is represented by this field cache entry.
+                 */
+                private final StackManipulation fieldValue;
+
+                /**
+                 * The field type that is represented by this field cache entry.
+                 */
+                private final TypeDescription fieldType;
+
+                /**
+                 * Creates a new field cache entry.
+                 *
+                 * @param fieldValue The field value that is represented by this field cache entry.
+                 * @param fieldType  The field type that is represented by this field cache entry.
+                 */
+                private FieldCacheEntry(StackManipulation fieldValue, TypeDescription fieldType) {
+                    this.fieldValue = fieldValue;
+                    this.fieldType = fieldType;
+                }
+
+                /**
+                 * Returns the field value that is represented by this field cache entry.
+                 *
+                 * @return The field value that is represented by this field cache entry.
+                 */
+                public StackManipulation getFieldValue() {
+                    return fieldValue;
+                }
+
+                /**
+                 * Returns the field type that is represented by this field cache entry.
+                 *
+                 * @return The field type that is represented by this field cache entry.
+                 */
+                public TypeDescription getFieldType() {
+                    return fieldType;
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && fieldType.equals(((FieldCacheEntry) other).fieldType)
+                            && fieldValue.equals(((FieldCacheEntry) other).fieldValue);
+                }
+
+                @Override
+                public int hashCode() {
+                    return 31 * fieldValue.hashCode() + fieldType.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeExtensionDelegate.FieldCacheEntry{" +
+                            "fieldValue=" + fieldValue +
+                            ", fieldType=" + fieldType +
+                            '}';
+                }
+            }
+
+            /**
+             * An implementation of a {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Entry} for implementing
+             * an accessor method.
+             */
+            private static class AccessorMethodDelegation implements TypeWriter.MethodPool.Entry, ByteCodeAppender {
+
+                /**
+                 * The stack manipulation that represents the requested special method invocation.
+                 */
+                private final StackManipulation accessorMethodInvocation;
+
+                /**
+                 * Creates a new accessor method delegation.
+                 *
+                 * @param accessorMethodInvocation The stack manipulation that represents the requested special method
+                 *                                 invocation.
+                 */
+                private AccessorMethodDelegation(StackManipulation accessorMethodInvocation) {
+                    this.accessorMethodInvocation = accessorMethodInvocation;
+                }
+
+                @Override
+                public ByteCodeAppender getByteCodeAppender() {
+                    return this;
+                }
+
+                @Override
+                public boolean isDefineMethod() {
+                    return true;
+                }
+
+                @Override
+                public boolean appendsCode() {
+                    return true;
+                }
+
+                @Override
+                public Size apply(MethodVisitor methodVisitor,
+                                  Instrumentation.Context instrumentationContext,
+                                  MethodDescription instrumentedMethod) {
+                    StackManipulation.Size stackSize = new StackManipulation.Compound(
+                            MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
+                            accessorMethodInvocation,
+                            MethodReturn.returning(instrumentedMethod.getReturnType())
+                    ).apply(methodVisitor, instrumentationContext);
+                    return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
+                }
+
+                @Override
+                public void apply(ClassVisitor classVisitor,
+                                  Instrumentation.Context instrumentationContext,
+                                  MethodDescription methodDescription) {
+                    MethodVisitor methodVisitor = classVisitor.visitMethod(methodDescription.getModifiers(),
+                            methodDescription.getInternalName(),
+                            methodDescription.getDescriptor(),
+                            methodDescription.getGenericSignature(),
+                            methodDescription.getExceptionTypes().toInternalNames());
+                    methodVisitor.visitCode();
+                    Size size = apply(methodVisitor, instrumentationContext, methodDescription);
+                    methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
+                    methodVisitor.visitEnd();
+                }
+
+                @Override
+                public MethodAttributeAppender getAttributeAppender() {
+                    return MethodAttributeAppender.NoOp.INSTANCE;
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && accessorMethodInvocation.equals(((AccessorMethodDelegation) other).accessorMethodInvocation);
+                }
+
+                @Override
+                public int hashCode() {
+                    return accessorMethodInvocation.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeExtensionDelegate.AccessorMethodDelegation{accessorMethodInvocation=" + accessorMethodInvocation + '}';
                 }
             }
         }

@@ -46,13 +46,13 @@ public class DynamicTypeDefaultLoadedTest {
                 mainLoadedTypeInitializer,
                 Collections.singletonList(auxiliaryType),
                 loadedTypes);
-        when(auxiliaryType.getDescription()).thenReturn(mainTypeDescription);
+        when(auxiliaryType.getTypeDescription()).thenReturn(mainTypeDescription);
     }
 
     @Test
     public void testLoadedTypeDescription() throws Exception {
         assertEquals(MAIN_TYPE, dynamicType.getLoaded());
-        assertThat(dynamicType.getDescription(), is(mainTypeDescription));
+        assertThat(dynamicType.getTypeDescription(), is(mainTypeDescription));
         assertThat(dynamicType.getLoadedAuxiliaryTypes().size(), is(1));
         assertThat(dynamicType.getLoadedAuxiliaryTypes().keySet(), hasItem(auxiliaryTypeDescription));
         assertEquals(AUXILIARY_TYPE, dynamicType.getLoadedAuxiliaryTypes().get(auxiliaryTypeDescription));

@@ -78,9 +78,9 @@ public class DynamicTypeDefaultTest {
         when(typeDescription.getName()).thenReturn(FOO);
         when(auxiliaryType.saveIn(any(File.class))).thenReturn(Collections.<TypeDescription, File>emptyMap());
         when(auxiliaryTypeDescription.getName()).thenReturn(BAR);
-        when(auxiliaryType.getDescription()).thenReturn(auxiliaryTypeDescription);
+        when(auxiliaryType.getTypeDescription()).thenReturn(auxiliaryTypeDescription);
         when(auxiliaryType.getBytes()).thenReturn(auxiliaryTypeBinaryRepresentation);
-        when(auxiliaryType.getTypeInitializers()).thenReturn(Collections.singletonMap(auxiliaryTypeDescription, auxiliaryLoadedTypeInitializer));
+        when(auxiliaryType.getLoadedTypeInitializers()).thenReturn(Collections.singletonMap(auxiliaryTypeDescription, auxiliaryLoadedTypeInitializer));
         when(auxiliaryType.getRawAuxiliaryTypes()).thenReturn(Collections.<TypeDescription, byte[]>emptyMap());
     }
 
@@ -91,7 +91,7 @@ public class DynamicTypeDefaultTest {
 
     @Test
     public void testTypeDescription() throws Exception {
-        assertThat(dynamicType.getDescription(), is(typeDescription));
+        assertThat(dynamicType.getTypeDescription(), is(typeDescription));
     }
 
     @Test
@@ -102,26 +102,26 @@ public class DynamicTypeDefaultTest {
 
     @Test
     public void testTypeInitializersNotAlive() throws Exception {
-        assertThat(dynamicType.hasAliveTypeInitializers(), is(false));
+        assertThat(dynamicType.hasAliveLoadedTypeInitializers(), is(false));
     }
 
     @Test
     public void testTypeInitializersAliveMain() throws Exception {
         when(mainLoadedTypeInitializer.isAlive()).thenReturn(true);
-        assertThat(dynamicType.hasAliveTypeInitializers(), is(true));
+        assertThat(dynamicType.hasAliveLoadedTypeInitializers(), is(true));
     }
 
     @Test
     public void testTypeInitializersAliveAuxiliary() throws Exception {
         when(auxiliaryLoadedTypeInitializer.isAlive()).thenReturn(true);
-        assertThat(dynamicType.hasAliveTypeInitializers(), is(true));
+        assertThat(dynamicType.hasAliveLoadedTypeInitializers(), is(true));
     }
 
     @Test
     public void testTypeInitializers() throws Exception {
-        assertThat(dynamicType.getTypeInitializers().size(), is(2));
-        assertThat(dynamicType.getTypeInitializers().get(typeDescription), is(mainLoadedTypeInitializer));
-        assertThat(dynamicType.getTypeInitializers().get(auxiliaryTypeDescription), is(auxiliaryLoadedTypeInitializer));
+        assertThat(dynamicType.getLoadedTypeInitializers().size(), is(2));
+        assertThat(dynamicType.getLoadedTypeInitializers().get(typeDescription), is(mainLoadedTypeInitializer));
+        assertThat(dynamicType.getLoadedTypeInitializers().get(auxiliaryTypeDescription), is(auxiliaryLoadedTypeInitializer));
     }
 
     @Test

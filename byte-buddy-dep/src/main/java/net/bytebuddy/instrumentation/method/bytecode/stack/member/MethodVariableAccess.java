@@ -152,9 +152,9 @@ public enum MethodVariableAccess {
             if (includeThisReference) {
                 stackManipulation[parameterIndex++] = MethodVariableAccess.REFERENCE.loadFromIndex(0);
             }
-            stackIndex = methodDescription.getDeclaringType().getStackSize().getSize();
+            stackIndex = StackSize.SINGLE.getSize();
         } else {
-            stackIndex = 0;
+            stackIndex = StackSize.ZERO.getSize();
         }
         for (TypeDescription parameterType : methodDescription.getParameterTypes()) {
             stackManipulation[parameterIndex++] = typeCastingHandler
