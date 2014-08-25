@@ -39,7 +39,7 @@ import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
  *
  * @param <T> The most specific type that is known to be represented by the enhanced type.
  */
-public class InliningDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<T> {
+public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<T> {
 
     /**
      * A locator for finding a class file.
@@ -73,22 +73,22 @@ public class InliningDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      * @param classFileLocator                      A locator for finding a class file.
      * @param targetHandler                         The target handler to be used by this type builder.
      */
-    public InliningDynamicTypeBuilder(ClassFileVersion classFileVersion,
-                                      NamingStrategy namingStrategy,
-                                      TypeDescription levelType,
-                                      List<? extends TypeDescription> interfaceTypes,
-                                      int modifiers,
-                                      TypeAttributeAppender attributeAppender,
-                                      MethodMatcher ignoredMethods,
-                                      BridgeMethodResolver.Factory bridgeMethodResolverFactory,
-                                      ClassVisitorWrapper.Chain classVisitorWrapperChain,
-                                      FieldRegistry fieldRegistry,
-                                      MethodRegistry methodRegistry,
-                                      MethodLookupEngine.Factory methodLookupEngineFactory,
-                                      FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
-                                      MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
-                                      ClassFileLocator classFileLocator,
-                                      TargetHandler targetHandler) {
+    public InlineDynamicTypeBuilder(ClassFileVersion classFileVersion,
+                                    NamingStrategy namingStrategy,
+                                    TypeDescription levelType,
+                                    List<? extends TypeDescription> interfaceTypes,
+                                    int modifiers,
+                                    TypeAttributeAppender attributeAppender,
+                                    MethodMatcher ignoredMethods,
+                                    BridgeMethodResolver.Factory bridgeMethodResolverFactory,
+                                    ClassVisitorWrapper.Chain classVisitorWrapperChain,
+                                    FieldRegistry fieldRegistry,
+                                    MethodRegistry methodRegistry,
+                                    MethodLookupEngine.Factory methodLookupEngineFactory,
+                                    FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
+                                    MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
+                                    ClassFileLocator classFileLocator,
+                                    TargetHandler targetHandler) {
         this(classFileVersion,
                 namingStrategy,
                 levelType,
@@ -134,24 +134,24 @@ public class InliningDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      * @param classFileLocator                      A locator for finding a class file.
      * @param targetHandler                         The target handler to be used by this type builder.
      */
-    protected InliningDynamicTypeBuilder(ClassFileVersion classFileVersion,
-                                         NamingStrategy namingStrategy,
-                                         TypeDescription levelType,
-                                         List<TypeDescription> interfaceTypes,
-                                         int modifiers,
-                                         TypeAttributeAppender attributeAppender,
-                                         MethodMatcher ignoredMethods,
-                                         BridgeMethodResolver.Factory bridgeMethodResolverFactory,
-                                         ClassVisitorWrapper.Chain classVisitorWrapperChain,
-                                         FieldRegistry fieldRegistry,
-                                         MethodRegistry methodRegistry,
-                                         MethodLookupEngine.Factory methodLookupEngineFactory,
-                                         FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
-                                         MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
-                                         List<FieldToken> fieldTokens,
-                                         List<MethodToken> methodTokens,
-                                         ClassFileLocator classFileLocator,
-                                         TargetHandler targetHandler) {
+    protected InlineDynamicTypeBuilder(ClassFileVersion classFileVersion,
+                                       NamingStrategy namingStrategy,
+                                       TypeDescription levelType,
+                                       List<TypeDescription> interfaceTypes,
+                                       int modifiers,
+                                       TypeAttributeAppender attributeAppender,
+                                       MethodMatcher ignoredMethods,
+                                       BridgeMethodResolver.Factory bridgeMethodResolverFactory,
+                                       ClassVisitorWrapper.Chain classVisitorWrapperChain,
+                                       FieldRegistry fieldRegistry,
+                                       MethodRegistry methodRegistry,
+                                       MethodLookupEngine.Factory methodLookupEngineFactory,
+                                       FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
+                                       MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
+                                       List<FieldToken> fieldTokens,
+                                       List<MethodToken> methodTokens,
+                                       ClassFileLocator classFileLocator,
+                                       TargetHandler targetHandler) {
         super(classFileVersion,
                 namingStrategy,
                 levelType,
@@ -202,7 +202,7 @@ public class InliningDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                                  MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
                                                  List<FieldToken> fieldTokens,
                                                  List<MethodToken> methodTokens) {
-        return new InliningDynamicTypeBuilder<T>(classFileVersion,
+        return new InlineDynamicTypeBuilder<T>(classFileVersion,
                 namingStrategy,
                 levelType,
                 interfaceTypes,
@@ -225,7 +225,7 @@ public class InliningDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     @Override
     public DynamicType.Unloaded<T> make() {
         MethodRegistry.Prepared preparedMethodRegistry = methodRegistry.prepare(
-                applyRecordedMembersTo(new InliningInstrumentedType(classFileVersion,
+                applyRecordedMembersTo(new InlineInstrumentedType(classFileVersion,
                         targetType,
                         interfaceTypes,
                         modifiers,
@@ -260,8 +260,8 @@ public class InliningDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
                 && super.equals(other)
-                && classFileLocator.equals(((InliningDynamicTypeBuilder<?>) other).classFileLocator)
-                && targetHandler.equals(((InliningDynamicTypeBuilder<?>) other).targetHandler);
+                && classFileLocator.equals(((InlineDynamicTypeBuilder<?>) other).classFileLocator)
+                && targetHandler.equals(((InlineDynamicTypeBuilder<?>) other).targetHandler);
     }
 
     @Override
@@ -292,7 +292,7 @@ public class InliningDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     }
 
     /**
-     * An inlining dynamic type builder's target handler is responsible to proving any information that is required
+     * An inline dynamic type builder's target handler is responsible to proving any information that is required
      * for defining the type.
      */
     public static interface TargetHandler {
@@ -350,7 +350,7 @@ public class InliningDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         }
 
         /**
-         * A prepared {@link net.bytebuddy.dynamic.scaffold.inline.InliningDynamicTypeBuilder.TargetHandler}.
+         * A prepared {@link InlineDynamicTypeBuilder.TargetHandler}.
          */
         static interface Prepared {
 

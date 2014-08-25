@@ -28,7 +28,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 
-public class InliningDynamicTypeBuilderTest {
+public class InlineDynamicTypeBuilderTest {
 
     private static final ClassLoader BOOTSTRAP_CLASS_LOADER = null;
 
@@ -36,7 +36,7 @@ public class InliningDynamicTypeBuilderTest {
 
     @Test
     public void testPlainRebasing() throws Exception {
-        Class<?> foo = new InliningDynamicTypeBuilder<Foo>(ClassFileVersion.forCurrentJavaVersion(),
+        Class<?> foo = new InlineDynamicTypeBuilder<Foo>(ClassFileVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOOBAR),
                 new TypeDescription.ForLoadedType(Foo.class),
                 new TypeList.ForLoadedType(Arrays.<Class<?>>asList(Serializable.class)),
@@ -51,7 +51,7 @@ public class InliningDynamicTypeBuilderTest {
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ClassFileLocator.Default.CLASS_PATH,
-                InliningDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation.INSTANCE)
+                InlineDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation.INSTANCE)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -79,7 +79,7 @@ public class InliningDynamicTypeBuilderTest {
 
     @Test
     public void testPlainRedefinition() throws Exception {
-        Class<?> foo = new InliningDynamicTypeBuilder<Foo>(ClassFileVersion.forCurrentJavaVersion(),
+        Class<?> foo = new InlineDynamicTypeBuilder<Foo>(ClassFileVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOOBAR),
                 new TypeDescription.ForLoadedType(Foo.class),
                 new TypeList.ForLoadedType(Arrays.<Class<?>>asList(Serializable.class)),
@@ -94,7 +94,7 @@ public class InliningDynamicTypeBuilderTest {
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ClassFileLocator.Default.CLASS_PATH,
-                InliningDynamicTypeBuilder.TargetHandler.ForSubclassInstrumentation.INSTANCE)
+                InlineDynamicTypeBuilder.TargetHandler.ForSubclassInstrumentation.INSTANCE)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();

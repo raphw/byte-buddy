@@ -6,7 +6,7 @@ import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.dynamic.scaffold.FieldRegistry;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator;
-import net.bytebuddy.dynamic.scaffold.inline.InliningDynamicTypeBuilder;
+import net.bytebuddy.dynamic.scaffold.inline.InlineDynamicTypeBuilder;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.dynamic.scaffold.subclass.SubclassDynamicTypeBuilder;
 import net.bytebuddy.instrumentation.Instrumentation;
@@ -440,7 +440,7 @@ public class ByteBuddy {
      * @return A dynamic type builder for this configuration that redefines the given type description.
      */
     public <T> DynamicType.Builder<T> redefine(TypeDescription levelType, ClassFileLocator classFileLocator) {
-        return new InliningDynamicTypeBuilder<T>(classFileVersion,
+        return new InlineDynamicTypeBuilder<T>(classFileVersion,
                 new NamingStrategy.Fixed(levelType.getName()),
                 nonNull(levelType),
                 interfaceTypes,
@@ -455,7 +455,7 @@ public class ByteBuddy {
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
                 nonNull(classFileLocator),
-                InliningDynamicTypeBuilder.TargetHandler.ForSubclassInstrumentation.INSTANCE);
+                InlineDynamicTypeBuilder.TargetHandler.ForSubclassInstrumentation.INSTANCE);
     }
 
     /**
@@ -542,7 +542,7 @@ public class ByteBuddy {
      * @return A dynamic type builder for this configuration that creates a rebased version of the given type.
      */
     public <T> DynamicType.Builder<T> rebase(TypeDescription levelType, ClassFileLocator classFileLocator) {
-        return new InliningDynamicTypeBuilder<T>(classFileVersion,
+        return new InlineDynamicTypeBuilder<T>(classFileVersion,
                 new NamingStrategy.Fixed(levelType.getName()),
                 nonNull(levelType),
                 interfaceTypes,
@@ -557,7 +557,7 @@ public class ByteBuddy {
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
                 nonNull(classFileLocator),
-                InliningDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation.INSTANCE);
+                InlineDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation.INSTANCE);
     }
 
     /**
