@@ -2,7 +2,7 @@ package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
-import net.bytebuddy.instrumentation.MethodDelegation;
+import net.bytebuddy.instrumentation.FixedValue;
 import net.bytebuddy.utility.ToolsJarRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -43,7 +43,7 @@ public class ClassReloadingStrategyTest {
         new ByteBuddy()
                 .redefine(Foo.class)
                 .method(named(FOO))
-                .intercept(MethodDelegation.to(Interceptor.class))
+                .intercept(FixedValue.value(BAR))
                 .make()
                 .load(Foo.class.getClassLoader(), classReloadingStrategy);
         assertThat(foo.foo(), is(BAR));
@@ -62,7 +62,7 @@ public class ClassReloadingStrategyTest {
         new ByteBuddy()
                 .redefine(Foo.class)
                 .method(named(FOO))
-                .intercept(MethodDelegation.to(Interceptor.class))
+                .intercept(FixedValue.value(BAR))
                 .make()
                 .load(Foo.class.getClassLoader(), classReloadingStrategy);
         assertThat(foo.foo(), is(BAR));
@@ -80,7 +80,7 @@ public class ClassReloadingStrategyTest {
         new ByteBuddy()
                 .redefine(Foo.class)
                 .method(named(FOO))
-                .intercept(MethodDelegation.to(Interceptor.class))
+                .intercept(FixedValue.value(BAR))
                 .make()
                 .load(Foo.class.getClassLoader(), classReloadingStrategy);
         assertThat(foo.foo(), is(BAR));
@@ -113,14 +113,6 @@ public class ClassReloadingStrategyTest {
 
         public String foo() {
             return FOO;
-        }
-    }
-
-    @SuppressWarnings("unused")
-    public static class Interceptor {
-
-        public static String intercept() throws Exception {
-            return BAR;
         }
     }
 }
