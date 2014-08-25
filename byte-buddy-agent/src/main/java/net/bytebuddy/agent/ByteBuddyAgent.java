@@ -44,9 +44,14 @@ public class ByteBuddyAgent {
     private static final String AGENT_CLASS_PROPERTY = "Agent-Class";
 
     /**
-     * The manifest property specifying the can redefine class property.
+     * The manifest property specifying the <i>can redefine</i> class property.
      */
     private static final String CAN_REDEFINE_CLASSES_PROPERTY = "Can-Redefine-Classes";
+
+    /**
+     * The manifest property specifying the <i>can retransform</i> class property.
+     */
+    private static final String CAN_RETRANSFORM_CLASSES_PROPERTY = "Can-Retransform-Classes";
 
     /**
      * The manifest property value for the manifest version.
@@ -130,7 +135,7 @@ public class ByteBuddyAgent {
     private static final String INSTRUMENTATION_FIELD_NAME = "instrumentation";
 
     /**
-     * The Byte Buddy agent class is merely a utility class and should not be instantiated.
+     * The agent provides only {@code static} utility methods and should not be instantiated.
      */
     private ByteBuddyAgent() {
         throw new UnsupportedOperationException();
@@ -210,6 +215,7 @@ public class ByteBuddyAgent {
             manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, MANIFEST_VERSION_VALUE);
             manifest.getMainAttributes().put(new Attributes.Name(AGENT_CLASS_PROPERTY), ByteBuddyAgent.Installer.class.getName());
             manifest.getMainAttributes().put(new Attributes.Name(CAN_REDEFINE_CLASSES_PROPERTY), Boolean.TRUE.toString());
+            manifest.getMainAttributes().put(new Attributes.Name(CAN_RETRANSFORM_CLASSES_PROPERTY), Boolean.TRUE.toString());
             JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(agentFile), manifest);
             try {
                 jarOutputStream.putNextEntry(new JarEntry('/' + ByteBuddyAgent.Installer.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION));

@@ -43,6 +43,7 @@
                             <Premain-Class>${bytebuddy.agent}</Premain-Class>
                             <Agent-Class>${bytebuddy.agent}</Agent-Class>
                             <Can-Redefine-Classes>true</Can-Redefine-Classes>
+                            <Can-Retransform-Classes>true</Can-Retransform-Classes>
                         </manifestEntries>
                     </archive>
                 </configuration>
