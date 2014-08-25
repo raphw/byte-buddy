@@ -2,6 +2,7 @@ package net.bytebuddy.agent;
 
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -30,11 +31,20 @@ public class ByteBuddyAgentInstallerTest {
     @Mock
     private Instrumentation instrumentation;
 
+    private Instrumentation actualInstrumentation;
+
+    @Before
+    public void setUp() throws Exception {
+        Field field = ByteBuddyAgent.Installer.class.getDeclaredField(INSTRUMENTATION);
+        field.setAccessible(true);
+        actualInstrumentation = (Instrumentation) field.get(STATIC_FIELD);
+    }
+
     @After
     public void tearDown() throws Exception {
         Field field = ByteBuddyAgent.Installer.class.getDeclaredField(INSTRUMENTATION);
         field.setAccessible(true);
-        field.set(STATIC_FIELD, null);
+        field.set(STATIC_FIELD, actualInstrumentation);
     }
 
     @Test

@@ -76,7 +76,7 @@ public class TypeWriterEngineForCreationTest {
         when(methodPool.target(secondMethod)).thenReturn(secondMethodEntry);
         when(instrumentedType.getInternalName()).thenReturn(FOO);
         when(instrumentedType.getGenericSignature()).thenReturn(QUX);
-        when(instrumentedType.getActualModifiers()).thenReturn(TYPE_MODIFIER);
+        when(instrumentedType.getActualModifiers(any(boolean.class))).thenReturn(TYPE_MODIFIER);
         TypeList interfaceTypes = mock(TypeList.class);
         when(interfaceTypes.toInternalNames()).thenReturn(new String[]{BAZ});
         when(instrumentedType.getInterfaces()).thenReturn(interfaceTypes);

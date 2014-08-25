@@ -1,10 +1,8 @@
 package net.bytebuddy.agent;
 
-import net.bytebuddy.utility.ToolsJarRule;
 import org.junit.After;
-import org.junit.Rule;
+import org.junit.Before;
 import org.junit.Test;
-import org.junit.rules.MethodRule;
 
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Constructor;
@@ -12,7 +10,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
@@ -23,20 +20,20 @@ public class ByteBuddyAgentTest {
 
     private static final Object STATIC_FIELD = null;
 
-    @Rule
-    public MethodRule hotSpotRule = new ToolsJarRule();
+    private Instrumentation actualInstrumentation;
+
+    @Before
+    public void setUp() throws Exception {
+        Field field = ByteBuddyAgent.Installer.class.getDeclaredField(INSTRUMENTATION);
+        field.setAccessible(true);
+        actualInstrumentation = (Instrumentation) field.get(STATIC_FIELD);
+    }
 
     @After
     public void tearDown() throws Exception {
         Field field = ByteBuddyAgent.Installer.class.getDeclaredField(INSTRUMENTATION);
         field.setAccessible(true);
-        field.set(STATIC_FIELD, null);
-    }
-
-    @Test
-    @ToolsJarRule.Enforce
-    public void testAgentInstallation() throws Exception {
-        assertThat(ByteBuddyAgent.installOnOpenJDK(), notNullValue());
+        field.set(STATIC_FIELD, actualInstrumentation);
     }
 
     @Test
@@ -50,6 +47,9 @@ public class ByteBuddyAgentTest {
 
     @Test(expected = IllegalStateException.class)
     public void testMissingInstrumentationThrowsException() throws Exception {
+        Field field = ByteBuddyAgent.Installer.class.getDeclaredField(INSTRUMENTATION);
+        field.setAccessible(true);
+        field.set(STATIC_FIELD, null);
         ByteBuddyAgent.getInstrumentation();
     }
 

@@ -75,6 +75,11 @@ public interface TypeWriter<T> {
         static class ForRedefinition implements Engine {
 
             /**
+             * Representative of a {@link org.objectweb.asm.MethodVisitor} that is instructed to ignoring a result.
+             */
+            private static final MethodVisitor IGNORE_METHOD = null;
+
+            /**
              * The instrumented type that is written.
              */
             private final TypeDescription instrumentedType;
@@ -313,7 +318,7 @@ public interface TypeWriter<T> {
                                   String superTypeInternalName,
                                   String[] interfaceTypeInternalName) {
                     super.visit(Math.max(classFileVersion.getVersionNumber(), classFileVersionNumber),
-                            instrumentedType.getActualModifiers(),
+                            instrumentedType.getActualModifiers((modifiers & Opcodes.ACC_SUPER) != 0),
                             instrumentedType.getInternalName(),
                             instrumentedType.getGenericSignature(),
                             instrumentedType.getSupertype() == null ? null : instrumentedType.getSupertype().getInternalName(),
@@ -415,9 +420,9 @@ public interface TypeWriter<T> {
                     private final MethodDescription methodDescription;
 
                     /**
-                     * The rebased method to which the original code is to be written to.
+                     * The resolution of a potential rebased method.
                      */
-                    private final MethodDescription rebasedMethod;
+                    private final MethodRebaseResolver.Resolution resolution;
 
                     /**
                      * Creates a code preserving method visitor.
@@ -433,7 +438,7 @@ public interface TypeWriter<T> {
                         this.actualMethodVisitor = actualMethodVisitor;
                         this.byteCodeAppender = byteCodeAppender;
                         this.methodDescription = methodDescription;
-                        this.rebasedMethod = methodRebaseResolver.resolve(methodDescription).getResolvedMethod();
+                        this.resolution = methodRebaseResolver.resolve(methodDescription);
                     }
 
                     @Override
@@ -446,17 +451,19 @@ public interface TypeWriter<T> {
                             actualMethodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
                         }
                         actualMethodVisitor.visitEnd();
-                        mv = cv.visitMethod(rebasedMethod.getModifiers(),
-                                rebasedMethod.getInternalName(),
-                                rebasedMethod.getDescriptor(),
-                                rebasedMethod.getGenericSignature(),
-                                rebasedMethod.getExceptionTypes().toInternalNames());
+                        mv = resolution.isRebased()
+                                ? cv.visitMethod(resolution.getResolvedMethod().getModifiers(),
+                                resolution.getResolvedMethod().getInternalName(),
+                                resolution.getResolvedMethod().getDescriptor(),
+                                resolution.getResolvedMethod().getGenericSignature(),
+                                resolution.getResolvedMethod().getExceptionTypes().toInternalNames())
+                                : IGNORE_METHOD;
                         super.visitCode();
                     }
 
                     @Override
                     public void visitMaxs(int maxStack, int maxLocals) {
-                        super.visitMaxs(maxStack, Math.max(maxLocals, rebasedMethod.getStackSize()));
+                        super.visitMaxs(maxStack, Math.max(maxLocals, resolution.getResolvedMethod().getStackSize()));
                     }
 
                     @Override
@@ -465,7 +472,7 @@ public interface TypeWriter<T> {
                                 "actualMethodVisitor=" + actualMethodVisitor +
                                 ", byteCodeAppender=" + byteCodeAppender +
                                 ", methodDescription=" + methodDescription +
-                                ", rebasedMethod=" + rebasedMethod +
+                                ", resolution=" + resolution +
                                 '}';
                     }
                 }
@@ -509,7 +516,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public void visitCode() {
-                        mv = null; // Ignore byte code instructions, if existent.
+                        mv = IGNORE_METHOD;
                     }
 
                     @Override
@@ -669,7 +676,7 @@ public interface TypeWriter<T> {
                 ClassWriter classWriter = new ClassWriter(ASM_MANUAL_FLAG);
                 ClassVisitor classVisitor = classVisitorWrapper.wrap(classWriter);
                 classVisitor.visit(classFileVersion.getVersionNumber(),
-                        instrumentedType.getActualModifiers(),
+                        instrumentedType.getActualModifiers(true),
                         instrumentedType.getInternalName(),
                         instrumentedType.getGenericSignature(),
                         instrumentedType.getSupertype().getInternalName(),

@@ -11,8 +11,14 @@ import java.lang.instrument.UnmodifiableClassException;
 import java.util.*;
 
 /**
+ * <p>
  * The class reloading strategy allows to redefine loaded {@link java.lang.Class}es. Note that this strategy
  * will always attempt to load an existing class prior to its redefinition, even if this class is not yet loaded.
+ * </p>
+ * <p>
+ * <b>Note</b>: In order to redefine any type, neither its name or its modifiers must be changed. Furthermore, no
+ * fields or methods must be removed.
+ * </p>
  */
 public class ClassReloadingStrategy implements ClassLoadingStrategy {
 
@@ -103,7 +109,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
         int currentIndex = 0;
         int currentRead;
         do {
-            currentRead = inputStream.read(currentArray, currentIndex, BUFFER_SIZE);
+            currentRead = inputStream.read(currentArray, currentIndex, BUFFER_SIZE - currentIndex);
             currentIndex += currentRead;
             if (currentIndex == BUFFER_SIZE) {
                 previousBytes.add(currentArray);

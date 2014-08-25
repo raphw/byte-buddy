@@ -132,12 +132,19 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
     TypeDescription getEnclosingClass();
 
     /**
+     * <p>
      * Returns the type's actual modifiers as present in the class file. For example, a type cannot be {@code private}.
      * but it modifiers might reflect this property nevertheless if a class was defined as a private inner class.
+     * </p>
+     * <p>
+     * Unfortunately, the modifier for marking a {@code static} class collides with the {@code SUPER} modifier such
+     * that these flags are indistinguishable. Therefore, the flag must be specified manually.
+     * </p>
      *
+     * @param superFlag {@code true} if the super flag should be set.
      * @return The type's actual modifiers.
      */
-    int getActualModifiers();
+    int getActualModifiers(boolean superFlag);
 
     /**
      * Returns the simple internalName of this type.
@@ -243,14 +250,16 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
         }
 
         @Override
-        public int getActualModifiers() {
+        public int getActualModifiers(boolean superFlag) {
+            int actualModifiers;
             if (isPrivate()) {
-                return getModifiers() & ~(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC);
+                actualModifiers = getModifiers() & ~(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC);
             } else if (isProtected()) {
-                return getModifiers() & ~(Opcodes.ACC_PROTECTED | Opcodes.ACC_STATIC) | Opcodes.ACC_PUBLIC;
+                actualModifiers = getModifiers() & ~(Opcodes.ACC_PROTECTED | Opcodes.ACC_STATIC) | Opcodes.ACC_PUBLIC;
             } else {
-                return getModifiers() & ~Opcodes.ACC_STATIC;
+                actualModifiers = getModifiers() & ~Opcodes.ACC_STATIC;
             }
+            return actualModifiers | (superFlag ? Opcodes.ACC_SUPER : 0);
         }
 
         @Override

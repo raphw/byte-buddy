@@ -190,4 +190,14 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
     public int getModifiers() {
         return modifiers;
     }
+
+    @Override
+    public String toString() {
+        return "InlineInstrumentedType{" +
+                "levelType=" + levelType +
+                ", name='" + name + '\'' +
+                ", modifiers=" + modifiers +
+                ", interfaces=" + interfaces +
+                '}';
+    }
 }

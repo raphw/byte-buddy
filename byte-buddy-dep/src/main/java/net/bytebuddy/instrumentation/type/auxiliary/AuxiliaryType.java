@@ -6,7 +6,6 @@ import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.ModifierContributor;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.modifier.SyntheticState;
-import net.bytebuddy.modifier.Visibility;
 import org.objectweb.asm.Opcodes;
 
 /**
@@ -19,7 +18,7 @@ public interface AuxiliaryType {
     /**
      * The default type access of an auxiliary type. This array must not be mutated.
      */
-    static final ModifierContributor.ForType[] DEFAULT_TYPE_MODIFIER = {Visibility.PACKAGE_PRIVATE, SyntheticState.SYNTHETIC};
+    static final ModifierContributor.ForType[] DEFAULT_TYPE_MODIFIER = {SyntheticState.SYNTHETIC};
 
     /**
      * Creates a new auxiliary type.
