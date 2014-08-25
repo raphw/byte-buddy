@@ -17,8 +17,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * </p>
  * <p>
  * <b>Note</b>: In order to redefine any type, neither its name or its modifiers must be changed. Furthermore, no
- * fields or methods must be removed or added. This makes this strategy incompatible to applying it to a rebased
- * class definition which copies the original method implementations to additional methods.
+ * fields or methods must be removed or added. This makes this strategy generally incompatible to applying it to a
+ * rebased class definition as by {@link net.bytebuddy.ByteBuddy#rebase(Class)} which copies the original method
+ * implementations to additional methods. Furthermore, even the {@link net.bytebuddy.ByteBuddy#redefine(Class)}
+ * adds a method if the original class contains an explicit <i>class initializer</i>. For these reasons, it is not
+ * recommended to use this {@link net.bytebuddy.dynamic.ClassLoadingStrategy} with arbitrary classes.
  * </p>
  */
 public class ClassReloadingStrategy implements ClassLoadingStrategy {
