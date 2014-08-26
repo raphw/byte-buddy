@@ -97,5 +97,34 @@ mvn package
         <a href="http://getbootstrap.com/">Twitter's Bootstrap</a>.
     </p>
 
+    <h2>Roadmap</h2>
+
+    <p>
+        Currently, there are several enhancements planned for future releases. A version 1.0 will be released once all
+        the following features are implemented and tested to be stable:
+    </p>
+
+    <dl>
+        <dt>0.3</dt>
+        <dd>
+            Redefine and rebase classes: Using the same API as for creating subclasses, Byte Buddy allows to redefine
+            classes (replace method definitions) or to rebase classes (override methods by renaming the original
+            method). Both are mainly meant for implementing build-time instrumentation Additionally, a basic agent API
+            is introduced which allows some simple class reloading during runtime.
+        </dd>
+        <dt>0.4</dt>
+        <dd>
+            Treat unloaded classes: Byte Buddy introduces a class pool which allows to subclass, redefine or rebase
+            classes without loading them. This is convenient for build-time instrumentation or for instrumentation
+            at application start-up. Additionally, a convenience agent-builder for writing custom Java agents is
+            introduced.
+        </dd>
+        <dt>0.5</dt>
+        <dd>
+            Better support for generics: Generic types are written to class files. Additionally, the API is extended
+            to allow the definition of additional generic parameters when defining new types, methods or fields.
+        </dd>
+    </dl>
+
     <p></p>
 </div>
