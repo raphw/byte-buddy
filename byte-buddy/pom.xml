@@ -29,6 +29,7 @@
     <properties>
         <shade.source>org.objectweb.asm</shade.source>
         <shade.target>net.bytebuddy.jar.asm</shade.target>
+        <description.short>Byte Buddy is a class file generation utility for the JVM</description.short>
         <version.plugin.copy>0.2.5</version.plugin.copy>
         <version.plugin.build-helper>1.8</version.plugin.build-helper>
     </properties>
@@ -49,7 +50,7 @@
             </activation>
             <build>
                 <plugins>
-                    <!-- Shade the ASM dependency -->
+                    <!-- Shade the ASM dependency and define OSGI manifest -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-shade-plugin</artifactId>
@@ -71,6 +72,20 @@
                                             <shadedPattern>${shade.target}</shadedPattern>
                                         </relocation>
                                     </relocations>
+                                    <transformers>
+                                        <transformer
+                                                implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                            <manifestEntries>
+                                                <Bundle-SymbolicName>
+                                                    ${project.groupId}.${project.artifactId}
+                                                </Bundle-SymbolicName>
+                                                <Bundle-Name>${project.name}</Bundle-Name>
+                                                <Bundle-Description>${description.short}</Bundle-Description>
+                                                <Bundle-Version>${project.version}</Bundle-Version>
+                                                <Export-Package>net.bytebuddy.*</Export-Package>
+                                            </manifestEntries>
+                                        </transformer>
+                                    </transformers>
                                 </configuration>
                             </execution>
                         </executions>

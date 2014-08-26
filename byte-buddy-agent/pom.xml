@@ -15,6 +15,7 @@
 
     <properties>
         <bytebuddy.agent>net.bytebuddy.agent.ByteBuddyAgent.Installer</bytebuddy.agent>
+        <description.short>The Byte Buddy agent allows the retrieval of a JVM instrumentation</description.short>
         <version.plugin.jar>2.5</version.plugin.jar>
     </properties>
 
@@ -33,6 +34,7 @@
 
     <build>
         <plugins>
+            <!-- Configure both agent use and OSGI -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -44,6 +46,13 @@
                             <Agent-Class>${bytebuddy.agent}</Agent-Class>
                             <Can-Redefine-Classes>true</Can-Redefine-Classes>
                             <Can-Retransform-Classes>true</Can-Retransform-Classes>
+                            <Bundle-SymbolicName>
+                                ${project.groupId}.${project.artifactId}
+                            </Bundle-SymbolicName>
+                            <Bundle-Name>${project.name}</Bundle-Name>
+                            <Bundle-Description>${description.short}</Bundle-Description>
+                            <Bundle-Version>${project.version}</Bundle-Version>
+                            <Export-Package>net.bytebuddy.*</Export-Package>
                         </manifestEntries>
                     </archive>
                 </configuration>
