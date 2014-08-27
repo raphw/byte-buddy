@@ -25,7 +25,7 @@ import static org.mockito.Mockito.when;
 
 public class DynamicTypeDefaultTest {
 
-    private static final String FOO = "foo", BAR = "bar", TEMP = "tmp", DOT_CLASS = ".class";
+    private static final String FOOBAR = "foo/bar", QUXBAZ = "qux/baz", FOO = "foo", TEMP = "tmp";
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -75,9 +75,9 @@ public class DynamicTypeDefaultTest {
                 binaryRepresentation,
                 mainLoadedTypeInitializer,
                 Collections.singletonList(auxiliaryType));
-        when(typeDescription.getName()).thenReturn(FOO);
+        when(typeDescription.getName()).thenReturn(FOOBAR);
         when(auxiliaryType.saveIn(any(File.class))).thenReturn(Collections.<TypeDescription, File>emptyMap());
-        when(auxiliaryTypeDescription.getName()).thenReturn(BAR);
+        when(auxiliaryTypeDescription.getName()).thenReturn(QUXBAZ);
         when(auxiliaryType.getTypeDescription()).thenReturn(auxiliaryTypeDescription);
         when(auxiliaryType.getBytes()).thenReturn(auxiliaryTypeBinaryRepresentation);
         when(auxiliaryType.getLoadedTypeInitializers()).thenReturn(Collections.singletonMap(auxiliaryTypeDescription, auxiliaryLoadedTypeInitializer));
@@ -127,13 +127,17 @@ public class DynamicTypeDefaultTest {
     @Test
     public void testFileSaving() throws Exception {
         File folder = makeTemporaryFolder();
+        boolean folderDeletion, fileDeletion;
         try {
             Map<TypeDescription, File> files = dynamicType.saveIn(folder);
             assertThat(files.size(), is(1));
             assertFile(files.get(typeDescription), binaryRepresentation);
         } finally {
-            assertThat(folder.delete(), is(true));
+            folderDeletion = new File(folder, FOO).delete();
+            fileDeletion = folder.delete();
         }
+        assertThat(folderDeletion, is(true));
+        assertThat(fileDeletion, is(true));
         verify(auxiliaryType).saveIn(folder);
     }
 

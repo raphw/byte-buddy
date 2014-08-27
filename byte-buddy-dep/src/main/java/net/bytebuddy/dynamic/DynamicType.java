@@ -2275,6 +2275,7 @@ public interface DynamicType {
         public Map<TypeDescription, File> saveIn(File folder) throws IOException {
             Map<TypeDescription, File> savedFiles = new HashMap<TypeDescription, File>();
             File target = new File(folder, typeDescription.getName().replace('.', File.separatorChar) + CLASS_FILE_EXTENSION);
+            target.getParentFile().mkdirs();
             FileOutputStream fileOutputStream = new FileOutputStream(target);
             try {
                 fileOutputStream.write(binaryRepresentation);
