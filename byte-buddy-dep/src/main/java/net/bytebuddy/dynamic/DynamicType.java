@@ -22,11 +22,14 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import org.objectweb.asm.Opcodes;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.lang.annotation.Annotation;
 import java.util.*;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
+import java.util.zip.ZipEntry;
 
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
 import static net.bytebuddy.utility.ByteBuddyCommons.*;
@@ -83,14 +86,37 @@ public interface DynamicType {
     /**
      * Saves a dynamic type in a given folder using the Java class file format while respecting the naming conventions
      * for saving compiled Java classes. All auxiliary types, if any, are saved in the same directory. The resulting
-     * folder structure will resemble the structure that is required for Java runtimes, i.e. each folder representing
-     * a segment of the package name.
+     * folder structure will resemble the structure that is required for Java run times, i.e. each folder representing
+     * a segment of the package name. If the specified {@code folder} does not yet exist, it is created during the
+     * call of this method.
      *
      * @param folder The base target folder for storing this dynamic type and its auxiliary types, if any.
      * @return A map of type descriptions pointing to files with their stored binary representations within {@code folder}.
      * @throws IOException Thrown if the underlying file operations cause an {@code IOException}.
      */
     Map<TypeDescription, File> saveIn(File folder) throws IOException;
+
+    /**
+     * Injects the types of this dynamic type into a given <i>jar</i> file. Any pre-existent type with the same name
+     * is overridden during injection. The {@code target} file's folder must exist prior to calling this method.
+     *
+     * @param source The original jar file.
+     * @param target The {@code source} jar file with the injected contents.
+     * @return The {@code target} jar file.
+     * @throws IOException If an IO exception occurs while writing the file.
+     */
+    File inject(File source, File target) throws IOException;
+
+    /**
+     * Saves the contents of this dynamic type inside a <i>jar</i> file. The folder of the given {@code file} must
+     * exist prior to calling this method.
+     *
+     * @param file     The target file to which the <i>jar</i> is written to.
+     * @param manifest The manifest of the created <i>jar</i>.
+     * @return The given {@code file}.
+     * @throws IOException If an IO exception occurs while writing the file.
+     */
+    File toJar(File file, Manifest manifest) throws IOException;
 
     /**
      * A builder for defining a dynamic type. Implementations of such builders are usually immutable.
@@ -2194,6 +2220,21 @@ public interface DynamicType {
         private static final String CLASS_FILE_EXTENSION = ".class";
 
         /**
+         * The size of a writing buffer.
+         */
+        private static final int BUFFER_SIZE = 1024;
+
+        /**
+         * A convenience index for the beginning of an array to improve the readability of the code.
+         */
+        private static final int FROM_BEGINNING = 0;
+
+        /**
+         * A convenience representative of an {@link java.io.InputStream}'s end to improve the readability of the code.
+         */
+        private static final int END_OF_FILE = -1;
+
+        /**
          * A type description of this dynamic type.
          */
         protected final TypeDescription typeDescription;
@@ -2275,18 +2316,84 @@ public interface DynamicType {
         public Map<TypeDescription, File> saveIn(File folder) throws IOException {
             Map<TypeDescription, File> savedFiles = new HashMap<TypeDescription, File>();
             File target = new File(folder, typeDescription.getName().replace('.', File.separatorChar) + CLASS_FILE_EXTENSION);
-            target.getParentFile().mkdirs();
-            FileOutputStream fileOutputStream = new FileOutputStream(target);
+            if (target.getParentFile() != null) {
+                target.getParentFile().mkdirs();
+            }
+            OutputStream outputStream = new FileOutputStream(target);
             try {
-                fileOutputStream.write(binaryRepresentation);
+                outputStream.write(binaryRepresentation);
             } finally {
-                fileOutputStream.close();
+                outputStream.close();
             }
             savedFiles.put(typeDescription, target);
             for (DynamicType auxiliaryType : auxiliaryTypes) {
                 savedFiles.putAll(auxiliaryType.saveIn(folder));
             }
             return savedFiles;
+        }
+
+        @Override
+        public File inject(File source, File target) throws IOException {
+            JarInputStream jarInputStream = new JarInputStream(new BufferedInputStream(new FileInputStream(source)));
+            try {
+                target.createNewFile();
+                JarOutputStream jarOutputStream = new JarOutputStream(
+                        new BufferedOutputStream(new FileOutputStream(target)), jarInputStream.getManifest());
+                try {
+                    Map<TypeDescription, byte[]> rawAuxiliaryTypes = getRawAuxiliaryTypes();
+                    Map<String, byte[]> files = new HashMap<String, byte[]>(rawAuxiliaryTypes.size() + 1);
+                    for (Map.Entry<TypeDescription, byte[]> entry : rawAuxiliaryTypes.entrySet()) {
+                        files.put(entry.getKey().getInternalName(), entry.getValue());
+                    }
+                    files.put(typeDescription.getInternalName(), binaryRepresentation);
+                    JarEntry jarEntry;
+                    while ((jarEntry = jarInputStream.getNextJarEntry()) != null) {
+                        byte[] replacement = files.remove(jarEntry.getName());
+                        if (replacement == null) {
+                            jarOutputStream.putNextEntry(jarEntry);
+                            byte[] buffer = new byte[BUFFER_SIZE];
+                            int index;
+                            while ((index = jarInputStream.read(buffer)) != END_OF_FILE) {
+                                jarOutputStream.write(buffer, FROM_BEGINNING, index);
+                            }
+                        } else {
+                            jarOutputStream.putNextEntry(new JarEntry(jarEntry.getName()));
+                            jarOutputStream.write(replacement);
+                        }
+                        jarInputStream.closeEntry();
+                        jarOutputStream.closeEntry();
+                    }
+                    for (Map.Entry<String, byte[]> entry : files.entrySet()) {
+                        jarOutputStream.putNextEntry(new ZipEntry(entry.getKey()));
+                        jarOutputStream.write(entry.getValue());
+                        jarOutputStream.closeEntry();
+                    }
+                } finally {
+                    jarOutputStream.close();
+                }
+            } finally {
+                jarInputStream.close();
+            }
+            return target;
+        }
+
+        @Override
+        public File toJar(File file, Manifest manifest) throws IOException {
+            file.createNewFile();
+            JarOutputStream outputStream = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(file)), manifest);
+            try {
+                for (Map.Entry<TypeDescription, byte[]> entry : getRawAuxiliaryTypes().entrySet()) {
+                    outputStream.putNextEntry(new JarEntry(entry.getKey().getInternalName()));
+                    outputStream.write(entry.getValue());
+                    outputStream.closeEntry();
+                }
+                outputStream.putNextEntry(new JarEntry(typeDescription.getInternalName()));
+                outputStream.write(binaryRepresentation);
+                outputStream.closeEntry();
+            } finally {
+                outputStream.close();
+            }
+            return file;
         }
 
         @Override
