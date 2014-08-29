@@ -63,4 +63,40 @@ public enum MethodManifestation implements ModifierContributor.ForMethod {
     public int getMask() {
         return mask;
     }
+
+    /**
+     * Returns {@code true} if this instance represents a {@code native} method.
+     *
+     * @return {@code true} if this instance represents a {@code native} method.
+     */
+    public boolean isNative() {
+        return (mask & Opcodes.ACC_NATIVE) != 0;
+    }
+
+    /**
+     * Returns {@code true} if this instance represents a {@code abstract} method.
+     *
+     * @return {@code true} if this instance represents a {@code abstract} method.
+     */
+    public boolean isAbstract() {
+        return (mask & Opcodes.ACC_ABSTRACT) != 0;
+    }
+
+    /**
+     * Returns {@code true} if this instance represents a {@code final} method.
+     *
+     * @return {@code true} if this instance represents a {@code final} method.
+     */
+    public boolean isFinal() {
+        return (mask & Opcodes.ACC_FINAL) != 0;
+    }
+
+    /**
+     * Returns {@code true} if this instance represents a bridge method.
+     *
+     * @return {@code true} if this instance represents a bridge method.
+     */
+    public boolean isBridge() {
+        return (mask & Opcodes.ACC_BRIDGE) != 0;
+    }
 }

@@ -41,4 +41,31 @@ public enum FieldManifestation implements ModifierContributor.ForField {
     public int getMask() {
         return mask;
     }
+
+    /**
+     * Returns {@code true} if this manifestation represents a {@code final} type.
+     *
+     * @return {@code true} if this manifestation represents a {@code final} type.
+     */
+    public boolean isFinal() {
+        return (mask & Opcodes.ACC_FINAL) != 0;
+    }
+
+    /**
+     * Returns {@code true} if this manifestation represents a {@code volatile} type.
+     *
+     * @return {@code true} if this manifestation represents a {@code volatile} type.
+     */
+    public boolean isVolatile() {
+        return (mask & Opcodes.ACC_VOLATILE) != 0;
+    }
+
+    /**
+     * Returns {@code true} if this manifestation represents a field that is neither {@code final} or {@code volatile}.
+     *
+     * @return {@code true} if this manifestation represents a field that is neither {@code final} or {@code volatile}.
+     */
+    public boolean isPlain() {
+        return !(isFinal() || isVolatile());
+    }
 }

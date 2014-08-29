@@ -17,6 +17,7 @@ public enum MethodArguments implements ModifierContributor.ForMethod {
      * Describes a method that permits varargs.
      */
     VARARGS(Opcodes.ACC_VARARGS);
+
     /**
      * The mask of the modifier contributor.
      */

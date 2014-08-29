@@ -48,4 +48,40 @@ public enum Visibility implements ModifierContributor.ForType,
     public int getMask() {
         return mask;
     }
+
+    /**
+     * Returns {@code true} if this instance describes {@code public} visibility.
+     *
+     * @return {@code true} if this instance describes {@code public} visibility.
+     */
+    public boolean isPublic() {
+        return (mask & Opcodes.ACC_PUBLIC) != 0;
+    }
+
+    /**
+     * Returns {@code true} if this instance describes {@code protected} visibility.
+     *
+     * @return {@code true} if this instance describes {@code protected} visibility.
+     */
+    public boolean isProtected() {
+        return (mask & Opcodes.ACC_PROTECTED) != 0;
+    }
+
+    /**
+     * Returns {@code true} if this instance describes package-private visibility.
+     *
+     * @return {@code true} if this instance describes package-private visibility.
+     */
+    public boolean isPackagePrivate() {
+        return !(isPublic() || isPrivate() || isProtected());
+    }
+
+    /**
+     * Returns {@code true} if this instance describes {@code private} visibility.
+     *
+     * @return {@code true} if this instance describes {@code private} visibility.
+     */
+    public boolean isPrivate() {
+        return (mask & Opcodes.ACC_PRIVATE) != 0;
+    }
 }

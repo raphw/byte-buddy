@@ -56,4 +56,40 @@ public enum TypeManifestation implements ModifierContributor.ForType {
     public int getMask() {
         return mask;
     }
+
+    /**
+     * Returns {@code true} if a type represents a {@code final} type.
+     *
+     * @return {@code true} if a type represents a {@code final} type.
+     */
+    public boolean isFinal() {
+        return (mask & Opcodes.ACC_FINAL) != 0;
+    }
+
+    /**
+     * Returns {@code true} if a type represents an {@code abstract} type but not an interface type.
+     *
+     * @return {@code true} if a type represents an {@code abstract} type but not an interface type.
+     */
+    public boolean isAbstract() {
+        return (mask & Opcodes.ACC_ABSTRACT) != 0 && !isInterface();
+    }
+
+    /**
+     * Returns {@code true} if a type represents an {@code enum} type.
+     *
+     * @return {@code true} if a type represents an {@code enum} type.
+     */
+    public boolean isEnum() {
+        return (mask & Opcodes.ACC_ENUM) != 0;
+    }
+
+    /**
+     * Returns {@code true} if a type represents an interface type.
+     *
+     * @return {@code true} if a type represents an interface type.
+     */
+    public boolean isInterface() {
+        return (mask & Opcodes.ACC_INTERFACE) != 0;
+    }
 }

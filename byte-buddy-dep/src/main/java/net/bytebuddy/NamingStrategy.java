@@ -151,14 +151,14 @@ public interface NamingStrategy {
             @Override
             public TypeManifestation getTypeManifestation() {
                 if ((modifiers & Modifier.FINAL) != 0) {
-                    return TypeManifestation.FINAL;
+                    return (modifiers & Opcodes.ACC_ENUM) != 0 ? TypeManifestation.ENUM : TypeManifestation.FINAL;
                     // Note: Interfaces are abstract, the interface condition needs to be checked before abstraction.
                 } else if ((modifiers & Opcodes.ACC_INTERFACE) != 0) {
                     return TypeManifestation.INTERFACE;
                 } else if ((modifiers & Opcodes.ACC_ABSTRACT) != 0) {
-                    return TypeManifestation.ABSTRACT;
+                    return (modifiers & Opcodes.ACC_ENUM) != 0 ? TypeManifestation.ABSTRACT_ENUM : TypeManifestation.ABSTRACT;
                 } else {
-                    return TypeManifestation.PLAIN;
+                    return (modifiers & Opcodes.ACC_ENUM) != 0 ? TypeManifestation.ENUM : TypeManifestation.PLAIN;
                 }
             }
 
