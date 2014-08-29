@@ -520,18 +520,6 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 }
 
                 @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && placeholderType.equals(((ForRebaseInstrumentation) other).placeholderType)
-                            && methodRebaseResolver.equals(((ForRebaseInstrumentation) other).methodRebaseResolver);
-                }
-
-                @Override
-                public int hashCode() {
-                    return 31 * methodRebaseResolver.hashCode() + placeholderType.hashCode();
-                }
-
-                @Override
                 public String toString() {
                     return "RebaseDynamicTypeBuilder.TargetHandler.Prepared.ForRebaseInstrumentation{" +
                             "methodRebaseResolver=" + methodRebaseResolver +
