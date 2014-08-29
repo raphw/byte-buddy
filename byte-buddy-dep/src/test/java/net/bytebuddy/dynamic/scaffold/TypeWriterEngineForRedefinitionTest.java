@@ -15,7 +15,6 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -158,11 +157,11 @@ public class TypeWriterEngineForRedefinitionTest {
     }
 
     @Test
-    @Ignore("Test is based on faulty implementation about code preservation, needs to be fixed")
-    public void testTypeCreation() throws Exception {
+    public void testTypeCreationWithRebasement() throws Exception {
         when(classFileLocator.classFileFor(targetType))
                 .thenReturn(getClass().getClassLoader().getResourceAsStream(Foo.class.getName()
                         .replace('.', '/') + ".class"));
+        when(barResolution.isRebased()).thenReturn(true);
         assertThat(new TypeWriter.Engine.ForRedefinition(instrumentedType,
                 targetType,
                 classFileVersion,
@@ -183,6 +182,59 @@ public class TypeWriterEngineForRedefinitionTest {
         verify(classVisitor).visitMethod(Opcodes.ACC_PUBLIC, BAR, "()V", null, null);
         verify(classVisitor).visitMethod(Opcodes.ACC_PUBLIC, QUX, "()V", null, null);
         verify(classVisitor).visitMethod(Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC, BAR + FOO, BAR + QUX, QUX + FOO, new String[]{BAZ + QUX});
+        verify(methodPool).target(new MethodDescription.ForLoadedMethod(Foo.class.getDeclaredMethod(FOO)));
+        verify(fooEntry).isDefineMethod();
+        verify(fooAttributeAppender).apply(any(MethodVisitor.class),
+                eq(new MethodDescription.ForLoadedMethod(Foo.class.getDeclaredMethod(FOO))));
+        verify(fooByteCodeAppender, atLeast(1)).appendsCode();
+        verify(fooByteCodeAppender).apply(any(MethodVisitor.class),
+                eq(instrumentationContext),
+                eq(new MethodDescription.ForLoadedMethod(Foo.class.getDeclaredMethod(FOO))));
+        verify(methodPool).target(new MethodDescription.ForLoadedMethod(Foo.class.getDeclaredMethod(BAR)));
+        verify(barEntry).isDefineMethod();
+        verify(methodPool).target(firstMethod);
+        verify(firstMethodEntry).apply(classVisitor, instrumentationContext, firstMethod);
+        verify(methodPool).target(secondMethod);
+        verify(secondMethodEntry).apply(classVisitor, instrumentationContext, secondMethod);
+        verify(quxMethodVisitor).visitCode();
+        verify(quxMethodVisitor).visitEnd();
+        verify(classVisitor).visitEnd();
+        verifyNoMoreInteractions(classVisitor);
+        verify(typeAttributeAppender).apply(any(ClassVisitor.class), eq(instrumentedType));
+        verifyNoMoreInteractions(typeAttributeAppender);
+        verify(fieldPool).target(secondField);
+        verify(secondFieldEntry).apply(classVisitor, secondField);
+        verifyNoMoreInteractions(fieldPool);
+        verifyZeroInteractions(firstFieldEntry);
+        verifyNoMoreInteractions(secondFieldEntry);
+    }
+
+    @Test
+    public void testTypeCreationWithoutRebasement() throws Exception {
+        when(classFileLocator.classFileFor(targetType))
+                .thenReturn(getClass().getClassLoader().getResourceAsStream(Foo.class.getName()
+                        .replace('.', '/') + ".class"));
+        when(barResolution.isRebased()).thenReturn(false);
+        assertThat(new TypeWriter.Engine.ForRedefinition(instrumentedType,
+                targetType,
+                classFileVersion,
+                invokableMethods,
+                classVisitorWrapper,
+                typeAttributeAppender,
+                fieldPool,
+                methodPool,
+                classFileLocator,
+                methodRebaseResolver).create(instrumentationContext), notNullValue());
+        verify(classVisitor).visit(CLASS_VERSION, TYPE_MODIFIER, FOO, QUX, BAR, new String[]{BAZ});
+        verify(classVisitor, atLeast(0)).visitSource(any(String.class), any(String.class));
+        verify(classVisitor, atLeast(0)).visitInnerClass(any(String.class), any(String.class), any(String.class), any(int.class));
+        verify(classVisitor).visitAnnotation(Type.getDescriptor(Bar.class), true);
+        verify(classVisitor).visitField(Opcodes.ACC_PRIVATE, FOO, Type.getDescriptor(Void.class), null, null);
+        verify(classVisitor).visitMethod(Opcodes.ACC_PUBLIC, MethodDescription.CONSTRUCTOR_INTERNAL_NAME, "()V", null, null);
+        verify(classVisitor).visitMethod(Opcodes.ACC_PUBLIC, FOO, "()V", null, null);
+        verify(classVisitor).visitMethod(Opcodes.ACC_PUBLIC, BAR, "()V", null, null);
+        verify(classVisitor).visitMethod(Opcodes.ACC_PUBLIC, QUX, "()V", null, null);
+        verify(classVisitor, never()).visitMethod(Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC, BAR + FOO, BAR + QUX, QUX + FOO, new String[]{BAZ + QUX});
         verify(methodPool).target(new MethodDescription.ForLoadedMethod(Foo.class.getDeclaredMethod(FOO)));
         verify(fooEntry).isDefineMethod();
         verify(fooAttributeAppender).apply(any(MethodVisitor.class),
