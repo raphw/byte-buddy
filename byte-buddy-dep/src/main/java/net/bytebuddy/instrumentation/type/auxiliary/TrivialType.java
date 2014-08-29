@@ -36,7 +36,7 @@ public enum TrivialType implements AuxiliaryType, MethodLookupEngine.Factory, Me
     }
 
     @Override
-    public MethodLookupEngine make(ClassFileVersion classFileVersion) {
+    public MethodLookupEngine make(boolean extractDefaultMethods) {
         return this;
     }
 

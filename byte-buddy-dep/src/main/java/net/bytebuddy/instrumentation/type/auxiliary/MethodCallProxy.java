@@ -217,7 +217,7 @@ public class MethodCallProxy implements AuxiliaryType {
         }
 
         @Override
-        public MethodLookupEngine make(ClassFileVersion classFileVersion) {
+        public MethodLookupEngine make(boolean extractDefaultMethods) {
             return this;
         }
     }

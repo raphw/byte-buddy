@@ -179,7 +179,7 @@ public @interface Pipe {
         }
 
         @Override
-        public MethodLookupEngine make(ClassFileVersion classFileVersion) {
+        public MethodLookupEngine make(boolean extractDefaultMethods) {
             return this;
         }
 

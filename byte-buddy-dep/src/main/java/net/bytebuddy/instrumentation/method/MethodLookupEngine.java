@@ -1,6 +1,5 @@
 package net.bytebuddy.instrumentation.method;
 
-import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
@@ -48,7 +47,7 @@ public interface MethodLookupEngine {
          * @param classFileVersion The class file version of the created type.
          * @return A {@link net.bytebuddy.instrumentation.method.MethodLookupEngine}.
          */
-        MethodLookupEngine make(ClassFileVersion classFileVersion);
+        MethodLookupEngine make(boolean extractDefaultMethods);
     }
 
     /**
@@ -456,8 +455,8 @@ public interface MethodLookupEngine {
             INSTANCE;
 
             @Override
-            public MethodLookupEngine make(ClassFileVersion classFileVersion) {
-                return new Default(classFileVersion.isSupportsDefaultMethods()
+            public MethodLookupEngine make(boolean extractDefaultMethods) {
+                return new Default(extractDefaultMethods
                         ? DefaultMethodLookup.ENABLED
                         : DefaultMethodLookup.DISABLED);
             }

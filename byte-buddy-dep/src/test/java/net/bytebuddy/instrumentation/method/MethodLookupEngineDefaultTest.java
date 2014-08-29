@@ -1,6 +1,5 @@
 package net.bytebuddy.instrumentation.method;
 
-import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.JavaVersionRule;
@@ -57,7 +56,7 @@ public class MethodLookupEngineDefaultTest {
 
     @Before
     public void setUp() throws Exception {
-        methodLookupEngine = MethodLookupEngine.Default.Factory.INSTANCE.make(ClassFileVersion.JAVA_V8);
+        methodLookupEngine = MethodLookupEngine.Default.Factory.INSTANCE.make(true);
         classLoader = new PrecompiledTypeClassLoader(getClass().getClassLoader());
     }
 

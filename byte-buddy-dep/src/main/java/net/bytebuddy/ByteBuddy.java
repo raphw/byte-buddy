@@ -455,7 +455,7 @@ public class ByteBuddy {
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
                 nonNull(classFileLocator),
-                InlineDynamicTypeBuilder.TargetHandler.ForSubclassInstrumentation.INSTANCE);
+                InlineDynamicTypeBuilder.TargetHandler.ForRedefinitionInstrumentation.INSTANCE);
     }
 
     /**

@@ -94,7 +94,7 @@ public class InlineDynamicTypeBuilderTest {
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ClassFileLocator.Default.CLASS_PATH,
-                InlineDynamicTypeBuilder.TargetHandler.ForSubclassInstrumentation.INSTANCE)
+                InlineDynamicTypeBuilder.TargetHandler.ForRedefinitionInstrumentation.INSTANCE)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
