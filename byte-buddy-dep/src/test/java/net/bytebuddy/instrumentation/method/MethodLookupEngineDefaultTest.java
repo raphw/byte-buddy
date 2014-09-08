@@ -79,8 +79,44 @@ public class MethodLookupEngineDefaultTest {
         assertThat(finding.getInvokableMethods(), containsAllOf(classOverridingToString.getDeclaredMethods()));
         assertThat(finding.getInvokableMethods(), containsAllOf(objectType.getDeclaredMethods()
                 .filter(isVirtualTo(classOverridingToString)).filter(not(named(TO_STRING)))));
+        assertThat(finding.getInvokableMethods().filter(named(TO_STRING)).getOnly().isSpecializableFor(classOverridingToString), is(true));
+        assertThat(finding.getInvokableMethods().filter(named(TO_STRING)).getOnly().isSpecializableFor(objectType), is(true));
         assertThat(finding.getInvokableMethods().size(), is(classOverridingToString.getDeclaredMethods().size()
                 + objectType.getDeclaredMethods().filter(isVirtualTo(classOverridingToString)).size() - 1));
+        assertThat(finding.getInvokableDefaultMethods().size(), is(0));
+    }
+
+    @Test
+    public void testClassOverrideAbstractMethodLookup() throws Exception {
+        TypeDescription objectType = new TypeDescription.ForLoadedType(Object.class);
+        TypeDescription classOverridingToStringAbstract = new TypeDescription.ForLoadedType(ClassOverridingToStringAbstract.class);
+        MethodLookupEngine.Finding finding = methodLookupEngine.process(classOverridingToStringAbstract);
+        assertThat(finding.getTypeDescription(), is(classOverridingToStringAbstract));
+        assertThat(finding.getInvokableMethods(), containsAllOf(classOverridingToStringAbstract.getDeclaredMethods()));
+        assertThat(finding.getInvokableMethods(), containsAllOf(objectType.getDeclaredMethods()
+                .filter(isVirtualTo(classOverridingToStringAbstract)).filter(not(named(TO_STRING)))));
+        assertThat(finding.getInvokableMethods().filter(named(TO_STRING)).getOnly().isSpecializableFor(classOverridingToStringAbstract), is(false));
+        assertThat(finding.getInvokableMethods().filter(named(TO_STRING)).getOnly().isSpecializableFor(objectType), is(true));
+        assertThat(finding.getInvokableMethods().size(), is(classOverridingToStringAbstract.getDeclaredMethods().size()
+                + objectType.getDeclaredMethods().filter(isVirtualTo(classOverridingToStringAbstract)).size() - 1));
+        assertThat(finding.getInvokableDefaultMethods().size(), is(0));
+    }
+
+    @Test
+    public void testClassReOverrideAbstractMethodLookup() throws Exception {
+        TypeDescription objectType = new TypeDescription.ForLoadedType(Object.class);
+        TypeDescription classOverridingToStringAbstract = new TypeDescription.ForLoadedType(ClassOverridingToStringAbstract.class);
+        TypeDescription classReOverridingToStringManifest = new TypeDescription.ForLoadedType(ClassReOverridingToStringManifest.class);
+        MethodLookupEngine.Finding finding = methodLookupEngine.process(classReOverridingToStringManifest);
+        assertThat(finding.getTypeDescription(), is(classReOverridingToStringManifest));
+        assertThat(finding.getInvokableMethods(), containsAllOf(classReOverridingToStringManifest.getDeclaredMethods()));
+        assertThat(finding.getInvokableMethods(), containsAllOf(objectType.getDeclaredMethods()
+                .filter(isVirtualTo(classReOverridingToStringManifest)).filter(not(named(TO_STRING)))));
+        assertThat(finding.getInvokableMethods().filter(named(TO_STRING)).getOnly().isSpecializableFor(classReOverridingToStringManifest), is(true));
+        assertThat(finding.getInvokableMethods().filter(named(TO_STRING)).getOnly().isSpecializableFor(classOverridingToStringAbstract), is(false));
+        assertThat(finding.getInvokableMethods().filter(named(TO_STRING)).getOnly().isSpecializableFor(objectType), is(true));
+        assertThat(finding.getInvokableMethods().size(), is(classReOverridingToStringManifest.getDeclaredMethods().size()
+                + objectType.getDeclaredMethods().filter(isVirtualTo(classReOverridingToStringManifest)).size() - 1));
         assertThat(finding.getInvokableDefaultMethods().size(), is(0));
     }
 
@@ -385,6 +421,20 @@ public class MethodLookupEngineDefaultTest {
         @Override
         public String toString() {
             return super.toString();
+        }
+    }
+
+    private abstract static class ClassOverridingToStringAbstract {
+
+        @Override
+        public abstract String toString();
+    }
+
+    private static class ClassReOverridingToStringManifest extends ClassOverridingToStringAbstract {
+
+        @Override
+        public String toString() {
+            return FOO;
         }
     }
 
