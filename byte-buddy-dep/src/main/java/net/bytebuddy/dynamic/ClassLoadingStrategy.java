@@ -41,7 +41,28 @@ public interface ClassLoadingStrategy {
             @Override
             public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
                 Map<TypeDescription, Class<?>> loadedTypes = new LinkedHashMap<TypeDescription, Class<?>>(types.size());
-                classLoader = new ByteArrayClassLoader(types, classLoader);
+                classLoader = ByteArrayClassLoader.of(classLoader, types, ByteArrayClassLoader.PersistenceHandler.LATENT);
+                for (TypeDescription typeDescription : types.keySet()) {
+                    try {
+                        loadedTypes.put(typeDescription, classLoader.loadClass(typeDescription.getName()));
+                    } catch (ClassNotFoundException e) {
+                        throw new RuntimeException("Cannot load class " + typeDescription, e);
+                    }
+                }
+                return loadedTypes;
+            }
+        },
+
+        /**
+         * The strategy is identical to {@link net.bytebuddy.dynamic.ClassLoadingStrategy.Default#WRAPPER} but exposes
+         * the byte arrays that represent a class by {@link java.lang.ClassLoader#getResourceAsStream(String)}. For
+         * this purpose, all class files are persisted as byte arrays withing the wrapping class loader.
+         */
+        WRAPPER_PERSISTENT {
+            @Override
+            public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+                Map<TypeDescription, Class<?>> loadedTypes = new LinkedHashMap<TypeDescription, Class<?>>(types.size());
+                classLoader = ByteArrayClassLoader.of(classLoader, types, ByteArrayClassLoader.PersistenceHandler.MANIFEST);
                 for (TypeDescription typeDescription : types.keySet()) {
                     try {
                         loadedTypes.put(typeDescription, classLoader.loadClass(typeDescription.getName()));

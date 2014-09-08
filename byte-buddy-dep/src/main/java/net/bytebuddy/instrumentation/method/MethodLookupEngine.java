@@ -178,6 +178,16 @@ public interface MethodLookupEngine {
         private final List<MethodDescription> methodChain;
 
         /**
+         * Creates a new overriding class method.
+         *
+         * @param methodChain A list of overridden methods starting with the most specific method going down to the
+         *                    least specific.
+         */
+        protected OverridenClassMethod(List<MethodDescription> methodChain) {
+            this.methodChain = methodChain;
+        }
+
+        /**
          * Creates a new method description of an overriding method to an overriden method. The overriding method is
          * considered to be a {@link net.bytebuddy.instrumentation.method.MethodLookupEngine.OverridenClassMethod}
          * itself and is resolved appropriately.
@@ -199,16 +209,6 @@ public interface MethodLookupEngine {
             }
             methodChain.add(overriddenMethod);
             return new OverridenClassMethod(methodChain);
-        }
-
-        /**
-         * Creates a new overriding class method.
-         *
-         * @param methodChain A list of overridden methods starting with the most specific method going down to the
-         *                    least specific.
-         */
-        protected OverridenClassMethod(List<MethodDescription> methodChain) {
-            this.methodChain = methodChain;
         }
 
         @Override
@@ -259,6 +259,11 @@ public interface MethodLookupEngine {
         @Override
         public Annotation[] getAnnotations() {
             return methodChain.get(MOST_SPECIFIC).getAnnotations();
+        }
+
+        @Override
+        public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
+            return methodChain.get(MOST_SPECIFIC).isAnnotationPresent(annotationClass);
         }
 
         @Override

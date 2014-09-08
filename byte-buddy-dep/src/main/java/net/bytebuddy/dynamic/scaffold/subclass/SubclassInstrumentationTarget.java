@@ -19,46 +19,10 @@ import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isCons
 public class SubclassInstrumentationTarget extends Instrumentation.Target.AbstractBase {
 
     /**
-     * Responsible for identifying the origin type that an instrumentation target represents when
-     * {@link net.bytebuddy.instrumentation.Instrumentation.Target#getOriginType()} is invoked.
-     */
-    public static enum OriginTypeIdentifier {
-
-        /**
-         * Identifies the super type of an instrumented type as the origin type.
-         */
-        SUPER_TYPE {
-            @Override
-            protected TypeDescription identify(TypeDescription typeDescription) {
-                return typeDescription.getSupertype();
-            }
-        },
-
-        /**
-         * Identifies the instrumented type as its own origin type.
-         */
-        LEVEL_TYPE {
-            @Override
-            protected TypeDescription identify(TypeDescription typeDescription) {
-                return typeDescription;
-            }
-        };
-
-        /**
-         * Identifies the origin type to a given type description.
-         *
-         * @param typeDescription The type description for which an origin type should be identified.
-         * @return The origin type to the given type description.
-         */
-        protected abstract TypeDescription identify(TypeDescription typeDescription);
-    }
-
-    /**
      * The constructor of the super type, mapped by the constructor parameters of each constructor which is
      * sufficient for a constructor's unique identification.
      */
     protected final Map<TypeList, MethodDescription> superConstructors;
-
     /**
      * The origin type identifier to use.
      */
@@ -118,6 +82,41 @@ public class SubclassInstrumentationTarget extends Instrumentation.Target.Abstra
                 ", bridgeMethodResolver=" + bridgeMethodResolver +
                 ", targetTypeIdentifier=" + originTypeIdentifier +
                 '}';
+    }
+
+    /**
+     * Responsible for identifying the origin type that an instrumentation target represents when
+     * {@link net.bytebuddy.instrumentation.Instrumentation.Target#getOriginType()} is invoked.
+     */
+    public static enum OriginTypeIdentifier {
+
+        /**
+         * Identifies the super type of an instrumented type as the origin type.
+         */
+        SUPER_TYPE {
+            @Override
+            protected TypeDescription identify(TypeDescription typeDescription) {
+                return typeDescription.getSupertype();
+            }
+        },
+
+        /**
+         * Identifies the instrumented type as its own origin type.
+         */
+        LEVEL_TYPE {
+            @Override
+            protected TypeDescription identify(TypeDescription typeDescription) {
+                return typeDescription;
+            }
+        };
+
+        /**
+         * Identifies the origin type to a given type description.
+         *
+         * @param typeDescription The type description for which an origin type should be identified.
+         * @return The origin type to the given type description.
+         */
+        protected abstract TypeDescription identify(TypeDescription typeDescription);
     }
 
     /**

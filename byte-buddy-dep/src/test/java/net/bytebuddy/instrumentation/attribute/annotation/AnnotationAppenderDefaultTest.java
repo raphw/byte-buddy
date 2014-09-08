@@ -119,7 +119,8 @@ public class AnnotationAppenderDefaultTest {
         }
         classWriter.visitEnd();
         Class<?> bar = new ByteArrayClassLoader(getClass().getClassLoader(),
-                Collections.singletonMap(BAR, classWriter.toByteArray())).loadClass(BAR);
+                Collections.singletonMap(BAR, classWriter.toByteArray()),
+                ByteArrayClassLoader.PersistenceHandler.LATENT).loadClass(BAR);
         assertThat(bar.getName(), is(BAR));
         assertEquals(Object.class, bar.getSuperclass());
         return bar;
