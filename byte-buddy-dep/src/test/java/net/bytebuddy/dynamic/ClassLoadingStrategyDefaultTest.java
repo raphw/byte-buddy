@@ -37,6 +37,33 @@ public class ClassLoadingStrategyDefaultTest {
     }
 
     @Test
+    public void testWrapperPersistent() throws Exception {
+        Map<TypeDescription, Class<?>> loaded = ClassLoadingStrategy.Default.WRAPPER_PERSISTENT.load(classLoader, binaryRepresentations);
+        assertThat(loaded.size(), is(1));
+        Class<?> type = loaded.get(typeDescription);
+        assertThat(type.getClassLoader().getParent(), is(classLoader));
+        assertThat(type.getName(), is(Foo.class.getName()));
+    }
+
+    @Test
+    public void testChildFirst() throws Exception {
+        Map<TypeDescription, Class<?>> loaded = ClassLoadingStrategy.Default.CHILD_FIRST.load(classLoader, binaryRepresentations);
+        assertThat(loaded.size(), is(1));
+        Class<?> type = loaded.get(typeDescription);
+        assertThat(type.getClassLoader().getParent(), is(classLoader));
+        assertThat(type.getName(), is(Foo.class.getName()));
+    }
+
+    @Test
+    public void testChildFirstPersistent() throws Exception {
+        Map<TypeDescription, Class<?>> loaded = ClassLoadingStrategy.Default.CHILD_FIRST_PERSISTENT.load(classLoader, binaryRepresentations);
+        assertThat(loaded.size(), is(1));
+        Class<?> type = loaded.get(typeDescription);
+        assertThat(type.getClassLoader().getParent(), is(classLoader));
+        assertThat(type.getName(), is(Foo.class.getName()));
+    }
+
+    @Test
     public void testInjection() throws Exception {
         Map<TypeDescription, Class<?>> loaded = ClassLoadingStrategy.Default.INJECTION.load(classLoader, binaryRepresentations);
         assertThat(loaded.size(), is(1));

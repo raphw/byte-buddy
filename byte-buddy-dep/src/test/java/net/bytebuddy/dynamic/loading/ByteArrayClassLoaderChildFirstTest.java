@@ -1,11 +1,15 @@
 package net.bytebuddy.dynamic.loading;
 
+import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.utility.ClassFileExtraction;
 import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.commons.RemappingClassAdapter;
+import org.objectweb.asm.commons.SimpleRemapper;
 
 import java.io.InputStream;
 import java.util.Arrays;
@@ -20,16 +24,18 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotEquals;
 
 @RunWith(Parameterized.class)
-public class ByteArrayClassLoaderTest {
+public class ByteArrayClassLoaderChildFirstTest {
 
-    private static final ClassLoader BOOTSTRAP_CLASS_LOADER = null;
-    private static final String BAR = "bar";
+    private static final String FOO = "foo", BAR = "bar";
+
     private final ByteArrayClassLoader.PersistenceHandler persistenceHandler;
+
     private final Matcher<InputStream> expectedResourceLookup;
+
     private ClassLoader classLoader;
 
-    public ByteArrayClassLoaderTest(ByteArrayClassLoader.PersistenceHandler persistenceHandler,
-                                    Matcher<InputStream> expectedResourceLookup) {
+    public ByteArrayClassLoaderChildFirstTest(ByteArrayClassLoader.PersistenceHandler persistenceHandler,
+                                              Matcher<InputStream> expectedResourceLookup) {
         this.persistenceHandler = persistenceHandler;
         this.expectedResourceLookup = expectedResourceLookup;
     }
@@ -44,14 +50,10 @@ public class ByteArrayClassLoaderTest {
 
     @Before
     public void setUp() throws Exception {
-        Map<String, byte[]> values = Collections.singletonMap(Foo.class.getName(), ClassFileExtraction.extract(Foo.class));
-        classLoader = new ByteArrayClassLoader(BOOTSTRAP_CLASS_LOADER, values, persistenceHandler);
-    }
-
-    @Test
-    public void testSuccessfulHit() throws Exception {
-        assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
-        assertNotEquals(Foo.class, classLoader.loadClass(Foo.class.getName()));
+        Map<String, byte[]> values = Collections.singletonMap(Foo.class.getName(),
+                ClassFileExtraction.extract(Bar.class, new RenamingWrapper(Bar.class.getName().replace('.', '/'),
+                        Foo.class.getName().replace('.', '/'))));
+        classLoader = new ByteArrayClassLoader.ChildFirst(getClass().getClassLoader(), values, persistenceHandler);
     }
 
     @Test
@@ -85,7 +87,32 @@ public class ByteArrayClassLoaderTest {
         classLoader.loadClass(BAR);
     }
 
-    private static class Foo {
-        /* Note: Foo is know to the system class loader but not to the bootstrap class loader */
+    @Test
+    public void testSuccessfulHit() throws Exception {
+        assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
+        assertNotEquals(Foo.class, classLoader.loadClass(Foo.class.getName()));
+    }
+
+    public static class Foo {
+        /* empty */
+    }
+
+    public static class Bar {
+        /* empty */
+    }
+
+    private static class RenamingWrapper implements ClassVisitorWrapper {
+
+        private final String oldName, newName;
+
+        private RenamingWrapper(String oldName, String newName) {
+            this.oldName = oldName;
+            this.newName = newName;
+        }
+
+        @Override
+        public ClassVisitor wrap(ClassVisitor classVisitor) {
+            return new RemappingClassAdapter(classVisitor, new SimpleRemapper(oldName, newName));
+        }
     }
 }

@@ -3,8 +3,15 @@ package net.bytebuddy.dynamic.loading;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -17,11 +24,17 @@ public class ByteArrayClassLoader extends ClassLoader {
     /**
      * A mutable map of type names mapped to their binary representation.
      */
-    private final Map<String, byte[]> typeDefinitions;
+    protected final Map<String, byte[]> typeDefinitions;
+
     /**
      * The persistence handler of this class loader.
      */
-    private final PersistenceHandler persistenceHandler;
+    protected final PersistenceHandler persistenceHandler;
+
+    /**
+     * The access control context of this class loader's instantiation.
+     */
+    protected final AccessControlContext accessControlContext;
 
     /**
      * Creates a new class loader for a given definition of classes.
@@ -36,6 +49,7 @@ public class ByteArrayClassLoader extends ClassLoader {
         super(parent);
         this.typeDefinitions = new HashMap<String, byte[]>(typeDefinitions);
         this.persistenceHandler = persistenceHandler;
+        accessControlContext = AccessController.getContext();
     }
 
     /**
@@ -44,26 +58,67 @@ public class ByteArrayClassLoader extends ClassLoader {
      * @param parent             The {@link java.lang.ClassLoader} that is the parent of this class loader.
      * @param typeDefinitions    A map of type descriptions pointing to their binary representations.
      * @param persistenceHandler The persistence handler to be used by the created class loader.
+     * @param childFirst         {@code true} if the class loader should apply child first semantics when loading
+     *                           the {@code typeDefinitions}.
+     * @return A corresponding class loader.
      */
     public static ClassLoader of(ClassLoader parent,
                                  Map<TypeDescription, byte[]> typeDefinitions,
-                                 PersistenceHandler persistenceHandler) {
+                                 PersistenceHandler persistenceHandler,
+                                 boolean childFirst) {
         Map<String, byte[]> rawTypeDefinitions = new HashMap<String, byte[]>(typeDefinitions.size());
         for (Map.Entry<TypeDescription, byte[]> entry : typeDefinitions.entrySet()) {
             rawTypeDefinitions.put(entry.getKey().getName(), entry.getValue());
         }
-        return new ByteArrayClassLoader(parent, rawTypeDefinitions, persistenceHandler);
+        return childFirst
+                ? new ChildFirst(parent, rawTypeDefinitions, persistenceHandler)
+                : new ByteArrayClassLoader(parent, rawTypeDefinitions, persistenceHandler);
+    }
+
+    /**
+     * Loads a given set of class descriptions and their binary representations.
+     *
+     * @param classLoader        The parent class loader.
+     * @param types              The raw types to load.
+     * @param persistenceHandler The persistence handler of the created class loader.
+     * @param childFirst         {@code true} {@code true} if the created class loader should apply child-first
+     *                           semantics when loading the {@code types}.
+     * @return A map of the given type descriptions pointing to their loaded representations.
+     */
+    public static Map<TypeDescription, Class<?>> load(ClassLoader classLoader,
+                                                      Map<TypeDescription, byte[]> types,
+                                                      PersistenceHandler persistenceHandler,
+                                                      boolean childFirst) {
+        Map<TypeDescription, Class<?>> loadedTypes = new LinkedHashMap<TypeDescription, Class<?>>(types.size());
+        classLoader = ByteArrayClassLoader.of(classLoader, types, persistenceHandler, childFirst);
+        for (TypeDescription typeDescription : types.keySet()) {
+            try {
+                loadedTypes.put(typeDescription, classLoader.loadClass(typeDescription.getName()));
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException("Cannot load class " + typeDescription, e);
+            }
+        }
+        return loadedTypes;
     }
 
     @Override
-    protected Class<?> findClass(String name) throws ClassNotFoundException {
-        // Does not need synchronization because this method is only called from within
-        // ClassLoader in a synchronized context.
-        byte[] javaType = persistenceHandler.lookup(name, typeDefinitions);
-        if (javaType != null) {
-            return defineClass(name, javaType, 0, javaType.length);
+    protected Class<?> findClass(final String name) throws ClassNotFoundException {
+        try {
+            // This does not need synchronization because this method is only called from within
+            // ClassLoader in a synchronized context.
+            return AccessController.doPrivileged(new PrivilegedExceptionAction<Class<?>>() {
+                @Override
+                public Class<?> run() throws ClassNotFoundException {
+                    byte[] javaType = persistenceHandler.lookup(name, typeDefinitions);
+                    if (javaType != null) {
+                        return defineClass(name, javaType, 0, javaType.length);
+                    }
+                    throw new ClassNotFoundException(name);
+                }
+            }, accessControlContext);
+        } catch (PrivilegedActionException e) {
+            throw (ClassNotFoundException) e.getCause();
         }
-        return super.findClass(name);
     }
 
     @Override
@@ -79,8 +134,10 @@ public class ByteArrayClassLoader extends ClassLoader {
     @Override
     public String toString() {
         return "ByteArrayClassLoader{" +
-                "typeDefinitions=" + typeDefinitions +
+                "parent=" + getParent() +
+                ", typeDefinitions=" + typeDefinitions +
                 ", persistenceHandler=" + persistenceHandler +
+                ", accessControlContext=" + accessControlContext +
                 '}';
     }
 
@@ -141,5 +198,70 @@ public class ByteArrayClassLoader extends ClassLoader {
          * @return An input stream representing the requested resource or {@code null} if no such resource is known.
          */
         protected abstract InputStream inputStream(String name, Map<String, byte[]> typeDefinitions);
+    }
+
+    /**
+     * A {@link net.bytebuddy.dynamic.loading.ByteArrayClassLoader} which applies child-first semantics for the
+     * given type definitions.
+     */
+    public static class ChildFirst extends ByteArrayClassLoader {
+
+        /**
+         * Creates a new child-first byte array class loader.
+         *
+         * @param parent             The {@link java.lang.ClassLoader} that is the parent of this class loader.
+         * @param typeDefinitions    A map of fully qualified class names pointing to their binary representations.
+         * @param persistenceHandler The persistence handler of this class loader.
+         */
+        public ChildFirst(ClassLoader parent,
+                          Map<String, byte[]> typeDefinitions,
+                          PersistenceHandler persistenceHandler) {
+            super(parent, typeDefinitions, persistenceHandler);
+        }
+
+        @Override
+        protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+            Class<?> type = findLoadedClass(name);
+            if (type != null) {
+                return type;
+            }
+            try {
+                type = findClass(name);
+                if (resolve) {
+                    resolveClass(type);
+                }
+                return type;
+            } catch (ClassNotFoundException e) {
+                // If an unknown class is loaded, this implementation causes the findClass method of this instance
+                // to be triggered twice. This is however of minor importance because this would result in a
+                // ClassNotFoundException which is rather uncommon.
+                return super.loadClass(name, resolve);
+            }
+        }
+
+        @Override
+        public InputStream getResourceAsStream(String name) {
+            InputStream inputStream = persistenceHandler.inputStream(name, typeDefinitions);
+            if (inputStream != null) {
+                return inputStream;
+            } else {
+                URL url = getResource(name);
+                try {
+                    return url != null ? url.openStream() : null;
+                } catch (IOException ignored) {
+                    return null;
+                }
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "ByteArrayClassLoader.ChildFirst{" +
+                    "parent=" + getParent() +
+                    ", typeDefinitions=" + typeDefinitions +
+                    ", persistenceHandler=" + persistenceHandler +
+                    ", accessControlContext=" + accessControlContext +
+                    '}';
+        }
     }
 }

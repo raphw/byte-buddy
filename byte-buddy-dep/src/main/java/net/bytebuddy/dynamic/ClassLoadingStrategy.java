@@ -40,16 +40,7 @@ public interface ClassLoadingStrategy {
         WRAPPER {
             @Override
             public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
-                Map<TypeDescription, Class<?>> loadedTypes = new LinkedHashMap<TypeDescription, Class<?>>(types.size());
-                classLoader = ByteArrayClassLoader.of(classLoader, types, ByteArrayClassLoader.PersistenceHandler.LATENT);
-                for (TypeDescription typeDescription : types.keySet()) {
-                    try {
-                        loadedTypes.put(typeDescription, classLoader.loadClass(typeDescription.getName()));
-                    } catch (ClassNotFoundException e) {
-                        throw new RuntimeException("Cannot load class " + typeDescription, e);
-                    }
-                }
-                return loadedTypes;
+                return ByteArrayClassLoader.load(classLoader, types, ByteArrayClassLoader.PersistenceHandler.LATENT, false);
             }
         },
 
@@ -61,16 +52,37 @@ public interface ClassLoadingStrategy {
         WRAPPER_PERSISTENT {
             @Override
             public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
-                Map<TypeDescription, Class<?>> loadedTypes = new LinkedHashMap<TypeDescription, Class<?>>(types.size());
-                classLoader = ByteArrayClassLoader.of(classLoader, types, ByteArrayClassLoader.PersistenceHandler.MANIFEST);
-                for (TypeDescription typeDescription : types.keySet()) {
-                    try {
-                        loadedTypes.put(typeDescription, classLoader.loadClass(typeDescription.getName()));
-                    } catch (ClassNotFoundException e) {
-                        throw new RuntimeException("Cannot load class " + typeDescription, e);
-                    }
-                }
-                return loadedTypes;
+                return ByteArrayClassLoader.load(classLoader, types, ByteArrayClassLoader.PersistenceHandler.MANIFEST, false);
+            }
+        },
+
+        /**
+         * <p>
+         * The child-first class loading strategy is a modified version of the
+         * {@link net.bytebuddy.dynamic.ClassLoadingStrategy.Default#WRAPPER} where the dynamic types are given
+         * priority over any types of a parent class loader with the same name.
+         * </p>
+         * <p>
+         * <b>Important</b>: This does <i>not</i> replace a type of the same name, but it makes the type invisible by
+         * the reach of this class loader.
+         * </p>
+         */
+        CHILD_FIRST {
+            @Override
+            public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+                return ByteArrayClassLoader.load(classLoader, types, ByteArrayClassLoader.PersistenceHandler.LATENT, true);
+            }
+        },
+
+        /**
+         * The strategy is identical to {@link net.bytebuddy.dynamic.ClassLoadingStrategy.Default#CHILD_FIRST} but
+         * exposes the byte arrays that represent a class by {@link java.lang.ClassLoader#getResourceAsStream(String)}.
+         * For this purpose, all class files are persisted as byte arrays withing the wrapping class loader.
+         */
+        CHILD_FIRST_PERSISTENT {
+            @Override
+            public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+                return ByteArrayClassLoader.load(classLoader, types, ByteArrayClassLoader.PersistenceHandler.MANIFEST, true);
             }
         },
 

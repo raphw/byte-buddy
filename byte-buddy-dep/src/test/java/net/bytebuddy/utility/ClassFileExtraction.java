@@ -1,5 +1,6 @@
 package net.bytebuddy.utility;
 
+import net.bytebuddy.asm.ClassVisitorWrapper;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -14,11 +15,15 @@ public class ClassFileExtraction {
     private static final int ASM_MANUAL = 0;
     private static final int CA = 0xCA, FE = 0xFE, BA = 0xBA, BE = 0xBE;
 
-    public static byte[] extract(Class<?> type) throws IOException {
+    public static byte[] extract(Class<?> type, ClassVisitorWrapper classVisitorWrapper) throws IOException {
         ClassReader classReader = new ClassReader(type.getName());
         ClassWriter classWriter = new ClassWriter(classReader, ASM_MANUAL);
-        classReader.accept(classWriter, ASM_MANUAL);
+        classReader.accept(classVisitorWrapper.wrap(classWriter), ASM_MANUAL);
         return classWriter.toByteArray();
+    }
+
+    public static byte[] extract(Class<?> type) throws IOException {
+        return extract(type, new ClassVisitorWrapper.Chain());
     }
 
     @Test
