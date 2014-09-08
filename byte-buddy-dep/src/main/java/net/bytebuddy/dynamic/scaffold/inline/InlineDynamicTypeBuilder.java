@@ -8,6 +8,7 @@ import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.dynamic.scaffold.FieldRegistry;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.dynamic.scaffold.TypeWriter;
+import net.bytebuddy.dynamic.scaffold.subclass.SubclassInstrumentationTarget;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
@@ -231,8 +232,7 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                         namingStrategy)));
         TargetHandler.Prepared preparedTargetHandler = targetHandler.prepare(ignoredMethods,
                 classFileVersion,
-                preparedMethodRegistry.getInstrumentedType(),
-                methodLookupEngineFactory);
+                preparedMethodRegistry.getInstrumentedType());
         MethodRegistry.Compiled compiledMethodRegistry = preparedMethodRegistry.compile(preparedTargetHandler.factory(bridgeMethodResolverFactory),
                 methodLookupEngineFactory.make(classFileVersion.isSupportsDefaultMethods()),
                 preparedTargetHandler.getMethodPoolEntryDefault());
@@ -307,8 +307,7 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
          */
         Prepared prepare(MethodMatcher ignoredMethods,
                          ClassFileVersion classFileVersion,
-                         TypeDescription instrumentedType,
-                         MethodLookupEngine.Factory methodLookupEngineFactory);
+                         TypeDescription instrumentedType);
 
         /**
          * Performs a subclass instrumentation which creates a redefinition of the given type by invoking the
@@ -324,9 +323,8 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
             @Override
             public Prepared prepare(MethodMatcher ignoredMethods,
                                     ClassFileVersion classFileVersion,
-                                    TypeDescription instrumentedType,
-                                    MethodLookupEngine.Factory methodLookupEngineFactory) {
-                return new Prepared.ForRedefinitionInstrumentation(methodLookupEngineFactory.make(false));
+                                    TypeDescription instrumentedType) {
+                return Prepared.ForRedefinitionInstrumentation.INSTANCE;
             }
         }
 
@@ -344,8 +342,7 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
             @Override
             public Prepared prepare(MethodMatcher ignoredMethods,
                                     ClassFileVersion classFileVersion,
-                                    TypeDescription instrumentedType,
-                                    MethodLookupEngine.Factory methodLookupEngineFactory) {
+                                    TypeDescription instrumentedType) {
                 return new Prepared.ForRebaseInstrumentation(ignoredMethods,
                         classFileVersion,
                         instrumentedType);
@@ -390,21 +387,12 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
              * A prepared target handler for an instrumentation that creates a redefinition of the given type by
              * invoking the actual super method when redefining a method.
              */
-            static class ForRedefinitionInstrumentation implements Prepared {
+            static enum ForRedefinitionInstrumentation implements Prepared {
 
                 /**
-                 * A method lookup engine to use for analyzing the super type.
+                 * The singleton instance.
                  */
-                private final MethodLookupEngine methodLookupEngine;
-
-                /**
-                 * Creates a new prepared target handler for a redefinition instrumentation.
-                 *
-                 * @param methodLookupEngine A method lookup engine for analyzing the super type.
-                 */
-                public ForRedefinitionInstrumentation(MethodLookupEngine methodLookupEngine) {
-                    this.methodLookupEngine = methodLookupEngine;
-                }
+                INSTANCE;
 
                 @Override
                 public MethodRebaseResolver getMethodRebaseResolver() {
@@ -418,30 +406,13 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
 
                 @Override
                 public Instrumentation.Target.Factory factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
-                    return new RedefineInstrumentationTarget.Factory(methodLookupEngine, bridgeMethodResolverFactory);
+                    return new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory,
+                            SubclassInstrumentationTarget.OriginTypeIdentifier.LEVEL_TYPE);
                 }
 
                 @Override
                 public List<DynamicType> getAuxiliaryTypes() {
                     return Collections.emptyList();
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && methodLookupEngine.equals(((ForRedefinitionInstrumentation) other).methodLookupEngine);
-                }
-
-                @Override
-                public int hashCode() {
-                    return methodLookupEngine.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "RebaseDynamicTypeBuilder.TargetHandler.Prepared.ForRedefinitionInstrumentation{" +
-                            "methodLookupEngine=" + methodLookupEngine +
-                            '}';
                 }
             }
 

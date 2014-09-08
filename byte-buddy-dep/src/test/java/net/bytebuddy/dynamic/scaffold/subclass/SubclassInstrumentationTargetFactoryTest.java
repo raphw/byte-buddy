@@ -43,7 +43,8 @@ public class SubclassInstrumentationTargetFactoryTest {
         when(finding.getTypeDescription()).thenReturn(instrumentedType);
         when(instrumentedType.getSupertype()).thenReturn(superType);
         when(superType.getDeclaredMethods()).thenReturn(new MethodList.Empty());
-        factory = new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory);
+        factory = new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory,
+                SubclassInstrumentationTarget.OriginTypeIdentifier.SUPER_TYPE);
     }
 
     @Test
@@ -52,11 +53,29 @@ public class SubclassInstrumentationTargetFactoryTest {
     }
 
     @Test
+    public void testOriginTypeSuperType() throws Exception {
+        assertThat(new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory,
+                SubclassInstrumentationTarget.OriginTypeIdentifier.SUPER_TYPE).make(finding)
+                .getOriginType(), is(superType));
+    }
+
+    @Test
+    public void testOriginTypeLevelType() throws Exception {
+        assertThat(new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory,
+                SubclassInstrumentationTarget.OriginTypeIdentifier.LEVEL_TYPE).make(finding)
+                .getOriginType(), is(instrumentedType));
+    }
+
+    @Test
     public void testHashCodeEquals() throws Exception {
-        assertThat(factory.hashCode(), is(new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory).hashCode()));
-        assertThat(factory, is((Instrumentation.Target.Factory) new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory)));
+        assertThat(factory.hashCode(), is(new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory,
+                SubclassInstrumentationTarget.OriginTypeIdentifier.SUPER_TYPE).hashCode()));
+        assertThat(factory, is((Instrumentation.Target.Factory) new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory,
+                SubclassInstrumentationTarget.OriginTypeIdentifier.SUPER_TYPE)));
         BridgeMethodResolver.Factory otherFactory = mock(BridgeMethodResolver.Factory.class);
-        assertThat(factory.hashCode(), not(is(new SubclassInstrumentationTarget.Factory(otherFactory).hashCode())));
-        assertThat(factory, not(is((Instrumentation.Target.Factory) new SubclassInstrumentationTarget.Factory(otherFactory))));
+        assertThat(factory.hashCode(), not(is(new SubclassInstrumentationTarget.Factory(otherFactory,
+                SubclassInstrumentationTarget.OriginTypeIdentifier.SUPER_TYPE).hashCode())));
+        assertThat(factory, not(is((Instrumentation.Target.Factory) new SubclassInstrumentationTarget.Factory(otherFactory,
+                SubclassInstrumentationTarget.OriginTypeIdentifier.SUPER_TYPE))));
     }
 }

@@ -50,5 +50,6 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
         when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean()))
                 .thenReturn(stackManipulation);
         when(instrumentationTarget.getTypeDescription()).thenReturn(instrumentedType);
+        when(instrumentationTarget.getOriginType()).thenReturn(instrumentedType);
     }
 }

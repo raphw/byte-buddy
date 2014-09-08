@@ -37,7 +37,7 @@ public class MethodDelegationOriginTest extends AbstractInstrumentationTest {
         DynamicType.Loaded<Foo> loaded = instrument(Foo.class, MethodDelegation.to(OriginClass.class));
         Foo instance = loaded.getLoaded().newInstance();
         assertThat(instance.foo(), instanceOf(Class.class));
-        assertEquals(Foo.class, ((Class<?>) instance.foo()).getSuperclass());
+        assertEquals(Foo.class, instance.foo());
     }
 
     @Test

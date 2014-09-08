@@ -65,6 +65,11 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
     }
 
     @Override
+    public TypeDescription getOriginType() {
+        return typeDescription;
+    }
+
+    @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
                 && super.equals(other)

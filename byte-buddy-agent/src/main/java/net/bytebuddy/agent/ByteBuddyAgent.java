@@ -142,15 +142,19 @@ public class ByteBuddyAgent {
     }
 
     /**
+     * <p>
      * Installs the Byte Buddy agent using the <i>tools.jar</i>'s Attach API. This installation is only possible
      * on the OpenJDK and compatible JDKs as the <i>tools.jar</i> is not available on non-JDK JVMs or other JDKs.
      * Note that the installation is only performed if the Byte Buddy agent is not yet installed. However, this method
      * implies reflective lookup and reflective invocation such that the returned value should be cached rather than
      * calling this method several times.
+     * </p>
+     * <p>
+     * <b>Note</b>: If the currently running JVM does not support the runtime installation of an agent, this method
+     * throws an {@link java.lang.IllegalStateException}
+     * </p>
      *
      * @return The {@link java.lang.instrument.Instrumentation} instance that is provided by the Byte Buddy agent.
-     * @throws IllegalStateException If the currently running JVM does not support the runtime installation of
-     *                               an agent.
      */
     public static Instrumentation installOnOpenJDK() {
         try {
@@ -234,13 +238,18 @@ public class ByteBuddyAgent {
     }
 
     /**
+     * <p>
      * Looks up the {@link java.lang.instrument.Instrumentation} instance of an installed Byte Buddy agent. Note that
      * this method implies reflective lookup and reflective invocation such that the returned value should be cached
      * rather than calling this method several times.
+     * </p>
+     * <p>
+     * <b>Note</b>: This method throws an {@link java.lang.IllegalStateException} If the Byte Buddy agent is not
+     * properly installed.
+     * </p>
      *
      * @return The {@link java.lang.instrument.Instrumentation} instance which is provided by an installed
      * Byte Buddy agent.
-     * @throws java.lang.IllegalStateException If the Byte Buddy agent is not properly installed.
      */
     public static Instrumentation getInstrumentation() {
         Instrumentation instrumentation = doGetInstrumentation();

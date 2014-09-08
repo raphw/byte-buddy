@@ -272,6 +272,16 @@ public interface Instrumentation {
         TypeDescription getTypeDescription();
 
         /**
+         * Identifies the origin type of an instrumentation. The origin type describes the type that is subject to
+         * any form of enhancement. If a subclass of a given type is generated, the base type of this subclass
+         * describes the origin type. If a given type is redefined or rebased, the origin type is described by the
+         * instrumented type itself.
+         *
+         * @return The origin type of this instrumentation.
+         */
+        TypeDescription getOriginType();
+
+        /**
          * Creates a special method invocation for invoking the super method of the given method.
          *
          * @param methodDescription The method that is to be invoked specially.

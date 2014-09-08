@@ -199,7 +199,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                         interfaceTypes,
                                         modifiers,
                                         namingStrategy))))
-                .compile(new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory),
+                .compile(new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory,
+                                SubclassInstrumentationTarget.OriginTypeIdentifier.SUPER_TYPE),
                         methodLookupEngineFactory.make(classFileVersion.isSupportsDefaultMethods()),
                         MethodRegistry.Compiled.Entry.Skip.INSTANCE);
         return new TypeWriter.Default<T>(compiledMethodRegistry.getInstrumentedType(),

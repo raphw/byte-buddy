@@ -44,7 +44,7 @@ public interface MethodLookupEngine {
         /**
          * Returns a {@link net.bytebuddy.instrumentation.method.MethodLookupEngine}.
          *
-         * @param classFileVersion The class file version of the created type.
+         * @param extractDefaultMethods {@code true} if interface default methods should be resolved.
          * @return A {@link net.bytebuddy.instrumentation.method.MethodLookupEngine}.
          */
         MethodLookupEngine make(boolean extractDefaultMethods);
@@ -161,10 +161,162 @@ public interface MethodLookupEngine {
     }
 
     /**
+     * This method description represents a method that is defined in a non-interface type and overrides a method
+     * in another class it directly or indirectly extends.
+     */
+    static class OverridenClassMethod extends MethodDescription.AbstractMethodDescription {
+
+        /**
+         * Describes the index of the most specific method in the method chain in order to improve
+         * the readability of the code.
+         */
+        private static final int MOST_SPECIFIC = 0;
+
+        /**
+         * A list of overridden methods starting with the most specific method going down to the least specific.
+         */
+        private final List<MethodDescription> methodChain;
+
+        /**
+         * Creates a new method description of an overriding method to an overriden method. The overriding method is
+         * considered to be a {@link net.bytebuddy.instrumentation.method.MethodLookupEngine.OverridenClassMethod}
+         * itself and is resolved appropriately.
+         *
+         * @param overridingMethod The most specific method that is overriding another method.
+         * @param overriddenMethod The method that is overridden by the {@code overridingMethod}.
+         * @return A method description that represents the overriding method while considering how to properly
+         * specialize on invoking the overriden method.
+         */
+        public static MethodDescription of(MethodDescription overridingMethod, MethodDescription overriddenMethod) {
+            List<MethodDescription> methodChain;
+            if (overridingMethod instanceof OverridenClassMethod) {
+                OverridenClassMethod overridenClassMethod = (OverridenClassMethod) overridingMethod;
+                methodChain = new ArrayList<MethodDescription>(overridenClassMethod.methodChain.size() + 1);
+                methodChain.addAll(overridenClassMethod.methodChain);
+            } else {
+                methodChain = new ArrayList<MethodDescription>(2);
+                methodChain.add(overridingMethod);
+            }
+            methodChain.add(overriddenMethod);
+            return new OverridenClassMethod(methodChain);
+        }
+
+        /**
+         * Creates a new overriding class method.
+         *
+         * @param methodChain A list of overridden methods starting with the most specific method going down to the
+         *                    least specific.
+         */
+        protected OverridenClassMethod(List<MethodDescription> methodChain) {
+            this.methodChain = methodChain;
+        }
+
+        @Override
+        public TypeDescription getReturnType() {
+            return methodChain.get(MOST_SPECIFIC).getReturnType();
+        }
+
+        @Override
+        public TypeList getParameterTypes() {
+            return methodChain.get(MOST_SPECIFIC).getParameterTypes();
+        }
+
+        @Override
+        public Annotation[][] getParameterAnnotations() {
+            return methodChain.get(MOST_SPECIFIC).getParameterAnnotations();
+        }
+
+        @Override
+        public TypeList getExceptionTypes() {
+            return methodChain.get(MOST_SPECIFIC).getExceptionTypes();
+        }
+
+        @Override
+        public boolean isConstructor() {
+            return methodChain.get(MOST_SPECIFIC).isConstructor();
+        }
+
+        @Override
+        public boolean isTypeInitializer() {
+            return methodChain.get(MOST_SPECIFIC).isTypeInitializer();
+        }
+
+        @Override
+        public boolean represents(Method method) {
+            return methodChain.get(MOST_SPECIFIC).represents(method);
+        }
+
+        @Override
+        public boolean represents(Constructor<?> constructor) {
+            return methodChain.get(MOST_SPECIFIC).represents(constructor);
+        }
+
+        @Override
+        public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+            return methodChain.get(MOST_SPECIFIC).getAnnotation(annotationClass);
+        }
+
+        @Override
+        public Annotation[] getAnnotations() {
+            return methodChain.get(MOST_SPECIFIC).getAnnotations();
+        }
+
+        @Override
+        public Annotation[] getDeclaredAnnotations() {
+            return methodChain.get(MOST_SPECIFIC).getDeclaredAnnotations();
+        }
+
+        @Override
+        public String getName() {
+            return methodChain.get(MOST_SPECIFIC).getName();
+        }
+
+        @Override
+        public String getInternalName() {
+            return methodChain.get(MOST_SPECIFIC).getInternalName();
+        }
+
+        @Override
+        public TypeDescription getDeclaringType() {
+            return methodChain.get(MOST_SPECIFIC).getDeclaringType();
+        }
+
+        @Override
+        public int getModifiers() {
+            return methodChain.get(MOST_SPECIFIC).getModifiers();
+        }
+
+        @Override
+        public boolean isSpecializableFor(TypeDescription targetType) {
+            for (MethodDescription methodDescription : methodChain) {
+                if (methodDescription.isSpecializableFor(targetType)) {
+                    return true;
+                } else if (methodDescription.getDeclaringType().isAssignableFrom(targetType)) {
+                    return false;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public String toString() {
+            return "MethodLookupEngine.OverridenClassMethod{" +
+                    "methodChain=" + methodChain +
+                    '}';
+        }
+    }
+
+    /**
      * This {@link net.bytebuddy.instrumentation.method.MethodDescription} represents methods that are defined
      * ambiguously on several interfaces of a common type.
      */
     static class ConflictingInterfaceMethod extends MethodDescription.AbstractMethodDescription {
+
+        /**
+         * An index that is guaranteed to exist but that expresses the fact that any method that is represented
+         * by an instance of this class defines identical signatures by definition.
+         */
+        private static final int ANY = 0;
 
         /**
          * The modifiers for a conflicting interface method.
@@ -236,12 +388,12 @@ public interface MethodLookupEngine {
 
         @Override
         public TypeDescription getReturnType() {
-            return methodDescriptions.get(0).getReturnType();
+            return methodDescriptions.get(ANY).getReturnType();
         }
 
         @Override
         public TypeList getParameterTypes() {
-            return methodDescriptions.get(0).getParameterTypes();
+            return methodDescriptions.get(ANY).getParameterTypes();
         }
 
         @Override
@@ -296,12 +448,12 @@ public interface MethodLookupEngine {
 
         @Override
         public String getName() {
-            return methodDescriptions.get(0).getName();
+            return methodDescriptions.get(ANY).getName();
         }
 
         @Override
         public String getInternalName() {
-            return methodDescriptions.get(0).getInternalName();
+            return methodDescriptions.get(ANY).getInternalName();
         }
 
         @Override
@@ -522,7 +674,9 @@ public interface MethodLookupEngine {
                 classMethods = new HashMap<String, MethodDescription>();
                 interfaceMethods = new HashMap<String, MethodDescription>();
                 processedTypes = new HashSet<TypeDescription>();
-                virtualMethodMatcher = isMethod().and(not(isPrivate().or(isStatic()).or(isPackagePrivate().and(not(isVisibleTo(typeOfInterest))))));
+                virtualMethodMatcher = isMethod().and(not(isPrivate()
+                        .or(isStatic())
+                        .or(isPackagePrivate().and(not(isVisibleTo(typeOfInterest))))));
                 pushClass(typeOfInterest, any());
             }
 
@@ -549,9 +703,10 @@ public interface MethodLookupEngine {
                 if (processedTypes.add(typeDescription)) {
                     for (MethodDescription methodDescription : typeDescription.getDeclaredMethods().filter(methodMatcher)) {
                         String uniqueSignature = methodDescription.getUniqueSignature();
-                        if (!classMethods.containsKey(uniqueSignature)) {
-                            classMethods.put(uniqueSignature, methodDescription);
-                        }
+                        MethodDescription overridingMethod = classMethods.get(uniqueSignature);
+                        classMethods.put(uniqueSignature, overridingMethod == null
+                                ? methodDescription
+                                : OverridenClassMethod.of(overridingMethod, methodDescription));
                     }
                 }
             }

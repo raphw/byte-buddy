@@ -5,6 +5,7 @@ import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
+import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 
 import java.util.HashMap;
@@ -18,25 +19,68 @@ import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isCons
 public class SubclassInstrumentationTarget extends Instrumentation.Target.AbstractBase {
 
     /**
+     * Responsible for identifying the origin type that an instrumentation target represents when
+     * {@link net.bytebuddy.instrumentation.Instrumentation.Target#getOriginType()} is invoked.
+     */
+    public static enum OriginTypeIdentifier {
+
+        /**
+         * Identifies the super type of an instrumented type as the origin type.
+         */
+        SUPER_TYPE {
+            @Override
+            protected TypeDescription identify(TypeDescription typeDescription) {
+                return typeDescription.getSupertype();
+            }
+        },
+
+        /**
+         * Identifies the instrumented type as its own origin type.
+         */
+        LEVEL_TYPE {
+            @Override
+            protected TypeDescription identify(TypeDescription typeDescription) {
+                return typeDescription;
+            }
+        };
+
+        /**
+         * Identifies the origin type to a given type description.
+         *
+         * @param typeDescription The type description for which an origin type should be identified.
+         * @return The origin type to the given type description.
+         */
+        protected abstract TypeDescription identify(TypeDescription typeDescription);
+    }
+
+    /**
      * The constructor of the super type, mapped by the constructor parameters of each constructor which is
      * sufficient for a constructor's unique identification.
      */
     protected final Map<TypeList, MethodDescription> superConstructors;
 
     /**
+     * The origin type identifier to use.
+     */
+    protected final OriginTypeIdentifier originTypeIdentifier;
+
+    /**
      * Creates a new subclass instrumentation target.
      *
      * @param finding                     The lookup of the instrumented type this instance should represent.
      * @param bridgeMethodResolverFactory A factory for creating a bridge method resolver.
+     * @param originTypeIdentifier        The origin type identifier to use.
      */
     protected SubclassInstrumentationTarget(MethodLookupEngine.Finding finding,
-                                            BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
+                                            BridgeMethodResolver.Factory bridgeMethodResolverFactory,
+                                            OriginTypeIdentifier originTypeIdentifier) {
         super(finding, bridgeMethodResolverFactory);
         MethodList superConstructors = finding.getTypeDescription().getSupertype().getDeclaredMethods().filter(isConstructor());
         this.superConstructors = new HashMap<TypeList, MethodDescription>(superConstructors.size());
         for (MethodDescription superConstructor : superConstructors) {
             this.superConstructors.put(superConstructor.getParameterTypes(), superConstructor);
         }
+        this.originTypeIdentifier = originTypeIdentifier;
     }
 
     @Override
@@ -51,13 +95,19 @@ public class SubclassInstrumentationTarget extends Instrumentation.Target.Abstra
     }
 
     @Override
+    public TypeDescription getOriginType() {
+        return originTypeIdentifier.identify(typeDescription);
+    }
+
+    @Override
     public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass()) && super.equals(other);
+        return this == other || !(other == null || getClass() != other.getClass()) && super.equals(other)
+                && originTypeIdentifier == ((SubclassInstrumentationTarget) other).originTypeIdentifier;
     }
 
     @Override
     public int hashCode() {
-        return 7 * super.hashCode();
+        return 31 * super.hashCode() + originTypeIdentifier.hashCode();
     }
 
     @Override
@@ -66,6 +116,7 @@ public class SubclassInstrumentationTarget extends Instrumentation.Target.Abstra
                 "typeDescription=" + typeDescription +
                 ", defaultMethods=" + defaultMethods +
                 ", bridgeMethodResolver=" + bridgeMethodResolver +
+                ", targetTypeIdentifier=" + originTypeIdentifier +
                 '}';
     }
 
@@ -80,35 +131,45 @@ public class SubclassInstrumentationTarget extends Instrumentation.Target.Abstra
         private final BridgeMethodResolver.Factory bridgeMethodResolverFactory;
 
         /**
+         * The origin type identifier to use.
+         */
+        private final OriginTypeIdentifier originTypeIdentifier;
+
+        /**
          * Creates a new factory for a {@link net.bytebuddy.dynamic.scaffold.subclass.SubclassInstrumentationTarget}.
          *
          * @param bridgeMethodResolverFactory A factory for creating a bridge method resolver to be handed to the
          *                                    created subclass instrumentation target.
+         * @param originTypeIdentifier        The origin type identifier to use.
          */
-        public Factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
+        public Factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory,
+                       OriginTypeIdentifier originTypeIdentifier) {
             this.bridgeMethodResolverFactory = bridgeMethodResolverFactory;
+            this.originTypeIdentifier = originTypeIdentifier;
         }
 
         @Override
         public Instrumentation.Target make(MethodLookupEngine.Finding finding) {
-            return new SubclassInstrumentationTarget(finding, bridgeMethodResolverFactory);
+            return new SubclassInstrumentationTarget(finding, bridgeMethodResolverFactory, originTypeIdentifier);
         }
 
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && bridgeMethodResolverFactory.equals(((Factory) other).bridgeMethodResolverFactory);
+                    && bridgeMethodResolverFactory.equals(((Factory) other).bridgeMethodResolverFactory)
+                    && originTypeIdentifier.equals(((Factory) other).originTypeIdentifier);
         }
 
         @Override
         public int hashCode() {
-            return 7 * bridgeMethodResolverFactory.hashCode();
+            return 31 * bridgeMethodResolverFactory.hashCode() + originTypeIdentifier.hashCode();
         }
 
         @Override
         public String toString() {
             return "SubclassInstrumentationTarget.Factory{" +
                     "bridgeMethodResolverFactory=" + bridgeMethodResolverFactory +
+                    "targetTypeIdentifier=" + originTypeIdentifier +
                     '}';
         }
     }
