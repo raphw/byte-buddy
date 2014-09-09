@@ -102,22 +102,47 @@ public class ByteArrayClassLoader extends ClassLoader {
     }
 
     @Override
-    protected Class<?> findClass(final String name) throws ClassNotFoundException {
+    protected Class<?> findClass(String name) throws ClassNotFoundException {
         try {
             // This does not need synchronization because this method is only called from within
             // ClassLoader in a synchronized context.
-            return AccessController.doPrivileged(new PrivilegedExceptionAction<Class<?>>() {
-                @Override
-                public Class<?> run() throws ClassNotFoundException {
-                    byte[] javaType = persistenceHandler.lookup(name, typeDefinitions);
-                    if (javaType != null) {
-                        return defineClass(name, javaType, 0, javaType.length);
-                    }
-                    throw new ClassNotFoundException(name);
-                }
-            }, accessControlContext);
+            return AccessController.doPrivileged(new ClassLoadingAction(name), accessControlContext);
         } catch (PrivilegedActionException e) {
             throw (ClassNotFoundException) e.getCause();
+        }
+    }
+
+    /**
+     * A class loading action is responsible to perform the loading of a class in a privileged security context.
+     */
+    private class ClassLoadingAction implements PrivilegedExceptionAction<Class<?>> {
+
+        /**
+         * The name of the type to be loaded.
+         */
+        private final String name;
+
+        /**
+         * Creates a new class loading action.
+         *
+         * @param name The name of the type to be loaded.
+         */
+        private ClassLoadingAction(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public Class<?> run() throws ClassNotFoundException {
+            byte[] javaType = persistenceHandler.lookup(name, typeDefinitions);
+            if (javaType != null) {
+                return defineClass(name, javaType, 0, javaType.length);
+            }
+            throw new ClassNotFoundException(name);
+        }
+
+        @Override
+        public String toString() {
+            return "ByteArrayClassLoader.ClassLoadingAction{name='" + name + '\'' + '}';
         }
     }
 
