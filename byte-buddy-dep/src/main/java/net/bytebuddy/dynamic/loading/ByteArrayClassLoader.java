@@ -95,7 +95,7 @@ public class ByteArrayClassLoader extends ClassLoader {
             try {
                 loadedTypes.put(typeDescription, classLoader.loadClass(typeDescription.getName()));
             } catch (ClassNotFoundException e) {
-                throw new RuntimeException("Cannot load class " + typeDescription, e);
+                throw new IllegalStateException("Cannot load class " + typeDescription, e);
             }
         }
         return loadedTypes;
