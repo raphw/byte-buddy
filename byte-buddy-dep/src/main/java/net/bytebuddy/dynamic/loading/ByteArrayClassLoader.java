@@ -142,7 +142,7 @@ public class ByteArrayClassLoader extends ClassLoader {
 
         @Override
         public String toString() {
-            return "ByteArrayClassLoader.ClassLoadingAction{name='" + name + '\'' + '}';
+            return "ByteArrayClassLoader.ClassLoadingAction{name='" + name + "'}";
         }
     }
 
