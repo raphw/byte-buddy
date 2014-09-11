@@ -29,6 +29,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
@@ -98,14 +99,25 @@ public interface DynamicType {
 
     /**
      * Injects the types of this dynamic type into a given <i>jar</i> file. Any pre-existent type with the same name
-     * is overridden during injection. The {@code target} file's folder must exist prior to calling this method.
+     * is overridden during injection. The {@code target} file's folder must exist prior to calling this method. The
+     * file itself is overwritten or created depending on its prior existence.
      *
-     * @param source The original jar file.
-     * @param target The {@code source} jar file with the injected contents.
+     * @param sourceJar The original jar file.
+     * @param targetJar The {@code source} jar file with the injected contents.
      * @return The {@code target} jar file.
-     * @throws IOException If an IO exception occurs while writing the file.
+     * @throws IOException If an IO exception occurs while injecting from the source into the target.
      */
-    File inject(File source, File target) throws IOException;
+    File inject(File sourceJar, File targetJar) throws IOException;
+
+    /**
+     * Injects the types of this dynamic type into a given <i>jar</i> file. Any pre-existent type with the same name
+     * is overridden during injection.
+     *
+     * @param jar The jar file to replace with an injected version.
+     * @return The {@code jar} file.
+     * @throws IOException If an IO exception occurs while injecting into the jar.
+     */
+    File inject(File jar) throws IOException;
 
     /**
      * Saves the contents of this dynamic type inside a <i>jar</i> file. The folder of the given {@code file} must
@@ -2235,6 +2247,11 @@ public interface DynamicType {
         private static final int END_OF_FILE = -1;
 
         /**
+         * A suffix for temporary files.
+         */
+        private static final String TEMP_SUFFIX = "tmp";
+
+        /**
          * A type description of this dynamic type.
          */
         protected final TypeDescription typeDescription;
@@ -2333,12 +2350,12 @@ public interface DynamicType {
         }
 
         @Override
-        public File inject(File source, File target) throws IOException {
-            JarInputStream jarInputStream = new JarInputStream(new BufferedInputStream(new FileInputStream(source)));
+        public File inject(File sourceJar, File targetJar) throws IOException {
+            JarInputStream jarInputStream = new JarInputStream(new BufferedInputStream(new FileInputStream(sourceJar)));
             try {
-                target.createNewFile();
+                targetJar.createNewFile();
                 JarOutputStream jarOutputStream = new JarOutputStream(
-                        new BufferedOutputStream(new FileOutputStream(target)), jarInputStream.getManifest());
+                        new BufferedOutputStream(new FileOutputStream(targetJar)), jarInputStream.getManifest());
                 try {
                     Map<TypeDescription, byte[]> rawAuxiliaryTypes = getRawAuxiliaryTypes();
                     Map<String, byte[]> files = new HashMap<String, byte[]>(rawAuxiliaryTypes.size() + 1);
@@ -2374,7 +2391,34 @@ public interface DynamicType {
             } finally {
                 jarInputStream.close();
             }
-            return target;
+            return targetJar;
+        }
+
+        @Override
+        public File inject(File jar) throws IOException {
+            File temporary = inject(jar, File.createTempFile(jar.getName(), TEMP_SUFFIX));
+            try {
+                InputStream jarInputStream = new BufferedInputStream(new FileInputStream(temporary));
+                try {
+                    OutputStream jarOutputStream = new BufferedOutputStream(new FileOutputStream(jar));
+                    try {
+                        byte[] buffer = new byte[BUFFER_SIZE];
+                        int index;
+                        while ((index = jarInputStream.read(buffer)) != END_OF_FILE) {
+                            jarOutputStream.write(buffer, FROM_BEGINNING, index);
+                        }
+                    } finally {
+                        jarOutputStream.close();
+                    }
+                } finally {
+                    jarInputStream.close();
+                }
+            } finally {
+                if (!temporary.delete()) {
+                    Logger.getAnonymousLogger().warning("Cannot delete " + temporary);
+                }
+            }
+            return jar;
         }
 
         @Override
