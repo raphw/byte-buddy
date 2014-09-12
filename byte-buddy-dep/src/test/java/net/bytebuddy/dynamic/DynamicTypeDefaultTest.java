@@ -186,7 +186,7 @@ public class DynamicTypeDefaultTest {
     }
 
     @Test
-    public void testJarInjection() throws Exception {
+    public void testJarTargetInjection() throws Exception {
         File sourceFile = File.createTempFile(BAR, TEMP);
         Manifest manifest = new Manifest();
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, BAR);
@@ -205,6 +205,39 @@ public class DynamicTypeDefaultTest {
         boolean fileDeletion;
         try {
             assertThat(dynamicType.inject(sourceFile, file), is(file));
+            assertThat(file.exists(), is(true));
+            assertThat(file.isFile(), is(true));
+            assertThat(file.length() > 0L, is(true));
+            Map<String, byte[]> bytes = new HashMap<String, byte[]>();
+            bytes.put(FOOBAR, BINARY_FIRST);
+            bytes.put(QUXBAZ, BINARY_SECOND);
+            bytes.put(BARBAZ, BINARY_THIRD);
+            assertJarFile(file, manifest, bytes);
+        } finally {
+            fileDeletion = file.delete() & sourceFile.delete();
+        }
+        assertThat(fileDeletion, is(true));
+    }
+
+    @Test
+    public void testJarSelfInjection() throws Exception {
+        File file = File.createTempFile(BAR, TEMP);
+        Manifest manifest = new Manifest();
+        manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, BAR);
+        JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(file), manifest);
+        try {
+            jarOutputStream.putNextEntry(new JarEntry(BARBAZ));
+            jarOutputStream.write(BINARY_THIRD);
+            jarOutputStream.closeEntry();
+            jarOutputStream.putNextEntry(new JarEntry(FOOBAR));
+            jarOutputStream.write(BINARY_THIRD);
+            jarOutputStream.closeEntry();
+        } finally {
+            jarOutputStream.close();
+        }
+        boolean fileDeletion;
+        try {
+            assertThat(dynamicType.inject(file), is(file));
             assertThat(file.exists(), is(true));
             assertThat(file.isFile(), is(true));
             assertThat(file.length() > 0L, is(true));
