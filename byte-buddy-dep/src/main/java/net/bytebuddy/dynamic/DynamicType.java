@@ -265,8 +265,9 @@ public interface DynamicType {
         /**
          * Defines a new method for this type.
          * <p>&nbsp;</p>
-         * Note that a method definition will shadow any method of identical signature that was defined in a super
-         * class. This implies that the defined method will be treated as if it does not have a super implementation.
+         * Note that a method definition overrides any method of identical signature that was defined in a super
+         * type what is only valid if the method is of at least broader visibility and if the overridden method
+         * is not {@code final}.
          *
          * @param name           The name of the method.
          * @param returnType     The return type of the method  where the current type can be represented by
@@ -284,8 +285,9 @@ public interface DynamicType {
         /**
          * Defines a new method for this type.
          * <p>&nbsp;</p>
-         * Note that a method definition will shadow any method of identical signature that was defined in a super
-         * class. This implies that the defined method will be treated as if it does not have a super implementation.
+         * Note that a method definition overrides any method of identical signature that was defined in a super
+         * type what is only valid if the method is of at least broader visibility and if the overridden method
+         * is not {@code final}.
          *
          * @param name           The name of the method.
          * @param returnType     A description of the return type of the method  where the current type can be
