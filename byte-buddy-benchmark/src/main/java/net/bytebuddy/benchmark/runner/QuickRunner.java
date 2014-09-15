@@ -37,7 +37,7 @@ public class QuickRunner {
                 .include(WILDCARD + ClassByImplementationBenchmark.class.getSimpleName() + WILDCARD)
                 .include(WILDCARD + ClassByExtensionBenchmark.class.getSimpleName() + WILDCARD)
                 .include(WILDCARD + TrivialClassCreationBenchmark.class.getSimpleName() + WILDCARD)
-                .forks(1)
+                .forks(0) // Should rather be 1 but there seems to be a bug in JMH.
                 .build()).run();
     }
 }
