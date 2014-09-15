@@ -3,7 +3,6 @@ package net.bytebuddy.instrumentation;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.ClassLoadingStrategy;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.SuperCall;
-import net.bytebuddy.utility.RandomString;
 import org.junit.Test;
 
 import java.lang.reflect.Method;
@@ -13,14 +12,13 @@ import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 public class RebaseInstrumentationTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
     private static final Object STATIC_METHOD = null;
-
-    private static final ClassLoader BOOTSTRAP_CLASS_LOADER = null;
 
     @Test
     public void testFixedValueInstanceMethod() throws Exception {
@@ -29,9 +27,10 @@ public class RebaseInstrumentationTest {
                 .method(named(BAR))
                 .intercept(FixedValue.value(FOO))
                 .make()
-                .load(BOOTSTRAP_CLASS_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
         assertEquals(Object.class, dynamicType.getSuperclass());
+        assertNotEquals(Foo.class, dynamicType);
         assertThat(dynamicType.getName(), is(Foo.class.getName()));
         Method barMethod = dynamicType.getDeclaredMethod(BAR);
         assertThat((String) barMethod.invoke(dynamicType.newInstance()), is(FOO));
@@ -44,9 +43,10 @@ public class RebaseInstrumentationTest {
                 .method(named(BAR))
                 .intercept(FixedValue.value(FOO))
                 .make()
-                .load(BOOTSTRAP_CLASS_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
         assertEquals(Object.class, dynamicType.getSuperclass());
+        assertNotEquals(Qux.class, dynamicType);
         assertThat(dynamicType.getName(), is(Qux.class.getName()));
         Method barMethod = dynamicType.getDeclaredMethod(BAR);
         assertThat((String) barMethod.invoke(STATIC_METHOD), is(FOO));
@@ -56,13 +56,14 @@ public class RebaseInstrumentationTest {
     public void testSuperCallInstanceMethod() throws Exception {
         Class<?> dynamicType = new ByteBuddy()
                 .rebase(Foo.class)
-                .name(FOO + RandomString.make())
                 .method(named(BAR))
                 .intercept(MethodDelegation.to(SuperInterceptor.class))
                 .make()
-                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
         assertEquals(Object.class, dynamicType.getSuperclass());
+        assertNotEquals(Foo.class, dynamicType);
+        assertThat(dynamicType.getName(), is(Foo.class.getName()));
         Method barMethod = dynamicType.getDeclaredMethod(BAR);
         assertThat((String) barMethod.invoke(dynamicType.newInstance()), is(FOO + BAR));
     }
@@ -71,13 +72,14 @@ public class RebaseInstrumentationTest {
     public void testSuperCallStaticMethod() throws Exception {
         Class<?> dynamicType = new ByteBuddy()
                 .rebase(Qux.class)
-                .name(QUX + RandomString.make())
                 .method(named(BAR))
                 .intercept(MethodDelegation.to(SuperInterceptor.class))
                 .make()
-                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
         assertEquals(Object.class, dynamicType.getSuperclass());
+        assertNotEquals(Qux.class, dynamicType);
+        assertThat(dynamicType.getName(), is(Qux.class.getName()));
         Method barMethod = dynamicType.getDeclaredMethod(BAR);
         assertThat((String) barMethod.invoke(STATIC_METHOD), is(FOO + BAR));
     }
