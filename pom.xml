@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.bytebuddy</groupId>
@@ -12,7 +13,7 @@
     <name>Byte Buddy (parent)</name>
     <description>
         Byte Buddy is a Java library for creating Java classes at run time.
-        The parent artifact contains configuration information that concern all submodules.
+        The parent artifact contains configuration information that concern all modules.
     </description>
     <url>http://bytebuddy.net</url>
 
@@ -149,7 +150,7 @@
                         <format>html</format>
                         <format>xml</format>
                     </formats>
-                    <check />
+                    <check/>
                 </configuration>
             </plugin>
             <!-- Generate coveralls reports from Travis -->
@@ -238,13 +239,14 @@
                                     <goal>jar</goal>
                                 </goals>
                             </execution>
-                            <execution>
-                                <id>aggregate-javadoc</id>
-                                <goals>
-                                    <goal>aggregate</goal>
-                                </goals>
-                                <phase>package</phase>
-                            </execution>
+                            <!-- MNG-4618: Fails with Maven 3 due to a bug in the Maven plugin -->
+                            <!--<execution>-->
+                            <!--<id>aggregate-javadoc</id>-->
+                            <!--<goals>-->
+                            <!--<goal>aggregate</goal>-->
+                            <!--</goals>-->
+                            <!--<phase>package</phase>-->
+                            <!--</execution>-->
                         </executions>
                     </plugin>
                     <!-- Sign artifacts -->
