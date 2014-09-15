@@ -37,21 +37,31 @@ public class HashCodeEqualsTester {
 
     private final Refinement refinement;
 
-    public HashCodeEqualsTester(Class<?> type, Refinement refinement) {
+    private final boolean skipSynthetic;
+
+    private HashCodeEqualsTester(Class<?> type, Refinement refinement, boolean skipSynthetic) {
         this.type = type;
         this.refinement = refinement;
+        this.skipSynthetic = skipSynthetic;
     }
 
     public static HashCodeEqualsTester of(Class<?> type) {
-        return new HashCodeEqualsTester(type, Refinement.NoOp.INSTANCE);
+        return new HashCodeEqualsTester(type, Refinement.NoOp.INSTANCE, false);
     }
 
     public HashCodeEqualsTester refine(Refinement refinement) {
-        return new HashCodeEqualsTester(type, new Refinement.Pair(this.refinement, refinement));
+        return new HashCodeEqualsTester(type, new Refinement.Pair(this.refinement, refinement), false);
+    }
+
+    public HashCodeEqualsTester skipSynthetic() {
+        return new HashCodeEqualsTester(type, refinement, true);
     }
 
     public void apply() throws IllegalAccessException, InvocationTargetException, InstantiationException {
         for (Constructor<?> constructor : type.getDeclaredConstructors()) {
+            if (constructor.isSynthetic() && skipSynthetic) {
+                continue;
+            }
             constructor.setAccessible(true);
             Class<?>[] parameterTypes = constructor.getParameterTypes();
             Object[] actualArguments = new Object[parameterTypes.length];
@@ -62,6 +72,9 @@ public class HashCodeEqualsTester {
             }
             int testIndex = 0;
             Object instance = constructor.newInstance(actualArguments);
+            assertThat(instance, is(instance));
+            assertThat(instance, not(is((Object) null)));
+            assertThat(instance, not(is(new Object())));
             Object similarInstance = constructor.newInstance(actualArguments);
             assertThat(instance.hashCode(), is(similarInstance.hashCode()));
             assertThat(instance, is(similarInstance));

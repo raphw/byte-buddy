@@ -128,5 +128,8 @@ public class ByteBuddyTest {
     @Test
     public void testHashCodeEquals() throws Exception {
         HashCodeEqualsTester.of(ByteBuddy.class).apply();
+        HashCodeEqualsTester.of(ByteBuddy.MatchedMethodInterception.class).apply();
+        HashCodeEqualsTester.of(ByteBuddy.MethodAnnotationTarget.class).apply();
+        HashCodeEqualsTester.of(ByteBuddy.OptionalMethodInterception.class).apply();
     }
 }

@@ -171,6 +171,13 @@ public class ClassByExtensionBenchmark {
     public static class ByteBuddyInterceptor {
 
         /**
+         * The interceptor's constructor is not supposed to be invoked.
+         */
+        private ByteBuddyInterceptor() {
+            throw new UnsupportedOperationException();
+        }
+
+        /**
          * Call the super method.
          *
          * @param zuper A proxy for invoking the super method.

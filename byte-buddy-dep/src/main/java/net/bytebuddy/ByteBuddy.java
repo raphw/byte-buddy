@@ -1407,7 +1407,7 @@ public class ByteBuddy {
     /**
      * An optional method interception that allows to intercept a method selection only if this is needed.
      */
-    public class OptionalMethodInterception extends ByteBuddy implements MethodInterceptable {
+    public static class OptionalMethodInterception extends ByteBuddy implements MethodInterceptable {
 
         /**
          * The method matcher that defines the selected that is represented by this instance.
@@ -1474,32 +1474,33 @@ public class ByteBuddy {
             return new MatchedMethodInterception(methodMatcher).withoutCode();
         }
 
-        /**
-         * Returns the outer class instance of this instance.
-         *
-         * @return The outer class instance.
-         */
-        private ByteBuddy getByteBuddy() {
-            return ByteBuddy.this;
-        }
-
         @Override
         public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && ByteBuddy.this.equals(((OptionalMethodInterception) other).getByteBuddy())
+            return this == other || !(other == null || getClass() != other.getClass()) && super.equals(other)
                     && methodMatcher.equals(((OptionalMethodInterception) other).methodMatcher);
         }
 
         @Override
         public int hashCode() {
-            return 31 * methodMatcher.hashCode() + ByteBuddy.this.hashCode();
+            return 31 * methodMatcher.hashCode() + super.hashCode();
         }
 
         @Override
         public String toString() {
             return "ByteBuddy.OptionalMethodInterception{" +
-                    "methodMatcher=" + methodMatcher +
-                    "byteBuddy=" + ByteBuddy.this.toString() +
+                    "classFileVersion=" + classFileVersion +
+                    ", namingStrategy=" + namingStrategy +
+                    ", interfaceTypes=" + interfaceTypes +
+                    ", ignoredMethods=" + ignoredMethods +
+                    ", bridgeMethodResolverFactory=" + bridgeMethodResolverFactory +
+                    ", classVisitorWrapperChain=" + classVisitorWrapperChain +
+                    ", methodRegistry=" + methodRegistry +
+                    ", modifiers=" + modifiers +
+                    ", methodLookupEngineFactory=" + methodLookupEngineFactory +
+                    ", typeAttributeAppender=" + typeAttributeAppender +
+                    ", defaultFieldAttributeAppenderFactory=" + defaultFieldAttributeAppenderFactory +
+                    ", defaultMethodAttributeAppenderFactory=" + defaultMethodAttributeAppenderFactory +
+                    ", methodMatcher=" + methodMatcher +
                     '}';
         }
     }

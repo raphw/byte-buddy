@@ -30,6 +30,9 @@
         <cobertura.exclude.benchmark.generated>
             net/bytebuddy/benchmark/generated/**/*.class
         </cobertura.exclude.benchmark.generated>
+        <cobertura.exclude.benchmark.jmh>
+            org/openjdk/jmh/infra/generated/**/*.class
+        </cobertura.exclude.benchmark.jmh>
         <cobertura.exclude.benchmark.runner>
             net/bytebuddy/benchmark/runner/**/*.class
         </cobertura.exclude.benchmark.runner>
@@ -139,6 +142,7 @@
                     <instrumentation>
                         <excludes>
                             <exclude>${cobertura.exclude.benchmark.generated}</exclude>
+                            <exclude>${cobertura.exclude.benchmark.jmh}</exclude>
                             <exclude>${cobertura.exclude.benchmark.runner}</exclude>
                         </excludes>
                     </instrumentation>

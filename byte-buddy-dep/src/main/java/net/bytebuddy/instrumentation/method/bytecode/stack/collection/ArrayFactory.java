@@ -103,20 +103,13 @@ public class ArrayFactory implements CollectionFactory {
 
     @Override
     public boolean equals(Object other) {
-        if (this == other) return true;
-        if (other == null || getClass() != other.getClass()) return false;
-        ArrayFactory that = (ArrayFactory) other;
-        return arrayCreator.equals(that.arrayCreator)
-                && componentType.equals(that.componentType)
-                && sizeDecrease.equals(that.sizeDecrease);
+        return this == other || !(other == null || getClass() != other.getClass())
+                && componentType.equals(((ArrayFactory) other).componentType);
     }
 
     @Override
     public int hashCode() {
-        int result = componentType.hashCode();
-        result = 31 * result + arrayCreator.hashCode();
-        result = 31 * result + sizeDecrease.hashCode();
-        return result;
+        return componentType.hashCode();
     }
 
     @Override
