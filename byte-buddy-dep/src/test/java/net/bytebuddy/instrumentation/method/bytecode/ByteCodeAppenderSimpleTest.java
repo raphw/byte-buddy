@@ -3,6 +3,7 @@ package net.bytebuddy.instrumentation.method.bytecode;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -12,7 +13,6 @@ import org.mockito.Mock;
 import org.objectweb.asm.MethodVisitor;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -57,9 +57,6 @@ public class ByteCodeAppenderSimpleTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        assertThat(new ByteCodeAppender.Simple(first, second).hashCode(), is(new ByteCodeAppender.Simple(first, second).hashCode()));
-        assertThat(new ByteCodeAppender.Simple(first, second), is(new ByteCodeAppender.Simple(first, second)));
-        assertThat(new ByteCodeAppender.Simple(first, second).hashCode(), not(is(new ByteCodeAppender.Simple(first).hashCode())));
-        assertThat(new ByteCodeAppender.Simple(first, second), not(is(new ByteCodeAppender.Simple(first))));
+        HashCodeEqualsTester.of(ByteCodeAppender.Simple.class).apply();
     }
 }

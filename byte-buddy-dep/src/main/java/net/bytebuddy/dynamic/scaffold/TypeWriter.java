@@ -222,19 +222,21 @@ public interface TypeWriter<T> {
                 if (other == null || getClass() != other.getClass()) return false;
                 ForRedefinition that = (ForRedefinition) other;
                 return attributeAppender.equals(that.attributeAppender)
+                        && classFileLocator.equals(that.classFileLocator)
                         && classFileVersion.equals(that.classFileVersion)
                         && classVisitorWrapper.equals(that.classVisitorWrapper)
                         && fieldPool.equals(that.fieldPool)
-                        && classFileLocator.equals(that.classFileLocator)
                         && instrumentedType.equals(that.instrumentedType)
                         && invokableMethods.equals(that.invokableMethods)
+                        && methodPool.equals(that.methodPool)
                         && methodRebaseResolver.equals(that.methodRebaseResolver)
-                        && methodPool.equals(that.methodPool);
+                        && targetType.equals(that.targetType);
             }
 
             @Override
             public int hashCode() {
                 int result = instrumentedType.hashCode();
+                result = 31 * result + targetType.hashCode();
                 result = 31 * result + classFileVersion.hashCode();
                 result = 31 * result + invokableMethods.hashCode();
                 result = 31 * result + classVisitorWrapper.hashCode();
@@ -250,6 +252,7 @@ public interface TypeWriter<T> {
             public String toString() {
                 return "TypeWriter.Engine.ForRedefinition{" +
                         "instrumentedType=" + instrumentedType +
+                        ", targetType=" + targetType +
                         ", classFileVersion=" + classFileVersion +
                         ", invokableMethods=" + invokableMethods +
                         ", classVisitorWrapper=" + classVisitorWrapper +
@@ -317,7 +320,10 @@ public interface TypeWriter<T> {
                                   String genericSignature,
                                   String superTypeInternalName,
                                   String[] interfaceTypeInternalName) {
-                    super.visit(Math.max(classFileVersion.getVersionNumber(), classFileVersionNumber),
+                    ClassFileVersion originalClassFileVersion = new ClassFileVersion(classFileVersionNumber);
+                    super.visit((classFileVersion.compareTo(originalClassFileVersion) > 0
+                                    ? classFileVersion
+                                    : originalClassFileVersion).getVersionNumber(),
                             instrumentedType.getActualModifiers((modifiers & Opcodes.ACC_SUPER) != 0),
                             instrumentedType.getInternalName(),
                             instrumentedType.getGenericSignature(),

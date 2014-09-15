@@ -1,12 +1,12 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind;
 
+import net.bytebuddy.utility.HashCodeEqualsTester;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNot.not;
 import static org.mockito.Mockito.*;
 
 public class AmbiguityResolverChainTest extends AbstractAmbiguityResolverTest {
@@ -45,13 +45,6 @@ public class AmbiguityResolverChainTest extends AbstractAmbiguityResolverTest {
 
     @Test
     public void testEqualsHashCode() throws Exception {
-        MethodDelegationBinder.AmbiguityResolver firstChain = MethodDelegationBinder.AmbiguityResolver.Chain
-                .of(MethodDelegationBinder.AmbiguityResolver.Chain.of(first, second), third);
-        MethodDelegationBinder.AmbiguityResolver secondChain = MethodDelegationBinder.AmbiguityResolver.Chain
-                .of(first, second, third);
-        assertThat(firstChain.hashCode(), is(secondChain.hashCode()));
-        assertThat(firstChain, is(secondChain));
-        assertThat(firstChain.hashCode(), not(is(chain.hashCode())));
-        assertThat(firstChain, not(is(chain)));
+        HashCodeEqualsTester.of(MethodDelegationBinder.AmbiguityResolver.Chain.class).apply();
     }
 }

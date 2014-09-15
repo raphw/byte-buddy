@@ -5,6 +5,7 @@ import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -15,7 +16,6 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
@@ -107,14 +107,7 @@ public class TypeWriterMethodPoolEntryTest {
 
     @Test
     public void testSimpleEntryHashCodeEquals() throws Exception {
-        assertThat(new TypeWriter.MethodPool.Entry.Simple(first, methodAttributeAppender).hashCode(),
-                is(new TypeWriter.MethodPool.Entry.Simple(first, methodAttributeAppender).hashCode()));
-        assertThat(new TypeWriter.MethodPool.Entry.Simple(first, methodAttributeAppender),
-                is(new TypeWriter.MethodPool.Entry.Simple(first, methodAttributeAppender)));
-        assertThat(new TypeWriter.MethodPool.Entry.Simple(first, methodAttributeAppender).hashCode(),
-                not(is(new TypeWriter.MethodPool.Entry.Simple(second, methodAttributeAppender).hashCode())));
-        assertThat(new TypeWriter.MethodPool.Entry.Simple(first, methodAttributeAppender),
-                not(is(new TypeWriter.MethodPool.Entry.Simple(second, methodAttributeAppender))));
+        HashCodeEqualsTester.of(TypeWriter.MethodPool.Entry.Simple.class).apply();
     }
 
     @Test

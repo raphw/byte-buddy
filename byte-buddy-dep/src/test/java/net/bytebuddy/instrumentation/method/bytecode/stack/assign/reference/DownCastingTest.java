@@ -3,6 +3,7 @@ package net.bytebuddy.instrumentation.method.bytecode.stack.assign.reference;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -11,8 +12,9 @@ import org.mockito.Mock;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import java.util.Random;
+
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -49,14 +51,13 @@ public class DownCastingTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        when(typeDescription.getInternalName()).thenReturn(FOO);
-        TypeDescription otherEqual = mock(TypeDescription.class);
-        when(otherEqual.getInternalName()).thenReturn(FOO);
-        assertThat(new DownCasting(typeDescription).hashCode(), is(new DownCasting(otherEqual).hashCode()));
-        assertThat(new DownCasting(typeDescription), is(new DownCasting(otherEqual)));
-        TypeDescription otherNonEqual = mock(TypeDescription.class);
-        when(otherNonEqual.getInternalName()).thenReturn(BAR);
-        assertThat(new DownCasting(typeDescription).hashCode(), not(is(new DownCasting(otherNonEqual).hashCode())));
-        assertThat(new DownCasting(typeDescription), not(is(new DownCasting(otherNonEqual))));
+        HashCodeEqualsTester.of(DownCasting.class).refine(new HashCodeEqualsTester.Refinement() {
+            @Override
+            public void apply(Object mock) {
+                if (mock instanceof TypeDescription) {
+                    when(((TypeDescription) mock).getInternalName()).thenReturn(FOO + new Random().nextInt());
+                }
+            }
+        }).apply();
     }
 }

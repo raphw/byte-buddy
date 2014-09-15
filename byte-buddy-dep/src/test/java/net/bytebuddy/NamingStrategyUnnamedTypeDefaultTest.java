@@ -4,6 +4,7 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.modifier.SyntheticState;
 import net.bytebuddy.modifier.TypeManifestation;
 import net.bytebuddy.modifier.Visibility;
+import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -17,7 +18,6 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class NamingStrategyUnnamedTypeDefaultTest {
@@ -86,13 +86,6 @@ public class NamingStrategyUnnamedTypeDefaultTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        assertThat(new NamingStrategy.UnnamedType.Default(superType, interfaceTypes, MODIFIERS, classFileVersion).hashCode(),
-                is(new NamingStrategy.UnnamedType.Default(superType, interfaceTypes, MODIFIERS, classFileVersion).hashCode()));
-        assertThat(new NamingStrategy.UnnamedType.Default(superType, interfaceTypes, MODIFIERS, classFileVersion),
-                is(new NamingStrategy.UnnamedType.Default(superType, interfaceTypes, MODIFIERS, classFileVersion)));
-        assertThat(new NamingStrategy.UnnamedType.Default(superType, interfaceTypes, MODIFIERS, classFileVersion).hashCode(),
-                not(is(new NamingStrategy.UnnamedType.Default(superType, interfaceTypes, MODIFIERS, other).hashCode())));
-        assertThat(new NamingStrategy.UnnamedType.Default(superType, interfaceTypes, MODIFIERS, classFileVersion),
-                not(is(new NamingStrategy.UnnamedType.Default(superType, interfaceTypes, MODIFIERS, other))));
+        HashCodeEqualsTester.of(NamingStrategy.UnnamedType.Default.class).apply();
     }
 }

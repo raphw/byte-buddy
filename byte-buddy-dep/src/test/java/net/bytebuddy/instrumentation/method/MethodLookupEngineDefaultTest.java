@@ -2,6 +2,7 @@ package net.bytebuddy.instrumentation.method;
 
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.JavaVersionRule;
 import net.bytebuddy.utility.PrecompiledTypeClassLoader;
 import org.hamcrest.CoreMatchers;
@@ -383,16 +384,8 @@ public class MethodLookupEngineDefaultTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce
     public void testHashCodeEquals() throws Exception {
-        assertThat(methodLookupEngine.hashCode(),
-                is(new MethodLookupEngine.Default(MethodLookupEngine.Default.DefaultMethodLookup.ENABLED).hashCode()));
-        assertThat(methodLookupEngine,
-                is((MethodLookupEngine) new MethodLookupEngine.Default(MethodLookupEngine.Default.DefaultMethodLookup.ENABLED)));
-        assertThat(methodLookupEngine.hashCode(),
-                CoreMatchers.not(is(new MethodLookupEngine.Default(MethodLookupEngine.Default.DefaultMethodLookup.DISABLED).hashCode())));
-        assertThat(methodLookupEngine,
-                CoreMatchers.not(is((MethodLookupEngine) new MethodLookupEngine.Default(MethodLookupEngine.Default.DefaultMethodLookup.DISABLED))));
+        HashCodeEqualsTester.of(MethodLookupEngine.Default.class).apply();
     }
 
     private static interface SingleMethodInterface {

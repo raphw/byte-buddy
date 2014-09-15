@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
 import net.bytebuddy.instrumentation.field.FieldDescription;
+import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -11,7 +12,8 @@ import org.mockito.Mock;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -69,18 +71,7 @@ public class TypeWriterFieldPoolEntryTest {
 
     @Test
     public void testSimpleEntryEntryHashCodeEquals() throws Exception {
-        assertThat(new TypeWriter.FieldPool.Entry.Simple(fieldAttributeAppender, DEFAULT_VALUE).hashCode(),
-                is(new TypeWriter.FieldPool.Entry.Simple(fieldAttributeAppender, DEFAULT_VALUE).hashCode()));
-        assertThat(new TypeWriter.FieldPool.Entry.Simple(fieldAttributeAppender, DEFAULT_VALUE),
-                is(new TypeWriter.FieldPool.Entry.Simple(fieldAttributeAppender, DEFAULT_VALUE)));
-        assertThat(new TypeWriter.FieldPool.Entry.Simple(fieldAttributeAppender, null).hashCode(),
-                is(new TypeWriter.FieldPool.Entry.Simple(fieldAttributeAppender, null).hashCode()));
-        assertThat(new TypeWriter.FieldPool.Entry.Simple(fieldAttributeAppender, null),
-                is(new TypeWriter.FieldPool.Entry.Simple(fieldAttributeAppender, null)));
-        assertThat(new TypeWriter.FieldPool.Entry.Simple(fieldAttributeAppender, new Object()).hashCode(),
-                not(is(new TypeWriter.FieldPool.Entry.Simple(fieldAttributeAppender, new Object()).hashCode())));
-        assertThat(new TypeWriter.FieldPool.Entry.Simple(fieldAttributeAppender, new Object()),
-                not(is(new TypeWriter.FieldPool.Entry.Simple(fieldAttributeAppender, new Object()))));
+        HashCodeEqualsTester.of(TypeWriter.FieldPool.Entry.Simple.class).apply();
     }
 
     @Test

@@ -14,14 +14,15 @@ import org.objectweb.asm.MethodVisitor;
 import java.util.Arrays;
 import java.util.Collection;
 
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
 
 @RunWith(Parameterized.class)
-public class LongConstantPoolValueTest {
+public class FloatConstantTest {
 
-    private final long value;
+    private final float value;
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
     @Mock
@@ -29,32 +30,39 @@ public class LongConstantPoolValueTest {
     @Mock
     private Instrumentation.Context instrumentationContext;
 
-    public LongConstantPoolValueTest(long value) {
+    public FloatConstantTest(float value) {
         this.value = value;
     }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {Long.MIN_VALUE},
-                {Integer.MIN_VALUE},
-                {-100L},
-                {-2L},
-                {6L},
-                {7L},
-                {100L},
-                {Integer.MAX_VALUE},
-                {Long.MAX_VALUE},
+                {Float.MIN_VALUE},
+                {-100f},
+                {-2f},
+                {0.5f},
+                {6f},
+                {7f},
+                {100f},
+                {Float.MAX_VALUE},
         });
     }
 
     @Test
     public void testBiPush() throws Exception {
-        StackManipulation.Size size = LongConstant.forValue(value).apply(methodVisitor, instrumentationContext);
-        assertThat(size.getSizeImpact(), is(2));
-        assertThat(size.getMaximalSize(), is(2));
+        StackManipulation.Size size = FloatConstant.forValue(value).apply(methodVisitor, instrumentationContext);
+        assertThat(size.getSizeImpact(), is(1));
+        assertThat(size.getMaximalSize(), is(1));
         verify(methodVisitor).visitLdcInsn(value);
         verifyNoMoreInteractions(methodVisitor);
         verifyZeroInteractions(instrumentationContext);
+    }
+
+    @Test
+    public void testHashCodeEquals() throws Exception {
+        assertThat(FloatConstant.forValue(value).hashCode(), is(FloatConstant.forValue(value).hashCode()));
+        assertThat(FloatConstant.forValue(value), is(FloatConstant.forValue(value)));
+        assertThat(FloatConstant.forValue(value).hashCode(), not(is(FloatConstant.forValue(value * 2).hashCode())));
+        assertThat(FloatConstant.forValue(value), not(is(FloatConstant.forValue(value * 2))));
     }
 }

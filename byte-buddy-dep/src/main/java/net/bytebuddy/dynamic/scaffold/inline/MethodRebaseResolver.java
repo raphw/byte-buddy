@@ -111,6 +111,17 @@ public interface MethodRebaseResolver {
             }
 
             @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && seed.equals(((Suffixing) other).seed) && suffix.equals(((Suffixing) other).suffix);
+            }
+
+            @Override
+            public int hashCode() {
+                return 31 * suffix.hashCode() + seed.hashCode();
+            }
+
+            @Override
             public String toString() {
                 return "MethodRebaseResolver.MethodNameTransformer.RandomSuffixing{" +
                         "suffix='" + suffix + '\'' +

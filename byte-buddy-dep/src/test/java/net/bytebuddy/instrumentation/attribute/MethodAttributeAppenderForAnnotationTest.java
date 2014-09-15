@@ -1,15 +1,11 @@
 package net.bytebuddy.instrumentation.attribute;
 
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.utility.HashCodeEqualsTester;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.asm.Type;
 
-import java.lang.annotation.Annotation;
-
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
 
 public class MethodAttributeAppenderForAnnotationTest extends AbstractMethodAttributeAppenderTest {
@@ -79,10 +75,6 @@ public class MethodAttributeAppenderForAnnotationTest extends AbstractMethodAttr
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        Annotation qux = new Qux.Instance(), baz = new Baz.Instance();
-        assertThat(new MethodAttributeAppender.ForAnnotation(qux).hashCode(), is(new MethodAttributeAppender.ForAnnotation(qux).hashCode()));
-        assertThat(new MethodAttributeAppender.ForAnnotation(qux), is(new MethodAttributeAppender.ForAnnotation(qux)));
-        assertThat(new MethodAttributeAppender.ForAnnotation(qux).hashCode(), not(is(new MethodAttributeAppender.ForAnnotation(baz).hashCode())));
-        assertThat(new MethodAttributeAppender.ForAnnotation(qux), not(is(new MethodAttributeAppender.ForAnnotation(baz))));
+        HashCodeEqualsTester.of(MethodAttributeAppender.ForAnnotation.class).apply();
     }
 }

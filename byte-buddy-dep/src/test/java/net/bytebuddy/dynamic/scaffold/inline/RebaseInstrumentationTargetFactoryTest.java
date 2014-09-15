@@ -6,6 +6,7 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -17,9 +18,7 @@ import java.util.Collections;
 import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class RebaseInstrumentationTargetFactoryTest {
@@ -55,10 +54,6 @@ public class RebaseInstrumentationTargetFactoryTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        assertThat(factory.hashCode(), is(new RebaseInstrumentationTarget.Factory(bridgeMethodResolverFactory, methodRebaseResolver).hashCode()));
-        assertThat(factory, is((Instrumentation.Target.Factory) new RebaseInstrumentationTarget.Factory(bridgeMethodResolverFactory, methodRebaseResolver)));
-        BridgeMethodResolver.Factory otherFactory = mock(BridgeMethodResolver.Factory.class);
-        assertThat(factory.hashCode(), not(is(new RebaseInstrumentationTarget.Factory(otherFactory, methodRebaseResolver).hashCode())));
-        assertThat(factory, not(is((Instrumentation.Target.Factory) new RebaseInstrumentationTarget.Factory(otherFactory, methodRebaseResolver))));
+        HashCodeEqualsTester.of(RebaseInstrumentationTarget.Factory.class).apply();
     }
 }

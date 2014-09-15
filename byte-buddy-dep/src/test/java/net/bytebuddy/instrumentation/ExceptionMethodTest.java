@@ -2,6 +2,7 @@ package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.utility.CallTraceable;
+import net.bytebuddy.utility.HashCodeEqualsTester;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.*;
@@ -71,18 +72,7 @@ public class ExceptionMethodTest extends AbstractInstrumentationTest {
 
     @Test
     public void testEqualsHashCode() throws Exception {
-        assertThat(ExceptionMethod.throwing(RuntimeException.class).hashCode(), is(ExceptionMethod.throwing(RuntimeException.class).hashCode()));
-        assertThat(ExceptionMethod.throwing(RuntimeException.class), is(ExceptionMethod.throwing(RuntimeException.class)));
-        assertThat(ExceptionMethod.throwing(RuntimeException.class).hashCode(), not(is(ExceptionMethod.throwing(Exception.class).hashCode())));
-        assertThat(ExceptionMethod.throwing(RuntimeException.class), not(is(ExceptionMethod.throwing(Exception.class))));
-        assertThat(ExceptionMethod.throwing(RuntimeException.class).hashCode(), not(is(ExceptionMethod.throwing(RuntimeException.class, FOO).hashCode())));
-        assertThat(ExceptionMethod.throwing(RuntimeException.class), not(is(ExceptionMethod.throwing(RuntimeException.class, FOO))));
-        assertThat(ExceptionMethod.throwing(RuntimeException.class, FOO).hashCode(), is(ExceptionMethod.throwing(RuntimeException.class, FOO).hashCode()));
-        assertThat(ExceptionMethod.throwing(RuntimeException.class, FOO), is(ExceptionMethod.throwing(RuntimeException.class, FOO)));
-        assertThat(ExceptionMethod.throwing(RuntimeException.class, FOO).hashCode(), not(is(ExceptionMethod.throwing(Exception.class, FOO).hashCode())));
-        assertThat(ExceptionMethod.throwing(RuntimeException.class, FOO), not(is(ExceptionMethod.throwing(Exception.class, FOO))));
-        assertThat(ExceptionMethod.throwing(RuntimeException.class, FOO).hashCode(), not(is(ExceptionMethod.throwing(RuntimeException.class, BAR).hashCode())));
-        assertThat(ExceptionMethod.throwing(RuntimeException.class, FOO), not(is(ExceptionMethod.throwing(RuntimeException.class, BAR))));
+        HashCodeEqualsTester.of(ExceptionMethod.class).apply();
     }
 
     public static class Foo extends CallTraceable {

@@ -1,6 +1,7 @@
 package net.bytebuddy.instrumentation.method.bytecode.stack;
 
 import net.bytebuddy.instrumentation.Instrumentation;
+import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -9,7 +10,6 @@ import org.mockito.Mock;
 import org.objectweb.asm.MethodVisitor;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -62,9 +62,6 @@ public class StackManipulationCompoundTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        assertThat(new StackManipulation.Compound(first).hashCode(), is(new StackManipulation.Compound(first).hashCode()));
-        assertThat(new StackManipulation.Compound(first), is(new StackManipulation.Compound(first)));
-        assertThat(new StackManipulation.Compound(first).hashCode(), not(is(new StackManipulation.Compound(second).hashCode())));
-        assertThat(new StackManipulation.Compound(first), not(is(new StackManipulation.Compound(second))));
+        HashCodeEqualsTester.of(StackManipulation.Compound.class).apply();
     }
 }

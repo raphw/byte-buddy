@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic;
 
 import net.bytebuddy.instrumentation.LoadedTypeInitializer;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -79,5 +80,10 @@ public class DynamicTypeDefaultUnloadedTest {
         assertEquals(AUXILIARY_TYPE, loaded.getLoadedAuxiliaryTypes().get(auxiliaryTypeDescription));
         verify(mainLoadedTypeInitializer).onLoad(MAIN_TYPE);
         verify(auxiliaryLoadedTypeInitializer).onLoad(AUXILIARY_TYPE);
+    }
+
+    @Test
+    public void testHashCodeEquals() throws Exception {
+        HashCodeEqualsTester.of(DynamicType.Default.Unloaded.class).apply();
     }
 }

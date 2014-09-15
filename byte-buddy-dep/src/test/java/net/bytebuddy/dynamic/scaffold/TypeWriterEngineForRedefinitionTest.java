@@ -13,6 +13,7 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -29,7 +30,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
@@ -140,6 +141,7 @@ public class TypeWriterEngineForRedefinitionTest {
         TypeList barExceptionTypes = mock(TypeList.class);
         when(barExceptionTypes.toInternalNames()).thenReturn(new String[]{BAZ + QUX});
         when(barResolutionMethod.getExceptionTypes()).thenReturn(barExceptionTypes);
+        when(classFileVersion.compareTo(any(ClassFileVersion.class))).thenReturn(1);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -157,7 +159,7 @@ public class TypeWriterEngineForRedefinitionTest {
     }
 
     @Test
-    public void testTypeCreationWithRebasement() throws Exception {
+    public void testTypeCreationWithRebase() throws Exception {
         when(classFileLocator.classFileFor(targetType))
                 .thenReturn(getClass().getClassLoader().getResourceAsStream(Foo.class.getName()
                         .replace('.', '/') + ".class"));
@@ -172,6 +174,7 @@ public class TypeWriterEngineForRedefinitionTest {
                 methodPool,
                 classFileLocator,
                 methodRebaseResolver).create(instrumentationContext), notNullValue());
+        verify(classFileVersion).compareTo(any(ClassFileVersion.class));
         verify(classVisitor).visit(CLASS_VERSION, TYPE_MODIFIER, FOO, QUX, BAR, new String[]{BAZ});
         verify(classVisitor, atLeast(0)).visitSource(any(String.class), any(String.class));
         verify(classVisitor, atLeast(0)).visitInnerClass(any(String.class), any(String.class), any(String.class), any(int.class));
@@ -210,7 +213,7 @@ public class TypeWriterEngineForRedefinitionTest {
     }
 
     @Test
-    public void testTypeCreationWithoutRebasement() throws Exception {
+    public void testTypeCreationWithoutRebase() throws Exception {
         when(classFileLocator.classFileFor(targetType))
                 .thenReturn(getClass().getClassLoader().getResourceAsStream(Foo.class.getName()
                         .replace('.', '/') + ".class"));
@@ -225,6 +228,7 @@ public class TypeWriterEngineForRedefinitionTest {
                 methodPool,
                 classFileLocator,
                 methodRebaseResolver).create(instrumentationContext), notNullValue());
+        verify(classFileVersion).compareTo(any(ClassFileVersion.class));
         verify(classVisitor).visit(CLASS_VERSION, TYPE_MODIFIER, FOO, QUX, BAR, new String[]{BAZ});
         verify(classVisitor, atLeast(0)).visitSource(any(String.class), any(String.class));
         verify(classVisitor, atLeast(0)).visitInnerClass(any(String.class), any(String.class), any(String.class), any(int.class));
@@ -264,86 +268,7 @@ public class TypeWriterEngineForRedefinitionTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        assertThat(new TypeWriter.Engine.ForRedefinition(instrumentedType,
-                        targetType,
-                        classFileVersion,
-                        invokableMethods,
-                        classVisitorWrapper,
-                        typeAttributeAppender,
-                        fieldPool,
-                        methodPool,
-                        classFileLocator,
-                        methodRebaseResolver).hashCode(),
-                is(new TypeWriter.Engine.ForRedefinition(instrumentedType,
-                        targetType,
-                        classFileVersion,
-                        invokableMethods,
-                        classVisitorWrapper,
-                        typeAttributeAppender,
-                        fieldPool,
-                        methodPool,
-                        classFileLocator,
-                        methodRebaseResolver).hashCode()));
-        assertThat(new TypeWriter.Engine.ForRedefinition(instrumentedType,
-                        targetType,
-                        classFileVersion,
-                        invokableMethods,
-                        classVisitorWrapper,
-                        typeAttributeAppender,
-                        fieldPool,
-                        methodPool,
-                        classFileLocator,
-                        methodRebaseResolver),
-                is(new TypeWriter.Engine.ForRedefinition(instrumentedType,
-                        targetType,
-                        classFileVersion,
-                        invokableMethods,
-                        classVisitorWrapper,
-                        typeAttributeAppender,
-                        fieldPool,
-                        methodPool,
-                        classFileLocator,
-                        methodRebaseResolver)));
-        assertThat(new TypeWriter.Engine.ForRedefinition(instrumentedType,
-                        targetType,
-                        classFileVersion,
-                        invokableMethods,
-                        classVisitorWrapper,
-                        typeAttributeAppender,
-                        fieldPool,
-                        methodPool,
-                        classFileLocator,
-                        methodRebaseResolver).hashCode(),
-                not(is(new TypeWriter.Engine.ForRedefinition(instrumentedType,
-                        targetType,
-                        classFileVersion,
-                        invokableMethods,
-                        classVisitorWrapper,
-                        typeAttributeAppender,
-                        fieldPool,
-                        methodPool,
-                        classFileLocator,
-                        otherMethodRebaseResolver).hashCode())));
-        assertThat(new TypeWriter.Engine.ForRedefinition(instrumentedType,
-                        targetType,
-                        classFileVersion,
-                        invokableMethods,
-                        classVisitorWrapper,
-                        typeAttributeAppender,
-                        fieldPool,
-                        methodPool,
-                        classFileLocator,
-                        methodRebaseResolver),
-                not(is(new TypeWriter.Engine.ForRedefinition(instrumentedType,
-                        targetType,
-                        classFileVersion,
-                        invokableMethods,
-                        classVisitorWrapper,
-                        typeAttributeAppender,
-                        fieldPool,
-                        methodPool,
-                        classFileLocator,
-                        otherMethodRebaseResolver))));
+        HashCodeEqualsTester.of(TypeWriter.Engine.ForRedefinition.class).apply();
     }
 
     @Retention(RetentionPolicy.RUNTIME)

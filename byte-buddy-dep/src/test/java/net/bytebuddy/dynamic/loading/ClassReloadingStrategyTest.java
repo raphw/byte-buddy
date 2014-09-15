@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic.loading;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.instrumentation.FixedValue;
+import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.ToolsJarRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -14,7 +15,8 @@ import java.lang.instrument.Instrumentation;
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 public class ClassReloadingStrategyTest {
 
@@ -90,14 +92,14 @@ public class ClassReloadingStrategyTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        Instrumentation instrumentation = mock(Instrumentation.class);
-        when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
-        assertThat(new ClassReloadingStrategy(instrumentation).hashCode(), is(new ClassReloadingStrategy(instrumentation).hashCode()));
-        assertThat(new ClassReloadingStrategy(instrumentation), is(new ClassReloadingStrategy(instrumentation)));
-        assertThat(new ClassReloadingStrategy(instrumentation, ClassReloadingStrategy.Engine.REDEFINITION).hashCode(),
-                not(is(new ClassReloadingStrategy(instrumentation, ClassReloadingStrategy.Engine.RETRANSFORMATION).hashCode())));
-        assertThat(new ClassReloadingStrategy(instrumentation, ClassReloadingStrategy.Engine.REDEFINITION),
-                not(is(new ClassReloadingStrategy(instrumentation, ClassReloadingStrategy.Engine.RETRANSFORMATION))));
+        HashCodeEqualsTester.of(ClassReloadingStrategy.class).refine(new HashCodeEqualsTester.Refinement() {
+            @Override
+            public void apply(Object mock) {
+                if (Instrumentation.class.isAssignableFrom(mock.getClass())) {
+                    when(((Instrumentation) mock).isRedefineClassesSupported()).thenReturn(true);
+                }
+            }
+        }).apply();
     }
 
     @SuppressWarnings("unused")

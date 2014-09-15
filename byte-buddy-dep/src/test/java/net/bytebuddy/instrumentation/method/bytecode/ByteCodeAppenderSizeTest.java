@@ -1,9 +1,9 @@
 package net.bytebuddy.instrumentation.method.bytecode;
 
+import net.bytebuddy.utility.HashCodeEqualsTester;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -24,9 +24,6 @@ public class ByteCodeAppenderSizeTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        assertThat(new ByteCodeAppender.Size(LOWER, BIGGER).hashCode(), is(new ByteCodeAppender.Size(LOWER, BIGGER).hashCode()));
-        assertThat(new ByteCodeAppender.Size(LOWER, BIGGER), is(new ByteCodeAppender.Size(LOWER, BIGGER)));
-        assertThat(new ByteCodeAppender.Size(LOWER, BIGGER).hashCode(), not(is(new ByteCodeAppender.Size(BIGGER, LOWER).hashCode())));
-        assertThat(new ByteCodeAppender.Size(LOWER, BIGGER), not(is(new ByteCodeAppender.Size(BIGGER, LOWER))));
+        HashCodeEqualsTester.of(ByteCodeAppender.Size.class).apply();
     }
 }

@@ -2,6 +2,7 @@ package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
+import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -9,7 +10,6 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -60,9 +60,6 @@ public class InstrumentationCompoundTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        assertThat(new Instrumentation.Compound(first, second).hashCode(), is(new Instrumentation.Compound(first, second).hashCode()));
-        assertThat(new Instrumentation.Compound(first, second), is(new Instrumentation.Compound(first, second)));
-        assertThat(new Instrumentation.Compound(first, second).hashCode(), not(is(new Instrumentation.Compound(second, first).hashCode())));
-        assertThat(new Instrumentation.Compound(first, second), not(is(new Instrumentation.Compound(second, first))));
+        HashCodeEqualsTester.of(Instrumentation.Compound.class).apply();
     }
 }

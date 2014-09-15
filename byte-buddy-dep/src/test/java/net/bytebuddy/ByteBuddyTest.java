@@ -11,6 +11,7 @@ import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -122,5 +123,10 @@ public class ByteBuddyTest {
     @Test
     public void testClassFileVersionConstructor() throws Exception {
         assertThat(new ByteBuddy(ClassFileVersion.JAVA_V6).getClassFileVersion(), is(ClassFileVersion.JAVA_V6));
+    }
+
+    @Test
+    public void testHashCodeEquals() throws Exception {
+        HashCodeEqualsTester.of(ByteBuddy.class).apply();
     }
 }

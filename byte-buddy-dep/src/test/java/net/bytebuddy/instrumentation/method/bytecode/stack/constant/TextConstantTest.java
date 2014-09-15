@@ -2,6 +2,7 @@ package net.bytebuddy.instrumentation.method.bytecode.stack.constant;
 
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -25,7 +26,6 @@ public class TextConstantTest {
     @Mock
     private Instrumentation.Context instrumentationContext;
 
-
     @Test
     public void testTextValue() throws Exception {
         StackManipulation.Size size = new TextConstant(FOO).apply(methodVisitor, instrumentationContext);
@@ -34,5 +34,10 @@ public class TextConstantTest {
         verify(methodVisitor).visitLdcInsn(FOO);
         verifyNoMoreInteractions(methodVisitor);
         verifyZeroInteractions(instrumentationContext);
+    }
+
+    @Test
+    public void testHashCodeEquals() throws Exception {
+        HashCodeEqualsTester.of(TextConstant.class).apply();
     }
 }

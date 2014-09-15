@@ -1,11 +1,13 @@
 package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.utility.HashCodeEqualsTester;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertNotEquals;
 
@@ -57,11 +59,7 @@ public class ForwardingTest extends AbstractInstrumentationTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        Foo foo = new Foo();
-        assertThat(Forwarding.to(foo).hashCode(), is(Forwarding.to(foo).hashCode()));
-        assertThat(Forwarding.to(foo), is(Forwarding.to(foo)));
-        assertThat(Forwarding.to(foo).hashCode(), not(is(Forwarding.to(new Foo()).hashCode())));
-        assertThat(Forwarding.to(foo), not(is(Forwarding.to(new Foo()))));
+        HashCodeEqualsTester.of(Forwarding.class).apply();
     }
 
     @Test(expected = IllegalArgumentException.class)

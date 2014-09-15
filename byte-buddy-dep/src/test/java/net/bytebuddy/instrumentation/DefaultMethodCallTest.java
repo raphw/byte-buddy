@@ -158,9 +158,7 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
     public void testHashCodeEquals() throws Exception {
         assertThat(DefaultMethodCall.unambiguousOnly().hashCode(), is(DefaultMethodCall.unambiguousOnly().hashCode()));
         assertThat(DefaultMethodCall.unambiguousOnly(), is(DefaultMethodCall.unambiguousOnly()));
-        assertThat(DefaultMethodCall.unambiguousOnly().hashCode(),
-                CoreMatchers.not(is(DefaultMethodCall.prioritize(Serializable.class).hashCode())));
-        assertThat(DefaultMethodCall.unambiguousOnly(),
-                CoreMatchers.not(is(DefaultMethodCall.prioritize(Serializable.class))));
+        assertThat(DefaultMethodCall.unambiguousOnly().hashCode(), CoreMatchers.not(is(DefaultMethodCall.prioritize(Serializable.class).hashCode())));
+        assertThat(DefaultMethodCall.unambiguousOnly(), CoreMatchers.not(is(DefaultMethodCall.prioritize(Serializable.class))));
     }
 }

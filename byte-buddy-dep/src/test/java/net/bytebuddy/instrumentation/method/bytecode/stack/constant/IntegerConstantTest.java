@@ -15,12 +15,13 @@ import org.objectweb.asm.Opcodes;
 import java.util.Arrays;
 import java.util.Collection;
 
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
 
 @RunWith(Parameterized.class)
-public class IntegerConstantPushAndConstantTest {
+public class IntegerConstantTest {
 
     private final int value;
     private final PushType pushType;
@@ -31,7 +32,7 @@ public class IntegerConstantPushAndConstantTest {
     @Mock
     private Instrumentation.Context instrumentationContext;
 
-    public IntegerConstantPushAndConstantTest(int value, PushType pushType) {
+    public IntegerConstantTest(int value, PushType pushType) {
         this.value = value;
         this.pushType = pushType;
     }
@@ -65,6 +66,14 @@ public class IntegerConstantPushAndConstantTest {
         pushType.verifyInstruction(methodVisitor, value);
         verifyNoMoreInteractions(methodVisitor);
         verifyZeroInteractions(instrumentationContext);
+    }
+
+    @Test
+    public void testHashCodeEquals() throws Exception {
+        assertThat(IntegerConstant.forValue(value).hashCode(), is(IntegerConstant.forValue(value).hashCode()));
+        assertThat(IntegerConstant.forValue(value), is(IntegerConstant.forValue(value)));
+        assertThat(IntegerConstant.forValue(value).hashCode(), not(is(IntegerConstant.forValue(value * 2).hashCode())));
+        assertThat(IntegerConstant.forValue(value), not(is(IntegerConstant.forValue(value * 2))));
     }
 
     private static enum PushType {

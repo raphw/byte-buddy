@@ -23,4 +23,9 @@ public class RandomStringTest {
         RandomString randomString = new RandomString();
         assertThat(randomString.nextString(), not(randomString.nextString()));
     }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testNegativeLengthThrowsException() throws Exception {
+        new RandomString(-1);
+    }
 }

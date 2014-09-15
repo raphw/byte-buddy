@@ -1,9 +1,9 @@
 package net.bytebuddy.instrumentation;
 
+import net.bytebuddy.utility.HashCodeEqualsTester;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class LoadedTypeInitializerForStaticFieldTest {
@@ -38,23 +38,7 @@ public class LoadedTypeInitializerForStaticFieldTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        Object first = new Object(), second = new Object();
-        assertThat(LoadedTypeInitializer.ForStaticField.accessible(FOO, first).hashCode(),
-                is(LoadedTypeInitializer.ForStaticField.accessible(FOO, first).hashCode()));
-        assertThat(LoadedTypeInitializer.ForStaticField.accessible(FOO, first),
-                is(LoadedTypeInitializer.ForStaticField.accessible(FOO, first)));
-        assertThat(LoadedTypeInitializer.ForStaticField.accessible(FOO, first).hashCode(),
-                not(is(LoadedTypeInitializer.ForStaticField.nonAccessible(FOO, first).hashCode())));
-        assertThat(LoadedTypeInitializer.ForStaticField.accessible(FOO, first),
-                not(is(LoadedTypeInitializer.ForStaticField.nonAccessible(FOO, first))));
-        assertThat(LoadedTypeInitializer.ForStaticField.accessible(FOO, first).hashCode(),
-                not(is(LoadedTypeInitializer.ForStaticField.accessible(FOO, second).hashCode())));
-        assertThat(LoadedTypeInitializer.ForStaticField.accessible(FOO, first),
-                not(is(LoadedTypeInitializer.ForStaticField.accessible(FOO, second))));
-        assertThat(LoadedTypeInitializer.ForStaticField.accessible(FOO, first).hashCode(),
-                not(is(LoadedTypeInitializer.ForStaticField.accessible(FOO + FOO, first).hashCode())));
-        assertThat(LoadedTypeInitializer.ForStaticField.accessible(FOO, first),
-                not(is(LoadedTypeInitializer.ForStaticField.accessible(FOO + FOO, first))));
+        HashCodeEqualsTester.of(LoadedTypeInitializer.ForStaticField.class).apply();
     }
 
     @SuppressWarnings("unused")

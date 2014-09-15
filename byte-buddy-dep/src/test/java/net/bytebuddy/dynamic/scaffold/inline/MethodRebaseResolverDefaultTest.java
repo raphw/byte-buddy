@@ -6,6 +6,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -18,7 +19,6 @@ import org.objectweb.asm.Opcodes;
 import java.util.Arrays;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
@@ -165,13 +165,6 @@ public class MethodRebaseResolverDefaultTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        assertThat(new MethodRebaseResolver.Default(methodMatcher, placeholderType, methodNameTransformer).hashCode(),
-                is(new MethodRebaseResolver.Default(methodMatcher, placeholderType, methodNameTransformer).hashCode()));
-        assertThat(new MethodRebaseResolver.Default(methodMatcher, placeholderType, methodNameTransformer),
-                is(new MethodRebaseResolver.Default(methodMatcher, placeholderType, methodNameTransformer)));
-        assertThat(new MethodRebaseResolver.Default(methodMatcher, placeholderType, methodNameTransformer).hashCode(),
-                not(is(new MethodRebaseResolver.Default(methodMatcher, placeholderType, otherMethodNameTransformer).hashCode())));
-        assertThat(new MethodRebaseResolver.Default(methodMatcher, placeholderType, methodNameTransformer),
-                not(is(new MethodRebaseResolver.Default(methodMatcher, placeholderType, otherMethodNameTransformer))));
+        HashCodeEqualsTester.of(MethodRebaseResolver.Default.class).apply();
     }
 }

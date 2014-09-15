@@ -14,6 +14,7 @@ import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.utility.HashCodeEqualsTester;
 import org.junit.Test;
 import org.objectweb.asm.Opcodes;
 
@@ -29,8 +30,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 
 public class InlineDynamicTypeBuilderTest {
-
-    private static final ClassLoader BOOTSTRAP_CLASS_LOADER = null;
 
     private static final String FOOBAR = "foo.Bar", FOO = "foo";
 
@@ -114,6 +113,11 @@ public class InlineDynamicTypeBuilderTest {
         assertThat(foo.getDeclaredConstructor().getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(foo.getDeclaredConstructor().getAnnotation(Bar.class), notNullValue());
         assertThat(foo.getDeclaredMethod(FOO).invoke(foo.newInstance()), is((Object) FOO));
+    }
+
+    @Test
+    public void testHashCodeEquals() throws Exception {
+        HashCodeEqualsTester.of(InlineDynamicTypeBuilder.class).apply();
     }
 
     @Retention(RetentionPolicy.RUNTIME)

@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -10,7 +11,6 @@ import org.mockito.Mock;
 import java.io.InputStream;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -47,9 +47,6 @@ public class ClassFileLocatorCompoundTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        assertThat(new ClassFileLocator.Compound(classFileLocator).hashCode(), is(new ClassFileLocator.Compound(classFileLocator).hashCode()));
-        assertThat(new ClassFileLocator.Compound(classFileLocator), is(new ClassFileLocator.Compound(classFileLocator)));
-        assertThat(new ClassFileLocator.Compound(classFileLocator).hashCode(), not(is(new ClassFileLocator.Compound().hashCode())));
-        assertThat(new ClassFileLocator.Compound(classFileLocator), not(is(new ClassFileLocator.Compound())));
+        HashCodeEqualsTester.of(ClassFileLocator.Compound.class).apply();
     }
 }

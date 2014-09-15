@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic;
 
 import net.bytebuddy.instrumentation.LoadedTypeInitializer;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
 import net.bytebuddy.utility.RandomString;
 import org.junit.Before;
@@ -20,7 +21,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.jar.*;
 
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -254,13 +254,6 @@ public class DynamicTypeDefaultTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        assertThat(dynamicType.hashCode(), is(dynamicType.hashCode()));
-        assertThat(dynamicType, is(dynamicType));
-        DynamicType other = new DynamicType.Default(auxiliaryTypeDescription,
-                BINARY_FIRST,
-                auxiliaryLoadedTypeInitializer,
-                Collections.<DynamicType>emptyList());
-        assertThat(dynamicType.hashCode(), not(is(other.hashCode())));
-        assertThat(dynamicType, not(is(other)));
+        HashCodeEqualsTester.of(DynamicType.Default.class).apply();
     }
 }

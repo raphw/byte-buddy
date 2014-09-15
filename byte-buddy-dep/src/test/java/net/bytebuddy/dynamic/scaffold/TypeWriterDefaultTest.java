@@ -5,6 +5,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.LoadedTypeInitializer;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -16,7 +17,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
@@ -65,13 +65,6 @@ public class TypeWriterDefaultTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        assertThat(new TypeWriter.Default<Object>(instrumentedType, loadedTypeInitializer, explicitAuxiliaryTypes, classFileVersion, engine).hashCode(),
-                is(new TypeWriter.Default<Object>(instrumentedType, loadedTypeInitializer, explicitAuxiliaryTypes, classFileVersion, engine).hashCode()));
-        assertThat(new TypeWriter.Default<Object>(instrumentedType, loadedTypeInitializer, explicitAuxiliaryTypes, classFileVersion, engine),
-                is(new TypeWriter.Default<Object>(instrumentedType, loadedTypeInitializer, explicitAuxiliaryTypes, classFileVersion, engine)));
-        assertThat(new TypeWriter.Default<Object>(instrumentedType, loadedTypeInitializer, explicitAuxiliaryTypes, classFileVersion, engine).hashCode(),
-                not(is(new TypeWriter.Default<Object>(instrumentedType, loadedTypeInitializer, explicitAuxiliaryTypes, classFileVersion, otherEngine).hashCode())));
-        assertThat(new TypeWriter.Default<Object>(instrumentedType, loadedTypeInitializer, explicitAuxiliaryTypes, classFileVersion, engine),
-                not(is(new TypeWriter.Default<Object>(instrumentedType, loadedTypeInitializer, explicitAuxiliaryTypes, classFileVersion, otherEngine))));
+        HashCodeEqualsTester.of(TypeWriter.Default.class).apply();
     }
 }

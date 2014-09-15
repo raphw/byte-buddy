@@ -519,7 +519,8 @@ public class TypeProxy implements AuxiliaryType {
             ByReflectionFactory that = (ByReflectionFactory) other;
             return ignoreFinalizer == that.ignoreFinalizer
                     && instrumentationTarget.equals(that.instrumentationTarget)
-                    && proxiedType.equals(that.proxiedType);
+                    && proxiedType.equals(that.proxiedType)
+                    && serializableProxy == that.serializableProxy;
         }
 
         @Override

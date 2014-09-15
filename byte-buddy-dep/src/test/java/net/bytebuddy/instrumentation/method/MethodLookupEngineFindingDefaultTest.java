@@ -34,6 +34,5 @@ public class MethodLookupEngineFindingDefaultTest {
                 not(is(new MethodLookupEngine.Finding.Default(typeDescription, otherMethodList, Collections.<TypeDescription, Set<MethodDescription>>emptyMap()).hashCode())));
         assertThat(new MethodLookupEngine.Finding.Default(typeDescription, methodList, Collections.<TypeDescription, Set<MethodDescription>>emptyMap()),
                 not(is(new MethodLookupEngine.Finding.Default(typeDescription, otherMethodList, Collections.<TypeDescription, Set<MethodDescription>>emptyMap()))));
-
     }
 }

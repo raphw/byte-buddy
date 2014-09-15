@@ -4,6 +4,7 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
 import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
@@ -119,25 +120,13 @@ public class BridgeMethodResolverSimpleTest {
     }
 
     @Test
-    public void testBridgeTargetHashCodeEquals() throws Exception {
-        MethodDescription otherMethod = mock(MethodDescription.class);
-        assertThat(new BridgeMethodResolver.Simple.BridgeTarget.Candidate(methodDescription).hashCode(),
-                is(new BridgeMethodResolver.Simple.BridgeTarget.Candidate(methodDescription).hashCode()));
-        assertThat(new BridgeMethodResolver.Simple.BridgeTarget.Candidate(methodDescription),
-                is(new BridgeMethodResolver.Simple.BridgeTarget.Candidate(methodDescription)));
-        assertThat(new BridgeMethodResolver.Simple.BridgeTarget.Candidate(methodDescription).hashCode(),
-                CoreMatchers.not(is(new BridgeMethodResolver.Simple.BridgeTarget.Candidate(otherMethod).hashCode())));
-        assertThat(new BridgeMethodResolver.Simple.BridgeTarget.Candidate(methodDescription),
-                CoreMatchers.not(is(new BridgeMethodResolver.Simple.BridgeTarget.Candidate(otherMethod))));
-        assertThat(new BridgeMethodResolver.Simple.BridgeTarget.Resolved(methodDescription).hashCode(),
-                is(new BridgeMethodResolver.Simple.BridgeTarget.Resolved(methodDescription).hashCode()));
-        assertThat(new BridgeMethodResolver.Simple.BridgeTarget.Resolved(methodDescription),
-                is(new BridgeMethodResolver.Simple.BridgeTarget.Resolved(methodDescription)));
-        assertThat(new BridgeMethodResolver.Simple.BridgeTarget.Resolved(methodDescription).hashCode(),
-                CoreMatchers.not(is(new BridgeMethodResolver.Simple.BridgeTarget.Resolved(otherMethod).hashCode())));
-        assertThat(new BridgeMethodResolver.Simple.BridgeTarget.Resolved(methodDescription),
-                CoreMatchers.not(is(new BridgeMethodResolver.Simple.BridgeTarget.Resolved(otherMethod))));
+    public void testBridgeTargetCandidateHashCodeEquals() throws Exception {
+        HashCodeEqualsTester.of(BridgeMethodResolver.Simple.BridgeTarget.Candidate.class).apply();
+    }
 
+    @Test
+    public void testBridgeTargetResolvedHashCodeEquals() throws Exception {
+        HashCodeEqualsTester.of(BridgeMethodResolver.Simple.BridgeTarget.Resolved.class).apply();
     }
 
     private static class Foo<T> {

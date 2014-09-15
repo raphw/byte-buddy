@@ -2,6 +2,7 @@ package net.bytebuddy.instrumentation.method.bytecode.bind;
 
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -12,7 +13,6 @@ import org.mockito.Mock;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
@@ -146,12 +146,6 @@ public class MethodDelegationBinderProcessorTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        MethodDelegationBinder.Processor processor = new MethodDelegationBinder.Processor(methodDelegationBinder, ambiguityResolver);
-        MethodDelegationBinder.Processor equal = new MethodDelegationBinder.Processor(methodDelegationBinder, ambiguityResolver);
-        assertThat(processor.hashCode(), is(equal.hashCode()));
-        assertThat(processor, is(equal));
-        MethodDelegationBinder.Processor unequal = new MethodDelegationBinder.Processor(methodDelegationBinder, mock(MethodDelegationBinder.AmbiguityResolver.class));
-        assertThat(processor.hashCode(), not(is(unequal.hashCode())));
-        assertThat(processor, not(is(unequal)));
+        HashCodeEqualsTester.of(MethodDelegationBinder.Processor.class).apply();
     }
 }

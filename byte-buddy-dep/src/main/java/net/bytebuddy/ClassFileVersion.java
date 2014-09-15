@@ -141,7 +141,11 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
 
     @Override
     public int compareTo(ClassFileVersion other) {
-        return versionNumber < other.versionNumber ? -1 : versionNumber == other.versionNumber ? 0 : 1;
+        return other.versionNumber == versionNumber
+                ? 0 : versionNumber == Opcodes.V1_1
+                ? -1 : other.versionNumber == Opcodes.V1_1
+                ? 1 : versionNumber < other.versionNumber
+                ? -1 : 1;
     }
 
     @Override

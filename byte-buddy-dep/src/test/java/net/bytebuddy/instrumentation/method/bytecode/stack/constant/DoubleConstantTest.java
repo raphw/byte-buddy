@@ -14,12 +14,13 @@ import org.objectweb.asm.MethodVisitor;
 import java.util.Arrays;
 import java.util.Collection;
 
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
 
 @RunWith(Parameterized.class)
-public class DoubleConstantPoolValueTest {
+public class DoubleConstantTest {
 
     private final double value;
     @Rule
@@ -29,7 +30,7 @@ public class DoubleConstantPoolValueTest {
     @Mock
     private Instrumentation.Context instrumentationContext;
 
-    public DoubleConstantPoolValueTest(double value) {
+    public DoubleConstantTest(double value) {
         this.value = value;
     }
 
@@ -57,5 +58,13 @@ public class DoubleConstantPoolValueTest {
         verify(methodVisitor).visitLdcInsn(value);
         verifyNoMoreInteractions(methodVisitor);
         verifyZeroInteractions(instrumentationContext);
+    }
+
+    @Test
+    public void testHashCodeEquals() throws Exception {
+        assertThat(DoubleConstant.forValue(value).hashCode(), is(DoubleConstant.forValue(value).hashCode()));
+        assertThat(DoubleConstant.forValue(value), is(DoubleConstant.forValue(value)));
+        assertThat(DoubleConstant.forValue(value).hashCode(), not(is(DoubleConstant.forValue(value * 2).hashCode())));
+        assertThat(DoubleConstant.forValue(value), not(is(DoubleConstant.forValue(value * 2))));
     }
 }

@@ -9,6 +9,7 @@ import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -21,7 +22,7 @@ import org.objectweb.asm.Opcodes;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
@@ -116,61 +117,6 @@ public class TypeWriterEngineForCreationTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        assertThat(new TypeWriter.Engine.ForCreation(instrumentedType,
-                        classFileVersion,
-                        invokableMethods,
-                        classVisitorWrapper,
-                        typeAttributeAppender,
-                        fieldPool,
-                        methodPool).hashCode(),
-                is(new TypeWriter.Engine.ForCreation(instrumentedType,
-                        classFileVersion,
-                        invokableMethods,
-                        classVisitorWrapper,
-                        typeAttributeAppender,
-                        fieldPool,
-                        methodPool).hashCode()));
-        assertThat(new TypeWriter.Engine.ForCreation(instrumentedType,
-                        classFileVersion,
-                        invokableMethods,
-                        classVisitorWrapper,
-                        typeAttributeAppender,
-                        fieldPool,
-                        methodPool),
-                is(new TypeWriter.Engine.ForCreation(instrumentedType,
-                        classFileVersion,
-                        invokableMethods,
-                        classVisitorWrapper,
-                        typeAttributeAppender,
-                        fieldPool,
-                        methodPool)));
-        assertThat(new TypeWriter.Engine.ForCreation(instrumentedType,
-                        classFileVersion,
-                        invokableMethods,
-                        classVisitorWrapper,
-                        typeAttributeAppender,
-                        fieldPool,
-                        methodPool).hashCode(),
-                not(is(new TypeWriter.Engine.ForCreation(instrumentedType,
-                        classFileVersion,
-                        invokableMethods,
-                        classVisitorWrapper,
-                        typeAttributeAppender,
-                        fieldPool,
-                        otherMethodPool).hashCode())));
-        assertThat(new TypeWriter.Engine.ForCreation(instrumentedType,
-                        classFileVersion,
-                        invokableMethods,
-                        classVisitorWrapper,
-                        typeAttributeAppender,
-                        fieldPool,
-                        methodPool),
-                not(is(new TypeWriter.Engine.ForCreation(instrumentedType,
-                        classFileVersion,
-                        invokableMethods,
-                        classVisitorWrapper,
-                        typeAttributeAppender,
-                        fieldPool,
-                        otherMethodPool))));
+        HashCodeEqualsTester.of(TypeWriter.Engine.ForCreation.class).apply();
     }
 }
