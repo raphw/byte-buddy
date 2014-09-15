@@ -27,6 +27,8 @@ mainly for allowing the reuse of `Method` instances for the `@Origin` annotation
 - Added basic support for Java 7 types `MethodHandle` and `MethodType` which are available from Java 7 for injection.
 - Added support for type redefinition and type rebasing.
 - Added support for accessing a JVM's HotSwap features and a Java agent.
+- Added latent a child-first `ClassLoadingStrategy` and manifest versions of the `WRAPPER` and `CHILD_FIRST` default
+  class loading strategies.
 
 ### Current snapshot version
 
