@@ -15,7 +15,7 @@
 
     <properties>
         <bytebuddy.agent>net.bytebuddy.agent.ByteBuddyAgent.Installer</bytebuddy.agent>
-        <description.short>The Byte Buddy agent allows the retrieval of a JVM instrumentation</description.short>
+        <description.osgi>The Byte Buddy agent allows the retrieval of a JVM instrumentation</description.osgi>
         <version.plugin.jar>2.5</version.plugin.jar>
     </properties>
 
@@ -50,7 +50,7 @@
                                 ${project.groupId}.${project.artifactId}
                             </Bundle-SymbolicName>
                             <Bundle-Name>${project.name}</Bundle-Name>
-                            <Bundle-Description>${description.short}</Bundle-Description>
+                            <Bundle-Description>${description.osgi}</Bundle-Description>
                             <Bundle-Version>${project.version}</Bundle-Version>
                             <Export-Package>net.bytebuddy.*</Export-Package>
                         </manifestEntries>

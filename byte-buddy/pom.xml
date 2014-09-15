@@ -29,10 +29,15 @@
     <properties>
         <shade.source>org.objectweb.asm</shade.source>
         <shade.target>net.bytebuddy.jar.asm</shade.target>
-        <description.short>Byte Buddy is a class file generation utility for the JVM</description.short>
+        <description.osgi>Byte Buddy is a class file generation utility for the JVM</description.osgi>
         <version.plugin.copy>0.2.5</version.plugin.copy>
         <version.plugin.build-helper>1.8</version.plugin.build-helper>
     </properties>
+
+    <!--
+      IDEs might complain about the following dependency not being OSGI compatible. While this is true, it does not
+      matter as the dependency is repackaged by the Shade plugin and becomes part of this module's jar artifact.
+    -->
 
     <dependencies>
         <dependency>
@@ -80,9 +85,10 @@
                                                     ${project.groupId}.${project.artifactId}
                                                 </Bundle-SymbolicName>
                                                 <Bundle-Name>${project.name}</Bundle-Name>
-                                                <Bundle-Description>${description.short}</Bundle-Description>
+                                                <Bundle-Description>${description.osgi}</Bundle-Description>
                                                 <Bundle-Version>${project.version}</Bundle-Version>
-                                                <Export-Package>net.bytebuddy.*</Export-Package>
+                                                <Export-Package>!${shade.target}.*,net.bytebuddy.*</Export-Package>
+                                                <Private-Package>${shade.target}.*</Private-Package>
                                             </manifestEntries>
                                         </transformer>
                                     </transformers>
