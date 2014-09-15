@@ -13,7 +13,7 @@
     <name>Byte Buddy (parent)</name>
     <description>
         Byte Buddy is a Java library for creating Java classes at run time.
-        The parent artifact contains configuration information that concern all submodules.
+        The parent artifact contains configuration information that concern all modules.
     </description>
     <url>http://bytebuddy.net</url>
 
