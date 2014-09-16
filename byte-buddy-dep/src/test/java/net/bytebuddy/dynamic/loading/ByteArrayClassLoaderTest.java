@@ -23,7 +23,7 @@ import static org.junit.Assert.assertNotEquals;
 public class ByteArrayClassLoaderTest {
 
     private static final ClassLoader BOOTSTRAP_CLASS_LOADER = null;
-    private static final String BAR = "bar";
+    private static final String BAR = "bar", CLASS_FILE = ".class";
     private final ByteArrayClassLoader.PersistenceHandler persistenceHandler;
     private final Matcher<InputStream> expectedResourceLookup;
     private ClassLoader classLoader;
@@ -56,7 +56,7 @@ public class ByteArrayClassLoaderTest {
 
     @Test
     public void testResourceLookupBeforeLoading() throws Exception {
-        InputStream inputStream = classLoader.getResourceAsStream(Foo.class.getName());
+        InputStream inputStream = classLoader.getResourceAsStream(Foo.class.getName().replace('.', '/') + CLASS_FILE);
         try {
             assertThat(inputStream, expectedResourceLookup);
         } finally {
@@ -69,7 +69,7 @@ public class ByteArrayClassLoaderTest {
     @Test
     public void testResourceLookupAfterLoading() throws Exception {
         assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
-        InputStream inputStream = classLoader.getResourceAsStream(Foo.class.getName());
+        InputStream inputStream = classLoader.getResourceAsStream(Foo.class.getName().replace('.', '/') + CLASS_FILE);
         try {
             assertThat(inputStream, expectedResourceLookup);
         } finally {

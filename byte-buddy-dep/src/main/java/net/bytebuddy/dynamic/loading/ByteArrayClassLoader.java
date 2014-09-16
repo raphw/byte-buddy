@@ -148,8 +148,12 @@ public class ByteArrayClassLoader extends ClassLoader {
             }
 
             @Override
-            protected InputStream inputStream(String name, Map<String, byte[]> typeDefinitions) {
-                byte[] binaryRepresentation = typeDefinitions.get(name);
+            protected InputStream inputStream(String resourceName, Map<String, byte[]> typeDefinitions) {
+                if (!resourceName.endsWith(CLASS_FILE_SUFFIX)) {
+                    return null;
+                }
+                byte[] binaryRepresentation = typeDefinitions.get(resourceName.replace('/', '.')
+                        .substring(0, resourceName.length() - CLASS_FILE_SUFFIX.length()));
                 return binaryRepresentation == null
                         ? null
                         : new ByteArrayInputStream(binaryRepresentation);
@@ -167,10 +171,15 @@ public class ByteArrayClassLoader extends ClassLoader {
             }
 
             @Override
-            protected InputStream inputStream(String name, Map<String, byte[]> typeDefinitions) {
+            protected InputStream inputStream(String resourceName, Map<String, byte[]> typeDefinitions) {
                 return null;
             }
         };
+
+        /**
+         * The suffix of files in the Java class file format.
+         */
+        private static final String CLASS_FILE_SUFFIX = ".class";
 
         /**
          * Performs a lookup of a class file by its name.
@@ -184,11 +193,11 @@ public class ByteArrayClassLoader extends ClassLoader {
         /**
          * Performs a lookup of an input stream for exposing a class file as a resource.
          *
-         * @param name            The name of the class to be exposed as its class file.
+         * @param resourceName    The resource name of the class to be exposed as its class file.
          * @param typeDefinitions A map of fully qualified class names pointing to their binary representations.
          * @return An input stream representing the requested resource or {@code null} if no such resource is known.
          */
-        protected abstract InputStream inputStream(String name, Map<String, byte[]> typeDefinitions);
+        protected abstract InputStream inputStream(String resourceName, Map<String, byte[]> typeDefinitions);
     }
 
     /**
