@@ -91,7 +91,7 @@ public class RebaseInstrumentationTargetTest extends AbstractInstrumentationTarg
         MethodVisitor methodVisitor = mock(MethodVisitor.class);
         Instrumentation.Context instrumentationContext = mock(Instrumentation.Context.class);
         StackManipulation.Size size = specialMethodInvocation.apply(methodVisitor, instrumentationContext);
-        verify(methodVisitor).visitMethodInsn(Opcodes.INVOKEVIRTUAL, BAR, BAZ, FOOBAR, false);
+        verify(methodVisitor).visitMethodInsn(Opcodes.INVOKESPECIAL, BAR, BAZ, FOOBAR, false);
         verifyNoMoreInteractions(methodVisitor);
         verifyZeroInteractions(instrumentationContext);
         assertThat(size.getSizeImpact(), is(0));

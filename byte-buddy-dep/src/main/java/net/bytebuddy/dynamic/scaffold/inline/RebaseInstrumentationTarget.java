@@ -122,7 +122,9 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
                                                      TypeDescription instrumentedType) {
             this.methodDescription = resolution.getResolvedMethod();
             this.instrumentedType = instrumentedType;
-            stackManipulation = new Compound(resolution.getAdditionalArguments(), MethodInvocation.invoke(resolution.getResolvedMethod()));
+            stackManipulation = new Compound(resolution.getAdditionalArguments(), resolution.getResolvedMethod().isStatic()
+                    ? MethodInvocation.invoke(resolution.getResolvedMethod())
+                    : MethodInvocation.invoke(resolution.getResolvedMethod()).special(instrumentedType));
         }
 
         /**
