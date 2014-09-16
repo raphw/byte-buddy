@@ -221,16 +221,16 @@ class HardcodedFrameworkImpl implements Framework {
         active development became rather vague. For this reason, many of its users moved away from cglib.
     </dd>
     <dt>
-        <a href="http://www.csg.ci.i.u-tokyo.ac.jp/~chiba/javassist/">javassist</a>
+        <a href="http://www.csg.ci.i.u-tokyo.ac.jp/~chiba/javassist/">Javassist</a>
     </dt>
     <dd>
         This library comes with a compiler that takes strings containing Java source code which are translated into Java
         byte code during the runtime of an application. This is very ambitious and in principle a great idea since Java
-        source code is obviously a great way for describing Java classes. However, the javassist compiler does not
+        source code is obviously a great way for describing Java classes. However, the Javassist compiler does not
         compare to the javac compiler in its functionality and allows for easy mistakes when dynamically composing
-        strings to implement more complex logic. Additionally, javassist comes with a proxy library which is similar to
+        strings to implement more complex logic. Additionally, Javassist comes with a proxy library which is similar to
         the JCL's proxy utilities but allows extending classes and is not limited to interfaces. The scope of
-        javassist's proxy tools remain however equally limited in its API and functionality.
+        Javassist's proxy tools remain however equally limited in its API and functionality.
     </dd>
 </dl>
 
@@ -266,7 +266,7 @@ class HardcodedFrameworkImpl implements Framework {
             <td></td>
             <td colspan="2">Byte Buddy</td>
             <td colspan="2">cglib</td>
-            <td colspan="2">javassist</td>
+            <td colspan="2">Javassist</td>
             <td colspan="2">Java proxy</td>
         </tr>
         </thead>
@@ -349,7 +349,7 @@ class HardcodedFrameworkImpl implements Framework {
     class's creation and the runtime of invoking the generated class's methods. The first benchmark measures a library's
     required time for subclassing <code>Object</code> without implementing or overriding any methods. This gives us an
     impression of a library's general overhead. In this benchmark, Byte Buddy performs slightly better than Java's
-    built-in proxies and significantly better than cglib and javassist. However, when additionally implementing an
+    built-in proxies and significantly better than cglib and Javassist. However, when additionally implementing an
     interface with 18 methods by creating method stubs, Byte Buddy performs better than any other benchmarked library.
     This is especially true for the runtime behavior of the generated class. The good performance of the class
     generation is partly determined by the manner a method's implementation is described to Byte Buddy. This can be
@@ -361,7 +361,7 @@ class HardcodedFrameworkImpl implements Framework {
     a user defined Java method. Do not worry about the details for now, we will discuss both of these approaches in a
     later section. As the benchmark suggests, the latter approach is slower to implement than by using another library.
     The performance loss is caused by the <code>MethodDelegation</code>'s approach of creating specialized accessor
-    classes for each method. On the other hand, cglib only creates a single generic accessor class and javassist does
+    classes for each method. On the other hand, cglib only creates a single generic accessor class and Javassist does
     not create any such class. This comes at the cost at runtime performance of each method invocation as obvious from
     the second measurement.
 </p>
@@ -510,6 +510,70 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = byteBuddy.subclass(Object.class).mak
     lost. As a result, the dynamic type is created using the default configuration which was originally created.
 </p>
 
+<h4>Redefining and rebasing existing classes</h4>
+
+<p>
+    So far, we only demonstrated how Byte Buddy can be used to create a subclass of an existing class. The same
+    API can however be use for enhancing existing classes. Such enhancement is available in two different
+    flavours:
+</p>
+
+<dl class="dl-horizontal padded">
+    <dt>
+        type redefinition
+    </dt>
+    <dd>
+        When redefining a class, Byte Buddy allows for the extension of existing classes, either by adding fields and
+        methods or by replacing existing method implementations. Preexisting method implementations are however lost if
+        they are replaced by another implementation. For example, when redefining the following type<br/><br/>
+<pre class="prettyprint">
+class Foo {
+  String bar() { return "bar"; }
+}
+</pre>
+        to return <code>"qux"</code> from the <code>bar</code> method, the information that this method originally
+        returned <code>"bar"</code> would be lost entirely.
+    </dd>
+    <dt>
+        type rebasing
+    </dt>
+    <dd>
+        When rebasing a class, Byte Buddy allows for the definition of an imaginary subclass. However, instead of
+        creating such a subclass directly, Byte Buddy merely copies all method implementations that are overridden
+        into renamed private methods with compatible signatures. This way, no implementations are lost while rebased
+        methods can continue to invoke their super implementations by calling the renamed methods. This way, the above
+        class <code>Foo</code> could be rebased to<br/><br/>
+<pre class="prettyprint">
+class Foo {
+  String bar() { return "foo" + bar$original(); }
+  private String bar$original() { return "bar"; }
+}
+</pre>
+        where the information that the <code>bar</code> method originally returned <code>"bar"</code> is preserved
+        within a copied method and therefore remains accessible.
+    </dd>
+</dl>
+
+<p>
+    Any rebasing, redefinition or subclassing is performed using an identical API which is defined by the
+    <code>DynamicType.Builder</code> interface. This way, it is possible to for example define a class as a subclass
+    and to later alter the definition to represent a rebased class instead. This is achieved by merely changing a
+    single word of Byte Buddy's domain specific language. This way, applying either of the possible approaches
+</p>
+
+<pre class="prettyprint">
+new ByteBuddy().subclass(Foo.class)
+new ByteBuddy().redefine(Foo.class)
+new ByteBuddy().rebase(Foo.class)
+</pre>
+
+<p>
+    is handled transparently during further stages of the definition process which is explained throughout the remainder
+    of this tutorial. Because a subclass definition is a familiar concept to Java developers, all of the following
+    explanations and examples of Byte Buddy's domain specific language are however demonstrated by creating subclasses,
+    even though all classes could similarly be defined using a redefinition or a rebasing.
+</p>
+
 <h4>Loading a class</h4>
 
 <p>
@@ -518,41 +582,49 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = byteBuddy.subclass(Object.class).mak
     suggests, these types are not loaded into the Java virtual machine. Instead, classes created by Byte Buddy are
     represented in their binary form, in the
     <a href="http://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html">Java class file format</a>. This way,
-    it is up to you to decide what you want to do with a generated class. For example, you might want to run
+    it is up to you to decide what you want to do with a generated type. For example, you might want to run
     Byte Buddy from a build script that only generates classes to enhance a Java application before it is deployed.
     For this purpose, the <code>DynamicType.Unloaded</code> class allows to extract a byte array that represents
     the dynamic type. For convenience, the type additionally offers a <code>saveIn(File)</code> method that allows
-    you to store a class in a given folder.
+    you to store a class in a given folder. Furthermore, it allows you to inject classes into a <i>jar</i> file.
 </p>
 
 <p>
     While directly accessing a class's binary form is straight forward, loading a type is unfortunately more
     complex. In Java, all classes are loaded using a <code>ClassLoader</code>. One example for such a class loader
-    is the bootstrap class loader which is responsible for loading the classes of the Java Class Library. The
-    system class loader, on the other hand, is responsible for loading classes on the Java application's class path.
-    Obviously, none of these preexisting class loaders is aware of any dynamic class we have created. To overcome
-    this, we have to find other possibilities for loading a runtime generated class. Byte Buddy offers solutions by
-    two different approaches out of the box:
+    is the bootstrap class loader which is responsible for loading the classes that are shipped within the Java class
+    library. The system class loader, on the other hand, is responsible for loading classes on the Java application's
+    class path. Obviously, none of these preexisting class loaders is aware of any dynamic class we have created.
+    To overcome this, we have to find other possibilities for loading a runtime generated class. Byte Buddy offers
+    solutions by different approaches out of the box:
 </p>
 
 <ul class="colored-list padded">
     <li><span>
         We simply create a new <code>ClassLoader</code> which is explicitly told about the existence of a
-        particular dynamically created class. Because
-        Java class loaders are organized in hierarchies, we define this class loader as the child of a given class
-        loader that already exists in the running Java application. This way, all types of the running Java
-        program is visible to the dynamic type that was loaded with new new <code>ClassLoader</code>.
+        particular dynamically created class. Because Java class loaders are organized in hierarchies, we define this
+        class loader as the child of a given class loader that already exists in the running Java application. This way,
+        all types of the running Java program is visible to the dynamic type that was loaded with new new
+        <code>ClassLoader</code>.
     </span></li>
     <li><span>
-        We can use reflection to inject a new type into an existent class loader. Usually, a class loader is asked
-        to provide a given type by its name. Using reflection, we can turn this principle around and call a
-        protected method to inject a new class into the class loader without the class loader actually knowing how
-        to locate this dynamic class.
+        Normally, Java class loaders query their parent <code>ClassLoader</code> before attempting to directly load a
+        type of a given name. This implies that a class loader normally never loads a type if its parent class loader
+        is aware of a type with identical name. For this purpose, Byte Buddy offers the creation of a child-first class
+        loader which attempts to load a type by itself before querying its parent. Other than that, this approach is
+        similar to the approach just mentioned above. Note that this approach does not override a type of a parent
+        class-loader but rather shadows this other type.
+    </span></li>
+    <li><span>
+        Finally, we can use reflection to inject a type into an existent <code>ClassLoader</code>. Usually, a class
+        loader is asked to provide a given type by its name. Using reflection, we can turn this principle around and
+        call a protected method to inject a new class into the class loader without the class loader actually knowing
+        how to locate this dynamic class.
      </span></li>
 </ul>
 
 <p>
-    Unfortunately, both approaches have downsides.
+    Unfortunately, the above approaches have downsides.
 </p>
 
 <ul class="colored-list padded">
@@ -571,10 +643,12 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = byteBuddy.subclass(Object.class).mak
         once a code segment referencing another type is is resolved. This lookup delegates to the same class loader.
         Imagine a scenario where we dynamically created two classes <code>example.Foo</code> and <code>example.Bar</code>.
         If we injected <code>example.Foo</code> into an existent class loader, this class loader might attempt to
-        locate <code>example.Bar</code>. This lookup will however fail since the latter class was created dynamically
+        locate <code>example.Bar</code>. This lookup would however fail since the latter class was created dynamically
         and is unreachable for the class loader into which we just injected the <code>example.Foo</code> class.
         Therefore, the reflective approach cannot be used for classes with circular dependencies that become
-        effective during class loading.
+        effective during class loading. Fortunately, most JVM implementations resolve referenced classes lazily on
+        their first active use which is why class injection normally works without these restrictions. Also, in
+        practice, classes that are created by Byte Buddy normally do not suffer from such circularity.
     </span></li>
 </ul>
 
@@ -589,12 +663,23 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = byteBuddy.subclass(Object.class).mak
 
 <p>
     After creating a <code>DynamicType.Unloaded</code>, this type can be loaded using a
-    <code>ClassLoadingStrategy</code>. Byte Buddy provides two such strategies out of the box where each follows
+    <code>ClassLoadingStrategy</code>. Byte Buddy provides several such strategies out of the box where each follows
     one of the concepts that were described above. These strategies are defined in
-    <code>ClassLoadingStrategy.Default</code>
-    where the <code>WRAPPER</code> strategy creates a new <code>ClassLoader</code> and the
-    <code>INJECTION</code> strategy attempts to inject a dynamic type using reflection. Let's look at such class
-    loading in action:
+    <code>ClassLoadingStrategy.Default</code> where the <code>WRAPPER</code> strategy creates a new, wrapping
+    <code>ClassLoader</code>, where the <code>CHILD_FIRST</code> strategy creates a similar class loader with
+    child-first semantics and where the <code>INJECTION</code> strategy injects a dynamic type using reflection.
+    Both the <code>WRAPPER</code> and the <code>CHILD_FIRST</code> strategies are also available in so-called
+    <i>manifest</i> versions where a type's binary format is preserved even after a class was loaded. These alternative
+    versions make the binary representation of a class loader's classes accessible via the
+    <code>ClassLoader::getResourceAsStream</code> method. However, note that this requires these class loaders to
+    maintain a reference to the full binary representation of a class what consumes space on a JVM's heap. Therefore,
+    you should only use the manifest versions if you plan to actually access the binary format. Since the
+    <code>INJECTION</code> strategy works via reflection and without a possibility to change the semantics of the
+    <code>ClassLoader::getResourceAsStream</code> method, it is naturally not available in a manifest version.
+</p>
+
+<p>
+    Let's look at such class loading in action:
 </p>
 
 <pre class="prettyprint">
@@ -607,10 +692,13 @@ Class&lt;?&gt; type = new ByteBuddy()
 
 <p>
     In the above example, we have created and loaded a class. We used the <code>WRAPPER</code> strategy for loading
-    the class which is suitable for most cases, as we mentioned it before. However, for this easy class creation,
-    the <code>INJECTION</code> strategy would have worked as well. Finally, the <code>getLoaded</code> method
+    the class which is suitable for most cases, as we mentioned it before. Finally, the <code>getLoaded</code> method
     returns an instance of a Java <code>Class</code> that represents the dynamic class which is now loaded.
 </p>
+
+<h4>Reloading a class</h4>
+
+<p></p>
 
 </div>
 
