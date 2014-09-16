@@ -40,7 +40,7 @@ public interface ClassLoadingStrategy {
         WRAPPER {
             @Override
             public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
-                return ByteArrayClassLoader.load(classLoader, types, ByteArrayClassLoader.PersistenceHandler.LATENT, false);
+                return ByteArrayClassLoader.load(classLoader, types, ByteArrayClassLoader.PersistenceHandler.LATENT, PARENT_FIRST);
             }
         },
 
@@ -52,7 +52,7 @@ public interface ClassLoadingStrategy {
         WRAPPER_PERSISTENT {
             @Override
             public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
-                return ByteArrayClassLoader.load(classLoader, types, ByteArrayClassLoader.PersistenceHandler.MANIFEST, false);
+                return ByteArrayClassLoader.load(classLoader, types, ByteArrayClassLoader.PersistenceHandler.MANIFEST, PARENT_FIRST);
             }
         },
 
@@ -70,7 +70,7 @@ public interface ClassLoadingStrategy {
         CHILD_FIRST {
             @Override
             public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
-                return ByteArrayClassLoader.load(classLoader, types, ByteArrayClassLoader.PersistenceHandler.LATENT, true);
+                return ByteArrayClassLoader.load(classLoader, types, ByteArrayClassLoader.PersistenceHandler.LATENT, PARENT_LAST);
             }
         },
 
@@ -82,7 +82,7 @@ public interface ClassLoadingStrategy {
         CHILD_FIRST_PERSISTENT {
             @Override
             public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
-                return ByteArrayClassLoader.load(classLoader, types, ByteArrayClassLoader.PersistenceHandler.MANIFEST, true);
+                return ByteArrayClassLoader.load(classLoader, types, ByteArrayClassLoader.PersistenceHandler.MANIFEST, PARENT_LAST);
             }
         },
 
@@ -105,6 +105,11 @@ public interface ClassLoadingStrategy {
                 }
                 return loadedTypes;
             }
-        }
+        };
+
+        /**
+         * An identifier for a class loading-order for making the code more readable.
+         */
+        private static final boolean PARENT_LAST = true, PARENT_FIRST = false;
     }
 }
