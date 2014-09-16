@@ -141,7 +141,7 @@ public class ByteArrayClassLoader extends ClassLoader {
         /**
          * The manifest persistence handler retains all class file representations and makes them accessible.
          */
-        MANIFEST {
+        MANIFEST(true) {
             @Override
             protected byte[] lookup(String name, Map<String, byte[]> typeDefinitions) {
                 return typeDefinitions.get(name);
@@ -164,7 +164,7 @@ public class ByteArrayClassLoader extends ClassLoader {
          * The latent persistence handler hides all class file representations and does not make them accessible
          * even before they are loaded.
          */
-        LATENT {
+        LATENT(false) {
             @Override
             protected byte[] lookup(String name, Map<String, byte[]> typeDefinitions) {
                 return typeDefinitions.remove(name);
@@ -180,6 +180,29 @@ public class ByteArrayClassLoader extends ClassLoader {
          * The suffix of files in the Java class file format.
          */
         private static final String CLASS_FILE_SUFFIX = ".class";
+
+        /**
+         * {@code true} if this persistence handler represents manifest class file storage.
+         */
+        private final boolean manifest;
+
+        /**
+         * Creates a new persistence handler.
+         *
+         * @param manifest {@code true} if this persistence handler represents manifest class file storage.
+         */
+        private PersistenceHandler(boolean manifest) {
+            this.manifest = manifest;
+        }
+
+        /**
+         * Checks if this persistence handler represents manifest class file storage.
+         *
+         * @return {@code true} if this persistence handler represents manifest class file storage.
+         */
+        public boolean isManifest() {
+            return manifest;
+        }
 
         /**
          * Performs a lookup of a class file by its name.
@@ -205,6 +228,11 @@ public class ByteArrayClassLoader extends ClassLoader {
      * given type definitions.
      */
     public static class ChildFirst extends ByteArrayClassLoader {
+
+        /**
+         * The suffix of files in the Java class file format.
+         */
+        private static final String CLASS_FILE_SUFFIX = ".class";
 
         /**
          * Creates a new child-first byte array class loader.
@@ -242,7 +270,8 @@ public class ByteArrayClassLoader extends ClassLoader {
         @Override
         public InputStream getResourceAsStream(String name) {
             InputStream inputStream = persistenceHandler.inputStream(name, typeDefinitions);
-            if (inputStream != null) {
+            // A non-persistent class must maintain to
+            if (inputStream != null || (!persistenceHandler.isManifest() && isSelfDefined(name))) {
                 return inputStream;
             } else {
                 URL url = getResource(name);
@@ -251,6 +280,27 @@ public class ByteArrayClassLoader extends ClassLoader {
                 } catch (IOException ignored) {
                     return null;
                 }
+            }
+        }
+
+        /**
+         * Checks if a resource name represents a class file of a class that was loaded by this class loader.
+         *
+         * @param resourceName The resource name of the class to be exposed as its class file.
+         * @return {@code true} if this class represents a class that was already loaded by this class loader.
+         */
+        private boolean isSelfDefined(String resourceName) {
+            if (!resourceName.endsWith(CLASS_FILE_SUFFIX)) {
+                return false;
+            }
+            // This synchronization is required to avoid a racing condition to the actual class loading.
+            synchronized (this) {
+                String typeName = resourceName.replace('/', '.').substring(0, resourceName.length() - CLASS_FILE_SUFFIX.length());
+                if (typeDefinitions.containsKey(typeName)) {
+                    return true;
+                }
+                Class<?> loadedClass = findLoadedClass(typeName);
+                return loadedClass != null && loadedClass.getClassLoader() == this;
             }
         }
 

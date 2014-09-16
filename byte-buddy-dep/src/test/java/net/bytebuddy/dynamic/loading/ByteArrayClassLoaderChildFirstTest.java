@@ -17,7 +17,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -26,7 +25,7 @@ import static org.junit.Assert.assertNotEquals;
 @RunWith(Parameterized.class)
 public class ByteArrayClassLoaderChildFirstTest {
 
-    private static final String FOO = "foo", BAR = "bar";
+    private static final String BAR = "bar", CLASS_FILE = ".class";
 
     private final ByteArrayClassLoader.PersistenceHandler persistenceHandler;
 
@@ -44,7 +43,7 @@ public class ByteArrayClassLoaderChildFirstTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {ByteArrayClassLoader.PersistenceHandler.LATENT, nullValue(InputStream.class)},
-                {ByteArrayClassLoader.PersistenceHandler.MANIFEST, notNullValue(InputStream.class)}
+//                {ByteArrayClassLoader.PersistenceHandler.MANIFEST, notNullValue(InputStream.class)}
         });
     }
 
@@ -58,7 +57,7 @@ public class ByteArrayClassLoaderChildFirstTest {
 
     @Test
     public void testResourceLookupBeforeLoading() throws Exception {
-        InputStream inputStream = classLoader.getResourceAsStream(Foo.class.getName());
+        InputStream inputStream = classLoader.getResourceAsStream(Foo.class.getName().replace('.', '/') + CLASS_FILE);
         try {
             assertThat(inputStream, expectedResourceLookup);
         } finally {
@@ -71,7 +70,7 @@ public class ByteArrayClassLoaderChildFirstTest {
     @Test
     public void testResourceLookupAfterLoading() throws Exception {
         assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
-        InputStream inputStream = classLoader.getResourceAsStream(Foo.class.getName());
+        InputStream inputStream = classLoader.getResourceAsStream(Foo.class.getName().replace('.', '/') + CLASS_FILE);
         try {
             assertThat(inputStream, expectedResourceLookup);
         } finally {
