@@ -105,19 +105,12 @@ mvn package
     </p>
 
     <dl>
-        <dt>0.3</dt>
-        <dd>
-            Redefine and rebase classes: Using the same API as for creating subclasses, Byte Buddy allows to redefine
-            classes (replace method definitions) or to rebase classes (override methods by renaming the original
-            method). Both are mainly meant for implementing build-time instrumentation Additionally, a basic agent API
-            is introduced which allows some simple class reloading during runtime.
-        </dd>
         <dt>0.4</dt>
         <dd>
             Treat unloaded classes: Byte Buddy introduces a class pool which allows to subclass, redefine or rebase
             classes without loading them. This is convenient for build-time instrumentation or for instrumentation
             at application start-up. Additionally, a convenience agent-builder for writing custom Java agents is
-            introduced.
+            introduced. This might require a generalization of the current <code>MethodMatcher</code> API.
         </dd>
         <dt>0.5</dt>
         <dd>
@@ -126,5 +119,10 @@ mvn package
         </dd>
     </dl>
 
-    <p></p>
+    <p>
+        Additionally, there is a plan to implement a <code>ClassLoadingStrategy</code> for offering limited support
+        for Android. Android requires preprocessed byte code which can however be created at runtime by emulating
+        the dex compiler. This extension is still in the experimental phase and might be deployed in between versions
+        as its own module.
+    </p>
 </div>
