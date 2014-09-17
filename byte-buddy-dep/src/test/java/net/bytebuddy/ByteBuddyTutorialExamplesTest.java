@@ -1,7 +1,9 @@
 package net.bytebuddy;
 
+import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.dynamic.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
 import net.bytebuddy.instrumentation.*;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
@@ -18,6 +20,7 @@ import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.JavaVersionRule;
 import net.bytebuddy.utility.PrecompiledTypeClassLoader;
+import net.bytebuddy.utility.ToolsJarRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -46,6 +49,9 @@ public class ByteBuddyTutorialExamplesTest {
 
     @Rule
     public MethodRule java8Rule = new JavaVersionRule(8);
+
+    @Rule
+    public MethodRule toolsJarRule = new ToolsJarRule();
 
     @SuppressWarnings("unused")
     private static void println(String s) {
@@ -121,6 +127,21 @@ public class ByteBuddyTutorialExamplesTest {
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(dynamicType, notNullValue());
+    }
+
+    @Test
+    @ToolsJarRule.Enforce
+    public void testTutorialGettingStartedClassReloading() throws Exception {
+        ByteBuddyAgent.installOnOpenJDK();
+        FooReloading foo = new FooReloading();
+        new ByteBuddy()
+                .redefine(BarReloading.class)
+                .name(FooReloading.class.getName())
+                .make()
+                .load(FooReloading.class.getClassLoader(), ClassReloadingStrategy.fromInstalledAgent());
+        assertThat(foo.m(), is("bar"));
+        ClassReloadingStrategy.fromInstalledAgent().reset(FooReloading.class);
+        assertThat(foo.m(), is("foo"));
     }
 
     @Test
@@ -494,6 +515,22 @@ public class ByteBuddyTutorialExamplesTest {
     public static @interface StringValue {
 
         String value();
+    }
+
+    @SuppressWarnings("unchecked")
+    public static class FooReloading {
+
+        public String m() {
+            return "foo";
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static class BarReloading {
+
+        public String m() {
+            return "bar";
+        }
     }
 
     @SuppressWarnings("unused")
