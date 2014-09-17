@@ -201,10 +201,10 @@ Where to go from here?
 Byte Buddy is a comprehensive library and we only scratched the surface of Byte Buddy's capabilities. However, Byte
 Buddy aims for being easy to use by providing a domain-specific language for creating classes. Most runtime code
 generation can be done by writing readable code and without any knowledge of Java's class file format. If you want
-to learn more about Byte Buddy can find such an [tutorial on Byte Buddy's web page](http://bytebuddy.net/#/tutorial).
+to learn more about Byte Buddy, you can find such a [tutorial on Byte Buddy's web page](http://bytebuddy.net/#/tutorial).
 Furthermore, Byte Buddy comes with a [detailed in-code documentation](http://bytebuddy.net/javadoc/) and extensive 
 test case coverage which can also serve as example code. When using Byte Buddy, make also sure to read the
-information below on maintaining a project dependency.
+following information on maintaining a project dependency.
 
 Dependency and API evolution
 ----------------------------
@@ -258,7 +258,7 @@ cd byte-buddy
 mvn package
 ```
 
-By these commands, Byte Buddy is cloned from GitHub and built on your machine. Byte Buddy is currently tested for the
+On these commands, Byte Buddy is cloned from GitHub and built on your machine. Byte Buddy is currently tested for the
 [*OpenJDK*](http://openjdk.java.net/) versions 6 and 7 and the *Oracle JDK* versions 7 and 8 using Travis CI. Please
 use GitHub's [issue tracker](https://github.com/raphw/byte-buddy/issues) for reporting bugs. When committing code,
 please provide test cases that prove the functionality of your features or that demonstrate a bug fix. Furthermore,
