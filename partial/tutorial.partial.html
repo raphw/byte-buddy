@@ -1135,16 +1135,20 @@ void foo(Object o1, @Argument(0) Object o2, Object o3)
     </span></li>
     <li><span>
         Parameters that are annotated with <code>@Origin</code> must be of used on any of the types <code>Method</code>,
-        <code>Class</code> or <code>String</code>. Depending on the parameter's type, it is assigned a
-        <code>Method</code> reference to the original method that is now instrumented or a reference to the
-        dynamically created <code>Class</code>. If the annotated parameter is a <code>String</code>, the parameter
-        is assigned a unique identifier for the instrumented method which consists of the method's name, a concatenation
-        of the method's parameters'
+        <code>Class</code>, <code>MethodHandle</code>, <code>MethodType</code> or <code>String</code>. Depending on
+        the parameter's type, it is assigned a <code>Method</code> reference to the original method that is now
+        instrumented or a reference to the dynamically created <code>Class</code>. If the annotated parameter is a
+        <code>String</code>, the parameter is assigned a unique identifier for the instrumented method which consists
+        of the method's name, a concatenation of the method's parameters'
         <a href="http://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html">descriptors</a> enclosed in braces and
         the method's return type's descriptor. In general, we recommend the use of these <code>String</code> values as
         method identifiers wherever possible and discourage the use of <code>Method</code> objects as their lookup
-        introduces a significant runtime overhead. Instead of using reflection for invoking an intercepted method,
-        we recommend the use of the <code>@Pipe</code> annotation which is discussed later in this section.
+        introduces a significant runtime overhead. To avoid this overhead, the <code>@Origin</code> annotation also
+        offers a property for caching such instances for reuse. Note that the <code>MethodHandle</code> and
+        <code>MethodType</code> are stored in a class's constant pool such that classes using these constants must
+        at least be of Java version 7. Instead of using reflection for reflectively invoking an intercepted method on
+        another object, we furthermore recommend the use of the <code>@Pipe</code> annotation which is discussed later
+        in this section.
     </span></li>
 </ul>
 
@@ -1617,6 +1621,16 @@ new ByteBuddy()
     custom <code>ConstructorStrategy</code> or by defining an individual constructor within Byte Buddy's domain specific
     language using the <code>defineConstructor</code> method. Furthermore, we are planing to add new features to Byte
     Buddy for defining more complex constructors out of the box.
+</p>
+
+<p>
+    For class rebasing and class redefinition, constructors are of course simply retained what makes the specification
+    of a <code>ConstructorStrategy</code> obsolete. Instead, for copying these retained constructors' (and methods')
+    implementations, it is required to specify a <code>ClassFileLocator</code> which allows a lookup of the original
+    class file that contains these constructor definitions. Byte Buddy does its best to identify the location of the
+    original class file by itself, e.g. by querying the corresponding <code>ClassLoader</code> or by looking on an
+    application's class path. When dealing with customary class loader, a lookup might however still not be successful.
+    Then, a custom <code>ClassFileLocator</code> can be provided.
 </p>
 
 <h4>Calling a default method</h4>
