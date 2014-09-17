@@ -624,7 +624,7 @@ new ByteBuddy().rebase(Foo.class)
 </ul>
 
 <p>
-    Unfortunately, the above approaches have downsides.
+    Unfortunately, the above approaches have both their downsides:
 </p>
 
 <ul class="colored-list padded">
@@ -698,7 +698,74 @@ Class&lt;?&gt; type = new ByteBuddy()
 
 <h4>Reloading a class</h4>
 
-<p></p>
+<p>
+    In a previous section, we learned how Byte Buddy can be used in order to redefine or to rebase an existing class.
+    During the execution of a Java program, it is however often impossible to guarantee that a specific class is not
+    already loaded. (Furthermore, Byte Buddy currently only takes loaded classes as its argument, this will change
+    in future versions where the existing API can be used to equally work with unloaded classes.) Thanks to the
+    Java virtual machine's HotSwap feature, existing classes can however be redefined even after they are loaded.
+    This feature is made accessible by Byte Buddy's <code>ClassReloadingStrategy</code>. Let us demonstrate this
+    strategy by redefining a class <code>Foo</code>:
+</p>
+
+<pre class="prettyprint">
+class Foo {
+  String m() { return "foo"; }
+}
+
+class Bar {
+  String m() { return "bar"; }
+}
+</pre>
+
+<p>
+    Using Byte Buddy, we can now easily redefine the class <code>Foo</code> to become <code>Bar</code>. Using
+    HotSwap, this redefinition will even apply for preexisting instances:
+</p>
+
+<pre>
+ByteBuddyAgent.installOnOpenJDK();
+Foo foo = new Foo();
+new ByteBuddy()
+  .redefine(Bar.class)
+  .name(Foo.class.getName())
+  .make()
+  .load(Foo.class.getClassLoader(), ClassReloadingStrategy.fromInstalledAgent());
+assertThat(foo.m(), is("bar"));
+</pre>
+
+<p>
+    HotSwap is only accessible using a
+    <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/instrument/package-summary.html">so-called Java
+        agent</a>.
+    Such an agent can be installed by either specifying it on the startup of the Java virtual machine by using the
+    <code>-javaagent</code> parameter where the parameter's argument needs to be Byte Buddy's agent jar which can be
+    <a href="https://bintray.com/raphw/maven/ByteBuddy/view">downloaded from Byte Buddy's Bintray page</a>. However,
+    when a Java application is run from a JDK version of the Java virtual machine, Byte Buddy can load a Java agent
+    even after application startup by <code>ByteBuddyAgent.installOnOpenJDK()</code>. Because class redefinition is
+    mostly used to implement tooling or testing, this can be a very convenient alternative.
+</p>
+
+<p>
+    One thing that might first appear counter-intuitive about the above example is the fact that Byte Buddy is
+    instructed to redefine the <code>Bar</code> type where the <code>Foo</code> type is eventually redefined. The
+    Java virtual machine identifies types by their name and a class loader. Therefore, by renaming <code>Bar</code>
+    to <code>Foo</code> and applying this definition, we eventually redefine the type we renamed <code>Bar</code>
+    into. It is of course equally possible to redefine <code>Foo</code> directly without renaming a different type.
+</p>
+
+<p>
+    Using Java's HotSwap feature, there is however one huge drawback. Current implementations of HotSwap require that
+    the redefined classes apply the same class schema both before and after a class redefinition. This means that it
+    is not allowed to add methods or fields when reloading classes. We already discussed that Byte Buddy defines
+    copies of the original methods for any rebased class such that class rebasing does not work for the
+    <code>ClassReloadingStrategy</code>. Also, class redefinition does not work for classes with an explicit class
+    initializer method (a static block within a class) because this initializer needs to be copied into an extra method
+    as well. There are however <a href="http://openjdk.java.net/jeps/159">plans to extend HotSwap in the future</a>
+    and Byte Buddy stands ready to promptly use this feature, once it is hopefully implemented. In the mean time, Byte
+    Buddy's HotSwap support can be used for corner-cases where it seems useful. Otherwise, class rebasing and
+    redefinition can be a convenient feature when enhancing existing classes from for example a build script.
+</p>
 
 </div>
 
