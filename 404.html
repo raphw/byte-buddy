@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" data-ng-app="byteBuddy">
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Byte Buddy - runtime code generation for Java</title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+    <link rel="icon" type="image/png" href="images/favicon.png"/>
+    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="css/prettify-tomorrow-theme.css"/>
+    <link rel="stylesheet" href="css/custom.css"/>
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Bevan"/>
+    <!--[if lt IE 9]>
+    <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+</head>
+<body style="overflow-x:hidden;">
+
+<header class="navbar navbar-default navbar-fixed-top" role="Banner" data-ng-controller="menuController">
+    <div class="container">
+        <div class="navbar-header">
+            <button class="navbar-toggle" type="button" data-ng-click="toggleCollapse()">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a href="#/" class="navbar-brand">
+                <img src="images/logo-text.png" width="132px" alt="logo text"/>
+            </a>
+        </div>
+        <nav class="collapse navbar-collapse" role="navigation" data-collapse="isCollapsed()">
+            <ul class="nav navbar-nav">
+                <li data-ng-repeat="item in menuItems"
+                    data-ng-class="activeClass(item)">
+                    <a data-ng-href="{{item.target}}"
+                       data-ng-click="collapse()"
+                       href="#">{{item.name}}</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</header>
+
+<h1>Page not found</h1>
+
+<p>
+    The page you are trying to open does not exist. Please use the navigation to return to a page.
+</p>
+
+</body>
+</html>
