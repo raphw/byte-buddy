@@ -33,9 +33,9 @@
             <ul class="nav navbar-nav">
                 <li data-ng-repeat="item in menuItems"
                     data-ng-class="activeClass(item)">
-                    <a data-ng-href="{{item.target}}"
+                    <a data-ng-href="/{{item.target}}"
                        data-ng-click="collapse()"
-                       href="/#">{{item.name}}</a>
+                       href="#">{{item.name}}</a>
                 </li>
             </ul>
         </nav>
