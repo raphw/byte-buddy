@@ -9,7 +9,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
 /**
- * A constant for a Java 7 {@link java.lang.invoke.MethodType}.
+ * A constant for a Java 7 {@code java.lang.invoke.MethodType}.
  */
 public class MethodTypeConstant implements StackManipulation {
 
@@ -19,7 +19,7 @@ public class MethodTypeConstant implements StackManipulation {
      */
     private static final String METHOD_TYPE_TYPE_INTERNAL_NAME = "java/lang/invoke/MethodType";
     /**
-     * The size of a {@link java.lang.invoke.MethodType} on the operand stack.
+     * The size of a {@code java.lang.invoke.MethodType} on the operand stack.
      */
     private static final Size SIZE = StackSize.SINGLE.toIncreasingSize();
     /**
@@ -37,10 +37,10 @@ public class MethodTypeConstant implements StackManipulation {
     }
 
     /**
-     * Checks if a type represents the {@link java.lang.invoke.MethodType} type.
+     * Checks if a type represents the {@code java.lang.invoke.MethodType} type.
      *
      * @param typeDescription The type to be checked.
-     * @return {@code true} if the given type represents a {@link java.lang.invoke.MethodType}.
+     * @return {@code true} if the given type represents a {@code java.lang.invoke.MethodType}.
      */
     public static boolean isRepresentedBy(TypeDescription typeDescription) {
         return typeDescription.getInternalName().equals(METHOD_TYPE_TYPE_INTERNAL_NAME);

@@ -1,7 +1,12 @@
 package net.bytebuddy.dynamic.loading;
 
+import net.bytebuddy.instrumentation.type.TypeDescription;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.security.ProtectionDomain;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * An injector that loads classes by reflectively invoking non-public methods on a given {@link java.lang.ClassLoader}.
@@ -13,6 +18,11 @@ import java.lang.reflect.Method;
  * reflection.
  */
 public class ClassLoaderByteArrayInjector {
+
+    /**
+     * A convenience reference to the default protection domain which is {@code null}.
+     */
+    private static final ProtectionDomain DEFAULT_PROTECTION_DOMAIN = null;
 
     /**
      * A convenience variable representing the first index of an array, to make the code more readable.
@@ -37,7 +47,8 @@ public class ClassLoaderByteArrayInjector {
                     String.class,
                     byte[].class,
                     int.class,
-                    int.class);
+                    int.class,
+                    ProtectionDomain.class);
             loadByteArrayMethod.setAccessible(true);
             reflectionStore = new ReflectionStore.Resolved(findLoadedClassMethod, loadByteArrayMethod);
         } catch (Exception e) {
@@ -52,12 +63,45 @@ public class ClassLoaderByteArrayInjector {
     private final ClassLoader classLoader;
 
     /**
-     * Creates a new injector for the given {@link java.lang.ClassLoader}.
+     * The protection domain that is used when loading classes.
+     */
+    private final ProtectionDomain protectionDomain;
+
+    /**
+     * Creates a new injector for the given {@link java.lang.ClassLoader} and a default
+     * {@link java.security.ProtectionDomain}.
      *
      * @param classLoader The {@link java.lang.ClassLoader} into which new class definitions are to be injected.
      */
     public ClassLoaderByteArrayInjector(ClassLoader classLoader) {
+        this(classLoader, DEFAULT_PROTECTION_DOMAIN);
+    }
+
+    /**
+     * Creates a new injector for the given {@link java.lang.ClassLoader} and {@link java.security.ProtectionDomain}.
+     *
+     * @param classLoader      The {@link java.lang.ClassLoader} into which new class definitions are to be injected.
+     * @param protectionDomain The protection domain to apply during class definition.
+     */
+    public ClassLoaderByteArrayInjector(ClassLoader classLoader, ProtectionDomain protectionDomain) {
         this.classLoader = classLoader;
+        this.protectionDomain = protectionDomain;
+    }
+
+    /**
+     * Injects a given type mapping into a class loader byte array injector.
+     *
+     * @param classLoaderByteArrayInjector The target of the injection.
+     * @param types                        A mapping of types to their binary representation.
+     * @return A map of loaded classes which were injected into the class loader byte array injector.
+     */
+    public static Map<TypeDescription, Class<?>> inject(ClassLoaderByteArrayInjector classLoaderByteArrayInjector,
+                                                        Map<TypeDescription, byte[]> types) {
+        Map<TypeDescription, Class<?>> loadedTypes = new LinkedHashMap<TypeDescription, Class<?>>(types.size());
+        for (Map.Entry<TypeDescription, byte[]> entry : types.entrySet()) {
+            loadedTypes.put(entry.getKey(), classLoaderByteArrayInjector.inject(entry.getKey().getName(), entry.getValue()));
+        }
+        return loadedTypes;
     }
 
     /**
@@ -78,7 +122,8 @@ public class ClassLoaderByteArrayInjector {
                             name,
                             binaryRepresentation,
                             FROM_BEGINNING,
-                            binaryRepresentation.length);
+                            binaryRepresentation.length,
+                            protectionDomain);
                 }
             }
         } catch (IllegalAccessException e) {

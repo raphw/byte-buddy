@@ -30,11 +30,11 @@ import java.lang.reflect.Method;
  * This unique signature allows the unambiguous identification of a particular class's methods while avoid the rather
  * expensive creation of a {@link java.lang.reflect.Method} instance.
  * </li>
- * <li>If the annotated type is {@link java.lang.invoke.MethodHandle}, a handle of the intercepted method is injected.
- * A {@link java.lang.invoke.MethodHandle} is stored in a class's constant pool and does therefore not face the same
+ * <li>If the annotated type is {@code java.lang.invoke.MethodHandle}, a handle of the intercepted method is injected.
+ * A {@code java.lang.invoke.MethodHandle} is stored in a class's constant pool and does therefore not face the same
  * runtime performance limitations as a {@link java.lang.reflect.Method} reference. Method handles are only supported
  * for byte code versions starting from Java 7.</li>
- * <li>If the annotated type is {@link java.lang.invoke.MethodType}, a description of the intercepted method's type
+ * <li>If the annotated type is {@code java.lang.invoke.MethodType}, a description of the intercepted method's type
  * is injected. Method type descriptions are only supported for byte code versions starting from Java 7.</li>
  * </ol>
  * Any other parameter type will cause an {@link java.lang.IllegalStateException}.

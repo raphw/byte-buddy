@@ -4,7 +4,7 @@ import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoaderByteArrayInjector;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 
-import java.util.LinkedHashMap;
+import java.security.ProtectionDomain;
 import java.util.Map;
 
 /**
@@ -98,12 +98,7 @@ public interface ClassLoadingStrategy {
         INJECTION {
             @Override
             public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
-                Map<TypeDescription, Class<?>> loadedTypes = new LinkedHashMap<TypeDescription, Class<?>>(types.size());
-                ClassLoaderByteArrayInjector classLoaderByteArrayInjector = new ClassLoaderByteArrayInjector(classLoader);
-                for (Map.Entry<TypeDescription, byte[]> entry : types.entrySet()) {
-                    loadedTypes.put(entry.getKey(), classLoaderByteArrayInjector.inject(entry.getKey().getName(), entry.getValue()));
-                }
-                return loadedTypes;
+                return ClassLoaderByteArrayInjector.inject(new ClassLoaderByteArrayInjector(classLoader), types);
             }
         };
 
@@ -111,5 +106,47 @@ public interface ClassLoadingStrategy {
          * An identifier for a class loading-order for making the code more readable.
          */
         private static final boolean PARENT_LAST = true, PARENT_FIRST = false;
+    }
+
+    /**
+     * A class loading strategy which applies a class loader injection while applying a given
+     * {@link java.security.ProtectionDomain}.
+     */
+    public static class ProtectionDomainInjection implements ClassLoadingStrategy {
+
+        /**
+         * The protection domain to apply.
+         */
+        private final ProtectionDomain protectionDomain;
+
+        /**
+         * Creates a new protection domain injection class loading strategy.
+         *
+         * @param protectionDomain The protection domain to apply.
+         */
+        protected ProtectionDomainInjection(ProtectionDomain protectionDomain) {
+            this.protectionDomain = protectionDomain;
+        }
+
+        @Override
+        public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+            return ClassLoaderByteArrayInjector.inject(new ClassLoaderByteArrayInjector(classLoader, protectionDomain), types);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && protectionDomain.equals(((ProtectionDomainInjection) other).protectionDomain);
+        }
+
+        @Override
+        public int hashCode() {
+            return protectionDomain.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "ClassLoadingStrategy.ProtectionDomainInjection{protectionDomain=" + protectionDomain + '}';
+        }
     }
 }
