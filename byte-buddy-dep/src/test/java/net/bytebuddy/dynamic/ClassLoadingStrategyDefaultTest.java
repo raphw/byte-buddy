@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.security.ProtectionDomain;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -18,6 +19,7 @@ public class ClassLoadingStrategyDefaultTest {
     private ClassLoader classLoader;
     private TypeDescription typeDescription;
     private Map<TypeDescription, byte[]> binaryRepresentations;
+    private ProtectionDomain protectionDomain;
 
     @Before
     public void setUp() throws Exception {
@@ -25,6 +27,7 @@ public class ClassLoadingStrategyDefaultTest {
         binaryRepresentations = new LinkedHashMap<TypeDescription, byte[]>();
         typeDescription = new TypeDescription.ForLoadedType(Foo.class);
         binaryRepresentations.put(typeDescription, ClassFileExtraction.extract(Foo.class));
+        protectionDomain = getClass().getProtectionDomain();
     }
 
     @Test
@@ -66,6 +69,56 @@ public class ClassLoadingStrategyDefaultTest {
     @Test
     public void testInjection() throws Exception {
         Map<TypeDescription, Class<?>> loaded = ClassLoadingStrategy.Default.INJECTION.load(classLoader, binaryRepresentations);
+        assertThat(loaded.size(), is(1));
+        Class<?> type = loaded.get(typeDescription);
+        assertThat(type.getClassLoader(), is(classLoader));
+        assertThat(type.getName(), is(Foo.class.getName()));
+    }
+
+    @Test
+    public void testWrapperWithProtectionDomain() throws Exception {
+        Map<TypeDescription, Class<?>> loaded = ClassLoadingStrategy.Default.WRAPPER.withProtectionDomain(protectionDomain)
+                .load(classLoader, binaryRepresentations);
+        assertThat(loaded.size(), is(1));
+        Class<?> type = loaded.get(typeDescription);
+        assertThat(type.getClassLoader().getParent(), is(classLoader));
+        assertThat(type.getName(), is(Foo.class.getName()));
+    }
+
+    @Test
+    public void testWrapperPersistentWithProtectionDomain() throws Exception {
+        Map<TypeDescription, Class<?>> loaded = ClassLoadingStrategy.Default.WRAPPER_PERSISTENT.withProtectionDomain(protectionDomain)
+                .load(classLoader, binaryRepresentations);
+        assertThat(loaded.size(), is(1));
+        Class<?> type = loaded.get(typeDescription);
+        assertThat(type.getClassLoader().getParent(), is(classLoader));
+        assertThat(type.getName(), is(Foo.class.getName()));
+    }
+
+    @Test
+    public void testChildFirstWithProtectionDomain() throws Exception {
+        Map<TypeDescription, Class<?>> loaded = ClassLoadingStrategy.Default.CHILD_FIRST.withProtectionDomain(protectionDomain)
+                .load(classLoader, binaryRepresentations);
+        assertThat(loaded.size(), is(1));
+        Class<?> type = loaded.get(typeDescription);
+        assertThat(type.getClassLoader().getParent(), is(classLoader));
+        assertThat(type.getName(), is(Foo.class.getName()));
+    }
+
+    @Test
+    public void testChildFirstPersistentWithProtectionDomain() throws Exception {
+        Map<TypeDescription, Class<?>> loaded = ClassLoadingStrategy.Default.CHILD_FIRST_PERSISTENT.withProtectionDomain(protectionDomain)
+                .load(classLoader, binaryRepresentations);
+        assertThat(loaded.size(), is(1));
+        Class<?> type = loaded.get(typeDescription);
+        assertThat(type.getClassLoader().getParent(), is(classLoader));
+        assertThat(type.getName(), is(Foo.class.getName()));
+    }
+
+    @Test
+    public void testInjectionWithProtectionDomain() throws Exception {
+        Map<TypeDescription, Class<?>> loaded = ClassLoadingStrategy.Default.INJECTION.withProtectionDomain(protectionDomain)
+                .load(classLoader, binaryRepresentations);
         assertThat(loaded.size(), is(1));
         Class<?> type = loaded.get(typeDescription);
         assertThat(type.getClassLoader(), is(classLoader));

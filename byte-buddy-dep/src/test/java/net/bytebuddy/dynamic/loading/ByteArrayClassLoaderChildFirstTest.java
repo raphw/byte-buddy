@@ -12,6 +12,7 @@ import org.objectweb.asm.commons.RemappingClassAdapter;
 import org.objectweb.asm.commons.SimpleRemapper;
 
 import java.io.InputStream;
+import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -26,6 +27,8 @@ import static org.junit.Assert.assertNotEquals;
 public class ByteArrayClassLoaderChildFirstTest {
 
     private static final String BAR = "bar", CLASS_FILE = ".class";
+
+    private static final ProtectionDomain DEFAULT_PROTECTION_DOMAIN = null;
 
     private final ByteArrayClassLoader.PersistenceHandler persistenceHandler;
 
@@ -52,7 +55,7 @@ public class ByteArrayClassLoaderChildFirstTest {
         Map<String, byte[]> values = Collections.singletonMap(Foo.class.getName(),
                 ClassFileExtraction.extract(Bar.class, new RenamingWrapper(Bar.class.getName().replace('.', '/'),
                         Foo.class.getName().replace('.', '/'))));
-        classLoader = new ByteArrayClassLoader.ChildFirst(getClass().getClassLoader(), values, persistenceHandler);
+        classLoader = new ByteArrayClassLoader.ChildFirst(getClass().getClassLoader(), values, DEFAULT_PROTECTION_DOMAIN, persistenceHandler);
     }
 
     @Test

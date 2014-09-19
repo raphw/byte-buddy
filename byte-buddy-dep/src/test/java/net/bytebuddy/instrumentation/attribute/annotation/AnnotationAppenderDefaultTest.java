@@ -17,6 +17,7 @@ import org.objectweb.asm.Type;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.security.ProtectionDomain;
 import java.util.Collections;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -26,6 +27,8 @@ import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
 
 public class AnnotationAppenderDefaultTest {
+
+    private static final ProtectionDomain DEFAULT_PROTECTION_DOMAIN = null;
 
     private static final int ASM_MANUAL = 0;
     private static final String BAR = "net.bytebuddy.test.Bar";
@@ -120,6 +123,7 @@ public class AnnotationAppenderDefaultTest {
         classWriter.visitEnd();
         Class<?> bar = new ByteArrayClassLoader(getClass().getClassLoader(),
                 Collections.singletonMap(BAR, classWriter.toByteArray()),
+                DEFAULT_PROTECTION_DOMAIN,
                 ByteArrayClassLoader.PersistenceHandler.LATENT).loadClass(BAR);
         assertThat(bar.getName(), is(BAR));
         assertEquals(Object.class, bar.getSuperclass());

@@ -8,6 +8,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.io.InputStream;
+import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -23,6 +24,7 @@ import static org.junit.Assert.assertNotEquals;
 public class ByteArrayClassLoaderTest {
 
     private static final ClassLoader BOOTSTRAP_CLASS_LOADER = null;
+    private static final ProtectionDomain DEFAULT_PROTECTION_DOMAIN = null;
     private static final String BAR = "bar", CLASS_FILE = ".class";
     private final ByteArrayClassLoader.PersistenceHandler persistenceHandler;
     private final Matcher<InputStream> expectedResourceLookup;
@@ -45,7 +47,7 @@ public class ByteArrayClassLoaderTest {
     @Before
     public void setUp() throws Exception {
         Map<String, byte[]> values = Collections.singletonMap(Foo.class.getName(), ClassFileExtraction.extract(Foo.class));
-        classLoader = new ByteArrayClassLoader(BOOTSTRAP_CLASS_LOADER, values, persistenceHandler);
+        classLoader = new ByteArrayClassLoader(BOOTSTRAP_CLASS_LOADER, values, DEFAULT_PROTECTION_DOMAIN, persistenceHandler);
     }
 
     @Test

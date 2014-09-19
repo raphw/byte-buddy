@@ -15,7 +15,7 @@ import java.util.Map;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class ClassLoadingStrategyProtectionDomainInjectionTest {
+public class ClassLoadingStrategyDefaultProtectionDomainInjectionTest {
 
     private ClassLoader classLoader;
     private TypeDescription typeDescription;
@@ -33,7 +33,7 @@ public class ClassLoadingStrategyProtectionDomainInjectionTest {
 
     @Test
     public void testProtectionDomainInjection() throws Exception {
-        Map<TypeDescription, Class<?>> loaded = new ClassLoadingStrategy.ProtectionDomainInjection(protectionDomain)
+        Map<TypeDescription, Class<?>> loaded = new ClassLoadingStrategy.Default.ProtectionDomainInjection(protectionDomain)
                 .load(classLoader, binaryRepresentations);
         assertThat(loaded.size(), is(1));
         Class<?> type = loaded.get(typeDescription);
@@ -43,7 +43,7 @@ public class ClassLoadingStrategyProtectionDomainInjectionTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(ClassLoadingStrategy.ProtectionDomainInjection.class).apply();
+        HashCodeEqualsTester.of(ClassLoadingStrategy.Default.ProtectionDomainInjection.class).apply();
     }
 
     private static class Foo {
