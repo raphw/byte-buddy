@@ -29,6 +29,11 @@ mainly for allowing the reuse of `Method` instances for the `@Origin` annotation
 - Added support for accessing a JVM's HotSwap features and a Java agent.
 - Added latent a child-first `ClassLoadingStrategy` and manifest versions of the `WRAPPER` and `CHILD_FIRST` default
   class loading strategies.
+  
+### 19. September 2014: Version 0.3.1
+
+- Added support for optionally specifying a `ProtectionDomain` for the built-in `ClassLoadingStrategy` implementations.
+- Fixed a bug in the resolution of resources of the `ByteArrayClassLoader` and its child-first implementation.
 
 ### Current snapshot version
 
