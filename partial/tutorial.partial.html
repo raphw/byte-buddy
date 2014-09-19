@@ -698,7 +698,7 @@ Class&lt;?&gt; type = new ByteBuddy()
 </p>
 
 <p>
-    Note that when loading classes, the predefined <code>ClassLoadingStrategy</code>s are executed by applying the
+    Note that when loading classes, the predefined class loading strategies are executed by applying the
     <code>ProtectionDomain</code> of the current execution context. Alternatively, all default strategies offer
     the specification of an explicit protection domain by calling the <code>withProtectionDomain</code> method.
     Defining an explicit protection domain is important when using security managers or when working with classes
@@ -783,7 +783,7 @@ assertThat(foo.m(), is("bar"));
 <h2>Fields and methods</h2>
 
 <p>
-    The type we created in the previous section did not define any fields or methods. However, by subclassing
+    The types we created in the previous section did not define any fields or methods. However, by subclassing
     <code>Object</code>, it inherits the methods that are defined by its super class. Let us verify this Java
     trivia and call the <code>toString</code> method on an instance of the dynamic type. We can get hold of an
     instance by calling the created class's constructor reflectively.
