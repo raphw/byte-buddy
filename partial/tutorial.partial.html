@@ -285,6 +285,7 @@ class HardcodedFrameworkImpl implements Framework {
         <tr class="table-section section-even">
             <td>interface (stub methods)</td>
             <td>153.800</td>
+            <td>153.800</td>
             <td>(0.394)</td>
             <td>804.000</td>
             <td>(1.899)</td>
@@ -694,6 +695,14 @@ Class&lt;?&gt; type = new ByteBuddy()
     In the above example, we have created and loaded a class. We used the <code>WRAPPER</code> strategy for loading
     the class which is suitable for most cases, as we mentioned it before. Finally, the <code>getLoaded</code> method
     returns an instance of a Java <code>Class</code> that represents the dynamic class which is now loaded.
+</p>
+
+<p>
+    Note that when loading classes, the predefined <code>ClassLoadingStrategy</code>s are executed by applying the
+    <code>ProtectionDomain</code> of the current execution context. Alternatively, all default strategies offer
+    the specification of an explicit protection domain by calling the <code>withProtectionDomain</code> method.
+    Defining an explicit protection domain is important when using security managers or when working with classes
+    that are defined in signed jars.
 </p>
 
 <h4>Reloading a class</h4>
