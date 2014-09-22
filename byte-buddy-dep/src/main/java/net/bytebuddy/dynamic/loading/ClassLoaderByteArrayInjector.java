@@ -4,7 +4,8 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.security.ProtectionDomain;
+import java.security.*;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -23,11 +24,6 @@ public class ClassLoaderByteArrayInjector {
      * A convenience reference to the default protection domain which is {@code null}.
      */
     private static final ProtectionDomain DEFAULT_PROTECTION_DOMAIN = null;
-
-    /**
-     * A convenience variable representing the first index of an array, to make the code more readable.
-     */
-    private static final int FROM_BEGINNING = 0;
 
     /**
      * A storage for the reflection method representations that are obtained on loading this classes.
@@ -68,6 +64,11 @@ public class ClassLoaderByteArrayInjector {
     private final ProtectionDomain protectionDomain;
 
     /**
+     * The access control context of this class loader's instantiation.
+     */
+    private final AccessControlContext accessControlContext;
+
+    /**
      * Creates a new injector for the given {@link java.lang.ClassLoader} and a default
      * {@link java.security.ProtectionDomain}.
      *
@@ -86,6 +87,7 @@ public class ClassLoaderByteArrayInjector {
     public ClassLoaderByteArrayInjector(ClassLoader classLoader, ProtectionDomain protectionDomain) {
         this.classLoader = classLoader;
         this.protectionDomain = protectionDomain;
+        accessControlContext = AccessController.getContext();
     }
 
     /**
@@ -118,12 +120,17 @@ public class ClassLoaderByteArrayInjector {
                 if (type != null) {
                     return type;
                 } else {
-                    return (Class<?>) REFLECTION_STORE.getLoadByteArrayMethod().invoke(classLoader,
-                            name,
-                            binaryRepresentation,
-                            FROM_BEGINNING,
-                            binaryRepresentation.length,
-                            protectionDomain);
+                    try {
+                        return AccessController.doPrivileged(new ClassLoadingAction(name, binaryRepresentation), accessControlContext);
+                    } catch (PrivilegedActionException e) {
+                        if (e.getCause() instanceof IllegalAccessException) {
+                            throw (IllegalAccessException) e.getCause();
+                        } else if (e.getCause() instanceof InvocationTargetException) {
+                            throw (InvocationTargetException) e.getCause();
+                        } else {
+                            throw (RuntimeException) e.getCause();
+                        }
+                    }
                 }
             }
         } catch (IllegalAccessException e) {
@@ -234,6 +241,57 @@ public class ClassLoaderByteArrayInjector {
             public String toString() {
                 return "ClassLoaderByteArrayInjector.ReflectionStore.Faulty{exception=" + exception + '}';
             }
+        }
+    }
+
+    /**
+     * A privileged action for loading a class reflectively.
+     */
+    private class ClassLoadingAction implements PrivilegedExceptionAction<Class<?>> {
+
+        /**
+         * A convenience variable representing the first index of an array, to make the code more readable.
+         */
+        private static final int FROM_BEGINNING = 0;
+
+        /**
+         * The name of the class that is being loaded.
+         */
+        private final String name;
+
+        /**
+         * The binary representation of the class that is being loaded.
+         */
+        private final byte[] binaryRepresentation;
+
+        /**
+         * Creates a new class loading action.
+         *
+         * @param name                 The name of the class that is being loaded.
+         * @param binaryRepresentation The binary representation of the class that is being loaded.
+         */
+        private ClassLoadingAction(String name, byte[] binaryRepresentation) {
+            this.name = name;
+            this.binaryRepresentation = binaryRepresentation;
+        }
+
+        @Override
+        public Class<?> run() throws IllegalAccessException, InvocationTargetException {
+            return (Class<?>) REFLECTION_STORE.getLoadByteArrayMethod().invoke(classLoader,
+                    name,
+                    binaryRepresentation,
+                    FROM_BEGINNING,
+                    binaryRepresentation.length,
+                    protectionDomain);
+        }
+
+        @Override
+        public String toString() {
+            return "ClassLoaderByteArrayInjector.ClassLoadingAction{" +
+                    "injector=" + ClassLoaderByteArrayInjector.this +
+                    ", name='" + name + '\'' +
+                    ", binaryRepresentation=" + Arrays.toString(binaryRepresentation) +
+                    '}';
         }
     }
 }

@@ -29,14 +29,14 @@ public class ByteArrayClassLoader extends ClassLoader {
     protected final PersistenceHandler persistenceHandler;
 
     /**
-     * The access control context of this class loader's instantiation.
-     */
-    protected final AccessControlContext accessControlContext;
-
-    /**
      * The protection domain to apply. Might be {@code null} when referencing the default protection domain.
      */
     protected final ProtectionDomain protectionDomain;
+
+    /**
+     * The access control context of this class loader's instantiation.
+     */
+    protected final AccessControlContext accessControlContext;
 
     /**
      * Creates a new class loader for a given definition of classes.
