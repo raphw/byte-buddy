@@ -9,6 +9,7 @@ import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -169,6 +170,16 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
     @Override
     public TypeList getInterfaces() {
         return new TypeList.Explicit(interfaces);
+    }
+
+    @Override
+    public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+        return null;
+    }
+
+    @Override
+    public Annotation[] getAnnotations() {
+        return new Annotation[0];
     }
 
     @Override
