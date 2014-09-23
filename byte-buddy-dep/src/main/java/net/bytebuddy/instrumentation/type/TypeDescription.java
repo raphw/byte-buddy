@@ -250,6 +250,16 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
         }
 
         @Override
+        public String getPackageName() {
+            int packageIndex = getName().lastIndexOf('.');
+            if (packageIndex == -1) {
+                return "";
+            } else {
+                return getName().substring(0, packageIndex);
+            }
+        }
+
+        @Override
         public int getActualModifiers(boolean superFlag) {
             int actualModifiers;
             if (isPrivate()) {
@@ -283,6 +293,108 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
         @Override
         public int hashCode() {
             return getName().hashCode();
+        }
+
+        public abstract static class ForSimpleType extends AbstractTypeDescription {
+
+            /**
+             * Checks if a specific type is assignable to another type where the source type must be a super
+             * type of the target type.
+             *
+             * @param sourceType The source type to which another type is to be assigned to.
+             * @param targetType The target type that is to be assigned to the source type.
+             * @return {@code true} if the target type is assignable to the source type.
+             */
+            private static boolean isAssignable(TypeDescription sourceType, TypeDescription targetType) {
+                // Means that '[sourceType] var = ([targetType]) val;' is a valid assignment. This is true, if:
+                // (1) Both types are equal.
+                if (sourceType.equals(targetType)) {
+                    return true;
+                }
+                // The sub type has a super type and this super type is assignable to the super type.
+                TypeDescription targetTypeSuperType = targetType.getSupertype();
+                if (targetTypeSuperType != null && targetTypeSuperType.isAssignableTo(sourceType)) {
+                    return true;
+                }
+                // (2) If the target type is an interface, any of this type's interfaces might be assignable to it.
+                if (sourceType.isInterface()) {
+                    for (TypeDescription interfaceType : targetType.getInterfaces()) {
+                        if (interfaceType.isAssignableTo(sourceType)) {
+                            return true;
+                        }
+                    }
+                }
+                // (3) None of these criteria are true, i.e. the types are not assignable.
+                return false;
+            }
+
+            @Override
+            public boolean isAssignableFrom(Class<?> type) {
+                return isAssignableFrom(new ForLoadedType(type));
+            }
+
+            @Override
+            public boolean isAssignableFrom(TypeDescription typeDescription) {
+                return isAssignable(this, typeDescription);
+            }
+
+            @Override
+            public boolean isAssignableTo(Class<?> type) {
+                return isAssignableTo(new ForLoadedType(type));
+            }
+
+            @Override
+            public boolean isAssignableTo(TypeDescription typeDescription) {
+                return isAssignable(typeDescription, this);
+            }
+
+            @Override
+            public boolean isInstance(Object object) {
+                return isAssignableFrom(object.getClass());
+            }
+
+            @Override
+            public boolean isPrimitive() {
+                return false;
+            }
+
+            @Override
+            public boolean isArray() {
+                return false;
+            }
+
+            @Override
+            public TypeDescription getComponentType() {
+                return null;
+            }
+
+            @Override
+            public boolean represents(Class<?> type) {
+                return type.getName().equals(getName());
+            }
+
+            @Override
+            public String getDescriptor() {
+                return "L" + getInternalName() + ";";
+            }
+
+            @Override
+            public String getSimpleName() {
+                return getName().substring(getPackageName().length() + 1, getName().length());
+            }
+
+            @Override
+            public String getPackageName() {
+                int packageIndex = getInternalName().lastIndexOf('/');
+                return packageIndex == -1
+                        ? ""
+                        : getName().substring(0, packageIndex);
+            }
+
+            @Override
+            public StackSize getStackSize() {
+                return StackSize.SINGLE;
+            }
         }
     }
 
@@ -493,6 +605,217 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
         @Override
         public String toString() {
             return "TypeDescription.ForLoadedType{" + type + "}";
+        }
+    }
+
+    static class ArrayProjection extends AbstractTypeDescription {
+
+        private static final int ARRAY_MODIFIERS = Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL | Opcodes.ACC_ABSTRACT;
+
+        public static TypeDescription of(TypeDescription componentType, int arity) {
+            if (arity == 0) {
+                return componentType;
+            } else if (arity < 0) {
+                throw new IllegalArgumentException("Arrays cannot have a negative arity");
+            }
+            while (componentType.isArray()) {
+                componentType = componentType.getComponentType();
+                arity++;
+            }
+            return new ArrayProjection(componentType, arity);
+        }
+
+        private final TypeDescription componentType;
+
+        private final int arity;
+
+        protected ArrayProjection(TypeDescription componentType, int arity) {
+            this.componentType = componentType;
+            this.arity = arity;
+        }
+
+        @Override
+        public boolean isAssignableFrom(Class<?> type) {
+            return isAssignableFrom(new ForLoadedType(type));
+        }
+
+        @Override
+        public boolean isAssignableFrom(TypeDescription typeDescription) {
+            return isArrayAssignable(this, typeDescription);
+        }
+
+        @Override
+        public boolean isAssignableTo(Class<?> type) {
+            return isAssignableTo(new ForLoadedType(type));
+        }
+
+        @Override
+        public boolean isAssignableTo(TypeDescription typeDescription) {
+            return typeDescription.represents(Object.class) || isArrayAssignable(typeDescription, this);
+        }
+
+        private static boolean isArrayAssignable(TypeDescription sourceType, TypeDescription targetType) {
+            int sourceArity = 0, targetArity = 0;
+            while (sourceType.isArray()) {
+                sourceArity++;
+                sourceType = sourceType.getComponentType();
+            }
+            while (targetType.isArray()) {
+                targetArity++;
+                targetType = targetType.getComponentType();
+            }
+            return sourceArity == targetArity && sourceType.isAssignableFrom(targetType);
+        }
+
+        @Override
+        public boolean represents(Class<?> type) {
+            int arity = 0;
+            while (type.isArray()) {
+                type = type.getComponentType();
+                arity++;
+            }
+            return arity == this.arity && componentType.represents(type);
+        }
+
+        @Override
+        public boolean isArray() {
+            return true;
+        }
+
+        @Override
+        public TypeDescription getComponentType() {
+            return arity == 1
+                    ? componentType
+                    : new ArrayProjection(componentType, arity - 1);
+        }
+
+        @Override
+        public boolean isPrimitive() {
+            return false;
+        }
+
+        @Override
+        public TypeDescription getSupertype() {
+            return new ForLoadedType(Object.class);
+        }
+
+        @Override
+        public TypeList getInterfaces() {
+            return null;
+        }
+
+        @Override
+        public MethodDescription getEnclosingMethod() {
+            return null;
+        }
+
+        @Override
+        public TypeDescription getEnclosingClass() {
+            return null;
+        }
+
+        @Override
+        public String getSimpleName() {
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append(componentType.getSimpleName());
+            for (int i = 0; i < arity; i++) {
+                stringBuilder.append("[]");
+            }
+            return stringBuilder.toString();
+        }
+
+        @Override
+        public String getCanonicalName() {
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append(componentType.getName());
+            for (int i = 0; i < arity; i++) {
+                stringBuilder.append("[]");
+            }
+            return stringBuilder.toString();
+        }
+
+        @Override
+        public boolean isAnonymousClass() {
+            return false;
+        }
+
+        @Override
+        public boolean isLocalClass() {
+            return false;
+        }
+
+        @Override
+        public boolean isMemberClass() {
+            return false;
+        }
+
+        @Override
+        public FieldList getDeclaredFields() {
+            return new FieldList.Empty();
+        }
+
+        @Override
+        public MethodList getDeclaredMethods() {
+            return new MethodList.Empty();
+        }
+
+        @Override
+        public StackSize getStackSize() {
+            return StackSize.SINGLE;
+        }
+
+        @Override
+        public boolean isSealed() {
+            return componentType.isSealed();
+        }
+
+        @Override
+        public ClassLoader getClassLoader() {
+            return componentType.getClassLoader();
+        }
+
+        @Override
+        public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
+            return false;
+        }
+
+        @Override
+        public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+            return null;
+        }
+
+        @Override
+        public Annotation[] getAnnotations() {
+            return new Annotation[0];
+        }
+
+        @Override
+        public Annotation[] getDeclaredAnnotations() {
+            return new Annotation[0];
+        }
+
+        @Override
+        public String getName() {
+            return getDescriptor();
+        }
+
+        @Override
+        public String getDescriptor() {
+            StringBuilder stringBuilder = new StringBuilder();
+            for (int i = 0; i < arity; i++) {
+                stringBuilder.append('[');
+            }
+            return stringBuilder.append(componentType.getInternalName()).toString();
+        }
+
+        @Override
+        public TypeDescription getDeclaringType() {
+            return null;
+        }
+
+        @Override
+        public int getModifiers() {
+            return ARRAY_MODIFIERS;
         }
     }
 }
