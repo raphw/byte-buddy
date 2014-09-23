@@ -5,7 +5,6 @@ import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
-import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -77,7 +76,7 @@ public interface InstrumentedType extends TypeDescription {
     /**
      * An abstract base implementation of an instrumented type.
      */
-    abstract static class AbstractBase extends AbstractTypeDescription implements InstrumentedType {
+    abstract static class AbstractBase extends AbstractTypeDescription.ForSimpleType implements InstrumentedType {
 
         /**
          * The loaded type initializer for this instrumented type.
@@ -130,37 +129,6 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         /**
-         * Checks if a specific type is assignable to another type where the source type must be a super
-         * type of the target type.
-         *
-         * @param sourceType The source type to which another type is to be assigned to.
-         * @param targetType The target type that is to be assigned to the source type.
-         * @return {@code true} if the target type is assignable to the source type.
-         */
-        private static boolean isAssignable(TypeDescription sourceType, TypeDescription targetType) {
-            // Means that '[sourceType] var = ([targetType]) val;' is a valid assignment. This is true, if:
-            // (1) Both types are equal.
-            if (sourceType.equals(targetType)) {
-                return true;
-            }
-            // The sub type has a super type and this super type is assignable to the super type.
-            TypeDescription targetTypeSuperType = targetType.getSupertype();
-            if (targetTypeSuperType != null && targetTypeSuperType.isAssignableTo(sourceType)) {
-                return true;
-            }
-            // (2) If the target type is an interface, any of this type's interfaces might be assignable to it.
-            if (sourceType.isInterface()) {
-                for (TypeDescription interfaceType : targetType.getInterfaces()) {
-                    if (interfaceType.isAssignableTo(sourceType)) {
-                        return true;
-                    }
-                }
-            }
-            // (3) None of these criteria are true, i.e. the types are not assignable.
-            return false;
-        }
-
-        /**
          * Substitutes an <i>outdated</i> reference to the instrumented type with a reference to <i>this</i>.
          *
          * @param typeName        The non-internal name of this instrumented type.
@@ -178,63 +146,8 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-            return null;
-        }
-
-        @Override
-        public Annotation[] getAnnotations() {
-            return new Annotation[0];
-        }
-
-        @Override
         public Annotation[] getDeclaredAnnotations() {
             return new Annotation[0];
-        }
-
-        @Override
-        public boolean isInstance(Object object) {
-            return isAssignableFrom(object.getClass());
-        }
-
-        @Override
-        public boolean isAssignableFrom(Class<?> type) {
-            return isAssignableFrom(new ForLoadedType(type));
-        }
-
-        @Override
-        public boolean isAssignableFrom(TypeDescription typeDescription) {
-            return isAssignable(this, typeDescription);
-        }
-
-        @Override
-        public boolean isAssignableTo(Class<?> type) {
-            return isAssignableTo(new ForLoadedType(type));
-        }
-
-        @Override
-        public boolean isAssignableTo(TypeDescription typeDescription) {
-            return isAssignable(typeDescription, this);
-        }
-
-        @Override
-        public boolean represents(Class<?> type) {
-            return type.getName().equals(getName());
-        }
-
-        @Override
-        public boolean isArray() {
-            return false;
-        }
-
-        @Override
-        public TypeDescription getComponentType() {
-            return null;
-        }
-
-        @Override
-        public boolean isPrimitive() {
-            return false;
         }
 
         @Override
@@ -248,18 +161,18 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public String getSimpleName() {
-            return getName().substring(getPackageName().length() + 1, getName().length());
-        }
-
-        @Override
-        public String getCanonicalName() {
-            return getName();
+        public TypeDescription getDeclaringType() {
+            return null;
         }
 
         @Override
         public boolean isAnonymousClass() {
             return false;
+        }
+
+        @Override
+        public String getCanonicalName() {
+            return getName();
         }
 
         @Override
@@ -280,31 +193,6 @@ public interface InstrumentedType extends TypeDescription {
         @Override
         public MethodList getDeclaredMethods() {
             return new MethodList.Explicit(methodDescriptions);
-        }
-
-        @Override
-        public String getPackageName() {
-            int packageIndex = getName().lastIndexOf('.');
-            if (packageIndex == -1) {
-                return "";
-            } else {
-                return getName().substring(0, packageIndex);
-            }
-        }
-
-        @Override
-        public StackSize getStackSize() {
-            return StackSize.SINGLE;
-        }
-
-        @Override
-        public String getDescriptor() {
-            return "L" + getInternalName() + ";";
-        }
-
-        @Override
-        public TypeDescription getDeclaringType() {
-            return null;
         }
 
         @Override
@@ -564,11 +452,6 @@ public interface InstrumentedType extends TypeDescription {
             }
 
             @Override
-            public String getName() {
-                return isConstructor() ? getDeclaringType().getName() : getInternalName();
-            }
-
-            @Override
             public String getInternalName() {
                 return internalName;
             }
@@ -584,11 +467,11 @@ public interface InstrumentedType extends TypeDescription {
             }
 
             @Override
-            public boolean equals(Object o) {
-                if (this == o) return true;
-                if (o == null || getClass() != o.getClass()) return false;
-                if (!super.equals(o)) return false;
-                MethodToken that = (MethodToken) o;
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                if (!super.equals(other)) return false;
+                MethodToken that = (MethodToken) other;
                 return modifiers == that.modifiers
                         && internalName.equals(that.internalName)
                         && parameterTypes.equals(that.parameterTypes)

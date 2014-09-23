@@ -2,12 +2,15 @@ package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.dynamic.ClassLoadingStrategy;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.utility.StreamDrainer;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.instrument.*;
 import java.security.ProtectionDomain;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -128,36 +131,6 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
         }
     }
 
-    /**
-     * Drains an input stream into a byte array.
-     *
-     * @param inputStream The input stream to drain.
-     * @return A byte array containing the content of the input stream.
-     * @throws IOException If the stream reading causes an error.
-     */
-    private static byte[] drain(InputStream inputStream) throws IOException {
-        List<byte[]> previousBytes = new LinkedList<byte[]>();
-        byte[] currentArray = new byte[BUFFER_SIZE];
-        int currentIndex = 0;
-        int currentRead;
-        do {
-            currentRead = inputStream.read(currentArray, currentIndex, BUFFER_SIZE - currentIndex);
-            currentIndex += currentRead > 0 ? currentRead : 0;
-            if (currentIndex == BUFFER_SIZE) {
-                previousBytes.add(currentArray);
-                currentArray = new byte[BUFFER_SIZE];
-                currentIndex = 0;
-            }
-        } while (currentRead != END_OF_STREAM);
-        byte[] result = new byte[previousBytes.size() * BUFFER_SIZE + currentIndex];
-        int arrayIndex = 0;
-        for (byte[] previousByte : previousBytes) {
-            System.arraycopy(previousByte, FIRST_INDEX, result, arrayIndex++ * BUFFER_SIZE, BUFFER_SIZE);
-        }
-        System.arraycopy(currentArray, FIRST_INDEX, result, arrayIndex * BUFFER_SIZE, currentIndex);
-        return result;
-    }
-
     @Override
     public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
         Map<TypeDescription, Class<?>> loadedClasses = new HashMap<TypeDescription, Class<?>>(types.size());
@@ -195,7 +168,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
             for (Class<?> aType : type) {
                 InputStream inputStream = aType.getClassLoader().getResourceAsStream(aType.getName().replace('.', '/') + CLASS_FILE_EXTENSION);
                 try {
-                    classDefinitions.put(aType, new ClassDefinition(aType, drain(inputStream)));
+                    classDefinitions.put(aType, new ClassDefinition(aType, new StreamDrainer().drain(inputStream)));
                 } finally {
                     inputStream.close();
                 }

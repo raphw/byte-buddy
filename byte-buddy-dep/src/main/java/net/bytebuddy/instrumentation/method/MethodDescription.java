@@ -164,6 +164,11 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         }
 
         @Override
+        public String getName() {
+            return isConstructor() ? getDeclaringType().getName() : getInternalName();
+        }
+
+        @Override
         public String getDescriptor() {
             StringBuilder descriptor = new StringBuilder("(");
             for (TypeDescription parameterType : getParameterTypes()) {
@@ -624,11 +629,6 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         @Override
         public Annotation[] getDeclaredAnnotations() {
             return new Annotation[0];
-        }
-
-        @Override
-        public String getName() {
-            return isConstructor() ? getDeclaringType().getName() : internalName;
         }
 
         @Override
