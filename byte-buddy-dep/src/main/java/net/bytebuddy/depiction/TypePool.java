@@ -79,7 +79,6 @@ public interface TypePool {
             typeCache = new ConcurrentHashMap<String, TypeDescription>();
         }
 
-        @Override
         protected TypeDescription doDescribe(String name) {
             TypeDescription typeDescription = typeCache.get(name);
             if (typeDescription != null) {
@@ -350,6 +349,7 @@ public interface TypePool {
             }
             this.declarationContext = declarationContext;
             this.anonymousType = anonymousType;
+            int index = 0;
             declaredFields = new ArrayList<FieldDescription>(fieldTokens.size());
             for (FieldToken fieldToken : fieldTokens) {
                 declaredFields.add(fieldToken.toFieldDescription(this));
@@ -621,11 +621,6 @@ public interface TypePool {
             }
 
             @Override
-            public Annotation[][] getParameterAnnotations() {
-                return new Annotation[0][0];
-            }
-
-            @Override
             public TypeList getExceptionTypes() {
                 return exceptionTypes;
             }
@@ -648,26 +643,6 @@ public interface TypePool {
             @Override
             public boolean represents(Constructor<?> constructor) {
                 return equals(new ForLoadedConstructor(constructor));
-            }
-
-            @Override
-            public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
-                return false;
-            }
-
-            @Override
-            public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-                return null;
-            }
-
-            @Override
-            public Annotation[] getAnnotations() {
-                return new Annotation[0];
-            }
-
-            @Override
-            public Annotation[] getDeclaredAnnotations() {
-                return new Annotation[0];
             }
 
             @Override
