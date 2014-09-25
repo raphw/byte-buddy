@@ -23,7 +23,7 @@ public interface TypePool {
 
     void clear();
 
-    static abstract class AbstractBase implements TypePool {
+    abstract static class AbstractBase implements TypePool {
 
         protected static final Map<String, TypeDescription> PRIMITIVE_TYPES;
 
