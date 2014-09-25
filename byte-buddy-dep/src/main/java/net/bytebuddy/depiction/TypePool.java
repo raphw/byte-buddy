@@ -11,9 +11,7 @@ import org.objectweb.asm.*;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public interface TypePool {
@@ -22,7 +20,33 @@ public interface TypePool {
 
     void clear();
 
-    static class Default implements TypePool {
+    static abstract class AbstractBase implements TypePool {
+
+        protected static final Map<String, TypeDescription> PRIMITIVE_TYPES;
+
+        static {
+            Map<String, TypeDescription> primitiveTypes = new HashMap<String, TypeDescription>();
+            for (Class<?> primitiveType : new Class<?>[]{boolean.class, byte.class, short.class, char.class, int.class, long.class, float.class, double.class}) {
+                primitiveTypes.put(primitiveType.getName(), new TypeDescription.ForLoadedType(primitiveType));
+            }
+            PRIMITIVE_TYPES = Collections.unmodifiableMap(primitiveTypes);
+        }
+
+        @Override
+        public TypeDescription describe(String name) {
+            int arity = 0;
+            while (name.endsWith("[]")) {
+                arity++;
+                name = name.substring(0, name.length() - 2);
+            }
+            TypeDescription typeDescription = PRIMITIVE_TYPES.get(name);
+            return TypeDescription.ArrayProjection.of(typeDescription == null ? doDescribe(name) : typeDescription, arity);
+        }
+
+        protected abstract TypeDescription doDescribe(String name);
+    }
+
+    static class Default extends AbstractBase {
 
         private static final int ASM_VERSION = Opcodes.ASM5;
 
@@ -42,7 +66,7 @@ public interface TypePool {
         }
 
         @Override
-        public TypeDescription describe(String name) {
+        protected TypeDescription doDescribe(String name) {
             TypeDescription typeDescription = typeCache.get(name);
             if (typeDescription != null) {
                 return typeDescription;
@@ -103,7 +127,7 @@ public interface TypePool {
 
             @Override
             public void visitInnerClass(String name, String outerName, String innerName, int modifiers) {
-                if(name.equals(this.name)) {
+                if (name.equals(this.name)) {
                     this.modifiers = modifiers;
                 }
             }
@@ -288,21 +312,21 @@ public interface TypePool {
 
             private final String descriptor;
 
-            public FieldToken(int modifiers, String name, String descriptor) {
+            protected FieldToken(int modifiers, String name, String descriptor) {
                 this.modifiers = modifiers;
                 this.name = name;
                 this.descriptor = descriptor;
             }
 
-            public int getModifiers() {
+            protected int getModifiers() {
                 return modifiers;
             }
 
-            public String getName() {
+            protected String getName() {
                 return name;
             }
 
-            public String getDescriptor() {
+            protected String getDescriptor() {
                 return descriptor;
             }
 
@@ -317,17 +341,17 @@ public interface TypePool {
 
             private final String name;
 
-            private final String descriptor;
+            private final String fieldTypeName;
 
             private UnloadedFieldDescription(int modifiers, String name, String descriptor) {
                 this.modifiers = modifiers;
                 this.name = name;
-                this.descriptor = descriptor;
+                fieldTypeName = Type.getType(descriptor).getClassName();
             }
 
             @Override
             public TypeDescription getFieldType() {
-                return null;
+                return typePool.describe(fieldTypeName);
             }
 
             @Override
@@ -364,8 +388,6 @@ public interface TypePool {
             public int getModifiers() {
                 return modifiers;
             }
-
-
         }
 
         protected static class MethodToken {
@@ -376,26 +398,33 @@ public interface TypePool {
 
             private final String descriptor;
 
-            public MethodToken(int modifiers, String name, String descriptor, String[] exceptionName) {
+            private final String[] exceptionName;
+
+            protected MethodToken(int modifiers, String name, String descriptor, String[] exceptionName) {
                 this.modifiers = modifiers;
                 this.name = name;
                 this.descriptor = descriptor;
+                this.exceptionName = exceptionName;
             }
 
-            public int getModifiers() {
+            protected int getModifiers() {
                 return modifiers;
             }
 
-            public String getName() {
+            protected String getName() {
                 return name;
             }
 
-            public String getDescriptor() {
+            protected String getDescriptor() {
                 return descriptor;
             }
 
+            protected String[] getExceptionName() {
+                return exceptionName;
+            }
+
             private MethodDescription toMethodDescription(UnloadedTypeDescription unloadedTypeDescription) {
-                return unloadedTypeDescription.new UnloadedMethodDescription(modifiers, name, descriptor);
+                return unloadedTypeDescription.new UnloadedMethodDescription(getModifiers(), getName(), getDescriptor(), getExceptionName());
             }
         }
 
@@ -405,32 +434,43 @@ public interface TypePool {
 
             private final String internalName;
 
-            private final String descriptor;
+            private final String returnTypeName;
 
-            private UnloadedMethodDescription(int modifiers, String internalName, String descriptor) {
+            private final TypeList parameterTypes;
+
+            private final TypeList exceptionTypes;
+
+            private UnloadedMethodDescription(int modifiers,
+                                              String internalName,
+                                              String methodDescriptor,
+                                              String[] exceptionInternalName) {
                 this.modifiers = modifiers;
                 this.internalName = internalName;
-                this.descriptor = descriptor;
+                returnTypeName = Type.getReturnType(methodDescriptor).getClassName();
+                parameterTypes = new TypePoolTypeList(methodDescriptor);
+                exceptionTypes = exceptionInternalName == null
+                        ? new TypeList.Empty()
+                        : new TypePoolTypeList(exceptionInternalName);
             }
 
             @Override
             public TypeDescription getReturnType() {
-                return null;
+                return typePool.describe(returnTypeName);
             }
 
             @Override
             public TypeList getParameterTypes() {
-                return null;
+                return parameterTypes;
             }
 
             @Override
             public Annotation[][] getParameterAnnotations() {
-                return new Annotation[0][];
+                return new Annotation[0][0];
             }
 
             @Override
             public TypeList getExceptionTypes() {
-                return null;
+                return exceptionTypes;
             }
 
             @Override
@@ -445,12 +485,12 @@ public interface TypePool {
 
             @Override
             public boolean represents(Method method) {
-                return false;
+                return equals(new ForLoadedMethod(method));
             }
 
             @Override
             public boolean represents(Constructor<?> constructor) {
-                return false;
+                return equals(new ForLoadedConstructor(constructor));
             }
 
             @Override
@@ -486,6 +526,58 @@ public interface TypePool {
             @Override
             public int getModifiers() {
                 return modifiers;
+            }
+        }
+
+        protected class TypePoolTypeList extends AbstractList<TypeDescription> implements TypeList {
+
+            private final String[] name;
+
+            private final String[] internalName;
+
+            private final int stackSize;
+
+            protected TypePoolTypeList(String methodDescriptor) {
+                Type[] parameterType = Type.getArgumentTypes(methodDescriptor);
+                name = new String[parameterType.length];
+                internalName = new String[parameterType.length];
+                int index = 0, stackSize = 0;
+                for (Type aParameterType : parameterType) {
+                    name[index++] = aParameterType.getClassName();
+                    internalName[index++] = aParameterType.getInternalName();
+                    stackSize += aParameterType.getSize();
+                }
+                this.stackSize = stackSize;
+            }
+
+            protected TypePoolTypeList(String[] internalName) {
+                name = new String[internalName.length];
+                this.internalName = internalName;
+                int index = 0;
+                for (String anInternalName : internalName) {
+                    name[index++] = anInternalName.replace('/', '.');
+                }
+                stackSize = index;
+            }
+
+            @Override
+            public TypeDescription get(int index) {
+                return typePool.describe(name[index]);
+            }
+
+            @Override
+            public int size() {
+                return name.length;
+            }
+
+            @Override
+            public String[] toInternalNames() {
+                return internalName.length == 0 ? null : internalName;
+            }
+
+            @Override
+            public int getStackSize() {
+                return stackSize;
             }
         }
     }
