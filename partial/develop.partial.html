@@ -107,10 +107,12 @@ mvn package
     <dl>
         <dt>0.4</dt>
         <dd>
-            Treat unloaded classes: Byte Buddy introduces a class pool which allows to subclass, redefine or rebase
-            classes without loading them. This is convenient for build-time instrumentation or for instrumentation
-            at application start-up. Additionally, a convenience agent-builder for writing custom Java agents is
-            introduced. This might require a generalization of the current <code>MethodMatcher</code> API.
+            Treat unloaded classes: Byte Buddy introduces a type pool which allows to subclass, redefine or rebase
+            classes without loading them. Also, by reading a class from its binary format, debug information can be
+            exposed. This is convenient for build-time instrumentation or for instrumentation at application start-up
+            or during a type's loading. Additionally, a convenience agent-builder for writing custom Java agents is
+            introduced. This might require a generalization of the current <code>MethodMatcher</code> API to allow
+            for other matchers such as <code>TypeMatcher</code>s.
         </dd>
         <dt>0.5</dt>
         <dd>
@@ -122,8 +124,8 @@ mvn package
 
     <p>
         Additionally, there is a plan to implement a <code>ClassLoadingStrategy</code> for offering limited support
-        for Android. Android requires preprocessed byte code which can however be created at runtime by emulating
-        the dex compiler. This extension is still in the experimental phase and might be deployed in between versions
-        as its own module.
+        for Android. Android requires preprocessed byte code in the <i>dex</i> format which can however be created at
+        runtime by emulating the dex compiler. This extension is still in the experimental phase and might be
+        deployed in between versions as its own module.
     </p>
 </div>
