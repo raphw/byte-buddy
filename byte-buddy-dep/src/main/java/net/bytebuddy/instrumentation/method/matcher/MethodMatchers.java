@@ -751,6 +751,10 @@ public final class MethodMatchers {
         return isBridgeMethodCompatibleTo(new MethodDescription.ForLoadedMethod(method));
     }
 
+    public static JunctionMethodMatcher hasMethodDescriptor(String methodDescriptor) {
+        return new MethodDescriptorMethodMatcher(methodDescriptor);
+    }
+
     /**
      * Checks if a method is annotated by a given parameter.
      *
@@ -2063,6 +2067,36 @@ public final class MethodMatchers {
         @Override
         public String toString() {
             return "isVisibilityBridge()";
+        }
+    }
+
+    private static class MethodDescriptorMethodMatcher extends JunctionMethodMatcher.AbstractBase {
+
+        private final String methodDescriptor;
+
+        private MethodDescriptorMethodMatcher(String methodDescriptor) {
+            this.methodDescriptor = methodDescriptor;
+        }
+
+        @Override
+        public boolean matches(MethodDescription methodDescription) {
+            return methodDescription.getDescriptor().equals(methodDescriptor);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && methodDescriptor.equals(((MethodDescriptorMethodMatcher) other).methodDescriptor);
+        }
+
+        @Override
+        public int hashCode() {
+            return methodDescriptor.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "hasMethodDescriptor(" + methodDescriptor + ')';
         }
     }
 }
