@@ -2433,7 +2433,7 @@ public interface DynamicType {
                     outputStream.write(entry.getValue());
                     outputStream.closeEntry();
                 }
-                outputStream.putNextEntry(new JarEntry(typeDescription.getInternalName() + CLASS_FILE_EXTENSION);
+                outputStream.putNextEntry(new JarEntry(typeDescription.getInternalName() + CLASS_FILE_EXTENSION));
                 outputStream.write(binaryRepresentation);
                 outputStream.closeEntry();
             } finally {
