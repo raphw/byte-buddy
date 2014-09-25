@@ -2429,11 +2429,11 @@ public interface DynamicType {
             JarOutputStream outputStream = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(file)), manifest);
             try {
                 for (Map.Entry<TypeDescription, byte[]> entry : getRawAuxiliaryTypes().entrySet()) {
-                    outputStream.putNextEntry(new JarEntry(entry.getKey().getInternalName()));
+                    outputStream.putNextEntry(new JarEntry(entry.getKey().getInternalName() + CLASS_FILE_EXTENSION));
                     outputStream.write(entry.getValue());
                     outputStream.closeEntry();
                 }
-                outputStream.putNextEntry(new JarEntry(typeDescription.getInternalName()));
+                outputStream.putNextEntry(new JarEntry(typeDescription.getInternalName() + CLASS_FILE_EXTENSION);
                 outputStream.write(binaryRepresentation);
                 outputStream.closeEntry();
             } finally {
