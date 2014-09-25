@@ -30,7 +30,6 @@ import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.logging.Logger;
-import java.util.zip.ZipEntry;
 
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
 import static net.bytebuddy.utility.ByteBuddyCommons.*;
@@ -2362,28 +2361,27 @@ public interface DynamicType {
                     Map<TypeDescription, byte[]> rawAuxiliaryTypes = getRawAuxiliaryTypes();
                     Map<String, byte[]> files = new HashMap<String, byte[]>(rawAuxiliaryTypes.size() + 1);
                     for (Map.Entry<TypeDescription, byte[]> entry : rawAuxiliaryTypes.entrySet()) {
-                        files.put(entry.getKey().getInternalName(), entry.getValue());
+                        files.put(entry.getKey().getInternalName() + CLASS_FILE_EXTENSION, entry.getValue());
                     }
-                    files.put(typeDescription.getInternalName(), binaryRepresentation);
+                    files.put(typeDescription.getInternalName() + CLASS_FILE_EXTENSION, binaryRepresentation);
                     JarEntry jarEntry;
                     while ((jarEntry = jarInputStream.getNextJarEntry()) != null) {
+                        jarOutputStream.putNextEntry(jarEntry);
                         byte[] replacement = files.remove(jarEntry.getName());
                         if (replacement == null) {
-                            jarOutputStream.putNextEntry(jarEntry);
                             byte[] buffer = new byte[BUFFER_SIZE];
                             int index;
                             while ((index = jarInputStream.read(buffer)) != END_OF_FILE) {
                                 jarOutputStream.write(buffer, FROM_BEGINNING, index);
                             }
                         } else {
-                            jarOutputStream.putNextEntry(new JarEntry(jarEntry.getName()));
                             jarOutputStream.write(replacement);
                         }
                         jarInputStream.closeEntry();
                         jarOutputStream.closeEntry();
                     }
                     for (Map.Entry<String, byte[]> entry : files.entrySet()) {
-                        jarOutputStream.putNextEntry(new ZipEntry(entry.getKey()));
+                        jarOutputStream.putNextEntry(new JarEntry(entry.getKey()));
                         jarOutputStream.write(entry.getValue());
                         jarOutputStream.closeEntry();
                     }

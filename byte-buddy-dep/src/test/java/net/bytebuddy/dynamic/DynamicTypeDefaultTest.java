@@ -30,6 +30,8 @@ import static org.mockito.Mockito.when;
 
 public class DynamicTypeDefaultTest {
 
+    private static final String CLASS_FILE_EXTENSION = ".class";
+
     private static final String FOOBAR = "foo/bar", QUXBAZ = "qux/baz", BARBAZ = "bar/baz", FOO = "foo", BAR = "bar", TEMP = "tmp";
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -176,8 +178,8 @@ public class DynamicTypeDefaultTest {
             assertThat(file.isFile(), is(true));
             assertThat(file.length() > 0L, is(true));
             Map<String, byte[]> bytes = new HashMap<String, byte[]>();
-            bytes.put(FOOBAR, BINARY_FIRST);
-            bytes.put(QUXBAZ, BINARY_SECOND);
+            bytes.put(FOOBAR + CLASS_FILE_EXTENSION, BINARY_FIRST);
+            bytes.put(QUXBAZ + CLASS_FILE_EXTENSION, BINARY_SECOND);
             assertJarFile(file, manifest, bytes);
         } finally {
             fileDeletion = file.delete();
@@ -192,10 +194,10 @@ public class DynamicTypeDefaultTest {
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, BAR);
         JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(sourceFile), manifest);
         try {
-            jarOutputStream.putNextEntry(new JarEntry(BARBAZ));
+            jarOutputStream.putNextEntry(new JarEntry(BARBAZ + CLASS_FILE_EXTENSION));
             jarOutputStream.write(BINARY_THIRD);
             jarOutputStream.closeEntry();
-            jarOutputStream.putNextEntry(new JarEntry(FOOBAR));
+            jarOutputStream.putNextEntry(new JarEntry(FOOBAR + CLASS_FILE_EXTENSION));
             jarOutputStream.write(BINARY_THIRD);
             jarOutputStream.closeEntry();
         } finally {
@@ -209,9 +211,9 @@ public class DynamicTypeDefaultTest {
             assertThat(file.isFile(), is(true));
             assertThat(file.length() > 0L, is(true));
             Map<String, byte[]> bytes = new HashMap<String, byte[]>();
-            bytes.put(FOOBAR, BINARY_FIRST);
-            bytes.put(QUXBAZ, BINARY_SECOND);
-            bytes.put(BARBAZ, BINARY_THIRD);
+            bytes.put(FOOBAR + CLASS_FILE_EXTENSION, BINARY_FIRST);
+            bytes.put(QUXBAZ + CLASS_FILE_EXTENSION, BINARY_SECOND);
+            bytes.put(BARBAZ + CLASS_FILE_EXTENSION, BINARY_THIRD);
             assertJarFile(file, manifest, bytes);
         } finally {
             fileDeletion = file.delete() & sourceFile.delete();
@@ -226,10 +228,10 @@ public class DynamicTypeDefaultTest {
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, BAR);
         JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(file), manifest);
         try {
-            jarOutputStream.putNextEntry(new JarEntry(BARBAZ));
+            jarOutputStream.putNextEntry(new JarEntry(BARBAZ + CLASS_FILE_EXTENSION));
             jarOutputStream.write(BINARY_THIRD);
             jarOutputStream.closeEntry();
-            jarOutputStream.putNextEntry(new JarEntry(FOOBAR));
+            jarOutputStream.putNextEntry(new JarEntry(FOOBAR + CLASS_FILE_EXTENSION));
             jarOutputStream.write(BINARY_THIRD);
             jarOutputStream.closeEntry();
         } finally {
@@ -242,9 +244,9 @@ public class DynamicTypeDefaultTest {
             assertThat(file.isFile(), is(true));
             assertThat(file.length() > 0L, is(true));
             Map<String, byte[]> bytes = new HashMap<String, byte[]>();
-            bytes.put(FOOBAR, BINARY_FIRST);
-            bytes.put(QUXBAZ, BINARY_SECOND);
-            bytes.put(BARBAZ, BINARY_THIRD);
+            bytes.put(FOOBAR + CLASS_FILE_EXTENSION, BINARY_FIRST);
+            bytes.put(QUXBAZ + CLASS_FILE_EXTENSION, BINARY_SECOND);
+            bytes.put(BARBAZ + CLASS_FILE_EXTENSION, BINARY_THIRD);
             assertJarFile(file, manifest, bytes);
         } finally {
             fileDeletion = file.delete();
