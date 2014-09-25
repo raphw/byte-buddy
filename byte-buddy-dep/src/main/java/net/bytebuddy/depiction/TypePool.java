@@ -712,5 +712,57 @@ public interface TypePool {
                 return stackSize;
             }
         }
+
+        protected class TypePoolTypeList extends AbstractList<TypeDescription> implements TypeList {
+
+            private final String[] name;
+
+            private final String[] internalName;
+
+            private final int stackSize;
+
+            protected TypePoolTypeList(String methodDescriptor) {
+                Type[] parameterType = Type.getArgumentTypes(methodDescriptor);
+                name = new String[parameterType.length];
+                internalName = new String[parameterType.length];
+                int index = 0, stackSize = 0;
+                for (Type aParameterType : parameterType) {
+                    name[index++] = aParameterType.getClassName();
+                    internalName[index++] = aParameterType.getInternalName();
+                    stackSize += aParameterType.getSize();
+                }
+                this.stackSize = stackSize;
+            }
+
+            protected TypePoolTypeList(String[] internalName) {
+                name = new String[internalName.length];
+                this.internalName = internalName;
+                int index = 0;
+                for (String anInternalName : internalName) {
+                    name[index++] = anInternalName.replace('/', '.');
+                }
+                stackSize = index;
+            }
+
+            @Override
+            public TypeDescription get(int index) {
+                return typePool.describe(name[index]);
+            }
+
+            @Override
+            public int size() {
+                return name.length;
+            }
+
+            @Override
+            public String[] toInternalNames() {
+                return internalName.length == 0 ? null : internalName;
+            }
+
+            @Override
+            public int getStackSize() {
+                return stackSize;
+            }
+        }
     }
 }
