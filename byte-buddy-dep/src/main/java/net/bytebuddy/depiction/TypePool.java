@@ -349,7 +349,6 @@ public interface TypePool {
             }
             this.declarationContext = declarationContext;
             this.anonymousType = anonymousType;
-            int index = 0;
             declaredFields = new ArrayList<FieldDescription>(fieldTokens.size());
             for (FieldToken fieldToken : fieldTokens) {
                 declaredFields.add(fieldToken.toFieldDescription(this));
