@@ -25,6 +25,8 @@ public interface TypePool {
 
     abstract static class AbstractBase implements TypePool {
 
+        private static final String ARRAY_SYMBOL = "[]";
+
         protected static final Map<String, TypeDescription> PRIMITIVE_TYPES;
 
         static {
@@ -47,7 +49,7 @@ public interface TypePool {
         @Override
         public TypeDescription describe(String name) {
             int arity = 0;
-            while (name.endsWith("[]")) {
+            while (name.endsWith(ARRAY_SYMBOL)) {
                 arity++;
                 name = name.substring(0, name.length() - 2);
             }
