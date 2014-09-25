@@ -14,6 +14,9 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.hasMethodDescriptor;
+import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.named;
+
 public interface TypePool {
 
     TypeDescription describe(String name);
@@ -26,7 +29,16 @@ public interface TypePool {
 
         static {
             Map<String, TypeDescription> primitiveTypes = new HashMap<String, TypeDescription>();
-            for (Class<?> primitiveType : new Class<?>[]{boolean.class, byte.class, short.class, char.class, int.class, long.class, float.class, double.class}) {
+            Class<?>[] literal = new Class<?>[]{};
+            for (Class<?> primitiveType : new Class<?>[]{boolean.class,
+                    byte.class,
+                    short.class,
+                    char.class,
+                    int.class,
+                    long.class,
+                    float.class,
+                    double.class,
+                    void.class}) {
                 primitiveTypes.put(primitiveType.getName(), new TypeDescription.ForLoadedType(primitiveType));
             }
             PRIMITIVE_TYPES = Collections.unmodifiableMap(primitiveTypes);
@@ -96,11 +108,15 @@ public interface TypePool {
 
             private int modifiers;
 
-            private String name;
+            private String internalName;
 
             private String superTypeName;
 
             private String[] interfaceName;
+
+            private boolean anonymousType;
+
+            private UnloadedTypeDescription.DeclarationContext declarationContext;
 
             private final List<UnloadedTypeDescription.FieldToken> fieldTokens;
 
@@ -108,6 +124,8 @@ public interface TypePool {
 
             private TypeInterpreter() {
                 super(ASM_VERSION);
+                declarationContext = UnloadedTypeDescription.DeclarationContext.SelfDeclared.INSTANCE;
+                anonymousType = false;
                 fieldTokens = new LinkedList<UnloadedTypeDescription.FieldToken>();
                 methodTokens = new LinkedList<UnloadedTypeDescription.MethodToken>();
             }
@@ -115,52 +133,68 @@ public interface TypePool {
             @Override
             public void visit(int classFileVersion,
                               int modifiers,
-                              String name,
+                              String internalName,
                               String genericSignature,
                               String superTypeName,
                               String[] interfaceName) {
                 this.modifiers = modifiers;
-                this.name = name;
+                this.internalName = internalName;
                 this.superTypeName = superTypeName;
                 this.interfaceName = interfaceName;
             }
 
             @Override
-            public void visitInnerClass(String name, String outerName, String innerName, int modifiers) {
-                if (name.equals(this.name)) {
+            public void visitOuterClass(String typeName, String methodName, String methodDescriptor) {
+                if (methodName != null) {
+                    declarationContext = new UnloadedTypeDescription.DeclarationContext.DeclaredInMethod(typeName,
+                            methodName,
+                            methodDescriptor);
+                } else if (typeName != null) {
+                    declarationContext = new UnloadedTypeDescription.DeclarationContext.DeclaredInType(typeName);
+                }
+            }
+
+            @Override
+            public void visitInnerClass(String internalName, String outerName, String innerName, int modifiers) {
+                if (internalName.equals(this.internalName)) {
                     this.modifiers = modifiers;
+                    if (innerName == null) {
+                        anonymousType = true;
+                    }
                 }
             }
 
             @Override
             public FieldVisitor visitField(int modifiers,
-                                           String name,
+                                           String internalName,
                                            String descriptor,
                                            String genericSignature,
                                            Object defaultValue) {
-                fieldTokens.add(new UnloadedTypeDescription.FieldToken(modifiers, name, descriptor));
+                fieldTokens.add(new UnloadedTypeDescription.FieldToken(modifiers, internalName, descriptor));
                 return null;
             }
 
             @Override
             public MethodVisitor visitMethod(int modifiers,
-                                             String name,
+                                             String internalName,
                                              String descriptor,
                                              String genericSignature,
                                              String[] exceptionName) {
-                if (name.equals(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME)) {
+                if (internalName.equals(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME)) {
                     return null;
                 }
-                methodTokens.add(new UnloadedTypeDescription.MethodToken(modifiers, name, descriptor, exceptionName));
+                methodTokens.add(new UnloadedTypeDescription.MethodToken(modifiers, internalName, descriptor, exceptionName));
                 return null;
             }
 
             public TypeDescription toTypeDescription() {
                 return new UnloadedTypeDescription(Default.this,
                         modifiers,
-                        name,
+                        internalName,
                         superTypeName,
                         interfaceName,
+                        declarationContext,
+                        anonymousType,
                         fieldTokens,
                         methodTokens);
             }
@@ -179,26 +213,141 @@ public interface TypePool {
 
         private final String[] interfaceName;
 
+        private final DeclarationContext declarationContext;
+
+        private final boolean anonymousType;
+
         private final List<FieldDescription> declaredFields;
 
         private final List<MethodDescription> declaredMethods;
+
+        protected static interface DeclarationContext {
+
+            static enum SelfDeclared implements DeclarationContext {
+
+                INSTANCE;
+
+                @Override
+                public MethodDescription getEnclosingMethod(TypePool typePool) {
+                    return null;
+                }
+
+                @Override
+                public TypeDescription getEnclosingType(TypePool typePool) {
+                    return null;
+                }
+
+                @Override
+                public boolean isDeclaredInType() {
+                    return false;
+                }
+
+
+                @Override
+                public boolean isDeclaredInMethod() {
+                    return false;
+                }
+
+            }
+
+            static class DeclaredInType implements DeclarationContext {
+
+                private final String name;
+
+                public DeclaredInType(String internalName) {
+                    name = internalName.replace('/', '.');
+                }
+
+                @Override
+                public MethodDescription getEnclosingMethod(TypePool typePool) {
+                    return null;
+                }
+
+                @Override
+                public TypeDescription getEnclosingType(TypePool typePool) {
+                    return typePool.describe(name);
+                }
+
+                @Override
+                public boolean isDeclaredInType() {
+                    return true;
+                }
+
+                @Override
+                public boolean isDeclaredInMethod() {
+                    return false;
+                }
+            }
+
+            static class DeclaredInMethod implements DeclarationContext {
+
+                private final String name;
+
+                private final String methodName;
+
+                private final String methodDescriptor;
+
+                public DeclaredInMethod(String internalName, String methodName, String methodDescriptor) {
+                    name = internalName.replace('/', '.');
+                    this.methodName = methodName;
+                    this.methodDescriptor = methodDescriptor;
+                }
+
+                @Override
+                public MethodDescription getEnclosingMethod(TypePool typePool) {
+                    return getEnclosingType(typePool).getDeclaredMethods()
+                            .filter(named(methodName).and(hasMethodDescriptor(methodDescriptor))).getOnly();
+                }
+
+                @Override
+                public TypeDescription getEnclosingType(TypePool typePool) {
+                    return typePool.describe(name);
+                }
+
+                @Override
+                public boolean isDeclaredInType() {
+                    return false;
+                }
+
+                @Override
+                public boolean isDeclaredInMethod() {
+                    return true;
+                }
+            }
+
+            MethodDescription getEnclosingMethod(TypePool typePool);
+
+            TypeDescription getEnclosingType(TypePool typePool);
+
+            boolean isDeclaredInType();
+
+            boolean isDeclaredInMethod();
+        }
 
         protected UnloadedTypeDescription(TypePool typePool,
                                           int modifiers,
                                           String name,
                                           String superTypeName,
                                           String[] interfaceName,
+                                          DeclarationContext declarationContext,
+                                          boolean anonymousType,
                                           List<FieldToken> fieldTokens,
                                           List<MethodToken> methodTokens) {
             this.typePool = typePool;
             this.modifiers = modifiers;
             this.name = name.replace('/', '.');
-            this.superTypeName = superTypeName.replace('/', '.');
-            this.interfaceName = new String[interfaceName.length];
-            int index = 0;
-            for (String anInterfaceName : interfaceName) {
-                this.interfaceName[index++] = anInterfaceName.replace('/', '.');
+            this.superTypeName = superTypeName == null ? null : superTypeName.replace('/', '.');
+            if (interfaceName != null) {
+                this.interfaceName = new String[interfaceName.length];
+                int index = 0;
+                for (String anInterfaceName : interfaceName) {
+                    this.interfaceName[index++] = anInterfaceName.replace('/', '.');
+                }
+            } else {
+                this.interfaceName = null;
             }
+            this.declarationContext = declarationContext;
+            this.anonymousType = anonymousType;
             declaredFields = new ArrayList<FieldDescription>(fieldTokens.size());
             for (FieldToken fieldToken : fieldTokens) {
                 declaredFields.add(fieldToken.toFieldDescription(this));
@@ -211,42 +360,46 @@ public interface TypePool {
 
         @Override
         public TypeDescription getSupertype() {
-            return typePool.describe(superTypeName);
+            return superTypeName == null
+                    ? null
+                    : typePool.describe(superTypeName);
         }
 
         @Override
         public TypeList getInterfaces() {
-            return null;
+            return interfaceName == null
+                    ? new TypeList.Empty()
+                    : new TypePoolTypeList(interfaceName);
         }
 
         @Override
         public MethodDescription getEnclosingMethod() {
-            return null;
+            return declarationContext.getEnclosingMethod(typePool);
         }
 
         @Override
         public TypeDescription getEnclosingClass() {
-            return null;
+            return declarationContext.getEnclosingType(typePool);
         }
 
         @Override
         public String getCanonicalName() {
-            return null;
+            return name;
         }
 
         @Override
         public boolean isAnonymousClass() {
-            return false;
+            return anonymousType;
         }
 
         @Override
         public boolean isLocalClass() {
-            return false;
+            return !anonymousType && declarationContext.isDeclaredInMethod();
         }
 
         @Override
         public boolean isMemberClass() {
-            return false;
+            return declarationContext.isDeclaredInType();
         }
 
         @Override
@@ -296,7 +449,9 @@ public interface TypePool {
 
         @Override
         public TypeDescription getDeclaringType() {
-            return null;
+            return declarationContext.isDeclaredInMethod()
+                    ? null
+                    : declarationContext.getEnclosingType(typePool);
         }
 
         @Override
