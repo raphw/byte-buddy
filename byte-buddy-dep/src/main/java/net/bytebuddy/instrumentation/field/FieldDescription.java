@@ -2,11 +2,11 @@ package net.bytebuddy.instrumentation.field;
 
 import net.bytebuddy.instrumentation.ByteCodeElement;
 import net.bytebuddy.instrumentation.ModifierReviewable;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotatedElement;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.type.DeclaredInType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
 
 /**
@@ -88,23 +88,8 @@ public interface FieldDescription extends ModifierReviewable, ByteCodeElement, D
         }
 
         @Override
-        public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
-            return field.isAnnotationPresent(annotationClass);
-        }
-
-        @Override
-        public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-            return field.getAnnotation(annotationClass);
-        }
-
-        @Override
-        public Annotation[] getAnnotations() {
-            return field.getAnnotations();
-        }
-
-        @Override
-        public Annotation[] getDeclaredAnnotations() {
-            return field.getDeclaredAnnotations();
+        public AnnotationList getDeclaredAnnotations() {
+            return new AnnotationList.ForLoadedAnnotation(field.getDeclaredAnnotations());
         }
 
         @Override
@@ -178,23 +163,8 @@ public interface FieldDescription extends ModifierReviewable, ByteCodeElement, D
         }
 
         @Override
-        public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-            return null;
-        }
-
-        @Override
-        public Annotation[] getAnnotations() {
-            return new Annotation[0];
-        }
-
-        @Override
-        public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
-            return false;
-        }
-
-        @Override
-        public Annotation[] getDeclaredAnnotations() {
-            return new Annotation[0];
+        public AnnotationList getDeclaredAnnotations() {
+            return new AnnotationList.Empty();
         }
 
         @Override

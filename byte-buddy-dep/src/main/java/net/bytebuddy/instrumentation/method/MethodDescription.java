@@ -1,14 +1,14 @@
 package net.bytebuddy.instrumentation.method;
 
 import net.bytebuddy.instrumentation.ModifierReviewable;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotatedElement;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.type.DeclaredInType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.Collections;
@@ -49,7 +49,7 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
      *
      * @return The parameter annotations of the method described by this instance.
      */
-    Annotation[][] getParameterAnnotations();
+    List<AnnotationList> getParameterAnnotations();
 
     /**
      * Returns a description of the exception types of the method described by this instance.
@@ -281,8 +281,8 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         }
 
         @Override
-        public Annotation[][] getParameterAnnotations() {
-            return constructor.getParameterAnnotations();
+        public List<AnnotationList> getParameterAnnotations() {
+            return AnnotationList.ForLoadedAnnotation.asList(constructor.getParameterAnnotations());
         }
 
         @Override
@@ -346,23 +346,8 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         }
 
         @Override
-        public Annotation[] getDeclaredAnnotations() {
-            return constructor.getDeclaredAnnotations();
-        }
-
-        @Override
-        public Annotation[] getAnnotations() {
-            return constructor.getAnnotations();
-        }
-
-        @Override
-        public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-            return constructor.getAnnotation(annotationClass);
-        }
-
-        @Override
-        public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
-            return constructor.isAnnotationPresent(annotationClass);
+        public AnnotationList getDeclaredAnnotations() {
+            return new AnnotationList.ForLoadedAnnotation(constructor.getDeclaredAnnotations());
         }
 
         @Override
@@ -406,8 +391,8 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         }
 
         @Override
-        public Annotation[][] getParameterAnnotations() {
-            return method.getParameterAnnotations();
+        public List<AnnotationList> getParameterAnnotations() {
+            return AnnotationList.ForLoadedAnnotation.asList(method.getParameterAnnotations());
         }
 
         @Override
@@ -471,23 +456,8 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         }
 
         @Override
-        public Annotation[] getDeclaredAnnotations() {
-            return method.getDeclaredAnnotations();
-        }
-
-        @Override
-        public Annotation[] getAnnotations() {
-            return method.getAnnotations();
-        }
-
-        @Override
-        public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-            return method.getAnnotation(annotationClass);
-        }
-
-        @Override
-        public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
-            return method.isAnnotationPresent(annotationClass);
+        public AnnotationList getDeclaredAnnotations() {
+            return new AnnotationList.ForLoadedAnnotation(method.getDeclaredAnnotations());
         }
 
         @Override
@@ -582,8 +552,8 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         }
 
         @Override
-        public Annotation[][] getParameterAnnotations() {
-            return new Annotation[0][0];
+        public List<AnnotationList> getParameterAnnotations() {
+            return AnnotationList.Empty.asList(parameterTypes.size());
         }
 
         @Override
@@ -612,23 +582,8 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         }
 
         @Override
-        public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
-            return false;
-        }
-
-        @Override
-        public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-            return null;
-        }
-
-        @Override
-        public Annotation[] getAnnotations() {
-            return new Annotation[0];
-        }
-
-        @Override
-        public Annotation[] getDeclaredAnnotations() {
-            return new Annotation[0];
+        public AnnotationList getDeclaredAnnotations() {
+            return new AnnotationList.Empty();
         }
 
         @Override

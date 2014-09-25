@@ -3,16 +3,15 @@ package net.bytebuddy.dynamic.scaffold.subclass;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.instrumentation.LoadedTypeInitializer;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 
-import java.lang.annotation.Annotation;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.isValidTypeName;
 
@@ -199,32 +198,8 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
     }
 
     @Override
-    public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
-        return getAnnotation(annotationClass) != null;
-    }
-
-    @Override
-    public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-        T annotation = superClass.getAnnotation(annotationClass);
-        return annotation != null
-                && annotation.getClass().isAnnotationPresent(Retention.class)
-                && annotation.getClass().getAnnotation(Retention.class).value() == RetentionPolicy.RUNTIME
-                ? annotation
-                : null;
-    }
-
-    @Override
-    public Annotation[] getAnnotations() {
-        List<Annotation> annotations = new LinkedList<Annotation>(Arrays.asList(superClass.getAnnotations()));
-        Iterator<Annotation> annotationIterator = annotations.iterator();
-        while (annotationIterator.hasNext()) {
-            Annotation annotation = annotationIterator.next();
-            if (!annotation.getClass().isAnnotationPresent(Retention.class)
-                    || annotation.getClass().getAnnotation(Retention.class).value() != RetentionPolicy.RUNTIME) {
-                annotationIterator.remove();
-            }
-        }
-        return annotations.toArray(new Annotation[annotations.size()]);
+    public AnnotationList getDeclaredAnnotations() {
+        return new AnnotationList.Empty();
     }
 
     @Override

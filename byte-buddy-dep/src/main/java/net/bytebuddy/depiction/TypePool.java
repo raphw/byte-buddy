@@ -1,5 +1,6 @@
 package net.bytebuddy.depiction;
 
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
@@ -8,7 +9,6 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import org.objectweb.asm.*;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -424,26 +424,6 @@ public interface TypePool {
         }
 
         @Override
-        public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
-            return false;
-        }
-
-        @Override
-        public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-            return null;
-        }
-
-        @Override
-        public Annotation[] getAnnotations() {
-            return new Annotation[0];
-        }
-
-        @Override
-        public Annotation[] getDeclaredAnnotations() {
-            return new Annotation[0];
-        }
-
-        @Override
         public String getName() {
             return name;
         }
@@ -458,6 +438,11 @@ public interface TypePool {
         @Override
         public int getModifiers() {
             return modifiers;
+        }
+
+        @Override
+        public AnnotationList getDeclaredAnnotations() {
+            return null; // TODO
         }
 
         protected static class FieldToken {
@@ -511,23 +496,8 @@ public interface TypePool {
             }
 
             @Override
-            public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
-                return false;
-            }
-
-            @Override
-            public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-                return null;
-            }
-
-            @Override
-            public Annotation[] getAnnotations() {
-                return new Annotation[0];
-            }
-
-            @Override
-            public Annotation[] getDeclaredAnnotations() {
-                return new Annotation[0];
+            public AnnotationList getDeclaredAnnotations() {
+                return null; // TODO
             }
 
             @Override

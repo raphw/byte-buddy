@@ -1,11 +1,11 @@
 package net.bytebuddy.instrumentation.method;
 
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import org.objectweb.asm.Opcodes;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -222,7 +222,7 @@ public interface MethodLookupEngine {
         }
 
         @Override
-        public Annotation[][] getParameterAnnotations() {
+        public List<AnnotationList> getParameterAnnotations() {
             return methodChain.get(MOST_SPECIFIC).getParameterAnnotations();
         }
 
@@ -252,26 +252,6 @@ public interface MethodLookupEngine {
         }
 
         @Override
-        public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-            return methodChain.get(MOST_SPECIFIC).getAnnotation(annotationClass);
-        }
-
-        @Override
-        public Annotation[] getAnnotations() {
-            return methodChain.get(MOST_SPECIFIC).getAnnotations();
-        }
-
-        @Override
-        public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
-            return methodChain.get(MOST_SPECIFIC).isAnnotationPresent(annotationClass);
-        }
-
-        @Override
-        public Annotation[] getDeclaredAnnotations() {
-            return methodChain.get(MOST_SPECIFIC).getDeclaredAnnotations();
-        }
-
-        @Override
         public String getName() {
             return methodChain.get(MOST_SPECIFIC).getName();
         }
@@ -289,6 +269,11 @@ public interface MethodLookupEngine {
         @Override
         public int getModifiers() {
             return methodChain.get(MOST_SPECIFIC).getModifiers();
+        }
+
+        @Override
+        public AnnotationList getDeclaredAnnotations() {
+            return methodChain.get(MOST_SPECIFIC).getDeclaredAnnotations();
         }
 
         @Override
@@ -402,11 +387,6 @@ public interface MethodLookupEngine {
         }
 
         @Override
-        public Annotation[][] getParameterAnnotations() {
-            return new Annotation[0][0];
-        }
-
-        @Override
         public TypeList getExceptionTypes() {
             return new TypeList.Empty();
         }
@@ -432,23 +412,13 @@ public interface MethodLookupEngine {
         }
 
         @Override
-        public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
-            return false;
+        public List<AnnotationList> getParameterAnnotations() {
+            return AnnotationList.Empty.asList(methodDescriptions.get(ANY).getParameterTypes().size());
         }
 
         @Override
-        public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-            return null;
-        }
-
-        @Override
-        public Annotation[] getAnnotations() {
-            return new Annotation[0];
-        }
-
-        @Override
-        public Annotation[] getDeclaredAnnotations() {
-            return new Annotation[0];
+        public AnnotationList getDeclaredAnnotations() {
+            return new AnnotationList.Empty();
         }
 
         @Override
