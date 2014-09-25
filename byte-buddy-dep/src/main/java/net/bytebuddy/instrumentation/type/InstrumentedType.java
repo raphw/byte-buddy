@@ -1,12 +1,12 @@
 package net.bytebuddy.instrumentation.type;
 
 import net.bytebuddy.instrumentation.LoadedTypeInitializer;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -141,16 +141,6 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
-            return false;
-        }
-
-        @Override
-        public Annotation[] getDeclaredAnnotations() {
-            return new Annotation[0];
-        }
-
-        @Override
         public MethodDescription getEnclosingMethod() {
             return null;
         }
@@ -251,23 +241,8 @@ public interface InstrumentedType extends TypeDescription {
             }
 
             @Override
-            public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
-                return false;
-            }
-
-            @Override
-            public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-                return null;
-            }
-
-            @Override
-            public Annotation[] getAnnotations() {
-                return new Annotation[0];
-            }
-
-            @Override
-            public Annotation[] getDeclaredAnnotations() {
-                return new Annotation[0];
+            public AnnotationList getDeclaredAnnotations() {
+                return new AnnotationList.Empty();
             }
 
             @Override
@@ -402,11 +377,6 @@ public interface InstrumentedType extends TypeDescription {
             }
 
             @Override
-            public Annotation[][] getParameterAnnotations() {
-                return new Annotation[0][0];
-            }
-
-            @Override
             public TypeList getExceptionTypes() {
                 return new TypeList.Explicit(exceptionTypes);
             }
@@ -432,23 +402,13 @@ public interface InstrumentedType extends TypeDescription {
             }
 
             @Override
-            public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
-                return false;
+            public List<AnnotationList> getParameterAnnotations() {
+                return AnnotationList.Empty.asList(parameterTypes.size());
             }
 
             @Override
-            public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-                return null;
-            }
-
-            @Override
-            public Annotation[] getAnnotations() {
-                return new Annotation[0];
-            }
-
-            @Override
-            public Annotation[] getDeclaredAnnotations() {
-                return new Annotation[0];
+            public AnnotationList getDeclaredAnnotations() {
+                return new AnnotationList.Empty();
             }
 
             @Override

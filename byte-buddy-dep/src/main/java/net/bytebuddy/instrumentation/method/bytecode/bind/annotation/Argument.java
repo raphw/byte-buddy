@@ -1,6 +1,8 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
 import net.bytebuddy.instrumentation.Instrumentation;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MostSpecificTypeResolver;
@@ -193,12 +195,11 @@ public @interface Argument {
             for (int sourceIndex = 0; sourceIndex < source.getParameterTypes().size(); sourceIndex++) {
                 results.add(sourceIndex);
             }
-            for (Annotation[] parameterAnnotation : target.getParameterAnnotations()) {
-                for (Annotation aParameterAnnotation : parameterAnnotation) {
-                    if (aParameterAnnotation.annotationType() == Argument.class) {
-                        results.remove(((Argument) aParameterAnnotation).value());
-                        break;
-                    }
+            for (AnnotationList parameterAnnotations : target.getParameterAnnotations()) {
+                AnnotationDescription.Loadable<Argument> annotation = parameterAnnotations.ofType(Argument.class);
+                if (annotation != null) {
+                    results.remove(annotation.load().value());
+                    break;
                 }
             }
             return results.iterator();
