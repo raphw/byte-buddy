@@ -6,10 +6,7 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.ClassLoadingStrategy;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.NoOp;
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.BenchmarkMode;
-import org.openjdk.jmh.annotations.Mode;
-import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.*;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -20,9 +17,18 @@ import java.util.concurrent.TimeUnit;
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.any;
 
 /**
+ * <p>
  * A benchmark for creating plain subclasses of {@link Object} that do not override any methods. This benchmark
  * intends to measure the general overhead of each library.
+ * </p>
+ * <p>
+ * Note that this class defines all values that are accessed by benchmark methods as instance fields. This way, the JIT
+ * compiler's capability of constant folding is limited in order to produce more comparable test results.
+ * </p>
  */
+@State(Scope.Thread)
+@BenchmarkMode(Mode.AverageTime)
+@OutputTimeUnit(TimeUnit.MICROSECONDS)
 public class TrivialClassCreationBenchmark {
 
     /**
@@ -31,14 +37,24 @@ public class TrivialClassCreationBenchmark {
     public static final Class<?> BASE_CLASS = Object.class;
 
     /**
+     * The base class to be subclassed in all benchmarks.
+     */
+    private Class<?> baseClass = BASE_CLASS;
+
+    /**
+     * The zero-length of the class loader's URL.
+     */
+    private int urlLength = 0;
+
+    /**
      * Creates a new class loader. By using a fresh class loader for each creation, we avoid name space issues.
      * A class loader's creation is part of the benchmark but since any test creates a class loader exactly once,
      * the benchmark remains valid.
      *
      * @return A new class loader.
      */
-    private static ClassLoader newClassLoader() {
-        return new URLClassLoader(new URL[0]);
+    private ClassLoader newClassLoader() {
+        return new URLClassLoader(new URL[urlLength]);
     }
 
     /**
@@ -47,12 +63,10 @@ public class TrivialClassCreationBenchmark {
      * @return The created instance, in order to avoid JIT removal.
      */
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public Class<?> benchmarkByteBuddy() {
         return new ByteBuddy()
                 .withIgnoredMethods(any())
-                .subclass(BASE_CLASS)
+                .subclass(baseClass)
                 .make()
                 .load(newClassLoader(), ClassLoadingStrategy.Default.INJECTION)
                 .getLoaded();
@@ -64,13 +78,11 @@ public class TrivialClassCreationBenchmark {
      * @return The created instance, in order to avoid JIT removal.
      */
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public Class<?> benchmarkCglib() {
         Enhancer enhancer = new Enhancer();
         enhancer.setUseCache(false);
         enhancer.setClassLoader(newClassLoader());
-        enhancer.setSuperclass(BASE_CLASS);
+        enhancer.setSuperclass(baseClass);
         enhancer.setCallbackType(NoOp.class);
         return enhancer.createClass();
     }
@@ -81,8 +93,6 @@ public class TrivialClassCreationBenchmark {
      * @return The created instance, in order to avoid JIT removal.
      */
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public Class<?> benchmarkJavassist() {
         ProxyFactory proxyFactory = new ProxyFactory();
         proxyFactory.setUseCache(false);
@@ -92,7 +102,7 @@ public class TrivialClassCreationBenchmark {
                 return newClassLoader();
             }
         };
-        proxyFactory.setSuperclass(BASE_CLASS);
+        proxyFactory.setSuperclass(baseClass);
         proxyFactory.setFilter(new MethodFilter() {
             public boolean isHandled(Method method) {
                 return false;
@@ -107,9 +117,7 @@ public class TrivialClassCreationBenchmark {
      * @return The created instance, in order to avoid JIT removal.
      */
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public Class<?> benchmarkJdkProxy() {
-        return Proxy.getProxyClass(newClassLoader(), new Class[0]);
+        return Proxy.getProxyClass(newClassLoader(), new Class<?>[urlLength]);
     }
 }

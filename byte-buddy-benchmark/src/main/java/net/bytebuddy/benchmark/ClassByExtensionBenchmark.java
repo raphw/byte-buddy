@@ -11,10 +11,7 @@ import net.bytebuddy.instrumentation.SuperMethodCall;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.RuntimeType;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.SuperCall;
 import net.sf.cglib.proxy.*;
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.BenchmarkMode;
-import org.openjdk.jmh.annotations.Mode;
-import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.*;
 
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -26,11 +23,20 @@ import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isDecl
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.none;
 
 /**
+ * <p>
  * This benchmark dynamically creates a subclass of {@link ExampleClass} which overrides all methods to invoke the
  * direct super class's implementation. The benchmark furthermore creates an instance of this class since some
  * code generation frameworks rely on this property. Because this benchmark requires the creation of a subclass,
  * the JDK proxy is not included in this benchmark.
+ * </p>
+ * <p>
+ * Note that this class defines all values that are accessed by benchmark methods as instance fields. This way, the JIT
+ * compiler's capability of constant folding is limited in order to produce more comparable test results.
+ * </p>
  */
+@State(Scope.Thread)
+@BenchmarkMode(Mode.AverageTime)
+@OutputTimeUnit(TimeUnit.MICROSECONDS)
 public class ClassByExtensionBenchmark {
 
     /**
@@ -39,14 +45,24 @@ public class ClassByExtensionBenchmark {
     public static final Class<? extends ExampleClass> BASE_CLASS = ExampleClass.class;
 
     /**
+     * The base class to be subclassed in all benchmarks.
+     */
+    private Class<? extends ExampleClass> baseClass = BASE_CLASS;
+
+    /**
+     * The zero-length of the class loader's URL.
+     */
+    private int urlLength = 0;
+
+    /**
      * Creates a new class loader. By using a fresh class loader for each creation, we avoid name space issues.
      * A class loader's creation is part of the benchmark but since any test creates a class loader exactly once,
      * the benchmark remains valid.
      *
      * @return A new class loader.
      */
-    private static ClassLoader newClassLoader() {
-        return new URLClassLoader(new URL[0]);
+    private ClassLoader newClassLoader() {
+        return new URLClassLoader(new URL[urlLength]);
     }
 
     /**
@@ -57,12 +73,10 @@ public class ClassByExtensionBenchmark {
      * @throws java.lang.Exception If the reflective invocation causes an exception.
      */
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public ExampleClass benchmarkByteBuddyWithAnnotations() throws Exception {
         return new ByteBuddy()
                 .withIgnoredMethods(none())
-                .subclass(BASE_CLASS)
+                .subclass(baseClass)
                 .method(isDeclaredBy(ExampleClass.class)).intercept(MethodDelegation.to(ByteBuddyInterceptor.class))
                 .make()
                 .load(newClassLoader(), ClassLoadingStrategy.Default.INJECTION)
@@ -78,12 +92,10 @@ public class ClassByExtensionBenchmark {
      * @throws java.lang.Exception If the reflective invocation causes an exception.
      */
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public ExampleClass benchmarkByteBuddySpecialized() throws Exception {
         return new ByteBuddy()
                 .withIgnoredMethods(none())
-                .subclass(BASE_CLASS)
+                .subclass(baseClass)
                 .method(isDeclaredBy(ExampleClass.class)).intercept(SuperMethodCall.INSTANCE)
                 .make()
                 .load(newClassLoader(), ClassLoadingStrategy.Default.INJECTION)
@@ -97,17 +109,15 @@ public class ClassByExtensionBenchmark {
      * @return The created instance, in order to avoid JIT removal.
      */
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public ExampleClass benchmarkCglib() {
         Enhancer enhancer = new Enhancer();
         enhancer.setUseCache(false);
         enhancer.setClassLoader(newClassLoader());
-        enhancer.setSuperclass(BASE_CLASS);
-        CallbackHelper callbackHelper = new CallbackHelper(BASE_CLASS, new Class[0]) {
+        enhancer.setSuperclass(baseClass);
+        CallbackHelper callbackHelper = new CallbackHelper(baseClass, new Class[0]) {
             @Override
             protected Object getCallback(Method method) {
-                if (method.getDeclaringClass() == BASE_CLASS) {
+                if (method.getDeclaringClass() == baseClass) {
                     return new MethodInterceptor() {
                         @Override
                         public Object intercept(Object object,
@@ -134,8 +144,6 @@ public class ClassByExtensionBenchmark {
      * @throws java.lang.Exception If the reflective invocation causes an exception.
      */
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public ExampleClass benchmarkJavassist() throws Exception {
         ProxyFactory proxyFactory = new ProxyFactory();
         proxyFactory.setUseCache(false);
@@ -145,10 +153,10 @@ public class ClassByExtensionBenchmark {
                 return newClassLoader();
             }
         };
-        proxyFactory.setSuperclass(BASE_CLASS);
+        proxyFactory.setSuperclass(baseClass);
         proxyFactory.setFilter(new MethodFilter() {
             public boolean isHandled(Method method) {
-                return method.getDeclaringClass() == BASE_CLASS;
+                return method.getDeclaringClass() == baseClass;
             }
         });
         Object instance = proxyFactory.createClass().newInstance();

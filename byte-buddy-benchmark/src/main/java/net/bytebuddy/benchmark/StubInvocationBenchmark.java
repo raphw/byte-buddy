@@ -7,57 +7,65 @@ import org.openjdk.jmh.infra.Blackhole;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * <p>
  * This benchmark measures the invocation speed of stub method invocations. All classes implement
  * {@link net.bytebuddy.benchmark.specimen.ExampleInterface} and implement all methods to return the return type's
  * default value, independently of the arguments.
+ * </p>
+ * <p>
+ * Note that this class defines all values that are accessed by benchmark methods as instance fields. This way, the JIT
+ * compiler's capability of constant folding is limited in order to produce more comparable test results.
+ * </p>
  */
-@State(Scope.Benchmark)
+@State(Scope.Thread)
+@BenchmarkMode(Mode.AverageTime)
+@OutputTimeUnit(TimeUnit.MICROSECONDS)
 public class StubInvocationBenchmark {
 
     /**
      * A generic {@link String} value.
      */
-    private static final String STRING_VALUE = "foo";
+    private String stringValue = "foo";
 
     /**
      * A generic {@code boolean} value.
      */
-    private static final boolean BOOLEAN_VALUE = true;
+    private boolean booleanValue = true;
 
     /**
      * A generic {@code byte} value.
      */
-    private static final byte BYTE_VALUE = 42;
+    private byte byteValue = 42;
 
     /**
      * A generic {@code short} value.
      */
-    private static final short SHORT_VALUE = 42;
+    private short shortValue = 42;
 
     /**
      * A generic {@code char} value.
      */
-    private static final char CHAR_VALUE = '@';
+    private char charValue = '@';
 
     /**
      * A generic {@code int} value.
      */
-    private static final int INT_VALUE = 42;
+    private int intValue = 42;
 
     /**
      * A generic {@code long} value.
      */
-    private static final long LONG_VALUE = 42L;
+    private long longValue = 42L;
 
     /**
      * A generic {@code float} value.
      */
-    private static final float FLOAT_VALUE = 42f;
+    private float floatValue = 42f;
 
     /**
      * A generic {@code double} value.
      */
-    private static final double DOUBLE_VALUE = 42d;
+    private double doubleValue = 42d;
 
     /**
      * An instance created by Byte Buddy for performing benchmarks on.
@@ -100,30 +108,28 @@ public class StubInvocationBenchmark {
      * @param blackHole A black hole for avoiding JIT erasure.
      */
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MICROSECONDS)
     @OperationsPerInvocation(20)
     public void benchmarkByteBuddy(Blackhole blackHole) {
-        blackHole.consume(byteBuddyInstance.method(BOOLEAN_VALUE));
-        blackHole.consume(byteBuddyInstance.method(BYTE_VALUE));
-        blackHole.consume(byteBuddyInstance.method(SHORT_VALUE));
-        blackHole.consume(byteBuddyInstance.method(INT_VALUE));
-        blackHole.consume(byteBuddyInstance.method(CHAR_VALUE));
-        blackHole.consume(byteBuddyInstance.method(INT_VALUE));
-        blackHole.consume(byteBuddyInstance.method(LONG_VALUE));
-        blackHole.consume(byteBuddyInstance.method(FLOAT_VALUE));
-        blackHole.consume(byteBuddyInstance.method(DOUBLE_VALUE));
-        blackHole.consume(byteBuddyInstance.method(STRING_VALUE));
-        blackHole.consume(byteBuddyInstance.method(BOOLEAN_VALUE, BOOLEAN_VALUE, BOOLEAN_VALUE));
-        blackHole.consume(byteBuddyInstance.method(BYTE_VALUE, BYTE_VALUE, BYTE_VALUE));
-        blackHole.consume(byteBuddyInstance.method(SHORT_VALUE, SHORT_VALUE, SHORT_VALUE));
-        blackHole.consume(byteBuddyInstance.method(INT_VALUE, INT_VALUE, INT_VALUE));
-        blackHole.consume(byteBuddyInstance.method(CHAR_VALUE, CHAR_VALUE, CHAR_VALUE));
-        blackHole.consume(byteBuddyInstance.method(INT_VALUE, INT_VALUE, INT_VALUE));
-        blackHole.consume(byteBuddyInstance.method(LONG_VALUE, LONG_VALUE, LONG_VALUE));
-        blackHole.consume(byteBuddyInstance.method(FLOAT_VALUE, FLOAT_VALUE, FLOAT_VALUE));
-        blackHole.consume(byteBuddyInstance.method(DOUBLE_VALUE, DOUBLE_VALUE, DOUBLE_VALUE));
-        blackHole.consume(byteBuddyInstance.method(STRING_VALUE, STRING_VALUE, STRING_VALUE));
+        blackHole.consume(byteBuddyInstance.method(booleanValue));
+        blackHole.consume(byteBuddyInstance.method(byteValue));
+        blackHole.consume(byteBuddyInstance.method(shortValue));
+        blackHole.consume(byteBuddyInstance.method(intValue));
+        blackHole.consume(byteBuddyInstance.method(charValue));
+        blackHole.consume(byteBuddyInstance.method(intValue));
+        blackHole.consume(byteBuddyInstance.method(longValue));
+        blackHole.consume(byteBuddyInstance.method(floatValue));
+        blackHole.consume(byteBuddyInstance.method(doubleValue));
+        blackHole.consume(byteBuddyInstance.method(stringValue));
+        blackHole.consume(byteBuddyInstance.method(booleanValue, booleanValue, booleanValue));
+        blackHole.consume(byteBuddyInstance.method(byteValue, byteValue, byteValue));
+        blackHole.consume(byteBuddyInstance.method(shortValue, shortValue, shortValue));
+        blackHole.consume(byteBuddyInstance.method(intValue, intValue, intValue));
+        blackHole.consume(byteBuddyInstance.method(charValue, charValue, charValue));
+        blackHole.consume(byteBuddyInstance.method(intValue, intValue, intValue));
+        blackHole.consume(byteBuddyInstance.method(longValue, longValue, longValue));
+        blackHole.consume(byteBuddyInstance.method(floatValue, floatValue, floatValue));
+        blackHole.consume(byteBuddyInstance.method(doubleValue, doubleValue, doubleValue));
+        blackHole.consume(byteBuddyInstance.method(stringValue, stringValue, stringValue));
     }
 
     /**
@@ -132,30 +138,28 @@ public class StubInvocationBenchmark {
      * @param blackHole A black hole for avoiding JIT erasure.
      */
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MICROSECONDS)
     @OperationsPerInvocation(20)
     public void benchmarkCglib(Blackhole blackHole) {
-        blackHole.consume(cglibInstance.method(BOOLEAN_VALUE));
-        blackHole.consume(cglibInstance.method(BYTE_VALUE));
-        blackHole.consume(cglibInstance.method(SHORT_VALUE));
-        blackHole.consume(cglibInstance.method(INT_VALUE));
-        blackHole.consume(cglibInstance.method(CHAR_VALUE));
-        blackHole.consume(cglibInstance.method(INT_VALUE));
-        blackHole.consume(cglibInstance.method(LONG_VALUE));
-        blackHole.consume(cglibInstance.method(FLOAT_VALUE));
-        blackHole.consume(cglibInstance.method(DOUBLE_VALUE));
-        blackHole.consume(cglibInstance.method(STRING_VALUE));
-        blackHole.consume(cglibInstance.method(BOOLEAN_VALUE, BOOLEAN_VALUE, BOOLEAN_VALUE));
-        blackHole.consume(cglibInstance.method(BYTE_VALUE, BYTE_VALUE, BYTE_VALUE));
-        blackHole.consume(cglibInstance.method(SHORT_VALUE, SHORT_VALUE, SHORT_VALUE));
-        blackHole.consume(cglibInstance.method(INT_VALUE, INT_VALUE, INT_VALUE));
-        blackHole.consume(cglibInstance.method(CHAR_VALUE, CHAR_VALUE, CHAR_VALUE));
-        blackHole.consume(cglibInstance.method(INT_VALUE, INT_VALUE, INT_VALUE));
-        blackHole.consume(cglibInstance.method(LONG_VALUE, LONG_VALUE, LONG_VALUE));
-        blackHole.consume(cglibInstance.method(FLOAT_VALUE, FLOAT_VALUE, FLOAT_VALUE));
-        blackHole.consume(cglibInstance.method(DOUBLE_VALUE, DOUBLE_VALUE, DOUBLE_VALUE));
-        blackHole.consume(cglibInstance.method(STRING_VALUE, STRING_VALUE, STRING_VALUE));
+        blackHole.consume(cglibInstance.method(booleanValue));
+        blackHole.consume(cglibInstance.method(byteValue));
+        blackHole.consume(cglibInstance.method(shortValue));
+        blackHole.consume(cglibInstance.method(intValue));
+        blackHole.consume(cglibInstance.method(charValue));
+        blackHole.consume(cglibInstance.method(intValue));
+        blackHole.consume(cglibInstance.method(longValue));
+        blackHole.consume(cglibInstance.method(floatValue));
+        blackHole.consume(cglibInstance.method(doubleValue));
+        blackHole.consume(cglibInstance.method(stringValue));
+        blackHole.consume(cglibInstance.method(booleanValue, booleanValue, booleanValue));
+        blackHole.consume(cglibInstance.method(byteValue, byteValue, byteValue));
+        blackHole.consume(cglibInstance.method(shortValue, shortValue, shortValue));
+        blackHole.consume(cglibInstance.method(intValue, intValue, intValue));
+        blackHole.consume(cglibInstance.method(charValue, charValue, charValue));
+        blackHole.consume(cglibInstance.method(intValue, intValue, intValue));
+        blackHole.consume(cglibInstance.method(longValue, longValue, longValue));
+        blackHole.consume(cglibInstance.method(floatValue, floatValue, floatValue));
+        blackHole.consume(cglibInstance.method(doubleValue, doubleValue, doubleValue));
+        blackHole.consume(cglibInstance.method(stringValue, stringValue, stringValue));
     }
 
     /**
@@ -164,30 +168,28 @@ public class StubInvocationBenchmark {
      * @param blackHole A black hole for avoiding JIT erasure.
      */
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MICROSECONDS)
     @OperationsPerInvocation(20)
     public void benchmarkJavassist(Blackhole blackHole) {
-        blackHole.consume(javassistInstance.method(BOOLEAN_VALUE));
-        blackHole.consume(javassistInstance.method(BYTE_VALUE));
-        blackHole.consume(javassistInstance.method(SHORT_VALUE));
-        blackHole.consume(javassistInstance.method(INT_VALUE));
-        blackHole.consume(javassistInstance.method(CHAR_VALUE));
-        blackHole.consume(javassistInstance.method(INT_VALUE));
-        blackHole.consume(javassistInstance.method(LONG_VALUE));
-        blackHole.consume(javassistInstance.method(FLOAT_VALUE));
-        blackHole.consume(javassistInstance.method(DOUBLE_VALUE));
-        blackHole.consume(javassistInstance.method(STRING_VALUE));
-        blackHole.consume(javassistInstance.method(BOOLEAN_VALUE, BOOLEAN_VALUE, BOOLEAN_VALUE));
-        blackHole.consume(javassistInstance.method(BYTE_VALUE, BYTE_VALUE, BYTE_VALUE));
-        blackHole.consume(javassistInstance.method(SHORT_VALUE, SHORT_VALUE, SHORT_VALUE));
-        blackHole.consume(javassistInstance.method(INT_VALUE, INT_VALUE, INT_VALUE));
-        blackHole.consume(javassistInstance.method(CHAR_VALUE, CHAR_VALUE, CHAR_VALUE));
-        blackHole.consume(javassistInstance.method(INT_VALUE, INT_VALUE, INT_VALUE));
-        blackHole.consume(javassistInstance.method(LONG_VALUE, LONG_VALUE, LONG_VALUE));
-        blackHole.consume(javassistInstance.method(FLOAT_VALUE, FLOAT_VALUE, FLOAT_VALUE));
-        blackHole.consume(javassistInstance.method(DOUBLE_VALUE, DOUBLE_VALUE, DOUBLE_VALUE));
-        blackHole.consume(javassistInstance.method(STRING_VALUE, STRING_VALUE, STRING_VALUE));
+        blackHole.consume(javassistInstance.method(booleanValue));
+        blackHole.consume(javassistInstance.method(byteValue));
+        blackHole.consume(javassistInstance.method(shortValue));
+        blackHole.consume(javassistInstance.method(intValue));
+        blackHole.consume(javassistInstance.method(charValue));
+        blackHole.consume(javassistInstance.method(intValue));
+        blackHole.consume(javassistInstance.method(longValue));
+        blackHole.consume(javassistInstance.method(floatValue));
+        blackHole.consume(javassistInstance.method(doubleValue));
+        blackHole.consume(javassistInstance.method(stringValue));
+        blackHole.consume(javassistInstance.method(booleanValue, booleanValue, booleanValue));
+        blackHole.consume(javassistInstance.method(byteValue, byteValue, byteValue));
+        blackHole.consume(javassistInstance.method(shortValue, shortValue, shortValue));
+        blackHole.consume(javassistInstance.method(intValue, intValue, intValue));
+        blackHole.consume(javassistInstance.method(charValue, charValue, charValue));
+        blackHole.consume(javassistInstance.method(intValue, intValue, intValue));
+        blackHole.consume(javassistInstance.method(longValue, longValue, longValue));
+        blackHole.consume(javassistInstance.method(floatValue, floatValue, floatValue));
+        blackHole.consume(javassistInstance.method(doubleValue, doubleValue, doubleValue));
+        blackHole.consume(javassistInstance.method(stringValue, stringValue, stringValue));
     }
 
     /**
@@ -196,29 +198,27 @@ public class StubInvocationBenchmark {
      * @param blackHole A black hole for avoiding JIT erasure.
      */
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MICROSECONDS)
     @OperationsPerInvocation(20)
     public void benchmarkJdkProxy(Blackhole blackHole) {
-        blackHole.consume(jdkProxyInstance.method(BOOLEAN_VALUE));
-        blackHole.consume(jdkProxyInstance.method(BYTE_VALUE));
-        blackHole.consume(jdkProxyInstance.method(SHORT_VALUE));
-        blackHole.consume(jdkProxyInstance.method(INT_VALUE));
-        blackHole.consume(jdkProxyInstance.method(CHAR_VALUE));
-        blackHole.consume(jdkProxyInstance.method(INT_VALUE));
-        blackHole.consume(jdkProxyInstance.method(LONG_VALUE));
-        blackHole.consume(jdkProxyInstance.method(FLOAT_VALUE));
-        blackHole.consume(jdkProxyInstance.method(DOUBLE_VALUE));
-        blackHole.consume(jdkProxyInstance.method(STRING_VALUE));
-        blackHole.consume(jdkProxyInstance.method(BOOLEAN_VALUE, BOOLEAN_VALUE, BOOLEAN_VALUE));
-        blackHole.consume(jdkProxyInstance.method(BYTE_VALUE, BYTE_VALUE, BYTE_VALUE));
-        blackHole.consume(jdkProxyInstance.method(SHORT_VALUE, SHORT_VALUE, SHORT_VALUE));
-        blackHole.consume(jdkProxyInstance.method(INT_VALUE, INT_VALUE, INT_VALUE));
-        blackHole.consume(jdkProxyInstance.method(CHAR_VALUE, CHAR_VALUE, CHAR_VALUE));
-        blackHole.consume(jdkProxyInstance.method(INT_VALUE, INT_VALUE, INT_VALUE));
-        blackHole.consume(jdkProxyInstance.method(LONG_VALUE, LONG_VALUE, LONG_VALUE));
-        blackHole.consume(jdkProxyInstance.method(FLOAT_VALUE, FLOAT_VALUE, FLOAT_VALUE));
-        blackHole.consume(jdkProxyInstance.method(DOUBLE_VALUE, DOUBLE_VALUE, DOUBLE_VALUE));
-        blackHole.consume(jdkProxyInstance.method(STRING_VALUE, STRING_VALUE, STRING_VALUE));
+        blackHole.consume(jdkProxyInstance.method(booleanValue));
+        blackHole.consume(jdkProxyInstance.method(byteValue));
+        blackHole.consume(jdkProxyInstance.method(shortValue));
+        blackHole.consume(jdkProxyInstance.method(intValue));
+        blackHole.consume(jdkProxyInstance.method(charValue));
+        blackHole.consume(jdkProxyInstance.method(intValue));
+        blackHole.consume(jdkProxyInstance.method(longValue));
+        blackHole.consume(jdkProxyInstance.method(floatValue));
+        blackHole.consume(jdkProxyInstance.method(doubleValue));
+        blackHole.consume(jdkProxyInstance.method(stringValue));
+        blackHole.consume(jdkProxyInstance.method(booleanValue, booleanValue, booleanValue));
+        blackHole.consume(jdkProxyInstance.method(byteValue, byteValue, byteValue));
+        blackHole.consume(jdkProxyInstance.method(shortValue, shortValue, shortValue));
+        blackHole.consume(jdkProxyInstance.method(intValue, intValue, intValue));
+        blackHole.consume(jdkProxyInstance.method(charValue, charValue, charValue));
+        blackHole.consume(jdkProxyInstance.method(intValue, intValue, intValue));
+        blackHole.consume(jdkProxyInstance.method(longValue, longValue, longValue));
+        blackHole.consume(jdkProxyInstance.method(floatValue, floatValue, floatValue));
+        blackHole.consume(jdkProxyInstance.method(doubleValue, doubleValue, doubleValue));
+        blackHole.consume(jdkProxyInstance.method(stringValue, stringValue, stringValue));
     }
 }

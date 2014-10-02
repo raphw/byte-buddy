@@ -29,7 +29,6 @@
     <properties>
         <shade.source>org.objectweb.asm</shade.source>
         <shade.target>net.bytebuddy.jar.asm</shade.target>
-        <description.osgi>Byte Buddy is a class file generation utility for the JVM</description.osgi>
         <version.plugin.ant>1.7</version.plugin.ant>
         <version.plugin.build-helper>1.8</version.plugin.build-helper>
     </properties>
@@ -85,7 +84,7 @@
                                                     ${project.groupId}.${project.artifactId}
                                                 </Bundle-SymbolicName>
                                                 <Bundle-Name>${project.name}</Bundle-Name>
-                                                <Bundle-Description>${description.osgi}</Bundle-Description>
+                                                <Bundle-Description>${project.description}</Bundle-Description>
                                                 <Bundle-Version>${project.version}</Bundle-Version>
                                                 <Export-Package>!${shade.target}.*,net.bytebuddy.*</Export-Package>
                                                 <Private-Package>${shade.target}.*</Private-Package>
