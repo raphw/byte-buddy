@@ -45,55 +45,15 @@ public class ClassByImplementationBenchmark {
     public static final Class<? extends ExampleInterface> BASE_CLASS = ExampleInterface.class;
 
     /**
+     * The base class to be subclassed in all benchmarks.
+     */
+    private Class<? extends ExampleInterface> baseClass = BASE_CLASS;
+
+    /**
      * The default reference value. By defining the default reference value as a string type instead of as an object
      * type, the field is inlined by the compiler, similar to the primitive values.
      */
     public static final String DEFAULT_REFERENCE_VALUE = null;
-
-    /**
-     * The default {@code boolean} value.
-     */
-    public static final boolean DEFAULT_BOOLEAN_VALUE = false;
-
-    /**
-     * The default {@code byte} value.
-     */
-    public static final byte DEFAULT_BYTE_VALUE = 0;
-
-    /**
-     * The default {@code short} value.
-     */
-    public static final short DEFAULT_SHORT_VALUE = 0;
-
-    /**
-     * The default {@code char} value.
-     */
-    public static final char DEFAULT_CHAR_VALUE = 0;
-
-    /**
-     * The default {@code int} value.
-     */
-    public static final int DEFAULT_INT_VALUE = 0;
-
-    /**
-     * The default {@code long} value.
-     */
-    public static final long DEFAULT_LONG_VALUE = 0L;
-
-    /**
-     * The default {@code float} value.
-     */
-    public static final float DEFAULT_FLOAT_VALUE = 0f;
-
-    /**
-     * The default {@code double} value.
-     */
-    public static final double DEFAULT_DOUBLE_VALUE = 0d;
-
-    /**
-     * The base class to be subclassed in all benchmarks.
-     */
-    private Class<? extends ExampleInterface> baseClass = BASE_CLASS;
 
     /**
      * The default reference value. By defining the default reference value as a string type instead of as an object
@@ -104,7 +64,17 @@ public class ClassByImplementationBenchmark {
     /**
      * The default {@code boolean} value.
      */
+    public static final boolean DEFAULT_BOOLEAN_VALUE = false;
+
+    /**
+     * The default {@code boolean} value.
+     */
     private boolean defaultBooleanValue = DEFAULT_BOOLEAN_VALUE;
+
+    /**
+     * The default {@code byte} value.
+     */
+    public static final byte DEFAULT_BYTE_VALUE = 0;
 
     /**
      * The default {@code byte} value.
@@ -114,7 +84,17 @@ public class ClassByImplementationBenchmark {
     /**
      * The default {@code short} value.
      */
+    public static final short DEFAULT_SHORT_VALUE = 0;
+
+    /**
+     * The default {@code short} value.
+     */
     private short defaultShortValue = DEFAULT_SHORT_VALUE;
+
+    /**
+     * The default {@code char} value.
+     */
+    public static final char DEFAULT_CHAR_VALUE = 0;
 
     /**
      * The default {@code char} value.
@@ -124,7 +104,17 @@ public class ClassByImplementationBenchmark {
     /**
      * The default {@code int} value.
      */
+    public static final int DEFAULT_INT_VALUE = 0;
+
+    /**
+     * The default {@code int} value.
+     */
     private int defaultIntValue = DEFAULT_INT_VALUE;
+
+    /**
+     * The default {@code long} value.
+     */
+    public static final long DEFAULT_LONG_VALUE = 0L;
 
     /**
      * The default {@code long} value.
@@ -134,7 +124,17 @@ public class ClassByImplementationBenchmark {
     /**
      * The default {@code float} value.
      */
+    public static final float DEFAULT_FLOAT_VALUE = 0f;
+
+    /**
+     * The default {@code float} value.
+     */
     private float defaultFloatValue = DEFAULT_FLOAT_VALUE;
+
+    /**
+     * The default {@code double} value.
+     */
+    public static final double DEFAULT_DOUBLE_VALUE = 0d;
 
     /**
      * The default {@code double} value.

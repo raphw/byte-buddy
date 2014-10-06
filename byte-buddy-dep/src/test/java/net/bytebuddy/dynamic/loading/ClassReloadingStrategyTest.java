@@ -3,7 +3,6 @@ package net.bytebuddy.dynamic.loading;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.instrumentation.FixedValue;
-import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.ToolsJarRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -16,7 +15,6 @@ import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
 
 public class ClassReloadingStrategyTest {
 
@@ -88,18 +86,6 @@ public class ClassReloadingStrategyTest {
         assertThat(foo.foo(), is(BAR));
         classReloadingStrategy.reset(Foo.class);
         assertThat(foo.foo(), is(FOO));
-    }
-
-    @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(ClassReloadingStrategy.class).refine(new HashCodeEqualsTester.Refinement() {
-            @Override
-            public void apply(Object mock) {
-                if (Instrumentation.class.isAssignableFrom(mock.getClass())) {
-                    when(((Instrumentation) mock).isRedefineClassesSupported()).thenReturn(true);
-                }
-            }
-        }).apply();
     }
 
     @SuppressWarnings("unused")
