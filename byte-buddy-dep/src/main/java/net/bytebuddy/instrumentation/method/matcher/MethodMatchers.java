@@ -1935,7 +1935,7 @@ public final class MethodMatchers {
 
         @Override
         public boolean matches(MethodDescription methodDescription) {
-            return methodDescription.isAnnotationPresent(annotationType);
+            return methodDescription.getAnnotations().isAnnotationPresent(annotationType);
         }
 
         @Override

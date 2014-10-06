@@ -203,6 +203,11 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
     }
 
     @Override
+    public AnnotationList getAnnotations() {
+        return null; // TODO
+    }
+
+    @Override
     public String toString() {
         return "SubclassInstrumentedType{" +
                 "classFileVersion=" + classFileVersion +

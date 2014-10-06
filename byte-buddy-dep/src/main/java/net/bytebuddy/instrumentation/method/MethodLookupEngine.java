@@ -277,6 +277,11 @@ public interface MethodLookupEngine {
         }
 
         @Override
+        public AnnotationList getAnnotations() {
+            return null; // TODO
+        }
+
+        @Override
         public boolean isSpecializableFor(TypeDescription targetType) {
             for (MethodDescription methodDescription : methodChain) {
                 if (methodDescription.isSpecializableFor(targetType)) {
@@ -418,6 +423,11 @@ public interface MethodLookupEngine {
 
         @Override
         public AnnotationList getDeclaredAnnotations() {
+            return new AnnotationList.Empty();
+        }
+
+        @Override
+        public AnnotationList getAnnotations() {
             return new AnnotationList.Empty();
         }
 

@@ -578,6 +578,11 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
         }
 
         @Override
+        public AnnotationList getAnnotations() {
+            return null; // TODO
+        }
+
+        @Override
         public boolean isSealed() {
             return type.getPackage() != null && type.getPackage().isSealed();
         }
@@ -761,6 +766,11 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
 
         @Override
         public AnnotationList getDeclaredAnnotations() {
+            return new AnnotationList.Empty();
+        }
+
+        @Override
+        public AnnotationList getAnnotations() {
             return new AnnotationList.Empty();
         }
 

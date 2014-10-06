@@ -10,6 +10,8 @@ public interface AnnotationDescription {
 
     <T> T getValue(String attributeName, Class<T> type);
 
+    Object getValue(String attributeName);
+
     TypeDescription getAnnotationType();
 
     <T extends Annotation> Loadable<T> prepare(Class<T> annotationType);
@@ -55,6 +57,11 @@ public interface AnnotationDescription {
             } catch (ClassCastException e) {
                 throw new IllegalStateException(attributeName + " of " + annotation + " is not of type " + type, e);
             }
+        }
+
+        @Override
+        public Object getValue(String attributeName) {
+            return null; // TODO
         }
 
         @Override

@@ -1,10 +1,12 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
 import net.bytebuddy.instrumentation.Instrumentation;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
+import net.bytebuddy.instrumentation.type.TypeDescription;
 
 import java.lang.annotation.Annotation;
 import java.util.*;
@@ -71,12 +73,12 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
             return MethodBinding.Illegal.INSTANCE;
         }
         MethodBinding.Builder methodDelegationBindingBuilder = new MethodBinding.Builder(methodInvoker, target);
-        Iterator<? extends Annotation> defaults = defaultsProvider.makeIterator(instrumentationTarget, source, target);
+        Iterator<AnnotationDescription> defaults = defaultsProvider.makeIterator(instrumentationTarget, source, target);
         for (int targetParameterIndex = 0;
              targetParameterIndex < target.getParameterTypes().size();
              targetParameterIndex++) {
             ParameterBinding<?> parameterBinding = delegationProcessor
-                    .handler(target.getParameterAnnotations()[targetParameterIndex], defaults)
+                    .handler(target.getParameterAnnotations().get(targetParameterIndex), defaults)
                     .bind(targetParameterIndex,
                             source,
                             target,
@@ -233,7 +235,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          * A map of registered annotation types to the binder that is responsible for binding a parameter
          * that is annotated with the given annotation.
          */
-        private final Map<Class<? extends Annotation>, ParameterBinder<?>> argumentBinders;
+        private final Map<TypeDescription, ParameterBinder<?>> argumentBinders;
 
         /**
          * Creates a new delegation processor.
@@ -243,9 +245,9 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          *                         for a specific annotation.
          */
         private DelegationProcessor(List<ParameterBinder<?>> parameterBinders) {
-            Map<Class<? extends Annotation>, ParameterBinder<?>> argumentBinderMap = new HashMap<Class<? extends Annotation>, ParameterBinder<?>>();
+            Map<TypeDescription, ParameterBinder<?>> argumentBinderMap = new HashMap<TypeDescription, ParameterBinder<?>>();
             for (ParameterBinder<?> parameterBinder : parameterBinders) {
-                if (argumentBinderMap.put(parameterBinder.getHandledType(), parameterBinder) != null) {
+                if (argumentBinderMap.put(new TypeDescription.ForLoadedType(parameterBinder.getHandledType()), parameterBinder) != null) {
                     throw new IllegalArgumentException("Attempt to bind two handlers to " + parameterBinder.getHandledType());
                 }
             }
@@ -260,20 +262,20 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          * @param defaults   The defaults provider to be queried if no explicit handler mapping could be found.
          * @return A handler for processing the parameter with the given annotations.
          */
-        private Handler handler(Annotation[] annotation, Iterator<? extends Annotation> defaults) {
+        private Handler handler(List<AnnotationDescription> annotations, Iterator<AnnotationDescription> defaults) {
             Handler handler = null;
-            for (Annotation anAnnotation : annotation) {
-                ParameterBinder<?> parameterBinder = argumentBinders.get(anAnnotation.annotationType());
+            for (AnnotationDescription annotation : annotations) {
+                ParameterBinder<?> parameterBinder = argumentBinders.get(annotation.getAnnotationType());
                 if (parameterBinder != null && handler != null) {
                     throw new IllegalStateException("Ambiguous binding for parameter annotated with two handled annotation types");
                 } else if (parameterBinder != null /* && handler == null */) {
-                    handler = makeHandler(parameterBinder, anAnnotation);
+                    handler = makeHandler(parameterBinder, annotation);
                 }
             }
             if (handler == null) { // No handler was found: attempt using defaults provider.
                 if (defaults.hasNext()) {
-                    Annotation defaultAnnotation = defaults.next();
-                    ParameterBinder<?> parameterBinder = argumentBinders.get(defaultAnnotation.annotationType());
+                    AnnotationDescription defaultAnnotation = defaults.next();
+                    ParameterBinder<?> parameterBinder = argumentBinders.get(defaultAnnotation.getAnnotationType());
                     if (parameterBinder == null) {
                         return Handler.Unbound.INSTANCE;
                     } else {
@@ -294,8 +296,8 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          * @return A handler for processing the given annotation.
          */
         @SuppressWarnings("unchecked")
-        private Handler makeHandler(ParameterBinder<?> parameterBinder, Annotation annotation) {
-            return new Handler.Bound<Annotation>((ParameterBinder<Annotation>) parameterBinder, annotation);
+        private Handler makeHandler(ParameterBinder<?> parameterBinder, AnnotationDescription annotation) {
+            return new Handler.Bound<Annotation>((ParameterBinder<Annotation>) parameterBinder, annotation); // TODO
         }
 
         @Override

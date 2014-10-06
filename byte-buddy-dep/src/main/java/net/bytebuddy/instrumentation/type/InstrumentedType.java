@@ -412,6 +412,11 @@ public interface InstrumentedType extends TypeDescription {
             }
 
             @Override
+            public AnnotationList getAnnotations() {
+                return null; // TODO
+            }
+
+            @Override
             public String getInternalName() {
                 return internalName;
             }

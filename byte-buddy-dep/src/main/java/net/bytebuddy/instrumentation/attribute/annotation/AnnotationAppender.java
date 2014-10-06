@@ -1,13 +1,13 @@
 package net.bytebuddy.instrumentation.attribute.annotation;
 
+import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.*;
 
-import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 /**
  * Annotation appenders are capable of writing annotations to a specified target.
@@ -22,7 +22,7 @@ public interface AnnotationAppender {
      * @return Usually {@code this} or any other annotation appender capable of writing another annotation to
      * the specified target.
      */
-    AnnotationAppender append(Annotation annotation, AnnotationVisibility annotationVisibility);
+    AnnotationAppender append(AnnotationDescription annotation, AnnotationVisibility annotationVisibility);
 
     /**
      * Determines if an annotation should be written to a specified target and if the annotation should be marked
@@ -73,11 +73,11 @@ public interface AnnotationAppender {
          * @return The annotation visibility of a given annotation. Annotations with a non-defined visibility or an
          * visibility of type {@link java.lang.annotation.RetentionPolicy#SOURCE} will be silently ignored.
          */
-        public static AnnotationVisibility of(Annotation annotation) {
-            Retention retention = annotation.annotationType().getAnnotation(Retention.class);
-            if (retention == null || retention.value() == RetentionPolicy.SOURCE) {
+        public static AnnotationVisibility of(AnnotationDescription annotation) {
+            AnnotationDescription.Loadable<Retention> retention = annotation.getAnnotationType().getAnnotations().ofType(Retention.class);
+            if (retention == null || retention.load().value() == RetentionPolicy.SOURCE) {
                 return INVISIBLE;
-            } else if (retention.value() == RetentionPolicy.CLASS) {
+            } else if (retention.load().value() == RetentionPolicy.CLASS) {
                 return CLASS_FILE;
             } else {
                 return RUNTIME;
@@ -280,7 +280,7 @@ public interface AnnotationAppender {
         }
 
         @Override
-        public AnnotationAppender append(Annotation annotation, AnnotationVisibility annotationVisibility) {
+        public AnnotationAppender append(AnnotationDescription annotation, AnnotationVisibility annotationVisibility) {
             if (!annotationVisibility.isSuppressed()) {
                 try {
                     tryAppend(annotation, annotationVisibility.isVisible());
@@ -301,9 +301,9 @@ public interface AnnotationAppender {
          * @throws InvocationTargetException In case that the annotation cannot be read.
          * @throws IllegalAccessException    In case that an annotation cannot be accessed.
          */
-        private void tryAppend(Annotation annotation, boolean visible)
+        private void tryAppend(AnnotationDescription annotation, boolean visible)
                 throws InvocationTargetException, IllegalAccessException {
-            handle(target.visit(Type.getDescriptor(annotation.annotationType()), visible), annotation);
+            handle(target.visit(annotation.getAnnotationType().getDescriptor(), visible), annotation);
         }
 
         /**
@@ -314,10 +314,10 @@ public interface AnnotationAppender {
          * @throws InvocationTargetException In case that the annotation cannot be read.
          * @throws IllegalAccessException    In case that an annotation cannot be accessed.
          */
-        private void handle(AnnotationVisitor annotationVisitor, Annotation annotation)
+        private void handle(AnnotationVisitor annotationVisitor, AnnotationDescription annotation)
                 throws InvocationTargetException, IllegalAccessException {
-            for (Method method : annotation.annotationType().getDeclaredMethods()) {
-                apply(annotationVisitor, method.getReturnType(), method.getName(), method.invoke(annotation));
+            for (MethodDescription method : annotation.getAnnotationType().getDeclaredMethods()) {
+                apply(annotationVisitor, method.getReturnType(), method.getName(), annotation.getValue(method.getName()));
             }
             annotationVisitor.visitEnd();
         }
@@ -332,24 +332,24 @@ public interface AnnotationAppender {
          * @throws InvocationTargetException In case that the annotation cannot be read.
          * @throws IllegalAccessException    In case that an annotation cannot be accessed.
          */
-        private void apply(AnnotationVisitor annotationVisitor, Class<?> valueType, String name, Object value)
+        private void apply(AnnotationVisitor annotationVisitor, TypeDescription valueType, String name, Object value)
                 throws InvocationTargetException, IllegalAccessException {
             if (valueType.isAnnotation()) {
-                handle(annotationVisitor.visitAnnotation(name, Type.getDescriptor(valueType)), (Annotation) value);
+                handle(annotationVisitor.visitAnnotation(name, valueType.getDescriptor()), (AnnotationDescription) value);
             } else if (valueType.isEnum()) {
-                annotationVisitor.visitEnum(name, Type.getDescriptor(valueType), ((Enum<?>) value).name());
+                annotationVisitor.visitEnum(name, valueType.getDescriptor(), ((Enum<?>) value).name()); // TODO
             } else if (valueType.isArray()) {
                 AnnotationVisitor arrayVisitor = annotationVisitor.visitArray(name);
                 int length = Array.getLength(value);
-                Class<?> componentType = valueType.getComponentType();
+                TypeDescription componentType = valueType.getComponentType();
                 for (int index = 0; index < length; index++) {
                     apply(arrayVisitor, componentType, ASM_IGNORE_NAME, Array.get(value, index));
                 }
                 arrayVisitor.visitEnd();
-            } else if (valueType == Class.class) {
-                annotationVisitor.visit(name, Type.getType((Class<?>) value));
+            } else if (valueType.represents(Class.class)) {
+                annotationVisitor.visit(name, Type.getType((Class<?>) value)); // TODO
             } else {
-                annotationVisitor.visit(name, value);
+                annotationVisitor.visit(name, value); // TODO ?
             }
         }
 

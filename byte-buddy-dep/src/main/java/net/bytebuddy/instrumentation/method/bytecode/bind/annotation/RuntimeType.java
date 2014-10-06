@@ -1,5 +1,6 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 
 import java.lang.annotation.*;
@@ -42,8 +43,8 @@ public @interface RuntimeType {
          * @return {@code true} if the runtime type should be considered for binding the method's return value.
          */
         public static boolean check(MethodDescription methodDescription) {
-            for (Annotation annotation : methodDescription.getAnnotations()) {
-                if (annotation.annotationType() == RuntimeType.class) {
+            for (AnnotationDescription annotation : methodDescription.getAnnotations()) {
+                if (annotation.getAnnotationType().represents(RuntimeType.class)) {
                     return true;
                 }
             }
@@ -58,8 +59,8 @@ public @interface RuntimeType {
          * @return {@code true} if the runtime type should be considered for binding this parameter.
          */
         public static boolean check(MethodDescription methodDescription, int parameterIndex) {
-            for (Annotation annotation : methodDescription.getParameterAnnotations()[parameterIndex]) {
-                if (annotation.annotationType() == RuntimeType.class) {
+            for (AnnotationDescription annotation : methodDescription.getParameterAnnotations().get(parameterIndex)) {
+                if (annotation.getAnnotationType().represents(RuntimeType.class)) {
                     return true;
                 }
             }
