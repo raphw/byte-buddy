@@ -163,14 +163,18 @@ public interface AnnotationDescription {
                 Object value = (methodDescription instanceof MethodDescription.ForLoadedMethod
                         ? ((MethodDescription.ForLoadedMethod) methodDescription).getLoadedMethod()
                         : annotation.annotationType().getDeclaredMethod(methodDescription.getName())).invoke(annotation);
-                if (value instanceof Class) {
+                if (value instanceof Class<?>) {
                     value = new TypeDescription.ForLoadedType((Class<?>) value);
-                } else if (value instanceof Class[]) {
+                } else if (value instanceof Class<?>[]) {
                     value = new TypeList.ForLoadedType((Class<?>[]) value).toArray(new TypeDescription[((Class<?>[]) value).length]);
                 } else if (value instanceof Enum<?>) {
                     value = EnumerationValue.ForLoadedEnumeration.of((Enum<?>) value);
                 } else if (value instanceof Enum<?>[]) {
                     value = EnumerationValue.ForLoadedEnumeration.asList((Enum<?>[]) value);
+                } else if(value instanceof Annotation) {
+                    value = ForLoadedAnnotation.of((Annotation) value);
+                } else if(value instanceof Annotation[]) {
+                    value = new AnnotationList.ForLoadedAnnotation((Annotation[]) value).toArray(new AnnotationDescription[((Annotation[]) value).length]);
                 }
                 return value;
             } catch (IllegalAccessException e) {

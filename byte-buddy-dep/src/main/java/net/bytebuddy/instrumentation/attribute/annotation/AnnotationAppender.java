@@ -324,7 +324,7 @@ public interface AnnotationAppender {
                 handle(annotationVisitor.visitAnnotation(name, valueType.getDescriptor()), (AnnotationDescription) value);
             } else if (valueType.isEnum()) {
                 annotationVisitor.visitEnum(name, valueType.getDescriptor(), ((AnnotationDescription.EnumerationValue) value).getName());
-            } else if (valueType.represents(TypeDescription.class)) {
+            } else if (valueType.isAssignableFrom(Class.class)) {
                 annotationVisitor.visit(name, Type.getType(((TypeDescription) value).getDescriptor()));
             } else if (valueType.isArray()) {
                 AnnotationVisitor arrayVisitor = annotationVisitor.visitArray(name);
