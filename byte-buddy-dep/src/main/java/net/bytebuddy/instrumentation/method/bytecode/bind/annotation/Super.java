@@ -4,6 +4,7 @@ import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
@@ -13,6 +14,9 @@ import net.bytebuddy.instrumentation.type.auxiliary.TypeProxy;
 import java.lang.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.named;
+import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.returns;
 
 /**
  * Parameters that are annotated with this annotation are assigned an instance of an auxiliary proxy type that allows calling
@@ -94,18 +98,19 @@ public @interface Super {
             @Override
             protected StackManipulation proxyFor(TypeDescription parameterType,
                                                  Instrumentation.Target instrumentationTarget,
-                                                 Super annotation) {
-                List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(annotation.constructorParameters().length);
-                for (Class<?> constructorParameter : annotation.constructorParameters()) {
-                    typeDescriptions.add(constructorParameter == TargetType.class
+                                                 AnnotationDescription.Loadable<Super> annotation) {
+                TypeDescription[] constructorParameters = annotation.getValue(CONSTRUCTOR_PARAMETERS, TypeDescription[].class);
+                List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(constructorParameters.length);
+                for (TypeDescription constructorParameter : constructorParameters) {
+                    typeDescriptions.add(constructorParameter.represents(TargetType.class)
                             ? TargetType.DESCRIPTION
-                            : new TypeDescription.ForLoadedType(constructorParameter));
+                            : constructorParameter);
                 }
                 return new TypeProxy.ByConstructor(parameterType,
                         instrumentationTarget,
                         typeDescriptions,
-                        annotation.ignoreFinalizer(),
-                        annotation.serializableProxy());
+                        annotation.getValue(IGNORE_FINALIZER, Boolean.class),
+                        annotation.getValue(SERIALIZABLE_PROXY, Boolean.class));
             }
         },
 
@@ -117,13 +122,26 @@ public @interface Super {
             @Override
             protected StackManipulation proxyFor(TypeDescription parameterType,
                                                  Instrumentation.Target instrumentationTarget,
-                                                 Super annotation) {
+                                                 AnnotationDescription.Loadable<Super> annotation) {
                 return new TypeProxy.ByReflectionFactory(parameterType,
                         instrumentationTarget,
-                        annotation.ignoreFinalizer(),
-                        annotation.serializableProxy());
+                        annotation.getValue(IGNORE_FINALIZER, Boolean.class),
+                        annotation.getValue(SERIALIZABLE_PROXY, Boolean.class));
             }
         };
+
+        private static final MethodDescription IGNORE_FINALIZER;
+
+        private static final MethodDescription SERIALIZABLE_PROXY;
+
+        private static final MethodDescription CONSTRUCTOR_PARAMETERS;
+
+        static {
+            MethodList annotationProperties = new TypeDescription.ForLoadedType(Super.class).getDeclaredMethods();
+            IGNORE_FINALIZER = annotationProperties.filter(named("ignoreFinalizer")).getOnly();
+            SERIALIZABLE_PROXY = annotationProperties.filter(named("serializableProxy")).getOnly();
+            CONSTRUCTOR_PARAMETERS = annotationProperties.filter(named("constructorParameters")).getOnly();
+        }
 
         /**
          * Creates a stack manipulation which loads a {@code super}-call proxy onto the stack.
@@ -136,7 +154,7 @@ public @interface Super {
          */
         protected abstract StackManipulation proxyFor(TypeDescription parameterType,
                                                       Instrumentation.Target instrumentationTarget,
-                                                      Super annotation);
+                                                      AnnotationDescription.Loadable<Super> annotation);
     }
 
     /**
@@ -153,6 +171,13 @@ public @interface Super {
          */
         INSTANCE;
 
+        private static final MethodDescription STRATEGY;
+
+        static {
+            MethodList annotationProperties = new TypeDescription.ForLoadedType(Super.class).getDeclaredMethods();
+            STRATEGY = annotationProperties.filter(returns(Instantiation.class)).getOnly();
+        }
+
         @Override
         public Class<Super> getHandledType() {
             return Super.class;
@@ -165,14 +190,13 @@ public @interface Super {
                                                                MethodDescription target,
                                                                Instrumentation.Target instrumentationTarget,
                                                                Assigner assigner) {
-            Super zuper = annotation.load(); // TODO: Must not load!
             TypeDescription parameterType = target.getParameterTypes().get(targetParameterIndex);
             if (source.isStatic() || !instrumentationTarget.getTypeDescription().isAssignableTo(parameterType)) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             } else {
-                return new MethodDelegationBinder.ParameterBinding.Anonymous(zuper
-                        .strategy()
-                        .proxyFor(parameterType, instrumentationTarget, zuper));
+                return new MethodDelegationBinder.ParameterBinding.Anonymous(annotation
+                        .getValue(STRATEGY, AnnotationDescription.EnumerationValue.class).prepare(Instantiation.class).load()
+                        .proxyFor(parameterType, instrumentationTarget, annotation));
             }
         }
     }

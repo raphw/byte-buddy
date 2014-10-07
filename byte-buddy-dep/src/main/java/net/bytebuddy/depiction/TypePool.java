@@ -606,12 +606,12 @@ public interface TypePool {
 
             @Override
             public List<AnnotationList> getParameterAnnotations() {
-                return null;
+                return null; // TODO
             }
 
             @Override
             public AnnotationList getDeclaredAnnotations() {
-                return null;
+                return null; // TODO
             }
 
             @Override

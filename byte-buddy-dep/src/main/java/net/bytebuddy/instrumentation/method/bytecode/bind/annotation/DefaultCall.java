@@ -3,6 +3,7 @@ package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import net.bytebuddy.instrumentation.type.TypeDescription;
@@ -10,6 +11,8 @@ import net.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy;
 
 import java.lang.annotation.*;
 import java.util.concurrent.Callable;
+
+import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.named;
 
 /**
  * A parameter with this annotation is assigned a proxy for invoking a default method that fits the intercepted method.
@@ -61,17 +64,27 @@ public @interface DefaultCall {
          */
         INSTANCE;
 
+        private static final MethodDescription TARGET_TYPE;
+
+        private static final MethodDescription SERIALIZABLE_PROXY;
+
+        static {
+            MethodList annotationProperties = new TypeDescription.ForLoadedType(DefaultCall.class).getDeclaredMethods();
+            TARGET_TYPE = annotationProperties.filter(named("targetType")).getOnly();
+            SERIALIZABLE_PROXY = annotationProperties.filter(named("serializableProxy")).getOnly();
+        }
+
         /**
          * Defines a locator for looking up the suitable default method to an annotation.
          *
-         * @param type The {@link DefaultCall#targetType()} value where the {@code void} type encodes an implicit
-         *             lookup.
+         * @param typeDescription The {@link DefaultCall#targetType()} value where the {@code void} type encodes an
+         *                        implicit lookup.
          * @return A suitable default method locator.
          */
-        private static DefaultMethodLocator locate(Class<?> type) {
-            return type == void.class
+        private static DefaultMethodLocator resolve(TypeDescription typeDescription) {
+            return typeDescription.represents(void.class)
                     ? DefaultMethodLocator.Implicit.INSTANCE
-                    : new DefaultMethodLocator.Explicit(type);
+                    : new DefaultMethodLocator.Explicit(typeDescription);
         }
 
         @Override
@@ -86,14 +99,15 @@ public @interface DefaultCall {
                                                                MethodDescription target,
                                                                Instrumentation.Target instrumentationTarget,
                                                                Assigner assigner) {
-            DefaultCall defaultCall = annotation.load(); // TODO: Must not load!
             TypeDescription targetType = target.getParameterTypes().get(targetParameterIndex);
             if (!targetType.represents(Runnable.class) && !targetType.represents(Callable.class) && !targetType.represents(Object.class)) {
                 throw new IllegalStateException("A default method call proxy can only be assigned to Runnable or Callable types: " + target);
             }
-            Instrumentation.SpecialMethodInvocation specialMethodInvocation = locate(defaultCall.targetType()).resolve(instrumentationTarget, source);
+            Instrumentation.SpecialMethodInvocation specialMethodInvocation = resolve(annotation.getValue(TARGET_TYPE, TypeDescription.class))
+                    .resolve(instrumentationTarget, source);
             return specialMethodInvocation.isValid()
-                    ? new MethodDelegationBinder.ParameterBinding.Anonymous(new MethodCallProxy.AssignableSignatureCall(specialMethodInvocation, defaultCall.serializableProxy()))
+                    ? new MethodDelegationBinder.ParameterBinding.Anonymous(new MethodCallProxy
+                    .AssignableSignatureCall(specialMethodInvocation, annotation.getValue(SERIALIZABLE_PROXY, Boolean.class)))
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
         }
 
@@ -156,10 +170,11 @@ public @interface DefaultCall {
                 /**
                  * Creates a new explicit default method locator.
                  *
-                 * @param type The actual target interface as explicitly defined by {@link DefaultCall#targetType()}.
+                 * @param typeDescription The actual target interface as explicitly defined by
+                 *                        {@link DefaultCall#targetType()}.
                  */
-                public Explicit(Class<?> type) {
-                    typeDescription = new TypeDescription.ForLoadedType(type);
+                public Explicit(TypeDescription typeDescription) {
+                    this.typeDescription = typeDescription;
                 }
 
                 @Override
