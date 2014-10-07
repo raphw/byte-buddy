@@ -21,7 +21,7 @@ public interface AnnotationDescription {
 
     static interface EnumerationValue {
 
-        String getName();
+        String getValue();
 
         TypeDescription getEnumerationType();
 
@@ -38,12 +38,12 @@ public interface AnnotationDescription {
             public boolean equals(Object other) {
                 return other == this || other instanceof EnumerationValue
                         && (((EnumerationValue) other)).getEnumerationType().equals(getEnumerationType())
-                        && (((EnumerationValue) other)).getName().equals(getName());
+                        && (((EnumerationValue) other)).getValue().equals(getValue());
             }
 
             @Override
             public int hashCode() {
-                return getName().hashCode() + 31 * getEnumerationType().hashCode();
+                return getValue().hashCode() + 31 * getEnumerationType().hashCode();
             }
         }
 
@@ -65,7 +65,7 @@ public interface AnnotationDescription {
             }
 
             @Override
-            public String getName() {
+            public String getValue() {
                 return value.name();
             }
 
@@ -160,23 +160,9 @@ public interface AnnotationDescription {
         @Override
         public Object getValue(MethodDescription methodDescription) {
             try {
-                Object value = (methodDescription instanceof MethodDescription.ForLoadedMethod
+                return new TypeWrapper((methodDescription instanceof MethodDescription.ForLoadedMethod
                         ? ((MethodDescription.ForLoadedMethod) methodDescription).getLoadedMethod()
-                        : annotation.annotationType().getDeclaredMethod(methodDescription.getName())).invoke(annotation);
-                if (value instanceof Class<?>) {
-                    value = new TypeDescription.ForLoadedType((Class<?>) value);
-                } else if (value instanceof Class<?>[]) {
-                    value = new TypeList.ForLoadedType((Class<?>[]) value).toArray(new TypeDescription[((Class<?>[]) value).length]);
-                } else if (value instanceof Enum<?>) {
-                    value = EnumerationValue.ForLoadedEnumeration.of((Enum<?>) value);
-                } else if (value instanceof Enum<?>[]) {
-                    value = EnumerationValue.ForLoadedEnumeration.asList((Enum<?>[]) value);
-                } else if(value instanceof Annotation) {
-                    value = ForLoadedAnnotation.of((Annotation) value);
-                } else if(value instanceof Annotation[]) {
-                    value = new AnnotationList.ForLoadedAnnotation((Annotation[]) value).toArray(new AnnotationDescription[((Annotation[]) value).length]);
-                }
-                return value;
+                        : annotation.annotationType().getDeclaredMethod(methodDescription.getName())).invoke(annotation)).apply();
             } catch (IllegalAccessException e) {
                 throw new IllegalStateException("Cannot access enum property " + methodDescription, e);
             } catch (InvocationTargetException e) {
@@ -198,6 +184,33 @@ public interface AnnotationDescription {
         @Override
         public TypeDescription getAnnotationType() {
             return new TypeDescription.ForLoadedType(annotation.annotationType());
+        }
+
+        public static class TypeWrapper {
+
+            private final Object value;
+
+            public TypeWrapper(Object value) {
+                this.value = value;
+            }
+
+            public Object apply() {
+                Object value = this.value;
+                if (value instanceof Class<?>) {
+                    value = new TypeDescription.ForLoadedType((Class<?>) value);
+                } else if (value instanceof Class<?>[]) {
+                    value = new TypeList.ForLoadedType((Class<?>[]) value).toArray(new TypeDescription[((Class<?>[]) value).length]);
+                } else if (value instanceof Enum<?>) {
+                    value = EnumerationValue.ForLoadedEnumeration.of((Enum<?>) value);
+                } else if (value instanceof Enum<?>[]) {
+                    value = EnumerationValue.ForLoadedEnumeration.asList((Enum<?>[]) value);
+                } else if (value instanceof Annotation) {
+                    value = ForLoadedAnnotation.of((Annotation) value);
+                } else if (value instanceof Annotation[]) {
+                    value = new AnnotationList.ForLoadedAnnotation((Annotation[]) value).toArray(new AnnotationDescription[((Annotation[]) value).length]);
+                }
+                return value;
+            }
         }
     }
 }

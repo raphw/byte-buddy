@@ -2,6 +2,7 @@ package net.bytebuddy.instrumentation.method;
 
 import net.bytebuddy.instrumentation.ModifierReviewable;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotatedElement;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.type.DeclaredInType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
@@ -143,6 +144,8 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
      */
     boolean isSpecializableFor(TypeDescription typeDescription);
 
+    Object getDefaultValue();
+
     /**
      * An abstract base implementation of a method description.
      */
@@ -231,6 +234,11 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
             } else {
                 return !isAbstract() && getDeclaringType().isAssignableFrom(targetType);
             }
+        }
+
+        @Override
+        public Object getDefaultValue() {
+            throw new IllegalStateException(toString() + " does not represent a default value");
         }
 
         @Override
@@ -462,6 +470,14 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         @Override
         public AnnotationList getDeclaredAnnotations() {
             return new AnnotationList.ForLoadedAnnotation(method.getDeclaredAnnotations());
+        }
+
+        @Override
+        public Object getDefaultValue() {
+            Object value = method.getDefaultValue();
+            return value == null
+                    ? super.getDefaultValue()
+                    : new AnnotationDescription.ForLoadedAnnotation.TypeWrapper(value).apply();
         }
 
         @Override
