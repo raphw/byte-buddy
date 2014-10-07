@@ -1,4 +1,4 @@
-package net.bytebuddy.depiction;
+package net.bytebuddy.pool;
 
 import net.bytebuddy.utility.StreamDrainer;
 
