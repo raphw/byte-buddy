@@ -103,8 +103,9 @@ public class AnnotationAppenderDefaultTest {
                 null);
         AnnotationVisitor annotationVisitor = classWriter.visitAnnotation(Type.getDescriptor(annotation.annotationType()), true);
         when(target.visit(any(String.class), anyBoolean())).thenReturn(annotationVisitor);
-        AnnotationAppender.AnnotationVisibility annotationVisibility = AnnotationAppender.AnnotationVisibility.of(annotation);
-        annotationAppender.append(annotation, annotationVisibility);
+        AnnotationDescription annotationDescription = AnnotationDescription.ForLoadedAnnotation.of(annotation);
+        AnnotationAppender.AnnotationVisibility annotationVisibility = AnnotationAppender.AnnotationVisibility.of(annotationDescription);
+        annotationAppender.append(annotationDescription, annotationVisibility);
         switch (annotationVisibility) {
             case RUNTIME:
                 verify(target).visit(Type.getDescriptor(annotation.annotationType()), true);

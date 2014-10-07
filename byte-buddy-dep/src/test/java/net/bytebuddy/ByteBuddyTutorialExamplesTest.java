@@ -5,6 +5,7 @@ import net.bytebuddy.dynamic.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
 import net.bytebuddy.instrumentation.*;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
@@ -451,6 +452,7 @@ public class ByteBuddyTutorialExamplesTest {
     }
 
     public static enum StringValueBinder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<StringValue> {
+
         INSTANCE;
 
         @Override
@@ -459,7 +461,7 @@ public class ByteBuddyTutorialExamplesTest {
         }
 
         @Override
-        public MethodDelegationBinder.ParameterBinding<?> bind(StringValue annotation,
+        public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<StringValue> annotation,
                                                                int targetParameterIndex,
                                                                MethodDescription source,
                                                                MethodDescription target,
@@ -468,7 +470,7 @@ public class ByteBuddyTutorialExamplesTest {
             if (!target.getParameterTypes().get(targetParameterIndex).represents(String.class)) {
                 throw new IllegalStateException(target + " makes wrong use of StringValue");
             }
-            StackManipulation constant = new TextConstant(annotation.value());
+            StackManipulation constant = new TextConstant(annotation.load().value()); // TODO: Update documentation.
             return new MethodDelegationBinder.ParameterBinding.Anonymous(constant);
         }
     }

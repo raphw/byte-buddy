@@ -44,7 +44,7 @@ public class PipeBinderTest extends AbstractAnnotationBinderTest<Pipe> {
     @Test
     public void testParameterBinding() throws Exception {
         when(targetTypeList.get(0)).thenReturn(targetMethodType);
-        MethodDelegationBinder.ParameterBinding<?> parameterBinding = binder.bind(annotation,
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = binder.bind(annotationDescription,
                 0,
                 source,
                 target,
@@ -57,7 +57,7 @@ public class PipeBinderTest extends AbstractAnnotationBinderTest<Pipe> {
     public void testCannotPipeStaticMethod() throws Exception {
         when(targetTypeList.get(0)).thenReturn(targetMethodType);
         when(source.isStatic()).thenReturn(true);
-        MethodDelegationBinder.ParameterBinding<?> parameterBinding = binder.bind(annotation,
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = binder.bind(annotationDescription,
                 0,
                 source,
                 target,
@@ -69,7 +69,7 @@ public class PipeBinderTest extends AbstractAnnotationBinderTest<Pipe> {
     @Test(expected = IllegalStateException.class)
     public void testParameterBindingOnIllegalTargetTypeThrowsException() throws Exception {
         when(targetTypeList.get(0)).thenReturn(mock(TypeDescription.class));
-        binder.bind(annotation,
+        binder.bind(annotationDescription,
                 0,
                 source,
                 target,

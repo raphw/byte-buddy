@@ -1,5 +1,6 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
@@ -31,23 +32,23 @@ public class RuntimeTypeVerifierTest {
 
     @Test
     public void testCheckMethodValid() throws Exception {
-        when(methodDescription.getAnnotations()).thenReturn(new Annotation[]{runtimeType});
+        when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(new Annotation[]{runtimeType}));
         assertThat(RuntimeType.Verifier.check(methodDescription), is(true));
-        verify(methodDescription).getAnnotations();
+        verify(methodDescription).getDeclaredAnnotations();
         verifyNoMoreInteractions(methodDescription);
     }
 
     @Test
     public void testCheckMethodInvalid() throws Exception {
-        when(methodDescription.getAnnotations()).thenReturn(new Annotation[0]);
+        when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(new Annotation[0]));
         assertThat(RuntimeType.Verifier.check(methodDescription), is(false));
-        verify(methodDescription).getAnnotations();
+        verify(methodDescription).getDeclaredAnnotations();
         verifyNoMoreInteractions(methodDescription);
     }
 
     @Test
     public void testCheckMethodParameterValid() throws Exception {
-        when(methodDescription.getParameterAnnotations()).thenReturn(new Annotation[][]{{runtimeType}});
+        when(methodDescription.getParameterAnnotations()).thenReturn(AnnotationList.ForLoadedAnnotation.asList(new Annotation[][]{{runtimeType}}));
         assertThat(RuntimeType.Verifier.check(methodDescription, 0), is(true));
         verify(methodDescription).getParameterAnnotations();
         verifyNoMoreInteractions(methodDescription);
@@ -55,7 +56,7 @@ public class RuntimeTypeVerifierTest {
 
     @Test
     public void testCheckMethodParameterInvalid() throws Exception {
-        when(methodDescription.getParameterAnnotations()).thenReturn(new Annotation[1][0]);
+        when(methodDescription.getParameterAnnotations()).thenReturn(AnnotationList.ForLoadedAnnotation.asList(new Annotation[1][0]));
         assertThat(RuntimeType.Verifier.check(methodDescription, 0), is(false));
         verify(methodDescription).getParameterAnnotations();
         verifyNoMoreInteractions(methodDescription);
