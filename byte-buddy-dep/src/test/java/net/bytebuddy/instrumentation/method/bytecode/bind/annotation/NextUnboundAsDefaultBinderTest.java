@@ -112,7 +112,8 @@ public class NextUnboundAsDefaultBinderTest {
         Argument indexOneArgument = mock(Argument.class);
         when(indexOneArgument.value()).thenReturn(1);
         doReturn(Argument.class).when(indexOneArgument).annotationType();
-        when(target.getParameterAnnotations()).thenReturn(AnnotationList.ForLoadedAnnotation.asList(new Annotation[][]{{indexOneArgument}, {indexZeroArgument}}));
+        when(target.getParameterAnnotations()).thenReturn(AnnotationList.ForLoadedAnnotation
+                .asList(new Annotation[][]{{indexOneArgument}, {indexZeroArgument}}));
         Iterator<AnnotationDescription> iterator = Argument.NextUnboundAsDefaultsProvider.INSTANCE
                 .makeIterator(instrumentationTarget, source, target);
         assertThat(iterator.hasNext(), is(false));

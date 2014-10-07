@@ -20,7 +20,7 @@ public class IgnoreForBindingVerifierTest {
 
     @Mock
     private MethodDescription methodDescription;
-
+    @Mock
     private AnnotationList annotationList;
 
     @Before
@@ -32,14 +32,18 @@ public class IgnoreForBindingVerifierTest {
     public void testIsPresent() throws Exception {
         when(annotationList.isAnnotationPresent(IgnoreForBinding.class)).thenReturn(true);
         assertThat(IgnoreForBinding.Verifier.check(methodDescription), is(true));
-        verify(annotationList).isAnnotationPresent(IgnoreForBinding.class);
+        verify(methodDescription).getDeclaredAnnotations();
         verifyNoMoreInteractions(methodDescription);
+        verify(annotationList).isAnnotationPresent(IgnoreForBinding.class);
+        verifyNoMoreInteractions(annotationList);
     }
 
     @Test
     public void testIsNotPresent() throws Exception {
         assertThat(IgnoreForBinding.Verifier.check(methodDescription), is(false));
-        verify(annotationList).isAnnotationPresent(IgnoreForBinding.class);
+        verify(methodDescription).getDeclaredAnnotations();
         verifyNoMoreInteractions(methodDescription);
+        verify(annotationList).isAnnotationPresent(IgnoreForBinding.class);
+        verifyNoMoreInteractions(annotationList);
     }
 }

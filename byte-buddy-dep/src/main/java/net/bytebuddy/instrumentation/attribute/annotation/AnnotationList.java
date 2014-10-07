@@ -32,7 +32,7 @@ public interface AnnotationList extends List<AnnotationDescription> {
 
         @Override
         public AnnotationDescription get(int index) {
-            return null;
+            return AnnotationDescription.ForLoadedAnnotation.of(annotation[index]);
         }
 
         @Override
