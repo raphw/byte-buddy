@@ -455,6 +455,10 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
             return Type.getMethodDescriptor(method);
         }
 
+        public Method getLoadedMethod() {
+            return method;
+        }
+
         @Override
         public AnnotationList getDeclaredAnnotations() {
             return new AnnotationList.ForLoadedAnnotation(method.getDeclaredAnnotations());

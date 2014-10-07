@@ -7,7 +7,6 @@ import org.objectweb.asm.*;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Array;
-import java.lang.reflect.InvocationTargetException;
 
 /**
  * Annotation appenders are capable of writing annotations to a specified target.
@@ -284,13 +283,7 @@ public interface AnnotationAppender {
         @Override
         public AnnotationAppender append(AnnotationDescription annotation, AnnotationVisibility annotationVisibility) {
             if (!annotationVisibility.isSuppressed()) {
-                try {
-                    tryAppend(annotation, annotationVisibility.isVisible());
-                } catch (InvocationTargetException e) {
-                    throw new IllegalStateException("Could not invoke method of " + annotation + " reflectively", e);
-                } catch (IllegalAccessException e) {
-                    throw new IllegalStateException("Could not access method of " + annotation, e);
-                }
+                doAppend(annotation, annotationVisibility.isVisible());
             }
             return this;
         }
@@ -300,11 +293,8 @@ public interface AnnotationAppender {
          *
          * @param annotation The annotation to be written.
          * @param visible    {@code true} if this annotation should be treated as visible at runtime.
-         * @throws InvocationTargetException In case that the annotation cannot be read.
-         * @throws IllegalAccessException    In case that an annotation cannot be accessed.
          */
-        private void tryAppend(AnnotationDescription annotation, boolean visible)
-                throws InvocationTargetException, IllegalAccessException {
+        private void doAppend(AnnotationDescription annotation, boolean visible) {
             handle(target.visit(annotation.getAnnotationType().getDescriptor(), visible), annotation);
         }
 
@@ -313,13 +303,10 @@ public interface AnnotationAppender {
          *
          * @param annotationVisitor The annotation visitor the write process is to be applied on.
          * @param annotation        The annotation to be written.
-         * @throws InvocationTargetException In case that the annotation cannot be read.
-         * @throws IllegalAccessException    In case that an annotation cannot be accessed.
          */
-        private void handle(AnnotationVisitor annotationVisitor, AnnotationDescription annotation)
-                throws InvocationTargetException, IllegalAccessException {
-            for (MethodDescription method : annotation.getAnnotationType().getDeclaredMethods()) {
-                apply(annotationVisitor, method.getReturnType(), method.getName(), annotation.getValue(method.getName()));
+        private void handle(AnnotationVisitor annotationVisitor, AnnotationDescription annotation) {
+            for (MethodDescription methodDescription : annotation.getAnnotationType().getDeclaredMethods()) {
+                apply(annotationVisitor, methodDescription.getReturnType(), methodDescription.getName(), annotation.getValue(methodDescription));
             }
             annotationVisitor.visitEnd();
         }
@@ -331,15 +318,14 @@ public interface AnnotationAppender {
          * @param valueType         The type of the annotation value.
          * @param name              The name of the annotation type.
          * @param value             The annotation's value.
-         * @throws InvocationTargetException In case that the annotation cannot be read.
-         * @throws IllegalAccessException    In case that an annotation cannot be accessed.
          */
-        private void apply(AnnotationVisitor annotationVisitor, TypeDescription valueType, String name, Object value)
-                throws InvocationTargetException, IllegalAccessException {
+        private void apply(AnnotationVisitor annotationVisitor, TypeDescription valueType, String name, Object value) {
             if (valueType.isAnnotation()) {
                 handle(annotationVisitor.visitAnnotation(name, valueType.getDescriptor()), (AnnotationDescription) value);
             } else if (valueType.isEnum()) {
-                annotationVisitor.visitEnum(name, valueType.getDescriptor(), ((Enum<?>) value).name()); // TODO
+                annotationVisitor.visitEnum(name, valueType.getDescriptor(), ((AnnotationDescription.EnumerationValue) value).getName());
+            } else if (valueType.represents(TypeDescription.class)) {
+                annotationVisitor.visit(name, Type.getType(((TypeDescription) value).getDescriptor()));
             } else if (valueType.isArray()) {
                 AnnotationVisitor arrayVisitor = annotationVisitor.visitArray(name);
                 int length = Array.getLength(value);
@@ -348,10 +334,8 @@ public interface AnnotationAppender {
                     apply(arrayVisitor, componentType, ASM_IGNORE_NAME, Array.get(value, index));
                 }
                 arrayVisitor.visitEnd();
-            } else if (valueType.represents(Class.class)) {
-                annotationVisitor.visit(name, Type.getType((Class<?>) value)); // TODO
             } else {
-                annotationVisitor.visit(name, value); // TODO ?
+                annotationVisitor.visit(name, value);
             }
         }
 
