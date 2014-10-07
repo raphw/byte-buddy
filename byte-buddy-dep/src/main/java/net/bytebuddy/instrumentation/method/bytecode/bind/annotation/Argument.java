@@ -200,7 +200,6 @@ public @interface Argument {
                 AnnotationDescription.Loadable<Argument> annotation = parameterAnnotations.ofType(Argument.class);
                 if (annotation != null) {
                     results.remove(annotation.load().value());
-                    break;
                 }
             }
             return results.iterator();
