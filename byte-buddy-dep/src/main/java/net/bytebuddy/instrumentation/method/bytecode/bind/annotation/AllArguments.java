@@ -1,6 +1,7 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
 import net.bytebuddy.instrumentation.Instrumentation;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
@@ -110,7 +111,7 @@ public @interface AllArguments {
         }
 
         @Override
-        public MethodDelegationBinder.ParameterBinding<?> bind(AllArguments annotation,
+        public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<AllArguments> annotation,
                                                                int targetParameterIndex,
                                                                MethodDescription source,
                                                                MethodDescription target,
@@ -130,7 +131,7 @@ public @interface AllArguments {
                         assigner.assign(sourceParameter, arrayFactory.getComponentType(), considerRuntimeType));
                 if (stackManipulation.isValid()) {
                     stackManipulations.add(stackManipulation);
-                } else if (annotation.value().isStrict()) {
+                } else if (annotation.load().value().isStrict()) {
                     return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
                 }
                 offset += sourceParameter.getStackSize().getSize();

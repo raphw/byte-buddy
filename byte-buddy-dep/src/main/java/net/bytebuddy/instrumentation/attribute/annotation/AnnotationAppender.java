@@ -74,7 +74,9 @@ public interface AnnotationAppender {
          * visibility of type {@link java.lang.annotation.RetentionPolicy#SOURCE} will be silently ignored.
          */
         public static AnnotationVisibility of(AnnotationDescription annotation) {
-            AnnotationDescription.Loadable<Retention> retention = annotation.getAnnotationType().getAnnotations().ofType(Retention.class);
+            AnnotationDescription.Loadable<Retention> retention = annotation.getAnnotationType()
+                    .getDeclaredAnnotations()
+                    .ofType(Retention.class);
             if (retention == null || retention.load().value() == RetentionPolicy.SOURCE) {
                 return INVISIBLE;
             } else if (retention.load().value() == RetentionPolicy.CLASS) {

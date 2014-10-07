@@ -3,6 +3,7 @@ package net.bytebuddy.instrumentation.type;
 import net.bytebuddy.instrumentation.ByteCodeElement;
 import net.bytebuddy.instrumentation.ModifierReviewable;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotatedElement;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
@@ -13,6 +14,10 @@ import org.objectweb.asm.Type;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.Set;
+
+import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
 /**
  * Implementations of this interface represent a Java type, i.e. a class or interface.
@@ -234,6 +239,8 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
      */
     ClassLoader getClassLoader();
 
+    AnnotationList getInheritedAnnotations();
+
     /**
      * An abstract base implementation of a type description.
      */
@@ -285,6 +292,20 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
         }
 
         @Override
+        public AnnotationList getInheritedAnnotations() {
+            AnnotationList declaredAnnotations = getDeclaredAnnotations();
+            if (getSupertype() == null) {
+                return declaredAnnotations;
+            } else {
+                Set<TypeDescription> annotationTypes = new HashSet<TypeDescription>(declaredAnnotations.size());
+                for (AnnotationDescription annotationDescription : declaredAnnotations) {
+                    annotationTypes.add(annotationDescription.getAnnotationType());
+                }
+                return new AnnotationList.Explicit(join(declaredAnnotations, getSupertype().getInheritedAnnotations().inherited(annotationTypes)));
+            }
+        }
+
+        @Override
         public boolean equals(Object other) {
             return other == this || other instanceof TypeDescription
                     && getName().equals(((TypeDescription) other).getName());
@@ -295,7 +316,7 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
             return getName().hashCode();
         }
 
-        public abstract static class ForSimpleType extends AbstractTypeDescription {
+        public abstract static class OfSimpleType extends AbstractTypeDescription {
 
             /**
              * Checks if a specific type is assignable to another type where the source type must be a super
@@ -578,8 +599,8 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
         }
 
         @Override
-        public AnnotationList getAnnotations() {
-            return null; // TODO
+        public AnnotationList getInheritedAnnotations() {
+            return new AnnotationList.ForLoadedAnnotation(type.getAnnotations());
         }
 
         @Override
@@ -770,7 +791,7 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
         }
 
         @Override
-        public AnnotationList getAnnotations() {
+        public AnnotationList getInheritedAnnotations() {
             return new AnnotationList.Empty();
         }
 

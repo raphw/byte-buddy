@@ -57,8 +57,8 @@ public @interface BindingPriority {
         public Resolution resolve(MethodDescription source,
                                   MethodDelegationBinder.MethodBinding left,
                                   MethodDelegationBinder.MethodBinding right) {
-            double leftPriority = resolve(left.getTarget().getAnnotations().ofType(BindingPriority.class));
-            double rightPriority = resolve(right.getTarget().getAnnotations().ofType(BindingPriority.class));
+            double leftPriority = resolve(left.getTarget().getDeclaredAnnotations().ofType(BindingPriority.class));
+            double rightPriority = resolve(right.getTarget().getDeclaredAnnotations().ofType(BindingPriority.class));
             if (leftPriority == rightPriority) {
                 return Resolution.AMBIGUOUS;
             } else if (leftPriority < rightPriority) {

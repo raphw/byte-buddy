@@ -202,7 +202,7 @@ public interface TypePool {
         }
     }
 
-    static class UnloadedTypeDescription extends TypeDescription.AbstractTypeDescription.ForSimpleType {
+    static class UnloadedTypeDescription extends TypeDescription.AbstractTypeDescription.OfSimpleType {
 
         private final TypePool typePool;
 
@@ -445,11 +445,6 @@ public interface TypePool {
             return null; // TODO
         }
 
-        @Override
-        public AnnotationList getAnnotations() {
-            return null; // TODO
-        }
-
         protected static class FieldToken {
 
             private final int modifiers;
@@ -502,11 +497,6 @@ public interface TypePool {
 
             @Override
             public AnnotationList getDeclaredAnnotations() {
-                return null; // TODO
-            }
-
-            @Override
-            public AnnotationList getAnnotations() {
                 return null; // TODO
             }
 
@@ -622,11 +612,6 @@ public interface TypePool {
             @Override
             public AnnotationList getDeclaredAnnotations() {
                 return null;
-            }
-
-            @Override
-            public AnnotationList getAnnotations() {
-                return null; // TODO
             }
 
             @Override

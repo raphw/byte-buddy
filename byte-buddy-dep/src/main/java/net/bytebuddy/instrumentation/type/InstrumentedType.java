@@ -76,7 +76,7 @@ public interface InstrumentedType extends TypeDescription {
     /**
      * An abstract base implementation of an instrumented type.
      */
-    abstract static class AbstractBase extends AbstractTypeDescription.ForSimpleType implements InstrumentedType {
+    abstract static class AbstractBase extends AbstractTypeDescription.OfSimpleType implements InstrumentedType {
 
         /**
          * The loaded type initializer for this instrumented type.
@@ -409,11 +409,6 @@ public interface InstrumentedType extends TypeDescription {
             @Override
             public AnnotationList getDeclaredAnnotations() {
                 return new AnnotationList.Empty();
-            }
-
-            @Override
-            public AnnotationList getAnnotations() {
-                return null; // TODO
             }
 
             @Override

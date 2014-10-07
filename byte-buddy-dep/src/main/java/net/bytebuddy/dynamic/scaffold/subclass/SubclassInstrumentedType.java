@@ -11,6 +11,7 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.isValidTypeName;
@@ -203,8 +204,8 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
     }
 
     @Override
-    public AnnotationList getAnnotations() {
-        return null; // TODO
+    public AnnotationList getInheritedAnnotations() {
+        return getSupertype().getInheritedAnnotations().inherited(Collections.<TypeDescription>emptySet());
     }
 
     @Override

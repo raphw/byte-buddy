@@ -351,11 +351,6 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         }
 
         @Override
-        public AnnotationList getAnnotations() {
-            return null; // TODO
-        }
-
-        @Override
         public String toString() {
             return "MethodDescription.ForLoadedConstructor{" + constructor + "}";
         }
@@ -463,11 +458,6 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         @Override
         public AnnotationList getDeclaredAnnotations() {
             return new AnnotationList.ForLoadedAnnotation(method.getDeclaredAnnotations());
-        }
-
-        @Override
-        public AnnotationList getAnnotations() {
-            return null; // TODO
         }
 
         @Override
@@ -593,11 +583,6 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
 
         @Override
         public AnnotationList getDeclaredAnnotations() {
-            return new AnnotationList.Empty();
-        }
-
-        @Override
-        public AnnotationList getAnnotations() {
             return new AnnotationList.Empty();
         }
 

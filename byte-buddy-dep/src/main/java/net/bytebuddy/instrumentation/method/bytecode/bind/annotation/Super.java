@@ -2,6 +2,7 @@ package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.instrumentation.Instrumentation;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
@@ -158,19 +159,20 @@ public @interface Super {
         }
 
         @Override
-        public MethodDelegationBinder.ParameterBinding<?> bind(Super annotation,
+        public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<Super> annotation,
                                                                int targetParameterIndex,
                                                                MethodDescription source,
                                                                MethodDescription target,
                                                                Instrumentation.Target instrumentationTarget,
                                                                Assigner assigner) {
+            Super zuper = annotation.load(); // TODO: Must not load!
             TypeDescription parameterType = target.getParameterTypes().get(targetParameterIndex);
             if (source.isStatic() || !instrumentationTarget.getTypeDescription().isAssignableTo(parameterType)) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             } else {
-                return new MethodDelegationBinder.ParameterBinding.Anonymous(annotation
+                return new MethodDelegationBinder.ParameterBinding.Anonymous(zuper
                         .strategy()
-                        .proxyFor(parameterType, instrumentationTarget, annotation));
+                        .proxyFor(parameterType, instrumentationTarget, zuper));
             }
         }
     }

@@ -145,12 +145,13 @@ public @interface Argument {
         }
 
         @Override
-        public MethodDelegationBinder.ParameterBinding<?> bind(Argument argument,
+        public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<Argument> annotation,
                                                                int targetParameterIndex,
                                                                MethodDescription source,
                                                                MethodDescription target,
                                                                Instrumentation.Target instrumentationTarget,
                                                                Assigner assigner) {
+            Argument argument = annotation.load();
             if (argument.value() < 0) {
                 throw new IllegalArgumentException(String.format("Argument annotation on %d's argument virtual " +
                         "%s holds negative index", targetParameterIndex, target));
@@ -206,7 +207,7 @@ public @interface Argument {
         }
 
         @Override
-        public Iterator<Argument> makeIterator(Instrumentation.Target instrumentationTarget,
+        public Iterator<AnnotationDescription> makeIterator(Instrumentation.Target instrumentationTarget,
                                                MethodDescription source,
                                                MethodDescription target) {
             return new NextUnboundArgumentIterator(makeFreeIndexList(source, target));
@@ -216,7 +217,7 @@ public @interface Argument {
          * An iterator that creates {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument}
          * annotations for any non-referenced index of the source method.
          */
-        private static class NextUnboundArgumentIterator implements Iterator<Argument> {
+        private static class NextUnboundArgumentIterator implements Iterator<AnnotationDescription> {
 
             /**
              * An iterator over all free indices.
@@ -239,8 +240,8 @@ public @interface Argument {
             }
 
             @Override
-            public Argument next() {
-                return new DefaultArgument(iterator.next());
+            public AnnotationDescription next() {
+                return AnnotationDescription.ForLoadedAnnotation.of(new DefaultArgument(iterator.next()));
             }
 
             @Override

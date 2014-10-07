@@ -63,7 +63,7 @@ public interface MethodAttributeAppender {
         public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
             AnnotationAppender methodAppender =
                     new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethod(methodVisitor));
-            for (AnnotationDescription annotation : methodDescription.getAnnotations()) {
+            for (AnnotationDescription annotation : methodDescription.getDeclaredAnnotations()) {
                 methodAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
             }
             int i = 0;

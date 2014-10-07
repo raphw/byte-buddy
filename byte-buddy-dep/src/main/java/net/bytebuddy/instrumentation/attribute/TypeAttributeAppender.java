@@ -54,7 +54,7 @@ public interface TypeAttributeAppender {
         public void apply(ClassVisitor classVisitor, TypeDescription typeDescription) {
             AnnotationAppender annotationAppender =
                     new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor));
-            for (AnnotationDescription annotation : typeDescription.getSupertype().getAnnotations()) {
+            for (AnnotationDescription annotation : typeDescription.getSupertype().getDeclaredAnnotations()) {
                 annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
             }
         }

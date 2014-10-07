@@ -198,8 +198,8 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
     }
 
     @Override
-    public AnnotationList getAnnotations() {
-        return levelType.getAnnotations();
+    public AnnotationList getInheritedAnnotations() {
+        return levelType.getInheritedAnnotations();
     }
 
     @Override

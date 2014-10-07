@@ -51,11 +51,6 @@ public interface FieldDescription extends ModifierReviewable, ByteCodeElement, D
         }
 
         @Override
-        public AnnotationList getAnnotations() {
-            return getDeclaredAnnotations();
-        }
-
-        @Override
         public boolean equals(Object other) {
             return other == this || other instanceof FieldDescription
                     && getName().equals(((FieldDescription) other).getName())

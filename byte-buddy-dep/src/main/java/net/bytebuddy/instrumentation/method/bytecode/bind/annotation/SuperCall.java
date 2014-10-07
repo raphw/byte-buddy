@@ -1,6 +1,7 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
 import net.bytebuddy.instrumentation.Instrumentation;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
@@ -54,7 +55,7 @@ public @interface SuperCall {
         }
 
         @Override
-        public MethodDelegationBinder.ParameterBinding<?> bind(SuperCall annotation,
+        public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<SuperCall> annotation,
                                                                int targetParameterIndex,
                                                                MethodDescription source,
                                                                MethodDescription target,
@@ -67,7 +68,7 @@ public @interface SuperCall {
             Instrumentation.SpecialMethodInvocation specialMethodInvocation = instrumentationTarget.invokeSuper(source,
                     Instrumentation.Target.MethodLookup.Default.EXACT);
             return specialMethodInvocation.isValid()
-                    ? new MethodDelegationBinder.ParameterBinding.Anonymous(new MethodCallProxy.AssignableSignatureCall(specialMethodInvocation, annotation.serializableProxy()))
+                    ? new MethodDelegationBinder.ParameterBinding.Anonymous(new MethodCallProxy.AssignableSignatureCall(specialMethodInvocation, annotation.load().serializableProxy()))
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
         }
     }

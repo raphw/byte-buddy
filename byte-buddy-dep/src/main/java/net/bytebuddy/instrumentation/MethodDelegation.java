@@ -138,7 +138,7 @@ public class MethodDelegation implements Instrumentation {
      * The {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.TargetMethodAnnotationDrivenBinder.DefaultsProvider}
      * to be used by this method delegation.
      */
-    private final TargetMethodAnnotationDrivenBinder.DefaultsProvider<?> defaultsProvider;
+    private final TargetMethodAnnotationDrivenBinder.DefaultsProvider defaultsProvider;
 
     /**
      * The {@link net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.AmbiguityResolver}
@@ -169,7 +169,7 @@ public class MethodDelegation implements Instrumentation {
      */
     protected MethodDelegation(InstrumentationDelegate instrumentationDelegate,
                                List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders,
-                               TargetMethodAnnotationDrivenBinder.DefaultsProvider<?> defaultsProvider,
+                               TargetMethodAnnotationDrivenBinder.DefaultsProvider defaultsProvider,
                                MethodDelegationBinder.AmbiguityResolver ambiguityResolver,
                                Assigner assigner,
                                MethodList targetMethodCandidates) {
@@ -376,7 +376,7 @@ public class MethodDelegation implements Instrumentation {
      *
      * @return The defaults provider that is to be used if no other is specified explicitly.
      */
-    private static TargetMethodAnnotationDrivenBinder.DefaultsProvider<?> defaultDefaultsProvider() {
+    private static TargetMethodAnnotationDrivenBinder.DefaultsProvider defaultDefaultsProvider() {
         return Argument.NextUnboundAsDefaultsProvider.INSTANCE;
     }
 

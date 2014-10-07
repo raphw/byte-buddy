@@ -5,6 +5,7 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.instrumentation.Instrumentation;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
@@ -158,7 +159,7 @@ public @interface Pipe {
         }
 
         @Override
-        public MethodDelegationBinder.ParameterBinding<?> bind(Pipe annotation,
+        public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<Pipe> annotation,
                                                                int targetParameterIndex,
                                                                MethodDescription source,
                                                                MethodDescription target,
@@ -174,7 +175,7 @@ public @interface Pipe {
             return new MethodDelegationBinder.ParameterBinding.Anonymous(new Redirection(forwardingMethod.getDeclaringType(),
                     source,
                     assigner,
-                    annotation.serializableProxy(),
+                    annotation.load().serializableProxy(),
                     this));
         }
 

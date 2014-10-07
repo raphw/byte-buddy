@@ -1,20 +1,18 @@
 package net.bytebuddy.instrumentation.attribute.annotation;
 
-import net.bytebuddy.instrumentation.method.MethodList;
+import net.bytebuddy.instrumentation.type.TypeDescription;
 
 import java.lang.annotation.Annotation;
-import java.util.AbstractList;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.lang.annotation.Inherited;
+import java.util.*;
 
 public interface AnnotationList extends List<AnnotationDescription> {
-
-    boolean isAnnotationPresent(AnnotationDescription annotationDescription);
 
     <T extends Annotation> boolean isAnnotationPresent(Class<T> annotationType);
 
     <T extends Annotation> AnnotationDescription.Loadable<T> ofType(Class<T> annotationType);
+
+    AnnotationList inherited(Set<? extends TypeDescription> ignoredTypes);
 
     static class ForLoadedAnnotation extends AbstractList<AnnotationDescription> implements AnnotationList {
 
@@ -43,16 +41,6 @@ public interface AnnotationList extends List<AnnotationDescription> {
         }
 
         @Override
-        public boolean isAnnotationPresent(AnnotationDescription annotationDescription) {
-            for (Annotation anAnnotation : annotation) {
-                if (annotationDescription.getAnnotationType().equals(new MethodList.ForLoadedType(anAnnotation.annotationType()))) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        @Override
         public <T extends Annotation> boolean isAnnotationPresent(Class<T> annotationType) {
             for (Annotation anAnnotation : annotation) {
                 if (anAnnotation.annotationType().equals(annotationType)) {
@@ -70,6 +58,18 @@ public interface AnnotationList extends List<AnnotationDescription> {
                 }
             }
             return null;
+        }
+
+        @Override
+        public AnnotationList inherited(Set<? extends TypeDescription> ignoredTypes) {
+            List<Annotation> inherited = new LinkedList<Annotation>();
+            for (Annotation annotation : this.annotation) {
+                if (!ignoredTypes.contains(new TypeDescription.ForLoadedType(annotation.annotationType()))
+                        && annotation.annotationType().isAnnotationPresent(Inherited.class)) {
+                    inherited.add(annotation);
+                }
+            }
+            return new ForLoadedAnnotation(inherited.toArray(new Annotation[inherited.size()]));
         }
     }
 
@@ -94,11 +94,6 @@ public interface AnnotationList extends List<AnnotationDescription> {
         }
 
         @Override
-        public boolean isAnnotationPresent(AnnotationDescription annotationDescription) {
-            return false;
-        }
-
-        @Override
         public <T extends Annotation> boolean isAnnotationPresent(Class<T> annotationType) {
             return false;
         }
@@ -106,6 +101,70 @@ public interface AnnotationList extends List<AnnotationDescription> {
         @Override
         public <T extends Annotation> AnnotationDescription.Loadable<T> ofType(Class<T> annotationType) {
             return null;
+        }
+
+        @Override
+        public AnnotationList inherited(Set<? extends TypeDescription> ignoredTypes) {
+            return this;
+        }
+    }
+
+    static class Explicit extends AbstractList<AnnotationDescription> implements AnnotationList {
+
+        public static List<AnnotationList> asList(List<? extends List<? extends AnnotationDescription>> annotations) {
+            List<AnnotationList> result = new ArrayList<AnnotationList>(annotations.size());
+            for (List<? extends AnnotationDescription> annotation : annotations) {
+                result.add(new Explicit(annotation));
+            }
+            return result;
+        }
+
+        private final List<? extends AnnotationDescription> annotationDescriptions;
+
+        public Explicit(List<? extends AnnotationDescription> annotationDescriptions) {
+            this.annotationDescriptions = annotationDescriptions;
+        }
+
+        @Override
+        public AnnotationDescription get(int index) {
+            return annotationDescriptions.get(index);
+        }
+
+        @Override
+        public int size() {
+            return annotationDescriptions.size();
+        }
+
+        @Override
+        public <T extends Annotation> boolean isAnnotationPresent(Class<T> annotationType) {
+            for (AnnotationDescription annotationDescription : annotationDescriptions) {
+                if (annotationDescription.getAnnotationType().represents(annotationType)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public <T extends Annotation> AnnotationDescription.Loadable<T> ofType(Class<T> annotationType) {
+            for (AnnotationDescription annotationDescription : annotationDescriptions) {
+                if (annotationDescription.getAnnotationType().represents(annotationType)) {
+                    return annotationDescription.prepare(annotationType);
+                }
+            }
+            return null;
+        }
+
+        @Override
+        public AnnotationList inherited(Set<? extends TypeDescription> ignoredTypes) {
+            List<AnnotationDescription> inherited = new LinkedList<AnnotationDescription>();
+            for (AnnotationDescription annotation : annotationDescriptions) {
+                TypeDescription annotationType = annotation.getAnnotationType();
+                if (!ignoredTypes.contains(annotationType) && annotationType.getDeclaredAnnotations().isAnnotationPresent(Inherited.class)) {
+                    inherited.add(annotation);
+                }
+            }
+            return new Explicit(new ArrayList<AnnotationDescription>(inherited));
         }
     }
 }

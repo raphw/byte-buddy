@@ -1,6 +1,7 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
 import net.bytebuddy.instrumentation.Instrumentation;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
@@ -79,19 +80,20 @@ public @interface DefaultCall {
         }
 
         @Override
-        public MethodDelegationBinder.ParameterBinding<?> bind(DefaultCall annotation,
+        public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<DefaultCall> annotation,
                                                                int targetParameterIndex,
                                                                MethodDescription source,
                                                                MethodDescription target,
                                                                Instrumentation.Target instrumentationTarget,
                                                                Assigner assigner) {
+            DefaultCall defaultCall = annotation.load(); // TODO: Must not load!
             TypeDescription targetType = target.getParameterTypes().get(targetParameterIndex);
             if (!targetType.represents(Runnable.class) && !targetType.represents(Callable.class) && !targetType.represents(Object.class)) {
                 throw new IllegalStateException("A default method call proxy can only be assigned to Runnable or Callable types: " + target);
             }
-            Instrumentation.SpecialMethodInvocation specialMethodInvocation = locate(annotation.targetType()).resolve(instrumentationTarget, source);
+            Instrumentation.SpecialMethodInvocation specialMethodInvocation = locate(defaultCall.targetType()).resolve(instrumentationTarget, source);
             return specialMethodInvocation.isValid()
-                    ? new MethodDelegationBinder.ParameterBinding.Anonymous(new MethodCallProxy.AssignableSignatureCall(specialMethodInvocation, annotation.serializableProxy()))
+                    ? new MethodDelegationBinder.ParameterBinding.Anonymous(new MethodCallProxy.AssignableSignatureCall(specialMethodInvocation, defaultCall.serializableProxy()))
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
         }
 
