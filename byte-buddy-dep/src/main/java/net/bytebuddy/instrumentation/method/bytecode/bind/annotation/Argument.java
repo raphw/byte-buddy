@@ -207,8 +207,8 @@ public @interface Argument {
 
         @Override
         public Iterator<AnnotationDescription> makeIterator(Instrumentation.Target instrumentationTarget,
-                                               MethodDescription source,
-                                               MethodDescription target) {
+                                                            MethodDescription source,
+                                                            MethodDescription target) {
             return new NextUnboundArgumentIterator(makeFreeIndexList(source, target));
         }
 
@@ -254,6 +254,8 @@ public @interface Argument {
              */
             private static class DefaultArgument implements Argument {
 
+                private static final String VALUE = "value";
+
                 /**
                  * The index of the source method parameter to be bound.
                  */
@@ -281,6 +283,16 @@ public @interface Argument {
                 @Override
                 public Class<Argument> annotationType() {
                     return Argument.class;
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || other instanceof Argument && parameterIndex == ((Argument) other).value();
+                }
+
+                @Override
+                public int hashCode() {
+                    return (127 * VALUE.hashCode()) ^ parameterIndex; // OpenJDK implementation of the hash code method
                 }
 
                 @Override
