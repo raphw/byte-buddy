@@ -171,12 +171,31 @@ public interface TypePool {
 
             @Override
             public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-                return null; // TODO
+                return new AnnotationExtractor(Default.this,
+                        new OnTypeCollector(descriptor),
+                        new AnnotationExtractor.ComponentTypeLookup.ForAnnotationProperty(Default.this, descriptor));
             }
 
-            //            @Override
-            public void register(UnloadedTypeDescription.AnnotationToken annotationToken) {
-                annotationTokens.add(annotationToken);
+            private class OnTypeCollector implements AnnotationExtractor.Registrant {
+
+                private final String descriptor;
+
+                private final LinkedHashMap<String, UnloadedTypeDescription.AnnotationValue<?, ?>> values;
+
+                private OnTypeCollector(String descriptor) {
+                    this.descriptor = descriptor;
+                    values = new LinkedHashMap<String, UnloadedTypeDescription.AnnotationValue<?, ?>>();
+                }
+
+                @Override
+                public void register(String name, UnloadedTypeDescription.AnnotationValue<?, ?> annotationValue) {
+                    values.put(name, annotationValue);
+                }
+
+                @Override
+                public void onComplete() {
+                    annotationTokens.add(new UnloadedTypeDescription.AnnotationToken(descriptor, values));
+                }
             }
 
             @Override
@@ -233,12 +252,31 @@ public interface TypePool {
 
                 @Override
                 public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-                    return null; // TODO
+                    return new AnnotationExtractor(Default.this,
+                            new OnFieldCollector(descriptor),
+                            new AnnotationExtractor.ComponentTypeLookup.ForAnnotationProperty(Default.this, descriptor));
                 }
 
-                //                @Override
-                public void register(UnloadedTypeDescription.AnnotationToken annotationToken) {
-                    annotationTokens.add(annotationToken);
+                private class OnFieldCollector implements AnnotationExtractor.Registrant {
+
+                    private final String descriptor;
+
+                    private final LinkedHashMap<String, UnloadedTypeDescription.AnnotationValue<?, ?>> values;
+
+                    private OnFieldCollector(String descriptor) {
+                        this.descriptor = descriptor;
+                        values = new LinkedHashMap<String, UnloadedTypeDescription.AnnotationValue<?, ?>>();
+                    }
+
+                    @Override
+                    public void register(String name, UnloadedTypeDescription.AnnotationValue<?, ?> annotationValue) {
+                        values.put(name, annotationValue);
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        annotationTokens.add(new UnloadedTypeDescription.AnnotationToken(descriptor, values));
+                    }
                 }
 
                 @Override
@@ -247,7 +285,7 @@ public interface TypePool {
                 }
             }
 
-            private class MethodAnnotationCollector extends MethodVisitor {
+            private class MethodAnnotationCollector extends MethodVisitor implements AnnotationExtractor.Registrant {
 
                 private final int modifiers;
 
@@ -274,26 +312,40 @@ public interface TypePool {
                     this.exceptionName = exceptionName;
                     annotationTokens = new LinkedList<UnloadedTypeDescription.AnnotationToken>();
                     parameterAnnotationTokens = new HashMap<Integer, List<UnloadedTypeDescription.AnnotationToken>>();
+                    for (int i = 0; i < Type.getMethodType(descriptor).getArgumentTypes().length; i++) {
+                        parameterAnnotationTokens.put(i, new LinkedList<UnloadedTypeDescription.AnnotationToken>());
+                    }
                 }
 
                 @Override
                 public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-                    return null; // TODO
+                    return new AnnotationExtractor(Default.this,
+                            new OnMethodCollector(descriptor),
+                            new AnnotationExtractor.ComponentTypeLookup.ForAnnotationProperty(Default.this, descriptor));
                 }
 
                 @Override
-                public AnnotationVisitor visitParameterAnnotation(int parameter, String descriptor, boolean visible) {
-                    return null; // TODO
-                }
-
-                //                @Override
-                public void register(UnloadedTypeDescription.AnnotationToken annotationToken) {
-                    annotationTokens.add(annotationToken);
+                public AnnotationVisitor visitParameterAnnotation(int index, String descriptor, boolean visible) {
+                    return new AnnotationExtractor(Default.this,
+                            new OnMethodParameterCollector(descriptor, index),
+                            new AnnotationExtractor.ComponentTypeLookup.ForAnnotationProperty(Default.this, descriptor));
                 }
 
                 @Override
                 public AnnotationVisitor visitAnnotationDefault() {
-                    return new AnnotationDefaultVisitor();
+                    return new AnnotationExtractor(Default.this,
+                            this,
+                            new AnnotationExtractor.ComponentTypeLookup.FixedArrayReturnType(descriptor));
+                }
+
+                @Override
+                public void register(String ignored, UnloadedTypeDescription.AnnotationValue<?, ?> annotationValue) {
+                    defaultValue = annotationValue;
+                }
+
+                @Override
+                public void onComplete() {
+                    /* do nothing */
                 }
 
                 @Override
@@ -307,56 +359,216 @@ public interface TypePool {
                             defaultValue));
                 }
 
-                private class ParameterSink {
+                private class OnMethodCollector implements AnnotationExtractor.Registrant {
+
+                    private final String descriptor;
+
+                    private final LinkedHashMap<String, UnloadedTypeDescription.AnnotationValue<?, ?>> values;
+
+                    private OnMethodCollector(String descriptor) {
+                        this.descriptor = descriptor;
+                        values = new LinkedHashMap<String, UnloadedTypeDescription.AnnotationValue<?, ?>>();
+                    }
+
+                    @Override
+                    public void register(String name, UnloadedTypeDescription.AnnotationValue<?, ?> annotationValue) {
+                        values.put(name, annotationValue);
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        annotationTokens.add(new UnloadedTypeDescription.AnnotationToken(descriptor, values));
+                    }
+                }
+
+                private class OnMethodParameterCollector implements AnnotationExtractor.Registrant {
+
+                    private final String descriptor;
 
                     private final int index;
 
-                    private ParameterSink(int index) {
+                    private final LinkedHashMap<String, UnloadedTypeDescription.AnnotationValue<?, ?>> values;
+
+                    private OnMethodParameterCollector(String descriptor, int index) {
+                        this.descriptor = descriptor;
                         this.index = index;
+                        values = new LinkedHashMap<String, UnloadedTypeDescription.AnnotationValue<?, ?>>();
                     }
 
-                    //                    @Override
-                    public void register(UnloadedTypeDescription.AnnotationToken annotationToken) {
-                        List<UnloadedTypeDescription.AnnotationToken> tokens = parameterAnnotationTokens.get(index);
-                        if (tokens == null) {
-                            tokens = new LinkedList<UnloadedTypeDescription.AnnotationToken>();
-                            parameterAnnotationTokens.put(index, tokens);
-                        }
-                        tokens.add(annotationToken);
+                    @Override
+                    public void register(String name, UnloadedTypeDescription.AnnotationValue<?, ?> annotationValue) {
+                        values.put(name, annotationValue);
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        parameterAnnotationTokens.get(index).add(new UnloadedTypeDescription.AnnotationToken(descriptor, values));
+                    }
+                }
+            }
+        }
+
+        protected static class AnnotationExtractor extends AnnotationVisitor {
+
+            private final TypePool typePool;
+
+            private final Registrant registrant;
+
+            private final ComponentTypeLookup componentTypeLookup;
+
+            public AnnotationExtractor(TypePool typePool, Registrant registrant, ComponentTypeLookup componentTypeLookup) {
+                super(ASM_VERSION);
+                this.typePool = typePool;
+                this.registrant = registrant;
+                this.componentTypeLookup = componentTypeLookup;
+            }
+
+            @Override
+            public void visit(String name, Object value) {
+                UnloadedTypeDescription.AnnotationValue<?, ?> annotationValue;
+                if (value instanceof Type) {
+                    annotationValue = new UnloadedTypeDescription.AnnotationValue.TypeToken((Type) value);
+                } else if (value.getClass().isArray()) {
+                    annotationValue = new UnloadedTypeDescription.AnnotationValue.ArrayToken.Trivial<Object>(value);
+                } else {
+                    annotationValue = new UnloadedTypeDescription.AnnotationValue.Trivial<Object>(value);
+                }
+                registrant.register(name, annotationValue);
+            }
+
+            @Override
+            public void visitEnum(String name, String descriptor, String value) {
+                registrant.register(name, new UnloadedTypeDescription.AnnotationValue.Enumeration(descriptor, value));
+            }
+
+            @Override
+            public AnnotationVisitor visitAnnotation(String name, String descriptor) {
+                return new AnnotationExtractor(typePool,
+                        new AnnotationLookup(name, descriptor),
+                        new ComponentTypeLookup.ForAnnotationProperty(typePool, descriptor));
+            }
+
+            @Override
+            public AnnotationVisitor visitArray(String name) {
+                return new AnnotationExtractor(typePool,
+                        new ArrayLookup(name, componentTypeLookup.lookup(name)),
+                        ComponentTypeLookup.Illegal.INSTANCE);
+            }
+
+            @Override
+            public void visitEnd() {
+                registrant.onComplete();
+            }
+
+            private class ArrayLookup implements Registrant {
+
+                private final String name;
+
+                private final String componentTypeDescriptor;
+
+                private final LinkedList<UnloadedTypeDescription.AnnotationValue<?, ?>> values;
+
+                private ArrayLookup(String name, String componentTypeDescriptor) {
+                    this.name = name;
+                    this.componentTypeDescriptor = componentTypeDescriptor;
+                    values = new LinkedList<UnloadedTypeDescription.AnnotationValue<?, ?>>();
+                }
+
+                @Override
+                public void register(String ignored, UnloadedTypeDescription.AnnotationValue<?, ?> annotationValue) {
+                    values.add(annotationValue);
+                }
+
+                @Override
+                public void onComplete() {
+                    registrant.register(name, new UnloadedTypeDescription.AnnotationValue.ArrayToken.Complex(values, componentTypeDescriptor));
+                }
+            }
+
+            private class AnnotationLookup implements Registrant {
+
+                private final String name;
+
+                private final String descriptor;
+
+                private final LinkedHashMap<String, UnloadedTypeDescription.AnnotationValue<?, ?>> values;
+
+                private AnnotationLookup(String name, String descriptor) {
+                    this.name = name;
+                    this.descriptor = descriptor;
+                    values = new LinkedHashMap<String, UnloadedTypeDescription.AnnotationValue<?, ?>>();
+                }
+
+                @Override
+                public void register(String name, UnloadedTypeDescription.AnnotationValue<?, ?> annotationValue) {
+                    values.put(name, annotationValue);
+                }
+
+                @Override
+                public void onComplete() {
+                    registrant.register(name, new UnloadedTypeDescription.AnnotationValue
+                            .Annotation(new UnloadedTypeDescription.AnnotationToken(descriptor, values)));
+                }
+            }
+
+            public static interface ComponentTypeLookup {
+
+                static class ForAnnotationProperty implements ComponentTypeLookup {
+
+                    private final TypePool typePool;
+
+                    private final String annotationName;
+
+                    public ForAnnotationProperty(TypePool typePool, String annotationDescriptor) {
+                        this.typePool = typePool;
+                        annotationName = annotationDescriptor.replace('/', '.');
+                    }
+
+                    @Override
+                    public String lookup(String name) {
+                        return typePool.describe(annotationName)
+                                .getDeclaredMethods()
+                                .filter(named(name))
+                                .getOnly()
+                                .getReturnType()
+                                .getComponentType()
+                                .getName();
                     }
                 }
 
-                private class AnnotationDefaultVisitor extends AnnotationVisitor {
+                static class FixedArrayReturnType implements ComponentTypeLookup {
 
-                    private AnnotationDefaultVisitor() {
-                        super(ASM_VERSION);
+                    private final String componentType;
+
+                    public FixedArrayReturnType(String methodDescriptor) {
+                        String arrayType = Type.getMethodType(methodDescriptor).getReturnType().getClassName();
+                        componentType = arrayType.substring(0, arrayType.length() - 2);
                     }
 
                     @Override
-                    public void visit(String ignored, Object value) {
-                        defaultValue = new UnloadedTypeDescription.AnnotationValue.Trivial<Object>(value);
-                    }
-
-                    @Override
-                    public void visitEnum(String ignored, String descriptor, String value) {
-                        defaultValue = new UnloadedTypeDescription.AnnotationValue.Enumeration(descriptor, value);
-                    }
-
-                    @Override
-                    public AnnotationVisitor visitAnnotation(String ignored, String descriptor) {
-                        return null; // TODO
-                    }
-
-                    //                    @Override
-                    public void register(UnloadedTypeDescription.AnnotationToken annotationToken) {
-                        defaultValue = new UnloadedTypeDescription.AnnotationValue.Annotation(annotationToken);
-                    }
-
-                    @Override
-                    public AnnotationVisitor visitArray(String ignored) {
-                        return null; // TODO
+                    public String lookup(String name) {
+                        return componentType;
                     }
                 }
+
+                static enum Illegal implements ComponentTypeLookup {
+
+                    INSTANCE;
+
+                    @Override
+                    public String lookup(String name) {
+                        throw new IllegalStateException("Unexpected lookup of component type");
+                    }
+                }
+
+                String lookup(String name);
+            }
+
+            public static interface Registrant {
+
+                void register(String name, UnloadedTypeDescription.AnnotationValue<?, ?> annotationValue);
+
+                void onComplete();
             }
         }
     }
@@ -947,17 +1159,17 @@ public interface TypePool {
 
         protected static class AnnotationToken {
 
-            private final String annotationDescriptor;
+            private final String descriptor;
 
             private final LinkedHashMap<String, AnnotationValue<?, ?>> values;
 
-            protected AnnotationToken(String annotationDescriptor, LinkedHashMap<String, AnnotationValue<?, ?>> values) {
-                this.annotationDescriptor = annotationDescriptor;
+            protected AnnotationToken(String descriptor, LinkedHashMap<String, AnnotationValue<?, ?>> values) {
+                this.descriptor = descriptor;
                 this.values = values;
             }
 
-            public String getAnnotationDescriptor() {
-                return annotationDescriptor;
+            public String getDescriptor() {
+                return descriptor;
             }
 
             public LinkedHashMap<String, AnnotationValue<?, ?>> getValues() {
@@ -965,7 +1177,7 @@ public interface TypePool {
             }
 
             private AnnotationDescription toAnnotationDescription(TypePool typePool) {
-                return new UnloadedAnnotationDescription(typePool, annotationDescriptor, values);
+                return new UnloadedAnnotationDescription(typePool, descriptor, values);
             }
         }
 
@@ -983,6 +1195,7 @@ public interface TypePool {
                 this.typePool = typePool;
                 this.annotationDescriptor = annotationDescriptor;
                 this.values = values;
+                // TODO: Use type pool to look up annotation default values that are not contained in the values map.
             }
 
             @Override
@@ -1085,7 +1298,7 @@ public interface TypePool {
 
                 @Override
                 public Annotation load(ClassLoader classLoader) throws ClassNotFoundException {
-                    Class<?> annotationType = classLoader.loadClass(annotationToken.getAnnotationDescriptor().replace('/', '.'));
+                    Class<?> annotationType = classLoader.loadClass(annotationToken.getDescriptor().replace('/', '.'));
                     return (Annotation) Proxy.newProxyInstance(classLoader, new Class<?>[]{annotationType},
                             new AnnotationInvocationHandler(classLoader, annotationType, annotationToken.getValues()));
                 }
@@ -1094,7 +1307,7 @@ public interface TypePool {
                 public String toStringRepresentation() {
                     StringBuilder toString = new StringBuilder();
                     toString.append('@');
-                    toString.append(annotationToken.getAnnotationDescriptor().replace('/', '.'));
+                    toString.append(annotationToken.getDescriptor().replace('/', '.'));
                     toString.append('(');
                     boolean firstMember = true;
                     for (Map.Entry<String, AnnotationValue<?, ?>> entry : annotationToken.getValues().entrySet()) {
@@ -1392,6 +1605,17 @@ public interface TypePool {
                             hashCode = 31 * hashCode + annotationValue.hashCodeRepresentation(classLoader);
                         }
                         return hashCode;
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && componentTypeName.equals(((Complex) other).componentTypeName);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return componentTypeName.hashCode();
                     }
                 }
             }
