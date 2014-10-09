@@ -401,7 +401,9 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
 
             @Override
             public String getSimpleName() {
-                return getName().substring(getPackageName().length() + 1, getName().length());
+                int simpleNameIndex = getInternalName().lastIndexOf('$');
+                simpleNameIndex = simpleNameIndex == -1 ? getInternalName().lastIndexOf('/') : simpleNameIndex;
+                return simpleNameIndex == -1 ? getInternalName() : getInternalName().substring(simpleNameIndex + 1);
             }
 
             @Override
@@ -727,8 +729,7 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
 
         @Override
         public String getSimpleName() {
-            StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.append(componentType.getSimpleName());
+            StringBuilder stringBuilder = new StringBuilder(componentType.getSimpleName());
             for (int i = 0; i < arity; i++) {
                 stringBuilder.append("[]");
             }
@@ -737,8 +738,7 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
 
         @Override
         public String getCanonicalName() {
-            StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.append(componentType.getName());
+            StringBuilder stringBuilder = new StringBuilder(componentType.getCanonicalName());
             for (int i = 0; i < arity; i++) {
                 stringBuilder.append("[]");
             }
@@ -806,7 +806,7 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
             for (int i = 0; i < arity; i++) {
                 stringBuilder.append('[');
             }
-            return stringBuilder.append(componentType.getInternalName()).toString();
+            return stringBuilder.append(componentType.getDescriptor().replace('/', '.')).toString();
         }
 
         @Override

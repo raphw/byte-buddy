@@ -3,6 +3,7 @@ package net.bytebuddy.utility;
 import net.bytebuddy.instrumentation.ModifierContributor;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 import java.lang.reflect.Modifier;
 import java.util.*;
@@ -292,5 +293,11 @@ public final class ByteBuddyCommons {
             }
         }
         return types;
+    }
+
+    public static String toInternalName(Type type) {
+        return type.getSort() == Type.OBJECT || type.getSort() == Type.ARRAY
+                ? type.getInternalName()
+                : type.toString();
     }
 }

@@ -8,6 +8,7 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.utility.ByteBuddyCommons;
 import org.objectweb.asm.*;
 import org.objectweb.asm.Type;
 
@@ -27,12 +28,15 @@ public interface TypePool {
 
     abstract static class AbstractBase implements TypePool {
 
-        private static final String ARRAY_SYMBOL = "[]";
+        private static final String ARRAY_SYMBOL = "[";
 
         protected static final Map<String, TypeDescription> PRIMITIVE_TYPES;
 
+        protected static final Map<String, String> PRIMITIVE_DESCRIPTORS;
+
         static {
             Map<String, TypeDescription> primitiveTypes = new HashMap<String, TypeDescription>();
+            Map<String, String> primitiveDescriptors = new HashMap<String, String>();
             for (Class<?> primitiveType : new Class<?>[]{boolean.class,
                     byte.class,
                     short.class,
@@ -43,16 +47,22 @@ public interface TypePool {
                     double.class,
                     void.class}) {
                 primitiveTypes.put(primitiveType.getName(), new TypeDescription.ForLoadedType(primitiveType));
+                primitiveDescriptors.put(Type.getDescriptor(primitiveType), primitiveType.getName());
             }
             PRIMITIVE_TYPES = Collections.unmodifiableMap(primitiveTypes);
+            PRIMITIVE_DESCRIPTORS = Collections.unmodifiableMap(primitiveDescriptors);
         }
 
         @Override
         public TypeDescription describe(String name) {
             int arity = 0;
-            while (name.endsWith(ARRAY_SYMBOL)) {
+            while (name.startsWith(ARRAY_SYMBOL)) {
                 arity++;
-                name = name.substring(0, name.length() - 2);
+                name = name.substring(1);
+            }
+            if (arity > 0) {
+                String resolvedName = PRIMITIVE_DESCRIPTORS.get(name);
+                name = resolvedName == null ? name.substring(1, name.length() - 1) : resolvedName;
             }
             TypeDescription typeDescription = PRIMITIVE_TYPES.get(name);
             return TypeDescription.ArrayProjection.of(typeDescription == null ? doDescribe(name) : typeDescription, arity);
@@ -165,6 +175,9 @@ public interface TypePool {
                     this.modifiers = modifiers;
                     if (innerName == null) {
                         anonymousType = true;
+                    }
+                    if (declarationContext.isSelfDeclared()) {
+                        declarationContext = new UnloadedTypeDescription.DeclarationContext.DeclaredInType(outerName);
                     }
                 }
             }
@@ -530,7 +543,7 @@ public interface TypePool {
 
                     public ForAnnotationProperty(TypePool typePool, String annotationDescriptor) {
                         this.typePool = typePool;
-                        annotationName = annotationDescriptor.replace('/', '.');
+                        annotationName = annotationDescriptor.substring(1, annotationDescriptor.length() - 1).replace('/', '.');
                     }
 
                     @Override
@@ -614,10 +627,14 @@ public interface TypePool {
                 }
 
                 @Override
+                public boolean isSelfDeclared() {
+                    return true;
+                }
+
+                @Override
                 public boolean isDeclaredInType() {
                     return false;
                 }
-
 
                 @Override
                 public boolean isDeclaredInMethod() {
@@ -642,6 +659,11 @@ public interface TypePool {
                 @Override
                 public TypeDescription getEnclosingType(TypePool typePool) {
                     return typePool.describe(name);
+                }
+
+                @Override
+                public boolean isSelfDeclared() {
+                    return false;
                 }
 
                 @Override
@@ -681,6 +703,11 @@ public interface TypePool {
                 }
 
                 @Override
+                public boolean isSelfDeclared() {
+                    return false;
+                }
+
+                @Override
                 public boolean isDeclaredInType() {
                     return false;
                 }
@@ -694,6 +721,8 @@ public interface TypePool {
             MethodDescription getEnclosingMethod(TypePool typePool);
 
             TypeDescription getEnclosingType(TypePool typePool);
+
+            boolean isSelfDeclared();
 
             boolean isDeclaredInType();
 
@@ -765,7 +794,7 @@ public interface TypePool {
 
         @Override
         public String getCanonicalName() {
-            return name;
+            return name.replace('$', '.');
         }
 
         @Override
@@ -1121,9 +1150,10 @@ public interface TypePool {
                 internalName = new String[parameterType.length];
                 int index = 0, stackSize = 0;
                 for (Type aParameterType : parameterType) {
-                    name[index++] = aParameterType.getClassName();
-                    internalName[index++] = aParameterType.getInternalName();
+                    name[index] = aParameterType.getClassName();
+                    internalName[index] = ByteBuddyCommons.toInternalName(aParameterType);
                     stackSize += aParameterType.getSize();
+                    index++;
                 }
                 this.stackSize = stackSize;
             }
@@ -1197,9 +1227,12 @@ public interface TypePool {
                 this.typePool = typePool;
                 this.annotationDescriptor = annotationDescriptor;
                 this.values = values;
-                for (MethodDescription methodDescription : typePool.describe(annotationDescriptor.replace('/', '.')).getDeclaredMethods()) {
+                for (MethodDescription methodDescription : typePool.describe(annotationDescriptor
+                        .substring(1, annotationDescriptor.length() - 1)
+                        .replace('/', '.')).getDeclaredMethods()) {
                     if (!values.containsKey(methodDescription.getName())) {
-                        values.put(methodDescription.getName(), AnnotationValue.Resolved.of(methodDescription.getDefaultValue(), methodDescription));
+                        values.put(methodDescription.getName(), AnnotationValue.Resolved
+                                .of(methodDescription.getDefaultValue(), methodDescription));
                     }
                 }
             }
