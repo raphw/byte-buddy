@@ -1259,7 +1259,7 @@ public interface TypePool {
 
             @Override
             public TypeDescription getAnnotationType() {
-                return typePool.describe(annotationDescriptor);
+                return typePool.describe(annotationDescriptor.substring(1, annotationDescriptor.length() - 1).replace('/', '.'));
             }
 
             @Override
