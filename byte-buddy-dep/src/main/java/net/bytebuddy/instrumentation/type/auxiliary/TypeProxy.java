@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
+import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.takesArguments;
 
 /**
  * A type proxy creates accessor methods for all overridable methods of a given type by subclassing the given type and
@@ -58,6 +59,8 @@ public class TypeProxy implements AuxiliaryType {
      */
     private final Instrumentation.Target instrumentationTarget;
 
+    private final InvocationFactory invocationFactory;
+
     /**
      * {@code true} if the finalizer method should not be instrumented.
      */
@@ -78,10 +81,12 @@ public class TypeProxy implements AuxiliaryType {
      */
     public TypeProxy(TypeDescription proxiedType,
                      Instrumentation.Target instrumentationTarget,
+                     InvocationFactory invocationFactory,
                      boolean ignoreFinalizer,
                      boolean serializableProxy) {
         this.proxiedType = proxiedType;
         this.instrumentationTarget = instrumentationTarget;
+        this.invocationFactory = invocationFactory;
         this.ignoreFinalizer = ignoreFinalizer;
         this.serializableProxy = serializableProxy;
     }
@@ -92,7 +97,7 @@ public class TypeProxy implements AuxiliaryType {
                             MethodAccessorFactory methodAccessorFactory) {
         MethodMatcher finalizerMatcher = ignoreFinalizer ? not(isFinalizer()) : any();
         return new ByteBuddy(classFileVersion)
-                .subclass(proxiedType, ConstructorStrategy.Default.IMITATE_SUPER_TYPE)
+                .subclass(proxiedType, invocationFactory.getConstructorStrategy())
                 .name(auxiliaryTypeName)
                 .modifiers(DEFAULT_TYPE_MODIFIER)
                 .implement(serializableProxy ? new Class<?>[]{Serializable.class} : new Class<?>[0])
@@ -396,7 +401,11 @@ public class TypeProxy implements AuxiliaryType {
         @Override
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
             TypeDescription proxyType = instrumentationContext
-                    .register(new TypeProxy(proxiedType, instrumentationTarget, ignoreFinalizer, serializableProxy));
+                    .register(new TypeProxy(proxiedType,
+                            instrumentationTarget,
+                            InvocationFactory.ForSuperMethodCall.INSTANCE,
+                            ignoreFinalizer,
+                            serializableProxy));
             StackManipulation[] constructorValue = new StackManipulation[constructorParameters.size()];
             int index = 0;
             for (TypeDescription parameterType : constructorParameters) {
@@ -502,7 +511,11 @@ public class TypeProxy implements AuxiliaryType {
         @Override
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
             TypeDescription proxyType = instrumentationContext
-                    .register(new TypeProxy(proxiedType, instrumentationTarget, ignoreFinalizer, serializableProxy));
+                    .register(new TypeProxy(proxiedType,
+                            instrumentationTarget,
+                            InvocationFactory.ForSuperMethodCall.INSTANCE,
+                            ignoreFinalizer,
+                            serializableProxy));
             return new Compound(
                     MethodInvocation.invoke(proxyType.getDeclaredMethods()
                             .filter(named(REFLECTION_METHOD).and(takesArguments(0))).getOnly()),
@@ -541,6 +554,89 @@ public class TypeProxy implements AuxiliaryType {
                     ", serializableProxy=" + serializableProxy +
                     '}';
         }
+    }
+
+    public static class ForDefaultMethod implements StackManipulation {
+
+        private final TypeDescription proxiedType;
+
+        private final Instrumentation.Target instrumentationTarget;
+
+        private final boolean serializableProxy;
+
+        public ForDefaultMethod(TypeDescription proxiedType,
+                                Instrumentation.Target instrumentationTarget,
+                                boolean serializableProxy) {
+            this.proxiedType = proxiedType;
+            this.instrumentationTarget = instrumentationTarget;
+            this.serializableProxy = serializableProxy;
+        }
+
+        @Override
+        public boolean isValid() {
+            return true;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+            TypeDescription proxyType = instrumentationContext
+                    .register(new TypeProxy(proxiedType,
+                            instrumentationTarget,
+                            InvocationFactory.ForDefaultMethodCall.INSTANCE,
+                            true,
+                            serializableProxy));
+            return new Compound(
+                    TypeCreation.forType(proxyType),
+                    Duplication.SINGLE,
+                    MethodInvocation.invoke(proxyType.getDeclaredMethods().filter(isConstructor()).getOnly()),
+                    Duplication.SINGLE,
+                    MethodVariableAccess.forType(instrumentationTarget.getTypeDescription()).loadFromIndex(0),
+                    FieldAccess.forField(proxyType.getDeclaredFields().named(INSTANCE_FIELD)).putter()
+            ).apply(methodVisitor, instrumentationContext);
+        }
+    }
+
+    public static interface InvocationFactory {
+
+        static enum ForSuperMethodCall implements InvocationFactory {
+
+            INSTANCE;
+
+            @Override
+            public Instrumentation.SpecialMethodInvocation invoke(Instrumentation.Target instrumentationTarget,
+                                                                  TypeDescription proxiedType,
+                                                                  MethodDescription instrumentedMethod) {
+                return instrumentationTarget.invokeSuper(instrumentedMethod, Instrumentation.Target.MethodLookup.Default.MOST_SPECIFIC);
+            }
+
+            @Override
+            public ConstructorStrategy getConstructorStrategy() {
+                return ConstructorStrategy.Default.IMITATE_SUPER_TYPE;
+            }
+        }
+
+        static enum ForDefaultMethodCall implements InvocationFactory {
+
+            INSTANCE;
+
+            @Override
+            public Instrumentation.SpecialMethodInvocation invoke(Instrumentation.Target instrumentationTarget,
+                                                                  TypeDescription proxiedType,
+                                                                  MethodDescription instrumentedMethod) {
+                return instrumentationTarget.invokeDefault(proxiedType, instrumentedMethod.getUniqueSignature());
+            }
+
+            @Override
+            public ConstructorStrategy getConstructorStrategy() {
+                return ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR;
+            }
+        }
+
+        Instrumentation.SpecialMethodInvocation invoke(Instrumentation.Target instrumentationTarget,
+                                                       TypeDescription proxiedType,
+                                                       MethodDescription instrumentedMethod);
+
+        ConstructorStrategy getConstructorStrategy();
     }
 
     /**
@@ -631,8 +727,8 @@ public class TypeProxy implements AuxiliaryType {
             public Size apply(MethodVisitor methodVisitor,
                               Context instrumentationContext,
                               MethodDescription instrumentedMethod) {
-                StackManipulation.Size stackSize = implementAccess(instrumentedMethod,
-                        instrumentationTarget.invokeSuper(instrumentedMethod, Target.MethodLookup.Default.MOST_SPECIFIC))
+                StackManipulation.Size stackSize = implement(instrumentedMethod,
+                        invocationFactory.invoke(instrumentationTarget, proxiedType, instrumentedMethod))
                         .apply(methodVisitor, instrumentationContext);
                 return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
             }
@@ -644,8 +740,8 @@ public class TypeProxy implements AuxiliaryType {
              * @param specialMethodInvocation The special method invocation to proxy by the implemented method.
              * @return A stack manipulation that represents the invocation of the special method invocation.
              */
-            private StackManipulation implementAccess(MethodDescription instrumentedMethod,
-                                                      Instrumentation.SpecialMethodInvocation specialMethodInvocation) {
+            private StackManipulation implement(MethodDescription instrumentedMethod,
+                                                Instrumentation.SpecialMethodInvocation specialMethodInvocation) {
                 return specialMethodInvocation.isValid()
                         ? new AccessorMethodInvocation(instrumentedMethod, specialMethodInvocation)
                         : AbstractMethodErrorThrow.INSTANCE;

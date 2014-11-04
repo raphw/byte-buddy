@@ -26,11 +26,15 @@ import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
 import org.objectweb.asm.MethodVisitor;
 
 import java.io.Serializable;
+import java.lang.annotation.*;
 import java.util.*;
 
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.PARAMETER)
 public @interface Morph {
 
     boolean serializableProxy() default false;
@@ -215,7 +219,8 @@ public @interface Morph {
                 return serializableProxy == that.serializableProxy
                         && assigner.equals(that.assigner)
                         && forwardingType.equals(that.forwardingType)
-                        && sourceMethod.equals(that.sourceMethod);
+                        && sourceMethod.equals(that.sourceMethod)
+                        && methodLookupEngineFactory.equals(that.methodLookupEngineFactory);
             }
 
             @Override
@@ -223,6 +228,7 @@ public @interface Morph {
                 int result = forwardingType.hashCode();
                 result = 31 * result + sourceMethod.hashCode();
                 result = 31 * result + assigner.hashCode();
+                result = 31 * result + methodLookupEngineFactory.hashCode();
                 result = 31 * result + (serializableProxy ? 1 : 0);
                 return result;
             }
@@ -233,6 +239,7 @@ public @interface Morph {
                         "forwardingType=" + forwardingType +
                         ", sourceMethod=" + sourceMethod +
                         ", assigner=" + assigner +
+                        ", methodLookupEngineFactory=" + methodLookupEngineFactory +
                         ", serializableProxy=" + serializableProxy +
                         '}';
             }

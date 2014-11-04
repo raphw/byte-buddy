@@ -8,10 +8,15 @@ import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 
+import java.lang.annotation.*;
+
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isStatic;
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.not;
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.PARAMETER)
 public @interface Field {
 
     static final String BEAN_PROPERTY = "";
