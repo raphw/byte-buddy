@@ -16,9 +16,13 @@ public @interface Field {
 
     static final String BEAN_PROPERTY = "";
 
+    static final Class<?> IMPLICIT_LOOKUP = void.class;
+
     boolean serializableProxy() default false;
 
     String value() default BEAN_PROPERTY;
+
+    Class<?> definingType() default IMPLICIT_LOOKUP;
 
     static class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Field> {
 

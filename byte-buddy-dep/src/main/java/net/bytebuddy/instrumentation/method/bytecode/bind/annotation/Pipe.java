@@ -150,12 +150,13 @@ public @interface Pipe {
             if (methodCandidates.size() != 1) {
                 throw new IllegalArgumentException(typeDescription + " must declare exactly one non-static method");
             }
-            methodCandidates = methodCandidates.filter(takesArguments(Object.class).and(returns(Object.class)));
-            if (methodCandidates.size() != 1) {
-                throw new IllegalArgumentException(typeDescription + " must declare exactly one method with an " +
-                        "Object-typed return type and an Object-typed return value");
+            MethodDescription methodDescription = methodCandidates.getOnly();
+            if (!methodDescription.getReturnType().represents(Object.class)) {
+                throw new IllegalArgumentException(methodDescription + " does not return an Object-type");
+            } else if (methodDescription.getParameterTypes().size() != 1 || !methodDescription.getParameterTypes().get(0).represents(Object.class)) {
+                throw new IllegalArgumentException(methodDescription + " does not take a single Object-typed argument");
             }
-            return methodCandidates.getOnly();
+            return methodDescription;
         }
 
         @Override
@@ -565,7 +566,7 @@ public @interface Pipe {
                                 new StackManipulation.Compound(fieldLoading),
                                 MethodInvocation.invoke(redirectedMethod),
                                 assigner.assign(redirectedMethod.getReturnType(), instrumentedMethod.getReturnType(), false),
-                                MethodReturn.ANY_REFERENCE
+                                MethodReturn.REFERENCE
                         ).apply(methodVisitor, instrumentationContext);
                         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                     }
