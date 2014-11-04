@@ -40,11 +40,9 @@ public @interface Field {
 
     static final String BEAN_PROPERTY = "";
 
-    static final Class<?> IMPLICIT_LOOKUP = void.class;
-
     boolean serializableProxy() default false;
 
-    String value() default BEAN_PROPERTY;
+    String value() default "";
 
     Class<?> definingType() default void.class;
 
@@ -135,7 +133,11 @@ public @interface Field {
                     .resolve(instrumentationTarget.getTypeDescription());
             return resolution.isResolved()
                     ? new MethodDelegationBinder.ParameterBinding.Anonymous(new ProxyCreation(new AccessorProxy(
-                    resolution.getFieldDescription(), assigner, accessType, annotation.getValue(SERIALIZABLE_PROXY, boolean.class))))
+                    resolution.getFieldDescription(),
+                    assigner,
+                    instrumentationTarget.getTypeDescription(),
+                    accessType,
+                    annotation.getValue(SERIALIZABLE_PROXY, Boolean.class))))
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
         }
 
@@ -263,7 +265,7 @@ public @interface Field {
 
                 @Override
                 protected LookupEngine lookup(TypeDescription typeDescription) {
-                    return typeDescription.represents(IMPLICIT_LOOKUP)
+                    return typeDescription.represents(void.class)
                             ? new LookupEngine.ForHierarchy(fieldName)
                             : new LookupEngine.ForExplicitType(fieldName, typeDescription);
                 }
@@ -279,8 +281,8 @@ public @interface Field {
 
             protected static FieldLocator of(String fieldName, MethodDescription methodDescription) {
                 return BEAN_PROPERTY.equals(fieldName)
-                        ? new Legal(fieldName)
-                        : Legal.consider(methodDescription);
+                        ? Legal.consider(methodDescription)
+                        : new Legal(fieldName);
             }
 
             protected abstract LookupEngine lookup(TypeDescription typeDescription);
@@ -317,6 +319,8 @@ public @interface Field {
 
             private final FieldDescription accessedField;
 
+            private final TypeDescription instrumentedType;
+
             private final Assigner assigner;
 
             private final AccessType accessType;
@@ -325,10 +329,12 @@ public @interface Field {
 
             public AccessorProxy(FieldDescription accessedField,
                                  Assigner assigner,
+                                 TypeDescription instrumentedType,
                                  AccessType accessType,
                                  boolean serializableProxy) {
                 this.accessedField = accessedField;
                 this.assigner = assigner;
+                this.instrumentedType = instrumentedType;
                 this.accessType = accessType;
                 this.serializableProxy = serializableProxy;
             }
@@ -342,8 +348,8 @@ public @interface Field {
                         .name(auxiliaryTypeName)
                         .modifiers(DEFAULT_TYPE_MODIFIER)
                         .implement(serializableProxy ? new Class<?>[]{Serializable.class} : new Class<?>[0])
-                        .defineField(FIELD_NAME, accessedField.getDeclaringType(), Visibility.PRIVATE, FieldManifestation.FINAL)
-                        .defineConstructor(Collections.singletonList(accessedField.getDeclaringType()))
+                        .defineField(FIELD_NAME, instrumentedType, Visibility.PRIVATE, FieldManifestation.FINAL)
+                        .defineConstructor(Collections.singletonList(instrumentedType))
                         .intercept(ConstructorCall.INSTANCE)
                         .method(isDeclaredBy(accessType.proxyType(getterMethod, setterMethod)))
                         .intercept(accessType.access(accessedField, assigner, methodAccessorFactory))
@@ -386,10 +392,6 @@ public @interface Field {
             protected abstract Instrumentation access(FieldDescription fieldDescription,
                                                       Assigner assigner,
                                                       AuxiliaryType.MethodAccessorFactory methodAccessorFactory);
-        }
-
-        private static interface Lookup {
-
         }
 
         private static enum ConstructorCall implements Instrumentation {

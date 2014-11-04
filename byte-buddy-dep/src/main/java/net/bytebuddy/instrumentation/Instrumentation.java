@@ -766,8 +766,8 @@ public interface Instrumentation {
                             randomString.nextString());
                     accessorMethod = new MethodDescription.Latent(name,
                             instrumentedType,
-                            fieldDescription.getFieldType(),
-                            Collections.<TypeDescription>emptyList(),
+                            new TypeDescription.ForLoadedType(void.class),
+                            Collections.singletonList(fieldDescription.getFieldType()),
                             ACCESSOR_METHOD_MODIFIER | (fieldDescription.isStatic()
                                     ? Opcodes.ACC_STATIC
                                     : 0),
