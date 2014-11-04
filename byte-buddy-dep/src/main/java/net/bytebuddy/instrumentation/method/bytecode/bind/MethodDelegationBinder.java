@@ -147,7 +147,7 @@ public interface MethodDelegationBinder {
 
             @Override
             public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-                throw new IllegalStateException();
+                throw new IllegalStateException("An illegal parameter binding must not be applied");
             }
         }
 

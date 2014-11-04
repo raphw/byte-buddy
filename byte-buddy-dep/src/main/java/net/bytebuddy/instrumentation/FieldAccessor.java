@@ -274,18 +274,14 @@ public abstract class FieldAccessor implements Instrumentation {
             @Override
             public FieldDescription locate(String name) {
                 TypeDescription currentType = instrumentedType;
-                boolean isSelf = true;
                 do {
                     for (FieldDescription fieldDescription : currentType.getDeclaredFields()) {
-                        if (fieldDescription.getName().equals(name)
-                                && (isSelf || !fieldDescription.isPrivate())
-                                && (!fieldDescription.isPackagePrivate() || fieldDescription.isVisibleTo(instrumentedType))) {
+                        if (fieldDescription.getName().equals(name) && fieldDescription.isVisibleTo(instrumentedType)) {
                             return fieldDescription;
                         }
                     }
-                    isSelf = false;
                 } while (!(currentType = currentType.getSupertype()).represents(Object.class));
-                throw new IllegalArgumentException("There is no field " + name + " that is visible for " + instrumentedType);
+                throw new IllegalArgumentException("There is no field '" + name + "' that is visible to " + instrumentedType);
             }
 
             @Override
@@ -505,7 +501,7 @@ public abstract class FieldAccessor implements Instrumentation {
         @Override
         protected String getFieldName(MethodDescription targetMethod) {
             String name = targetMethod.getInternalName();
-            name = name.startsWith("is") ? name.substring(2) : name.substring(3);
+            name = name.substring(name.startsWith("is") ? 2 : 3);
             if (name.length() == 0) {
                 throw new IllegalArgumentException(targetMethod + " does not specify a bean name");
             }

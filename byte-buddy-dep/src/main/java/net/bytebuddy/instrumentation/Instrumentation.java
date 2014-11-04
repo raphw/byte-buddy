@@ -143,12 +143,12 @@ public interface Instrumentation {
 
             @Override
             public MethodDescription getMethodDescription() {
-                throw new IllegalStateException();
+                throw new IllegalStateException("An illegal special method invocation must not be applied");
             }
 
             @Override
             public TypeDescription getTypeDescription() {
-                throw new IllegalStateException();
+                throw new IllegalStateException("An illegal special method invocation must not be applied");
             }
         }
 

@@ -283,7 +283,7 @@ public class MethodCallProxy implements AuxiliaryType {
 
             @Override
             public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
-                StackManipulation thisReference = MethodVariableAccess.forType(instrumentedMethod.getDeclaringType()).loadFromIndex(0);
+                StackManipulation thisReference = MethodVariableAccess.REFERENCE.loadFromIndex(0);
                 FieldList fieldList = instrumentedType.getDeclaredFields();
                 StackManipulation[] fieldLoading = new StackManipulation[fieldList.size()];
                 int index = 0;
