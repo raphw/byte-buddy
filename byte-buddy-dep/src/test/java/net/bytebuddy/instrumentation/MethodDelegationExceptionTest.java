@@ -20,11 +20,6 @@ public class MethodDelegationExceptionTest extends AbstractInstrumentationTest {
         instrument(Foo.class, MethodDelegation.to(Qux.class));
     }
 
-    @Test(expected = NullPointerException.class)
-    public void testNullArgument() throws Exception {
-        MethodDelegation.to(null);
-    }
-
     @Test(expected = IllegalArgumentException.class)
     public void testInterface() throws Exception {
         MethodDelegation.to(Runnable.class);

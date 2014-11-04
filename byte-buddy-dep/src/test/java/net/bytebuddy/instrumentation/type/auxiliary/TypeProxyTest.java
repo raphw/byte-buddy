@@ -99,6 +99,7 @@ public class TypeProxyTest {
         DynamicType dynamicType = new TypeProxy(
                 new TypeDescription.ForLoadedType(proxyType),
                 instrumentationTarget,
+                TypeProxy.InvocationFactory.ForSuperMethodCall.INSTANCE,
                 true,
                 false).make(auxiliaryTypeName, ClassFileVersion.forCurrentJavaVersion(), methodAccessorFactory);
         DynamicType.Unloaded<?> unloaded = (DynamicType.Unloaded<?>) dynamicType;
