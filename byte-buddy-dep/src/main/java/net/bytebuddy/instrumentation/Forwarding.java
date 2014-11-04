@@ -12,6 +12,9 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import static net.bytebuddy.utility.ByteBuddyCommons.isValidIdentifier;
+import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
+
 /**
  * This instrumentation forwards method invocations to another instance. For this, the intercepted method must be
  * defined on a super type of the given delegation target. Static methods cannot be forwarded as they are not
@@ -72,8 +75,8 @@ public class Forwarding implements Instrumentation {
      * @return A corresponding instrumentation.
      */
     public static Instrumentation to(Object delegate, String fieldName) {
-        return new Forwarding(fieldName,
-                new TypeDescription.ForLoadedType(delegate.getClass()),
+        return new Forwarding(isValidIdentifier(fieldName),
+                new TypeDescription.ForLoadedType(nonNull(delegate).getClass()),
                 new PreparationHandler.ForStaticInstance(delegate));
     }
 
@@ -86,8 +89,12 @@ public class Forwarding implements Instrumentation {
      * @return A corresponding instrumentation.
      */
     public static Instrumentation toStaticField(String fieldName, Class<?> fieldType) {
-        return new Forwarding(fieldName,
-                new TypeDescription.ForLoadedType(fieldType),
+        return toStaticField(fieldName, new TypeDescription.ForLoadedType(nonNull(fieldType)));
+    }
+
+    public static Instrumentation toStaticField(String fieldName, TypeDescription fieldType) {
+        return new Forwarding(isValidIdentifier(fieldName),
+                nonNull(fieldType),
                 PreparationHandler.ForStaticField.INSTANCE);
     }
 
@@ -100,8 +107,12 @@ public class Forwarding implements Instrumentation {
      * @return A corresponding instrumentation.
      */
     public static Instrumentation toInstanceField(String fieldName, Class<?> fieldType) {
-        return new Forwarding(fieldName,
-                new TypeDescription.ForLoadedType(fieldType),
+        return toInstanceField(fieldName, new TypeDescription.ForLoadedType(nonNull(fieldType)));
+    }
+
+    public static Instrumentation toInstanceField(String fieldName, TypeDescription fieldType) {
+        return new Forwarding(isValidIdentifier(fieldName),
+                nonNull(fieldType),
                 PreparationHandler.ForInstanceField.INSTANCE);
     }
 

@@ -4,6 +4,7 @@ import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
+import net.bytebuddy.instrumentation.method.bytecode.stack.Removal;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import net.bytebuddy.instrumentation.type.TypeDescription;
@@ -26,6 +27,8 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
      * The provider for annotations to be supplied for binding of non-annotated parameters.
      */
     private final DefaultsProvider defaultsProvider;
+
+    private final TerminationHandler terminationHandler;
 
     /**
      * An user-supplied assigner to use for variable assignments.
@@ -50,10 +53,12 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
      */
     public TargetMethodAnnotationDrivenBinder(List<ParameterBinder<?>> parameterBinders,
                                               DefaultsProvider defaultsProvider,
+                                              TerminationHandler terminationHandler,
                                               Assigner assigner,
                                               MethodInvoker methodInvoker) {
         this.delegationProcessor = new DelegationProcessor(parameterBinders);
         this.defaultsProvider = defaultsProvider;
+        this.terminationHandler = terminationHandler;
         this.assigner = assigner;
         this.methodInvoker = methodInvoker;
     }
@@ -65,10 +70,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         if (IgnoreForBinding.Verifier.check(target)) {
             return MethodBinding.Illegal.INSTANCE;
         }
-        StackManipulation returningStackManipulation = assigner.assign(
-                target.isConstructor() ? target.getDeclaringType() : target.getReturnType(),
-                source.getReturnType(),
-                RuntimeType.Verifier.check(target));
+        StackManipulation returningStackManipulation = terminationHandler.resolve(assigner, source, target);
         if (!returningStackManipulation.isValid()) {
             return MethodBinding.Illegal.INSTANCE;
         }
@@ -98,6 +100,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         TargetMethodAnnotationDrivenBinder that = (TargetMethodAnnotationDrivenBinder) other;
         return assigner.equals(that.assigner)
                 && defaultsProvider.equals(that.defaultsProvider)
+                && terminationHandler.equals(that.terminationHandler)
                 && delegationProcessor.equals(that.delegationProcessor)
                 && methodInvoker.equals(that.methodInvoker);
     }
@@ -106,6 +109,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
     public int hashCode() {
         int result = delegationProcessor.hashCode();
         result = 31 * result + defaultsProvider.hashCode();
+        result = 31 * result + terminationHandler.hashCode();
         result = 31 * result + assigner.hashCode();
         result = 31 * result + methodInvoker.hashCode();
         return result;
@@ -116,6 +120,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         return "TargetMethodAnnotationDrivenBinder{" +
                 "delegationProcessor=" + delegationProcessor +
                 ", defaultsProvider=" + defaultsProvider +
+                ", terminationHandler=" + terminationHandler +
                 ", assigner=" + assigner +
                 ", methodInvoker=" + methodInvoker +
                 '}';
@@ -220,6 +225,33 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 }
             }
         }
+    }
+
+    public static interface TerminationHandler {
+
+        static enum Returning implements TerminationHandler {
+
+            INSTANCE;
+
+            @Override
+            public StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target) {
+                return assigner.assign(target.isConstructor() ? target.getDeclaringType() : target.getReturnType(),
+                        source.getReturnType(),
+                        RuntimeType.Verifier.check(target));
+            }
+        }
+
+        static enum Dropping implements TerminationHandler {
+
+            INSTANCE;
+
+            @Override
+            public StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target) {
+                return Removal.pop(target.isConstructor() ? target.getDeclaringType() : target.getReturnType());
+            }
+        }
+
+        StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target);
     }
 
     /**

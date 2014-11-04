@@ -4,6 +4,7 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.ModifierContributor;
+import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.modifier.SyntheticState;
 import org.objectweb.asm.Opcodes;
@@ -57,6 +58,10 @@ public interface AuxiliaryType {
          */
         MethodDescription registerAccessorFor(Instrumentation.SpecialMethodInvocation specialMethodInvocation);
 
+        MethodDescription registerGetterFor(FieldDescription fieldDescription);
+
+        MethodDescription registerSetterFor(FieldDescription fieldDescription);
+
         /**
          * A method accessor factory that forbids any accessor registration.
          */
@@ -71,6 +76,18 @@ public interface AuxiliaryType {
             public MethodDescription registerAccessorFor(Instrumentation.SpecialMethodInvocation specialMethodInvocation) {
                 throw new IllegalStateException("It is illegal to register an accessor for this type");
             }
+
+            @Override
+            public MethodDescription registerGetterFor(FieldDescription fieldDescription) {
+                throw new IllegalStateException("It is illegal to register an accessor for this type");
+            }
+
+            @Override
+            public MethodDescription registerSetterFor(FieldDescription fieldDescription) {
+                throw new IllegalStateException("It is illegal to register an accessor for this type");
+            }
+
+
         }
     }
 }

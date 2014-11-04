@@ -18,8 +18,7 @@ import org.objectweb.asm.MethodVisitor;
 
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isGetter;
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isSetter;
-import static net.bytebuddy.utility.ByteBuddyCommons.isValidIdentifier;
-import static net.bytebuddy.utility.ByteBuddyCommons.resolveModifierContributors;
+import static net.bytebuddy.utility.ByteBuddyCommons.*;
 
 /**
  * Defines a method to access a given field by following the Java bean conventions for getters and setters:
@@ -62,7 +61,7 @@ public abstract class FieldAccessor implements Instrumentation {
      * @return A field accessor for a field of a given name.
      */
     public static FieldDefinable ofField(String name) {
-        return new ForNamedField(name, defaultAssigner(), defaultConsiderRuntimeType());
+        return new ForNamedField(isValidIdentifier(name), defaultAssigner(), defaultConsiderRuntimeType());
     }
 
     /**
@@ -107,15 +106,19 @@ public abstract class FieldAccessor implements Instrumentation {
                                                 Instrumentation.Context instrumentationContext,
                                                 FieldDescription fieldDescription,
                                                 MethodDescription methodDescription) {
+        StackManipulation stackManipulation = assigner.assign(fieldDescription.getFieldType(),
+                methodDescription.getReturnType(),
+                considerRuntimeType);
+        if (!stackManipulation.isValid()) {
+            throw new IllegalStateException("Getter type of " + methodDescription + " is not compatible with " + fieldDescription);
+        }
         return apply(methodVisitor,
                 instrumentationContext,
                 fieldDescription,
                 methodDescription,
                 new StackManipulation.Compound(
                         FieldAccess.forField(fieldDescription).getter(),
-                        assigner.assign(fieldDescription.getFieldType(),
-                                methodDescription.getReturnType(),
-                                considerRuntimeType)
+                        stackManipulation
                 )
         );
     }
@@ -133,7 +136,12 @@ public abstract class FieldAccessor implements Instrumentation {
                                                 Instrumentation.Context instrumentationContext,
                                                 FieldDescription fieldDescription,
                                                 MethodDescription methodDescription) {
-        if (fieldDescription.isFinal()) {
+        StackManipulation stackManipulation = assigner.assign(methodDescription.getParameterTypes().get(0),
+                fieldDescription.getFieldType(),
+                considerRuntimeType);
+        if (!stackManipulation.isValid()) {
+            throw new IllegalStateException("Setter type of " + methodDescription + " is not compatible with " + fieldDescription);
+        } else if (fieldDescription.isFinal()) {
             throw new IllegalArgumentException("Cannot apply setter on final field " + fieldDescription);
         }
         return apply(methodVisitor,
@@ -143,9 +151,7 @@ public abstract class FieldAccessor implements Instrumentation {
                 new StackManipulation.Compound(
                         MethodVariableAccess.forType(fieldDescription.getFieldType())
                                 .loadFromIndex(methodDescription.getParameterOffset(0)),
-                        assigner.assign(methodDescription.getParameterTypes().get(0),
-                                fieldDescription.getFieldType(),
-                                considerRuntimeType),
+                        stackManipulation,
                         FieldAccess.forField(fieldDescription).putter()
                 )
         );
@@ -376,7 +382,7 @@ public abstract class FieldAccessor implements Instrumentation {
          * @param considerRuntimeType {@code true} if a field value's runtime type should be considered.
          * @return This field accessor with the given assigner and runtime type use configuration.
          */
-        Instrumentation assigner(Assigner assigner, boolean considerRuntimeType);
+        Instrumentation withAssigner(Assigner assigner, boolean considerRuntimeType);
     }
 
     /**
@@ -425,6 +431,8 @@ public abstract class FieldAccessor implements Instrumentation {
          * @return A field accessor that defines a field of the given type.
          */
         AssignerConfigurable defineAs(Class<?> type, ModifierContributor.ForField... modifier);
+
+        AssignerConfigurable defineAs(TypeDescription typeDescription, ModifierContributor.ForField... modifier);
     }
 
     /**
@@ -464,24 +472,24 @@ public abstract class FieldAccessor implements Instrumentation {
 
         @Override
         public AssignerConfigurable in(FieldLocator.Factory fieldLocatorFactory) {
-            return new ForBeanProperty(assigner, considerRuntimeType, fieldLocatorFactory);
+            return new ForBeanProperty(assigner, considerRuntimeType, nonNull(fieldLocatorFactory));
         }
 
         @Override
         public AssignerConfigurable in(Class<?> type) {
-            return in(new TypeDescription.ForLoadedType(type));
+            return in(new TypeDescription.ForLoadedType(nonNull(type)));
         }
 
         @Override
         public AssignerConfigurable in(TypeDescription typeDescription) {
-            return typeDescription.represents(TargetType.class)
+            return nonNull(typeDescription).represents(TargetType.class)
                     ? in(FieldLocator.ForInstrumentedType.INSTANCE)
                     : in(new FieldLocator.ForGivenType(typeDescription));
         }
 
         @Override
-        public Instrumentation assigner(Assigner assigner, boolean considerRuntimeType) {
-            return new ForBeanProperty(assigner, considerRuntimeType);
+        public Instrumentation withAssigner(Assigner assigner, boolean considerRuntimeType) {
+            return new ForBeanProperty(nonNull(assigner), considerRuntimeType);
         }
 
         @Override
@@ -582,8 +590,13 @@ public abstract class FieldAccessor implements Instrumentation {
 
         @Override
         public AssignerConfigurable defineAs(Class<?> type, ModifierContributor.ForField... modifier) {
+            return defineAs(new TypeDescription.ForLoadedType(nonNull(type)), modifier);
+        }
+
+        @Override
+        public AssignerConfigurable defineAs(TypeDescription typeDescription, ModifierContributor.ForField... modifier) {
             return new ForNamedField(fieldName,
-                    new PreparationHandler.FieldDefiner(fieldName, type, modifier),
+                    new PreparationHandler.FieldDefiner(fieldName, nonNull(typeDescription), nonNull(modifier)),
                     FieldLocator.ForInstrumentedType.INSTANCE,
                     assigner,
                     considerRuntimeType);
@@ -593,14 +606,14 @@ public abstract class FieldAccessor implements Instrumentation {
         public AssignerConfigurable in(FieldLocator.Factory fieldLocatorFactory) {
             return new ForNamedField(fieldName,
                     preparationHandler,
-                    fieldLocatorFactory,
+                    nonNull(fieldLocatorFactory),
                     assigner,
                     considerRuntimeType);
         }
 
         @Override
         public AssignerConfigurable in(Class<?> type) {
-            return in(new TypeDescription.ForLoadedType(type));
+            return in(new TypeDescription.ForLoadedType(nonNull(type)));
         }
 
         @Override
@@ -611,8 +624,8 @@ public abstract class FieldAccessor implements Instrumentation {
         }
 
         @Override
-        public Instrumentation assigner(Assigner assigner, boolean considerRuntimeType) {
-            return new ForNamedField(fieldName, preparationHandler, fieldLocatorFactory, assigner, considerRuntimeType);
+        public Instrumentation withAssigner(Assigner assigner, boolean considerRuntimeType) {
+            return new ForNamedField(fieldName, preparationHandler, fieldLocatorFactory, nonNull(assigner), considerRuntimeType);
         }
 
         @Override
@@ -711,13 +724,13 @@ public abstract class FieldAccessor implements Instrumentation {
                 /**
                  * Creates a new preparation handler that defines a given field.
                  *
-                 * @param name        The name of the field that is defined by this preparation handler.
-                 * @param type        The type of the field that is to be defined.
-                 * @param contributor The modifier of the field that is to be defined.
+                 * @param name            The name of the field that is defined by this preparation handler.
+                 * @param typeDescription The type of the field that is to be defined.
+                 * @param contributor     The modifier of the field that is to be defined.
                  */
-                public FieldDefiner(String name, Class<?> type, ModifierContributor.ForField... contributor) {
-                    this.name = isValidIdentifier(name);
-                    typeDescription = new TypeDescription.ForLoadedType(type);
+                public FieldDefiner(String name, TypeDescription typeDescription, ModifierContributor.ForField... contributor) {
+                    this.name = name;
+                    this.typeDescription = typeDescription;
                     modifiers = resolveModifierContributors(ByteBuddyCommons.FIELD_MODIFIER_MASK, contributor);
                 }
 

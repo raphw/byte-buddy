@@ -623,6 +623,10 @@ public interface Instrumentation {
              */
             private final Map<Instrumentation.SpecialMethodInvocation, MethodDescription> registeredAccessorMethods;
 
+            private final Map<FieldDescription, MethodDescription> registeredGetters;
+
+            private final Map<FieldDescription, MethodDescription> registeredSetters;
+
             /**
              * A map of accessor methods to a method pool entry that represents their implementation.
              */
@@ -686,6 +690,8 @@ public interface Instrumentation {
                 this.fieldCachePrefix = fieldCachePrefix;
                 this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
                 registeredAccessorMethods = new HashMap<Instrumentation.SpecialMethodInvocation, MethodDescription>();
+                registeredGetters = new HashMap<FieldDescription, MethodDescription>();
+                registeredSetters = new HashMap<FieldDescription, MethodDescription>();
                 accessorMethodEntries = new HashMap<MethodDescription, TypeWriter.MethodPool.Entry>();
                 auxiliaryTypes = new HashMap<AuxiliaryType, DynamicType>();
                 registeredFieldCacheEntries = new HashMap<FieldCacheEntry, FieldDescription>();
@@ -723,6 +729,58 @@ public interface Instrumentation {
                                           MethodDescription accessorMethod) {
                 registeredAccessorMethods.put(specialMethodInvocation, accessorMethod);
                 accessorMethodEntries.put(accessorMethod, new AccessorMethodDelegation(specialMethodInvocation));
+            }
+
+            @Override
+            public MethodDescription registerGetterFor(FieldDescription fieldDescription) {
+                MethodDescription accessorMethod = registeredGetters.get(fieldDescription);
+                if (accessorMethod == null) {
+                    String name = String.format("%s$%s$%s", fieldDescription.getName(),
+                            accessorMethodSuffix,
+                            randomString.nextString());
+                    accessorMethod = new MethodDescription.Latent(name,
+                            instrumentedType,
+                            fieldDescription.getFieldType(),
+                            Collections.<TypeDescription>emptyList(),
+                            ACCESSOR_METHOD_MODIFIER | (fieldDescription.isStatic()
+                                    ? Opcodes.ACC_STATIC
+                                    : 0),
+                            Collections.<TypeDescription>emptyList());
+                    registerGetter(fieldDescription, accessorMethod);
+                }
+                return accessorMethod;
+            }
+
+            private void registerGetter(FieldDescription fieldDescription,
+                                        MethodDescription accessorMethod) {
+                registeredGetters.put(fieldDescription, accessorMethod);
+                accessorMethodEntries.put(accessorMethod, new FieldGetter(fieldDescription));
+            }
+
+            @Override
+            public MethodDescription registerSetterFor(FieldDescription fieldDescription) {
+                MethodDescription accessorMethod = registeredSetters.get(fieldDescription);
+                if (accessorMethod == null) {
+                    String name = String.format("%s$%s$%s", fieldDescription.getName(),
+                            accessorMethodSuffix,
+                            randomString.nextString());
+                    accessorMethod = new MethodDescription.Latent(name,
+                            instrumentedType,
+                            fieldDescription.getFieldType(),
+                            Collections.<TypeDescription>emptyList(),
+                            ACCESSOR_METHOD_MODIFIER | (fieldDescription.isStatic()
+                                    ? Opcodes.ACC_STATIC
+                                    : 0),
+                            Collections.<TypeDescription>emptyList());
+                    registerSetter(fieldDescription, accessorMethod);
+                }
+                return accessorMethod;
+            }
+
+            private void registerSetter(FieldDescription fieldDescription,
+                                        MethodDescription accessorMethod) {
+                registeredSetters.put(fieldDescription, accessorMethod);
+                accessorMethodEntries.put(accessorMethod, new FieldSetter(fieldDescription));
             }
 
             @Override
@@ -792,7 +850,7 @@ public interface Instrumentation {
 
             @Override
             public String toString() {
-                return "TypeExtensionDelegate{" +
+                return "Instrumentation.Context.Default{" +
                         "instrumentedType=" + instrumentedType +
                         ", classFileVersion=" + classFileVersion +
                         ", accessorMethodSuffix='" + accessorMethodSuffix + '\'' +
@@ -865,7 +923,7 @@ public interface Instrumentation {
 
                     @Override
                     public String toString() {
-                        return "TypeExtensionDelegate.AuxiliaryTypeNamingStrategySuffixingRandom{suffix='" + suffix + '\'' + '}';
+                        return "Instrumentation.Context.Default.AuxiliaryTypeNamingStrategySuffixingRandom{suffix='" + suffix + '\'' + '}';
                     }
                 }
             }
@@ -948,7 +1006,7 @@ public interface Instrumentation {
 
                 @Override
                 public String toString() {
-                    return "TypeExtensionDelegate.FieldCacheAppender{registeredFieldCacheEntries=" + registeredFieldCacheEntries + '}';
+                    return "Instrumentation.Context.Default.FieldCacheAppender{registeredFieldCacheEntries=" + registeredFieldCacheEntries + '}';
                 }
             }
 
@@ -1011,7 +1069,7 @@ public interface Instrumentation {
 
                 @Override
                 public String toString() {
-                    return "TypeExtensionDelegate.FieldCacheEntry{" +
+                    return "Instrumentation.Context.Default.FieldCacheEntry{" +
                             "fieldValue=" + fieldValue +
                             ", fieldType=" + fieldType +
                             '}';
@@ -1099,7 +1157,150 @@ public interface Instrumentation {
 
                 @Override
                 public String toString() {
-                    return "TypeExtensionDelegate.AccessorMethodDelegation{accessorMethodInvocation=" + accessorMethodInvocation + '}';
+                    return "Instrumentation.Context.Default.AccessorMethodDelegation{accessorMethodInvocation=" + accessorMethodInvocation + '}';
+                }
+            }
+
+            private static class FieldGetter implements TypeWriter.MethodPool.Entry, ByteCodeAppender {
+
+                private final FieldDescription fieldDescription;
+
+                private FieldGetter(FieldDescription fieldDescription) {
+                    this.fieldDescription = fieldDescription;
+                }
+
+                @Override
+                public boolean isDefineMethod() {
+                    return true;
+                }
+
+                @Override
+                public ByteCodeAppender getByteCodeAppender() {
+                    return this;
+                }
+
+                @Override
+                public MethodAttributeAppender getAttributeAppender() {
+                    return MethodAttributeAppender.NoOp.INSTANCE;
+                }
+
+                @Override
+                public boolean appendsCode() {
+                    return true;
+                }
+
+                @Override
+                public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
+                    StackManipulation.Size stackSize = new StackManipulation.Compound(
+                            fieldDescription.isStatic()
+                                    ? StackManipulation.LegalTrivial.INSTANCE
+                                    : MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                            FieldAccess.forField(fieldDescription).getter(),
+                            MethodReturn.returning(fieldDescription.getFieldType())
+                    ).apply(methodVisitor, instrumentationContext);
+                    return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
+                }
+
+                @Override
+                public void apply(ClassVisitor classVisitor, Context instrumentationContext, MethodDescription methodDescription) {
+                    MethodVisitor methodVisitor = classVisitor.visitMethod(methodDescription.getModifiers(),
+                            methodDescription.getInternalName(),
+                            methodDescription.getDescriptor(),
+                            methodDescription.getGenericSignature(),
+                            methodDescription.getExceptionTypes().toInternalNames());
+                    methodVisitor.visitCode();
+                    Size size = apply(methodVisitor, instrumentationContext, methodDescription);
+                    methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
+                    methodVisitor.visitEnd();
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && fieldDescription.equals(((FieldGetter) other).fieldDescription);
+                }
+
+                @Override
+                public int hashCode() {
+                    return fieldDescription.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "Instrumentation.Context.Default.FieldGetter{" +
+                            "fieldDescription=" + fieldDescription +
+                            '}';
+                }
+            }
+
+
+            private static class FieldSetter implements TypeWriter.MethodPool.Entry, ByteCodeAppender {
+
+                private final FieldDescription fieldDescription;
+
+                private FieldSetter(FieldDescription fieldDescription) {
+                    this.fieldDescription = fieldDescription;
+                }
+
+                @Override
+                public boolean isDefineMethod() {
+                    return true;
+                }
+
+                @Override
+                public ByteCodeAppender getByteCodeAppender() {
+                    return this;
+                }
+
+                @Override
+                public MethodAttributeAppender getAttributeAppender() {
+                    return MethodAttributeAppender.NoOp.INSTANCE;
+                }
+
+                @Override
+                public boolean appendsCode() {
+                    return true;
+                }
+
+                @Override
+                public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
+                    StackManipulation.Size stackSize = new StackManipulation.Compound(
+                            MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
+                            FieldAccess.forField(fieldDescription).putter(),
+                            MethodReturn.VOID
+                    ).apply(methodVisitor, instrumentationContext);
+                    return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
+                }
+
+                @Override
+                public void apply(ClassVisitor classVisitor, Context instrumentationContext, MethodDescription methodDescription) {
+                    MethodVisitor methodVisitor = classVisitor.visitMethod(methodDescription.getModifiers(),
+                            methodDescription.getInternalName(),
+                            methodDescription.getDescriptor(),
+                            methodDescription.getGenericSignature(),
+                            methodDescription.getExceptionTypes().toInternalNames());
+                    methodVisitor.visitCode();
+                    Size size = apply(methodVisitor, instrumentationContext, methodDescription);
+                    methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
+                    methodVisitor.visitEnd();
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && fieldDescription.equals(((FieldSetter) other).fieldDescription);
+                }
+
+                @Override
+                public int hashCode() {
+                    return fieldDescription.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "Instrumentation.Context.Default.FieldSetter{" +
+                            "fieldDescription=" + fieldDescription +
+                            '}';
                 }
             }
         }
@@ -1162,6 +1363,45 @@ public interface Instrumentation {
         @Override
         public String toString() {
             return "Compound{" + Arrays.toString(instrumentation) + '}';
+        }
+    }
+
+    static class Simple implements Instrumentation {
+
+        private final ByteCodeAppender byteCodeAppender;
+
+        public Simple(ByteCodeAppender... byteCodeAppender) {
+            this.byteCodeAppender = new ByteCodeAppender.Compound(byteCodeAppender);
+        }
+
+        public Simple(StackManipulation... stackManipulation) {
+            byteCodeAppender = new ByteCodeAppender.Simple(stackManipulation);
+        }
+
+        @Override
+        public InstrumentedType prepare(InstrumentedType instrumentedType) {
+            return instrumentedType;
+        }
+
+        @Override
+        public ByteCodeAppender appender(Target instrumentationTarget) {
+            return byteCodeAppender;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && byteCodeAppender.equals(((Simple) other).byteCodeAppender);
+        }
+
+        @Override
+        public int hashCode() {
+            return byteCodeAppender.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "Instrumentation.Simple{byteCodeAppender=" + byteCodeAppender + '}';
         }
     }
 }

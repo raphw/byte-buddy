@@ -14,6 +14,7 @@ import org.objectweb.asm.MethodVisitor;
 
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isConstructor;
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.takesArguments;
+import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
  * This instrumentation causes a {@link java.lang.Throwable} to be thrown when the instrumented method is invoked.
@@ -53,9 +54,15 @@ public class ExceptionMethod implements Instrumentation, ByteCodeAppender {
      * @return An instrumentation that will throw an instance of the isThrowable on each method invocation of the
      * instrumented methods.
      */
-    public static Instrumentation throwing(Class<? extends Throwable> throwable) {
-        TypeDescription exceptionType = new TypeDescription.ForLoadedType(throwable);
-        return new ExceptionMethod(exceptionType, new ConstructionDelegate.ForDefaultConstructor(exceptionType));
+    public static Instrumentation throwing(Class<? extends Throwable> exceptionType) {
+        return throwing(new TypeDescription.ForLoadedType(nonNull(exceptionType)));
+    }
+
+    public static Instrumentation throwing(TypeDescription exceptionType) {
+        if (!exceptionType.isAssignableTo(Throwable.class)) {
+            throw new IllegalArgumentException(exceptionType + " does not extend throwable");
+        }
+        return new ExceptionMethod(nonNull(exceptionType), new ConstructionDelegate.ForDefaultConstructor(exceptionType));
     }
 
     /**
@@ -63,14 +70,20 @@ public class ExceptionMethod implements Instrumentation, ByteCodeAppender {
      * which is then thrown immediately. For this to be possible, the given type must define a constructor that
      * takes a single {@link java.lang.String} as its argument.
      *
-     * @param throwable The type of the isThrowable.
-     * @param message   The string that is handed to the constructor. Usually an exception message.
+     * @param exceptionType The type of the isThrowable.
+     * @param message       The string that is handed to the constructor. Usually an exception message.
      * @return An instrumentation that will throw an instance of the isThrowable on each method invocation of the
      * instrumented methods.
      */
-    public static Instrumentation throwing(Class<? extends Throwable> throwable, String message) {
-        TypeDescription exceptionType = new TypeDescription.ForLoadedType(throwable);
-        return new ExceptionMethod(exceptionType, new ConstructionDelegate.ForStringConstructor(exceptionType, message));
+    public static Instrumentation throwing(Class<? extends Throwable> exceptionType, String message) {
+        return throwing(new TypeDescription.ForLoadedType(nonNull(exceptionType)), message);
+    }
+
+    public static Instrumentation throwing(TypeDescription exceptionType, String message) {
+        if (!exceptionType.isAssignableTo(Throwable.class)) {
+            throw new IllegalArgumentException(exceptionType + " does not extend throwable");
+        }
+        return new ExceptionMethod(nonNull(exceptionType), new ConstructionDelegate.ForStringConstructor(exceptionType, nonNull(message)));
     }
 
     @Override

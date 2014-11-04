@@ -10,12 +10,10 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import org.objectweb.asm.MethodVisitor;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.isInterface;
+import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
  * This {@link net.bytebuddy.instrumentation.Instrumentation} invokes a default method for the methods it instruments.
@@ -67,7 +65,11 @@ public class DefaultMethodCall implements Instrumentation {
      * interfaces to be prioritized in their order.
      */
     public static Instrumentation prioritize(Class<?>... prioritizedInterface) {
-        return new DefaultMethodCall(new TypeList.ForLoadedType(prioritizedInterface));
+        return new DefaultMethodCall(new TypeList.ForLoadedType(nonNull(prioritizedInterface)));
+    }
+
+    public static Instrumentation prioritize(TypeDescription... prioritizedInterface) {
+        return new DefaultMethodCall(new TypeList.Explicit(Arrays.asList(nonNull(prioritizedInterface))));
     }
 
     /**

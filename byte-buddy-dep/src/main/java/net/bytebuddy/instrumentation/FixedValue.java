@@ -15,6 +15,9 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import static net.bytebuddy.utility.ByteBuddyCommons.isValidIdentifier;
+import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
+
 /**
  * This instrumentation returns a fixed value for a method. Other than the
  * {@link net.bytebuddy.instrumentation.StubMethod} instrumentation, this implementation allows
@@ -72,7 +75,7 @@ public abstract class FixedValue implements Instrumentation {
      * possible for integer types and types that are presented by integers inside the JVM ({@code boolean}, {@code byte},
      * {@code short}, {@code char}) and for the {@code null} value. Additionally, several common constants of
      * the {@code float}, {@code double} and {@code long} types can be represented by opcode constants. Note that the
-     * Java 7 types {@link java.lang.invoke.MethodHandle} and {@link java.lang.invoke.MethodType} are are currently not
+     * Java 7 types {@code java.lang.invoke.MethodHandle} and {@code java.lang.invoke.MethodType} are are currently not
      * supported for constant pool storage.
      *
      * @param fixedValue The fixed value to be returned by methods that are instrumented by this instrumentation.
@@ -174,7 +177,7 @@ public abstract class FixedValue implements Instrumentation {
         if (fixedValue == null) {
             throw new IllegalArgumentException("The fixed value must not be null");
         }
-        return new ForStaticField(fieldName, fixedValue, defaultAssigner(), defaultConsiderRuntimeType());
+        return new ForStaticField(isValidIdentifier(fieldName), fixedValue, defaultAssigner(), defaultConsiderRuntimeType());
     }
 
     /**
@@ -311,7 +314,7 @@ public abstract class FixedValue implements Instrumentation {
 
         @Override
         public Instrumentation withAssigner(Assigner assigner, boolean considerRuntimeType) {
-            return new ForPoolValue(valueLoadInstruction, loadedType, assigner, considerRuntimeType);
+            return new ForPoolValue(valueLoadInstruction, loadedType, nonNull(assigner), considerRuntimeType);
         }
 
         @Override
@@ -416,7 +419,7 @@ public abstract class FixedValue implements Instrumentation {
 
         @Override
         public Instrumentation withAssigner(Assigner assigner, boolean considerRuntimeType) {
-            return new ForStaticField(fieldName, fixedValue, assigner, considerRuntimeType);
+            return new ForStaticField(fieldName, fixedValue, nonNull(assigner), considerRuntimeType);
         }
 
         @Override

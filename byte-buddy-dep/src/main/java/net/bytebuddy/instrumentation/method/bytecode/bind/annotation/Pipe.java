@@ -27,13 +27,13 @@ import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
 import net.bytebuddy.modifier.Visibility;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
 
 import java.io.Serializable;
 import java.lang.annotation.*;
 import java.util.*;
 
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
+import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
  * A target method parameter that is annotated with this annotation allows to forward an intercepted method
@@ -131,26 +131,31 @@ public @interface Pipe {
          * annotation.
          */
         public static TargetMethodAnnotationDrivenBinder.ParameterBinder<Pipe> install(Class<?> type) {
-            TypeDescription forwardingType = new TypeDescription.ForLoadedType(type);
-            if (!forwardingType.isInterface()) {
-                throw new IllegalArgumentException(String.format("The installed type %s is not an interface", type));
-            } else if (forwardingType.getInterfaces().size() > 0) {
-                throw new IllegalArgumentException(String.format("The installed type %s is not a zero-inheritance " +
-                        "interface", type));
-            } else if ((forwardingType.getModifiers() & Opcodes.ACC_PUBLIC) == 0) {
-                throw new IllegalArgumentException(String.format("The installed type %s is not public", type));
+            return install(new TypeDescription.ForLoadedType(nonNull(type)));
+        }
+
+        public static TargetMethodAnnotationDrivenBinder.ParameterBinder<Pipe> install(TypeDescription typeDescription) {
+            return new Binder(onlyMethod(nonNull(typeDescription)));
+        }
+
+        private static MethodDescription onlyMethod(TypeDescription typeDescription) {
+            if (!typeDescription.isInterface()) {
+                throw new IllegalArgumentException(typeDescription + " is not an interface");
+            } else if (typeDescription.getInterfaces().size() > 0) {
+                throw new IllegalArgumentException(typeDescription + " must not extend other interfaces");
+            } else if (!typeDescription.isPublic()) {
+                throw new IllegalArgumentException(typeDescription + " is mot public");
             }
-            MethodList methodCandidates = forwardingType.getDeclaredMethods().filter(not(isStatic()));
+            MethodList methodCandidates = typeDescription.getDeclaredMethods().filter(not(isStatic()));
             if (methodCandidates.size() != 1) {
-                throw new IllegalArgumentException(String.format("The installed type %s does not declare exactly " +
-                        "one non-static method", type));
+                throw new IllegalArgumentException(typeDescription + " must declare exactly one non-static method");
             }
             methodCandidates = methodCandidates.filter(takesArguments(Object.class).and(returns(Object.class)));
             if (methodCandidates.size() != 1) {
-                throw new IllegalArgumentException(String.format("The installed type %s does not declare " +
-                        "an Object-typed argument or Object-typed return type method", type));
+                throw new IllegalArgumentException(typeDescription + " must declare exactly one method with an " +
+                        "Object-typed return type and an Object-typed return value");
             }
-            return new Binder(methodCandidates.getOnly());
+            return methodCandidates.getOnly();
         }
 
         @Override

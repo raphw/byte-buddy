@@ -10,6 +10,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.After;
 import org.junit.Before;
@@ -23,7 +24,6 @@ import org.objectweb.asm.MethodVisitor;
 import java.lang.annotation.Annotation;
 import java.util.*;
 
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Matchers.anyBoolean;
@@ -39,6 +39,8 @@ public class TargetMethodAnnotationDrivenBinderTest {
     private TargetMethodAnnotationDrivenBinder.ParameterBinder<?> firstParameterBinder, secondParameterBinder;
     @Mock
     private TargetMethodAnnotationDrivenBinder.DefaultsProvider defaultsProvider;
+    @Mock
+    private TargetMethodAnnotationDrivenBinder.TerminationHandler terminationHandler;
     @Mock
     private Assigner assigner;
     @Mock
@@ -84,7 +86,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
 
     @SuppressWarnings({"unchecked", "unused"})
     private static Iterator<AnnotationDescription> prepareDefaultProvider(TargetMethodAnnotationDrivenBinder.DefaultsProvider defaultsProvider,
-                                                               List<? extends AnnotationDescription> defaultIteratorValues) {
+                                                                          List<? extends AnnotationDescription> defaultIteratorValues) {
         Iterator<AnnotationDescription> annotationIterator = mock(Iterator.class);
         when(defaultsProvider.makeIterator(any(Instrumentation.Target.class), any(MethodDescription.class), any(MethodDescription.class)))
                 .thenReturn((Iterator) annotationIterator);
@@ -139,6 +141,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
         new TargetMethodAnnotationDrivenBinder(
                 Arrays.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>asList(firstParameterBinder, secondParameterBinder),
                 defaultsProvider,
+                terminationHandler,
                 assigner,
                 methodInvoker);
     }
@@ -150,6 +153,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
         MethodDelegationBinder methodDelegationBinder = new TargetMethodAnnotationDrivenBinder(
                 Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>emptyList(),
                 defaultsProvider,
+                terminationHandler,
                 assigner,
                 methodInvoker);
         assertThat(methodDelegationBinder.bind(instrumentationTarget, source, target).isValid(), is(false));
@@ -167,6 +171,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
         MethodDelegationBinder methodDelegationBinder = new TargetMethodAnnotationDrivenBinder(
                 Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>emptyList(),
                 defaultsProvider,
+                terminationHandler,
                 assigner,
                 methodInvoker);
         assertThat(methodDelegationBinder.bind(instrumentationTarget, source, target).isValid(), is(false));
@@ -188,6 +193,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
         MethodDelegationBinder methodDelegationBinder = new TargetMethodAnnotationDrivenBinder(
                 Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>emptyList(),
                 defaultsProvider,
+                terminationHandler,
                 assigner,
                 methodInvoker);
         assertThat(methodDelegationBinder.bind(instrumentationTarget, source, target).isValid(), is(false));
@@ -218,6 +224,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
         MethodDelegationBinder methodDelegationBinder = new TargetMethodAnnotationDrivenBinder(
                 Arrays.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>asList(firstParameterBinder),
                 defaultsProvider,
+                terminationHandler,
                 assigner,
                 methodInvoker);
         MethodDelegationBinder.MethodBinding methodBinding = methodDelegationBinder.bind(instrumentationTarget, source, target);
@@ -253,6 +260,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
         MethodDelegationBinder methodDelegationBinder = new TargetMethodAnnotationDrivenBinder(
                 Arrays.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>asList(firstParameterBinder, secondParameterBinder),
                 defaultsProvider,
+                terminationHandler,
                 assigner,
                 methodInvoker);
         MethodDelegationBinder.MethodBinding methodBinding = methodDelegationBinder.bind(instrumentationTarget, source, target);
@@ -324,6 +332,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
         MethodDelegationBinder methodDelegationBinder = new TargetMethodAnnotationDrivenBinder(
                 Arrays.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>asList(firstParameterBinder, secondParameterBinder),
                 defaultsProvider,
+                terminationHandler,
                 assigner,
                 methodInvoker);
         assertThat(methodDelegationBinder.bind(instrumentationTarget, source, target).isValid(), is(false));
@@ -375,6 +384,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
         MethodDelegationBinder methodDelegationBinder = new TargetMethodAnnotationDrivenBinder(
                 Arrays.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>asList(firstParameterBinder, secondParameterBinder),
                 defaultsProvider,
+                terminationHandler,
                 assigner,
                 methodInvoker);
         MethodDelegationBinder.MethodBinding methodBinding = methodDelegationBinder.bind(instrumentationTarget, source, target);
@@ -445,6 +455,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
         MethodDelegationBinder methodDelegationBinder = new TargetMethodAnnotationDrivenBinder(
                 Arrays.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>asList(firstParameterBinder, secondParameterBinder),
                 defaultsProvider,
+                terminationHandler,
                 assigner,
                 methodInvoker);
         MethodDelegationBinder.MethodBinding methodBinding = methodDelegationBinder.bind(instrumentationTarget, source, target);
@@ -492,42 +503,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        assertThat(new TargetMethodAnnotationDrivenBinder(Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>emptyList(),
-                        defaultsProvider,
-                        assigner,
-                        methodInvoker).hashCode(),
-                is(new TargetMethodAnnotationDrivenBinder(Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>emptyList(),
-                        defaultsProvider,
-                        assigner,
-                        methodInvoker).hashCode())
-        );
-        assertThat(new TargetMethodAnnotationDrivenBinder(Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>emptyList(),
-                        defaultsProvider,
-                        assigner,
-                        methodInvoker),
-                is(new TargetMethodAnnotationDrivenBinder(Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>emptyList(),
-                        defaultsProvider,
-                        assigner,
-                        methodInvoker))
-        );
-        assertThat(new TargetMethodAnnotationDrivenBinder(Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>singletonList(firstParameterBinder),
-                        defaultsProvider,
-                        assigner,
-                        methodInvoker).hashCode(),
-                not(is(new TargetMethodAnnotationDrivenBinder(Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>emptyList(),
-                        defaultsProvider,
-                        assigner,
-                        methodInvoker).hashCode()))
-        );
-        assertThat(new TargetMethodAnnotationDrivenBinder(Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>singletonList(firstParameterBinder),
-                        defaultsProvider,
-                        assigner,
-                        methodInvoker),
-                not(is(new TargetMethodAnnotationDrivenBinder(Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>emptyList(),
-                        defaultsProvider,
-                        assigner,
-                        methodInvoker)))
-        );
+        HashCodeEqualsTester.of(TargetMethodAnnotationDrivenBinder.class).apply();
     }
 
     private static @interface FirstPseudoAnnotation {

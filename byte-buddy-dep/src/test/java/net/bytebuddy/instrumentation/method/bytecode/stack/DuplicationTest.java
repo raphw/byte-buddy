@@ -66,7 +66,9 @@ public class DuplicationTest {
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, instrumentationContext);
         assertThat(size.getMaximalSize(), is(stackSize.getSize()));
         assertThat(size.getSizeImpact(), is(stackSize.getSize()));
-        verify(methodVisitor).visitInsn(opcode);
+        if (stackSize != StackSize.ZERO) {
+            verify(methodVisitor).visitInsn(opcode);
+        }
         verifyNoMoreInteractions(methodVisitor);
     }
 }

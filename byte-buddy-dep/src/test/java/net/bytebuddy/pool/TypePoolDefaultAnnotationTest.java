@@ -22,15 +22,15 @@ public class TypePoolDefaultAnnotationTest {
     @Test
     public void testSimpleAnnotationExtraction() throws Exception {
         TypeDescription typeDescription = typePool.describe(SimpleAnnotatedType.class.getName());
-        assertThat(typeDescription.getDeclaredAnnotations().isAnnotationPresent(Empty.class), is(true));
+        assertThat(typeDescription.getDeclaredAnnotations().isAnnotationPresent(Simple.class), is(true));
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    private @interface Empty {
+    private @interface Simple {
         /* */
     }
 
-    @Empty
+    @Simple
     private static class SimpleAnnotatedType {
         /* empty */
     }
