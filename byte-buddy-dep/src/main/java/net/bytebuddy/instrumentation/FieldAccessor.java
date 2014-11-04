@@ -231,7 +231,7 @@ public abstract class FieldAccessor implements Instrumentation {
 
             @Override
             public FieldLocator make(TypeDescription instrumentedType) {
-                return new ForGivenType(instrumentedType);
+                return new ForGivenType(instrumentedType, instrumentedType);
             }
         }
 
@@ -281,7 +281,7 @@ public abstract class FieldAccessor implements Instrumentation {
                         }
                     }
                 } while (!(currentType = currentType.getSupertype()).represents(Object.class));
-                throw new IllegalArgumentException("There is no field '" + name + "' that is visible to " + instrumentedType);
+                throw new IllegalArgumentException("There is no field '" + name + " that is visible to " + instrumentedType);
             }
 
             @Override
@@ -321,46 +321,79 @@ public abstract class FieldAccessor implements Instrumentation {
         /**
          * A field locator that only looks up fields that are defined for a given type.
          */
-        static class ForGivenType implements FieldLocator, Factory {
+        static class ForGivenType implements FieldLocator {
+
+            public static class Factory implements FieldLocator.Factory {
+
+                private final TypeDescription targetType;
+
+                public Factory(TypeDescription targetType) {
+                    this.targetType = targetType;
+                }
+
+                @Override
+                public FieldLocator make(TypeDescription instrumentedType) {
+                    return new ForGivenType(targetType, instrumentedType);
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && targetType.equals(((Factory) other).targetType);
+                }
+
+                @Override
+                public int hashCode() {
+                    return targetType.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return " FieldAccessor.FieldLocator.ForGivenType.Factory{targetType=" + targetType + '}';
+                }
+            }
 
             /**
              * The target type for which a field should be accessed.
              */
             private final TypeDescription targetType;
 
+            private final TypeDescription instrumentedType;
+
             /**
              * Creates a new field locator for a given type.
              *
              * @param targetType The type for which fields are to be looked up.
              */
-            public ForGivenType(TypeDescription targetType) {
+            public ForGivenType(TypeDescription targetType, TypeDescription instrumentedType) {
                 this.targetType = targetType;
-            }
-
-            @Override
-            public FieldLocator make(TypeDescription instrumentedType) {
-                return this;
+                this.instrumentedType = instrumentedType;
             }
 
             @Override
             public FieldDescription locate(String name) {
-                return targetType.getDeclaredFields().named(name);
+                FieldDescription fieldDescription = targetType.getDeclaredFields().named(name);
+                if (!fieldDescription.isVisibleTo(instrumentedType)) {
+                    throw new IllegalArgumentException(fieldDescription + " is not visible to " + instrumentedType);
+                }
+                return fieldDescription;
             }
 
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
+                        && instrumentedType.equals(((ForGivenType) other).instrumentedType)
                         && targetType.equals(((ForGivenType) other).targetType);
             }
 
             @Override
             public int hashCode() {
-                return targetType.hashCode();
+                return 31 * instrumentedType.hashCode() + targetType.hashCode();
             }
 
             @Override
             public String toString() {
-                return "FieldLocator.ForGivenType{targetType=" + targetType + '}';
+                return "FieldLocator.ForGivenType{targetType=" + targetType + ", instrumentedType=" + instrumentedType + '}';
             }
         }
     }
@@ -480,7 +513,7 @@ public abstract class FieldAccessor implements Instrumentation {
         public AssignerConfigurable in(TypeDescription typeDescription) {
             return nonNull(typeDescription).represents(TargetType.class)
                     ? in(FieldLocator.ForInstrumentedType.INSTANCE)
-                    : in(new FieldLocator.ForGivenType(typeDescription));
+                    : in(new FieldLocator.ForGivenType.Factory(typeDescription));
         }
 
         @Override
@@ -616,7 +649,7 @@ public abstract class FieldAccessor implements Instrumentation {
         public AssignerConfigurable in(TypeDescription typeDescription) {
             return typeDescription.represents(TargetType.class)
                     ? in(FieldLocator.ForInstrumentedType.INSTANCE)
-                    : in(new FieldLocator.ForGivenType(typeDescription));
+                    : in(new FieldLocator.ForGivenType.Factory(typeDescription));
         }
 
         @Override
