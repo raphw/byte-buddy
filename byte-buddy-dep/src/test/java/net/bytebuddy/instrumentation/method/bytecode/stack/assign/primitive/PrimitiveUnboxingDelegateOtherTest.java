@@ -1,11 +1,8 @@
 package net.bytebuddy.instrumentation.method.bytecode.stack.assign.primitive;
 
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Test;
-
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 public class PrimitiveUnboxingDelegateOtherTest {
 
@@ -16,13 +13,6 @@ public class PrimitiveUnboxingDelegateOtherTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        assertThat(PrimitiveUnboxingDelegate.forReferenceType(new TypeDescription.ForLoadedType(Object.class)).hashCode(),
-                is(PrimitiveUnboxingDelegate.forReferenceType(new TypeDescription.ForLoadedType(Object.class)).hashCode()));
-        assertThat(PrimitiveUnboxingDelegate.forReferenceType(new TypeDescription.ForLoadedType(Object.class)),
-                is(PrimitiveUnboxingDelegate.forReferenceType(new TypeDescription.ForLoadedType(Object.class))));
-        assertThat(PrimitiveUnboxingDelegate.forReferenceType(new TypeDescription.ForLoadedType(Object.class)).hashCode(),
-                not(is(PrimitiveUnboxingDelegate.forReferenceType(new TypeDescription.ForLoadedType(String.class)).hashCode())));
-        assertThat(PrimitiveUnboxingDelegate.forReferenceType(new TypeDescription.ForLoadedType(Object.class)),
-                not(is(PrimitiveUnboxingDelegate.forReferenceType(new TypeDescription.ForLoadedType(String.class)))));
+        ObjectPropertyAssertion.of(PrimitiveUnboxingDelegate.ImplicitlyTypedUnboxingResponsible.class).apply();
     }
 }

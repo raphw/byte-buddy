@@ -22,7 +22,7 @@ import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.modifier.Visibility;
-import net.bytebuddy.utility.HashCodeEqualsTester;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -521,8 +521,8 @@ public class InlineDynamicTypeBuilderTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(InlineDynamicTypeBuilder.class).apply();
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(InlineDynamicTypeBuilder.class).apply();
     }
 
     @Retention(RetentionPolicy.RUNTIME)

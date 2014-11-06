@@ -6,6 +6,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -16,7 +17,6 @@ import org.objectweb.asm.MethodVisitor;
 import java.util.Arrays;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
@@ -71,14 +71,7 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        assertThat(new MethodRebaseResolver.Resolution.ForRebasedMethod(methodDescription, methodNameTransformer).hashCode(),
-                is(new MethodRebaseResolver.Resolution.ForRebasedMethod(methodDescription, methodNameTransformer).hashCode()));
-        assertThat(new MethodRebaseResolver.Resolution.ForRebasedMethod(methodDescription, methodNameTransformer),
-                is(new MethodRebaseResolver.Resolution.ForRebasedMethod(methodDescription, methodNameTransformer)));
-        assertThat(new MethodRebaseResolver.Resolution.ForRebasedMethod(methodDescription, methodNameTransformer).hashCode(),
-                not(is(new MethodRebaseResolver.Resolution.ForRebasedMethod(methodDescription, otherMethodNameTransformer).hashCode())));
-        assertThat(new MethodRebaseResolver.Resolution.ForRebasedMethod(methodDescription, methodNameTransformer),
-                not(is(new MethodRebaseResolver.Resolution.ForRebasedMethod(methodDescription, otherMethodNameTransformer))));
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(MethodRebaseResolver.Resolution.ForRebasedMethod.class).apply();
     }
 }

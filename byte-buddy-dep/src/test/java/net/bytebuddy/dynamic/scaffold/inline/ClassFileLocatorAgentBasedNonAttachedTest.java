@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
-import net.bytebuddy.utility.HashCodeEqualsTester;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.lang.instrument.Instrumentation;
@@ -16,8 +16,8 @@ public class ClassFileLocatorAgentBasedNonAttachedTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(ClassFileLocator.AgentBased.class).refine(new HashCodeEqualsTester.Refinement<Instrumentation>() {
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.class).refine(new ObjectPropertyAssertion.Refinement<Instrumentation>() {
             @Override
             public void apply(Instrumentation mock) {
                 when(mock.isRetransformClassesSupported()).thenReturn(true);

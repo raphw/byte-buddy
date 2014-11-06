@@ -1,6 +1,6 @@
 package net.bytebuddy.instrumentation;
 
-import net.bytebuddy.utility.HashCodeEqualsTester;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -37,8 +37,8 @@ public class LoadedTypeInitializerForStaticFieldTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(LoadedTypeInitializer.ForStaticField.class).apply();
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(LoadedTypeInitializer.ForStaticField.class).apply();
     }
 
     @SuppressWarnings("unused")

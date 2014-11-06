@@ -1,6 +1,6 @@
 package net.bytebuddy.instrumentation.method.bytecode;
 
-import net.bytebuddy.utility.HashCodeEqualsTester;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -23,7 +23,7 @@ public class ByteCodeAppenderSizeTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(ByteCodeAppender.Size.class).apply();
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(ByteCodeAppender.Size.class).apply();
     }
 }

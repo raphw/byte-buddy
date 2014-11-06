@@ -4,6 +4,7 @@ import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -70,13 +71,8 @@ public class FieldRegistryDefaultTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        assertThat(new FieldRegistry.Default().hashCode(), is(new FieldRegistry.Default().hashCode()));
-        assertThat(new FieldRegistry.Default(), is(new FieldRegistry.Default()));
-        assertThat(new FieldRegistry.Default().include(latentFieldMatcher, distinctFactory, null).hashCode(),
-                not(is(new FieldRegistry.Default().hashCode())));
-        assertThat(new FieldRegistry.Default().include(latentFieldMatcher, distinctFactory, null),
-                not(is((FieldRegistry) new FieldRegistry.Default())));
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(FieldRegistry.Default.class).apply();
     }
 
     @Test

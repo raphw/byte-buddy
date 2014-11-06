@@ -1,7 +1,7 @@
 package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.utility.HashCodeEqualsTester;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
@@ -58,8 +58,8 @@ public class ForwardingTest extends AbstractInstrumentationTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(Forwarding.class).apply();
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(Forwarding.class).apply();
     }
 
     @Test(expected = IllegalArgumentException.class)

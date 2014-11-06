@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
-import net.bytebuddy.utility.HashCodeEqualsTester;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.RandomString;
 import org.junit.Test;
 
@@ -23,8 +23,8 @@ public class MethodRebaseResolverMethodNameTransformerSuffixingTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(MethodRebaseResolver.MethodNameTransformer.Suffixing.class).refine(new HashCodeEqualsTester.Refinement<RandomString>() {
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(MethodRebaseResolver.MethodNameTransformer.Suffixing.class).refine(new ObjectPropertyAssertion.Refinement<RandomString>() {
             @Override
             public void apply(RandomString mock) {
                 when(mock.nextString()).thenReturn("" + new Random().nextInt());

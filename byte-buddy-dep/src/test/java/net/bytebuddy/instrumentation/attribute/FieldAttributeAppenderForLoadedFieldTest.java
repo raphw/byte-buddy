@@ -1,14 +1,12 @@
 package net.bytebuddy.instrumentation.attribute;
 
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.asm.Type;
 
 import java.lang.reflect.Field;
 
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
 
 public class FieldAttributeAppenderForLoadedFieldTest extends AbstractFieldAttributeAppenderTest {
@@ -31,12 +29,8 @@ public class FieldAttributeAppenderForLoadedFieldTest extends AbstractFieldAttri
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        Field otherField = Other.class.getDeclaredField(BAR);
-        assertThat(new FieldAttributeAppender.ForLoadedField(field).hashCode(), is(new FieldAttributeAppender.ForLoadedField(field).hashCode()));
-        assertThat(new FieldAttributeAppender.ForLoadedField(field), is(new FieldAttributeAppender.ForLoadedField(field)));
-        assertThat(new FieldAttributeAppender.ForLoadedField(field).hashCode(), not(is(new FieldAttributeAppender.ForLoadedField(otherField).hashCode())));
-        assertThat(new FieldAttributeAppender.ForLoadedField(field), not(is(new FieldAttributeAppender.ForLoadedField(otherField))));
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(FieldAttributeAppender.ForLoadedField.class).apply();
     }
 
     private static class Foo {
@@ -44,11 +38,6 @@ public class FieldAttributeAppenderForLoadedFieldTest extends AbstractFieldAttri
         @Qux
         @Baz
         @QuxBaz
-        private Object bar;
-    }
-
-    private static class Other {
-
         private Object bar;
     }
 }

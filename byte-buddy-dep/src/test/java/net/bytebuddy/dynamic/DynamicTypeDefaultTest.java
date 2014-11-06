@@ -2,7 +2,7 @@ package net.bytebuddy.dynamic;
 
 import net.bytebuddy.instrumentation.LoadedTypeInitializer;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.utility.HashCodeEqualsTester;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.MockitoRule;
 import net.bytebuddy.utility.RandomString;
 import org.junit.Before;
@@ -256,6 +256,6 @@ public class DynamicTypeDefaultTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(DynamicType.Default.class).apply();
+        ObjectPropertyAssertion.of(DynamicType.Default.class).apply();
     }
 }

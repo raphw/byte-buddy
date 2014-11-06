@@ -103,7 +103,7 @@ public interface FieldAttributeAppender {
 
             @Override
             public String toString() {
-                return "FieldAttributeAppender.Factory.Compound{" + Arrays.toString(factory) + '}';
+                return "FieldAttributeAppender.Factory.Compound{factory=" + Arrays.toString(factory) + '}';
             }
         }
     }
@@ -251,7 +251,7 @@ public interface FieldAttributeAppender {
 
         @Override
         public String toString() {
-            return "FieldAttributeAppender.Compound{" + Arrays.toString(fieldAttributeAppender) + '}';
+            return "FieldAttributeAppender.Compound{fieldAttributeAppender=" + Arrays.toString(fieldAttributeAppender) + '}';
         }
     }
 }

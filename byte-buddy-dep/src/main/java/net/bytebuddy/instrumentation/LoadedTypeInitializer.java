@@ -219,7 +219,7 @@ public interface LoadedTypeInitializer {
 
         @Override
         public String toString() {
-            return "LoadedTypeInitializer.Compound{typeInitializer=" + Arrays.toString(loadedTypeInitializer) + '}';
+            return "LoadedTypeInitializer.Compound{loadedTypeInitializer=" + Arrays.toString(loadedTypeInitializer) + '}';
         }
     }
 }

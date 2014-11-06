@@ -3,7 +3,7 @@ package net.bytebuddy.dynamic;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.ClassFileExtraction;
-import net.bytebuddy.utility.HashCodeEqualsTester;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -44,8 +44,8 @@ public class ClassLoadingStrategyDefaultProtectionDomainWrapperTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(ClassLoadingStrategy.Default.ProtectionDomainWrapper.class).apply();
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(ClassLoadingStrategy.Default.ProtectionDomainWrapper.class).apply();
     }
 
     private static class Foo {

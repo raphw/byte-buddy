@@ -1,6 +1,6 @@
 package net.bytebuddy.instrumentation.method.bytecode.stack;
 
-import net.bytebuddy.utility.HashCodeEqualsTester;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -36,7 +36,7 @@ public class StackManipulationSizeTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(StackManipulation.Size.class).apply();
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(StackManipulation.Size.class).apply();
     }
 }

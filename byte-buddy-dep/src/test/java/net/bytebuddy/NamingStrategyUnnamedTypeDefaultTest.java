@@ -4,7 +4,7 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.modifier.SyntheticState;
 import net.bytebuddy.modifier.TypeManifestation;
 import net.bytebuddy.modifier.Visibility;
-import net.bytebuddy.utility.HashCodeEqualsTester;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -85,7 +85,7 @@ public class NamingStrategyUnnamedTypeDefaultTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(NamingStrategy.UnnamedType.Default.class).apply();
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(NamingStrategy.UnnamedType.Default.class).apply();
     }
 }

@@ -1,15 +1,13 @@
 package net.bytebuddy.instrumentation.attribute;
 
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.asm.Type;
 
 import java.lang.reflect.Method;
 
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
 
 public class MethodAttributeAppenderForLoadedMethodTest extends AbstractMethodAttributeAppenderTest {
@@ -38,16 +36,8 @@ public class MethodAttributeAppenderForLoadedMethodTest extends AbstractMethodAt
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        Method otherMethod = Object.class.getDeclaredMethod(TO_STRING);
-        assertThat(new MethodAttributeAppender.ForLoadedMethod(method).hashCode(),
-                is(new MethodAttributeAppender.ForLoadedMethod(method).hashCode()));
-        assertThat(new MethodAttributeAppender.ForLoadedMethod(method),
-                is(new MethodAttributeAppender.ForLoadedMethod(method)));
-        assertThat(new MethodAttributeAppender.ForLoadedMethod(method).hashCode(),
-                not(is(new MethodAttributeAppender.ForLoadedMethod(otherMethod).hashCode())));
-        assertThat(new MethodAttributeAppender.ForLoadedMethod(method),
-                not(is(new MethodAttributeAppender.ForLoadedMethod(otherMethod))));
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(MethodAttributeAppender.ForLoadedMethod.class).apply();
     }
 
     private static abstract class Foo {

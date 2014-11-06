@@ -1,15 +1,13 @@
 package net.bytebuddy.instrumentation.attribute;
 
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.asm.Type;
 
 import java.lang.reflect.Constructor;
 
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
 
 public class MethodAttributeAppenderForLoadedConstructorTest extends AbstractMethodAttributeAppenderTest {
@@ -38,16 +36,8 @@ public class MethodAttributeAppenderForLoadedConstructorTest extends AbstractMet
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        Constructor<?> otherConstructor = Object.class.getDeclaredConstructor();
-        assertThat(new MethodAttributeAppender.ForLoadedConstructor(constructor).hashCode(),
-                is(new MethodAttributeAppender.ForLoadedConstructor(constructor).hashCode()));
-        assertThat(new MethodAttributeAppender.ForLoadedConstructor(constructor),
-                is(new MethodAttributeAppender.ForLoadedConstructor(constructor)));
-        assertThat(new MethodAttributeAppender.ForLoadedConstructor(constructor).hashCode(),
-                not(is(new MethodAttributeAppender.ForLoadedConstructor(otherConstructor).hashCode())));
-        assertThat(new MethodAttributeAppender.ForLoadedConstructor(constructor),
-                not(is(new MethodAttributeAppender.ForLoadedConstructor(otherConstructor))));
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(MethodAttributeAppender.ForLoadedConstructor.class).apply();
     }
 
     private static abstract class Foo {

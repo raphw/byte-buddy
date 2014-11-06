@@ -133,11 +133,6 @@ public abstract class MethodConstant implements StackManipulation {
         return methodDescription.hashCode();
     }
 
-    @Override
-    public String toString() {
-        return "MethodConstant{methodDescription=" + methodDescription + '}';
-    }
-
     /**
      * Represents a {@link net.bytebuddy.instrumentation.method.bytecode.stack.constant.MethodConstant} that is
      * directly loaded onto the operand stack without caching the value. Since the look-up of a Java method bares
@@ -159,7 +154,7 @@ public abstract class MethodConstant implements StackManipulation {
      * Creates a {@link net.bytebuddy.instrumentation.method.bytecode.stack.constant.MethodConstant} for loading
      * a {@link java.lang.reflect.Method} instance onto the operand stack.
      */
-    private static class ForMethod extends MethodConstant implements CanCache {
+    protected static class ForMethod extends MethodConstant implements CanCache {
 
         /**
          * The name of the {@link java.lang.Class#getDeclaredMethod(String, Class[])} method.
@@ -178,7 +173,7 @@ public abstract class MethodConstant implements StackManipulation {
          *
          * @param methodDescription The method to be loaded onto the stack.
          */
-        private ForMethod(MethodDescription methodDescription) {
+        protected ForMethod(MethodDescription methodDescription) {
             super(methodDescription);
         }
 
@@ -198,13 +193,18 @@ public abstract class MethodConstant implements StackManipulation {
         protected String getDescriptor() {
             return GET_DECLARED_METHOD_DESCRIPTOR;
         }
+
+        @Override
+        public String toString() {
+            return "MethodConstant.ForMethod{methodDescription=" + methodDescription + '}';
+        }
     }
 
     /**
      * Creates a {@link net.bytebuddy.instrumentation.method.bytecode.stack.constant.MethodConstant} for loading
      * a {@link java.lang.reflect.Constructor} instance onto the operand stack.
      */
-    private static class ForConstructor extends MethodConstant implements CanCache {
+    protected static class ForConstructor extends MethodConstant implements CanCache {
 
         /**
          * The name of the {@link java.lang.Class#getDeclaredMethod(String, Class[])} method.
@@ -223,7 +223,7 @@ public abstract class MethodConstant implements StackManipulation {
          *
          * @param methodDescription The constructor to be loaded onto the stack.
          */
-        private ForConstructor(MethodDescription methodDescription) {
+        protected ForConstructor(MethodDescription methodDescription) {
             super(methodDescription);
         }
 
@@ -242,12 +242,17 @@ public abstract class MethodConstant implements StackManipulation {
         protected String getDescriptor() {
             return GET_DECLARED_CONSTRUCTOR_DESCRIPTOR;
         }
+
+        @Override
+        public String toString() {
+            return "MethodConstant.ForConstructor{methodDescription=" + methodDescription + '}';
+        }
     }
 
     /**
      * Represents a cached {@link net.bytebuddy.instrumentation.method.bytecode.stack.constant.MethodConstant}.
      */
-    private static class Cached implements StackManipulation {
+    protected static class Cached implements StackManipulation {
 
         /**
          * A description of the {@link java.lang.reflect.Method} type.
@@ -264,7 +269,7 @@ public abstract class MethodConstant implements StackManipulation {
          *
          * @param methodConstant The method constant to store in the field cache.
          */
-        private Cached(StackManipulation methodConstant) {
+        protected Cached(StackManipulation methodConstant) {
             this.methodConstant = methodConstant;
         }
 

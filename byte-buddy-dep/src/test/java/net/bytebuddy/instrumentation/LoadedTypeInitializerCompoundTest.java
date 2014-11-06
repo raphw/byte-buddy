@@ -3,13 +3,13 @@ package net.bytebuddy.instrumentation;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
@@ -62,10 +62,7 @@ public class LoadedTypeInitializerCompoundTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        assertThat(new LoadedTypeInitializer.Compound(first, second).hashCode(), is(new LoadedTypeInitializer.Compound(first, second).hashCode()));
-        assertThat(new LoadedTypeInitializer.Compound(first, second), is(new LoadedTypeInitializer.Compound(first, second)));
-        assertThat(new LoadedTypeInitializer.Compound(first, second).hashCode(), not(is(new LoadedTypeInitializer.Compound(second, first).hashCode())));
-        assertThat(new LoadedTypeInitializer.Compound(first, second), not(is(new LoadedTypeInitializer.Compound(second, first))));
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(LoadedTypeInitializer.Compound.class).apply();
     }
 }

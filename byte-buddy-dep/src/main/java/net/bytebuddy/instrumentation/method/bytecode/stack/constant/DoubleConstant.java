@@ -72,7 +72,7 @@ public enum DoubleConstant implements StackManipulation {
     /**
      * A stack manipulation for loading a {@code double} value from a class's constant pool onto the operand stack.
      */
-    private static class ConstantPool implements StackManipulation {
+    protected static class ConstantPool implements StackManipulation {
 
         /**
          * The {@code double} value to be loaded onto the operand stack.
@@ -84,7 +84,7 @@ public enum DoubleConstant implements StackManipulation {
          *
          * @param value The {@code double} value to be loaded onto the operand stack.
          */
-        private ConstantPool(double value) {
+        protected ConstantPool(double value) {
             this.value = value;
         }
 

@@ -10,7 +10,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
-import net.bytebuddy.utility.HashCodeEqualsTester;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.After;
 import org.junit.Before;
@@ -491,13 +491,13 @@ public class TargetMethodAnnotationDrivenBinderTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(TargetMethodAnnotationDrivenBinder.class).listType(new HashCodeEqualsTester.Generator<Object>() {
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.class).listType(new ObjectPropertyAssertion.Generator<Object>() {
             @Override
             public Class<?> generate() {
                 return TargetMethodAnnotationDrivenBinder.ParameterBinder.class;
             }
-        }).refine(new HashCodeEqualsTester.Refinement<TargetMethodAnnotationDrivenBinder.ParameterBinder>() {
+        }).refine(new ObjectPropertyAssertion.Refinement<TargetMethodAnnotationDrivenBinder.ParameterBinder>() {
             @Override
             public void apply(TargetMethodAnnotationDrivenBinder.ParameterBinder mock) {
                 when(mock.getHandledType()).thenReturn(Annotation.class);

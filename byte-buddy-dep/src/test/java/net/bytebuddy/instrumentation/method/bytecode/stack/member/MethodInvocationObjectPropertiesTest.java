@@ -5,18 +5,16 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 
-public class MethodInvocationHashCodeEqualsTest {
+public class MethodInvocationObjectPropertiesTest {
 
     private static final String FOO = "foo";
 
@@ -53,26 +51,7 @@ public class MethodInvocationHashCodeEqualsTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        assertThat(MethodInvocation.invoke(instanceMethod).hashCode(), is(MethodInvocation.invoke(instanceMethod).hashCode()));
-        assertThat(MethodInvocation.invoke(instanceMethod), is(MethodInvocation.invoke(instanceMethod)));
-        assertThat(MethodInvocation.invoke(instanceMethod).hashCode(), not(is(MethodInvocation.invoke(otherInstanceMethod).hashCode())));
-        assertThat(MethodInvocation.invoke(instanceMethod), not(is(MethodInvocation.invoke(otherInstanceMethod))));
-        assertThat(MethodInvocation.invoke(staticMethod).hashCode(), not(is(MethodInvocation.invoke(otherInstanceMethod).hashCode())));
-        assertThat(MethodInvocation.invoke(staticMethod), not(is(MethodInvocation.invoke(otherInstanceMethod))));
-        assertThat(MethodInvocation.invoke(interfaceMethod).hashCode(), not(is(MethodInvocation.invoke(otherInstanceMethod).hashCode())));
-        assertThat(MethodInvocation.invoke(interfaceMethod), not(is(MethodInvocation.invoke(otherInstanceMethod))));
-    }
-
-    @Test
-    public void testVirtualStaticHashCodeEquals() throws Exception {
-        assertThat(MethodInvocation.invoke(instanceMethod).virtual(firstType).hashCode(),
-                is(MethodInvocation.invoke(instanceMethod).virtual(firstType).hashCode()));
-        assertThat(MethodInvocation.invoke(instanceMethod).virtual(firstType),
-                is(MethodInvocation.invoke(instanceMethod).virtual(firstType)));
-        assertThat(MethodInvocation.invoke(instanceMethod).virtual(firstType).hashCode(),
-                not(is(MethodInvocation.invoke(instanceMethod).special(firstType).hashCode())));
-        assertThat(MethodInvocation.invoke(instanceMethod).virtual(firstType),
-                not(is(MethodInvocation.invoke(instanceMethod).special(firstType))));
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(MethodInvocation.Invocation.class).apply();
     }
 }

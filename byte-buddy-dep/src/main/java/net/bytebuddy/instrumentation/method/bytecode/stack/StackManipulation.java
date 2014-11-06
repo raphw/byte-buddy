@@ -209,7 +209,7 @@ public interface StackManipulation {
 
         @Override
         public String toString() {
-            return "StackManipulation.Compound{" + Arrays.asList(stackManipulation) + "}";
+            return "StackManipulation.Compound{stackManipulation=" + Arrays.asList(stackManipulation) + "}";
         }
     }
 }

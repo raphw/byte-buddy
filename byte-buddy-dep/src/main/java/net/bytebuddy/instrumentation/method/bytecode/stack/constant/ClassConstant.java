@@ -131,7 +131,7 @@ public enum ClassConstant implements StackManipulation {
     /**
      * A class constant for a non-primitive {@link java.lang.Class}.
      */
-    private static class ForReferenceType implements StackManipulation {
+    protected static class ForReferenceType implements StackManipulation {
 
         /**
          * The type which should be loaded onto the operand stack as a class value.
@@ -143,7 +143,7 @@ public enum ClassConstant implements StackManipulation {
          *
          * @param typeDescription A description of the class to load onto the stack.
          */
-        private ForReferenceType(TypeDescription typeDescription) {
+        protected ForReferenceType(TypeDescription typeDescription) {
             this.typeDescription = typeDescription;
         }
 

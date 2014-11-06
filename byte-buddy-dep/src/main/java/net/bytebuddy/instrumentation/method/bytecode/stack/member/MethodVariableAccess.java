@@ -251,7 +251,7 @@ public enum MethodVariableAccess {
     /**
      * A stack manipulation for loading a variable of a method's local variable array onto the operand stack.
      */
-    private class ArgumentLoadingStackManipulation implements StackManipulation {
+    protected class ArgumentLoadingStackManipulation implements StackManipulation {
 
         /**
          * The index of the local variable array from which the variable should be loaded.

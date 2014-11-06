@@ -2,7 +2,7 @@ package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
 import net.bytebuddy.instrumentation.field.FieldDescription;
-import net.bytebuddy.utility.HashCodeEqualsTester;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -71,7 +71,7 @@ public class TypeWriterFieldPoolEntryTest {
 
     @Test
     public void testSimpleEntryEntryHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(TypeWriter.FieldPool.Entry.Simple.class).apply();
+        ObjectPropertyAssertion.of(TypeWriter.FieldPool.Entry.Simple.class).apply();
     }
 
     @Test

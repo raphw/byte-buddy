@@ -2,14 +2,13 @@ package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.utility.JavaVersionRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.PrecompiledTypeClassLoader;
-import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 
-import java.io.Serializable;
 import java.lang.reflect.Method;
 
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isDeclaredBy;
@@ -155,10 +154,7 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        assertThat(DefaultMethodCall.unambiguousOnly().hashCode(), is(DefaultMethodCall.unambiguousOnly().hashCode()));
-        assertThat(DefaultMethodCall.unambiguousOnly(), is(DefaultMethodCall.unambiguousOnly()));
-        assertThat(DefaultMethodCall.unambiguousOnly().hashCode(), CoreMatchers.not(is(DefaultMethodCall.prioritize(Serializable.class).hashCode())));
-        assertThat(DefaultMethodCall.unambiguousOnly(), CoreMatchers.not(is(DefaultMethodCall.prioritize(Serializable.class))));
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(DefaultMethodCall.class).apply();
     }
 }

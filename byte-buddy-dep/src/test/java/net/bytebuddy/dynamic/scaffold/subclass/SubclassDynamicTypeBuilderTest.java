@@ -23,7 +23,7 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.modifier.Ownership;
 import net.bytebuddy.modifier.Visibility;
-import net.bytebuddy.utility.HashCodeEqualsTester;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -564,8 +564,8 @@ public class SubclassDynamicTypeBuilderTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(SubclassDynamicTypeBuilder.class).apply();
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(SubclassDynamicTypeBuilder.class).apply();
     }
 
     public static class Foo {

@@ -1,12 +1,12 @@
 package net.bytebuddy.instrumentation.attribute;
 
-import net.bytebuddy.utility.HashCodeEqualsTester;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 public class FieldAttributeAppenderFactoryCompoundTest {
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(FieldAttributeAppender.Factory.Compound.class).apply();
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(FieldAttributeAppender.Factory.Compound.class).apply();
     }
 }

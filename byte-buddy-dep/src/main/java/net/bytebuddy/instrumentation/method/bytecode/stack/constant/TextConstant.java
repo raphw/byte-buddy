@@ -53,6 +53,6 @@ public class TextConstant implements StackManipulation {
 
     @Override
     public String toString() {
-        return "TextConstant{'" + text + '\'' + '}';
+        return "TextConstant{text='" + text + '\'' + '}';
     }
 }

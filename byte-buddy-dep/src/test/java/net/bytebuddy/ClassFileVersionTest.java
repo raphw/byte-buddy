@@ -1,6 +1,6 @@
 package net.bytebuddy;
 
-import net.bytebuddy.utility.HashCodeEqualsTester;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.Opcodes;
 
@@ -38,7 +38,7 @@ public class ClassFileVersionTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(ClassFileVersion.class).apply();
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(ClassFileVersion.class).apply();
     }
 }

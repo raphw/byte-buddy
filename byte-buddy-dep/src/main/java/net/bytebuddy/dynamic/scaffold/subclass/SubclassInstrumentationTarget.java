@@ -168,7 +168,7 @@ public class SubclassInstrumentationTarget extends Instrumentation.Target.Abstra
         public String toString() {
             return "SubclassInstrumentationTarget.Factory{" +
                     "bridgeMethodResolverFactory=" + bridgeMethodResolverFactory +
-                    "targetTypeIdentifier=" + originTypeIdentifier +
+                    "originTypeIdentifier=" + originTypeIdentifier +
                     '}';
         }
     }

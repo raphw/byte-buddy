@@ -1,6 +1,5 @@
 package net.bytebuddy.dynamic.scaffold.subclass;
 
-import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.instrumentation.AbstractInstrumentationTargetTest;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
@@ -9,6 +8,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -18,9 +18,7 @@ import org.objectweb.asm.Opcodes;
 import java.util.Arrays;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 public class SubclassInstrumentationTargetTest extends AbstractInstrumentationTargetTest {
@@ -121,16 +119,7 @@ public class SubclassInstrumentationTargetTest extends AbstractInstrumentationTa
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        assertThat(instrumentationTarget.hashCode(), is(new SubclassInstrumentationTarget(finding,
-                bridgeMethodResolverFactory, SubclassInstrumentationTarget.OriginTypeIdentifier.SUPER_TYPE).hashCode()));
-        assertThat(instrumentationTarget, is((Instrumentation.Target) new SubclassInstrumentationTarget(finding,
-                bridgeMethodResolverFactory, SubclassInstrumentationTarget.OriginTypeIdentifier.SUPER_TYPE)));
-        BridgeMethodResolver.Factory factory = mock(BridgeMethodResolver.Factory.class);
-        when(factory.make(any(MethodList.class))).thenReturn(mock(BridgeMethodResolver.class));
-        Instrumentation.Target other = new SubclassInstrumentationTarget(finding,
-                factory, SubclassInstrumentationTarget.OriginTypeIdentifier.SUPER_TYPE);
-        assertThat(instrumentationTarget.hashCode(), not(is(other.hashCode())));
-        assertThat(instrumentationTarget, not(is(other)));
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(SubclassInstrumentationTarget.class).apply();
     }
 }

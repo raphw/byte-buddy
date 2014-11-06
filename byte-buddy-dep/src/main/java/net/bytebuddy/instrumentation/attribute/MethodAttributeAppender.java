@@ -139,7 +139,7 @@ public interface MethodAttributeAppender {
 
             @Override
             public String toString() {
-                return "MethodAttributeAppender.Factory.Compound{" + Arrays.toString(factory) + '}';
+                return "MethodAttributeAppender.Factory.Compound{factory=" + Arrays.toString(factory) + '}';
             }
         }
     }
@@ -441,7 +441,7 @@ public interface MethodAttributeAppender {
 
         @Override
         public String toString() {
-            return "MethodAttributeAppender.Compound{" + Arrays.toString(methodAttributeAppender) + '}';
+            return "MethodAttributeAppender.Compound{methodAttributeAppender=" + Arrays.toString(methodAttributeAppender) + '}';
         }
     }
 }

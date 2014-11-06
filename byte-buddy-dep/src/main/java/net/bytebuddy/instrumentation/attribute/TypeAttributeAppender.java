@@ -199,7 +199,7 @@ public interface TypeAttributeAppender {
 
         @Override
         public String toString() {
-            return "TypeAttributeAppender.Compound{" + Arrays.toString(typeAttributeAppender) + '}';
+            return "TypeAttributeAppender.Compound{typeAttributeAppender=" + Arrays.toString(typeAttributeAppender) + '}';
         }
     }
 }

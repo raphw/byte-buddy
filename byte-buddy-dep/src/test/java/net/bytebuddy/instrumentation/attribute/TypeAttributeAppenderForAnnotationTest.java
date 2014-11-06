@@ -1,6 +1,6 @@
 package net.bytebuddy.instrumentation.attribute;
 
-import net.bytebuddy.utility.HashCodeEqualsTester;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.mockito.asm.Type;
 
@@ -34,13 +34,13 @@ public class TypeAttributeAppenderForAnnotationTest extends AbstractTypeAttribut
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(TypeAttributeAppender.ForAnnotation.class).generate(new HashCodeEqualsTester.Generator<Annotation>() {
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(TypeAttributeAppender.ForAnnotation.class).generate(new ObjectPropertyAssertion.Generator<Annotation>() {
             @Override
             public Class<? extends Annotation> generate() {
                 return SimpleAnnotation.class;
             }
-        }).refine(new HashCodeEqualsTester.Refinement<SimpleAnnotation>() {
+        }).refine(new ObjectPropertyAssertion.Refinement<SimpleAnnotation>() {
             @Override
             public void apply(SimpleAnnotation mock) {
                 doReturn(SimpleAnnotation.class).when(mock).annotationType();

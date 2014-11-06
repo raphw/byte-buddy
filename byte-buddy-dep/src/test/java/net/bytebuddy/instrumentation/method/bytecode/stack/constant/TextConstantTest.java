@@ -2,7 +2,7 @@ package net.bytebuddy.instrumentation.method.bytecode.stack.constant;
 
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
-import net.bytebuddy.utility.HashCodeEqualsTester;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -37,7 +37,7 @@ public class TextConstantTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(TextConstant.class).apply();
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(TextConstant.class).apply();
     }
 }

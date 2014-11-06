@@ -1,7 +1,7 @@
 package net.bytebuddy;
 
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.utility.HashCodeEqualsTester;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -44,7 +44,7 @@ public class NamingStrategyTest {
 
     @Test
     public void testSuffixingRandomEqualsHashCode() throws Exception {
-        HashCodeEqualsTester.of(NamingStrategy.SuffixingRandom.class).apply();
+        ObjectPropertyAssertion.of(NamingStrategy.SuffixingRandom.class).apply();
     }
 
     @Test
@@ -56,7 +56,7 @@ public class NamingStrategyTest {
 
     @Test
     public void testFixedEqualsHashCode() throws Exception {
-        HashCodeEqualsTester.of(NamingStrategy.Fixed.class).apply();
+        ObjectPropertyAssertion.of(NamingStrategy.Fixed.class).apply();
     }
 
     @Test
@@ -70,6 +70,6 @@ public class NamingStrategyTest {
 
     @Test
     public void testPrefixingRandomEqualsHashCode() throws Exception {
-        HashCodeEqualsTester.of(NamingStrategy.PrefixingRandom.class).apply();
+        ObjectPropertyAssertion.of(NamingStrategy.PrefixingRandom.class).apply();
     }
 }

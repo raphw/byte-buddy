@@ -2,10 +2,7 @@ package net.bytebuddy.utility;
 
 import org.objectweb.asm.Opcodes;
 
-import java.lang.reflect.Array;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.*;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -15,7 +12,7 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 
-public class HashCodeEqualsTester {
+public class ObjectPropertyAssertion {
 
     private static final boolean DEFAULT_BOOLEAN = false, OTHER_BOOLEAN = true;
 
@@ -45,36 +42,59 @@ public class HashCodeEqualsTester {
 
     private final boolean skipSynthetic;
 
-    private HashCodeEqualsTester(Class<?> type,
-                                 ApplicableGenerator generator,
-                                 ApplicableRefinement refinement,
-                                 Generator<?> listTypeGenerator,
-                                 boolean skipSynthetic) {
+    private final boolean skipToString;
+
+    private ObjectPropertyAssertion(Class<?> type,
+                                    ApplicableGenerator generator,
+                                    ApplicableRefinement refinement,
+                                    Generator<?> listTypeGenerator,
+                                    boolean skipSynthetic,
+                                    boolean skipToString) {
         this.type = type;
         this.generator = generator;
         this.listTypeGenerator = listTypeGenerator;
         this.refinement = refinement;
         this.skipSynthetic = skipSynthetic;
+        this.skipToString = skipToString;
     }
 
-    public static HashCodeEqualsTester of(Class<?> type) {
-        return new HashCodeEqualsTester(type, new ApplicableGenerator(), new ApplicableRefinement(), new ObjectTypeGenerator(), false);
+    public static ObjectPropertyAssertion of(Class<?> type) {
+        return new ObjectPropertyAssertion(type,
+                new ApplicableGenerator(),
+                new ApplicableRefinement(),
+                new ObjectTypeGenerator(),
+                false,
+                false);
     }
 
-    public HashCodeEqualsTester refine(Refinement<?> refinement) {
-        return new HashCodeEqualsTester(type, generator, this.refinement.with(refinement), listTypeGenerator, skipSynthetic);
+    public ObjectPropertyAssertion refine(Refinement<?> refinement) {
+        return new ObjectPropertyAssertion(type,
+                generator,
+                this.refinement.with(refinement),
+                listTypeGenerator,
+                skipSynthetic,
+                skipToString);
     }
 
-    public HashCodeEqualsTester generate(Generator<?> generator) {
-        return new HashCodeEqualsTester(type, this.generator.with(generator), refinement, listTypeGenerator, skipSynthetic);
+    public ObjectPropertyAssertion generate(Generator<?> generator) {
+        return new ObjectPropertyAssertion(type,
+                this.generator.with(generator),
+                refinement,
+                listTypeGenerator,
+                skipSynthetic,
+                skipToString);
     }
 
-    public HashCodeEqualsTester listType(Generator<?> generator) {
-        return new HashCodeEqualsTester(type, this.generator, refinement, generator, skipSynthetic);
+    public ObjectPropertyAssertion listType(Generator<?> generator) {
+        return new ObjectPropertyAssertion(type, this.generator, refinement, generator, skipSynthetic, skipToString);
     }
 
-    public HashCodeEqualsTester skipSynthetic() {
-        return new HashCodeEqualsTester(type, generator, refinement, listTypeGenerator, true);
+    public ObjectPropertyAssertion skipSynthetic() {
+        return new ObjectPropertyAssertion(type, generator, refinement, listTypeGenerator, true, skipToString);
+    }
+
+    public ObjectPropertyAssertion skipToString() {
+        return new ObjectPropertyAssertion(type, generator, refinement, listTypeGenerator, skipSynthetic, true);
     }
 
     public void apply() throws IllegalAccessException, InvocationTargetException, InstantiationException {
@@ -98,7 +118,17 @@ public class HashCodeEqualsTester {
             Object similarInstance = constructor.newInstance(actualArguments);
             assertThat(instance.hashCode(), is(similarInstance.hashCode()));
             assertThat(instance, is(similarInstance));
-            assertThat(instance.toString(), startsWith(type.getCanonicalName().substring(type.getPackage().getName().length() + 1)));
+            if (!skipToString) {
+                assertThat(instance.toString(), startsWith(type.getCanonicalName().substring(type.getPackage().getName().length() + 1) + "{"));
+                assertThat(instance.toString(), endsWith("}"));
+                for (Field field : type.getDeclaredFields()) {
+                    if (!field.isSynthetic() && !Modifier.isStatic(field.getModifiers())) {
+                        assertThat(instance.toString(), containsString(field.getName()));
+                    }
+                }
+            } else {
+                assertThat(instance.toString(), notNullValue());
+            }
             for (Object otherArgument : otherArguments) {
                 Object[] compareArguments = new Object[actualArguments.length];
                 int argumentIndex = 0;

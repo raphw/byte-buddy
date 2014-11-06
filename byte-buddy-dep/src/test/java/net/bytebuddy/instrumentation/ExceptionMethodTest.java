@@ -2,7 +2,7 @@ package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.utility.CallTraceable;
-import net.bytebuddy.utility.HashCodeEqualsTester;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.*;
@@ -72,7 +72,7 @@ public class ExceptionMethodTest extends AbstractInstrumentationTest {
 
     @Test
     public void testEqualsHashCode() throws Exception {
-        HashCodeEqualsTester.of(ExceptionMethod.class).apply();
+        ObjectPropertyAssertion.of(ExceptionMethod.class).apply();
     }
 
     public static class Foo extends CallTraceable {

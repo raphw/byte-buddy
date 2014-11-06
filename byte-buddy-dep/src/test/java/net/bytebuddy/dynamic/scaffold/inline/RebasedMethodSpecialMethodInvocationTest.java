@@ -6,6 +6,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -14,9 +15,6 @@ import org.mockito.Mock;
 
 import java.util.Arrays;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 
 public class RebasedMethodSpecialMethodInvocationTest {
@@ -47,15 +45,8 @@ public class RebasedMethodSpecialMethodInvocationTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        assertThat(RebaseInstrumentationTarget.RebasedMethodSpecialMethodInvocation.of(resolution, typeDescription).hashCode(),
-                is(RebaseInstrumentationTarget.RebasedMethodSpecialMethodInvocation.of(resolution, typeDescription).hashCode()));
-        assertThat(RebaseInstrumentationTarget.RebasedMethodSpecialMethodInvocation.of(resolution, typeDescription),
-                is(RebaseInstrumentationTarget.RebasedMethodSpecialMethodInvocation.of(resolution, typeDescription)));
-        assertThat(RebaseInstrumentationTarget.RebasedMethodSpecialMethodInvocation.of(resolution, typeDescription).hashCode(),
-                not(is(RebaseInstrumentationTarget.RebasedMethodSpecialMethodInvocation.of(resolution, otherTypeDescription).hashCode())));
-        assertThat(RebaseInstrumentationTarget.RebasedMethodSpecialMethodInvocation.of(resolution, typeDescription),
-                not(is(RebaseInstrumentationTarget.RebasedMethodSpecialMethodInvocation.of(resolution, otherTypeDescription))));
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(RebaseInstrumentationTarget.RebasedMethodSpecialMethodInvocation.class).apply();
 
     }
 }

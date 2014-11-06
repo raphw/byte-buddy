@@ -2466,7 +2466,7 @@ public interface DynamicType {
             return "DynamicType.Default{" +
                     "typeDescription='" + typeDescription + '\'' +
                     ", binaryRepresentation=" + Arrays.toString(binaryRepresentation) +
-                    ", typeInitializer=" + loadedTypeInitializer +
+                    ", loadedTypeInitializer=" + loadedTypeInitializer +
                     ", auxiliaryTypes=" + auxiliaryTypes +
                     '}';
         }

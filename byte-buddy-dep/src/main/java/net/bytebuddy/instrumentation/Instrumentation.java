@@ -1362,7 +1362,7 @@ public interface Instrumentation {
 
         @Override
         public String toString() {
-            return "Instrumentation.Compound{" + Arrays.toString(instrumentation) + '}';
+            return "Instrumentation.Compound{instrumentation=" + Arrays.toString(instrumentation) + '}';
         }
     }
 

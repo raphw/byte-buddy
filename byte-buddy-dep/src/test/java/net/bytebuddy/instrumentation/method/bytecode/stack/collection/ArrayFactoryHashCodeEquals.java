@@ -2,7 +2,7 @@ package net.bytebuddy.instrumentation.method.bytecode.stack.collection;
 
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.utility.HashCodeEqualsTester;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -26,20 +26,14 @@ public class ArrayFactoryHashCodeEquals {
     private StackManipulation stackManipulation;
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        assertThat(ArrayFactory.targeting(new TypeDescription.ForLoadedType(Object.class)).hashCode(),
-                is(ArrayFactory.targeting(new TypeDescription.ForLoadedType(Object.class)).hashCode()));
-        assertThat(ArrayFactory.targeting(new TypeDescription.ForLoadedType(Object.class)),
-                is(ArrayFactory.targeting(new TypeDescription.ForLoadedType(Object.class))));
-        assertThat(ArrayFactory.targeting(new TypeDescription.ForLoadedType(Object.class)).hashCode(),
-                not(is(ArrayFactory.targeting(new TypeDescription.ForLoadedType(String.class)).hashCode())));
-        assertThat(ArrayFactory.targeting(new TypeDescription.ForLoadedType(Object.class)),
-                not(is(ArrayFactory.targeting(new TypeDescription.ForLoadedType(String.class)))));
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(ArrayFactory.class).apply();
+        ObjectPropertyAssertion.of(ArrayFactory.ArrayCreator.ForReferenceType.class).apply();
     }
 
     @Test
     public void testReferenceCreatorHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(ArrayFactory.ArrayCreator.Reference.class).refine(new HashCodeEqualsTester.Refinement<TypeDescription>() {
+        ObjectPropertyAssertion.of(ArrayFactory.ArrayCreator.ForReferenceType.class).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
             @Override
             public void apply(TypeDescription mock) {
                 when(mock.getInternalName()).thenReturn("" + System.identityHashCode(mock));

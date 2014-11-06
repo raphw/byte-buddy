@@ -1,6 +1,6 @@
 package net.bytebuddy;
 
-import net.bytebuddy.utility.HashCodeEqualsTester;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -23,8 +23,8 @@ public class ByteBuddyDefinableTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(ByteBuddy.Definable.Defined.class).apply();
-        HashCodeEqualsTester.of(ByteBuddy.Definable.Undefined.class).apply();
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(ByteBuddy.Definable.Defined.class).apply();
+        ObjectPropertyAssertion.of(ByteBuddy.Definable.Undefined.class).apply();
     }
 }

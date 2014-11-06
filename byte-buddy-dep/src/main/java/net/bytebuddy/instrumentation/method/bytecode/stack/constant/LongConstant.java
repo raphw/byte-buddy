@@ -72,7 +72,7 @@ public enum LongConstant implements StackManipulation {
     /**
      * A stack manipulation for loading a {@code long} value from a class's constant pool onto the operand stack.
      */
-    private static class ConstantPool implements StackManipulation {
+    protected static class ConstantPool implements StackManipulation {
 
         /**
          * The {@code long} value to be loaded onto the operand stack.
@@ -84,7 +84,7 @@ public enum LongConstant implements StackManipulation {
          *
          * @param value The {@code long} value to be loaded onto the operand stack.
          */
-        private ConstantPool(long value) {
+        protected ConstantPool(long value) {
             this.value = value;
         }
 

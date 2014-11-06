@@ -6,6 +6,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -14,9 +15,7 @@ import org.mockito.Mock;
 import org.objectweb.asm.MethodVisitor;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class InstrumentationSpecialMethodInvocationSimpleTest {
@@ -73,28 +72,7 @@ public class InstrumentationSpecialMethodInvocationSimpleTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        assertThat(specialMethodInvocation.hashCode(), is(Instrumentation.SpecialMethodInvocation.Simple.of(methodDescription, typeDescription).hashCode()));
-        assertThat(specialMethodInvocation, is(Instrumentation.SpecialMethodInvocation.Simple.of(methodDescription, typeDescription)));
-        MethodDescription otherMethodDescription = mock(MethodDescription.class);
-        when(otherMethodDescription.getInternalName()).thenReturn(FOO);
-        when(otherMethodDescription.getParameterTypes()).thenReturn(parameterTypes);
-        TypeDescription otherType = mock(TypeDescription.class);
-        when(otherMethodDescription.getDeclaringType()).thenReturn(otherType);
-        when(otherMethodDescription.getReturnType()).thenReturn(returnType);
-        when(otherMethodDescription.isSpecializableFor(typeDescription)).thenReturn(true);
-        Instrumentation.SpecialMethodInvocation other = Instrumentation.SpecialMethodInvocation.Simple.of(otherMethodDescription, typeDescription);
-        assertThat(specialMethodInvocation.hashCode(), is(other.hashCode()));
-        assertThat(specialMethodInvocation, is(other));
-        assertThat(specialMethodInvocation.hashCode(), not(is(Instrumentation.SpecialMethodInvocation.Illegal.INSTANCE.hashCode())));
-        assertThat(specialMethodInvocation, not(is((Instrumentation.SpecialMethodInvocation) Instrumentation.SpecialMethodInvocation.Illegal.INSTANCE)));
-        MethodDescription otherUnequalMethodDescription = mock(MethodDescription.class);
-        when(otherUnequalMethodDescription.getInternalName()).thenReturn(BAR);
-        when(otherUnequalMethodDescription.getDeclaringType()).thenReturn(typeDescription);
-        when(otherUnequalMethodDescription.getReturnType()).thenReturn(returnType);
-        Instrumentation.SpecialMethodInvocation otherUnequal = Instrumentation.SpecialMethodInvocation.Simple.of(otherUnequalMethodDescription, typeDescription);
-        assertThat(specialMethodInvocation.hashCode(), not(is(otherUnequal.hashCode())));
-        assertThat(specialMethodInvocation, not(is(otherUnequal)));
-
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(Instrumentation.SpecialMethodInvocation.Simple.class).apply();
     }
 }
