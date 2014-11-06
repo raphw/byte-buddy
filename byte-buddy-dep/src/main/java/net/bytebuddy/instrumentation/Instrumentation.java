@@ -1362,18 +1362,35 @@ public interface Instrumentation {
 
         @Override
         public String toString() {
-            return "Compound{" + Arrays.toString(instrumentation) + '}';
+            return "Instrumentation.Compound{" + Arrays.toString(instrumentation) + '}';
         }
     }
 
+    /**
+     * A simple implementation of an instrumentation that does not register any members with the instrumented type.
+     */
     static class Simple implements Instrumentation {
 
+        /**
+         * The byte code appender to emmit.
+         */
         private final ByteCodeAppender byteCodeAppender;
 
+        /**
+         * Creates a new simple instrumentation for the given byte code appenders.
+         *
+         * @param byteCodeAppender The byte code appenders to apply in their order of application.
+         */
         public Simple(ByteCodeAppender... byteCodeAppender) {
             this.byteCodeAppender = new ByteCodeAppender.Compound(byteCodeAppender);
         }
 
+        /**
+         * Creates a new simple instrumentation for the given stack manipulations which are summarized in a
+         * byte code appender that defines any requested method by these manipulations.
+         *
+         * @param stackManipulation The stack manipulation to apply in their order of application.
+         */
         public Simple(StackManipulation... stackManipulation) {
             byteCodeAppender = new ByteCodeAppender.Simple(stackManipulation);
         }

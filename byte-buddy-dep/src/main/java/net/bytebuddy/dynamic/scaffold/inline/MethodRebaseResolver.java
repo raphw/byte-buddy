@@ -123,7 +123,7 @@ public interface MethodRebaseResolver {
 
             @Override
             public String toString() {
-                return "MethodRebaseResolver.MethodNameTransformer.RandomSuffixing{" +
+                return "MethodRebaseResolver.MethodNameTransformer.Suffixing{" +
                         "suffix='" + suffix + '\'' +
                         ", seed='" + seed + '\'' +
                         '}';

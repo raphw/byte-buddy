@@ -11,8 +11,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 
@@ -99,6 +98,7 @@ public class HashCodeEqualsTester {
             Object similarInstance = constructor.newInstance(actualArguments);
             assertThat(instance.hashCode(), is(similarInstance.hashCode()));
             assertThat(instance, is(similarInstance));
+            assertThat(instance.toString(), startsWith(type.getCanonicalName().substring(type.getPackage().getName().length() + 1)));
             for (Object otherArgument : otherArguments) {
                 Object[] compareArguments = new Object[actualArguments.length];
                 int argumentIndex = 0;

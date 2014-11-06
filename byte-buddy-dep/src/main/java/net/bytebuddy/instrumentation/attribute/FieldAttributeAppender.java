@@ -251,7 +251,7 @@ public interface FieldAttributeAppender {
 
         @Override
         public String toString() {
-            return "FieldAttributeAppenderCompound{" + Arrays.toString(fieldAttributeAppender) + '}';
+            return "FieldAttributeAppender.Compound{" + Arrays.toString(fieldAttributeAppender) + '}';
         }
     }
 }

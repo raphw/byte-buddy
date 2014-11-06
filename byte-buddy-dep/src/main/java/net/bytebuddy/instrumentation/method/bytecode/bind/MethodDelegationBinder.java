@@ -725,7 +725,7 @@ public interface MethodDelegationBinder {
 
             @Override
             public String toString() {
-                return "AmbiguityResolver.Chain{ambiguityResolvers=" + ambiguityResolvers + '}';
+                return "MethodDelegationBinder.AmbiguityResolver.Chain{ambiguityResolvers=" + ambiguityResolvers + '}';
             }
         }
     }
