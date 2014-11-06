@@ -17,12 +17,10 @@ public class ClassReloadingStrategyNonAttachedTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(ClassReloadingStrategy.class).refine(new HashCodeEqualsTester.Refinement() {
+        HashCodeEqualsTester.of(ClassReloadingStrategy.class).refine(new HashCodeEqualsTester.Refinement<Instrumentation>() {
             @Override
-            public void apply(Object mock) {
-                if (Instrumentation.class.isAssignableFrom(mock.getClass())) {
-                    when(((Instrumentation) mock).isRedefineClassesSupported()).thenReturn(true);
-                }
+            public void apply(Instrumentation mock) {
+                when(mock.isRedefineClassesSupported()).thenReturn(true);
             }
         }).apply();
     }

@@ -4,6 +4,8 @@ import net.bytebuddy.utility.HashCodeEqualsTester;
 import org.junit.Test;
 import org.mockito.asm.Type;
 
+import java.lang.annotation.Annotation;
+
 import static org.mockito.Mockito.*;
 
 public class TypeAttributeAppenderForAnnotationTest extends AbstractTypeAttributeAppenderTest {
@@ -33,6 +35,22 @@ public class TypeAttributeAppenderForAnnotationTest extends AbstractTypeAttribut
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(TypeAttributeAppender.ForAnnotation.class).apply();
+        HashCodeEqualsTester.of(TypeAttributeAppender.ForAnnotation.class).generate(new HashCodeEqualsTester.Generator<Annotation>() {
+            @Override
+            public Class<? extends Annotation> generate() {
+                return SimpleAnnotation.class;
+            }
+        }).refine(new HashCodeEqualsTester.Refinement<SimpleAnnotation>() {
+            @Override
+            public void apply(SimpleAnnotation mock) {
+                doReturn(SimpleAnnotation.class).when(mock).annotationType();
+                when(mock.value()).thenReturn("annotation" + System.identityHashCode(mock));
+            }
+        }).apply();
+    }
+
+    public static @interface SimpleAnnotation {
+
+        String value();
     }
 }

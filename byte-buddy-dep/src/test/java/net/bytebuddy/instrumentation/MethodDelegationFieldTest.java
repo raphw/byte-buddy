@@ -1,24 +1,45 @@
 package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Field;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class MethodDelegationFieldTest extends AbstractInstrumentationTest{
+public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
     @Test
-    public void testFieldAccess() throws Exception{
-        DynamicType.Loaded<Foo> loaded = instrument(Foo.class, MethodDelegation.to(Swap.class)
+    public void testExplicitFieldAccess() throws Exception {
+        DynamicType.Loaded<Explicit> loaded = instrument(Explicit.class, MethodDelegation.to(Swap.class)
                 .appendParameterBinder(Field.Binder.install(Get.class, Set.class)));
-        Foo foo = loaded.getLoaded().newInstance();
-        assertThat(foo.foo, is(FOO));
-        foo.swap();
-        assertThat(foo.foo, is(FOO + BAR));
+        Explicit explicit = loaded.getLoaded().newInstance();
+        assertThat(explicit.foo, is(FOO));
+        explicit.swap();
+        assertThat(explicit.foo, is(FOO + BAR));
+    }
+
+    @Test
+    public void testImplicitFieldGetterAccess() throws Exception {
+        DynamicType.Loaded<ImplicitGetter> loaded = instrument(ImplicitGetter.class, MethodDelegation.to(GetInterceptor.class)
+                .appendParameterBinder(Field.Binder.install(Get.class, Set.class)));
+        ImplicitGetter implicitGetter = loaded.getLoaded().newInstance();
+        assertThat(implicitGetter.foo, is(FOO));
+        assertThat(implicitGetter.getFoo(), is(FOO + BAR));
+        assertThat(implicitGetter.foo, is(FOO + BAR));
+    }
+
+    @Test
+    public void testImplicitFieldSetterAccess() throws Exception {
+        DynamicType.Loaded<ImplicitSetter> loaded = instrument(ImplicitSetter.class, MethodDelegation.to(SetInterceptor.class)
+                .appendParameterBinder(Field.Binder.install(Get.class, Set.class)));
+        ImplicitSetter implicitSetter = loaded.getLoaded().newInstance();
+        assertThat(implicitSetter.foo, is(FOO));
+        implicitSetter.setFoo(BAR);
+        assertThat(implicitSetter.foo, is(FOO + BAR));
     }
 
     public static interface Get<T> {
@@ -38,12 +59,45 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest{
         }
     }
 
-    public static class Foo {
+    public static class Explicit {
 
         protected String foo = FOO;
 
         public void swap() {
             /* do nothing */
+        }
+    }
+
+    public static class ImplicitGetter {
+
+        protected String foo = FOO;
+
+        public String getFoo() {
+            return null;
+        }
+    }
+
+    public static class GetInterceptor {
+
+        public static String get(@Field Get<String> getter, @Field Set<String> setter) {
+            setter.set(getter.get() + BAR);
+            return getter.get();
+        }
+    }
+
+    public static class ImplicitSetter {
+
+        protected String foo = FOO;
+
+        public void setFoo(String value) {
+            /* do nothing */
+        }
+    }
+
+    public static class SetInterceptor {
+
+        public static void set(@Argument(0) String value, @Field Get<String> getter, @Field Set<String> setter) {
+            setter.set(getter.get() + value);
         }
     }
 }

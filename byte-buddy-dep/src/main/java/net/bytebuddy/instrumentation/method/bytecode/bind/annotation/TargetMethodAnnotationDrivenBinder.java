@@ -70,8 +70,8 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         if (IgnoreForBinding.Verifier.check(target)) {
             return MethodBinding.Illegal.INSTANCE;
         }
-        StackManipulation returningStackManipulation = terminationHandler.resolve(assigner, source, target);
-        if (!returningStackManipulation.isValid()) {
+        StackManipulation methodTermination = terminationHandler.resolve(assigner, source, target);
+        if (!methodTermination.isValid()) {
             return MethodBinding.Illegal.INSTANCE;
         }
         MethodBinding.Builder methodDelegationBindingBuilder = new MethodBinding.Builder(methodInvoker, target);
@@ -90,7 +90,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 return MethodBinding.Illegal.INSTANCE;
             }
         }
-        return methodDelegationBindingBuilder.build(returningStackManipulation);
+        return methodDelegationBindingBuilder.build(methodTermination);
     }
 
     @Override

@@ -5,9 +5,12 @@ import org.objectweb.asm.Opcodes;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.ParameterizedType;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
+import static net.bytebuddy.utility.ByteBuddyCommons.join;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -35,26 +38,36 @@ public class HashCodeEqualsTester {
 
     private final Class<?> type;
 
-    private final Refinement refinement;
+    private final ApplicableRefinement refinement;
+
+    private final ApplicableGenerator generator;
 
     private final boolean skipSynthetic;
 
-    private HashCodeEqualsTester(Class<?> type, Refinement refinement, boolean skipSynthetic) {
+    private HashCodeEqualsTester(Class<?> type,
+                                 ApplicableGenerator generator,
+                                 ApplicableRefinement refinement,
+                                 boolean skipSynthetic) {
         this.type = type;
+        this.generator = generator;
         this.refinement = refinement;
         this.skipSynthetic = skipSynthetic;
     }
 
     public static HashCodeEqualsTester of(Class<?> type) {
-        return new HashCodeEqualsTester(type, Refinement.NoOp.INSTANCE, false);
+        return new HashCodeEqualsTester(type, new ApplicableGenerator(), new ApplicableRefinement(), false);
     }
 
-    public HashCodeEqualsTester refine(Refinement refinement) {
-        return new HashCodeEqualsTester(type, new Refinement.Pair(this.refinement, refinement), false);
+    public HashCodeEqualsTester refine(Refinement<?> refinement) {
+        return new HashCodeEqualsTester(type, generator, this.refinement.with(refinement), skipSynthetic);
+    }
+
+    public HashCodeEqualsTester generate(Generator<?> generator) {
+        return new HashCodeEqualsTester(type, this.generator.with(generator), refinement, skipSynthetic);
     }
 
     public HashCodeEqualsTester skipSynthetic() {
-        return new HashCodeEqualsTester(type, refinement, true);
+        return new HashCodeEqualsTester(type, generator, refinement, true);
     }
 
     public void apply() throws IllegalAccessException, InvocationTargetException, InstantiationException {
@@ -146,43 +159,78 @@ public class HashCodeEqualsTester {
         } else if ((parameterType.getModifiers() & Opcodes.ACC_FINAL) != 0) {
             throw new IllegalArgumentException("Cannot mock final type " + parameterType);
         } else {
-            actualArgument = mock(parameterType);
+            actualArgument = generator.generate(parameterType);
             refinement.apply(actualArgument);
-            otherArgument = mock(parameterType);
+            otherArgument = generator.generate(parameterType);
             refinement.apply(otherArgument);
         }
         Array.set(actualArguments, index, actualArgument);
         Array.set(otherArguments, index, otherArgument);
     }
 
-    public static interface Refinement {
+    public static interface Refinement<T> {
 
-        void apply(Object mock);
+        void apply(T mock);
+    }
 
-        static enum NoOp implements Refinement {
+    private static class ApplicableRefinement {
 
-            INSTANCE;
+        private final List<Refinement<?>> refinements;
 
-            @Override
-            public void apply(Object mock) {
-                /* do nothing */
+        private ApplicableRefinement() {
+            refinements = Collections.emptyList();
+        }
+
+        private ApplicableRefinement(List<Refinement<?>> refinements) {
+            this.refinements = refinements;
+        }
+
+        @SuppressWarnings("unchecked")
+        private void apply(Object mock) {
+            for (Refinement refinement : refinements) {
+                ParameterizedType generic = (ParameterizedType) refinement.getClass().getGenericInterfaces()[0];
+                Class<?> restrained = (Class<?>) generic.getActualTypeArguments()[0];
+                if (restrained.isInstance(mock)) {
+                    refinement.apply(mock);
+                }
             }
         }
 
-        static class Pair implements Refinement {
+        private ApplicableRefinement with(Refinement<?> refinement) {
+            return new ApplicableRefinement(join(refinements, refinement));
+        }
+    }
 
-            private final Refinement first, second;
+    public static interface Generator<T> {
 
-            public Pair(Refinement first, Refinement second) {
-                this.first = first;
-                this.second = second;
+        Class<? extends T> generate();
+    }
+
+    private static class ApplicableGenerator {
+
+        private final List<Generator<?>> generators;
+
+        private ApplicableGenerator() {
+            generators = Collections.emptyList();
+        }
+
+        private ApplicableGenerator(List<Generator<?>> generators) {
+            this.generators = generators;
+        }
+
+        private Object generate(Class<?> type) {
+            for (Generator<?> generator : generators) {
+                ParameterizedType generic = (ParameterizedType) generator.getClass().getGenericInterfaces()[0];
+                Class<?> restrained = (Class<?>) generic.getActualTypeArguments()[0];
+                if (type.isAssignableFrom(restrained)) {
+                    type = generator.generate();
+                }
             }
+            return mock(type);
+        }
 
-            @Override
-            public void apply(Object mock) {
-                first.apply(mock);
-                second.apply(mock);
-            }
+        private ApplicableGenerator with(Generator<?> generator) {
+            return new ApplicableGenerator(join(generators, generator));
         }
     }
 }

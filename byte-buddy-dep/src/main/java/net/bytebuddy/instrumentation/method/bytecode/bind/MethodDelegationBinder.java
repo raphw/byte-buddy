@@ -394,10 +394,10 @@ public interface MethodDelegationBinder {
             /**
              * Creates a binding that represents the bindings collected by this {@code Builder}.
              *
-             * @param returnValueStackManipulation A stack manipulation applied to the target method's return value.
+             * @param terminatingManipulation A stack manipulation that is applied after the method invocation.
              * @return A binding representing the parameter bindings collected by this builder.
              */
-            public MethodBinding build(StackManipulation returnValueStackManipulation) {
+            public MethodBinding build(StackManipulation terminatingManipulation) {
                 if (target.getParameterTypes().size() != nextParameterIndex) {
                     throw new IllegalStateException("The number of parameters bound does not equal the target's number of parameters");
                 }
@@ -405,7 +405,7 @@ public interface MethodDelegationBinder {
                         registeredTargetIndices,
                         methodInvoker.invoke(target),
                         parameterStackManipulations,
-                        returnValueStackManipulation);
+                        terminatingManipulation);
             }
 
             /**
@@ -453,9 +453,9 @@ public interface MethodDelegationBinder {
                 private final List<StackManipulation> parameterStackManipulations;
 
                 /**
-                 * The stack manipulation that represents the method return.
+                 * The stack manipulation that is applied after the method invocation.
                  */
-                private final StackManipulation returnValueStackManipulation;
+                private final StackManipulation terminatingStackManipulation;
 
                 /**
                  * Creates a new method binding.
@@ -466,23 +466,23 @@ public interface MethodDelegationBinder {
                  * @param methodInvocation             A stack manipulation that represents the actual method invocation.
                  * @param parameterStackManipulations  A list of manipulations that each represent the loading of a
                  *                                     parameter value onto the operand stack.
-                 * @param returnValueStackManipulation The stack manipulation that represents the method return.
+                 * @param terminatingStackManipulation The stack manipulation that is applied after the method invocation.
                  */
                 private Build(MethodDescription target,
                               Map<?, Integer> registeredTargetIndices,
                               StackManipulation methodInvocation,
                               List<StackManipulation> parameterStackManipulations,
-                              StackManipulation returnValueStackManipulation) {
+                              StackManipulation terminatingStackManipulation) {
                     this.target = target;
                     this.registeredTargetIndices = new HashMap<Object, Integer>(registeredTargetIndices);
                     this.methodInvocation = methodInvocation;
                     this.parameterStackManipulations = new ArrayList<StackManipulation>(parameterStackManipulations);
-                    this.returnValueStackManipulation = returnValueStackManipulation;
+                    this.terminatingStackManipulation = terminatingStackManipulation;
                 }
 
                 @Override
                 public boolean isValid() {
-                    boolean result = returnValueStackManipulation.isValid() && methodInvocation.isValid();
+                    boolean result = methodInvocation.isValid() && terminatingStackManipulation.isValid();
                     Iterator<StackManipulation> assignment = parameterStackManipulations.iterator();
                     while (result && assignment.hasNext()) {
                         result = assignment.next().isValid();
@@ -507,7 +507,7 @@ public interface MethodDelegationBinder {
                         size = size.aggregate(stackManipulation.apply(methodVisitor, instrumentationContext));
                     }
                     size = size.aggregate(methodInvocation.apply(methodVisitor, instrumentationContext));
-                    return size.aggregate(returnValueStackManipulation.apply(methodVisitor, instrumentationContext));
+                    return size.aggregate(terminatingStackManipulation.apply(methodVisitor, instrumentationContext));
                 }
 
                 @Override
@@ -518,7 +518,7 @@ public interface MethodDelegationBinder {
                     return methodInvocation.equals(build.methodInvocation)
                             && parameterStackManipulations.equals(build.parameterStackManipulations)
                             && registeredTargetIndices.equals(build.registeredTargetIndices)
-                            && returnValueStackManipulation.equals(build.returnValueStackManipulation)
+                            && terminatingStackManipulation.equals(build.terminatingStackManipulation)
                             && target.equals(build.target);
                 }
 
@@ -528,7 +528,7 @@ public interface MethodDelegationBinder {
                     result = 31 * result + registeredTargetIndices.hashCode();
                     result = 31 * result + methodInvocation.hashCode();
                     result = 31 * result + parameterStackManipulations.hashCode();
-                    result = 31 * result + returnValueStackManipulation.hashCode();
+                    result = 31 * result + terminatingStackManipulation.hashCode();
                     return result;
                 }
 

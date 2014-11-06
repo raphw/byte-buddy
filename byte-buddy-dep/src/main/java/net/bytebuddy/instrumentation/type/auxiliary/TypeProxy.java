@@ -116,6 +116,7 @@ public class TypeProxy implements AuxiliaryType {
         return ignoreFinalizer == typeProxy.ignoreFinalizer
                 && serializableProxy == typeProxy.serializableProxy
                 && instrumentationTarget.equals(typeProxy.instrumentationTarget)
+                && invocationFactory.equals(typeProxy.invocationFactory)
                 && proxiedType.equals(typeProxy.proxiedType);
     }
 
@@ -123,6 +124,7 @@ public class TypeProxy implements AuxiliaryType {
     public int hashCode() {
         int result = proxiedType.hashCode();
         result = 31 * result + instrumentationTarget.hashCode();
+        result = 31 * result + invocationFactory.hashCode();
         result = 31 * result + (ignoreFinalizer ? 1 : 0);
         result = 31 * result + (serializableProxy ? 1 : 0);
         return result;
@@ -133,6 +135,7 @@ public class TypeProxy implements AuxiliaryType {
         return "TypeProxy{" +
                 "proxiedType=" + proxiedType +
                 ", instrumentationTarget=" + instrumentationTarget +
+                ", invocationFactory=" + invocationFactory +
                 ", ignoreFinalizer=" + ignoreFinalizer +
                 ", serializableProxy=" + serializableProxy +
                 '}';

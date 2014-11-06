@@ -54,6 +54,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
     @Test
     public void testLegalStrictBindingNoRuntimeType() throws Exception {
         RuntimeType runtimeType = mock(RuntimeType.class);
+        doReturn(RuntimeType.class).when(runtimeType).annotationType();
         when(target.getParameterAnnotations()).thenReturn(AnnotationList.ForLoadedAnnotation.asList(new Annotation[][]{{}, {runtimeType}}));
         testLegalStrictBinding(new Annotation[][]{{}, {runtimeType}}, true);
     }

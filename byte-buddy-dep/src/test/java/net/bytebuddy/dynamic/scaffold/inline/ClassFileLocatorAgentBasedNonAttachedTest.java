@@ -17,12 +17,10 @@ public class ClassFileLocatorAgentBasedNonAttachedTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(ClassFileLocator.AgentBased.class).refine(new HashCodeEqualsTester.Refinement() {
+        HashCodeEqualsTester.of(ClassFileLocator.AgentBased.class).refine(new HashCodeEqualsTester.Refinement<Instrumentation>() {
             @Override
-            public void apply(Object mock) {
-                if (Instrumentation.class.isAssignableFrom(mock.getClass())) {
-                    when(((Instrumentation) mock).isRetransformClassesSupported()).thenReturn(true);
-                }
+            public void apply(Instrumentation mock) {
+                when(mock.isRetransformClassesSupported()).thenReturn(true);
             }
         }).apply();
     }

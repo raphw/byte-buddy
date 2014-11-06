@@ -183,7 +183,7 @@ public interface FieldAttributeAppender {
         public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription) {
             AnnotationAppender annotationAppender =
                     new AnnotationAppender.Default(new AnnotationAppender.Target.OnField(fieldVisitor));
-            for (AnnotationDescription annotation : fieldDescription.getDeclaredAnnotations()) {
+            for (AnnotationDescription annotation : this.fieldDescription.getDeclaredAnnotations()) {
                 annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.RUNTIME);
             }
         }

@@ -51,12 +51,10 @@ public class DownCastingTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(DownCasting.class).refine(new HashCodeEqualsTester.Refinement() {
+        HashCodeEqualsTester.of(DownCasting.class).refine(new HashCodeEqualsTester.Refinement<TypeDescription>() {
             @Override
-            public void apply(Object mock) {
-                if (mock instanceof TypeDescription) {
-                    when(((TypeDescription) mock).getInternalName()).thenReturn(FOO + new Random().nextInt());
-                }
+            public void apply(TypeDescription mock) {
+                when((mock).getInternalName()).thenReturn(FOO + new Random().nextInt());
             }
         }).apply();
     }

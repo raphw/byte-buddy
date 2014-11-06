@@ -24,12 +24,10 @@ public class MethodRebaseResolverMethodNameTransformerSuffixingTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(MethodRebaseResolver.MethodNameTransformer.Suffixing.class).refine(new HashCodeEqualsTester.Refinement() {
+        HashCodeEqualsTester.of(MethodRebaseResolver.MethodNameTransformer.Suffixing.class).refine(new HashCodeEqualsTester.Refinement<RandomString>() {
             @Override
-            public void apply(Object mock) {
-                if (RandomString.class.isAssignableFrom(mock.getClass())) {
-                    when(((RandomString) mock).nextString()).thenReturn("" + new Random().nextInt());
-                }
+            public void apply(RandomString mock) {
+                when(mock.nextString()).thenReturn("" + new Random().nextInt());
             }
         }).apply();
     }

@@ -164,11 +164,11 @@ public interface AnnotationDescription {
                         ? ((MethodDescription.ForLoadedMethod) methodDescription).getLoadedMethod()
                         : annotation.annotationType().getDeclaredMethod(methodDescription.getName())).invoke(annotation)).apply();
             } catch (IllegalAccessException e) {
-                throw new IllegalStateException("Cannot access enum property " + methodDescription, e);
+                throw new IllegalStateException("Cannot access annotation property " + methodDescription, e);
             } catch (InvocationTargetException e) {
-                throw new IllegalArgumentException("Error on accessing enum property " + methodDescription, e);
+                throw new IllegalArgumentException("Error on accessing annotation property " + methodDescription, e);
             } catch (NoSuchMethodException e) {
-                throw new IllegalArgumentException("Cannot invoke property on enum " + methodDescription, e);
+                throw new IllegalArgumentException("Cannot invoke property on annotation " + methodDescription, e);
             }
         }
 

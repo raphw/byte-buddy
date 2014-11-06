@@ -39,12 +39,10 @@ public class ArrayFactoryHashCodeEquals {
 
     @Test
     public void testReferenceCreatorHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(ArrayFactory.ArrayCreator.Reference.class).refine(new HashCodeEqualsTester.Refinement() {
+        HashCodeEqualsTester.of(ArrayFactory.ArrayCreator.Reference.class).refine(new HashCodeEqualsTester.Refinement<TypeDescription>() {
             @Override
-            public void apply(Object mock) {
-                if (mock instanceof TypeDescription) {
-                    when(((TypeDescription) mock).getInternalName()).thenReturn("" + System.identityHashCode(mock));
-                }
+            public void apply(TypeDescription mock) {
+                when(mock.getInternalName()).thenReturn("" + System.identityHashCode(mock));
             }
         }).skipSynthetic().apply();
     }
