@@ -42,32 +42,40 @@ public class HashCodeEqualsTester {
 
     private final ApplicableGenerator generator;
 
+    private final Generator<?> listTypeGenerator;
+
     private final boolean skipSynthetic;
 
     private HashCodeEqualsTester(Class<?> type,
                                  ApplicableGenerator generator,
                                  ApplicableRefinement refinement,
+                                 Generator<?> listTypeGenerator,
                                  boolean skipSynthetic) {
         this.type = type;
         this.generator = generator;
+        this.listTypeGenerator = listTypeGenerator;
         this.refinement = refinement;
         this.skipSynthetic = skipSynthetic;
     }
 
     public static HashCodeEqualsTester of(Class<?> type) {
-        return new HashCodeEqualsTester(type, new ApplicableGenerator(), new ApplicableRefinement(), false);
+        return new HashCodeEqualsTester(type, new ApplicableGenerator(), new ApplicableRefinement(), new ObjectTypeGenerator(), false);
     }
 
     public HashCodeEqualsTester refine(Refinement<?> refinement) {
-        return new HashCodeEqualsTester(type, generator, this.refinement.with(refinement), skipSynthetic);
+        return new HashCodeEqualsTester(type, generator, this.refinement.with(refinement), listTypeGenerator, skipSynthetic);
     }
 
     public HashCodeEqualsTester generate(Generator<?> generator) {
-        return new HashCodeEqualsTester(type, this.generator.with(generator), refinement, skipSynthetic);
+        return new HashCodeEqualsTester(type, this.generator.with(generator), refinement, listTypeGenerator, skipSynthetic);
+    }
+
+    public HashCodeEqualsTester listType(Generator<?> generator) {
+        return new HashCodeEqualsTester(type, this.generator, refinement, generator, skipSynthetic);
     }
 
     public HashCodeEqualsTester skipSynthetic() {
-        return new HashCodeEqualsTester(type, generator, refinement, true);
+        return new HashCodeEqualsTester(type, generator, refinement, listTypeGenerator, true);
     }
 
     public void apply() throws IllegalAccessException, InvocationTargetException, InstantiationException {
@@ -149,7 +157,7 @@ public class HashCodeEqualsTester {
         } else if (List.class.isAssignableFrom(parameterType)) {
             actualArgument = Array.newInstance(Object.class, 1);
             otherArgument = Array.newInstance(Object.class, 1);
-            putInstance(Object.class, actualArgument, otherArgument, 0);
+            putInstance(listTypeGenerator.generate(), actualArgument, otherArgument, 0);
             actualArgument = Arrays.asList((Object[]) actualArgument);
             otherArgument = Arrays.asList((Object[]) otherArgument);
         } else if (parameterType.isArray()) {
@@ -204,6 +212,14 @@ public class HashCodeEqualsTester {
     public static interface Generator<T> {
 
         Class<? extends T> generate();
+    }
+
+    public static class ObjectTypeGenerator implements Generator<Object> {
+
+        @Override
+        public Class<?> generate() {
+            return Object.class;
+        }
     }
 
     private static class ApplicableGenerator {

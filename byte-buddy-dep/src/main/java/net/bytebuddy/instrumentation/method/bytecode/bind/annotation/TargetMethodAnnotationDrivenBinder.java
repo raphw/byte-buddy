@@ -56,7 +56,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                                               TerminationHandler terminationHandler,
                                               Assigner assigner,
                                               MethodInvoker methodInvoker) {
-        this.delegationProcessor = new DelegationProcessor(parameterBinders);
+        delegationProcessor = new DelegationProcessor(parameterBinders);
         this.defaultsProvider = defaultsProvider;
         this.terminationHandler = terminationHandler;
         this.assigner = assigner;
@@ -266,7 +266,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          * A map of registered annotation types to the binder that is responsible for binding a parameter
          * that is annotated with the given annotation.
          */
-        private final Map<TypeDescription, ParameterBinder<?>> argumentBinders;
+        private final Map<TypeDescription, ParameterBinder<?>> parameterBinders;
 
         /**
          * Creates a new delegation processor.
@@ -276,13 +276,13 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          *                         for a specific annotation.
          */
         private DelegationProcessor(List<ParameterBinder<?>> parameterBinders) {
-            Map<TypeDescription, ParameterBinder<?>> argumentBinderMap = new HashMap<TypeDescription, ParameterBinder<?>>();
+            Map<TypeDescription, ParameterBinder<?>> parameterBinderMap = new HashMap<TypeDescription, ParameterBinder<?>>();
             for (ParameterBinder<?> parameterBinder : parameterBinders) {
-                if (argumentBinderMap.put(new TypeDescription.ForLoadedType(parameterBinder.getHandledType()), parameterBinder) != null) {
+                if (parameterBinderMap.put(new TypeDescription.ForLoadedType(parameterBinder.getHandledType()), parameterBinder) != null) {
                     throw new IllegalArgumentException("Attempt to bind two handlers to " + parameterBinder.getHandledType());
                 }
             }
-            this.argumentBinders = Collections.unmodifiableMap(argumentBinderMap);
+            this.parameterBinders = Collections.unmodifiableMap(parameterBinderMap);
         }
 
         /**
@@ -296,7 +296,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         private Handler handler(List<AnnotationDescription> annotations, Iterator<AnnotationDescription> defaults) {
             Handler handler = null;
             for (AnnotationDescription annotation : annotations) {
-                ParameterBinder<?> parameterBinder = argumentBinders.get(annotation.getAnnotationType());
+                ParameterBinder<?> parameterBinder = parameterBinders.get(annotation.getAnnotationType());
                 if (parameterBinder != null && handler != null) {
                     throw new IllegalStateException("Ambiguous binding for parameter annotated with two handled annotation types");
                 } else if (parameterBinder != null /* && handler == null */) {
@@ -306,7 +306,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
             if (handler == null) { // No handler was found: attempt using defaults provider.
                 if (defaults.hasNext()) {
                     AnnotationDescription defaultAnnotation = defaults.next();
-                    ParameterBinder<?> parameterBinder = argumentBinders.get(defaultAnnotation.getAnnotationType());
+                    ParameterBinder<?> parameterBinder = parameterBinders.get(defaultAnnotation.getAnnotationType());
                     if (parameterBinder == null) {
                         return Handler.Unbound.INSTANCE;
                     } else {
@@ -335,18 +335,18 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && argumentBinders.equals(((DelegationProcessor) other).argumentBinders);
+                    && parameterBinders.equals(((DelegationProcessor) other).parameterBinders);
         }
 
         @Override
         public int hashCode() {
-            return argumentBinders.hashCode();
+            return parameterBinders.hashCode();
         }
 
         @Override
         public String toString() {
             return "TargetMethodAnnotationDrivenBinder.DelegationProcessor{" +
-                    "argumentBinders=" + argumentBinders +
+                    "parameterBinders=" + parameterBinders +
                     '}';
         }
 

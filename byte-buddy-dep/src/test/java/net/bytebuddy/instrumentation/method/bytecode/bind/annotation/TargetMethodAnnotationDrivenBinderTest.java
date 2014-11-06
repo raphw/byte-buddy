@@ -44,7 +44,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
     @Mock
     private Assigner assigner;
     @Mock
-    private StackManipulation assignmentBinding, methodInvocation;
+    private StackManipulation assignmentBinding, methodInvocation, termination;
     @Mock
     private TargetMethodAnnotationDrivenBinder.MethodInvoker methodInvoker;
     @Mock
@@ -121,12 +121,19 @@ public class TargetMethodAnnotationDrivenBinderTest {
         when(target.getInternalName()).thenReturn(BAR);
         when(target.getDescriptor()).thenReturn(BAZ);
         when(target.isStatic()).thenReturn(true);
-        when(firstPseudoAnnotation.getAnnotationType()).thenReturn(new TypeDescription.ForLoadedType(FirstPseudoAnnotation.class));
-        when(secondPseudoAnnotation.getAnnotationType()).thenReturn(new TypeDescription.ForLoadedType(SecondPseudoAnnotation.class));
+        when(firstPseudoAnnotation.getAnnotationType())
+                .thenReturn(new TypeDescription.ForLoadedType(FirstPseudoAnnotation.class));
+        when(firstPseudoAnnotation.prepare(FirstPseudoAnnotation.class)).thenReturn(firstPseudoAnnotation);
+        when(secondPseudoAnnotation.getAnnotationType())
+                .thenReturn(new TypeDescription.ForLoadedType(SecondPseudoAnnotation.class));
+        when(secondPseudoAnnotation.prepare(SecondPseudoAnnotation.class)).thenReturn(secondPseudoAnnotation);
         when(sourceTypeDescription.getStackSize()).thenReturn(StackSize.ZERO);
         when(targetTypeDescription.getStackSize()).thenReturn(StackSize.ZERO);
         when(source.getReturnType()).thenReturn(sourceTypeDescription);
         when(target.getReturnType()).thenReturn(targetTypeDescription);
+        when(terminationHandler.resolve(assigner, source, target)).thenReturn(termination);
+        when(termination.apply(any(MethodVisitor.class), any(Instrumentation.Context.class)))
+                .thenReturn(new StackManipulation.Size(0, 0));
     }
 
     @After
@@ -149,6 +156,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
     @Test
     public void testIgnoreForBindingAnnotation() throws Exception {
         when(target.getDeclaredAnnotations()).thenReturn(annotationList);
+        when(termination.isValid()).thenReturn(true);
         when(annotationList.isAnnotationPresent(IgnoreForBinding.class)).thenReturn(true);
         MethodDelegationBinder methodDelegationBinder = new TargetMethodAnnotationDrivenBinder(
                 Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>emptyList(),
@@ -164,9 +172,10 @@ public class TargetMethodAnnotationDrivenBinderTest {
     }
 
     @Test
-    public void testReturnTypeMismatchNoRuntimeType() throws Exception {
+    public void testTerminationBinderMismatch() throws Exception {
         when(assignmentBinding.isValid()).thenReturn(false);
         when(methodInvocation.isValid()).thenReturn(true);
+        when(termination.isValid()).thenReturn(false);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         MethodDelegationBinder methodDelegationBinder = new TargetMethodAnnotationDrivenBinder(
                 Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>emptyList(),
@@ -175,33 +184,10 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 assigner,
                 methodInvoker);
         assertThat(methodDelegationBinder.bind(instrumentationTarget, source, target).isValid(), is(false));
-        verify(assigner).assign(targetTypeDescription, sourceTypeDescription, false);
-        verifyNoMoreInteractions(assigner);
+        verify(terminationHandler).resolve(assigner, source, target);
+        verifyNoMoreInteractions(terminationHandler);
+        verifyZeroInteractions(assigner);
         verifyZeroInteractions(methodInvoker);
-        verify(source, atLeast(1)).getReturnType();
-        verify(target, atLeast(1)).getReturnType();
-        verifyZeroInteractions(defaultsProvider);
-    }
-
-    @Test
-    public void testReturnTypeMismatchRuntimeType() throws Exception {
-        when(assignmentBinding.isValid()).thenReturn(false);
-        when(methodInvocation.isValid()).thenReturn(true);
-        RuntimeType runtimeType = mock(RuntimeType.class);
-        doReturn(RuntimeType.class).when(runtimeType).annotationType();
-        when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(new Annotation[]{runtimeType}));
-        MethodDelegationBinder methodDelegationBinder = new TargetMethodAnnotationDrivenBinder(
-                Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>emptyList(),
-                defaultsProvider,
-                terminationHandler,
-                assigner,
-                methodInvoker);
-        assertThat(methodDelegationBinder.bind(instrumentationTarget, source, target).isValid(), is(false));
-        verify(assigner).assign(targetTypeDescription, sourceTypeDescription, true);
-        verifyNoMoreInteractions(assigner);
-        verifyZeroInteractions(methodInvoker);
-        verify(source, atLeast(1)).getReturnType();
-        verify(target, atLeast(1)).getReturnType();
         verifyZeroInteractions(defaultsProvider);
     }
 
@@ -209,6 +195,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
     public void testDoNotBindOnIllegalMethodInvocation() throws Exception {
         when(assignmentBinding.isValid()).thenReturn(true);
         when(methodInvocation.isValid()).thenReturn(false);
+        when(termination.isValid()).thenReturn(true);
         TypeList typeList = mock(TypeList.class);
         when(typeList.size()).thenReturn(0);
         when(target.getParameterTypes()).thenReturn(typeList);
@@ -239,6 +226,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
     public void testBindingByDefaults() throws Exception {
         when(assignmentBinding.isValid()).thenReturn(true);
         when(methodInvocation.isValid()).thenReturn(true);
+        when(termination.isValid()).thenReturn(true);
         TypeList typeList = mock(TypeList.class);
         when(typeList.size()).thenReturn(2);
         when(target.getParameterTypes()).thenReturn(typeList);
@@ -272,13 +260,12 @@ public class TargetMethodAnnotationDrivenBinderTest {
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
         verifyZeroInteractions(methodVisitor);
-        verify(source, atLeast(1)).getReturnType();
-        verify(target, atLeast(1)).getReturnType();
         verify(target, atLeast(1)).getParameterTypes();
         verify(target, atLeast(1)).getParameterAnnotations();
         verify(target, atLeast(1)).getDeclaredAnnotations();
-        verify(assigner).assign(targetTypeDescription, sourceTypeDescription, false);
-        verifyNoMoreInteractions(assigner);
+        verifyZeroInteractions(assigner);
+        verify(terminationHandler).resolve(assigner, source, target);
+        verifyNoMoreInteractions(terminationHandler);
         verify(methodInvoker).invoke(target);
         verifyNoMoreInteractions(methodInvoker);
         verify(firstParameterBinder, atLeast(1)).getHandledType();
@@ -311,6 +298,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
     public void testInsufficientDefaults() throws Exception {
         when(assignmentBinding.isValid()).thenReturn(true);
         when(methodInvocation.isValid()).thenReturn(true);
+        when(termination.isValid()).thenReturn(true);
         TypeList typeList = mock(TypeList.class);
         when(typeList.size()).thenReturn(2);
         when(target.getParameterTypes()).thenReturn(typeList);
@@ -349,8 +337,9 @@ public class TargetMethodAnnotationDrivenBinderTest {
         verify(defaultsIterator, times(2)).hasNext();
         verify(defaultsIterator, times(1)).next();
         verifyNoMoreInteractions(defaultsIterator);
-        verify(assigner).assign(targetTypeDescription, sourceTypeDescription, false);
-        verifyNoMoreInteractions(assigner);
+        verifyZeroInteractions(assigner);
+        verify(terminationHandler).resolve(assigner, source, target);
+        verifyNoMoreInteractions(terminationHandler);
         verifyZeroInteractions(methodInvoker);
         verifyZeroInteractions(firstBinding);
         verify(secondBinding, atLeast(1)).isValid();
@@ -363,6 +352,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
     public void testBindingByParameterAnnotations() throws Exception {
         when(assignmentBinding.isValid()).thenReturn(true);
         when(methodInvocation.isValid()).thenReturn(true);
+        when(termination.isValid()).thenReturn(true);
         TypeList typeList = mock(TypeList.class);
         when(typeList.size()).thenReturn(2);
         when(target.getParameterTypes()).thenReturn(typeList);
@@ -396,13 +386,12 @@ public class TargetMethodAnnotationDrivenBinderTest {
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
         verifyZeroInteractions(methodVisitor);
-        verify(source, atLeast(1)).getReturnType();
-        verify(target, atLeast(1)).getReturnType();
         verify(target, atLeast(1)).getParameterTypes();
         verify(target, atLeast(1)).getParameterAnnotations();
         verify(target, atLeast(1)).getDeclaredAnnotations();
-        verify(assigner).assign(targetTypeDescription, sourceTypeDescription, false);
         verifyNoMoreInteractions(assigner);
+        verify(terminationHandler).resolve(assigner, source, target);
+        verifyNoMoreInteractions(terminationHandler);
         verify(methodInvoker).invoke(target);
         verifyNoMoreInteractions(methodInvoker);
         verify(firstParameterBinder, atLeast(1)).getHandledType();
@@ -433,6 +422,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
     public void testBindingByParameterAnnotationsAndDefaults() throws Exception {
         when(assignmentBinding.isValid()).thenReturn(true);
         when(methodInvocation.isValid()).thenReturn(true);
+        when(termination.isValid()).thenReturn(true);
         TypeList typeList = mock(TypeList.class);
         when(typeList.size()).thenReturn(2);
         when(target.getParameterTypes()).thenReturn(typeList);
@@ -467,13 +457,12 @@ public class TargetMethodAnnotationDrivenBinderTest {
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
         verifyZeroInteractions(methodVisitor);
-        verify(source, atLeast(1)).getReturnType();
-        verify(target, atLeast(1)).getReturnType();
         verify(target, atLeast(1)).getParameterTypes();
         verify(target, atLeast(1)).getParameterAnnotations();
         verify(target, atLeast(1)).getDeclaredAnnotations();
-        verify(assigner).assign(targetTypeDescription, sourceTypeDescription, false);
-        verifyNoMoreInteractions(assigner);
+        verifyZeroInteractions(assigner);
+        verify(terminationHandler).resolve(assigner, source, target);
+        verifyNoMoreInteractions(terminationHandler);
         verify(methodInvoker).invoke(target);
         verifyNoMoreInteractions(methodInvoker);
         verify(firstParameterBinder, atLeast(1)).getHandledType();
@@ -503,7 +492,18 @@ public class TargetMethodAnnotationDrivenBinderTest {
 
     @Test
     public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(TargetMethodAnnotationDrivenBinder.class).apply();
+        HashCodeEqualsTester.of(TargetMethodAnnotationDrivenBinder.class).listType(new HashCodeEqualsTester.Generator<Object>() {
+            @Override
+            public Class<?> generate() {
+                return TargetMethodAnnotationDrivenBinder.ParameterBinder.class;
+            }
+        }).refine(new HashCodeEqualsTester.Refinement<TargetMethodAnnotationDrivenBinder.ParameterBinder>() {
+            @Override
+            public void apply(TargetMethodAnnotationDrivenBinder.ParameterBinder mock) {
+                when(mock.getHandledType()).thenReturn(Annotation.class);
+
+            }
+        }).apply();
     }
 
     private static @interface FirstPseudoAnnotation {

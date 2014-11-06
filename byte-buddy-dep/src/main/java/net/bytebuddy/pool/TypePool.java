@@ -55,14 +55,17 @@ public interface TypePool {
 
         @Override
         public TypeDescription describe(String name) {
+            if (name.contains("/")) {
+                throw new IllegalArgumentException(name + " contains the illegal character '/'");
+            }
             int arity = 0;
             while (name.startsWith(ARRAY_SYMBOL)) {
                 arity++;
                 name = name.substring(1);
             }
             if (arity > 0) {
-                String resolvedName = PRIMITIVE_DESCRIPTORS.get(name);
-                name = resolvedName == null ? name.substring(1, name.length() - 1) : resolvedName;
+                String primitiveName = PRIMITIVE_DESCRIPTORS.get(name);
+                name = primitiveName == null ? name.substring(1, name.length() - 1) : primitiveName;
             }
             TypeDescription typeDescription = PRIMITIVE_TYPES.get(name);
             return TypeDescription.ArrayProjection.of(typeDescription == null ? doDescribe(name) : typeDescription, arity);
@@ -931,7 +934,10 @@ public interface TypePool {
                                              List<AnnotationToken> annotationTokens) {
                 this.modifiers = modifiers;
                 this.name = name;
-                fieldTypeName = Type.getType(descriptor).getClassName();
+                Type fieldType = Type.getType(descriptor);
+                fieldTypeName = fieldType.getSort() == Type.ARRAY
+                        ? fieldType.getInternalName().replace('/', '.')
+                        : fieldType.getClassName();
                 declaredAnnotations = new ArrayList<AnnotationDescription>(annotationTokens.size());
                 for (AnnotationToken annotationToken : annotationTokens) {
                     declaredAnnotations.add(annotationToken.toAnnotationDescription(typePool));
@@ -1062,7 +1068,10 @@ public interface TypePool {
                                               AnnotationValue<?, ?> defaultValue) {
                 this.modifiers = modifiers;
                 this.internalName = internalName;
-                returnTypeName = Type.getReturnType(methodDescriptor).getClassName();
+                Type returnType = Type.getReturnType(methodDescriptor);
+                returnTypeName = returnType.getSort() == Type.ARRAY
+                        ? returnType.getDescriptor().replace('/', '.')
+                        : returnType.getClassName();
                 parameterTypes = new TypePoolTypeList(methodDescriptor);
                 exceptionTypes = exceptionInternalName == null
                         ? new TypeList.Empty()
@@ -1170,7 +1179,9 @@ public interface TypePool {
                 internalName = new String[parameterType.length];
                 int index = 0, stackSize = 0;
                 for (Type aParameterType : parameterType) {
-                    name[index] = aParameterType.getClassName();
+                    name[index] = aParameterType.getSort() == Type.ARRAY
+                            ? aParameterType.getInternalName().replace('/', '.')
+                            : aParameterType.getClassName();
                     internalName[index] = ByteBuddyCommons.toInternalName(aParameterType);
                     stackSize += aParameterType.getSize();
                     index++;
@@ -2063,21 +2074,21 @@ public interface TypePool {
                         };
 
                         protected static Dispatcher of(Class<?> type) {
-                            if(type == boolean.class) {
+                            if (type == boolean.class) {
                                 return BOOLEAN;
-                            } else if(type == byte.class) {
+                            } else if (type == byte.class) {
                                 return BYTE;
-                            } else if(type == short.class) {
+                            } else if (type == short.class) {
                                 return SHORT;
-                            } else if(type == char.class) {
+                            } else if (type == char.class) {
                                 return CHARACTER;
-                            } else if(type == int.class) {
+                            } else if (type == int.class) {
                                 return INTEGER;
-                            } else if(type == long.class) {
+                            } else if (type == long.class) {
                                 return LONG;
-                            } else if(type == float.class) {
+                            } else if (type == float.class) {
                                 return FLOAT;
-                            } else if(type == double.class) {
+                            } else if (type == double.class) {
                                 return DOUBLE;
                             } else {
                                 return REFERENCE;
