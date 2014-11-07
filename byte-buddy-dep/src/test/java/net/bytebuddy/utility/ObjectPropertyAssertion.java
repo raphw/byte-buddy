@@ -8,7 +8,7 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 
-public class ObjectPropertyAssertion {
+public class ObjectPropertyAssertion<T> {
 
     private static final boolean DEFAULT_BOOLEAN = false, OTHER_BOOLEAN = true;
 
@@ -28,7 +28,7 @@ public class ObjectPropertyAssertion {
 
     private static final String DEFAULT_STRING = "foo", OTHER_STRING = "bar";
 
-    private final Class<?> type;
+    private final Class<T> type;
 
     private final ApplicableRefinement refinement;
 
@@ -42,7 +42,7 @@ public class ObjectPropertyAssertion {
 
     private final Set<String> ignoredFields;
 
-    private ObjectPropertyAssertion(Class<?> type,
+    private ObjectPropertyAssertion(Class<T> type,
                                     ApplicableGenerator generator,
                                     ApplicableRefinement refinement,
                                     ApplicableCreator creator,
@@ -58,8 +58,8 @@ public class ObjectPropertyAssertion {
         this.ignoredFields = ignoredFields;
     }
 
-    public static ObjectPropertyAssertion of(Class<?> type) {
-        return new ObjectPropertyAssertion(type,
+    public static <S> ObjectPropertyAssertion<S> of(Class<S> type) {
+        return new ObjectPropertyAssertion<S>(type,
                 new ApplicableGenerator(),
                 new ApplicableRefinement(),
                 new ApplicableCreator(),
@@ -68,8 +68,8 @@ public class ObjectPropertyAssertion {
                 new HashSet<String>());
     }
 
-    public ObjectPropertyAssertion refine(Refinement<?> refinement) {
-        return new ObjectPropertyAssertion(type,
+    public ObjectPropertyAssertion<T> refine(Refinement<?> refinement) {
+        return new ObjectPropertyAssertion<T>(type,
                 generator,
                 this.refinement.with(refinement),
                 creator,
@@ -78,8 +78,8 @@ public class ObjectPropertyAssertion {
                 ignoredFields);
     }
 
-    public ObjectPropertyAssertion generate(Generator<?> generator) {
-        return new ObjectPropertyAssertion(type,
+    public ObjectPropertyAssertion<T> generate(Generator<?> generator) {
+        return new ObjectPropertyAssertion<T>(type,
                 this.generator.with(generator),
                 refinement,
                 creator,
@@ -88,8 +88,8 @@ public class ObjectPropertyAssertion {
                 ignoredFields);
     }
 
-    public ObjectPropertyAssertion create(Creator<?> creator) {
-        return new ObjectPropertyAssertion(type,
+    public ObjectPropertyAssertion<T> create(Creator<?> creator) {
+        return new ObjectPropertyAssertion<T>(type,
                 generator,
                 refinement,
                 this.creator.with(creator),
@@ -98,18 +98,18 @@ public class ObjectPropertyAssertion {
                 ignoredFields);
     }
 
-    public ObjectPropertyAssertion skipSynthetic() {
-        return new ObjectPropertyAssertion(type, generator, refinement, creator, true, skipToString, ignoredFields);
+    public ObjectPropertyAssertion<T> skipSynthetic() {
+        return new ObjectPropertyAssertion<T>(type, generator, refinement, creator, true, skipToString, ignoredFields);
     }
 
-    public ObjectPropertyAssertion skipToString() {
-        return new ObjectPropertyAssertion(type, generator, refinement, creator, skipSynthetic, true, ignoredFields);
+    public ObjectPropertyAssertion<T> skipToString() {
+        return new ObjectPropertyAssertion<T>(type, generator, refinement, creator, skipSynthetic, true, ignoredFields);
     }
 
-    public ObjectPropertyAssertion ignoreFields(String... field) {
+    public ObjectPropertyAssertion<T> ignoreFields(String... field) {
         Set<String> ignoredFields = new HashSet<String>(this.ignoredFields);
         ignoredFields.addAll(Arrays.asList(field));
-        return new ObjectPropertyAssertion(type, generator, refinement, creator, skipSynthetic, true, ignoredFields);
+        return new ObjectPropertyAssertion<T>(type, generator, refinement, creator, skipSynthetic, true, ignoredFields);
     }
 
     public void apply() throws IllegalAccessException, InvocationTargetException, InstantiationException {
@@ -126,7 +126,8 @@ public class ObjectPropertyAssertion {
                 putInstance(parameterType, actualArguments, otherArguments, index++);
             }
             int testIndex = 0;
-            Object instance = constructor.newInstance(actualArguments);
+            @SuppressWarnings("unchecked")
+            T instance = (T) constructor.newInstance(actualArguments);
             assertThat(instance, is(instance));
             assertThat(instance, not(is((Object) null)));
             assertThat(instance, not(is(new Object())));
@@ -134,16 +135,7 @@ public class ObjectPropertyAssertion {
             assertThat(instance.hashCode(), is(similarInstance.hashCode()));
             assertThat(instance, is(similarInstance));
             if (!skipToString) {
-                assertThat(instance.toString(), startsWith(type.getCanonicalName().substring(type.getPackage().getName().length() + 1) + "{"));
-                assertThat(instance.toString(), endsWith("}"));
-                Class<?> currentType = type;
-                do {
-                    for (Field field : type.getDeclaredFields()) {
-                        if (!field.isSynthetic() && !Modifier.isStatic(field.getModifiers()) && !ignoredFields.contains(field.getName())) {
-                            assertThat(instance.toString(), containsString(field.getName()));
-                        }
-                    }
-                } while ((currentType = currentType.getSuperclass()) != Object.class);
+                checkString(instance);
             } else {
                 assertThat(instance.toString(), notNullValue());
             }
@@ -164,6 +156,26 @@ public class ObjectPropertyAssertion {
                 testIndex++;
             }
         }
+    }
+
+    private void checkString(T instance) {
+        assertThat(instance.toString(), startsWith(type.getCanonicalName().substring(type.getPackage().getName().length() + 1) + "{"));
+        assertThat(instance.toString(), endsWith("}"));
+        Class<?> currentType = type;
+        do {
+            for (Field field : type.getDeclaredFields()) {
+                if (!field.isSynthetic() && !Modifier.isStatic(field.getModifiers()) && !ignoredFields.contains(field.getName())) {
+                    assertThat(instance.toString(), containsString(field.getName()));
+                }
+            }
+        } while ((currentType = currentType.getSuperclass()) != Object.class);
+    }
+
+    public void apply(T instance) {
+        checkString(instance);
+        assertThat(instance, is(instance));
+        assertThat(instance, not(is((Object) null)));
+        assertThat(instance, not(is(new Object())));
     }
 
     private void putInstance(Class<?> parameterType, Object actualArguments, Object otherArguments, int index) {

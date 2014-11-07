@@ -54,7 +54,7 @@ public interface AnnotationDescription {
             }
 
             @SuppressWarnings("unchecked")
-            protected static EnumerationValue of(Enum<?> value) {
+            protected static EnumerationValue ofWildcard(Enum<?> value) {
                 return new ForLoadedEnumeration(value);
             }
 
@@ -91,7 +91,7 @@ public interface AnnotationDescription {
             public static List<EnumerationValue> asList(Enum<?>[] enumerations) {
                 List<EnumerationValue> result = new ArrayList<EnumerationValue>(enumerations.length);
                 for (Enum<?> enumeration : enumerations) {
-                    result.add(of(enumeration));
+                    result.add(ofWildcard(enumeration));
                 }
                 return result;
             }
@@ -201,7 +201,7 @@ public interface AnnotationDescription {
                 } else if (value instanceof Class<?>[]) {
                     value = new TypeList.ForLoadedType((Class<?>[]) value).toArray(new TypeDescription[((Class<?>[]) value).length]);
                 } else if (value instanceof Enum<?>) {
-                    value = EnumerationValue.ForLoadedEnumeration.of((Enum<?>) value);
+                    value = EnumerationValue.ForLoadedEnumeration.ofWildcard((Enum<?>) value);
                 } else if (value instanceof Enum<?>[]) {
                     value = EnumerationValue.ForLoadedEnumeration.asList((Enum<?>[]) value);
                 } else if (value instanceof Annotation) {

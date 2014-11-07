@@ -7,67 +7,129 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+/**
+ * Allows accessing array values.
+ */
 public enum ArrayAccess {
 
+    /**
+     * Access for a {@code byte}- or {@code boolean}-typed array.
+     */
     BYTE(Opcodes.BALOAD, Opcodes.BASTORE, StackSize.SINGLE),
 
+    /**
+     * Access for a {@code short}-typed array.
+     */
     SHORT(Opcodes.SALOAD, Opcodes.SASTORE, StackSize.SINGLE),
 
+    /**
+     * Access for a {@code char}-typed array.
+     */
     CHARACTER(Opcodes.CALOAD, Opcodes.CASTORE, StackSize.SINGLE),
 
+    /**
+     * Access for a {@code int}-typed array.
+     */
     INTEGER(Opcodes.IALOAD, Opcodes.IASTORE, StackSize.SINGLE),
 
+    /**
+     * Access for a {@code long}-typed array.
+     */
     LONG(Opcodes.LALOAD, Opcodes.LASTORE, StackSize.DOUBLE),
 
+    /**
+     * Access for a {@code float}-typed array.
+     */
     FLOAT(Opcodes.FALOAD, Opcodes.FASTORE, StackSize.SINGLE),
 
+    /**
+     * Access for a {@code double}-typed array.
+     */
     DOUBLE(Opcodes.DALOAD, Opcodes.DASTORE, StackSize.DOUBLE),
 
+    /**
+     * Access for a reference-typed array.
+     */
     REFERENCE(Opcodes.AALOAD, Opcodes.AASTORE, StackSize.SINGLE);
 
-    public static ArrayAccess of(TypeDescription typeDescription) {
-        if (typeDescription.represents(boolean.class) || typeDescription.represents(short.class)) {
+    /**
+     * Locates an array accessor by the array's component type.
+     *
+     * @param componentType The array's component type.
+     * @return An array accessor for the given type.
+     */
+    public static ArrayAccess of(TypeDescription componentType) {
+        if (componentType.represents(boolean.class) || componentType.represents(byte.class)) {
             return BYTE;
-        } else if (typeDescription.represents(short.class)) {
+        } else if (componentType.represents(short.class)) {
             return SHORT;
-        } else if (typeDescription.represents(char.class)) {
+        } else if (componentType.represents(char.class)) {
             return CHARACTER;
-        } else if (typeDescription.represents(int.class)) {
+        } else if (componentType.represents(int.class)) {
             return INTEGER;
-        } else if (typeDescription.represents(long.class)) {
+        } else if (componentType.represents(long.class)) {
             return LONG;
-        } else if (typeDescription.represents(float.class)) {
+        } else if (componentType.represents(float.class)) {
             return FLOAT;
-        } else if (typeDescription.represents(double.class)) {
+        } else if (componentType.represents(double.class)) {
             return DOUBLE;
-        } else if (typeDescription.represents(void.class)) {
-            throw new IllegalArgumentException("The void type is no legal array type");
+        } else if (componentType.represents(void.class)) {
+            throw new IllegalArgumentException("void is no legal array type");
         } else {
             return REFERENCE;
         }
     }
 
+    /**
+     * The opcode used for loading a value.
+     */
     private final int loadOpcode;
 
+    /**
+     * The opcode used for storing a value.
+     */
     private final int storeOpcode;
 
+    /**
+     * The size of the array's component value.
+     */
     private final StackSize stackSize;
 
+    /**
+     * Creates a new array access.
+     *
+     * @param loadOpcode  The opcode used for loading a value.
+     * @param storeOpcode The opcode used for storing a value.
+     * @param stackSize   The size of the array's component value.
+     */
     private ArrayAccess(int loadOpcode, int storeOpcode, StackSize stackSize) {
         this.loadOpcode = loadOpcode;
         this.storeOpcode = storeOpcode;
         this.stackSize = stackSize;
     }
 
+    /**
+     * Creates a value-loading stack manipulation.
+     *
+     * @return A value-loading stack manipulation.
+     */
     public StackManipulation load() {
         return new Loader();
     }
 
+    /**
+     * Creates a value-storing stack manipulation.
+     *
+     * @return A value-storing stack manipulation.
+     */
     public StackManipulation store() {
         return new Putter();
     }
 
-    private class Loader implements StackManipulation {
+    /**
+     * A stack manipulation for loading an array's value.
+     */
+    protected class Loader implements StackManipulation {
 
         @Override
         public boolean isValid() {
@@ -78,6 +140,15 @@ public enum ArrayAccess {
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
             methodVisitor.visitInsn(loadOpcode);
             return stackSize.toIncreasingSize().aggregate(new Size(-2, 0));
+        }
+
+        /**
+         * Returns the outer instance.
+         *
+         * @return The outer instance.
+         */
+        private ArrayAccess getArrayAccess() {
+            return ArrayAccess.this;
         }
 
         @Override
@@ -91,17 +162,16 @@ public enum ArrayAccess {
                     && getArrayAccess() == ((Loader) other).getArrayAccess());
         }
 
-        private ArrayAccess getArrayAccess() {
-            return ArrayAccess.this;
-        }
-
         @Override
         public String toString() {
             return "ArrayAccess.Loader{arrayAccess=" + ArrayAccess.this + '}';
         }
     }
 
-    private class Putter implements StackManipulation {
+    /**
+     * A stack manipulation for storing an array's value.
+     */
+    protected class Putter implements StackManipulation {
 
         @Override
         public boolean isValid() {
@@ -114,6 +184,15 @@ public enum ArrayAccess {
             return stackSize.toDecreasingSize().aggregate(new Size(-2, 0));
         }
 
+        /**
+         * Returns the outer instance.
+         *
+         * @return The outer instance.
+         */
+        private ArrayAccess getArrayAccess() {
+            return ArrayAccess.this;
+        }
+
         @Override
         public int hashCode() {
             return ArrayAccess.this.hashCode();
@@ -123,10 +202,6 @@ public enum ArrayAccess {
         public boolean equals(Object other) {
             return this == other || (other != null && other.getClass() == getClass()
                     && getArrayAccess() == ((Putter) other).getArrayAccess());
-        }
-
-        private ArrayAccess getArrayAccess() {
-            return ArrayAccess.this;
         }
 
         @Override
