@@ -71,6 +71,19 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodRebaseResolver.Resolution.ForRebasedConstructor.class).apply();
+        ObjectPropertyAssertion.of(MethodRebaseResolver.Resolution.ForRebasedConstructor.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription>() {
+            @Override
+            public void apply(MethodDescription mock) {
+                when(mock.getParameterTypes()).thenReturn(new TypeList.Empty());
+                when(mock.getDeclaringType()).thenReturn(mock(TypeDescription.class));
+                when(mock.getReturnType()).thenReturn(mock(TypeDescription.class));
+                when(mock.getInternalName()).thenReturn(FOO + System.identityHashCode(mock));
+            }
+        }).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
+            @Override
+            public void apply(TypeDescription mock) {
+                when(mock.getDescriptor()).thenReturn(FOO + System.identityHashCode(mock));
+            }
+        }).apply();
     }
 }

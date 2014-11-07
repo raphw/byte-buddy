@@ -1,6 +1,7 @@
 package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.JavaVersionRule;
 import net.bytebuddy.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.PrecompiledTypeClassLoader;
@@ -10,11 +11,15 @@ import org.junit.Test;
 import org.junit.rules.MethodRule;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
 
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isDeclaredBy;
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.not;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class DefaultMethodCallTest extends AbstractInstrumentationTest {
 
@@ -155,6 +160,13 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(DefaultMethodCall.class).apply();
+        ObjectPropertyAssertion.of(DefaultMethodCall.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
+            @Override
+            public List<?> create() {
+                TypeDescription typeDescription = mock(TypeDescription.class);
+                when(typeDescription.isInterface()).thenReturn(true);
+                return Arrays.asList(typeDescription);
+            }
+        }).apply();
     }
 }

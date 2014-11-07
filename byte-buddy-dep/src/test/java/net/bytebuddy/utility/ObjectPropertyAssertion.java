@@ -1,11 +1,7 @@
 package net.bytebuddy.utility;
 
-import org.objectweb.asm.Opcodes;
-
 import java.lang.reflect.*;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 import static org.hamcrest.CoreMatchers.*;
@@ -38,63 +34,82 @@ public class ObjectPropertyAssertion {
 
     private final ApplicableGenerator generator;
 
-    private final Generator<?> listTypeGenerator;
+    private final ApplicableCreator creator;
 
     private final boolean skipSynthetic;
 
     private final boolean skipToString;
 
+    private final Set<String> ignoredFields;
+
     private ObjectPropertyAssertion(Class<?> type,
                                     ApplicableGenerator generator,
                                     ApplicableRefinement refinement,
-                                    Generator<?> listTypeGenerator,
+                                    ApplicableCreator creator,
                                     boolean skipSynthetic,
-                                    boolean skipToString) {
+                                    boolean skipToString,
+                                    Set<String> ignoredFields) {
         this.type = type;
         this.generator = generator;
-        this.listTypeGenerator = listTypeGenerator;
         this.refinement = refinement;
+        this.creator = creator;
         this.skipSynthetic = skipSynthetic;
         this.skipToString = skipToString;
+        this.ignoredFields = ignoredFields;
     }
 
     public static ObjectPropertyAssertion of(Class<?> type) {
         return new ObjectPropertyAssertion(type,
                 new ApplicableGenerator(),
                 new ApplicableRefinement(),
-                new ObjectTypeGenerator(),
+                new ApplicableCreator(),
                 false,
-                false);
+                false,
+                new HashSet<String>());
     }
 
     public ObjectPropertyAssertion refine(Refinement<?> refinement) {
         return new ObjectPropertyAssertion(type,
                 generator,
                 this.refinement.with(refinement),
-                listTypeGenerator,
+                creator,
                 skipSynthetic,
-                skipToString);
+                skipToString,
+                ignoredFields);
     }
 
     public ObjectPropertyAssertion generate(Generator<?> generator) {
         return new ObjectPropertyAssertion(type,
                 this.generator.with(generator),
                 refinement,
-                listTypeGenerator,
+                creator,
                 skipSynthetic,
-                skipToString);
+                skipToString,
+                ignoredFields);
     }
 
-    public ObjectPropertyAssertion listType(Generator<?> generator) {
-        return new ObjectPropertyAssertion(type, this.generator, refinement, generator, skipSynthetic, skipToString);
+    public ObjectPropertyAssertion create(Creator<?> creator) {
+        return new ObjectPropertyAssertion(type,
+                generator,
+                refinement,
+                this.creator.with(creator),
+                skipSynthetic,
+                skipToString,
+                ignoredFields);
     }
 
     public ObjectPropertyAssertion skipSynthetic() {
-        return new ObjectPropertyAssertion(type, generator, refinement, listTypeGenerator, true, skipToString);
+        return new ObjectPropertyAssertion(type, generator, refinement, creator, true, skipToString, ignoredFields);
     }
 
     public ObjectPropertyAssertion skipToString() {
-        return new ObjectPropertyAssertion(type, generator, refinement, listTypeGenerator, skipSynthetic, true);
+        return new ObjectPropertyAssertion(type, generator, refinement, creator, skipSynthetic, true, ignoredFields);
+    }
+
+    public ObjectPropertyAssertion ignoreFields(String... field) {
+        Set<String> ignoredFields = new HashSet<String>(this.ignoredFields);
+        ignoredFields.addAll(Arrays.asList(field));
+        return new ObjectPropertyAssertion(type, generator, refinement, creator, skipSynthetic, true, ignoredFields);
     }
 
     public void apply() throws IllegalAccessException, InvocationTargetException, InstantiationException {
@@ -121,11 +136,14 @@ public class ObjectPropertyAssertion {
             if (!skipToString) {
                 assertThat(instance.toString(), startsWith(type.getCanonicalName().substring(type.getPackage().getName().length() + 1) + "{"));
                 assertThat(instance.toString(), endsWith("}"));
-                for (Field field : type.getDeclaredFields()) {
-                    if (!field.isSynthetic() && !Modifier.isStatic(field.getModifiers())) {
-                        assertThat(instance.toString(), containsString(field.getName()));
+                Class<?> currentType = type;
+                do {
+                    for (Field field : type.getDeclaredFields()) {
+                        if (!field.isSynthetic() && !Modifier.isStatic(field.getModifiers()) && !ignoredFields.contains(field.getName())) {
+                            assertThat(instance.toString(), containsString(field.getName()));
+                        }
                     }
-                }
+                } while ((currentType = currentType.getSuperclass()) != Object.class);
             } else {
                 assertThat(instance.toString(), notNullValue());
             }
@@ -184,22 +202,14 @@ public class ObjectPropertyAssertion {
             }
             actualArgument = enumConstants[0];
             otherArgument = enumConstants[1];
-        } else if (List.class.isAssignableFrom(parameterType)) {
-            actualArgument = Array.newInstance(Object.class, 1);
-            otherArgument = Array.newInstance(Object.class, 1);
-            putInstance(listTypeGenerator.generate(), actualArgument, otherArgument, 0);
-            actualArgument = Arrays.asList((Object[]) actualArgument);
-            otherArgument = Arrays.asList((Object[]) otherArgument);
         } else if (parameterType.isArray()) {
             actualArgument = Array.newInstance(parameterType.getComponentType(), 1);
             otherArgument = Array.newInstance(parameterType.getComponentType(), 1);
             putInstance(parameterType.getComponentType(), actualArgument, otherArgument, 0);
-        } else if ((parameterType.getModifiers() & Opcodes.ACC_FINAL) != 0) {
-            throw new IllegalArgumentException("Cannot mock final type " + parameterType);
         } else {
-            actualArgument = generator.generate(parameterType);
+            actualArgument = creator.replace(parameterType, generator);
             refinement.apply(actualArgument);
-            otherArgument = generator.generate(parameterType);
+            otherArgument = creator.replace(parameterType, generator);
             refinement.apply(otherArgument);
         }
         Array.set(actualArguments, index, actualArgument);
@@ -244,14 +254,6 @@ public class ObjectPropertyAssertion {
         Class<? extends T> generate();
     }
 
-    public static class ObjectTypeGenerator implements Generator<Object> {
-
-        @Override
-        public Class<?> generate() {
-            return Object.class;
-        }
-    }
-
     private static class ApplicableGenerator {
 
         private final List<Generator<?>> generators;
@@ -277,6 +279,41 @@ public class ObjectPropertyAssertion {
 
         private ApplicableGenerator with(Generator<?> generator) {
             return new ApplicableGenerator(join(generators, generator));
+        }
+    }
+
+    public static interface Creator<T> {
+
+        T create();
+    }
+
+    private static class ApplicableCreator {
+
+        private final List<Creator<?>> creators;
+
+        private ApplicableCreator() {
+            creators = Collections.emptyList();
+        }
+
+        private ApplicableCreator(List<Creator<?>> creators) {
+            this.creators = creators;
+        }
+
+        private Object replace(Class<?> type, ApplicableGenerator generator) {
+            for (Creator<?> creator : creators) {
+                ParameterizedType generic = (ParameterizedType) creator.getClass().getGenericInterfaces()[0];
+                Class<?> restrained = generic.getActualTypeArguments()[0] instanceof ParameterizedType
+                        ? (Class<?>) ((ParameterizedType) generic.getActualTypeArguments()[0]).getRawType()
+                        : (Class<?>) generic.getActualTypeArguments()[0];
+                if (type.isAssignableFrom(restrained)) {
+                    return creator.create();
+                }
+            }
+            return generator.generate(type);
+        }
+
+        private ApplicableCreator with(Creator<?> creator) {
+            return new ApplicableCreator(join(creators, creator));
         }
     }
 }

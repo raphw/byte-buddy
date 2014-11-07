@@ -6,12 +6,14 @@ import org.junit.Test;
 import org.mockito.asm.Type;
 
 import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.Iterator;
 
 import static org.mockito.Mockito.*;
 
 public class FieldAttributeAppenderForLoadedFieldTest extends AbstractFieldAttributeAppenderTest {
 
-    private static final String BAR = "bar";
+    private static final String FOO = "foo", BAR = "bar";
     private Field field;
 
     @Before
@@ -30,7 +32,13 @@ public class FieldAttributeAppenderForLoadedFieldTest extends AbstractFieldAttri
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(FieldAttributeAppender.ForLoadedField.class).apply();
+        final Iterator<Field> iterator = Arrays.asList(Sample.class.getDeclaredField(FOO), Sample.class.getDeclaredField(BAR)).iterator();
+        ObjectPropertyAssertion.of(FieldAttributeAppender.ForLoadedField.class).create(new ObjectPropertyAssertion.Creator<Field>() {
+            @Override
+            public Field create() {
+                return iterator.next();
+            }
+        }).apply();
     }
 
     private static class Foo {
@@ -39,5 +47,10 @@ public class FieldAttributeAppenderForLoadedFieldTest extends AbstractFieldAttri
         @Baz
         @QuxBaz
         private Object bar;
+    }
+
+    private static class Sample {
+
+        private Void foo, bar;
     }
 }

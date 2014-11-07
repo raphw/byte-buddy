@@ -7,6 +7,8 @@ import org.junit.Test;
 import org.mockito.asm.Type;
 
 import java.lang.reflect.Constructor;
+import java.util.Arrays;
+import java.util.Iterator;
 
 import static org.mockito.Mockito.*;
 
@@ -37,7 +39,14 @@ public class MethodAttributeAppenderForLoadedConstructorTest extends AbstractMet
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodAttributeAppender.ForLoadedConstructor.class).apply();
+        Constructor<?> first = Sample.class.getDeclaredConstructor(), second = Sample.class.getDeclaredConstructor(Void.class);
+        final Iterator<Constructor<?>> iterator = Arrays.asList(first, second).iterator();
+        ObjectPropertyAssertion.of(MethodAttributeAppender.ForLoadedConstructor.class).create(new ObjectPropertyAssertion.Creator<Constructor<?>>() {
+            @Override
+            public Constructor<?> create() {
+                return iterator.next();
+            }
+        }).apply();
     }
 
     private static abstract class Foo {
@@ -47,6 +56,15 @@ public class MethodAttributeAppenderForLoadedConstructorTest extends AbstractMet
         @QuxBaz
         protected Foo(@Qux @Baz @QuxBaz Object o) {
             /* empty */
+        }
+    }
+
+    private static class Sample {
+
+        private Sample() {
+        }
+
+        private Sample(Void v) {
         }
     }
 }

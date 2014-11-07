@@ -17,6 +17,9 @@ import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import java.util.Arrays;
+import java.util.Iterator;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -124,6 +127,12 @@ public class MethodHandleConstantTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodHandleConstant.class).apply();
+        final Iterator<String> iterator = Arrays.asList(FOO, BAR).iterator();
+        ObjectPropertyAssertion.of(MethodHandleConstant.class).create(new ObjectPropertyAssertion.Creator<Handle>() {
+            @Override
+            public Handle create() {
+                return new Handle(Opcodes.H_GETFIELD, FOO, BAR, iterator.next());
+            }
+        }).apply();
     }
 }

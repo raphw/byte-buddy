@@ -10,8 +10,8 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
-import net.bytebuddy.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -492,16 +492,22 @@ public class TargetMethodAnnotationDrivenBinderTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.class).listType(new ObjectPropertyAssertion.Generator<Object>() {
-            @Override
-            public Class<?> generate() {
-                return TargetMethodAnnotationDrivenBinder.ParameterBinder.class;
-            }
-        }).refine(new ObjectPropertyAssertion.Refinement<TargetMethodAnnotationDrivenBinder.ParameterBinder>() {
+        ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.class).refine(new ObjectPropertyAssertion.Refinement<TargetMethodAnnotationDrivenBinder.ParameterBinder>() {
             @Override
             public void apply(TargetMethodAnnotationDrivenBinder.ParameterBinder mock) {
                 when(mock.getHandledType()).thenReturn(Annotation.class);
-
+            }
+        }).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
+            @Override
+            public void apply(TypeDescription mock) {
+                when(mock.getStackSize()).thenReturn(StackSize.ZERO);
+            }
+        }).create(new ObjectPropertyAssertion.Creator<List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>>() {
+            @Override
+            public List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> create() {
+                TargetMethodAnnotationDrivenBinder.ParameterBinder<?> parameterBinder = mock(TargetMethodAnnotationDrivenBinder.ParameterBinder.class);
+                doReturn(Annotation.class).when(parameterBinder).getHandledType();
+                return Arrays.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>asList(parameterBinder);
             }
         }).apply();
     }

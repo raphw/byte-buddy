@@ -7,7 +7,6 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
-import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -158,10 +157,5 @@ public class RebaseInstrumentationTargetTest extends AbstractInstrumentationTarg
         Instrumentation.SpecialMethodInvocation specialMethodInvocation = instrumentationTarget.invokeSuper(superMethod, methodLookup);
         assertThat(specialMethodInvocation.isValid(), is(false));
         verifyZeroInteractions(methodRebaseResolver);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(RebaseInstrumentationTarget.class).apply();
     }
 }

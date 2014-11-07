@@ -104,12 +104,13 @@ public class ArrayFactory implements CollectionFactory {
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && componentType.equals(((ArrayFactory) other).componentType);
+                && componentType.equals(((ArrayFactory) other).componentType)
+                && arrayCreator.equals(((ArrayFactory) other).arrayCreator);
     }
 
     @Override
     public int hashCode() {
-        return componentType.hashCode();
+        return componentType.hashCode() + 31 * arrayCreator.hashCode();
     }
 
     @Override
@@ -271,7 +272,7 @@ public class ArrayFactory implements CollectionFactory {
 
             @Override
             public String toString() {
-                return "ArrayFactory.ArrayCreator.Reference{" +
+                return "ArrayFactory.ArrayCreator.ForReferenceType{" +
                         "internalTypeName='" + internalTypeName + '\'' +
                         '}';
             }

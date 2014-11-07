@@ -10,6 +10,9 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
+import java.util.Arrays;
+import java.util.List;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
@@ -63,6 +66,11 @@ public class LoadedTypeInitializerCompoundTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(LoadedTypeInitializer.Compound.class).apply();
+        ObjectPropertyAssertion.of(LoadedTypeInitializer.Compound.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
+            @Override
+            public List<?> create() {
+                return Arrays.asList(mock(LoadedTypeInitializer.class));
+            }
+        }).apply();
     }
 }

@@ -5,10 +5,8 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.utility.MockitoRule;
-import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
@@ -48,10 +46,5 @@ public class MethodInvocationObjectPropertiesTest {
         when(otherInstanceMethod.getParameterTypes()).thenReturn(parameterTypes);
         when(staticMethod.getParameterTypes()).thenReturn(parameterTypes);
         when(interfaceMethod.getParameterTypes()).thenReturn(parameterTypes);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodInvocation.Invocation.class).apply();
     }
 }

@@ -83,11 +83,6 @@ public class BridgeMethodResolverSimpleTest {
     }
 
     @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(BridgeMethodResolver.Simple.class).apply();
-    }
-
-    @Test
     public void testBridgeTargetCandidate() throws Exception {
         assertThat(new BridgeMethodResolver.Simple.BridgeTarget.Candidate(methodDescription).isResolved(), is(false));
         assertThat(new BridgeMethodResolver.Simple.BridgeTarget.Candidate(methodDescription).extract(), is(methodDescription));

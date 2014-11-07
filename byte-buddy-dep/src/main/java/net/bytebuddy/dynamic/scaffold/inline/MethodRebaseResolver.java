@@ -268,7 +268,7 @@ public interface MethodRebaseResolver {
 
             @Override
             public String toString() {
-                return "MethodRebaseResolver.Resolution.ForRedefinedMethod{methodDescription=" + methodDescription + '}';
+                return "MethodRebaseResolver.Resolution.ForRebasedMethod{methodDescription=" + methodDescription + '}';
             }
         }
 
@@ -326,7 +326,7 @@ public interface MethodRebaseResolver {
 
             @Override
             public String toString() {
-                return "MethodRebaseResolver.Resolution.ForRedefinedConstructor{methodDescription=" + methodDescription + '}';
+                return "MethodRebaseResolver.Resolution.ForRebasedConstructor{methodDescription=" + methodDescription + '}';
             }
         }
     }

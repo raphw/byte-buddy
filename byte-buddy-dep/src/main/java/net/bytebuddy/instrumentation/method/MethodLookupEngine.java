@@ -153,7 +153,7 @@ public interface MethodLookupEngine {
             public String toString() {
                 return "MethodLookupEngine.Finding.Default{" +
                         "lookedUpType=" + lookedUpType +
-                        ", defaultMethods=" + invokableMethods +
+                        ", invokableMethods=" + invokableMethods +
                         ", invokableDefaultMethods=" + invokableDefaultMethods +
                         '}';
             }

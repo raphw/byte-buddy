@@ -263,7 +263,7 @@ public enum MethodVariableAccess {
          *
          * @param variableIndex The index of the local variable array from which the variable should be loaded.
          */
-        private ArgumentLoadingStackManipulation(int variableIndex) {
+        protected ArgumentLoadingStackManipulation(int variableIndex) {
             this.variableIndex = variableIndex;
         }
 
@@ -317,7 +317,9 @@ public enum MethodVariableAccess {
 
         @Override
         public String toString() {
-            return "MethodVariableAccess.ArgumentLoadingStackManipulation{variableIndex=" + variableIndex + '}';
+            return "MethodVariableAccess.ArgumentLoadingStackManipulation{" +
+                    "methodVariableAccess=" + MethodVariableAccess.this +
+                    " ,variableIndex=" + variableIndex + '}';
         }
     }
 }

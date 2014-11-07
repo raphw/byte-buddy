@@ -22,8 +22,8 @@ import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.modifier.Visibility;
-import net.bytebuddy.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -42,6 +42,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
@@ -522,7 +523,12 @@ public class InlineDynamicTypeBuilderTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(InlineDynamicTypeBuilder.class).apply();
+        ObjectPropertyAssertion.of(InlineDynamicTypeBuilder.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
+            @Override
+            public List<?> create() {
+                return Arrays.asList(new Object());
+            }
+        }).apply();
     }
 
     @Retention(RetentionPolicy.RUNTIME)

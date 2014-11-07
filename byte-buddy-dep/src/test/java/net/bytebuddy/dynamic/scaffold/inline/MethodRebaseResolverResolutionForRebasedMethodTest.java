@@ -18,8 +18,7 @@ import java.util.Arrays;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class MethodRebaseResolverResolutionForRebasedMethodTest {
 
@@ -72,6 +71,18 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodRebaseResolver.Resolution.ForRebasedMethod.class).apply();
+        ObjectPropertyAssertion.of(MethodRebaseResolver.Resolution.ForRebasedMethod.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription>() {
+            @Override
+            public void apply(MethodDescription mock) {
+                when(mock.getParameterTypes()).thenReturn(new TypeList.Empty());
+                when(mock.getDeclaringType()).thenReturn(mock(TypeDescription.class));
+                when(mock.getReturnType()).thenReturn(mock(TypeDescription.class));
+            }
+        }).refine(new ObjectPropertyAssertion.Refinement<MethodRebaseResolver.MethodNameTransformer>() {
+            @Override
+            public void apply(MethodRebaseResolver.MethodNameTransformer mock) {
+                when(mock.transform(any(String.class))).thenReturn(FOO + System.identityHashCode(mock));
+            }
+        }).apply();
     }
 }

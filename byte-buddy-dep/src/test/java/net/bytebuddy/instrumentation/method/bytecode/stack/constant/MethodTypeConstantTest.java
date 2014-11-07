@@ -10,7 +10,11 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
+import org.mockito.asm.Type;
 import org.objectweb.asm.MethodVisitor;
+
+import java.util.Arrays;
+import java.util.Iterator;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -46,6 +50,12 @@ public class MethodTypeConstantTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodTypeConstant.class).apply();
+        final Iterator<String> iterator = Arrays.asList(Type.getDescriptor(Void.class), Type.getDescriptor(String.class)).iterator();
+        ObjectPropertyAssertion.of(MethodTypeConstant.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription>() {
+            @Override
+            public void apply(MethodDescription mock) {
+                when(mock.getDescriptor()).thenReturn(iterator.next());
+            }
+        }).apply();
     }
 }

@@ -4,6 +4,9 @@ import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.mockito.asm.Type;
 
+import java.util.Arrays;
+import java.util.Iterator;
+
 import static org.mockito.Mockito.*;
 
 public class TypeAttributeAppenderForTypeTest extends AbstractTypeAttributeAppenderTest {
@@ -19,7 +22,13 @@ public class TypeAttributeAppenderForTypeTest extends AbstractTypeAttributeAppen
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeAttributeAppender.ForType.class).apply();
+        final Iterator<Class<?>> iterator = Arrays.<Class<?>>asList(Void.class, String.class).iterator();
+        ObjectPropertyAssertion.of(TypeAttributeAppender.ForType.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
+            @Override
+            public Class<?> create() {
+                return iterator.next();
+            }
+        }).apply();
     }
 
     @Baz

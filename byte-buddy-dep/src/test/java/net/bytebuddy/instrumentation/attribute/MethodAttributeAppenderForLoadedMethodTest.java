@@ -7,12 +7,14 @@ import org.junit.Test;
 import org.mockito.asm.Type;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Iterator;
 
 import static org.mockito.Mockito.*;
 
 public class MethodAttributeAppenderForLoadedMethodTest extends AbstractMethodAttributeAppenderTest {
 
-    private static final String BAR = "bar", TO_STRING = "toString";
+    private static final String FOO = "foo", BAR = "bar";
     private static final int PARAMETER_INDEX = 0;
     private Method method;
 
@@ -37,7 +39,13 @@ public class MethodAttributeAppenderForLoadedMethodTest extends AbstractMethodAt
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodAttributeAppender.ForLoadedMethod.class).apply();
+        final Iterator<Method> iterator = Arrays.asList(Sample.class.getDeclaredMethod(FOO), Sample.class.getDeclaredMethod(FOO, Void.class)).iterator();
+        ObjectPropertyAssertion.of(MethodAttributeAppender.ForLoadedMethod.class).create(new ObjectPropertyAssertion.Creator<Method>() {
+            @Override
+            public Method create() {
+                return iterator.next();
+            }
+        }).apply();
     }
 
     private static abstract class Foo {
@@ -46,5 +54,14 @@ public class MethodAttributeAppenderForLoadedMethodTest extends AbstractMethodAt
         @Baz
         @QuxBaz
         protected abstract void bar(@Qux @Baz @QuxBaz Object o);
+    }
+
+    private static class Sample {
+
+        private void foo() {
+        }
+
+        private void foo (Void v) {
+        }
     }
 }
