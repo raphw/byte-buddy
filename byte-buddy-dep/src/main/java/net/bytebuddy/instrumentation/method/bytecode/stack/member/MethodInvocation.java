@@ -89,18 +89,24 @@ public enum MethodInvocation {
         StackManipulation special(TypeDescription invocationTarget);
     }
 
-    private static enum IllegalInvocation implements WithImplicitInvocationTargetType {
+    /**
+     * An illegal implicit method invocation.
+     */
+    protected static enum IllegalInvocation implements WithImplicitInvocationTargetType {
 
+        /**
+         * The singleton instance.
+         */
         INSTANCE;
 
         @Override
         public StackManipulation virtual(TypeDescription invocationTarget) {
-            return this;
+            return Illegal.INSTANCE;
         }
 
         @Override
         public StackManipulation special(TypeDescription invocationTarget) {
-            return this;
+            return Illegal.INSTANCE;
         }
 
         @Override
@@ -110,7 +116,7 @@ public enum MethodInvocation {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-            throw new IllegalStateException("Cannot apply an illegal stack manipulation");
+            return Illegal.INSTANCE.apply(methodVisitor, instrumentationContext);
         }
     }
 
@@ -130,11 +136,6 @@ public enum MethodInvocation {
         private final MethodDescription methodDescription;
 
         /**
-         * The operand stack size implication of applying this invocation.
-         */
-        private final Size size;
-
-        /**
          * Creates an invocation of a given method on its declaring type as an invocation target.
          *
          * @param methodDescription The method to be invoked.
@@ -152,9 +153,6 @@ public enum MethodInvocation {
         protected Invocation(MethodDescription methodDescription, TypeDescription typeDescription) {
             this.typeDescription = typeDescription;
             this.methodDescription = methodDescription;
-            int parameterSize = methodDescription.getStackSize();
-            int returnValueSize = methodDescription.getReturnType().getStackSize().getSize();
-            size = new Size(returnValueSize - parameterSize, Math.max(0, returnValueSize - parameterSize));
         }
 
         @Override
@@ -169,7 +167,9 @@ public enum MethodInvocation {
                     methodDescription.getInternalName(),
                     methodDescription.getDescriptor(),
                     typeDescription.isInterface());
-            return size;
+            int parameterSize = methodDescription.getStackSize();
+            int returnValueSize = methodDescription.getReturnType().getStackSize().getSize();
+            return new Size(returnValueSize - parameterSize, Math.max(0, returnValueSize - parameterSize));
         }
 
         @Override
@@ -223,7 +223,6 @@ public enum MethodInvocation {
             return "MethodInvocation.Invocation{" +
                     "typeDescription=" + typeDescription +
                     ", methodDescription=" + methodDescription +
-                    ", size=" + size +
                     '}';
         }
     }

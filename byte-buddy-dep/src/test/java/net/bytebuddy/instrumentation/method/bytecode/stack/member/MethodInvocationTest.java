@@ -74,6 +74,12 @@ public class MethodInvocationTest {
     }
 
     @Test
+    public void testTypeInitializerInvocation() throws Exception {
+        when(methodDescription.isTypeInitializer()).thenReturn(true);
+        assertThat(MethodInvocation.invoke(methodDescription).isValid(), is(false));
+    }
+
+    @Test
     public void testStaticMethodInvocation() throws Exception {
         when(methodDescription.isStatic()).thenReturn(true);
         assertInvocation(MethodInvocation.invoke(methodDescription), Opcodes.INVOKESTATIC, FOO, false);

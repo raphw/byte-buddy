@@ -201,14 +201,4 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
     public AnnotationList getInheritedAnnotations() {
         return levelType.getInheritedAnnotations();
     }
-
-    @Override
-    public String toString() {
-        return "InlineInstrumentedType{" +
-                "levelType=" + levelType +
-                ", name='" + name + '\'' +
-                ", modifiers=" + modifiers +
-                ", interfaces=" + interfaces +
-                '}';
-    }
 }

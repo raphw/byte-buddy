@@ -1,8 +1,6 @@
 package net.bytebuddy.instrumentation.type;
 
 import net.bytebuddy.instrumentation.ByteCodeElement;
-import net.bytebuddy.instrumentation.ModifierReviewable;
-import net.bytebuddy.instrumentation.attribute.annotation.AnnotatedElement;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.field.FieldList;
@@ -22,7 +20,7 @@ import static net.bytebuddy.utility.ByteBuddyCommons.join;
 /**
  * Implementations of this interface represent a Java type, i.e. a class or interface.
  */
-public interface TypeDescription extends ByteCodeElement, DeclaredInType, ModifierReviewable, AnnotatedElement {
+public interface TypeDescription extends ByteCodeElement {
 
     /**
      * Checks if {@code object} is an instance of the type represented by this instance.
@@ -239,6 +237,8 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
      */
     ClassLoader getClassLoader();
 
+    String getJavaName();
+
     AnnotationList getInheritedAnnotations();
 
     /**
@@ -306,6 +306,26 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
         }
 
         @Override
+        public String getJavaName() {
+            if (isArray()) {
+                TypeDescription typeDescription = this;
+                int dimensions = 0;
+                do {
+                    dimensions++;
+                    typeDescription = typeDescription.getComponentType();
+                } while (typeDescription.isArray());
+                StringBuilder stringBuilder = new StringBuilder();
+                stringBuilder.append(typeDescription.getName());
+                for (int i = 0; i < dimensions; i++) {
+                    stringBuilder.append("[]");
+                }
+                return stringBuilder.toString();
+            } else {
+                return getName();
+            }
+        }
+
+        @Override
         public boolean equals(Object other) {
             return other == this || other instanceof TypeDescription
                     && getName().equals(((TypeDescription) other).getName());
@@ -314,6 +334,11 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
         @Override
         public int hashCode() {
             return getName().hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return (isPrimitive() ? "" : (isInterface() ? "interface" : "class")) + " " + getName();
         }
 
         public abstract static class OfSimpleType extends AbstractTypeDescription {
@@ -613,11 +638,6 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
         @Override
         public ClassLoader getClassLoader() {
             return type.getClassLoader();
-        }
-
-        @Override
-        public String toString() {
-            return "TypeDescription.ForLoadedType{" + type + "}";
         }
     }
 

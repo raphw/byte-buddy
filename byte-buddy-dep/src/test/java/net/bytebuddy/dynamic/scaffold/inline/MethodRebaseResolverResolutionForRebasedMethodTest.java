@@ -75,6 +75,7 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
             @Override
             public void apply(MethodDescription mock) {
                 when(mock.getParameterTypes()).thenReturn(new TypeList.Empty());
+                when(mock.getExceptionTypes()).thenReturn(new TypeList.Empty());
                 when(mock.getDeclaringType()).thenReturn(mock(TypeDescription.class));
                 when(mock.getReturnType()).thenReturn(mock(TypeDescription.class));
             }

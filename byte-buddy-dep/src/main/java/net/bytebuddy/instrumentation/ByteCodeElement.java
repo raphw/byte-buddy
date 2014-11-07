@@ -1,11 +1,13 @@
 package net.bytebuddy.instrumentation;
 
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotatedElement;
+import net.bytebuddy.instrumentation.type.DeclaredInType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 
 /**
  * Implementations describe an element represented in byte code, i.e. a type, a field or a method or a constructor.
  */
-public interface ByteCodeElement {
+public interface ByteCodeElement extends ModifierReviewable, DeclaredInType, AnnotatedElement {
 
     /**
      * Returns the internalName of this byte code element.

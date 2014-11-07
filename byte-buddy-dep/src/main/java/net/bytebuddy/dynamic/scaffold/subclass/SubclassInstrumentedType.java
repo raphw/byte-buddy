@@ -207,15 +207,4 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
     public AnnotationList getInheritedAnnotations() {
         return getSupertype().getInheritedAnnotations().inherited(Collections.<TypeDescription>emptySet());
     }
-
-    @Override
-    public String toString() {
-        return "SubclassInstrumentedType{" +
-                "classFileVersion=" + classFileVersion +
-                ", superClass=" + superClass +
-                ", interfaces=" + interfaces +
-                ", modifiers=" + modifiers +
-                ", name='" + name + '\'' +
-                '}';
-    }
 }

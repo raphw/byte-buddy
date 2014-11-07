@@ -1,19 +1,17 @@
 package net.bytebuddy.instrumentation.field;
 
 import net.bytebuddy.instrumentation.ByteCodeElement;
-import net.bytebuddy.instrumentation.ModifierReviewable;
-import net.bytebuddy.instrumentation.attribute.annotation.AnnotatedElement;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
-import net.bytebuddy.instrumentation.type.DeclaredInType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
 /**
  * Implementations of this interface describe a Java field. Implementations of this interface must provide meaningful
  * {@code equal(Object)} and {@code hashCode()} implementations.
  */
-public interface FieldDescription extends ModifierReviewable, ByteCodeElement, DeclaredInType, AnnotatedElement {
+public interface FieldDescription extends ByteCodeElement {
 
     /**
      * Returns a description of the type of this field.
@@ -60,6 +58,17 @@ public interface FieldDescription extends ModifierReviewable, ByteCodeElement, D
         @Override
         public int hashCode() {
             return (getDeclaringType().getInternalName() + "." + getName()).hashCode();
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder stringBuilder = new StringBuilder();
+            if (getModifiers() != 0) {
+                stringBuilder.append(Modifier.toString(getModifiers())).append(" ");
+            }
+            stringBuilder.append(getFieldType().getJavaName()).append(" ");
+            stringBuilder.append(getDeclaringType().getJavaName()).append(" ");
+            return stringBuilder.append(getName()).toString();
         }
     }
 

@@ -4,47 +4,28 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
-import net.bytebuddy.utility.MockitoRule;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.TestRule;
-import org.mockito.Mock;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
+import org.junit.Test;
 
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class MethodInvocationObjectPropertiesTest {
 
     private static final String FOO = "foo";
 
-    @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
-    @Mock
-    private MethodDescription instanceMethod, otherInstanceMethod, staticMethod, interfaceMethod;
-    @Mock
-    private TypeDescription firstType, otherType, interfaceType, returnType;
-    @Mock
-    private TypeList parameterTypes;
-
-    @Before
-    public void setUp() throws Exception {
-        when(staticMethod.isStatic()).thenReturn(true);
-        when(interfaceMethod.isStatic()).thenReturn(true);
-        when(instanceMethod.getDeclaringType()).thenReturn(firstType);
-        when(otherInstanceMethod.getDeclaringType()).thenReturn(otherType);
-        when(staticMethod.getDeclaringType()).thenReturn(firstType);
-        when(interfaceMethod.getDeclaringType()).thenReturn(interfaceType);
-        when(instanceMethod.getReturnType()).thenReturn(returnType);
-        when(otherInstanceMethod.getReturnType()).thenReturn(returnType);
-        when(staticMethod.getReturnType()).thenReturn(returnType);
-        when(interfaceMethod.getReturnType()).thenReturn(returnType);
-        when(returnType.getStackSize()).thenReturn(StackSize.ZERO);
-        when(instanceMethod.getInternalName()).thenReturn(FOO);
-        when(otherInstanceMethod.getInternalName()).thenReturn(FOO);
-        when(staticMethod.getInternalName()).thenReturn(FOO);
-        when(interfaceMethod.getInternalName()).thenReturn(FOO);
-        when(instanceMethod.getParameterTypes()).thenReturn(parameterTypes);
-        when(otherInstanceMethod.getParameterTypes()).thenReturn(parameterTypes);
-        when(staticMethod.getParameterTypes()).thenReturn(parameterTypes);
-        when(interfaceMethod.getParameterTypes()).thenReturn(parameterTypes);
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(MethodInvocation.Invocation.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription>() {
+            @Override
+            public void apply(MethodDescription mock) {
+                when(mock.getDeclaringType()).thenReturn(mock(TypeDescription.class));
+                TypeDescription returnType = mock(TypeDescription.class);
+                when(returnType.getStackSize()).thenReturn(StackSize.ZERO);
+                when(mock.getReturnType()).thenReturn(returnType);
+                when(mock.getInternalName()).thenReturn(FOO);
+                when(mock.getParameterTypes()).thenReturn(new TypeList.Empty());
+            }
+        }).apply();
     }
 }

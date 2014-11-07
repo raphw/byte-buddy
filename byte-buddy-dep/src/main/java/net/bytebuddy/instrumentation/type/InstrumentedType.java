@@ -425,38 +425,6 @@ public interface InstrumentedType extends TypeDescription {
             public int getModifiers() {
                 return modifiers;
             }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                if (!super.equals(other)) return false;
-                MethodToken that = (MethodToken) other;
-                return modifiers == that.modifiers
-                        && internalName.equals(that.internalName)
-                        && parameterTypes.equals(that.parameterTypes)
-                        && returnType.equals(that.returnType);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = super.hashCode();
-                result = 31 * result + internalName.hashCode();
-                result = 31 * result + returnType.hashCode();
-                result = 31 * result + parameterTypes.hashCode();
-                result = 31 * result + modifiers;
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "InstrumentedType.MethodToken{" +
-                        "internalName='" + internalName + '\'' +
-                        ", returnType=" + returnType +
-                        ", parameterTypes=" + parameterTypes +
-                        ", modifiers=" + modifiers +
-                        '}';
-            }
         }
     }
 }

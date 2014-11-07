@@ -6,12 +6,35 @@ import java.lang.annotation.Annotation;
 import java.lang.annotation.Inherited;
 import java.util.*;
 
+/**
+ * Defines a list of annotation instances.
+ */
 public interface AnnotationList extends List<AnnotationDescription> {
 
-    <T extends Annotation> boolean isAnnotationPresent(Class<T> annotationType);
+    /**
+     * Checks if this list contains an annotation of the given type.
+     *
+     * @param annotationType The type to find in the list.
+     * @return {@code true} if the list contains the annotation type.
+     */
+    boolean isAnnotationPresent(Class<? extends Annotation> annotationType);
 
+    /**
+     * Finds the first annotation of the given type and returns it.
+     *
+     * @param annotationType The type to be found in the list.
+     * @param <T>            The annotation type.
+     * @return The annotation value or {@code null} if no such annotation was found.
+     */
     <T extends Annotation> AnnotationDescription.Loadable<T> ofType(Class<T> annotationType);
 
+    /**
+     * Returns only annotations that are marked as {@link java.lang.annotation.Inherited} as long as they are not
+     * contained by the set of ignored annotation types.
+     *
+     * @param ignoredTypes A list of annotation types to be ignored from the lookup.
+     * @return A list of all inherited annotations besides of the given ignored types.
+     */
     AnnotationList inherited(Set<? extends TypeDescription> ignoredTypes);
 
     static class ForLoadedAnnotation extends AbstractList<AnnotationDescription> implements AnnotationList {
@@ -41,7 +64,7 @@ public interface AnnotationList extends List<AnnotationDescription> {
         }
 
         @Override
-        public <T extends Annotation> boolean isAnnotationPresent(Class<T> annotationType) {
+        public boolean isAnnotationPresent(Class<? extends Annotation> annotationType) {
             for (Annotation anAnnotation : annotation) {
                 if (anAnnotation.annotationType().equals(annotationType)) {
                     return true;
@@ -71,6 +94,13 @@ public interface AnnotationList extends List<AnnotationDescription> {
             }
             return new ForLoadedAnnotation(inherited.toArray(new Annotation[inherited.size()]));
         }
+
+        @Override
+        public String toString() {
+            return "AnnotationList.ForLoadedAnnotation{" +
+                    "annotation=" + Arrays.toString(annotation) +
+                    '}';
+        }
     }
 
     static class Empty extends AbstractList<AnnotationDescription> implements AnnotationList {
@@ -94,7 +124,7 @@ public interface AnnotationList extends List<AnnotationDescription> {
         }
 
         @Override
-        public <T extends Annotation> boolean isAnnotationPresent(Class<T> annotationType) {
+        public boolean isAnnotationPresent(Class<? extends Annotation> annotationType) {
             return false;
         }
 
@@ -136,7 +166,7 @@ public interface AnnotationList extends List<AnnotationDescription> {
         }
 
         @Override
-        public <T extends Annotation> boolean isAnnotationPresent(Class<T> annotationType) {
+        public boolean isAnnotationPresent(Class<? extends Annotation> annotationType) {
             for (AnnotationDescription annotationDescription : annotationDescriptions) {
                 if (annotationDescription.getAnnotationType().represents(annotationType)) {
                     return true;

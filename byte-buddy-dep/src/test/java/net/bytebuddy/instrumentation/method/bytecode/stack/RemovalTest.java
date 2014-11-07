@@ -22,7 +22,7 @@ import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
 
 @RunWith(Parameterized.class)
-public class DuplicationTest {
+public class RemovalTest {
 
     private final StackSize stackSize;
     private final int opcode;
@@ -35,7 +35,7 @@ public class DuplicationTest {
     @Mock
     private Instrumentation.Context instrumentationContext;
 
-    public DuplicationTest(StackSize stackSize, int opcode) {
+    public RemovalTest(StackSize stackSize, int opcode) {
         this.stackSize = stackSize;
         this.opcode = opcode;
     }
@@ -44,8 +44,8 @@ public class DuplicationTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {StackSize.ZERO, Opcodes.NOP},
-                {StackSize.SINGLE, Opcodes.DUP},
-                {StackSize.DOUBLE, Opcodes.DUP2}
+                {StackSize.SINGLE, Opcodes.POP},
+                {StackSize.DOUBLE, Opcodes.POP2}
         });
     }
 
@@ -61,14 +61,15 @@ public class DuplicationTest {
 
     @Test
     public void testDuplication() throws Exception {
-        StackManipulation stackManipulation = Duplication.duplicate(typeDescription);
+        StackManipulation stackManipulation = Removal.pop(typeDescription);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, instrumentationContext);
-        assertThat(size.getSizeImpact(), is(stackSize.getSize()));
-        assertThat(size.getMaximalSize(), is(stackSize.getSize()));
+        assertThat(size.getSizeImpact(), is(-stackSize.getSize()));
+        assertThat(size.getMaximalSize(), is(0));
         if (stackSize != StackSize.ZERO) {
             verify(methodVisitor).visitInsn(opcode);
         }
         verifyNoMoreInteractions(methodVisitor);
     }
+
 }

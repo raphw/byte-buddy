@@ -1,10 +1,8 @@
 package net.bytebuddy.instrumentation.method;
 
-import net.bytebuddy.instrumentation.ModifierReviewable;
-import net.bytebuddy.instrumentation.attribute.annotation.AnnotatedElement;
+import net.bytebuddy.instrumentation.ByteCodeElement;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
-import net.bytebuddy.instrumentation.type.DeclaredInType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import org.objectweb.asm.Opcodes;
@@ -12,6 +10,7 @@ import org.objectweb.asm.Type;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Collections;
 import java.util.List;
 
@@ -19,7 +18,7 @@ import java.util.List;
  * Implementations of this interface describe a Java method, i.e. a method or a constructor. Implementations of this
  * interface must provide meaningful {@code equal(Object)} and {@code hashCode()} implementations.
  */
-public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, DeclaredInType, AnnotatedElement {
+public interface MethodDescription extends ByteCodeElement {
 
     /**
      * The internal name of a Java constructor.
@@ -144,12 +143,30 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
      */
     boolean isSpecializableFor(TypeDescription typeDescription);
 
+    /**
+     * Returns the unique signature of a byte code method. A unique signature is defined as the concatenation of
+     * the internal name of the method / constructor and the method descriptor. Note that methods on byte code
+     * level do consider two similar methods with different return type as distinct methods.
+     *
+     * @return A unique signature of this byte code level method.
+     */
+    String getUniqueSignature();
+
     Object getDefaultValue();
 
     /**
      * An abstract base implementation of a method description.
      */
     abstract static class AbstractMethodDescription extends AbstractModifierReviewable implements MethodDescription {
+
+        private static final int SOURCE_MODIFIERS = Modifier.PUBLIC
+                | Modifier.PROTECTED
+                | Modifier.PRIVATE
+                | Modifier.ABSTRACT
+                | Modifier.STATIC
+                | Modifier.FINAL
+                | Modifier.SYNCHRONIZED
+                | Modifier.NATIVE;
 
         @Override
         public String getUniqueSignature() {
@@ -251,6 +268,42 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         @Override
         public int hashCode() {
             return (getDeclaringType().getInternalName() + "." + getUniqueSignature()).hashCode();
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder stringBuilder = new StringBuilder();
+            int modifiers = getModifiers() & SOURCE_MODIFIERS;
+            if (modifiers != 0) {
+                stringBuilder.append(Modifier.toString(modifiers)).append(" ");
+            }
+            stringBuilder.append(getReturnType().getJavaName()).append(" ");
+            stringBuilder.append(getDeclaringType().getJavaName()).append(".");
+            stringBuilder.append(getName()).append("(");
+            boolean first = true;
+            for (TypeDescription typeDescription : getParameterTypes()) {
+                if (!first) {
+                    stringBuilder.append(",");
+                } else {
+                    first = false;
+                }
+                stringBuilder.append(typeDescription.getJavaName());
+            }
+            stringBuilder.append(")");
+            TypeList exceptionTypes = getExceptionTypes();
+            if (exceptionTypes.size() > 0) {
+                stringBuilder.append(" throws ");
+                first = true;
+                for (TypeDescription typeDescription : exceptionTypes) {
+                    if (!first) {
+                        stringBuilder.append(",");
+                    } else {
+                        first = false;
+                    }
+                    stringBuilder.append(typeDescription.getName());
+                }
+            }
+            return stringBuilder.toString();
         }
     }
 
@@ -356,11 +409,6 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         @Override
         public AnnotationList getDeclaredAnnotations() {
             return new AnnotationList.ForLoadedAnnotation(constructor.getDeclaredAnnotations());
-        }
-
-        @Override
-        public String toString() {
-            return "MethodDescription.ForLoadedConstructor{" + constructor + "}";
         }
     }
 
@@ -478,11 +526,6 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
             return value == null
                     ? super.getDefaultValue()
                     : new AnnotationDescription.ForLoadedAnnotation.TypeWrapper(value).apply();
-        }
-
-        @Override
-        public String toString() {
-            return "MethodDescription.ForLoadedMethod{" + method + "}";
         }
     }
 
@@ -619,18 +662,6 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         @Override
         public int getModifiers() {
             return modifiers;
-        }
-
-        @Override
-        public String toString() {
-            return "MethodDescription.Latent{" +
-                    "internalName='" + internalName + '\'' +
-                    ", declaringType=" + declaringType +
-                    ", returnType=" + returnType +
-                    ", parameterTypes=" + parameterTypes +
-                    ", modifiers=" + modifiers +
-                    ", exceptionTypes=" + exceptionTypes +
-                    '}';
         }
     }
 }

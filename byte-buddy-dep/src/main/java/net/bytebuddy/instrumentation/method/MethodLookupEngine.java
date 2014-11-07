@@ -287,13 +287,6 @@ public interface MethodLookupEngine {
             }
             return false;
         }
-
-        @Override
-        public String toString() {
-            return "MethodLookupEngine.OverridenClassMethod{" +
-                    "methodChain=" + methodChain +
-                    '}';
-        }
     }
 
     /**
@@ -454,14 +447,6 @@ public interface MethodLookupEngine {
                 }
             }
             return invokableMethod != null;
-        }
-
-        @Override
-        public String toString() {
-            return "MethodLookupEngine.ConflictingInterfaceMethod{" +
-                    "typeOfInterest=" + virtualHost +
-                    ", methodDescriptions=" + methodDescriptions +
-                    '}';
         }
     }
 

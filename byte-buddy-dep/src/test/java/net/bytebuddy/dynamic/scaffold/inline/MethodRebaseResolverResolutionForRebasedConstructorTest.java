@@ -75,6 +75,7 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
             @Override
             public void apply(MethodDescription mock) {
                 when(mock.getParameterTypes()).thenReturn(new TypeList.Empty());
+                when(mock.getExceptionTypes()).thenReturn(new TypeList.Empty());
                 when(mock.getDeclaringType()).thenReturn(mock(TypeDescription.class));
                 when(mock.getReturnType()).thenReturn(mock(TypeDescription.class));
                 when(mock.getInternalName()).thenReturn(FOO + System.identityHashCode(mock));
