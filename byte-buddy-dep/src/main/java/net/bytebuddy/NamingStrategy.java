@@ -2,6 +2,7 @@ package net.bytebuddy;
 
 import net.bytebuddy.instrumentation.ModifierContributor;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.modifier.EnumerationState;
 import net.bytebuddy.modifier.SyntheticState;
 import net.bytebuddy.modifier.TypeManifestation;
 import net.bytebuddy.modifier.Visibility;
@@ -71,6 +72,13 @@ public interface NamingStrategy {
          * @return The manifestation of this unnamed type.
          */
         SyntheticState getSyntheticState();
+
+        /**
+         * Returns the enumeration state of this unnamed type.
+         *
+         * @return The enumeration state of this unnamed type.
+         */
+        EnumerationState getEnumerationState();
 
         /**
          * Returns the class file version of this unnamed type.
@@ -151,15 +159,20 @@ public interface NamingStrategy {
             @Override
             public TypeManifestation getTypeManifestation() {
                 if ((modifiers & Modifier.FINAL) != 0) {
-                    return (modifiers & Opcodes.ACC_ENUM) != 0 ? TypeManifestation.ENUM : TypeManifestation.FINAL;
+                    return TypeManifestation.FINAL;
                     // Note: Interfaces are abstract, the interface condition needs to be checked before abstraction.
                 } else if ((modifiers & Opcodes.ACC_INTERFACE) != 0) {
                     return TypeManifestation.INTERFACE;
                 } else if ((modifiers & Opcodes.ACC_ABSTRACT) != 0) {
-                    return (modifiers & Opcodes.ACC_ENUM) != 0 ? TypeManifestation.ABSTRACT_ENUM : TypeManifestation.ABSTRACT;
+                    return TypeManifestation.ABSTRACT;
                 } else {
-                    return (modifiers & Opcodes.ACC_ENUM) != 0 ? TypeManifestation.ENUM : TypeManifestation.PLAIN;
+                    return TypeManifestation.PLAIN;
                 }
+            }
+
+            @Override
+            public EnumerationState getEnumerationState() {
+                return EnumerationState.is((modifiers & Opcodes.ACC_ENUM) != 0);
             }
 
             @Override

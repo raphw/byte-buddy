@@ -51,4 +51,9 @@ public class FieldListExplicitTest {
         when(secondFieldDescription.getInternalName()).thenReturn(BAR);
         fieldList.named(FOO);
     }
+
+    @Test
+    public void testSubList() throws Exception {
+        assertThat(fieldList.subList(0, 1), is((FieldList) new FieldList.Explicit(Arrays.asList(firstFieldDescription))));
+    }
 }

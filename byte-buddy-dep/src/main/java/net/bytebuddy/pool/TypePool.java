@@ -8,6 +8,7 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.utility.PropertyDispatcher;
 import net.bytebuddy.utility.ByteBuddyCommons;
 import org.objectweb.asm.*;
 import org.objectweb.asm.Type;
@@ -1218,6 +1219,20 @@ public interface TypePool {
             public int getStackSize() {
                 return stackSize;
             }
+
+            @Override
+            public TypeList subList(int fromIndex, int toIndex) {
+                if (fromIndex < 0) {
+                    throw new IndexOutOfBoundsException("fromIndex = " + fromIndex);
+                } else if (toIndex > internalName.length) {
+                    throw new IndexOutOfBoundsException("toIndex = " + toIndex);
+                } else if (fromIndex > toIndex) {
+                    throw new IllegalArgumentException("fromIndex(" + fromIndex + ") > toIndex(" + toIndex + ")");
+                }
+                return new TypePoolTypeList(Arrays.asList(internalName)
+                        .subList(fromIndex, toIndex)
+                        .toArray(new String[toIndex - fromIndex]));
+            }
         }
 
         protected static class AnnotationToken {
@@ -1469,23 +1484,7 @@ public interface TypePool {
                     }
 
                     @Override
-                    public <T extends Enum<T>> Loadable<T> prepare(Class<T> type) {
-                        return new LoadableUnloadedEnumerationValue<T>(typePool, type);
-                    }
-                }
-
-                private class LoadableUnloadedEnumerationValue<S extends Enum<S>> extends UnloadedEnumerationValue
-                        implements AnnotationDescription.EnumerationValue.Loadable<S> {
-
-                    private final Class<S> type;
-
-                    private LoadableUnloadedEnumerationValue(TypePool typePool, Class<S> type) {
-                        super(typePool);
-                        this.type = type;
-                    }
-
-                    @Override
-                    public S load() {
+                    public <T extends Enum<T>> T load(Class<T> type) {
                         return Enum.valueOf(type, value);
                     }
                 }
@@ -1552,11 +1551,11 @@ public interface TypePool {
 
                 public static class Trivial<X> extends ForArray<X, X, X> {
 
-                    private final Dispatcher dispatcher;
+                    private final PropertyDispatcher propertyDispatcher;
 
                     public Trivial(X value) {
                         super(value);
-                        dispatcher = Dispatcher.of(value);
+                        propertyDispatcher = PropertyDispatcher.of(value.getClass());
                     }
 
                     @Override
@@ -1571,150 +1570,12 @@ public interface TypePool {
 
                     @Override
                     public String toStringRepresentation() {
-                        return dispatcher.toStringRepresentation(value);
+                        return propertyDispatcher.toString(value);
                     }
 
                     @Override
                     public int hashCodeRepresentation(ClassLoader classLoader) {
-                        return dispatcher.hashCodeRepresentation(value);
-                    }
-
-                    protected static enum Dispatcher {
-
-                        BOOLEAN {
-                            @Override
-                            protected int hashCodeRepresentation(Object value) {
-                                return Arrays.hashCode((boolean[]) value);
-                            }
-
-                            @Override
-                            protected String toStringRepresentation(Object value) {
-                                return Arrays.toString((boolean[]) value);
-                            }
-                        },
-
-                        BYTE {
-                            @Override
-                            protected int hashCodeRepresentation(Object value) {
-                                return Arrays.hashCode((byte[]) value);
-                            }
-
-                            @Override
-                            protected String toStringRepresentation(Object value) {
-                                return Arrays.toString((byte[]) value);
-                            }
-                        },
-
-                        SHORT {
-                            @Override
-                            protected int hashCodeRepresentation(Object value) {
-                                return Arrays.hashCode((short[]) value);
-                            }
-
-                            @Override
-                            protected String toStringRepresentation(Object value) {
-                                return Arrays.toString((short[]) value);
-                            }
-                        },
-
-                        CHARACTER {
-                            @Override
-                            protected int hashCodeRepresentation(Object value) {
-                                return Arrays.hashCode((char[]) value);
-                            }
-
-                            @Override
-                            protected String toStringRepresentation(Object value) {
-                                return Arrays.toString((char[]) value);
-                            }
-                        },
-
-                        INTEGER {
-                            @Override
-                            protected int hashCodeRepresentation(Object value) {
-                                return Arrays.hashCode((int[]) value);
-                            }
-
-                            @Override
-                            protected String toStringRepresentation(Object value) {
-                                return Arrays.toString((int[]) value);
-                            }
-                        },
-
-                        LONG {
-                            @Override
-                            protected int hashCodeRepresentation(Object value) {
-                                return Arrays.hashCode((long[]) value);
-                            }
-
-                            @Override
-                            protected String toStringRepresentation(Object value) {
-                                return Arrays.toString((long[]) value);
-                            }
-                        },
-
-                        FLOAT {
-                            @Override
-                            protected int hashCodeRepresentation(Object value) {
-                                return Arrays.hashCode((float[]) value);
-                            }
-
-                            @Override
-                            protected String toStringRepresentation(Object value) {
-                                return Arrays.toString((float[]) value);
-                            }
-                        },
-
-                        DOUBLE {
-                            @Override
-                            protected int hashCodeRepresentation(Object value) {
-                                return Arrays.hashCode((double[]) value);
-                            }
-
-                            @Override
-                            protected String toStringRepresentation(Object value) {
-                                return Arrays.toString((double[]) value);
-                            }
-                        },
-
-                        REFERENCE {
-                            @Override
-                            protected int hashCodeRepresentation(Object value) {
-                                return Arrays.hashCode((Object[]) value);
-                            }
-
-                            @Override
-                            protected String toStringRepresentation(Object value) {
-                                return Arrays.toString((Object[]) value);
-                            }
-                        };
-
-                        public static Dispatcher of(Object value) {
-                            Class<?> componentType = value.getClass().getComponentType();
-                            if (componentType == boolean.class) {
-                                return BOOLEAN;
-                            } else if (componentType == byte.class) {
-                                return BYTE;
-                            } else if (componentType == short.class) {
-                                return SHORT;
-                            } else if (componentType == char.class) {
-                                return CHARACTER;
-                            } else if (componentType == int.class) {
-                                return INTEGER;
-                            } else if (componentType == long.class) {
-                                return LONG;
-                            } else if (componentType == float.class) {
-                                return FLOAT;
-                            } else if (componentType == double.class) {
-                                return DOUBLE;
-                            } else {
-                                return REFERENCE;
-                            }
-                        }
-
-                        protected abstract int hashCodeRepresentation(Object value);
-
-                        protected abstract String toStringRepresentation(Object value);
+                        return propertyDispatcher.hashCode(value);
                     }
                 }
 
@@ -1857,7 +1718,7 @@ public interface TypePool {
                 return values.get(method).load(classLoader);
             }
 
-            protected String toStringRepresentation() throws ClassNotFoundException {
+            protected String toStringRepresentation() {
                 StringBuilder toString = new StringBuilder();
                 toString.append('@');
                 toString.append(annotationType.getName());
@@ -1946,158 +1807,21 @@ public interface TypePool {
 
                 private static class ForArray<S> extends ResolvedAnnotationValue<S> {
 
-                    private final Dispatcher dispatcher;
+                    private final PropertyDispatcher propertyDispatcher;
 
                     private ForArray(Method method) {
                         super(method);
-                        dispatcher = Dispatcher.of(method.getReturnType().getComponentType());
+                        propertyDispatcher = PropertyDispatcher.of(method.getReturnType().getComponentType());
                     }
 
                     @Override
                     public String toStringRepresentation() {
-                        return dispatcher.toStringRepresentation(method.getDefaultValue());
+                        return propertyDispatcher.toString(method.getDefaultValue());
                     }
 
                     @Override
                     public int hashCodeRepresentation(ClassLoader classLoader) throws ClassNotFoundException {
-                        return dispatcher.hashCodeRepresentation(method.getDefaultValue());
-                    }
-
-                    private static enum Dispatcher {
-
-                        BOOLEAN {
-                            @Override
-                            protected String toStringRepresentation(Object value) {
-                                return Arrays.toString((boolean[]) value);
-                            }
-
-                            @Override
-                            protected int hashCodeRepresentation(Object value) {
-                                return Arrays.hashCode((boolean[]) value);
-                            }
-                        },
-
-                        BYTE {
-                            @Override
-                            protected String toStringRepresentation(Object value) {
-                                return Arrays.toString((byte[]) value);
-                            }
-
-                            @Override
-                            protected int hashCodeRepresentation(Object value) {
-                                return Arrays.hashCode((byte[]) value);
-                            }
-                        },
-
-                        SHORT {
-                            @Override
-                            protected String toStringRepresentation(Object value) {
-                                return Arrays.toString((short[]) value);
-                            }
-
-                            @Override
-                            protected int hashCodeRepresentation(Object value) {
-                                return Arrays.hashCode((short[]) value);
-                            }
-                        },
-
-                        CHARACTER {
-                            @Override
-                            protected String toStringRepresentation(Object value) {
-                                return Arrays.toString((char[]) value);
-                            }
-
-                            @Override
-                            protected int hashCodeRepresentation(Object value) {
-                                return Arrays.hashCode((char[]) value);
-                            }
-                        },
-
-                        INTEGER {
-                            @Override
-                            protected String toStringRepresentation(Object value) {
-                                return Arrays.toString((int[]) value);
-                            }
-
-                            @Override
-                            protected int hashCodeRepresentation(Object value) {
-                                return Arrays.hashCode((int[]) value);
-                            }
-                        },
-
-                        LONG {
-                            @Override
-                            protected String toStringRepresentation(Object value) {
-                                return Arrays.toString((long[]) value);
-                            }
-
-                            @Override
-                            protected int hashCodeRepresentation(Object value) {
-                                return Arrays.hashCode((long[]) value);
-                            }
-                        },
-
-                        FLOAT {
-                            @Override
-                            protected String toStringRepresentation(Object value) {
-                                return Arrays.toString((float[]) value);
-                            }
-
-                            @Override
-                            protected int hashCodeRepresentation(Object value) {
-                                return Arrays.hashCode((float[]) value);
-                            }
-                        },
-
-                        DOUBLE {
-                            @Override
-                            protected String toStringRepresentation(Object value) {
-                                return Arrays.toString((double[]) value);
-                            }
-
-                            @Override
-                            protected int hashCodeRepresentation(Object value) {
-                                return Arrays.hashCode((double[]) value);
-                            }
-                        },
-
-                        REFERENCE {
-                            @Override
-                            protected String toStringRepresentation(Object value) {
-                                return Arrays.toString((Object[]) value);
-                            }
-
-                            @Override
-                            protected int hashCodeRepresentation(Object value) {
-                                return Arrays.hashCode((Object[]) value);
-                            }
-                        };
-
-                        protected static Dispatcher of(Class<?> type) {
-                            if (type == boolean.class) {
-                                return BOOLEAN;
-                            } else if (type == byte.class) {
-                                return BYTE;
-                            } else if (type == short.class) {
-                                return SHORT;
-                            } else if (type == char.class) {
-                                return CHARACTER;
-                            } else if (type == int.class) {
-                                return INTEGER;
-                            } else if (type == long.class) {
-                                return LONG;
-                            } else if (type == float.class) {
-                                return FLOAT;
-                            } else if (type == double.class) {
-                                return DOUBLE;
-                            } else {
-                                return REFERENCE;
-                            }
-                        }
-
-                        protected abstract String toStringRepresentation(Object value);
-
-                        protected abstract int hashCodeRepresentation(Object value);
+                        return propertyDispatcher.hashCode(method.getDefaultValue());
                     }
                 }
             }

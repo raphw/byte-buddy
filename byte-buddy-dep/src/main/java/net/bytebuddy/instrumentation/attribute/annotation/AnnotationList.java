@@ -37,8 +37,20 @@ public interface AnnotationList extends List<AnnotationDescription> {
      */
     AnnotationList inherited(Set<? extends TypeDescription> ignoredTypes);
 
+    @Override
+    AnnotationList subList(int fromIndex, int toIndex);
+
+    /**
+     * Describes an array of loaded {@link java.lang.annotation.Annotation}s as an annotatoon list.
+     */
     static class ForLoadedAnnotation extends AbstractList<AnnotationDescription> implements AnnotationList {
 
+        /**
+         * Creates a list of annotation lists representing the given loaded annotations.
+         *
+         * @param annotations The annotations to represent where each dimension is converted into a list.
+         * @return A list of annotation lists representing the given annotations.
+         */
         public static List<AnnotationList> asList(Annotation[][] annotations) {
             List<AnnotationList> result = new ArrayList<AnnotationList>(annotations.length);
             for (Annotation[] annotation : annotations) {
@@ -47,9 +59,17 @@ public interface AnnotationList extends List<AnnotationDescription> {
             return result;
         }
 
+        /**
+         * The represented annotations.
+         */
         private final Annotation[] annotation;
 
-        public ForLoadedAnnotation(Annotation[] annotation) {
+        /**
+         * Creates a new list of loaded annotations.
+         *
+         * @param annotation The represented annotations.
+         */
+        public ForLoadedAnnotation(Annotation... annotation) {
             this.annotation = annotation;
         }
 
@@ -96,15 +116,22 @@ public interface AnnotationList extends List<AnnotationDescription> {
         }
 
         @Override
-        public String toString() {
-            return "AnnotationList.ForLoadedAnnotation{" +
-                    "annotation=" + Arrays.toString(annotation) +
-                    '}';
+        public AnnotationList subList(int fromIndex, int toIndex) {
+            return new Explicit(super.subList(fromIndex, toIndex));
         }
     }
 
+    /**
+     * Represents an empty annotation list.
+     */
     static class Empty extends AbstractList<AnnotationDescription> implements AnnotationList {
 
+        /**
+         * Creates a list of empty annotation lists of the given dimension.
+         *
+         * @param length The length of the list.
+         * @return A list of empty annotation lists of the given length.
+         */
         public static List<AnnotationList> asList(int length) {
             List<AnnotationList> result = new ArrayList<AnnotationList>(length);
             for (int i = 0; i < length; i++) {
@@ -115,7 +142,7 @@ public interface AnnotationList extends List<AnnotationDescription> {
 
         @Override
         public AnnotationDescription get(int index) {
-            throw new NoSuchElementException();
+            throw new IndexOutOfBoundsException();
         }
 
         @Override
@@ -137,10 +164,30 @@ public interface AnnotationList extends List<AnnotationDescription> {
         public AnnotationList inherited(Set<? extends TypeDescription> ignoredTypes) {
             return this;
         }
+
+        @Override
+        public AnnotationList subList(int fromIndex, int toIndex) {
+            if (fromIndex == toIndex && toIndex == 0) {
+                return this;
+            } else if (fromIndex > toIndex) {
+                throw new IllegalArgumentException("fromIndex(" + fromIndex + ") > toIndex(" + toIndex + ")");
+            } else {
+                throw new IndexOutOfBoundsException("fromIndex = " + fromIndex);
+            }
+        }
     }
 
+    /**
+     * Represents a list of explicitly provided annotation descriptions.
+     */
     static class Explicit extends AbstractList<AnnotationDescription> implements AnnotationList {
 
+        /**
+         * Creates a list of annotation lists for a given multidimensional list of annotation descriptions.
+         *
+         * @param annotations The list of annotations to represent as a list of annotation lists.
+         * @return The list of annotation lists.
+         */
         public static List<AnnotationList> asList(List<? extends List<? extends AnnotationDescription>> annotations) {
             List<AnnotationList> result = new ArrayList<AnnotationList>(annotations.size());
             for (List<? extends AnnotationDescription> annotation : annotations) {
@@ -149,8 +196,16 @@ public interface AnnotationList extends List<AnnotationDescription> {
             return result;
         }
 
+        /**
+         * The list of represented annotation descriptions.
+         */
         private final List<? extends AnnotationDescription> annotationDescriptions;
 
+        /**
+         * Creates a new list of annotation descriptions.
+         *
+         * @param annotationDescriptions The list of represented annotation descriptions.
+         */
         public Explicit(List<? extends AnnotationDescription> annotationDescriptions) {
             this.annotationDescriptions = annotationDescriptions;
         }
@@ -195,6 +250,11 @@ public interface AnnotationList extends List<AnnotationDescription> {
                 }
             }
             return new Explicit(new ArrayList<AnnotationDescription>(inherited));
+        }
+
+        @Override
+        public AnnotationList subList(int fromIndex, int toIndex) {
+            return new Explicit(super.subList(fromIndex, toIndex));
         }
     }
 }

@@ -4,7 +4,10 @@ import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.AbstractList;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Implementations represent a list of method descriptions.
@@ -101,14 +104,6 @@ public interface MethodList extends List<MethodDescription> {
         public MethodList subList(int fromIndex, int toIndex) {
             return new Explicit(super.subList(fromIndex, toIndex));
         }
-
-        @Override
-        public String toString() {
-            return "MethodList.ForLoadedType{" +
-                    "methods=" + Arrays.toString(methods) +
-                    ", constructors=" + Arrays.toString(constructors) +
-                    '}';
-        }
     }
 
     /**
@@ -164,11 +159,6 @@ public interface MethodList extends List<MethodDescription> {
         public MethodList subList(int fromIndex, int toIndex) {
             return new Explicit(super.subList(fromIndex, toIndex));
         }
-
-        @Override
-        public String toString() {
-            return "MethodList.Explicit{methodDescriptions=" + methodDescriptions + '}';
-        }
     }
 
     /**
@@ -178,7 +168,7 @@ public interface MethodList extends List<MethodDescription> {
 
         @Override
         public MethodDescription get(int index) {
-            throw new NoSuchElementException();
+            throw new IndexOutOfBoundsException("index = " + index);
         }
 
         @Override
@@ -200,14 +190,11 @@ public interface MethodList extends List<MethodDescription> {
         public MethodList subList(int fromIndex, int toIndex) {
             if (fromIndex == toIndex && toIndex == 0) {
                 return this;
+            } else if (fromIndex > toIndex) {
+                throw new IllegalArgumentException("fromIndex(" + fromIndex + ") > toIndex(" + toIndex + ")");
             } else {
-                throw new IndexOutOfBoundsException();
+                throw new IndexOutOfBoundsException("fromIndex = " + fromIndex);
             }
-        }
-
-        @Override
-        public String toString() {
-            return "MethodList.Empty";
         }
     }
 }

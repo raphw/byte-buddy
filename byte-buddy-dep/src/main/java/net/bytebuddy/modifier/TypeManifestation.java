@@ -26,17 +26,7 @@ public enum TypeManifestation implements ModifierContributor.ForType {
     /**
      * Modifier for an interface.
      */
-    INTERFACE(Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT),
-
-    /**
-     * Modifier for a final enum type.
-     */
-    ENUM(Opcodes.ACC_ENUM | Opcodes.ACC_FINAL),
-
-    /**
-     * Modifier for an abstract enum type.
-     */
-    ABSTRACT_ENUM(Opcodes.ACC_ENUM | Opcodes.ACC_ABSTRACT);
+    INTERFACE(Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT);
 
     /**
      * The mask the modifier contributor.
@@ -73,15 +63,6 @@ public enum TypeManifestation implements ModifierContributor.ForType {
      */
     public boolean isAbstract() {
         return (mask & Opcodes.ACC_ABSTRACT) != 0 && !isInterface();
-    }
-
-    /**
-     * Returns {@code true} if a type represents an {@code enum} type.
-     *
-     * @return {@code true} if a type represents an {@code enum} type.
-     */
-    public boolean isEnum() {
-        return (mask & Opcodes.ACC_ENUM) != 0;
     }
 
     /**

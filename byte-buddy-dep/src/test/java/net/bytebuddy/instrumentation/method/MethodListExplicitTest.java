@@ -50,4 +50,9 @@ public class MethodListExplicitTest {
     public void testGetOnly() throws Exception {
         methodList.getOnly();
     }
+
+    @Test
+    public void testSubList() throws Exception {
+        assertThat(methodList.subList(0, 1), is((MethodList) new MethodList.Explicit(Arrays.asList(firstMethodDescription))));
+    }
 }

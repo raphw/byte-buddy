@@ -195,7 +195,7 @@ public @interface Super {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             } else {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(annotation
-                        .getValue(STRATEGY, AnnotationDescription.EnumerationValue.class).prepare(Instantiation.class).load()
+                        .getValue(STRATEGY, AnnotationDescription.EnumerationValue.class).load(Instantiation.class)
                         .proxyFor(parameterType, instrumentationTarget, annotation));
             }
         }

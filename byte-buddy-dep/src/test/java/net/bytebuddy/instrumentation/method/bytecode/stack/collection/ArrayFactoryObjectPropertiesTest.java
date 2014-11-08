@@ -13,9 +13,7 @@ import org.mockito.Mock;
 import java.util.Arrays;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class ArrayFactoryObjectPropertiesTest {
@@ -25,6 +23,18 @@ public class ArrayFactoryObjectPropertiesTest {
 
     @Mock
     private StackManipulation stackManipulation;
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testVoidIsIllegal() throws Exception {
+        ArrayFactory.targeting(new TypeDescription.ForLoadedType(void.class));
+    }
+
+    @Test
+    public void testIllegalArrayStackManipulation() throws Exception {
+        assertThat(ArrayFactory.targeting(new TypeDescription.ForLoadedType(Object.class))
+                .new ArrayStackManipulation(Arrays.<StackManipulation>asList(StackManipulation.Illegal.INSTANCE))
+                .isValid(), is(false));
+    }
 
     @Test
     public void testObjectProperties() throws Exception {
@@ -41,17 +51,6 @@ public class ArrayFactoryObjectPropertiesTest {
                 when(mock.getInternalName()).thenReturn("" + System.identityHashCode(mock));
             }
         }).apply();
-    }
-
-    @Test
-    public void testStackManipulationHashCodeEquals() throws Exception {
-        assertThat(ArrayFactory.targeting(new TypeDescription.ForLoadedType(Object.class)).withValues(Arrays.asList(stackManipulation)).hashCode(),
-                is(ArrayFactory.targeting(new TypeDescription.ForLoadedType(Object.class)).withValues(Arrays.asList(stackManipulation)).hashCode()));
-        assertThat(ArrayFactory.targeting(new TypeDescription.ForLoadedType(Object.class)).withValues(Arrays.asList(stackManipulation)),
-                is(ArrayFactory.targeting(new TypeDescription.ForLoadedType(Object.class)).withValues(Arrays.asList(stackManipulation))));
-        assertThat(ArrayFactory.targeting(new TypeDescription.ForLoadedType(Object.class)).withValues(Arrays.asList(stackManipulation)).hashCode(),
-                not(is(ArrayFactory.targeting(new TypeDescription.ForLoadedType(Object.class)).withValues(Arrays.asList(mock(StackManipulation.class))).hashCode())));
-        assertThat(ArrayFactory.targeting(new TypeDescription.ForLoadedType(Object.class)).withValues(Arrays.asList(stackManipulation)),
-                not(is(ArrayFactory.targeting(new TypeDescription.ForLoadedType(Object.class)).withValues(Arrays.asList(mock(StackManipulation.class))))));
+        ObjectPropertyAssertion.of(ArrayFactory.ArrayStackManipulation.class).apply();
     }
 }

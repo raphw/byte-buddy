@@ -282,7 +282,7 @@ public class ArrayFactory implements CollectionFactory {
     /**
      * A stack manipulation for creating an array as defined by the enclosing array factory.
      */
-    private class ArrayStackManipulation implements StackManipulation {
+    protected class ArrayStackManipulation implements StackManipulation {
 
         /**
          * A list of value load instructions that are to be stored inside the created array.
@@ -294,7 +294,7 @@ public class ArrayFactory implements CollectionFactory {
          *
          * @param stackManipulations A list of value load instructions that are to be stored inside the created array.
          */
-        public ArrayStackManipulation(List<StackManipulation> stackManipulations) {
+        protected ArrayStackManipulation(List<StackManipulation> stackManipulations) {
             this.stackManipulations = stackManipulations;
         }
 

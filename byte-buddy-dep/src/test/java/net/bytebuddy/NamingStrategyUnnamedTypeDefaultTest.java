@@ -1,6 +1,7 @@
 package net.bytebuddy;
 
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.modifier.EnumerationState;
 import net.bytebuddy.modifier.SyntheticState;
 import net.bytebuddy.modifier.TypeManifestation;
 import net.bytebuddy.modifier.Visibility;
@@ -72,16 +73,20 @@ public class NamingStrategyUnnamedTypeDefaultTest {
     public void testTypeManifestationProperty() throws Exception {
         assertThat(new NamingStrategy.UnnamedType.Default(superType, interfaceTypes, Opcodes.ACC_ABSTRACT, classFileVersion).getTypeManifestation(),
                 is(TypeManifestation.ABSTRACT));
-        assertThat(new NamingStrategy.UnnamedType.Default(superType, interfaceTypes, Opcodes.ACC_ABSTRACT | Opcodes.ACC_ENUM, classFileVersion).getTypeManifestation(),
-                is(TypeManifestation.ABSTRACT_ENUM));
-        assertThat(new NamingStrategy.UnnamedType.Default(superType, interfaceTypes, Opcodes.ACC_ENUM | Opcodes.ACC_ENUM, classFileVersion).getTypeManifestation(),
-                is(TypeManifestation.ENUM));
         assertThat(new NamingStrategy.UnnamedType.Default(superType, interfaceTypes, Opcodes.ACC_FINAL, classFileVersion).getTypeManifestation(),
                 is(TypeManifestation.FINAL));
         assertThat(new NamingStrategy.UnnamedType.Default(superType, interfaceTypes, Opcodes.ACC_INTERFACE, classFileVersion).getTypeManifestation(),
                 is(TypeManifestation.INTERFACE));
         assertThat(new NamingStrategy.UnnamedType.Default(superType, interfaceTypes, 0, classFileVersion).getTypeManifestation(),
                 is(TypeManifestation.PLAIN));
+    }
+
+    @Test
+    public void testEnumerationStateProperty() throws Exception {
+        assertThat(new NamingStrategy.UnnamedType.Default(superType, interfaceTypes, Opcodes.ACC_ENUM, classFileVersion).getEnumerationState(),
+                is(EnumerationState.ENUMERATION));
+        assertThat(new NamingStrategy.UnnamedType.Default(superType, interfaceTypes, 0, classFileVersion).getEnumerationState(),
+                is(EnumerationState.NON_ENUMERATION));
     }
 
     @Test

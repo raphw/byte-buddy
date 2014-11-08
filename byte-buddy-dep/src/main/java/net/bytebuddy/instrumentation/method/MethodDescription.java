@@ -525,7 +525,7 @@ public interface MethodDescription extends ByteCodeElement {
             Object value = method.getDefaultValue();
             return value == null
                     ? super.getDefaultValue()
-                    : new AnnotationDescription.ForLoadedAnnotation.TypeWrapper(value).apply();
+                    : AnnotationDescription.ForLoadedAnnotation.wrap(value, new TypeDescription.ForLoadedType(method.getReturnType()));
         }
     }
 
