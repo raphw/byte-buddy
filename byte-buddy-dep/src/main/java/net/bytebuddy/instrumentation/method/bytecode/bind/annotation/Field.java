@@ -133,12 +133,12 @@ public @interface Field {
                     .lookup(annotation.getValue(DEFINING_TYPE, TypeDescription.class), instrumentationTarget.getTypeDescription())
                     .resolve(instrumentationTarget.getTypeDescription());
             return resolution.isResolved()
-                    ? new MethodDelegationBinder.ParameterBinding.Anonymous(new ProxyCreation(new AccessorProxy(
+                    ? new MethodDelegationBinder.ParameterBinding.Anonymous(new AccessorProxy(
                     resolution.getFieldDescription(),
                     assigner,
                     instrumentationTarget.getTypeDescription(),
                     accessType,
-                    annotation.getValue(SERIALIZABLE_PROXY, Boolean.class))))
+                    annotation.getValue(SERIALIZABLE_PROXY, Boolean.class)))
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
         }
 
@@ -290,32 +290,7 @@ public @interface Field {
             protected abstract LookupEngine lookup(TypeDescription typeDescription, TypeDescription instrumentedTyoe);
         }
 
-        private static class ProxyCreation implements StackManipulation {
-
-            private final AuxiliaryType auxiliaryType;
-
-            private ProxyCreation(AuxiliaryType auxiliaryType) {
-                this.auxiliaryType = auxiliaryType;
-            }
-
-            @Override
-            public boolean isValid() {
-                return true;
-            }
-
-            @Override
-            public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-                TypeDescription auxiliaryType = instrumentationContext.register(this.auxiliaryType);
-                return new Compound(
-                        TypeCreation.forType(auxiliaryType),
-                        Duplication.SINGLE,
-                        MethodVariableAccess.REFERENCE.loadFromIndex(0),
-                        MethodInvocation.invoke(auxiliaryType.getDeclaredMethods().filter(isConstructor()).getOnly())
-                ).apply(methodVisitor, instrumentationContext);
-            }
-        }
-
-        protected class AccessorProxy implements AuxiliaryType {
+        protected class AccessorProxy implements AuxiliaryType, StackManipulation {
 
             private static final String FIELD_NAME = "instance";
 
@@ -356,6 +331,22 @@ public @interface Field {
                         .method(isDeclaredBy(accessType.proxyType(getterMethod, setterMethod)))
                         .intercept(accessType.access(accessedField, assigner, methodAccessorFactory))
                         .make();
+            }
+
+            @Override
+            public boolean isValid() {
+                return true;
+            }
+
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+                TypeDescription auxiliaryType = instrumentationContext.register(this);
+                return new Compound(
+                        TypeCreation.forType(auxiliaryType),
+                        Duplication.SINGLE,
+                        MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                        MethodInvocation.invoke(auxiliaryType.getDeclaredMethods().filter(isConstructor()).getOnly())
+                ).apply(methodVisitor, instrumentationContext);
             }
         }
 
@@ -409,7 +400,7 @@ public @interface Field {
              * Creates the constructor call singleton.
              */
             private ConstructorCall() {
-                this.objectTypeDefaultConstructor = new TypeDescription.ForLoadedType(Object.class)
+                objectTypeDefaultConstructor = new TypeDescription.ForLoadedType(Object.class)
                         .getDeclaredMethods()
                         .filter(isConstructor())
                         .getOnly();
@@ -425,7 +416,7 @@ public @interface Field {
                 return new Appender(instrumentationTarget);
             }
 
-            private class Appender implements ByteCodeAppender {
+            private static class Appender implements ByteCodeAppender {
 
                 private final TypeDescription instrumentedType;
 
@@ -442,13 +433,13 @@ public @interface Field {
                 public Size apply(MethodVisitor methodVisitor,
                                   Context instrumentationContext,
                                   MethodDescription instrumentedMethod) {
-                    StackManipulation thisReference = MethodVariableAccess.REFERENCE.loadFromIndex(0);
-                    StackManipulation.Size stackSize = new StackManipulation.Compound(thisReference,
-                            MethodInvocation.invoke(objectTypeDefaultConstructor),
-                            thisReference,
-                            MethodVariableAccess.forType(instrumentedMethod.getParameterTypes().get(0)).loadFromIndex(1),
+                    StackManipulation.Size stackSize = new StackManipulation.Compound(
+                            MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                            MethodInvocation.invoke(ConstructorCall.INSTANCE.objectTypeDefaultConstructor),
+                            MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
                             FieldAccess.forField(instrumentedType.getDeclaredFields().named(AccessorProxy.FIELD_NAME)).putter(),
-                            MethodReturn.VOID).apply(methodVisitor, instrumentationContext);
+                            MethodReturn.VOID
+                    ).apply(methodVisitor, instrumentationContext);
                     return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                 }
             }

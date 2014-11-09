@@ -69,7 +69,7 @@ public @interface Super {
     boolean ignoreFinalizer() default true;
 
     /**
-     * Determines if the generated proxy should be forced to be {@link java.io.Serializable}. If the annotated type
+     * Determines if the generated proxy should be {@link java.io.Serializable}. If the annotated type
      * already is serializable, such an explicit specification is not required.
      *
      * @return {@code true} if the generated proxy should be {@link java.io.Serializable}.

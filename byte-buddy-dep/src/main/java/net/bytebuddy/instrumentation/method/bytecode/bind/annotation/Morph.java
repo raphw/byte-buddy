@@ -6,6 +6,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
+import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
@@ -17,12 +18,15 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.TypeCreation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import net.bytebuddy.instrumentation.method.bytecode.stack.collection.ArrayAccess;
 import net.bytebuddy.instrumentation.method.bytecode.stack.constant.IntegerConstant;
+import net.bytebuddy.instrumentation.method.bytecode.stack.member.FieldAccess;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
+import net.bytebuddy.modifier.FieldManifestation;
+import net.bytebuddy.modifier.Visibility;
 import org.objectweb.asm.MethodVisitor;
 
 import java.io.Serializable;
@@ -72,10 +76,9 @@ public @interface Morph {
             MethodDescription methodDescription = methodCandidates.getOnly();
             if (!methodDescription.getReturnType().represents(Object.class)) {
                 throw new IllegalArgumentException(methodDescription + " does not return an Object-type");
-            } else if (methodDescription.getParameterTypes().size() != 2
-                    || !methodDescription.getParameterTypes().get(0).represents(Object.class)
-                    || methodDescription.getParameterTypes().get(1).represents(Object[].class)) {
-                throw new IllegalArgumentException(methodDescription + " does not take two arguments of type Object and Object[]");
+            } else if (methodDescription.getParameterTypes().size() != 1
+                    || !methodDescription.getParameterTypes().get(0).represents(Object[].class)) {
+                throw new IllegalArgumentException(methodDescription + " does not take a single argument of type Object[]");
             }
             return methodDescription;
         }
@@ -96,14 +99,17 @@ public @interface Morph {
             if (!parameterType.equals(forwardingMethod.getDeclaringType())) {
                 throw new IllegalStateException(String.format("The installed type %s for the @Morph annotation does not " +
                         "equal the annotated parameter type on %s", parameterType, target));
-            } else if (source.isStatic()) {
-                return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }
-            return new MethodDelegationBinder.ParameterBinding.Anonymous(new Redirection(forwardingMethod.getDeclaringType(),
-                    source,
+            Instrumentation.SpecialMethodInvocation specialMethodInvocation = instrumentationTarget.invokeSuper(source,
+                    Instrumentation.Target.MethodLookup.Default.EXACT);
+            return specialMethodInvocation.isValid()
+                    ? new MethodDelegationBinder.ParameterBinding.Anonymous(new Redirection(forwardingMethod.getDeclaringType(),
+                    instrumentationTarget.getTypeDescription(),
+                    specialMethodInvocation,
                     assigner,
                     annotation.load().serializableProxy(),
-                    this));
+                    this))
+                    : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
         }
 
         @Override
@@ -134,15 +140,13 @@ public @interface Morph {
 
         protected static class Redirection implements AuxiliaryType, StackManipulation {
 
-            /**
-             * The type that declares the method for forwarding a method invocation.
-             */
+            private static final String FIELD_NAME = "target";
+
             private final TypeDescription forwardingType;
 
-            /**
-             * The method that is to be forwarded.
-             */
-            private final MethodDescription sourceMethod;
+            private final TypeDescription instrumentedType;
+
+            private final Instrumentation.SpecialMethodInvocation specialMethodInvocation;
 
             /**
              * The assigner to use.
@@ -159,22 +163,15 @@ public @interface Morph {
              */
             private final Factory methodLookupEngineFactory;
 
-            /**
-             * Creates a new redirection.
-             *
-             * @param forwardingType            The type that declares the method for forwarding a method invocation.
-             * @param sourceMethod              The method that is to be forwarded.
-             * @param assigner                  The assigner to use.
-             * @param serializableProxy         Determines if the generated proxy should be {@link java.io.Serializable}.
-             * @param methodLookupEngineFactory The method lookup engine factory to register.
-             */
             protected Redirection(TypeDescription forwardingType,
-                                  MethodDescription sourceMethod,
+                                  TypeDescription instrumentedType,
+                                  Instrumentation.SpecialMethodInvocation specialMethodInvocation,
                                   Assigner assigner,
                                   boolean serializableProxy,
                                   Factory methodLookupEngineFactory) {
                 this.forwardingType = forwardingType;
-                this.sourceMethod = sourceMethod;
+                this.instrumentedType = instrumentedType;
+                this.specialMethodInvocation = specialMethodInvocation;
                 this.assigner = assigner;
                 this.serializableProxy = serializableProxy;
                 this.methodLookupEngineFactory = methodLookupEngineFactory;
@@ -185,13 +182,16 @@ public @interface Morph {
                                     ClassFileVersion classFileVersion,
                                     MethodAccessorFactory methodAccessorFactory) {
                 return new ByteBuddy(classFileVersion)
-                        .subclass(forwardingType, ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR)
+                        .subclass(forwardingType, ConstructorStrategy.Default.NO_CONSTRUCTORS)
                         .name(auxiliaryTypeName)
                         .modifiers(DEFAULT_TYPE_MODIFIER)
                         .methodLookupEngine(methodLookupEngineFactory)
                         .implement(serializableProxy ? new Class<?>[]{Serializable.class} : new Class<?>[0])
+                        .defineField(FIELD_NAME, instrumentedType, Visibility.PRIVATE, FieldManifestation.FINAL)
+                        .defineConstructor(Collections.singletonList(instrumentedType))
+                        .intercept(ConstructorCall.INSTANCE)
                         .method(isDeclaredBy(forwardingType))
-                        .intercept(new MethodCall(sourceMethod, assigner))
+                        .intercept(new MethodCall(methodAccessorFactory.registerAccessorFor(specialMethodInvocation), assigner))
                         .make();
             }
 
@@ -206,7 +206,7 @@ public @interface Morph {
                 return new Compound(
                         TypeCreation.forType(forwardingType),
                         Duplication.SINGLE,
-                        MethodVariableAccess.loadArguments(sourceMethod),
+                        MethodVariableAccess.REFERENCE.loadFromIndex(0),
                         MethodInvocation.invoke(forwardingType.getDeclaredMethods().filter(isConstructor()).getOnly())
                 ).apply(methodVisitor, instrumentationContext);
             }
@@ -219,14 +219,14 @@ public @interface Morph {
                 return serializableProxy == that.serializableProxy
                         && assigner.equals(that.assigner)
                         && forwardingType.equals(that.forwardingType)
-                        && sourceMethod.equals(that.sourceMethod)
+                        && specialMethodInvocation.equals(that.specialMethodInvocation)
                         && methodLookupEngineFactory.equals(that.methodLookupEngineFactory);
             }
 
             @Override
             public int hashCode() {
                 int result = forwardingType.hashCode();
-                result = 31 * result + sourceMethod.hashCode();
+                result = 31 * result + specialMethodInvocation.hashCode();
                 result = 31 * result + assigner.hashCode();
                 result = 31 * result + methodLookupEngineFactory.hashCode();
                 result = 31 * result + (serializableProxy ? 1 : 0);
@@ -237,33 +237,21 @@ public @interface Morph {
             public String toString() {
                 return "Morph.Binder.Redirection{" +
                         "forwardingType=" + forwardingType +
-                        ", sourceMethod=" + sourceMethod +
+                        ", specialMethodInvocation=" + specialMethodInvocation +
                         ", assigner=" + assigner +
                         ", methodLookupEngineFactory=" + methodLookupEngineFactory +
                         ", serializableProxy=" + serializableProxy +
                         '}';
             }
 
-            private static class MethodCall implements Instrumentation, ByteCodeAppender {
+            private static class MethodCall implements Instrumentation {
 
-                /**
-                 * The method that is invoked by the implemented method.
-                 */
-                private final MethodDescription morphMethod;
+                private final MethodDescription accessorMethod;
 
-                /**
-                 * The assigner to be used for invoking the forwarded method.
-                 */
                 private final Assigner assigner;
 
-                /**
-                 * Creates a new method call instrumentation.
-                 *
-                 * @param morphMethod The method that is invoked by the implemented method.
-                 * @param assigner    The assigner to be used for invoking the forwarded method.
-                 */
-                private MethodCall(MethodDescription morphMethod, Assigner assigner) {
-                    this.morphMethod = morphMethod;
+                private MethodCall(MethodDescription accessorMethod, Assigner assigner) {
+                    this.accessorMethod = accessorMethod;
                     this.assigner = assigner;
                 }
 
@@ -274,75 +262,154 @@ public @interface Morph {
 
                 @Override
                 public ByteCodeAppender appender(Target instrumentationTarget) {
-                    return this;
+                    return new Appender(instrumentationTarget);
                 }
 
-                @Override
-                public boolean appendsCode() {
-                    return true;
-                }
+                private class Appender implements ByteCodeAppender {
 
-                @Override
-                public Size apply(MethodVisitor methodVisitor,
-                                  Context instrumentationContext,
-                                  MethodDescription instrumentedMethod) {
-                    StackManipulation arrayReference = MethodVariableAccess.REFERENCE.loadFromIndex(2);
-                    StackManipulation[] parameterLoading = new StackManipulation[morphMethod.getParameterTypes().size()];
-                    int index = 0;
-                    for (TypeDescription parameterType : morphMethod.getParameterTypes()) {
-                        parameterLoading[index] = new StackManipulation.Compound(arrayReference,
-                                IntegerConstant.forValue(index),
-                                ArrayAccess.REFERENCE.load(),
-                                assigner.assign(new TypeDescription.ForLoadedType(Object.class), parameterType, true));
-                        index++;
+                    private final FieldDescription targetReference;
+
+                    private Appender(Target instrumentationTarget) {
+                        targetReference = instrumentationTarget.getTypeDescription().getDeclaredFields().named(FIELD_NAME);
                     }
-                    StackManipulation.Size stackSize = new StackManipulation.Compound(
-                            MethodVariableAccess.REFERENCE.loadFromIndex(1),
-                            assigner.assign(new TypeDescription.ForLoadedType(Object.class), morphMethod.getDeclaringType(), true),
-                            new StackManipulation.Compound(parameterLoading),
-                            MethodInvocation.invoke(morphMethod),
-                            assigner.assign(morphMethod.getReturnType(), instrumentedMethod.getReturnType(), false),
-                            MethodReturn.REFERENCE
-                    ).apply(methodVisitor, instrumentationContext);
-                    return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
+
+                    @Override
+                    public boolean appendsCode() {
+                        return true;
+                    }
+
+                    @Override
+                    public Size apply(MethodVisitor methodVisitor,
+                                      Context instrumentationContext,
+                                      MethodDescription instrumentedMethod) {
+                        StackManipulation arrayReference = MethodVariableAccess.REFERENCE.loadFromIndex(1);
+                        StackManipulation[] parameterLoading = new StackManipulation[accessorMethod.getParameterTypes().size()];
+                        int index = 0;
+                        for (TypeDescription parameterType : accessorMethod.getParameterTypes()) {
+                            parameterLoading[index] = new StackManipulation.Compound(arrayReference,
+                                    IntegerConstant.forValue(index),
+                                    ArrayAccess.REFERENCE.load(),
+                                    assigner.assign(new TypeDescription.ForLoadedType(Object.class), parameterType, true));
+                            index++;
+                        }
+                        StackManipulation.Size stackSize = new StackManipulation.Compound(
+                                MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                                FieldAccess.forField(targetReference).getter(),
+                                new StackManipulation.Compound(parameterLoading),
+                                MethodInvocation.invoke(accessorMethod),
+                                assigner.assign(accessorMethod.getReturnType(), instrumentedMethod.getReturnType(), false),
+                                MethodReturn.REFERENCE
+                        ).apply(methodVisitor, instrumentationContext);
+                        return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
+                    }
+
+                    private MethodCall getMethodCall() {
+                        return MethodCall.this;
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && MethodCall.this.equals(((Appender) other).getMethodCall())
+                                && targetReference.equals(((Appender) other).targetReference);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return targetReference.hashCode() + 31 * MethodCall.this.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Morph.Binder.Redirection.MethodCall.Appender{" +
+                                "targetReference=" + targetReference +
+                                ", methodCall=" + MethodCall.this +
+                                '}';
+                    }
                 }
 
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && morphMethod.equals(((MethodCall) other).morphMethod)
+                            && accessorMethod.equals(((MethodCall) other).accessorMethod)
                             && assigner.equals(((MethodCall) other).assigner);
                 }
 
                 @Override
                 public int hashCode() {
-                    return morphMethod.hashCode() + 31 * assigner.hashCode();
+                    return accessorMethod.hashCode() + 31 * assigner.hashCode();
                 }
 
                 @Override
                 public String toString() {
                     return "Morph.Binder.Redirection.MethodCall{" +
-                            "morphMethod=" + morphMethod +
+                            "accessorMethod=" + accessorMethod +
                             ", assigner=" + assigner +
                             '}';
+                }
+            }
+
+            private static enum ConstructorCall implements Instrumentation {
+
+                INSTANCE;
+
+                /**
+                 * A reference of the {@link Object} type default constructor.
+                 */
+                private final MethodDescription objectTypeDefaultConstructor;
+
+                /**
+                 * Creates the constructor call singleton.
+                 */
+                private ConstructorCall() {
+                    objectTypeDefaultConstructor = new TypeDescription.ForLoadedType(Object.class)
+                            .getDeclaredMethods()
+                            .filter(isConstructor())
+                            .getOnly();
+                }
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
+                }
+
+                @Override
+                public ByteCodeAppender appender(Target instrumentationTarget) {
+                    return new Appender(instrumentationTarget);
+                }
+
+                private static class Appender implements ByteCodeAppender {
+
+                    private final FieldDescription fieldDescription;
+
+                    private Appender(Target instrumentationTarget) {
+                        fieldDescription = instrumentationTarget.getTypeDescription().getDeclaredFields().named(FIELD_NAME);
+                    }
+
+                    @Override
+                    public boolean appendsCode() {
+                        return true;
+                    }
+
+                    @Override
+                    public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
+                        StackManipulation.Size stackSize = new StackManipulation.Compound(
+                                MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                                MethodInvocation.invoke(ConstructorCall.INSTANCE.objectTypeDefaultConstructor),
+                                MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
+                                FieldAccess.forField(fieldDescription).putter(),
+                                MethodReturn.VOID
+                        ).apply(methodVisitor, instrumentationContext);
+                        return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
+                    }
                 }
             }
         }
 
         private class PrecomputedFinding implements Finding {
 
-            /**
-             * The type which was looked up. This type should be the instrumented type itself and therefore defines
-             * the constructor of the instrumented type.
-             */
             private final TypeDescription typeDescription;
 
-            /**
-             * Creates a precomputed finding.
-             *
-             * @param typeDescription The type which was looked up. This type should be the instrumented type itself
-             *                        and therefore defines the constructor of the instrumented type.
-             */
             public PrecomputedFinding(TypeDescription typeDescription) {
                 this.typeDescription = typeDescription;
             }
@@ -365,11 +432,6 @@ public @interface Morph {
                 return Collections.emptyMap();
             }
 
-            /**
-             * Returns the outer instance.
-             *
-             * @return The outer instance.
-             */
             private Binder getBinder() {
                 return Binder.this;
             }

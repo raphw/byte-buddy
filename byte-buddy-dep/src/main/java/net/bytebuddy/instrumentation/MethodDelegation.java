@@ -50,6 +50,11 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
  * <li>{@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.This}: A parameter
  * of {@code Qux#baz} that is annotated with {@code This} will be assigned the instance that is instrumented for
  * a non-static method.</li>
+ * <li>{@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Super}: A parameter that is annotated with
+ * this annotation is assigned a proxy that allows calling an instrumented type's super methods.</li>
+ * <li>{@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Default}: A parameter that is annotated with
+ * this annotation is assigned a proxy that allows calling an instrumented type's directly implemented interfaces'
+ * default methods.</li>
  * <li>{@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.SuperCall}: A parameter
  * of {@code Qux#baz} that is annotated with {@code SuperCall} will be assigned an instance of a type implementing both
  * {@link java.lang.Runnable} and {@link java.util.concurrent.Callable} which will invoke the instrumented method on the
@@ -429,6 +434,7 @@ public class MethodDelegation implements Instrumentation {
                 Origin.Binder.INSTANCE,
                 This.Binder.INSTANCE,
                 Super.Binder.INSTANCE,
+                Default.Binder.INSTANCE,
                 SuperCall.Binder.INSTANCE,
                 DefaultCall.Binder.INSTANCE);
     }

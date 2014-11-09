@@ -31,10 +31,13 @@ public class AnnotationVisibilityTest {
                 {Origin.class},
                 {RuntimeType.class},
                 {Super.class},
+                {Default.class},
                 {SuperCall.class},
                 {DefaultCall.class},
                 {This.class},
-                {Pipe.class}
+                {Pipe.class},
+                {Morph.class},
+                {Field.class}
         });
     }
 

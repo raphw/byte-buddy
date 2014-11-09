@@ -134,6 +134,16 @@ public @interface Pipe {
             return install(new TypeDescription.ForLoadedType(nonNull(type)));
         }
 
+        /**
+         * Installs a given type for use on a {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Pipe}
+         * annotation. The given type must be an interface without any super interfaces and a single method which
+         * maps an {@link java.lang.Object} type to another {@link java.lang.Object} type. The use of generics is
+         * permitted.
+         *
+         * @param typeDescription The type to install.
+         * @return A binder for the {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Pipe}
+         * annotation.
+         */
         public static TargetMethodAnnotationDrivenBinder.ParameterBinder<Pipe> install(TypeDescription typeDescription) {
             return new Binder(onlyMethod(nonNull(typeDescription)));
         }
@@ -403,7 +413,7 @@ public @interface Pipe {
                  * The appender for implementing the
                  * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Pipe.Binder.Redirection.ConstructorCall}.
                  */
-                private class Appender implements ByteCodeAppender {
+                private static class Appender implements ByteCodeAppender {
 
                     /**
                      * The instrumented type being created.
@@ -441,7 +451,7 @@ public @interface Pipe {
                         }
                         StackManipulation.Size stackSize = new StackManipulation.Compound(
                                 thisReference,
-                                MethodInvocation.invoke(objectTypeDefaultConstructor),
+                                MethodInvocation.invoke(ConstructorCall.INSTANCE.objectTypeDefaultConstructor),
                                 new StackManipulation.Compound(fieldLoading),
                                 MethodReturn.VOID
                         ).apply(methodVisitor, instrumentationContext);
