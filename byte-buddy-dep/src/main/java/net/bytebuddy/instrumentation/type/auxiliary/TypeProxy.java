@@ -17,7 +17,6 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.FieldAccess;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess;
-import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.modifier.Ownership;
@@ -30,7 +29,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.takesArguments;
 
 /**
  * A type proxy creates accessor methods for all overridable methods of a given type by subclassing the given type and
@@ -95,13 +93,12 @@ public class TypeProxy implements AuxiliaryType {
     public DynamicType make(String auxiliaryTypeName,
                             ClassFileVersion classFileVersion,
                             MethodAccessorFactory methodAccessorFactory) {
-        MethodMatcher finalizerMatcher = ignoreFinalizer ? not(isFinalizer()) : any();
         return new ByteBuddy(classFileVersion)
                 .subclass(proxiedType, invocationFactory.getConstructorStrategy())
                 .name(auxiliaryTypeName)
                 .modifiers(DEFAULT_TYPE_MODIFIER)
                 .implement(serializableProxy ? new Class<?>[]{Serializable.class} : new Class<?>[0])
-                .method(finalizerMatcher)
+                .method(ignoreFinalizer ? not(isFinalizer()) : any())
                 .intercept(new MethodCall(methodAccessorFactory))
                 .defineMethod(REFLECTION_METHOD, TargetType.DESCRIPTION, Collections.<TypeDescription>emptyList(), Ownership.STATIC)
                 .intercept(SilentConstruction.INSTANCE)
@@ -597,6 +594,33 @@ public class TypeProxy implements AuxiliaryType {
                     FieldAccess.forField(proxyType.getDeclaredFields().named(INSTANCE_FIELD)).putter()
             ).apply(methodVisitor, instrumentationContext);
         }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            ForDefaultMethod that = (ForDefaultMethod) other;
+            return serializableProxy == that.serializableProxy
+                    && instrumentationTarget.equals(that.instrumentationTarget)
+                    && proxiedType.equals(that.proxiedType);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = proxiedType.hashCode();
+            result = 31 * result + instrumentationTarget.hashCode();
+            result = 31 * result + (serializableProxy ? 1 : 0);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "TypeProxy.ForDefaultMethod{" +
+                    "proxiedType=" + proxiedType +
+                    ", instrumentationTarget=" + instrumentationTarget +
+                    ", serializableProxy=" + serializableProxy +
+                    '}';
+        }
     }
 
     public static interface InvocationFactory {
@@ -645,7 +669,7 @@ public class TypeProxy implements AuxiliaryType {
     /**
      * An instrumentation for implementing a method call of a {@link net.bytebuddy.instrumentation.type.auxiliary.TypeProxy}.
      */
-    private class MethodCall implements Instrumentation {
+    protected class MethodCall implements Instrumentation {
 
         /**
          * The method accessor factory to query for the super method invocation.
@@ -657,7 +681,7 @@ public class TypeProxy implements AuxiliaryType {
          *
          * @param methodAccessorFactory The method accessor factory to query for the super method invocation.
          */
-        private MethodCall(MethodAccessorFactory methodAccessorFactory) {
+        protected MethodCall(MethodAccessorFactory methodAccessorFactory) {
             this.methodAccessorFactory = methodAccessorFactory;
         }
 
@@ -705,7 +729,7 @@ public class TypeProxy implements AuxiliaryType {
         /**
          * Implementation of a byte code appender for a {@link net.bytebuddy.instrumentation.type.auxiliary.TypeProxy.MethodCall}.
          */
-        private class Appender implements ByteCodeAppender {
+        protected class Appender implements ByteCodeAppender {
 
             /**
              * The stack manipulation for loading the proxied instance onto the stack.
@@ -717,7 +741,7 @@ public class TypeProxy implements AuxiliaryType {
              *
              * @param instrumentedType The instrumented type that is proxied by the enclosing instrumentation.
              */
-            private Appender(TypeDescription instrumentedType) {
+            protected Appender(TypeDescription instrumentedType) {
                 fieldLoadingInstruction = FieldAccess.forField(instrumentedType.getDeclaredFields().named(INSTANCE_FIELD)).getter();
             }
 
@@ -782,7 +806,7 @@ public class TypeProxy implements AuxiliaryType {
             /**
              * Stack manipulation for invoking an accessor method.
              */
-            private class AccessorMethodInvocation implements StackManipulation {
+            protected class AccessorMethodInvocation implements StackManipulation {
 
                 /**
                  * The instrumented method that is implemented.
@@ -801,8 +825,8 @@ public class TypeProxy implements AuxiliaryType {
                  * @param specialMethodInvocation The special method invocation that is invoked by this accessor
                  *                                method invocation.
                  */
-                private AccessorMethodInvocation(MethodDescription instrumentedMethod,
-                                                 SpecialMethodInvocation specialMethodInvocation) {
+                protected AccessorMethodInvocation(MethodDescription instrumentedMethod,
+                                                   SpecialMethodInvocation specialMethodInvocation) {
                     this.instrumentedMethod = instrumentedMethod;
                     this.specialMethodInvocation = specialMethodInvocation;
                 }

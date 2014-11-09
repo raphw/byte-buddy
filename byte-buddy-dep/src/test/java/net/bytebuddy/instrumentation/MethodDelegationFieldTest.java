@@ -6,12 +6,14 @@ import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Field;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.hamcrest.CoreMatchers.is;
+import java.io.Serializable;
+
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
 
-    private static final String FOO = "foo", BAR = "bar";
+    private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
     @Before
     public void setUp() throws Exception {
@@ -21,6 +23,16 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
     @Test
     public void testExplicitFieldAccess() throws Exception {
         DynamicType.Loaded<Explicit> loaded = instrument(Explicit.class, MethodDelegation.to(Swap.class)
+                .appendParameterBinder(Field.Binder.install(Get.class, Set.class)));
+        Explicit explicit = loaded.getLoaded().newInstance();
+        assertThat(explicit.foo, is(FOO));
+        explicit.swap();
+        assertThat(explicit.foo, is(FOO + BAR));
+    }
+
+    @Test
+    public void testExplicitFieldAccessSerializable() throws Exception {
+        DynamicType.Loaded<Explicit> loaded = instrument(Explicit.class, MethodDelegation.to(SwapSerializable.class)
                 .appendParameterBinder(Field.Binder.install(Get.class, Set.class)));
         Explicit explicit = loaded.getLoaded().newInstance();
         assertThat(explicit.foo, is(FOO));
@@ -58,6 +70,30 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
         assertThat(implicitSetter.foo, is(FOO + BAR));
     }
 
+    @Test
+    public void testExplicitFieldAccessImplicitTarget() throws Exception {
+        DynamicType.Loaded<ExplicitInherited> loaded = instrument(ExplicitInherited.class, MethodDelegation.to(Swap.class)
+                .appendParameterBinder(Field.Binder.install(Get.class, Set.class)));
+        ExplicitInherited explicitInherited = loaded.getLoaded().newInstance();
+        assertThat(((Explicit) explicitInherited).foo, is(FOO));
+        assertThat(explicitInherited.foo, is(QUX));
+        explicitInherited.swap();
+        assertThat(((Explicit) explicitInherited).foo, is(FOO));
+        assertThat(explicitInherited.foo, is(QUX + BAR));
+    }
+
+    @Test
+    public void testExplicitFieldAccessExplicitTarget() throws Exception {
+        DynamicType.Loaded<ExplicitInherited> loaded = instrument(ExplicitInherited.class, MethodDelegation.to(SwapInherited.class)
+                .appendParameterBinder(Field.Binder.install(Get.class, Set.class)));
+        ExplicitInherited explicitInherited = loaded.getLoaded().newInstance();
+        assertThat(((Explicit) explicitInherited).foo, is(FOO));
+        assertThat(explicitInherited.foo, is(QUX));
+        explicitInherited.swap();
+        assertThat(((Explicit) explicitInherited).foo, is(FOO + BAR));
+        assertThat(explicitInherited.foo, is(QUX));
+    }
+
     public static interface Get<T> {
 
         T get();
@@ -71,6 +107,8 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
     public static class Swap {
 
         public static void swap(@Field(FOO) Get<String> getter, @Field(FOO) Set<String> setter) {
+            assertThat(getter, not(instanceOf(Serializable.class)));
+            assertThat(setter, not(instanceOf(Serializable.class)));
             setter.set(getter.get() + BAR);
         }
     }
@@ -81,6 +119,26 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
 
         public void swap() {
             /* do nothing */
+        }
+    }
+
+    public static class ExplicitInherited extends Explicit {
+
+        protected String foo = QUX;
+
+        @Override
+        public void swap() {
+            /* do nothing */
+        }
+    }
+
+    public static class SwapInherited {
+
+        public static void swap(@Field(value = FOO, definingType = Explicit.class) Get<String> getter,
+                                @Field(value = FOO, definingType = Explicit.class) Set<String> setter) {
+            assertThat(getter, not(instanceOf(Serializable.class)));
+            assertThat(setter, not(instanceOf(Serializable.class)));
+            setter.set(getter.get() + BAR);
         }
     }
 
@@ -123,6 +181,16 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
 
         public static void set(@Argument(0) String value, @Field Get<String> getter, @Field Set<String> setter) {
             setter.set(getter.get() + value);
+        }
+    }
+
+    public static class SwapSerializable {
+
+        public static void swap(@Field(value = FOO, serializableProxy = true) Get<String> getter,
+                                @Field(value = FOO, serializableProxy = true) Set<String> setter) {
+            assertThat(getter, instanceOf(Serializable.class));
+            assertThat(setter, instanceOf(Serializable.class));
+            setter.set(getter.get() + BAR);
         }
     }
 }
