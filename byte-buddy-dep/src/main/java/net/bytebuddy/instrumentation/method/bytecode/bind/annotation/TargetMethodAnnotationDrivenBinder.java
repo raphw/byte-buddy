@@ -28,6 +28,9 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
      */
     private final DefaultsProvider defaultsProvider;
 
+    /**
+     * The termination handler to be applied.
+     */
     private final TerminationHandler terminationHandler;
 
     /**
@@ -43,13 +46,14 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
     /**
      * Creates a new method delegation binder that binds method based on annotations found on the target method.
      *
-     * @param parameterBinders A list of parameter binder delegates. Each such delegate is responsible for creating a
-     *                         {@link net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.ParameterBinding}
-     *                         for a specific annotation.
-     * @param defaultsProvider A provider that creates an annotation for parameters that are not annotated by any annotation
-     *                         that is handled by any of the registered {@code parameterBinders}.
-     * @param assigner         An assigner that is supplied to the {@code parameterBinders} and that is used for binding the return value.
-     * @param methodInvoker    A delegate for applying the actual method invocation of the target method.
+     * @param parameterBinders   A list of parameter binder delegates. Each such delegate is responsible for creating a
+     *                           {@link net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.ParameterBinding}
+     *                           for a specific annotation.
+     * @param defaultsProvider   A provider that creates an annotation for parameters that are not annotated by any annotation
+     *                           that is handled by any of the registered {@code parameterBinders}.
+     * @param terminationHandler The termination handler to be applied.
+     * @param assigner           An assigner that is supplied to the {@code parameterBinders} and that is used for binding the return value.
+     * @param methodInvoker      A delegate for applying the actual method invocation of the target method.
      */
     public TargetMethodAnnotationDrivenBinder(List<ParameterBinder<?>> parameterBinders,
                                               DefaultsProvider defaultsProvider,
@@ -227,10 +231,20 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         }
     }
 
+    /**
+     * Responsible for creating a {@link net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation}
+     * that is applied after the interception method is applied.
+     */
     public static interface TerminationHandler {
 
+        /**
+         * A termination handler that returns the return value of the interception method.
+         */
         static enum Returning implements TerminationHandler {
 
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
             @Override
@@ -241,8 +255,14 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
             }
         }
 
+        /**
+         * A termination handler that pops the return value of the interception method.
+         */
         static enum Dropping implements TerminationHandler {
 
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
             @Override
@@ -251,6 +271,14 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
             }
         }
 
+        /**
+         * Creates a stack manipulation that is to be applied after the method return.
+         *
+         * @param assigner The supplied assigner.
+         * @param source   The source method that is bound to the {@code target} method.
+         * @param target   The target method that is subject to be bound by the {@code source} method.
+         * @return A stack manipulation that is applied after the method return.
+         */
         StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target);
     }
 

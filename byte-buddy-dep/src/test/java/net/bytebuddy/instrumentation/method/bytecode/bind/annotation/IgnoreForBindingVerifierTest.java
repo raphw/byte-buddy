@@ -3,14 +3,20 @@ package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.utility.MockitoRule;
+import org.hamcrest.core.Is;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
+import org.mockito.asm.Opcodes;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
 
 public class IgnoreForBindingVerifierTest {
@@ -45,5 +51,18 @@ public class IgnoreForBindingVerifierTest {
         verifyNoMoreInteractions(methodDescription);
         verify(annotationList).isAnnotationPresent(IgnoreForBinding.class);
         verifyNoMoreInteractions(annotationList);
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testInstantiation() throws Exception {
+        Constructor<?> constructor = IgnoreForBinding.Verifier.class.getDeclaredConstructor();
+        assertThat(constructor.getModifiers(), Is.is(Opcodes.ACC_PRIVATE));
+        constructor.setAccessible(true);
+        try {
+            constructor.newInstance();
+            fail();
+        } catch (InvocationTargetException e) {
+            throw (UnsupportedOperationException) e.getCause();
+        }
     }
 }

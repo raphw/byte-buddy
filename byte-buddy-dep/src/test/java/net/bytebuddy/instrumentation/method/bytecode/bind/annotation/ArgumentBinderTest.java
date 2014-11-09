@@ -111,4 +111,22 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
         when(annotation.value()).thenReturn(-1);
         Argument.Binder.INSTANCE.bind(annotationDescription, 0, source, target, instrumentationTarget, assigner);
     }
+
+    @Test
+    public void testDefaultArgument() throws Exception {
+        Argument argument = new Argument.NextUnboundAsDefaultsProvider.NextUnboundArgumentIterator.DefaultArgument(0);
+        Argument loadedArgument = (Argument) Carrier.class.getDeclaredMethod("method", Void.class).getParameterAnnotations()[0][0];
+        assertThat(argument, is(loadedArgument));
+        assertThat(argument.hashCode(), is(loadedArgument.hashCode()));
+        assertThat(argument.toString(), is(loadedArgument.toString()));
+    }
+
+
+    private static class Carrier {
+
+        private void method(@Argument(0) Void parameter) {
+            /* do nothing */
+        }
+
+    }
 }

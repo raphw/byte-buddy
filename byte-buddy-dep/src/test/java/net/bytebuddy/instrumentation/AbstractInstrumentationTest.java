@@ -17,8 +17,10 @@ import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.utility.DebuggingWrapper;
 import org.hamcrest.CoreMatchers;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.util.Textifier;
 
 import java.util.Arrays;
 
@@ -61,6 +63,7 @@ public abstract class AbstractInstrumentationTest {
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ConstructorStrategy.Default.IMITATE_SUPER_TYPE)
                 .method(targetMethods).intercept(instrumentation)
+                .classVisitor(new DebuggingWrapper(System.out, new Textifier()))
                 .make()
                 .load(classLoader, ClassLoadingStrategy.Default.WRAPPER);
     }

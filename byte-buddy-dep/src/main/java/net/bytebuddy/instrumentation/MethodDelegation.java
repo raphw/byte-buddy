@@ -140,6 +140,9 @@ public class MethodDelegation implements Instrumentation {
      */
     private final TargetMethodAnnotationDrivenBinder.DefaultsProvider defaultsProvider;
 
+    /**
+     * The termination handler to apply.
+     */
     private final TargetMethodAnnotationDrivenBinder.TerminationHandler terminationHandler;
 
     /**
@@ -164,6 +167,7 @@ public class MethodDelegation implements Instrumentation {
      * @param instrumentationDelegate The instrumentation delegate to use by this method delegator.
      * @param parameterBinders        The parameter binders to use by this method delegator.
      * @param defaultsProvider        The defaults provider to use by this method delegator.
+     * @param terminationHandler      The termination handler to apply.
      * @param ambiguityResolver       The ambiguity resolver to use by this method delegator.
      * @param assigner                The assigner to be supplied by this method delegator.
      * @param targetMethodCandidates  A list of methods that should be considered as possible binding targets by
@@ -195,6 +199,12 @@ public class MethodDelegation implements Instrumentation {
         return to(new TypeDescription.ForLoadedType(nonNull(type)));
     }
 
+    /**
+     * Creates an instrumentation where only {@code static} methods of the given type are considered as binding targets.
+     *
+     * @param typeDescription The type containing the {@code static} methods for binding.
+     * @return A method delegation instrumentation to the given {@code static} methods.
+     */
     public static MethodDelegation to(TypeDescription typeDescription) {
         if (nonNull(typeDescription).isInterface()) {
             throw new IllegalArgumentException("Cannot delegate to interface " + typeDescription);
@@ -322,6 +332,27 @@ public class MethodDelegation implements Instrumentation {
         return toInstanceField(new TypeDescription.ForLoadedType(nonNull(type)), fieldName);
     }
 
+
+    /**
+     * Creates an instrumentation where method calls are delegated to an instance that is manually stored in a field
+     * {@code fieldName} that is defined for the instrumented type. The field belongs to any instance of the instrumented
+     * type and must be set manually by the user of the instrumented class. Note that this prevents interception of
+     * method calls within the constructor of the instrumented class which will instead result in a
+     * {@link java.lang.NullPointerException}. Note that this includes methods that were defined by the
+     * {@link java.lang.Object} class. You can narrow this default selection by explicitly selecting methods with
+     * calling the
+     * {@link net.bytebuddy.instrumentation.MethodDelegation#filter(net.bytebuddy.instrumentation.method.matcher.MethodMatcher)}
+     * method on the returned method delegation as for example:
+     * <pre>MethodDelegation.to(new Foo()).filter(MethodMatchers.not(isDeclaredBy(Object.class)));</pre>
+     * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
+     * for delegation.
+     * <p>&nbsp;</p>
+     * The field is typically accessed by reflection or by defining an accessor on the instrumented type.
+     *
+     * @param typeDescription The type of the delegate and the field.
+     * @param fieldName       The name of the field.
+     * @return A method delegation that intercepts method calls by delegating to method calls on the given instance.
+     */
     public static MethodDelegation toInstanceField(TypeDescription typeDescription, String fieldName) {
         return toInstanceField(nonNull(typeDescription), isValidIdentifier(fieldName), defaultMethodLookupEngine());
     }
@@ -339,6 +370,15 @@ public class MethodDelegation implements Instrumentation {
         return toInstanceField(new TypeDescription.ForLoadedType(nonNull(type)), fieldName, methodLookupEngine);
     }
 
+    /**
+     * Identical to {@link net.bytebuddy.instrumentation.MethodDelegation#toInstanceField(Class, String)} but uses an
+     * explicit {@link net.bytebuddy.instrumentation.method.MethodLookupEngine}.
+     *
+     * @param typeDescription    The type of the delegate and the field.
+     * @param fieldName          The name of the field.
+     * @param methodLookupEngine The method lookup engine to use.
+     * @return A method delegation that intercepts method calls by delegating to method calls on the given instance.
+     */
     public static MethodDelegation toInstanceField(TypeDescription typeDescription, String fieldName, MethodLookupEngine methodLookupEngine) {
         return new MethodDelegation(
                 new InstrumentationDelegate.ForInstanceField(nonNull(typeDescription), isValidIdentifier(fieldName)),
@@ -363,6 +403,13 @@ public class MethodDelegation implements Instrumentation {
         return toConstructor(new TypeDescription.ForLoadedType(nonNull(type)));
     }
 
+    /**
+     * Creates an instrumentation where method calls are delegated to constructor calls on the given type. As a result,
+     * the return values of all instrumented methods must be assignable to
+     *
+     * @param typeDescription The type that should be constructed by the instrumented methods.
+     * @return An instrumentation that creates instances of the given type as its result.
+     */
     public static MethodDelegation toConstructor(TypeDescription typeDescription) {
         return new MethodDelegation(new InstrumentationDelegate.ForConstruction(nonNull(typeDescription)),
                 defaultParameterBinders(),
@@ -536,6 +583,16 @@ public class MethodDelegation implements Instrumentation {
                 isNotEmpty(targetMethodCandidates.filter(nonNull(methodMatcher)), NO_METHODS_ERROR_MESSAGE));
     }
 
+    /**
+     * Appends another {@link net.bytebuddy.instrumentation.Instrumentation} to a method delegation. The return
+     * value of the delegation target is dropped such that the given {@code instrumentation} becomes responsible for
+     * returning from the method instead. However, if an exception is thrown from the interception method, this
+     * exception is not catched and the chained instrumentation is never applied. Note that this changes the binding
+     * semantics as the target method's return value is not longer considered what might change the binding target.
+     *
+     * @param instrumentation The instrumentation to apply after the delegation.
+     * @return An instrumentation that represents this chained instrumentation application.
+     */
     public Instrumentation andThen(Instrumentation instrumentation) {
         return new Compound(new MethodDelegation(instrumentationDelegate,
                 parameterBinders,

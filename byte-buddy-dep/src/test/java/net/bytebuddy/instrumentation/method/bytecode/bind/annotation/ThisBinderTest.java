@@ -88,6 +88,15 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
         verify(target, atLeast(1)).getParameterAnnotations();
     }
 
+    @Test
+    public void testStaticMethodIllegal() throws Exception {
+        when(target.getParameterTypes()).thenReturn(typeList);
+        when(source.isStatic()).thenReturn(true);
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
+                .bind(annotationDescription, 0, source, target, instrumentationTarget, assigner);
+        assertThat(parameterBinding.isValid(), is(false));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testPrimitiveType() throws Exception {
         when(parameterType.isPrimitive()).thenReturn(true);

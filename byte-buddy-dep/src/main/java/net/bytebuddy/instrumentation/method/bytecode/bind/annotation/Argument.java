@@ -216,7 +216,7 @@ public @interface Argument {
          * An iterator that creates {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument}
          * annotations for any non-referenced index of the source method.
          */
-        private static class NextUnboundArgumentIterator implements Iterator<AnnotationDescription> {
+        protected static class NextUnboundArgumentIterator implements Iterator<AnnotationDescription> {
 
             /**
              * An iterator over all free indices.
@@ -229,7 +229,7 @@ public @interface Argument {
              *
              * @param iterator An iterator of free indices of the source method.
              */
-            private NextUnboundArgumentIterator(Iterator<Integer> iterator) {
+            protected NextUnboundArgumentIterator(Iterator<Integer> iterator) {
                 this.iterator = iterator;
             }
 
@@ -252,9 +252,17 @@ public @interface Argument {
              * A default implementation of an {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument}
              * annotation.
              */
-            private static class DefaultArgument implements Argument {
+            protected static class DefaultArgument implements Argument {
 
+                /**
+                 * The name of the value annotation parameter.
+                 */
                 private static final String VALUE = "value";
+
+                /**
+                 * The name of the value binding mechanic parameter.
+                 */
+                private static final String BINDING_MECHANIC = "bindingMechanic";
 
                 /**
                  * The index of the source method parameter to be bound.
@@ -266,7 +274,7 @@ public @interface Argument {
                  *
                  * @param parameterIndex The index of the source method parameter to be bound.
                  */
-                private DefaultArgument(int parameterIndex) {
+                protected DefaultArgument(int parameterIndex) {
                     this.parameterIndex = parameterIndex;
                 }
 
@@ -292,12 +300,14 @@ public @interface Argument {
 
                 @Override
                 public int hashCode() {
-                    return (127 * VALUE.hashCode()) ^ parameterIndex; // OpenJDK implementation of the hash code method
+                    return ((127 * BINDING_MECHANIC.hashCode()) ^ BindingMechanic.UNIQUE.hashCode())
+                            + ((127 * VALUE.hashCode()) ^ parameterIndex);
                 }
 
                 @Override
                 public String toString() {
-                    return "Argument.NextUnboundAsDefaultsProvider.DefaultArgument{parameterIndex=" + parameterIndex + '}';
+                    return "@" + Argument.class.getName() + "(bindingMechanic=" + BindingMechanic.UNIQUE.name()
+                            + ", value=" + parameterIndex + ")";
                 }
             }
         }

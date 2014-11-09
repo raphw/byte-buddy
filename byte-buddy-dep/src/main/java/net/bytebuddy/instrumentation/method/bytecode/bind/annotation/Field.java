@@ -3,6 +3,7 @@ package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
@@ -129,7 +130,7 @@ public @interface Field {
                 throw new IllegalStateException(target + " uses a @Field annotation on an non-installed type");
             }
             FieldLocator.Resolution resolution = FieldLocator.of(annotation.getValue(FIELD_NAME, String.class), source)
-                    .lookup(annotation.getValue(DEFINING_TYPE, TypeDescription.class))
+                    .lookup(annotation.getValue(DEFINING_TYPE, TypeDescription.class), instrumentationTarget.getTypeDescription())
                     .resolve(instrumentationTarget.getTypeDescription());
             return resolution.isResolved()
                     ? new MethodDelegationBinder.ParameterBinding.Anonymous(new ProxyCreation(new AccessorProxy(
@@ -264,17 +265,18 @@ public @interface Field {
                 }
 
                 @Override
-                protected LookupEngine lookup(TypeDescription typeDescription) {
+                protected LookupEngine lookup(TypeDescription typeDescription, TypeDescription instrumentedType) {
                     return typeDescription.represents(void.class)
                             ? new LookupEngine.ForHierarchy(fieldName)
-                            : new LookupEngine.ForExplicitType(fieldName, typeDescription);
+                            : new LookupEngine.ForExplicitType(fieldName,
+                            typeDescription.represents(TargetType.class) ? instrumentedType : typeDescription);
                 }
             }
 
             protected static class Illegal extends FieldLocator {
 
                 @Override
-                protected LookupEngine lookup(TypeDescription typeDescription) {
+                protected LookupEngine lookup(TypeDescription typeDescription, TypeDescription instrumentedType) {
                     return new LookupEngine.Illegal();
                 }
             }
@@ -285,7 +287,7 @@ public @interface Field {
                         : new Legal(fieldName);
             }
 
-            protected abstract LookupEngine lookup(TypeDescription typeDescription);
+            protected abstract LookupEngine lookup(TypeDescription typeDescription, TypeDescription instrumentedTyoe);
         }
 
         private static class ProxyCreation implements StackManipulation {

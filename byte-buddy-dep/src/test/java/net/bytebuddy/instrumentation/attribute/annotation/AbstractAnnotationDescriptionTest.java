@@ -1,5 +1,6 @@
 package net.bytebuddy.instrumentation.attribute.annotation;
 
+import net.bytebuddy.instrumentation.method.MethodDescription;
 import org.junit.Test;
 
 import java.lang.annotation.Annotation;
@@ -29,11 +30,19 @@ public abstract class AbstractAnnotationDescriptionTest<T extends Annotation> {
         assertThat(secondValue().getAnnotationType().represents(second().annotationType()), is(true));
     }
 
-
     @Test
     public void assertToString() throws Exception {
         assertThat(firstValue().toString(), is(first().toString()));
         assertThat(secondValue().toString(), is(second().toString()));
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testIllegalMethod() throws Exception {
+        firstValue().getValue(new MethodDescription.ForLoadedMethod(Object.class.getMethod("toString")));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testIllegalPreparation() throws Exception {
+        firstValue().prepare(Annotation.class);
+    }
 }

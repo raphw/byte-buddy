@@ -2,8 +2,15 @@ package net.bytebuddy.utility;
 
 import java.util.Arrays;
 
+/**
+ * A dispatcher for invoking {@link Object#toString()} and {@link Object#hashCode()} methods that are sensitive to
+ * array values which need redirection to different specialized methods defined by {@link java.util.Arrays}.
+ */
 public enum PropertyDispatcher {
 
+    /**
+     * A property dispatcher for a {@code boolean[]} array.
+     */
     BOOLEAN_ARRAY {
         @Override
         public String toString(Object value) {
@@ -16,6 +23,9 @@ public enum PropertyDispatcher {
         }
     },
 
+    /**
+     * A property dispatcher for a {@code byte[]} array.
+     */
     BYTE_ARRAY {
         @Override
         public String toString(Object value) {
@@ -28,6 +38,9 @@ public enum PropertyDispatcher {
         }
     },
 
+    /**
+     * A property dispatcher for a {@code short[]} array.
+     */
     SHORT_ARRAY {
         @Override
         public String toString(Object value) {
@@ -40,6 +53,9 @@ public enum PropertyDispatcher {
         }
     },
 
+    /**
+     * A property dispatcher for a {@code char[]} array.
+     */
     CHARACTER_ARRAY {
         @Override
         public String toString(Object value) {
@@ -52,6 +68,9 @@ public enum PropertyDispatcher {
         }
     },
 
+    /**
+     * A property dispatcher for a {@code int[]} array.
+     */
     INTEGER_ARRAY {
         @Override
         public String toString(Object value) {
@@ -64,6 +83,9 @@ public enum PropertyDispatcher {
         }
     },
 
+    /**
+     * A property dispatcher for a {@code long[]} array.
+     */
     LONG_ARRAY {
         @Override
         public String toString(Object value) {
@@ -76,6 +98,9 @@ public enum PropertyDispatcher {
         }
     },
 
+    /**
+     * A property dispatcher for a {@code float[]} array.
+     */
     FLOAT_ARRAY {
         @Override
         public String toString(Object value) {
@@ -88,6 +113,9 @@ public enum PropertyDispatcher {
         }
     },
 
+    /**
+     * A property dispatcher for a {@code double[]} array.
+     */
     DOUBLE_ARRAY {
         @Override
         public String toString(Object value) {
@@ -100,6 +128,9 @@ public enum PropertyDispatcher {
         }
     },
 
+    /**
+     * A property dispatcher for any {@code Object[]} array.
+     */
     REFERENCE_ARRAY {
         @Override
         public String toString(Object value) {
@@ -112,6 +143,9 @@ public enum PropertyDispatcher {
         }
     },
 
+    /**
+     * A property dispatcher for a non-array.
+     */
     NON_ARRAY {
         @Override
         public String toString(Object value) {
@@ -124,6 +158,12 @@ public enum PropertyDispatcher {
         }
     };
 
+    /**
+     * Finds a property dispatcher for a given type.
+     *
+     * @param type The type for which a property dispatcher should be found.
+     * @return A suitable property dispatcher.
+     */
     public static PropertyDispatcher of(Class<?> type) {
         if (type == boolean[].class) {
             return BOOLEAN_ARRAY;
@@ -148,7 +188,19 @@ public enum PropertyDispatcher {
         }
     }
 
+    /**
+     * Computes a string representation for the given type.
+     *
+     * @param value The value onto which a specific {@code toString} method should be invoked.
+     * @return The created string.
+     */
     public abstract String toString(Object value);
 
+    /**
+     * Computes a hash code for the given type.
+     *
+     * @param value The value onto which a specific {@code hashCode} method should be invoked.
+     * @return The created hash code.
+     */
     public abstract int hashCode(Object value);
 }

@@ -5,20 +5,43 @@ import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * A utility for draining the contents of an {@link java.io.InputStream} into a {@code byte} array.
+ */
 public class StreamDrainer {
 
+    /**
+     * The default size of the buffer for draining a stream.
+     */
     public static final int DEFAULT_BUFFER_SIZE = 1024;
 
+    /**
+     * A convenience constant referring to the value representing the end of a stream.
+     */
     private static final int END_OF_STREAM = -1;
 
+    /**
+     * A convenience constant referring to the value representing the start of a stream.
+     */
     private static final int FROM_BEGINNING = 0;
 
+    /**
+     * The buffer size for reading from a given stream.
+     */
     private final int bufferSize;
 
+    /**
+     * Creates a stream drainer with the default buffer size.
+     */
     public StreamDrainer() {
         this(DEFAULT_BUFFER_SIZE);
     }
 
+    /**
+     * Creates a stream drainer with the given buffer size.
+     *
+     * @param bufferSize The buffer size for reading from a given stream.
+     */
     public StreamDrainer(int bufferSize) {
         this.bufferSize = bufferSize;
     }
