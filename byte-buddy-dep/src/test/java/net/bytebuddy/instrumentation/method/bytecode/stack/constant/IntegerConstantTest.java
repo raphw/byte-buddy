@@ -60,7 +60,9 @@ public class IntegerConstantTest {
 
     @Test
     public void testBiPush() throws Exception {
-        StackManipulation.Size size = IntegerConstant.forValue(value).apply(methodVisitor, instrumentationContext);
+        StackManipulation integerConstant = IntegerConstant.forValue(value);
+        assertThat(integerConstant.isValid(), is(true));
+        StackManipulation.Size size = integerConstant.apply(methodVisitor, instrumentationContext);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
         pushType.verifyInstruction(methodVisitor, value);

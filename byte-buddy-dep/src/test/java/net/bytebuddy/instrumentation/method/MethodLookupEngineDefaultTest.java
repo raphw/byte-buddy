@@ -2,8 +2,8 @@ package net.bytebuddy.instrumentation.method;
 
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaVersionRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.PrecompiledTypeClassLoader;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;

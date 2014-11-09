@@ -105,7 +105,7 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
      * @param typeDescription A description of the primitive type.
      * @return A corresponding primitive unboxing delegate.
      */
-    private static PrimitiveUnboxingDelegate forPrimitive(TypeDescription typeDescription) {
+    protected static PrimitiveUnboxingDelegate forPrimitive(TypeDescription typeDescription) {
         if (typeDescription.represents(boolean.class)) {
             return BOOLEAN;
         } else if (typeDescription.represents(byte.class)) {
@@ -244,13 +244,6 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
             return new Compound(
                     primitiveUnboxingDelegate,
                     PrimitiveWideningDelegate.forPrimitive(primitiveUnboxingDelegate.primitiveType).widenTo(targetType));
-        }
-
-        @Override
-        public String toString() {
-            return "PrimitiveUnboxingDelegate.ExplicitlyTypedUnboxingResponsible{" +
-                    "primitiveUnboxingDelegate=" + primitiveUnboxingDelegate +
-                    '}';
         }
     }
 

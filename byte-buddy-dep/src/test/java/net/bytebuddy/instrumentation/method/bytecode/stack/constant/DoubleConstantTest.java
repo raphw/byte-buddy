@@ -52,7 +52,9 @@ public class DoubleConstantTest {
 
     @Test
     public void testBiPush() throws Exception {
-        StackManipulation.Size size = DoubleConstant.forValue(value).apply(methodVisitor, instrumentationContext);
+        StackManipulation doubleConstant = DoubleConstant.forValue(value);
+        assertThat(doubleConstant.isValid(), is(true));
+        StackManipulation.Size size = doubleConstant.apply(methodVisitor, instrumentationContext);
         assertThat(size.getSizeImpact(), is(2));
         assertThat(size.getMaximalSize(), is(2));
         verify(methodVisitor).visitLdcInsn(value);

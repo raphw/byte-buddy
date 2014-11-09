@@ -114,6 +114,15 @@ public class MethodConstantTest {
         verifyNoMoreInteractions(instrumentationContext);
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testTypeInitializer() throws Exception {
+        when(methodDescription.isTypeInitializer()).thenReturn(true);
+        MethodConstant.CanCache methodConstant = MethodConstant.forMethod(methodDescription);
+        assertThat(methodConstant.isValid(), is(false));
+        assertThat(methodConstant.cached().isValid(), is(false));
+        methodConstant.apply(methodVisitor, instrumentationContext);
+    }
+
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(MethodConstant.ForMethod.class).apply();

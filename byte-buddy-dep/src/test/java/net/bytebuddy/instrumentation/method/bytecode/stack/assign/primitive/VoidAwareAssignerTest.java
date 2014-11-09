@@ -5,6 +5,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
@@ -58,5 +59,16 @@ public class VoidAwareAssignerTest {
         assertThat(stackManipulation, is(chainedStackManipulation));
         verify(chainedAssigner).assign(sourceTypeDescription, targetTypeDescription, false);
         verifyNoMoreInteractions(chainedAssigner);
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(VoidAwareAssigner.class).apply();
+    }
+
+    @Test
+    public void testValueRemoval() throws Exception {
+
+
     }
 }

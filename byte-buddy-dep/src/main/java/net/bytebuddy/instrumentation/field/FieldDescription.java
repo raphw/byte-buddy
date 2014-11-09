@@ -190,15 +190,5 @@ public interface FieldDescription extends ByteCodeElement {
         public int getModifiers() {
             return modifiers;
         }
-
-        @Override
-        public String toString() {
-            return "FieldDescription.Latent{" +
-                    "fieldName='" + fieldName + '\'' +
-                    ", declaringType=" + declaringType +
-                    ", fieldType=" + fieldType +
-                    ", modifiers=" + modifiers +
-                    '}';
-        }
     }
 }

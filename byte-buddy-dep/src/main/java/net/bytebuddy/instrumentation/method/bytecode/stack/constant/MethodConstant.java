@@ -48,11 +48,37 @@ public abstract class MethodConstant implements StackManipulation {
      */
     public static CanCache forMethod(MethodDescription methodDescription) {
         if (methodDescription.isTypeInitializer()) {
-            throw new IllegalArgumentException("The type initializer cannot be represented by Java's reflection API");
+            return CanCacheIllegal.INSTANCE;
         } else if (methodDescription.isConstructor()) {
             return new ForConstructor(methodDescription);
         } else {
             return new ForMethod(methodDescription);
+        }
+    }
+
+    /**
+     * Represents a method constant that cannot be represented by Java's reflection API.
+     */
+    private static enum CanCacheIllegal implements CanCache {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        @Override
+        public StackManipulation cached() {
+            return Illegal.INSTANCE;
+        }
+
+        @Override
+        public boolean isValid() {
+            return false;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+            return Illegal.INSTANCE.apply(methodVisitor, instrumentationContext);
         }
     }
 

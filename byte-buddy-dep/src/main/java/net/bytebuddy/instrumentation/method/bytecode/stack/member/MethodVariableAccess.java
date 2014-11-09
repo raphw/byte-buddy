@@ -181,7 +181,7 @@ public enum MethodVariableAccess {
      * A handler for optionally applying a type casting for each method parameter that is loaded onto the operand
      * stack.
      */
-    private static interface TypeCastingHandler {
+    protected static interface TypeCastingHandler {
 
         /**
          * Returns the given stack manipulation while possibly wrapping the operation by a type casting
@@ -245,7 +245,6 @@ public enum MethodVariableAccess {
                 return "MethodVariableAccess.TypeCastingHandler.ForBridgeTarget{typeIterator=" + typeIterator + '}';
             }
         }
-
     }
 
     /**

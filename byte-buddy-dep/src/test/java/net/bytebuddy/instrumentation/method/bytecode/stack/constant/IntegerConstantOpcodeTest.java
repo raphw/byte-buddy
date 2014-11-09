@@ -42,6 +42,7 @@ public class IntegerConstantOpcodeTest {
         return Arrays.asList(new Object[][]{
                 {-1, Opcodes.ICONST_M1},
                 {0, Opcodes.ICONST_0},
+                {0, Opcodes.ICONST_0},
                 {1, Opcodes.ICONST_1},
                 {2, Opcodes.ICONST_2},
                 {3, Opcodes.ICONST_3},
@@ -57,7 +58,12 @@ public class IntegerConstantOpcodeTest {
 
     @Test
     public void testConstant() throws Exception {
-        StackManipulation.Size size = IntegerConstant.forValue(value).apply(methodVisitor, instrumentationContext);
+        StackManipulation loading = IntegerConstant.forValue(value);
+        if (value == 0 || value == 1) {
+            assertThat(loading, is(IntegerConstant.forValue(value == 1)));
+        }
+        assertThat(loading.isValid(), is(true));
+        StackManipulation.Size size = loading.apply(methodVisitor, instrumentationContext);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
         verify(methodVisitor).visitInsn(opcode);

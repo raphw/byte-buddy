@@ -10,9 +10,7 @@ import org.objectweb.asm.Opcodes;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isConstructor;
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isMethod;
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.named;
+import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 

@@ -50,7 +50,9 @@ public class FloatConstantTest {
 
     @Test
     public void testBiPush() throws Exception {
-        StackManipulation.Size size = FloatConstant.forValue(value).apply(methodVisitor, instrumentationContext);
+        StackManipulation floatConstant = FloatConstant.forValue(value);
+        assertThat(floatConstant.isValid(), is(true));
+        StackManipulation.Size size = floatConstant.apply(methodVisitor, instrumentationContext);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
         verify(methodVisitor).visitLdcInsn(value);

@@ -264,35 +264,6 @@ public interface InstrumentedType extends TypeDescription {
             public int getModifiers() {
                 return modifiers;
             }
-
-            @Override
-            public boolean equals(Object o) {
-                if (this == o) return true;
-                if (o == null || getClass() != o.getClass()) return false;
-                if (!super.equals(o)) return false;
-                FieldToken that = (FieldToken) o;
-                return modifiers == that.modifiers
-                        && fieldType.equals(that.fieldType)
-                        && name.equals(that.name);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = super.hashCode();
-                result = 31 * result + name.hashCode();
-                result = 31 * result + fieldType.hashCode();
-                result = 31 * result + modifiers;
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "InstrumentedType.FieldToken{" +
-                        "name='" + name + '\'' +
-                        ", fieldType=" + fieldType +
-                        ", modifiers=" + modifiers +
-                        '}';
-            }
         }
 
         /**

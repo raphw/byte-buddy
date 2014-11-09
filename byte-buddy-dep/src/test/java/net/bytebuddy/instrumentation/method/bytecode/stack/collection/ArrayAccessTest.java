@@ -72,7 +72,7 @@ public class ArrayAccessTest {
     @Test
     public void testStore() throws Exception {
         ArrayAccess arrayAccess = ArrayAccess.of(typeDescription);
-        assertThat(arrayAccess.load().isValid(), is(true));
+        assertThat(arrayAccess.store().isValid(), is(true));
         StackManipulation.Size size = arrayAccess.store().apply(methodVisitor, instrumentationContext);
         assertThat(size.getSizeImpact(), is(-(typeDescription.getStackSize().getSize() + 2)));
         assertThat(size.getMaximalSize(), is(0));

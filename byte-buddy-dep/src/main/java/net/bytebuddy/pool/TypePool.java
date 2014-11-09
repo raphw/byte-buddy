@@ -8,8 +8,8 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
-import net.bytebuddy.utility.PropertyDispatcher;
 import net.bytebuddy.utility.ByteBuddyCommons;
+import net.bytebuddy.utility.PropertyDispatcher;
 import org.objectweb.asm.*;
 import org.objectweb.asm.Type;
 
