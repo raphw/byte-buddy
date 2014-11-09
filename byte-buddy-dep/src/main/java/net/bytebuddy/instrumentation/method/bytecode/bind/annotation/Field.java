@@ -23,9 +23,8 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariable
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
-import net.bytebuddy.modifier.FieldManifestation;
-import net.bytebuddy.modifier.Visibility;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
 import java.io.Serializable;
 import java.lang.annotation.*;
@@ -325,9 +324,12 @@ public @interface Field {
                         .name(auxiliaryTypeName)
                         .modifiers(DEFAULT_TYPE_MODIFIER)
                         .implement(serializableProxy ? new Class<?>[]{Serializable.class} : new Class<?>[0])
-                        .defineField(FIELD_NAME, instrumentedType, Visibility.PRIVATE, FieldManifestation.FINAL)
-                        .defineConstructor(Collections.singletonList(instrumentedType))
-                        .intercept(ConstructorCall.INSTANCE)
+                        .defineConstructor(accessedField.isStatic()
+                                ? Collections.<TypeDescription>emptyList()
+                                : Collections.singletonList(instrumentedType))
+                        .intercept(accessedField.isStatic()
+                                ? StaticFieldConstructor.INSTANCE
+                                : new InstanceFieldConstructor(instrumentedType))
                         .method(isDeclaredBy(accessType.proxyType(getterMethod, setterMethod)))
                         .intercept(accessType.access(accessedField, assigner, methodAccessorFactory))
                         .make();
@@ -344,7 +346,9 @@ public @interface Field {
                 return new Compound(
                         TypeCreation.forType(auxiliaryType),
                         Duplication.SINGLE,
-                        MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                        accessedField.isStatic()
+                                ? LegalTrivial.INSTANCE
+                                : MethodVariableAccess.REFERENCE.loadFromIndex(0),
                         MethodInvocation.invoke(auxiliaryType.getDeclaredMethods().filter(isConstructor()).getOnly())
                 ).apply(methodVisitor, instrumentationContext);
             }
@@ -387,19 +391,19 @@ public @interface Field {
                                                       AuxiliaryType.MethodAccessorFactory methodAccessorFactory);
         }
 
-        private static enum ConstructorCall implements Instrumentation {
+        private static enum StaticFieldConstructor implements Instrumentation {
 
             INSTANCE;
 
             /**
              * A reference of the {@link Object} type default constructor.
              */
-            private final MethodDescription objectTypeDefaultConstructor;
+            protected final MethodDescription objectTypeDefaultConstructor;
 
             /**
              * Creates the constructor call singleton.
              */
-            private ConstructorCall() {
+            private StaticFieldConstructor() {
                 objectTypeDefaultConstructor = new TypeDescription.ForLoadedType(Object.class)
                         .getDeclaredMethods()
                         .filter(isConstructor())
@@ -413,15 +417,40 @@ public @interface Field {
 
             @Override
             public ByteCodeAppender appender(Target instrumentationTarget) {
+                return new ByteCodeAppender.Simple(MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                        MethodInvocation.invoke(objectTypeDefaultConstructor),
+                        MethodReturn.VOID);
+            }
+        }
+
+        private static class InstanceFieldConstructor implements Instrumentation {
+
+            private final TypeDescription instrumentedType;
+
+            private InstanceFieldConstructor(TypeDescription instrumentedType) {
+                this.instrumentedType = instrumentedType;
+            }
+
+            @Override
+            public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                return instrumentedType.withField(AccessorProxy.FIELD_NAME,
+                        this.instrumentedType,
+                        Opcodes.ACC_FINAL | Opcodes.ACC_PRIVATE);
+            }
+
+            @Override
+            public ByteCodeAppender appender(Target instrumentationTarget) {
                 return new Appender(instrumentationTarget);
             }
 
             private static class Appender implements ByteCodeAppender {
 
-                private final TypeDescription instrumentedType;
+                private final FieldDescription fieldDescription;
 
                 private Appender(Target instrumentationTarget) {
-                    instrumentedType = instrumentationTarget.getTypeDescription();
+                    fieldDescription = instrumentationTarget.getTypeDescription()
+                            .getDeclaredFields()
+                            .named(AccessorProxy.FIELD_NAME);
                 }
 
                 @Override
@@ -435,9 +464,9 @@ public @interface Field {
                                   MethodDescription instrumentedMethod) {
                     StackManipulation.Size stackSize = new StackManipulation.Compound(
                             MethodVariableAccess.REFERENCE.loadFromIndex(0),
-                            MethodInvocation.invoke(ConstructorCall.INSTANCE.objectTypeDefaultConstructor),
+                            MethodInvocation.invoke(StaticFieldConstructor.INSTANCE.objectTypeDefaultConstructor),
                             MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
-                            FieldAccess.forField(instrumentedType.getDeclaredFields().named(AccessorProxy.FIELD_NAME)).putter(),
+                            FieldAccess.forField(fieldDescription).putter(),
                             MethodReturn.VOID
                     ).apply(methodVisitor, instrumentationContext);
                     return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
@@ -490,8 +519,11 @@ public @interface Field {
                                   MethodDescription instrumentedMethod) {
                     MethodDescription getterMethod = methodAccessorFactory.registerGetterFor(accessedField);
                     StackManipulation.Size stackSize = new StackManipulation.Compound(
-                            MethodVariableAccess.REFERENCE.loadFromIndex(0),
-                            FieldAccess.forField(typeDescription.getDeclaredFields().named(AccessorProxy.FIELD_NAME)).getter(),
+                            accessedField.isStatic()
+                                    ? StackManipulation.LegalTrivial.INSTANCE
+                                    : new StackManipulation.Compound(
+                                    MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                                    FieldAccess.forField(typeDescription.getDeclaredFields().named(AccessorProxy.FIELD_NAME)).getter()),
                             MethodInvocation.invoke(getterMethod),
                             assigner.assign(getterMethod.getReturnType(), instrumentedMethod.getReturnType(), true),
                             MethodReturn.returning(instrumentedMethod.getReturnType())
@@ -547,8 +579,11 @@ public @interface Field {
                     TypeDescription parameterType = instrumentedMethod.getParameterTypes().get(0);
                     MethodDescription setterMethod = methodAccessorFactory.registerSetterFor(accessedField);
                     StackManipulation.Size stackSize = new StackManipulation.Compound(
-                            MethodVariableAccess.REFERENCE.loadFromIndex(0),
-                            FieldAccess.forField(typeDescription.getDeclaredFields().named(AccessorProxy.FIELD_NAME)).getter(),
+                            accessedField.isStatic()
+                                    ? StackManipulation.LegalTrivial.INSTANCE
+                                    : new StackManipulation.Compound(
+                                    MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                                    FieldAccess.forField(typeDescription.getDeclaredFields().named(AccessorProxy.FIELD_NAME)).getter()),
                             MethodVariableAccess.forType(parameterType).loadFromIndex(1),
                             assigner.assign(parameterType, setterMethod.getParameterTypes().get(0), true),
                             MethodInvocation.invoke(setterMethod),

@@ -79,15 +79,13 @@ public interface AuxiliaryType {
 
             @Override
             public MethodDescription registerGetterFor(FieldDescription fieldDescription) {
-                throw new IllegalStateException("It is illegal to register an accessor for this type");
+                throw new IllegalStateException("It is illegal to register a field getter for this type");
             }
 
             @Override
             public MethodDescription registerSetterFor(FieldDescription fieldDescription) {
-                throw new IllegalStateException("It is illegal to register an accessor for this type");
+                throw new IllegalStateException("It is illegal to register a field setter for this type");
             }
-
-
         }
     }
 }

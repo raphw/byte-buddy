@@ -3,7 +3,7 @@ package net.bytebuddy.instrumentation.type.auxiliary;
 import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
-public class MethodCallProxyEqualsHashCodeTest {
+public class MethodCallProxyOtherTest {
 
     @Test
     public void testEqualsHashCode() throws Exception {
@@ -11,7 +11,7 @@ public class MethodCallProxyEqualsHashCodeTest {
     }
 
     @Test
-    public void testAssignableSignatureCallEqualsHashCode() throws Exception {
+    public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(MethodCallProxy.AssignableSignatureCall.class).apply();
     }
 }

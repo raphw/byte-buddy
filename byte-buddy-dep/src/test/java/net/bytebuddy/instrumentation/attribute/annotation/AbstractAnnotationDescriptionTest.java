@@ -1,9 +1,11 @@
 package net.bytebuddy.instrumentation.attribute.annotation;
 
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.utility.PropertyDispatcher;
 import org.junit.Test;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -32,8 +34,16 @@ public abstract class AbstractAnnotationDescriptionTest<T extends Annotation> {
 
     @Test
     public void assertToString() throws Exception {
-        assertThat(firstValue().toString(), is(first().toString()));
-        assertThat(secondValue().toString(), is(second().toString()));
+        assertToString(firstValue().toString(), first());
+        assertToString(secondValue().toString(), second());
+    }
+
+    private void assertToString(String actual, T loaded) throws Exception {
+        assertThat(actual, startsWith("@" + loaded.annotationType().getName()));
+        for (Method method : loaded.annotationType().getDeclaredMethods()) {
+            assertThat(actual, containsString(method.getName() + "="
+                    + PropertyDispatcher.of(method.getReturnType()).toString(method.invoke(loaded))));
+        }
     }
 
     @Test(expected = IllegalArgumentException.class)

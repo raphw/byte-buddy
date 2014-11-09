@@ -3,6 +3,7 @@ package net.bytebuddy.instrumentation;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Field;
+import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -12,6 +13,11 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
+    @Before
+    public void setUp() throws Exception {
+        ExplicitStatic.foo = FOO;
+    }
+
     @Test
     public void testExplicitFieldAccess() throws Exception {
         DynamicType.Loaded<Explicit> loaded = instrument(Explicit.class, MethodDelegation.to(Swap.class)
@@ -20,6 +26,16 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
         assertThat(explicit.foo, is(FOO));
         explicit.swap();
         assertThat(explicit.foo, is(FOO + BAR));
+    }
+
+    @Test
+    public void testExplicitFieldAccessStatic() throws Exception {
+        DynamicType.Loaded<ExplicitStatic> loaded = instrument(ExplicitStatic.class, MethodDelegation.to(Swap.class)
+                .appendParameterBinder(Field.Binder.install(Get.class, Set.class)));
+        ExplicitStatic explicit = loaded.getLoaded().newInstance();
+        assertThat(ExplicitStatic.foo, is(FOO));
+        explicit.swap();
+        assertThat(ExplicitStatic.foo, is(FOO + BAR));
     }
 
     @Test
@@ -62,6 +78,15 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
     public static class Explicit {
 
         protected String foo = FOO;
+
+        public void swap() {
+            /* do nothing */
+        }
+    }
+
+    public static class ExplicitStatic {
+
+        protected static String foo;
 
         public void swap() {
             /* do nothing */

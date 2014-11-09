@@ -117,7 +117,7 @@ public class AnnotationDescriptionForLoadedAnnotationTest {
 
     @Test
     public void testPropertyRetrievalCasted() throws Exception {
-        assertThat(annotationDescription.getValue(methodDescription, castType), instanceOf(castType));
+        assertThat(castType.isInstance(annotationDescription.getValue(methodDescription, castType)), is(true));
         assertThat(annotationDescription.getValue(methodDescription, castType), is(expected));
     }
 
