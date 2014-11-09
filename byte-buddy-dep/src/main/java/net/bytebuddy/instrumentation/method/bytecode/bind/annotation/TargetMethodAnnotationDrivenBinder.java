@@ -7,6 +7,7 @@ import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder
 import net.bytebuddy.instrumentation.method.bytecode.stack.Removal;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
+import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 
 import java.lang.annotation.Annotation;
@@ -249,9 +250,9 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
 
             @Override
             public StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target) {
-                return assigner.assign(target.isConstructor() ? target.getDeclaringType() : target.getReturnType(),
+                return new StackManipulation.Compound(assigner.assign(target.isConstructor() ? target.getDeclaringType() : target.getReturnType(),
                         source.getReturnType(),
-                        RuntimeType.Verifier.check(target));
+                        RuntimeType.Verifier.check(target)), MethodReturn.returning(source.getReturnType()));
             }
         }
 

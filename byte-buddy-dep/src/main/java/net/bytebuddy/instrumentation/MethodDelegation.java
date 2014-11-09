@@ -17,7 +17,6 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.assign.primitive.Prim
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.primitive.VoidAwareAssigner;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.reference.ReferenceTypeAwareAssigner;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.FieldAccess;
-import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess;
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
@@ -331,7 +330,6 @@ public class MethodDelegation implements Instrumentation {
     public static MethodDelegation toInstanceField(Class<?> type, String fieldName) {
         return toInstanceField(new TypeDescription.ForLoadedType(nonNull(type)), fieldName);
     }
-
 
     /**
      * Creates an instrumentation where method calls are delegated to an instance that is manually stored in a field
@@ -978,8 +976,7 @@ public class MethodDelegation implements Instrumentation {
                           MethodDescription instrumentedMethod) {
             StackManipulation.Size stackSize = new StackManipulation.Compound(
                     preparingStackAssignment,
-                    processor.process(instrumentationTarget, instrumentedMethod, targetMethods),
-                    MethodReturn.returning(instrumentedMethod.getReturnType())
+                    processor.process(instrumentationTarget, instrumentedMethod, targetMethods)
             ).apply(methodVisitor, instrumentationContext);
             return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
         }

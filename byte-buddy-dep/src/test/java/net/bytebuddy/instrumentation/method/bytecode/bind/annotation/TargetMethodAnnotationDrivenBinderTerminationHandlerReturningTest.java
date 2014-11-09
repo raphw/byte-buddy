@@ -4,6 +4,7 @@ import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
+import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
@@ -51,7 +52,7 @@ public class TargetMethodAnnotationDrivenBinderTerminationHandlerReturningTest {
     public void testApplication() throws Exception {
         StackManipulation stackManipulation = TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE
                 .resolve(assigner, source, target);
-        assertThat(stackManipulation, is(this.stackManipulation));
+        assertThat(stackManipulation, is((StackManipulation) new StackManipulation.Compound(this.stackManipulation, MethodReturn.REFERENCE)));
         verify(annotationList).isAnnotationPresent(RuntimeType.class);
     }
 }

@@ -4,8 +4,6 @@ import net.bytebuddy.instrumentation.method.matcher.MethodMatchers;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.NoSuchElementException;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -33,7 +31,7 @@ public class MethodListEmptyTest {
         assertThat(methodList.filter(MethodMatchers.any()), is(methodList));
     }
 
-    @Test(expected = NoSuchElementException.class)
+    @Test(expected = IndexOutOfBoundsException.class)
     public void testNoElements() throws Exception {
         methodList.get(0);
     }

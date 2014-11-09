@@ -17,8 +17,7 @@ import java.lang.annotation.Annotation;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
 
@@ -50,6 +49,7 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
     @Before
     public void setUp() throws Exception {
         annotation = mock(annotationType);
+        doReturn(annotationType).when(annotation).annotationType();
         annotationDescription = AnnotationDescription.ForLoadedAnnotation.of(annotation);
         when(source.getParameterTypes()).thenReturn(sourceTypeList);
         when(target.getParameterTypes()).thenReturn(targetTypeList);
