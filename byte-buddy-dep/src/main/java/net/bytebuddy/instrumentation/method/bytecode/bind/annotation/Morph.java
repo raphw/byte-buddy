@@ -25,9 +25,8 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariable
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
-import net.bytebuddy.modifier.FieldManifestation;
-import net.bytebuddy.modifier.Visibility;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
 import java.io.Serializable;
 import java.lang.annotation.*;
@@ -103,7 +102,7 @@ public @interface Morph {
             Instrumentation.SpecialMethodInvocation specialMethodInvocation = instrumentationTarget.invokeSuper(source,
                     Instrumentation.Target.MethodLookup.Default.EXACT);
             return specialMethodInvocation.isValid()
-                    ? new MethodDelegationBinder.ParameterBinding.Anonymous(new Redirection(forwardingMethod.getDeclaringType(),
+                    ? new MethodDelegationBinder.ParameterBinding.Anonymous(new RedirectionProxy(forwardingMethod.getDeclaringType(),
                     instrumentationTarget.getTypeDescription(),
                     specialMethodInvocation,
                     assigner,
@@ -138,7 +137,7 @@ public @interface Morph {
             return "Morph.Binder{forwardingMethod=" + forwardingMethod + '}';
         }
 
-        protected static class Redirection implements AuxiliaryType, StackManipulation {
+        protected static class RedirectionProxy implements AuxiliaryType, StackManipulation {
 
             private static final String FIELD_NAME = "target";
 
@@ -163,12 +162,12 @@ public @interface Morph {
              */
             private final Factory methodLookupEngineFactory;
 
-            protected Redirection(TypeDescription forwardingType,
-                                  TypeDescription instrumentedType,
-                                  Instrumentation.SpecialMethodInvocation specialMethodInvocation,
-                                  Assigner assigner,
-                                  boolean serializableProxy,
-                                  Factory methodLookupEngineFactory) {
+            protected RedirectionProxy(TypeDescription forwardingType,
+                                       TypeDescription instrumentedType,
+                                       Instrumentation.SpecialMethodInvocation specialMethodInvocation,
+                                       Assigner assigner,
+                                       boolean serializableProxy,
+                                       Factory methodLookupEngineFactory) {
                 this.forwardingType = forwardingType;
                 this.instrumentedType = instrumentedType;
                 this.specialMethodInvocation = specialMethodInvocation;
@@ -187,9 +186,12 @@ public @interface Morph {
                         .modifiers(DEFAULT_TYPE_MODIFIER)
                         .methodLookupEngine(methodLookupEngineFactory)
                         .implement(serializableProxy ? new Class<?>[]{Serializable.class} : new Class<?>[0])
-                        .defineField(FIELD_NAME, instrumentedType, Visibility.PRIVATE, FieldManifestation.FINAL)
-                        .defineConstructor(Collections.singletonList(instrumentedType))
-                        .intercept(ConstructorCall.INSTANCE)
+                        .defineConstructor(specialMethodInvocation.getMethodDescription().isStatic()
+                                ? Collections.<TypeDescription>emptyList()
+                                : Collections.singletonList(instrumentedType))
+                        .intercept(specialMethodInvocation.getMethodDescription().isStatic()
+                                ? StaticFieldConstructor.INSTANCE
+                                : new InstanceFieldConstructor(instrumentedType))
                         .method(isDeclaredBy(forwardingType))
                         .intercept(new MethodCall(methodAccessorFactory.registerAccessorFor(specialMethodInvocation), assigner))
                         .make();
@@ -215,7 +217,7 @@ public @interface Morph {
             public boolean equals(Object other) {
                 if (this == other) return true;
                 if (other == null || getClass() != other.getClass()) return false;
-                Redirection that = (Redirection) other;
+                RedirectionProxy that = (RedirectionProxy) other;
                 return serializableProxy == that.serializableProxy
                         && assigner.equals(that.assigner)
                         && forwardingType.equals(that.forwardingType)
@@ -267,10 +269,10 @@ public @interface Morph {
 
                 private class Appender implements ByteCodeAppender {
 
-                    private final FieldDescription targetReference;
+                    private final TypeDescription typeDescription;
 
                     private Appender(Target instrumentationTarget) {
-                        targetReference = instrumentationTarget.getTypeDescription().getDeclaredFields().named(FIELD_NAME);
+                        typeDescription = instrumentationTarget.getTypeDescription();
                     }
 
                     @Override
@@ -293,8 +295,11 @@ public @interface Morph {
                             index++;
                         }
                         StackManipulation.Size stackSize = new StackManipulation.Compound(
-                                MethodVariableAccess.REFERENCE.loadFromIndex(0),
-                                FieldAccess.forField(targetReference).getter(),
+                                accessorMethod.isStatic()
+                                        ? LegalTrivial.INSTANCE
+                                        : new StackManipulation.Compound(
+                                        MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                                        FieldAccess.forField(typeDescription.getDeclaredFields().named(RedirectionProxy.FIELD_NAME)).getter()),
                                 new StackManipulation.Compound(parameterLoading),
                                 MethodInvocation.invoke(accessorMethod),
                                 assigner.assign(accessorMethod.getReturnType(), instrumentedMethod.getReturnType(), false),
@@ -311,18 +316,18 @@ public @interface Morph {
                     public boolean equals(Object other) {
                         return this == other || !(other == null || getClass() != other.getClass())
                                 && MethodCall.this.equals(((Appender) other).getMethodCall())
-                                && targetReference.equals(((Appender) other).targetReference);
+                                && typeDescription.equals(((Appender) other).typeDescription);
                     }
 
                     @Override
                     public int hashCode() {
-                        return targetReference.hashCode() + 31 * MethodCall.this.hashCode();
+                        return typeDescription.hashCode() + 31 * MethodCall.this.hashCode();
                     }
 
                     @Override
                     public String toString() {
-                        return "Morph.Binder.Redirection.MethodCall.Appender{" +
-                                "targetReference=" + targetReference +
+                        return "Morph.Binder.RedirectionProxy.MethodCall.Appender{" +
+                                "typeDescription=" + typeDescription +
                                 ", methodCall=" + MethodCall.this +
                                 '}';
                     }
@@ -349,19 +354,19 @@ public @interface Morph {
                 }
             }
 
-            private static enum ConstructorCall implements Instrumentation {
+            private static enum StaticFieldConstructor implements Instrumentation {
 
                 INSTANCE;
 
                 /**
                  * A reference of the {@link Object} type default constructor.
                  */
-                private final MethodDescription objectTypeDefaultConstructor;
+                protected final MethodDescription objectTypeDefaultConstructor;
 
                 /**
                  * Creates the constructor call singleton.
                  */
-                private ConstructorCall() {
+                private StaticFieldConstructor() {
                     objectTypeDefaultConstructor = new TypeDescription.ForLoadedType(Object.class)
                             .getDeclaredMethods()
                             .filter(isConstructor())
@@ -375,6 +380,29 @@ public @interface Morph {
 
                 @Override
                 public ByteCodeAppender appender(Target instrumentationTarget) {
+                    return new ByteCodeAppender.Simple(MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                            MethodInvocation.invoke(objectTypeDefaultConstructor),
+                            MethodReturn.VOID);
+                }
+            }
+
+            private static class InstanceFieldConstructor implements Instrumentation {
+
+                private final TypeDescription instrumentedType;
+
+                private InstanceFieldConstructor(TypeDescription instrumentedType) {
+                    this.instrumentedType = instrumentedType;
+                }
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType.withField(RedirectionProxy.FIELD_NAME,
+                            this.instrumentedType,
+                            Opcodes.ACC_FINAL | Opcodes.ACC_PRIVATE);
+                }
+
+                @Override
+                public ByteCodeAppender appender(Target instrumentationTarget) {
                     return new Appender(instrumentationTarget);
                 }
 
@@ -383,7 +411,9 @@ public @interface Morph {
                     private final FieldDescription fieldDescription;
 
                     private Appender(Target instrumentationTarget) {
-                        fieldDescription = instrumentationTarget.getTypeDescription().getDeclaredFields().named(FIELD_NAME);
+                        fieldDescription = instrumentationTarget.getTypeDescription()
+                                .getDeclaredFields()
+                                .named(RedirectionProxy.FIELD_NAME);
                     }
 
                     @Override
@@ -392,10 +422,12 @@ public @interface Morph {
                     }
 
                     @Override
-                    public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
+                    public Size apply(MethodVisitor methodVisitor,
+                                      Context instrumentationContext,
+                                      MethodDescription instrumentedMethod) {
                         StackManipulation.Size stackSize = new StackManipulation.Compound(
                                 MethodVariableAccess.REFERENCE.loadFromIndex(0),
-                                MethodInvocation.invoke(ConstructorCall.INSTANCE.objectTypeDefaultConstructor),
+                                MethodInvocation.invoke(StaticFieldConstructor.INSTANCE.objectTypeDefaultConstructor),
                                 MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
                                 FieldAccess.forField(fieldDescription).putter(),
                                 MethodReturn.VOID
