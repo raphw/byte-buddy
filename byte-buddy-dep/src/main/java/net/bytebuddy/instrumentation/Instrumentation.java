@@ -623,8 +623,14 @@ public interface Instrumentation {
              */
             private final Map<Instrumentation.SpecialMethodInvocation, MethodDescription> registeredAccessorMethods;
 
+            /**
+             * The registered getters.
+             */
             private final Map<FieldDescription, MethodDescription> registeredGetters;
 
+            /**
+             * The registered setters.
+             */
             private final Map<FieldDescription, MethodDescription> registeredSetters;
 
             /**
@@ -751,6 +757,12 @@ public interface Instrumentation {
                 return accessorMethod;
             }
 
+            /**
+             * Registers a new getter method.
+             *
+             * @param fieldDescription The field to read.
+             * @param accessorMethod   The accessor method for this field.
+             */
             private void registerGetter(FieldDescription fieldDescription,
                                         MethodDescription accessorMethod) {
                 registeredGetters.put(fieldDescription, accessorMethod);
@@ -777,6 +789,12 @@ public interface Instrumentation {
                 return accessorMethod;
             }
 
+            /**
+             * Registers a new setter method.
+             *
+             * @param fieldDescription The field to write to.
+             * @param accessorMethod   The accessor method for this field.
+             */
             private void registerSetter(FieldDescription fieldDescription,
                                         MethodDescription accessorMethod) {
                 registeredSetters.put(fieldDescription, accessorMethod);
@@ -1161,8 +1179,14 @@ public interface Instrumentation {
                 }
             }
 
+            /**
+             * An implementation for a field getter.
+             */
             private static class FieldGetter implements TypeWriter.MethodPool.Entry, ByteCodeAppender {
 
+                /**
+                 * The field to read from.
+                 */
                 private final FieldDescription fieldDescription;
 
                 private FieldGetter(FieldDescription fieldDescription) {
@@ -1232,7 +1256,6 @@ public interface Instrumentation {
                             '}';
                 }
             }
-
 
             private static class FieldSetter implements TypeWriter.MethodPool.Entry, ByteCodeAppender {
 
