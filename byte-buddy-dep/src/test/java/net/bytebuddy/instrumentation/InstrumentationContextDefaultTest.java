@@ -14,6 +14,7 @@ import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
 import net.bytebuddy.utility.MockitoRule;
 import net.bytebuddy.utility.MoreOpcodes;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -522,12 +523,21 @@ public class InstrumentationContextDefaultTest {
         assertThat(instrumentationContext.registerSetterFor(secondField), is(secondMethodDescription));
         instrumentationContext.drain(classVisitor, methodPool, injectedCode);
         verify(classVisitor).visitMethod(eq(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
-                eq("("+ QUX+ ")V"), isNull(String.class), isNull(String[].class));
+                eq("(" + QUX + ")V"), isNull(String.class), isNull(String[].class));
         verify(methodVisitor).visitCode();
         verify(methodVisitor).visitInsn(MoreOpcodes.ALOAD_0);
         verify(methodVisitor).visitFieldInsn(Opcodes.PUTSTATIC, BAZ, BAR, FOO);
         verify(methodVisitor).visitInsn(Opcodes.RETURN);
         verify(methodVisitor).visitMaxs(1, 0);
         verify(methodVisitor).visitEnd();
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(Instrumentation.Context.Default.FieldCacheAppender.class);
+        ObjectPropertyAssertion.of(Instrumentation.Context.Default.FieldCacheEntry.class);
+        ObjectPropertyAssertion.of(Instrumentation.Context.Default.AccessorMethodDelegation.class);
+        ObjectPropertyAssertion.of(Instrumentation.Context.Default.FieldSetter.class);
+        ObjectPropertyAssertion.of(Instrumentation.Context.Default.FieldGetter.class);
     }
 }

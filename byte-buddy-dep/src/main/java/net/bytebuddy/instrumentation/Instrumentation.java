@@ -949,7 +949,7 @@ public interface Instrumentation {
             /**
              * A byte code appender that writes the field cache entries to a given {@link org.objectweb.asm.MethodVisitor}.
              */
-            private static class FieldCacheAppender implements ByteCodeAppender {
+            protected static class FieldCacheAppender implements ByteCodeAppender {
 
                 /**
                  * The map of registered field cache entries.
@@ -974,9 +974,9 @@ public interface Instrumentation {
                  * @param injectedCode                The explicitly supplied injected code.
                  * @return The entry to apply to the type initializer.
                  */
-                public static TypeWriter.MethodPool.Entry resolve(TypeWriter.MethodPool.Entry originalEntry,
-                                                                  Map<FieldCacheEntry, FieldDescription> registeredFieldCacheEntries,
-                                                                  InjectedCode injectedCode) {
+                protected static TypeWriter.MethodPool.Entry resolve(TypeWriter.MethodPool.Entry originalEntry,
+                                                                     Map<FieldCacheEntry, FieldDescription> registeredFieldCacheEntries,
+                                                                     InjectedCode injectedCode) {
                     boolean defineMethod = originalEntry.isDefineMethod();
                     boolean injectCode = injectedCode.isInjected();
                     return registeredFieldCacheEntries.size() == 0 && !injectCode
@@ -1032,7 +1032,7 @@ public interface Instrumentation {
              * A field cache entry for uniquely identifying a cached field. A cached field is described by the stack
              * manipulation that loads the field's value onto the operand stack and the type of the field.
              */
-            private static class FieldCacheEntry {
+            protected static class FieldCacheEntry {
 
                 /**
                  * The field value that is represented by this field cache entry.
@@ -1050,7 +1050,7 @@ public interface Instrumentation {
                  * @param fieldValue The field value that is represented by this field cache entry.
                  * @param fieldType  The field type that is represented by this field cache entry.
                  */
-                private FieldCacheEntry(StackManipulation fieldValue, TypeDescription fieldType) {
+                protected FieldCacheEntry(StackManipulation fieldValue, TypeDescription fieldType) {
                     this.fieldValue = fieldValue;
                     this.fieldType = fieldType;
                 }
@@ -1098,7 +1098,7 @@ public interface Instrumentation {
              * An implementation of a {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Entry} for implementing
              * an accessor method.
              */
-            private static class AccessorMethodDelegation implements TypeWriter.MethodPool.Entry, ByteCodeAppender {
+            protected static class AccessorMethodDelegation implements TypeWriter.MethodPool.Entry, ByteCodeAppender {
 
                 /**
                  * The stack manipulation that represents the requested special method invocation.
@@ -1111,7 +1111,7 @@ public interface Instrumentation {
                  * @param accessorMethodInvocation The stack manipulation that represents the requested special method
                  *                                 invocation.
                  */
-                private AccessorMethodDelegation(StackManipulation accessorMethodInvocation) {
+                protected AccessorMethodDelegation(StackManipulation accessorMethodInvocation) {
                     this.accessorMethodInvocation = accessorMethodInvocation;
                 }
 
@@ -1182,14 +1182,19 @@ public interface Instrumentation {
             /**
              * An implementation for a field getter.
              */
-            private static class FieldGetter implements TypeWriter.MethodPool.Entry, ByteCodeAppender {
+            protected static class FieldGetter implements TypeWriter.MethodPool.Entry, ByteCodeAppender {
 
                 /**
                  * The field to read from.
                  */
                 private final FieldDescription fieldDescription;
 
-                private FieldGetter(FieldDescription fieldDescription) {
+                /**
+                 * Creates a new field getter instrumentation.
+                 *
+                 * @param fieldDescription The field to read.
+                 */
+                protected FieldGetter(FieldDescription fieldDescription) {
                     this.fieldDescription = fieldDescription;
                 }
 
@@ -1257,11 +1262,22 @@ public interface Instrumentation {
                 }
             }
 
-            private static class FieldSetter implements TypeWriter.MethodPool.Entry, ByteCodeAppender {
+            /**
+             * An implementation for a field setter.
+             */
+            protected static class FieldSetter implements TypeWriter.MethodPool.Entry, ByteCodeAppender {
 
+                /**
+                 * The field to write to.
+                 */
                 private final FieldDescription fieldDescription;
 
-                private FieldSetter(FieldDescription fieldDescription) {
+                /**
+                 * Creates a new field setter.
+                 *
+                 * @param fieldDescription The field to write to.
+                 */
+                protected FieldSetter(FieldDescription fieldDescription) {
                     this.fieldDescription = fieldDescription;
                 }
 
