@@ -44,7 +44,7 @@ public interface TypeList extends List<TypeDescription> {
          *
          * @param type The types to be represented by this list.
          */
-        public ForLoadedType(Class<?>[] type) {
+        public ForLoadedType(Class<?>... type) {
             this.type = type;
         }
 

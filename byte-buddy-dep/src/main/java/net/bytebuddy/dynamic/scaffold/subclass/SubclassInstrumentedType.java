@@ -205,6 +205,8 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
 
     @Override
     public AnnotationList getInheritedAnnotations() {
-        return getSupertype().getInheritedAnnotations().inherited(Collections.<TypeDescription>emptySet());
+        return getSupertype() == null
+                ? new AnnotationList.Empty()
+                : getSupertype().getInheritedAnnotations().inherited(Collections.<TypeDescription>emptySet());
     }
 }

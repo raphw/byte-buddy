@@ -1,55 +1,40 @@
 package net.bytebuddy.instrumentation.field;
 
-import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.test.packaging.PackagePrivateField;
-import org.junit.Before;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import org.junit.Test;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.reflect.Field;
+
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 
-public class FieldDescriptionForLoadedFieldTest {
+public class FieldDescriptionForLoadedFieldTest extends AbstractFieldDescriptionTest {
 
-    private static final String FOO = "foo";
-    private FieldDescription fieldDescription;
-    private FieldDescription privateField;
-    private FieldDescription packagePrivateField;
-    private FieldDescription protectedField;
-
-    @Before
-    public void setUp() throws Exception {
-        fieldDescription = new FieldDescription.ForLoadedField(Foo.class.getDeclaredField(FOO));
-        protectedField = new FieldDescription.ForLoadedField(PackagePrivateField.class.getDeclaredField(PackagePrivateField.PROTECTED_FIELD_NAME));
-        packagePrivateField = new FieldDescription.ForLoadedField(PackagePrivateField.class.getDeclaredField(PackagePrivateField.PACKAGE_PRIVATE_FIELD_NAME));
-        privateField = new FieldDescription.ForLoadedField(PackagePrivateField.class.getDeclaredField(PackagePrivateField.PRIVATE_FIELD_NAME));
+    @Override
+    protected FieldDescription describe(Field field) {
+        return new FieldDescription.ForLoadedField(field);
     }
 
     @Test
-    public void testFieldName() throws Exception {
-        assertThat(fieldDescription.getName(), is(FOO));
-        assertThat(fieldDescription.getInternalName(), is(FOO));
+    public void testAnnotations() throws Exception {
+        assertThat(describe(Sample.class.getDeclaredField("annotated")).getDeclaredAnnotations(),
+                is((AnnotationList) new AnnotationList.ForLoadedAnnotation(Sample.class
+                        .getDeclaredField("annotated").getDeclaredAnnotations())));
+        assertThat(describe(Sample.class.getDeclaredField("nonAnnotated")).getDeclaredAnnotations(),
+                is((AnnotationList) new AnnotationList.Empty()));
     }
 
-    @Test
-    public void testIsVisibleTo() throws Exception {
-        assertThat(fieldDescription.isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(true));
-        assertThat(privateField.isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
-        assertThat(packagePrivateField.isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
-        assertThat(protectedField.isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+    private static class Sample {
+
+        @SampleAnnotation
+        private Void annotated;
+
+        private Void nonAnnotated;
     }
 
-    @Test
-    public void testFieldType() throws Exception {
-        assertThat(fieldDescription.getFieldType().represents(Object.class), is(true));
-    }
-
-    @Test
-    public void testDeclaringType() throws Exception {
-        assertThat(fieldDescription.getDeclaringType().represents(Foo.class), is(true));
-    }
-
-    private static class Foo {
-
-        public Object foo;
+    @Retention(RetentionPolicy.RUNTIME)
+    private @interface SampleAnnotation {
     }
 }

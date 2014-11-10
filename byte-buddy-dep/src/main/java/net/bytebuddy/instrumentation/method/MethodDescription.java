@@ -214,7 +214,7 @@ public interface MethodDescription extends ByteCodeElement {
             return isPublic()
                     || typeDescription.equals(getDeclaringType())
                     || (isProtected() && getDeclaringType().isAssignableFrom(typeDescription))
-                    || (!isPrivate() && typeDescription.getPackageName().equals(getDeclaringType().getPackageName()));
+                    || (!isPrivate() && typeDescription.isSamePackage(getDeclaringType()));
         }
 
         @Override

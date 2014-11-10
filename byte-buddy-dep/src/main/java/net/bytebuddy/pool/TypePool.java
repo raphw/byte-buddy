@@ -794,7 +794,7 @@ public interface TypePool {
 
         @Override
         public TypeDescription getSupertype() {
-            return superTypeName == null
+            return superTypeName == null || isInterface()
                     ? null
                     : typePool.describe(superTypeName);
         }

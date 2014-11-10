@@ -12,6 +12,7 @@ import org.objectweb.asm.Type;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -119,6 +120,13 @@ public interface TypeDescription extends ByteCodeElement {
      * @return A list of interfaces that are implemented by this type.
      */
     TypeList getInterfaces();
+
+    /**
+     * Returns all interfaces that are implemented by this type, either directly or indirectly.
+     *
+     * @return A list of all interfaces of this type in random order.
+     */
+    TypeList getInheritedInterfaces();
 
     /**
      * Returns a description of the enclosing method of this type.
@@ -254,6 +262,14 @@ public interface TypeDescription extends ByteCodeElement {
     AnnotationList getInheritedAnnotations();
 
     /**
+     * Checks if two types are defined in the same package.
+     *
+     * @param typeDescription The type of interest.
+     * @return {@code true} if this type and the given type are in the same package.
+     */
+    boolean isSamePackage(TypeDescription typeDescription);
+
+    /**
      * An abstract base implementation of a type description.
      */
     abstract static class AbstractTypeDescription extends AbstractModifierReviewable implements TypeDescription {
@@ -269,16 +285,6 @@ public interface TypeDescription extends ByteCodeElement {
         }
 
         @Override
-        public String getPackageName() {
-            int packageIndex = getName().lastIndexOf('.');
-            if (packageIndex == -1) {
-                return "";
-            } else {
-                return getName().substring(0, packageIndex);
-            }
-        }
-
-        @Override
         public int getActualModifiers(boolean superFlag) {
             int actualModifiers;
             if (isPrivate()) {
@@ -288,7 +294,7 @@ public interface TypeDescription extends ByteCodeElement {
             } else {
                 actualModifiers = getModifiers() & ~Opcodes.ACC_STATIC;
             }
-            return actualModifiers | (superFlag ? Opcodes.ACC_SUPER : 0);
+            return superFlag ? (actualModifiers | Opcodes.ACC_SUPER) : actualModifiers;
         }
 
         @Override
@@ -297,10 +303,40 @@ public interface TypeDescription extends ByteCodeElement {
         }
 
         @Override
+        public boolean isSamePackage(TypeDescription typeDescription) {
+            String thisPackage = getPackageName(), otherPackage = typeDescription.getPackageName();
+            return (thisPackage == null && otherPackage == null) || (thisPackage != null && thisPackage.equals(otherPackage));
+        }
+
+        @Override
         public boolean isVisibleTo(TypeDescription typeDescription) {
-            return isPublic()
-                    || (isPackagePrivate() && typeDescription.getPackageName().equals(getPackageName()))
-                    || (isProtected() && getEnclosingClass() != null && getEnclosingClass().isAssignableFrom(typeDescription));
+            return isPublic() || isProtected() || isSamePackage(typeDescription);
+        }
+
+        @Override
+        public TypeList getInheritedInterfaces() {
+            Set<TypeDescription> interfaces = new HashSet<TypeDescription>();
+            TypeDescription current = this;
+            do {
+                for (TypeDescription interfaceType : current.getInterfaces()) {
+                    collect(interfaceType, interfaces);
+                }
+            } while ((current = current.getSupertype()) != null);
+            return new TypeList.Explicit(new ArrayList<TypeDescription>(interfaces));
+        }
+
+        /**
+         * Collects all interfaces for a given type description.
+         *
+         * @param typeDescription An interface type to check for other interfaces.
+         * @param interfaces      A collection of already discovered interfaces.
+         */
+        private static void collect(TypeDescription typeDescription, Set<TypeDescription> interfaces) {
+            if (interfaces.add(typeDescription)) {
+                for (TypeDescription interfaceType : typeDescription.getInterfaces()) {
+                    collect(interfaceType, interfaces);
+                }
+            }
         }
 
         @Override
@@ -350,9 +386,13 @@ public interface TypeDescription extends ByteCodeElement {
 
         @Override
         public String toString() {
-            return (isPrimitive() ? "" : (isInterface() ? "interface" : "class")) + " " + getName();
+            return (isPrimitive() ? "" : (isInterface() ? "interface" : "class") + " ") + getName();
         }
 
+        /**
+         * An adapter implementation of a {@link net.bytebuddy.instrumentation.type.TypeDescription} that
+         * describes any type that is not an array or a primitive type.
+         */
         public abstract static class OfSimpleType extends AbstractTypeDescription {
 
             /**
@@ -367,6 +407,10 @@ public interface TypeDescription extends ByteCodeElement {
                 // Means that '[sourceType] var = ([targetType]) val;' is a valid assignment. This is true, if:
                 // (1) Both types are equal.
                 if (sourceType.equals(targetType)) {
+                    return true;
+                }
+                // Interfaces do not extend the Object type but are assignable to the Object type.
+                if (sourceType.represents(Object.class) && !targetType.isPrimitive()) {
                     return true;
                 }
                 // The sub type has a super type and this super type is assignable to the super type.
@@ -445,7 +489,7 @@ public interface TypeDescription extends ByteCodeElement {
 
             @Override
             public String getPackageName() {
-                int packageIndex = getInternalName().lastIndexOf('/');
+                int packageIndex = getName().lastIndexOf('.');
                 return packageIndex == -1
                         ? ""
                         : getName().substring(0, packageIndex);
@@ -609,7 +653,8 @@ public interface TypeDescription extends ByteCodeElement {
 
         @Override
         public String getPackageName() {
-            return type.getPackage().getName();
+            Package packageReference = type.getPackage();
+            return packageReference == null ? null : packageReference.getName();
         }
 
         @Override
@@ -653,6 +698,9 @@ public interface TypeDescription extends ByteCodeElement {
         }
     }
 
+    /**
+     * A projection for an array type based on an existing {@link net.bytebuddy.instrumentation.type.TypeDescription}
+     */
     static class ArrayProjection extends AbstractTypeDescription {
 
         /**
@@ -660,6 +708,13 @@ public interface TypeDescription extends ByteCodeElement {
          */
         private static final int ARRAY_MODIFIERS = Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL | Opcodes.ACC_ABSTRACT;
 
+        /**
+         * Creates an array projection.
+         *
+         * @param componentType The component type of the array.
+         * @param arity         The arity of this array.
+         * @return A projection of the component type as an arity of the given value.
+         */
         public static TypeDescription of(TypeDescription componentType, int arity) {
             if (arity == 0) {
                 return componentType;
@@ -673,10 +728,22 @@ public interface TypeDescription extends ByteCodeElement {
             return new ArrayProjection(componentType, arity);
         }
 
+        /**
+         * The base component type which is itself not an array.
+         */
         private final TypeDescription componentType;
 
+        /**
+         * The arity of this array.
+         */
         private final int arity;
 
+        /**
+         * Crrates a new array projection.
+         *
+         * @param componentType The base component type of the array which is itself not an array.
+         * @param arity         The arity of this array.
+         */
         protected ArrayProjection(TypeDescription componentType, int arity) {
             this.componentType = componentType;
             this.arity = arity;
@@ -702,6 +769,14 @@ public interface TypeDescription extends ByteCodeElement {
             return typeDescription.represents(Object.class) || isArrayAssignable(typeDescription, this);
         }
 
+        /**
+         * Checks if two types are assignable to another by first checking the array dimensions and by later
+         * checking the component types if the arity matches.
+         *
+         * @param sourceType The source type to which another type is to be assigned to.
+         * @param targetType The target type that is to be assigned to the source type.
+         * @return {@code true} if both types are assignable to one another.
+         */
         private static boolean isArrayAssignable(TypeDescription sourceType, TypeDescription targetType) {
             int sourceArity = 0, targetArity = 0;
             while (sourceType.isArray()) {
@@ -831,8 +906,17 @@ public interface TypeDescription extends ByteCodeElement {
         }
 
         @Override
+        public String getPackageName() {
+            return null;
+        }
+
+        @Override
         public String getName() {
-            return getDescriptor();
+            StringBuilder stringBuilder = new StringBuilder();
+            for (int i = 0; i < arity; i++) {
+                stringBuilder.append('[');
+            }
+            return stringBuilder.append(componentType.getDescriptor().replace('/', '.')).toString();
         }
 
         @Override
@@ -841,7 +925,7 @@ public interface TypeDescription extends ByteCodeElement {
             for (int i = 0; i < arity; i++) {
                 stringBuilder.append('[');
             }
-            return stringBuilder.append(componentType.getDescriptor().replace('/', '.')).toString();
+            return stringBuilder.append(componentType.getDescriptor()).toString();
         }
 
         @Override

@@ -21,6 +21,11 @@ public enum PropertyDispatcher {
         public int hashCode(Object value) {
             return Arrays.hashCode((boolean[]) value);
         }
+
+        @Override
+        protected boolean doEquals(Object first, Object second) {
+            return Arrays.equals((boolean[]) first, (boolean[]) second);
+        }
     },
 
     /**
@@ -35,6 +40,11 @@ public enum PropertyDispatcher {
         @Override
         public int hashCode(Object value) {
             return Arrays.hashCode((byte[]) value);
+        }
+
+        @Override
+        protected boolean doEquals(Object first, Object second) {
+            return Arrays.equals((byte[]) first, (byte[]) second);
         }
     },
 
@@ -51,6 +61,11 @@ public enum PropertyDispatcher {
         public int hashCode(Object value) {
             return Arrays.hashCode((short[]) value);
         }
+
+        @Override
+        protected boolean doEquals(Object first, Object second) {
+            return Arrays.equals((short[]) first, (short[]) second);
+        }
     },
 
     /**
@@ -65,6 +80,11 @@ public enum PropertyDispatcher {
         @Override
         public int hashCode(Object value) {
             return Arrays.hashCode((char[]) value);
+        }
+
+        @Override
+        protected boolean doEquals(Object first, Object second) {
+            return Arrays.equals((char[]) first, (char[]) second);
         }
     },
 
@@ -81,6 +101,11 @@ public enum PropertyDispatcher {
         public int hashCode(Object value) {
             return Arrays.hashCode((int[]) value);
         }
+
+        @Override
+        protected boolean doEquals(Object first, Object second) {
+            return Arrays.equals((int[]) first, (int[]) second);
+        }
     },
 
     /**
@@ -95,6 +120,11 @@ public enum PropertyDispatcher {
         @Override
         public int hashCode(Object value) {
             return Arrays.hashCode((long[]) value);
+        }
+
+        @Override
+        protected boolean doEquals(Object first, Object second) {
+            return Arrays.equals((long[]) first, (long[]) second);
         }
     },
 
@@ -111,6 +141,11 @@ public enum PropertyDispatcher {
         public int hashCode(Object value) {
             return Arrays.hashCode((float[]) value);
         }
+
+        @Override
+        protected boolean doEquals(Object first, Object second) {
+            return Arrays.equals((float[]) first, (float[]) second);
+        }
     },
 
     /**
@@ -125,6 +160,11 @@ public enum PropertyDispatcher {
         @Override
         public int hashCode(Object value) {
             return Arrays.hashCode((double[]) value);
+        }
+
+        @Override
+        protected boolean doEquals(Object first, Object second) {
+            return Arrays.equals((double[]) first, (double[]) second);
         }
     },
 
@@ -141,6 +181,11 @@ public enum PropertyDispatcher {
         public int hashCode(Object value) {
             return Arrays.hashCode((Object[]) value);
         }
+
+        @Override
+        protected boolean doEquals(Object first, Object second) {
+            return Arrays.equals((Object[]) first, (Object[]) second);
+        }
     },
 
     /**
@@ -155,6 +200,11 @@ public enum PropertyDispatcher {
         @Override
         public int hashCode(Object value) {
             return value.hashCode();
+        }
+
+        @Override
+        protected boolean doEquals(Object first, Object second) {
+            return first.equals(second);
         }
     };
 
@@ -203,4 +253,24 @@ public enum PropertyDispatcher {
      * @return The created hash code.
      */
     public abstract int hashCode(Object value);
+
+    /**
+     * Compares if two values are equal.
+     *
+     * @param first  The first value which must be of the type of this property dispatcher and not {@code null}.
+     * @param second Another value which might or might not be of the type of this property dispatcher.
+     * @return {@code true} if both values are equal.
+     */
+    public boolean equals(Object first, Object second) {
+        return second != null && (first == second || PropertyDispatcher.of(second.getClass()) == this && doEquals(first, second));
+    }
+
+    /**
+     * Compares two values that are both non-null and of the same type as the array.
+     *
+     * @param first  The first value of this property dispatcher's type.
+     * @param second The second value of this property dispatcher's type.
+     * @return {@code true} if both values are equal.
+     */
+    protected abstract boolean doEquals(Object first, Object second);
 }

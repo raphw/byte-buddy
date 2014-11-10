@@ -8,70 +8,74 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public abstract class AbstractEnumerationValueTest<T extends Enum<T>> {
+public abstract class AbstractEnumerationValueTest {
 
-    protected abstract T first();
-
-    protected abstract T second();
-
-    protected abstract AnnotationDescription.EnumerationValue firstValue();
-
-    protected abstract AnnotationDescription.EnumerationValue secondValue();
+    protected abstract AnnotationDescription.EnumerationValue describe(Enum<?> enumeration);
 
     @Test
     public void testPrecondition() throws Exception {
-        assertThat(first(), not(equalTo(second())));
-        assertThat(first(), equalTo(first()));
-        assertThat(second(), equalTo(second()));
-        assertThat(first().getDeclaringClass(), equalTo(second().getDeclaringClass()));
-        assertThat(firstValue().getEnumerationType(), equalTo(secondValue().getEnumerationType()));
-        assertThat(firstValue().getEnumerationType().represents(first().getDeclaringClass()), is(true));
-        assertThat(secondValue().getEnumerationType().represents(second().getDeclaringClass()), is(true));
+        assertThat(describe(Sample.FIRST).getEnumerationType().represents(Sample.class), is(true));
+        assertThat(describe(Other.INSTANCE).getEnumerationType().represents(Other.class), is(true));
     }
 
     @Test
     public void assertValue() throws Exception {
-        assertThat(firstValue().getValue(), is(first().name()));
-        assertThat(secondValue().getValue(), is(second().name()));
+        assertThat(describe(Sample.FIRST).getValue(), is(Sample.FIRST.name()));
+        assertThat(describe(Sample.SECOND).getValue(), is(Sample.SECOND.name()));
     }
 
     @Test
     public void assertToString() throws Exception {
-        assertThat(firstValue().toString(), is(first().toString()));
-        assertThat(secondValue().toString(), is(second().toString()));
+        assertThat(describe(Sample.FIRST).toString(), is(Sample.FIRST.toString()));
+        assertThat(describe(Sample.SECOND).toString(), is(Sample.SECOND.toString()));
     }
 
     @Test
     public void assertType() throws Exception {
-        assertThat(firstValue().getEnumerationType(), is((TypeDescription) new TypeDescription.ForLoadedType(first().getDeclaringClass())));
-        assertThat(secondValue().getEnumerationType(), is((TypeDescription) new TypeDescription.ForLoadedType(first().getDeclaringClass())));
+        assertThat(describe(Sample.FIRST).getEnumerationType(), equalTo((TypeDescription) new TypeDescription.ForLoadedType(Sample.class)));
+        assertThat(describe(Sample.SECOND).getEnumerationType(), equalTo((TypeDescription) new TypeDescription.ForLoadedType(Sample.class)));
     }
 
     @Test
     public void assertHashCode() throws Exception {
-        assertThat(firstValue().hashCode(), is(first().name().hashCode() + 31 * firstValue().getEnumerationType().hashCode()));
-        assertThat(firstValue().hashCode(), not(is(second().name().hashCode() + 31 * firstValue().getEnumerationType().hashCode())));
-        assertThat(secondValue().hashCode(), is(second().name().hashCode() + 31 * firstValue().getEnumerationType().hashCode()));
+        assertThat(describe(Sample.FIRST).hashCode(), is(Sample.FIRST.name().hashCode() + 31 * new TypeDescription.ForLoadedType(Sample.class).hashCode()));
+        assertThat(describe(Sample.SECOND).hashCode(), is(Sample.SECOND.name().hashCode() + 31 * new TypeDescription.ForLoadedType(Sample.class).hashCode()));
+        assertThat(describe(Sample.FIRST).hashCode(), not(is(describe(Sample.SECOND).hashCode())));
     }
 
     @Test
     public void assertEquals() throws Exception {
-        AnnotationDescription.EnumerationValue enumerationValue = firstValue();
-        assertThat(enumerationValue, equalTo(enumerationValue));
-        AnnotationDescription.EnumerationValue otherType = mock(AnnotationDescription.EnumerationValue.class);
-        when(otherType.getEnumerationType()).thenReturn(mock(TypeDescription.class));
-        when(otherType.getValue()).thenReturn(first().name());
-        assertThat(firstValue(), not(equalTo(otherType)));
-        assertThat(firstValue(), equalTo((AnnotationDescription.EnumerationValue) new AnnotationDescription.EnumerationValue.ForLoadedEnumeration(first())));
-        assertThat(firstValue(), not(equalTo((AnnotationDescription.EnumerationValue) new AnnotationDescription.EnumerationValue.ForLoadedEnumeration(second()))));
-        assertThat(firstValue(), not(equalTo(new Object())));
-        assertThat(firstValue(), not(equalTo(null)));
-        assertThat(firstValue(), not(equalTo(secondValue())));
+        AnnotationDescription.EnumerationValue identical = describe(Sample.FIRST);
+        assertThat(identical, equalTo(identical));
+        AnnotationDescription.EnumerationValue equalFirst = mock(AnnotationDescription.EnumerationValue.class);
+        when(equalFirst.getValue()).thenReturn(Sample.FIRST.name());
+        when(equalFirst.getEnumerationType()).thenReturn(new TypeDescription.ForLoadedType(Sample.class));
+        assertThat(describe(Sample.FIRST), equalTo(equalFirst));
+        AnnotationDescription.EnumerationValue equalSecond = mock(AnnotationDescription.EnumerationValue.class);
+        when(equalSecond.getValue()).thenReturn(Sample.SECOND.name());
+        when(equalSecond.getEnumerationType()).thenReturn(new TypeDescription.ForLoadedType(Sample.class));
+        assertThat(describe(Sample.SECOND), equalTo(equalSecond));
+        AnnotationDescription.EnumerationValue equalFirstTypeOnly = mock(AnnotationDescription.EnumerationValue.class);
+        when(equalFirstTypeOnly.getValue()).thenReturn(Sample.SECOND.name());
+        when(equalFirstTypeOnly.getEnumerationType()).thenReturn(new TypeDescription.ForLoadedType(Sample.class));
+        assertThat(describe(Sample.FIRST), not(equalTo(equalFirstTypeOnly)));
+        AnnotationDescription.EnumerationValue equalFirstNameOnly = mock(AnnotationDescription.EnumerationValue.class);
+        when(equalFirstNameOnly.getValue()).thenReturn(Sample.FIRST.name());
+        when(equalFirstNameOnly.getEnumerationType()).thenReturn(new TypeDescription.ForLoadedType(Other.class));
+        assertThat(describe(Sample.FIRST), not(equalTo(equalFirstNameOnly)));
+        assertThat(describe(Sample.FIRST), not(equalTo(equalSecond)));
+        assertThat(describe(Sample.FIRST), not(equalTo(new Object())));
+        assertThat(describe(Sample.FIRST), not(equalTo(null)));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testIncompatible() throws Exception {
-        firstValue().load(Other.class);
+        describe(Sample.FIRST).load(Other.class);
+    }
+
+    public static enum Sample {
+        FIRST,
+        SECOND
     }
 
     private static enum Other {

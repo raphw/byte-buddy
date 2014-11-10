@@ -42,10 +42,11 @@ public interface FieldDescription extends ByteCodeElement {
 
         @Override
         public boolean isVisibleTo(TypeDescription typeDescription) {
-            return isPublic()
+            return getDeclaringType().isVisibleTo(typeDescription)
+                    && (isPublic()
                     || typeDescription.equals(getDeclaringType())
                     || (isProtected() && getDeclaringType().isAssignableFrom(typeDescription))
-                    || (!isPrivate() && typeDescription.getPackageName().equals(getDeclaringType().getPackageName()));
+                    || (!isPrivate() && typeDescription.isSamePackage(getDeclaringType())));
         }
 
         @Override
@@ -57,7 +58,7 @@ public interface FieldDescription extends ByteCodeElement {
 
         @Override
         public int hashCode() {
-            return (getDeclaringType().getInternalName() + "." + getName()).hashCode();
+            return getDeclaringType().hashCode() + 31 * getName().hashCode();
         }
 
         @Override
@@ -67,7 +68,7 @@ public interface FieldDescription extends ByteCodeElement {
                 stringBuilder.append(Modifier.toString(getModifiers())).append(" ");
             }
             stringBuilder.append(getFieldType().getJavaName()).append(" ");
-            stringBuilder.append(getDeclaringType().getJavaName()).append(" ");
+            stringBuilder.append(getDeclaringType().getJavaName()).append(".");
             return stringBuilder.append(getName()).toString();
         }
     }

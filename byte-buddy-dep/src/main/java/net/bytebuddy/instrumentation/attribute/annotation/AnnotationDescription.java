@@ -6,7 +6,6 @@ import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.utility.PropertyDispatcher;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -193,7 +192,8 @@ public interface AnnotationDescription {
                 return false;
             }
             for (MethodDescription methodDescription : getAnnotationType().getDeclaredMethods()) {
-                if (!annotationDescription.getValue(methodDescription).equals(getValue(methodDescription))) {
+                Object value = getValue(methodDescription);
+                if (!PropertyDispatcher.of(value.getClass()).equals(value, annotationDescription.getValue(methodDescription))) {
                     return false;
                 }
             }
@@ -296,12 +296,8 @@ public interface AnnotationDescription {
                         ? ((MethodDescription.ForLoadedMethod) methodDescription).getLoadedMethod()
                         : annotation.annotationType().getDeclaredMethod(methodDescription.getName()))
                         .invoke(annotation), methodDescription.getReturnType());
-            } catch (IllegalAccessException e) {
+            } catch (Exception e) {
                 throw new IllegalStateException("Cannot access annotation property " + methodDescription, e);
-            } catch (InvocationTargetException e) {
-                throw new IllegalArgumentException("Error on accessing annotation property " + methodDescription, e);
-            } catch (NoSuchMethodException e) {
-                throw new IllegalArgumentException("Cannot invoke property on annotation " + methodDescription, e);
             }
         }
 
