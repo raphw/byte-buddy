@@ -1,5 +1,6 @@
 package net.bytebuddy.instrumentation.attribute;
 
+import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
@@ -9,6 +10,8 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Iterator;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
 public class FieldAttributeAppenderForLoadedFieldTest extends AbstractFieldAttributeAppenderTest {
@@ -19,6 +22,12 @@ public class FieldAttributeAppenderForLoadedFieldTest extends AbstractFieldAttri
     @Before
     public void setUp() throws Exception {
         field = Foo.class.getDeclaredField(BAR);
+    }
+
+    @Test
+    public void testMakeReturnsSameInstance() throws Exception {
+        assertThat(new FieldAttributeAppender.ForLoadedField(field).make(mock(TypeDescription.class)),
+                is((FieldAttributeAppender) new FieldAttributeAppender.ForLoadedField(field)));
     }
 
     @Test

@@ -218,7 +218,7 @@ public interface MethodAttributeAppender {
         /**
          * Represents the target on which this method attribute appender should write its annotations to.
          */
-        private static interface Target {
+        protected static interface Target {
 
             /**
              * Materializes the target for a given creation process.
@@ -262,7 +262,7 @@ public interface MethodAttributeAppender {
                  *
                  * @param parameterIndex The index of the target parameter.
                  */
-                public OnMethodParameter(int parameterIndex) {
+                protected OnMethodParameter(int parameterIndex) {
                     this.parameterIndex = parameterIndex;
                 }
 
@@ -288,7 +288,7 @@ public interface MethodAttributeAppender {
 
                 @Override
                 public String toString() {
-                    return "Target.OnMethodParameter{parameterIndex=" + parameterIndex + '}';
+                    return "MethodAttributeAppender.ForAnnotation.Target.OnMethodParameter{parameterIndex=" + parameterIndex + '}';
                 }
             }
         }
@@ -322,6 +322,7 @@ public interface MethodAttributeAppender {
                 throw new IllegalArgumentException("The constructor " + method + " has more parameters than the " +
                         "instrumented method " + methodDescription);
             }
+            // Instead of implementing the appender we piggy-back on an existing implementation.
             ForInstrumentedMethod.INSTANCE.apply(methodVisitor, new MethodDescription.ForLoadedMethod(method));
         }
 

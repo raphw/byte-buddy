@@ -5,6 +5,8 @@ import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public abstract class AbstractEnumerationValueTest<T extends Enum<T>> {
 
@@ -54,10 +56,25 @@ public abstract class AbstractEnumerationValueTest<T extends Enum<T>> {
 
     @Test
     public void assertEquals() throws Exception {
+        AnnotationDescription.EnumerationValue enumerationValue = firstValue();
+        assertThat(enumerationValue, equalTo(enumerationValue));
+        AnnotationDescription.EnumerationValue otherType = mock(AnnotationDescription.EnumerationValue.class);
+        when(otherType.getEnumerationType()).thenReturn(mock(TypeDescription.class));
+        when(otherType.getValue()).thenReturn(first().name());
+        assertThat(firstValue(), not(equalTo(otherType)));
         assertThat(firstValue(), equalTo((AnnotationDescription.EnumerationValue) new AnnotationDescription.EnumerationValue.ForLoadedEnumeration(first())));
         assertThat(firstValue(), not(equalTo((AnnotationDescription.EnumerationValue) new AnnotationDescription.EnumerationValue.ForLoadedEnumeration(second()))));
         assertThat(firstValue(), not(equalTo(new Object())));
         assertThat(firstValue(), not(equalTo(null)));
         assertThat(firstValue(), not(equalTo(secondValue())));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testIncompatible() throws Exception {
+        firstValue().load(Other.class);
+    }
+
+    private static enum Other {
+        INSTANCE
     }
 }

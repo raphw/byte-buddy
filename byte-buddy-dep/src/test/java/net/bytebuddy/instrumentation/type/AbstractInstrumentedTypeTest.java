@@ -53,6 +53,15 @@ public abstract class AbstractInstrumentedTypeTest {
         assertThat(fieldDescription.getName(), is(BAR));
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testWithFieldDouble() throws Exception {
+        TypeDescription fieldType = mock(TypeDescription.class);
+        when(fieldType.getName()).thenReturn(FOO);
+        makePlainInstrumentedType()
+                .withField(BAR, fieldType, Opcodes.ACC_PUBLIC)
+                .withField(BAR, fieldType, Opcodes.ACC_PUBLIC);
+    }
+
     @Test
     public void testWithMethod() throws Exception {
         TypeDescription returnType = mock(TypeDescription.class);
@@ -96,6 +105,15 @@ public abstract class AbstractInstrumentedTypeTest {
         assertThat(methodDescription.getExceptionTypes().size(), is(0));
         assertThat(methodDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(methodDescription.getName(), is(BAR));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testWithMethodDouble() throws Exception {
+        TypeDescription returnType = mock(TypeDescription.class);
+        when(returnType.getName()).thenReturn(FOO);
+        makePlainInstrumentedType()
+                .withMethod(BAR, returnType, Collections.<TypeDescription>emptyList(), Collections.<TypeDescription>emptyList(), Opcodes.ACC_PUBLIC)
+                .withMethod(BAR, returnType, Collections.<TypeDescription>emptyList(), Collections.<TypeDescription>emptyList(), Opcodes.ACC_PUBLIC);
     }
 
     @Test

@@ -147,6 +147,17 @@ public interface AnnotationAppender {
             }
 
             @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && classVisitor.equals(((OnType) other).classVisitor);
+            }
+
+            @Override
+            public int hashCode() {
+                return classVisitor.hashCode();
+            }
+
+            @Override
             public String toString() {
                 return "AnnotationAppender.Target.OnType{classVisitor=" + classVisitor + '}';
             }
@@ -174,6 +185,17 @@ public interface AnnotationAppender {
             @Override
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible) {
                 return methodVisitor.visitAnnotation(annotationTypeDescriptor, visible);
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && methodVisitor.equals(((OnMethod) other).methodVisitor);
+            }
+
+            @Override
+            public int hashCode() {
+                return methodVisitor.hashCode();
             }
 
             @Override
@@ -214,6 +236,18 @@ public interface AnnotationAppender {
             }
 
             @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && parameterIndex == ((OnMethodParameter) other).parameterIndex
+                        && methodVisitor.equals(((OnMethodParameter) other).methodVisitor);
+            }
+
+            @Override
+            public int hashCode() {
+                return methodVisitor.hashCode() + 31 * parameterIndex;
+            }
+
+            @Override
             public String toString() {
                 return "AnnotationAppender.Target.OnMethodParameter{" +
                         "methodVisitor=" + methodVisitor +
@@ -244,6 +278,17 @@ public interface AnnotationAppender {
             @Override
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible) {
                 return fieldVisitor.visitAnnotation(annotationTypeDescriptor, visible);
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && fieldVisitor.equals(((OnField) other).fieldVisitor);
+            }
+
+            @Override
+            public int hashCode() {
+                return fieldVisitor.hashCode();
             }
 
             @Override

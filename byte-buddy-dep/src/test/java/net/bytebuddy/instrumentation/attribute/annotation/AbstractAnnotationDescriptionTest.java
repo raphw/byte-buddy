@@ -46,6 +46,23 @@ public abstract class AbstractAnnotationDescriptionTest<T extends Annotation> {
         }
     }
 
+    @Test
+    public void testHashCode() throws Exception {
+        assertThat(firstValue().hashCode(), is(firstValue().hashCode()));
+        assertThat(firstValue().hashCode(), not(is(secondValue().hashCode())));
+    }
+
+    @Test
+    public void testEquals() throws Exception {
+        AnnotationDescription annotationDescription = firstValue();
+        assertThat(annotationDescription, equalTo(annotationDescription));
+        assertThat(firstValue(), equalTo((AnnotationDescription) AnnotationDescription.ForLoadedAnnotation.of(first())));
+        assertThat(firstValue(), not(equalTo((AnnotationDescription) AnnotationDescription.ForLoadedAnnotation.of(second()))));
+        assertThat(firstValue(), not(equalTo(new Object())));
+        assertThat(firstValue(), not(equalTo(null)));
+        assertThat(firstValue(), not(equalTo(secondValue())));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testIllegalMethod() throws Exception {
         firstValue().getValue(new MethodDescription.ForLoadedMethod(Object.class.getMethod("toString")));

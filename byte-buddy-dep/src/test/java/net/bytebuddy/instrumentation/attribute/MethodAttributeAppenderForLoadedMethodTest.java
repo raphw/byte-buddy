@@ -1,5 +1,6 @@
 package net.bytebuddy.instrumentation.attribute;
 
+import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -10,6 +11,8 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Iterator;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
 public class MethodAttributeAppenderForLoadedMethodTest extends AbstractMethodAttributeAppenderTest {
@@ -24,6 +27,18 @@ public class MethodAttributeAppenderForLoadedMethodTest extends AbstractMethodAt
         TypeList typeList = mock(TypeList.class);
         when(methodDescription.getParameterTypes()).thenReturn(typeList);
         when(typeList.size()).thenReturn(PARAMETER_INDEX + 1);
+    }
+
+    @Test
+    public void testMakeReturnsSameInstance() throws Exception {
+        assertThat(new MethodAttributeAppender.ForLoadedMethod(method).make(mock(TypeDescription.class)),
+                is((MethodAttributeAppender) new MethodAttributeAppender.ForLoadedMethod(method)));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testIllegalApplicationThrowsException() throws Exception {
+        when(methodDescription.getParameterTypes()).thenReturn(new TypeList.Empty());
+        new MethodAttributeAppender.ForLoadedMethod(method).apply(methodVisitor, methodDescription);
     }
 
     @Test
@@ -61,7 +76,7 @@ public class MethodAttributeAppenderForLoadedMethodTest extends AbstractMethodAt
         private void foo() {
         }
 
-        private void foo (Void v) {
+        private void foo(Void v) {
         }
     }
 }
