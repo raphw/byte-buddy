@@ -87,7 +87,7 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
                 "typeDescription=" + typeDescription +
                 ", defaultMethods=" + defaultMethods +
                 ", bridgeMethodResolver=" + bridgeMethodResolver +
-                ", methodRedefinitionResolver=" + methodRebaseResolver +
+                ", methodRebaseResolver=" + methodRebaseResolver +
                 '}';
     }
 

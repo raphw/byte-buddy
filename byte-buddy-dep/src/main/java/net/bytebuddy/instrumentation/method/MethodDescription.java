@@ -254,11 +254,6 @@ public interface MethodDescription extends ByteCodeElement {
         }
 
         @Override
-        public Object getDefaultValue() {
-            throw new IllegalStateException(toString() + " does not represent a default value");
-        }
-
-        @Override
         public boolean equals(Object other) {
             return other == this || other instanceof MethodDescription
                     && getUniqueSignature().equals(((MethodDescription) other).getUniqueSignature())
@@ -407,6 +402,11 @@ public interface MethodDescription extends ByteCodeElement {
         }
 
         @Override
+        public Object getDefaultValue() {
+            return null;
+        }
+
+        @Override
         public AnnotationList getDeclaredAnnotations() {
             return new AnnotationList.ForLoadedAnnotation(constructor.getDeclaredAnnotations());
         }
@@ -524,7 +524,7 @@ public interface MethodDescription extends ByteCodeElement {
         public Object getDefaultValue() {
             Object value = method.getDefaultValue();
             return value == null
-                    ? super.getDefaultValue()
+                    ? null
                     : AnnotationDescription.ForLoadedAnnotation.wrap(value, new TypeDescription.ForLoadedType(method.getReturnType()));
         }
     }
@@ -662,6 +662,11 @@ public interface MethodDescription extends ByteCodeElement {
         @Override
         public int getModifiers() {
             return modifiers;
+        }
+
+        @Override
+        public Object getDefaultValue() {
+            return null;
         }
     }
 }

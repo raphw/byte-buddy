@@ -1,17 +1,24 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
+import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.instrumentation.AbstractInstrumentationTargetTest;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.MethodList;
+import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+
+import java.util.Collections;
+import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -157,5 +164,22 @@ public class RebaseInstrumentationTargetTest extends AbstractInstrumentationTarg
         Instrumentation.SpecialMethodInvocation specialMethodInvocation = instrumentationTarget.invokeSuper(superMethod, methodLookup);
         assertThat(specialMethodInvocation.isValid(), is(false));
         verifyZeroInteractions(methodRebaseResolver);
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(RebaseInstrumentationTarget.class).refine(new ObjectPropertyAssertion.Refinement<MethodLookupEngine.Finding>() {
+            @Override
+            public void apply(MethodLookupEngine.Finding mock) {
+                when(mock.getTypeDescription()).thenReturn(mock(TypeDescription.class));
+                when(mock.getInvokableMethods()).thenReturn(new MethodList.Empty());
+                when(mock.getInvokableDefaultMethods()).thenReturn(Collections.<TypeDescription, Set<MethodDescription>>emptyMap());
+            }
+        }).refine(new ObjectPropertyAssertion.Refinement<BridgeMethodResolver.Factory>() {
+            @Override
+            public void apply(BridgeMethodResolver.Factory mock) {
+                when(mock.make(any(MethodList.class))).thenReturn(mock(BridgeMethodResolver.class));
+            }
+        }).apply();
     }
 }

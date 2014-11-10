@@ -35,7 +35,7 @@ public abstract class AbstractAnnotationDescriptionTest {
     private static final SampleEnumeration ENUMERATION = SampleEnumeration.VALUE;
     private static final Class<?> CLASS = Void.class;
     private static final Class<?> ARRAY_CLASS = Void[].class;
-    private static final Other ANNOTATION = Other.Implementation.INSTANCE;
+    private static final Other ANNOTATION = EnumerationCarrier.class.getAnnotation(Other.class);
 
     private static final boolean[] BOOLEAN_ARRAY = new boolean[]{BOOLEAN};
     private static final byte[] BYTE_ARRAY = new byte[]{BYTE};
@@ -347,16 +347,12 @@ public abstract class AbstractAnnotationDescriptionTest {
         Other[] annotationArrayValue();
     }
 
+    @Retention(RetentionPolicy.RUNTIME)
     public @interface Other {
+    }
 
-        static enum Implementation implements Other {
-            INSTANCE;
-
-            @Override
-            public Class<? extends Annotation> annotationType() {
-                return Other.class;
-            }
-        }
+    @Other
+    private static class EnumerationCarrier {
     }
 
     public static enum SampleEnumeration {

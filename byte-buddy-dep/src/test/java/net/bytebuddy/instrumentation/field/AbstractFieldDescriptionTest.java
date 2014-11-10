@@ -107,6 +107,12 @@ public abstract class AbstractFieldDescriptionTest {
     }
 
     @Test
+    public void testSynthetic() throws Exception {
+        assertThat(describe(first).isSynthetic(), is(first.isSynthetic()));
+        assertThat(describe(second).isSynthetic(), is(second.isSynthetic()));
+    }
+
+    @Test
     public void testIsVisibleTo() throws Exception {
         assertThat(describe(PublicType.class.getDeclaredField("publicField"))
                 .isVisibleTo(new TypeDescription.ForLoadedType(PublicType.class)), is(true));

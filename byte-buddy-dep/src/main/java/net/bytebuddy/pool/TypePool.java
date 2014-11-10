@@ -1161,7 +1161,7 @@ public interface TypePool {
             @Override
             public Object getDefaultValue() {
                 return defaultValue == null
-                        ? super.getDefaultValue()
+                        ? null
                         : defaultValue.resolve(typePool);
             }
         }
@@ -1277,6 +1277,9 @@ public interface TypePool {
 
             @Override
             public Object getValue(MethodDescription methodDescription) {
+                if (!methodDescription.getDeclaringType().getDescriptor().equals(annotationDescriptor)) {
+                    throw new IllegalArgumentException(methodDescription + " is not declared by " + getAnnotationType());
+                }
                 AnnotationValue<?, ?> annotationValue = values.get(methodDescription.getName());
                 return annotationValue == null
                         ? methodDescription.getDefaultValue()
@@ -1338,7 +1341,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public String toStringRepresentation() {
+                public String toStringRepresentation(ClassLoader classLoader) {
                     return value.toString();
                 }
 
@@ -1374,16 +1377,18 @@ public interface TypePool {
 
                 @Override
                 public Annotation load(ClassLoader classLoader) throws ClassNotFoundException {
-                    Class<?> annotationType = classLoader.loadClass(annotationToken.getDescriptor().replace('/', '.'));
+                    Class<?> annotationType = classLoader.loadClass(annotationToken.getDescriptor()
+                            .substring(1, annotationToken.getDescriptor().length() - 1)
+                            .replace('/', '.'));
                     return (Annotation) Proxy.newProxyInstance(classLoader, new Class<?>[]{annotationType},
                             new AnnotationInvocationHandler(classLoader, annotationType, annotationToken.getValues()));
                 }
 
                 @Override
-                public String toStringRepresentation() {
+                public String toStringRepresentation(ClassLoader classLoader) throws ClassNotFoundException {
                     StringBuilder toString = new StringBuilder();
                     toString.append('@');
-                    toString.append(annotationToken.getDescriptor().replace('/', '.'));
+                    toString.append(annotationToken.getDescriptor().replace('/', '.'), 1, annotationToken.getDescriptor().length() - 1);
                     toString.append('(');
                     boolean firstMember = true;
                     for (Map.Entry<String, AnnotationValue<?, ?>> entry : annotationToken.getValues().entrySet()) {
@@ -1394,7 +1399,7 @@ public interface TypePool {
                         }
                         toString.append(entry.getKey());
                         toString.append('=');
-                        toString.append(entry.getValue().toStringRepresentation());
+                        toString.append(entry.getValue().toStringRepresentation(classLoader));
                     }
                     toString.append(')');
                     return toString.toString();
@@ -1440,11 +1445,11 @@ public interface TypePool {
                 @Override
                 @SuppressWarnings("unchecked")
                 public Enum<?> load(ClassLoader classLoader) throws ClassNotFoundException {
-                    return Enum.valueOf((Class) (classLoader.loadClass(descriptor.replace('/', '.'))), value);
+                    return Enum.valueOf((Class) (classLoader.loadClass(descriptor.substring(1, descriptor.length() - 1).replace('/', '.'))), value);
                 }
 
                 @Override
-                public String toStringRepresentation() {
+                public String toStringRepresentation(ClassLoader classLoader) {
                     return value;
                 }
 
@@ -1465,7 +1470,7 @@ public interface TypePool {
                     return 31 * descriptor.hashCode() + value.hashCode();
                 }
 
-                private class UnloadedEnumerationValue implements AnnotationDescription.EnumerationValue {
+                private class UnloadedEnumerationValue extends AnnotationDescription.EnumerationValue.AbstractEnumerationValue {
 
                     private final TypePool typePool;
 
@@ -1480,7 +1485,7 @@ public interface TypePool {
 
                     @Override
                     public TypeDescription getEnumerationType() {
-                        return typePool.describe(descriptor);
+                        return typePool.describe(descriptor.substring(1, descriptor.length() - 1).replace('/', '.'));
                     }
 
                     @Override
@@ -1492,10 +1497,14 @@ public interface TypePool {
 
             static class ForType implements AnnotationValue<TypeDescription, Class<?>> {
 
+                private static final boolean NO_INITIALIZATION = false;
+
                 private final String name;
 
                 public ForType(Type type) {
-                    name = type.getClassName();
+                    name = type.getSort() == Type.ARRAY
+                            ? type.getInternalName().replace('/', '.')
+                            : type.getClassName();
                 }
 
                 @Override
@@ -1505,12 +1514,12 @@ public interface TypePool {
 
                 @Override
                 public Class<?> load(ClassLoader classLoader) throws ClassNotFoundException {
-                    return classLoader.loadClass(name);
+                    return Class.forName(name, NO_INITIALIZATION, classLoader);
                 }
 
                 @Override
-                public String toStringRepresentation() {
-                    return name;
+                public String toStringRepresentation(ClassLoader classLoader) throws ClassNotFoundException {
+                    return load(classLoader).toString();
                 }
 
                 @Override
@@ -1569,7 +1578,7 @@ public interface TypePool {
                     }
 
                     @Override
-                    public String toStringRepresentation() {
+                    public String toStringRepresentation(ClassLoader classLoader) {
                         return propertyDispatcher.toString(value);
                     }
 
@@ -1594,10 +1603,12 @@ public interface TypePool {
                         Class<?> componentType;
                         if (componentTypeDescription.represents(Class.class)) {
                             componentType = TypeDescription.class;
-                        } else if (componentTypeDescription.isAssignableFrom(Enum.class)) {
+                        } else if (componentTypeDescription.isAssignableTo(Enum.class)) {
                             componentType = AnnotationDescription.EnumerationValue.class;
-                        } else if (componentTypeDescription.isAssignableFrom(Annotation.class)) {
+                        } else if (componentTypeDescription.isAssignableTo(Annotation.class)) {
                             componentType = AnnotationDescription.class;
+                        } else if (componentTypeDescription.represents(String.class)) {
+                            componentType = String.class;
                         } else {
                             throw new IllegalStateException("Unexpected complex array component type " + componentTypeDescription);
                         }
@@ -1620,8 +1631,8 @@ public interface TypePool {
                     }
 
                     @Override
-                    public String toStringRepresentation() {
-                        StringBuilder toString = new StringBuilder(componentTypeReference.lookup()).append('[');
+                    public String toStringRepresentation(ClassLoader classLoader) throws ClassNotFoundException {
+                        StringBuilder toString = new StringBuilder("[");
                         boolean first = true;
                         for (AnnotationValue<?, ?> annotationValue : value) {
                             if (first) {
@@ -1629,7 +1640,7 @@ public interface TypePool {
                             } else {
                                 toString.append(", ");
                             }
-                            toString.append(annotationValue.toStringRepresentation());
+                            toString.append(annotationValue.toStringRepresentation(classLoader));
                         }
                         return toString.append(']').toString();
                     }
@@ -1666,7 +1677,7 @@ public interface TypePool {
 
             S load(ClassLoader classLoader) throws ClassNotFoundException;
 
-            String toStringRepresentation();
+            String toStringRepresentation(ClassLoader classLoader) throws ClassNotFoundException;
 
             int hashCodeRepresentation(ClassLoader classLoader) throws ClassNotFoundException;
         }
@@ -1718,7 +1729,7 @@ public interface TypePool {
                 return values.get(method).load(classLoader);
             }
 
-            protected String toStringRepresentation() {
+            protected String toStringRepresentation() throws ClassNotFoundException {
                 StringBuilder toString = new StringBuilder();
                 toString.append('@');
                 toString.append(annotationType.getName());
@@ -1732,7 +1743,7 @@ public interface TypePool {
                     }
                     toString.append(entry.getKey().getName());
                     toString.append('=');
-                    toString.append(entry.getValue().toStringRepresentation());
+                    toString.append(entry.getValue().toStringRepresentation(classLoader));
                 }
                 toString.append(')');
                 return toString.toString();
@@ -1751,7 +1762,8 @@ public interface TypePool {
                     return false;
                 }
                 for (Method method : annotationType.getDeclaredMethods()) {
-                    if (!invoke(method).equals(method.invoke(other))) {
+                    Object thisValue = invoke(method);
+                    if (!PropertyDispatcher.of(thisValue.getClass()).equals(thisValue, method.invoke(other))) {
                         return false;
                     }
                 }
@@ -1795,7 +1807,7 @@ public interface TypePool {
                     }
 
                     @Override
-                    public String toStringRepresentation() {
+                    public String toStringRepresentation(ClassLoader classLoader) {
                         return method.getDefaultValue().toString();
                     }
 
@@ -1815,7 +1827,7 @@ public interface TypePool {
                     }
 
                     @Override
-                    public String toStringRepresentation() {
+                    public String toStringRepresentation(ClassLoader classLoader) {
                         return propertyDispatcher.toString(method.getDefaultValue());
                     }
 

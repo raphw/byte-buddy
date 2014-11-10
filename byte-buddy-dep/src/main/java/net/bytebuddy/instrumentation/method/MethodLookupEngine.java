@@ -287,6 +287,11 @@ public interface MethodLookupEngine {
             }
             return false;
         }
+
+        @Override
+        public Object getDefaultValue() {
+            return methodChain.get(MOST_SPECIFIC).getDefaultValue();
+        }
     }
 
     /**
@@ -447,6 +452,11 @@ public interface MethodLookupEngine {
                 }
             }
             return invokableMethod != null;
+        }
+
+        @Override
+        public Object getDefaultValue() {
+            return null;
         }
     }
 

@@ -396,6 +396,11 @@ public interface InstrumentedType extends TypeDescription {
             public int getModifiers() {
                 return modifiers;
             }
+
+            @Override
+            public Object getDefaultValue() {
+                return null;
+            }
         }
     }
 }

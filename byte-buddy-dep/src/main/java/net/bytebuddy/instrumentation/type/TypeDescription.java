@@ -716,16 +716,14 @@ public interface TypeDescription extends ByteCodeElement {
          * @return A projection of the component type as an arity of the given value.
          */
         public static TypeDescription of(TypeDescription componentType, int arity) {
-            if (arity == 0) {
-                return componentType;
-            } else if (arity < 0) {
+            if (arity < 0) {
                 throw new IllegalArgumentException("Arrays cannot have a negative arity");
             }
             while (componentType.isArray()) {
                 componentType = componentType.getComponentType();
                 arity++;
             }
-            return new ArrayProjection(componentType, arity);
+            return arity == 0 ? componentType : new ArrayProjection(componentType, arity);
         }
 
         /**
