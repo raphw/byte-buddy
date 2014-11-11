@@ -2,7 +2,7 @@ Byte Buddy
 ==========
 
 <a href="http://bytebuddy.net">
-<img src="https://raw.githubusercontent.com/raphw/byte-buddy/gh-pages/images/logo-bg.png" alt="Byte Buddy logo" height="160px" align="right" />
+<img src="https://raw.githubusercontent.com/raphw/byte-buddy/gh-pages/images/logo-bg.png" alt="Byte Buddy logo" height="180px" align="right" />
 </a>
 
 runtime code generation on the Java platform
