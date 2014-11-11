@@ -5,6 +5,11 @@ What is Byte Buddy?
 <img src="https://raw.githubusercontent.com/raphw/byte-buddy/gh-pages/images/logo-bg.png" alt="Byte Buddy logo" height="160px" align="right" />
 </a>
 
+[![Build Status](https://travis-ci.org/raphw/byte-buddy.png)](https://travis-ci.org/raphw/byte-buddy) 
+[![Coverage Status](https://coveralls.io/repos/raphw/byte-buddy/badge.png?branch=master)](https://coveralls.io/r/raphw/byte-buddy?branch=master)
+[![Bintray](https://api.bintray.com/packages/raphw/maven/ByteBuddy/images/download.svg)](https://bintray.com/raphw/maven/ByteBuddy/_latestVersion) 
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.bytebuddy/byte-buddy-parent/badge.svg)](https://maven-badges.herokuapp.com/maven-central/net.bytebuddy/byte-buddy-parent)
+
 Byte Buddy is a code generation library for creating Java classes during the runtime of a Java application and without
 the help of a compiler. Other than the code generation utilities that
 [ship with the Java Class Library](http://docs.oracle.com/javase/6/docs/api/java/lang/reflect/Proxy.html),
@@ -33,9 +38,6 @@ such as for example *Spring* or *Hibernate* choose the latter approach which is 
 of using [*Plain Old Java Objects*](http://en.wikipedia.org/wiki/Plain_Old_Java_Object). As a result, code generation
 has become an ubiquitous concept in the Java space. Byte Buddy is an attempt to innovate the runtime creation of Java
 types in order to provide a better tool set to those relying on code generation.
-
-[![Download](https://api.bintray.com/packages/raphw/maven/ByteBuddy/images/download.png)](https://bintray.com/raphw/maven/ByteBuddy/_latestVersion)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.bytebuddy/byte-buddy-parent/badge.svg)](https://maven-badges.herokuapp.com/maven-central/net.bytebuddy/byte-buddy-parent)
 
 Hello World
 -----------
@@ -266,5 +268,3 @@ make sure you are not breaking any existing test cases. If possible, please take
 For feature requests or general feedback, you can also use the 
 [issue tracker](https://github.com/raphw/byte-buddy/issues) or contact us on 
 [our mailing list](https://groups.google.com/forum/#!forum/byte-buddy).
-
-[![Build Status](https://travis-ci.org/raphw/byte-buddy.png)](https://travis-ci.org/raphw/byte-buddy) [![Coverage Status](https://coveralls.io/repos/raphw/byte-buddy/badge.png?branch=master)](https://coveralls.io/r/raphw/byte-buddy?branch=master)
