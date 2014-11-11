@@ -254,6 +254,8 @@ public interface MethodDescription extends ByteCodeElement {
                 return false;
             } else if (isPrivate() || isConstructor()) {
                 return getDeclaringType().equals(targetType);
+            } else if (isDefaultMethod()) {
+                return targetType.getInterfaces().contains(getDeclaringType());
             } else {
                 return !isAbstract() && getDeclaringType().isAssignableFrom(targetType);
             }
@@ -360,22 +362,12 @@ public interface MethodDescription extends ByteCodeElement {
         }
 
         @Override
-        public boolean isVarArgs() {
-            return constructor.isVarArgs();
-        }
-
-        @Override
         public boolean isConstructor() {
             return true;
         }
 
         @Override
         public boolean isTypeInitializer() {
-            return false;
-        }
-
-        @Override
-        public boolean isBridge() {
             return false;
         }
 
@@ -467,11 +459,6 @@ public interface MethodDescription extends ByteCodeElement {
         @Override
         public TypeList getExceptionTypes() {
             return new TypeList.ForLoadedType(method.getExceptionTypes());
-        }
-
-        @Override
-        public boolean isVarArgs() {
-            return method.isVarArgs();
         }
 
         @Override
@@ -649,12 +636,12 @@ public interface MethodDescription extends ByteCodeElement {
 
         @Override
         public boolean represents(Method method) {
-            return false;
+            return equals(new ForLoadedMethod(method));
         }
 
         @Override
         public boolean represents(Constructor<?> constructor) {
-            return false;
+            return equals(new ForLoadedConstructor(constructor));
         }
 
         @Override

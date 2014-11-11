@@ -249,7 +249,9 @@ public class ObjectPropertyAssertion<T> {
         private void apply(Object mock) {
             for (Refinement refinement : refinements) {
                 ParameterizedType generic = (ParameterizedType) refinement.getClass().getGenericInterfaces()[0];
-                Class<?> restrained = (Class<?>) generic.getActualTypeArguments()[0];
+                Class<?> restrained = generic.getActualTypeArguments()[0] instanceof ParameterizedType
+                        ? (Class<?>) ((ParameterizedType) generic.getActualTypeArguments()[0]).getRawType()
+                        : (Class<?>) generic.getActualTypeArguments()[0];
                 if (restrained.isInstance(mock)) {
                     refinement.apply(mock);
                 }
@@ -281,7 +283,9 @@ public class ObjectPropertyAssertion<T> {
         private Object generate(Class<?> type) {
             for (Generator<?> generator : generators) {
                 ParameterizedType generic = (ParameterizedType) generator.getClass().getGenericInterfaces()[0];
-                Class<?> restrained = (Class<?>) generic.getActualTypeArguments()[0];
+                Class<?> restrained = generic.getActualTypeArguments()[0] instanceof ParameterizedType
+                        ? (Class<?>) ((ParameterizedType) generic.getActualTypeArguments()[0]).getRawType()
+                        : (Class<?>) generic.getActualTypeArguments()[0];
                 if (type.isAssignableFrom(restrained)) {
                     type = generator.generate();
                 }

@@ -10,6 +10,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -491,7 +492,7 @@ public interface TypeDescription extends ByteCodeElement {
             public String getPackageName() {
                 int packageIndex = getName().lastIndexOf('.');
                 return packageIndex == -1
-                        ? ""
+                        ? null
                         : getName().substring(0, packageIndex);
             }
 
@@ -577,18 +578,15 @@ public interface TypeDescription extends ByteCodeElement {
         }
 
         @Override
-        public boolean isSynthetic() {
-            return type.isSynthetic();
-        }
-
-        @Override
         public TypeDescription getSupertype() {
             return type.getSuperclass() == null ? null : new TypeDescription.ForLoadedType(type.getSuperclass());
         }
 
         @Override
         public TypeList getInterfaces() {
-            return new TypeList.ForLoadedType(type.getInterfaces());
+            return type.isArray()
+                    ? new TypeList.ForLoadedType(Cloneable.class, Serializable.class)
+                    : new TypeList.ForLoadedType(type.getInterfaces());
         }
 
         @Override
@@ -822,7 +820,7 @@ public interface TypeDescription extends ByteCodeElement {
 
         @Override
         public TypeList getInterfaces() {
-            return null;
+            return new TypeList.ForLoadedType(Cloneable.class, Serializable.class);
         }
 
         @Override

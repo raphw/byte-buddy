@@ -15,7 +15,7 @@ public class TypeListForLoadedTypeTest {
 
     @Before
     public void setUp() throws Exception {
-        typeList = new TypeList.ForLoadedType(new Class<?>[]{Object.class, Integer.class, long.class});
+        typeList = new TypeList.ForLoadedType(Object.class, Integer.class, long.class);
     }
 
     @Test
@@ -37,7 +37,7 @@ public class TypeListForLoadedTypeTest {
 
     @Test
     public void testEmptyList() throws Exception {
-        TypeList typeList = new TypeList.ForLoadedType(new Class<?>[0]);
+        TypeList typeList = new TypeList.ForLoadedType();
         assertThat(typeList.isEmpty(), is(true));
         assertThat(typeList.toInternalNames(), nullValue(String[].class));
     }

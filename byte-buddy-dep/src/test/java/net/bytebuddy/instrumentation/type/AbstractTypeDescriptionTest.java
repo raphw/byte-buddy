@@ -1,15 +1,20 @@
 package net.bytebuddy.instrumentation.type;
 
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
+import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import org.junit.Test;
 import org.mockito.asm.Type;
 import org.objectweb.asm.Opcodes;
 
+import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 
@@ -35,6 +40,13 @@ public abstract class AbstractTypeDescriptionTest {
             Object[].class);
 
     protected abstract TypeDescription describe(Class<?> type);
+
+    private final Class<?> constructorType;
+
+    protected AbstractTypeDescriptionTest() {
+        class ConstructorType {}
+        constructorType = ConstructorType.class;
+    }
 
     @Test
     public void testPrecondition() throws Exception {
@@ -227,6 +239,7 @@ public abstract class AbstractTypeDescriptionTest {
         assertThat(describe(SampleInterfaceImplementation.class).getInterfaces(), is((TypeList) new TypeList.ForLoadedType(SampleInterface.class)));
         assertThat(describe(SampleIndirectInterfaceImplementation.class).getInterfaces(), is((TypeList) new TypeList.Empty()));
         assertThat(describe(SampleTransitiveInterfaceImplementation.class).getInterfaces(), is((TypeList) new TypeList.ForLoadedType(SampleTransitiveInterface.class)));
+        assertThat(describe(Object[].class).getInterfaces(), is((TypeList) new TypeList.ForLoadedType(Cloneable.class, Serializable.class)));
     }
 
     @Test
@@ -290,10 +303,46 @@ public abstract class AbstractTypeDescriptionTest {
 
     @Test
     public void testAnnotations() throws Exception {
-        assertThat(describe(SampleClass.class).getDeclaredAnnotations(),
-                is((AnnotationList) new AnnotationList.ForLoadedAnnotation(SampleClass.class.getDeclaredAnnotations())));
-        assertThat(describe(SampleInterface.class).getDeclaredAnnotations(),
-                is((AnnotationList) new AnnotationList.Empty()));
+        assertAnnotations(SampleClass.class);
+        assertAnnotations(SampleInterface.class);
+        assertAnnotations(SampleClassInherited.class);
+        assertAnnotations(SampleClassInheritedOverride.class);
+    }
+
+    private void assertAnnotations(Class<?> type) {
+        assertThat(describe(type).getDeclaredAnnotations(),
+                hasItems(new AnnotationList.ForLoadedAnnotation(type.getDeclaredAnnotations())
+                        .toArray(new AnnotationDescription[type.getDeclaredAnnotations().length])));
+        assertThat(describe(type).getDeclaredAnnotations().size(), is(type.getDeclaredAnnotations().length));
+        assertThat(describe(type).getInheritedAnnotations(),
+                hasItems(new AnnotationList.ForLoadedAnnotation(type.getAnnotations())
+                        .toArray(new AnnotationDescription[type.getAnnotations().length])));
+        assertThat(describe(type).getInheritedAnnotations().size(), is(type.getAnnotations().length));
+    }
+
+    @Test
+    public void testDeclaredInMethod() throws Exception {
+        Method method = AbstractTypeDescriptionTest.class.getDeclaredMethod("testDeclaredInMethod");
+        Constructor<?> constructor = AbstractTypeDescriptionTest.class.getDeclaredConstructor();
+        class MethodSample {
+        }
+        assertThat(describe(MethodSample.class).getEnclosingMethod().represents(method), is(true));
+        assertThat(describe(constructorType).getEnclosingMethod().represents(constructor), is(true));
+        assertThat(describe(SampleClass.class).getEnclosingMethod(), nullValue(MethodDescription.class));
+        assertThat(describe(Object[].class).getEnclosingMethod(), nullValue(MethodDescription.class));
+    }
+
+    @Test
+    public void testDeclaredInType() throws Exception {
+        assertThat(describe(SampleClass.class).getEnclosingClass().represents(AbstractTypeDescriptionTest.class), is(true));
+        assertThat(describe(Object.class).getEnclosingClass(), nullValue(TypeDescription.class));
+        assertThat(describe(Object[].class).getEnclosingClass(), nullValue(TypeDescription.class));
+    }
+
+    @Test
+    public void testComponentType() throws Exception {
+        assertThat(describe(Object.class).getComponentType(), nullValue(Object.class));
+        assertThat(describe(Object[].class).getComponentType(), is(describe(Object.class)));
     }
 
     @SampleAnnotation
@@ -314,10 +363,10 @@ public abstract class AbstractTypeDescriptionTest {
         String value();
     }
 
-    @OtherAnnotation(BAR)
     public class SampleClassInherited extends SampleClass {
     }
 
+    @OtherAnnotation(BAR)
     public class SampleClassInheritedOverride extends SampleClass {
     }
 

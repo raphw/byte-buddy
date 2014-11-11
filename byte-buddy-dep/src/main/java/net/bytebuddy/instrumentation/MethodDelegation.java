@@ -628,7 +628,7 @@ public class MethodDelegation implements Instrumentation {
         if (methodList.size() == 0) {
             throw new IllegalStateException("No bindable method is visible to " + instrumentationTarget.getTypeDescription());
         }
-        return new MethodDelegationByteCodeAppender(instrumentationDelegate.getPreparingStackAssignment(instrumentationTarget.getTypeDescription()),
+        return new Appender(instrumentationDelegate.getPreparingStackAssignment(instrumentationTarget.getTypeDescription()),
                 instrumentationTarget,
                 methodList,
                 new MethodDelegationBinder.Processor(new TargetMethodAnnotationDrivenBinder(
@@ -808,7 +808,7 @@ public class MethodDelegation implements Instrumentation {
 
             @Override
             public String toString() {
-                return "MethodDelegation.InstrumentationDelegate.ForStaticFieldInstance{" +
+                return "MethodDelegation.InstrumentationDelegate.ForStaticField{" +
                         "fieldName='" + fieldName + '\'' +
                         ", delegate=" + delegate +
                         '}';
@@ -938,7 +938,7 @@ public class MethodDelegation implements Instrumentation {
     /**
      * The appender for implementing a {@link net.bytebuddy.instrumentation.MethodDelegation}.
      */
-    private static class MethodDelegationByteCodeAppender implements ByteCodeAppender {
+    protected static class Appender implements ByteCodeAppender {
 
         /**
          * The stack manipulation that is responsible for loading a potential target instance onto the stack
@@ -971,10 +971,10 @@ public class MethodDelegation implements Instrumentation {
          * @param processor                The method delegation binder processor which is responsible for implementing
          *                                 the method delegation.
          */
-        private MethodDelegationByteCodeAppender(StackManipulation preparingStackAssignment,
-                                                 Target instrumentationTarget,
-                                                 Iterable<? extends MethodDescription> targetMethods,
-                                                 MethodDelegationBinder.Processor processor) {
+        protected Appender(StackManipulation preparingStackAssignment,
+                         Target instrumentationTarget,
+                         Iterable<? extends MethodDescription> targetMethods,
+                         MethodDelegationBinder.Processor processor) {
             this.preparingStackAssignment = preparingStackAssignment;
             this.instrumentationTarget = instrumentationTarget;
             this.targetMethods = targetMethods;
@@ -1001,7 +1001,7 @@ public class MethodDelegation implements Instrumentation {
         public boolean equals(Object other) {
             if (this == other) return true;
             if (other == null || getClass() != other.getClass()) return false;
-            MethodDelegationByteCodeAppender that = (MethodDelegationByteCodeAppender) other;
+            Appender that = (Appender) other;
             return instrumentationTarget.equals(that.instrumentationTarget)
                     && preparingStackAssignment.equals(that.preparingStackAssignment)
                     && processor.equals(that.processor)
@@ -1019,7 +1019,7 @@ public class MethodDelegation implements Instrumentation {
 
         @Override
         public String toString() {
-            return "MethodDelegationByteCodeAppender{" +
+            return "MethodDelegation.Appender{" +
                     "preparingStackAssignment=" + preparingStackAssignment +
                     ", instrumentationTarget=" + instrumentationTarget +
                     ", targetMethods=" + targetMethods +

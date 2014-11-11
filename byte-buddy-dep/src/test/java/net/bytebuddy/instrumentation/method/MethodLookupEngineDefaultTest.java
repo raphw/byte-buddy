@@ -20,6 +20,8 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class MethodLookupEngineDefaultTest {
 
@@ -386,6 +388,10 @@ public class MethodLookupEngineDefaultTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(MethodLookupEngine.Default.class).apply();
+        TypeDescription typeDescription = mock(TypeDescription.class);
+        when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Empty());
+        ObjectPropertyAssertion.of(MethodLookupEngine.Default.MethodBucket.class)
+                .apply(new MethodLookupEngine.Default.MethodBucket(typeDescription));
     }
 
     private static interface SingleMethodInterface {

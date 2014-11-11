@@ -604,7 +604,7 @@ public interface MethodLookupEngine {
          * </li>
          * </ol>
          */
-        private static class MethodBucket {
+        protected static class MethodBucket {
 
             /**
              * A map of class methods by their unique signature, represented as strings.
@@ -639,7 +639,7 @@ public interface MethodLookupEngine {
              *
              * @param typeOfInterest The type for which a type extraction is performed.
              */
-            private MethodBucket(TypeDescription typeOfInterest) {
+            protected MethodBucket(TypeDescription typeOfInterest) {
                 this.typeOfInterest = typeOfInterest;
                 classMethods = new HashMap<String, MethodDescription>();
                 interfaceMethods = new HashMap<String, MethodDescription>();
@@ -811,11 +811,12 @@ public interface MethodLookupEngine {
 
             @Override
             public String toString() {
-                return "MethodBucket{" +
+                return "MethodLookupEngine.Default.MethodBucket{" +
                         "typeOfInterest=" + typeOfInterest +
                         ", classMethods=" + classMethods +
                         ", interfaceMethods=" + interfaceMethods +
                         ", processedTypes=" + processedTypes +
+                        ", virtualMethodMatcher=" + virtualMethodMatcher +
                         '}';
             }
 

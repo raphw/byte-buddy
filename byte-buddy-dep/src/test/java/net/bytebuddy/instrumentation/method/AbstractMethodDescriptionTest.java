@@ -388,16 +388,37 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(firstConstructor).getDeclaredAnnotations(), is((AnnotationList) new AnnotationList.Empty()));
         assertThat(describe(secondConstructor).getDeclaredAnnotations(),
                 is((AnnotationList) new AnnotationList.ForLoadedAnnotation(secondConstructor.getDeclaredAnnotations())));
+        assertThat(describe(firstMethod).getParameterAnnotations(), is(AnnotationList.Empty.asList(0)));
+        assertThat(describe(secondMethod).getParameterAnnotations(), is(AnnotationList.Empty.asList(2)));
+        assertThat(describe(thirdMethod).getParameterAnnotations(),
+                is(AnnotationList.ForLoadedAnnotation.asList(thirdMethod.getParameterAnnotations())));
+        assertThat(describe(firstConstructor).getParameterAnnotations(), is(AnnotationList.Empty.asList(1)));
+        assertThat(describe(secondConstructor).getParameterAnnotations(),
+                is(AnnotationList.ForLoadedAnnotation.asList(secondConstructor.getParameterAnnotations())));
+    }
+
+    @Test
+    public void testRepresents() throws Exception {
+        assertThat(describe(firstMethod).represents(firstMethod), is(true));
+        assertThat(describe(firstMethod).represents(secondMethod), is(false));
+        assertThat(describe(firstMethod).represents(thirdMethod), is(false));
+        assertThat(describe(firstMethod).represents(firstConstructor), is(false));
+        assertThat(describe(firstMethod).represents(secondConstructor), is(false));
+        assertThat(describe(firstConstructor).represents(firstConstructor), is(true));
+        assertThat(describe(firstConstructor).represents(secondConstructor), is(false));
+        assertThat(describe(firstConstructor).represents(firstMethod), is(false));
+        assertThat(describe(firstConstructor).represents(secondMethod), is(false));
+        assertThat(describe(firstConstructor).represents(thirdMethod), is(false));
     }
 
     private static abstract class Sample {
 
-        public Sample(Void argument) {
+        Sample(Void argument) {
 
         }
 
         @SampleAnnotation
-        private Sample(int[] first, long second) throws IOException {
+        private Sample(int[] first, @SampleAnnotation long second) throws IOException {
 
         }
 
@@ -405,12 +426,11 @@ public abstract class AbstractMethodDescriptionTest {
             /* do nothing */
         }
 
-        protected abstract Object second(String first, long second) throws RuntimeException;
+        protected abstract Object second(String first, long second) throws RuntimeException, IOException;
 
         @SampleAnnotation
-        public abstract boolean[] third(Object[] third, int[] forth) throws Throwable;
+        public abstract boolean[] third(@SampleAnnotation Object[] third, int[] forth) throws Throwable;
     }
-
 
     public static abstract class PublicType {
 
