@@ -196,7 +196,8 @@ public class InstrumentationContextDefaultTest {
                 any(String.class), eq(BAR), isNull(String.class), isNull());
         verify(classVisitor).visitField(eq(Instrumentation.Context.ExtractableView.FIELD_CACHE_MODIFIER),
                 any(String.class), eq(QUX), isNull(String.class), isNull());
-        verify(classVisitor).visitMethod(eq(Opcodes.ACC_STATIC), eq(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME),
+        verify(classVisitor).visitMethod(eq(MethodDescription.TYPE_INITIALIZER_MODIFIER),
+                eq(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME),
                 eq("()V"), isNull(String.class), isNull(String[].class));
         verifyNoMoreInteractions(classVisitor);
         verify(methodVisitor).visitCode();
@@ -234,7 +235,8 @@ public class InstrumentationContextDefaultTest {
                 any(String.class), eq(BAR), isNull(String.class), isNull());
         verify(classVisitor).visitField(eq(Instrumentation.Context.ExtractableView.FIELD_CACHE_MODIFIER),
                 any(String.class), eq(QUX), isNull(String.class), isNull());
-        verify(classVisitor).visitMethod(eq(Opcodes.ACC_STATIC), eq(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME),
+        verify(classVisitor).visitMethod(eq(MethodDescription.TYPE_INITIALIZER_MODIFIER),
+                eq(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME),
                 eq("()V"), isNull(String.class), isNull(String[].class));
         verifyNoMoreInteractions(classVisitor);
         verify(methodVisitor).visitCode();
@@ -273,7 +275,8 @@ public class InstrumentationContextDefaultTest {
                 any(String.class), eq(BAR), isNull(String.class), isNull());
         verify(classVisitor).visitField(eq(Instrumentation.Context.ExtractableView.FIELD_CACHE_MODIFIER),
                 any(String.class), eq(QUX), isNull(String.class), isNull());
-        verify(classVisitor).visitMethod(eq(Opcodes.ACC_STATIC), eq(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME),
+        verify(classVisitor).visitMethod(eq(MethodDescription.TYPE_INITIALIZER_MODIFIER),
+                eq(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME),
                 eq("()V"), isNull(String.class), isNull(String[].class));
         verifyNoMoreInteractions(classVisitor);
         verify(methodVisitor).visitCode();
@@ -314,7 +317,8 @@ public class InstrumentationContextDefaultTest {
                 any(String.class), eq(BAR), isNull(String.class), isNull());
         verify(classVisitor).visitField(eq(Instrumentation.Context.ExtractableView.FIELD_CACHE_MODIFIER),
                 any(String.class), eq(QUX), isNull(String.class), isNull());
-        verify(classVisitor).visitMethod(eq(Opcodes.ACC_STATIC), eq(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME),
+        verify(classVisitor).visitMethod(eq(MethodDescription.TYPE_INITIALIZER_MODIFIER),
+                eq(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME),
                 eq("()V"), isNull(String.class), isNull(String[].class));
         verifyNoMoreInteractions(classVisitor);
         verify(methodVisitor).visitCode();

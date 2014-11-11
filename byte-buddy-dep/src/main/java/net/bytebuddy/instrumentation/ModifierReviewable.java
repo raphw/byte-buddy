@@ -87,6 +87,13 @@ public interface ModifierReviewable {
     boolean isSynthetic();
 
     /**
+     * CSpecifies if the modifier described by this object is mandated.
+     *
+     * @return {@code true} if the modifier described by this object is mandated.
+     */
+    boolean isMandated();
+
+    /**
      * Specifies if the modifier described by this object reflects the type super flag.
      *
      * @return {@code true} if the modifier described by this object reflects the type super flag.
@@ -209,6 +216,11 @@ public interface ModifierReviewable {
         @Override
         public boolean isStrict() {
             return matchesMask(Modifier.STRICT);
+        }
+
+        @Override
+        public boolean isMandated() {
+            return matchesMask(Opcodes.ACC_MANDATED);
         }
 
         @Override

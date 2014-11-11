@@ -23,6 +23,7 @@ public class FieldDescriptionLatentTest extends AbstractFieldDescriptionTest {
     }
 
     @Test
+    @Override
     public void testAnnotations() throws Exception {
         assertThat(new FieldDescription.Latent(FOO,
                 mock(TypeDescription.class),

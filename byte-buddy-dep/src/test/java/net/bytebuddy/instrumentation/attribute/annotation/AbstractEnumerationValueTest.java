@@ -1,7 +1,11 @@
 package net.bytebuddy.instrumentation.attribute.annotation;
 
+import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import org.junit.Before;
 import org.junit.Test;
+
+import java.lang.reflect.Method;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -10,12 +14,30 @@ import static org.mockito.Mockito.when;
 
 public abstract class AbstractEnumerationValueTest {
 
-    protected abstract AnnotationDescription.EnumerationValue describe(Enum<?> enumeration);
+    private AnnotationDescription.EnumerationValue describe(Enum<?> enumeration) {
+        if (enumeration == Sample.FIRST) {
+            return describe(enumeration, FirstCarrier.class, new MethodDescription.ForLoadedMethod(annotationMethod));
+        } else {
+            return describe(enumeration, SecondCarrier.class, new MethodDescription.ForLoadedMethod(annotationMethod));
+        }
+    }
+
+    protected abstract AnnotationDescription.EnumerationValue describe(Enum<?> enumeration,
+                                                                       Class<?> carrierType,
+                                                                       MethodDescription annotationMethod);
+
+    private Method annotationMethod;
+
+    @Before
+    public void setUp() throws Exception {
+        annotationMethod = Carrier.class.getDeclaredMethod("value");
+    }
 
     @Test
     public void testPrecondition() throws Exception {
         assertThat(describe(Sample.FIRST).getEnumerationType().represents(Sample.class), is(true));
-        assertThat(describe(Other.INSTANCE).getEnumerationType().represents(Other.class), is(true));
+        assertThat(describe(Sample.SECOND).getEnumerationType().represents(Sample.class), is(true));
+        assertThat(describe(Sample.FIRST).getEnumerationType().represents(Other.class), is(false));
     }
 
     @Test
@@ -80,5 +102,17 @@ public abstract class AbstractEnumerationValueTest {
 
     private static enum Other {
         INSTANCE
+    }
+
+    @Carrier(Sample.FIRST)
+    private static class FirstCarrier {
+    }
+
+    @Carrier(Sample.SECOND)
+    private static class SecondCarrier {
+    }
+
+    public static @interface Carrier {
+        Sample value();
     }
 }

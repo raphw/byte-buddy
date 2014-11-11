@@ -31,6 +31,11 @@ public interface MethodDescription extends ByteCodeElement {
     static final String TYPE_INITIALIZER_INTERNAL_NAME = "<clinit>";
 
     /**
+     * The type initializer of any representation of a type initializer.
+     */
+    static final int TYPE_INITIALIZER_MODIFIER = Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
+
+    /**
      * Returns a description of the return type of the method described by this instance.
      *
      * @return A description of the return type of the method described by this instance.
@@ -211,10 +216,11 @@ public interface MethodDescription extends ByteCodeElement {
 
         @Override
         public boolean isVisibleTo(TypeDescription typeDescription) {
-            return isPublic()
+            return getDeclaringType().isVisibleTo(typeDescription)
+                    && (isPublic()
                     || typeDescription.equals(getDeclaringType())
                     || (isProtected() && getDeclaringType().isAssignableFrom(typeDescription))
-                    || (!isPrivate() && typeDescription.isSamePackage(getDeclaringType()));
+                    || (!isPrivate() && typeDescription.isSamePackage(getDeclaringType())));
         }
 
         @Override
@@ -256,13 +262,18 @@ public interface MethodDescription extends ByteCodeElement {
         @Override
         public boolean equals(Object other) {
             return other == this || other instanceof MethodDescription
-                    && getUniqueSignature().equals(((MethodDescription) other).getUniqueSignature())
-                    && getDeclaringType().equals(((MethodDescription) other).getDeclaringType());
+                    && getInternalName().equals(((MethodDescription) other).getInternalName())
+                    && getDeclaringType().equals(((MethodDescription) other).getDeclaringType())
+                    && getReturnType().equals(((MethodDescription) other).getReturnType())
+                    && getParameterTypes().equals(((MethodDescription) other).getParameterTypes());
         }
 
         @Override
         public int hashCode() {
-            return (getDeclaringType().getInternalName() + "." + getUniqueSignature()).hashCode();
+            int hashCode = getDeclaringType().hashCode();
+            hashCode = 31 * hashCode + getInternalName().hashCode();
+            hashCode = 31 * hashCode + getReturnType().hashCode();
+            return 31 * hashCode + getParameterTypes().hashCode();
         }
 
         @Override
@@ -272,8 +283,10 @@ public interface MethodDescription extends ByteCodeElement {
             if (modifiers != 0) {
                 stringBuilder.append(Modifier.toString(modifiers)).append(" ");
             }
-            stringBuilder.append(getReturnType().getJavaName()).append(" ");
-            stringBuilder.append(getDeclaringType().getJavaName()).append(".");
+            if (isMethod()) {
+                stringBuilder.append(getReturnType().getJavaName()).append(" ");
+                stringBuilder.append(getDeclaringType().getJavaName()).append(".");
+            }
             stringBuilder.append(getName()).append("(");
             boolean first = true;
             for (TypeDescription typeDescription : getParameterTypes()) {
@@ -600,7 +613,7 @@ public interface MethodDescription extends ByteCodeElement {
                     declaringType,
                     new TypeDescription.ForLoadedType(void.class),
                     new TypeList.Empty(),
-                    Opcodes.ACC_STATIC,
+                    TYPE_INITIALIZER_MODIFIER,
                     Collections.<TypeDescription>emptyList());
         }
 

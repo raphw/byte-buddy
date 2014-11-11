@@ -1,11 +1,14 @@
 package net.bytebuddy.instrumentation.field;
 
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.test.packaging.VisibilityFieldTestHelper;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.asm.Type;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Field;
 
 import static org.hamcrest.CoreMatchers.*;
@@ -156,6 +159,13 @@ public abstract class AbstractFieldDescriptionTest {
                 .isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
     }
 
+    @Test
+    public void testAnnotations() throws Exception {
+        assertThat(describe(first).getDeclaredAnnotations(), is((AnnotationList) new AnnotationList.Empty()));
+        assertThat(describe(second).getDeclaredAnnotations(),
+                is((AnnotationList) new AnnotationList.ForLoadedAnnotation(second.getDeclaredAnnotations())));
+    }
+
     protected static class FirstSample {
 
         private Void first;
@@ -163,6 +173,7 @@ public abstract class AbstractFieldDescriptionTest {
 
     protected static class SecondSample {
 
+        @SampleAnnotation
         int second;
     }
 
@@ -186,5 +197,9 @@ public abstract class AbstractFieldDescriptionTest {
         Void packagePrivateField;
 
         private Void privateField;
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    private @interface SampleAnnotation {
     }
 }

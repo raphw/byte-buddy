@@ -6,6 +6,7 @@ import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.utility.PropertyDispatcher;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -292,10 +293,17 @@ public interface AnnotationDescription {
                 throw new IllegalArgumentException(methodDescription + " does not represent " + annotation.annotationType());
             }
             try {
-                return wrap((methodDescription instanceof MethodDescription.ForLoadedMethod
+                boolean visible = methodDescription.isVisibleTo(new TypeDescription.ForLoadedType(getClass()));
+                Method method = methodDescription instanceof MethodDescription.ForLoadedMethod
                         ? ((MethodDescription.ForLoadedMethod) methodDescription).getLoadedMethod()
-                        : annotation.annotationType().getDeclaredMethod(methodDescription.getName()))
-                        .invoke(annotation), methodDescription.getReturnType());
+                        : null;
+                if (method == null || (!visible && !method.isAccessible())) {
+                    method = annotation.annotationType().getDeclaredMethod(methodDescription.getName());
+                    if (!visible) {
+                        method.setAccessible(true);
+                    }
+                }
+                return wrap(method.invoke(annotation), methodDescription.getReturnType());
             } catch (Exception e) {
                 throw new IllegalStateException("Cannot access annotation property " + methodDescription, e);
             }

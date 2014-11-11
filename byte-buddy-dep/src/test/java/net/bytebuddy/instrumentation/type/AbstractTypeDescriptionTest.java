@@ -1,11 +1,15 @@
 package net.bytebuddy.instrumentation.type;
 
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import org.junit.Test;
 import org.mockito.asm.Type;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.annotation.Annotation;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.Arrays;
 import java.util.List;
 
@@ -15,6 +19,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public abstract class AbstractTypeDescriptionTest {
+
+    private static final String FOO = "foo", BAR = "bar";
 
     private static final List<Class<?>> TYPES = Arrays.<Class<?>>asList(Object.class,
             SampleClass.class,
@@ -282,13 +288,37 @@ public abstract class AbstractTypeDescriptionTest {
         assertThat(describe(SampleAnnotation.class).isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
     }
 
+    @Test
+    public void testAnnotations() throws Exception {
+        assertThat(describe(SampleClass.class).getDeclaredAnnotations(),
+                is((AnnotationList) new AnnotationList.ForLoadedAnnotation(SampleClass.class.getDeclaredAnnotations())));
+        assertThat(describe(SampleInterface.class).getDeclaredAnnotations(),
+                is((AnnotationList) new AnnotationList.Empty()));
+    }
+
+    @SampleAnnotation
+    @OtherAnnotation(FOO)
     public class SampleClass {
     }
 
     protected static interface SampleInterface {
     }
 
+    @Retention(RetentionPolicy.RUNTIME)
     private static @interface SampleAnnotation {
+    }
+
+    @Inherited
+    @Retention(RetentionPolicy.RUNTIME)
+    private static @interface OtherAnnotation {
+        String value();
+    }
+
+    @OtherAnnotation(BAR)
+    public class SampleClassInherited extends SampleClass {
+    }
+
+    public class SampleClassInheritedOverride extends SampleClass {
     }
 
     static class SamplePackagePrivate {

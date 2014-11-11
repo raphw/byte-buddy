@@ -52,7 +52,7 @@ public abstract class AbstractAnnotationDescriptionTest {
 
     protected abstract AnnotationDescription describe(Annotation annotation, Class<?> declaringType);
 
-    protected AnnotationDescription describe(Annotation annotation) {
+    private AnnotationDescription describe(Annotation annotation) {
         return describe(annotation, annotation == first ? FooSample.class : BarSample.class);
     }
 

@@ -7,7 +7,7 @@ import org.junit.Before;
 
 import java.lang.reflect.Field;
 
-public class TypePoolDefaultFieldDescription extends AbstractFieldDescriptionTest {
+public class TypePoolDefaultFieldDescriptionTest extends AbstractFieldDescriptionTest {
 
     private TypePool typePool;
 

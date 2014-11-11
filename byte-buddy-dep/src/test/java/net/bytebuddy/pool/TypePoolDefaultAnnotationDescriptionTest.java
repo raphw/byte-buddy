@@ -7,7 +7,7 @@ import org.junit.Before;
 
 import java.lang.annotation.Annotation;
 
-public class TypePoolDefaultAnnotationDescription extends AbstractAnnotationDescriptionTest {
+public class TypePoolDefaultAnnotationDescriptionTest extends AbstractAnnotationDescriptionTest {
 
     private TypePool typePool;
 
