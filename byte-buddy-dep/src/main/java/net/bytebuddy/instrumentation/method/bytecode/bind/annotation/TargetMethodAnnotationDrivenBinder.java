@@ -239,6 +239,16 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
     public static interface TerminationHandler {
 
         /**
+         * Creates a stack manipulation that is to be applied after the method return.
+         *
+         * @param assigner The supplied assigner.
+         * @param source   The source method that is bound to the {@code target} method.
+         * @param target   The target method that is subject to be bound by the {@code source} method.
+         * @return A stack manipulation that is applied after the method return.
+         */
+        StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target);
+
+        /**
          * A termination handler that returns the return value of the interception method.
          */
         static enum Returning implements TerminationHandler {
@@ -271,16 +281,6 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 return Removal.pop(target.isConstructor() ? target.getDeclaringType() : target.getReturnType());
             }
         }
-
-        /**
-         * Creates a stack manipulation that is to be applied after the method return.
-         *
-         * @param assigner The supplied assigner.
-         * @param source   The source method that is bound to the {@code target} method.
-         * @param target   The target method that is subject to be bound by the {@code source} method.
-         * @return A stack manipulation that is applied after the method return.
-         */
-        StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target);
     }
 
     /**

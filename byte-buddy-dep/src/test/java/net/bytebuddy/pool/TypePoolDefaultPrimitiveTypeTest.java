@@ -14,6 +14,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @RunWith(Parameterized.class)
 public class TypePoolDefaultPrimitiveTypeTest {
 
+    private final Class<?> primitiveType;
+    private TypePool typePool;
+
+    public TypePoolDefaultPrimitiveTypeTest(Class<?> primitiveType) {
+        this.primitiveType = primitiveType;
+    }
+
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
@@ -28,14 +35,6 @@ public class TypePoolDefaultPrimitiveTypeTest {
                 {void.class}
         });
     }
-
-    private final Class<?> primitiveType;
-
-    public TypePoolDefaultPrimitiveTypeTest(Class<?> primitiveType) {
-        this.primitiveType = primitiveType;
-    }
-
-    private TypePool typePool;
 
     @Before
     public void setUp() throws Exception {

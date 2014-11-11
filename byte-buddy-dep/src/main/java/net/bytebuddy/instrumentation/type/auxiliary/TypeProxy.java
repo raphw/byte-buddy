@@ -340,6 +340,49 @@ public class TypeProxy implements AuxiliaryType {
         }
     }
 
+    public static interface InvocationFactory {
+
+        Instrumentation.SpecialMethodInvocation invoke(Instrumentation.Target instrumentationTarget,
+                                                       TypeDescription proxiedType,
+                                                       MethodDescription instrumentedMethod);
+
+        ConstructorStrategy getConstructorStrategy();
+
+        static enum ForSuperMethodCall implements InvocationFactory {
+
+            INSTANCE;
+
+            @Override
+            public Instrumentation.SpecialMethodInvocation invoke(Instrumentation.Target instrumentationTarget,
+                                                                  TypeDescription proxiedType,
+                                                                  MethodDescription instrumentedMethod) {
+                return instrumentationTarget.invokeSuper(instrumentedMethod, Instrumentation.Target.MethodLookup.Default.MOST_SPECIFIC);
+            }
+
+            @Override
+            public ConstructorStrategy getConstructorStrategy() {
+                return ConstructorStrategy.Default.IMITATE_SUPER_TYPE;
+            }
+        }
+
+        static enum ForDefaultMethodCall implements InvocationFactory {
+
+            INSTANCE;
+
+            @Override
+            public Instrumentation.SpecialMethodInvocation invoke(Instrumentation.Target instrumentationTarget,
+                                                                  TypeDescription proxiedType,
+                                                                  MethodDescription instrumentedMethod) {
+                return instrumentationTarget.invokeDefault(proxiedType, instrumentedMethod.getUniqueSignature());
+            }
+
+            @Override
+            public ConstructorStrategy getConstructorStrategy() {
+                return ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR;
+            }
+        }
+    }
+
     /**
      * Loads a type proxy onto the operand stack which is created by calling one of its constructors. When this
      * stack manipulation is applied, an instance of the instrumented type must lie on top of the operand stack.
@@ -621,49 +664,6 @@ public class TypeProxy implements AuxiliaryType {
                     ", serializableProxy=" + serializableProxy +
                     '}';
         }
-    }
-
-    public static interface InvocationFactory {
-
-        static enum ForSuperMethodCall implements InvocationFactory {
-
-            INSTANCE;
-
-            @Override
-            public Instrumentation.SpecialMethodInvocation invoke(Instrumentation.Target instrumentationTarget,
-                                                                  TypeDescription proxiedType,
-                                                                  MethodDescription instrumentedMethod) {
-                return instrumentationTarget.invokeSuper(instrumentedMethod, Instrumentation.Target.MethodLookup.Default.MOST_SPECIFIC);
-            }
-
-            @Override
-            public ConstructorStrategy getConstructorStrategy() {
-                return ConstructorStrategy.Default.IMITATE_SUPER_TYPE;
-            }
-        }
-
-        static enum ForDefaultMethodCall implements InvocationFactory {
-
-            INSTANCE;
-
-            @Override
-            public Instrumentation.SpecialMethodInvocation invoke(Instrumentation.Target instrumentationTarget,
-                                                                  TypeDescription proxiedType,
-                                                                  MethodDescription instrumentedMethod) {
-                return instrumentationTarget.invokeDefault(proxiedType, instrumentedMethod.getUniqueSignature());
-            }
-
-            @Override
-            public ConstructorStrategy getConstructorStrategy() {
-                return ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR;
-            }
-        }
-
-        Instrumentation.SpecialMethodInvocation invoke(Instrumentation.Target instrumentationTarget,
-                                                       TypeDescription proxiedType,
-                                                       MethodDescription instrumentedMethod);
-
-        ConstructorStrategy getConstructorStrategy();
     }
 
     /**

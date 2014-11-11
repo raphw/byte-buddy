@@ -25,57 +25,55 @@ import static org.mockito.Mockito.when;
 public abstract class AbstractAnnotationDescriptionTest {
 
     private static final boolean BOOLEAN = true;
+    private static final boolean[] BOOLEAN_ARRAY = new boolean[]{BOOLEAN};
     private static final byte BYTE = 42;
+    private static final byte[] BYTE_ARRAY = new byte[]{BYTE};
     private static final short SHORT = 42;
+    private static final short[] SHORT_ARRAY = new short[]{SHORT};
     private static final char CHARACTER = 42;
+    private static final char[] CHARACTER_ARRAY = new char[]{CHARACTER};
     private static final int INTEGER = 42;
+    private static final int[] INTEGER_ARRAY = new int[]{INTEGER};
     private static final long LONG = 42L;
+    private static final long[] LONG_ARRAY = new long[]{LONG};
     private static final float FLOAT = 42f;
+    private static final float[] FLOAT_ARRAY = new float[]{FLOAT};
     private static final double DOUBLE = 42d;
+    private static final double[] DOUBLE_ARRAY = new double[]{DOUBLE};
     private static final String FOO = "foo", BAR = "bar";
+    private static final String[] STRING_ARRAY = new String[]{FOO};
     private static final SampleEnumeration ENUMERATION = SampleEnumeration.VALUE;
+    private static final SampleEnumeration[] ENUMERATION_ARRAY = new SampleEnumeration[]{ENUMERATION};
     private static final Class<?> CLASS = Void.class;
+    private static final Class<?>[] CLASS_ARRAY = new Class<?>[]{CLASS};
     private static final Class<?> ARRAY_CLASS = Void[].class;
     private static final Other ANNOTATION = EnumerationCarrier.class.getAnnotation(Other.class);
-
+    private static final Other[] ANNOTATION_ARRAY = new Other[]{ANNOTATION};
     private static final boolean OTHER_BOOLEAN = false;
+    private static final boolean[] OTHER_BOOLEAN_ARRAY = new boolean[]{OTHER_BOOLEAN};
     private static final byte OTHER_BYTE = 42 * 2;
+    private static final byte[] OTHER_BYTE_ARRAY = new byte[]{OTHER_BYTE};
     private static final short OTHER_SHORT = 42 * 2;
+    private static final short[] OTHER_SHORT_ARRAY = new short[]{OTHER_SHORT};
     private static final char OTHER_CHARACTER = 42 * 2;
+    private static final char[] OTHER_CHARACTER_ARRAY = new char[]{OTHER_CHARACTER};
     private static final int OTHER_INTEGER = 42 * 2;
+    private static final int[] OTHER_INTEGER_ARRAY = new int[]{OTHER_INTEGER};
     private static final long OTHER_LONG = 42L * 2;
+    private static final long[] OTHER_LONG_ARRAY = new long[]{OTHER_LONG};
     private static final float OTHER_FLOAT = 42f * 2;
+    private static final float[] OTHER_FLOAT_ARRAY = new float[]{OTHER_FLOAT};
     private static final double OTHER_DOUBLE = 42d * 2;
+    private static final double[] OTHER_DOUBLE_ARRAY = new double[]{OTHER_DOUBLE};
     private static final SampleEnumeration OTHER_ENUMERATION = SampleEnumeration.OTHER;
+    private static final SampleEnumeration[] OTHER_ENUMERATION_ARRAY = new SampleEnumeration[]{OTHER_ENUMERATION};
     private static final Class<?> OTHER_CLASS = Object.class;
+    private static final Class<?>[] OTHER_CLASS_ARRAY = new Class<?>[]{OTHER_CLASS};
     private static final Class<?> OTHER_ARRAY_CLASS = Object[].class;
     private static final Other OTHER_ANNOTATION = OtherEnumerationCarrier.class.getAnnotation(Other.class);
-
-    private static final boolean[] BOOLEAN_ARRAY = new boolean[]{BOOLEAN};
-    private static final byte[] BYTE_ARRAY = new byte[]{BYTE};
-    private static final short[] SHORT_ARRAY = new short[]{SHORT};
-    private static final char[] CHARACTER_ARRAY = new char[]{CHARACTER};
-    private static final int[] INTEGER_ARRAY = new int[]{INTEGER};
-    private static final long[] LONG_ARRAY = new long[]{LONG};
-    private static final float[] FLOAT_ARRAY = new float[]{FLOAT};
-    private static final double[] DOUBLE_ARRAY = new double[]{DOUBLE};
-    private static final String[] STRING_ARRAY = new String[]{FOO};
-    private static final SampleEnumeration[] ENUMERATION_ARRAY = new SampleEnumeration[]{ENUMERATION};
-    private static final Class<?>[] CLASS_ARRAY = new Class<?>[]{CLASS};
-    private static final Other[] ANNOTATION_ARRAY = new Other[]{ANNOTATION};
-
-    private static final boolean[] OTHER_BOOLEAN_ARRAY = new boolean[]{OTHER_BOOLEAN};
-    private static final byte[] OTHER_BYTE_ARRAY = new byte[]{OTHER_BYTE};
-    private static final short[] OTHER_SHORT_ARRAY = new short[]{OTHER_SHORT};
-    private static final char[] OTHER_CHARACTER_ARRAY = new char[]{OTHER_CHARACTER};
-    private static final int[] OTHER_INTEGER_ARRAY = new int[]{OTHER_INTEGER};
-    private static final long[] OTHER_LONG_ARRAY = new long[]{OTHER_LONG};
-    private static final float[] OTHER_FLOAT_ARRAY = new float[]{OTHER_FLOAT};
-    private static final double[] OTHER_DOUBLE_ARRAY = new double[]{OTHER_DOUBLE};
-    private static final String[] OTHER_STRING_ARRAY = new String[]{BAR};
-    private static final SampleEnumeration[] OTHER_ENUMERATION_ARRAY = new SampleEnumeration[]{OTHER_ENUMERATION};
-    private static final Class<?>[] OTHER_CLASS_ARRAY = new Class<?>[]{OTHER_CLASS};
     private static final Other[] OTHER_ANNOTATION_ARRAY = new Other[]{OTHER_ANNOTATION};
+    private static final String[] OTHER_STRING_ARRAY = new String[]{BAR};
+    private Annotation first, second, defaultFirst, defaultSecond;
 
     protected abstract AnnotationDescription describe(Annotation annotation, Class<?> declaringType);
 
@@ -94,8 +92,6 @@ public abstract class AbstractAnnotationDescriptionTest {
         }
         return describe(annotation, carrier);
     }
-
-    private Annotation first, second, defaultFirst, defaultSecond;
 
     @Before
     public void setUp() throws Exception {
@@ -280,17 +276,17 @@ public abstract class AbstractAnnotationDescriptionTest {
         assertValue(defaultFirst, "byteValue", BYTE, BYTE);
         assertValue(defaultSecond, "byteValue", OTHER_BYTE, OTHER_BYTE);
         assertValue(defaultFirst, "shortValue", SHORT, SHORT);
-        assertValue(defaultSecond, "shortValue", OTHER_SHORT , OTHER_SHORT );
+        assertValue(defaultSecond, "shortValue", OTHER_SHORT, OTHER_SHORT);
         assertValue(defaultFirst, "charValue", CHARACTER, CHARACTER);
-        assertValue(defaultSecond, "charValue", OTHER_CHARACTER , OTHER_CHARACTER );
+        assertValue(defaultSecond, "charValue", OTHER_CHARACTER, OTHER_CHARACTER);
         assertValue(defaultFirst, "intValue", INTEGER, INTEGER);
-        assertValue(defaultSecond, "intValue", OTHER_INTEGER , OTHER_INTEGER );
+        assertValue(defaultSecond, "intValue", OTHER_INTEGER, OTHER_INTEGER);
         assertValue(defaultFirst, "longValue", LONG, LONG);
-        assertValue(defaultSecond, "longValue", OTHER_LONG , OTHER_LONG );
+        assertValue(defaultSecond, "longValue", OTHER_LONG, OTHER_LONG);
         assertValue(defaultFirst, "floatValue", FLOAT, FLOAT);
-        assertValue(defaultSecond, "floatValue", OTHER_FLOAT , OTHER_FLOAT );
+        assertValue(defaultSecond, "floatValue", OTHER_FLOAT, OTHER_FLOAT);
         assertValue(defaultFirst, "doubleValue", DOUBLE, DOUBLE);
-        assertValue(defaultSecond, "doubleValue", OTHER_DOUBLE , OTHER_DOUBLE );
+        assertValue(defaultSecond, "doubleValue", OTHER_DOUBLE, OTHER_DOUBLE);
         assertValue(defaultFirst, "stringValue", FOO, FOO);
         assertValue(defaultSecond, "stringValue", BAR, BAR);
         assertValue(defaultFirst, "classValue", new TypeDescription.ForLoadedType(CLASS), CLASS);
@@ -340,60 +336,9 @@ public abstract class AbstractAnnotationDescriptionTest {
                 .invoke(describe(annotation).prepare(annotation.annotationType()).load()), is(loadedValue));
     }
 
-    @Sample(booleanValue = BOOLEAN,
-            byteValue = BYTE,
-            charValue = CHARACTER,
-            shortValue = SHORT,
-            intValue = INTEGER,
-            longValue = LONG,
-            floatValue = FLOAT,
-            doubleValue = DOUBLE,
-            stringValue = FOO,
-            classValue = Void.class,
-            arrayClassValue = Void[].class,
-            enumValue = SampleEnumeration.VALUE,
-            annotationValue = @Other,
-            booleanArrayValue = BOOLEAN,
-            byteArrayValue = BYTE,
-            shortArrayValue = SHORT,
-            charArrayValue = CHARACTER,
-            intArrayValue = INTEGER,
-            longArrayValue = LONG,
-            floatArrayValue = FLOAT,
-            doubleArrayValue = DOUBLE,
-            stringArrayValue = FOO,
-            classArrayValue = Void.class,
-            enumArrayValue = SampleEnumeration.VALUE,
-            annotationArrayValue = @Other)
-    private static class FooSample {
-    }
-
-    @Sample(booleanValue = BOOLEAN,
-            byteValue = BYTE,
-            charValue = CHARACTER,
-            shortValue = SHORT,
-            intValue = INTEGER,
-            longValue = LONG,
-            floatValue = FLOAT,
-            doubleValue = DOUBLE,
-            stringValue = BAR,
-            classValue = Void.class,
-            arrayClassValue = Void[].class,
-            enumValue = SampleEnumeration.VALUE,
-            annotationValue = @Other,
-            booleanArrayValue = BOOLEAN,
-            byteArrayValue = BYTE,
-            shortArrayValue = SHORT,
-            charArrayValue = CHARACTER,
-            intArrayValue = INTEGER,
-            longArrayValue = LONG,
-            floatArrayValue = FLOAT,
-            doubleArrayValue = DOUBLE,
-            stringArrayValue = FOO,
-            classArrayValue = Void.class,
-            enumArrayValue = SampleEnumeration.VALUE,
-            annotationArrayValue = @Other)
-    private static class BarSample {
+    public static enum SampleEnumeration {
+        VALUE,
+        OTHER
     }
 
     @Retention(RetentionPolicy.RUNTIME)
@@ -448,38 +393,6 @@ public abstract class AbstractAnnotationDescriptionTest {
         SampleEnumeration[] enumArrayValue();
 
         Other[] annotationArrayValue();
-    }
-
-    @SampleDefault
-    private static class DefaultSample {
-    }
-
-    @SampleDefault(booleanValue = !BOOLEAN,
-            byteValue = BYTE * 2,
-            charValue = CHARACTER * 2,
-            shortValue = SHORT * 2,
-            intValue = INTEGER * 2,
-            longValue = LONG * 2,
-            floatValue = FLOAT * 2,
-            doubleValue = DOUBLE * 2,
-            stringValue = BAR,
-            classValue = Object.class,
-            arrayClassValue = Object[].class,
-            enumValue = SampleEnumeration.OTHER,
-            annotationValue = @Other(BAR),
-            booleanArrayValue = !BOOLEAN,
-            byteArrayValue = OTHER_BYTE,
-            shortArrayValue = OTHER_SHORT,
-            charArrayValue = OTHER_CHARACTER,
-            intArrayValue = OTHER_INTEGER,
-            longArrayValue = OTHER_LONG ,
-            floatArrayValue = OTHER_FLOAT ,
-            doubleArrayValue = OTHER_DOUBLE ,
-            stringArrayValue = BAR,
-            classArrayValue = Object.class,
-            enumArrayValue = SampleEnumeration.OTHER,
-            annotationArrayValue = @Other(BAR))
-    private static class NonDefaultSample {
     }
 
     @Retention(RetentionPolicy.RUNTIME)
@@ -541,16 +454,99 @@ public abstract class AbstractAnnotationDescriptionTest {
         String value() default FOO;
     }
 
+    @Sample(booleanValue = BOOLEAN,
+            byteValue = BYTE,
+            charValue = CHARACTER,
+            shortValue = SHORT,
+            intValue = INTEGER,
+            longValue = LONG,
+            floatValue = FLOAT,
+            doubleValue = DOUBLE,
+            stringValue = FOO,
+            classValue = Void.class,
+            arrayClassValue = Void[].class,
+            enumValue = SampleEnumeration.VALUE,
+            annotationValue = @Other,
+            booleanArrayValue = BOOLEAN,
+            byteArrayValue = BYTE,
+            shortArrayValue = SHORT,
+            charArrayValue = CHARACTER,
+            intArrayValue = INTEGER,
+            longArrayValue = LONG,
+            floatArrayValue = FLOAT,
+            doubleArrayValue = DOUBLE,
+            stringArrayValue = FOO,
+            classArrayValue = Void.class,
+            enumArrayValue = SampleEnumeration.VALUE,
+            annotationArrayValue = @Other)
+    private static class FooSample {
+    }
+
+    @Sample(booleanValue = BOOLEAN,
+            byteValue = BYTE,
+            charValue = CHARACTER,
+            shortValue = SHORT,
+            intValue = INTEGER,
+            longValue = LONG,
+            floatValue = FLOAT,
+            doubleValue = DOUBLE,
+            stringValue = BAR,
+            classValue = Void.class,
+            arrayClassValue = Void[].class,
+            enumValue = SampleEnumeration.VALUE,
+            annotationValue = @Other,
+            booleanArrayValue = BOOLEAN,
+            byteArrayValue = BYTE,
+            shortArrayValue = SHORT,
+            charArrayValue = CHARACTER,
+            intArrayValue = INTEGER,
+            longArrayValue = LONG,
+            floatArrayValue = FLOAT,
+            doubleArrayValue = DOUBLE,
+            stringArrayValue = FOO,
+            classArrayValue = Void.class,
+            enumArrayValue = SampleEnumeration.VALUE,
+            annotationArrayValue = @Other)
+    private static class BarSample {
+    }
+
+    @SampleDefault
+    private static class DefaultSample {
+    }
+
+    @SampleDefault(booleanValue = !BOOLEAN,
+            byteValue = BYTE * 2,
+            charValue = CHARACTER * 2,
+            shortValue = SHORT * 2,
+            intValue = INTEGER * 2,
+            longValue = LONG * 2,
+            floatValue = FLOAT * 2,
+            doubleValue = DOUBLE * 2,
+            stringValue = BAR,
+            classValue = Object.class,
+            arrayClassValue = Object[].class,
+            enumValue = SampleEnumeration.OTHER,
+            annotationValue = @Other(BAR),
+            booleanArrayValue = !BOOLEAN,
+            byteArrayValue = OTHER_BYTE,
+            shortArrayValue = OTHER_SHORT,
+            charArrayValue = OTHER_CHARACTER,
+            intArrayValue = OTHER_INTEGER,
+            longArrayValue = OTHER_LONG,
+            floatArrayValue = OTHER_FLOAT,
+            doubleArrayValue = OTHER_DOUBLE,
+            stringArrayValue = BAR,
+            classArrayValue = Object.class,
+            enumArrayValue = SampleEnumeration.OTHER,
+            annotationArrayValue = @Other(BAR))
+    private static class NonDefaultSample {
+    }
+
     @Other
     private static class EnumerationCarrier {
     }
 
     @Other(BAR)
     private static class OtherEnumerationCarrier {
-    }
-
-    public static enum SampleEnumeration {
-        VALUE,
-        OTHER
     }
 }

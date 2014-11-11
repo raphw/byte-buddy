@@ -87,7 +87,7 @@ public interface BridgeMethodResolver {
         /**
          * Creates a new simple bridge method resolver.
          *
-         * @param methodList        The relevant methods which can be called in a given context.
+         * @param methodList      The relevant methods which can be called in a given context.
          * @param conflictHandler A conflict handler that is queried for handling ambiguous resolutions.
          */
         public Simple(MethodList methodList, ConflictHandler conflictHandler) {

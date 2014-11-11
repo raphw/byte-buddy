@@ -275,6 +275,20 @@ public interface TypeDescription extends ByteCodeElement {
      */
     abstract static class AbstractTypeDescription extends AbstractModifierReviewable implements TypeDescription {
 
+        /**
+         * Collects all interfaces for a given type description.
+         *
+         * @param typeDescription An interface type to check for other interfaces.
+         * @param interfaces      A collection of already discovered interfaces.
+         */
+        private static void collect(TypeDescription typeDescription, Set<TypeDescription> interfaces) {
+            if (interfaces.add(typeDescription)) {
+                for (TypeDescription interfaceType : typeDescription.getInterfaces()) {
+                    collect(interfaceType, interfaces);
+                }
+            }
+        }
+
         @Override
         public boolean isInstance(Object object) {
             return isAssignableFrom(object.getClass());
@@ -324,20 +338,6 @@ public interface TypeDescription extends ByteCodeElement {
                 }
             } while ((current = current.getSupertype()) != null);
             return new TypeList.Explicit(new ArrayList<TypeDescription>(interfaces));
-        }
-
-        /**
-         * Collects all interfaces for a given type description.
-         *
-         * @param typeDescription An interface type to check for other interfaces.
-         * @param interfaces      A collection of already discovered interfaces.
-         */
-        private static void collect(TypeDescription typeDescription, Set<TypeDescription> interfaces) {
-            if (interfaces.add(typeDescription)) {
-                for (TypeDescription interfaceType : typeDescription.getInterfaces()) {
-                    collect(interfaceType, interfaces);
-                }
-            }
         }
 
         @Override
@@ -705,6 +705,25 @@ public interface TypeDescription extends ByteCodeElement {
          * The modifiers of any array type.
          */
         private static final int ARRAY_MODIFIERS = Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL | Opcodes.ACC_ABSTRACT;
+        /**
+         * The base component type which is itself not an array.
+         */
+        private final TypeDescription componentType;
+        /**
+         * The arity of this array.
+         */
+        private final int arity;
+
+        /**
+         * Crrates a new array projection.
+         *
+         * @param componentType The base component type of the array which is itself not an array.
+         * @param arity         The arity of this array.
+         */
+        protected ArrayProjection(TypeDescription componentType, int arity) {
+            this.componentType = componentType;
+            this.arity = arity;
+        }
 
         /**
          * Creates an array projection.
@@ -722,47 +741,6 @@ public interface TypeDescription extends ByteCodeElement {
                 arity++;
             }
             return arity == 0 ? componentType : new ArrayProjection(componentType, arity);
-        }
-
-        /**
-         * The base component type which is itself not an array.
-         */
-        private final TypeDescription componentType;
-
-        /**
-         * The arity of this array.
-         */
-        private final int arity;
-
-        /**
-         * Crrates a new array projection.
-         *
-         * @param componentType The base component type of the array which is itself not an array.
-         * @param arity         The arity of this array.
-         */
-        protected ArrayProjection(TypeDescription componentType, int arity) {
-            this.componentType = componentType;
-            this.arity = arity;
-        }
-
-        @Override
-        public boolean isAssignableFrom(Class<?> type) {
-            return isAssignableFrom(new ForLoadedType(type));
-        }
-
-        @Override
-        public boolean isAssignableFrom(TypeDescription typeDescription) {
-            return isArrayAssignable(this, typeDescription);
-        }
-
-        @Override
-        public boolean isAssignableTo(Class<?> type) {
-            return isAssignableTo(new ForLoadedType(type));
-        }
-
-        @Override
-        public boolean isAssignableTo(TypeDescription typeDescription) {
-            return typeDescription.represents(Object.class) || isArrayAssignable(typeDescription, this);
         }
 
         /**
@@ -784,6 +762,26 @@ public interface TypeDescription extends ByteCodeElement {
                 targetType = targetType.getComponentType();
             }
             return sourceArity == targetArity && sourceType.isAssignableFrom(targetType);
+        }
+
+        @Override
+        public boolean isAssignableFrom(Class<?> type) {
+            return isAssignableFrom(new ForLoadedType(type));
+        }
+
+        @Override
+        public boolean isAssignableFrom(TypeDescription typeDescription) {
+            return isArrayAssignable(this, typeDescription);
+        }
+
+        @Override
+        public boolean isAssignableTo(Class<?> type) {
+            return isAssignableTo(new ForLoadedType(type));
+        }
+
+        @Override
+        public boolean isAssignableTo(TypeDescription typeDescription) {
+            return typeDescription.represents(Object.class) || isArrayAssignable(typeDescription, this);
         }
 
         @Override

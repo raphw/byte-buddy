@@ -972,9 +972,9 @@ public class MethodDelegation implements Instrumentation {
          *                                 the method delegation.
          */
         protected Appender(StackManipulation preparingStackAssignment,
-                         Target instrumentationTarget,
-                         Iterable<? extends MethodDescription> targetMethods,
-                         MethodDelegationBinder.Processor processor) {
+                           Target instrumentationTarget,
+                           Iterable<? extends MethodDescription> targetMethods,
+                           MethodDelegationBinder.Processor processor) {
             this.preparingStackAssignment = preparingStackAssignment;
             this.instrumentationTarget = instrumentationTarget;
             this.targetMethods = targetMethods;

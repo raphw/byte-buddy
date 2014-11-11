@@ -67,29 +67,6 @@ public enum MethodInvocation {
     }
 
     /**
-     * Represents a method invocation where the invocation type (static, virtual, special, interface) is derived
-     * from the given method's description.
-     */
-    public static interface WithImplicitInvocationTargetType extends StackManipulation {
-
-        /**
-         * Transforms this method invocation into a virtual (or interface) method invocation on the given type.
-         *
-         * @param invocationTarget The type on which the method is to be invoked virtually on.
-         * @return A stack manipulation representing this method invocation.
-         */
-        StackManipulation virtual(TypeDescription invocationTarget);
-
-        /**
-         * Transforms this method invocation into a special invocation on the given type.
-         *
-         * @param invocationTarget The type on which the method is to be invoked specially on.
-         * @return A stack manipulation representing this method invocation.
-         */
-        StackManipulation special(TypeDescription invocationTarget);
-    }
-
-    /**
      * An illegal implicit method invocation.
      */
     protected static enum IllegalInvocation implements WithImplicitInvocationTargetType {
@@ -118,6 +95,29 @@ public enum MethodInvocation {
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
             return Illegal.INSTANCE.apply(methodVisitor, instrumentationContext);
         }
+    }
+
+    /**
+     * Represents a method invocation where the invocation type (static, virtual, special, interface) is derived
+     * from the given method's description.
+     */
+    public static interface WithImplicitInvocationTargetType extends StackManipulation {
+
+        /**
+         * Transforms this method invocation into a virtual (or interface) method invocation on the given type.
+         *
+         * @param invocationTarget The type on which the method is to be invoked virtually on.
+         * @return A stack manipulation representing this method invocation.
+         */
+        StackManipulation virtual(TypeDescription invocationTarget);
+
+        /**
+         * Transforms this method invocation into a special invocation on the given type.
+         *
+         * @param invocationTarget The type on which the method is to be invoked specially on.
+         * @return A stack manipulation representing this method invocation.
+         */
+        StackManipulation special(TypeDescription invocationTarget);
     }
 
     /**

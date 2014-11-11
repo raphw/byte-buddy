@@ -38,15 +38,15 @@ public abstract class AbstractTypeDescriptionTest {
             float.class,
             double.class,
             Object[].class);
-
-    protected abstract TypeDescription describe(Class<?> type);
-
     private final Class<?> constructorType;
 
     protected AbstractTypeDescriptionTest() {
-        class ConstructorType {}
+        class ConstructorType {
+        }
         constructorType = ConstructorType.class;
     }
+
+    protected abstract TypeDescription describe(Class<?> type);
 
     @Test
     public void testPrecondition() throws Exception {
@@ -345,11 +345,6 @@ public abstract class AbstractTypeDescriptionTest {
         assertThat(describe(Object[].class).getComponentType(), is(describe(Object.class)));
     }
 
-    @SampleAnnotation
-    @OtherAnnotation(FOO)
-    public class SampleClass {
-    }
-
     protected static interface SampleInterface {
     }
 
@@ -363,11 +358,7 @@ public abstract class AbstractTypeDescriptionTest {
         String value();
     }
 
-    public class SampleClassInherited extends SampleClass {
-    }
-
-    @OtherAnnotation(BAR)
-    public class SampleClassInheritedOverride extends SampleClass {
+    public static interface SampleTransitiveInterface extends SampleInterface {
     }
 
     static class SamplePackagePrivate {
@@ -379,9 +370,18 @@ public abstract class AbstractTypeDescriptionTest {
     public static class SampleIndirectInterfaceImplementation extends SampleInterfaceImplementation {
     }
 
-    public static interface SampleTransitiveInterface extends SampleInterface {
+    public static class SampleTransitiveInterfaceImplementation implements SampleTransitiveInterface {
     }
 
-    public static class SampleTransitiveInterfaceImplementation implements SampleTransitiveInterface {
+    @SampleAnnotation
+    @OtherAnnotation(FOO)
+    public class SampleClass {
+    }
+
+    public class SampleClassInherited extends SampleClass {
+    }
+
+    @OtherAnnotation(BAR)
+    public class SampleClassInheritedOverride extends SampleClass {
     }
 }

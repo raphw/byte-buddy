@@ -7,6 +7,8 @@ import java.io.InputStream;
 
 public interface TypeSourceLocator {
 
+    byte[] locate(String typeName);
+
     static class ForClassLoader implements TypeSourceLocator {
 
         private static final String CLASS_FILE_SUFFIX = ".class";
@@ -34,6 +36,4 @@ public interface TypeSourceLocator {
             }
         }
     }
-
-    byte[] locate(String typeName);
 }

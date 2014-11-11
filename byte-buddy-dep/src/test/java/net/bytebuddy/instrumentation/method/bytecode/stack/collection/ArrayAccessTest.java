@@ -23,6 +23,21 @@ import static org.mockito.Mockito.*;
 @RunWith(Parameterized.class)
 public class ArrayAccessTest {
 
+    private final TypeDescription typeDescription;
+    private final int loadOpcode, storeOpcode;
+    @Rule
+    public TestRule mockitoRule = new MockitoRule(this);
+    @Mock
+    private MethodVisitor methodVisitor;
+    @Mock
+    private Instrumentation.Context instrumentationContext;
+
+    public ArrayAccessTest(Class<?> type, int loadOpcode, int storeOpcode) {
+        typeDescription = new TypeDescription.ForLoadedType(type);
+        this.loadOpcode = loadOpcode;
+        this.storeOpcode = storeOpcode;
+    }
+
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
@@ -36,25 +51,6 @@ public class ArrayAccessTest {
                 {double.class, Opcodes.DALOAD, Opcodes.DASTORE},
                 {Object.class, Opcodes.AALOAD, Opcodes.AASTORE},
         });
-    }
-
-    private final TypeDescription typeDescription;
-
-    private final int loadOpcode, storeOpcode;
-
-    @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
-
-    @Mock
-    private MethodVisitor methodVisitor;
-
-    @Mock
-    private Instrumentation.Context instrumentationContext;
-
-    public ArrayAccessTest(Class<?> type, int loadOpcode, int storeOpcode) {
-        typeDescription = new TypeDescription.ForLoadedType(type);
-        this.loadOpcode = loadOpcode;
-        this.storeOpcode = storeOpcode;
     }
 
     @Test

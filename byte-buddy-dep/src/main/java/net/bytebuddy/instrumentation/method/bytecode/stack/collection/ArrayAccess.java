@@ -51,6 +51,31 @@ public enum ArrayAccess {
      * Access for a reference-typed array.
      */
     REFERENCE(Opcodes.AALOAD, Opcodes.AASTORE, StackSize.SINGLE);
+    /**
+     * The opcode used for loading a value.
+     */
+    private final int loadOpcode;
+    /**
+     * The opcode used for storing a value.
+     */
+    private final int storeOpcode;
+    /**
+     * The size of the array's component value.
+     */
+    private final StackSize stackSize;
+
+    /**
+     * Creates a new array access.
+     *
+     * @param loadOpcode  The opcode used for loading a value.
+     * @param storeOpcode The opcode used for storing a value.
+     * @param stackSize   The size of the array's component value.
+     */
+    private ArrayAccess(int loadOpcode, int storeOpcode, StackSize stackSize) {
+        this.loadOpcode = loadOpcode;
+        this.storeOpcode = storeOpcode;
+        this.stackSize = stackSize;
+    }
 
     /**
      * Locates an array accessor by the array's component type.
@@ -78,34 +103,6 @@ public enum ArrayAccess {
         } else {
             return REFERENCE;
         }
-    }
-
-    /**
-     * The opcode used for loading a value.
-     */
-    private final int loadOpcode;
-
-    /**
-     * The opcode used for storing a value.
-     */
-    private final int storeOpcode;
-
-    /**
-     * The size of the array's component value.
-     */
-    private final StackSize stackSize;
-
-    /**
-     * Creates a new array access.
-     *
-     * @param loadOpcode  The opcode used for loading a value.
-     * @param storeOpcode The opcode used for storing a value.
-     * @param stackSize   The size of the array's component value.
-     */
-    private ArrayAccess(int loadOpcode, int storeOpcode, StackSize stackSize) {
-        this.loadOpcode = loadOpcode;
-        this.storeOpcode = storeOpcode;
-        this.stackSize = stackSize;
     }
 
     /**

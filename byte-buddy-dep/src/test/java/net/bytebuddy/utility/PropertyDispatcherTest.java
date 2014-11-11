@@ -14,6 +14,22 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class PropertyDispatcherTest {
 
     private static final String FOO = "foo";
+    private final Object value, other;
+    private final PropertyDispatcher expectedPropertyDispatcher;
+    private final int expectedHashCode;
+    private final String expectedToString;
+
+    public PropertyDispatcherTest(Object value,
+                                  Object other,
+                                  PropertyDispatcher expectedPropertyDispatcher,
+                                  int expectedHashCode,
+                                  String expectedToString) {
+        this.value = value;
+        this.other = other;
+        this.expectedPropertyDispatcher = expectedPropertyDispatcher;
+        this.expectedHashCode = expectedHashCode;
+        this.expectedToString = expectedToString;
+    }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
@@ -29,26 +45,6 @@ public class PropertyDispatcherTest {
                 {new Object[]{FOO}, new Object[]{FOO}, PropertyDispatcher.REFERENCE_ARRAY, Arrays.hashCode(new Object[]{FOO}), Arrays.toString(new Object[]{FOO})},
                 {FOO, FOO, PropertyDispatcher.NON_ARRAY, FOO.hashCode(), FOO}
         });
-    }
-
-    private final Object value, other;
-
-    private final PropertyDispatcher expectedPropertyDispatcher;
-
-    private final int expectedHashCode;
-
-    private final String expectedToString;
-
-    public PropertyDispatcherTest(Object value,
-                                  Object other,
-                                  PropertyDispatcher expectedPropertyDispatcher,
-                                  int expectedHashCode,
-                                  String expectedToString) {
-        this.value = value;
-        this.other = other;
-        this.expectedPropertyDispatcher = expectedPropertyDispatcher;
-        this.expectedHashCode = expectedHashCode;
-        this.expectedToString = expectedToString;
     }
 
     @Test

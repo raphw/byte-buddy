@@ -324,51 +324,9 @@ public abstract class FieldAccessor implements Instrumentation {
         static class ForGivenType implements FieldLocator {
 
             /**
-             * A factory for a field locator locating given type.
-             */
-            public static class Factory implements FieldLocator.Factory {
-
-                /**
-                 * The type to locate.
-                 */
-                private final TypeDescription targetType;
-
-                /**
-                 * Creates a new field locator factory for a given type.
-                 *
-                 * @param targetType The type for which fields are to be looked up.
-                 */
-                public Factory(TypeDescription targetType) {
-                    this.targetType = targetType;
-                }
-
-                @Override
-                public FieldLocator make(TypeDescription instrumentedType) {
-                    return new ForGivenType(targetType, instrumentedType);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && targetType.equals(((Factory) other).targetType);
-                }
-
-                @Override
-                public int hashCode() {
-                    return targetType.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "FieldAccessor.FieldLocator.ForGivenType.Factory{targetType=" + targetType + '}';
-                }
-            }
-
-            /**
              * The target type for which a field should be accessed.
              */
             private final TypeDescription targetType;
-
             /**
              * The instrumented type onto which the field locator is to be applied.
              */
@@ -412,6 +370,47 @@ public abstract class FieldAccessor implements Instrumentation {
                         "targetType=" + targetType +
                         ", instrumentedType=" + instrumentedType +
                         '}';
+            }
+
+            /**
+             * A factory for a field locator locating given type.
+             */
+            public static class Factory implements FieldLocator.Factory {
+
+                /**
+                 * The type to locate.
+                 */
+                private final TypeDescription targetType;
+
+                /**
+                 * Creates a new field locator factory for a given type.
+                 *
+                 * @param targetType The type for which fields are to be looked up.
+                 */
+                public Factory(TypeDescription targetType) {
+                    this.targetType = targetType;
+                }
+
+                @Override
+                public FieldLocator make(TypeDescription instrumentedType) {
+                    return new ForGivenType(targetType, instrumentedType);
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && targetType.equals(((Factory) other).targetType);
+                }
+
+                @Override
+                public int hashCode() {
+                    return targetType.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "FieldAccessor.FieldLocator.ForGivenType.Factory{targetType=" + targetType + '}';
+                }
             }
         }
     }

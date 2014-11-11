@@ -35,6 +35,11 @@ public class MethodDelegationMorphTest extends AbstractInstrumentationTest {
                 .appendParameterBinder(Morph.Binder.install(Morphing.class)));
     }
 
+    public static interface Morphing<T> {
+
+        T morph(Object... arguments);
+    }
+
     public static class Foo {
 
         public String foo(String foo) {
@@ -63,10 +68,5 @@ public class MethodDelegationMorphTest extends AbstractInstrumentationTest {
         public static String intercept(@Morph Void morphing) {
             return null;
         }
-    }
-
-    public static interface Morphing<T> {
-
-        T morph(Object... arguments);
     }
 }

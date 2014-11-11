@@ -135,6 +135,20 @@ public interface AnnotationDescription {
                 this.value = value;
             }
 
+            /**
+             * Enlists a given array of loaded enumerations as enumeration values.
+             *
+             * @param enumerations The enumerations to represent.
+             * @return A list of the given enumerations.
+             */
+            public static List<EnumerationValue> asList(Enum<?>[] enumerations) {
+                List<EnumerationValue> result = new ArrayList<EnumerationValue>(enumerations.length);
+                for (Enum<?> enumeration : enumerations) {
+                    result.add(new ForLoadedEnumeration(enumeration));
+                }
+                return result;
+            }
+
             @Override
             public String getValue() {
                 return value.name();
@@ -153,21 +167,23 @@ public interface AnnotationDescription {
                 }
                 return (T) value;
             }
-
-            /**
-             * Enlists a given array of loaded enumerations as enumeration values.
-             *
-             * @param enumerations The enumerations to represent.
-             * @return A list of the given enumerations.
-             */
-            public static List<EnumerationValue> asList(Enum<?>[] enumerations) {
-                List<EnumerationValue> result = new ArrayList<EnumerationValue>(enumerations.length);
-                for (Enum<?> enumeration : enumerations) {
-                    result.add(new ForLoadedEnumeration(enumeration));
-                }
-                return result;
-            }
         }
+    }
+
+    /**
+     * An annotation description that is linked to a given loaded annotation type which allows its representation
+     * as a fully loaded instance.
+     *
+     * @param <S> The annotation type.
+     */
+    static interface Loadable<S extends Annotation> extends AnnotationDescription {
+
+        /**
+         * Loads this annotation description. This causes the classes of all annotation values to be loaded.
+         *
+         * @return A loaded version of this annotation description.
+         */
+        S load();
     }
 
     /**
@@ -235,22 +251,6 @@ public interface AnnotationDescription {
     }
 
     /**
-     * An annotation description that is linked to a given loaded annotation type which allows its representation
-     * as a fully loaded instance.
-     *
-     * @param <S> The annotation type.
-     */
-    static interface Loadable<S extends Annotation> extends AnnotationDescription {
-
-        /**
-         * Loads this annotation description. This causes the classes of all annotation values to be loaded.
-         *
-         * @return A loaded version of this annotation description.
-         */
-        S load();
-    }
-
-    /**
      * A description of an already loaded annotation.
      *
      * @param <S> The type of the annotation.
@@ -263,17 +263,6 @@ public interface AnnotationDescription {
         private final S annotation;
 
         /**
-         * Creates a description of the given annotation.
-         *
-         * @param annotation The annotation to be described.
-         * @param <U>        The type of the annotation.
-         * @return A description of the given annotation.
-         */
-        public static <U extends Annotation> Loadable<U> of(U annotation) {
-            return new ForLoadedAnnotation<U>(annotation);
-        }
-
-        /**
          * Creates a new annotation description for a loaded annotation.
          *
          * @param annotation The annotation to represent.
@@ -282,31 +271,15 @@ public interface AnnotationDescription {
             this.annotation = annotation;
         }
 
-        @Override
-        public S load() {
-            return annotation;
-        }
-
-        @Override
-        public Object getValue(MethodDescription methodDescription) {
-            if (!methodDescription.getDeclaringType().represents(annotation.annotationType())) {
-                throw new IllegalArgumentException(methodDescription + " does not represent " + annotation.annotationType());
-            }
-            try {
-                boolean visible = methodDescription.isVisibleTo(new TypeDescription.ForLoadedType(getClass()));
-                Method method = methodDescription instanceof MethodDescription.ForLoadedMethod
-                        ? ((MethodDescription.ForLoadedMethod) methodDescription).getLoadedMethod()
-                        : null;
-                if (method == null || (!visible && !method.isAccessible())) {
-                    method = annotation.annotationType().getDeclaredMethod(methodDescription.getName());
-                    if (!visible) {
-                        method.setAccessible(true);
-                    }
-                }
-                return wrap(method.invoke(annotation), methodDescription.getReturnType());
-            } catch (Exception e) {
-                throw new IllegalStateException("Cannot access annotation property " + methodDescription, e);
-            }
+        /**
+         * Creates a description of the given annotation.
+         *
+         * @param annotation The annotation to be described.
+         * @param <U>        The type of the annotation.
+         * @return A description of the given annotation.
+         */
+        public static <U extends Annotation> Loadable<U> of(U annotation) {
+            return new ForLoadedAnnotation<U>(annotation);
         }
 
         /**
@@ -340,6 +313,33 @@ public interface AnnotationDescription {
                         .toArray(new AnnotationDescription[((Annotation[]) value).length]);
             }
             return value;
+        }
+
+        @Override
+        public S load() {
+            return annotation;
+        }
+
+        @Override
+        public Object getValue(MethodDescription methodDescription) {
+            if (!methodDescription.getDeclaringType().represents(annotation.annotationType())) {
+                throw new IllegalArgumentException(methodDescription + " does not represent " + annotation.annotationType());
+            }
+            try {
+                boolean visible = methodDescription.isVisibleTo(new TypeDescription.ForLoadedType(getClass()));
+                Method method = methodDescription instanceof MethodDescription.ForLoadedMethod
+                        ? ((MethodDescription.ForLoadedMethod) methodDescription).getLoadedMethod()
+                        : null;
+                if (method == null || (!visible && !method.isAccessible())) {
+                    method = annotation.annotationType().getDeclaredMethod(methodDescription.getName());
+                    if (!visible) {
+                        method.setAccessible(true);
+                    }
+                }
+                return wrap(method.invoke(annotation), methodDescription.getReturnType());
+            } catch (Exception e) {
+                throw new IllegalStateException("Cannot access annotation property " + methodDescription, e);
+            }
         }
 
         @Override

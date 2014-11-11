@@ -233,6 +233,16 @@ public class ObjectPropertyAssertion<T> {
         void apply(T mock);
     }
 
+    public static interface Generator<T> {
+
+        Class<? extends T> generate();
+    }
+
+    public static interface Creator<T> {
+
+        T create();
+    }
+
     private static class ApplicableRefinement {
 
         private final List<Refinement<?>> refinements;
@@ -263,11 +273,6 @@ public class ObjectPropertyAssertion<T> {
         }
     }
 
-    public static interface Generator<T> {
-
-        Class<? extends T> generate();
-    }
-
     private static class ApplicableGenerator {
 
         private final List<Generator<?>> generators;
@@ -296,11 +301,6 @@ public class ObjectPropertyAssertion<T> {
         private ApplicableGenerator with(Generator<?> generator) {
             return new ApplicableGenerator(join(generators, generator));
         }
-    }
-
-    public static interface Creator<T> {
-
-        T create();
     }
 
     private static class ApplicableCreator {

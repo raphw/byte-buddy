@@ -18,9 +18,9 @@ import static org.mockito.Mockito.when;
 
 public abstract class AbstractFieldDescriptionTest {
 
-    protected abstract FieldDescription describe(Field field);
-
     private Field first, second;
+
+    protected abstract FieldDescription describe(Field field);
 
     @Before
     public void setUp() throws Exception {
@@ -166,6 +166,10 @@ public abstract class AbstractFieldDescriptionTest {
                 is((AnnotationList) new AnnotationList.ForLoadedAnnotation(second.getDeclaredAnnotations())));
     }
 
+    @Retention(RetentionPolicy.RUNTIME)
+    private @interface SampleAnnotation {
+    }
+
     protected static class FirstSample {
 
         private Void first;
@@ -197,9 +201,5 @@ public abstract class AbstractFieldDescriptionTest {
         Void packagePrivateField;
 
         private Void privateField;
-    }
-
-    @Retention(RetentionPolicy.RUNTIME)
-    private @interface SampleAnnotation {
     }
 }

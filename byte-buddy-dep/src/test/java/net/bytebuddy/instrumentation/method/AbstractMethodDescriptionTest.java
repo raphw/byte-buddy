@@ -21,13 +21,26 @@ import static org.mockito.Mockito.when;
 
 public abstract class AbstractMethodDescriptionTest {
 
+    private Method firstMethod, secondMethod, thirdMethod;
+    private Constructor<?> firstConstructor, secondConstructor;
+
+    private static int hashCode(Method method) {
+        int hashCode = new TypeDescription.ForLoadedType(method.getDeclaringClass()).hashCode();
+        hashCode = 31 * hashCode + method.getName().hashCode();
+        hashCode = 31 * hashCode + new TypeDescription.ForLoadedType(method.getReturnType()).hashCode();
+        return 31 * hashCode + new TypeList.ForLoadedType(method.getParameterTypes()).hashCode();
+    }
+
+    private static int hashCode(Constructor<?> constructor) {
+        int hashCode = new TypeDescription.ForLoadedType(constructor.getDeclaringClass()).hashCode();
+        hashCode = 31 * hashCode + MethodDescription.CONSTRUCTOR_INTERNAL_NAME.hashCode();
+        hashCode = 31 * hashCode + new TypeDescription.ForLoadedType(void.class).hashCode();
+        return 31 * hashCode + new TypeList.ForLoadedType(constructor.getParameterTypes()).hashCode();
+    }
+
     protected abstract MethodDescription describe(Method method);
 
     protected abstract MethodDescription describe(Constructor<?> constructor);
-
-    private Method firstMethod, secondMethod, thirdMethod;
-
-    private Constructor<?> firstConstructor, secondConstructor;
 
     @Before
     public void setUp() throws Exception {
@@ -137,20 +150,6 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(firstConstructor).hashCode(), not(is(hashCode(secondMethod))));
         assertThat(describe(firstConstructor).hashCode(), not(is(hashCode(thirdMethod))));
         assertThat(describe(firstConstructor).hashCode(), not(is(hashCode(secondConstructor))));
-    }
-
-    private static int hashCode(Method method) {
-        int hashCode = new TypeDescription.ForLoadedType(method.getDeclaringClass()).hashCode();
-        hashCode = 31 * hashCode + method.getName().hashCode();
-        hashCode = 31 * hashCode + new TypeDescription.ForLoadedType(method.getReturnType()).hashCode();
-        return 31 * hashCode + new TypeList.ForLoadedType(method.getParameterTypes()).hashCode();
-    }
-
-    private static int hashCode(Constructor<?> constructor) {
-        int hashCode = new TypeDescription.ForLoadedType(constructor.getDeclaringClass()).hashCode();
-        hashCode = 31 * hashCode + MethodDescription.CONSTRUCTOR_INTERNAL_NAME.hashCode();
-        hashCode = 31 * hashCode + new TypeDescription.ForLoadedType(void.class).hashCode();
-        return 31 * hashCode + new TypeList.ForLoadedType(constructor.getParameterTypes()).hashCode();
     }
 
     @Test
@@ -411,6 +410,10 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(firstConstructor).represents(thirdMethod), is(false));
     }
 
+    @Retention(RetentionPolicy.RUNTIME)
+    private static @interface SampleAnnotation {
+    }
+
     private static abstract class Sample {
 
         Sample(Void argument) {
@@ -488,9 +491,5 @@ public abstract class AbstractMethodDescriptionTest {
         private void privateMethod() {
             /* do nothing*/
         }
-    }
-
-    @Retention(RetentionPolicy.RUNTIME)
-    private static @interface SampleAnnotation {
     }
 }

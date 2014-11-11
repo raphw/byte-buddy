@@ -15,6 +15,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @RunWith(Parameterized.class)
 public class ModifierReviewableTest {
 
+    private final SimpleModifierReviewable simpleModifierReviewable;
+    private final Method method;
+
+    public ModifierReviewableTest(int modifiers, String methodName) throws Exception {
+        simpleModifierReviewable = new SimpleModifierReviewable(modifiers);
+        method = ModifierReviewable.class.getDeclaredMethod(methodName);
+    }
+
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
@@ -39,15 +47,6 @@ public class ModifierReviewableTest {
                 {Opcodes.ACC_VARARGS, "isVarArgs"},
                 {Opcodes.ACC_VOLATILE, "isVolatile"}
         });
-    }
-
-    private final SimpleModifierReviewable simpleModifierReviewable;
-
-    private final Method method;
-
-    public ModifierReviewableTest(int modifiers, String methodName) throws Exception {
-        simpleModifierReviewable = new SimpleModifierReviewable(modifiers);
-        method = ModifierReviewable.class.getDeclaredMethod(methodName);
     }
 
     @Test

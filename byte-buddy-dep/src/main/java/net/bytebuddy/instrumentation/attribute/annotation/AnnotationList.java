@@ -46,20 +46,6 @@ public interface AnnotationList extends List<AnnotationDescription> {
     static class ForLoadedAnnotation extends AbstractList<AnnotationDescription> implements AnnotationList {
 
         /**
-         * Creates a list of annotation lists representing the given loaded annotations.
-         *
-         * @param annotations The annotations to represent where each dimension is converted into a list.
-         * @return A list of annotation lists representing the given annotations.
-         */
-        public static List<AnnotationList> asList(Annotation[][] annotations) {
-            List<AnnotationList> result = new ArrayList<AnnotationList>(annotations.length);
-            for (Annotation[] annotation : annotations) {
-                result.add(new ForLoadedAnnotation(annotation));
-            }
-            return result;
-        }
-
-        /**
          * The represented annotations.
          */
         private final Annotation[] annotation;
@@ -71,6 +57,20 @@ public interface AnnotationList extends List<AnnotationDescription> {
          */
         public ForLoadedAnnotation(Annotation... annotation) {
             this.annotation = annotation;
+        }
+
+        /**
+         * Creates a list of annotation lists representing the given loaded annotations.
+         *
+         * @param annotations The annotations to represent where each dimension is converted into a list.
+         * @return A list of annotation lists representing the given annotations.
+         */
+        public static List<AnnotationList> asList(Annotation[][] annotations) {
+            List<AnnotationList> result = new ArrayList<AnnotationList>(annotations.length);
+            for (Annotation[] annotation : annotations) {
+                result.add(new ForLoadedAnnotation(annotation));
+            }
+            return result;
         }
 
         @Override
@@ -183,20 +183,6 @@ public interface AnnotationList extends List<AnnotationDescription> {
     static class Explicit extends AbstractList<AnnotationDescription> implements AnnotationList {
 
         /**
-         * Creates a list of annotation lists for a given multidimensional list of annotation descriptions.
-         *
-         * @param annotations The list of annotations to represent as a list of annotation lists.
-         * @return The list of annotation lists.
-         */
-        public static List<AnnotationList> asList(List<? extends List<? extends AnnotationDescription>> annotations) {
-            List<AnnotationList> result = new ArrayList<AnnotationList>(annotations.size());
-            for (List<? extends AnnotationDescription> annotation : annotations) {
-                result.add(new Explicit(annotation));
-            }
-            return result;
-        }
-
-        /**
          * The list of represented annotation descriptions.
          */
         private final List<? extends AnnotationDescription> annotationDescriptions;
@@ -208,6 +194,20 @@ public interface AnnotationList extends List<AnnotationDescription> {
          */
         public Explicit(List<? extends AnnotationDescription> annotationDescriptions) {
             this.annotationDescriptions = annotationDescriptions;
+        }
+
+        /**
+         * Creates a list of annotation lists for a given multidimensional list of annotation descriptions.
+         *
+         * @param annotations The list of annotations to represent as a list of annotation lists.
+         * @return The list of annotation lists.
+         */
+        public static List<AnnotationList> asList(List<? extends List<? extends AnnotationDescription>> annotations) {
+            List<AnnotationList> result = new ArrayList<AnnotationList>(annotations.size());
+            for (List<? extends AnnotationDescription> annotation : annotations) {
+                result.add(new Explicit(annotation));
+            }
+            return result;
         }
 
         @Override

@@ -57,32 +57,6 @@ public abstract class MethodConstant implements StackManipulation {
     }
 
     /**
-     * Represents a method constant that cannot be represented by Java's reflection API.
-     */
-    private static enum CanCacheIllegal implements CanCache {
-
-        /**
-         * The singleton instance.
-         */
-        INSTANCE;
-
-        @Override
-        public StackManipulation cached() {
-            return Illegal.INSTANCE;
-        }
-
-        @Override
-        public boolean isValid() {
-            return false;
-        }
-
-        @Override
-        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-            return Illegal.INSTANCE.apply(methodVisitor, instrumentationContext);
-        }
-    }
-
-    /**
      * Returns a list of type constant load operations for the given list of parameters.
      *
      * @param parameterTypes A list of all type descriptions that should be represented as type constant
@@ -157,6 +131,32 @@ public abstract class MethodConstant implements StackManipulation {
     @Override
     public int hashCode() {
         return methodDescription.hashCode();
+    }
+
+    /**
+     * Represents a method constant that cannot be represented by Java's reflection API.
+     */
+    private static enum CanCacheIllegal implements CanCache {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        @Override
+        public StackManipulation cached() {
+            return Illegal.INSTANCE;
+        }
+
+        @Override
+        public boolean isValid() {
+            return false;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+            return Illegal.INSTANCE.apply(methodVisitor, instrumentationContext);
+        }
     }
 
     /**

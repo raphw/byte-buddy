@@ -14,6 +14,8 @@ import static org.mockito.Mockito.when;
 
 public abstract class AbstractEnumerationValueTest {
 
+    private Method annotationMethod;
+
     private AnnotationDescription.EnumerationValue describe(Enum<?> enumeration) {
         if (enumeration == Sample.FIRST) {
             return describe(enumeration, FirstCarrier.class, new MethodDescription.ForLoadedMethod(annotationMethod));
@@ -25,8 +27,6 @@ public abstract class AbstractEnumerationValueTest {
     protected abstract AnnotationDescription.EnumerationValue describe(Enum<?> enumeration,
                                                                        Class<?> carrierType,
                                                                        MethodDescription annotationMethod);
-
-    private Method annotationMethod;
 
     @Before
     public void setUp() throws Exception {
@@ -104,15 +104,15 @@ public abstract class AbstractEnumerationValueTest {
         INSTANCE
     }
 
+    public static @interface Carrier {
+        Sample value();
+    }
+
     @Carrier(Sample.FIRST)
     private static class FirstCarrier {
     }
 
     @Carrier(Sample.SECOND)
     private static class SecondCarrier {
-    }
-
-    public static @interface Carrier {
-        Sample value();
     }
 }

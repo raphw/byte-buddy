@@ -48,8 +48,16 @@ public @interface Field {
 
     static class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Field> {
 
+        private static final MethodDescription DEFINING_TYPE;
+        private static final MethodDescription FIELD_NAME;
+        private static final MethodDescription SERIALIZABLE_PROXY;
+        static {
+            MethodList methodList = new TypeDescription.ForLoadedType(Field.class).getDeclaredMethods();
+            DEFINING_TYPE = methodList.filter(named("definingType")).getOnly();
+            FIELD_NAME = methodList.filter(named("value")).getOnly();
+            SERIALIZABLE_PROXY = methodList.filter(named("serializableProxy")).getOnly();
+        }
         private final MethodDescription getterMethod;
-
         private final MethodDescription setterMethod;
 
         protected Binder(MethodDescription getterMethod, MethodDescription setterMethod) {
@@ -94,19 +102,6 @@ public @interface Field {
             return methodCandidates.getOnly();
         }
 
-        private static final MethodDescription DEFINING_TYPE;
-
-        private static final MethodDescription FIELD_NAME;
-
-        private static final MethodDescription SERIALIZABLE_PROXY;
-
-        static {
-            MethodList methodList = new TypeDescription.ForLoadedType(Field.class).getDeclaredMethods();
-            DEFINING_TYPE = methodList.filter(named("definingType")).getOnly();
-            FIELD_NAME = methodList.filter(named("value")).getOnly();
-            SERIALIZABLE_PROXY = methodList.filter(named("serializableProxy")).getOnly();
-        }
-
         @Override
         public Class<Field> getHandledType() {
             return Field.class;
@@ -139,219 +134,6 @@ public @interface Field {
                     accessType,
                     annotation.getValue(SERIALIZABLE_PROXY, Boolean.class)))
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
-        }
-
-        private abstract static class FieldLocator {
-
-            private abstract static class Resolution {
-
-                private static class Unresolved extends Resolution {
-
-                    @Override
-                    protected boolean isResolved() {
-                        return false;
-                    }
-
-                    @Override
-                    protected FieldDescription getFieldDescription() {
-                        throw new IllegalStateException("Cannot resolve an unresolved field lookup");
-                    }
-                }
-
-                private static class Resolved extends Resolution {
-
-                    private final FieldDescription fieldDescription;
-
-                    private Resolved(FieldDescription fieldDescription) {
-                        this.fieldDescription = fieldDescription;
-                    }
-
-                    @Override
-                    protected boolean isResolved() {
-                        return true;
-                    }
-
-                    @Override
-                    protected FieldDescription getFieldDescription() {
-                        return fieldDescription;
-                    }
-                }
-
-                protected abstract boolean isResolved();
-
-                protected abstract FieldDescription getFieldDescription();
-
-            }
-
-            private abstract static class LookupEngine {
-
-                private static class Illegal extends LookupEngine {
-
-                    @Override
-                    protected Resolution resolve(TypeDescription instrumentedType) {
-                        return new Resolution.Unresolved();
-                    }
-                }
-
-                private static class ForHierarchy extends LookupEngine {
-
-                    private final String fieldName;
-
-                    private ForHierarchy(String fieldName) {
-                        this.fieldName = fieldName;
-                    }
-
-                    @Override
-                    protected Resolution resolve(TypeDescription instrumentedType) {
-                        TypeDescription currentType = instrumentedType;
-                        do {
-                            for (FieldDescription fieldDescription : currentType.getDeclaredFields()) {
-                                if (fieldDescription.getInternalName().equals(fieldName) && fieldDescription.isVisibleTo(instrumentedType)) {
-                                    return new Resolution.Resolved(fieldDescription);
-                                }
-                            }
-                        } while ((currentType = currentType.getSupertype()) != null);
-                        return new Resolution.Unresolved();
-                    }
-                }
-
-                private static class ForExplicitType extends LookupEngine {
-
-                    private final String fieldName;
-
-                    private final TypeDescription typeDescription;
-
-                    private ForExplicitType(String fieldName, TypeDescription typeDescription) {
-                        this.fieldName = fieldName;
-                        this.typeDescription = typeDescription;
-                    }
-
-                    @Override
-                    protected Resolution resolve(TypeDescription instrumentedType) {
-                        for (FieldDescription fieldDescription : typeDescription.getDeclaredFields()) {
-                            if (fieldDescription.getInternalName().equals(fieldName)) {
-                                return fieldDescription.isVisibleTo(instrumentedType)
-                                        ? new Resolution.Resolved(fieldDescription)
-                                        : new Resolution.Unresolved();
-                            }
-                        }
-                        return new Resolution.Unresolved();
-                    }
-                }
-
-                protected abstract Resolution resolve(TypeDescription instrumentedType);
-            }
-
-            protected static class Legal extends FieldLocator {
-
-                protected static FieldLocator consider(MethodDescription methodDescription) {
-                    String fieldName;
-                    if (isSetter().matches(methodDescription)) {
-                        fieldName = methodDescription.getInternalName().substring(3);
-                    } else if (isGetter().matches(methodDescription)) {
-                        fieldName = methodDescription.getInternalName()
-                                .substring(methodDescription.getInternalName().startsWith("is") ? 2 : 3);
-                    } else {
-                        return new Illegal();
-                    }
-                    return new Legal(Character.toLowerCase(fieldName.charAt(0)) + fieldName.substring(1));
-                }
-
-                private final String fieldName;
-
-                protected Legal(String fieldName) {
-                    this.fieldName = fieldName;
-                }
-
-                @Override
-                protected LookupEngine lookup(TypeDescription typeDescription, TypeDescription instrumentedType) {
-                    return typeDescription.represents(void.class)
-                            ? new LookupEngine.ForHierarchy(fieldName)
-                            : new LookupEngine.ForExplicitType(fieldName,
-                            typeDescription.represents(TargetType.class) ? instrumentedType : typeDescription);
-                }
-            }
-
-            protected static class Illegal extends FieldLocator {
-
-                @Override
-                protected LookupEngine lookup(TypeDescription typeDescription, TypeDescription instrumentedType) {
-                    return new LookupEngine.Illegal();
-                }
-            }
-
-            protected static FieldLocator of(String fieldName, MethodDescription methodDescription) {
-                return BEAN_PROPERTY.equals(fieldName)
-                        ? Legal.consider(methodDescription)
-                        : new Legal(fieldName);
-            }
-
-            protected abstract LookupEngine lookup(TypeDescription typeDescription, TypeDescription instrumentedTyoe);
-        }
-
-        protected class AccessorProxy implements AuxiliaryType, StackManipulation {
-
-            private static final String FIELD_NAME = "instance";
-
-            private final FieldDescription accessedField;
-
-            private final TypeDescription instrumentedType;
-
-            private final Assigner assigner;
-
-            private final AccessType accessType;
-
-            private final boolean serializableProxy;
-
-            public AccessorProxy(FieldDescription accessedField,
-                                 Assigner assigner,
-                                 TypeDescription instrumentedType,
-                                 AccessType accessType,
-                                 boolean serializableProxy) {
-                this.accessedField = accessedField;
-                this.assigner = assigner;
-                this.instrumentedType = instrumentedType;
-                this.accessType = accessType;
-                this.serializableProxy = serializableProxy;
-            }
-
-            @Override
-            public DynamicType make(String auxiliaryTypeName,
-                                    ClassFileVersion classFileVersion,
-                                    MethodAccessorFactory methodAccessorFactory) {
-                return new ByteBuddy(classFileVersion)
-                        .subclass(accessType.proxyType(getterMethod, setterMethod), ConstructorStrategy.Default.NO_CONSTRUCTORS)
-                        .name(auxiliaryTypeName)
-                        .modifiers(DEFAULT_TYPE_MODIFIER)
-                        .implement(serializableProxy ? new Class<?>[]{Serializable.class} : new Class<?>[0])
-                        .defineConstructor(accessedField.isStatic()
-                                ? Collections.<TypeDescription>emptyList()
-                                : Collections.singletonList(instrumentedType))
-                        .intercept(accessedField.isStatic()
-                                ? StaticFieldConstructor.INSTANCE
-                                : new InstanceFieldConstructor(instrumentedType))
-                        .method(isDeclaredBy(accessType.proxyType(getterMethod, setterMethod)))
-                        .intercept(accessType.access(accessedField, assigner, methodAccessorFactory))
-                        .make();
-            }
-
-            @Override
-            public boolean isValid() {
-                return true;
-            }
-
-            @Override
-            public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-                TypeDescription auxiliaryType = instrumentationContext.register(this);
-                return new Compound(
-                        TypeCreation.forType(auxiliaryType),
-                        Duplication.SINGLE,
-                        accessedField.isStatic()
-                                ? LegalTrivial.INSTANCE
-                                : MethodVariableAccess.REFERENCE.loadFromIndex(0),
-                        MethodInvocation.invoke(auxiliaryType.getDeclaredMethods().filter(isConstructor()).getOnly())
-                ).apply(methodVisitor, instrumentationContext);
-            }
         }
 
         protected static enum AccessType {
@@ -420,6 +202,154 @@ public @interface Field {
                 return new ByteCodeAppender.Simple(MethodVariableAccess.REFERENCE.loadFromIndex(0),
                         MethodInvocation.invoke(objectTypeDefaultConstructor),
                         MethodReturn.VOID);
+            }
+        }
+
+        private abstract static class FieldLocator {
+
+            protected static FieldLocator of(String fieldName, MethodDescription methodDescription) {
+                return BEAN_PROPERTY.equals(fieldName)
+                        ? Legal.consider(methodDescription)
+                        : new Legal(fieldName);
+            }
+
+            protected abstract LookupEngine lookup(TypeDescription typeDescription, TypeDescription instrumentedTyoe);
+
+            private abstract static class Resolution {
+
+                protected abstract boolean isResolved();
+
+                protected abstract FieldDescription getFieldDescription();
+
+                private static class Unresolved extends Resolution {
+
+                    @Override
+                    protected boolean isResolved() {
+                        return false;
+                    }
+
+                    @Override
+                    protected FieldDescription getFieldDescription() {
+                        throw new IllegalStateException("Cannot resolve an unresolved field lookup");
+                    }
+                }
+
+                private static class Resolved extends Resolution {
+
+                    private final FieldDescription fieldDescription;
+
+                    private Resolved(FieldDescription fieldDescription) {
+                        this.fieldDescription = fieldDescription;
+                    }
+
+                    @Override
+                    protected boolean isResolved() {
+                        return true;
+                    }
+
+                    @Override
+                    protected FieldDescription getFieldDescription() {
+                        return fieldDescription;
+                    }
+                }
+
+            }
+
+            private abstract static class LookupEngine {
+
+                protected abstract Resolution resolve(TypeDescription instrumentedType);
+
+                private static class Illegal extends LookupEngine {
+
+                    @Override
+                    protected Resolution resolve(TypeDescription instrumentedType) {
+                        return new Resolution.Unresolved();
+                    }
+                }
+
+                private static class ForHierarchy extends LookupEngine {
+
+                    private final String fieldName;
+
+                    private ForHierarchy(String fieldName) {
+                        this.fieldName = fieldName;
+                    }
+
+                    @Override
+                    protected Resolution resolve(TypeDescription instrumentedType) {
+                        TypeDescription currentType = instrumentedType;
+                        do {
+                            for (FieldDescription fieldDescription : currentType.getDeclaredFields()) {
+                                if (fieldDescription.getInternalName().equals(fieldName) && fieldDescription.isVisibleTo(instrumentedType)) {
+                                    return new Resolution.Resolved(fieldDescription);
+                                }
+                            }
+                        } while ((currentType = currentType.getSupertype()) != null);
+                        return new Resolution.Unresolved();
+                    }
+                }
+
+                private static class ForExplicitType extends LookupEngine {
+
+                    private final String fieldName;
+
+                    private final TypeDescription typeDescription;
+
+                    private ForExplicitType(String fieldName, TypeDescription typeDescription) {
+                        this.fieldName = fieldName;
+                        this.typeDescription = typeDescription;
+                    }
+
+                    @Override
+                    protected Resolution resolve(TypeDescription instrumentedType) {
+                        for (FieldDescription fieldDescription : typeDescription.getDeclaredFields()) {
+                            if (fieldDescription.getInternalName().equals(fieldName)) {
+                                return fieldDescription.isVisibleTo(instrumentedType)
+                                        ? new Resolution.Resolved(fieldDescription)
+                                        : new Resolution.Unresolved();
+                            }
+                        }
+                        return new Resolution.Unresolved();
+                    }
+                }
+            }
+
+            protected static class Legal extends FieldLocator {
+
+                private final String fieldName;
+
+                protected Legal(String fieldName) {
+                    this.fieldName = fieldName;
+                }
+
+                protected static FieldLocator consider(MethodDescription methodDescription) {
+                    String fieldName;
+                    if (isSetter().matches(methodDescription)) {
+                        fieldName = methodDescription.getInternalName().substring(3);
+                    } else if (isGetter().matches(methodDescription)) {
+                        fieldName = methodDescription.getInternalName()
+                                .substring(methodDescription.getInternalName().startsWith("is") ? 2 : 3);
+                    } else {
+                        return new Illegal();
+                    }
+                    return new Legal(Character.toLowerCase(fieldName.charAt(0)) + fieldName.substring(1));
+                }
+
+                @Override
+                protected LookupEngine lookup(TypeDescription typeDescription, TypeDescription instrumentedType) {
+                    return typeDescription.represents(void.class)
+                            ? new LookupEngine.ForHierarchy(fieldName)
+                            : new LookupEngine.ForExplicitType(fieldName,
+                            typeDescription.represents(TargetType.class) ? instrumentedType : typeDescription);
+                }
+            }
+
+            protected static class Illegal extends FieldLocator {
+
+                @Override
+                protected LookupEngine lookup(TypeDescription typeDescription, TypeDescription instrumentedType) {
+                    return new LookupEngine.Illegal();
+                }
             }
         }
 
@@ -591,6 +521,71 @@ public @interface Field {
                     ).apply(methodVisitor, instrumentationContext);
                     return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                 }
+            }
+        }
+
+        protected class AccessorProxy implements AuxiliaryType, StackManipulation {
+
+            private static final String FIELD_NAME = "instance";
+
+            private final FieldDescription accessedField;
+
+            private final TypeDescription instrumentedType;
+
+            private final Assigner assigner;
+
+            private final AccessType accessType;
+
+            private final boolean serializableProxy;
+
+            public AccessorProxy(FieldDescription accessedField,
+                                 Assigner assigner,
+                                 TypeDescription instrumentedType,
+                                 AccessType accessType,
+                                 boolean serializableProxy) {
+                this.accessedField = accessedField;
+                this.assigner = assigner;
+                this.instrumentedType = instrumentedType;
+                this.accessType = accessType;
+                this.serializableProxy = serializableProxy;
+            }
+
+            @Override
+            public DynamicType make(String auxiliaryTypeName,
+                                    ClassFileVersion classFileVersion,
+                                    MethodAccessorFactory methodAccessorFactory) {
+                return new ByteBuddy(classFileVersion)
+                        .subclass(accessType.proxyType(getterMethod, setterMethod), ConstructorStrategy.Default.NO_CONSTRUCTORS)
+                        .name(auxiliaryTypeName)
+                        .modifiers(DEFAULT_TYPE_MODIFIER)
+                        .implement(serializableProxy ? new Class<?>[]{Serializable.class} : new Class<?>[0])
+                        .defineConstructor(accessedField.isStatic()
+                                ? Collections.<TypeDescription>emptyList()
+                                : Collections.singletonList(instrumentedType))
+                        .intercept(accessedField.isStatic()
+                                ? StaticFieldConstructor.INSTANCE
+                                : new InstanceFieldConstructor(instrumentedType))
+                        .method(isDeclaredBy(accessType.proxyType(getterMethod, setterMethod)))
+                        .intercept(accessType.access(accessedField, assigner, methodAccessorFactory))
+                        .make();
+            }
+
+            @Override
+            public boolean isValid() {
+                return true;
+            }
+
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+                TypeDescription auxiliaryType = instrumentationContext.register(this);
+                return new Compound(
+                        TypeCreation.forType(auxiliaryType),
+                        Duplication.SINGLE,
+                        accessedField.isStatic()
+                                ? LegalTrivial.INSTANCE
+                                : MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                        MethodInvocation.invoke(auxiliaryType.getDeclaredMethods().filter(isConstructor()).getOnly())
+                ).apply(methodVisitor, instrumentationContext);
             }
         }
     }

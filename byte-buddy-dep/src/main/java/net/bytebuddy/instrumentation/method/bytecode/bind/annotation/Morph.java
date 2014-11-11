@@ -246,6 +246,38 @@ public @interface Morph {
                         '}';
             }
 
+            private static enum StaticFieldConstructor implements Instrumentation {
+
+                INSTANCE;
+
+                /**
+                 * A reference of the {@link Object} type default constructor.
+                 */
+                protected final MethodDescription objectTypeDefaultConstructor;
+
+                /**
+                 * Creates the constructor call singleton.
+                 */
+                private StaticFieldConstructor() {
+                    objectTypeDefaultConstructor = new TypeDescription.ForLoadedType(Object.class)
+                            .getDeclaredMethods()
+                            .filter(isConstructor())
+                            .getOnly();
+                }
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
+                }
+
+                @Override
+                public ByteCodeAppender appender(Target instrumentationTarget) {
+                    return new ByteCodeAppender.Simple(MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                            MethodInvocation.invoke(objectTypeDefaultConstructor),
+                            MethodReturn.VOID);
+                }
+            }
+
             private static class MethodCall implements Instrumentation {
 
                 private final MethodDescription accessorMethod;
@@ -265,6 +297,26 @@ public @interface Morph {
                 @Override
                 public ByteCodeAppender appender(Target instrumentationTarget) {
                     return new Appender(instrumentationTarget);
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && accessorMethod.equals(((MethodCall) other).accessorMethod)
+                            && assigner.equals(((MethodCall) other).assigner);
+                }
+
+                @Override
+                public int hashCode() {
+                    return accessorMethod.hashCode() + 31 * assigner.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "Morph.Binder.Redirection.MethodCall{" +
+                            "accessorMethod=" + accessorMethod +
+                            ", assigner=" + assigner +
+                            '}';
                 }
 
                 private class Appender implements ByteCodeAppender {
@@ -331,58 +383,6 @@ public @interface Morph {
                                 ", methodCall=" + MethodCall.this +
                                 '}';
                     }
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && accessorMethod.equals(((MethodCall) other).accessorMethod)
-                            && assigner.equals(((MethodCall) other).assigner);
-                }
-
-                @Override
-                public int hashCode() {
-                    return accessorMethod.hashCode() + 31 * assigner.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "Morph.Binder.Redirection.MethodCall{" +
-                            "accessorMethod=" + accessorMethod +
-                            ", assigner=" + assigner +
-                            '}';
-                }
-            }
-
-            private static enum StaticFieldConstructor implements Instrumentation {
-
-                INSTANCE;
-
-                /**
-                 * A reference of the {@link Object} type default constructor.
-                 */
-                protected final MethodDescription objectTypeDefaultConstructor;
-
-                /**
-                 * Creates the constructor call singleton.
-                 */
-                private StaticFieldConstructor() {
-                    objectTypeDefaultConstructor = new TypeDescription.ForLoadedType(Object.class)
-                            .getDeclaredMethods()
-                            .filter(isConstructor())
-                            .getOnly();
-                }
-
-                @Override
-                public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType;
-                }
-
-                @Override
-                public ByteCodeAppender appender(Target instrumentationTarget) {
-                    return new ByteCodeAppender.Simple(MethodVariableAccess.REFERENCE.loadFromIndex(0),
-                            MethodInvocation.invoke(objectTypeDefaultConstructor),
-                            MethodReturn.VOID);
                 }
             }
 

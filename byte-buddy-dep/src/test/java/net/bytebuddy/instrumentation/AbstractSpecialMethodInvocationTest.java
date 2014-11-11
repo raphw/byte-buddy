@@ -82,5 +82,7 @@ public abstract class AbstractSpecialMethodInvocationTest {
         when(equalMethodButParameter.getReturnType()).thenReturn(returnType);
         when(equalMethodButParameter.getParameterTypes()).thenReturn(new TypeList.Explicit(Arrays.asList(mock(TypeDescription.class))));
         assertThat(make(FOO, returnType, parameterTypes, targetType), not(is(equalButParameter)));
+        assertThat(make(FOO, returnType, parameterTypes, targetType), not(is(new Object())));
+        assertThat(make(FOO, returnType, parameterTypes, targetType), not(is((Object) null)));
     }
 }
