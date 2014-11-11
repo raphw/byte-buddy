@@ -848,7 +848,7 @@ public interface DynamicType {
                     instrumentedType = instrumentedType.withMethod(methodToken.internalName,
                             methodToken.resolveReturnType(instrumentedType),
                             methodToken.resolveParameterTypes(instrumentedType),
-                            methodToken.resolveExceptionTypes(),
+                            methodToken.resolveExceptionTypes(instrumentedType),
                             methodToken.modifiers);
                 }
                 return instrumentedType;
@@ -1305,10 +1305,15 @@ public interface DynamicType {
                 /**
                  * Resolves the declared exception types for the method.
                  *
+                 * @param instrumentedType The instrumented place which is used for replacement.
                  * @return A list of type descriptions for the actual exception types.
                  */
-                protected List<TypeDescription> resolveExceptionTypes() {
-                    return this.exceptionTypes;
+                protected List<TypeDescription> resolveExceptionTypes(TypeDescription instrumentedType) {
+                    List<TypeDescription> exceptionTypes = new ArrayList<TypeDescription>(this.exceptionTypes.size());
+                    for (TypeDescription exceptionType : this.exceptionTypes) {
+                        exceptionTypes.add(considerSubstitution(exceptionType, instrumentedType));
+                    }
+                    return exceptionTypes;
                 }
 
                 /**
@@ -1358,10 +1363,10 @@ public interface DynamicType {
 
                 @Override
                 public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && internalName.equals(((MethodToken) other).internalName)
-                            && parameterTypes.equals(((MethodToken) other).parameterTypes)
-                            && returnType.equals(((MethodToken) other).returnType);
+                    return (this == other || other instanceof MethodToken)
+                            && internalName.equals(((MethodToken) other).getInternalName())
+                            && parameterTypes.equals(((MethodToken) other).getParameterTypes())
+                            && returnType.equals(((MethodToken) other).getReturnType());
                 }
 
                 @Override
@@ -1374,7 +1379,7 @@ public interface DynamicType {
 
                 @Override
                 public String toString() {
-                    return "MethodToken{" +
+                    return "DynamicType.Builder.AbstractBase.MethodToken{" +
                             "internalName='" + internalName + '\'' +
                             ", returnType=" + returnType +
                             ", parameterTypes=" + parameterTypes +
@@ -1462,8 +1467,8 @@ public interface DynamicType {
 
                 @Override
                 public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && name.equals(((FieldToken) other).name);
+                    return (this == other || other instanceof FieldToken)
+                            && name.equals(((FieldToken) other).getFieldName());
                 }
 
                 @Override
@@ -1781,7 +1786,7 @@ public interface DynamicType {
 
                 @Override
                 public String toString() {
-                    return "SubclassFieldAnnotationTarget{" +
+                    return "DynamicType.Builder.AbstractBase.DefaultFieldValueTarget{" +
                             "base=" + AbstractBase.this +
                             ", fieldToken=" + fieldToken +
                             ", attributeAppenderFactory=" + attributeAppenderFactory +
@@ -1864,7 +1869,7 @@ public interface DynamicType {
 
                 @Override
                 public String toString() {
-                    return "DefaultMatchedMethodInterception{" +
+                    return "DynamicType.Builder.AbstractBase.DefaultMatchedMethodInterception{" +
                             "base=" + AbstractBase.this +
                             ", latentMethodMatcher=" + latentMethodMatcher +
                             ", methodTokens=" + methodTokens +
@@ -1950,9 +1955,9 @@ public interface DynamicType {
 
                 @Override
                 public String toString() {
-                    return "DefaultExceptionDeclarableMethodInterception{" +
+                    return "DynamicType.Builder.AbstractBase.DefaultExceptionDeclarableMethodInterception{" +
                             "base=" + AbstractBase.this +
-                            "methodToken=" + methodToken +
+                            ", methodToken=" + methodToken +
                             '}';
                 }
 
@@ -2076,7 +2081,7 @@ public interface DynamicType {
 
                 @Override
                 public String toString() {
-                    return "DefaultMethodAnnotationTarget{" +
+                    return "DynamicType.Builder.AbstractBase.DefaultMethodAnnotationTarget{" +
                             "base=" + AbstractBase.this +
                             ", methodTokens=" + methodTokens +
                             ", latentMethodMatcher=" + latentMethodMatcher +
@@ -2171,7 +2176,7 @@ public interface DynamicType {
 
                 @Override
                 public String toString() {
-                    return "DefaultOptionalMatchedMethodInterception{" +
+                    return "DynamicType.Builder.AbstractBase.DefaultOptionalMatchedMethodInterception{" +
                             "base=" + AbstractBase.this +
                             "interfaceType=" + Arrays.toString(interfaceType) +
                             '}';

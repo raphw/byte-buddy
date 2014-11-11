@@ -118,10 +118,10 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
          * @param resolution       The resolution of the rebased method.
          * @param instrumentedType The instrumented type on which this method is to be invoked.
          */
-        private RebasedMethodSpecialMethodInvocation(MethodRebaseResolver.Resolution resolution,
-                                                     TypeDescription instrumentedType) {
-            this.methodDescription = resolution.getResolvedMethod();
+        protected RebasedMethodSpecialMethodInvocation(MethodRebaseResolver.Resolution resolution,
+                                                       TypeDescription instrumentedType) {
             this.instrumentedType = instrumentedType;
+            methodDescription = resolution.getResolvedMethod();
             stackManipulation = new Compound(resolution.getAdditionalArguments(), resolution.getResolvedMethod().isStatic()
                     ? MethodInvocation.invoke(resolution.getResolvedMethod())
                     : MethodInvocation.invoke(resolution.getResolvedMethod()).special(instrumentedType));
@@ -165,7 +165,7 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
         @Override
         public boolean equals(Object other) {
             if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
+            if (!(other instanceof Instrumentation.SpecialMethodInvocation)) return false;
             Instrumentation.SpecialMethodInvocation specialMethodInvocation = (Instrumentation.SpecialMethodInvocation) other;
             return isValid() == specialMethodInvocation.isValid()
                     && instrumentedType.equals(specialMethodInvocation.getTypeDescription())

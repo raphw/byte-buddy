@@ -180,9 +180,9 @@ public interface Instrumentation {
              *                          invocation.
              * @param stackManipulation The stack manipulation that represents this special method invocation.
              */
-            private Simple(MethodDescription methodDescription,
-                           TypeDescription typeDescription,
-                           StackManipulation stackManipulation) {
+            protected Simple(MethodDescription methodDescription,
+                             TypeDescription typeDescription,
+                             StackManipulation stackManipulation) {
                 this.methodDescription = methodDescription;
                 this.typeDescription = typeDescription;
                 this.stackManipulation = stackManipulation;
@@ -228,7 +228,7 @@ public interface Instrumentation {
             @Override
             public boolean equals(Object other) {
                 if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
+                if (!(other instanceof SpecialMethodInvocation)) return false;
                 SpecialMethodInvocation specialMethodInvocation = (SpecialMethodInvocation) other;
                 return isValid() == specialMethodInvocation.isValid()
                         && typeDescription.equals(specialMethodInvocation.getTypeDescription())
@@ -248,7 +248,7 @@ public interface Instrumentation {
 
             @Override
             public String toString() {
-                return "Instrumentation.SpecialMethodInvocation.Legal{" +
+                return "Instrumentation.SpecialMethodInvocation.Simple{" +
                         "typeDescription=" + typeDescription +
                         ", methodDescription=" + methodDescription +
                         '}';
