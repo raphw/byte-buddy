@@ -1,11 +1,11 @@
-Byte Buddy
-==========
-
-A Java library for runtime code generation on the JVM
-
 <a href="http://bytebuddy.net">
 <img src="https://raw.githubusercontent.com/raphw/byte-buddy/gh-pages/images/logo-bg.png" alt="Byte Buddy logo" height="160px" align="right" />
 </a>
+
+Byte Buddy
+==========
+
+runtime code generation on the Java platform
 
 [![Build Status](https://travis-ci.org/raphw/byte-buddy.png)](https://travis-ci.org/raphw/byte-buddy) 
 [![Coverage Status](https://coveralls.io/repos/raphw/byte-buddy/badge.png?branch=master)](https://coveralls.io/r/raphw/byte-buddy?branch=master)
