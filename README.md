@@ -82,120 +82,61 @@ In reality, a user of such a library wants to perform more complex manipulations
 logic to a compiled Java program. Using Byte Buddy, doing so is however not much harder and the following example
 gives a taste of how method calls can be intercepted.
 
-For this demonstration, we will make up a simple pseudo domain where `Account` objects can be used for transferring
-money to a given recipient where the latter is represented by a simple string. Furthermore, we want to express that 
-the direct transfer of money by calling the `transfer` method is somewhat unsafe which is why we annotate the 
-method with `@Unsafe`.
+Byte Buddy describes method implementations by instances of the `Instrumentation` interface such as `FixedValue` which 
+we used in the above example. By implementing this interface, a user of Byte Buddy can go to the length of defining 
+custom byte code for a method. Normally, it is however easier to use Byte Buddy's `MethodDelegation` for intercepting 
+a method call. Using this instrumentation is straight forward as it uses simple POJOs. For example, we can implement 
+the `Comparator` interface with the following class which simply mimics the signature of the `Comparator:compare` 
+method:
 
 ```java
-@Retention(RetentionPolicy.RUNTIME)
-@interface Unsafe { }
-
-@Retention(RetentionPolicy.RUNTIME)
-@interface Secured { }
-
-class Account {
-  private int amount = 100;
-  @Unsafe
-  public String transfer(int amount, String recipient) {
-    this.amount -= amount;
-    return "transferred $" + amount + " to " + recipient;
+public static class ComparisonInterceptor {
+  public int intercept(Object first, Object second) {
+    return first.hashCode() - second.hashCode();
   }
 }
 ```
 
-In order to make a transaction safe, we rather want to process it by some `Bank`. For this purpose, the bank
-provides an obfuscation but logs the transaction details internally (and to your console). It will then conduct
-the transaction for the customer. With the help of Byte Buddy, we will now create a subclass of `Account` that
-processes all its transfers by using a `Bank`.
+Note that the above interceptor does not depend on any Byte Buddy classes. This is good news as classes that are  
+created by Byte Buddy do not require Byte Buddy on the class path! We can now implement the `Comparator` interface by 
+passing an instance of the above class to `MethodDelegation`: 
 
 ```java
-class Bank {
-  public static String obfuscate(@Argument(1) String recipient,
-                                 @Argument(0) Integer amount,
-                                 @Super Account zuper) {
-    System.out.println("Transfer " + amount + " to " + recipient);
-    return zuper.transfer(amount, recipient.substring(0, 3) + "XXX") + " (obfuscated)";
-  }
-}
-```
-
-Note the annotations on the `Bank`'s obfuscation method's parameters. The first both arguments are annotated
-with `@Argument(n)` which will instruct Byte Buddy to inject the `n`-th argument of any intercepted method into
-the annotated parameter. Further, note that the order of the parameters of the `Bank`'s obfuscation method
-is opposite to the intercepted method in `Account`. Also note how Byte Buddy is capable of auto-boxing the `Integer`
-value. The third parameter of the `Bank`'s obfuscation method is annotated with `@Super` which instructs
-Byte Buddy to create a proxy that allows to call the non-intercepted (`super`) implementations of the extended type.
-
-For the given implementation of a `Bank`, we can now create a `BankAccount` using `ByteBuddy`:
-
-```java
-Class<? extends Account> dynamicType = new ByteBuddy()
-  .subclass(Account.class)
-  .name("BankAccount")
-  .method(isAnnotatedBy(Unsafe.class)).intercept(MethodDelegation.to(Bank.class))
-  .annotateType(new Secured() {
-    @Override
-    public Class<? extends Annotation> annotationType() {
-      return Secured.class;
-    }
-  })
-  .implement(Serializable.class)
+Class<? extends Comparator> dynamicType = new ByteBuddy()
+  .subclass(Comparator.class) 
+  .method(named("compare")).intercept(MethodDelegation.to(new ComparisonInterceptor())
   .make()
   .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
   .getLoaded();
-assertThat(dynamicType.getName(), is("BankAccount"));
-assertThat(dynamicType.isAnnotationPresent(Secured.class), is(true));
-assertThat(Serializable.class.isAssignableFrom(dynamicType), is(true));
-assertThat(dynamicType.newInstance().transfer(26, "123456"),
-    is("transferred $26 to 123XXX (obfuscated)"));
+assertThat(dynamicType.newInstance().compare(3, 1), is(2));
 ```
 
-As obvious from the test results, the dynamically generated `BankAccount` class works as expected. We instructed
-Byte Buddy to intercept any method call to methods that are annotated by the `Unsafe` annotation which only concerns
-the `Account`'s `transfer` method. We then define to intercept the method call to be delegated by the
-`MethodDelegation` instrumentation which will automatically detect the only `static` method of `Bank` as a possible
-delegation target. The documentation of the `MethodDelegation` class gives details on how a method delegation is
-discovered and how it can be specified in further detail.
-
-Since all transactions will now be processed by a `Bank`, we can mark the new class as `Secured`. We can add this
-annotation by simply handing over an instance of the annotation to add to the class. Since Java annotations are
-nothing more than interfaces, this is straight-forward, even though it might appear a little strange at first. Finally,
-we instruct the `Serializable` interface to be implemented by the created type.
-
-The created type will be written directly in the Java class file format and in Java byte code and never exist as Java
-source code or as the source code of another JVM language. However, if you had written a class like the one we just
-created with Byte Buddy in Java, you would end up with the following Java source code:
+Byte Buddy now matches the `Comparator::compare` method and delegates any method invocation to the defined 
+interceptor. Doing so, it figures out a *best match* for an interceptor method as long as no further matching 
+information is provided. Interceptors can take more generic inputs and outputs using annotations. The above 
+interceptor could also be implemented like:
 
 ```java
-@Secured
-class BankAccount extends Account implements Serializable {
-
-  private class Proxy extends Account {
-
-    @Override
-    public String transfer(int amount, String recipientAccount) {
-      return BankAccount.super.transfer(amount, recipientAccount);
-    }
-
-    // Omitted overridable methods of java.lang.Object which are also
-    // implemented to call the super method implementations of the outer
-    // BankAccount instance.
-  }
-
-  @Override
-  public String transfer(int amount, String recipientAccount) {
-    return Bank.obfuscate(recipientAccount, new Integer(amount), new Proxy());
+public static class GeneralInterceptor {
+  @RuntimeType
+  public Object intercept(@AllArguments Object[] allArguments,
+                          @Origin Method method) {
+    // intercept any method of any signature
   }
 }
 ```
 
-You can check out the documentation of the `MethodDelegation` class for more information. There are plenty of other
-options for delegation such as delegating to a class or an instance member. And there are other instrumentations that
-ship with ByteBuddy and were not yet mentioned. One of them allows the implementation of `StubMethod`s. The
-`Exceptional` instrumentation allows to throw exceptions. One can conduct a `SuperMethodCall` or implement a
-`FieldAccessor`. Or one can adapt Java Class Library proxies by using an `InvocationHandlerAdapter`. Just as for the
-`MethodDelegation`, the Java documentation is a good place to getting started. Give Byte Buddy a try! You will like it.
+With the above interceptor, any method could be matched and processed. When matching this interceptor, the two 
+arguments of the `ComparisonInterceptor` would for example be passed as an object of length two. Also, a reference 
+to `Comparator::compare` would be passed as a second argument such that the interceptor can detect which method it
+is currently intercepting. By using the `@RuntimeType` annotation on the method, Byte Buddy simply casts the returned
+value to the return value of the intercepted method such as `int` for `Comparator::compare` where Byte Buddy is
+capable of boxing and unboxing primitive types. 
+
+You might think that using these annotations ties your code to Byte Buddy. However, Java ignores annotations in case  
+that they are not available to a class loader such that generated code can still exist without Byte Buddy! You can  
+find more information on the `MethodDelegation` and on all of its predefined annotations in its *javadoc* and in 
+Byte Buddy's tutorial.
 
 Where to go from here?
 ----------------------

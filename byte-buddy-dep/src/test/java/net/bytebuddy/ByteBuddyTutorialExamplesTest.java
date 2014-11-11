@@ -28,12 +28,12 @@ import org.junit.rules.MethodRule;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -71,26 +71,23 @@ public class ByteBuddyTutorialExamplesTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testExtensiveExample() throws Exception {
-        Class<? extends Account> dynamicType = new ByteBuddy()
-                .subclass(Account.class)
-                .implement(Serializable.class)
-                .name("BankAccount")
-                .annotateType(new Secured() {
-                    @Override
-                    public Class<? extends Annotation> annotationType() {
-                        return Secured.class;
-                    }
-                })
-                .method(isAnnotatedBy(Unsafe.class)).intercept(MethodDelegation.to(Bank.class))
-                .make()
-                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(dynamicType.getName(), is("BankAccount"));
-        assertThat(Serializable.class.isAssignableFrom(dynamicType), is(true));
-        assertThat(dynamicType.isAnnotationPresent(Secured.class), is(true));
-        assertThat(dynamicType.newInstance().transfer(26, "123456"), is("transferred $26 to 123XXX (obfuscated)"));
+        Class<? extends Comparator> dynamicType = new ByteBuddy()
+          .subclass(Comparator.class)
+          .method(named("compare")).intercept(MethodDelegation.to(new ComparisonInterceptor()))
+          .make()
+          .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+          .getLoaded();
+        assertThat(dynamicType.newInstance().compare(3, 1), is(2));
     }
+
+    public static class ComparisonInterceptor {
+
+        public int intercept(Object first, Object second) {
+            return first.hashCode() - second.hashCode();
+        }
+      }
 
     @Test
     public void testTutorialGettingStartedUnnamed() throws Exception {
