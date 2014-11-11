@@ -184,12 +184,12 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
      * An implementation of an {@link net.bytebuddy.instrumentation.InvocationHandlerAdapter} that delegates method
      * invocations to an adapter that is stored in a static field.
      */
-    private static class ForStaticDelegation extends InvocationHandlerAdapter {
+    protected static class ForStaticDelegation extends InvocationHandlerAdapter {
 
         /**
          * The invocation handler to which method interceptions are to be delegated.
          */
-        private final InvocationHandler invocationHandler;
+        protected final InvocationHandler invocationHandler;
 
         /**
          * Creates a new invocation handler adapter for delegating invocations to an invocation handler that is stored
@@ -238,15 +238,15 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
         public String toString() {
             return "InvocationHandlerAdapter.ForStaticDelegation{" +
                     "fieldName=" + fieldName +
-                    "cacheMethods=" + cacheMethods +
-                    "invocationHandler=" + invocationHandler +
+                    ", cacheMethods=" + cacheMethods +
+                    ", invocationHandler=" + invocationHandler +
                     '}';
         }
 
         /**
          * An appender for implementing the {@link net.bytebuddy.instrumentation.InvocationHandlerAdapter.ForStaticDelegation}.
          */
-        private class Appender implements ByteCodeAppender {
+        protected class Appender implements ByteCodeAppender {
 
             /**
              * The instrumented type for which the methods are being intercepted.
@@ -258,7 +258,7 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
              *
              * @param instrumentedType The type that is instrumented.
              */
-            private Appender(TypeDescription instrumentedType) {
+            protected Appender(TypeDescription instrumentedType) {
                 this.instrumentedType = instrumentedType;
             }
 
@@ -301,7 +301,7 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
 
             @Override
             public String toString() {
-                return "InvocationHandlerAdapter.Appender{" +
+                return "InvocationHandlerAdapter.ForStaticDelegation.Appender{" +
                         "invocationHandlerAdapter=" + ForStaticDelegation.this +
                         "instrumentedType=" + instrumentedType +
                         '}';
@@ -313,7 +313,7 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
      * An implementation of an {@link net.bytebuddy.instrumentation.InvocationHandlerAdapter} that delegates method
      * invocations to an adapter that is stored in an instance field.
      */
-    private static class ForInstanceDelegation extends InvocationHandlerAdapter {
+    protected static class ForInstanceDelegation extends InvocationHandlerAdapter {
 
         /**
          * Creates a new invocation handler adapter for delegating invocations to an invocation handler that is stored
@@ -323,7 +323,7 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
          * @param cacheMethods Determines if the {@link java.lang.reflect.Method} instances that are handed to the
          *                     intercepted methods are cached in {@code static} fields.
          */
-        private ForInstanceDelegation(String fieldName, boolean cacheMethods) {
+        protected ForInstanceDelegation(String fieldName, boolean cacheMethods) {
             super(fieldName, cacheMethods);
         }
 
@@ -355,7 +355,7 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
         /**
          * An appender for implementing the {@link net.bytebuddy.instrumentation.InvocationHandlerAdapter.ForInstanceDelegation}.
          */
-        private class Appender implements ByteCodeAppender {
+        protected class Appender implements ByteCodeAppender {
 
             /**
              * The type that is subject of the instrumentation.
@@ -367,7 +367,7 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
              *
              * @param instrumentedType The type that is instrumented.
              */
-            private Appender(TypeDescription instrumentedType) {
+            protected Appender(TypeDescription instrumentedType) {
                 this.instrumentedType = instrumentedType;
             }
 
@@ -408,7 +408,7 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
 
             @Override
             public String toString() {
-                return "InvocationHandlerAdapter.Appender{" +
+                return "InvocationHandlerAdapter.ForInstanceDelegation.Appender{" +
                         "invocationHandlerAdapter=" + ForInstanceDelegation.this +
                         "instrumentedType=" + instrumentedType +
                         '}';

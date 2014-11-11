@@ -2,6 +2,7 @@ package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -50,5 +51,15 @@ public class FieldAccessorEqualsHashCodeTest {
         assertThat(FieldAccessor.ofField(FOO).defineAs(TYPE), is(FieldAccessor.ofField(FOO).defineAs(TYPE)));
         assertThat(FieldAccessor.ofField(FOO).defineAs(TYPE).hashCode(), not(is(FieldAccessor.ofField(FOO).defineAs(OTHER_TYPE).hashCode())));
         assertThat(FieldAccessor.ofField(FOO).defineAs(TYPE), not(is(FieldAccessor.ofField(FOO).defineAs(OTHER_TYPE))));
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(FieldAccessor.Appender.class).apply();
+        ObjectPropertyAssertion.of(FieldAccessor.ForNamedField.class).apply();
+        ObjectPropertyAssertion.of(FieldAccessor.ForBeanProperty.class).apply();
+        ObjectPropertyAssertion.of(FieldAccessor.FieldLocator.ForGivenType.class).apply();
+        ObjectPropertyAssertion.of(FieldAccessor.FieldLocator.ForGivenType.Factory.class).apply();
+        ObjectPropertyAssertion.of(FieldAccessor.FieldLocator.ForInstrumentedTypeHierarchy.class).apply();
     }
 }

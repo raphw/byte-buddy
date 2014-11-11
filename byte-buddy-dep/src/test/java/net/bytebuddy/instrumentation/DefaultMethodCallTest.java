@@ -2,6 +2,7 @@ package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.utility.JavaVersionRule;
 import net.bytebuddy.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.PrecompiledTypeClassLoader;
@@ -166,6 +167,20 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
                 TypeDescription typeDescription = mock(TypeDescription.class);
                 when(typeDescription.isInterface()).thenReturn(true);
                 return Arrays.asList(typeDescription);
+            }
+        }).apply();
+        final TypeDescription removalType = mock(TypeDescription.class);
+        ObjectPropertyAssertion.of(DefaultMethodCall.Appender.class).refine(new ObjectPropertyAssertion.Refinement<Instrumentation.Target>() {
+            @Override
+            public void apply(Instrumentation.Target mock) {
+                TypeDescription typeDescription = mock(TypeDescription.class);
+                when(typeDescription.getInterfaces()).thenReturn(new TypeList.Explicit(Arrays.asList(removalType, mock(TypeDescription.class))));
+                when(mock.getTypeDescription()).thenReturn(typeDescription);
+            }
+        }).create(new ObjectPropertyAssertion.Creator<List<?>>() {
+            @Override
+            public List<?> create() {
+                return Arrays.asList(removalType, mock(TypeDescription.class));
             }
         }).apply();
     }

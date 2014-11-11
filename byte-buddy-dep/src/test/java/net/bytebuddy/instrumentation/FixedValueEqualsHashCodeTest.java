@@ -1,5 +1,6 @@
 package net.bytebuddy.instrumentation;
 
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.not;
@@ -36,5 +37,11 @@ public class FixedValueEqualsHashCodeTest {
         assertThat(FixedValue.reference(FOO, QUX), is(FixedValue.reference(FOO, QUX)));
         assertThat(FixedValue.reference(FOO, QUX).hashCode(), not(is(FixedValue.reference(BAR, QUX).hashCode())));
         assertThat(FixedValue.reference(FOO, QUX), not(is(FixedValue.reference(BAR, QUX))));
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(FixedValue.ForPoolValue.class).skipSynthetic().apply();
+        ObjectPropertyAssertion.of(FixedValue.ForStaticField.class).apply();
     }
 }

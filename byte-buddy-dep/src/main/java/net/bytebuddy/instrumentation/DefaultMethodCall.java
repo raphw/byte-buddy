@@ -132,7 +132,7 @@ public class DefaultMethodCall implements Instrumentation {
     /**
      * The appender for implementing a {@link net.bytebuddy.instrumentation.DefaultMethodCall}.
      */
-    private static class Appender implements ByteCodeAppender {
+    protected static class Appender implements ByteCodeAppender {
 
         /**
          * The instrumentation target of this appender.
@@ -155,7 +155,7 @@ public class DefaultMethodCall implements Instrumentation {
          * @param instrumentationTarget The instrumentation target of this appender.
          * @param prioritizedInterfaces The relevant prioritized interfaces to be considered by this appender.
          */
-        public Appender(Target instrumentationTarget, List<TypeDescription> prioritizedInterfaces) {
+        protected Appender(Target instrumentationTarget, List<TypeDescription> prioritizedInterfaces) {
             this.instrumentationTarget = instrumentationTarget;
             this.prioritizedInterfaces = prioritizedInterfaces;
             this.nonPrioritizedInterfaces = new HashSet<TypeDescription>(instrumentationTarget.getTypeDescription().getInterfaces());

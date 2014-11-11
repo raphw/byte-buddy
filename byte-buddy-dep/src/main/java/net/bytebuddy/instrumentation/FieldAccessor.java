@@ -297,7 +297,7 @@ public abstract class FieldAccessor implements Instrumentation {
 
             @Override
             public String toString() {
-                return "FieldLocator.ForInstrumentedTypeHierarchy{instrumentedType=" + instrumentedType + '}';
+                return "FieldAccessor.FieldLocator.ForInstrumentedTypeHierarchy{instrumentedType=" + instrumentedType + '}';
             }
 
             /**
@@ -323,10 +323,21 @@ public abstract class FieldAccessor implements Instrumentation {
          */
         static class ForGivenType implements FieldLocator {
 
+            /**
+             * A factory for a field locator locating given type.
+             */
             public static class Factory implements FieldLocator.Factory {
 
+                /**
+                 * The type to locate.
+                 */
                 private final TypeDescription targetType;
 
+                /**
+                 * Creates a new field locator factory for a given type.
+                 *
+                 * @param targetType The type for which fields are to be looked up.
+                 */
                 public Factory(TypeDescription targetType) {
                     this.targetType = targetType;
                 }
@@ -349,7 +360,7 @@ public abstract class FieldAccessor implements Instrumentation {
 
                 @Override
                 public String toString() {
-                    return " FieldAccessor.FieldLocator.ForGivenType.Factory{targetType=" + targetType + '}';
+                    return "FieldAccessor.FieldLocator.ForGivenType.Factory{targetType=" + targetType + '}';
                 }
             }
 
@@ -358,12 +369,16 @@ public abstract class FieldAccessor implements Instrumentation {
              */
             private final TypeDescription targetType;
 
+            /**
+             * The instrumented type onto which the field locator is to be applied.
+             */
             private final TypeDescription instrumentedType;
 
             /**
              * Creates a new field locator for a given type.
              *
-             * @param targetType The type for which fields are to be looked up.
+             * @param targetType       The type for which fields are to be looked up.
+             * @param instrumentedType The instrumented type onto which the field locator is to be applied.
              */
             public ForGivenType(TypeDescription targetType, TypeDescription instrumentedType) {
                 this.targetType = targetType;
@@ -393,7 +408,10 @@ public abstract class FieldAccessor implements Instrumentation {
 
             @Override
             public String toString() {
-                return "FieldLocator.ForGivenType{targetType=" + targetType + ", instrumentedType=" + instrumentedType + '}';
+                return "FieldAccessor.FieldLocator.ForGivenType{" +
+                        "targetType=" + targetType +
+                        ", instrumentedType=" + instrumentedType +
+                        '}';
             }
         }
     }

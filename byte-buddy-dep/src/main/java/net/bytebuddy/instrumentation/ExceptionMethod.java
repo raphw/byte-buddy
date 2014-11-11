@@ -54,15 +54,24 @@ public class ExceptionMethod implements Instrumentation, ByteCodeAppender {
      * @return An instrumentation that will throw an instance of the isThrowable on each method invocation of the
      * instrumented methods.
      */
-    public static Instrumentation throwing(Class<? extends Throwable> exceptionType) {
-        return throwing(new TypeDescription.ForLoadedType(nonNull(exceptionType)));
+    public static Instrumentation throwing(Class<? extends Throwable> throwable) {
+        return throwing(new TypeDescription.ForLoadedType(nonNull(throwable)));
     }
 
-    public static Instrumentation throwing(TypeDescription exceptionType) {
-        if (!exceptionType.isAssignableTo(Throwable.class)) {
-            throw new IllegalArgumentException(exceptionType + " does not extend throwable");
+    /**
+     * Creates an instrumentation that creates a new instance of the given isThrowable type on each method invocation
+     * which is then thrown immediately. For this to be possible, the given type must define a default constructor
+     * which is visible from the instrumented type.
+     *
+     * @param throwable The type of the isThrowable.
+     * @return An instrumentation that will throw an instance of the isThrowable on each method invocation of the
+     * instrumented methods.
+     */
+    public static Instrumentation throwing(TypeDescription throwable) {
+        if (!throwable.isAssignableTo(Throwable.class)) {
+            throw new IllegalArgumentException(throwable + " does not extend throwable");
         }
-        return new ExceptionMethod(nonNull(exceptionType), new ConstructionDelegate.ForDefaultConstructor(exceptionType));
+        return new ExceptionMethod(nonNull(throwable), new ConstructionDelegate.ForDefaultConstructor(throwable));
     }
 
     /**
@@ -79,6 +88,16 @@ public class ExceptionMethod implements Instrumentation, ByteCodeAppender {
         return throwing(new TypeDescription.ForLoadedType(nonNull(exceptionType)), message);
     }
 
+    /**
+     * Creates an instrumentation that creates a new instance of the given isThrowable type on each method invocation
+     * which is then thrown immediately. For this to be possible, the given type must define a constructor that
+     * takes a single {@link java.lang.String} as its argument.
+     *
+     * @param exceptionType The type of the isThrowable.
+     * @param message       The string that is handed to the constructor. Usually an exception message.
+     * @return An instrumentation that will throw an instance of the isThrowable on each method invocation of the
+     * instrumented methods.
+     */
     public static Instrumentation throwing(TypeDescription exceptionType, String message) {
         if (!exceptionType.isAssignableTo(Throwable.class)) {
             throw new IllegalArgumentException(exceptionType + " does not extend throwable");

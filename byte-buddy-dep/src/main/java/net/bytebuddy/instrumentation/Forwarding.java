@@ -280,7 +280,7 @@ public class Forwarding implements Instrumentation {
     /**
      * An appender for implementing a {@link net.bytebuddy.instrumentation.Forwarding} operation.
      */
-    private class Appender implements ByteCodeAppender {
+    protected class Appender implements ByteCodeAppender {
 
         /**
          * The stack manipulation for loading the delegate onto the stack, i.e. the field loading operation.
