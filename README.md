@@ -128,16 +128,16 @@ public static class GeneralInterceptor {
 }
 ```
 
-With the above interceptor, any method could be matched and processed. When matching this interceptor, the two 
+With the above interceptor, any method could be matched and processed. When matching this interceptor, the two
 arguments of the `ComparisonInterceptor` would for example be passed as an object of length two. Also, a reference 
 to `Comparator::compare` would be passed as a second argument such that the interceptor can detect which method it
 is currently intercepting. By using the `@RuntimeType` annotation on the method, Byte Buddy simply casts the returned
 value to the return value of the intercepted method such as `int` for `Comparator::compare` where Byte Buddy is
 capable of boxing and unboxing primitive types. 
 
-You might think that using these annotations ties your code to Byte Buddy. However, Java ignores annotations in case  
-that they are not available to a class loader such that generated code can still exist without Byte Buddy! You can  
-find more information on the `MethodDelegation` and on all of its predefined annotations in its *javadoc* and in 
+You might think that using these annotations ties your code to Byte Buddy. However, Java ignores annotations in case
+that they are not available to a class loader such that generated code can still exist without Byte Buddy! You can
+find more information on the `MethodDelegation` and on all of its predefined annotations in its *javadoc* and in
 Byte Buddy's tutorial.
 
 Where to go from here?
