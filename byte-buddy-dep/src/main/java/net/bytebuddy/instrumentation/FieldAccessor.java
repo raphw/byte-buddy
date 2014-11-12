@@ -606,7 +606,7 @@ public abstract class FieldAccessor implements Instrumentation {
 
         @Override
         public int hashCode() {
-            return 31 *(31 * super.hashCode() + fieldLocatorFactory.hashCode()) + fieldNameExtractor.hashCode();
+            return 31 * (31 * super.hashCode() + fieldLocatorFactory.hashCode()) + fieldNameExtractor.hashCode();
         }
 
         @Override
@@ -890,7 +890,7 @@ public abstract class FieldAccessor implements Instrumentation {
         public Size apply(MethodVisitor methodVisitor,
                           Instrumentation.Context instrumentationContext,
                           MethodDescription instrumentedMethod) {
-            if(isConstructor().matches(instrumentedMethod)) {
+            if (isConstructor().matches(instrumentedMethod)) {
                 throw new IllegalArgumentException("Constructors cannot define beans: " + instrumentedMethod);
             }
             if (takesArguments(0).and(not(returns(void.class))).matches(instrumentedMethod)) {
