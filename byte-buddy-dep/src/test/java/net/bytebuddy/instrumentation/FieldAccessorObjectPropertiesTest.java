@@ -12,7 +12,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class FieldAccessorEqualsHashCodeTest {
+public class FieldAccessorObjectPropertiesTest {
 
     private static final String FOO = "foo", BAR = "bar";
     private static final Class<?> TYPE = Void.class, OTHER_TYPE = Object.class;

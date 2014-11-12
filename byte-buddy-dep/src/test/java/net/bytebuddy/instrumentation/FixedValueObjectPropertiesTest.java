@@ -7,7 +7,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-public class FixedValueEqualsHashCodeTest {
+public class FixedValueObjectPropertiesTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
