@@ -829,9 +829,11 @@ public interface MethodDelegationBinder {
                                          Iterable<? extends MethodDescription> targets) {
             List<MethodBinding> possibleDelegations = new LinkedList<MethodBinding>();
             for (MethodDescription target : targets) {
-                MethodBinding methodBinding = methodDelegationBinder.bind(instrumentationTarget, source, target);
-                if (methodBinding.isValid()) {
-                    possibleDelegations.add(methodBinding);
+                if (target.isVisibleTo(instrumentationTarget.getTypeDescription())) {
+                    MethodBinding methodBinding = methodDelegationBinder.bind(instrumentationTarget, source, target);
+                    if (methodBinding.isValid()) {
+                        possibleDelegations.add(methodBinding);
+                    }
                 }
             }
             return possibleDelegations;

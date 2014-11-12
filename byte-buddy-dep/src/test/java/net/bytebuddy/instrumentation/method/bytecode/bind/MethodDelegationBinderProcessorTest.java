@@ -2,6 +2,7 @@ package net.bytebuddy.instrumentation.method.bytecode.bind;
 
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.MockitoRule;
 import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -28,7 +29,7 @@ public class MethodDelegationBinderProcessorTest {
     private MethodDescription source;
 
     @Mock
-    private MethodDescription bindableTarget, unbindableTarget, dominantBindableTarget;
+    private MethodDescription bindableTarget, unbindableTarget, dominantBindableTarget, invisibleTarget;
     @Mock
     private MethodDelegationBinder.MethodBinding boundDelegation, unboundDelegation, dominantBoundDelegation;
 
@@ -36,6 +37,8 @@ public class MethodDelegationBinderProcessorTest {
     private MethodDelegationBinder methodDelegationBinder;
     @Mock
     private MethodDelegationBinder.AmbiguityResolver ambiguityResolver;
+    @Mock
+    private TypeDescription instrumentedType;
 
     @Before
     public void setUp() throws Exception {
@@ -43,6 +46,8 @@ public class MethodDelegationBinderProcessorTest {
         when(unboundDelegation.isValid()).thenReturn(false);
         when(dominantBoundDelegation.isValid()).thenReturn(true);
         when(methodDelegationBinder.bind(instrumentationTarget, source, bindableTarget))
+                .thenReturn(boundDelegation);
+        when(methodDelegationBinder.bind(instrumentationTarget, source, invisibleTarget))
                 .thenReturn(boundDelegation);
         when(methodDelegationBinder.bind(instrumentationTarget, source, unbindableTarget))
                 .thenReturn(unboundDelegation);
@@ -55,6 +60,11 @@ public class MethodDelegationBinderProcessorTest {
                 .thenReturn(MethodDelegationBinder.AmbiguityResolver.Resolution.RIGHT);
         when(ambiguityResolver.resolve(source, boundDelegation, boundDelegation))
                 .thenReturn(MethodDelegationBinder.AmbiguityResolver.Resolution.AMBIGUOUS);
+        when(instrumentationTarget.getTypeDescription()).thenReturn(instrumentedType);
+        when(unbindableTarget.isVisibleTo(instrumentedType)).thenReturn(true);
+        when(bindableTarget.isVisibleTo(instrumentedType)).thenReturn(true);
+        when(dominantBindableTarget.isVisibleTo(instrumentedType)).thenReturn(true);
+        when(invisibleTarget.isVisibleTo(instrumentedType)).thenReturn(false);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -142,6 +152,25 @@ public class MethodDelegationBinderProcessorTest {
         verify(ambiguityResolver).resolve(source, boundDelegation, boundDelegation);
         verify(ambiguityResolver, times(2)).resolve(source, boundDelegation, dominantBoundDelegation);
         verifyNoMoreInteractions(ambiguityResolver);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testInvisibleDoesNotBind() throws Exception {
+        List<MethodDescription> methodDescriptions = Arrays.asList(invisibleTarget);
+        MethodDelegationBinder.Processor processor = new MethodDelegationBinder.Processor(methodDelegationBinder, ambiguityResolver);
+        processor.process(instrumentationTarget, source, methodDescriptions);
+    }
+
+    @Test
+    public void testInvisibleDoesNotBindButBindable() throws Exception {
+        List<MethodDescription> methodDescriptions = Arrays.asList(invisibleTarget, bindableTarget);
+        MethodDelegationBinder.Processor processor = new MethodDelegationBinder.Processor(methodDelegationBinder, ambiguityResolver);
+        MethodDelegationBinder.MethodBinding result = processor.process(instrumentationTarget, source, methodDescriptions);
+        assertThat(result, is(boundDelegation));
+        verify(methodDelegationBinder, times(1)).bind(instrumentationTarget, source, bindableTarget);
+        verify(boundDelegation, atLeast(1)).isValid();
+        verify(methodDelegationBinder, times(0)).bind(instrumentationTarget, source, invisibleTarget);
+        verifyZeroInteractions(ambiguityResolver);
     }
 
     @Test

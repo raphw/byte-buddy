@@ -89,6 +89,7 @@ public interface TypePool {
 
         protected static final Map<String, TypeDescription> PRIMITIVE_TYPES;
         protected static final Map<String, String> PRIMITIVE_DESCRIPTORS;
+
         static {
             Map<String, TypeDescription> primitiveTypes = new HashMap<String, TypeDescription>();
             Map<String, String> primitiveDescriptors = new HashMap<String, String>();
@@ -107,6 +108,7 @@ public interface TypePool {
             PRIMITIVE_TYPES = Collections.unmodifiableMap(primitiveTypes);
             PRIMITIVE_DESCRIPTORS = Collections.unmodifiableMap(primitiveDescriptors);
         }
+
         private static final String ARRAY_SYMBOL = "[";
         protected final CacheProvider cacheProvider;
 

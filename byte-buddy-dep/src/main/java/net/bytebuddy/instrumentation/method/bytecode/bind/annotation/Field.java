@@ -51,12 +51,14 @@ public @interface Field {
         private static final MethodDescription DEFINING_TYPE;
         private static final MethodDescription FIELD_NAME;
         private static final MethodDescription SERIALIZABLE_PROXY;
+
         static {
             MethodList methodList = new TypeDescription.ForLoadedType(Field.class).getDeclaredMethods();
             DEFINING_TYPE = methodList.filter(named("definingType")).getOnly();
             FIELD_NAME = methodList.filter(named("value")).getOnly();
             SERIALIZABLE_PROXY = methodList.filter(named("serializableProxy")).getOnly();
         }
+
         private final MethodDescription getterMethod;
         private final MethodDescription setterMethod;
 

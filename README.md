@@ -86,10 +86,10 @@ gives a taste of how method calls can be intercepted.
 
 Byte Buddy describes method implementations by instances of the `Instrumentation` interface such as `FixedValue` which 
 we used in the above example. By implementing this interface, a user of Byte Buddy can go to the length of defining 
-custom byte code for a method. Normally, it is however easier to use Byte Buddy's `MethodDelegation` for intercepting 
-a method call. Using this instrumentation is straight forward as it uses simple POJOs. For example, we can implement 
-the `Comparator` interface with the following class which simply mimics the signature of the `Comparator:compare` 
-method:
+custom byte code for a method. Normally, it is however easier to use Byte Buddy's `MethodDelegation` which allows
+to implement an intercepted method in plain Java. Using this instrumentation is straight forward as it operates on any
+POJO. For example, we can implement the `Comparator` interface by defining the following class which mimics the
+signature of the `Comparator:compare` method we want to implement later:
 
 ```java
 public static class ComparisonInterceptor {
@@ -99,8 +99,8 @@ public static class ComparisonInterceptor {
 }
 ```
 
-Note that the above interceptor does not depend on any Byte Buddy classes. This is good news as classes that are  
-created by Byte Buddy do not require Byte Buddy on the class path! We can now implement the `Comparator` interface by 
+Note that the above interceptor does not depend on any Byte Buddy class. This is good news because none of the classes
+that by Byte Buddy generates require Byte Buddy on the class path! We can now implement the `Comparator` interface by 
 passing an instance of the above class to `MethodDelegation`: 
 
 ```java
@@ -113,10 +113,13 @@ Class<? extends Comparator> dynamicType = new ByteBuddy()
 assertThat(dynamicType.newInstance().compare(3, 1), is(2));
 ```
 
-Byte Buddy now matches the `Comparator::compare` method and delegates any method invocation to the defined 
-interceptor. Doing so, it figures out a *best match* for an interceptor method as long as no further matching 
-information is provided. Interceptors can take more generic inputs and outputs using annotations. The above 
-interceptor could also be implemented like:
+Byte Buddy matches the `Comparator::compare` method and delegates its invocation to the provided interceptor. Doing so, 
+it figures out a *best match* for an interceptor method as long as no further matching information is provided to
+the `MethodDelegation`. The matching logic is described in detail in the *javadoc* of the `MethodDelegation` and can be 
+customized for specific use-cases. 
+
+Interceptors can take more generic inputs and outputs using annotations. An example for a more general interceptor
+would be the following class:
 
 ```java
 public static class GeneralInterceptor {
@@ -128,15 +131,15 @@ public static class GeneralInterceptor {
 }
 ```
 
-With the above interceptor, any method could be matched and processed. When matching this interceptor, the two
-arguments of the `ComparisonInterceptor` would for example be passed as an object of length two. Also, a reference 
-to `Comparator::compare` would be passed as a second argument such that the interceptor can detect which method it
-is currently intercepting. By using the `@RuntimeType` annotation on the method, Byte Buddy simply casts the returned
-value to the return value of the intercepted method such as `int` for `Comparator::compare` where Byte Buddy is
-capable of boxing and unboxing primitive types. 
+With the above interceptor, any intercepted method could be matched and processed. When matching the 
+`Comparator:compare`, the two arguments of the method would for example be passed as an array of length two. Also, 
+a reference to `Comparator::compare` would be passed as a second argument such that the interceptor can detect which 
+method it is currently intercepting. By using the `@RuntimeType` annotation on the method, Byte Buddy simply casts 
+the returned value to the return value of the intercepted method such as `int` for `Comparator::compare` where Byte 
+Buddy automatically applied a boxing or an unboxing of primitive types. 
 
 You might think that using these annotations ties your code to Byte Buddy. However, Java ignores annotations in case
-that they are not available to a class loader such that generated code can still exist without Byte Buddy! You can
+that they are not visible to a class loader. This way, generated code can still exist without Byte Buddy! You can
 find more information on the `MethodDelegation` and on all of its predefined annotations in its *javadoc* and in
 Byte Buddy's tutorial.
 

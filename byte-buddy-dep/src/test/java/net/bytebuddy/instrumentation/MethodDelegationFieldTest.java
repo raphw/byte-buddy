@@ -117,7 +117,9 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
 
         public void swap() {
             /* do nothing */
-        }        protected String foo = FOO;
+        }
+
+        protected String foo = FOO;
 
 
     }
@@ -155,7 +157,9 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
 
         public String getFoo() {
             return null;
-        }        protected String foo = FOO;
+        }
+
+        protected String foo = FOO;
 
 
     }
@@ -172,7 +176,9 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
 
         public void setFoo(String value) {
             /* do nothing */
-        }        protected String foo = FOO;
+        }
+
+        protected String foo = FOO;
 
 
     }

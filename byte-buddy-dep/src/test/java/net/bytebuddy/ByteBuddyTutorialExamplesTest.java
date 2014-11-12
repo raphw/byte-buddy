@@ -74,20 +74,13 @@ public class ByteBuddyTutorialExamplesTest {
     @SuppressWarnings("unchecked")
     public void testExtensiveExample() throws Exception {
         Class<? extends Comparator> dynamicType = new ByteBuddy()
-          .subclass(Comparator.class)
-          .method(named("compare")).intercept(MethodDelegation.to(new ComparisonInterceptor()))
-          .make()
-          .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
-          .getLoaded();
+                .subclass(Comparator.class)
+                .method(named("compare")).intercept(MethodDelegation.to(new ComparisonInterceptor()))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
         assertThat(dynamicType.newInstance().compare(3, 1), is(2));
     }
-
-    public static class ComparisonInterceptor {
-
-        public int intercept(Object first, Object second) {
-            return first.hashCode() - second.hashCode();
-        }
-      }
 
     @Test
     public void testTutorialGettingStartedUnnamed() throws Exception {
@@ -514,6 +507,13 @@ public class ByteBuddyTutorialExamplesTest {
     public static @interface StringValue {
 
         String value();
+    }
+
+    public static class ComparisonInterceptor {
+
+        public int intercept(Object first, Object second) {
+            return first.hashCode() - second.hashCode();
+        }
     }
 
     @SuppressWarnings("unchecked")

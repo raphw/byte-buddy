@@ -422,6 +422,8 @@ public abstract class FieldAccessor implements Instrumentation {
 
     public static interface FieldNameExtractor {
 
+        String fieldNameFor(MethodDescription methodDescription);
+
         static enum ForBeanProperty implements FieldNameExtractor {
 
             INSTANCE;
@@ -444,8 +446,6 @@ public abstract class FieldAccessor implements Instrumentation {
                 return Character.toLowerCase(name.charAt(0)) + name.substring(1);
             }
         }
-
-        String fieldNameFor(MethodDescription methodDescription);
     }
 
     /**
