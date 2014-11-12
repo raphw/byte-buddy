@@ -57,7 +57,7 @@ public class FieldAccessorEqualsHashCodeTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(FieldAccessor.Appender.class).apply();
         ObjectPropertyAssertion.of(FieldAccessor.ForNamedField.class).apply();
-        ObjectPropertyAssertion.of(FieldAccessor.ForBeanProperty.class).apply();
+        ObjectPropertyAssertion.of(FieldAccessor.ForUnnamedField.class).apply();
         ObjectPropertyAssertion.of(FieldAccessor.FieldLocator.ForGivenType.class).apply();
         ObjectPropertyAssertion.of(FieldAccessor.FieldLocator.ForGivenType.Factory.class).apply();
         ObjectPropertyAssertion.of(FieldAccessor.FieldLocator.ForInstrumentedTypeHierarchy.class).apply();
