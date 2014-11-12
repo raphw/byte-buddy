@@ -136,7 +136,7 @@ With the above interceptor, any intercepted method could be matched and processe
 a reference to `Comparator::compare` would be passed as a second argument such that the interceptor can detect which 
 method it is currently intercepting. By using the `@RuntimeType` annotation on the method, Byte Buddy simply casts 
 the returned value to the return value of the intercepted method such as `int` for `Comparator::compare` where Byte 
-Buddy automatically applied a boxing or an unboxing of primitive types. 
+Buddy automatically applies a boxing or an unboxing of primitive types. 
 
 You might think that using these annotations ties your code to Byte Buddy. However, Java ignores annotations in case
 that they are not visible to a class loader. This way, generated code can still exist without Byte Buddy! You can
