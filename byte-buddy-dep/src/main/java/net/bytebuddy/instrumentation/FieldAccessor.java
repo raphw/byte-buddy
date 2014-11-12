@@ -598,19 +598,22 @@ public abstract class FieldAccessor implements Instrumentation {
 
         @Override
         public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass()) && super.equals(other)
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && super.equals(other)
+                    && fieldNameExtractor.equals(((ForUnnamedField) other).fieldNameExtractor)
                     && fieldLocatorFactory.equals(((ForUnnamedField) other).fieldLocatorFactory);
         }
 
         @Override
         public int hashCode() {
-            return 31 * super.hashCode() + fieldLocatorFactory.hashCode();
+            return 31 *(31 * super.hashCode() + fieldLocatorFactory.hashCode()) + fieldNameExtractor.hashCode();
         }
 
         @Override
         public String toString() {
             return "FieldAccessor.ForUnnamedField{" +
                     "fieldLocatorFactory=" + fieldLocatorFactory +
+                    "fieldNameExtractor=" + fieldNameExtractor +
                     '}';
         }
     }
