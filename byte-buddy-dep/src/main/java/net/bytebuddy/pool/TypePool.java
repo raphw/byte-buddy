@@ -340,6 +340,9 @@ public interface TypePool {
             void onComplete();
         }
 
+        /**
+         * A component type locator allows for the lazy
+         */
         protected static interface ComponentTypeLocator {
 
             LazyTypeDescription.AnnotationValue.ForComplexArray.ComponentTypeReference bind(String name);
@@ -417,23 +420,62 @@ public interface TypePool {
          */
         protected class TypeExtractor extends ClassVisitor {
 
+            /**
+             * A list of annotation tokens describing annotations that are found on the visited type.
+             */
             private final List<LazyTypeDescription.AnnotationToken> annotationTokens;
+
+            /**
+             * A list of field tokens describing fields that are found on the visited type.
+             */
             private final List<LazyTypeDescription.FieldToken> fieldTokens;
+
+            /**
+             * A list of method tokens describing annotations that are found on the visited type.
+             */
             private final List<LazyTypeDescription.MethodToken> methodTokens;
+
+            /**
+             * The modifiers found for this type.
+             */
             private int modifiers;
+
+            /**
+             * The internal name found for this type.
+             */
             private String internalName;
+
+            /**
+             * The internal name of the super type found for this type or {@code null} if no such type exists.
+             */
             private String superTypeName;
+
+            /**
+             * A list of internal names of interfaces implemented by this type or {@code null} if no interfaces
+             * are implemented.
+             */
             private String[] interfaceName;
+
+            /**
+             * {@code true} if this type was found to represent an anonymous type.
+             */
             private boolean anonymousType;
+
+            /**
+             * The declaration context found for this type.
+             */
             private LazyTypeDescription.DeclarationContext declarationContext;
 
-            private TypeExtractor() {
+            /**
+             * Creates a new type extractor.
+             */
+            protected TypeExtractor() {
                 super(ASM_VERSION);
-                declarationContext = LazyTypeDescription.DeclarationContext.SelfDeclared.INSTANCE;
-                anonymousType = false;
                 annotationTokens = new LinkedList<LazyTypeDescription.AnnotationToken>();
                 fieldTokens = new LinkedList<LazyTypeDescription.FieldToken>();
                 methodTokens = new LinkedList<LazyTypeDescription.MethodToken>();
+                anonymousType = false;
+                declarationContext = LazyTypeDescription.DeclarationContext.SelfDeclared.INSTANCE;
             }
 
             @Override
@@ -534,13 +576,13 @@ public interface TypePool {
                         '}';
             }
 
-            private class OnTypeCollector implements AnnotationRegistrant {
+            protected class OnTypeCollector implements AnnotationRegistrant {
 
                 private final String descriptor;
 
                 private final Map<String, LazyTypeDescription.AnnotationValue<?, ?>> values;
 
-                private OnTypeCollector(String descriptor) {
+                protected OnTypeCollector(String descriptor) {
                     this.descriptor = descriptor;
                     values = new HashMap<String, LazyTypeDescription.AnnotationValue<?, ?>>();
                 }
@@ -562,8 +604,8 @@ public interface TypePool {
 
                 private final ComponentTypeLocator componentTypeLocator;
 
-                public AnnotationExtractor(AnnotationRegistrant annotationRegistrant,
-                                           ComponentTypeLocator componentTypeLocator) {
+                protected AnnotationExtractor(AnnotationRegistrant annotationRegistrant,
+                                              ComponentTypeLocator componentTypeLocator) {
                     super(ASM_VERSION);
                     this.annotationRegistrant = annotationRegistrant;
                     this.componentTypeLocator = componentTypeLocator;
@@ -604,7 +646,7 @@ public interface TypePool {
                     annotationRegistrant.onComplete();
                 }
 
-                private class ArrayLookup implements AnnotationRegistrant {
+                protected class ArrayLookup implements AnnotationRegistrant {
 
                     private final String name;
 
@@ -612,8 +654,8 @@ public interface TypePool {
 
                     private final LinkedList<LazyTypeDescription.AnnotationValue<?, ?>> values;
 
-                    private ArrayLookup(String name,
-                                        LazyTypeDescription.AnnotationValue.ForComplexArray.ComponentTypeReference componentTypeReference) {
+                    protected ArrayLookup(String name,
+                                          LazyTypeDescription.AnnotationValue.ForComplexArray.ComponentTypeReference componentTypeReference) {
                         this.name = name;
                         this.componentTypeReference = componentTypeReference;
                         values = new LinkedList<LazyTypeDescription.AnnotationValue<?, ?>>();
@@ -638,7 +680,7 @@ public interface TypePool {
 
                     private final Map<String, LazyTypeDescription.AnnotationValue<?, ?>> values;
 
-                    private AnnotationLookup(String name, String descriptor) {
+                    protected AnnotationLookup(String name, String descriptor) {
                         this.name = name;
                         this.descriptor = descriptor;
                         values = new HashMap<String, LazyTypeDescription.AnnotationValue<?, ?>>();
@@ -657,7 +699,7 @@ public interface TypePool {
                 }
             }
 
-            private class FieldExtractor extends FieldVisitor {
+            protected class FieldExtractor extends FieldVisitor {
 
                 private final int modifiers;
 
@@ -667,7 +709,7 @@ public interface TypePool {
 
                 private final List<LazyTypeDescription.AnnotationToken> annotationTokens;
 
-                private FieldExtractor(int modifiers, String internalName, String descriptor) {
+                protected FieldExtractor(int modifiers, String internalName, String descriptor) {
                     super(ASM_VERSION);
                     this.modifiers = modifiers;
                     this.internalName = internalName;
@@ -686,13 +728,13 @@ public interface TypePool {
                     fieldTokens.add(new LazyTypeDescription.FieldToken(modifiers, internalName, descriptor, annotationTokens));
                 }
 
-                private class OnFieldCollector implements AnnotationRegistrant {
+                protected class OnFieldCollector implements AnnotationRegistrant {
 
                     private final String descriptor;
 
                     private final Map<String, LazyTypeDescription.AnnotationValue<?, ?>> values;
 
-                    private OnFieldCollector(String descriptor) {
+                    protected OnFieldCollector(String descriptor) {
                         this.descriptor = descriptor;
                         values = new HashMap<String, LazyTypeDescription.AnnotationValue<?, ?>>();
                     }
@@ -709,7 +751,10 @@ public interface TypePool {
                 }
             }
 
-            private class MethodExtractor extends MethodVisitor implements AnnotationRegistrant {
+            /**
+             * A visitor for a method that extracts
+             */
+            protected class MethodExtractor extends MethodVisitor implements AnnotationRegistrant {
 
                 private final int modifiers;
 
@@ -725,10 +770,10 @@ public interface TypePool {
 
                 private LazyTypeDescription.AnnotationValue<?, ?> defaultValue;
 
-                private MethodExtractor(int modifiers,
-                                        String internalName,
-                                        String descriptor,
-                                        String[] exceptionName) {
+                protected MethodExtractor(int modifiers,
+                                          String internalName,
+                                          String descriptor,
+                                          String[] exceptionName) {
                     super(ASM_VERSION);
                     this.modifiers = modifiers;
                     this.internalName = internalName;
@@ -779,13 +824,13 @@ public interface TypePool {
                             defaultValue));
                 }
 
-                private class OnMethodCollector implements AnnotationRegistrant {
+                protected class OnMethodCollector implements AnnotationRegistrant {
 
                     private final String descriptor;
 
                     private final Map<String, LazyTypeDescription.AnnotationValue<?, ?>> values;
 
-                    private OnMethodCollector(String descriptor) {
+                    protected OnMethodCollector(String descriptor) {
                         this.descriptor = descriptor;
                         values = new HashMap<String, LazyTypeDescription.AnnotationValue<?, ?>>();
                     }
@@ -801,7 +846,7 @@ public interface TypePool {
                     }
                 }
 
-                private class OnMethodParameterCollector implements AnnotationRegistrant {
+                protected class OnMethodParameterCollector implements AnnotationRegistrant {
 
                     private final String descriptor;
 
@@ -809,7 +854,7 @@ public interface TypePool {
 
                     private final Map<String, LazyTypeDescription.AnnotationValue<?, ?>> values;
 
-                    private OnMethodParameterCollector(String descriptor, int index) {
+                    protected OnMethodParameterCollector(String descriptor, int index) {
                         this.descriptor = descriptor;
                         this.index = index;
                         values = new HashMap<String, LazyTypeDescription.AnnotationValue<?, ?>>();

@@ -685,7 +685,7 @@ public abstract class FieldAccessor implements Instrumentation {
             return new ForNamedField(assigner,
                     considerRuntimeType,
                     fieldName,
-                    new PreparationHandler.FieldDefiner(fieldName, nonNull(typeDescription), nonNull(modifier)),
+                    new PreparationHandler.FieldDefiner(fieldName, nonVoid(typeDescription), nonNull(modifier)),
                     FieldLocator.ForInstrumentedType.INSTANCE);
         }
 

@@ -943,7 +943,7 @@ public interface DynamicType {
                         namingStrategy,
                         targetType,
                         interfaceTypes,
-                        resolveModifierContributors(TYPE_MODIFIER_MASK, modifier),
+                        resolveModifierContributors(TYPE_MODIFIER_MASK, nonNull(modifier)),
                         attributeAppender,
                         ignoredMethods,
                         bridgeMethodResolverFactory,
@@ -1035,7 +1035,7 @@ public interface DynamicType {
                         classVisitorWrapperChain,
                         fieldRegistry,
                         methodRegistry,
-                        methodLookupEngineFactory,
+                        nonNull(methodLookupEngineFactory),
                         defaultFieldAttributeAppenderFactory,
                         defaultMethodAttributeAppenderFactory,
                         fieldTokens,
@@ -1064,7 +1064,7 @@ public interface DynamicType {
 
             @Override
             public OptionalMatchedMethodInterception<S> implement(TypeDescription... interfaceType) {
-                return new DefaultOptionalMatchedMethodInterception(interfaceType);
+                return new DefaultOptionalMatchedMethodInterception(isInterface(interfaceType));
             }
 
             @Override
@@ -1073,7 +1073,7 @@ public interface DynamicType {
                                                    ModifierContributor.ForField... modifier) {
                 return new DefaultFieldValueTarget(
                         new FieldToken(isValidIdentifier(name),
-                                nonNull(fieldType),
+                                nonVoid(fieldType),
                                 resolveModifierContributors(FIELD_MODIFIER_MASK, nonNull(modifier))),
                         defaultFieldAttributeAppenderFactory);
             }
@@ -1085,7 +1085,7 @@ public interface DynamicType {
                                                                          ModifierContributor.ForMethod... modifier) {
                 return new DefaultExceptionDeclarableMethodInterception(new MethodToken(isValidIdentifier(name),
                         nonNull(returnType),
-                        nonNull(parameterTypes),
+                        nonVoid(parameterTypes),
                         Collections.<TypeDescription>emptyList(),
                         resolveModifierContributors(METHOD_MODIFIER_MASK, nonNull(modifier))));
             }
@@ -1093,24 +1093,24 @@ public interface DynamicType {
             @Override
             public ExceptionDeclarableMethodInterception<S> defineConstructor(List<? extends TypeDescription> parameterTypes,
                                                                               ModifierContributor.ForMethod... modifier) {
-                return new DefaultExceptionDeclarableMethodInterception(new MethodToken(nonNull(parameterTypes),
+                return new DefaultExceptionDeclarableMethodInterception(new MethodToken(nonVoid(parameterTypes),
                         Collections.<TypeDescription>emptyList(),
                         resolveModifierContributors(METHOD_MODIFIER_MASK & ~Opcodes.ACC_STATIC, nonNull(modifier))));
             }
 
             @Override
             public MatchedMethodInterception<S> method(MethodMatcher methodMatcher) {
-                return invokable(isMethod().and(methodMatcher));
+                return invokable(isMethod().and(nonNull(methodMatcher)));
             }
 
             @Override
             public MatchedMethodInterception<S> constructor(MethodMatcher methodMatcher) {
-                return invokable(isConstructor().and(methodMatcher));
+                return invokable(isConstructor().and(nonNull(methodMatcher)));
             }
 
             @Override
             public MatchedMethodInterception<S> invokable(MethodMatcher methodMatcher) {
-                return new DefaultMatchedMethodInterception(new MethodRegistry.LatentMethodMatcher.Simple(methodMatcher), methodTokens);
+                return new DefaultMatchedMethodInterception(new MethodRegistry.LatentMethodMatcher.Simple(nonNull(methodMatcher)), methodTokens);
             }
 
             /**
@@ -1755,12 +1755,12 @@ public interface DynamicType {
                 @Override
                 public FieldAnnotationTarget<S> attribute(FieldAttributeAppender.Factory attributeAppenderFactory) {
                     return new DefaultFieldValueTarget(fieldToken,
-                            new FieldAttributeAppender.Factory.Compound(this.attributeAppenderFactory, attributeAppenderFactory));
+                            new FieldAttributeAppender.Factory.Compound(this.attributeAppenderFactory, nonNull(attributeAppenderFactory)));
                 }
 
                 @Override
                 public FieldAnnotationTarget<S> annotateField(Annotation... annotation) {
-                    return attribute(new FieldAttributeAppender.ForAnnotation(annotation));
+                    return attribute(new FieldAttributeAppender.ForAnnotation(nonNull(annotation)));
                 }
 
                 @Override
@@ -1839,7 +1839,7 @@ public interface DynamicType {
                 public MethodAnnotationTarget<S> intercept(Instrumentation instrumentation) {
                     return new DefaultMethodAnnotationTarget(methodTokens,
                             latentMethodMatcher,
-                            instrumentation,
+                            nonNull(instrumentation),
                             defaultMethodAttributeAppenderFactory);
                 }
 
@@ -2043,17 +2043,17 @@ public interface DynamicType {
                     return new DefaultMethodAnnotationTarget(methodTokens,
                             latentMethodMatcher,
                             instrumentation,
-                            new MethodAttributeAppender.Factory.Compound(this.attributeAppenderFactory, attributeAppenderFactory));
+                            new MethodAttributeAppender.Factory.Compound(this.attributeAppenderFactory, nonNull(attributeAppenderFactory)));
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> annotateMethod(Annotation... annotation) {
-                    return attribute(new MethodAttributeAppender.ForAnnotation(annotation));
+                    return attribute(new MethodAttributeAppender.ForAnnotation(nonNull(annotation)));
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> annotateParameter(int parameterIndex, Annotation... annotation) {
-                    return attribute(new MethodAttributeAppender.ForAnnotation(parameterIndex, annotation));
+                    return attribute(new MethodAttributeAppender.ForAnnotation(parameterIndex, nonNull(annotation)));
                 }
 
                 @Override
@@ -2122,7 +2122,7 @@ public interface DynamicType {
 
                 @Override
                 public MethodAnnotationTarget<S> intercept(Instrumentation instrumentation) {
-                    return materialize().method(isDeclaredByAny(interfaceType)).intercept(instrumentation);
+                    return materialize().method(isDeclaredByAny(interfaceType)).intercept(nonNull(instrumentation));
                 }
 
                 @Override

@@ -84,6 +84,35 @@ public final class ByteBuddyCommons {
     }
 
     /**
+     * Validates that a type description is not representing the {@code void} type.
+     *
+     * @param typeDescription The type description to validate.
+     * @return The input value.
+     */
+    public static TypeDescription nonVoid(TypeDescription typeDescription) {
+        if (nonNull(typeDescription).represents(void.class)) {
+            throw new IllegalArgumentException("Type must not be void");
+        }
+        return typeDescription;
+    }
+
+    /**
+     * Validates that type descriptions do not represent the {@code void} type.
+     *
+     * @param typeDescriptions The type descriptions to validate.
+     * @param <T>              The type of the input collection.
+     * @return The input value.
+     */
+    public static <T extends Iterable<? extends TypeDescription>> T nonVoid(T typeDescriptions) {
+        for (TypeDescription typeDescription : typeDescriptions) {
+            if (nonNull(typeDescription).represents(void.class)) {
+                throw new IllegalArgumentException("Type must not be void");
+            }
+        }
+        return typeDescriptions;
+    }
+
+    /**
      * Validates if a type is an interface.
      *
      * @param type The type to validate.
@@ -94,6 +123,19 @@ public final class ByteBuddyCommons {
             throw new IllegalArgumentException(type + " is not an interface");
         }
         return type;
+    }
+
+    /**
+     * Validates if an array of type only contains interfaces.
+     *
+     * @param types The types to validate.
+     * @return The input value.
+     */
+    public static TypeDescription[] isInterface(TypeDescription[] types) {
+        for (TypeDescription typeDescription : types) {
+            isInterface(typeDescription);
+        }
+        return types;
     }
 
     /**

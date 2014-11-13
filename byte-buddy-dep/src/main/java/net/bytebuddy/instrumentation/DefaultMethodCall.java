@@ -68,6 +68,17 @@ public class DefaultMethodCall implements Instrumentation {
         return new DefaultMethodCall(new TypeList.ForLoadedType(nonNull(prioritizedInterface)));
     }
 
+    /**
+     * Creates a {@link net.bytebuddy.instrumentation.DefaultMethodCall} instrumentation which searches the given list
+     * of interface types for a suitable default method in their order. If no such prioritized interface is suitable,
+     * because it is either not defined on the instrumented type or because it does not define a suitable default method,
+     * any remaining interface is searched for a suitable default method. If no or more than one method defines a
+     * suitable default method, an exception is thrown.
+     *
+     * @param prioritizedInterface A list of prioritized default method interfaces in their prioritization order.
+     * @return An instrumentation which calls an instrumented method's compatible default method that considers the given
+     * interfaces to be prioritized in their order.
+     */
     public static Instrumentation prioritize(TypeDescription... prioritizedInterface) {
         return new DefaultMethodCall(new TypeList.Explicit(Arrays.asList(nonNull(prioritizedInterface))));
     }

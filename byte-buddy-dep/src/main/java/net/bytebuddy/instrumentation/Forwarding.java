@@ -12,8 +12,7 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import static net.bytebuddy.utility.ByteBuddyCommons.isValidIdentifier;
-import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
+import static net.bytebuddy.utility.ByteBuddyCommons.*;
 
 /**
  * This instrumentation forwards method invocations to another instance. For this, the intercepted method must be
@@ -92,9 +91,17 @@ public class Forwarding implements Instrumentation {
         return toStaticField(fieldName, new TypeDescription.ForLoadedType(nonNull(fieldType)));
     }
 
+    /**
+     * Forwards all intercepted method invocations to a {@code static} field of the instrumented class. The value
+     * of this field must be set explicitly.
+     *
+     * @param fieldName The name of the field in which the delegate should be stored.
+     * @param fieldType The type of the field and thus the type of which the delegate is assumed to be of.
+     * @return A corresponding instrumentation.
+     */
     public static Instrumentation toStaticField(String fieldName, TypeDescription fieldType) {
         return new Forwarding(isValidIdentifier(fieldName),
-                nonNull(fieldType),
+                nonVoid(fieldType),
                 PreparationHandler.ForStaticField.INSTANCE);
     }
 
