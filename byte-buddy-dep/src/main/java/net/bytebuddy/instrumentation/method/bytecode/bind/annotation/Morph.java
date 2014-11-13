@@ -35,6 +35,15 @@ import java.util.*;
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
+/**
+ * This annotation instructs Byte Buddy to inject a proxy class that calls a method's super method with
+ * explicit arguments. For this, the {@link Morph.Binder}
+ * needs to be installed for an interface type that takes an argument of the array type {@link java.lang.Object} and
+ * returns a non-array type of {@link java.lang.Object}. This is an alternative to using the
+ * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.SuperCall} or
+ * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.DefaultCall} annotations which call a super
+ * method using the same arguments as the intercepted method was invoked with.
+ */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
@@ -42,9 +51,21 @@ public @interface Morph {
 
     boolean serializableProxy() default false;
 
+    Class<?> defaultTarget() default void.class;
+
     static class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Morph>,
             MethodLookupEngine.Factory,
             MethodLookupEngine {
+
+        private static final MethodDescription SERIALIZABLE_PROXY;
+
+        private static final MethodDescription DEFAULT_TARGET;
+
+        static {
+            MethodList methodList = new TypeDescription.ForLoadedType(Morph.class).getDeclaredMethods();
+            SERIALIZABLE_PROXY = methodList.filter(named("serializableProxy")).getOnly();
+            DEFAULT_TARGET = methodList.filter(named("defaultTarget")).getOnly();
+        }
 
         private final MethodDescription forwardingMethod;
 
@@ -99,17 +120,19 @@ public @interface Morph {
                 throw new IllegalStateException(String.format("The installed type %s for the @Morph annotation does not " +
                         "equal the annotated parameter type on %s", parameterType, target));
             }
-            Instrumentation.SpecialMethodInvocation specialMethodInvocation = instrumentationTarget.invokeSuper(source,
-                    Instrumentation.Target.MethodLookup.Default.EXACT);
+            TypeDescription defaultMethodTarget = annotation.getValue(DEFAULT_TARGET, TypeDescription.class);
+            Instrumentation.SpecialMethodInvocation specialMethodInvocation = defaultMethodTarget.represents(void.class)
+                    ? instrumentationTarget.invokeSuper(source, Instrumentation.Target.MethodLookup.Default.EXACT)
+                    : instrumentationTarget.invokeDefault(defaultMethodTarget, source.getUniqueSignature());
             return specialMethodInvocation.isValid()
                     ? new MethodDelegationBinder.ParameterBinding.Anonymous(new RedirectionProxy(forwardingMethod.getDeclaringType(),
                     instrumentationTarget.getTypeDescription(),
                     specialMethodInvocation,
                     assigner,
-                    annotation.load().serializableProxy(),
+                    annotation.getValue(SERIALIZABLE_PROXY, Boolean.class),
                     this))
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
-        }
+        } // TODO: Add Java 8 test for default method!
 
         @Override
         public MethodLookupEngine make(boolean extractDefaultMethods) {
@@ -438,7 +461,7 @@ public @interface Morph {
             }
         }
 
-        private class PrecomputedFinding implements Finding {
+        protected class PrecomputedFinding implements Finding {
 
             private final TypeDescription typeDescription;
 
