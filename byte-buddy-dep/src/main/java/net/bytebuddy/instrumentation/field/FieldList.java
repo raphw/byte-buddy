@@ -57,7 +57,7 @@ public interface FieldList extends List<FieldDescription> {
                     return new FieldDescription.ForLoadedField(field);
                 }
             }
-            throw new IllegalArgumentException("Expected to find a field " + fieldName);
+            throw new IllegalArgumentException("Expected to find a field named '" + fieldName + "'");
         }
 
         @Override

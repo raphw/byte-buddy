@@ -4,9 +4,9 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TargetType;
-import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.method.bytecode.stack.Duplication;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
@@ -34,7 +34,7 @@ import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
  * A type proxy creates accessor methods for all overridable methods of a given type by subclassing the given type and
  * delegating all method calls to accessor methods of the instrumented type it was created for.
  */
-public class TypeProxy implements AuxiliaryType {
+public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
 
     /**
      * The name of the {@code static} method that is added to this auxiliary type for creating instances by using the
@@ -57,6 +57,9 @@ public class TypeProxy implements AuxiliaryType {
      */
     private final Instrumentation.Target instrumentationTarget;
 
+    /**
+     * The invocation factory for creating special method invocations.
+     */
     private final InvocationFactory invocationFactory;
 
     /**
@@ -74,6 +77,7 @@ public class TypeProxy implements AuxiliaryType {
      *
      * @param proxiedType           The type this proxy should implement which can either be a non-final class or an interface.
      * @param instrumentationTarget The instrumentation target this type proxy is created for.
+     * @param invocationFactory     The invocation factory for creating special method invocations.
      * @param ignoreFinalizer       {@code true} if any finalizer methods should be ignored for proxying.
      * @param serializableProxy     Determines if the proxy should be serializable.
      */
@@ -94,15 +98,23 @@ public class TypeProxy implements AuxiliaryType {
                             ClassFileVersion classFileVersion,
                             MethodAccessorFactory methodAccessorFactory) {
         return new ByteBuddy(classFileVersion)
-                .subclass(proxiedType, invocationFactory.getConstructorStrategy())
+                .withIgnoredMethods(ignoreFinalizer ? isFinalizer() : none())
+                .subclass(proxiedType)
                 .name(auxiliaryTypeName)
                 .modifiers(DEFAULT_TYPE_MODIFIER)
+                .methodLookupEngine(this)
                 .implement(serializableProxy ? new Class<?>[]{Serializable.class} : new Class<?>[0])
-                .method(ignoreFinalizer ? not(isFinalizer()) : any())
+                .method(any())
                 .intercept(new MethodCall(methodAccessorFactory))
                 .defineMethod(REFLECTION_METHOD, TargetType.DESCRIPTION, Collections.<TypeDescription>emptyList(), Ownership.STATIC)
                 .intercept(SilentConstruction.INSTANCE)
                 .make();
+    }
+
+    @Override
+    public MethodLookupEngine make(boolean extractDefaultMethods) {
+        // Default methods are never required for a type proxy.
+        return MethodLookupEngine.Default.Factory.INSTANCE.make(false);
     }
 
     @Override
@@ -141,7 +153,7 @@ public class TypeProxy implements AuxiliaryType {
     /**
      * A stack manipulation that throws an abstract method error in case that a given super method cannot be invoked.
      */
-    private static enum AbstractMethodErrorThrow implements StackManipulation {
+    protected static enum AbstractMethodErrorThrow implements StackManipulation {
 
         /**
          * The singleton instance.
@@ -182,7 +194,7 @@ public class TypeProxy implements AuxiliaryType {
      * {@link sun.reflect.ReflectionFactory}. This way, a constructor invocation can be avoided. However, this comes
      * at the cost of potentially breaking compatibility as the reflection factory is not standardized.
      */
-    private enum SilentConstruction implements Instrumentation {
+    protected enum SilentConstruction implements Instrumentation {
 
         /**
          * The singleton instance.
@@ -202,7 +214,7 @@ public class TypeProxy implements AuxiliaryType {
         /**
          * The appender for implementing a {@link net.bytebuddy.instrumentation.type.auxiliary.TypeProxy.SilentConstruction}.
          */
-        private static class Appender implements ByteCodeAppender {
+        protected static class Appender implements ByteCodeAppender {
 
             /**
              * The internal name of the reflection factory class.
@@ -337,332 +349,6 @@ public class TypeProxy implements AuxiliaryType {
             public String toString() {
                 return "TypeProxy.SilentConstruction.Appender{instrumentedType=" + instrumentedType + '}';
             }
-        }
-    }
-
-    public static interface InvocationFactory {
-
-        Instrumentation.SpecialMethodInvocation invoke(Instrumentation.Target instrumentationTarget,
-                                                       TypeDescription proxiedType,
-                                                       MethodDescription instrumentedMethod);
-
-        ConstructorStrategy getConstructorStrategy();
-
-        static enum ForSuperMethodCall implements InvocationFactory {
-
-            INSTANCE;
-
-            @Override
-            public Instrumentation.SpecialMethodInvocation invoke(Instrumentation.Target instrumentationTarget,
-                                                                  TypeDescription proxiedType,
-                                                                  MethodDescription instrumentedMethod) {
-                return instrumentationTarget.invokeSuper(instrumentedMethod, Instrumentation.Target.MethodLookup.Default.MOST_SPECIFIC);
-            }
-
-            @Override
-            public ConstructorStrategy getConstructorStrategy() {
-                return ConstructorStrategy.Default.IMITATE_SUPER_TYPE;
-            }
-        }
-
-        static enum ForDefaultMethodCall implements InvocationFactory {
-
-            INSTANCE;
-
-            @Override
-            public Instrumentation.SpecialMethodInvocation invoke(Instrumentation.Target instrumentationTarget,
-                                                                  TypeDescription proxiedType,
-                                                                  MethodDescription instrumentedMethod) {
-                return instrumentationTarget.invokeDefault(proxiedType, instrumentedMethod.getUniqueSignature());
-            }
-
-            @Override
-            public ConstructorStrategy getConstructorStrategy() {
-                return ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR;
-            }
-        }
-    }
-
-    /**
-     * Loads a type proxy onto the operand stack which is created by calling one of its constructors. When this
-     * stack manipulation is applied, an instance of the instrumented type must lie on top of the operand stack.
-     * All constructor parameters will be assigned their default values when this stack operation is applied.
-     */
-    public static class ByConstructor implements StackManipulation {
-
-        /**
-         * The type for the type proxy to subclass or implement.
-         */
-        private final TypeDescription proxiedType;
-
-        /**
-         * The instrumentation target this type proxy is created for.
-         */
-        private final Instrumentation.Target instrumentationTarget;
-
-        /**
-         * The parameter types of the constructor that should be called.
-         */
-        private final List<TypeDescription> constructorParameters;
-
-        /**
-         * {@code true} if any finalizers should be ignored for the delegation.
-         */
-        private final boolean ignoreFinalizer;
-
-        /**
-         * Determines if the proxy should be serializable.
-         */
-        private final boolean serializableProxy;
-
-        /**
-         * Creates a new stack operation for creating a type proxy by calling one of its constructors.
-         *
-         * @param proxiedType           The type for the type proxy to subclass or implement.
-         * @param instrumentationTarget The instrumentation target this type proxy is created for.
-         * @param constructorParameters The parameter types of the constructor that should be called.
-         * @param ignoreFinalizer       {@code true} if any finalizers should be ignored for the delegation.
-         * @param serializableProxy     Determines if the proxy should be serializable.
-         */
-        public ByConstructor(TypeDescription proxiedType,
-                             Instrumentation.Target instrumentationTarget,
-                             List<TypeDescription> constructorParameters,
-                             boolean ignoreFinalizer,
-                             boolean serializableProxy) {
-            this.proxiedType = proxiedType;
-            this.instrumentationTarget = instrumentationTarget;
-            this.constructorParameters = constructorParameters;
-            this.ignoreFinalizer = ignoreFinalizer;
-            this.serializableProxy = serializableProxy;
-        }
-
-        @Override
-        public boolean isValid() {
-            return true;
-        }
-
-        @Override
-        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-            TypeDescription proxyType = instrumentationContext
-                    .register(new TypeProxy(proxiedType,
-                            instrumentationTarget,
-                            InvocationFactory.ForSuperMethodCall.INSTANCE,
-                            ignoreFinalizer,
-                            serializableProxy));
-            StackManipulation[] constructorValue = new StackManipulation[constructorParameters.size()];
-            int index = 0;
-            for (TypeDescription parameterType : constructorParameters) {
-                constructorValue[index++] = DefaultValue.of(parameterType);
-            }
-            return new Compound(
-                    TypeCreation.forType(proxyType),
-                    Duplication.SINGLE,
-                    new Compound(constructorValue),
-                    MethodInvocation.invoke(proxyType.getDeclaredMethods()
-                            .filter(isConstructor().and(takesArguments(constructorParameters))).getOnly()),
-                    Duplication.SINGLE,
-                    MethodVariableAccess.forType(instrumentationTarget.getTypeDescription()).loadFromIndex(0),
-                    FieldAccess.forField(proxyType.getDeclaredFields().named(INSTANCE_FIELD)).putter()
-            ).apply(methodVisitor, instrumentationContext);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            ByConstructor that = (ByConstructor) other;
-            return ignoreFinalizer == that.ignoreFinalizer
-                    && serializableProxy == that.serializableProxy
-                    && constructorParameters.equals(that.constructorParameters)
-                    && instrumentationTarget.equals(that.instrumentationTarget)
-                    && proxiedType.equals(that.proxiedType);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = proxiedType.hashCode();
-            result = 31 * result + instrumentationTarget.hashCode();
-            result = 31 * result + constructorParameters.hashCode();
-            result = 31 * result + (ignoreFinalizer ? 1 : 0);
-            result = 31 * result + (serializableProxy ? 1 : 0);
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "TypeProxy.ByConstructor{" +
-                    "proxiedType=" + proxiedType +
-                    ", instrumentationTarget=" + instrumentationTarget +
-                    ", constructorParameters=" + constructorParameters +
-                    ", ignoreFinalizer=" + ignoreFinalizer +
-                    ", serializableProxy=" + serializableProxy +
-                    '}';
-        }
-    }
-
-    /**
-     * Loads a type proxy onto the operand stack which is created by constructing a serialization constructor using
-     * the Oracle JDK's {@link sun.reflect.ReflectionFactory#newConstructorForSerialization(Class, java.lang.reflect.Constructor)}
-     * method which might not be available in any Java runtime. When this stack manipulation is applied, an instance of
-     * the instrumented type must lie on top of the operand stack.
-     */
-    public static class ByReflectionFactory implements StackManipulation {
-
-        /**
-         * The type for which a proxy type is created.
-         */
-        private final TypeDescription proxiedType;
-
-        /**
-         * The instrumentation target of the proxied type.
-         */
-        private final Instrumentation.Target instrumentationTarget;
-
-        /**
-         * {@code true} {@code true} if any finalizer methods should be ignored for proxying.
-         */
-        private final boolean ignoreFinalizer;
-
-        /**
-         * Determines if the proxy should be serializable.
-         */
-        private final boolean serializableProxy;
-
-        /**
-         * Creates a new stack operation for reflectively creating a type proxy for the given arguments.
-         *
-         * @param proxiedType           The type for the type proxy to subclass or implement.
-         * @param instrumentationTarget The instrumentation target this type proxy is created for.
-         * @param ignoreFinalizer       {@code true} if any finalizer methods should be ignored for proxying.
-         * @param serializableProxy     Determines if the proxy should be serializable.
-         */
-        public ByReflectionFactory(TypeDescription proxiedType,
-                                   Instrumentation.Target instrumentationTarget,
-                                   boolean ignoreFinalizer,
-                                   boolean serializableProxy) {
-            this.proxiedType = proxiedType;
-            this.instrumentationTarget = instrumentationTarget;
-            this.ignoreFinalizer = ignoreFinalizer;
-            this.serializableProxy = serializableProxy;
-        }
-
-        @Override
-        public boolean isValid() {
-            return true;
-        }
-
-        @Override
-        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-            TypeDescription proxyType = instrumentationContext
-                    .register(new TypeProxy(proxiedType,
-                            instrumentationTarget,
-                            InvocationFactory.ForSuperMethodCall.INSTANCE,
-                            ignoreFinalizer,
-                            serializableProxy));
-            return new Compound(
-                    MethodInvocation.invoke(proxyType.getDeclaredMethods()
-                            .filter(named(REFLECTION_METHOD).and(takesArguments(0))).getOnly()),
-                    Duplication.SINGLE,
-                    MethodVariableAccess.forType(instrumentationTarget.getTypeDescription()).loadFromIndex(0),
-                    FieldAccess.forField(proxyType.getDeclaredFields().named(INSTANCE_FIELD)).putter()
-            ).apply(methodVisitor, instrumentationContext);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            ByReflectionFactory that = (ByReflectionFactory) other;
-            return ignoreFinalizer == that.ignoreFinalizer
-                    && instrumentationTarget.equals(that.instrumentationTarget)
-                    && proxiedType.equals(that.proxiedType)
-                    && serializableProxy == that.serializableProxy;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = proxiedType.hashCode();
-            result = 31 * result + instrumentationTarget.hashCode();
-            result = 31 * result + (ignoreFinalizer ? 1 : 0);
-            result = 31 * result + (serializableProxy ? 1 : 0);
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "TypeProxy.ByReflectionFactory{" +
-                    "proxiedType=" + proxiedType +
-                    ", instrumentationTarget=" + instrumentationTarget +
-                    ", ignoreFinalizer=" + ignoreFinalizer +
-                    ", serializableProxy=" + serializableProxy +
-                    '}';
-        }
-    }
-
-    public static class ForDefaultMethod implements StackManipulation {
-
-        private final TypeDescription proxiedType;
-
-        private final Instrumentation.Target instrumentationTarget;
-
-        private final boolean serializableProxy;
-
-        public ForDefaultMethod(TypeDescription proxiedType,
-                                Instrumentation.Target instrumentationTarget,
-                                boolean serializableProxy) {
-            this.proxiedType = proxiedType;
-            this.instrumentationTarget = instrumentationTarget;
-            this.serializableProxy = serializableProxy;
-        }
-
-        @Override
-        public boolean isValid() {
-            return true;
-        }
-
-        @Override
-        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-            TypeDescription proxyType = instrumentationContext
-                    .register(new TypeProxy(proxiedType,
-                            instrumentationTarget,
-                            InvocationFactory.ForDefaultMethodCall.INSTANCE,
-                            true,
-                            serializableProxy));
-            return new Compound(
-                    TypeCreation.forType(proxyType),
-                    Duplication.SINGLE,
-                    MethodInvocation.invoke(proxyType.getDeclaredMethods().filter(isConstructor()).getOnly()),
-                    Duplication.SINGLE,
-                    MethodVariableAccess.forType(instrumentationTarget.getTypeDescription()).loadFromIndex(0),
-                    FieldAccess.forField(proxyType.getDeclaredFields().named(INSTANCE_FIELD)).putter()
-            ).apply(methodVisitor, instrumentationContext);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            ForDefaultMethod that = (ForDefaultMethod) other;
-            return serializableProxy == that.serializableProxy
-                    && instrumentationTarget.equals(that.instrumentationTarget)
-                    && proxiedType.equals(that.proxiedType);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = proxiedType.hashCode();
-            result = 31 * result + instrumentationTarget.hashCode();
-            result = 31 * result + (serializableProxy ? 1 : 0);
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "TypeProxy.ForDefaultMethod{" +
-                    "proxiedType=" + proxiedType +
-                    ", instrumentationTarget=" + instrumentationTarget +
-                    ", serializableProxy=" + serializableProxy +
-                    '}';
         }
     }
 
@@ -884,6 +570,364 @@ public class TypeProxy implements AuxiliaryType {
                             '}';
                 }
             }
+        }
+    }
+
+    /**
+     * An invocation factory is responsible for creating a special method invocation for any method that is to be
+     * invoked. These special method invocations are then implemented by the
+     * {@link net.bytebuddy.instrumentation.type.auxiliary.TypeProxy}.
+     * Illegal {@link net.bytebuddy.instrumentation.Instrumentation.SpecialMethodInvocation} are implemented by
+     * throwing an {@link java.lang.AbstractMethodError}.
+     */
+    public static interface InvocationFactory {
+
+        /**
+         * Creates a special method invocation to implement for a given method.
+         *
+         * @param instrumentationTarget The instrumentation target the type proxy is created for.
+         * @param proxiedType           The type for the type proxy to subclass or implement.
+         * @param instrumentedMethod    The instrumented method that is to be invoked.
+         * @return A special method invocation of the given method or an illegal invocation if the proxy should
+         * throw an {@link java.lang.AbstractMethodError} when the instrumented method is invoked.
+         */
+        Instrumentation.SpecialMethodInvocation invoke(Instrumentation.Target instrumentationTarget,
+                                                       TypeDescription proxiedType,
+                                                       MethodDescription instrumentedMethod);
+
+        /**
+         * Default implementations of the
+         * {@link net.bytebuddy.instrumentation.type.auxiliary.TypeProxy.InvocationFactory}.
+         */
+        static enum Default implements InvocationFactory {
+
+            /**
+             * Invokes the super method of the instrumented method.
+             */
+            SUPER_METHOD {
+                @Override
+                public Instrumentation.SpecialMethodInvocation invoke(Instrumentation.Target instrumentationTarget,
+                                                                      TypeDescription proxiedType,
+                                                                      MethodDescription instrumentedMethod) {
+                    return instrumentationTarget.invokeSuper(instrumentedMethod,
+                            Instrumentation.Target.MethodLookup.Default.MOST_SPECIFIC);
+                }
+            },
+
+            /**
+             * Invokes the default method of the instrumented method if it exists and is not ambiguous.
+             */
+            DEFAULT_METHOD {
+                @Override
+                public Instrumentation.SpecialMethodInvocation invoke(Instrumentation.Target instrumentationTarget,
+                                                                      TypeDescription proxiedType,
+                                                                      MethodDescription instrumentedMethod) {
+                    return instrumentationTarget.invokeDefault(proxiedType, instrumentedMethod.getUniqueSignature());
+                }
+            }
+        }
+    }
+
+    /**
+     * Loads a type proxy onto the operand stack which is created by calling one of its constructors. When this
+     * stack manipulation is applied, an instance of the instrumented type must lie on top of the operand stack.
+     * All constructor parameters will be assigned their default values when this stack operation is applied.
+     */
+    public static class ForSuperMethodByConstructor implements StackManipulation {
+
+        /**
+         * The type for the type proxy to subclass or implement.
+         */
+        private final TypeDescription proxiedType;
+
+        /**
+         * The instrumentation target this type proxy is created for.
+         */
+        private final Instrumentation.Target instrumentationTarget;
+
+        /**
+         * The parameter types of the constructor that should be called.
+         */
+        private final List<TypeDescription> constructorParameters;
+
+        /**
+         * {@code true} if any finalizers should be ignored for the delegation.
+         */
+        private final boolean ignoreFinalizer;
+
+        /**
+         * Determines if the proxy should be serializable.
+         */
+        private final boolean serializableProxy;
+
+        /**
+         * Creates a new stack operation for creating a type proxy by calling one of its constructors.
+         *
+         * @param proxiedType           The type for the type proxy to subclass or implement.
+         * @param instrumentationTarget The instrumentation target this type proxy is created for.
+         * @param constructorParameters The parameter types of the constructor that should be called.
+         * @param ignoreFinalizer       {@code true} if any finalizers should be ignored for the delegation.
+         * @param serializableProxy     Determines if the proxy should be serializable.
+         */
+        public ForSuperMethodByConstructor(TypeDescription proxiedType,
+                                           Instrumentation.Target instrumentationTarget,
+                                           List<TypeDescription> constructorParameters,
+                                           boolean ignoreFinalizer,
+                                           boolean serializableProxy) {
+            this.proxiedType = proxiedType;
+            this.instrumentationTarget = instrumentationTarget;
+            this.constructorParameters = constructorParameters;
+            this.ignoreFinalizer = ignoreFinalizer;
+            this.serializableProxy = serializableProxy;
+        }
+
+        @Override
+        public boolean isValid() {
+            return true;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+            TypeDescription proxyType = instrumentationContext
+                    .register(new TypeProxy(proxiedType,
+                            instrumentationTarget,
+                            InvocationFactory.Default.SUPER_METHOD,
+                            ignoreFinalizer,
+                            serializableProxy));
+            StackManipulation[] constructorValue = new StackManipulation[constructorParameters.size()];
+            int index = 0;
+            for (TypeDescription parameterType : constructorParameters) {
+                constructorValue[index++] = DefaultValue.of(parameterType);
+            }
+            return new Compound(
+                    TypeCreation.forType(proxyType),
+                    Duplication.SINGLE,
+                    new Compound(constructorValue),
+                    MethodInvocation.invoke(proxyType.getDeclaredMethods()
+                            .filter(isConstructor().and(takesArguments(constructorParameters))).getOnly()),
+                    Duplication.SINGLE,
+                    MethodVariableAccess.forType(instrumentationTarget.getTypeDescription()).loadFromIndex(0),
+                    FieldAccess.forField(proxyType.getDeclaredFields().named(INSTANCE_FIELD)).putter()
+            ).apply(methodVisitor, instrumentationContext);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            ForSuperMethodByConstructor that = (ForSuperMethodByConstructor) other;
+            return ignoreFinalizer == that.ignoreFinalizer
+                    && serializableProxy == that.serializableProxy
+                    && constructorParameters.equals(that.constructorParameters)
+                    && instrumentationTarget.equals(that.instrumentationTarget)
+                    && proxiedType.equals(that.proxiedType);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = proxiedType.hashCode();
+            result = 31 * result + instrumentationTarget.hashCode();
+            result = 31 * result + constructorParameters.hashCode();
+            result = 31 * result + (ignoreFinalizer ? 1 : 0);
+            result = 31 * result + (serializableProxy ? 1 : 0);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "TypeProxy.ForSuperMethodByConstructor{" +
+                    "proxiedType=" + proxiedType +
+                    ", instrumentationTarget=" + instrumentationTarget +
+                    ", constructorParameters=" + constructorParameters +
+                    ", ignoreFinalizer=" + ignoreFinalizer +
+                    ", serializableProxy=" + serializableProxy +
+                    '}';
+        }
+    }
+
+    /**
+     * Loads a type proxy onto the operand stack which is created by constructing a serialization constructor using
+     * the Oracle JDK's {@link sun.reflect.ReflectionFactory#newConstructorForSerialization(Class, java.lang.reflect.Constructor)}
+     * method which might not be available in any Java runtime. When this stack manipulation is applied, an instance of
+     * the instrumented type must lie on top of the operand stack.
+     */
+    public static class ForSuperMethodByReflectionFactory implements StackManipulation {
+
+        /**
+         * The type for which a proxy type is created.
+         */
+        private final TypeDescription proxiedType;
+
+        /**
+         * The instrumentation target of the proxied type.
+         */
+        private final Instrumentation.Target instrumentationTarget;
+
+        /**
+         * {@code true} {@code true} if any finalizer methods should be ignored for proxying.
+         */
+        private final boolean ignoreFinalizer;
+
+        /**
+         * Determines if the proxy should be serializable.
+         */
+        private final boolean serializableProxy;
+
+        /**
+         * Creates a new stack operation for reflectively creating a type proxy for the given arguments.
+         *
+         * @param proxiedType           The type for the type proxy to subclass or implement.
+         * @param instrumentationTarget The instrumentation target this type proxy is created for.
+         * @param ignoreFinalizer       {@code true} if any finalizer methods should be ignored for proxying.
+         * @param serializableProxy     Determines if the proxy should be serializable.
+         */
+        public ForSuperMethodByReflectionFactory(TypeDescription proxiedType,
+                                                 Instrumentation.Target instrumentationTarget,
+                                                 boolean ignoreFinalizer,
+                                                 boolean serializableProxy) {
+            this.proxiedType = proxiedType;
+            this.instrumentationTarget = instrumentationTarget;
+            this.ignoreFinalizer = ignoreFinalizer;
+            this.serializableProxy = serializableProxy;
+        }
+
+        @Override
+        public boolean isValid() {
+            return true;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+            TypeDescription proxyType = instrumentationContext
+                    .register(new TypeProxy(proxiedType,
+                            instrumentationTarget,
+                            InvocationFactory.Default.SUPER_METHOD,
+                            ignoreFinalizer,
+                            serializableProxy));
+            return new Compound(
+                    MethodInvocation.invoke(proxyType.getDeclaredMethods()
+                            .filter(named(REFLECTION_METHOD).and(takesArguments(0))).getOnly()),
+                    Duplication.SINGLE,
+                    MethodVariableAccess.forType(instrumentationTarget.getTypeDescription()).loadFromIndex(0),
+                    FieldAccess.forField(proxyType.getDeclaredFields().named(INSTANCE_FIELD)).putter()
+            ).apply(methodVisitor, instrumentationContext);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            ForSuperMethodByReflectionFactory that = (ForSuperMethodByReflectionFactory) other;
+            return ignoreFinalizer == that.ignoreFinalizer
+                    && instrumentationTarget.equals(that.instrumentationTarget)
+                    && proxiedType.equals(that.proxiedType)
+                    && serializableProxy == that.serializableProxy;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = proxiedType.hashCode();
+            result = 31 * result + instrumentationTarget.hashCode();
+            result = 31 * result + (ignoreFinalizer ? 1 : 0);
+            result = 31 * result + (serializableProxy ? 1 : 0);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "TypeProxy.ForSuperMethodByReflectionFactory{" +
+                    "proxiedType=" + proxiedType +
+                    ", instrumentationTarget=" + instrumentationTarget +
+                    ", ignoreFinalizer=" + ignoreFinalizer +
+                    ", serializableProxy=" + serializableProxy +
+                    '}';
+        }
+    }
+
+    /**
+     * Creates a type proxy which delegates its super method calls to any invokable default method of
+     * a given interface and loads an instance of this proxy onto the operand stack.
+     */
+    public static class ForDefaultMethod implements StackManipulation {
+
+        /**
+         * The proxied interface type.
+         */
+        private final TypeDescription proxiedType;
+
+        /**
+         * The instrumentation target for the original instrumentation.
+         */
+        private final Instrumentation.Target instrumentationTarget;
+
+        /**
+         * {@code true} if the proxy should be {@link java.io.Serializable}.
+         */
+        private final boolean serializableProxy;
+
+        /**
+         * Creates a new proxy creation for a default interface type proxy.
+         *
+         * @param proxiedType           The proxied interface type.
+         * @param instrumentationTarget The instrumentation target for the original instrumentation.
+         * @param serializableProxy     {@code true} if the proxy should be {@link java.io.Serializable}.
+         */
+        public ForDefaultMethod(TypeDescription proxiedType,
+                                Instrumentation.Target instrumentationTarget,
+                                boolean serializableProxy) {
+            this.proxiedType = proxiedType;
+            this.instrumentationTarget = instrumentationTarget;
+            this.serializableProxy = serializableProxy;
+        }
+
+        @Override
+        public boolean isValid() {
+            return true;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+            TypeDescription proxyType = instrumentationContext
+                    .register(new TypeProxy(proxiedType,
+                            instrumentationTarget,
+                            InvocationFactory.Default.DEFAULT_METHOD,
+                            true,
+                            serializableProxy));
+            return new Compound(
+                    TypeCreation.forType(proxyType),
+                    Duplication.SINGLE,
+                    MethodInvocation.invoke(proxyType.getDeclaredMethods().filter(isConstructor()).getOnly()),
+                    Duplication.SINGLE,
+                    MethodVariableAccess.forType(instrumentationTarget.getTypeDescription()).loadFromIndex(0),
+                    FieldAccess.forField(proxyType.getDeclaredFields().named(INSTANCE_FIELD)).putter()
+            ).apply(methodVisitor, instrumentationContext);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            ForDefaultMethod that = (ForDefaultMethod) other;
+            return serializableProxy == that.serializableProxy
+                    && instrumentationTarget.equals(that.instrumentationTarget)
+                    && proxiedType.equals(that.proxiedType);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = proxiedType.hashCode();
+            result = 31 * result + instrumentationTarget.hashCode();
+            result = 31 * result + (serializableProxy ? 1 : 0);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "TypeProxy.ForDefaultMethod{" +
+                    "proxiedType=" + proxiedType +
+                    ", instrumentationTarget=" + instrumentationTarget +
+                    ", serializableProxy=" + serializableProxy +
+                    '}';
         }
     }
 }

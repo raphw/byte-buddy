@@ -15,6 +15,10 @@ public interface TypeSourceLocator {
 
         private final ClassLoader classLoader;
 
+        public static TypeSourceLocator ofSystemClassLoader() {
+            return new ForClassLoader(ClassLoader.getSystemClassLoader());
+        }
+
         public ForClassLoader(ClassLoader classLoader) {
             this.classLoader = classLoader;
         }

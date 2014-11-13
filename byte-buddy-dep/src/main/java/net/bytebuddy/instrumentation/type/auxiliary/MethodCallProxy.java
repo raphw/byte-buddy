@@ -184,7 +184,7 @@ public class MethodCallProxy implements AuxiliaryType {
      * {@link net.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy}. This avoids a reflective lookup
      * of these methods what improves the runtime performance of this lookup.
      */
-    private static enum ProxyMethodLookupEngine implements MethodLookupEngine, MethodLookupEngine.Factory {
+    protected static enum ProxyMethodLookupEngine implements MethodLookupEngine, MethodLookupEngine.Factory {
 
         /**
          * The singleton instance.
@@ -223,9 +223,140 @@ public class MethodCallProxy implements AuxiliaryType {
     }
 
     /**
+     * An instrumentation for implementing a method of a {@link net.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy}.
+     */
+    protected static class MethodCall implements Instrumentation {
+
+        /**
+         * The method that is accessed by the implemented method.
+         */
+        private final MethodDescription accessorMethod;
+
+        /**
+         * The assigner to be used for invoking the accessor method.
+         */
+        private final Assigner assigner;
+
+        /**
+         * Creates a new method call instrumentation.
+         *
+         * @param accessorMethod The method that is accessed by the implemented method.
+         * @param assigner       The assigner to be used for invoking the accessor method.
+         */
+        private MethodCall(MethodDescription accessorMethod, Assigner assigner) {
+            this.accessorMethod = accessorMethod;
+            this.assigner = assigner;
+        }
+
+        @Override
+        public InstrumentedType prepare(InstrumentedType instrumentedType) {
+            return instrumentedType;
+        }
+
+        @Override
+        public ByteCodeAppender appender(Target instrumentationTarget) {
+            return new Appender(instrumentationTarget.getTypeDescription());
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && accessorMethod.equals(((MethodCall) other).accessorMethod)
+                    && assigner.equals(((MethodCall) other).assigner);
+        }
+
+        @Override
+        public int hashCode() {
+            return accessorMethod.hashCode() + 31 * assigner.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "MethodCallProxy.MethodCall{" +
+                    "accessorMethod=" + accessorMethod +
+                    ", assigner=" + assigner +
+                    '}';
+        }
+
+        /**
+         * The appender for implementing the {@link net.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy.MethodCall}.
+         */
+        protected class Appender implements ByteCodeAppender {
+
+            /**
+             * The instrumented type that is implemented.
+             */
+            private final TypeDescription instrumentedType;
+
+            /**
+             * Creates a new appender.
+             *
+             * @param instrumentedType The instrumented type to be implemented.
+             */
+            private Appender(TypeDescription instrumentedType) {
+                this.instrumentedType = instrumentedType;
+            }
+
+            @Override
+            public boolean appendsCode() {
+                return true;
+            }
+
+            @Override
+            public Size apply(MethodVisitor methodVisitor,
+                              Context instrumentationContext,
+                              MethodDescription instrumentedMethod) {
+                StackManipulation thisReference = MethodVariableAccess.forType(instrumentedType).loadFromIndex(0);
+                FieldList fieldList = instrumentedType.getDeclaredFields();
+                StackManipulation[] fieldLoading = new StackManipulation[fieldList.size()];
+                int index = 0;
+                for (FieldDescription fieldDescription : fieldList) {
+                    fieldLoading[index++] = new StackManipulation.Compound(thisReference, FieldAccess.forField(fieldDescription).getter());
+                }
+                StackManipulation.Size stackSize = new StackManipulation.Compound(
+                        new StackManipulation.Compound(fieldLoading),
+                        MethodInvocation.invoke(accessorMethod),
+                        assigner.assign(accessorMethod.getReturnType(), instrumentedMethod.getReturnType(), false),
+                        MethodReturn.returning(instrumentedMethod.getReturnType())
+                ).apply(methodVisitor, instrumentationContext);
+                return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
+            }
+
+            /**
+             * Returns the outer instance.
+             *
+             * @return The outer instance.
+             */
+            private MethodCall getMethodCall() {
+                return MethodCall.this;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && instrumentedType.equals(((Appender) other).instrumentedType)
+                        && MethodCall.this.equals(((Appender) other).getMethodCall());
+            }
+
+            @Override
+            public int hashCode() {
+                return 31 * MethodCall.this.hashCode() + instrumentedType.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "MethodCallProxy.MethodCall.Appender{" +
+                        "methodCall=" + MethodCall.this +
+                        ", instrumentedType=" + instrumentedType +
+                        '}';
+            }
+        }
+    }
+
+    /**
      * An instrumentation for implementing a constructor of a {@link net.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy}.
      */
-    private static enum ConstructorCall implements Instrumentation {
+    protected static enum ConstructorCall implements Instrumentation {
 
         /**
          * The singleton instance.
@@ -260,7 +391,7 @@ public class MethodCallProxy implements AuxiliaryType {
         /**
          * The appender for implementing the {@link net.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy.ConstructorCall}.
          */
-        private class Appender implements ByteCodeAppender {
+        protected static class Appender implements ByteCodeAppender {
 
             /**
              * The instrumented type being created.
@@ -298,7 +429,7 @@ public class MethodCallProxy implements AuxiliaryType {
                 }
                 StackManipulation.Size stackSize = new StackManipulation.Compound(
                         thisReference,
-                        MethodInvocation.invoke(objectTypeDefaultConstructor),
+                        MethodInvocation.invoke(ConstructorCall.INSTANCE.objectTypeDefaultConstructor),
                         new StackManipulation.Compound(fieldLoading),
                         MethodReturn.VOID
                 ).apply(methodVisitor, instrumentationContext);
@@ -391,137 +522,6 @@ public class MethodCallProxy implements AuxiliaryType {
                     "specialMethodInvocation=" + specialMethodInvocation +
                     ", serializableProxy=" + serializable +
                     '}';
-        }
-    }
-
-    /**
-     * An instrumentation for implementing a method of a {@link net.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy}.
-     */
-    private static class MethodCall implements Instrumentation {
-
-        /**
-         * The method that is accessed by the implemented method.
-         */
-        private final MethodDescription accessorMethod;
-
-        /**
-         * The assigner to be used for invoking the accessor method.
-         */
-        private final Assigner assigner;
-
-        /**
-         * Creates a new method call instrumentation.
-         *
-         * @param accessorMethod The method that is accessed by the implemented method.
-         * @param assigner       The assigner to be used for invoking the accessor method.
-         */
-        private MethodCall(MethodDescription accessorMethod, Assigner assigner) {
-            this.accessorMethod = accessorMethod;
-            this.assigner = assigner;
-        }
-
-        @Override
-        public InstrumentedType prepare(InstrumentedType instrumentedType) {
-            return instrumentedType;
-        }
-
-        @Override
-        public ByteCodeAppender appender(Target instrumentationTarget) {
-            return new Appender(instrumentationTarget.getTypeDescription());
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && accessorMethod.equals(((MethodCall) other).accessorMethod)
-                    && assigner.equals(((MethodCall) other).assigner);
-        }
-
-        @Override
-        public int hashCode() {
-            return accessorMethod.hashCode() + 31 * assigner.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "MethodCallProxy.MethodCall{" +
-                    "accessorMethod=" + accessorMethod +
-                    ", assigner=" + assigner +
-                    '}';
-        }
-
-        /**
-         * The appender for implementing the {@link net.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy.MethodCall}.
-         */
-        private class Appender implements ByteCodeAppender {
-
-            /**
-             * The instrumented type that is implemented.
-             */
-            private final TypeDescription instrumentedType;
-
-            /**
-             * Creates a new appender.
-             *
-             * @param instrumentedType The instrumented type to be implemented.
-             */
-            private Appender(TypeDescription instrumentedType) {
-                this.instrumentedType = instrumentedType;
-            }
-
-            @Override
-            public boolean appendsCode() {
-                return true;
-            }
-
-            @Override
-            public Size apply(MethodVisitor methodVisitor,
-                              Context instrumentationContext,
-                              MethodDescription instrumentedMethod) {
-                StackManipulation thisReference = MethodVariableAccess.forType(instrumentedType).loadFromIndex(0);
-                FieldList fieldList = instrumentedType.getDeclaredFields();
-                StackManipulation[] fieldLoading = new StackManipulation[fieldList.size()];
-                int index = 0;
-                for (FieldDescription fieldDescription : fieldList) {
-                    fieldLoading[index++] = new StackManipulation.Compound(thisReference, FieldAccess.forField(fieldDescription).getter());
-                }
-                StackManipulation.Size stackSize = new StackManipulation.Compound(
-                        new StackManipulation.Compound(fieldLoading),
-                        MethodInvocation.invoke(accessorMethod),
-                        assigner.assign(accessorMethod.getReturnType(), instrumentedMethod.getReturnType(), false),
-                        MethodReturn.returning(instrumentedMethod.getReturnType())
-                ).apply(methodVisitor, instrumentationContext);
-                return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
-            }
-
-            /**
-             * Returns the outer instance.
-             *
-             * @return The outer instance.
-             */
-            private MethodCall getMethodCall() {
-                return MethodCall.this;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && instrumentedType.equals(((Appender) other).instrumentedType)
-                        && MethodCall.this.equals(((Appender) other).getMethodCall());
-            }
-
-            @Override
-            public int hashCode() {
-                return 31 * MethodCall.this.hashCode() + instrumentedType.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCallProxy.MethodCall.Appender{" +
-                        "methodCall=" + MethodCall.this +
-                        ", instrumentedType=" + instrumentedType +
-                        '}';
-            }
         }
     }
 }

@@ -43,6 +43,11 @@ public class TypeListForLoadedTypeTest {
     }
 
     @Test
+    public void testSubList() throws Exception {
+        assertThat(typeList.subList(0, 1), is((TypeList) new TypeList.ForLoadedType(Object.class)));
+    }
+
+    @Test
     public void testStackSize() throws Exception {
         assertThat(typeList.getStackSize(), is(4));
     }

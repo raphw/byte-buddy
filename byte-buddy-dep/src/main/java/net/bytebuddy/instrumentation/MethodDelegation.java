@@ -73,6 +73,9 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
  * {@code Qux#baz} that is annotated with {@code Origin} is assigned a reference to either a {@link java.lang.reflect.Method}
  * or a {@link java.lang.Class} instance. A {@code Method}-typed parameter is assigned a reference to the original method that
  * is overriden. A {@code Class}-typed parameter is assigned the type of the caller.</li>
+ * <li>{@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Empty}: Assigns the parameter type's
+ * default value, i.e. {@code null} for a reference type or zero for primitive types. This is an opportunity to
+ * ignore a parameter.</li>
  * <li>{@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Pipe}: A parameter that is annotated
  * with this annotation is assigned a proxy for forwarding the source method invocation to another instance of the
  * same type as the declaring type of the intercepted method. <b>This annotation needs to be installed and explicitly
@@ -446,7 +449,8 @@ public class MethodDelegation implements Instrumentation {
                 Super.Binder.INSTANCE,
                 Default.Binder.INSTANCE,
                 SuperCall.Binder.INSTANCE,
-                DefaultCall.Binder.INSTANCE);
+                DefaultCall.Binder.INSTANCE,
+                Empty.Binder.INSTANCE);
     }
 
     /**
@@ -464,12 +468,10 @@ public class MethodDelegation implements Instrumentation {
      * @return The ambiguity resolver that is to be used if no other is specified explicitly.
      */
     private static MethodDelegationBinder.AmbiguityResolver defaultAmbiguityResolver() {
-        return MethodDelegationBinder.AmbiguityResolver.Chain.of(
-                BindingPriority.Resolver.INSTANCE,
+        return MethodDelegationBinder.AmbiguityResolver.Chain.of(BindingPriority.Resolver.INSTANCE,
                 MethodNameEqualityResolver.INSTANCE,
                 MostSpecificTypeResolver.INSTANCE,
-                ParameterLengthResolver.INSTANCE
-        );
+                ParameterLengthResolver.INSTANCE);
     }
 
     /**

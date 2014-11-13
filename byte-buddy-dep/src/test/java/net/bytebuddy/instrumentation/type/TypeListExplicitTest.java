@@ -1,5 +1,6 @@
 package net.bytebuddy.instrumentation.type;
 
+import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -29,11 +30,13 @@ public class TypeListExplicitTest {
 
     @Before
     public void setUp() throws Exception {
+        when(firstTypeDescription.getStackSize()).thenReturn(StackSize.SINGLE);
+        when(secondTypeDescription.getStackSize()).thenReturn(StackSize.DOUBLE);
         typeList = new TypeList.Explicit(Arrays.asList(firstTypeDescription, secondTypeDescription));
     }
 
     @Test
-    public void testFieldList() throws Exception {
+    public void testRetrieval() throws Exception {
         assertThat(typeList.size(), is(2));
         assertThat(typeList.get(0), is(firstTypeDescription));
         assertThat(typeList.get(1), is(secondTypeDescription));
@@ -54,5 +57,10 @@ public class TypeListExplicitTest {
     @Test
     public void testSubList() throws Exception {
         assertThat(typeList.subList(0, 1), is((TypeList) new TypeList.Explicit(Arrays.asList(firstTypeDescription))));
+    }
+
+    @Test
+    public void testStackSize() throws Exception {
+        assertThat(typeList.getStackSize(), is(3));
     }
 }

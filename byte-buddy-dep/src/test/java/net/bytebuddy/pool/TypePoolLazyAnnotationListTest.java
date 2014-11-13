@@ -15,7 +15,7 @@ import java.util.Collections;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class TypePoolUnloadedAnnotationListTest {
+public class TypePoolLazyAnnotationListTest {
 
     private AnnotationList annotationList;
 

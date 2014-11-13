@@ -106,7 +106,7 @@ public @interface Super {
                             ? TargetType.DESCRIPTION
                             : constructorParameter);
                 }
-                return new TypeProxy.ByConstructor(parameterType,
+                return new TypeProxy.ForSuperMethodByConstructor(parameterType,
                         instrumentationTarget,
                         typeDescriptions,
                         annotation.getValue(IGNORE_FINALIZER, Boolean.class),
@@ -123,7 +123,7 @@ public @interface Super {
             protected StackManipulation proxyFor(TypeDescription parameterType,
                                                  Instrumentation.Target instrumentationTarget,
                                                  AnnotationDescription.Loadable<Super> annotation) {
-                return new TypeProxy.ByReflectionFactory(parameterType,
+                return new TypeProxy.ForSuperMethodByReflectionFactory(parameterType,
                         instrumentationTarget,
                         annotation.getValue(IGNORE_FINALIZER, Boolean.class),
                         annotation.getValue(SERIALIZABLE_PROXY, Boolean.class));

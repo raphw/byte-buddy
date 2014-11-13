@@ -13,7 +13,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-public class TypePoolUnloadedTypeListTest {
+public class TypePoolLazyTypeListTest {
 
     private TypeList typeList;
 
@@ -61,6 +61,10 @@ public class TypePoolUnloadedTypeListTest {
     @Test(expected = IllegalArgumentException.class)
     public void testSubListIllegal() throws Exception {
         typeList.subList(1, 0);
+    }
+    @Test
+    public void testStackSize() throws Exception {
+        assertThat(typeList.getStackSize(), is(2));
     }
 
     public static abstract class Sample implements Serializable, Runnable {

@@ -12,18 +12,18 @@ import java.util.Map;
 
 import static org.mockito.Mockito.when;
 
-public class TypePoolUnloadedObjectPropertiesTest {
+public class TypePoolLazyObjectPropertiesTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypePool.UnloadedTypeDescription.FieldToken.class).apply();
-        ObjectPropertyAssertion.of(TypePool.UnloadedTypeDescription.MethodToken.class).apply();
-        ObjectPropertyAssertion.of(TypePool.UnloadedTypeDescription.AnnotationToken.class).apply();
-        ObjectPropertyAssertion.of(TypePool.UnloadedTypeDescription.AnnotationValue.Trivial.class).apply();
-        ObjectPropertyAssertion.of(TypePool.UnloadedTypeDescription.AnnotationValue.ForAnnotation.class).apply();
-        ObjectPropertyAssertion.of(TypePool.UnloadedTypeDescription.AnnotationValue.ForEnumeration.class).apply();
-        ObjectPropertyAssertion.of(TypePool.UnloadedTypeDescription.AnnotationValue.ForComplexArray.class).apply();
-        ObjectPropertyAssertion.of(TypePool.UnloadedTypeDescription.AnnotationValue.ForType.class)
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.FieldToken.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.MethodToken.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationToken.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationValue.Trivial.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationValue.ForAnnotation.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationValue.ForEnumeration.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationValue.ForComplexArray.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationValue.ForType.class)
                 .refine(new ObjectPropertyAssertion.Refinement<Type>() {
                     @Override
                     public void apply(Type mock) {
@@ -35,7 +35,7 @@ public class TypePoolUnloadedObjectPropertiesTest {
     @Test
     public void testInvocationHandlerObjectProperties() throws Exception {
         final Iterator<Class<?>> typeIterator = Arrays.<Class<?>>asList(FirstSample.class, SecondSample.class).iterator();
-        ObjectPropertyAssertion.of(TypePool.UnloadedTypeDescription.AnnotationInvocationHandler.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationInvocationHandler.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
             @Override
             public Class<?> create() {
                 return typeIterator.next();
@@ -43,11 +43,11 @@ public class TypePoolUnloadedObjectPropertiesTest {
         }).refine(new ObjectPropertyAssertion.Refinement<Map<?, ?>>() {
             @Override
             public void apply(Map<?, ?> mock) {
-                when(mock.get(Mockito.any(String.class))).thenReturn(Mockito.mock(TypePool.UnloadedTypeDescription.AnnotationValue.class));
+                when(mock.get(Mockito.any(String.class))).thenReturn(Mockito.mock(TypePool.LazyTypeDescription.AnnotationValue.class));
             }
         }).apply();
         final Iterator<Method> methodIterator = Arrays.asList(Object.class.getDeclaredMethods()).iterator();
-        ObjectPropertyAssertion.of(TypePool.UnloadedTypeDescription.AnnotationInvocationHandler.ResolvedAnnotationValue.class).create(new ObjectPropertyAssertion.Creator<Method>() {
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationInvocationHandler.ResolvedAnnotationValue.class).create(new ObjectPropertyAssertion.Creator<Method>() {
             @Override
             public Method create() {
                 return methodIterator.next();
@@ -57,8 +57,8 @@ public class TypePoolUnloadedObjectPropertiesTest {
 
     @Test
     public void testDeclarationContextObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypePool.UnloadedTypeDescription.DeclarationContext.DeclaredInType.class).apply();
-        ObjectPropertyAssertion.of(TypePool.UnloadedTypeDescription.DeclarationContext.DeclaredInMethod.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.DeclarationContext.DeclaredInType.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.DeclarationContext.DeclaredInMethod.class).apply();
     }
 
     private static @interface FirstSample {

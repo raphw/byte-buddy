@@ -50,4 +50,9 @@ public class TypeListEmptyTest {
     public void testSubListIllegal() throws Exception {
         typeList.subList(1, 0);
     }
+
+    @Test
+    public void testStackSize() throws Exception {
+        assertThat(typeList.getStackSize(), is(0));
+    }
 }
