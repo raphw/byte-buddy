@@ -1160,7 +1160,7 @@ public interface TypePool {
 
                 @Override
                 public String toString() {
-                    return "TypePool.UnloadedTypeDescription.DeclarationContext.DeclaredInType{" +
+                    return "TypePool.LazyTypeDescription.DeclarationContext.DeclaredInType{" +
                             "name='" + name + '\'' +
                             '}';
                 }
@@ -1247,7 +1247,7 @@ public interface TypePool {
 
                 @Override
                 public String toString() {
-                    return "TypePool.UnloadedTypeDescription.DeclarationContext.DeclaredInMethod{" +
+                    return "TypePool.LazyTypeDescription.DeclarationContext.DeclaredInMethod{" +
                             "name='" + name + '\'' +
                             ", methodName='" + methodName + '\'' +
                             ", methodDescriptor='" + methodDescriptor + '\'' +
@@ -1331,7 +1331,7 @@ public interface TypePool {
 
                 @Override
                 public String toString() {
-                    return "TypePool.UnloadedTypeDescription.AnnotationValue.Trivial{" +
+                    return "TypePool.LazyTypeDescription.AnnotationValue.Trivial{" +
                             "value=" + value +
                             "propertyDispatcher=" + propertyDispatcher +
                             '}';
@@ -1384,7 +1384,7 @@ public interface TypePool {
 
                 @Override
                 public String toString() {
-                    return "TypePool.UnloadedTypeDescription.AnnotationValue.ForAnnotation{" +
+                    return "TypePool.LazyTypeDescription.AnnotationValue.ForAnnotation{" +
                             "annotationToken=" + annotationToken +
                             '}';
                 }
@@ -1418,7 +1418,7 @@ public interface TypePool {
 
                 @Override
                 public AnnotationDescription.EnumerationValue resolve(TypePool typePool) {
-                    return new UnloadedEnumerationValue(typePool);
+                    return new LazyEnumerationValue(typePool);
                 }
 
                 @Override
@@ -1442,17 +1442,17 @@ public interface TypePool {
 
                 @Override
                 public String toString() {
-                    return "TypePool.UnloadedTypeDescription.AnnotationValue.ForEnumeration{" +
+                    return "TypePool.LazyTypeDescription.AnnotationValue.ForEnumeration{" +
                             "descriptor='" + descriptor + '\'' +
                             ", value='" + value + '\'' +
                             '}';
                 }
 
-                private class UnloadedEnumerationValue extends AnnotationDescription.EnumerationValue.AbstractEnumerationValue {
+                private class LazyEnumerationValue extends AnnotationDescription.EnumerationValue.AbstractEnumerationValue {
 
                     private final TypePool typePool;
 
-                    protected UnloadedEnumerationValue(TypePool typePool) {
+                    protected LazyEnumerationValue(TypePool typePool) {
                         this.typePool = typePool;
                     }
 
@@ -1522,7 +1522,7 @@ public interface TypePool {
 
                 @Override
                 public String toString() {
-                    return "TypePool.UnloadedTypeDescription.AnnotationValue.ForType{" +
+                    return "TypePool.LazyTypeDescription.AnnotationValue.ForType{" +
                             "name='" + name + '\'' +
                             '}';
                 }
@@ -1603,7 +1603,7 @@ public interface TypePool {
 
                 @Override
                 public String toString() {
-                    return "TypePool.UnloadedTypeDescription.AnnotationValue.ForComplexArray{" +
+                    return "TypePool.LazyTypeDescription.AnnotationValue.ForComplexArray{" +
                             "value=" + value +
                             ", componentTypeReference=" + componentTypeReference +
                             '}';
@@ -1801,7 +1801,7 @@ public interface TypePool {
 
             @Override
             public String toString() {
-                return "TypePool.UnloadedTypeDescription.AnnotationInvocationHandler{" +
+                return "TypePool.LazyTypeDescription.AnnotationInvocationHandler{" +
                         "annotationType=" + annotationType +
                         ", classLoader=" + classLoader +
                         ", values=" + values +
@@ -1863,7 +1863,7 @@ public interface TypePool {
 
                 @Override
                 public String toString() {
-                    return "TypePool.UnloadedTypeDescription.AnnotationInvocationHandler.ResolvedAnnotationValue{" +
+                    return "TypePool.LazyTypeDescription.AnnotationInvocationHandler.ResolvedAnnotationValue{" +
                             "method=" + method +
                             '}';
                 }
@@ -1942,7 +1942,7 @@ public interface TypePool {
 
             @Override
             public String toString() {
-                return "TypePool.UnloadedTypeDescription.AnnotationToken{" +
+                return "TypePool.LazyTypeDescription.AnnotationToken{" +
                         "descriptor='" + descriptor + '\'' +
                         ", values=" + values +
                         '}';
@@ -2061,7 +2061,7 @@ public interface TypePool {
 
             @Override
             public String toString() {
-                return "TypePool.UnloadedTypeDescription.FieldToken{" +
+                return "TypePool.LazyTypeDescription.FieldToken{" +
                         "modifiers=" + modifiers +
                         ", name='" + name + '\'' +
                         ", descriptor='" + descriptor + '\'' +
@@ -2247,7 +2247,7 @@ public interface TypePool {
 
             @Override
             public String toString() {
-                return "TypePool.UnloadedTypeDescription.MethodToken{" +
+                return "TypePool.LazyTypeDescription.MethodToken{" +
                         "modifiers=" + modifiers +
                         ", name='" + name + '\'' +
                         ", descriptor='" + descriptor + '\'' +
