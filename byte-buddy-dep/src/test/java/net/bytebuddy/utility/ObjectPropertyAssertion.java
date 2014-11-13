@@ -204,9 +204,6 @@ public class ObjectPropertyAssertion<T> {
         } else if (parameterType == double.class) {
             actualArgument = DEFAULT_DOUBLE;
             otherArgument = OTHER_DOUBLE;
-        } else if (parameterType == String.class) {
-            actualArgument = DEFAULT_STRING;
-            otherArgument = OTHER_STRING;
         } else if (parameterType.isEnum()) {
             Object[] enumConstants = parameterType.getEnumConstants();
             if (enumConstants.length == 1) {
@@ -219,9 +216,9 @@ public class ObjectPropertyAssertion<T> {
             otherArgument = Array.newInstance(parameterType.getComponentType(), 1);
             putInstance(parameterType.getComponentType(), actualArgument, otherArgument, 0);
         } else {
-            actualArgument = creator.replace(parameterType, generator);
+            actualArgument = creator.replace(parameterType, generator, false);
             refinement.apply(actualArgument);
-            otherArgument = creator.replace(parameterType, generator);
+            otherArgument = creator.replace(parameterType, generator, true);
             refinement.apply(otherArgument);
         }
         Array.set(actualArguments, index, actualArgument);
@@ -285,7 +282,7 @@ public class ObjectPropertyAssertion<T> {
             this.generators = generators;
         }
 
-        private Object generate(Class<?> type) {
+        private Object generate(Class<?> type, boolean alternative) {
             for (Generator<?> generator : generators) {
                 ParameterizedType generic = (ParameterizedType) generator.getClass().getGenericInterfaces()[0];
                 Class<?> restrained = generic.getActualTypeArguments()[0] instanceof ParameterizedType
@@ -295,7 +292,9 @@ public class ObjectPropertyAssertion<T> {
                     type = generator.generate();
                 }
             }
-            return mock(type);
+            return type == String.class
+                    ? alternative ? OTHER_STRING : DEFAULT_STRING
+                    : mock(type);
         }
 
         private ApplicableGenerator with(Generator<?> generator) {
@@ -315,7 +314,7 @@ public class ObjectPropertyAssertion<T> {
             this.creators = creators;
         }
 
-        private Object replace(Class<?> type, ApplicableGenerator generator) {
+        private Object replace(Class<?> type, ApplicableGenerator generator, boolean alterative) {
             for (Creator<?> creator : creators) {
                 ParameterizedType generic = (ParameterizedType) creator.getClass().getGenericInterfaces()[0];
                 Class<?> restrained = generic.getActualTypeArguments()[0] instanceof ParameterizedType
@@ -325,7 +324,7 @@ public class ObjectPropertyAssertion<T> {
                     return creator.create();
                 }
             }
-            return generator.generate(type);
+            return generator.generate(type, alterative);
         }
 
         private ApplicableCreator with(Creator<?> creator) {

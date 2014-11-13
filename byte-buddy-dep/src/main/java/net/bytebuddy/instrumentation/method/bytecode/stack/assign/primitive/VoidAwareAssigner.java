@@ -33,10 +33,10 @@ public class VoidAwareAssigner implements Assigner {
     /**
      * Creates a new assigner that is capable of handling void types.
      *
-     * @param nonVoidAwareAssigner A chained assigner which will be queried by this assigner to handle assignments that
-     *                             do not involve a {@code void} type.
-     * @param returnDefaultValue   Determines if this assigner will load a target type's default value onto the stack if
-     *                             a {@code void} type is assigned to a non-{@code void} type.
+     * @param chained            A chained assigner which will be queried by this assigner to handle assignments that
+     *                           do not involve a {@code void} type.
+     * @param returnDefaultValue Determines if this assigner will load a target type's default value onto the stack if
+     *                           a {@code void} type is assigned to a non-{@code void} type.
      */
     public VoidAwareAssigner(Assigner chained, boolean returnDefaultValue) {
         this.chained = chained;

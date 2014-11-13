@@ -192,6 +192,11 @@ public enum MethodInvocation {
             return SPECIAL.new Invocation(methodDescription, invocationTarget);
         }
 
+        /**
+         * Returns the outer instance.
+         *
+         * @return The outer instance.
+         */
         private MethodInvocation getOuterInstance() {
             return MethodInvocation.this;
         }

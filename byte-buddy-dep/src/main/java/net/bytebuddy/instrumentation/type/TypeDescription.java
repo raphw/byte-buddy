@@ -697,7 +697,7 @@ public interface TypeDescription extends ByteCodeElement {
     }
 
     /**
-     * A projection for an array type based on an existing {@link net.bytebuddy.instrumentation.type.TypeDescription}
+     * A projection for an array type based on an existing {@link net.bytebuddy.instrumentation.type.TypeDescription}.
      */
     static class ArrayProjection extends AbstractTypeDescription {
 

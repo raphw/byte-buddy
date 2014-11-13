@@ -157,13 +157,41 @@ public interface MethodDescription extends ByteCodeElement {
      */
     String getUniqueSignature();
 
+    /**
+     * Returns the default value of this method or {@code null} if no such value exists. The returned values might be
+     * of a different type than usual:
+     * <ul>
+     * <li>{@link java.lang.Class} values are represented as
+     * {@link net.bytebuddy.instrumentation.type.TypeDescription}s.</li>
+     * <li>{@link java.lang.annotation.Annotation} values are represented as
+     * {@link net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription}s</li>
+     * <li>{@link java.lang.Enum} values are represented as
+     * {@link net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription.EnumerationValue}s.</li>
+     * <li>Arrays of the latter types are represented as arrays of the named wrapper types.</li>
+     * </ul>
+     *
+     * @return The default value of this method or {@code null}.
+     */
     Object getDefaultValue();
+
+    /**
+     * Returns the default value but casts it to the given type. If the type differs from the value, a
+     * {@link java.lang.ClassCastException} is thrown.
+     *
+     * @param type The type to cast the default value to.
+     * @param <T>  The type to cast the default value to.
+     * @return The casted default value.
+     */
+    <T> T getDefaultValue(Class<T> type);
 
     /**
      * An abstract base implementation of a method description.
      */
     abstract static class AbstractMethodDescription extends AbstractModifierReviewable implements MethodDescription {
 
+        /**
+         * A merger of all method modifiers that are visible in the Java source code.
+         */
         private static final int SOURCE_MODIFIERS = Modifier.PUBLIC
                 | Modifier.PROTECTED
                 | Modifier.PRIVATE
@@ -259,6 +287,11 @@ public interface MethodDescription extends ByteCodeElement {
             } else {
                 return !isAbstract() && getDeclaringType().isAssignableFrom(targetType);
             }
+        }
+
+        @Override
+        public <T> T getDefaultValue(Class<T> type) {
+            return type.cast(getDefaultValue());
         }
 
         @Override
@@ -511,6 +544,11 @@ public interface MethodDescription extends ByteCodeElement {
             return Type.getMethodDescriptor(method);
         }
 
+        /**
+         * Returns the loaded method that is represented by this method description.
+         *
+         * @return The loaded method that is represented by this method description.
+         */
         public Method getLoadedMethod() {
             return method;
         }

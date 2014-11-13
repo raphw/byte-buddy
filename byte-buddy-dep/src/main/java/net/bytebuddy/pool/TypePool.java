@@ -341,14 +341,27 @@ public interface TypePool {
         }
 
         /**
-         * A component type locator allows for the lazy
+         * A component type locator allows for the lazy location of an array's component type.
          */
         protected static interface ComponentTypeLocator {
 
+            /**
+             * Binds this component type to a given property name of an annotation.
+             *
+             * @param name The name of an annotation property which the returned component type reference should
+             *             query for resolving an array's component type.
+             * @return A component type reference to an annotation value's component type.
+             */
             LazyTypeDescription.AnnotationValue.ForComplexArray.ComponentTypeReference bind(String name);
 
+            /**
+             * A component type locator which cannot legally resolve an array's component type.
+             */
             static enum Illegal implements ComponentTypeLocator {
 
+                /**
+                 * The singleton instance.
+                 */
                 INSTANCE;
 
                 @Override
@@ -357,12 +370,28 @@ public interface TypePool {
                 }
             }
 
+            /**
+             * A component type locator that lazily analyses an annotation for resolving an annotation property's
+             * array value's component type.
+             */
             static class ForAnnotationProperty implements ComponentTypeLocator {
 
+                /**
+                 * The type pool to query for type descriptions.
+                 */
                 private final TypePool typePool;
 
+                /**
+                 * The name of the annotation to analyze.
+                 */
                 private final String annotationName;
 
+                /**
+                 * Creates a new component type locator for an array value.
+                 *
+                 * @param typePool             The type pool to be used for looking up linked types.
+                 * @param annotationDescriptor A descriptor of the annotation to analyze.
+                 */
                 public ForAnnotationProperty(TypePool typePool, String annotationDescriptor) {
                     this.typePool = typePool;
                     annotationName = annotationDescriptor.substring(1, annotationDescriptor.length() - 1).replace('/', '.');
@@ -373,11 +402,45 @@ public interface TypePool {
                     return new Bound(name);
                 }
 
-                private class Bound implements LazyTypeDescription.AnnotationValue.ForComplexArray.ComponentTypeReference {
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && annotationName.equals(((ForAnnotationProperty) other).annotationName)
+                            && typePool.equals(((ForAnnotationProperty) other).typePool);
+                }
 
+                @Override
+                public int hashCode() {
+                    int result = typePool.hashCode();
+                    result = 31 * result + annotationName.hashCode();
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "TypePool.Default.ComponentTypeLocator.ForAnnotationProperty{" +
+                            "typePool=" + typePool +
+                            ", annotationName='" + annotationName + '\'' +
+                            '}';
+                }
+
+                /**
+                 * A bound representation of a
+                 * {@link net.bytebuddy.pool.TypePool.Default.ComponentTypeLocator.ForAnnotationProperty}.
+                 */
+                protected class Bound implements LazyTypeDescription.AnnotationValue.ForComplexArray.ComponentTypeReference {
+
+                    /**
+                     * The name of the annotation property.
+                     */
                     private final String name;
 
-                    private Bound(String name) {
+                    /**
+                     * Creates a new bound component type locator for an annotation property.
+                     *
+                     * @param name The name of the annotation property.
+                     */
+                    protected Bound(String name) {
                         this.name = name;
                     }
 
@@ -391,14 +454,53 @@ public interface TypePool {
                                 .getComponentType()
                                 .getName();
                     }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && name.equals(((Bound) other).name)
+                                && ForAnnotationProperty.this.equals(((Bound) other).getOuter());
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return name.hashCode() + 31 * ForAnnotationProperty.this.hashCode();
+                    }
+
+                    /**
+                     * Returns the outer instance.
+                     *
+                     * @return The outer instance.
+                     */
+                    private ForAnnotationProperty getOuter() {
+                        return ForAnnotationProperty.this;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypePool.Default.ComponentTypeLocator.ForAnnotationProperty.Bound{" +
+                                "name='" + name + '\'' +
+                                '}';
+                    }
                 }
             }
 
-            static class FixedArrayReturnType implements ComponentTypeLocator, LazyTypeDescription.AnnotationValue.ForComplexArray.ComponentTypeReference {
+            /**
+             * A component type locator that locates an array type by a method's return value from its method descriptor.
+             */
+            static class ForArrayType implements ComponentTypeLocator, LazyTypeDescription.AnnotationValue.ForComplexArray.ComponentTypeReference {
 
+                /**
+                 * The resolved component type's binary name.
+                 */
                 private final String componentType;
 
-                public FixedArrayReturnType(String methodDescriptor) {
+                /**
+                 * Creates a new component type locator for an array type.
+                 *
+                 * @param methodDescriptor The method descriptor to resolve.
+                 */
+                public ForArrayType(String methodDescriptor) {
                     String arrayType = Type.getMethodType(methodDescriptor).getReturnType().getClassName();
                     componentType = arrayType.substring(0, arrayType.length() - 2);
                 }
@@ -411,6 +513,24 @@ public interface TypePool {
                 @Override
                 public String lookup() {
                     return componentType;
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && componentType.equals(((ForArrayType) other).componentType);
+                }
+
+                @Override
+                public int hashCode() {
+                    return componentType.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "TypePool.Default.ComponentTypeLocator.ForArrayType{" +
+                            "componentType='" + componentType + '\'' +
+                            '}';
                 }
             }
         }
@@ -564,7 +684,8 @@ public interface TypePool {
             @Override
             public String toString() {
                 return "TypePool.Default.TypeExtractor{" +
-                        "annotationTokens=" + annotationTokens +
+                        "typePool=" + Default.this +
+                        ", annotationTokens=" + annotationTokens +
                         ", fieldTokens=" + fieldTokens +
                         ", methodTokens=" + methodTokens +
                         ", modifiers=" + modifiers +
@@ -576,12 +697,26 @@ public interface TypePool {
                         '}';
             }
 
+            /**
+             * An annotation registrant that collects annotations found on a type.
+             */
             protected class OnTypeCollector implements AnnotationRegistrant {
 
+                /**
+                 * The descriptor of the annotation that is being collected.
+                 */
                 private final String descriptor;
 
+                /**
+                 * The values that were collected so far.
+                 */
                 private final Map<String, LazyTypeDescription.AnnotationValue<?, ?>> values;
 
+                /**
+                 * Creates a new on type collector.
+                 *
+                 * @param descriptor The descriptor of the annotation that is being collected.
+                 */
                 protected OnTypeCollector(String descriptor) {
                     this.descriptor = descriptor;
                     values = new HashMap<String, LazyTypeDescription.AnnotationValue<?, ?>>();
@@ -596,14 +731,39 @@ public interface TypePool {
                 public void onComplete() {
                     annotationTokens.add(new LazyTypeDescription.AnnotationToken(descriptor, values));
                 }
+
+                @Override
+                public String toString() {
+                    return "TypePool.Default.TypeExtractor.OnTypeCollector{" +
+                            "typeExtractor=" + TypeExtractor.this +
+                            ", descriptor='" + descriptor + '\'' +
+                            ", values=" + values +
+                            '}';
+                }
             }
 
+            /**
+             * An annotation extractor reads an annotation found in a class field an collects data that
+             * is relevant to creating a related annotation description.
+             */
             protected class AnnotationExtractor extends AnnotationVisitor {
 
+                /**
+                 * The annotation registrant to register found annotation values on.
+                 */
                 private final AnnotationRegistrant annotationRegistrant;
 
+                /**
+                 * A locator for the component type of any found annotation value.
+                 */
                 private final ComponentTypeLocator componentTypeLocator;
 
+                /**
+                 * Creates a new annotation extractor.
+                 *
+                 * @param annotationRegistrant The annotation registrant to register found annotation values on.
+                 * @param componentTypeLocator A locator for the component type of any found annotation value.
+                 */
                 protected AnnotationExtractor(AnnotationRegistrant annotationRegistrant,
                                               ComponentTypeLocator componentTypeLocator) {
                     super(ASM_VERSION);
@@ -646,14 +806,41 @@ public interface TypePool {
                     annotationRegistrant.onComplete();
                 }
 
+                @Override
+                public String toString() {
+                    return "TypePool.Default.TypeExtractor.AnnotationExtractor{" +
+                            "typeExtractor=" + TypeExtractor.this +
+                            "annotationRegistrant=" + annotationRegistrant +
+                            ", componentTypeLocator=" + componentTypeLocator +
+                            '}';
+                }
+
+                /**
+                 * An annotation registrant for registering values of an array.
+                 */
                 protected class ArrayLookup implements AnnotationRegistrant {
 
+                    /**
+                     * The name of the annotation property the collected array is representing.
+                     */
                     private final String name;
 
+                    /**
+                     * A lazy reference to resolve the component type of the collected array.
+                     */
                     private final LazyTypeDescription.AnnotationValue.ForComplexArray.ComponentTypeReference componentTypeReference;
 
-                    private final LinkedList<LazyTypeDescription.AnnotationValue<?, ?>> values;
+                    /**
+                     * A list of all annotation values that are found on this array.
+                     */
+                    private final List<LazyTypeDescription.AnnotationValue<?, ?>> values;
 
+                    /**
+                     * Creates a new annotation registrant for an array lookup.
+                     *
+                     * @param name                   The name of the annotation property the collected array is representing.
+                     * @param componentTypeReference A lazy reference to resolve the component type of the collected array.
+                     */
                     protected ArrayLookup(String name,
                                           LazyTypeDescription.AnnotationValue.ForComplexArray.ComponentTypeReference componentTypeReference) {
                         this.name = name;
@@ -670,16 +857,46 @@ public interface TypePool {
                     public void onComplete() {
                         annotationRegistrant.register(name, new LazyTypeDescription.AnnotationValue.ForComplexArray(componentTypeReference, values));
                     }
+
+                    @Override
+                    public String toString() {
+                        return "TypePool.Default.TypeExtractor.AnnotationExtractor.ArrayLookup{" +
+                                "annotationExtractor=" + AnnotationExtractor.this +
+                                ", name='" + name + '\'' +
+                                ", componentTypeReference=" + componentTypeReference +
+                                ", values=" + values +
+                                '}';
+                    }
                 }
 
-                private class AnnotationLookup implements AnnotationRegistrant {
+                /**
+                 * An annotation registrant for registering the values on an array that is itself an annotation property.
+                 */
+                protected class AnnotationLookup implements AnnotationRegistrant {
 
+                    /**
+                     * The name of the original annotation for which the annotation values are looked up.
+                     */
                     private final String name;
 
+                    /**
+                     * The descriptor of the original annotation for which the annotation values are looked up.
+                     */
                     private final String descriptor;
 
+                    /**
+                     * A mapping of annotation property values to their values.
+                     */
                     private final Map<String, LazyTypeDescription.AnnotationValue<?, ?>> values;
 
+                    /**
+                     * Creates a new annotation registrant for a recursive annotation lookup.
+                     *
+                     * @param name       The name of the original annotation for which the annotation values are
+                     *                   looked up.
+                     * @param descriptor The descriptor of the original annotation for which the annotation values are
+                     *                   looked up.
+                     */
                     protected AnnotationLookup(String name, String descriptor) {
                         this.name = name;
                         this.descriptor = descriptor;
@@ -696,19 +913,52 @@ public interface TypePool {
                         annotationRegistrant.register(name, new LazyTypeDescription.AnnotationValue
                                 .ForAnnotation(new LazyTypeDescription.AnnotationToken(descriptor, values)));
                     }
+
+                    @Override
+                    public String toString() {
+                        return "TypePool.Default.TypeExtractor.AnnotationExtractor.AnnotationLookup{" +
+                                "annotationExtractor=" + AnnotationExtractor.this +
+                                ", name='" + name + '\'' +
+                                ", descriptor='" + descriptor + '\'' +
+                                ", values=" + values +
+                                '}';
+                    }
                 }
             }
 
+            /**
+             * A field extractor reads a field within a class file and collects data that is relevant
+             * to creating a related field description.
+             */
             protected class FieldExtractor extends FieldVisitor {
 
+                /**
+                 * The modifiers found on the field.
+                 */
                 private final int modifiers;
 
+                /**
+                 * The name of the field.
+                 */
                 private final String internalName;
 
+                /**
+                 * The descriptor of the field type.
+                 */
                 private final String descriptor;
 
+                /**
+                 * A list of annotation tokens found for this field.
+                 */
                 private final List<LazyTypeDescription.AnnotationToken> annotationTokens;
 
+                /**
+                 * Creates a new field extractor.
+                 *
+                 * @param modifiers    The modifiers found for this field.
+                 * @param internalName The name of the field.
+                 * @param descriptor   The descriptor of the field type.
+                 */
                 protected FieldExtractor(int modifiers, String internalName, String descriptor) {
                     super(ASM_VERSION);
                     this.modifiers = modifiers;
@@ -728,12 +978,37 @@ public interface TypePool {
                     fieldTokens.add(new LazyTypeDescription.FieldToken(modifiers, internalName, descriptor, annotationTokens));
                 }
 
+                @Override
+                public String toString() {
+                    return "TypePool.Default.TypeExtractor.FieldExtractor{" +
+                            "typeExtractor=" + TypeExtractor.this +
+                            ", modifiers=" + modifiers +
+                            ", internalName='" + internalName + '\'' +
+                            ", descriptor='" + descriptor + '\'' +
+                            ", annotationTokens=" + annotationTokens +
+                            '}';
+                }
+
+                /**
+                 * An annotation registrant that collects annotations that are declared on a field.
+                 */
                 protected class OnFieldCollector implements AnnotationRegistrant {
 
+                    /**
+                     * The annotation descriptor.
+                     */
                     private final String descriptor;
 
+                    /**
+                     * A mapping of annotation property names to their values.
+                     */
                     private final Map<String, LazyTypeDescription.AnnotationValue<?, ?>> values;
 
+                    /**
+                     * Creates a new annotation field registrant.
+                     *
+                     * @param descriptor The descriptor of the annotation.
+                     */
                     protected OnFieldCollector(String descriptor) {
                         this.descriptor = descriptor;
                         values = new HashMap<String, LazyTypeDescription.AnnotationValue<?, ?>>();
@@ -748,28 +1023,69 @@ public interface TypePool {
                     public void onComplete() {
                         annotationTokens.add(new LazyTypeDescription.AnnotationToken(descriptor, values));
                     }
+
+                    @Override
+                    public String toString() {
+                        return "TypePool.Default.TypeExtractor.FieldExtractor.OnFieldCollector{" +
+                                "fieldExtractor=" + FieldExtractor.this +
+                                ", descriptor='" + descriptor + '\'' +
+                                ", values=" + values +
+                                '}';
+                    }
                 }
             }
 
             /**
-             * A visitor for a method that extracts
+             * A method extractor reads a method within a class file and collects data that is relevant
+             * to creating a related method description.
              */
             protected class MethodExtractor extends MethodVisitor implements AnnotationRegistrant {
 
+                /**
+                 * The modifiers found for this method.
+                 */
                 private final int modifiers;
 
+                /**
+                 * The internal name found for this method.
+                 */
                 private final String internalName;
 
+                /**
+                 * The descriptor found for this method.
+                 */
                 private final String descriptor;
 
+                /**
+                 * An array of internal names of the exceptions of the found method
+                 * or {@code null} if there are no such exceptions.
+                 */
                 private final String[] exceptionName;
 
+                /**
+                 * A list of annotation tokens declared on the found method.
+                 */
                 private final List<LazyTypeDescription.AnnotationToken> annotationTokens;
 
+                /**
+                 * A mapping of parameter indices to annotation tokens found for the parameters at these indices.
+                 */
                 private final Map<Integer, List<LazyTypeDescription.AnnotationToken>> parameterAnnotationTokens;
 
+                /**
+                 * The default value of the found method or {@code null} if no such value exists.
+                 */
                 private LazyTypeDescription.AnnotationValue<?, ?> defaultValue;
 
+                /**
+                 * Creates a method extractor.
+                 *
+                 * @param modifiers     The modifiers found for this method.
+                 * @param internalName  The internal name found for this method.
+                 * @param descriptor    The descriptor found for this method.
+                 * @param exceptionName An array of internal names of the exceptions of the found method
+                 *                      or {@code null} if there are no such exceptions.
+                 */
                 protected MethodExtractor(int modifiers,
                                           String internalName,
                                           String descriptor,
@@ -800,7 +1116,7 @@ public interface TypePool {
 
                 @Override
                 public AnnotationVisitor visitAnnotationDefault() {
-                    return new AnnotationExtractor(this, new ComponentTypeLocator.FixedArrayReturnType(descriptor));
+                    return new AnnotationExtractor(this, new ComponentTypeLocator.ForArrayType(descriptor));
                 }
 
                 @Override
@@ -824,12 +1140,40 @@ public interface TypePool {
                             defaultValue));
                 }
 
+                @Override
+                public String toString() {
+                    return "TypePool.Default.TypeExtractor.MethodExtractor{" +
+                            "typeExtractor=" + TypeExtractor.this +
+                            ", modifiers=" + modifiers +
+                            ", internalName='" + internalName + '\'' +
+                            ", descriptor='" + descriptor + '\'' +
+                            ", exceptionName=" + Arrays.toString(exceptionName) +
+                            ", annotationTokens=" + annotationTokens +
+                            ", parameterAnnotationTokens=" + parameterAnnotationTokens +
+                            ", defaultValue=" + defaultValue +
+                            '}';
+                }
+
+                /**
+                 * An annotation registrant for annotations found on the method itself.
+                 */
                 protected class OnMethodCollector implements AnnotationRegistrant {
 
+                    /**
+                     * The descriptor of the annotation.
+                     */
                     private final String descriptor;
 
+                    /**
+                     * A mapping of annotation properties to their values.
+                     */
                     private final Map<String, LazyTypeDescription.AnnotationValue<?, ?>> values;
 
+                    /**
+                     * Creates a new method annotation registrant.
+                     *
+                     * @param descriptor The descriptor of the annotation.
+                     */
                     protected OnMethodCollector(String descriptor) {
                         this.descriptor = descriptor;
                         values = new HashMap<String, LazyTypeDescription.AnnotationValue<?, ?>>();
@@ -844,16 +1188,43 @@ public interface TypePool {
                     public void onComplete() {
                         annotationTokens.add(new LazyTypeDescription.AnnotationToken(descriptor, values));
                     }
+
+                    @Override
+                    public String toString() {
+                        return "TypePool.Default.TypeExtractor.MethodExtractor.OnMethodCollector{" +
+                                "methodExtractor=" + MethodExtractor.this +
+                                ", descriptor='" + descriptor + '\'' +
+                                ", values=" + values +
+                                '}';
+                    }
                 }
 
+                /**
+                 * An annotation registrant that collects annotations that are found on a specific parameter.
+                 */
                 protected class OnMethodParameterCollector implements AnnotationRegistrant {
 
+                    /**
+                     * The descriptor of the annotation.
+                     */
                     private final String descriptor;
 
+                    /**
+                     * The index of the parameter of this annotation.
+                     */
                     private final int index;
 
+                    /**
+                     * A mapping of annotation properties to their values.
+                     */
                     private final Map<String, LazyTypeDescription.AnnotationValue<?, ?>> values;
 
+                    /**
+                     * Creates a new method parameter annotation registrant.
+                     *
+                     * @param descriptor The descriptor of the annotation.
+                     * @param index      The index of the parameter of this annotation.
+                     */
                     protected OnMethodParameterCollector(String descriptor, int index) {
                         this.descriptor = descriptor;
                         this.index = index;
@@ -868,6 +1239,16 @@ public interface TypePool {
                     @Override
                     public void onComplete() {
                         parameterAnnotationTokens.get(index).add(new LazyTypeDescription.AnnotationToken(descriptor, values));
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypePool.Default.TypeExtractor.MethodExtractor.OnMethodParameterCollector{" +
+                                "methodExtractor=" + MethodExtractor.this +
+                                ", descriptor='" + descriptor + '\'' +
+                                ", index=" + index +
+                                ", values=" + values +
+                                '}';
                     }
                 }
             }
@@ -1493,10 +1874,20 @@ public interface TypePool {
                             '}';
                 }
 
-                private class LazyEnumerationValue extends AnnotationDescription.EnumerationValue.AbstractEnumerationValue {
+                /**
+                 * An enumeration description where any type references are only resolved on demand.
+                 */
+                protected class LazyEnumerationValue extends AnnotationDescription.EnumerationValue.AbstractEnumerationValue {
 
+                    /**
+                     * The type pool to query for resolving type references.
+                     */
                     private final TypePool typePool;
 
+                    /**
+                     * Creates a new lazy enumeration value.
+                     * @param typePool The type pool to query for resolving type references.
+                     */
                     protected LazyEnumerationValue(TypePool typePool) {
                         this.typePool = typePool;
                     }
@@ -1575,7 +1966,7 @@ public interface TypePool {
 
             /**
              * Represents an array that is referenced by an annotation which does not contain primitive values or
-             * {@link java.lang.String}
+             * {@link java.lang.String} values.
              */
             static class ForComplexArray implements AnnotationValue<Object[], Object[]> {
 

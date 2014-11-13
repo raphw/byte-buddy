@@ -49,17 +49,35 @@ public interface AuxiliaryType {
 
         /**
          * Registers an accessor method for a
-         * {@link net.bytebuddy.instrumentation.Instrumentation.SpecialMethodInvocation} which cannot be triggered
-         * invoked directly from outside a type. The method is registered on the instrumented type with package-private
-         * visibility, similarly to a Java compiler accessor method.
+         * {@link net.bytebuddy.instrumentation.Instrumentation.SpecialMethodInvocation} which cannot itself be
+         * triggered invoked directly from outside a type. The method is registered on the instrumented type
+         * with package-private visibility, similarly to a Java compiler's accessor methods.
          *
          * @param specialMethodInvocation The special method invocation.
          * @return The accessor method for invoking the special method invocation.
          */
         MethodDescription registerAccessorFor(Instrumentation.SpecialMethodInvocation specialMethodInvocation);
 
+        /**
+         * Registers a getter for the given {@link net.bytebuddy.instrumentation.field.FieldDescription} which might
+         * itself not be accessible from outside the class. The returned getter method defines the field type as
+         * its return type, does not take any arguments and is of package-private visibility, similarly to the Java
+         * compiler's accessor methods. If the field is {@code static}, this accessor method is also {@code static}.
+         *
+         * @param fieldDescription The field which is to be accessed.
+         * @return A getter method for the given field.
+         */
         MethodDescription registerGetterFor(FieldDescription fieldDescription);
 
+        /**
+         * Registers a setter for the given {@link net.bytebuddy.instrumentation.field.FieldDescription} which might
+         * itself not be accessible from outside the class. The returned setter method defines the field type as
+         * its only argument type, returns {@code void} and is of package-private visibility, similarly to the Java
+         * compiler's accessor methods. If the field is {@code static}, this accessor method is also {@code static}.
+         *
+         * @param fieldDescription The field which is to be accessed.
+         * @return A setter method for the given field.
+         */
         MethodDescription registerSetterFor(FieldDescription fieldDescription);
 
         /**
