@@ -84,6 +84,20 @@ public final class ByteBuddyCommons {
     }
 
     /**
+     * Validates that no value of an array is {@code null}.
+     *
+     * @param value The input value to be validated.
+     * @param <T>   The component type of the input value.
+     * @return The input value.
+     */
+    public static <T> T[] nonNull(T[] value) {
+        for (T object : value) {
+            nonNull(object);
+        }
+        return value;
+    }
+
+    /**
      * Validates that a type description is not representing the {@code void} type.
      *
      * @param typeDescription The type description to validate.

@@ -5,7 +5,6 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.objectweb.asm.Type;
 
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
@@ -44,13 +43,6 @@ public class TypePoolLazyObjectPropertiesTest {
             @Override
             public void apply(Map<?, ?> mock) {
                 when(mock.get(Mockito.any(String.class))).thenReturn(Mockito.mock(TypePool.LazyTypeDescription.AnnotationValue.class));
-            }
-        }).apply();
-        final Iterator<Method> methodIterator = Arrays.asList(Object.class.getDeclaredMethods()).iterator();
-        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationInvocationHandler.ResolvedAnnotationValue.class).create(new ObjectPropertyAssertion.Creator<Method>() {
-            @Override
-            public Method create() {
-                return methodIterator.next();
             }
         }).apply();
     }

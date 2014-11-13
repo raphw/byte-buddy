@@ -26,6 +26,13 @@ public enum PropertyDispatcher {
         protected boolean doEquals(Object first, Object second) {
             return Arrays.equals((boolean[]) first, (boolean[]) second);
         }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <T> T conditionalClone(T value) {
+            boolean[] castValue = (boolean[]) value;
+            return castValue.length == 0 ? value : (T) castValue.clone();
+        }
     },
 
     /**
@@ -45,6 +52,13 @@ public enum PropertyDispatcher {
         @Override
         protected boolean doEquals(Object first, Object second) {
             return Arrays.equals((byte[]) first, (byte[]) second);
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <T> T conditionalClone(T value) {
+            byte[] castValue = (byte[]) value;
+            return castValue.length == 0 ? value : (T) castValue.clone();
         }
     },
 
@@ -66,6 +80,13 @@ public enum PropertyDispatcher {
         protected boolean doEquals(Object first, Object second) {
             return Arrays.equals((short[]) first, (short[]) second);
         }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <T> T conditionalClone(T value) {
+            short[] castValue = (short[]) value;
+            return castValue.length == 0 ? value : (T) castValue.clone();
+        }
     },
 
     /**
@@ -85,6 +106,13 @@ public enum PropertyDispatcher {
         @Override
         protected boolean doEquals(Object first, Object second) {
             return Arrays.equals((char[]) first, (char[]) second);
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <T> T conditionalClone(T value) {
+            char[] castValue = (char[]) value;
+            return castValue.length == 0 ? value : (T) castValue.clone();
         }
     },
 
@@ -106,6 +134,13 @@ public enum PropertyDispatcher {
         protected boolean doEquals(Object first, Object second) {
             return Arrays.equals((int[]) first, (int[]) second);
         }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <T> T conditionalClone(T value) {
+            int[] castValue = (int[]) value;
+            return castValue.length == 0 ? value : (T) castValue.clone();
+        }
     },
 
     /**
@@ -125,6 +160,13 @@ public enum PropertyDispatcher {
         @Override
         protected boolean doEquals(Object first, Object second) {
             return Arrays.equals((long[]) first, (long[]) second);
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <T> T conditionalClone(T value) {
+            long[] castValue = (long[]) value;
+            return castValue.length == 0 ? value : (T) castValue.clone();
         }
     },
 
@@ -146,6 +188,13 @@ public enum PropertyDispatcher {
         protected boolean doEquals(Object first, Object second) {
             return Arrays.equals((float[]) first, (float[]) second);
         }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <T> T conditionalClone(T value) {
+            float[] castValue = (float[]) value;
+            return castValue.length == 0 ? value : (T) castValue.clone();
+        }
     },
 
     /**
@@ -165,6 +214,13 @@ public enum PropertyDispatcher {
         @Override
         protected boolean doEquals(Object first, Object second) {
             return Arrays.equals((double[]) first, (double[]) second);
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <T> T conditionalClone(T value) {
+            double[] castValue = (double[]) value;
+            return castValue.length == 0 ? value : (T) castValue.clone();
         }
     },
 
@@ -186,6 +242,13 @@ public enum PropertyDispatcher {
         protected boolean doEquals(Object first, Object second) {
             return Arrays.equals((Object[]) first, (Object[]) second);
         }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <T> T conditionalClone(T value) {
+            Object[] castValue = (Object[]) value;
+            return castValue.length == 0 ? value : (T) castValue.clone();
+        }
     },
 
     /**
@@ -205,6 +268,12 @@ public enum PropertyDispatcher {
         @Override
         protected boolean doEquals(Object first, Object second) {
             return first.equals(second);
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <T> T conditionalClone(T value) {
+            return value;
         }
     };
 
@@ -273,4 +342,13 @@ public enum PropertyDispatcher {
      * @return {@code true} if both values are equal.
      */
     protected abstract boolean doEquals(Object first, Object second);
+
+    /**
+     * Creates a shallow copy of an array but returns non-array types as such.
+     *
+     * @param value The value to attempt to clone.
+     * @param <T>   The type of the value.
+     * @return A shallow copy of an array or the input value if it does not represent an array.
+     */
+    public abstract <T> T conditionalClone(T value);
 }

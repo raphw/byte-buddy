@@ -7,7 +7,7 @@ import org.junit.runners.Parameterized;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @RunWith(Parameterized.class)
@@ -68,5 +68,15 @@ public class PropertyDispatcherTest {
         assertThat(PropertyDispatcher.of(value.getClass()).equals(value, null), is(false));
         assertThat(PropertyDispatcher.of(value.getClass()).equals(value, new Object()), is(false));
         assertThat(PropertyDispatcher.of(value.getClass()).equals(value, other), is(true));
+    }
+
+    @Test
+    public void testConditionalClone() throws Exception {
+        assertThat(PropertyDispatcher.of(value.getClass()).conditionalClone(value), is(value));
+        if (value.getClass().isArray()) {
+            assertThat(PropertyDispatcher.of(value.getClass()).conditionalClone(value), not(sameInstance(value)));
+        } else {
+            assertThat(PropertyDispatcher.of(value.getClass()).conditionalClone(value), sameInstance(value));
+        }
     }
 }

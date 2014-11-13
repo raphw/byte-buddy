@@ -60,6 +60,17 @@ public class ByteBuddyCommonsTest {
     }
 
     @Test
+    public void testNonNullArray() throws Exception {
+        Object[] object = new Object[] {new Object()};
+        assertThat(nonNull(object), sameInstance(object));
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testNonNullArrayThrowsException() throws Exception {
+        nonNull(new Object[1]);
+    }
+
+    @Test
     public void testNonVoid() throws Exception {
         TypeDescription typeDescription = mock(TypeDescription.class);
         assertThat(nonVoid(typeDescription), sameInstance(typeDescription));
