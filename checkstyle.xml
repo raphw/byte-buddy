@@ -17,10 +17,10 @@
     <module name="TreeWalker">
 
         <!-- Checkstyle has a bug that disallows @return in annotation methods, enable only on demand -->
-        <module name="JavadocMethod"/>
-        <module name="JavadocType"/>
-        <module name="JavadocVariable"/>
-        <module name="JavadocStyle"/>
+        <!--<module name="JavadocMethod"/>-->
+        <!--<module name="JavadocType"/>-->
+        <!--<module name="JavadocVariable"/>-->
+        <!--<module name="JavadocStyle"/>-->
 
         <module name="TodoComment"/>
 

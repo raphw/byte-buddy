@@ -92,7 +92,7 @@ POJO. For example, we can implement the `Comparator` interface by defining the f
 signature of the `Comparator:compare` method we want to implement later:
 
 ```java
-public static class ComparisonInterceptor {
+public class ComparisonInterceptor {
   public int intercept(Object first, Object second) {
     return first.hashCode() - second.hashCode();
   }
@@ -122,7 +122,7 @@ Interceptors can take more generic inputs and outputs using annotations. An exam
 would be the following class:
 
 ```java
-public static class GeneralInterceptor {
+public class GeneralInterceptor {
   @RuntimeType
   public Object intercept(@AllArguments Object[] allArguments,
                           @Origin Method method) {
