@@ -151,7 +151,7 @@ public @interface Argument {
                                                                MethodDescription target,
                                                                Instrumentation.Target instrumentationTarget,
                                                                Assigner assigner) {
-            Argument argument = annotation.load();
+            Argument argument = annotation.loadSilent();
             if (argument.value() < 0) {
                 throw new IllegalArgumentException(String.format("Argument annotation on %d's argument virtual " +
                         "%s holds negative index", targetParameterIndex, target));
@@ -199,7 +199,7 @@ public @interface Argument {
             for (AnnotationList parameterAnnotations : target.getParameterAnnotations()) {
                 AnnotationDescription.Loadable<Argument> annotation = parameterAnnotations.ofType(Argument.class);
                 if (annotation != null) {
-                    results.remove(annotation.load().value());
+                    results.remove(annotation.loadSilent().value());
                 }
             }
             return results.iterator();

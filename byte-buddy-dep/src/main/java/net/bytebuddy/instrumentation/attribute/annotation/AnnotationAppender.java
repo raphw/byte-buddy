@@ -76,9 +76,9 @@ public interface AnnotationAppender {
             AnnotationDescription.Loadable<Retention> retention = annotation.getAnnotationType()
                     .getDeclaredAnnotations()
                     .ofType(Retention.class);
-            if (retention == null || retention.load().value() == RetentionPolicy.SOURCE) {
+            if (retention == null || retention.loadSilent().value() == RetentionPolicy.SOURCE) {
                 return INVISIBLE;
-            } else if (retention.load().value() == RetentionPolicy.CLASS) {
+            } else if (retention.loadSilent().value() == RetentionPolicy.CLASS) {
                 return CLASS_FILE;
             } else {
                 return RUNTIME;

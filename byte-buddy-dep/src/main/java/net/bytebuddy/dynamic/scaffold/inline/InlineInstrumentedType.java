@@ -178,8 +178,8 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
     }
 
     @Override
-    public ClassLoader getClassLoader() {
-        return levelType.getClassLoader();
+    public BinaryRepresentation toBinary() {
+        return BinaryRepresentation.Illegal.INSTANCE;
     }
 
     @Override

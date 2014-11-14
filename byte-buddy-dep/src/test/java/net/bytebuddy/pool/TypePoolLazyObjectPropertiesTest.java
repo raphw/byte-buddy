@@ -2,13 +2,12 @@ package net.bytebuddy.pool;
 
 import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Test;
-import org.mockito.Mockito;
 import org.objectweb.asm.Type;
 
-import java.util.Arrays;
-import java.util.Iterator;
+import java.lang.annotation.Annotation;
 import java.util.Map;
 
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class TypePoolLazyObjectPropertiesTest {
@@ -32,19 +31,10 @@ public class TypePoolLazyObjectPropertiesTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testInvocationHandlerObjectProperties() throws Exception {
-        final Iterator<Class<?>> typeIterator = Arrays.<Class<?>>asList(FirstSample.class, SecondSample.class).iterator();
-        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationInvocationHandler.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
-            @Override
-            public Class<?> create() {
-                return typeIterator.next();
-            }
-        }).refine(new ObjectPropertyAssertion.Refinement<Map<?, ?>>() {
-            @Override
-            public void apply(Map<?, ?> mock) {
-                when(mock.get(Mockito.any(String.class))).thenReturn(Mockito.mock(TypePool.LazyTypeDescription.AnnotationValue.class));
-            }
-        }).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationInvocationHandler.class)
+                .apply(new TypePool.LazyTypeDescription.AnnotationInvocationHandler(mock(ClassLoader.class), Annotation.class, mock(Map.class)));
     }
 
     @Test

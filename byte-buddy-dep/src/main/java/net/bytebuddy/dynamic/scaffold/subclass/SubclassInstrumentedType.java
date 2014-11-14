@@ -194,8 +194,8 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
     }
 
     @Override
-    public ClassLoader getClassLoader() {
-        return null;
+    public BinaryRepresentation toBinary() {
+        return BinaryRepresentation.Illegal.INSTANCE;
     }
 
     @Override

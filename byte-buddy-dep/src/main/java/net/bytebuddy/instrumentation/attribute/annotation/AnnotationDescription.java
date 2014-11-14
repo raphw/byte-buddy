@@ -179,11 +179,41 @@ public interface AnnotationDescription {
     static interface Loadable<S extends Annotation> extends AnnotationDescription {
 
         /**
-         * Loads this annotation description. This causes the classes of all annotation values to be loaded.
+         * Loads this annotation description. This causes all classes referenced by the annotation value to be loaded.
+         * Without specifying a class loader, the annotation's class loader which was used to prepare this instance
+         * is used.
+         *
+         * @return A loaded version of this annotation description.
+         * @throws java.lang.ClassNotFoundException If any linked classes of the annotation cannot be loaded.
+         */
+        S load() throws ClassNotFoundException;
+
+        /**
+         * Loads this annotation description. This causes all classes referenced by the annotation value to be loaded.
+         *
+         * @param classLoader The class loader to be used for loading the annotation's linked types.
+         * @return A loaded version of this annotation description.
+         * @throws java.lang.ClassNotFoundException If any linked classes of the annotation cannot be loaded.
+         */
+        S load(ClassLoader classLoader) throws ClassNotFoundException;
+
+        /**
+         * Loads this annotation description. This causes all classes referenced by the annotation value to be loaded.
+         * Without specifying a class loader, the annotation's class loader which was used to prepare this instance
+         * is used. Any {@link java.lang.ClassNotFoundException} is wrapped in an {@link java.lang.IllegalStateException}.
          *
          * @return A loaded version of this annotation description.
          */
-        S load();
+        S loadSilent();
+
+        /**
+         * Loads this annotation description. This causes all classes referenced by the annotation value to be loaded.
+         * Any {@link java.lang.ClassNotFoundException} is wrapped in an {@link java.lang.IllegalStateException}.
+         *
+         * @param classLoader The class loader to be used for loading the annotation's linked types.
+         * @return A loaded version of this annotation description.
+         */
+        S loadSilent(ClassLoader classLoader);
     }
 
     /**
@@ -248,6 +278,37 @@ public interface AnnotationDescription {
             toString.append(')');
             return toString.toString();
         }
+
+        /**
+         * An abstract implementation of a loadable annotation description.
+         *
+         * @param <S> The annotation type this instance was prepared for.
+         */
+        public abstract static class ForPrepared<S extends Annotation> extends AbstractAnnotationDescription implements Loadable<S> {
+
+            /**
+             * The error message to be displayed on a {@link java.lang.ClassNotFoundException}.
+             */
+            public static final String ERROR_MESSAGE = "Could not load a type that is linked by the annotation value";
+
+            @Override
+            public S loadSilent() {
+                try {
+                    return load();
+                } catch (ClassNotFoundException e) {
+                    throw new IllegalStateException(ERROR_MESSAGE, e);
+                }
+            }
+
+            @Override
+            public S loadSilent(ClassLoader classLoader) {
+                try {
+                    return load(classLoader);
+                } catch (ClassNotFoundException e) {
+                    throw new IllegalStateException(ERROR_MESSAGE, e);
+                }
+            }
+        }
     }
 
     /**
@@ -255,7 +316,7 @@ public interface AnnotationDescription {
      *
      * @param <S> The type of the annotation.
      */
-    static class ForLoadedAnnotation<S extends Annotation> extends AbstractAnnotationDescription implements Loadable<S> {
+    static class ForLoadedAnnotation<S extends Annotation> extends AbstractAnnotationDescription.ForPrepared<S> implements Loadable<S> {
 
         /**
          * The represented annotation value.
@@ -317,6 +378,11 @@ public interface AnnotationDescription {
 
         @Override
         public S load() {
+            return annotation;
+        }
+
+        @Override
+        public S load(ClassLoader classLoader) {
             return annotation;
         }
 

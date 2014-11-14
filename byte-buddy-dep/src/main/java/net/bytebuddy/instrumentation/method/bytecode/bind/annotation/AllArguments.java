@@ -131,7 +131,7 @@ public @interface AllArguments {
                         assigner.assign(sourceParameter, arrayFactory.getComponentType(), considerRuntimeType));
                 if (stackManipulation.isValid()) {
                     stackManipulations.add(stackManipulation);
-                } else if (annotation.load().value().isStrict()) {
+                } else if (annotation.loadSilent().value().isStrict()) {
                     return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
                 }
                 offset += sourceParameter.getStackSize().getSize();

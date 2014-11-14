@@ -23,7 +23,6 @@ import org.objectweb.asm.commons.RemappingClassAdapter;
 import org.objectweb.asm.commons.SimpleRemapper;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -167,17 +166,13 @@ public interface TypeWriter<T> {
 
             @Override
             public byte[] create(Instrumentation.Context.ExtractableView instrumentationContext) {
-                InputStream classFile = classFileLocator.classFileFor(targetType);
-                if (classFile == null) {
-                    throw new IllegalArgumentException("Cannot locate the class file for "
-                            + targetType + " using " + classFileLocator);
-                }
                 try {
-                    try {
-                        return doCreate(instrumentationContext, classFile);
-                    } finally {
-                        classFile.close();
+                    TypeDescription.BinaryRepresentation binaryRepresentation = classFileLocator.classFileFor(targetType);
+                    if (!binaryRepresentation.isValid()) {
+                        throw new IllegalArgumentException("Cannot locate the class file for "
+                                + targetType + " using " + classFileLocator);
                     }
+                    return doCreate(instrumentationContext, binaryRepresentation.getData());
                 } catch (IOException e) {
                     throw new RuntimeException("The class file could not be written", e);
                 }
@@ -187,13 +182,11 @@ public interface TypeWriter<T> {
              * Performs the actual creation of a class file.
              *
              * @param instrumentationContext The instrumentation context to use for implementing the class file.
-             * @param classFile              An input stream representing the class file
+             * @param binaryRepresentation   The binary representation of the class file.
              * @return The byte array representing the created class.
-             * @throws IOException If the writing of the class file causes an error.
              */
-            private byte[] doCreate(Instrumentation.Context.ExtractableView instrumentationContext,
-                                    InputStream classFile) throws IOException {
-                ClassReader classReader = new ClassReader(classFile);
+            private byte[] doCreate(Instrumentation.Context.ExtractableView instrumentationContext, byte[] binaryRepresentation) {
+                ClassReader classReader = new ClassReader(binaryRepresentation);
                 ClassWriter classWriter = new ClassWriter(classReader, ASM_MANUAL_FLAG);
                 classReader.accept(writeTo(classVisitorWrapper.wrap(classWriter), instrumentationContext), ASM_MANUAL_FLAG);
                 return classWriter.toByteArray();

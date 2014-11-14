@@ -9,9 +9,12 @@ import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.utility.PropertyDispatcher;
+import net.bytebuddy.utility.StreamDrainer;
 import org.objectweb.asm.*;
 import org.objectweb.asm.Type;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.AnnotationTypeMismatchException;
 import java.lang.annotation.IncompleteAnnotationException;
@@ -135,6 +138,137 @@ public interface TypePool {
     }
 
     /**
+     * A source locator is responsible for finding the binary representation of a given type by its name.
+     */
+    static interface SourceLocator {
+
+        /**
+         * Locates the binary source of a non-array, non-primitive type.
+         *
+         * @param typeName The binary name of the type to locate.
+         * @return The binary representation of a type which might or might not be legal.
+         */
+        TypeDescription.BinaryRepresentation locate(String typeName);
+
+        /**
+         * A source locator that queries a class loader for a class's binary source.
+         */
+        static class ForClassLoader implements SourceLocator {
+
+            /**
+             * The file ending of Java class files.
+             */
+            private static final String CLASS_FILE_SUFFIX = ".class";
+
+            /**
+             * The class loader to query.
+             */
+            private final ClassLoader classLoader;
+
+            /**
+             * Creates a source locator for querying the class path.
+             *
+             * @return A source locator for the system class loader.
+             */
+            public static SourceLocator ofSystemClassLoader() {
+                return new ForClassLoader(ClassLoader.getSystemClassLoader());
+            }
+
+            /**
+             * Creates a new class loader source locator.
+             *
+             * @param classLoader The class loader to query.
+             */
+            public ForClassLoader(ClassLoader classLoader) {
+                this.classLoader = classLoader;
+            }
+
+            @Override
+            public TypeDescription.BinaryRepresentation locate(String typeName) {
+                InputStream resource = classLoader.getResourceAsStream(typeName.replace('.', '/') + CLASS_FILE_SUFFIX);
+                if (resource == null) {
+                    return TypeDescription.BinaryRepresentation.Illegal.INSTANCE;
+                }
+                try {
+                    try {
+                        return new TypeDescription.BinaryRepresentation.Explicit(new StreamDrainer().drain(resource));
+                    } finally {
+                        resource.close();
+                    }
+                } catch (IOException e) {
+                    throw new IllegalStateException("Error while reading resource stream for " + typeName, e);
+                }
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && classLoader.equals(((ForClassLoader) other).classLoader);
+            }
+
+            @Override
+            public int hashCode() {
+                return classLoader.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "TypePool.SourceLocator.ForClassLoader{classLoader=" + classLoader + '}';
+            }
+        }
+
+        /**
+         * A compound {@link net.bytebuddy.pool.TypePool.SourceLocator} for querying several source locators in
+         * a given order.
+         */
+        static class Compound implements SourceLocator {
+
+            /**
+             * The source locators to query.
+             */
+            private final SourceLocator[] sourceLocator;
+
+            /**
+             * Creates a new compound source locator.
+             *
+             * @param sourceLocator Source locators in the order of their application.
+             */
+            public Compound(SourceLocator... sourceLocator) {
+                this.sourceLocator = sourceLocator;
+            }
+
+            @Override
+            public TypeDescription.BinaryRepresentation locate(String typeName) {
+                for (SourceLocator sourceLocator : this.sourceLocator) {
+                    TypeDescription.BinaryRepresentation binaryRepresentation = sourceLocator.locate(typeName);
+                    if (binaryRepresentation.isValid()) {
+                        return binaryRepresentation;
+                    }
+                }
+                return TypeDescription.BinaryRepresentation.Illegal.INSTANCE;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && Arrays.equals(sourceLocator, ((Compound) other).sourceLocator);
+            }
+
+            @Override
+            public int hashCode() {
+                return Arrays.hashCode(sourceLocator);
+            }
+
+            @Override
+            public String toString() {
+                return "TypePool.SourceLocator.Compound{" +
+                        "sourceLocator=" + Arrays.toString(sourceLocator) +
+                        '}';
+            }
+        }
+    }
+
+    /**
      * A base implementation of a {@link net.bytebuddy.pool.TypePool} that is managing a cache provider and
      * that handles the description of array and primitive types.
      */
@@ -241,7 +375,7 @@ public interface TypePool {
     /**
      * A default implementation of a {@link net.bytebuddy.pool.TypePool} that models binary data in the
      * Java byte code format into a {@link net.bytebuddy.instrumentation.type.TypeDescription}. The data lookup
-     * is delegated to a {@link TypeSourceLocator}.
+     * is delegated to a {@link SourceLocator}.
      */
     static class Default extends AbstractBase {
 
@@ -258,17 +392,17 @@ public interface TypePool {
         /**
          * The locator to query for finding binary data of a type.
          */
-        private final TypeSourceLocator typeSourceLocator;
+        private final SourceLocator sourceLocator;
 
         /**
          * Creates a new default type pool.
          *
-         * @param cacheProvider     The cache provider to be used.
-         * @param typeSourceLocator The type source locator to be used.
+         * @param cacheProvider The cache provider to be used.
+         * @param sourceLocator The type source locator to be used.
          */
-        public Default(CacheProvider cacheProvider, TypeSourceLocator typeSourceLocator) {
+        public Default(CacheProvider cacheProvider, SourceLocator sourceLocator) {
             super(cacheProvider);
-            this.typeSourceLocator = typeSourceLocator;
+            this.sourceLocator = sourceLocator;
         }
 
         /**
@@ -278,16 +412,16 @@ public interface TypePool {
          * @return A type pool that reads its data from the system class path.
          */
         public static TypePool ofClassPath() {
-            return new Default(new CacheProvider.Simple(), TypeSourceLocator.ForClassLoader.ofSystemClassLoader());
+            return new Default(new CacheProvider.Simple(), SourceLocator.ForClassLoader.ofSystemClassLoader());
         }
 
         @Override
         protected TypeDescription doDescribe(String name) {
-            byte[] binaryRepresentation = typeSourceLocator.locate(name);
-            if (binaryRepresentation == null) {
-                throw new IllegalArgumentException("Cannot locate " + name + " using " + typeSourceLocator);
+            TypeDescription.BinaryRepresentation binaryRepresentation = sourceLocator.locate(name);
+            if (!binaryRepresentation.isValid()) {
+                throw new IllegalArgumentException("Cannot locate " + name + " using " + sourceLocator);
             }
-            return parse(binaryRepresentation);
+            return parse(binaryRepresentation.getData());
         }
 
         /**
@@ -307,18 +441,18 @@ public interface TypePool {
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
                     && super.equals(other)
-                    && typeSourceLocator.equals(((Default) other).typeSourceLocator);
+                    && sourceLocator.equals(((Default) other).sourceLocator);
         }
 
         @Override
         public int hashCode() {
-            return 31 * super.hashCode() + typeSourceLocator.hashCode();
+            return 31 * super.hashCode() + sourceLocator.hashCode();
         }
 
         @Override
         public String toString() {
             return "TypePool.Default{" +
-                    "typeSourceLocator=" + typeSourceLocator +
+                    "sourceLocator=" + sourceLocator +
                     ", cacheProvider=" + cacheProvider +
                     '}';
         }
@@ -1422,8 +1556,8 @@ public interface TypePool {
         }
 
         @Override
-        public ClassLoader getClassLoader() {
-            return null;
+        public BinaryRepresentation toBinary() {
+            return BinaryRepresentation.Illegal.INSTANCE;
         }
 
         @Override
@@ -1707,7 +1841,7 @@ public interface TypePool {
              * @return The loaded value of this annotation.
              * @throws ClassNotFoundException If a type that represents a loaded value cannot be found.
              */
-            S load(ClassLoader classLoader, Method method) throws ClassNotFoundException;
+            S load(ClassLoader classLoader) throws ClassNotFoundException;
 
             /**
              * Represents a primitive value, a {@link java.lang.String} or an array of the latter types.
@@ -1742,7 +1876,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public U load(ClassLoader classLoader, Method method) throws ClassNotFoundException {
+                public U load(ClassLoader classLoader) {
                     return propertyDispatcher.conditionalClone(value);
                 }
 
@@ -1791,14 +1925,14 @@ public interface TypePool {
                 }
 
                 @Override
-                public Annotation load(ClassLoader classLoader, Method method) throws ClassNotFoundException {
+                public Annotation load(ClassLoader classLoader) throws ClassNotFoundException {
                     @SuppressWarnings("unchecked")
                     Class<? extends Annotation> annotationType = (Class<? extends Annotation>) classLoader
                             .loadClass(annotationToken.getDescriptor()
                                     .substring(1, annotationToken.getDescriptor().length() - 1)
                                     .replace('/', '.'));
                     if (!annotationType.isAnnotation()) {
-                        throw new AnnotationTypeMismatchException(method, annotationType.toString());
+                        throw new IncompatibleClassChangeError("Not an annotation type: " + annotationType.toString());
                     }
                     return (Annotation) Proxy.newProxyInstance(classLoader, new Class<?>[]{annotationType},
                             new AnnotationInvocationHandler(classLoader, annotationType, annotationToken.getValues()));
@@ -1856,11 +1990,11 @@ public interface TypePool {
 
                 @Override
                 @SuppressWarnings("unchecked")
-                public Enum<?> load(ClassLoader classLoader, Method method) throws ClassNotFoundException {
+                public Enum<?> load(ClassLoader classLoader) throws ClassNotFoundException {
                     Class<?> enumType = classLoader
                             .loadClass(descriptor.substring(1, descriptor.length() - 1).replace('/', '.'));
                     if (!enumType.isEnum()) {
-                        throw new AnnotationTypeMismatchException(method, enumType.toString());
+                        throw new IncompatibleClassChangeError("Not an enum: " + enumType.toString());
                     }
                     try {
                         return Enum.valueOf((Class) enumType, value);
@@ -1957,7 +2091,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public Class<?> load(ClassLoader classLoader, Method method) throws ClassNotFoundException {
+                public Class<?> load(ClassLoader classLoader) throws ClassNotFoundException {
                     return Class.forName(name, NO_INITIALIZATION, classLoader);
                 }
 
@@ -2032,11 +2166,12 @@ public interface TypePool {
                 }
 
                 @Override
-                public Object[] load(ClassLoader classLoader, Method method) throws ClassNotFoundException {
-                    Object[] array = (Object[]) Array.newInstance(classLoader.loadClass(componentTypeReference.lookup()), value.size());
+                public Object[] load(ClassLoader classLoader) throws ClassNotFoundException {
+                    Object[] array = (Object[]) Array.newInstance(classLoader
+                            .loadClass(componentTypeReference.lookup()), value.size());
                     int index = 0;
                     for (AnnotationValue<?, ?> annotationValue : value) {
-                        Array.set(array, index++, annotationValue.load(classLoader, method));
+                        Array.set(array, index++, annotationValue.load(classLoader));
                     }
                     return array;
                 }
@@ -2110,7 +2245,7 @@ public interface TypePool {
             /**
              * A sorted list of values of this annotation.
              */
-            private final LinkedHashMap<Method, AnnotationValue<?, ?>> values;
+            private final LinkedHashMap<Method, Object> values;
 
             /**
              * Creates a new invocation handler.
@@ -2118,61 +2253,47 @@ public interface TypePool {
              * @param classLoader    The class loader for loading this value.
              * @param annotationType The loaded annotation type.
              * @param values         A sorted list of values of this annotation.
+             * @throws java.lang.ClassNotFoundException If an annotation value cannot be loaded.
              */
             public AnnotationInvocationHandler(ClassLoader classLoader,
                                                Class<? extends Annotation> annotationType,
-                                               Map<String, AnnotationValue<?, ?>> values) {
+                                               Map<String, AnnotationValue<?, ?>> values) throws ClassNotFoundException {
                 this.classLoader = classLoader;
                 this.annotationType = annotationType;
                 Method[] declaredMethod = annotationType.getDeclaredMethods();
-                this.values = new LinkedHashMap<Method, AnnotationValue<?, ?>>(declaredMethod.length);
+                this.values = new LinkedHashMap<Method, Object>(declaredMethod.length);
                 TypeDescription thisType = new ForLoadedType(getClass());
                 for (Method method : declaredMethod) {
                     if (!new MethodDescription.ForLoadedMethod(method).isVisibleTo(thisType)) {
                         method.setAccessible(true);
                     }
                     AnnotationValue<?, ?> annotationValue = values.get(method.getName());
-                    this.values.put(method, annotationValue == null ? ResolvedAnnotationValue.INSTANCE : annotationValue);
+                    this.values.put(method, annotationValue == null
+                            ? method.getDefaultValue()
+                            : annotationValue.load(classLoader));
                 }
             }
 
             @Override
             public Object invoke(Object proxy, Method method, Object[] arguments) {
-                try {
-                    if (method.getDeclaringClass() != annotationType) {
-                        if (method.getName().equals(HASH_CODE)) {
-                            return hashCodeRepresentation();
-                        } else if (method.getName().equals(EQUALS) && method.getParameterTypes().length == 1) {
-                            return equalsRepresentation(arguments[0]);
-                        } else if (method.getName().equals(TO_STRING)) {
-                            return toStringRepresentation();
-                        } else /* method.getName().equals("annotationType") */ {
-                            return annotationType;
-                        }
+                if (method.getDeclaringClass() != annotationType) {
+                    if (method.getName().equals(HASH_CODE)) {
+                        return hashCodeRepresentation();
+                    } else if (method.getName().equals(EQUALS) && method.getParameterTypes().length == 1) {
+                        return equalsRepresentation(proxy, arguments[0]);
+                    } else if (method.getName().equals(TO_STRING)) {
+                        return toStringRepresentation();
+                    } else /* method.getName().equals("annotationType") */ {
+                        return annotationType;
                     }
-                    Object value = invoke(method);
-                    if (value == null) {
-                        throw new IncompleteAnnotationException(annotationType, method.getName());
-                    } else if (!resolvePrimitive(method.getReturnType()).isAssignableFrom(value.getClass())) {
-                        throw new AnnotationTypeMismatchException(method, value.getClass().toString());
-                    }
-                    return value;
-                } catch (ClassNotFoundException e) {
-                    throw new IllegalStateException("Cannot find type used in annotation", e);
-                } catch (InvocationTargetException e) {
-                    Throwable cause = e.getCause();
-                    if (cause instanceof AnnotationTypeMismatchException) {
-                        throw (AnnotationTypeMismatchException) cause;
-                    } else if (cause instanceof IncompleteAnnotationException) {
-                        throw (IncompleteAnnotationException) cause;
-                    } else if (cause instanceof EnumConstantNotPresentException) {
-                        throw (EnumConstantNotPresentException) cause;
-                    } else {
-                        throw new IllegalStateException("Error while reading annotation property", cause);
-                    }
-                } catch (IllegalAccessException e) {
-                    throw new IllegalStateException("Could not access annotation property", e);
                 }
+                Object value = values.get(method);
+                if (value == null) {
+                    throw new IncompleteAnnotationException(annotationType, method.getName());
+                } else if (!asWrapper(method.getReturnType()).isAssignableFrom(value.getClass())) {
+                    throw new AnnotationTypeMismatchException(method, value.getClass().toString());
+                }
+                return PropertyDispatcher.of(method.getReturnType()).conditionalClone(value);
             }
 
             /**
@@ -2181,7 +2302,7 @@ public interface TypePool {
              * @param type The type to resolve.
              * @return The resolved type.
              */
-            private static Class<?> resolvePrimitive(Class<?> type) {
+            private static Class<?> asWrapper(Class<?> type) {
                 if (type.isPrimitive()) {
                     if (type == boolean.class) {
                         return Boolean.class;
@@ -2205,29 +2326,18 @@ public interface TypePool {
             }
 
             /**
-             * Invokes a method and returns its loaded value.
-             *
-             * @param method The method to invoke.
-             * @return The loaded value of this method.
-             * @throws ClassNotFoundException If a class cannot be loaded.
-             */
-            private Object invoke(Method method) throws ClassNotFoundException {
-                return values.get(method).load(classLoader, method);
-            }
-
-            /**
              * Returns the string representation of the represented annotation.
              *
              * @return The string representation of the represented annotation.
              * @throws ClassNotFoundException If a class cannot be loaded.
              */
-            protected String toStringRepresentation() throws ClassNotFoundException {
+            protected String toStringRepresentation() {
                 StringBuilder toString = new StringBuilder();
                 toString.append('@');
                 toString.append(annotationType.getName());
                 toString.append('(');
                 boolean firstMember = true;
-                for (Map.Entry<Method, AnnotationValue<?, ?>> entry : values.entrySet()) {
+                for (Map.Entry<Method, Object> entry : values.entrySet()) {
                     if (firstMember) {
                         firstMember = false;
                     } else {
@@ -2235,8 +2345,7 @@ public interface TypePool {
                     }
                     toString.append(entry.getKey().getName());
                     toString.append('=');
-                    toString.append(PropertyDispatcher.of(entry.getKey().getReturnType())
-                            .toString(entry.getValue().load(classLoader, entry.getKey())));
+                    toString.append(PropertyDispatcher.of(entry.getKey().getReturnType()).toString(entry.getValue()));
                 }
                 toString.append(')');
                 return toString.toString();
@@ -2248,11 +2357,11 @@ public interface TypePool {
              * @return The hash code of the represented annotation.
              * @throws ClassNotFoundException If a class cannot be loaded.
              */
-            private int hashCodeRepresentation() throws ClassNotFoundException {
+            private int hashCodeRepresentation() {
                 int hashCode = 0;
-                for (Map.Entry<Method, AnnotationValue<?, ?>> entry : values.entrySet()) {
+                for (Map.Entry<Method, Object> entry : values.entrySet()) {
                     hashCode += (127 * entry.getKey().getName().hashCode()) ^ PropertyDispatcher.of(entry.getKey().getReturnType())
-                            .hashCode(entry.getValue().load(classLoader, entry.getKey()));
+                            .hashCode(entry.getValue());
                 }
                 return hashCode;
             }
@@ -2260,15 +2369,14 @@ public interface TypePool {
             /**
              * Checks if another instance is equal to this instance.
              *
+             * @param self  The annotation proxy instance.
              * @param other The instance to be examined for equality to the represented instance.
              * @return {@code true} if the given instance is equal to the represented instance.
-             * @throws InvocationTargetException If a method causes an exception.
-             * @throws IllegalAccessException    If a method is accessed illegally.
-             * @throws ClassNotFoundException    If a class cannot be found.
              */
-            private boolean equalsRepresentation(Object other)
-                    throws InvocationTargetException, IllegalAccessException, ClassNotFoundException {
-                if (!annotationType.isInstance(other)) {
+            private boolean equalsRepresentation(Object self, Object other) {
+                if (self == other) {
+                    return true;
+                } else if (!annotationType.isInstance(other)) {
                     return false;
                 } else if (Proxy.isProxyClass(other.getClass())) {
                     InvocationHandler invocationHandler = Proxy.getInvocationHandler(other);
@@ -2276,11 +2384,17 @@ public interface TypePool {
                         return invocationHandler.equals(this);
                     }
                 }
-                for (Method method : annotationType.getDeclaredMethods()) {
-                    Object thisValue = invoke(method);
-                    if (!PropertyDispatcher.of(thisValue.getClass()).equals(thisValue, method.invoke(other))) {
-                        return false;
+                try {
+                    for (Method method : annotationType.getDeclaredMethods()) {
+                        Object thisValue = values.get(method);
+                        if (!PropertyDispatcher.of(thisValue.getClass()).equals(thisValue, method.invoke(other))) {
+                            return false;
+                        }
                     }
+                } catch (InvocationTargetException ignored) {
+                    return false;
+                } catch (IllegalAccessException ignored) {
+                    throw new AssertionError();
                 }
                 return true;
             }
@@ -2288,18 +2402,27 @@ public interface TypePool {
             @Override
             public boolean equals(Object other) {
                 if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
+                if (!(other instanceof AnnotationInvocationHandler)) return false;
                 AnnotationInvocationHandler that = (AnnotationInvocationHandler) other;
-                return annotationType.equals(that.annotationType)
-                        && classLoader.equals(that.classLoader)
-                        && values.equals(that.values);
+                if (!annotationType.equals(that.annotationType)) {
+                    return false;
+                }
+                for (Map.Entry<Method, ?> entry : values.entrySet()) {
+                    Object value = that.values.get(entry.getKey());
+                    if (!PropertyDispatcher.of(value.getClass()).equals(value, entry.getValue())) {
+                        return false;
+                    }
+                }
+                return true;
             }
 
             @Override
             public int hashCode() {
                 int result = annotationType.hashCode();
-                result = 31 * result + classLoader.hashCode();
                 result = 31 * result + values.hashCode();
+                for (Map.Entry<Method, ?> entry : values.entrySet()) {
+                    result = 31 * result + PropertyDispatcher.of(entry.getValue().getClass()).hashCode(entry.getValue());
+                }
                 return result;
             }
 
@@ -2310,24 +2433,6 @@ public interface TypePool {
                         ", classLoader=" + classLoader +
                         ", values=" + values +
                         '}';
-            }
-
-            /**
-             * Represents a value of an annotation as a default value of a loaded method.
-             */
-            protected static enum  ResolvedAnnotationValue implements AnnotationValue<Void, Object> {
-
-                INSTANCE;
-
-                @Override
-                public Object load(ClassLoader classLoader, Method method) throws ClassNotFoundException {
-                    return method.getDefaultValue();
-                }
-
-                @Override
-                public final Void resolve(TypePool typePool) {
-                    throw new UnsupportedOperationException("Already resolved annotation values do not support resolution");
-                }
             }
         }
 
@@ -2785,7 +2890,8 @@ public interface TypePool {
              *
              * @param <S> The annotation type.
              */
-            private static class Loadable<S extends Annotation> extends LazyAnnotationDescription implements AnnotationDescription.Loadable<S> {
+            private static class Loadable<S extends Annotation> extends LazyAnnotationDescription
+                    implements AnnotationDescription.Loadable<S> {
 
                 /**
                  * The loaded annotation type.
@@ -2812,10 +2918,33 @@ public interface TypePool {
                 }
 
                 @Override
+                public S load() throws ClassNotFoundException {
+                    return load(annotationType.getClassLoader());
+                }
+
+                @Override
                 @SuppressWarnings("unchecked")
-                public S load() {
-                    return (S) Proxy.newProxyInstance(annotationType.getClassLoader(), new Class<?>[]{annotationType},
+                public S load(ClassLoader classLoader) throws ClassNotFoundException {
+                    return (S) Proxy.newProxyInstance(classLoader, new Class<?>[]{annotationType},
                             new AnnotationInvocationHandler(annotationType.getClassLoader(), annotationType, values));
+                }
+
+                @Override
+                public S loadSilent() {
+                    try {
+                        return load();
+                    } catch (ClassNotFoundException e) {
+                        throw new IllegalStateException(ForLoadedAnnotation.ERROR_MESSAGE, e);
+                    }
+                }
+
+                @Override
+                public S loadSilent(ClassLoader classLoader) {
+                    try {
+                        return load(classLoader);
+                    } catch (ClassNotFoundException e) {
+                        throw new IllegalStateException(ForLoadedAnnotation.ERROR_MESSAGE, e);
+                    }
                 }
             }
         }

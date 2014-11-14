@@ -56,7 +56,7 @@ public class TypePoolDefaultComponentTypeLocatorTest {
                 return "()L" + RandomString.make() + ";";
             }
         }).apply();
-        TypePool.Default.TypeExtractor typeExtractor = new TypePool.Default(mock(TypePool.CacheProvider.class), mock(TypeSourceLocator.class))
+        TypePool.Default.TypeExtractor typeExtractor = new TypePool.Default(mock(TypePool.CacheProvider.class), mock(TypePool.SourceLocator.class))
                 .new TypeExtractor();
         ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.OnTypeCollector.class).apply(typeExtractor.new OnTypeCollector(FOO));
         ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.MethodExtractor.class).apply(typeExtractor.new MethodExtractor(0, FOO, "()" + BAR_DESCRIPTOR, null));

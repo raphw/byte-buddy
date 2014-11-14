@@ -68,7 +68,7 @@ public @interface SuperCall {
             Instrumentation.SpecialMethodInvocation specialMethodInvocation = instrumentationTarget.invokeSuper(source,
                     Instrumentation.Target.MethodLookup.Default.EXACT);
             return specialMethodInvocation.isValid()
-                    ? new MethodDelegationBinder.ParameterBinding.Anonymous(new MethodCallProxy.AssignableSignatureCall(specialMethodInvocation, annotation.load().serializableProxy()))
+                    ? new MethodDelegationBinder.ParameterBinding.Anonymous(new MethodCallProxy.AssignableSignatureCall(specialMethodInvocation, annotation.loadSilent().serializableProxy()))
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
         }
     }

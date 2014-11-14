@@ -191,7 +191,7 @@ public @interface Pipe {
             return new MethodDelegationBinder.ParameterBinding.Anonymous(new Redirection(forwardingMethod.getDeclaringType(),
                     source,
                     assigner,
-                    annotation.load().serializableProxy(),
+                    annotation.loadSilent().serializableProxy(),
                     this));
         }
 

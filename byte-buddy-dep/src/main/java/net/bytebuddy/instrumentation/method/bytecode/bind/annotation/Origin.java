@@ -95,7 +95,7 @@ public @interface Origin {
             if (parameterType.represents(Class.class)) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(ClassConstant.of(instrumentationTarget.getOriginType()));
             } else if (parameterType.represents(Method.class)) {
-                return new MethodDelegationBinder.ParameterBinding.Anonymous(annotation.load().cacheMethod()
+                return new MethodDelegationBinder.ParameterBinding.Anonymous(annotation.loadSilent().cacheMethod()
                         ? MethodConstant.forMethod(source).cached()
                         : MethodConstant.forMethod(source));
             } else if (parameterType.represents(String.class)) {

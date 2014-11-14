@@ -60,7 +60,7 @@ public @interface Default {
             } else {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(new TypeProxy.ForDefaultMethod(parameterType,
                         instrumentationTarget,
-                        annotation.load().serializableProxy()));
+                        annotation.loadSilent().serializableProxy()));
             }
         }
     }
