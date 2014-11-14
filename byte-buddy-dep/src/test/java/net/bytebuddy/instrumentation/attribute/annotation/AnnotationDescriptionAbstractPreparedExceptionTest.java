@@ -8,12 +8,12 @@ import java.lang.annotation.Annotation;
 
 public class AnnotationDescriptionAbstractPreparedExceptionTest {
 
-    @Test(expected = ClassNotFoundException.class)
+    @Test(expected = IllegalStateException.class)
     public void testThrowWithoutClassLoader() throws Exception {
         new PseudoDescription().loadSilent();
     }
 
-    @Test(expected = ClassNotFoundException.class)
+    @Test(expected = IllegalStateException.class)
     public void testThrowWithClassLoader() throws Exception {
         new PseudoDescription().loadSilent(getClass().getClassLoader());
     }
