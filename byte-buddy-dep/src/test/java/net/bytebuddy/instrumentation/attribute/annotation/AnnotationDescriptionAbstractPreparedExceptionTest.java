@@ -10,12 +10,12 @@ public class AnnotationDescriptionAbstractPreparedExceptionTest {
 
     @Test(expected = ClassNotFoundException.class)
     public void testThrowWithoutClassLoader() throws Exception {
-        new PseudoDescription().load();
+        new PseudoDescription().loadSilent();
     }
 
     @Test(expected = ClassNotFoundException.class)
     public void testThrowWithClassLoader() throws Exception {
-        new PseudoDescription().load(getClass().getClassLoader());
+        new PseudoDescription().loadSilent(getClass().getClassLoader());
     }
 
     private static class PseudoDescription extends AnnotationDescription.AbstractAnnotationDescription.ForPrepared<Annotation> {
