@@ -311,6 +311,11 @@ public class TypeProxyCreationTest {
         verifyNoMoreInteractions(methodVisitor);
     }
 
+    @Test
+    public void testAbstractMethodThrow() throws Exception {
+        assertThat(TypeProxy.AbstractMethodErrorThrow.INSTANCE.isValid(), is(true));
+    }
+
     public static class Foo {
 
         private Void target;

@@ -82,6 +82,18 @@ public class ByteBuddyCommonsTest {
         when(typeDescription.represents(void.class)).thenReturn(true);
         assertThat(nonVoid(typeDescription), sameInstance(typeDescription));
     }
+    @Test
+    public void testNonVoidCollection() throws Exception {
+        List<TypeDescription> typeDescriptions = Arrays.asList(mock(TypeDescription.class));
+        assertThat(nonVoid(typeDescriptions), sameInstance(typeDescriptions));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testNonVoidCollectionThrowsException() throws Exception {
+        TypeDescription typeDescription = mock(TypeDescription.class);
+        when(typeDescription.represents(void.class)).thenReturn(true);
+        nonVoid(Arrays.asList(typeDescription));
+    }
 
     @Test
     public void testIsInterface() throws Exception {
