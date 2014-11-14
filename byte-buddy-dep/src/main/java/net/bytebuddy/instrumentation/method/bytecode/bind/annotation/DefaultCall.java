@@ -197,7 +197,7 @@ public @interface DefaultCall {
 
                 @Override
                 public String toString() {
-                    return "Binder.DefaultCall.DefaultMethodLocator.Explicit{typeDescription=" + typeDescription + '}';
+                    return "DefaultCall.Binder.DefaultMethodLocator.Explicit{typeDescription=" + typeDescription + '}';
                 }
             }
         }
