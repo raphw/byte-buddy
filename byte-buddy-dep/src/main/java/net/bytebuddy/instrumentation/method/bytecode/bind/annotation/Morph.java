@@ -127,7 +127,7 @@ public @interface Morph {
             }
             Instrumentation.SpecialMethodInvocation specialMethodInvocation;
             TypeDescription typeDescription = annotation.getValue(DEFAULT_TARGET, TypeDescription.class);
-            if (!typeDescription.represents(void.class) && annotation.getValue(DEFAULT_METHOD, Boolean.class)) {
+            if (typeDescription.represents(void.class) && !annotation.getValue(DEFAULT_METHOD, Boolean.class)) {
                 specialMethodInvocation = instrumentationTarget.invokeSuper(source, Instrumentation.Target.MethodLookup.Default.EXACT);
             } else {
                 specialMethodInvocation = (typeDescription.represents(void.class)
