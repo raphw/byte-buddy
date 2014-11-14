@@ -33,19 +33,51 @@ import java.util.Collections;
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
+/**
+ * Using this annotation it is possible to access fields by getter and setter types. Before this annotation can be
+ * used, it needs to be installed with two types. The getter type must be defined in a single-method interface
+ * with a single method that returns an {@link java.lang.Object} type and takes no arguments. The getter interface
+ * must similarly return {@code void} and take a single {@link java.lang.Object} argument. After installing these
+ * interfaces with the {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Field.Binder}, this
+ * binder needs to be registered with a {@link net.bytebuddy.instrumentation.MethodDelegation} before it can be used.
+ */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
 public @interface Field {
 
+    /**
+     * A placeholder name to indicate that a field name should be inferred by the name of the intercepted
+     * method by the Java bean naming conventions.
+     */
     static final String BEAN_PROPERTY = "";
 
+    /**
+     * Determines if the proxy should be serializable.
+     *
+     * @return {@code true} if the proxy should be serializable.
+     */
     boolean serializableProxy() default false;
 
+    /**
+     * Determines the name of the field that is to be accessed. If this property is not set, a field name is inferred
+     * by the intercepted method after the Java beans naming conventions.
+     *
+     * @return The name of the field to be accessed.
+     */
     String value() default "";
 
+    /**
+     * Determines which type defines the field that is to be accessed. If this property is not set, the most field
+     * that is defined highest in the type hierarchy is accessed.
+     *
+     * @return The type that defines the accessed field.
+     */
     Class<?> definingType() default void.class;
 
+    /**
+     * A binder for the {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Field} annotation.
+     */
     static class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Field> {
 
         private static final MethodDescription DEFINING_TYPE;
@@ -138,6 +170,28 @@ public @interface Field {
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
         }
 
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && getterMethod.equals(((Binder) other).getterMethod)
+                    && setterMethod.equals(((Binder) other).setterMethod);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = getterMethod.hashCode();
+            result = 31 * result + setterMethod.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "Field.Binder{" +
+                    "getterMethod=" + getterMethod +
+                    ", setterMethod=" + setterMethod +
+                    '}';
+        }
+
         protected static enum AccessType {
 
             GETTER {
@@ -207,7 +261,7 @@ public @interface Field {
             }
         }
 
-        private abstract static class FieldLocator {
+        protected abstract static class FieldLocator {
 
             protected static FieldLocator of(String fieldName, MethodDescription methodDescription) {
                 return BEAN_PROPERTY.equals(fieldName)
@@ -217,13 +271,13 @@ public @interface Field {
 
             protected abstract LookupEngine lookup(TypeDescription typeDescription, TypeDescription instrumentedTyoe);
 
-            private abstract static class Resolution {
+            protected abstract static class Resolution {
 
                 protected abstract boolean isResolved();
 
                 protected abstract FieldDescription getFieldDescription();
 
-                private static class Unresolved extends Resolution {
+                protected static class Unresolved extends Resolution {
 
                     @Override
                     protected boolean isResolved() {
@@ -234,13 +288,28 @@ public @interface Field {
                     protected FieldDescription getFieldDescription() {
                         throw new IllegalStateException("Cannot resolve an unresolved field lookup");
                     }
+
+                    @Override
+                    public int hashCode() {
+                        return 17;
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return other == this || (other != null && other.getClass() == getClass());
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Field.Binder.FieldLocator.Resolution.Unresolved{}";
+                    }
                 }
 
-                private static class Resolved extends Resolution {
+                protected static class Resolved extends Resolution {
 
                     private final FieldDescription fieldDescription;
 
-                    private Resolved(FieldDescription fieldDescription) {
+                    protected Resolved(FieldDescription fieldDescription) {
                         this.fieldDescription = fieldDescription;
                     }
 
@@ -253,27 +322,59 @@ public @interface Field {
                     protected FieldDescription getFieldDescription() {
                         return fieldDescription;
                     }
-                }
 
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && fieldDescription.equals(((Resolved) other).fieldDescription);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return fieldDescription.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Field.Binder.FieldLocator.Resolution.Resolved{" +
+                                "fieldDescription=" + fieldDescription +
+                                '}';
+                    }
+                }
             }
 
-            private abstract static class LookupEngine {
+            protected abstract static class LookupEngine {
 
                 protected abstract Resolution resolve(TypeDescription instrumentedType);
 
-                private static class Illegal extends LookupEngine {
+                protected static class Illegal extends LookupEngine {
 
                     @Override
                     protected Resolution resolve(TypeDescription instrumentedType) {
                         return new Resolution.Unresolved();
                     }
+
+                    @Override
+                    public int hashCode() {
+                        return 17;
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return other == this || (other != null && other.getClass() == getClass());
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Field.Binder.FieldLocator.LookupEngine.Illegal{}";
+                    }
                 }
 
-                private static class ForHierarchy extends LookupEngine {
+                protected static class ForHierarchy extends LookupEngine {
 
                     private final String fieldName;
 
-                    private ForHierarchy(String fieldName) {
+                    protected ForHierarchy(String fieldName) {
                         this.fieldName = fieldName;
                     }
 
@@ -289,15 +390,33 @@ public @interface Field {
                         } while ((currentType = currentType.getSupertype()) != null);
                         return new Resolution.Unresolved();
                     }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && fieldName.equals(((ForHierarchy) other).fieldName);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return fieldName.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Field.Binder.FieldLocator.LookupEngine.ForHierarchy{" +
+                                "fieldName='" + fieldName + '\'' +
+                                '}';
+                    }
                 }
 
-                private static class ForExplicitType extends LookupEngine {
+                protected static class ForExplicitType extends LookupEngine {
 
                     private final String fieldName;
 
                     private final TypeDescription typeDescription;
 
-                    private ForExplicitType(String fieldName, TypeDescription typeDescription) {
+                    protected ForExplicitType(String fieldName, TypeDescription typeDescription) {
                         this.fieldName = fieldName;
                         this.typeDescription = typeDescription;
                     }
@@ -312,6 +431,28 @@ public @interface Field {
                             }
                         }
                         return new Resolution.Unresolved();
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && fieldName.equals(((ForExplicitType) other).fieldName)
+                                && typeDescription.equals(((ForExplicitType) other).typeDescription);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = fieldName.hashCode();
+                        result = 31 * result + typeDescription.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Field.Binder.FieldLocator.LookupEngine.ForExplicitType{" +
+                                "fieldName='" + fieldName + '\'' +
+                                ", typeDescription=" + typeDescription +
+                                '}';
                     }
                 }
             }
@@ -344,6 +485,24 @@ public @interface Field {
                             : new LookupEngine.ForExplicitType(fieldName,
                             typeDescription.represents(TargetType.class) ? instrumentedType : typeDescription);
                 }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && fieldName.equals(((Legal) other).fieldName);
+                }
+
+                @Override
+                public int hashCode() {
+                    return fieldName.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "Field.Binder.FieldLocator.Legal{" +
+                            "fieldName='" + fieldName + '\'' +
+                            '}';
+                }
             }
 
             protected static class Illegal extends FieldLocator {
@@ -352,14 +511,29 @@ public @interface Field {
                 protected LookupEngine lookup(TypeDescription typeDescription, TypeDescription instrumentedType) {
                     return new LookupEngine.Illegal();
                 }
+
+                @Override
+                public int hashCode() {
+                    return 31;
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return other == this || (other != null && other.getClass() == getClass());
+                }
+
+                @Override
+                public String toString() {
+                    return "Field.Binder.FieldLocator.Illegal{}";
+                }
             }
         }
 
-        private static class InstanceFieldConstructor implements Instrumentation {
+        protected static class InstanceFieldConstructor implements Instrumentation {
 
             private final TypeDescription instrumentedType;
 
-            private InstanceFieldConstructor(TypeDescription instrumentedType) {
+            protected InstanceFieldConstructor(TypeDescription instrumentedType) {
                 this.instrumentedType = instrumentedType;
             }
 
@@ -375,11 +549,29 @@ public @interface Field {
                 return new Appender(instrumentationTarget);
             }
 
-            private static class Appender implements ByteCodeAppender {
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && instrumentedType.equals(((InstanceFieldConstructor) other).instrumentedType);
+            }
+
+            @Override
+            public int hashCode() {
+                return instrumentedType.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "Field.Binder.InstanceFieldConstructor{" +
+                        "instrumentedType=" + instrumentedType +
+                        '}';
+            }
+
+            protected static class Appender implements ByteCodeAppender {
 
                 private final FieldDescription fieldDescription;
 
-                private Appender(Target instrumentationTarget) {
+                protected Appender(Target instrumentationTarget) {
                     fieldDescription = instrumentationTarget.getTypeDescription()
                             .getDeclaredFields()
                             .named(AccessorProxy.FIELD_NAME);
@@ -403,10 +595,28 @@ public @interface Field {
                     ).apply(methodVisitor, instrumentationContext);
                     return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                 }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && fieldDescription.equals(((Appender) other).fieldDescription);
+                }
+
+                @Override
+                public int hashCode() {
+                    return fieldDescription.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "Field.Binder.InstanceFieldConstructor.Appender{" +
+                            "fieldDescription=" + fieldDescription +
+                            '}';
+                }
             }
         }
 
-        private static class Getter implements Instrumentation {
+        protected static class Getter implements Instrumentation {
 
             private final FieldDescription accessedField;
 
@@ -414,7 +624,7 @@ public @interface Field {
 
             private final AuxiliaryType.MethodAccessorFactory methodAccessorFactory;
 
-            private Getter(FieldDescription accessedField,
+            protected Getter(FieldDescription accessedField,
                            Assigner assigner,
                            AuxiliaryType.MethodAccessorFactory methodAccessorFactory) {
                 this.accessedField = accessedField;
@@ -432,11 +642,38 @@ public @interface Field {
                 return new Appender(instrumentationTarget);
             }
 
-            private class Appender implements ByteCodeAppender {
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                Getter getter = (Getter) other;
+                return accessedField.equals(getter.accessedField)
+                        && assigner.equals(getter.assigner)
+                        && methodAccessorFactory.equals(getter.methodAccessorFactory);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = accessedField.hashCode();
+                result = 31 * result + assigner.hashCode();
+                result = 31 * result + methodAccessorFactory.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "Field.Binder.Getter{" +
+                        "accessedField=" + accessedField +
+                        ", assigner=" + assigner +
+                        ", methodAccessorFactory=" + methodAccessorFactory +
+                        '}';
+            }
+
+            protected class Appender implements ByteCodeAppender {
 
                 private final TypeDescription typeDescription;
 
-                private Appender(Target instrumentationTarget) {
+                protected Appender(Target instrumentationTarget) {
                     typeDescription = instrumentationTarget.getTypeDescription();
                 }
 
@@ -462,10 +699,34 @@ public @interface Field {
                     ).apply(methodVisitor, instrumentationContext);
                     return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                 }
+
+                private Getter getOuter() {
+                    return Getter.this;
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && Getter.this.equals(((Appender) other).getOuter())
+                            && typeDescription.equals(((Appender) other).typeDescription);
+                }
+
+                @Override
+                public int hashCode() {
+                    return typeDescription.hashCode() + 31 * Getter.this.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "Field.Binder.Getter.Appender{" +
+                            "getter=" + Getter.this +
+                            "typeDescription=" + typeDescription +
+                            '}';
+                }
             }
         }
 
-        private static class Setter implements Instrumentation {
+        protected static class Setter implements Instrumentation {
 
             private final FieldDescription accessedField;
 
@@ -473,7 +734,7 @@ public @interface Field {
 
             private final AuxiliaryType.MethodAccessorFactory methodAccessorFactory;
 
-            private Setter(FieldDescription accessedField,
+            protected Setter(FieldDescription accessedField,
                            Assigner assigner,
                            AuxiliaryType.MethodAccessorFactory methodAccessorFactory) {
                 this.accessedField = accessedField;
@@ -491,11 +752,38 @@ public @interface Field {
                 return new Appender(instrumentationTarget);
             }
 
-            private class Appender implements ByteCodeAppender {
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                Setter getter = (Setter) other;
+                return accessedField.equals(getter.accessedField)
+                        && assigner.equals(getter.assigner)
+                        && methodAccessorFactory.equals(getter.methodAccessorFactory);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = accessedField.hashCode();
+                result = 31 * result + assigner.hashCode();
+                result = 31 * result + methodAccessorFactory.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "Field.Binder.Setter{" +
+                        "accessedField=" + accessedField +
+                        ", assigner=" + assigner +
+                        ", methodAccessorFactory=" + methodAccessorFactory +
+                        '}';
+            }
+
+            protected class Appender implements ByteCodeAppender {
 
                 private final TypeDescription typeDescription;
 
-                private Appender(Target instrumentationTarget) {
+                protected Appender(Target instrumentationTarget) {
                     typeDescription = instrumentationTarget.getTypeDescription();
                 }
 
@@ -522,6 +810,29 @@ public @interface Field {
                             MethodReturn.VOID
                     ).apply(methodVisitor, instrumentationContext);
                     return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
+                }
+                private Setter getOuter() {
+                    return Setter.this;
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && Setter.this.equals(((Appender) other).getOuter())
+                            && typeDescription.equals(((Appender) other).typeDescription);
+                }
+
+                @Override
+                public int hashCode() {
+                    return typeDescription.hashCode() + 31 * Setter.this.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "Field.Binder.Setter.Appender{" +
+                            "setter=" + Setter.this +
+                            "typeDescription=" + typeDescription +
+                            '}';
                 }
             }
         }
@@ -588,6 +899,46 @@ public @interface Field {
                                 : MethodVariableAccess.REFERENCE.loadFromIndex(0),
                         MethodInvocation.invoke(auxiliaryType.getDeclaredMethods().filter(isConstructor()).getOnly())
                 ).apply(methodVisitor, instrumentationContext);
+            }
+
+            private Binder getOuter() {
+                return Binder.this;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                AccessorProxy that = (AccessorProxy) other;
+                return serializableProxy == that.serializableProxy
+                        && accessType == that.accessType
+                        && accessedField.equals(that.accessedField)
+                        && assigner.equals(that.assigner)
+                        && Binder.this.equals(that.getOuter())
+                        && instrumentedType.equals(that.instrumentedType);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = accessedField.hashCode();
+                result = 31 * result + instrumentedType.hashCode();
+                result = 31 * result + assigner.hashCode();
+                result = 31 * result + Binder.this.hashCode();
+                result = 31 * result + accessType.hashCode();
+                result = 31 * result + (serializableProxy ? 1 : 0);
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "Field.Binder.AccessorProxy{" +
+                        "accessedField=" + accessedField +
+                        ", instrumentedType=" + instrumentedType +
+                        ", assigner=" + assigner +
+                        ", accessType=" + accessType +
+                        ", serializableProxy=" + serializableProxy +
+                        ", binder=" + Binder.this +
+                        '}';
             }
         }
     }

@@ -312,7 +312,7 @@ public class TypeProxyCreationTest {
     }
 
     @Test
-    public void testAbstractMethodThrow() throws Exception {
+    public void testInstrumentationsValid() throws Exception {
         assertThat(TypeProxy.AbstractMethodErrorThrow.INSTANCE.isValid(), is(true));
     }
 

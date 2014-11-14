@@ -49,22 +49,55 @@ import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 @Target(ElementType.PARAMETER)
 public @interface Morph {
 
+    /**
+     * Determines if the injected proxy for this parameter should be serializable.
+     *
+     * @return {@code true} if the proxy should be serializable.
+     */
     boolean serializableProxy() default false;
 
+    /**
+     * Determines if the proxy should attempt to invoke a default method. If the default method is ambiguous,
+     * use the {@link Morph#defaultTarget()} property instead which allows to determine an explicit interface
+     * on which the default method should be invoked on. If this other method is used, this property is ignored.
+     *
+     * @return {@code true} if a default method should be ignored.
+     */
     boolean defaultMethod() default false;
 
+    /**
+     * The type on which a default method should be invoked. When this property is not set and the
+     * {@link Morph#defaultMethod()} property is set to {@code false}, a normal super method invocation is attempted.
+     *
+     * @return The target interface of a default method call.
+     */
     Class<?> defaultTarget() default void.class;
 
+    /**
+     * A binder for the {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Morph} annotation.
+     */
     static class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Morph>,
             MethodLookupEngine.Factory,
             MethodLookupEngine {
 
+        /**
+         * A reference to the serializable proxy method.
+         */
         private static final MethodDescription SERIALIZABLE_PROXY;
 
+        /**
+         * A reference to the default method method.
+         */
         private static final MethodDescription DEFAULT_METHOD;
 
+        /**
+         * A reference to the default target method.
+         */
         private static final MethodDescription DEFAULT_TARGET;
 
+        /**
+         * Looks up references for all annotation properties of the morph annotation.
+         */
         static {
             MethodList methodList = new TypeDescription.ForLoadedType(Morph.class).getDeclaredMethods();
             SERIALIZABLE_PROXY = methodList.filter(named("serializableProxy")).getOnly();
@@ -72,20 +105,54 @@ public @interface Morph {
             DEFAULT_TARGET = methodList.filter(named("defaultTarget")).getOnly();
         }
 
+        /**
+         * The method which is overridden for generating the proxy class.
+         */
         private final MethodDescription forwardingMethod;
 
+        /**
+         * Creates a new binder.
+         *
+         * @param forwardingMethod The method which is overridden for generating the proxy class.
+         */
         protected Binder(MethodDescription forwardingMethod) {
             this.forwardingMethod = forwardingMethod;
         }
 
+        /**
+         * Installs a given type for use on a {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Morph}
+         * annotation. The given type must be an interface without any super interfaces and a single method which
+         * maps an {@link java.lang.Object} array to a {@link java.lang.Object} type. The use of generics is
+         * permitted.
+         *
+         * @param type The type to install.
+         * @return A binder for the {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Morph}
+         * annotation.
+         */
         public static TargetMethodAnnotationDrivenBinder.ParameterBinder<Morph> install(Class<?> type) {
             return install(new TypeDescription.ForLoadedType(nonNull(type)));
         }
 
+        /**
+         * Installs a given type for use on a {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Morph}
+         * annotation. The given type must be an interface without any super interfaces and a single method which
+         * maps an {@link java.lang.Object} array to a {@link java.lang.Object} type. The use of generics is
+         * permitted.
+         *
+         * @param typeDescription The type to install.
+         * @return A binder for the {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Morph}
+         * annotation.
+         */
         public static TargetMethodAnnotationDrivenBinder.ParameterBinder<Morph> install(TypeDescription typeDescription) {
             return new Binder(onlyMethod(nonNull(typeDescription)));
         }
 
+        /**
+         * Extracts the only method of a given type and validates to fit the constraints of the morph annotation.
+         *
+         * @param typeDescription The type to extract the method from.
+         * @return The only method after validation.
+         */
         private static MethodDescription onlyMethod(TypeDescription typeDescription) {
             if (!typeDescription.isInterface()) {
                 throw new IllegalArgumentException(typeDescription + " is not an interface");
@@ -170,14 +237,30 @@ public @interface Morph {
             return "Morph.Binder{forwardingMethod=" + forwardingMethod + '}';
         }
 
+        /**
+         * A proxy that implements the installed interface in order to allow for a morphed super method invocation.
+         */
         protected static class RedirectionProxy implements AuxiliaryType, StackManipulation {
 
-            private static final String FIELD_NAME = "target";
+            /**
+             * The name of the field that carries an instance for invoking a super method on.
+             */
+            protected static final String FIELD_NAME = "target";
 
-            private final TypeDescription forwardingType;
+            /**
+             * The interface type that is implemented by the generated proxy.
+             */
+            private final TypeDescription morphingType;
 
+            /**
+             * The type that is instrumented on which the super method is invoked.
+             */
             private final TypeDescription instrumentedType;
 
+            /**
+             * The special method invocation to be executed by the morphing type via an accessor on the
+             * instrumented type.
+             */
             private final Instrumentation.SpecialMethodInvocation specialMethodInvocation;
 
             /**
@@ -195,13 +278,24 @@ public @interface Morph {
              */
             private final Factory methodLookupEngineFactory;
 
-            protected RedirectionProxy(TypeDescription forwardingType,
+            /**
+             * Creates a new redirection proxy.
+             *
+             * @param morphingType              The interface type that is implemented by the generated proxy.
+             * @param instrumentedType          The type that is instrumented on which the super method is invoked.
+             * @param specialMethodInvocation   The special method invocation to be executed by the morphing type via
+             *                                  an accessor on the instrumented type.
+             * @param assigner                  The assigner to use.
+             * @param serializableProxy         {@code true} if the proxy should be serializable.
+             * @param methodLookupEngineFactory The method lookup engine factory to use.
+             */
+            protected RedirectionProxy(TypeDescription morphingType,
                                        TypeDescription instrumentedType,
                                        Instrumentation.SpecialMethodInvocation specialMethodInvocation,
                                        Assigner assigner,
                                        boolean serializableProxy,
                                        Factory methodLookupEngineFactory) {
-                this.forwardingType = forwardingType;
+                this.morphingType = morphingType;
                 this.instrumentedType = instrumentedType;
                 this.specialMethodInvocation = specialMethodInvocation;
                 this.assigner = assigner;
@@ -214,7 +308,7 @@ public @interface Morph {
                                     ClassFileVersion classFileVersion,
                                     MethodAccessorFactory methodAccessorFactory) {
                 return new ByteBuddy(classFileVersion)
-                        .subclass(forwardingType, ConstructorStrategy.Default.NO_CONSTRUCTORS)
+                        .subclass(morphingType, ConstructorStrategy.Default.NO_CONSTRUCTORS)
                         .name(auxiliaryTypeName)
                         .modifiers(DEFAULT_TYPE_MODIFIER)
                         .methodLookupEngine(methodLookupEngineFactory)
@@ -225,7 +319,7 @@ public @interface Morph {
                         .intercept(specialMethodInvocation.getMethodDescription().isStatic()
                                 ? StaticFieldConstructor.INSTANCE
                                 : new InstanceFieldConstructor(instrumentedType))
-                        .method(isDeclaredBy(forwardingType))
+                        .method(isDeclaredBy(morphingType))
                         .intercept(new MethodCall(methodAccessorFactory.registerAccessorFor(specialMethodInvocation), assigner))
                         .make();
             }
@@ -241,7 +335,9 @@ public @interface Morph {
                 return new Compound(
                         TypeCreation.forType(forwardingType),
                         Duplication.SINGLE,
-                        MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                        specialMethodInvocation.getMethodDescription().isStatic()
+                                ? LegalTrivial.INSTANCE
+                                : MethodVariableAccess.REFERENCE.loadFromIndex(0),
                         MethodInvocation.invoke(forwardingType.getDeclaredMethods().filter(isConstructor()).getOnly())
                 ).apply(methodVisitor, instrumentationContext);
             }
@@ -253,16 +349,18 @@ public @interface Morph {
                 RedirectionProxy that = (RedirectionProxy) other;
                 return serializableProxy == that.serializableProxy
                         && assigner.equals(that.assigner)
-                        && forwardingType.equals(that.forwardingType)
+                        && instrumentedType.equals(that.instrumentedType)
+                        && morphingType.equals(that.morphingType)
                         && specialMethodInvocation.equals(that.specialMethodInvocation)
                         && methodLookupEngineFactory.equals(that.methodLookupEngineFactory);
             }
 
             @Override
             public int hashCode() {
-                int result = forwardingType.hashCode();
+                int result = morphingType.hashCode();
                 result = 31 * result + specialMethodInvocation.hashCode();
                 result = 31 * result + assigner.hashCode();
+                result = 31 * result + instrumentedType.hashCode();
                 result = 31 * result + methodLookupEngineFactory.hashCode();
                 result = 31 * result + (serializableProxy ? 1 : 0);
                 return result;
@@ -270,17 +368,24 @@ public @interface Morph {
 
             @Override
             public String toString() {
-                return "Morph.Binder.Redirection{" +
-                        "forwardingType=" + forwardingType +
+                return "Morph.Binder.RedirectionProxy{" +
+                        "morphingType=" + morphingType +
                         ", specialMethodInvocation=" + specialMethodInvocation +
                         ", assigner=" + assigner +
                         ", methodLookupEngineFactory=" + methodLookupEngineFactory +
                         ", serializableProxy=" + serializableProxy +
+                        ", instrumentedType=" + instrumentedType +
                         '}';
             }
 
-            private static enum StaticFieldConstructor implements Instrumentation {
+            /**
+             * Creates an instance of the proxy when instrumenting a static method.
+             */
+            protected static enum StaticFieldConstructor implements Instrumentation {
 
+                /**
+                 * The singleton instance.
+                 */
                 INSTANCE;
 
                 /**
@@ -311,13 +416,137 @@ public @interface Morph {
                 }
             }
 
-            private static class MethodCall implements Instrumentation {
+            /**
+             * Creates an instance of the proxy when instrumenting an instance method.
+             */
+            protected static class InstanceFieldConstructor implements Instrumentation {
 
+                /**
+                 * The instrumented type.
+                 */
+                private final TypeDescription instrumentedType;
+
+                /**
+                 * Creates a new instance field constructor instrumentation.
+                 *
+                 * @param instrumentedType The instrumented type.
+                 */
+                protected InstanceFieldConstructor(TypeDescription instrumentedType) {
+                    this.instrumentedType = instrumentedType;
+                }
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType.withField(RedirectionProxy.FIELD_NAME,
+                            this.instrumentedType,
+                            Opcodes.ACC_FINAL | Opcodes.ACC_PRIVATE);
+                }
+
+                @Override
+                public ByteCodeAppender appender(Target instrumentationTarget) {
+                    return new Appender(instrumentationTarget);
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && instrumentedType.equals(((InstanceFieldConstructor) other).instrumentedType);
+                }
+
+                @Override
+                public int hashCode() {
+                    return instrumentedType.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "Morph.Binder.RedirectionProxy.InstanceFieldConstructor{" +
+                            "instrumentedType=" + instrumentedType +
+                            '}';
+                }
+
+                /**
+                 * The byte code appender that implements the constructor.
+                 */
+                protected static class Appender implements ByteCodeAppender {
+
+                    /**
+                     * The field that carries the instance on which the super method is invoked.
+                     */
+                    private final FieldDescription fieldDescription;
+
+                    /**
+                     * Creates a new appender.
+                     *
+                     * @param instrumentationTarget The current instrumentation target.
+                     */
+                    protected Appender(Target instrumentationTarget) {
+                        fieldDescription = instrumentationTarget.getTypeDescription()
+                                .getDeclaredFields()
+                                .named(RedirectionProxy.FIELD_NAME);
+                    }
+
+                    @Override
+                    public boolean appendsCode() {
+                        return true;
+                    }
+
+                    @Override
+                    public Size apply(MethodVisitor methodVisitor,
+                                      Context instrumentationContext,
+                                      MethodDescription instrumentedMethod) {
+                        StackManipulation.Size stackSize = new StackManipulation.Compound(
+                                MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                                MethodInvocation.invoke(StaticFieldConstructor.INSTANCE.objectTypeDefaultConstructor),
+                                MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
+                                FieldAccess.forField(fieldDescription).putter(),
+                                MethodReturn.VOID
+                        ).apply(methodVisitor, instrumentationContext);
+                        return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && fieldDescription.equals(((Appender) other).fieldDescription);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return fieldDescription.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Morph.Binder.RedirectionProxy.InstanceFieldConstructor.Appender{" +
+                                "fieldDescription=" + fieldDescription +
+                                '}';
+                    }
+                }
+            }
+
+            /**
+             * Implements a the method call of the morphing method.
+             */
+            protected static class MethodCall implements Instrumentation {
+
+                /**
+                 * The accessor method to invoke from the proxy's method.
+                 */
                 private final MethodDescription accessorMethod;
 
+                /**
+                 * The assigner to be used.
+                 */
                 private final Assigner assigner;
 
-                private MethodCall(MethodDescription accessorMethod, Assigner assigner) {
+                /**
+                 * Creates a new method call instrumentation for a proxy method.
+                 *
+                 * @param accessorMethod The accessor method to invoke from the proxy's method.
+                 * @param assigner       The assigner to be used.
+                 */
+                protected MethodCall(MethodDescription accessorMethod, Assigner assigner) {
                     this.accessorMethod = accessorMethod;
                     this.assigner = assigner;
                 }
@@ -346,17 +575,28 @@ public @interface Morph {
 
                 @Override
                 public String toString() {
-                    return "Morph.Binder.Redirection.MethodCall{" +
+                    return "Morph.Binder.RedirectionProxy.MethodCall{" +
                             "accessorMethod=" + accessorMethod +
                             ", assigner=" + assigner +
                             '}';
                 }
 
-                private class Appender implements ByteCodeAppender {
+                /**
+                 * The byte code appender to implement the method.
+                 */
+                protected class Appender implements ByteCodeAppender {
 
+                    /**
+                     * The proxy type.
+                     */
                     private final TypeDescription typeDescription;
 
-                    private Appender(Target instrumentationTarget) {
+                    /**
+                     * Creates a new appender.
+                     *
+                     * @param instrumentationTarget The current instrumentation target.
+                     */
+                    protected Appender(Target instrumentationTarget) {
                         typeDescription = instrumentationTarget.getTypeDescription();
                     }
 
@@ -393,6 +633,11 @@ public @interface Morph {
                         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                     }
 
+                    /**
+                     * Returns the outer instance.
+                     *
+                     * @return The outer instance.
+                     */
                     private MethodCall getMethodCall() {
                         return MethodCall.this;
                     }
@@ -418,63 +663,22 @@ public @interface Morph {
                     }
                 }
             }
-
-            private static class InstanceFieldConstructor implements Instrumentation {
-
-                private final TypeDescription instrumentedType;
-
-                private InstanceFieldConstructor(TypeDescription instrumentedType) {
-                    this.instrumentedType = instrumentedType;
-                }
-
-                @Override
-                public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType.withField(RedirectionProxy.FIELD_NAME,
-                            this.instrumentedType,
-                            Opcodes.ACC_FINAL | Opcodes.ACC_PRIVATE);
-                }
-
-                @Override
-                public ByteCodeAppender appender(Target instrumentationTarget) {
-                    return new Appender(instrumentationTarget);
-                }
-
-                private static class Appender implements ByteCodeAppender {
-
-                    private final FieldDescription fieldDescription;
-
-                    private Appender(Target instrumentationTarget) {
-                        fieldDescription = instrumentationTarget.getTypeDescription()
-                                .getDeclaredFields()
-                                .named(RedirectionProxy.FIELD_NAME);
-                    }
-
-                    @Override
-                    public boolean appendsCode() {
-                        return true;
-                    }
-
-                    @Override
-                    public Size apply(MethodVisitor methodVisitor,
-                                      Context instrumentationContext,
-                                      MethodDescription instrumentedMethod) {
-                        StackManipulation.Size stackSize = new StackManipulation.Compound(
-                                MethodVariableAccess.REFERENCE.loadFromIndex(0),
-                                MethodInvocation.invoke(StaticFieldConstructor.INSTANCE.objectTypeDefaultConstructor),
-                                MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
-                                FieldAccess.forField(fieldDescription).putter(),
-                                MethodReturn.VOID
-                        ).apply(methodVisitor, instrumentationContext);
-                        return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
-                    }
-                }
-            }
         }
 
+        /**
+         * A finding that is precomputed to only return methods that are relevant to generating the required proxy.
+         */
         protected class PrecomputedFinding implements Finding {
 
+            /**
+             * The type to implement for generating the proxy.
+             */
             private final TypeDescription typeDescription;
 
+            /**
+             * Creates a new precomputed finding.
+             * @param typeDescription The type description to be used by the precomputed finding.
+             */
             public PrecomputedFinding(TypeDescription typeDescription) {
                 this.typeDescription = typeDescription;
             }
@@ -515,7 +719,7 @@ public @interface Morph {
 
             @Override
             public String toString() {
-                return "Pipe.Binder.PrecomputedFinding{" +
+                return "Morph.Binder.PrecomputedFinding{" +
                         "binder=" + Binder.this +
                         ", typeDescription=" + typeDescription +
                         '}';
@@ -610,7 +814,7 @@ public @interface Morph {
 
                 @Override
                 public String toString() {
-                    return "Binder.DefaultCall.DefaultMethodLocator.Explicit{typeDescription=" + typeDescription + '}';
+                    return "Morph.Binder.DefaultMethodLocator.Explicit{typeDescription=" + typeDescription + '}';
                 }
             }
         }
