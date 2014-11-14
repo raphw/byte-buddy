@@ -4,6 +4,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Morph;
 import net.bytebuddy.utility.JavaVersionRule;
 import net.bytebuddy.utility.PrecompiledTypeClassLoader;
+import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -102,7 +103,7 @@ public class MethodDelegationMorphTest extends AbstractInstrumentationTest {
     public static class SimpleMorph {
 
         public static String intercept(@Morph Morphing<String> morphing) {
-//            assertThat(morphing, not(instanceOf(Serializable.class)));
+            assertThat(morphing, CoreMatchers.not(instanceOf(Serializable.class)));
             return morphing.morph(QUX);
         }
     }
