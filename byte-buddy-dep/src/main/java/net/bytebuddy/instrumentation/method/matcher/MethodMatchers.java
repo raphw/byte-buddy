@@ -751,6 +751,12 @@ public final class MethodMatchers {
         return isBridgeMethodCompatibleTo(new MethodDescription.ForLoadedMethod(method));
     }
 
+    /**
+     * Matches a method descriptor.
+     *
+     * @param methodDescriptor The method descriptor to match.
+     * @return A matcher for the given method descriptor.
+     */
     public static JunctionMethodMatcher hasMethodDescriptor(String methodDescriptor) {
         return new MethodDescriptorMethodMatcher(methodDescriptor);
     }
@@ -2070,10 +2076,21 @@ public final class MethodMatchers {
         }
     }
 
+    /**
+     * Matches a method descriptor.
+     */
     private static class MethodDescriptorMethodMatcher extends JunctionMethodMatcher.AbstractBase {
 
+        /**
+         * The method descriptor to match.
+         */
         private final String methodDescriptor;
 
+        /**
+         * Creates a new method descriptor method matcher.
+         *
+         * @param methodDescriptor The method descriptor to match.
+         */
         private MethodDescriptorMethodMatcher(String methodDescriptor) {
             this.methodDescriptor = methodDescriptor;
         }

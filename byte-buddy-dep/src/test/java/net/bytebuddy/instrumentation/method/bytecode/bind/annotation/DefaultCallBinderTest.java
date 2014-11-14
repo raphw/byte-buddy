@@ -4,6 +4,7 @@ import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -96,5 +97,10 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
     @Test(expected = IllegalStateException.class)
     public void testIllegalAnnotatedValue() throws Exception {
         DefaultCall.Binder.INSTANCE.bind(annotationDescription, 0, source, target, instrumentationTarget, assigner);
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(DefaultCall.Binder.DefaultMethodLocator.Explicit.class).apply();
     }
 }

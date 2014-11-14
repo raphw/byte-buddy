@@ -28,6 +28,7 @@ public interface ClassFileLocator {
      *
      * @param typeDescription The description of the type for which a class file is to be located.
      * @return Any binary representation of the type which might be illegal.
+     * @throws java.io.IOException If reading a class file causes an error.
      */
     TypeDescription.BinaryRepresentation classFileFor(TypeDescription typeDescription) throws IOException;
 

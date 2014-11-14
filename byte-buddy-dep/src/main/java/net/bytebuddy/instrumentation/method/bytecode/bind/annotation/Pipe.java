@@ -148,6 +148,12 @@ public @interface Pipe {
             return new Binder(onlyMethod(nonNull(typeDescription)));
         }
 
+        /**
+         * Locates the only method of a type that is compatible to being overridden for invoking the proxy.
+         *
+         * @param typeDescription The type that is being installed.
+         * @return Its only method after validation.
+         */
         private static MethodDescription onlyMethod(TypeDescription typeDescription) {
             if (!typeDescription.isInterface()) {
                 throw new IllegalArgumentException(typeDescription + " is not an interface");
@@ -350,6 +356,7 @@ public @interface Pipe {
                 return serializableProxy == that.serializableProxy
                         && assigner.equals(that.assigner)
                         && forwardingType.equals(that.forwardingType)
+                        && methodLookupEngineFactory.equals(that.methodLookupEngineFactory)
                         && sourceMethod.equals(that.sourceMethod);
             }
 
@@ -358,6 +365,7 @@ public @interface Pipe {
                 int result = forwardingType.hashCode();
                 result = 31 * result + sourceMethod.hashCode();
                 result = 31 * result + assigner.hashCode();
+                result = 31 * result + methodLookupEngineFactory.hashCode();
                 result = 31 * result + (serializableProxy ? 1 : 0);
                 return result;
             }
@@ -369,6 +377,7 @@ public @interface Pipe {
                         ", sourceMethod=" + sourceMethod +
                         ", assigner=" + assigner +
                         ", serializableProxy=" + serializableProxy +
+                        ", methodLookupEngineFactory=" + methodLookupEngineFactory +
                         '}';
             }
 
@@ -377,7 +386,7 @@ public @interface Pipe {
              * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Pipe.Binder.Redirection}'s
              * constructor.
              */
-            private static enum ConstructorCall implements Instrumentation {
+            protected static enum ConstructorCall implements Instrumentation {
 
                 /**
                  * The singleton instance.
@@ -481,7 +490,7 @@ public @interface Pipe {
              * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Pipe.Binder.Redirection}'s
              * forwarding method.
              */
-            private static class MethodCall implements Instrumentation {
+            protected static class MethodCall implements Instrumentation {
 
                 /**
                  * The method that is invoked by the implemented method.
@@ -618,7 +627,7 @@ public @interface Pipe {
          * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Pipe.Binder}. By using this precomputed
          * result, method look-ups can be avoided.
          */
-        private class PrecomputedFinding implements Finding {
+        protected class PrecomputedFinding implements Finding {
 
             /**
              * The type which was looked up. This type should be the instrumented type itself and therefore defines

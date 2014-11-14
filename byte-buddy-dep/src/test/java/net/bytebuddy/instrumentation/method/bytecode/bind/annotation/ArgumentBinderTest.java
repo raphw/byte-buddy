@@ -121,7 +121,6 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
         assertThat(argument.toString(), is(loadedArgument.toString()));
     }
 
-
     private static class Carrier {
 
         private void method(@Argument(0) Void parameter) {

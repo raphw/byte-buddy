@@ -2329,7 +2329,6 @@ public interface TypePool {
              * Returns the string representation of the represented annotation.
              *
              * @return The string representation of the represented annotation.
-             * @throws ClassNotFoundException If a class cannot be loaded.
              */
             protected String toStringRepresentation() {
                 StringBuilder toString = new StringBuilder();
@@ -2355,7 +2354,6 @@ public interface TypePool {
              * Returns the hash code of the represented annotation.
              *
              * @return The hash code of the represented annotation.
-             * @throws ClassNotFoundException If a class cannot be loaded.
              */
             private int hashCodeRepresentation() {
                 int hashCode = 0;

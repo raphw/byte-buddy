@@ -74,6 +74,12 @@ public abstract class FieldAccessor implements Instrumentation {
         return of(FieldNameExtractor.ForBeanProperty.INSTANCE);
     }
 
+    /**
+     * Defines a custom strategy for determining the field that is accessed by this field accessor.
+     *
+     * @param fieldNameExtractor The field name extractor to use.
+     * @return A field accessor using the given field name extractor.
+     */
     public static OwnerTypeLocatable of(FieldNameExtractor fieldNameExtractor) {
         return new ForUnnamedField(defaultAssigner(),
                 defaultConsiderRuntimeType(),
@@ -420,12 +426,29 @@ public abstract class FieldAccessor implements Instrumentation {
         }
     }
 
+    /**
+     * A field name extractor is responsible for determining a field name to a method that is implemented
+     * to access this method.
+     */
     public static interface FieldNameExtractor {
 
+        /**
+         * Extracts a field name to be accessed by a getter or setter method.
+         *
+         * @param methodDescription The method for which a field name is to be determined.
+         * @return The name of the field to be accessed by this method.
+         */
         String fieldNameFor(MethodDescription methodDescription);
 
+        /**
+         * A {@link net.bytebuddy.instrumentation.FieldAccessor.FieldNameExtractor} that determines a field name
+         * according to the rules of Java bean naming conventions.
+         */
         static enum ForBeanProperty implements FieldNameExtractor {
 
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
             @Override
@@ -511,6 +534,13 @@ public abstract class FieldAccessor implements Instrumentation {
          */
         AssignerConfigurable defineAs(Class<?> type, ModifierContributor.ForField... modifier);
 
+        /**
+         * Defines a field with the given name in the instrumented type.
+         *
+         * @param typeDescription The type of the field.
+         * @param modifier        The modifiers for the field.
+         * @return A field accessor that defines a field of the given type.
+         */
         AssignerConfigurable defineAs(TypeDescription typeDescription, ModifierContributor.ForField... modifier);
     }
 
@@ -525,6 +555,9 @@ public abstract class FieldAccessor implements Instrumentation {
          */
         private final FieldLocator.Factory fieldLocatorFactory;
 
+        /**
+         * The field name extractor to be used.
+         */
         private final FieldNameExtractor fieldNameExtractor;
 
         /**
@@ -532,6 +565,7 @@ public abstract class FieldAccessor implements Instrumentation {
          *
          * @param assigner            The assigner to use.
          * @param considerRuntimeType {@code true} if a field value's runtime type should be considered.
+         * @param fieldNameExtractor  The field name extractor to use.
          */
         protected ForUnnamedField(Assigner assigner,
                                   boolean considerRuntimeType,
@@ -547,6 +581,7 @@ public abstract class FieldAccessor implements Instrumentation {
          *
          * @param assigner            The assigner to use.
          * @param considerRuntimeType {@code true} if a field value's runtime type should be considered.
+         * @param fieldNameExtractor  The field name extractor to use.
          * @param fieldLocatorFactory A factory that will produce a field locator that will be used to find locate
          *                            a field to be accessed.
          */
@@ -612,6 +647,8 @@ public abstract class FieldAccessor implements Instrumentation {
         @Override
         public String toString() {
             return "FieldAccessor.ForUnnamedField{" +
+                    "assigner=" + assigner +
+                    "considerRuntimeType=" + considerRuntimeType +
                     "fieldLocatorFactory=" + fieldLocatorFactory +
                     "fieldNameExtractor=" + fieldNameExtractor +
                     '}';
@@ -757,6 +794,8 @@ public abstract class FieldAccessor implements Instrumentation {
         @Override
         public String toString() {
             return "FieldAccessor.ForNamedField{" +
+                    "assigner=" + assigner +
+                    "considerRuntimeType=" + considerRuntimeType +
                     "fieldName='" + fieldName + '\'' +
                     ", preparationHandler=" + preparationHandler +
                     ", fieldLocatorFactory=" + fieldLocatorFactory +

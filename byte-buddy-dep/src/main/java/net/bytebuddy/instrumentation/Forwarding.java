@@ -117,6 +117,14 @@ public class Forwarding implements Instrumentation {
         return toInstanceField(fieldName, new TypeDescription.ForLoadedType(nonNull(fieldType)));
     }
 
+    /**
+     * Forwards all intercepted method invocations to an instance field of the instrumented class. The value
+     * of this field must be set explicitly.
+     *
+     * @param fieldName The name of the field in which the delegate should be stored.
+     * @param fieldType The type of the field and thus the type of which the delegate is assumed to be of.
+     * @return A corresponding instrumentation.
+     */
     public static Instrumentation toInstanceField(String fieldName, TypeDescription fieldType) {
         return new Forwarding(isValidIdentifier(fieldName),
                 nonNull(fieldType),

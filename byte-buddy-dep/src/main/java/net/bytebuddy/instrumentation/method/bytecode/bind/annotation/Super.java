@@ -130,12 +130,24 @@ public @interface Super {
             }
         };
 
+        /**
+         * A reference to the ignore finalizer method.
+         */
         private static final MethodDescription IGNORE_FINALIZER;
 
+        /**
+         * A reference to the serializable proxy method.
+         */
         private static final MethodDescription SERIALIZABLE_PROXY;
 
+        /**
+         * A reference to the constructor parameters method.
+         */
         private static final MethodDescription CONSTRUCTOR_PARAMETERS;
 
+        /**
+         * Extracts method references to the annotation methods.
+         */
         static {
             MethodList annotationProperties = new TypeDescription.ForLoadedType(Super.class).getDeclaredMethods();
             IGNORE_FINALIZER = annotationProperties.filter(named("ignoreFinalizer")).getOnly();
@@ -171,8 +183,14 @@ public @interface Super {
          */
         INSTANCE;
 
+        /**
+         * A method reference to the strategy property.
+         */
         private static final MethodDescription STRATEGY;
 
+        /**
+         * Extracts method references of the super annotation.
+         */
         static {
             MethodList annotationProperties = new TypeDescription.ForLoadedType(Super.class).getDeclaredMethods();
             STRATEGY = annotationProperties.filter(returns(Instantiation.class)).getOnly();

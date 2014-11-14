@@ -64,27 +64,23 @@ public @interface DefaultCall {
          */
         INSTANCE;
 
+        /**
+         * A reference to the target type method of the default call annotation.
+         */
         private static final MethodDescription TARGET_TYPE;
 
+        /**
+         * A reference to the serializable proxy method of the default call annotation.
+         */
         private static final MethodDescription SERIALIZABLE_PROXY;
 
+        /**
+         * Finds references to the methods of the default call annotation.
+         */
         static {
             MethodList annotationProperties = new TypeDescription.ForLoadedType(DefaultCall.class).getDeclaredMethods();
             TARGET_TYPE = annotationProperties.filter(named("targetType")).getOnly();
             SERIALIZABLE_PROXY = annotationProperties.filter(named("serializableProxy")).getOnly();
-        }
-
-        /**
-         * Defines a locator for looking up the suitable default method to an annotation.
-         *
-         * @param typeDescription The {@link DefaultCall#targetType()} value where the {@code void} type encodes an
-         *                        implicit lookup.
-         * @return A suitable default method locator.
-         */
-        private static DefaultMethodLocator resolve(TypeDescription typeDescription) {
-            return typeDescription.represents(void.class)
-                    ? DefaultMethodLocator.Implicit.INSTANCE
-                    : new DefaultMethodLocator.Explicit(typeDescription);
         }
 
         @Override
@@ -103,8 +99,10 @@ public @interface DefaultCall {
             if (!targetType.represents(Runnable.class) && !targetType.represents(Callable.class) && !targetType.represents(Object.class)) {
                 throw new IllegalStateException("A default method call proxy can only be assigned to Runnable or Callable types: " + target);
             }
-            Instrumentation.SpecialMethodInvocation specialMethodInvocation = resolve(annotation.getValue(TARGET_TYPE, TypeDescription.class))
-                    .resolve(instrumentationTarget, source);
+            TypeDescription typeDescription = annotation.getValue(TARGET_TYPE, TypeDescription.class);
+            Instrumentation.SpecialMethodInvocation specialMethodInvocation = (typeDescription.represents(void.class)
+                    ? DefaultMethodLocator.Implicit.INSTANCE
+                    : new DefaultMethodLocator.Explicit(typeDescription)).resolve(instrumentationTarget, source);
             return specialMethodInvocation.isValid()
                     ? new MethodDelegationBinder.ParameterBinding.Anonymous(new MethodCallProxy
                     .AssignableSignatureCall(specialMethodInvocation, annotation.getValue(SERIALIZABLE_PROXY, Boolean.class)))
@@ -114,7 +112,7 @@ public @interface DefaultCall {
         /**
          * A default method locator is responsible for looking up a default method to a given source method.
          */
-        private static interface DefaultMethodLocator {
+        protected static interface DefaultMethodLocator {
 
             /**
              * Locates the correct default method to a given source method.
@@ -187,8 +185,19 @@ public @interface DefaultCall {
                 }
 
                 @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && typeDescription.equals(((Explicit) other).typeDescription);
+                }
+
+                @Override
+                public int hashCode() {
+                    return typeDescription.hashCode();
+                }
+
+                @Override
                 public String toString() {
-                    return "Binder.DefaultMethodLocator.Explicit{typeDescription=" + typeDescription + '}';
+                    return "Binder.DefaultCall.DefaultMethodLocator.Explicit{typeDescription=" + typeDescription + '}';
                 }
             }
         }

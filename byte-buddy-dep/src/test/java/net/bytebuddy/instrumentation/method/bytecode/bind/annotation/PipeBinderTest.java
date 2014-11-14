@@ -81,6 +81,9 @@ public class PipeBinderTest extends AbstractAnnotationBinderTest<Pipe> {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(Pipe.Binder.class).apply();
+        ObjectPropertyAssertion.of(Pipe.Binder.PrecomputedFinding.class).apply();
+        ObjectPropertyAssertion.of(Pipe.Binder.Redirection.class).apply();
+        ObjectPropertyAssertion.of(Pipe.Binder.Redirection.MethodCall.class).skipSynthetic().apply();
     }
 
     @Test
