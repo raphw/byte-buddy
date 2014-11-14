@@ -20,6 +20,19 @@ import static org.mockito.Mockito.*;
 @RunWith(Parameterized.class)
 public class EmptyBinderTest extends AbstractAnnotationBinderTest<Empty> {
 
+    private final TypeDescription typeDescription;
+    private final int opcode;
+    @Mock
+    private MethodVisitor methodVisitor;
+    @Mock
+    private Instrumentation.Context instrumentationContext;
+
+    public EmptyBinderTest(Class<?> type, int opcode) {
+        super(Empty.class);
+        typeDescription = new TypeDescription.ForLoadedType(type);
+        this.opcode = opcode;
+    }
+
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
@@ -34,22 +47,6 @@ public class EmptyBinderTest extends AbstractAnnotationBinderTest<Empty> {
                 {Object.class, Opcodes.ACONST_NULL}
         });
     }
-
-    private final TypeDescription typeDescription;
-
-    private final int opcode;
-
-    public EmptyBinderTest(Class<?> type, int opcode) {
-        super(Empty.class);
-        typeDescription = new TypeDescription.ForLoadedType(type);
-        this.opcode = opcode;
-    }
-
-    @Mock
-    private MethodVisitor methodVisitor;
-
-    @Mock
-    private Instrumentation.Context instrumentationContext;
 
     @Test
     public void testEmptyValue() throws Exception {

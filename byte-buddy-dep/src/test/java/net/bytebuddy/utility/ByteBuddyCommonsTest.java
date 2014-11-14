@@ -61,7 +61,7 @@ public class ByteBuddyCommonsTest {
 
     @Test
     public void testNonNullArray() throws Exception {
-        Object[] object = new Object[] {new Object()};
+        Object[] object = new Object[]{new Object()};
         assertThat(nonNull(object), sameInstance(object));
     }
 

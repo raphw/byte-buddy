@@ -145,7 +145,7 @@ public interface TypeDescription extends ByteCodeElement {
      *
      * @return A  description of the enclosing type of this type or {@code null} if there is no such type.
      */
-    TypeDescription getEnclosingClass();
+    TypeDescription getEnclosingType();
 
     /**
      * <p>
@@ -249,6 +249,30 @@ public interface TypeDescription extends ByteCodeElement {
     BinaryRepresentation toBinary();
 
     /**
+     * Returns the name of this type as it is defined in Java source code. The main distinction is the display
+     * of arrays which are merged with internal names when calling the
+     * {@link net.bytebuddy.instrumentation.ByteCodeElement#getName()} to match the convention of Java types.
+     *
+     * @return The name of this type as represented in Java source code.
+     */
+    String getJavaName();
+
+    /**
+     * Returns the annotations that this type declares or inherits from super types.
+     *
+     * @return A list of all inherited annotations.
+     */
+    AnnotationList getInheritedAnnotations();
+
+    /**
+     * Checks if two types are defined in the same package.
+     *
+     * @param typeDescription The type of interest.
+     * @return {@code true} if this type and the given type are in the same package.
+     */
+    boolean isSamePackage(TypeDescription typeDescription);
+
+    /**
      * Represents a class file as binary data.
      */
     static interface BinaryRepresentation {
@@ -297,6 +321,19 @@ public interface TypeDescription extends ByteCodeElement {
              * The file extension of Java class files.
              */
             private static final String CLASS_FILE_EXTENSION = ".class";
+            /**
+             * The represented data.
+             */
+            private final byte[] data;
+
+            /**
+             * Creates a new explicit representation.
+             *
+             * @param data The data to represent.
+             */
+            public Explicit(byte[] data) {
+                this.data = data;
+            }
 
             /**
              * Attemts to create a binary representation of a loaded type by requesting data from its
@@ -318,20 +355,6 @@ public interface TypeDescription extends ByteCodeElement {
                         throw new IllegalStateException(e);
                     }
                 }
-            }
-
-            /**
-             * The represented data.
-             */
-            private final byte[] data;
-
-            /**
-             * Creates a new explicit representation.
-             *
-             * @param data The data to represent.
-             */
-            public Explicit(byte[] data) {
-                this.data = data;
             }
 
             @Override
@@ -363,30 +386,6 @@ public interface TypeDescription extends ByteCodeElement {
             }
         }
     }
-
-    /**
-     * Returns the name of this type as it is defined in Java source code. The main distinction is the display
-     * of arrays which are merged with internal names when calling the
-     * {@link net.bytebuddy.instrumentation.ByteCodeElement#getName()} to match the convention of Java types.
-     *
-     * @return The name of this type as represented in Java source code.
-     */
-    String getJavaName();
-
-    /**
-     * Returns the annotations that this type declares or inherits from super types.
-     *
-     * @return A list of all inherited annotations.
-     */
-    AnnotationList getInheritedAnnotations();
-
-    /**
-     * Checks if two types are defined in the same package.
-     *
-     * @param typeDescription The type of interest.
-     * @return {@code true} if this type and the given type are in the same package.
-     */
-    boolean isSamePackage(TypeDescription typeDescription);
 
     /**
      * An abstract base implementation of a type description.
@@ -727,7 +726,7 @@ public interface TypeDescription extends ByteCodeElement {
         }
 
         @Override
-        public TypeDescription getEnclosingClass() {
+        public TypeDescription getEnclosingType() {
             Class<?> enclosingType = type.getEnclosingClass();
             return enclosingType == null ? null : new TypeDescription.ForLoadedType(enclosingType);
         }
@@ -945,7 +944,7 @@ public interface TypeDescription extends ByteCodeElement {
         }
 
         @Override
-        public TypeDescription getEnclosingClass() {
+        public TypeDescription getEnclosingType() {
             return null;
         }
 

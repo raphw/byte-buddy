@@ -146,7 +146,7 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public TypeDescription getEnclosingClass() {
+        public TypeDescription getEnclosingType() {
             return null;
         }
 

@@ -353,227 +353,6 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
     }
 
     /**
-     * An instrumentation for implementing a method call of a {@link net.bytebuddy.instrumentation.type.auxiliary.TypeProxy}.
-     */
-    protected class MethodCall implements Instrumentation {
-
-        /**
-         * The method accessor factory to query for the super method invocation.
-         */
-        private final MethodAccessorFactory methodAccessorFactory;
-
-        /**
-         * Creates a new method call instrumentation.
-         *
-         * @param methodAccessorFactory The method accessor factory to query for the super method invocation.
-         */
-        protected MethodCall(MethodAccessorFactory methodAccessorFactory) {
-            this.methodAccessorFactory = methodAccessorFactory;
-        }
-
-        @Override
-        public InstrumentedType prepare(InstrumentedType instrumentedType) {
-            return instrumentedType.withField(INSTANCE_FIELD,
-                    TypeProxy.this.instrumentationTarget.getTypeDescription(),
-                    Opcodes.ACC_SYNTHETIC);
-        }
-
-        @Override
-        public ByteCodeAppender appender(Target instrumentationTarget) {
-            return new Appender(instrumentationTarget.getTypeDescription());
-        }
-
-        /**
-         * Returns the outer instance.
-         *
-         * @return The outer instance.
-         */
-        private TypeProxy getTypeProxy() {
-            return TypeProxy.this;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && methodAccessorFactory.equals(((MethodCall) other).methodAccessorFactory)
-                    && TypeProxy.this.equals(((MethodCall) other).getTypeProxy());
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * TypeProxy.this.hashCode() + methodAccessorFactory.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "TypeProxy.MethodCall{" +
-                    "typeProxy=" + TypeProxy.this +
-                    "methodAccessorFactory=" + methodAccessorFactory +
-                    '}';
-        }
-
-        /**
-         * Implementation of a byte code appender for a {@link net.bytebuddy.instrumentation.type.auxiliary.TypeProxy.MethodCall}.
-         */
-        protected class Appender implements ByteCodeAppender {
-
-            /**
-             * The stack manipulation for loading the proxied instance onto the stack.
-             */
-            private final StackManipulation fieldLoadingInstruction;
-
-            /**
-             * Creates a new appender.
-             *
-             * @param instrumentedType The instrumented type that is proxied by the enclosing instrumentation.
-             */
-            protected Appender(TypeDescription instrumentedType) {
-                fieldLoadingInstruction = FieldAccess.forField(instrumentedType.getDeclaredFields().named(INSTANCE_FIELD)).getter();
-            }
-
-            @Override
-            public boolean appendsCode() {
-                return true;
-            }
-
-            @Override
-            public Size apply(MethodVisitor methodVisitor,
-                              Context instrumentationContext,
-                              MethodDescription instrumentedMethod) {
-                StackManipulation.Size stackSize = implement(instrumentedMethod,
-                        invocationFactory.invoke(instrumentationTarget, proxiedType, instrumentedMethod))
-                        .apply(methodVisitor, instrumentationContext);
-                return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
-            }
-
-            /**
-             * Returns the actual implementation of a method based on the legality of the special method invocation.
-             *
-             * @param instrumentedMethod      The instrumented method.
-             * @param specialMethodInvocation The special method invocation to proxy by the implemented method.
-             * @return A stack manipulation that represents the invocation of the special method invocation.
-             */
-            private StackManipulation implement(MethodDescription instrumentedMethod,
-                                                Instrumentation.SpecialMethodInvocation specialMethodInvocation) {
-                return specialMethodInvocation.isValid()
-                        ? new AccessorMethodInvocation(instrumentedMethod, specialMethodInvocation)
-                        : AbstractMethodErrorThrow.INSTANCE;
-            }
-
-            /**
-             * Returns the outer instance.
-             *
-             * @return The outer instance.
-             */
-            private MethodCall getMethodCall() {
-                return MethodCall.this;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && fieldLoadingInstruction.equals(((Appender) other).fieldLoadingInstruction)
-                        && MethodCall.this.equals(((Appender) other).getMethodCall());
-            }
-
-            @Override
-            public int hashCode() {
-                return 31 * MethodCall.this.hashCode() + fieldLoadingInstruction.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "TypeProxy.MethodCall.Appender{" +
-                        "methodCall=" + MethodCall.this +
-                        "fieldLoadingInstruction=" + fieldLoadingInstruction +
-                        '}';
-            }
-
-            /**
-             * Stack manipulation for invoking an accessor method.
-             */
-            protected class AccessorMethodInvocation implements StackManipulation {
-
-                /**
-                 * The instrumented method that is implemented.
-                 */
-                private final MethodDescription instrumentedMethod;
-
-                /**
-                 * The special method invocation that is invoked by this accessor method invocation.
-                 */
-                private final SpecialMethodInvocation specialMethodInvocation;
-
-                /**
-                 * Creates a new accessor method invocation.
-                 *
-                 * @param instrumentedMethod      The instrumented method that is implemented.
-                 * @param specialMethodInvocation The special method invocation that is invoked by this accessor
-                 *                                method invocation.
-                 */
-                protected AccessorMethodInvocation(MethodDescription instrumentedMethod,
-                                                   SpecialMethodInvocation specialMethodInvocation) {
-                    this.instrumentedMethod = instrumentedMethod;
-                    this.specialMethodInvocation = specialMethodInvocation;
-                }
-
-                @Override
-                public boolean isValid() {
-                    return true;
-                }
-
-                @Override
-                public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-                    MethodDescription proxyMethod = methodAccessorFactory.registerAccessorFor(specialMethodInvocation);
-                    return new StackManipulation.Compound(
-                            MethodVariableAccess.REFERENCE.loadFromIndex(0),
-                            fieldLoadingInstruction,
-                            MethodVariableAccess.forBridgeMethodInvocation(instrumentedMethod, proxyMethod),
-                            MethodInvocation.invoke(proxyMethod),
-                            MethodReturn.returning(instrumentedMethod.getReturnType())
-                    ).apply(methodVisitor, instrumentationContext);
-                }
-
-                /**
-                 * Returns the outer instance.
-                 *
-                 * @return The outer instance.
-                 */
-                private Appender getAppender() {
-                    return Appender.this;
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    AccessorMethodInvocation that = (AccessorMethodInvocation) other;
-                    return Appender.this.equals(that.getAppender())
-                            && instrumentedMethod.equals(that.instrumentedMethod)
-                            && specialMethodInvocation.equals(that.specialMethodInvocation);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = Appender.this.hashCode();
-                    result = 31 * result + instrumentedMethod.hashCode();
-                    result = 31 * result + specialMethodInvocation.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "TypeProxy.MethodCall.Appender.AccessorMethodInvocation{" +
-                            "appender=" + Appender.this +
-                            ", instrumentedMethod=" + instrumentedMethod +
-                            ", specialMethodInvocation=" + specialMethodInvocation +
-                            '}';
-                }
-            }
-        }
-    }
-
-    /**
      * An invocation factory is responsible for creating a special method invocation for any method that is to be
      * invoked. These special method invocations are then implemented by the
      * {@link net.bytebuddy.instrumentation.type.auxiliary.TypeProxy}.
@@ -928,6 +707,227 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
                     ", instrumentationTarget=" + instrumentationTarget +
                     ", serializableProxy=" + serializableProxy +
                     '}';
+        }
+    }
+
+    /**
+     * An instrumentation for implementing a method call of a {@link net.bytebuddy.instrumentation.type.auxiliary.TypeProxy}.
+     */
+    protected class MethodCall implements Instrumentation {
+
+        /**
+         * The method accessor factory to query for the super method invocation.
+         */
+        private final MethodAccessorFactory methodAccessorFactory;
+
+        /**
+         * Creates a new method call instrumentation.
+         *
+         * @param methodAccessorFactory The method accessor factory to query for the super method invocation.
+         */
+        protected MethodCall(MethodAccessorFactory methodAccessorFactory) {
+            this.methodAccessorFactory = methodAccessorFactory;
+        }
+
+        @Override
+        public InstrumentedType prepare(InstrumentedType instrumentedType) {
+            return instrumentedType.withField(INSTANCE_FIELD,
+                    TypeProxy.this.instrumentationTarget.getTypeDescription(),
+                    Opcodes.ACC_SYNTHETIC);
+        }
+
+        @Override
+        public ByteCodeAppender appender(Target instrumentationTarget) {
+            return new Appender(instrumentationTarget.getTypeDescription());
+        }
+
+        /**
+         * Returns the outer instance.
+         *
+         * @return The outer instance.
+         */
+        private TypeProxy getTypeProxy() {
+            return TypeProxy.this;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && methodAccessorFactory.equals(((MethodCall) other).methodAccessorFactory)
+                    && TypeProxy.this.equals(((MethodCall) other).getTypeProxy());
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * TypeProxy.this.hashCode() + methodAccessorFactory.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "TypeProxy.MethodCall{" +
+                    "typeProxy=" + TypeProxy.this +
+                    "methodAccessorFactory=" + methodAccessorFactory +
+                    '}';
+        }
+
+        /**
+         * Implementation of a byte code appender for a {@link net.bytebuddy.instrumentation.type.auxiliary.TypeProxy.MethodCall}.
+         */
+        protected class Appender implements ByteCodeAppender {
+
+            /**
+             * The stack manipulation for loading the proxied instance onto the stack.
+             */
+            private final StackManipulation fieldLoadingInstruction;
+
+            /**
+             * Creates a new appender.
+             *
+             * @param instrumentedType The instrumented type that is proxied by the enclosing instrumentation.
+             */
+            protected Appender(TypeDescription instrumentedType) {
+                fieldLoadingInstruction = FieldAccess.forField(instrumentedType.getDeclaredFields().named(INSTANCE_FIELD)).getter();
+            }
+
+            @Override
+            public boolean appendsCode() {
+                return true;
+            }
+
+            @Override
+            public Size apply(MethodVisitor methodVisitor,
+                              Context instrumentationContext,
+                              MethodDescription instrumentedMethod) {
+                StackManipulation.Size stackSize = implement(instrumentedMethod,
+                        invocationFactory.invoke(instrumentationTarget, proxiedType, instrumentedMethod))
+                        .apply(methodVisitor, instrumentationContext);
+                return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
+            }
+
+            /**
+             * Returns the actual implementation of a method based on the legality of the special method invocation.
+             *
+             * @param instrumentedMethod      The instrumented method.
+             * @param specialMethodInvocation The special method invocation to proxy by the implemented method.
+             * @return A stack manipulation that represents the invocation of the special method invocation.
+             */
+            private StackManipulation implement(MethodDescription instrumentedMethod,
+                                                Instrumentation.SpecialMethodInvocation specialMethodInvocation) {
+                return specialMethodInvocation.isValid()
+                        ? new AccessorMethodInvocation(instrumentedMethod, specialMethodInvocation)
+                        : AbstractMethodErrorThrow.INSTANCE;
+            }
+
+            /**
+             * Returns the outer instance.
+             *
+             * @return The outer instance.
+             */
+            private MethodCall getMethodCall() {
+                return MethodCall.this;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && fieldLoadingInstruction.equals(((Appender) other).fieldLoadingInstruction)
+                        && MethodCall.this.equals(((Appender) other).getMethodCall());
+            }
+
+            @Override
+            public int hashCode() {
+                return 31 * MethodCall.this.hashCode() + fieldLoadingInstruction.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "TypeProxy.MethodCall.Appender{" +
+                        "methodCall=" + MethodCall.this +
+                        "fieldLoadingInstruction=" + fieldLoadingInstruction +
+                        '}';
+            }
+
+            /**
+             * Stack manipulation for invoking an accessor method.
+             */
+            protected class AccessorMethodInvocation implements StackManipulation {
+
+                /**
+                 * The instrumented method that is implemented.
+                 */
+                private final MethodDescription instrumentedMethod;
+
+                /**
+                 * The special method invocation that is invoked by this accessor method invocation.
+                 */
+                private final SpecialMethodInvocation specialMethodInvocation;
+
+                /**
+                 * Creates a new accessor method invocation.
+                 *
+                 * @param instrumentedMethod      The instrumented method that is implemented.
+                 * @param specialMethodInvocation The special method invocation that is invoked by this accessor
+                 *                                method invocation.
+                 */
+                protected AccessorMethodInvocation(MethodDescription instrumentedMethod,
+                                                   SpecialMethodInvocation specialMethodInvocation) {
+                    this.instrumentedMethod = instrumentedMethod;
+                    this.specialMethodInvocation = specialMethodInvocation;
+                }
+
+                @Override
+                public boolean isValid() {
+                    return true;
+                }
+
+                @Override
+                public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+                    MethodDescription proxyMethod = methodAccessorFactory.registerAccessorFor(specialMethodInvocation);
+                    return new StackManipulation.Compound(
+                            MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                            fieldLoadingInstruction,
+                            MethodVariableAccess.forBridgeMethodInvocation(instrumentedMethod, proxyMethod),
+                            MethodInvocation.invoke(proxyMethod),
+                            MethodReturn.returning(instrumentedMethod.getReturnType())
+                    ).apply(methodVisitor, instrumentationContext);
+                }
+
+                /**
+                 * Returns the outer instance.
+                 *
+                 * @return The outer instance.
+                 */
+                private Appender getAppender() {
+                    return Appender.this;
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    AccessorMethodInvocation that = (AccessorMethodInvocation) other;
+                    return Appender.this.equals(that.getAppender())
+                            && instrumentedMethod.equals(that.instrumentedMethod)
+                            && specialMethodInvocation.equals(that.specialMethodInvocation);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = Appender.this.hashCode();
+                    result = 31 * result + instrumentedMethod.hashCode();
+                    result = 31 * result + specialMethodInvocation.hashCode();
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeProxy.MethodCall.Appender.AccessorMethodInvocation{" +
+                            "appender=" + Appender.this +
+                            ", instrumentedMethod=" + instrumentedMethod +
+                            ", specialMethodInvocation=" + specialMethodInvocation +
+                            '}';
+                }
+            }
         }
     }
 }

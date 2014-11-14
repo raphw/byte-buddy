@@ -334,9 +334,9 @@ public abstract class AbstractTypeDescriptionTest {
 
     @Test
     public void testDeclaredInType() throws Exception {
-        assertThat(describe(SampleClass.class).getEnclosingClass().represents(AbstractTypeDescriptionTest.class), is(true));
-        assertThat(describe(Object.class).getEnclosingClass(), nullValue(TypeDescription.class));
-        assertThat(describe(Object[].class).getEnclosingClass(), nullValue(TypeDescription.class));
+        assertThat(describe(SampleClass.class).getEnclosingType().represents(AbstractTypeDescriptionTest.class), is(true));
+        assertThat(describe(Object.class).getEnclosingType(), nullValue(TypeDescription.class));
+        assertThat(describe(Object[].class).getEnclosingType(), nullValue(TypeDescription.class));
     }
 
     @Test

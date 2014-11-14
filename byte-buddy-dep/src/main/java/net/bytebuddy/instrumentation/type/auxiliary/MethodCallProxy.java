@@ -223,6 +223,107 @@ public class MethodCallProxy implements AuxiliaryType {
     }
 
     /**
+     * An instrumentation for implementing a constructor of a {@link net.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy}.
+     */
+    protected static enum ConstructorCall implements Instrumentation {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        /**
+         * A reference of the {@link Object} type default constructor.
+         */
+        private final MethodDescription objectTypeDefaultConstructor;
+
+        /**
+         * Creates the constructor call singleton.
+         */
+        private ConstructorCall() {
+            this.objectTypeDefaultConstructor = new TypeDescription.ForLoadedType(Object.class)
+                    .getDeclaredMethods()
+                    .filter(isConstructor())
+                    .getOnly();
+        }
+
+        @Override
+        public InstrumentedType prepare(InstrumentedType instrumentedType) {
+            return instrumentedType;
+        }
+
+        @Override
+        public ByteCodeAppender appender(Target instrumentationTarget) {
+            return new Appender(instrumentationTarget.getTypeDescription());
+        }
+
+        /**
+         * The appender for implementing the {@link net.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy.ConstructorCall}.
+         */
+        protected static class Appender implements ByteCodeAppender {
+
+            /**
+             * The instrumented type being created.
+             */
+            private final TypeDescription instrumentedType;
+
+            /**
+             * Creates a new appender.
+             *
+             * @param instrumentedType The instrumented type that is being created.
+             */
+            private Appender(TypeDescription instrumentedType) {
+                this.instrumentedType = instrumentedType;
+            }
+
+            @Override
+            public boolean appendsCode() {
+                return true;
+            }
+
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
+                StackManipulation thisReference = MethodVariableAccess.REFERENCE.loadFromIndex(0);
+                FieldList fieldList = instrumentedType.getDeclaredFields();
+                StackManipulation[] fieldLoading = new StackManipulation[fieldList.size()];
+                int index = 0;
+                for (FieldDescription fieldDescription : fieldList) {
+                    fieldLoading[index] = new StackManipulation.Compound(
+                            thisReference,
+                            MethodVariableAccess.forType(fieldDescription.getFieldType())
+                                    .loadFromIndex(instrumentedMethod.getParameterOffset(index)),
+                            FieldAccess.forField(fieldDescription).putter()
+                    );
+                    index++;
+                }
+                StackManipulation.Size stackSize = new StackManipulation.Compound(
+                        thisReference,
+                        MethodInvocation.invoke(ConstructorCall.INSTANCE.objectTypeDefaultConstructor),
+                        new StackManipulation.Compound(fieldLoading),
+                        MethodReturn.VOID
+                ).apply(methodVisitor, instrumentationContext);
+                return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && instrumentedType.equals(((Appender) other).instrumentedType);
+            }
+
+            @Override
+            public int hashCode() {
+                return instrumentedType.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "MethodCallProxy.ConstructorCall.Appender{instrumentedType=" + instrumentedType + '}';
+            }
+        }
+    }
+
+    /**
      * An instrumentation for implementing a method of a {@link net.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy}.
      */
     protected static class MethodCall implements Instrumentation {
@@ -349,107 +450,6 @@ public class MethodCallProxy implements AuxiliaryType {
                         "methodCall=" + MethodCall.this +
                         ", instrumentedType=" + instrumentedType +
                         '}';
-            }
-        }
-    }
-
-    /**
-     * An instrumentation for implementing a constructor of a {@link net.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy}.
-     */
-    protected static enum ConstructorCall implements Instrumentation {
-
-        /**
-         * The singleton instance.
-         */
-        INSTANCE;
-
-        /**
-         * A reference of the {@link Object} type default constructor.
-         */
-        private final MethodDescription objectTypeDefaultConstructor;
-
-        /**
-         * Creates the constructor call singleton.
-         */
-        private ConstructorCall() {
-            this.objectTypeDefaultConstructor = new TypeDescription.ForLoadedType(Object.class)
-                    .getDeclaredMethods()
-                    .filter(isConstructor())
-                    .getOnly();
-        }
-
-        @Override
-        public InstrumentedType prepare(InstrumentedType instrumentedType) {
-            return instrumentedType;
-        }
-
-        @Override
-        public ByteCodeAppender appender(Target instrumentationTarget) {
-            return new Appender(instrumentationTarget.getTypeDescription());
-        }
-
-        /**
-         * The appender for implementing the {@link net.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy.ConstructorCall}.
-         */
-        protected static class Appender implements ByteCodeAppender {
-
-            /**
-             * The instrumented type being created.
-             */
-            private final TypeDescription instrumentedType;
-
-            /**
-             * Creates a new appender.
-             *
-             * @param instrumentedType The instrumented type that is being created.
-             */
-            private Appender(TypeDescription instrumentedType) {
-                this.instrumentedType = instrumentedType;
-            }
-
-            @Override
-            public boolean appendsCode() {
-                return true;
-            }
-
-            @Override
-            public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
-                StackManipulation thisReference = MethodVariableAccess.REFERENCE.loadFromIndex(0);
-                FieldList fieldList = instrumentedType.getDeclaredFields();
-                StackManipulation[] fieldLoading = new StackManipulation[fieldList.size()];
-                int index = 0;
-                for (FieldDescription fieldDescription : fieldList) {
-                    fieldLoading[index] = new StackManipulation.Compound(
-                            thisReference,
-                            MethodVariableAccess.forType(fieldDescription.getFieldType())
-                                    .loadFromIndex(instrumentedMethod.getParameterOffset(index)),
-                            FieldAccess.forField(fieldDescription).putter()
-                    );
-                    index++;
-                }
-                StackManipulation.Size stackSize = new StackManipulation.Compound(
-                        thisReference,
-                        MethodInvocation.invoke(ConstructorCall.INSTANCE.objectTypeDefaultConstructor),
-                        new StackManipulation.Compound(fieldLoading),
-                        MethodReturn.VOID
-                ).apply(methodVisitor, instrumentationContext);
-                return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && instrumentedType.equals(((Appender) other).instrumentedType);
-            }
-
-            @Override
-            public int hashCode() {
-                return instrumentedType.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCallProxy.ConstructorCall.Appender{instrumentedType=" + instrumentedType + '}';
             }
         }
     }

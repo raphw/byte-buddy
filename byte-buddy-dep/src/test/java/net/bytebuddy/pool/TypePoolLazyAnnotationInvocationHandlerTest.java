@@ -164,16 +164,16 @@ public class TypePoolLazyAnnotationInvocationHandlerTest {
                 is((Object) false));
     }
 
+    public static enum Bar {
+        VALUE
+    }
+
     public static @interface Foo {
         String foo();
     }
 
     public static @interface DefaultFoo {
         String foo() default FOO;
-    }
-
-    public static enum Bar {
-        VALUE
     }
 
     private static class FooWithException implements Foo {

@@ -280,10 +280,8 @@ public interface MethodDescription extends ByteCodeElement {
         public boolean isSpecializableFor(TypeDescription targetType) {
             if (isStatic()) { // Static private methods are never specializable, check static property first
                 return false;
-            } else if (isPrivate() || isConstructor()) {
+            } else if (isPrivate() || isConstructor() || isDefaultMethod()) {
                 return getDeclaringType().equals(targetType);
-            } else if (isDefaultMethod()) {
-                return targetType.getInterfaces().contains(getDeclaringType());
             } else {
                 return !isAbstract() && getDeclaringType().isAssignableFrom(targetType);
             }

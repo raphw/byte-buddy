@@ -166,21 +166,21 @@ public interface TypePool {
             private final ClassLoader classLoader;
 
             /**
-             * Creates a source locator for querying the class path.
-             *
-             * @return A source locator for the system class loader.
-             */
-            public static SourceLocator ofSystemClassLoader() {
-                return new ForClassLoader(ClassLoader.getSystemClassLoader());
-            }
-
-            /**
              * Creates a new class loader source locator.
              *
              * @param classLoader The class loader to query.
              */
             public ForClassLoader(ClassLoader classLoader) {
                 this.classLoader = classLoader;
+            }
+
+            /**
+             * Creates a source locator for querying the class path.
+             *
+             * @return A source locator for the system class loader.
+             */
+            public static SourceLocator ofSystemClassLoader() {
+                return new ForClassLoader(ClassLoader.getSystemClassLoader());
             }
 
             @Override
@@ -1516,7 +1516,7 @@ public interface TypePool {
         }
 
         @Override
-        public TypeDescription getEnclosingClass() {
+        public TypeDescription getEnclosingType() {
             return declarationContext.getEnclosingType(typePool);
         }
 
@@ -2274,28 +2274,6 @@ public interface TypePool {
                 }
             }
 
-            @Override
-            public Object invoke(Object proxy, Method method, Object[] arguments) {
-                if (method.getDeclaringClass() != annotationType) {
-                    if (method.getName().equals(HASH_CODE)) {
-                        return hashCodeRepresentation();
-                    } else if (method.getName().equals(EQUALS) && method.getParameterTypes().length == 1) {
-                        return equalsRepresentation(proxy, arguments[0]);
-                    } else if (method.getName().equals(TO_STRING)) {
-                        return toStringRepresentation();
-                    } else /* method.getName().equals("annotationType") */ {
-                        return annotationType;
-                    }
-                }
-                Object value = values.get(method);
-                if (value == null) {
-                    throw new IncompleteAnnotationException(annotationType, method.getName());
-                } else if (!asWrapper(method.getReturnType()).isAssignableFrom(value.getClass())) {
-                    throw new AnnotationTypeMismatchException(method, value.getClass().toString());
-                }
-                return PropertyDispatcher.of(method.getReturnType()).conditionalClone(value);
-            }
-
             /**
              * Resolves any primitive type to its wrapper type.
              *
@@ -2323,6 +2301,28 @@ public interface TypePool {
                     }
                 }
                 return type;
+            }
+
+            @Override
+            public Object invoke(Object proxy, Method method, Object[] arguments) {
+                if (method.getDeclaringClass() != annotationType) {
+                    if (method.getName().equals(HASH_CODE)) {
+                        return hashCodeRepresentation();
+                    } else if (method.getName().equals(EQUALS) && method.getParameterTypes().length == 1) {
+                        return equalsRepresentation(proxy, arguments[0]);
+                    } else if (method.getName().equals(TO_STRING)) {
+                        return toStringRepresentation();
+                    } else /* method.getName().equals("annotationType") */ {
+                        return annotationType;
+                    }
+                }
+                Object value = values.get(method);
+                if (value == null) {
+                    throw new IncompleteAnnotationException(annotationType, method.getName());
+                } else if (!asWrapper(method.getReturnType()).isAssignableFrom(value.getClass())) {
+                    throw new AnnotationTypeMismatchException(method, value.getClass().toString());
+                }
+                return PropertyDispatcher.of(method.getReturnType()).conditionalClone(value);
             }
 
             /**

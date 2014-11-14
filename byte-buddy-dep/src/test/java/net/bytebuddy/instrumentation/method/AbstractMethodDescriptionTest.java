@@ -410,6 +410,17 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(firstConstructor).represents(thirdMethod), is(false));
     }
 
+    @Test
+    public void testSpecializable() throws Exception {
+        assertThat(describe(firstMethod).isSpecializableFor(new TypeDescription.ForLoadedType(Sample.class)), is(false));
+        assertThat(describe(secondMethod).isSpecializableFor(new TypeDescription.ForLoadedType(Sample.class)), is(false));
+        assertThat(describe(thirdMethod).isSpecializableFor(new TypeDescription.ForLoadedType(Sample.class)), is(true));
+        assertThat(describe(thirdMethod).isSpecializableFor(new TypeDescription.ForLoadedType(SampleSub.class)), is(true));
+        assertThat(describe(thirdMethod).isSpecializableFor(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(describe(firstConstructor).isSpecializableFor(new TypeDescription.ForLoadedType(Sample.class)), is(true));
+        assertThat(describe(firstConstructor).isSpecializableFor(new TypeDescription.ForLoadedType(SampleSub.class)), is(false));
+    }
+
     @Retention(RetentionPolicy.RUNTIME)
     private static @interface SampleAnnotation {
     }
@@ -432,7 +443,16 @@ public abstract class AbstractMethodDescriptionTest {
         protected abstract Object second(String first, long second) throws RuntimeException, IOException;
 
         @SampleAnnotation
-        public abstract boolean[] third(@SampleAnnotation Object[] third, int[] forth) throws Throwable;
+        public boolean[] third(@SampleAnnotation Object[] third, int[] forth) throws Throwable {
+            return null;
+        }
+    }
+
+    private static abstract class SampleSub extends Sample {
+
+        protected SampleSub(Void argument) {
+            super(argument);
+        }
     }
 
     public static abstract class PublicType {

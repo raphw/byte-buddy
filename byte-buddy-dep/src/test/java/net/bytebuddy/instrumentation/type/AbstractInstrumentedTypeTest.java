@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsNot.not;
 import static org.mockito.Mockito.*;
@@ -191,5 +192,36 @@ public abstract class AbstractInstrumentedTypeTest {
     @Test
     public void testSimpleName() {
         assertThat(makePlainInstrumentedType().getSimpleName(), is(BAR));
+    }
+
+    @Test
+    public void testEnclosingMethod() throws Exception {
+        assertThat(makePlainInstrumentedType().getEnclosingMethod(), nullValue());
+    }
+
+    @Test
+    public void testEnclosingType() throws Exception {
+        assertThat(makePlainInstrumentedType().getEnclosingType(), nullValue());
+    }
+
+    @Test
+    public void testDeclaringType() throws Exception {
+        assertThat(makePlainInstrumentedType().getDeclaringType(), nullValue());
+    }
+
+    @Test
+    public void testIsAnonymous() throws Exception {
+        assertThat(makePlainInstrumentedType().isAnonymousClass(), is(false));
+    }
+
+    @Test
+    public void testCanonicalName() throws Exception {
+        TypeDescription typeDescription = makePlainInstrumentedType();
+        assertThat(typeDescription.getCanonicalName(), is(typeDescription.getName()));
+    }
+
+    @Test
+    public void testIsMemberClass() throws Exception {
+        assertThat(makePlainInstrumentedType().isMemberClass(), is(false));
     }
 }
