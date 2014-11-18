@@ -11,8 +11,8 @@ import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -126,10 +126,10 @@ public class ByteBuddyTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(ByteBuddy.class).apply();
-        HashCodeEqualsTester.of(ByteBuddy.MatchedMethodInterception.class).apply();
-        HashCodeEqualsTester.of(ByteBuddy.MethodAnnotationTarget.class).apply();
-        HashCodeEqualsTester.of(ByteBuddy.OptionalMethodInterception.class).apply();
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(ByteBuddy.class).apply();
+        ObjectPropertyAssertion.of(ByteBuddy.MatchedMethodInterception.class).apply();
+        ObjectPropertyAssertion.of(ByteBuddy.MethodAnnotationTarget.class).apply();
+        ObjectPropertyAssertion.of(ByteBuddy.OptionalMethodInterception.class).apply();
     }
 }

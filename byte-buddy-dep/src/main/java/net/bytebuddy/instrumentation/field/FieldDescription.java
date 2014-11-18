@@ -1,19 +1,17 @@
 package net.bytebuddy.instrumentation.field;
 
 import net.bytebuddy.instrumentation.ByteCodeElement;
-import net.bytebuddy.instrumentation.ModifierReviewable;
-import net.bytebuddy.instrumentation.type.DeclaredInType;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
 /**
  * Implementations of this interface describe a Java field. Implementations of this interface must provide meaningful
  * {@code equal(Object)} and {@code hashCode()} implementations.
  */
-public interface FieldDescription extends ModifierReviewable, ByteCodeElement, DeclaredInType, AnnotatedElement {
+public interface FieldDescription extends ByteCodeElement {
 
     /**
      * Returns a description of the type of this field.
@@ -44,10 +42,11 @@ public interface FieldDescription extends ModifierReviewable, ByteCodeElement, D
 
         @Override
         public boolean isVisibleTo(TypeDescription typeDescription) {
-            return isPublic()
+            return getDeclaringType().isVisibleTo(typeDescription)
+                    && (isPublic()
                     || typeDescription.equals(getDeclaringType())
                     || (isProtected() && getDeclaringType().isAssignableFrom(typeDescription))
-                    || (!isPrivate() && typeDescription.getPackageName().equals(getDeclaringType().getPackageName()));
+                    || (!isPrivate() && typeDescription.isSamePackage(getDeclaringType())));
         }
 
         @Override
@@ -59,7 +58,18 @@ public interface FieldDescription extends ModifierReviewable, ByteCodeElement, D
 
         @Override
         public int hashCode() {
-            return (getDeclaringType().getInternalName() + "." + getName()).hashCode();
+            return getDeclaringType().hashCode() + 31 * getName().hashCode();
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder stringBuilder = new StringBuilder();
+            if (getModifiers() != 0) {
+                stringBuilder.append(Modifier.toString(getModifiers())).append(" ");
+            }
+            stringBuilder.append(getFieldType().getSourceCodeName()).append(" ");
+            stringBuilder.append(getDeclaringType().getSourceCodeName()).append(".");
+            return stringBuilder.append(getName()).toString();
         }
     }
 
@@ -88,23 +98,8 @@ public interface FieldDescription extends ModifierReviewable, ByteCodeElement, D
         }
 
         @Override
-        public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
-            return field.isAnnotationPresent(annotationClass);
-        }
-
-        @Override
-        public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-            return field.getAnnotation(annotationClass);
-        }
-
-        @Override
-        public Annotation[] getAnnotations() {
-            return field.getAnnotations();
-        }
-
-        @Override
-        public Annotation[] getDeclaredAnnotations() {
-            return field.getDeclaredAnnotations();
+        public AnnotationList getDeclaredAnnotations() {
+            return new AnnotationList.ForLoadedAnnotation(field.getDeclaredAnnotations());
         }
 
         @Override
@@ -178,23 +173,8 @@ public interface FieldDescription extends ModifierReviewable, ByteCodeElement, D
         }
 
         @Override
-        public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-            return null;
-        }
-
-        @Override
-        public Annotation[] getAnnotations() {
-            return new Annotation[0];
-        }
-
-        @Override
-        public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
-            return false;
-        }
-
-        @Override
-        public Annotation[] getDeclaredAnnotations() {
-            return new Annotation[0];
+        public AnnotationList getDeclaredAnnotations() {
+            return new AnnotationList.Empty();
         }
 
         @Override
@@ -210,16 +190,6 @@ public interface FieldDescription extends ModifierReviewable, ByteCodeElement, D
         @Override
         public int getModifiers() {
             return modifiers;
-        }
-
-        @Override
-        public String toString() {
-            return "FieldDescription.Latent{" +
-                    "fieldName='" + fieldName + '\'' +
-                    ", declaringType=" + declaringType +
-                    ", fieldType=" + fieldType +
-                    ", modifiers=" + modifiers +
-                    '}';
         }
     }
 }

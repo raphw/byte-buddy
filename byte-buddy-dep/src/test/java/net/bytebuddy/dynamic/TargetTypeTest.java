@@ -21,6 +21,7 @@ public class TargetTypeTest {
 
     @Test
     public void testMemberInaccessibility() throws Exception {
+        // Fails in Cobertura due to added methods but is ignored there.
         assertThat(TargetType.class.getDeclaredMethods().length, is(0));
     }
 

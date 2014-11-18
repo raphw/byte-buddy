@@ -6,7 +6,6 @@ import org.objectweb.asm.Type;
 import java.util.AbstractList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 /**
  * Implementations represent a list of type descriptions.
@@ -27,6 +26,9 @@ public interface TypeList extends List<TypeDescription> {
      */
     int getStackSize();
 
+    @Override
+    TypeList subList(int fromIndex, int toIndex);
+
     /**
      * Implementation of a type list for an array of loaded types.
      */
@@ -42,7 +44,7 @@ public interface TypeList extends List<TypeDescription> {
          *
          * @param type The types to be represented by this list.
          */
-        public ForLoadedType(Class<?>[] type) {
+        public ForLoadedType(Class<?>... type) {
             this.type = type;
         }
 
@@ -78,6 +80,11 @@ public interface TypeList extends List<TypeDescription> {
         @Override
         public int getStackSize() {
             return StackSize.sizeOf(Arrays.asList(type));
+        }
+
+        @Override
+        public TypeList subList(int fromIndex, int toIndex) {
+            return new Explicit(super.subList(fromIndex, toIndex));
         }
     }
 
@@ -128,6 +135,11 @@ public interface TypeList extends List<TypeDescription> {
             }
             return stackSize;
         }
+
+        @Override
+        public TypeList subList(int fromIndex, int toIndex) {
+            return new Explicit(super.subList(fromIndex, toIndex));
+        }
     }
 
     /**
@@ -137,7 +149,7 @@ public interface TypeList extends List<TypeDescription> {
 
         @Override
         public TypeDescription get(int index) {
-            throw new NoSuchElementException();
+            throw new IndexOutOfBoundsException("index = " + index);
         }
 
         @Override
@@ -153,6 +165,17 @@ public interface TypeList extends List<TypeDescription> {
         @Override
         public int getStackSize() {
             return 0;
+        }
+
+        @Override
+        public TypeList subList(int fromIndex, int toIndex) {
+            if (fromIndex == toIndex && toIndex == 0) {
+                return this;
+            } else if (fromIndex > toIndex) {
+                throw new IllegalArgumentException("fromIndex(" + fromIndex + ") > toIndex(" + toIndex + ")");
+            } else {
+                throw new IndexOutOfBoundsException("fromIndex = " + fromIndex);
+            }
         }
     }
 }

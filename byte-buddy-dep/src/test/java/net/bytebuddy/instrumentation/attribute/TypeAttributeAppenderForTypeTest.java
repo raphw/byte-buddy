@@ -1,11 +1,12 @@
 package net.bytebuddy.instrumentation.attribute;
 
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.mockito.asm.Type;
 
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
+import java.util.Arrays;
+import java.util.Iterator;
+
 import static org.mockito.Mockito.*;
 
 public class TypeAttributeAppenderForTypeTest extends AbstractTypeAttributeAppenderTest {
@@ -20,11 +21,14 @@ public class TypeAttributeAppenderForTypeTest extends AbstractTypeAttributeAppen
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        assertThat(new TypeAttributeAppender.ForType(FooBar.class).hashCode(), is(new TypeAttributeAppender.ForType(FooBar.class).hashCode()));
-        assertThat(new TypeAttributeAppender.ForType(FooBar.class), is(new TypeAttributeAppender.ForType(FooBar.class)));
-        assertThat(new TypeAttributeAppender.ForType(FooBar.class).hashCode(), not(is(new TypeAttributeAppender.ForType(Object.class).hashCode())));
-        assertThat(new TypeAttributeAppender.ForType(FooBar.class), not(is(new TypeAttributeAppender.ForType(Object.class))));
+    public void testObjectProperties() throws Exception {
+        final Iterator<Class<?>> iterator = Arrays.<Class<?>>asList(Void.class, String.class).iterator();
+        ObjectPropertyAssertion.of(TypeAttributeAppender.ForType.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
+            @Override
+            public Class<?> create() {
+                return iterator.next();
+            }
+        }).apply();
     }
 
     @Baz

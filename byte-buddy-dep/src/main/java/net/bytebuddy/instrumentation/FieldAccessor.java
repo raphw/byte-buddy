@@ -16,10 +16,8 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.ByteBuddyCommons;
 import org.objectweb.asm.MethodVisitor;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isGetter;
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isSetter;
-import static net.bytebuddy.utility.ByteBuddyCommons.isValidIdentifier;
-import static net.bytebuddy.utility.ByteBuddyCommons.resolveModifierContributors;
+import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
+import static net.bytebuddy.utility.ByteBuddyCommons.*;
 
 /**
  * Defines a method to access a given field by following the Java bean conventions for getters and setters:
@@ -62,7 +60,7 @@ public abstract class FieldAccessor implements Instrumentation {
      * @return A field accessor for a field of a given name.
      */
     public static FieldDefinable ofField(String name) {
-        return new ForNamedField(name, defaultAssigner(), defaultConsiderRuntimeType());
+        return new ForNamedField(defaultAssigner(), defaultConsiderRuntimeType(), isValidIdentifier(name));
     }
 
     /**
@@ -73,7 +71,19 @@ public abstract class FieldAccessor implements Instrumentation {
      * @return A field accessor that follows the Java naming conventions for bean properties.
      */
     public static OwnerTypeLocatable ofBeanProperty() {
-        return new ForBeanProperty(defaultAssigner(), defaultConsiderRuntimeType());
+        return of(FieldNameExtractor.ForBeanProperty.INSTANCE);
+    }
+
+    /**
+     * Defines a custom strategy for determining the field that is accessed by this field accessor.
+     *
+     * @param fieldNameExtractor The field name extractor to use.
+     * @return A field accessor using the given field name extractor.
+     */
+    public static OwnerTypeLocatable of(FieldNameExtractor fieldNameExtractor) {
+        return new ForUnnamedField(defaultAssigner(),
+                defaultConsiderRuntimeType(),
+                nonNull(fieldNameExtractor));
     }
 
     /**
@@ -107,15 +117,19 @@ public abstract class FieldAccessor implements Instrumentation {
                                                 Instrumentation.Context instrumentationContext,
                                                 FieldDescription fieldDescription,
                                                 MethodDescription methodDescription) {
+        StackManipulation stackManipulation = assigner.assign(fieldDescription.getFieldType(),
+                methodDescription.getReturnType(),
+                considerRuntimeType);
+        if (!stackManipulation.isValid()) {
+            throw new IllegalStateException("Getter type of " + methodDescription + " is not compatible with " + fieldDescription);
+        }
         return apply(methodVisitor,
                 instrumentationContext,
                 fieldDescription,
                 methodDescription,
                 new StackManipulation.Compound(
                         FieldAccess.forField(fieldDescription).getter(),
-                        assigner.assign(fieldDescription.getFieldType(),
-                                methodDescription.getReturnType(),
-                                considerRuntimeType)
+                        stackManipulation
                 )
         );
     }
@@ -133,7 +147,12 @@ public abstract class FieldAccessor implements Instrumentation {
                                                 Instrumentation.Context instrumentationContext,
                                                 FieldDescription fieldDescription,
                                                 MethodDescription methodDescription) {
-        if (fieldDescription.isFinal()) {
+        StackManipulation stackManipulation = assigner.assign(methodDescription.getParameterTypes().get(0),
+                fieldDescription.getFieldType(),
+                considerRuntimeType);
+        if (!stackManipulation.isValid()) {
+            throw new IllegalStateException("Setter type of " + methodDescription + " is not compatible with " + fieldDescription);
+        } else if (fieldDescription.isFinal()) {
             throw new IllegalArgumentException("Cannot apply setter on final field " + fieldDescription);
         }
         return apply(methodVisitor,
@@ -143,9 +162,7 @@ public abstract class FieldAccessor implements Instrumentation {
                 new StackManipulation.Compound(
                         MethodVariableAccess.forType(fieldDescription.getFieldType())
                                 .loadFromIndex(methodDescription.getParameterOffset(0)),
-                        assigner.assign(methodDescription.getParameterTypes().get(0),
-                                fieldDescription.getFieldType(),
-                                considerRuntimeType),
+                        stackManipulation,
                         FieldAccess.forField(fieldDescription).putter()
                 )
         );
@@ -225,7 +242,7 @@ public abstract class FieldAccessor implements Instrumentation {
 
             @Override
             public FieldLocator make(TypeDescription instrumentedType) {
-                return new ForGivenType(instrumentedType);
+                return new ForGivenType(instrumentedType, instrumentedType);
             }
         }
 
@@ -268,18 +285,14 @@ public abstract class FieldAccessor implements Instrumentation {
             @Override
             public FieldDescription locate(String name) {
                 TypeDescription currentType = instrumentedType;
-                boolean isSelf = true;
                 do {
                     for (FieldDescription fieldDescription : currentType.getDeclaredFields()) {
-                        if (fieldDescription.getName().equals(name)
-                                && (isSelf || !fieldDescription.isPrivate())
-                                && (!fieldDescription.isPackagePrivate() || fieldDescription.isVisibleTo(instrumentedType))) {
+                        if (fieldDescription.getName().equals(name) && fieldDescription.isVisibleTo(instrumentedType)) {
                             return fieldDescription;
                         }
                     }
-                    isSelf = false;
                 } while (!(currentType = currentType.getSupertype()).represents(Object.class));
-                throw new IllegalArgumentException("There is no field " + name + " that is visible for " + instrumentedType);
+                throw new IllegalArgumentException("There is no field '" + name + " that is visible to " + instrumentedType);
             }
 
             @Override
@@ -295,7 +308,7 @@ public abstract class FieldAccessor implements Instrumentation {
 
             @Override
             public String toString() {
-                return "FieldLocator.ForInstrumentedTypeHierarchy{instrumentedType=" + instrumentedType + '}';
+                return "FieldAccessor.FieldLocator.ForInstrumentedTypeHierarchy{instrumentedType=" + instrumentedType + '}';
             }
 
             /**
@@ -319,46 +332,141 @@ public abstract class FieldAccessor implements Instrumentation {
         /**
          * A field locator that only looks up fields that are defined for a given type.
          */
-        static class ForGivenType implements FieldLocator, Factory {
+        static class ForGivenType implements FieldLocator {
 
             /**
              * The target type for which a field should be accessed.
              */
             private final TypeDescription targetType;
+            /**
+             * The instrumented type onto which the field locator is to be applied.
+             */
+            private final TypeDescription instrumentedType;
 
             /**
              * Creates a new field locator for a given type.
              *
-             * @param targetType The type for which fields are to be looked up.
+             * @param targetType       The type for which fields are to be looked up.
+             * @param instrumentedType The instrumented type onto which the field locator is to be applied.
              */
-            public ForGivenType(TypeDescription targetType) {
+            public ForGivenType(TypeDescription targetType, TypeDescription instrumentedType) {
                 this.targetType = targetType;
-            }
-
-            @Override
-            public FieldLocator make(TypeDescription instrumentedType) {
-                return this;
+                this.instrumentedType = instrumentedType;
             }
 
             @Override
             public FieldDescription locate(String name) {
-                return targetType.getDeclaredFields().named(name);
+                FieldDescription fieldDescription = targetType.getDeclaredFields().named(name);
+                if (!fieldDescription.isVisibleTo(instrumentedType)) {
+                    throw new IllegalArgumentException(fieldDescription + " is not visible to " + instrumentedType);
+                }
+                return fieldDescription;
             }
 
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
+                        && instrumentedType.equals(((ForGivenType) other).instrumentedType)
                         && targetType.equals(((ForGivenType) other).targetType);
             }
 
             @Override
             public int hashCode() {
-                return targetType.hashCode();
+                return 31 * instrumentedType.hashCode() + targetType.hashCode();
             }
 
             @Override
             public String toString() {
-                return "FieldLocator.ForGivenType{targetType=" + targetType + '}';
+                return "FieldAccessor.FieldLocator.ForGivenType{" +
+                        "targetType=" + targetType +
+                        ", instrumentedType=" + instrumentedType +
+                        '}';
+            }
+
+            /**
+             * A factory for a field locator locating given type.
+             */
+            public static class Factory implements FieldLocator.Factory {
+
+                /**
+                 * The type to locate.
+                 */
+                private final TypeDescription targetType;
+
+                /**
+                 * Creates a new field locator factory for a given type.
+                 *
+                 * @param targetType The type for which fields are to be looked up.
+                 */
+                public Factory(TypeDescription targetType) {
+                    this.targetType = targetType;
+                }
+
+                @Override
+                public FieldLocator make(TypeDescription instrumentedType) {
+                    return new ForGivenType(targetType, instrumentedType);
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && targetType.equals(((Factory) other).targetType);
+                }
+
+                @Override
+                public int hashCode() {
+                    return targetType.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "FieldAccessor.FieldLocator.ForGivenType.Factory{targetType=" + targetType + '}';
+                }
+            }
+        }
+    }
+
+    /**
+     * A field name extractor is responsible for determining a field name to a method that is implemented
+     * to access this method.
+     */
+    public static interface FieldNameExtractor {
+
+        /**
+         * Extracts a field name to be accessed by a getter or setter method.
+         *
+         * @param methodDescription The method for which a field name is to be determined.
+         * @return The name of the field to be accessed by this method.
+         */
+        String fieldNameFor(MethodDescription methodDescription);
+
+        /**
+         * A {@link net.bytebuddy.instrumentation.FieldAccessor.FieldNameExtractor} that determines a field name
+         * according to the rules of Java bean naming conventions.
+         */
+        static enum ForBeanProperty implements FieldNameExtractor {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public String fieldNameFor(MethodDescription methodDescription) {
+                String name = methodDescription.getInternalName();
+                int crop;
+                if (name.startsWith("get") || name.startsWith("set")) {
+                    crop = 3;
+                } else if (name.startsWith("is")) {
+                    crop = 2;
+                } else {
+                    throw new IllegalArgumentException(methodDescription + " does not follow Java bean naming conventions");
+                }
+                name = name.substring(crop);
+                if (name.length() == 0) {
+                    throw new IllegalArgumentException(methodDescription + " does not specify a bean name");
+                }
+                return Character.toLowerCase(name.charAt(0)) + name.substring(1);
             }
         }
     }
@@ -376,7 +484,7 @@ public abstract class FieldAccessor implements Instrumentation {
          * @param considerRuntimeType {@code true} if a field value's runtime type should be considered.
          * @return This field accessor with the given assigner and runtime type use configuration.
          */
-        Instrumentation assigner(Assigner assigner, boolean considerRuntimeType);
+        Instrumentation withAssigner(Assigner assigner, boolean considerRuntimeType);
     }
 
     /**
@@ -425,13 +533,22 @@ public abstract class FieldAccessor implements Instrumentation {
          * @return A field accessor that defines a field of the given type.
          */
         AssignerConfigurable defineAs(Class<?> type, ModifierContributor.ForField... modifier);
+
+        /**
+         * Defines a field with the given name in the instrumented type.
+         *
+         * @param typeDescription The type of the field.
+         * @param modifier        The modifiers for the field.
+         * @return A field accessor that defines a field of the given type.
+         */
+        AssignerConfigurable defineAs(TypeDescription typeDescription, ModifierContributor.ForField... modifier);
     }
 
     /**
      * Implementation of a field accessor instrumentation where a field is identified by a method's name following
      * the Java specification for bean properties.
      */
-    protected static class ForBeanProperty extends FieldAccessor implements OwnerTypeLocatable {
+    protected static class ForUnnamedField extends FieldAccessor implements OwnerTypeLocatable {
 
         /**
          * A factory for creating a field locator for implementing this field accessor.
@@ -439,14 +556,24 @@ public abstract class FieldAccessor implements Instrumentation {
         private final FieldLocator.Factory fieldLocatorFactory;
 
         /**
+         * The field name extractor to be used.
+         */
+        private final FieldNameExtractor fieldNameExtractor;
+
+        /**
          * Creates a new field accessor instrumentation.
          *
          * @param assigner            The assigner to use.
          * @param considerRuntimeType {@code true} if a field value's runtime type should be considered.
+         * @param fieldNameExtractor  The field name extractor to use.
          */
-        protected ForBeanProperty(Assigner assigner, boolean considerRuntimeType) {
-            super(assigner, considerRuntimeType);
-            fieldLocatorFactory = FieldLocator.ForInstrumentedTypeHierarchy.Factory.INSTANCE;
+        protected ForUnnamedField(Assigner assigner,
+                                  boolean considerRuntimeType,
+                                  FieldNameExtractor fieldNameExtractor) {
+            this(assigner,
+                    considerRuntimeType,
+                    fieldNameExtractor,
+                    FieldLocator.ForInstrumentedTypeHierarchy.Factory.INSTANCE);
         }
 
         /**
@@ -454,34 +581,39 @@ public abstract class FieldAccessor implements Instrumentation {
          *
          * @param assigner            The assigner to use.
          * @param considerRuntimeType {@code true} if a field value's runtime type should be considered.
+         * @param fieldNameExtractor  The field name extractor to use.
          * @param fieldLocatorFactory A factory that will produce a field locator that will be used to find locate
          *                            a field to be accessed.
          */
-        protected ForBeanProperty(Assigner assigner, boolean considerRuntimeType, FieldLocator.Factory fieldLocatorFactory) {
+        protected ForUnnamedField(Assigner assigner,
+                                  boolean considerRuntimeType,
+                                  FieldNameExtractor fieldNameExtractor,
+                                  FieldLocator.Factory fieldLocatorFactory) {
             super(assigner, considerRuntimeType);
+            this.fieldNameExtractor = fieldNameExtractor;
             this.fieldLocatorFactory = fieldLocatorFactory;
         }
 
         @Override
         public AssignerConfigurable in(FieldLocator.Factory fieldLocatorFactory) {
-            return new ForBeanProperty(assigner, considerRuntimeType, fieldLocatorFactory);
+            return new ForUnnamedField(assigner, considerRuntimeType, fieldNameExtractor, nonNull(fieldLocatorFactory));
         }
 
         @Override
         public AssignerConfigurable in(Class<?> type) {
-            return in(new TypeDescription.ForLoadedType(type));
+            return in(new TypeDescription.ForLoadedType(nonNull(type)));
         }
 
         @Override
         public AssignerConfigurable in(TypeDescription typeDescription) {
-            return typeDescription.represents(TargetType.class)
+            return nonNull(typeDescription).represents(TargetType.class)
                     ? in(FieldLocator.ForInstrumentedType.INSTANCE)
-                    : in(new FieldLocator.ForGivenType(typeDescription));
+                    : in(new FieldLocator.ForGivenType.Factory(typeDescription));
         }
 
         @Override
-        public Instrumentation assigner(Assigner assigner, boolean considerRuntimeType) {
-            return new ForBeanProperty(assigner, considerRuntimeType);
+        public Instrumentation withAssigner(Assigner assigner, boolean considerRuntimeType) {
+            return new ForUnnamedField(nonNull(assigner), considerRuntimeType, fieldNameExtractor, fieldLocatorFactory);
         }
 
         @Override
@@ -496,29 +628,29 @@ public abstract class FieldAccessor implements Instrumentation {
 
         @Override
         protected String getFieldName(MethodDescription targetMethod) {
-            String name = targetMethod.getInternalName();
-            name = name.startsWith("is") ? name.substring(2) : name.substring(3);
-            if (name.length() == 0) {
-                throw new IllegalArgumentException(targetMethod + " does not specify a bean name");
-            }
-            return Character.toLowerCase(name.charAt(0)) + name.substring(1);
+            return fieldNameExtractor.fieldNameFor(targetMethod);
         }
 
         @Override
         public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass()) && super.equals(other)
-                    && fieldLocatorFactory.equals(((ForBeanProperty) other).fieldLocatorFactory);
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && super.equals(other)
+                    && fieldNameExtractor.equals(((ForUnnamedField) other).fieldNameExtractor)
+                    && fieldLocatorFactory.equals(((ForUnnamedField) other).fieldLocatorFactory);
         }
 
         @Override
         public int hashCode() {
-            return 31 * super.hashCode() + fieldLocatorFactory.hashCode();
+            return 31 * (31 * super.hashCode() + fieldLocatorFactory.hashCode()) + fieldNameExtractor.hashCode();
         }
 
         @Override
         public String toString() {
-            return "FieldAccessor.ForBeanProperty{" +
+            return "FieldAccessor.ForUnnamedField{" +
+                    "assigner=" + assigner +
+                    "considerRuntimeType=" + considerRuntimeType +
                     "fieldLocatorFactory=" + fieldLocatorFactory +
+                    "fieldNameExtractor=" + fieldNameExtractor +
                     '}';
         }
     }
@@ -546,13 +678,13 @@ public abstract class FieldAccessor implements Instrumentation {
         /**
          * Creates a field accessor instrumentation for a field of a given name.
          *
-         * @param fieldName           The name of the field.
          * @param assigner            The assigner to use.
          * @param considerRuntimeType {@code true} if a field value's runtime type should be considered.
+         * @param fieldName           The name of the field.
          */
-        protected ForNamedField(String fieldName,
-                                Assigner assigner,
-                                boolean considerRuntimeType) {
+        protected ForNamedField(Assigner assigner,
+                                boolean considerRuntimeType,
+                                String fieldName) {
             super(assigner, considerRuntimeType);
             this.fieldName = fieldName;
             preparationHandler = PreparationHandler.NoOp.INSTANCE;
@@ -569,50 +701,59 @@ public abstract class FieldAccessor implements Instrumentation {
          * @param assigner            The assigner to use.
          * @param considerRuntimeType {@code true} if a field value's runtime type should be considered.
          */
-        private ForNamedField(String fieldName,
+        private ForNamedField(Assigner assigner,
+                              boolean considerRuntimeType,
+                              String fieldName,
                               PreparationHandler preparationHandler,
-                              FieldLocator.Factory fieldLocatorFactory,
-                              Assigner assigner,
-                              boolean considerRuntimeType) {
+                              FieldLocator.Factory fieldLocatorFactory) {
             super(assigner, considerRuntimeType);
-            this.fieldLocatorFactory = fieldLocatorFactory;
             this.fieldName = fieldName;
             this.preparationHandler = preparationHandler;
+            this.fieldLocatorFactory = fieldLocatorFactory;
         }
 
         @Override
         public AssignerConfigurable defineAs(Class<?> type, ModifierContributor.ForField... modifier) {
-            return new ForNamedField(fieldName,
-                    new PreparationHandler.FieldDefiner(fieldName, type, modifier),
-                    FieldLocator.ForInstrumentedType.INSTANCE,
-                    assigner,
-                    considerRuntimeType);
+            return defineAs(new TypeDescription.ForLoadedType(nonNull(type)), modifier);
+        }
+
+        @Override
+        public AssignerConfigurable defineAs(TypeDescription typeDescription, ModifierContributor.ForField... modifier) {
+            return new ForNamedField(assigner,
+                    considerRuntimeType,
+                    fieldName,
+                    new PreparationHandler.FieldDefiner(fieldName, nonVoid(typeDescription), nonNull(modifier)),
+                    FieldLocator.ForInstrumentedType.INSTANCE);
         }
 
         @Override
         public AssignerConfigurable in(FieldLocator.Factory fieldLocatorFactory) {
-            return new ForNamedField(fieldName,
+            return new ForNamedField(assigner,
+                    considerRuntimeType,
+                    fieldName,
                     preparationHandler,
-                    fieldLocatorFactory,
-                    assigner,
-                    considerRuntimeType);
+                    nonNull(fieldLocatorFactory));
         }
 
         @Override
         public AssignerConfigurable in(Class<?> type) {
-            return in(new TypeDescription.ForLoadedType(type));
+            return in(new TypeDescription.ForLoadedType(nonNull(type)));
         }
 
         @Override
         public AssignerConfigurable in(TypeDescription typeDescription) {
             return typeDescription.represents(TargetType.class)
                     ? in(FieldLocator.ForInstrumentedType.INSTANCE)
-                    : in(new FieldLocator.ForGivenType(typeDescription));
+                    : in(new FieldLocator.ForGivenType.Factory(typeDescription));
         }
 
         @Override
-        public Instrumentation assigner(Assigner assigner, boolean considerRuntimeType) {
-            return new ForNamedField(fieldName, preparationHandler, fieldLocatorFactory, assigner, considerRuntimeType);
+        public Instrumentation withAssigner(Assigner assigner, boolean considerRuntimeType) {
+            return new ForNamedField(nonNull(assigner),
+                    considerRuntimeType,
+                    fieldName,
+                    preparationHandler,
+                    fieldLocatorFactory);
         }
 
         @Override
@@ -653,6 +794,8 @@ public abstract class FieldAccessor implements Instrumentation {
         @Override
         public String toString() {
             return "FieldAccessor.ForNamedField{" +
+                    "assigner=" + assigner +
+                    "considerRuntimeType=" + considerRuntimeType +
                     "fieldName='" + fieldName + '\'' +
                     ", preparationHandler=" + preparationHandler +
                     ", fieldLocatorFactory=" + fieldLocatorFactory +
@@ -711,13 +854,13 @@ public abstract class FieldAccessor implements Instrumentation {
                 /**
                  * Creates a new preparation handler that defines a given field.
                  *
-                 * @param name        The name of the field that is defined by this preparation handler.
-                 * @param type        The type of the field that is to be defined.
-                 * @param contributor The modifier of the field that is to be defined.
+                 * @param name            The name of the field that is defined by this preparation handler.
+                 * @param typeDescription The type of the field that is to be defined.
+                 * @param contributor     The modifier of the field that is to be defined.
                  */
-                public FieldDefiner(String name, Class<?> type, ModifierContributor.ForField... contributor) {
-                    this.name = isValidIdentifier(name);
-                    typeDescription = new TypeDescription.ForLoadedType(type);
+                public FieldDefiner(String name, TypeDescription typeDescription, ModifierContributor.ForField... contributor) {
+                    this.name = name;
+                    this.typeDescription = typeDescription;
                     modifiers = resolveModifierContributors(ByteBuddyCommons.FIELD_MODIFIER_MASK, contributor);
                 }
 
@@ -786,12 +929,15 @@ public abstract class FieldAccessor implements Instrumentation {
         public Size apply(MethodVisitor methodVisitor,
                           Instrumentation.Context instrumentationContext,
                           MethodDescription instrumentedMethod) {
-            if (isGetter().matches(instrumentedMethod)) {
+            if (isConstructor().matches(instrumentedMethod)) {
+                throw new IllegalArgumentException("Constructors cannot define beans: " + instrumentedMethod);
+            }
+            if (takesArguments(0).and(not(returns(void.class))).matches(instrumentedMethod)) {
                 return applyGetter(methodVisitor,
                         instrumentationContext,
                         fieldLocator.locate(getFieldName(instrumentedMethod)),
                         instrumentedMethod);
-            } else if (isSetter().matches(instrumentedMethod)) {
+            } else if (takesArguments(1).and(returns(void.class)).matches(instrumentedMethod)) {
                 return applySetter(methodVisitor,
                         instrumentationContext,
                         fieldLocator.locate(getFieldName(instrumentedMethod)),

@@ -11,6 +11,7 @@ import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -234,13 +235,8 @@ public class MethodRegistryDefaultTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        assertThat(new MethodRegistry.Default().hashCode(), is(new MethodRegistry.Default().hashCode()));
-        assertThat(new MethodRegistry.Default(), is(new MethodRegistry.Default()));
-        assertThat(new MethodRegistry.Default().append(latentMatchesKnownMethod, simpleInstrumentation, simpleAttributeAppenderFactory).hashCode(),
-                not(is(new MethodRegistry.Default().hashCode())));
-        assertThat(new MethodRegistry.Default().append(latentMatchesKnownMethod, simpleInstrumentation, simpleAttributeAppenderFactory),
-                not(is((MethodRegistry) new MethodRegistry.Default())));
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(MethodRegistry.Default.class).apply();
     }
 
     @Test

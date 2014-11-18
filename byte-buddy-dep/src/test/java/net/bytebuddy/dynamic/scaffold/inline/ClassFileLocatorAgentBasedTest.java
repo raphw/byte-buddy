@@ -9,11 +9,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 
-import java.io.InputStream;
 import java.lang.instrument.Instrumentation;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class ClassFileLocatorAgentBasedTest {
@@ -36,12 +34,9 @@ public class ClassFileLocatorAgentBasedTest {
     @ToolsJarRule.Enforce
     public void testExtraction() throws Exception {
         ClassFileLocator classFileLocator = ClassFileLocator.AgentBased.fromInstalledAgent(getClass().getClassLoader());
-        InputStream inputStream = classFileLocator.classFileFor(new TypeDescription.ForLoadedType(Foo.class));
-        try {
-            assertThat(inputStream, notNullValue());
-        } finally {
-            inputStream.close();
-        }
+        TypeDescription.BinaryRepresentation binaryRepresentation = classFileLocator.classFileFor(new TypeDescription.ForLoadedType(Foo.class));
+        assertThat(binaryRepresentation.isValid(), is(true));
+        assertThat(binaryRepresentation.getData(), notNullValue(byte[].class));
     }
 
     private static class Foo {

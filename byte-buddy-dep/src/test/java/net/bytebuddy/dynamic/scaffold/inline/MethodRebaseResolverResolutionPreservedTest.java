@@ -1,8 +1,8 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -34,7 +34,7 @@ public class MethodRebaseResolverResolutionPreservedTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(MethodRebaseResolver.Resolution.Preserved.class).apply();
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(MethodRebaseResolver.Resolution.Preserved.class).apply();
     }
 }

@@ -42,12 +42,7 @@ public @interface RuntimeType {
          * @return {@code true} if the runtime type should be considered for binding the method's return value.
          */
         public static boolean check(MethodDescription methodDescription) {
-            for (Annotation annotation : methodDescription.getAnnotations()) {
-                if (annotation.annotationType() == RuntimeType.class) {
-                    return true;
-                }
-            }
-            return false;
+            return methodDescription.getDeclaredAnnotations().isAnnotationPresent(RuntimeType.class);
         }
 
         /**
@@ -58,12 +53,9 @@ public @interface RuntimeType {
          * @return {@code true} if the runtime type should be considered for binding this parameter.
          */
         public static boolean check(MethodDescription methodDescription, int parameterIndex) {
-            for (Annotation annotation : methodDescription.getParameterAnnotations()[parameterIndex]) {
-                if (annotation.annotationType() == RuntimeType.class) {
-                    return true;
-                }
-            }
-            return false;
+            return methodDescription.getParameterAnnotations()
+                    .get(parameterIndex)
+                    .isAnnotationPresent(RuntimeType.class);
         }
     }
 }

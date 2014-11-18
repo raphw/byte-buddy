@@ -3,6 +3,7 @@ package net.bytebuddy.instrumentation.method.bytecode.stack.constant;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -14,7 +15,6 @@ import org.objectweb.asm.MethodVisitor;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
@@ -50,7 +50,9 @@ public class FloatConstantTest {
 
     @Test
     public void testBiPush() throws Exception {
-        StackManipulation.Size size = FloatConstant.forValue(value).apply(methodVisitor, instrumentationContext);
+        StackManipulation floatConstant = FloatConstant.forValue(value);
+        assertThat(floatConstant.isValid(), is(true));
+        StackManipulation.Size size = floatConstant.apply(methodVisitor, instrumentationContext);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
         verify(methodVisitor).visitLdcInsn(value);
@@ -59,10 +61,7 @@ public class FloatConstantTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        assertThat(FloatConstant.forValue(value).hashCode(), is(FloatConstant.forValue(value).hashCode()));
-        assertThat(FloatConstant.forValue(value), is(FloatConstant.forValue(value)));
-        assertThat(FloatConstant.forValue(value).hashCode(), not(is(FloatConstant.forValue(value * 2).hashCode())));
-        assertThat(FloatConstant.forValue(value), not(is(FloatConstant.forValue(value * 2))));
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(FloatConstant.ConstantPool.class).apply();
     }
 }

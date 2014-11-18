@@ -1,6 +1,8 @@
 package net.bytebuddy.instrumentation.attribute;
 
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationAppender;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
@@ -61,14 +63,14 @@ public interface MethodAttributeAppender {
         public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
             AnnotationAppender methodAppender =
                     new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethod(methodVisitor));
-            for (Annotation annotation : methodDescription.getAnnotations()) {
+            for (AnnotationDescription annotation : methodDescription.getDeclaredAnnotations()) {
                 methodAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
             }
             int i = 0;
-            for (Annotation[] annotations : methodDescription.getParameterAnnotations()) {
+            for (AnnotationList annotations : methodDescription.getParameterAnnotations()) {
                 AnnotationAppender parameterAppender =
                         new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethodParameter(methodVisitor, i++));
-                for (Annotation annotation : annotations) {
+                for (AnnotationDescription annotation : annotations) {
                     parameterAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
                 }
             }
@@ -137,7 +139,7 @@ public interface MethodAttributeAppender {
 
             @Override
             public String toString() {
-                return "MethodAttributeAppender.Factory.Compound{" + Arrays.toString(factory) + '}';
+                return "MethodAttributeAppender.Factory.Compound{factory=" + Arrays.toString(factory) + '}';
             }
         }
     }
@@ -151,7 +153,7 @@ public interface MethodAttributeAppender {
         /**
          * the annotations this method attribute appender is writing to its target.
          */
-        private final Annotation[] annotation;
+        private final AnnotationList annotations;
 
         /**
          * The target to which the annotations are written to.
@@ -164,7 +166,7 @@ public interface MethodAttributeAppender {
          * @param annotation The annotations to append to the target method.
          */
         public ForAnnotation(Annotation... annotation) {
-            this.annotation = annotation;
+            annotations = new AnnotationList.ForLoadedAnnotation(annotation);
             target = Target.OnMethod.INSTANCE;
         }
 
@@ -175,7 +177,7 @@ public interface MethodAttributeAppender {
          * @param annotation     The annotations to append to the target method parameter.
          */
         public ForAnnotation(int parameterIndex, Annotation... annotation) {
-            this.annotation = annotation;
+            annotations = new AnnotationList.ForLoadedAnnotation(annotation);
             target = new Target.OnMethodParameter(parameterIndex);
         }
 
@@ -183,7 +185,7 @@ public interface MethodAttributeAppender {
         public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
             AnnotationAppender appender =
                     new AnnotationAppender.Default(target.make(methodVisitor, methodDescription));
-            for (Annotation annotation : this.annotation) {
+            for (AnnotationDescription annotation : this.annotations) {
                 appender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
             }
         }
@@ -196,19 +198,19 @@ public interface MethodAttributeAppender {
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && Arrays.equals(annotation, ((ForAnnotation) other).annotation)
+                    && annotations.equals(((ForAnnotation) other).annotations)
                     && target.equals(((ForAnnotation) other).target);
         }
 
         @Override
         public int hashCode() {
-            return 31 * Arrays.hashCode(annotation) + target.hashCode();
+            return 31 * annotations.hashCode() + target.hashCode();
         }
 
         @Override
         public String toString() {
             return "MethodAttributeAppender.ForAnnotation{" +
-                    "annotation=" + Arrays.toString(annotation) +
+                    "annotations=" + annotations +
                     ", target=" + target +
                     '}';
         }
@@ -216,7 +218,7 @@ public interface MethodAttributeAppender {
         /**
          * Represents the target on which this method attribute appender should write its annotations to.
          */
-        private static interface Target {
+        protected static interface Target {
 
             /**
              * Materializes the target for a given creation process.
@@ -260,7 +262,7 @@ public interface MethodAttributeAppender {
                  *
                  * @param parameterIndex The index of the target parameter.
                  */
-                public OnMethodParameter(int parameterIndex) {
+                protected OnMethodParameter(int parameterIndex) {
                     this.parameterIndex = parameterIndex;
                 }
 
@@ -286,7 +288,7 @@ public interface MethodAttributeAppender {
 
                 @Override
                 public String toString() {
-                    return "Target.OnMethodParameter{parameterIndex=" + parameterIndex + '}';
+                    return "MethodAttributeAppender.ForAnnotation.Target.OnMethodParameter{parameterIndex=" + parameterIndex + '}';
                 }
             }
         }
@@ -320,6 +322,7 @@ public interface MethodAttributeAppender {
                 throw new IllegalArgumentException("The constructor " + method + " has more parameters than the " +
                         "instrumented method " + methodDescription);
             }
+            // Instead of implementing the appender we piggy-back on an existing implementation.
             ForInstrumentedMethod.INSTANCE.apply(methodVisitor, new MethodDescription.ForLoadedMethod(method));
         }
 
@@ -439,7 +442,7 @@ public interface MethodAttributeAppender {
 
         @Override
         public String toString() {
-            return "MethodAttributeAppender.Compound{" + Arrays.toString(methodAttributeAppender) + '}';
+            return "MethodAttributeAppender.Compound{methodAttributeAppender=" + Arrays.toString(methodAttributeAppender) + '}';
         }
     }
 }

@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic.scaffold.inline;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.instrumentation.LoadedTypeInitializer;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
@@ -177,8 +178,8 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
     }
 
     @Override
-    public ClassLoader getClassLoader() {
-        return levelType.getClassLoader();
+    public BinaryRepresentation toBinary() {
+        return BinaryRepresentation.Illegal.INSTANCE;
     }
 
     @Override
@@ -192,12 +193,12 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
     }
 
     @Override
-    public String toString() {
-        return "InlineInstrumentedType{" +
-                "levelType=" + levelType +
-                ", name='" + name + '\'' +
-                ", modifiers=" + modifiers +
-                ", interfaces=" + interfaces +
-                '}';
+    public AnnotationList getDeclaredAnnotations() {
+        return levelType.getDeclaredAnnotations();
+    }
+
+    @Override
+    public AnnotationList getInheritedAnnotations() {
+        return levelType.getInheritedAnnotations();
     }
 }

@@ -54,7 +54,7 @@ public enum MethodInvocation {
      */
     public static WithImplicitInvocationTargetType invoke(MethodDescription methodDescription) {
         if (methodDescription.isTypeInitializer()) {
-            throw new IllegalArgumentException("The type initializer cannot be invoked explicitly");
+            return IllegalInvocation.INSTANCE;
         } else if (methodDescription.isStatic()) { // Check this property first, private static methods must use INVOKESTATIC
             return STATIC.new Invocation(methodDescription);
         } else if (methodDescription.isPrivate() || methodDescription.isConstructor() || methodDescription.isDefaultMethod()) {
@@ -67,15 +67,44 @@ public enum MethodInvocation {
     }
 
     /**
+     * An illegal implicit method invocation.
+     */
+    protected static enum IllegalInvocation implements WithImplicitInvocationTargetType {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        @Override
+        public StackManipulation virtual(TypeDescription invocationTarget) {
+            return Illegal.INSTANCE;
+        }
+
+        @Override
+        public StackManipulation special(TypeDescription invocationTarget) {
+            return Illegal.INSTANCE;
+        }
+
+        @Override
+        public boolean isValid() {
+            return false;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+            return Illegal.INSTANCE.apply(methodVisitor, instrumentationContext);
+        }
+    }
+
+    /**
      * Represents a method invocation where the invocation type (static, virtual, special, interface) is derived
      * from the given method's description.
      */
     public static interface WithImplicitInvocationTargetType extends StackManipulation {
 
         /**
-         * Transforms this method invocation into a virtual (or interface) method invocation on the given type. If the
-         * represented method cannot be dispatched on the given invocation target type using virtual invocation,
-         * an exception is thrown.
+         * Transforms this method invocation into a virtual (or interface) method invocation on the given type.
          *
          * @param invocationTarget The type on which the method is to be invoked virtually on.
          * @return A stack manipulation representing this method invocation.
@@ -83,26 +112,18 @@ public enum MethodInvocation {
         StackManipulation virtual(TypeDescription invocationTarget);
 
         /**
-         * Transforms this method invocation into a special invocation on the given type. If the represented method
-         * cannot be dispatched on the given invocation target type using special invocation, an exception is thrown.
+         * Transforms this method invocation into a special invocation on the given type.
          *
          * @param invocationTarget The type on which the method is to be invoked specially on.
          * @return A stack manipulation representing this method invocation.
          */
         StackManipulation special(TypeDescription invocationTarget);
-
-        /**
-         * Returns the invocation type that was determined implicitly for the given method.
-         *
-         * @return The method invocation type that was determined implicitly for the given method.
-         */
-        MethodInvocation getImplicitInvocationType();
     }
 
     /**
      * An implementation of a method invoking stack manipulation.
      */
-    private class Invocation implements WithImplicitInvocationTargetType {
+    protected class Invocation implements WithImplicitInvocationTargetType {
 
         /**
          * The method to be invoked.
@@ -115,16 +136,11 @@ public enum MethodInvocation {
         private final MethodDescription methodDescription;
 
         /**
-         * The operand stack size implication of applying this invocation.
-         */
-        private final Size size;
-
-        /**
          * Creates an invocation of a given method on its declaring type as an invocation target.
          *
          * @param methodDescription The method to be invoked.
          */
-        private Invocation(MethodDescription methodDescription) {
+        protected Invocation(MethodDescription methodDescription) {
             this(methodDescription, methodDescription.getDeclaringType());
         }
 
@@ -134,12 +150,9 @@ public enum MethodInvocation {
          * @param methodDescription The method to be invoked.
          * @param typeDescription   The type on which this method is to be invoked.
          */
-        private Invocation(MethodDescription methodDescription, TypeDescription typeDescription) {
+        protected Invocation(MethodDescription methodDescription, TypeDescription typeDescription) {
             this.typeDescription = typeDescription;
             this.methodDescription = methodDescription;
-            int parameterSize = methodDescription.getStackSize();
-            int returnValueSize = methodDescription.getReturnType().getStackSize().getSize();
-            size = new Size(returnValueSize - parameterSize, Math.max(0, returnValueSize - parameterSize));
         }
 
         @Override
@@ -154,7 +167,9 @@ public enum MethodInvocation {
                     methodDescription.getInternalName(),
                     methodDescription.getDescriptor(),
                     typeDescription.isInterface());
-            return size;
+            int parameterSize = methodDescription.getStackSize();
+            int returnValueSize = methodDescription.getReturnType().getStackSize().getSize();
+            return new Size(returnValueSize - parameterSize, Math.max(0, returnValueSize - parameterSize));
         }
 
         @Override
@@ -177,8 +192,12 @@ public enum MethodInvocation {
             return SPECIAL.new Invocation(methodDescription, invocationTarget);
         }
 
-        @Override
-        public MethodInvocation getImplicitInvocationType() {
+        /**
+         * Returns the outer instance.
+         *
+         * @return The outer instance.
+         */
+        private MethodInvocation getOuterInstance() {
             return MethodInvocation.this;
         }
 
@@ -187,7 +206,7 @@ public enum MethodInvocation {
             if (this == other) return true;
             if (other == null || getClass() != other.getClass()) return false;
             Invocation that = (Invocation) other;
-            return MethodInvocation.this.equals(((Invocation) other).getImplicitInvocationType())
+            return MethodInvocation.this.equals(((Invocation) other).getOuterInstance())
                     && methodDescription.getInternalName().equals(that.methodDescription.getInternalName())
                     && methodDescription.getReturnType().equals(((Invocation) other).methodDescription.getReturnType())
                     && methodDescription.getParameterTypes().equals(((Invocation) other).methodDescription.getParameterTypes())
@@ -209,7 +228,6 @@ public enum MethodInvocation {
             return "MethodInvocation.Invocation{" +
                     "typeDescription=" + typeDescription +
                     ", methodDescription=" + methodDescription +
-                    ", size=" + size +
                     '}';
         }
     }

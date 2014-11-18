@@ -33,6 +33,11 @@ public class FieldListForLoadedFieldTest {
         fieldList.named(QUX);
     }
 
+    @Test
+    public void testSubList() throws Exception {
+        assertThat(fieldList.subList(0, 1), is((FieldList) new FieldList.ForLoadedField(Foo.class.getDeclaredField(FOO))));
+    }
+
     private static class Foo {
 
         private Object foo;

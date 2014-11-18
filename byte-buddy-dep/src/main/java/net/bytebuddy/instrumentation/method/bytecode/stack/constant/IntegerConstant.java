@@ -108,7 +108,7 @@ public enum IntegerConstant implements StackManipulation {
                 } else if (value >= Short.MIN_VALUE && value <= Short.MAX_VALUE) {
                     return new TwoBytePush((short) value);
                 } else {
-                    return new ConstantPoolValue(value);
+                    return new ConstantPool(value);
                 }
         }
     }
@@ -128,7 +128,7 @@ public enum IntegerConstant implements StackManipulation {
      * A stack manipulation that loads a JVM-integer value by a {@code BIPUSH} operation which is
      * legal for single byte integer values.
      */
-    private static class SingleBytePush implements StackManipulation {
+    protected static class SingleBytePush implements StackManipulation {
 
         /**
          * The single byte value to be loaded onto the operand stack.
@@ -140,7 +140,7 @@ public enum IntegerConstant implements StackManipulation {
          *
          * @param value The single byte value to be loaded onto the operand stack.
          */
-        private SingleBytePush(byte value) {
+        protected SingleBytePush(byte value) {
             this.value = value;
         }
 
@@ -176,7 +176,7 @@ public enum IntegerConstant implements StackManipulation {
      * A stack manipulation that loads a JVM-integer value by a {@code SIPUSH} operation which is
      * legal for up to two byte integer values.
      */
-    private static class TwoBytePush implements StackManipulation {
+    protected static class TwoBytePush implements StackManipulation {
 
         /**
          * The two byte value to be loaded onto the operand stack.
@@ -188,7 +188,7 @@ public enum IntegerConstant implements StackManipulation {
          *
          * @param value The two byte value to be loaded onto the operand stack.
          */
-        private TwoBytePush(short value) {
+        protected TwoBytePush(short value) {
             this.value = value;
         }
 
@@ -223,7 +223,7 @@ public enum IntegerConstant implements StackManipulation {
     /**
      * A stack manipulation that loads a JVM-integer value from a constant pool value onto the operand stack.
      */
-    private static class ConstantPoolValue implements StackManipulation {
+    protected static class ConstantPool implements StackManipulation {
 
         /**
          * The JVM-integer value to load onto the operand stack.
@@ -235,7 +235,7 @@ public enum IntegerConstant implements StackManipulation {
          *
          * @param value The JVM-integer value to load onto the operand stack.
          */
-        private ConstantPoolValue(int value) {
+        protected ConstantPool(int value) {
             this.value = value;
         }
 
@@ -253,7 +253,7 @@ public enum IntegerConstant implements StackManipulation {
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && value == ((ConstantPoolValue) other).value;
+                    && value == ((ConstantPool) other).value;
         }
 
         @Override
@@ -263,7 +263,7 @@ public enum IntegerConstant implements StackManipulation {
 
         @Override
         public String toString() {
-            return "IntegerConstant.ConstantPoolValue{value=" + value + '}';
+            return "IntegerConstant.ConstantPool{value=" + value + '}';
         }
     }
 }

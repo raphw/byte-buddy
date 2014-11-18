@@ -2,8 +2,8 @@ package net.bytebuddy.instrumentation.method.bytecode.stack;
 
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -12,6 +12,8 @@ import org.mockito.Mock;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
 public class TypeCreationTest {
@@ -35,7 +37,11 @@ public class TypeCreationTest {
 
     @Test
     public void testTypeCreation() throws Exception {
-        TypeCreation.forType(typeDescription).apply(methodVisitor, instrumentationContext);
+        StackManipulation stackManipulation = TypeCreation.forType(typeDescription);
+        assertThat(stackManipulation.isValid(), is(true));
+        StackManipulation.Size size = stackManipulation.apply(methodVisitor, instrumentationContext);
+        assertThat(size.getSizeImpact(), is(1));
+        assertThat(size.getMaximalSize(), is(1));
         verify(methodVisitor).visitTypeInsn(Opcodes.NEW, FOO);
         verifyNoMoreInteractions(methodVisitor);
         verifyZeroInteractions(instrumentationContext);
@@ -60,7 +66,7 @@ public class TypeCreationTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(TypeCreation.class).apply();
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(TypeCreation.class).apply();
     }
 }

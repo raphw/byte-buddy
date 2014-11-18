@@ -41,4 +41,9 @@ public class MethodListForLoadedTypeTest {
             assertThat(methodList.getOnly(), CoreMatchers.<MethodDescription>equalTo(new MethodDescription.ForLoadedMethod(method)));
         }
     }
+
+    @Test
+    public void testSubList() throws Exception {
+        assertThat(methodList.subList(0, 1).size(), is(1));
+    }
 }

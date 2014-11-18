@@ -105,7 +105,7 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
      * @param typeDescription A description of the primitive type.
      * @return A corresponding primitive unboxing delegate.
      */
-    private static PrimitiveUnboxingDelegate forPrimitive(TypeDescription typeDescription) {
+    protected static PrimitiveUnboxingDelegate forPrimitive(TypeDescription typeDescription) {
         if (typeDescription.represents(boolean.class)) {
             return BOOLEAN;
         } else if (typeDescription.represents(byte.class)) {
@@ -183,7 +183,7 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
     /**
      * An explicitly types unboxing responsible is applied for directly unboxing a wrapper type.
      */
-    private static enum ExplicitlyTypedUnboxingResponsible implements UnboxingResponsible {
+    protected static enum ExplicitlyTypedUnboxingResponsible implements UnboxingResponsible {
 
         /**
          * An unboxing responsible for unboxing a {@link java.lang.Boolean} type.
@@ -245,13 +245,6 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
                     primitiveUnboxingDelegate,
                     PrimitiveWideningDelegate.forPrimitive(primitiveUnboxingDelegate.primitiveType).widenTo(targetType));
         }
-
-        @Override
-        public String toString() {
-            return "PrimitiveUnboxingDelegate.ExplicitlyTypedUnboxingResponsible{" +
-                    "primitiveUnboxingDelegate=" + primitiveUnboxingDelegate +
-                    '}';
-        }
     }
 
     /**
@@ -277,7 +270,7 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
      * were not found to be of a given wrapper type. Instead, this unboxing responsible tries to assign the
      * source type to the primitive target type's wrapper type before performing an unboxing operation.
      */
-    private static class ImplicitlyTypedUnboxingResponsible implements UnboxingResponsible {
+    protected static class ImplicitlyTypedUnboxingResponsible implements UnboxingResponsible {
 
         /**
          * The original type which should be unboxed but is not of any known wrapper type.
@@ -289,7 +282,7 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
          *
          * @param originalType The original type which should be unboxed but is not of any known wrapper type.
          */
-        private ImplicitlyTypedUnboxingResponsible(TypeDescription originalType) {
+        protected ImplicitlyTypedUnboxingResponsible(TypeDescription originalType) {
             this.originalType = originalType;
         }
 

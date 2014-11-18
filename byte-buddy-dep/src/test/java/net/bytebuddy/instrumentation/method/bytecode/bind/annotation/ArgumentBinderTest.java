@@ -1,5 +1,6 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MostSpecificTypeResolver;
 import net.bytebuddy.instrumentation.type.TypeDescription;
@@ -70,9 +71,9 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
         when(targetParameters.size()).thenReturn(targetIndex + 1);
         when(targetParameters.get(targetIndex)).thenReturn(targetType);
         when(target.getParameterTypes()).thenReturn(targetParameters);
-        when(target.getParameterAnnotations()).thenReturn(annotations);
+        when(target.getParameterAnnotations()).thenReturn(AnnotationList.ForLoadedAnnotation.asList(annotations));
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Argument.Binder.INSTANCE
-                .bind(annotation, targetIndex, source, target, instrumentationTarget, assigner);
+                .bind(annotationDescription, targetIndex, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
         Object expectedToken = new MostSpecificTypeResolver.ParameterIndexToken(sourceIndex);
         if (bindingMechanic == Argument.BindingMechanic.UNIQUE) {
@@ -98,7 +99,7 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
         when(typeList.size()).thenReturn(0);
         when(source.getParameterTypes()).thenReturn(typeList);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Argument.Binder.INSTANCE
-                .bind(annotation, targetIndex, source, target, instrumentationTarget, assigner);
+                .bind(annotationDescription, targetIndex, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(false));
         verify(annotation, atLeast(1)).value();
         verify(source, atLeast(1)).getParameterTypes();
@@ -108,6 +109,23 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
     @Test(expected = IllegalArgumentException.class)
     public void testNegativeAnnotationValue() throws Exception {
         when(annotation.value()).thenReturn(-1);
-        Argument.Binder.INSTANCE.bind(annotation, 0, source, target, instrumentationTarget, assigner);
+        Argument.Binder.INSTANCE.bind(annotationDescription, 0, source, target, instrumentationTarget, assigner);
+    }
+
+    @Test
+    public void testDefaultArgument() throws Exception {
+        Argument argument = new Argument.NextUnboundAsDefaultsProvider.NextUnboundArgumentIterator.DefaultArgument(0);
+        Argument loadedArgument = (Argument) Carrier.class.getDeclaredMethod("method", Void.class).getParameterAnnotations()[0][0];
+        assertThat(argument, is(loadedArgument));
+        assertThat(argument.hashCode(), is(loadedArgument.hashCode()));
+        assertThat(argument.toString(), is(loadedArgument.toString()));
+    }
+
+    private static class Carrier {
+
+        private void method(@Argument(0) Void parameter) {
+            /* do nothing */
+        }
+
     }
 }

@@ -5,6 +5,7 @@ import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -44,7 +45,7 @@ public class PipeBinderTest extends AbstractAnnotationBinderTest<Pipe> {
     @Test
     public void testParameterBinding() throws Exception {
         when(targetTypeList.get(0)).thenReturn(targetMethodType);
-        MethodDelegationBinder.ParameterBinding<?> parameterBinding = binder.bind(annotation,
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = binder.bind(annotationDescription,
                 0,
                 source,
                 target,
@@ -57,7 +58,7 @@ public class PipeBinderTest extends AbstractAnnotationBinderTest<Pipe> {
     public void testCannotPipeStaticMethod() throws Exception {
         when(targetTypeList.get(0)).thenReturn(targetMethodType);
         when(source.isStatic()).thenReturn(true);
-        MethodDelegationBinder.ParameterBinding<?> parameterBinding = binder.bind(annotation,
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = binder.bind(annotationDescription,
                 0,
                 source,
                 target,
@@ -69,7 +70,7 @@ public class PipeBinderTest extends AbstractAnnotationBinderTest<Pipe> {
     @Test(expected = IllegalStateException.class)
     public void testParameterBindingOnIllegalTargetTypeThrowsException() throws Exception {
         when(targetTypeList.get(0)).thenReturn(mock(TypeDescription.class));
-        binder.bind(annotation,
+        binder.bind(annotationDescription,
                 0,
                 source,
                 target,
@@ -78,11 +79,11 @@ public class PipeBinderTest extends AbstractAnnotationBinderTest<Pipe> {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        assertThat(binder.hashCode(), is(new Pipe.Binder(targetMethod).hashCode()));
-        assertThat(binder, is((TargetMethodAnnotationDrivenBinder.ParameterBinder<Pipe>) new Pipe.Binder(targetMethod)));
-        assertThat(binder.hashCode(), not(is(new Pipe.Binder(mock(MethodDescription.class)).hashCode())));
-        assertThat(binder, not(is((TargetMethodAnnotationDrivenBinder.ParameterBinder<Pipe>) new Pipe.Binder(mock(MethodDescription.class)))));
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(Pipe.Binder.class).apply();
+        ObjectPropertyAssertion.of(Pipe.Binder.PrecomputedFinding.class).apply();
+        ObjectPropertyAssertion.of(Pipe.Binder.Redirection.class).apply();
+        ObjectPropertyAssertion.of(Pipe.Binder.Redirection.MethodCall.class).skipSynthetic().apply();
     }
 
     @Test

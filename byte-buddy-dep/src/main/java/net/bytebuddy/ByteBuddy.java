@@ -994,7 +994,7 @@ public class ByteBuddy {
 
             @Override
             public String toString() {
-                return "Definable.Undefined{}";
+                return "ByteBuddy.Definable.Undefined{}";
             }
         }
 
@@ -1042,7 +1042,7 @@ public class ByteBuddy {
 
             @Override
             public String toString() {
-                return "Definable.Defined{value=" + value + '}';
+                return "ByteBuddy.Definable.Defined{value=" + value + '}';
             }
         }
     }

@@ -13,8 +13,9 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
-import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
+import net.bytebuddy.utility.StreamDrainer;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -25,6 +26,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+import java.io.InputStream;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.Arrays;
@@ -79,6 +81,8 @@ public class TypeWriterEngineForRedefinitionTest {
     private ByteCodeAppender fooByteCodeAppender, barByteCodeAppender;
     @Mock
     private MethodRebaseResolver.Resolution barResolution;
+    @Mock
+    private TypeDescription.BinaryRepresentation binaryRepresentation;
 
     private List<MethodDescription> invokableMethods;
 
@@ -142,6 +146,7 @@ public class TypeWriterEngineForRedefinitionTest {
         when(barExceptionTypes.toInternalNames()).thenReturn(new String[]{BAZ + QUX});
         when(barResolutionMethod.getExceptionTypes()).thenReturn(barExceptionTypes);
         when(classFileVersion.compareTo(any(ClassFileVersion.class))).thenReturn(1);
+        when(classFileLocator.classFileFor(targetType)).thenReturn(binaryRepresentation);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -160,9 +165,13 @@ public class TypeWriterEngineForRedefinitionTest {
 
     @Test
     public void testTypeCreationWithRebase() throws Exception {
-        when(classFileLocator.classFileFor(targetType))
-                .thenReturn(getClass().getClassLoader().getResourceAsStream(Foo.class.getName()
-                        .replace('.', '/') + ".class"));
+        when(binaryRepresentation.isValid()).thenReturn(true);
+        InputStream inputStream = getClass().getClassLoader().getResourceAsStream(Foo.class.getName().replace('.', '/') + ".class");
+        try {
+            when(binaryRepresentation.getData()).thenReturn(new StreamDrainer().drain(inputStream));
+        } finally {
+            inputStream.close();
+        }
         when(barResolution.isRebased()).thenReturn(true);
         assertThat(new TypeWriter.Engine.ForRedefinition(instrumentedType,
                 targetType,
@@ -214,9 +223,13 @@ public class TypeWriterEngineForRedefinitionTest {
 
     @Test
     public void testTypeCreationWithoutRebase() throws Exception {
-        when(classFileLocator.classFileFor(targetType))
-                .thenReturn(getClass().getClassLoader().getResourceAsStream(Foo.class.getName()
-                        .replace('.', '/') + ".class"));
+        when(binaryRepresentation.isValid()).thenReturn(true);
+        InputStream inputStream = getClass().getClassLoader().getResourceAsStream(Foo.class.getName().replace('.', '/') + ".class");
+        try {
+            when(binaryRepresentation.getData()).thenReturn(new StreamDrainer().drain(inputStream));
+        } finally {
+            inputStream.close();
+        }
         when(barResolution.isRebased()).thenReturn(false);
         assertThat(new TypeWriter.Engine.ForRedefinition(instrumentedType,
                 targetType,
@@ -267,8 +280,8 @@ public class TypeWriterEngineForRedefinitionTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(TypeWriter.Engine.ForRedefinition.class).apply();
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(TypeWriter.Engine.ForRedefinition.class).apply();
     }
 
     @Retention(RetentionPolicy.RUNTIME)

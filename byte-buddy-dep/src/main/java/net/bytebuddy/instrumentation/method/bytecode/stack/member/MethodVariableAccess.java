@@ -181,7 +181,7 @@ public enum MethodVariableAccess {
      * A handler for optionally applying a type casting for each method parameter that is loaded onto the operand
      * stack.
      */
-    private static interface TypeCastingHandler {
+    protected static interface TypeCastingHandler {
 
         /**
          * Returns the given stack manipulation while possibly wrapping the operation by a type casting
@@ -245,13 +245,12 @@ public enum MethodVariableAccess {
                 return "MethodVariableAccess.TypeCastingHandler.ForBridgeTarget{typeIterator=" + typeIterator + '}';
             }
         }
-
     }
 
     /**
      * A stack manipulation for loading a variable of a method's local variable array onto the operand stack.
      */
-    private class ArgumentLoadingStackManipulation implements StackManipulation {
+    protected class ArgumentLoadingStackManipulation implements StackManipulation {
 
         /**
          * The index of the local variable array from which the variable should be loaded.
@@ -263,7 +262,7 @@ public enum MethodVariableAccess {
          *
          * @param variableIndex The index of the local variable array from which the variable should be loaded.
          */
-        private ArgumentLoadingStackManipulation(int variableIndex) {
+        protected ArgumentLoadingStackManipulation(int variableIndex) {
             this.variableIndex = variableIndex;
         }
 
@@ -317,7 +316,9 @@ public enum MethodVariableAccess {
 
         @Override
         public String toString() {
-            return "MethodVariableAccess.ArgumentLoadingStackManipulation{variableIndex=" + variableIndex + '}';
+            return "MethodVariableAccess.ArgumentLoadingStackManipulation{" +
+                    "methodVariableAccess=" + MethodVariableAccess.this +
+                    " ,variableIndex=" + variableIndex + '}';
         }
     }
 }

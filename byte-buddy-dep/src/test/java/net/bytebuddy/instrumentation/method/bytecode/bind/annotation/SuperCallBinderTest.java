@@ -38,7 +38,7 @@ public class SuperCallBinderTest extends AbstractAnnotationBinderTest<SuperCall>
         when(targetParameterType.represents(any(Class.class))).thenReturn(true);
         when(specialMethodInvocation.isValid()).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = SuperCall.Binder.INSTANCE
-                .bind(annotation, 0, source, target, instrumentationTarget, assigner);
+                .bind(annotationDescription, 0, source, target, instrumentationTarget, assigner);
         verify(instrumentationTarget).invokeSuper(source, Instrumentation.Target.MethodLookup.Default.EXACT);
         verifyNoMoreInteractions(instrumentationTarget);
         assertThat(parameterBinding.isValid(), is(true));
@@ -49,7 +49,7 @@ public class SuperCallBinderTest extends AbstractAnnotationBinderTest<SuperCall>
         when(targetParameterType.represents(any(Class.class))).thenReturn(true);
         when(specialMethodInvocation.isValid()).thenReturn(false);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = SuperCall.Binder.INSTANCE
-                .bind(annotation, 0, source, target, instrumentationTarget, assigner);
+                .bind(annotationDescription, 0, source, target, instrumentationTarget, assigner);
         verify(instrumentationTarget).invokeSuper(source, Instrumentation.Target.MethodLookup.Default.EXACT);
         verifyNoMoreInteractions(instrumentationTarget);
         assertThat(parameterBinding.isValid(), is(false));
@@ -57,6 +57,6 @@ public class SuperCallBinderTest extends AbstractAnnotationBinderTest<SuperCall>
 
     @Test(expected = IllegalStateException.class)
     public void testWrongTypeThrowsException() throws Exception {
-        SuperCall.Binder.INSTANCE.bind(annotation, 0, source, target, instrumentationTarget, assigner);
+        SuperCall.Binder.INSTANCE.bind(annotationDescription, 0, source, target, instrumentationTarget, assigner);
     }
 }

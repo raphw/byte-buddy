@@ -29,7 +29,7 @@ public class FieldAccessorTest<T extends CallTraceable,
     private static final String GET = "get", SET = "set";
     private static final Object STATIC_FIELD = null;
 
-    private static final String STRING_VALUE = "foo";
+    private static final String STRING_VALUE = "qux";
     private static final boolean BOOLEAN_VALUE = true;
     private static final byte BYTE_VALUE = 42;
     private static final short SHORT_VALUE = 42;
@@ -39,7 +39,7 @@ public class FieldAccessorTest<T extends CallTraceable,
     private static final float FLOAT_VALUE = 42f;
     private static final double DOUBLE_VALUE = 42d;
 
-    private static final String STRING_DEFAULT_VALUE = "bar";
+    private static final String STRING_DEFAULT_VALUE = "baz";
     private static final boolean BOOLEAN_DEFAULT_VALUE = false;
     private static final byte BYTE_DEFAULT_VALUE = 0;
     private static final short SHORT_DEFAULT_VALUE = 0;
@@ -225,8 +225,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected boolean foo = BOOLEAN_VALUE;
-
-
     }
 
     public static class BooleanInstanceSetter extends CallTraceable {
@@ -236,8 +234,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected boolean foo = BOOLEAN_DEFAULT_VALUE;
-
-
     }
 
     public static class BooleanClassGetter extends CallTraceable {
@@ -248,8 +244,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected static boolean foo = BOOLEAN_VALUE;
-
-
     }
 
     public static class BooleanClassSetter extends CallTraceable {
@@ -259,8 +253,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected static boolean foo = BOOLEAN_DEFAULT_VALUE;
-
-
     }
 
     public static class ByteInstanceGetter extends CallTraceable {
@@ -271,8 +263,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected byte foo = BYTE_VALUE;
-
-
     }
 
     public static class ByteInstanceSetter extends CallTraceable {
@@ -282,8 +272,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected byte foo = BYTE_DEFAULT_VALUE;
-
-
     }
 
     public static class ByteClassGetter extends CallTraceable {
@@ -294,8 +282,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected static byte foo = BYTE_VALUE;
-
-
     }
 
     public static class ByteClassSetter extends CallTraceable {
@@ -305,8 +291,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected static byte foo = BYTE_DEFAULT_VALUE;
-
-
     }
 
     public static class ShortInstanceGetter extends CallTraceable {
@@ -317,8 +301,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected short foo = SHORT_VALUE;
-
-
     }
 
     public static class ShortInstanceSetter extends CallTraceable {
@@ -328,8 +310,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected short foo = SHORT_DEFAULT_VALUE;
-
-
     }
 
     public static class ShortClassGetter extends CallTraceable {
@@ -340,8 +320,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected static short foo = SHORT_VALUE;
-
-
     }
 
     public static class ShortClassSetter extends CallTraceable {
@@ -351,8 +329,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected static short foo = SHORT_DEFAULT_VALUE;
-
-
     }
 
     public static class IntegerInstanceGetter extends CallTraceable {
@@ -363,8 +339,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected int foo = INT_VALUE;
-
-
     }
 
     public static class IntegerInstanceSetter extends CallTraceable {
@@ -374,8 +348,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected int foo = INT_DEFAULT_VALUE;
-
-
     }
 
     public static class IntegerClassGetter extends CallTraceable {
@@ -386,8 +358,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected static int foo = INT_VALUE;
-
-
     }
 
     public static class IntegerClassSetter extends CallTraceable {
@@ -397,8 +367,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected static int foo = INT_DEFAULT_VALUE;
-
-
     }
 
     public static class CharacterInstanceGetter extends CallTraceable {
@@ -409,8 +377,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected char foo = CHAR_VALUE;
-
-
     }
 
     public static class CharacterInstanceSetter extends CallTraceable {
@@ -420,8 +386,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected char foo = CHAR_DEFAULT_VALUE;
-
-
     }
 
     public static class CharacterClassGetter extends CallTraceable {
@@ -432,8 +396,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected static char foo = CHAR_VALUE;
-
-
     }
 
     public static class CharacterClassSetter extends CallTraceable {
@@ -443,8 +405,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected static char foo = CHAR_DEFAULT_VALUE;
-
-
     }
 
     public static class LongInstanceGetter extends CallTraceable {
@@ -455,8 +415,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected long foo = LONG_VALUE;
-
-
     }
 
     public static class LongInstanceSetter extends CallTraceable {
@@ -466,8 +424,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected long foo = LONG_DEFAULT_VALUE;
-
-
     }
 
     public static class LongClassGetter extends CallTraceable {
@@ -478,8 +434,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected static long foo = LONG_VALUE;
-
-
     }
 
     public static class LongClassSetter extends CallTraceable {
@@ -489,8 +443,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected static long foo = LONG_DEFAULT_VALUE;
-
-
     }
 
     public static class FloatInstanceGetter extends CallTraceable {
@@ -501,8 +453,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected float foo = FLOAT_VALUE;
-
-
     }
 
     public static class FloatInstanceSetter extends CallTraceable {
@@ -512,8 +462,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected float foo = FLOAT_DEFAULT_VALUE;
-
-
     }
 
     public static class FloatClassGetter extends CallTraceable {
@@ -524,8 +472,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected static float foo = FLOAT_VALUE;
-
-
     }
 
     public static class FloatClassSetter extends CallTraceable {
@@ -535,8 +481,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected static float foo = FLOAT_DEFAULT_VALUE;
-
-
     }
 
     public static class DoubleInstanceGetter extends CallTraceable {
@@ -547,8 +491,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected double foo = DOUBLE_VALUE;
-
-
     }
 
     public static class DoubleInstanceSetter extends CallTraceable {
@@ -558,8 +500,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected double foo = DOUBLE_DEFAULT_VALUE;
-
-
     }
 
     public static class DoubleClassGetter extends CallTraceable {
@@ -570,8 +510,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected static double foo = DOUBLE_VALUE;
-
-
     }
 
     public static class DoubleClassSetter extends CallTraceable {
@@ -581,8 +519,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected static double foo = DOUBLE_DEFAULT_VALUE;
-
-
     }
 
     public static class ObjectInstanceGetter extends CallTraceable {
@@ -593,8 +529,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected Object foo = STRING_VALUE;
-
-
     }
 
     public static class ObjectInstanceSetter extends CallTraceable {
@@ -604,8 +538,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected Object foo = STRING_DEFAULT_VALUE;
-
-
     }
 
     public static class ObjectClassGetter extends CallTraceable {
@@ -616,8 +548,6 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected static Object foo = STRING_VALUE;
-
-
     }
 
     public static class ObjectClassSetter extends CallTraceable {
@@ -627,7 +557,5 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
 
         protected static Object foo = STRING_DEFAULT_VALUE;
-
-
     }
 }

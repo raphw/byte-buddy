@@ -1,11 +1,12 @@
 package net.bytebuddy;
 
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.modifier.EnumerationState;
 import net.bytebuddy.modifier.SyntheticState;
 import net.bytebuddy.modifier.TypeManifestation;
 import net.bytebuddy.modifier.Visibility;
-import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -72,10 +73,6 @@ public class NamingStrategyUnnamedTypeDefaultTest {
     public void testTypeManifestationProperty() throws Exception {
         assertThat(new NamingStrategy.UnnamedType.Default(superType, interfaceTypes, Opcodes.ACC_ABSTRACT, classFileVersion).getTypeManifestation(),
                 is(TypeManifestation.ABSTRACT));
-        assertThat(new NamingStrategy.UnnamedType.Default(superType, interfaceTypes, Opcodes.ACC_ABSTRACT | Opcodes.ACC_ENUM, classFileVersion).getTypeManifestation(),
-                is(TypeManifestation.ABSTRACT_ENUM));
-        assertThat(new NamingStrategy.UnnamedType.Default(superType, interfaceTypes, Opcodes.ACC_ENUM | Opcodes.ACC_ENUM, classFileVersion).getTypeManifestation(),
-                is(TypeManifestation.ENUM));
         assertThat(new NamingStrategy.UnnamedType.Default(superType, interfaceTypes, Opcodes.ACC_FINAL, classFileVersion).getTypeManifestation(),
                 is(TypeManifestation.FINAL));
         assertThat(new NamingStrategy.UnnamedType.Default(superType, interfaceTypes, Opcodes.ACC_INTERFACE, classFileVersion).getTypeManifestation(),
@@ -85,7 +82,15 @@ public class NamingStrategyUnnamedTypeDefaultTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(NamingStrategy.UnnamedType.Default.class).apply();
+    public void testEnumerationStateProperty() throws Exception {
+        assertThat(new NamingStrategy.UnnamedType.Default(superType, interfaceTypes, Opcodes.ACC_ENUM, classFileVersion).getEnumerationState(),
+                is(EnumerationState.ENUMERATION));
+        assertThat(new NamingStrategy.UnnamedType.Default(superType, interfaceTypes, 0, classFileVersion).getEnumerationState(),
+                is(EnumerationState.NON_ENUMERATION));
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(NamingStrategy.UnnamedType.Default.class).apply();
     }
 }

@@ -5,6 +5,7 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.instrumentation.Instrumentation;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
@@ -26,13 +27,13 @@ import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
 import net.bytebuddy.modifier.Visibility;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
 
 import java.io.Serializable;
 import java.lang.annotation.*;
 import java.util.*;
 
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
+import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
  * A target method parameter that is annotated with this annotation allows to forward an intercepted method
@@ -130,26 +131,48 @@ public @interface Pipe {
          * annotation.
          */
         public static TargetMethodAnnotationDrivenBinder.ParameterBinder<Pipe> install(Class<?> type) {
-            TypeDescription forwardingType = new TypeDescription.ForLoadedType(type);
-            if (!forwardingType.isInterface()) {
-                throw new IllegalArgumentException(String.format("The installed type %s is not an interface", type));
-            } else if (forwardingType.getInterfaces().size() > 0) {
-                throw new IllegalArgumentException(String.format("The installed type %s is not a zero-inheritance " +
-                        "interface", type));
-            } else if ((forwardingType.getModifiers() & Opcodes.ACC_PUBLIC) == 0) {
-                throw new IllegalArgumentException(String.format("The installed type %s is not public", type));
+            return install(new TypeDescription.ForLoadedType(nonNull(type)));
+        }
+
+        /**
+         * Installs a given type for use on a {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Pipe}
+         * annotation. The given type must be an interface without any super interfaces and a single method which
+         * maps an {@link java.lang.Object} type to another {@link java.lang.Object} type. The use of generics is
+         * permitted.
+         *
+         * @param typeDescription The type to install.
+         * @return A binder for the {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Pipe}
+         * annotation.
+         */
+        public static TargetMethodAnnotationDrivenBinder.ParameterBinder<Pipe> install(TypeDescription typeDescription) {
+            return new Binder(onlyMethod(nonNull(typeDescription)));
+        }
+
+        /**
+         * Locates the only method of a type that is compatible to being overridden for invoking the proxy.
+         *
+         * @param typeDescription The type that is being installed.
+         * @return Its only method after validation.
+         */
+        private static MethodDescription onlyMethod(TypeDescription typeDescription) {
+            if (!typeDescription.isInterface()) {
+                throw new IllegalArgumentException(typeDescription + " is not an interface");
+            } else if (typeDescription.getInterfaces().size() > 0) {
+                throw new IllegalArgumentException(typeDescription + " must not extend other interfaces");
+            } else if (!typeDescription.isPublic()) {
+                throw new IllegalArgumentException(typeDescription + " is mot public");
             }
-            MethodList methodCandidates = forwardingType.getDeclaredMethods().filter(not(isStatic()));
+            MethodList methodCandidates = typeDescription.getDeclaredMethods().filter(not(isStatic()));
             if (methodCandidates.size() != 1) {
-                throw new IllegalArgumentException(String.format("The installed type %s does not declare exactly " +
-                        "one non-static method", type));
+                throw new IllegalArgumentException(typeDescription + " must declare exactly one non-static method");
             }
-            methodCandidates = methodCandidates.filter(takesArguments(Object.class).and(returns(Object.class)));
-            if (methodCandidates.size() != 1) {
-                throw new IllegalArgumentException(String.format("The installed type %s does not declare " +
-                        "an Object-typed argument or Object-typed return type method", type));
+            MethodDescription methodDescription = methodCandidates.getOnly();
+            if (!methodDescription.getReturnType().represents(Object.class)) {
+                throw new IllegalArgumentException(methodDescription + " does not return an Object-type");
+            } else if (methodDescription.getParameterTypes().size() != 1 || !methodDescription.getParameterTypes().get(0).represents(Object.class)) {
+                throw new IllegalArgumentException(methodDescription + " does not take a single Object-typed argument");
             }
-            return new Binder(methodCandidates.getOnly());
+            return methodDescription;
         }
 
         @Override
@@ -158,7 +181,7 @@ public @interface Pipe {
         }
 
         @Override
-        public MethodDelegationBinder.ParameterBinding<?> bind(Pipe annotation,
+        public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<Pipe> annotation,
                                                                int targetParameterIndex,
                                                                MethodDescription source,
                                                                MethodDescription target,
@@ -174,7 +197,7 @@ public @interface Pipe {
             return new MethodDelegationBinder.ParameterBinding.Anonymous(new Redirection(forwardingMethod.getDeclaringType(),
                     source,
                     assigner,
-                    annotation.serializableProxy(),
+                    annotation.loadSilent().serializableProxy(),
                     this));
         }
 
@@ -333,6 +356,7 @@ public @interface Pipe {
                 return serializableProxy == that.serializableProxy
                         && assigner.equals(that.assigner)
                         && forwardingType.equals(that.forwardingType)
+                        && methodLookupEngineFactory.equals(that.methodLookupEngineFactory)
                         && sourceMethod.equals(that.sourceMethod);
             }
 
@@ -341,6 +365,7 @@ public @interface Pipe {
                 int result = forwardingType.hashCode();
                 result = 31 * result + sourceMethod.hashCode();
                 result = 31 * result + assigner.hashCode();
+                result = 31 * result + methodLookupEngineFactory.hashCode();
                 result = 31 * result + (serializableProxy ? 1 : 0);
                 return result;
             }
@@ -352,6 +377,7 @@ public @interface Pipe {
                         ", sourceMethod=" + sourceMethod +
                         ", assigner=" + assigner +
                         ", serializableProxy=" + serializableProxy +
+                        ", methodLookupEngineFactory=" + methodLookupEngineFactory +
                         '}';
             }
 
@@ -360,7 +386,7 @@ public @interface Pipe {
              * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Pipe.Binder.Redirection}'s
              * constructor.
              */
-            private static enum ConstructorCall implements Instrumentation {
+            protected static enum ConstructorCall implements Instrumentation {
 
                 /**
                  * The singleton instance.
@@ -396,7 +422,7 @@ public @interface Pipe {
                  * The appender for implementing the
                  * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Pipe.Binder.Redirection.ConstructorCall}.
                  */
-                private class Appender implements ByteCodeAppender {
+                private static class Appender implements ByteCodeAppender {
 
                     /**
                      * The instrumented type being created.
@@ -434,7 +460,7 @@ public @interface Pipe {
                         }
                         StackManipulation.Size stackSize = new StackManipulation.Compound(
                                 thisReference,
-                                MethodInvocation.invoke(objectTypeDefaultConstructor),
+                                MethodInvocation.invoke(ConstructorCall.INSTANCE.objectTypeDefaultConstructor),
                                 new StackManipulation.Compound(fieldLoading),
                                 MethodReturn.VOID
                         ).apply(methodVisitor, instrumentationContext);
@@ -464,7 +490,7 @@ public @interface Pipe {
              * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Pipe.Binder.Redirection}'s
              * forwarding method.
              */
-            private static class MethodCall implements Instrumentation {
+            protected static class MethodCall implements Instrumentation {
 
                 /**
                  * The method that is invoked by the implemented method.
@@ -559,7 +585,7 @@ public @interface Pipe {
                                 new StackManipulation.Compound(fieldLoading),
                                 MethodInvocation.invoke(redirectedMethod),
                                 assigner.assign(redirectedMethod.getReturnType(), instrumentedMethod.getReturnType(), false),
-                                MethodReturn.ANY_REFERENCE
+                                MethodReturn.REFERENCE
                         ).apply(methodVisitor, instrumentationContext);
                         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                     }
@@ -601,7 +627,7 @@ public @interface Pipe {
          * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Pipe.Binder}. By using this precomputed
          * result, method look-ups can be avoided.
          */
-        private class PrecomputedFinding implements Finding {
+        protected class PrecomputedFinding implements Finding {
 
             /**
              * The type which was looked up. This type should be the instrumented type itself and therefore defines

@@ -271,7 +271,7 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
 
     @Override
     public String toString() {
-        return "RebaseDynamicTypeBuilder{" +
+        return "InlineDynamicTypeBuilder{" +
                 "classFileVersion=" + classFileVersion +
                 ", namingStrategy=" + namingStrategy +
                 ", levelType=" + targetType +

@@ -4,17 +4,20 @@ import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
+import org.mockito.asm.Type;
 import org.objectweb.asm.MethodVisitor;
 
+import java.util.Arrays;
+import java.util.Iterator;
+
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class MethodTypeConstantTest {
@@ -46,12 +49,13 @@ public class MethodTypeConstantTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        MethodDescription other = mock(MethodDescription.class);
-        when(other.getDescriptor()).thenReturn(BAR);
-        assertThat(new MethodTypeConstant(methodDescription).hashCode(), is(new MethodTypeConstant(methodDescription).hashCode()));
-        assertThat(new MethodTypeConstant(methodDescription), is(new MethodTypeConstant(methodDescription)));
-        assertThat(new MethodTypeConstant(methodDescription).hashCode(), not(is(new MethodTypeConstant(other).hashCode())));
-        assertThat(new MethodTypeConstant(methodDescription), not(is(new MethodTypeConstant(other))));
+    public void testObjectProperties() throws Exception {
+        final Iterator<String> iterator = Arrays.asList(Type.getDescriptor(Void.class), Type.getDescriptor(String.class)).iterator();
+        ObjectPropertyAssertion.of(MethodTypeConstant.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription>() {
+            @Override
+            public void apply(MethodDescription mock) {
+                when(mock.getDescriptor()).thenReturn(iterator.next());
+            }
+        }).apply();
     }
 }

@@ -63,6 +63,6 @@ public class PrimitiveTypeAwareAssigner implements Assigner {
 
     @Override
     public String toString() {
-        return "PrimitiveTypeAwareAssigner{chained=" + referenceTypeAwareAssigner + '}';
+        return "PrimitiveTypeAwareAssigner{referenceTypeAwareAssigner=" + referenceTypeAwareAssigner + '}';
     }
 }

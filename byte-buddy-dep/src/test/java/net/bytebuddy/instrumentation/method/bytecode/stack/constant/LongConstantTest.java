@@ -3,6 +3,7 @@ package net.bytebuddy.instrumentation.method.bytecode.stack.constant;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -14,7 +15,6 @@ import org.objectweb.asm.MethodVisitor;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
@@ -51,7 +51,9 @@ public class LongConstantTest {
 
     @Test
     public void testBiPush() throws Exception {
-        StackManipulation.Size size = LongConstant.forValue(value).apply(methodVisitor, instrumentationContext);
+        StackManipulation longConstant = LongConstant.forValue(value);
+        assertThat(longConstant.isValid(), is(true));
+        StackManipulation.Size size = longConstant.apply(methodVisitor, instrumentationContext);
         assertThat(size.getSizeImpact(), is(2));
         assertThat(size.getMaximalSize(), is(2));
         verify(methodVisitor).visitLdcInsn(value);
@@ -60,10 +62,7 @@ public class LongConstantTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        assertThat(LongConstant.forValue(value).hashCode(), is(LongConstant.forValue(value).hashCode()));
-        assertThat(LongConstant.forValue(value), is(LongConstant.forValue(value)));
-        assertThat(LongConstant.forValue(value).hashCode(), not(is(LongConstant.forValue(value * 2).hashCode())));
-        assertThat(LongConstant.forValue(value), not(is(LongConstant.forValue(value * 2))));
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(LongConstant.ConstantPool.class).apply();
     }
 }

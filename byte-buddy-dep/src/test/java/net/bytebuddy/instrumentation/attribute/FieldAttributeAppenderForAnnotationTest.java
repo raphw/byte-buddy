@@ -1,8 +1,10 @@
 package net.bytebuddy.instrumentation.attribute;
 
-import net.bytebuddy.utility.HashCodeEqualsTester;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.mockito.asm.Type;
+
+import java.lang.annotation.Annotation;
 
 import static org.mockito.Mockito.*;
 
@@ -32,7 +34,23 @@ public class FieldAttributeAppenderForAnnotationTest extends AbstractFieldAttrib
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(FieldAttributeAppender.ForAnnotation.class).apply();
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(FieldAttributeAppender.ForAnnotation.class).generate(new ObjectPropertyAssertion.Generator<Annotation>() {
+            @Override
+            public Class<? extends Annotation> generate() {
+                return SimpleAnnotation.class;
+            }
+        }).refine(new ObjectPropertyAssertion.Refinement<SimpleAnnotation>() {
+            @Override
+            public void apply(SimpleAnnotation mock) {
+                doReturn(SimpleAnnotation.class).when(mock).annotationType();
+                when(mock.value()).thenReturn("annotation" + System.identityHashCode(mock));
+            }
+        }).apply();
+    }
+
+    public static @interface SimpleAnnotation {
+
+        String value();
     }
 }

@@ -1,5 +1,7 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.utility.MockitoRule;
@@ -23,12 +25,16 @@ public class BindingPriorityResolverTest {
     @Mock
     private MethodDelegationBinder.MethodBinding left, right;
     @Mock
+    private AnnotationList leftAnnotations, rightAnnotations;
+    @Mock
     private BindingPriority highPriority, lowPriority;
 
     @Before
     public void setUp() throws Exception {
         when(left.getTarget()).thenReturn(leftMethod);
         when(right.getTarget()).thenReturn(rightMethod);
+        when(leftMethod.getDeclaredAnnotations()).thenReturn(leftAnnotations);
+        when(rightMethod.getDeclaredAnnotations()).thenReturn(rightAnnotations);
         when(highPriority.value()).thenReturn(BindingPriority.DEFAULT * 2d);
         when(lowPriority.value()).thenReturn(BindingPriority.DEFAULT / 2d);
     }
@@ -41,16 +47,16 @@ public class BindingPriorityResolverTest {
 
     @Test
     public void testLeftPrioritized() throws Exception {
-        when(leftMethod.getAnnotation(BindingPriority.class)).thenReturn(highPriority);
-        when(rightMethod.getAnnotation(BindingPriority.class)).thenReturn(lowPriority);
+        when(leftAnnotations.ofType(BindingPriority.class)).thenReturn(AnnotationDescription.ForLoadedAnnotation.of(highPriority));
+        when(rightAnnotations.ofType(BindingPriority.class)).thenReturn(AnnotationDescription.ForLoadedAnnotation.of(lowPriority));
         assertThat(BindingPriority.Resolver.INSTANCE.resolve(source, left, right),
                 is(MethodDelegationBinder.AmbiguityResolver.Resolution.LEFT));
     }
 
     @Test
     public void testRightPrioritized() throws Exception {
-        when(leftMethod.getAnnotation(BindingPriority.class)).thenReturn(lowPriority);
-        when(rightMethod.getAnnotation(BindingPriority.class)).thenReturn(highPriority);
+        when(leftAnnotations.ofType(BindingPriority.class)).thenReturn(AnnotationDescription.ForLoadedAnnotation.of(lowPriority));
+        when(rightAnnotations.ofType(BindingPriority.class)).thenReturn(AnnotationDescription.ForLoadedAnnotation.of(highPriority));
         assertThat(BindingPriority.Resolver.INSTANCE.resolve(source, left, right),
                 is(MethodDelegationBinder.AmbiguityResolver.Resolution.RIGHT));
     }

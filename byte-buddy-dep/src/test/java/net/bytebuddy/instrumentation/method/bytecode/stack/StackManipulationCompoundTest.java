@@ -1,8 +1,8 @@
 package net.bytebuddy.instrumentation.method.bytecode.stack;
 
 import net.bytebuddy.instrumentation.Instrumentation;
-import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -61,7 +61,7 @@ public class StackManipulationCompoundTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(StackManipulation.Compound.class).apply();
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(StackManipulation.Compound.class).apply();
     }
 }

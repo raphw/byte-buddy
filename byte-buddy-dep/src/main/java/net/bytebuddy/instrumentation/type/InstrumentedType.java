@@ -1,13 +1,12 @@
 package net.bytebuddy.instrumentation.type;
 
 import net.bytebuddy.instrumentation.LoadedTypeInitializer;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
-import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -77,7 +76,7 @@ public interface InstrumentedType extends TypeDescription {
     /**
      * An abstract base implementation of an instrumented type.
      */
-    abstract static class AbstractBase extends AbstractTypeDescription implements InstrumentedType {
+    abstract static class AbstractBase extends AbstractTypeDescription.OfSimpleType implements InstrumentedType {
 
         /**
          * The loaded type initializer for this instrumented type.
@@ -130,37 +129,6 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         /**
-         * Checks if a specific type is assignable to another type where the source type must be a super
-         * type of the target type.
-         *
-         * @param sourceType The source type to which another type is to be assigned to.
-         * @param targetType The target type that is to be assigned to the source type.
-         * @return {@code true} if the target type is assignable to the source type.
-         */
-        private static boolean isAssignable(TypeDescription sourceType, TypeDescription targetType) {
-            // Means that '[sourceType] var = ([targetType]) val;' is a valid assignment. This is true, if:
-            // (1) Both types are equal.
-            if (sourceType.equals(targetType)) {
-                return true;
-            }
-            // The sub type has a super type and this super type is assignable to the super type.
-            TypeDescription targetTypeSuperType = targetType.getSupertype();
-            if (targetTypeSuperType != null && targetTypeSuperType.isAssignableTo(sourceType)) {
-                return true;
-            }
-            // (2) If the target type is an interface, any of this type's interfaces might be assignable to it.
-            if (sourceType.isInterface()) {
-                for (TypeDescription interfaceType : targetType.getInterfaces()) {
-                    if (interfaceType.isAssignableTo(sourceType)) {
-                        return true;
-                    }
-                }
-            }
-            // (3) None of these criteria are true, i.e. the types are not assignable.
-            return false;
-        }
-
-        /**
          * Substitutes an <i>outdated</i> reference to the instrumented type with a reference to <i>this</i>.
          *
          * @param typeName        The non-internal name of this instrumented type.
@@ -173,93 +141,28 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
-            return false;
-        }
-
-        @Override
-        public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-            return null;
-        }
-
-        @Override
-        public Annotation[] getAnnotations() {
-            return new Annotation[0];
-        }
-
-        @Override
-        public Annotation[] getDeclaredAnnotations() {
-            return new Annotation[0];
-        }
-
-        @Override
-        public boolean isInstance(Object object) {
-            return isAssignableFrom(object.getClass());
-        }
-
-        @Override
-        public boolean isAssignableFrom(Class<?> type) {
-            return isAssignableFrom(new ForLoadedType(type));
-        }
-
-        @Override
-        public boolean isAssignableFrom(TypeDescription typeDescription) {
-            return isAssignable(this, typeDescription);
-        }
-
-        @Override
-        public boolean isAssignableTo(Class<?> type) {
-            return isAssignableTo(new ForLoadedType(type));
-        }
-
-        @Override
-        public boolean isAssignableTo(TypeDescription typeDescription) {
-            return isAssignable(typeDescription, this);
-        }
-
-        @Override
-        public boolean represents(Class<?> type) {
-            return type.getName().equals(getName());
-        }
-
-        @Override
-        public boolean isArray() {
-            return false;
-        }
-
-        @Override
-        public TypeDescription getComponentType() {
-            return null;
-        }
-
-        @Override
-        public boolean isPrimitive() {
-            return false;
-        }
-
-        @Override
         public MethodDescription getEnclosingMethod() {
             return null;
         }
 
         @Override
-        public TypeDescription getEnclosingClass() {
+        public TypeDescription getEnclosingType() {
             return null;
         }
 
         @Override
-        public String getSimpleName() {
-            return getName().substring(getPackageName().length() + 1, getName().length());
-        }
-
-        @Override
-        public String getCanonicalName() {
-            return getName();
+        public TypeDescription getDeclaringType() {
+            return null;
         }
 
         @Override
         public boolean isAnonymousClass() {
             return false;
+        }
+
+        @Override
+        public String getCanonicalName() {
+            return getName();
         }
 
         @Override
@@ -280,31 +183,6 @@ public interface InstrumentedType extends TypeDescription {
         @Override
         public MethodList getDeclaredMethods() {
             return new MethodList.Explicit(methodDescriptions);
-        }
-
-        @Override
-        public String getPackageName() {
-            int packageIndex = getName().lastIndexOf('.');
-            if (packageIndex == -1) {
-                return "";
-            } else {
-                return getName().substring(0, packageIndex);
-            }
-        }
-
-        @Override
-        public StackSize getStackSize() {
-            return StackSize.SINGLE;
-        }
-
-        @Override
-        public String getDescriptor() {
-            return "L" + getInternalName() + ";";
-        }
-
-        @Override
-        public TypeDescription getDeclaringType() {
-            return null;
         }
 
         @Override
@@ -363,23 +241,8 @@ public interface InstrumentedType extends TypeDescription {
             }
 
             @Override
-            public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
-                return false;
-            }
-
-            @Override
-            public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-                return null;
-            }
-
-            @Override
-            public Annotation[] getAnnotations() {
-                return new Annotation[0];
-            }
-
-            @Override
-            public Annotation[] getDeclaredAnnotations() {
-                return new Annotation[0];
+            public AnnotationList getDeclaredAnnotations() {
+                return new AnnotationList.Empty();
             }
 
             @Override
@@ -400,35 +263,6 @@ public interface InstrumentedType extends TypeDescription {
             @Override
             public int getModifiers() {
                 return modifiers;
-            }
-
-            @Override
-            public boolean equals(Object o) {
-                if (this == o) return true;
-                if (o == null || getClass() != o.getClass()) return false;
-                if (!super.equals(o)) return false;
-                FieldToken that = (FieldToken) o;
-                return modifiers == that.modifiers
-                        && fieldType.equals(that.fieldType)
-                        && name.equals(that.name);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = super.hashCode();
-                result = 31 * result + name.hashCode();
-                result = 31 * result + fieldType.hashCode();
-                result = 31 * result + modifiers;
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "InstrumentedType.FieldToken{" +
-                        "name='" + name + '\'' +
-                        ", fieldType=" + fieldType +
-                        ", modifiers=" + modifiers +
-                        '}';
             }
         }
 
@@ -514,11 +348,6 @@ public interface InstrumentedType extends TypeDescription {
             }
 
             @Override
-            public Annotation[][] getParameterAnnotations() {
-                return new Annotation[0][0];
-            }
-
-            @Override
             public TypeList getExceptionTypes() {
                 return new TypeList.Explicit(exceptionTypes);
             }
@@ -544,28 +373,13 @@ public interface InstrumentedType extends TypeDescription {
             }
 
             @Override
-            public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
-                return false;
+            public List<AnnotationList> getParameterAnnotations() {
+                return AnnotationList.Empty.asList(parameterTypes.size());
             }
 
             @Override
-            public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-                return null;
-            }
-
-            @Override
-            public Annotation[] getAnnotations() {
-                return new Annotation[0];
-            }
-
-            @Override
-            public Annotation[] getDeclaredAnnotations() {
-                return new Annotation[0];
-            }
-
-            @Override
-            public String getName() {
-                return isConstructor() ? getDeclaringType().getName() : getInternalName();
+            public AnnotationList getDeclaredAnnotations() {
+                return new AnnotationList.Empty();
             }
 
             @Override
@@ -584,35 +398,8 @@ public interface InstrumentedType extends TypeDescription {
             }
 
             @Override
-            public boolean equals(Object o) {
-                if (this == o) return true;
-                if (o == null || getClass() != o.getClass()) return false;
-                if (!super.equals(o)) return false;
-                MethodToken that = (MethodToken) o;
-                return modifiers == that.modifiers
-                        && internalName.equals(that.internalName)
-                        && parameterTypes.equals(that.parameterTypes)
-                        && returnType.equals(that.returnType);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = super.hashCode();
-                result = 31 * result + internalName.hashCode();
-                result = 31 * result + returnType.hashCode();
-                result = 31 * result + parameterTypes.hashCode();
-                result = 31 * result + modifiers;
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "InstrumentedType.MethodToken{" +
-                        "internalName='" + internalName + '\'' +
-                        ", returnType=" + returnType +
-                        ", parameterTypes=" + parameterTypes +
-                        ", modifiers=" + modifiers +
-                        '}';
+            public Object getDefaultValue() {
+                return null;
             }
         }
     }

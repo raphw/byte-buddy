@@ -62,6 +62,7 @@ public class VoidAwareAssignerNonVoidToVoidTest {
     @Before
     public void setUp() throws Exception {
         when(sourceTypeDescription.represents(sourceType)).thenReturn(true);
+        when(sourceTypeDescription.getStackSize()).thenReturn(StackSize.of(sourceType));
         if (sourceType.isPrimitive()) {
             when(sourceTypeDescription.isPrimitive()).thenReturn(true);
         }

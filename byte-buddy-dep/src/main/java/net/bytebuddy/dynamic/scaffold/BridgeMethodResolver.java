@@ -67,10 +67,10 @@ public interface BridgeMethodResolver {
         /**
          * Creates a bridge method resolver for a given list of methods.
          *
-         * @param relevant The relevant methods which can be called in a given context.
+         * @param methodList The relevant methods which can be called in a given context.
          * @return A bridge method resolver that reflects the given methods.
          */
-        BridgeMethodResolver make(MethodList relevant);
+        BridgeMethodResolver make(MethodList methodList);
     }
 
     /**
@@ -87,11 +87,11 @@ public interface BridgeMethodResolver {
         /**
          * Creates a new simple bridge method resolver.
          *
-         * @param relevant        The relevant methods which can be called in a given context.
+         * @param methodList      The relevant methods which can be called in a given context.
          * @param conflictHandler A conflict handler that is queried for handling ambiguous resolutions.
          */
-        public Simple(MethodList relevant, ConflictHandler conflictHandler) {
-            MethodList bridgeMethods = relevant.filter(isBridge());
+        public Simple(MethodList methodList, ConflictHandler conflictHandler) {
+            MethodList bridgeMethods = methodList.filter(isBridge());
             bridges = new HashMap<String, BridgeTarget>(bridgeMethods.size());
             for (MethodDescription bridgeMethod : bridgeMethods) {
                 bridges.put(bridgeMethod.getUniqueSignature(), findBridgeTargetFor(bridgeMethod, conflictHandler));
@@ -190,8 +190,8 @@ public interface BridgeMethodResolver {
             }
 
             @Override
-            public BridgeMethodResolver make(MethodList relevant) {
-                return new Simple(relevant, conflictHandler);
+            public BridgeMethodResolver make(MethodList methodList) {
+                return new Simple(methodList, conflictHandler);
             }
         }
 

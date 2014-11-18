@@ -10,12 +10,10 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import org.objectweb.asm.MethodVisitor;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.isInterface;
+import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
  * This {@link net.bytebuddy.instrumentation.Instrumentation} invokes a default method for the methods it instruments.
@@ -67,7 +65,22 @@ public class DefaultMethodCall implements Instrumentation {
      * interfaces to be prioritized in their order.
      */
     public static Instrumentation prioritize(Class<?>... prioritizedInterface) {
-        return new DefaultMethodCall(new TypeList.ForLoadedType(prioritizedInterface));
+        return new DefaultMethodCall(new TypeList.ForLoadedType(nonNull(prioritizedInterface)));
+    }
+
+    /**
+     * Creates a {@link net.bytebuddy.instrumentation.DefaultMethodCall} instrumentation which searches the given list
+     * of interface types for a suitable default method in their order. If no such prioritized interface is suitable,
+     * because it is either not defined on the instrumented type or because it does not define a suitable default method,
+     * any remaining interface is searched for a suitable default method. If no or more than one method defines a
+     * suitable default method, an exception is thrown.
+     *
+     * @param prioritizedInterface A list of prioritized default method interfaces in their prioritization order.
+     * @return An instrumentation which calls an instrumented method's compatible default method that considers the given
+     * interfaces to be prioritized in their order.
+     */
+    public static Instrumentation prioritize(TypeDescription... prioritizedInterface) {
+        return new DefaultMethodCall(new TypeList.Explicit(Arrays.asList(nonNull(prioritizedInterface))));
     }
 
     /**
@@ -130,7 +143,7 @@ public class DefaultMethodCall implements Instrumentation {
     /**
      * The appender for implementing a {@link net.bytebuddy.instrumentation.DefaultMethodCall}.
      */
-    private static class Appender implements ByteCodeAppender {
+    protected static class Appender implements ByteCodeAppender {
 
         /**
          * The instrumentation target of this appender.
@@ -153,7 +166,7 @@ public class DefaultMethodCall implements Instrumentation {
          * @param instrumentationTarget The instrumentation target of this appender.
          * @param prioritizedInterfaces The relevant prioritized interfaces to be considered by this appender.
          */
-        public Appender(Target instrumentationTarget, List<TypeDescription> prioritizedInterfaces) {
+        protected Appender(Target instrumentationTarget, List<TypeDescription> prioritizedInterfaces) {
             this.instrumentationTarget = instrumentationTarget;
             this.prioritizedInterfaces = prioritizedInterfaces;
             this.nonPrioritizedInterfaces = new HashSet<TypeDescription>(instrumentationTarget.getTypeDescription().getInterfaces());

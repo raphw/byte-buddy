@@ -2,8 +2,8 @@ package net.bytebuddy.instrumentation.attribute.annotation;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
-import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -103,8 +103,9 @@ public class AnnotationAppenderDefaultTest {
                 null);
         AnnotationVisitor annotationVisitor = classWriter.visitAnnotation(Type.getDescriptor(annotation.annotationType()), true);
         when(target.visit(any(String.class), anyBoolean())).thenReturn(annotationVisitor);
-        AnnotationAppender.AnnotationVisibility annotationVisibility = AnnotationAppender.AnnotationVisibility.of(annotation);
-        annotationAppender.append(annotation, annotationVisibility);
+        AnnotationDescription annotationDescription = AnnotationDescription.ForLoadedAnnotation.of(annotation);
+        AnnotationAppender.AnnotationVisibility annotationVisibility = AnnotationAppender.AnnotationVisibility.of(annotationDescription);
+        annotationAppender.append(annotationDescription, annotationVisibility);
         switch (annotationVisibility) {
             case RUNTIME:
                 verify(target).visit(Type.getDescriptor(annotation.annotationType()), true);
@@ -131,8 +132,8 @@ public class AnnotationAppenderDefaultTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(AnnotationAppender.Default.class).apply();
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(AnnotationAppender.Default.class).apply();
     }
 
     @Retention(RetentionPolicy.RUNTIME)

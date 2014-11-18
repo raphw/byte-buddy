@@ -1,5 +1,6 @@
 package net.bytebuddy.instrumentation.attribute;
 
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -17,7 +18,8 @@ public class TypeAttributeAppenderForSuperTypeTest extends AbstractTypeAttribute
     @Test
     public void testSuperTypeAnnotationAppender() throws Exception {
         when(typeDescription.getSupertype()).thenReturn(superType);
-        when(superType.getAnnotations()).thenReturn(new Annotation[]{new Qux.Instance(), new Baz.Instance(), new QuxBaz.Instance()});
+        when(superType.getDeclaredAnnotations()).thenReturn(new AnnotationList
+                .ForLoadedAnnotation(new Annotation[]{new Qux.Instance(), new Baz.Instance(), new QuxBaz.Instance()}));
         TypeAttributeAppender.ForSuperType.INSTANCE.apply(classVisitor, typeDescription);
         verify(classVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
         verify(classVisitor).visitAnnotation(Type.getDescriptor(QuxBaz.class), false);

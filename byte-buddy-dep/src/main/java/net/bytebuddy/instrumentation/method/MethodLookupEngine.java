@@ -1,11 +1,11 @@
 package net.bytebuddy.instrumentation.method;
 
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import org.objectweb.asm.Opcodes;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -153,7 +153,7 @@ public interface MethodLookupEngine {
             public String toString() {
                 return "MethodLookupEngine.Finding.Default{" +
                         "lookedUpType=" + lookedUpType +
-                        ", defaultMethods=" + invokableMethods +
+                        ", invokableMethods=" + invokableMethods +
                         ", invokableDefaultMethods=" + invokableDefaultMethods +
                         '}';
             }
@@ -222,7 +222,7 @@ public interface MethodLookupEngine {
         }
 
         @Override
-        public Annotation[][] getParameterAnnotations() {
+        public List<AnnotationList> getParameterAnnotations() {
             return methodChain.get(MOST_SPECIFIC).getParameterAnnotations();
         }
 
@@ -252,26 +252,6 @@ public interface MethodLookupEngine {
         }
 
         @Override
-        public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-            return methodChain.get(MOST_SPECIFIC).getAnnotation(annotationClass);
-        }
-
-        @Override
-        public Annotation[] getAnnotations() {
-            return methodChain.get(MOST_SPECIFIC).getAnnotations();
-        }
-
-        @Override
-        public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
-            return methodChain.get(MOST_SPECIFIC).isAnnotationPresent(annotationClass);
-        }
-
-        @Override
-        public Annotation[] getDeclaredAnnotations() {
-            return methodChain.get(MOST_SPECIFIC).getDeclaredAnnotations();
-        }
-
-        @Override
         public String getName() {
             return methodChain.get(MOST_SPECIFIC).getName();
         }
@@ -292,6 +272,11 @@ public interface MethodLookupEngine {
         }
 
         @Override
+        public AnnotationList getDeclaredAnnotations() {
+            return methodChain.get(MOST_SPECIFIC).getDeclaredAnnotations();
+        }
+
+        @Override
         public boolean isSpecializableFor(TypeDescription targetType) {
             for (MethodDescription methodDescription : methodChain) {
                 if (methodDescription.isSpecializableFor(targetType)) {
@@ -304,10 +289,8 @@ public interface MethodLookupEngine {
         }
 
         @Override
-        public String toString() {
-            return "MethodLookupEngine.OverridenClassMethod{" +
-                    "methodChain=" + methodChain +
-                    '}';
+        public Object getDefaultValue() {
+            return methodChain.get(MOST_SPECIFIC).getDefaultValue();
         }
     }
 
@@ -402,11 +385,6 @@ public interface MethodLookupEngine {
         }
 
         @Override
-        public Annotation[][] getParameterAnnotations() {
-            return new Annotation[0][0];
-        }
-
-        @Override
         public TypeList getExceptionTypes() {
             return new TypeList.Empty();
         }
@@ -432,23 +410,13 @@ public interface MethodLookupEngine {
         }
 
         @Override
-        public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
-            return false;
+        public List<AnnotationList> getParameterAnnotations() {
+            return AnnotationList.Empty.asList(methodDescriptions.get(ANY).getParameterTypes().size());
         }
 
         @Override
-        public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-            return null;
-        }
-
-        @Override
-        public Annotation[] getAnnotations() {
-            return new Annotation[0];
-        }
-
-        @Override
-        public Annotation[] getDeclaredAnnotations() {
-            return new Annotation[0];
+        public AnnotationList getDeclaredAnnotations() {
+            return new AnnotationList.Empty();
         }
 
         @Override
@@ -487,11 +455,8 @@ public interface MethodLookupEngine {
         }
 
         @Override
-        public String toString() {
-            return "MethodLookupEngine.ConflictingInterfaceMethod{" +
-                    "typeOfInterest=" + virtualHost +
-                    ", methodDescriptions=" + methodDescriptions +
-                    '}';
+        public Object getDefaultValue() {
+            return null;
         }
     }
 
@@ -639,7 +604,7 @@ public interface MethodLookupEngine {
          * </li>
          * </ol>
          */
-        private static class MethodBucket {
+        protected static class MethodBucket {
 
             /**
              * A map of class methods by their unique signature, represented as strings.
@@ -674,7 +639,7 @@ public interface MethodLookupEngine {
              *
              * @param typeOfInterest The type for which a type extraction is performed.
              */
-            private MethodBucket(TypeDescription typeOfInterest) {
+            protected MethodBucket(TypeDescription typeOfInterest) {
                 this.typeOfInterest = typeOfInterest;
                 classMethods = new HashMap<String, MethodDescription>();
                 interfaceMethods = new HashMap<String, MethodDescription>();
@@ -846,11 +811,12 @@ public interface MethodLookupEngine {
 
             @Override
             public String toString() {
-                return "MethodBucket{" +
+                return "MethodLookupEngine.Default.MethodBucket{" +
                         "typeOfInterest=" + typeOfInterest +
                         ", classMethods=" + classMethods +
                         ", interfaceMethods=" + interfaceMethods +
                         ", processedTypes=" + processedTypes +
+                        ", virtualMethodMatcher=" + virtualMethodMatcher +
                         '}';
             }
 

@@ -47,7 +47,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
         when(targetType.getInternalName()).thenReturn(FOO);
         when(targetType.represents(Class.class)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
-                .bind(annotation, INDEX, source, target, instrumentationTarget, assigner);
+                .bind(annotationDescription, INDEX, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
         verify(instrumentationTarget).getOriginType();
     }
@@ -57,7 +57,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
         when(targetType.getInternalName()).thenReturn(FOO);
         when(targetType.represents(Method.class)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
-                .bind(annotation, INDEX, source, target, instrumentationTarget, assigner);
+                .bind(annotationDescription, INDEX, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
     }
 
@@ -66,7 +66,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
         when(targetType.getInternalName()).thenReturn(FOO);
         when(targetType.represents(String.class)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
-                .bind(annotation, INDEX, source, target, instrumentationTarget, assigner);
+                .bind(annotationDescription, INDEX, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
     }
 
@@ -75,7 +75,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
         when(targetType.getInternalName()).thenReturn(METHOD_HANDLE_TYPE_INTERNAL_NAME);
         when(source.getDeclaringType()).thenReturn(mock(TypeDescription.class));
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
-                .bind(annotation, INDEX, source, target, instrumentationTarget, assigner);
+                .bind(annotationDescription, INDEX, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
     }
 
@@ -84,13 +84,13 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
         when(targetType.getInternalName()).thenReturn(METHOD_TYPE_TYPE_INTERNAL_NAME);
         when(source.getDescriptor()).thenReturn(FOO);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
-                .bind(annotation, INDEX, source, target, instrumentationTarget, assigner);
+                .bind(annotationDescription, INDEX, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testIllegalBinding() throws Exception {
         when(targetType.getInternalName()).thenReturn(FOO);
-        Origin.Binder.INSTANCE.bind(annotation, INDEX, source, target, instrumentationTarget, assigner);
+        Origin.Binder.INSTANCE.bind(annotationDescription, INDEX, source, target, instrumentationTarget, assigner);
     }
 }

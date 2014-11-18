@@ -40,7 +40,7 @@ public enum MethodReturn implements StackManipulation {
     /**
      * The method return handler for returning a reference type.
      */
-    ANY_REFERENCE(Opcodes.ARETURN, StackSize.SINGLE);
+    REFERENCE(Opcodes.ARETURN, StackSize.SINGLE);
 
     /**
      * The opcode of this operation.
@@ -83,7 +83,7 @@ public enum MethodReturn implements StackManipulation {
                 return INTEGER;
             }
         } else {
-            return ANY_REFERENCE;
+            return REFERENCE;
         }
     }
 

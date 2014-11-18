@@ -5,6 +5,7 @@ import net.bytebuddy.dynamic.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
 import net.bytebuddy.instrumentation.*;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
@@ -27,12 +28,12 @@ import org.junit.rules.MethodRule;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -70,25 +71,15 @@ public class ByteBuddyTutorialExamplesTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testExtensiveExample() throws Exception {
-        Class<? extends Account> dynamicType = new ByteBuddy()
-                .subclass(Account.class)
-                .implement(Serializable.class)
-                .name("BankAccount")
-                .annotateType(new Secured() {
-                    @Override
-                    public Class<? extends Annotation> annotationType() {
-                        return Secured.class;
-                    }
-                })
-                .method(isAnnotatedBy(Unsafe.class)).intercept(MethodDelegation.to(Bank.class))
+        Class<? extends Comparator> dynamicType = new ByteBuddy()
+                .subclass(Comparator.class)
+                .method(named("compare")).intercept(MethodDelegation.to(new ComparisonInterceptor()))
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(dynamicType.getName(), is("BankAccount"));
-        assertThat(Serializable.class.isAssignableFrom(dynamicType), is(true));
-        assertThat(dynamicType.isAnnotationPresent(Secured.class), is(true));
-        assertThat(dynamicType.newInstance().transfer(26, "123456"), is("transferred $26 to 123XXX (obfuscated)"));
+        assertThat(dynamicType.newInstance().compare(3, 1), is(2));
     }
 
     @Test
@@ -451,6 +442,7 @@ public class ByteBuddyTutorialExamplesTest {
     }
 
     public static enum StringValueBinder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<StringValue> {
+
         INSTANCE;
 
         @Override
@@ -459,7 +451,7 @@ public class ByteBuddyTutorialExamplesTest {
         }
 
         @Override
-        public MethodDelegationBinder.ParameterBinding<?> bind(StringValue annotation,
+        public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<StringValue> annotation,
                                                                int targetParameterIndex,
                                                                MethodDescription source,
                                                                MethodDescription target,
@@ -468,7 +460,7 @@ public class ByteBuddyTutorialExamplesTest {
             if (!target.getParameterTypes().get(targetParameterIndex).represents(String.class)) {
                 throw new IllegalStateException(target + " makes wrong use of StringValue");
             }
-            StackManipulation constant = new TextConstant(annotation.value());
+            StackManipulation constant = new TextConstant(annotation.loadSilent().value()); // TODO: Update documentation.
             return new MethodDelegationBinder.ParameterBinding.Anonymous(constant);
         }
     }
@@ -515,6 +507,13 @@ public class ByteBuddyTutorialExamplesTest {
     public static @interface StringValue {
 
         String value();
+    }
+
+    public static class ComparisonInterceptor {
+
+        public int intercept(Object first, Object second) {
+            return first.hashCode() - second.hashCode();
+        }
     }
 
     @SuppressWarnings("unchecked")

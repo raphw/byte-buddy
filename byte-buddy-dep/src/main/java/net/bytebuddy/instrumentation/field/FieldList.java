@@ -3,7 +3,6 @@ package net.bytebuddy.instrumentation.field;
 import java.lang.reflect.Field;
 import java.util.AbstractList;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 /**
  * Implementations represent a list of field descriptions.
@@ -18,6 +17,9 @@ public interface FieldList extends List<FieldDescription> {
      * @return The field named {@code fieldName}.
      */
     FieldDescription named(String fieldName);
+
+    @Override
+    FieldList subList(int fromIndex, int toIndex);
 
     /**
      * An implementation of a field list for an array of loaded fields.
@@ -34,7 +36,7 @@ public interface FieldList extends List<FieldDescription> {
          *
          * @param field An array of fields to be represented by this field list.
          */
-        public ForLoadedField(Field[] field) {
+        public ForLoadedField(Field... field) {
             this.field = field;
         }
 
@@ -55,7 +57,12 @@ public interface FieldList extends List<FieldDescription> {
                     return new FieldDescription.ForLoadedField(field);
                 }
             }
-            throw new IllegalArgumentException("Expected to find a field " + fieldName);
+            throw new IllegalArgumentException("Expected to find a field named '" + fieldName + "'");
+        }
+
+        @Override
+        public FieldList subList(int fromIndex, int toIndex) {
+            return new Explicit(super.subList(fromIndex, toIndex));
         }
     }
 
@@ -97,6 +104,11 @@ public interface FieldList extends List<FieldDescription> {
             }
             throw new IllegalArgumentException("Expected to find a field " + fieldName);
         }
+
+        @Override
+        public FieldList subList(int fromIndex, int toIndex) {
+            return new Explicit(super.subList(fromIndex, toIndex));
+        }
     }
 
     /**
@@ -106,7 +118,7 @@ public interface FieldList extends List<FieldDescription> {
 
         @Override
         public FieldDescription get(int index) {
-            throw new NoSuchElementException();
+            throw new IndexOutOfBoundsException();
         }
 
         @Override
@@ -117,6 +129,17 @@ public interface FieldList extends List<FieldDescription> {
         @Override
         public FieldDescription named(String fieldName) {
             throw new IllegalArgumentException("Expected to find a field " + fieldName + " but found none");
+        }
+
+        @Override
+        public FieldList subList(int fromIndex, int toIndex) {
+            if (fromIndex == toIndex && toIndex == 0) {
+                return this;
+            } else if (fromIndex > toIndex) {
+                throw new IllegalArgumentException("fromIndex(" + fromIndex + ") > toIndex(" + toIndex + ")");
+            } else {
+                throw new IndexOutOfBoundsException("fromIndex = " + fromIndex);
+            }
         }
     }
 }

@@ -246,7 +246,7 @@ public enum PrimitiveWideningDelegate {
     /**
      * A stack manipulation that widens a primitive type into a more general primitive type.
      */
-    private static class WideningStackManipulation implements StackManipulation {
+    protected static class WideningStackManipulation implements StackManipulation {
 
         /**
          * The opcode for executing the conversion.
@@ -264,7 +264,7 @@ public enum PrimitiveWideningDelegate {
          * @param conversionOpcode The opcode for executing the conversion.
          * @param size             The size change of applying the conversion.
          */
-        public WideningStackManipulation(int conversionOpcode, Size size) {
+        protected WideningStackManipulation(int conversionOpcode, Size size) {
             this.conversionOpcode = conversionOpcode;
             this.size = size;
         }

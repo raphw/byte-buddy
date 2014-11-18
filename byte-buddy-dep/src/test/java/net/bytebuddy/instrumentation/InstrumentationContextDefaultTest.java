@@ -14,6 +14,7 @@ import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
 import net.bytebuddy.utility.MockitoRule;
 import net.bytebuddy.utility.MoreOpcodes;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -77,6 +78,10 @@ public class InstrumentationContextDefaultTest {
     @Mock
     private TypeDescription firstSpecialType, secondSpecialType, firstSpecialReturnType, secondSpecialReturnType,
             firstSpecialParameterType, secondSpecialParameterType, firstSpecialExceptionType, secondSpecialExceptionType;
+    @Mock
+    private FieldDescription firstField, secondField;
+    @Mock
+    private TypeDescription firstFieldDeclaringType, secondFieldDeclaringType;
 
     private TypeList firstSpecialExceptionTypes, secondSpecialExceptionTypes;
 
@@ -135,6 +140,18 @@ public class InstrumentationContextDefaultTest {
         when(secondSpecialReturnType.getStackSize()).thenReturn(StackSize.ZERO);
         when(secondSpecialInvocation.apply(any(MethodVisitor.class), any(Instrumentation.Context.class)))
                 .thenReturn(new StackManipulation.Size(0, 0));
+        when(firstField.getFieldType()).thenReturn(firstFieldType);
+        when(firstField.getName()).thenReturn(FOO);
+        when(firstField.getInternalName()).thenReturn(FOO);
+        when(firstField.getDescriptor()).thenReturn(BAR);
+        when(firstField.getDeclaringType()).thenReturn(firstFieldDeclaringType);
+        when(firstFieldDeclaringType.getInternalName()).thenReturn(QUX);
+        when(secondField.getFieldType()).thenReturn(secondFieldType);
+        when(secondField.getName()).thenReturn(BAR);
+        when(secondField.getInternalName()).thenReturn(BAR);
+        when(secondField.getDescriptor()).thenReturn(FOO);
+        when(secondField.getDeclaringType()).thenReturn(secondFieldDeclaringType);
+        when(secondFieldDeclaringType.getInternalName()).thenReturn(BAZ);
     }
 
     @Test
@@ -179,7 +196,8 @@ public class InstrumentationContextDefaultTest {
                 any(String.class), eq(BAR), isNull(String.class), isNull());
         verify(classVisitor).visitField(eq(Instrumentation.Context.ExtractableView.FIELD_CACHE_MODIFIER),
                 any(String.class), eq(QUX), isNull(String.class), isNull());
-        verify(classVisitor).visitMethod(eq(Opcodes.ACC_STATIC), eq(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME),
+        verify(classVisitor).visitMethod(eq(MethodDescription.TYPE_INITIALIZER_MODIFIER),
+                eq(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME),
                 eq("()V"), isNull(String.class), isNull(String[].class));
         verifyNoMoreInteractions(classVisitor);
         verify(methodVisitor).visitCode();
@@ -217,7 +235,8 @@ public class InstrumentationContextDefaultTest {
                 any(String.class), eq(BAR), isNull(String.class), isNull());
         verify(classVisitor).visitField(eq(Instrumentation.Context.ExtractableView.FIELD_CACHE_MODIFIER),
                 any(String.class), eq(QUX), isNull(String.class), isNull());
-        verify(classVisitor).visitMethod(eq(Opcodes.ACC_STATIC), eq(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME),
+        verify(classVisitor).visitMethod(eq(MethodDescription.TYPE_INITIALIZER_MODIFIER),
+                eq(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME),
                 eq("()V"), isNull(String.class), isNull(String[].class));
         verifyNoMoreInteractions(classVisitor);
         verify(methodVisitor).visitCode();
@@ -256,7 +275,8 @@ public class InstrumentationContextDefaultTest {
                 any(String.class), eq(BAR), isNull(String.class), isNull());
         verify(classVisitor).visitField(eq(Instrumentation.Context.ExtractableView.FIELD_CACHE_MODIFIER),
                 any(String.class), eq(QUX), isNull(String.class), isNull());
-        verify(classVisitor).visitMethod(eq(Opcodes.ACC_STATIC), eq(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME),
+        verify(classVisitor).visitMethod(eq(MethodDescription.TYPE_INITIALIZER_MODIFIER),
+                eq(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME),
                 eq("()V"), isNull(String.class), isNull(String[].class));
         verifyNoMoreInteractions(classVisitor);
         verify(methodVisitor).visitCode();
@@ -297,7 +317,8 @@ public class InstrumentationContextDefaultTest {
                 any(String.class), eq(BAR), isNull(String.class), isNull());
         verify(classVisitor).visitField(eq(Instrumentation.Context.ExtractableView.FIELD_CACHE_MODIFIER),
                 any(String.class), eq(QUX), isNull(String.class), isNull());
-        verify(classVisitor).visitMethod(eq(Opcodes.ACC_STATIC), eq(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME),
+        verify(classVisitor).visitMethod(eq(MethodDescription.TYPE_INITIALIZER_MODIFIER),
+                eq(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME),
                 eq("()V"), isNull(String.class), isNull(String[].class));
         verifyNoMoreInteractions(classVisitor);
         verify(methodVisitor).visitCode();
@@ -395,5 +416,132 @@ public class InstrumentationContextDefaultTest {
         verify(methodVisitor).visitInsn(Opcodes.ARETURN);
         verify(methodVisitor).visitMaxs(1, 0);
         verify(methodVisitor).visitEnd();
+    }
+
+    @Test
+    public void testFieldGetterRegistration() throws Exception {
+        Instrumentation.Context.Default instrumentationContext = new Instrumentation.Context.Default(instrumentedType, classFileVersion);
+        MethodDescription firstFieldGetter = instrumentationContext.registerGetterFor(firstField);
+        assertThat(firstFieldGetter.getParameterTypes(), is((TypeList) new TypeList.Empty()));
+        assertThat(firstFieldGetter.getReturnType(), is(firstFieldType));
+        assertThat(firstFieldGetter.getInternalName(), startsWith(FOO));
+        assertThat(firstFieldGetter.getModifiers(), is(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER));
+        assertThat(firstFieldGetter.getExceptionTypes(), is((TypeList) new TypeList.Empty()));
+        assertThat(instrumentationContext.registerGetterFor(firstField), is(firstFieldGetter));
+        when(secondField.isStatic()).thenReturn(true);
+        MethodDescription secondFieldGetter = instrumentationContext.registerGetterFor(secondField);
+        assertThat(secondFieldGetter.getParameterTypes(), is((TypeList) new TypeList.Empty()));
+        assertThat(secondFieldGetter.getReturnType(), is(secondFieldType));
+        assertThat(secondFieldGetter.getInternalName(), startsWith(BAR));
+        assertThat(secondFieldGetter.getModifiers(), is(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC));
+        assertThat(secondFieldGetter.getExceptionTypes(), is((TypeList) new TypeList.Empty()));
+        assertThat(instrumentationContext.registerGetterFor(firstField), is(firstFieldGetter));
+        assertThat(instrumentationContext.registerGetterFor(secondField), is(secondFieldGetter));
+        instrumentationContext.drain(classVisitor, methodPool, injectedCode);
+        verify(classVisitor).visitMethod(eq(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER), Matchers.startsWith(FOO),
+                eq("()" + BAR), isNull(String.class), isNull(String[].class));
+        verify(classVisitor).visitMethod(eq(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
+                eq("()" + QUX), isNull(String.class), isNull(String[].class));
+    }
+
+    @Test
+    public void testFieldGetterRegistrationWritesFirst() throws Exception {
+        Instrumentation.Context.Default instrumentationContext = new Instrumentation.Context.Default(instrumentedType, classFileVersion);
+        MethodDescription firstMethodDescription = instrumentationContext.registerGetterFor(firstField);
+        assertThat(instrumentationContext.registerGetterFor(firstField), is(firstMethodDescription));
+        instrumentationContext.drain(classVisitor, methodPool, injectedCode);
+        verify(classVisitor).visitMethod(eq(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER), Matchers.startsWith(FOO),
+                eq("()" + BAR), isNull(String.class), isNull(String[].class));
+        verify(methodVisitor).visitCode();
+        verify(methodVisitor).visitInsn(MoreOpcodes.ALOAD_0);
+        verify(methodVisitor).visitFieldInsn(Opcodes.GETFIELD, QUX, FOO, BAR);
+        verify(methodVisitor).visitInsn(Opcodes.ARETURN);
+        verify(methodVisitor).visitMaxs(1, 1);
+        verify(methodVisitor).visitEnd();
+    }
+
+    @Test
+    public void testFieldGetterRegistrationWritesSecond() throws Exception {
+        when(secondField.isStatic()).thenReturn(true);
+        Instrumentation.Context.Default instrumentationContext = new Instrumentation.Context.Default(instrumentedType, classFileVersion);
+        MethodDescription secondMethodDescription = instrumentationContext.registerGetterFor(secondField);
+        assertThat(instrumentationContext.registerGetterFor(secondField), is(secondMethodDescription));
+        instrumentationContext.drain(classVisitor, methodPool, injectedCode);
+        verify(classVisitor).visitMethod(eq(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
+                eq("()" + QUX), isNull(String.class), isNull(String[].class));
+        verify(methodVisitor).visitCode();
+        verify(methodVisitor).visitFieldInsn(Opcodes.GETSTATIC, BAZ, BAR, FOO);
+        verify(methodVisitor).visitInsn(Opcodes.ARETURN);
+        verify(methodVisitor).visitMaxs(0, 0);
+        verify(methodVisitor).visitEnd();
+    }
+
+    @Test
+    public void testFieldSetterRegistration() throws Exception {
+        Instrumentation.Context.Default instrumentationContext = new Instrumentation.Context.Default(instrumentedType, classFileVersion);
+        MethodDescription firstFieldSetter = instrumentationContext.registerSetterFor(firstField);
+        assertThat(firstFieldSetter.getParameterTypes(), is((TypeList) new TypeList.Explicit(Arrays.asList(firstFieldType))));
+        assertThat(firstFieldSetter.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(void.class)));
+        assertThat(firstFieldSetter.getInternalName(), startsWith(FOO));
+        assertThat(firstFieldSetter.getModifiers(), is(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER));
+        assertThat(firstFieldSetter.getExceptionTypes(), is((TypeList) new TypeList.Empty()));
+        assertThat(instrumentationContext.registerSetterFor(firstField), is(firstFieldSetter));
+        when(secondField.isStatic()).thenReturn(true);
+        MethodDescription secondFieldSetter = instrumentationContext.registerSetterFor(secondField);
+        assertThat(secondFieldSetter.getParameterTypes(), is((TypeList) new TypeList.Explicit(Arrays.asList(secondFieldType))));
+        assertThat(secondFieldSetter.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(void.class)));
+        assertThat(secondFieldSetter.getInternalName(), startsWith(BAR));
+        assertThat(secondFieldSetter.getModifiers(), is(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC));
+        assertThat(secondFieldSetter.getExceptionTypes(), is((TypeList) new TypeList.Empty()));
+        assertThat(instrumentationContext.registerSetterFor(firstField), is(firstFieldSetter));
+        assertThat(instrumentationContext.registerSetterFor(secondField), is(secondFieldSetter));
+        instrumentationContext.drain(classVisitor, methodPool, injectedCode);
+        verify(classVisitor).visitMethod(eq(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER), Matchers.startsWith(FOO),
+                eq("(" + BAR + ")V"), isNull(String.class), isNull(String[].class));
+        verify(classVisitor).visitMethod(eq(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
+                eq("(" + QUX + ")V"), isNull(String.class), isNull(String[].class));
+    }
+
+    @Test
+    public void testFieldSetterRegistrationWritesFirst() throws Exception {
+        Instrumentation.Context.Default instrumentationContext = new Instrumentation.Context.Default(instrumentedType, classFileVersion);
+        MethodDescription firstMethodDescription = instrumentationContext.registerSetterFor(firstField);
+        assertThat(instrumentationContext.registerSetterFor(firstField), is(firstMethodDescription));
+        instrumentationContext.drain(classVisitor, methodPool, injectedCode);
+        verify(classVisitor).visitMethod(eq(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER), Matchers.startsWith(FOO),
+                eq("(" + BAR + ")V"), isNull(String.class), isNull(String[].class));
+        verify(methodVisitor).visitCode();
+        verify(methodVisitor).visitInsn(MoreOpcodes.ALOAD_0);
+        verify(methodVisitor).visitInsn(MoreOpcodes.ALOAD_1);
+        verify(methodVisitor).visitFieldInsn(Opcodes.PUTFIELD, QUX, FOO, BAR);
+        verify(methodVisitor).visitInsn(Opcodes.RETURN);
+        verify(methodVisitor).visitMaxs(2, 1);
+        verify(methodVisitor).visitEnd();
+    }
+
+    @Test
+    public void testFieldSetterRegistrationWritesSecond() throws Exception {
+        when(secondField.isStatic()).thenReturn(true);
+        Instrumentation.Context.Default instrumentationContext = new Instrumentation.Context.Default(instrumentedType, classFileVersion);
+        MethodDescription secondMethodDescription = instrumentationContext.registerSetterFor(secondField);
+        assertThat(instrumentationContext.registerSetterFor(secondField), is(secondMethodDescription));
+        instrumentationContext.drain(classVisitor, methodPool, injectedCode);
+        verify(classVisitor).visitMethod(eq(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
+                eq("(" + QUX + ")V"), isNull(String.class), isNull(String[].class));
+        verify(methodVisitor).visitCode();
+        verify(methodVisitor).visitInsn(MoreOpcodes.ALOAD_0);
+        verify(methodVisitor).visitFieldInsn(Opcodes.PUTSTATIC, BAZ, BAR, FOO);
+        verify(methodVisitor).visitInsn(Opcodes.RETURN);
+        verify(methodVisitor).visitMaxs(1, 0);
+        verify(methodVisitor).visitEnd();
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(Instrumentation.Context.Default.FieldCacheAppender.class);
+        ObjectPropertyAssertion.of(Instrumentation.Context.Default.FieldCacheEntry.class);
+        ObjectPropertyAssertion.of(Instrumentation.Context.Default.AccessorMethodDelegation.class);
+        ObjectPropertyAssertion.of(Instrumentation.Context.Default.FieldSetter.class);
+        ObjectPropertyAssertion.of(Instrumentation.Context.Default.FieldGetter.class);
     }
 }

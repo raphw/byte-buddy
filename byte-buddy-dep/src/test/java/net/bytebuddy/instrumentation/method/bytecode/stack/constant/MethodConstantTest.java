@@ -8,6 +8,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -20,7 +21,6 @@ import org.objectweb.asm.MethodVisitor;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
@@ -114,19 +114,19 @@ public class MethodConstantTest {
         verifyNoMoreInteractions(instrumentationContext);
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testTypeInitializer() throws Exception {
+        when(methodDescription.isTypeInitializer()).thenReturn(true);
+        MethodConstant.CanCache methodConstant = MethodConstant.forMethod(methodDescription);
+        assertThat(methodConstant.isValid(), is(false));
+        assertThat(methodConstant.cached().isValid(), is(false));
+        methodConstant.apply(methodVisitor, instrumentationContext);
+    }
+
     @Test
-    public void testHashCodeEquals() throws Exception {
-        assertThat(MethodConstant.forMethod(methodDescription).hashCode(), is(MethodConstant.forMethod(methodDescription).hashCode()));
-        assertThat(MethodConstant.forMethod(methodDescription), is(MethodConstant.forMethod(methodDescription)));
-        assertThat(MethodConstant.forMethod(methodDescription).hashCode(), not(is(MethodConstant.forMethod(mock(MethodDescription.class)).hashCode())));
-        assertThat(MethodConstant.forMethod(methodDescription), not(is(MethodConstant.forMethod(mock(MethodDescription.class)))));
-        assertThat(MethodConstant.forMethod(methodDescription).hashCode(), not(is(MethodConstant.forMethod(methodDescription).cached().hashCode())));
-        assertThat(MethodConstant.forMethod(methodDescription), not(is(MethodConstant.forMethod(methodDescription).cached())));
-        assertThat(MethodConstant.forMethod(methodDescription).cached().hashCode(), is(MethodConstant.forMethod(methodDescription).cached().hashCode()));
-        assertThat(MethodConstant.forMethod(methodDescription).cached(), is(MethodConstant.forMethod(methodDescription).cached()));
-        assertThat(MethodConstant.forMethod(methodDescription).cached().hashCode(), not(is(MethodConstant.forMethod(mock(MethodDescription.class)).cached().hashCode())));
-        assertThat(MethodConstant.forMethod(methodDescription).cached(), not(is(MethodConstant.forMethod(mock(MethodDescription.class)).cached())));
-        assertThat(MethodConstant.forMethod(methodDescription).cached().hashCode(), not(is(MethodConstant.forMethod(methodDescription).hashCode())));
-        assertThat(MethodConstant.forMethod(methodDescription).cached(), not(is((StackManipulation) MethodConstant.forMethod(methodDescription))));
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(MethodConstant.ForMethod.class).apply();
+        ObjectPropertyAssertion.of(MethodConstant.ForConstructor.class).apply();
+        ObjectPropertyAssertion.of(MethodConstant.Cached.class).apply();
     }
 }

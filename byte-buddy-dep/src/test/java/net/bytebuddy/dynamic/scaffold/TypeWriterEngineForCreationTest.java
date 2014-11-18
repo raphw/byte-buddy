@@ -9,8 +9,8 @@ import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
-import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -116,7 +116,7 @@ public class TypeWriterEngineForCreationTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(TypeWriter.Engine.ForCreation.class).apply();
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(TypeWriter.Engine.ForCreation.class).apply();
     }
 }

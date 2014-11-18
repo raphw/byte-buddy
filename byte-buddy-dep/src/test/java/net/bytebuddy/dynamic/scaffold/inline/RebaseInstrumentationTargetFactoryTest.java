@@ -6,8 +6,8 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -53,7 +53,7 @@ public class RebaseInstrumentationTargetFactoryTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(RebaseInstrumentationTarget.Factory.class).apply();
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(RebaseInstrumentationTarget.Factory.class).apply();
     }
 }

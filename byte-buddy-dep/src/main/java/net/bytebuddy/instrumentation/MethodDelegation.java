@@ -17,7 +17,6 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.assign.primitive.Prim
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.primitive.VoidAwareAssigner;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.reference.ReferenceTypeAwareAssigner;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.FieldAccess;
-import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess;
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
@@ -51,6 +50,11 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
  * <li>{@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.This}: A parameter
  * of {@code Qux#baz} that is annotated with {@code This} will be assigned the instance that is instrumented for
  * a non-static method.</li>
+ * <li>{@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Super}: A parameter that is annotated with
+ * this annotation is assigned a proxy that allows calling an instrumented type's super methods.</li>
+ * <li>{@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Default}: A parameter that is annotated with
+ * this annotation is assigned a proxy that allows calling an instrumented type's directly implemented interfaces'
+ * default methods.</li>
  * <li>{@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.SuperCall}: A parameter
  * of {@code Qux#baz} that is annotated with {@code SuperCall} will be assigned an instance of a type implementing both
  * {@link java.lang.Runnable} and {@link java.util.concurrent.Callable} which will invoke the instrumented method on the
@@ -69,11 +73,24 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
  * {@code Qux#baz} that is annotated with {@code Origin} is assigned a reference to either a {@link java.lang.reflect.Method}
  * or a {@link java.lang.Class} instance. A {@code Method}-typed parameter is assigned a reference to the original method that
  * is overriden. A {@code Class}-typed parameter is assigned the type of the caller.</li>
+ * <li>{@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Empty}: Assigns the parameter type's
+ * default value, i.e. {@code null} for a reference type or zero for primitive types. This is an opportunity to
+ * ignore a parameter.</li>
  * <li>{@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Pipe}: A parameter that is annotated
  * with this annotation is assigned a proxy for forwarding the source method invocation to another instance of the
  * same type as the declaring type of the intercepted method. <b>This annotation needs to be installed and explicitly
  * registered before it can be used.</b> See the {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Pipe}
  * annotation's documentation for further information on how this can be done.</li>
+ * <li>{@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Morph}: The morph annotation is similar to
+ * the {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.SuperCall} annotation but allows to
+ * explicitly define and therewith alter the arguments that are handed to the super method. <b>This annotation needs
+ * to be installed and explicitly registered before it can be used.</b> See the documentation to the annotation for
+ * further information.</li>
+ * <li>{@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Field}: Allows to access fields via getter
+ * and setter proxies. <b>This annotation needs to be installed and explicitly registered before it can be used.</b>
+ * Note that any field access requires boxing such that a use of {@link net.bytebuddy.instrumentation.FieldAccessor} in
+ * combination with {@link net.bytebuddy.instrumentation.MethodDelegation#andThen(Instrumentation)} might be a more
+ * performant alternative for implementing field getters and setters.</li>
  * </ul>
  * If a method is not annotated with any of the above methods, it will be treated as if it was annotated
  * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument} using the next
@@ -138,7 +155,12 @@ public class MethodDelegation implements Instrumentation {
      * The {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.TargetMethodAnnotationDrivenBinder.DefaultsProvider}
      * to be used by this method delegation.
      */
-    private final TargetMethodAnnotationDrivenBinder.DefaultsProvider<?> defaultsProvider;
+    private final TargetMethodAnnotationDrivenBinder.DefaultsProvider defaultsProvider;
+
+    /**
+     * The termination handler to apply.
+     */
+    private final TargetMethodAnnotationDrivenBinder.TerminationHandler terminationHandler;
 
     /**
      * The {@link net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.AmbiguityResolver}
@@ -162,6 +184,7 @@ public class MethodDelegation implements Instrumentation {
      * @param instrumentationDelegate The instrumentation delegate to use by this method delegator.
      * @param parameterBinders        The parameter binders to use by this method delegator.
      * @param defaultsProvider        The defaults provider to use by this method delegator.
+     * @param terminationHandler      The termination handler to apply.
      * @param ambiguityResolver       The ambiguity resolver to use by this method delegator.
      * @param assigner                The assigner to be supplied by this method delegator.
      * @param targetMethodCandidates  A list of methods that should be considered as possible binding targets by
@@ -169,13 +192,15 @@ public class MethodDelegation implements Instrumentation {
      */
     protected MethodDelegation(InstrumentationDelegate instrumentationDelegate,
                                List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders,
-                               TargetMethodAnnotationDrivenBinder.DefaultsProvider<?> defaultsProvider,
+                               TargetMethodAnnotationDrivenBinder.DefaultsProvider defaultsProvider,
+                               TargetMethodAnnotationDrivenBinder.TerminationHandler terminationHandler,
                                MethodDelegationBinder.AmbiguityResolver ambiguityResolver,
                                Assigner assigner,
                                MethodList targetMethodCandidates) {
         this.instrumentationDelegate = instrumentationDelegate;
         this.parameterBinders = parameterBinders;
         this.defaultsProvider = defaultsProvider;
+        this.terminationHandler = terminationHandler;
         this.ambiguityResolver = ambiguityResolver;
         this.assigner = assigner;
         this.targetMethodCandidates = isNotEmpty(targetMethodCandidates, NO_METHODS_ERROR_MESSAGE);
@@ -188,21 +213,30 @@ public class MethodDelegation implements Instrumentation {
      * @return A method delegation instrumentation to the given {@code static} methods.
      */
     public static MethodDelegation to(Class<?> type) {
-        if (type == null) {
-            throw new NullPointerException("Type must not be null");
-        } else if (type.isInterface()) {
-            throw new IllegalArgumentException("Cannot delegate to interface " + type);
-        } else if (type.isArray()) {
-            throw new IllegalArgumentException("Cannot delegate to array " + type);
-        } else if (type.isPrimitive()) {
-            throw new IllegalArgumentException("Cannot delegate to primitive " + type);
+        return to(new TypeDescription.ForLoadedType(nonNull(type)));
+    }
+
+    /**
+     * Creates an instrumentation where only {@code static} methods of the given type are considered as binding targets.
+     *
+     * @param typeDescription The type containing the {@code static} methods for binding.
+     * @return A method delegation instrumentation to the given {@code static} methods.
+     */
+    public static MethodDelegation to(TypeDescription typeDescription) {
+        if (nonNull(typeDescription).isInterface()) {
+            throw new IllegalArgumentException("Cannot delegate to interface " + typeDescription);
+        } else if (typeDescription.isArray()) {
+            throw new IllegalArgumentException("Cannot delegate to array " + typeDescription);
+        } else if (typeDescription.isPrimitive()) {
+            throw new IllegalArgumentException("Cannot delegate to primitive " + typeDescription);
         }
         return new MethodDelegation(InstrumentationDelegate.ForStaticMethod.INSTANCE,
                 defaultParameterBinders(),
                 defaultDefaultsProvider(),
+                TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
                 defaultAmbiguityResolver(),
                 defaultAssigner(),
-                new TypeDescription.ForLoadedType(type).getDeclaredMethods().filter(isStatic().and(not(isPrivate()))));
+                typeDescription.getDeclaredMethods().filter(isStatic().and(not(isPrivate()))));
     }
 
     /**
@@ -222,7 +256,7 @@ public class MethodDelegation implements Instrumentation {
      * @return A method delegation instrumentation to the given instance methods.
      */
     public static MethodDelegation to(Object delegate) {
-        return to(delegate, defaultMethodLookupEngine());
+        return to(nonNull(delegate), defaultMethodLookupEngine());
     }
 
     /**
@@ -236,15 +270,15 @@ public class MethodDelegation implements Instrumentation {
      * @return A method delegation instrumentation to the given instance methods.
      */
     public static MethodDelegation to(Object delegate, MethodLookupEngine methodLookupEngine) {
-        return new MethodDelegation(new InstrumentationDelegate.ForStaticFieldInstance(nonNull(delegate)),
+        return new MethodDelegation(new InstrumentationDelegate.ForStaticField(nonNull(delegate)),
                 defaultParameterBinders(),
                 defaultDefaultsProvider(),
+                TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
                 defaultAmbiguityResolver(),
                 defaultAssigner(),
                 methodLookupEngine.process(new TypeDescription.ForLoadedType(delegate.getClass()))
                         .getInvokableMethods()
-                        .filter(not(isStatic().or(isPrivate()).or(isConstructor())))
-        );
+                        .filter(not(isStatic().or(isPrivate()).or(isConstructor()))));
     }
 
     /**
@@ -280,15 +314,15 @@ public class MethodDelegation implements Instrumentation {
      */
     public static MethodDelegation to(Object delegate, String fieldName, MethodLookupEngine methodLookupEngine) {
         return new MethodDelegation(
-                new InstrumentationDelegate.ForStaticFieldInstance(nonNull(delegate), isValidIdentifier(fieldName)),
+                new InstrumentationDelegate.ForStaticField(nonNull(delegate), isValidIdentifier(fieldName)),
                 defaultParameterBinders(),
                 defaultDefaultsProvider(),
+                TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
                 defaultAmbiguityResolver(),
                 defaultAssigner(),
                 methodLookupEngine.process(new TypeDescription.ForLoadedType(delegate.getClass()))
                         .getInvokableMethods()
-                        .filter(not(isStatic().or(isPrivate()).or(isConstructor())))
-        );
+                        .filter(not(isStatic().or(isPrivate()).or(isConstructor()))));
     }
 
     /**
@@ -312,7 +346,31 @@ public class MethodDelegation implements Instrumentation {
      * @return A method delegation that intercepts method calls by delegating to method calls on the given instance.
      */
     public static MethodDelegation toInstanceField(Class<?> type, String fieldName) {
-        return toInstanceField(type, fieldName, defaultMethodLookupEngine());
+        return toInstanceField(new TypeDescription.ForLoadedType(nonNull(type)), fieldName);
+    }
+
+    /**
+     * Creates an instrumentation where method calls are delegated to an instance that is manually stored in a field
+     * {@code fieldName} that is defined for the instrumented type. The field belongs to any instance of the instrumented
+     * type and must be set manually by the user of the instrumented class. Note that this prevents interception of
+     * method calls within the constructor of the instrumented class which will instead result in a
+     * {@link java.lang.NullPointerException}. Note that this includes methods that were defined by the
+     * {@link java.lang.Object} class. You can narrow this default selection by explicitly selecting methods with
+     * calling the
+     * {@link net.bytebuddy.instrumentation.MethodDelegation#filter(net.bytebuddy.instrumentation.method.matcher.MethodMatcher)}
+     * method on the returned method delegation as for example:
+     * <pre>MethodDelegation.to(new Foo()).filter(MethodMatchers.not(isDeclaredBy(Object.class)));</pre>
+     * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
+     * for delegation.
+     * <p>&nbsp;</p>
+     * The field is typically accessed by reflection or by defining an accessor on the instrumented type.
+     *
+     * @param typeDescription The type of the delegate and the field.
+     * @param fieldName       The name of the field.
+     * @return A method delegation that intercepts method calls by delegating to method calls on the given instance.
+     */
+    public static MethodDelegation toInstanceField(TypeDescription typeDescription, String fieldName) {
+        return toInstanceField(nonNull(typeDescription), isValidIdentifier(fieldName), defaultMethodLookupEngine());
     }
 
     /**
@@ -325,16 +383,29 @@ public class MethodDelegation implements Instrumentation {
      * @return A method delegation that intercepts method calls by delegating to method calls on the given instance.
      */
     public static MethodDelegation toInstanceField(Class<?> type, String fieldName, MethodLookupEngine methodLookupEngine) {
+        return toInstanceField(new TypeDescription.ForLoadedType(nonNull(type)), fieldName, methodLookupEngine);
+    }
+
+    /**
+     * Identical to {@link net.bytebuddy.instrumentation.MethodDelegation#toInstanceField(Class, String)} but uses an
+     * explicit {@link net.bytebuddy.instrumentation.method.MethodLookupEngine}.
+     *
+     * @param typeDescription    The type of the delegate and the field.
+     * @param fieldName          The name of the field.
+     * @param methodLookupEngine The method lookup engine to use.
+     * @return A method delegation that intercepts method calls by delegating to method calls on the given instance.
+     */
+    public static MethodDelegation toInstanceField(TypeDescription typeDescription, String fieldName, MethodLookupEngine methodLookupEngine) {
         return new MethodDelegation(
-                new InstrumentationDelegate.ForInstanceField(new TypeDescription.ForLoadedType(nonNull(type)), isValidIdentifier(fieldName)),
+                new InstrumentationDelegate.ForInstanceField(nonNull(typeDescription), isValidIdentifier(fieldName)),
                 defaultParameterBinders(),
                 defaultDefaultsProvider(),
+                TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
                 defaultAmbiguityResolver(),
                 defaultAssigner(),
-                methodLookupEngine.process(new TypeDescription.ForLoadedType(type))
+                methodLookupEngine.process(typeDescription)
                         .getInvokableMethods()
-                        .filter(not(isStatic().or(isPrivate()).or(isConstructor())))
-        );
+                        .filter(not(isStatic().or(isPrivate()).or(isConstructor()))));
     }
 
     /**
@@ -345,15 +416,24 @@ public class MethodDelegation implements Instrumentation {
      * @return An instrumentation that creates instances of the given type as its result.
      */
     public static MethodDelegation toConstructor(Class<?> type) {
-        return new MethodDelegation(new InstrumentationDelegate.ForConstruction(new TypeDescription.ForLoadedType(type)),
+        return toConstructor(new TypeDescription.ForLoadedType(nonNull(type)));
+    }
+
+    /**
+     * Creates an instrumentation where method calls are delegated to constructor calls on the given type. As a result,
+     * the return values of all instrumented methods must be assignable to
+     *
+     * @param typeDescription The type that should be constructed by the instrumented methods.
+     * @return An instrumentation that creates instances of the given type as its result.
+     */
+    public static MethodDelegation toConstructor(TypeDescription typeDescription) {
+        return new MethodDelegation(new InstrumentationDelegate.ForConstruction(nonNull(typeDescription)),
                 defaultParameterBinders(),
                 defaultDefaultsProvider(),
+                TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
                 defaultAmbiguityResolver(),
                 defaultAssigner(),
-                new TypeDescription.ForLoadedType(type)
-                        .getDeclaredMethods()
-                        .filter(isConstructor())
-        );
+                typeDescription.getDeclaredMethods().filter(isConstructor()));
     }
 
     /**
@@ -367,8 +447,10 @@ public class MethodDelegation implements Instrumentation {
                 Origin.Binder.INSTANCE,
                 This.Binder.INSTANCE,
                 Super.Binder.INSTANCE,
+                Default.Binder.INSTANCE,
                 SuperCall.Binder.INSTANCE,
-                DefaultCall.Binder.INSTANCE);
+                DefaultCall.Binder.INSTANCE,
+                Empty.Binder.INSTANCE);
     }
 
     /**
@@ -376,7 +458,7 @@ public class MethodDelegation implements Instrumentation {
      *
      * @return The defaults provider that is to be used if no other is specified explicitly.
      */
-    private static TargetMethodAnnotationDrivenBinder.DefaultsProvider<?> defaultDefaultsProvider() {
+    private static TargetMethodAnnotationDrivenBinder.DefaultsProvider defaultDefaultsProvider() {
         return Argument.NextUnboundAsDefaultsProvider.INSTANCE;
     }
 
@@ -386,12 +468,10 @@ public class MethodDelegation implements Instrumentation {
      * @return The ambiguity resolver that is to be used if no other is specified explicitly.
      */
     private static MethodDelegationBinder.AmbiguityResolver defaultAmbiguityResolver() {
-        return MethodDelegationBinder.AmbiguityResolver.Chain.of(
-                BindingPriority.Resolver.INSTANCE,
+        return MethodDelegationBinder.AmbiguityResolver.Chain.of(BindingPriority.Resolver.INSTANCE,
                 MethodNameEqualityResolver.INSTANCE,
                 MostSpecificTypeResolver.INSTANCE,
-                ParameterLengthResolver.INSTANCE
-        );
+                ParameterLengthResolver.INSTANCE);
     }
 
     /**
@@ -422,6 +502,7 @@ public class MethodDelegation implements Instrumentation {
         return new MethodDelegation(instrumentationDelegate,
                 join(parameterBinders, nonNull(parameterBinder)),
                 defaultsProvider,
+                terminationHandler,
                 ambiguityResolver,
                 assigner,
                 targetMethodCandidates);
@@ -437,6 +518,7 @@ public class MethodDelegation implements Instrumentation {
         return new MethodDelegation(instrumentationDelegate,
                 Arrays.asList(nonNull(parameterBinder)),
                 defaultsProvider,
+                terminationHandler,
                 ambiguityResolver,
                 assigner,
                 targetMethodCandidates);
@@ -448,10 +530,11 @@ public class MethodDelegation implements Instrumentation {
      * @param defaultsProvider The defaults provider to use.
      * @return A method delegation instrumentation that makes use of the given defaults provider.
      */
-    public MethodDelegation defaultsProvider(TargetMethodAnnotationDrivenBinder.DefaultsProvider defaultsProvider) {
+    public MethodDelegation withDefaultsProvider(TargetMethodAnnotationDrivenBinder.DefaultsProvider defaultsProvider) {
         return new MethodDelegation(instrumentationDelegate,
                 parameterBinders,
                 nonNull(defaultsProvider),
+                terminationHandler,
                 ambiguityResolver,
                 assigner,
                 targetMethodCandidates);
@@ -478,6 +561,7 @@ public class MethodDelegation implements Instrumentation {
         return new MethodDelegation(instrumentationDelegate,
                 parameterBinders,
                 defaultsProvider,
+                terminationHandler,
                 MethodDelegationBinder.AmbiguityResolver.Chain.of(nonNull(ambiguityResolver)),
                 assigner,
                 targetMethodCandidates);
@@ -489,10 +573,11 @@ public class MethodDelegation implements Instrumentation {
      * @param assigner The assigner to apply.
      * @return A method delegation instrumentation that makes use of the given designer.
      */
-    public MethodDelegation assigner(Assigner assigner) {
+    public MethodDelegation withAssigner(Assigner assigner) {
         return new MethodDelegation(instrumentationDelegate,
                 parameterBinders,
                 defaultsProvider,
+                terminationHandler,
                 ambiguityResolver,
                 nonNull(assigner),
                 targetMethodCandidates);
@@ -508,9 +593,30 @@ public class MethodDelegation implements Instrumentation {
         return new MethodDelegation(instrumentationDelegate,
                 parameterBinders,
                 defaultsProvider,
+                terminationHandler,
                 ambiguityResolver,
                 assigner,
                 isNotEmpty(targetMethodCandidates.filter(nonNull(methodMatcher)), NO_METHODS_ERROR_MESSAGE));
+    }
+
+    /**
+     * Appends another {@link net.bytebuddy.instrumentation.Instrumentation} to a method delegation. The return
+     * value of the delegation target is dropped such that the given {@code instrumentation} becomes responsible for
+     * returning from the method instead. However, if an exception is thrown from the interception method, this
+     * exception is not catched and the chained instrumentation is never applied. Note that this changes the binding
+     * semantics as the target method's return value is not longer considered what might change the binding target.
+     *
+     * @param instrumentation The instrumentation to apply after the delegation.
+     * @return An instrumentation that represents this chained instrumentation application.
+     */
+    public Instrumentation andThen(Instrumentation instrumentation) {
+        return new Compound(new MethodDelegation(instrumentationDelegate,
+                parameterBinders,
+                defaultsProvider,
+                TargetMethodAnnotationDrivenBinder.TerminationHandler.Dropping.INSTANCE,
+                ambiguityResolver,
+                assigner,
+                targetMethodCandidates), nonNull(instrumentation));
     }
 
     @Override
@@ -524,12 +630,13 @@ public class MethodDelegation implements Instrumentation {
         if (methodList.size() == 0) {
             throw new IllegalStateException("No bindable method is visible to " + instrumentationTarget.getTypeDescription());
         }
-        return new MethodDelegationByteCodeAppender(instrumentationDelegate.getPreparingStackAssignment(instrumentationTarget.getTypeDescription()),
+        return new Appender(instrumentationDelegate.getPreparingStackAssignment(instrumentationTarget.getTypeDescription()),
                 instrumentationTarget,
                 methodList,
                 new MethodDelegationBinder.Processor(new TargetMethodAnnotationDrivenBinder(
                         parameterBinders,
                         defaultsProvider,
+                        terminationHandler,
                         assigner,
                         instrumentationDelegate.getMethodInvoker(instrumentationTarget.getTypeDescription())
                 ), ambiguityResolver)
@@ -544,6 +651,7 @@ public class MethodDelegation implements Instrumentation {
         return ambiguityResolver.equals(that.ambiguityResolver)
                 && assigner.equals(that.assigner)
                 && defaultsProvider.equals(that.defaultsProvider)
+                && terminationHandler.equals(that.terminationHandler)
                 && instrumentationDelegate.equals(that.instrumentationDelegate)
                 && targetMethodCandidates.equals(that.targetMethodCandidates)
                 && parameterBinders.equals(that.parameterBinders);
@@ -554,6 +662,7 @@ public class MethodDelegation implements Instrumentation {
         int result = instrumentationDelegate.hashCode();
         result = 31 * result + parameterBinders.hashCode();
         result = 31 * result + defaultsProvider.hashCode();
+        result = 31 * result + terminationHandler.hashCode();
         result = 31 * result + ambiguityResolver.hashCode();
         result = 31 * result + assigner.hashCode();
         result = 31 * result + targetMethodCandidates.hashCode();
@@ -566,6 +675,7 @@ public class MethodDelegation implements Instrumentation {
                 "instrumentationDelegate=" + instrumentationDelegate +
                 ", parameterBinders=" + parameterBinders +
                 ", defaultsProvider=" + defaultsProvider +
+                ", terminationHandler=" + terminationHandler +
                 ", ambiguityResolver=" + ambiguityResolver +
                 ", assigner=" + assigner +
                 ", targetMethodCandidates=" + targetMethodCandidates +
@@ -630,7 +740,7 @@ public class MethodDelegation implements Instrumentation {
         /**
          * An instrumentation applied on a static field.
          */
-        static class ForStaticFieldInstance implements InstrumentationDelegate {
+        static class ForStaticField implements InstrumentationDelegate {
 
             /**
              * The name prefix for the {@code static} field that is containing the delegation target.
@@ -653,7 +763,7 @@ public class MethodDelegation implements Instrumentation {
              *
              * @param delegate The actual delegation target.
              */
-            public ForStaticFieldInstance(Object delegate) {
+            public ForStaticField(Object delegate) {
                 this(delegate, String.format("%s$%d", PREFIX, delegate.hashCode()));
             }
 
@@ -663,7 +773,7 @@ public class MethodDelegation implements Instrumentation {
              * @param delegate  The actual delegation target.
              * @param fieldName The name of the field for storing the delegate instance.
              */
-            public ForStaticFieldInstance(Object delegate, String fieldName) {
+            public ForStaticField(Object delegate, String fieldName) {
                 this.delegate = delegate;
                 this.fieldName = fieldName;
             }
@@ -689,8 +799,8 @@ public class MethodDelegation implements Instrumentation {
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && delegate.equals(((ForStaticFieldInstance) other).delegate)
-                        && fieldName.equals(((ForStaticFieldInstance) other).fieldName);
+                        && delegate.equals(((ForStaticField) other).delegate)
+                        && fieldName.equals(((ForStaticField) other).fieldName);
             }
 
             @Override
@@ -700,7 +810,7 @@ public class MethodDelegation implements Instrumentation {
 
             @Override
             public String toString() {
-                return "MethodDelegation.InstrumentationDelegate.ForStaticFieldInstance{" +
+                return "MethodDelegation.InstrumentationDelegate.ForStaticField{" +
                         "fieldName='" + fieldName + '\'' +
                         ", delegate=" + delegate +
                         '}';
@@ -830,7 +940,7 @@ public class MethodDelegation implements Instrumentation {
     /**
      * The appender for implementing a {@link net.bytebuddy.instrumentation.MethodDelegation}.
      */
-    private static class MethodDelegationByteCodeAppender implements ByteCodeAppender {
+    protected static class Appender implements ByteCodeAppender {
 
         /**
          * The stack manipulation that is responsible for loading a potential target instance onto the stack
@@ -863,10 +973,10 @@ public class MethodDelegation implements Instrumentation {
          * @param processor                The method delegation binder processor which is responsible for implementing
          *                                 the method delegation.
          */
-        private MethodDelegationByteCodeAppender(StackManipulation preparingStackAssignment,
-                                                 Target instrumentationTarget,
-                                                 Iterable<? extends MethodDescription> targetMethods,
-                                                 MethodDelegationBinder.Processor processor) {
+        protected Appender(StackManipulation preparingStackAssignment,
+                           Target instrumentationTarget,
+                           Iterable<? extends MethodDescription> targetMethods,
+                           MethodDelegationBinder.Processor processor) {
             this.preparingStackAssignment = preparingStackAssignment;
             this.instrumentationTarget = instrumentationTarget;
             this.targetMethods = targetMethods;
@@ -884,8 +994,7 @@ public class MethodDelegation implements Instrumentation {
                           MethodDescription instrumentedMethod) {
             StackManipulation.Size stackSize = new StackManipulation.Compound(
                     preparingStackAssignment,
-                    processor.process(instrumentationTarget, instrumentedMethod, targetMethods),
-                    MethodReturn.returning(instrumentedMethod.getReturnType())
+                    processor.process(instrumentationTarget, instrumentedMethod, targetMethods)
             ).apply(methodVisitor, instrumentationContext);
             return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
         }
@@ -894,7 +1003,7 @@ public class MethodDelegation implements Instrumentation {
         public boolean equals(Object other) {
             if (this == other) return true;
             if (other == null || getClass() != other.getClass()) return false;
-            MethodDelegationByteCodeAppender that = (MethodDelegationByteCodeAppender) other;
+            Appender that = (Appender) other;
             return instrumentationTarget.equals(that.instrumentationTarget)
                     && preparingStackAssignment.equals(that.preparingStackAssignment)
                     && processor.equals(that.processor)
@@ -912,7 +1021,7 @@ public class MethodDelegation implements Instrumentation {
 
         @Override
         public String toString() {
-            return "MethodDelegationByteCodeAppender{" +
+            return "MethodDelegation.Appender{" +
                     "preparingStackAssignment=" + preparingStackAssignment +
                     ", instrumentationTarget=" + instrumentationTarget +
                     ", targetMethods=" + targetMethods +

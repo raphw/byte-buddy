@@ -3,15 +3,19 @@ package net.bytebuddy.dynamic.loading;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.ClassFileExtraction;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -59,6 +63,33 @@ public class ClassLoaderByteArrayInjectorTest {
         assertEquals(Object.class, result.entrySet().iterator().next().getValue());
         verify(mockInjector).inject(FOO, BYTE_ARRAY);
         verifyNoMoreInteractions(mockInjector);
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testFaultyReflectionStoreClassMethod() throws Exception {
+        new ClassLoaderByteArrayInjector.ReflectionStore.Faulty(new Exception()).getFindLoadedClassMethod();
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testFaultyReflectionStoreLoadByteArray() throws Exception {
+        new ClassLoaderByteArrayInjector.ReflectionStore.Faulty(new Exception()).getLoadByteArrayMethod();
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(ClassLoaderByteArrayInjector.class)
+                .apply(new ClassLoaderByteArrayInjector(mock(ClassLoader.class)));
+        ObjectPropertyAssertion.of(ClassLoaderByteArrayInjector.ClassLoadingAction.class)
+                .ignoreFields("accessControlContext")
+                .apply();
+        final Iterator<Method> iterator = Arrays.asList(Object.class.getDeclaredMethods()).iterator();
+        ObjectPropertyAssertion.of(ClassLoaderByteArrayInjector.ReflectionStore.Resolved.class).create(new ObjectPropertyAssertion.Creator<Method>() {
+            @Override
+            public Method create() {
+                return iterator.next();
+            }
+        }).apply();
+        ObjectPropertyAssertion.of(ClassLoaderByteArrayInjector.ReflectionStore.Faulty.class).apply();
     }
 
     private static class Foo {

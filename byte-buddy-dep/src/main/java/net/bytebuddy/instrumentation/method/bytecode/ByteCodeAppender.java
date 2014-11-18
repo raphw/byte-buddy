@@ -164,7 +164,7 @@ public interface ByteCodeAppender {
 
         @Override
         public String toString() {
-            return "ByteCodeAppender.Compound{" + Arrays.toString(byteCodeAppender) + '}';
+            return "ByteCodeAppender.Compound{byteCodeAppender=" + Arrays.toString(byteCodeAppender) + '}';
         }
     }
 

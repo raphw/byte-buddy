@@ -2,8 +2,8 @@ package net.bytebuddy.instrumentation.method;
 
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.JavaVersionRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.PrecompiledTypeClassLoader;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
@@ -20,6 +20,8 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class MethodLookupEngineDefaultTest {
 
@@ -384,8 +386,12 @@ public class MethodLookupEngineDefaultTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(MethodLookupEngine.Default.class).apply();
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(MethodLookupEngine.Default.class).apply();
+        TypeDescription typeDescription = mock(TypeDescription.class);
+        when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Empty());
+        ObjectPropertyAssertion.of(MethodLookupEngine.Default.MethodBucket.class)
+                .apply(new MethodLookupEngine.Default.MethodBucket(typeDescription));
     }
 
     private static interface SingleMethodInterface {

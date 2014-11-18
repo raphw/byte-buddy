@@ -6,6 +6,7 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -16,8 +17,10 @@ import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import java.util.Arrays;
+import java.util.Iterator;
+
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -123,15 +126,13 @@ public class MethodHandleConstantTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        MethodDescription other = mock(MethodDescription.class);
-        when(other.getDeclaringType()).thenReturn(typeDescription);
-        when(other.getInternalName()).thenReturn(FOO);
-        when(other.getInternalName()).thenReturn(BAR);
-        when(other.getDescriptor()).thenReturn(BAZ);
-        assertThat(MethodHandleConstant.of(methodDescription).hashCode(), is(MethodHandleConstant.of(methodDescription).hashCode()));
-        assertThat(MethodHandleConstant.of(methodDescription), is(MethodHandleConstant.of(methodDescription)));
-        assertThat(MethodHandleConstant.of(methodDescription).hashCode(), not(is(MethodHandleConstant.of(other).hashCode())));
-        assertThat(MethodHandleConstant.of(methodDescription), not(is(MethodHandleConstant.of(other))));
+    public void testObjectProperties() throws Exception {
+        final Iterator<String> iterator = Arrays.asList(FOO, BAR).iterator();
+        ObjectPropertyAssertion.of(MethodHandleConstant.class).create(new ObjectPropertyAssertion.Creator<Handle>() {
+            @Override
+            public Handle create() {
+                return new Handle(Opcodes.H_GETFIELD, FOO, BAR, iterator.next());
+            }
+        }).apply();
     }
 }

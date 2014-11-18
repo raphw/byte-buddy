@@ -5,8 +5,8 @@ import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.type.TypeList;
-import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -107,7 +107,7 @@ public class TypeWriterMethodPoolEntryTest {
 
     @Test
     public void testSimpleEntryHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(TypeWriter.MethodPool.Entry.Simple.class).apply();
+        ObjectPropertyAssertion.of(TypeWriter.MethodPool.Entry.Simple.class).apply();
     }
 
     @Test

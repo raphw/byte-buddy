@@ -27,6 +27,7 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsSame.sameInstance;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class ByteBuddyCommonsTest {
@@ -59,6 +60,42 @@ public class ByteBuddyCommonsTest {
     }
 
     @Test
+    public void testNonNullArray() throws Exception {
+        Object[] object = new Object[]{new Object()};
+        assertThat(nonNull(object), sameInstance(object));
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testNonNullArrayThrowsException() throws Exception {
+        nonNull(new Object[1]);
+    }
+
+    @Test
+    public void testNonVoid() throws Exception {
+        TypeDescription typeDescription = mock(TypeDescription.class);
+        assertThat(nonVoid(typeDescription), sameInstance(typeDescription));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testNonVoidThrowsException() throws Exception {
+        TypeDescription typeDescription = mock(TypeDescription.class);
+        when(typeDescription.represents(void.class)).thenReturn(true);
+        assertThat(nonVoid(typeDescription), sameInstance(typeDescription));
+    }
+    @Test
+    public void testNonVoidCollection() throws Exception {
+        List<TypeDescription> typeDescriptions = Arrays.asList(mock(TypeDescription.class));
+        assertThat(nonVoid(typeDescriptions), sameInstance(typeDescriptions));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testNonVoidCollectionThrowsException() throws Exception {
+        TypeDescription typeDescription = mock(TypeDescription.class);
+        when(typeDescription.represents(void.class)).thenReturn(true);
+        nonVoid(Arrays.asList(typeDescription));
+    }
+
+    @Test
     public void testIsInterface() throws Exception {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(Runnable.class);
         assertThat(isInterface(typeDescription), is(typeDescription));
@@ -67,6 +104,19 @@ public class ByteBuddyCommonsTest {
     @Test(expected = IllegalArgumentException.class)
     public void testIsInterfaceThrowsException() throws Exception {
         isInterface(new TypeDescription.ForLoadedType(Object.class));
+    }
+
+    @Test
+    public void testIsInterfaceArray() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Runnable.class);
+        TypeDescription otherTypeDescription = new TypeDescription.ForLoadedType(Serializable.class);
+        assertThat(isInterface(new TypeDescription[]{typeDescription, otherTypeDescription}),
+                is(new TypeDescription[]{typeDescription, otherTypeDescription}));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testIsInterfaceArrayThrowsException() throws Exception {
+        isInterface(new TypeDescription[]{new TypeDescription.ForLoadedType(Runnable.class), new TypeDescription.ForLoadedType(Object.class)});
     }
 
     @Test

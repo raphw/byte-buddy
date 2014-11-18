@@ -1,6 +1,8 @@
 package net.bytebuddy.instrumentation.attribute;
 
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationAppender;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.FieldVisitor;
@@ -101,7 +103,7 @@ public interface FieldAttributeAppender {
 
             @Override
             public String toString() {
-                return "FieldAttributeAppender.Factory.Compound{" + Arrays.toString(factory) + '}';
+                return "FieldAttributeAppender.Factory.Compound{factory=" + Arrays.toString(factory) + '}';
             }
         }
     }
@@ -115,7 +117,7 @@ public interface FieldAttributeAppender {
         /**
          * The annotations that this appender appends.
          */
-        private final Annotation[] annotation;
+        private final AnnotationList annotations;
 
         /**
          * Creates a new field annotation appender.
@@ -123,14 +125,14 @@ public interface FieldAttributeAppender {
          * @param annotation The annotations to be appended to the field.
          */
         public ForAnnotation(Annotation... annotation) {
-            this.annotation = annotation;
+            annotations = new AnnotationList.ForLoadedAnnotation(annotation);
         }
 
         @Override
         public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription) {
             AnnotationAppender annotationAppender =
                     new AnnotationAppender.Default(new AnnotationAppender.Target.OnField(fieldVisitor));
-            for (Annotation annotation : this.annotation) {
+            for (AnnotationDescription annotation : annotations) {
                 annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
             }
         }
@@ -143,17 +145,17 @@ public interface FieldAttributeAppender {
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && Arrays.equals(annotation, ((ForAnnotation) other).annotation);
+                    && annotations.equals(((ForAnnotation) other).annotations);
         }
 
         @Override
         public int hashCode() {
-            return Arrays.hashCode(annotation);
+            return annotations.hashCode();
         }
 
         @Override
         public String toString() {
-            return "FieldAttributeAppender.ForAnnotation{annotation=" + Arrays.toString(annotation) + '}';
+            return "FieldAttributeAppender.ForAnnotation{annotations=" + annotations + '}';
         }
     }
 
@@ -166,7 +168,7 @@ public interface FieldAttributeAppender {
         /**
          * The field from which the annotations should be copied.
          */
-        private final Field field;
+        private final FieldDescription fieldDescription;
 
         /**
          * Creates a new field attribute appender that appends all annotations that are found on a loaded field.
@@ -174,14 +176,14 @@ public interface FieldAttributeAppender {
          * @param field The field from which the annotations to append are read.
          */
         public ForLoadedField(Field field) {
-            this.field = field;
+            this.fieldDescription = new FieldDescription.ForLoadedField(field);
         }
 
         @Override
         public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription) {
             AnnotationAppender annotationAppender =
                     new AnnotationAppender.Default(new AnnotationAppender.Target.OnField(fieldVisitor));
-            for (Annotation annotation : field.getAnnotations()) {
+            for (AnnotationDescription annotation : this.fieldDescription.getDeclaredAnnotations()) {
                 annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.RUNTIME);
             }
         }
@@ -194,17 +196,17 @@ public interface FieldAttributeAppender {
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && field.equals(((ForLoadedField) other).field);
+                    && fieldDescription.equals(((ForLoadedField) other).fieldDescription);
         }
 
         @Override
         public int hashCode() {
-            return field.hashCode();
+            return fieldDescription.hashCode();
         }
 
         @Override
         public String toString() {
-            return "FieldAttributeAppender.ForLoadedField{field=" + field + '}';
+            return "FieldAttributeAppender.ForLoadedField{fieldDescription=" + fieldDescription + '}';
         }
     }
 
@@ -249,7 +251,7 @@ public interface FieldAttributeAppender {
 
         @Override
         public String toString() {
-            return "FieldAttributeAppenderCompound{" + Arrays.toString(fieldAttributeAppender) + '}';
+            return "FieldAttributeAppender.Compound{fieldAttributeAppender=" + Arrays.toString(fieldAttributeAppender) + '}';
         }
     }
 }

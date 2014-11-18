@@ -1,13 +1,16 @@
 package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.instrumentation.method.MethodList;
+import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.CallTraceable;
-import net.bytebuddy.utility.HashCodeEqualsTester;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.when;
 
 public class ExceptionMethodTest extends AbstractInstrumentationTest {
 
@@ -72,7 +75,19 @@ public class ExceptionMethodTest extends AbstractInstrumentationTest {
 
     @Test
     public void testEqualsHashCode() throws Exception {
-        HashCodeEqualsTester.of(ExceptionMethod.class).apply();
+        ObjectPropertyAssertion.of(ExceptionMethod.class).apply();
+        ObjectPropertyAssertion.of(ExceptionMethod.ConstructionDelegate.ForDefaultConstructor.class).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
+            @Override
+            public void apply(TypeDescription mock) {
+                when(mock.getDeclaredMethods()).thenReturn(new MethodList.ForLoadedType(Object.class));
+            }
+        }).apply();
+        ObjectPropertyAssertion.of(ExceptionMethod.ConstructionDelegate.ForStringConstructor.class).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
+            @Override
+            public void apply(TypeDescription mock) {
+                when(mock.getDeclaredMethods()).thenReturn(new MethodList.ForLoadedType(String.class));
+            }
+        }).apply();
     }
 
     public static class Foo extends CallTraceable {

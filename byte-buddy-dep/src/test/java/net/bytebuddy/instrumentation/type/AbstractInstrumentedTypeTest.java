@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsNot.not;
 import static org.mockito.Mockito.*;
@@ -51,6 +52,15 @@ public abstract class AbstractInstrumentedTypeTest {
         assertThat(fieldDescription.getFieldType(), is((TypeDescription) instrumentedType));
         assertThat(fieldDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(fieldDescription.getName(), is(BAR));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testWithFieldDouble() throws Exception {
+        TypeDescription fieldType = mock(TypeDescription.class);
+        when(fieldType.getName()).thenReturn(FOO);
+        makePlainInstrumentedType()
+                .withField(BAR, fieldType, Opcodes.ACC_PUBLIC)
+                .withField(BAR, fieldType, Opcodes.ACC_PUBLIC);
     }
 
     @Test
@@ -96,6 +106,15 @@ public abstract class AbstractInstrumentedTypeTest {
         assertThat(methodDescription.getExceptionTypes().size(), is(0));
         assertThat(methodDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(methodDescription.getName(), is(BAR));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testWithMethodDouble() throws Exception {
+        TypeDescription returnType = mock(TypeDescription.class);
+        when(returnType.getName()).thenReturn(FOO);
+        makePlainInstrumentedType()
+                .withMethod(BAR, returnType, Collections.<TypeDescription>emptyList(), Collections.<TypeDescription>emptyList(), Opcodes.ACC_PUBLIC)
+                .withMethod(BAR, returnType, Collections.<TypeDescription>emptyList(), Collections.<TypeDescription>emptyList(), Opcodes.ACC_PUBLIC);
     }
 
     @Test
@@ -173,5 +192,36 @@ public abstract class AbstractInstrumentedTypeTest {
     @Test
     public void testSimpleName() {
         assertThat(makePlainInstrumentedType().getSimpleName(), is(BAR));
+    }
+
+    @Test
+    public void testEnclosingMethod() throws Exception {
+        assertThat(makePlainInstrumentedType().getEnclosingMethod(), nullValue());
+    }
+
+    @Test
+    public void testEnclosingType() throws Exception {
+        assertThat(makePlainInstrumentedType().getEnclosingType(), nullValue());
+    }
+
+    @Test
+    public void testDeclaringType() throws Exception {
+        assertThat(makePlainInstrumentedType().getDeclaringType(), nullValue());
+    }
+
+    @Test
+    public void testIsAnonymous() throws Exception {
+        assertThat(makePlainInstrumentedType().isAnonymousClass(), is(false));
+    }
+
+    @Test
+    public void testCanonicalName() throws Exception {
+        TypeDescription typeDescription = makePlainInstrumentedType();
+        assertThat(typeDescription.getCanonicalName(), is(typeDescription.getName()));
+    }
+
+    @Test
+    public void testIsMemberClass() throws Exception {
+        assertThat(makePlainInstrumentedType().isMemberClass(), is(false));
     }
 }

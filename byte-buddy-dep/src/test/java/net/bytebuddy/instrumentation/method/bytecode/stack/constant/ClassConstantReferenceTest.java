@@ -4,6 +4,7 @@ import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -12,7 +13,6 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -47,10 +47,7 @@ public class ClassConstantReferenceTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        assertThat(ClassConstant.of(typeDescription).hashCode(), is(ClassConstant.of(typeDescription).hashCode()));
-        assertThat(ClassConstant.of(typeDescription), is(ClassConstant.of(typeDescription)));
-        assertThat(ClassConstant.of(typeDescription).hashCode(), not(is(ClassConstant.of(mock(TypeDescription.class)).hashCode())));
-        assertThat(ClassConstant.of(typeDescription), not(is(ClassConstant.of(mock(TypeDescription.class)))));
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(ClassConstant.ForReferenceType.class).apply();
     }
 }

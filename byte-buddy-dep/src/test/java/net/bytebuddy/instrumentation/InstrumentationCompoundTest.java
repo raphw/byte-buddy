@@ -2,8 +2,8 @@ package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
-import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -59,7 +59,7 @@ public class InstrumentationCompoundTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(Instrumentation.Compound.class).apply();
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(Instrumentation.Compound.class).apply();
     }
 }

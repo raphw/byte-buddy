@@ -46,6 +46,7 @@ public class DefaultValueTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {void.class, -1},
+                {boolean.class, Opcodes.ICONST_0},
                 {byte.class, Opcodes.ICONST_0},
                 {short.class, Opcodes.ICONST_0},
                 {char.class, Opcodes.ICONST_0},

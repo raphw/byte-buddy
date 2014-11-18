@@ -96,7 +96,7 @@ public enum FieldAccess {
     /**
      * A dispatcher for implementing a read or write access on a field.
      */
-    private class AccessDispatcher implements Defined {
+    protected class AccessDispatcher implements Defined {
 
         /**
          * A description of the accessed field.
@@ -108,7 +108,7 @@ public enum FieldAccess {
          *
          * @param fieldDescription A description of the accessed field.
          */
-        private AccessDispatcher(FieldDescription fieldDescription) {
+        protected AccessDispatcher(FieldDescription fieldDescription) {
             this.fieldDescription = fieldDescription;
         }
 
@@ -130,17 +130,30 @@ public enum FieldAccess {
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
+                    && FieldAccess.this.equals(((AccessDispatcher) other).getFieldAccess())
                     && fieldDescription.equals(((AccessDispatcher) other).fieldDescription);
         }
 
         @Override
         public int hashCode() {
-            return fieldDescription.hashCode();
+            return fieldDescription.hashCode() + 31 * FieldAccess.this.hashCode();
         }
 
         @Override
         public String toString() {
-            return "FieldAccess.AccessDispatcher{fieldDescription=" + fieldDescription + '}';
+            return "FieldAccess.AccessDispatcher{" +
+                    "fieldAccess=" + FieldAccess.this +
+                    ", fieldDescription=" + fieldDescription +
+                    '}';
+        }
+
+        /**
+         * Returns the outer instance.
+         *
+         * @return The outer instance.
+         */
+        private FieldAccess getFieldAccess() {
+            return FieldAccess.this;
         }
 
         /**
@@ -181,7 +194,7 @@ public enum FieldAccess {
         /**
          * A reading field access operation.
          */
-        private class FieldGetInstruction extends AbstractFieldInstruction {
+        protected class FieldGetInstruction extends AbstractFieldInstruction {
 
             @Override
             protected int getOpcode() {
@@ -223,7 +236,7 @@ public enum FieldAccess {
         /**
          * A writing field access operation.
          */
-        private class FieldPutInstruction extends AbstractFieldInstruction {
+        protected class FieldPutInstruction extends AbstractFieldInstruction {
 
             @Override
             protected int getOpcode() {

@@ -3,6 +3,7 @@ package net.bytebuddy.instrumentation.method.bytecode.stack.constant;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -15,7 +16,6 @@ import org.objectweb.asm.Opcodes;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
@@ -60,7 +60,9 @@ public class IntegerConstantTest {
 
     @Test
     public void testBiPush() throws Exception {
-        StackManipulation.Size size = IntegerConstant.forValue(value).apply(methodVisitor, instrumentationContext);
+        StackManipulation integerConstant = IntegerConstant.forValue(value);
+        assertThat(integerConstant.isValid(), is(true));
+        StackManipulation.Size size = integerConstant.apply(methodVisitor, instrumentationContext);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
         pushType.verifyInstruction(methodVisitor, value);
@@ -69,11 +71,10 @@ public class IntegerConstantTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        assertThat(IntegerConstant.forValue(value).hashCode(), is(IntegerConstant.forValue(value).hashCode()));
-        assertThat(IntegerConstant.forValue(value), is(IntegerConstant.forValue(value)));
-        assertThat(IntegerConstant.forValue(value).hashCode(), not(is(IntegerConstant.forValue(value * 2).hashCode())));
-        assertThat(IntegerConstant.forValue(value), not(is(IntegerConstant.forValue(value * 2))));
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(IntegerConstant.SingleBytePush.class).apply();
+        ObjectPropertyAssertion.of(IntegerConstant.TwoBytePush.class).apply();
+        ObjectPropertyAssertion.of(IntegerConstant.ConstantPool.class).apply();
     }
 
     private static enum PushType {

@@ -1,6 +1,8 @@
 package net.bytebuddy.instrumentation.attribute;
 
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationAppender;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.ClassVisitor;
 
@@ -52,7 +54,7 @@ public interface TypeAttributeAppender {
         public void apply(ClassVisitor classVisitor, TypeDescription typeDescription) {
             AnnotationAppender annotationAppender =
                     new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor));
-            for (Annotation annotation : typeDescription.getSupertype().getAnnotations()) {
+            for (AnnotationDescription annotation : typeDescription.getSupertype().getDeclaredAnnotations()) {
                 annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
             }
         }
@@ -67,7 +69,7 @@ public interface TypeAttributeAppender {
         /**
          * The annotations to write to the given type.
          */
-        private final Annotation[] annotation;
+        private final AnnotationList annotations;
 
         /**
          * Creates a new single annotation attribute appender.
@@ -75,14 +77,14 @@ public interface TypeAttributeAppender {
          * @param annotation The annotations to append.
          */
         public ForAnnotation(Annotation... annotation) {
-            this.annotation = annotation;
+            this.annotations = new AnnotationList.ForLoadedAnnotation(annotation);
         }
 
         @Override
         public void apply(ClassVisitor classVisitor, TypeDescription typeDescription) {
             AnnotationAppender annotationAppender =
                     new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor));
-            for (Annotation annotation : this.annotation) {
+            for (AnnotationDescription annotation : annotations) {
                 annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
             }
         }
@@ -90,17 +92,17 @@ public interface TypeAttributeAppender {
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && Arrays.equals(annotation, ((ForAnnotation) other).annotation);
+                    && annotations.equals(((ForAnnotation) other).annotations);
         }
 
         @Override
         public int hashCode() {
-            return Arrays.hashCode(annotation);
+            return annotations.hashCode();
         }
 
         @Override
         public String toString() {
-            return "TypeAttributeAppender.ForAnnotation{annotation=" + Arrays.toString(annotation) + '}';
+            return "TypeAttributeAppender.ForAnnotation{annotations=" + annotations + '}';
         }
     }
 
@@ -136,7 +138,7 @@ public interface TypeAttributeAppender {
         public void apply(ClassVisitor classVisitor, TypeDescription typeDescription) {
             AnnotationAppender annotationAppender =
                     new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor));
-            for (Annotation annotation : this.typeDescription.getDeclaredAnnotations()) {
+            for (AnnotationDescription annotation : this.typeDescription.getDeclaredAnnotations()) {
                 annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
             }
         }
@@ -197,7 +199,7 @@ public interface TypeAttributeAppender {
 
         @Override
         public String toString() {
-            return "TypeAttributeAppender.Compound{" + Arrays.toString(typeAttributeAppender) + '}';
+            return "TypeAttributeAppender.Compound{typeAttributeAppender=" + Arrays.toString(typeAttributeAppender) + '}';
         }
     }
 }

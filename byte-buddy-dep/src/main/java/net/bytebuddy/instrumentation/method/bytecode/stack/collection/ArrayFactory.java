@@ -68,26 +68,26 @@ public class ArrayFactory implements CollectionFactory {
     private static ArrayCreator makeArrayCreatorFor(TypeDescription componentType) {
         if (componentType.isPrimitive()) {
             if (componentType.represents(boolean.class)) {
-                return ArrayCreator.Primitive.BOOLEAN;
+                return ArrayCreator.ForPrimitiveType.BOOLEAN;
             } else if (componentType.represents(byte.class)) {
-                return ArrayCreator.Primitive.BYTE;
+                return ArrayCreator.ForPrimitiveType.BYTE;
             } else if (componentType.represents(short.class)) {
-                return ArrayCreator.Primitive.SHORT;
+                return ArrayCreator.ForPrimitiveType.SHORT;
             } else if (componentType.represents(char.class)) {
-                return ArrayCreator.Primitive.CHARACTER;
+                return ArrayCreator.ForPrimitiveType.CHARACTER;
             } else if (componentType.represents(int.class)) {
-                return ArrayCreator.Primitive.INTEGER;
+                return ArrayCreator.ForPrimitiveType.INTEGER;
             } else if (componentType.represents(long.class)) {
-                return ArrayCreator.Primitive.LONG;
+                return ArrayCreator.ForPrimitiveType.LONG;
             } else if (componentType.represents(float.class)) {
-                return ArrayCreator.Primitive.FLOAT;
+                return ArrayCreator.ForPrimitiveType.FLOAT;
             } else if (componentType.represents(double.class)) {
-                return ArrayCreator.Primitive.DOUBLE;
+                return ArrayCreator.ForPrimitiveType.DOUBLE;
             } else {
                 throw new IllegalArgumentException("Cannot create array of type " + componentType);
             }
         } else {
-            return new ArrayCreator.Reference(componentType);
+            return new ArrayCreator.ForReferenceType(componentType);
         }
     }
 
@@ -104,12 +104,13 @@ public class ArrayFactory implements CollectionFactory {
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && componentType.equals(((ArrayFactory) other).componentType);
+                && componentType.equals(((ArrayFactory) other).componentType)
+                && arrayCreator.equals(((ArrayFactory) other).arrayCreator);
     }
 
     @Override
     public int hashCode() {
-        return componentType.hashCode();
+        return componentType.hashCode() + 31 * arrayCreator.hashCode();
     }
 
     @Override
@@ -143,7 +144,7 @@ public class ArrayFactory implements CollectionFactory {
         /**
          * An array creator implementation for primitive types.
          */
-        static enum Primitive implements ArrayCreator {
+        static enum ForPrimitiveType implements ArrayCreator {
 
             /**
              * An array creator for creating {@code boolean[]} arrays.
@@ -201,7 +202,7 @@ public class ArrayFactory implements CollectionFactory {
              * @param creationOpcode The opcode for creating an array of this type.
              * @param storageOpcode  The opcode for storing a value in an array of this type.
              */
-            private Primitive(int creationOpcode, int storageOpcode) {
+            private ForPrimitiveType(int creationOpcode, int storageOpcode) {
                 this.creationOpcode = creationOpcode;
                 this.storageOpcode = storageOpcode;
             }
@@ -226,7 +227,7 @@ public class ArrayFactory implements CollectionFactory {
         /**
          * An array creator implementation for reference types.
          */
-        static class Reference implements ArrayCreator {
+        static class ForReferenceType implements ArrayCreator {
 
             /**
              * The internal name of this array's non-primitive component type.
@@ -238,7 +239,7 @@ public class ArrayFactory implements CollectionFactory {
              *
              * @param referenceType The internal name of this array's non-primitive component type.
              */
-            private Reference(TypeDescription referenceType) {
+            protected ForReferenceType(TypeDescription referenceType) {
                 this.internalTypeName = referenceType.getInternalName();
             }
 
@@ -261,7 +262,7 @@ public class ArrayFactory implements CollectionFactory {
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && internalTypeName.equals(((Reference) other).internalTypeName);
+                        && internalTypeName.equals(((ForReferenceType) other).internalTypeName);
             }
 
             @Override
@@ -271,7 +272,7 @@ public class ArrayFactory implements CollectionFactory {
 
             @Override
             public String toString() {
-                return "ArrayFactory.ArrayCreator.Reference{" +
+                return "ArrayFactory.ArrayCreator.ForReferenceType{" +
                         "internalTypeName='" + internalTypeName + '\'' +
                         '}';
             }
@@ -281,7 +282,7 @@ public class ArrayFactory implements CollectionFactory {
     /**
      * A stack manipulation for creating an array as defined by the enclosing array factory.
      */
-    private class ArrayStackManipulation implements StackManipulation {
+    protected class ArrayStackManipulation implements StackManipulation {
 
         /**
          * A list of value load instructions that are to be stored inside the created array.
@@ -293,7 +294,7 @@ public class ArrayFactory implements CollectionFactory {
          *
          * @param stackManipulations A list of value load instructions that are to be stored inside the created array.
          */
-        public ArrayStackManipulation(List<StackManipulation> stackManipulations) {
+        protected ArrayStackManipulation(List<StackManipulation> stackManipulations) {
             this.stackManipulations = stackManipulations;
         }
 

@@ -1,16 +1,16 @@
 package net.bytebuddy.instrumentation.method;
 
-import net.bytebuddy.instrumentation.ModifierReviewable;
-import net.bytebuddy.instrumentation.type.DeclaredInType;
+import net.bytebuddy.instrumentation.ByteCodeElement;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Collections;
 import java.util.List;
 
@@ -18,7 +18,7 @@ import java.util.List;
  * Implementations of this interface describe a Java method, i.e. a method or a constructor. Implementations of this
  * interface must provide meaningful {@code equal(Object)} and {@code hashCode()} implementations.
  */
-public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, DeclaredInType, AnnotatedElement {
+public interface MethodDescription extends ByteCodeElement {
 
     /**
      * The internal name of a Java constructor.
@@ -29,6 +29,11 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
      * The internal name of a Java static initializer.
      */
     static final String TYPE_INITIALIZER_INTERNAL_NAME = "<clinit>";
+
+    /**
+     * The type initializer of any representation of a type initializer.
+     */
+    static final int TYPE_INITIALIZER_MODIFIER = Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
 
     /**
      * Returns a description of the return type of the method described by this instance.
@@ -49,7 +54,7 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
      *
      * @return The parameter annotations of the method described by this instance.
      */
-    Annotation[][] getParameterAnnotations();
+    List<AnnotationList> getParameterAnnotations();
 
     /**
      * Returns a description of the exception types of the method described by this instance.
@@ -144,9 +149,57 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
     boolean isSpecializableFor(TypeDescription typeDescription);
 
     /**
+     * Returns the unique signature of a byte code method. A unique signature is defined as the concatenation of
+     * the internal name of the method / constructor and the method descriptor. Note that methods on byte code
+     * level do consider two similar methods with different return type as distinct methods.
+     *
+     * @return A unique signature of this byte code level method.
+     */
+    String getUniqueSignature();
+
+    /**
+     * Returns the default value of this method or {@code null} if no such value exists. The returned values might be
+     * of a different type than usual:
+     * <ul>
+     * <li>{@link java.lang.Class} values are represented as
+     * {@link net.bytebuddy.instrumentation.type.TypeDescription}s.</li>
+     * <li>{@link java.lang.annotation.Annotation} values are represented as
+     * {@link net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription}s</li>
+     * <li>{@link java.lang.Enum} values are represented as
+     * {@link net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription.EnumerationValue}s.</li>
+     * <li>Arrays of the latter types are represented as arrays of the named wrapper types.</li>
+     * </ul>
+     *
+     * @return The default value of this method or {@code null}.
+     */
+    Object getDefaultValue();
+
+    /**
+     * Returns the default value but casts it to the given type. If the type differs from the value, a
+     * {@link java.lang.ClassCastException} is thrown.
+     *
+     * @param type The type to cast the default value to.
+     * @param <T>  The type to cast the default value to.
+     * @return The casted default value.
+     */
+    <T> T getDefaultValue(Class<T> type);
+
+    /**
      * An abstract base implementation of a method description.
      */
     abstract static class AbstractMethodDescription extends AbstractModifierReviewable implements MethodDescription {
+
+        /**
+         * A merger of all method modifiers that are visible in the Java source code.
+         */
+        private static final int SOURCE_MODIFIERS = Modifier.PUBLIC
+                | Modifier.PROTECTED
+                | Modifier.PRIVATE
+                | Modifier.ABSTRACT
+                | Modifier.STATIC
+                | Modifier.FINAL
+                | Modifier.SYNCHRONIZED
+                | Modifier.NATIVE;
 
         @Override
         public String getUniqueSignature() {
@@ -161,6 +214,11 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         @Override
         public boolean isMethod() {
             return !isConstructor() && !isTypeInitializer();
+        }
+
+        @Override
+        public String getName() {
+            return isMethod() ? getInternalName() : getDeclaringType().getName();
         }
 
         @Override
@@ -186,10 +244,11 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
 
         @Override
         public boolean isVisibleTo(TypeDescription typeDescription) {
-            return isPublic()
+            return getDeclaringType().isVisibleTo(typeDescription)
+                    && (isPublic()
                     || typeDescription.equals(getDeclaringType())
                     || (isProtected() && getDeclaringType().isAssignableFrom(typeDescription))
-                    || (!isPrivate() && typeDescription.getPackageName().equals(getDeclaringType().getPackageName()));
+                    || (!isPrivate() && typeDescription.isSamePackage(getDeclaringType())));
         }
 
         @Override
@@ -221,7 +280,7 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         public boolean isSpecializableFor(TypeDescription targetType) {
             if (isStatic()) { // Static private methods are never specializable, check static property first
                 return false;
-            } else if (isPrivate() || isConstructor()) {
+            } else if (isPrivate() || isConstructor() || isDefaultMethod()) {
                 return getDeclaringType().equals(targetType);
             } else {
                 return !isAbstract() && getDeclaringType().isAssignableFrom(targetType);
@@ -229,15 +288,63 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         }
 
         @Override
+        public <T> T getDefaultValue(Class<T> type) {
+            return type.cast(getDefaultValue());
+        }
+
+        @Override
         public boolean equals(Object other) {
             return other == this || other instanceof MethodDescription
-                    && getUniqueSignature().equals(((MethodDescription) other).getUniqueSignature())
-                    && getDeclaringType().equals(((MethodDescription) other).getDeclaringType());
+                    && getInternalName().equals(((MethodDescription) other).getInternalName())
+                    && getDeclaringType().equals(((MethodDescription) other).getDeclaringType())
+                    && getReturnType().equals(((MethodDescription) other).getReturnType())
+                    && getParameterTypes().equals(((MethodDescription) other).getParameterTypes());
         }
 
         @Override
         public int hashCode() {
-            return (getDeclaringType().getInternalName() + "." + getUniqueSignature()).hashCode();
+            int hashCode = getDeclaringType().hashCode();
+            hashCode = 31 * hashCode + getInternalName().hashCode();
+            hashCode = 31 * hashCode + getReturnType().hashCode();
+            return 31 * hashCode + getParameterTypes().hashCode();
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder stringBuilder = new StringBuilder();
+            int modifiers = getModifiers() & SOURCE_MODIFIERS;
+            if (modifiers != 0) {
+                stringBuilder.append(Modifier.toString(modifiers)).append(" ");
+            }
+            if (isMethod()) {
+                stringBuilder.append(getReturnType().getSourceCodeName()).append(" ");
+                stringBuilder.append(getDeclaringType().getSourceCodeName()).append(".");
+            }
+            stringBuilder.append(getName()).append("(");
+            boolean first = true;
+            for (TypeDescription typeDescription : getParameterTypes()) {
+                if (!first) {
+                    stringBuilder.append(",");
+                } else {
+                    first = false;
+                }
+                stringBuilder.append(typeDescription.getSourceCodeName());
+            }
+            stringBuilder.append(")");
+            TypeList exceptionTypes = getExceptionTypes();
+            if (exceptionTypes.size() > 0) {
+                stringBuilder.append(" throws ");
+                first = true;
+                for (TypeDescription typeDescription : exceptionTypes) {
+                    if (!first) {
+                        stringBuilder.append(",");
+                    } else {
+                        first = false;
+                    }
+                    stringBuilder.append(typeDescription.getName());
+                }
+            }
+            return stringBuilder.toString();
         }
     }
 
@@ -276,18 +383,13 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         }
 
         @Override
-        public Annotation[][] getParameterAnnotations() {
-            return constructor.getParameterAnnotations();
+        public List<AnnotationList> getParameterAnnotations() {
+            return AnnotationList.ForLoadedAnnotation.asList(constructor.getParameterAnnotations());
         }
 
         @Override
         public TypeList getExceptionTypes() {
             return new TypeList.ForLoadedType(constructor.getExceptionTypes());
-        }
-
-        @Override
-        public boolean isVarArgs() {
-            return constructor.isVarArgs();
         }
 
         @Override
@@ -297,11 +399,6 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
 
         @Override
         public boolean isTypeInitializer() {
-            return false;
-        }
-
-        @Override
-        public boolean isBridge() {
             return false;
         }
 
@@ -341,28 +438,13 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         }
 
         @Override
-        public Annotation[] getDeclaredAnnotations() {
-            return constructor.getDeclaredAnnotations();
+        public Object getDefaultValue() {
+            return null;
         }
 
         @Override
-        public Annotation[] getAnnotations() {
-            return constructor.getAnnotations();
-        }
-
-        @Override
-        public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-            return constructor.getAnnotation(annotationClass);
-        }
-
-        @Override
-        public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
-            return constructor.isAnnotationPresent(annotationClass);
-        }
-
-        @Override
-        public String toString() {
-            return "MethodDescription.ForLoadedConstructor{" + constructor + "}";
+        public AnnotationList getDeclaredAnnotations() {
+            return new AnnotationList.ForLoadedAnnotation(constructor.getDeclaredAnnotations());
         }
     }
 
@@ -401,18 +483,13 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         }
 
         @Override
-        public Annotation[][] getParameterAnnotations() {
-            return method.getParameterAnnotations();
+        public List<AnnotationList> getParameterAnnotations() {
+            return AnnotationList.ForLoadedAnnotation.asList(method.getParameterAnnotations());
         }
 
         @Override
         public TypeList getExceptionTypes() {
             return new TypeList.ForLoadedType(method.getExceptionTypes());
-        }
-
-        @Override
-        public boolean isVarArgs() {
-            return method.isVarArgs();
         }
 
         @Override
@@ -465,29 +542,26 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
             return Type.getMethodDescriptor(method);
         }
 
-        @Override
-        public Annotation[] getDeclaredAnnotations() {
-            return method.getDeclaredAnnotations();
+        /**
+         * Returns the loaded method that is represented by this method description.
+         *
+         * @return The loaded method that is represented by this method description.
+         */
+        public Method getLoadedMethod() {
+            return method;
         }
 
         @Override
-        public Annotation[] getAnnotations() {
-            return method.getAnnotations();
+        public AnnotationList getDeclaredAnnotations() {
+            return new AnnotationList.ForLoadedAnnotation(method.getDeclaredAnnotations());
         }
 
         @Override
-        public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-            return method.getAnnotation(annotationClass);
-        }
-
-        @Override
-        public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
-            return method.isAnnotationPresent(annotationClass);
-        }
-
-        @Override
-        public String toString() {
-            return "MethodDescription.ForLoadedMethod{" + method + "}";
+        public Object getDefaultValue() {
+            Object value = method.getDefaultValue();
+            return value == null
+                    ? null
+                    : AnnotationDescription.ForLoadedAnnotation.wrap(value, new TypeDescription.ForLoadedType(method.getReturnType()));
         }
     }
 
@@ -562,7 +636,7 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
                     declaringType,
                     new TypeDescription.ForLoadedType(void.class),
                     new TypeList.Empty(),
-                    Opcodes.ACC_STATIC,
+                    TYPE_INITIALIZER_MODIFIER,
                     Collections.<TypeDescription>emptyList());
         }
 
@@ -577,8 +651,8 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         }
 
         @Override
-        public Annotation[][] getParameterAnnotations() {
-            return new Annotation[0][0];
+        public List<AnnotationList> getParameterAnnotations() {
+            return AnnotationList.Empty.asList(parameterTypes.size());
         }
 
         @Override
@@ -598,37 +672,17 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
 
         @Override
         public boolean represents(Method method) {
-            return false;
+            return equals(new ForLoadedMethod(method));
         }
 
         @Override
         public boolean represents(Constructor<?> constructor) {
-            return false;
+            return equals(new ForLoadedConstructor(constructor));
         }
 
         @Override
-        public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
-            return false;
-        }
-
-        @Override
-        public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-            return null;
-        }
-
-        @Override
-        public Annotation[] getAnnotations() {
-            return new Annotation[0];
-        }
-
-        @Override
-        public Annotation[] getDeclaredAnnotations() {
-            return new Annotation[0];
-        }
-
-        @Override
-        public String getName() {
-            return isConstructor() ? getDeclaringType().getName() : internalName;
+        public AnnotationList getDeclaredAnnotations() {
+            return new AnnotationList.Empty();
         }
 
         @Override
@@ -647,15 +701,8 @@ public interface MethodDescription extends ModifierReviewable, ByteCodeMethod, D
         }
 
         @Override
-        public String toString() {
-            return "MethodDescription.Latent{" +
-                    "internalName='" + internalName + '\'' +
-                    ", declaringType=" + declaringType +
-                    ", returnType=" + returnType +
-                    ", parameterTypes=" + parameterTypes +
-                    ", modifiers=" + modifiers +
-                    ", exceptionTypes=" + exceptionTypes +
-                    '}';
+        public Object getDefaultValue() {
+            return null;
         }
     }
 }

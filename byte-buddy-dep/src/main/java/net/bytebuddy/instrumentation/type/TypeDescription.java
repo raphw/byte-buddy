@@ -1,23 +1,32 @@
 package net.bytebuddy.instrumentation.type;
 
 import net.bytebuddy.instrumentation.ByteCodeElement;
-import net.bytebuddy.instrumentation.ModifierReviewable;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
+import net.bytebuddy.utility.StreamDrainer;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedElement;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
+import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
 /**
  * Implementations of this interface represent a Java type, i.e. a class or interface.
  */
-public interface TypeDescription extends ByteCodeElement, DeclaredInType, ModifierReviewable, AnnotatedElement {
+public interface TypeDescription extends ByteCodeElement {
 
     /**
      * Checks if {@code object} is an instance of the type represented by this instance.
@@ -118,6 +127,13 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
     TypeList getInterfaces();
 
     /**
+     * Returns all interfaces that are implemented by this type, either directly or indirectly.
+     *
+     * @return A list of all interfaces of this type in random order.
+     */
+    TypeList getInheritedInterfaces();
+
+    /**
      * Returns a description of the enclosing method of this type.
      *
      * @return A description of the enclosing method of this type or {@code null} if there is no such method.
@@ -129,7 +145,7 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
      *
      * @return A  description of the enclosing type of this type or {@code null} if there is no such type.
      */
-    TypeDescription getEnclosingClass();
+    TypeDescription getEnclosingType();
 
     /**
      * <p>
@@ -226,18 +242,169 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
     boolean isSealed();
 
     /**
-     * Returns the {@link java.lang.ClassLoader} which is able to locate the byte code representation for
-     * this type description or {@code null} if no such information is available.
+     * Returns a binary representation of this type if possible.
      *
-     * @return The {@link java.lang.ClassLoader} which can locate this type's class file or {@code null} if
-     * no such {@link java.lang.ClassLoader} is available.
+     * @return A binary representation of this type.
      */
-    ClassLoader getClassLoader();
+    BinaryRepresentation toBinary();
+
+    /**
+     * Returns the name of this type as it is defined in Java source code. The main distinction is the display
+     * of arrays which are merged with internal names when calling the
+     * {@link net.bytebuddy.instrumentation.ByteCodeElement#getName()} to match the convention of Java types.
+     *
+     * @return The name of this type as represented in Java source code.
+     */
+    String getSourceCodeName();
+
+    /**
+     * Returns the annotations that this type declares or inherits from super types.
+     *
+     * @return A list of all inherited annotations.
+     */
+    AnnotationList getInheritedAnnotations();
+
+    /**
+     * Checks if two types are defined in the same package.
+     *
+     * @param typeDescription The type of interest.
+     * @return {@code true} if this type and the given type are in the same package.
+     */
+    boolean isSamePackage(TypeDescription typeDescription);
+
+    /**
+     * Represents a class file as binary data.
+     */
+    static interface BinaryRepresentation {
+
+        /**
+         * Checks if this binary representation is valid.
+         *
+         * @return {@code true} if this binary representation is valid.
+         */
+        boolean isValid();
+
+        /**
+         * Finds the data of this binary representation. Calling this method is only legal for valid representations.
+         *
+         * @return The requested binary data. The returned array must not be altered.
+         */
+        byte[] getData();
+
+        /**
+         * A canonical representation of an illegal binary representation.
+         */
+        static enum Illegal implements BinaryRepresentation {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public boolean isValid() {
+                return false;
+            }
+
+            @Override
+            public byte[] getData() {
+                throw new IllegalStateException("Could not read binary data");
+            }
+        }
+
+        /**
+         * Represents a byte array as binary data.
+         */
+        static class Explicit implements BinaryRepresentation {
+
+            /**
+             * The file extension of Java class files.
+             */
+            private static final String CLASS_FILE_EXTENSION = ".class";
+            /**
+             * The represented data.
+             */
+            private final byte[] data;
+
+            /**
+             * Creates a new explicit representation.
+             *
+             * @param data The data to represent.
+             */
+            public Explicit(byte[] data) {
+                this.data = data;
+            }
+
+            /**
+             * Attemts to create a binary representation of a loaded type by requesting data from its
+             * {@link java.lang.ClassLoader}.
+             *
+             * @param type The type of interest.
+             * @return The binary data to this type which might be illegal.
+             */
+            public static BinaryRepresentation of(Class<?> type) {
+                InputStream inputStream = (type.getClassLoader() == null
+                        ? ClassLoader.getSystemClassLoader()
+                        : type.getClassLoader()).getResourceAsStream(type.getName().replace('.', '/') + CLASS_FILE_EXTENSION);
+                if (inputStream == null) {
+                    return Illegal.INSTANCE;
+                } else {
+                    try {
+                        return new Explicit(new StreamDrainer().drain(inputStream));
+                    } catch (IOException e) {
+                        throw new IllegalStateException(e);
+                    }
+                }
+            }
+
+            @Override
+            public boolean isValid() {
+                return true;
+            }
+
+            @Override
+            public byte[] getData() {
+                return data;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && Arrays.equals(data, ((Explicit) other).data);
+            }
+
+            @Override
+            public int hashCode() {
+                return Arrays.hashCode(data);
+            }
+
+            @Override
+            public String toString() {
+                return "TypeDescription.BinaryRepresentation.Explicit{" +
+                        "data=" + Arrays.toString(data) +
+                        '}';
+            }
+        }
+    }
 
     /**
      * An abstract base implementation of a type description.
      */
     abstract static class AbstractTypeDescription extends AbstractModifierReviewable implements TypeDescription {
+
+        /**
+         * Collects all interfaces for a given type description.
+         *
+         * @param typeDescription An interface type to check for other interfaces.
+         * @param interfaces      A collection of already discovered interfaces.
+         */
+        private static void collect(TypeDescription typeDescription, Set<TypeDescription> interfaces) {
+            if (interfaces.add(typeDescription)) {
+                for (TypeDescription interfaceType : typeDescription.getInterfaces()) {
+                    collect(interfaceType, interfaces);
+                }
+            }
+        }
 
         @Override
         public boolean isInstance(Object object) {
@@ -259,7 +426,7 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
             } else {
                 actualModifiers = getModifiers() & ~Opcodes.ACC_STATIC;
             }
-            return actualModifiers | (superFlag ? Opcodes.ACC_SUPER : 0);
+            return superFlag ? (actualModifiers | Opcodes.ACC_SUPER) : actualModifiers;
         }
 
         @Override
@@ -268,10 +435,60 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
         }
 
         @Override
+        public boolean isSamePackage(TypeDescription typeDescription) {
+            String thisPackage = getPackageName(), otherPackage = typeDescription.getPackageName();
+            return (thisPackage == null && otherPackage == null) || (thisPackage != null && thisPackage.equals(otherPackage));
+        }
+
+        @Override
         public boolean isVisibleTo(TypeDescription typeDescription) {
-            return isPublic()
-                    || (isPackagePrivate() && typeDescription.getPackageName().equals(getPackageName()))
-                    || (isProtected() && getEnclosingClass() != null && getEnclosingClass().isAssignableFrom(typeDescription));
+            return isPublic() || isProtected() || isSamePackage(typeDescription);
+        }
+
+        @Override
+        public TypeList getInheritedInterfaces() {
+            Set<TypeDescription> interfaces = new HashSet<TypeDescription>();
+            TypeDescription current = this;
+            do {
+                for (TypeDescription interfaceType : current.getInterfaces()) {
+                    collect(interfaceType, interfaces);
+                }
+            } while ((current = current.getSupertype()) != null);
+            return new TypeList.Explicit(new ArrayList<TypeDescription>(interfaces));
+        }
+
+        @Override
+        public AnnotationList getInheritedAnnotations() {
+            AnnotationList declaredAnnotations = getDeclaredAnnotations();
+            if (getSupertype() == null) {
+                return declaredAnnotations;
+            } else {
+                Set<TypeDescription> annotationTypes = new HashSet<TypeDescription>(declaredAnnotations.size());
+                for (AnnotationDescription annotationDescription : declaredAnnotations) {
+                    annotationTypes.add(annotationDescription.getAnnotationType());
+                }
+                return new AnnotationList.Explicit(join(declaredAnnotations, getSupertype().getInheritedAnnotations().inherited(annotationTypes)));
+            }
+        }
+
+        @Override
+        public String getSourceCodeName() {
+            if (isArray()) {
+                TypeDescription typeDescription = this;
+                int dimensions = 0;
+                do {
+                    dimensions++;
+                    typeDescription = typeDescription.getComponentType();
+                } while (typeDescription.isArray());
+                StringBuilder stringBuilder = new StringBuilder();
+                stringBuilder.append(typeDescription.getName());
+                for (int i = 0; i < dimensions; i++) {
+                    stringBuilder.append("[]");
+                }
+                return stringBuilder.toString();
+            } else {
+                return getName();
+            }
         }
 
         @Override
@@ -283,6 +500,123 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
         @Override
         public int hashCode() {
             return getName().hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return (isPrimitive() ? "" : (isInterface() ? "interface" : "class") + " ") + getName();
+        }
+
+        /**
+         * An adapter implementation of a {@link net.bytebuddy.instrumentation.type.TypeDescription} that
+         * describes any type that is not an array or a primitive type.
+         */
+        public abstract static class OfSimpleType extends AbstractTypeDescription {
+
+            /**
+             * Checks if a specific type is assignable to another type where the source type must be a super
+             * type of the target type.
+             *
+             * @param sourceType The source type to which another type is to be assigned to.
+             * @param targetType The target type that is to be assigned to the source type.
+             * @return {@code true} if the target type is assignable to the source type.
+             */
+            private static boolean isAssignable(TypeDescription sourceType, TypeDescription targetType) {
+                // Means that '[sourceType] var = ([targetType]) val;' is a valid assignment. This is true, if:
+                // (1) Both types are equal.
+                if (sourceType.equals(targetType)) {
+                    return true;
+                }
+                // Interfaces do not extend the Object type but are assignable to the Object type.
+                if (sourceType.represents(Object.class) && !targetType.isPrimitive()) {
+                    return true;
+                }
+                // The sub type has a super type and this super type is assignable to the super type.
+                TypeDescription targetTypeSuperType = targetType.getSupertype();
+                if (targetTypeSuperType != null && targetTypeSuperType.isAssignableTo(sourceType)) {
+                    return true;
+                }
+                // (2) If the target type is an interface, any of this type's interfaces might be assignable to it.
+                if (sourceType.isInterface()) {
+                    for (TypeDescription interfaceType : targetType.getInterfaces()) {
+                        if (interfaceType.isAssignableTo(sourceType)) {
+                            return true;
+                        }
+                    }
+                }
+                // (3) None of these criteria are true, i.e. the types are not assignable.
+                return false;
+            }
+
+            @Override
+            public boolean isAssignableFrom(Class<?> type) {
+                return isAssignableFrom(new ForLoadedType(type));
+            }
+
+            @Override
+            public boolean isAssignableFrom(TypeDescription typeDescription) {
+                return isAssignable(this, typeDescription);
+            }
+
+            @Override
+            public boolean isAssignableTo(Class<?> type) {
+                return isAssignableTo(new ForLoadedType(type));
+            }
+
+            @Override
+            public boolean isAssignableTo(TypeDescription typeDescription) {
+                return isAssignable(typeDescription, this);
+            }
+
+            @Override
+            public boolean isInstance(Object object) {
+                return isAssignableFrom(object.getClass());
+            }
+
+            @Override
+            public boolean isPrimitive() {
+                return false;
+            }
+
+            @Override
+            public boolean isArray() {
+                return false;
+            }
+
+            @Override
+            public TypeDescription getComponentType() {
+                return null;
+            }
+
+            @Override
+            public boolean represents(Class<?> type) {
+                return type.getName().equals(getName());
+            }
+
+            @Override
+            public String getDescriptor() {
+                return "L" + getInternalName() + ";";
+            }
+
+            @Override
+            public String getSimpleName() {
+                int simpleNameIndex = getInternalName().lastIndexOf('$');
+                simpleNameIndex = simpleNameIndex == -1 ? getInternalName().lastIndexOf('/') : simpleNameIndex;
+                return simpleNameIndex == -1 ? getInternalName() : getInternalName().substring(simpleNameIndex + 1);
+            }
+
+            @Override
+            public String getPackageName() {
+                int packageIndex = getName().lastIndexOf('.');
+                return packageIndex == -1
+                        ? null
+                        : getName().substring(0, packageIndex);
+            }
+
+            @Override
+            public StackSize getStackSize() {
+                return StackSize.SINGLE;
+            }
         }
     }
 
@@ -361,18 +695,15 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
         }
 
         @Override
-        public boolean isSynthetic() {
-            return type.isSynthetic();
-        }
-
-        @Override
         public TypeDescription getSupertype() {
             return type.getSuperclass() == null ? null : new TypeDescription.ForLoadedType(type.getSuperclass());
         }
 
         @Override
         public TypeList getInterfaces() {
-            return new TypeList.ForLoadedType(type.getInterfaces());
+            return type.isArray()
+                    ? new TypeList.ForLoadedType(Cloneable.class, Serializable.class)
+                    : new TypeList.ForLoadedType(type.getInterfaces());
         }
 
         @Override
@@ -395,7 +726,7 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
         }
 
         @Override
-        public TypeDescription getEnclosingClass() {
+        public TypeDescription getEnclosingType() {
             Class<?> enclosingType = type.getEnclosingClass();
             return enclosingType == null ? null : new TypeDescription.ForLoadedType(enclosingType);
         }
@@ -437,7 +768,8 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
 
         @Override
         public String getPackageName() {
-            return type.getPackage().getName();
+            Package packageReference = type.getPackage();
+            return packageReference == null ? null : packageReference.getName();
         }
 
         @Override
@@ -461,23 +793,13 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
         }
 
         @Override
-        public <T extends Annotation> T getAnnotation(Class<T> annotationType) {
-            return type.getAnnotation(annotationType);
+        public AnnotationList getDeclaredAnnotations() {
+            return new AnnotationList.ForLoadedAnnotation(type.getDeclaredAnnotations());
         }
 
         @Override
-        public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
-            return type.isAnnotationPresent(annotationClass);
-        }
-
-        @Override
-        public Annotation[] getAnnotations() {
-            return type.getAnnotations();
-        }
-
-        @Override
-        public Annotation[] getDeclaredAnnotations() {
-            return type.getDeclaredAnnotations();
+        public AnnotationList getInheritedAnnotations() {
+            return new AnnotationList.ForLoadedAnnotation(type.getAnnotations());
         }
 
         @Override
@@ -486,13 +808,245 @@ public interface TypeDescription extends ByteCodeElement, DeclaredInType, Modifi
         }
 
         @Override
-        public ClassLoader getClassLoader() {
-            return type.getClassLoader();
+        public BinaryRepresentation toBinary() {
+            return BinaryRepresentation.Explicit.of(type);
+        }
+    }
+
+    /**
+     * A projection for an array type based on an existing {@link net.bytebuddy.instrumentation.type.TypeDescription}.
+     */
+    static class ArrayProjection extends AbstractTypeDescription {
+
+        /**
+         * The modifiers of any array type.
+         */
+        private static final int ARRAY_MODIFIERS = Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL | Opcodes.ACC_ABSTRACT;
+        /**
+         * The base component type which is itself not an array.
+         */
+        private final TypeDescription componentType;
+        /**
+         * The arity of this array.
+         */
+        private final int arity;
+
+        /**
+         * Crrates a new array projection.
+         *
+         * @param componentType The base component type of the array which is itself not an array.
+         * @param arity         The arity of this array.
+         */
+        protected ArrayProjection(TypeDescription componentType, int arity) {
+            this.componentType = componentType;
+            this.arity = arity;
+        }
+
+        /**
+         * Creates an array projection.
+         *
+         * @param componentType The component type of the array.
+         * @param arity         The arity of this array.
+         * @return A projection of the component type as an arity of the given value.
+         */
+        public static TypeDescription of(TypeDescription componentType, int arity) {
+            if (arity < 0) {
+                throw new IllegalArgumentException("Arrays cannot have a negative arity");
+            }
+            while (componentType.isArray()) {
+                componentType = componentType.getComponentType();
+                arity++;
+            }
+            return arity == 0 ? componentType : new ArrayProjection(componentType, arity);
+        }
+
+        /**
+         * Checks if two types are assignable to another by first checking the array dimensions and by later
+         * checking the component types if the arity matches.
+         *
+         * @param sourceType The source type to which another type is to be assigned to.
+         * @param targetType The target type that is to be assigned to the source type.
+         * @return {@code true} if both types are assignable to one another.
+         */
+        private static boolean isArrayAssignable(TypeDescription sourceType, TypeDescription targetType) {
+            int sourceArity = 0, targetArity = 0;
+            while (sourceType.isArray()) {
+                sourceArity++;
+                sourceType = sourceType.getComponentType();
+            }
+            while (targetType.isArray()) {
+                targetArity++;
+                targetType = targetType.getComponentType();
+            }
+            return sourceArity == targetArity && sourceType.isAssignableFrom(targetType);
         }
 
         @Override
-        public String toString() {
-            return "TypeDescription.ForLoadedType{" + type + "}";
+        public boolean isAssignableFrom(Class<?> type) {
+            return isAssignableFrom(new ForLoadedType(type));
+        }
+
+        @Override
+        public boolean isAssignableFrom(TypeDescription typeDescription) {
+            return isArrayAssignable(this, typeDescription);
+        }
+
+        @Override
+        public boolean isAssignableTo(Class<?> type) {
+            return isAssignableTo(new ForLoadedType(type));
+        }
+
+        @Override
+        public boolean isAssignableTo(TypeDescription typeDescription) {
+            return typeDescription.represents(Object.class) || isArrayAssignable(typeDescription, this);
+        }
+
+        @Override
+        public boolean represents(Class<?> type) {
+            int arity = 0;
+            while (type.isArray()) {
+                type = type.getComponentType();
+                arity++;
+            }
+            return arity == this.arity && componentType.represents(type);
+        }
+
+        @Override
+        public boolean isArray() {
+            return true;
+        }
+
+        @Override
+        public TypeDescription getComponentType() {
+            return arity == 1
+                    ? componentType
+                    : new ArrayProjection(componentType, arity - 1);
+        }
+
+        @Override
+        public boolean isPrimitive() {
+            return false;
+        }
+
+        @Override
+        public TypeDescription getSupertype() {
+            return new ForLoadedType(Object.class);
+        }
+
+        @Override
+        public TypeList getInterfaces() {
+            return new TypeList.ForLoadedType(Cloneable.class, Serializable.class);
+        }
+
+        @Override
+        public MethodDescription getEnclosingMethod() {
+            return null;
+        }
+
+        @Override
+        public TypeDescription getEnclosingType() {
+            return null;
+        }
+
+        @Override
+        public String getSimpleName() {
+            StringBuilder stringBuilder = new StringBuilder(componentType.getSimpleName());
+            for (int i = 0; i < arity; i++) {
+                stringBuilder.append("[]");
+            }
+            return stringBuilder.toString();
+        }
+
+        @Override
+        public String getCanonicalName() {
+            StringBuilder stringBuilder = new StringBuilder(componentType.getCanonicalName());
+            for (int i = 0; i < arity; i++) {
+                stringBuilder.append("[]");
+            }
+            return stringBuilder.toString();
+        }
+
+        @Override
+        public boolean isAnonymousClass() {
+            return false;
+        }
+
+        @Override
+        public boolean isLocalClass() {
+            return false;
+        }
+
+        @Override
+        public boolean isMemberClass() {
+            return false;
+        }
+
+        @Override
+        public FieldList getDeclaredFields() {
+            return new FieldList.Empty();
+        }
+
+        @Override
+        public MethodList getDeclaredMethods() {
+            return new MethodList.Empty();
+        }
+
+        @Override
+        public StackSize getStackSize() {
+            return StackSize.SINGLE;
+        }
+
+        @Override
+        public boolean isSealed() {
+            return componentType.isSealed();
+        }
+
+        @Override
+        public BinaryRepresentation toBinary() {
+            return BinaryRepresentation.Illegal.INSTANCE;
+        }
+
+        @Override
+        public AnnotationList getDeclaredAnnotations() {
+            return new AnnotationList.Empty();
+        }
+
+        @Override
+        public AnnotationList getInheritedAnnotations() {
+            return new AnnotationList.Empty();
+        }
+
+        @Override
+        public String getPackageName() {
+            return null;
+        }
+
+        @Override
+        public String getName() {
+            StringBuilder stringBuilder = new StringBuilder();
+            for (int i = 0; i < arity; i++) {
+                stringBuilder.append('[');
+            }
+            return stringBuilder.append(componentType.getDescriptor().replace('/', '.')).toString();
+        }
+
+        @Override
+        public String getDescriptor() {
+            StringBuilder stringBuilder = new StringBuilder();
+            for (int i = 0; i < arity; i++) {
+                stringBuilder.append('[');
+            }
+            return stringBuilder.append(componentType.getDescriptor()).toString();
+        }
+
+        @Override
+        public TypeDescription getDeclaringType() {
+            return null;
+        }
+
+        @Override
+        public int getModifiers() {
+            return ARRAY_MODIFIERS;
         }
     }
 }

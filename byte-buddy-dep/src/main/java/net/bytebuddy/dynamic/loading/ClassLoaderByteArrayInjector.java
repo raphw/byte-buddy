@@ -142,13 +142,17 @@ public class ClassLoaderByteArrayInjector {
 
     @Override
     public String toString() {
-        return "ClassLoaderByteArrayInjector{classLoader=" + classLoader + '}';
+        return "ClassLoaderByteArrayInjector{" +
+                "protectionDomain=" + protectionDomain +
+                "accessControlContext=" + accessControlContext +
+                ", classLoader=" + classLoader +
+                '}';
     }
 
     /**
      * A storage for method representations in order to access a class loader reflectively.
      */
-    private static interface ReflectionStore {
+    protected static interface ReflectionStore {
 
         /**
          * Returns the method for finding a class on a class loader.
@@ -173,6 +177,7 @@ public class ClassLoaderByteArrayInjector {
              * The method for finding a class on a class loader.
              */
             private final Method findLoadedClassMethod;
+
             /**
              * The method for loading a class into a class loader.
              */
@@ -184,7 +189,7 @@ public class ClassLoaderByteArrayInjector {
              * @param findLoadedClassMethod The method for finding a class on a class loader.
              * @param loadByteArrayMethod   The method for loading a class into a class loader.
              */
-            private Resolved(Method findLoadedClassMethod, Method loadByteArrayMethod) {
+            protected Resolved(Method findLoadedClassMethod, Method loadByteArrayMethod) {
                 this.findLoadedClassMethod = findLoadedClassMethod;
                 this.loadByteArrayMethod = loadByteArrayMethod;
             }
@@ -197,6 +202,22 @@ public class ClassLoaderByteArrayInjector {
             @Override
             public Method getLoadByteArrayMethod() {
                 return loadByteArrayMethod;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                Resolved resolved = (Resolved) other;
+                return findLoadedClassMethod.equals(resolved.findLoadedClassMethod)
+                        && loadByteArrayMethod.equals(resolved.loadByteArrayMethod);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = findLoadedClassMethod.hashCode();
+                result = 31 * result + loadByteArrayMethod.hashCode();
+                return result;
             }
 
             @Override
@@ -214,27 +235,43 @@ public class ClassLoaderByteArrayInjector {
         static class Faulty implements ReflectionStore {
 
             /**
-             * An exception to throw when attempting to lookup a method using this reflection store.
+             * The message to display in an exception.
              */
-            private final RuntimeException exception;
+            private static final String MESSAGE = "Cannot access reflection API for class loading";
+
+            /**
+             * The exception that occurred when looking up the reflection methods.
+             */
+            private final Exception exception;
 
             /**
              * Creates a new faulty reflection store.
              *
              * @param exception The exception that was thrown when attempting to lookup the method.
              */
-            private Faulty(Exception exception) {
-                this.exception = new RuntimeException("Could not execute reflective lookup", exception);
+            protected Faulty(Exception exception) {
+                this.exception = exception;
             }
 
             @Override
             public Method getFindLoadedClassMethod() {
-                throw exception;
+                throw new RuntimeException(MESSAGE, exception);
             }
 
             @Override
             public Method getLoadByteArrayMethod() {
-                throw exception;
+                throw new RuntimeException(MESSAGE, exception);
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && exception.equals(((Faulty) other).exception);
+            }
+
+            @Override
+            public int hashCode() {
+                return exception.hashCode();
             }
 
             @Override
@@ -247,7 +284,7 @@ public class ClassLoaderByteArrayInjector {
     /**
      * A privileged action for loading a class reflectively.
      */
-    private class ClassLoadingAction implements PrivilegedExceptionAction<Class<?>> {
+    protected class ClassLoadingAction implements PrivilegedExceptionAction<Class<?>> {
 
         /**
          * A convenience variable representing the first index of an array, to make the code more readable.
@@ -270,7 +307,7 @@ public class ClassLoaderByteArrayInjector {
          * @param name                 The name of the class that is being loaded.
          * @param binaryRepresentation The binary representation of the class that is being loaded.
          */
-        private ClassLoadingAction(String name, byte[] binaryRepresentation) {
+        protected ClassLoadingAction(String name, byte[] binaryRepresentation) {
             this.name = name;
             this.binaryRepresentation = binaryRepresentation;
         }
@@ -283,6 +320,33 @@ public class ClassLoaderByteArrayInjector {
                     FROM_BEGINNING,
                     binaryRepresentation.length,
                     protectionDomain);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            ClassLoadingAction that = (ClassLoadingAction) other;
+            return Arrays.equals(binaryRepresentation, that.binaryRepresentation)
+                    && ClassLoaderByteArrayInjector.this.equals(that.getOuter())
+                    && name.equals(that.name);
+        }
+
+        /**
+         * Returns the outer instance.
+         *
+         * @return The outer instance.
+         */
+        private ClassLoaderByteArrayInjector getOuter() {
+            return ClassLoaderByteArrayInjector.this;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = name.hashCode();
+            result = 31 * result + ClassLoaderByteArrayInjector.class.hashCode();
+            result = 31 * result + Arrays.hashCode(binaryRepresentation);
+            return result;
         }
 
         @Override

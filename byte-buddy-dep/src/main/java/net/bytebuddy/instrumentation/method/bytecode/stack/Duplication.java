@@ -13,7 +13,12 @@ public enum Duplication implements StackManipulation {
     /**
      * A duplication of no values. This corresponds a no-op instruction.
      */
-    ZERO(StackSize.ZERO, Opcodes.NOP),
+    ZERO(StackSize.ZERO, Opcodes.NOP) {
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+            return new Size(0, 0);
+        }
+    },
 
     /**
      * A duplication of a single-sized stack values.

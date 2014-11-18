@@ -38,7 +38,7 @@ public enum SuperMethodCall implements Instrumentation {
     /**
      * An appender for implementing a {@link net.bytebuddy.instrumentation.SuperMethodCall}.
      */
-    private static class Appender implements ByteCodeAppender {
+    protected static class Appender implements ByteCodeAppender {
 
         /**
          * The target of the current instrumentation.

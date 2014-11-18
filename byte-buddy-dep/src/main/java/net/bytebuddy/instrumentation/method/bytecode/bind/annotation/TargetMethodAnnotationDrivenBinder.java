@@ -1,10 +1,14 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
 import net.bytebuddy.instrumentation.Instrumentation;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
+import net.bytebuddy.instrumentation.method.bytecode.stack.Removal;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
+import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
+import net.bytebuddy.instrumentation.type.TypeDescription;
 
 import java.lang.annotation.Annotation;
 import java.util.*;
@@ -23,7 +27,12 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
     /**
      * The provider for annotations to be supplied for binding of non-annotated parameters.
      */
-    private final DefaultsProvider<?> defaultsProvider;
+    private final DefaultsProvider defaultsProvider;
+
+    /**
+     * The termination handler to be applied.
+     */
+    private final TerminationHandler terminationHandler;
 
     /**
      * An user-supplied assigner to use for variable assignments.
@@ -38,20 +47,23 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
     /**
      * Creates a new method delegation binder that binds method based on annotations found on the target method.
      *
-     * @param parameterBinders A list of parameter binder delegates. Each such delegate is responsible for creating a
-     *                         {@link net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.ParameterBinding}
-     *                         for a specific annotation.
-     * @param defaultsProvider A provider that creates an annotation for parameters that are not annotated by any annotation
-     *                         that is handled by any of the registered {@code parameterBinders}.
-     * @param assigner         An assigner that is supplied to the {@code parameterBinders} and that is used for binding the return value.
-     * @param methodInvoker    A delegate for applying the actual method invocation of the target method.
+     * @param parameterBinders   A list of parameter binder delegates. Each such delegate is responsible for creating a
+     *                           {@link net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.ParameterBinding}
+     *                           for a specific annotation.
+     * @param defaultsProvider   A provider that creates an annotation for parameters that are not annotated by any annotation
+     *                           that is handled by any of the registered {@code parameterBinders}.
+     * @param terminationHandler The termination handler to be applied.
+     * @param assigner           An assigner that is supplied to the {@code parameterBinders} and that is used for binding the return value.
+     * @param methodInvoker      A delegate for applying the actual method invocation of the target method.
      */
     public TargetMethodAnnotationDrivenBinder(List<ParameterBinder<?>> parameterBinders,
-                                              DefaultsProvider<?> defaultsProvider,
+                                              DefaultsProvider defaultsProvider,
+                                              TerminationHandler terminationHandler,
                                               Assigner assigner,
                                               MethodInvoker methodInvoker) {
-        this.delegationProcessor = new DelegationProcessor(parameterBinders);
+        delegationProcessor = new DelegationProcessor(parameterBinders);
         this.defaultsProvider = defaultsProvider;
+        this.terminationHandler = terminationHandler;
         this.assigner = assigner;
         this.methodInvoker = methodInvoker;
     }
@@ -63,20 +75,17 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         if (IgnoreForBinding.Verifier.check(target)) {
             return MethodBinding.Illegal.INSTANCE;
         }
-        StackManipulation returningStackManipulation = assigner.assign(
-                target.isConstructor() ? target.getDeclaringType() : target.getReturnType(),
-                source.getReturnType(),
-                RuntimeType.Verifier.check(target));
-        if (!returningStackManipulation.isValid()) {
+        StackManipulation methodTermination = terminationHandler.resolve(assigner, source, target);
+        if (!methodTermination.isValid()) {
             return MethodBinding.Illegal.INSTANCE;
         }
         MethodBinding.Builder methodDelegationBindingBuilder = new MethodBinding.Builder(methodInvoker, target);
-        Iterator<? extends Annotation> defaults = defaultsProvider.makeIterator(instrumentationTarget, source, target);
+        Iterator<AnnotationDescription> defaults = defaultsProvider.makeIterator(instrumentationTarget, source, target);
         for (int targetParameterIndex = 0;
              targetParameterIndex < target.getParameterTypes().size();
              targetParameterIndex++) {
             ParameterBinding<?> parameterBinding = delegationProcessor
-                    .handler(target.getParameterAnnotations()[targetParameterIndex], defaults)
+                    .handler(target.getParameterAnnotations().get(targetParameterIndex), defaults)
                     .bind(targetParameterIndex,
                             source,
                             target,
@@ -86,7 +95,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 return MethodBinding.Illegal.INSTANCE;
             }
         }
-        return methodDelegationBindingBuilder.build(returningStackManipulation);
+        return methodDelegationBindingBuilder.build(methodTermination);
     }
 
     @Override
@@ -96,6 +105,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         TargetMethodAnnotationDrivenBinder that = (TargetMethodAnnotationDrivenBinder) other;
         return assigner.equals(that.assigner)
                 && defaultsProvider.equals(that.defaultsProvider)
+                && terminationHandler.equals(that.terminationHandler)
                 && delegationProcessor.equals(that.delegationProcessor)
                 && methodInvoker.equals(that.methodInvoker);
     }
@@ -104,6 +114,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
     public int hashCode() {
         int result = delegationProcessor.hashCode();
         result = 31 * result + defaultsProvider.hashCode();
+        result = 31 * result + terminationHandler.hashCode();
         result = 31 * result + assigner.hashCode();
         result = 31 * result + methodInvoker.hashCode();
         return result;
@@ -114,6 +125,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         return "TargetMethodAnnotationDrivenBinder{" +
                 "delegationProcessor=" + delegationProcessor +
                 ", defaultsProvider=" + defaultsProvider +
+                ", terminationHandler=" + terminationHandler +
                 ", assigner=" + assigner +
                 ", methodInvoker=" + methodInvoker +
                 '}';
@@ -145,7 +157,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          * @param assigner              An assigner that can be used for applying the binding.
          * @return A parameter binding for the requested target method parameter.
          */
-        ParameterBinding<?> bind(T annotation,
+        ParameterBinding<?> bind(AnnotationDescription.Loadable<T> annotation,
                                  int targetParameterIndex,
                                  MethodDescription source,
                                  MethodDescription target,
@@ -157,10 +169,9 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
      * Implementations of the defaults provider interface create annotations for parameters that are not annotated with
      * a known annotation.
      *
-     * @param <T> The annotation type that is emitted by the defaults provider.
      * @see net.bytebuddy.instrumentation.method.bytecode.bind.annotation.TargetMethodAnnotationDrivenBinder
      */
-    public static interface DefaultsProvider<T extends Annotation> {
+    public static interface DefaultsProvider {
 
         /**
          * Creates an iterator from which a value is pulled each time no processable annotation is found on a
@@ -171,15 +182,15 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          * @param target                Tge target method that is subject to be bound by the {@code source} method.
          * @return An iterator that supplies default annotations for
          */
-        Iterator<T> makeIterator(Instrumentation.Target instrumentationTarget,
-                                 MethodDescription source,
-                                 MethodDescription target);
+        Iterator<AnnotationDescription> makeIterator(Instrumentation.Target instrumentationTarget,
+                                                     MethodDescription source,
+                                                     MethodDescription target);
 
         /**
          * A defaults provider that does not supply any defaults. If this defaults provider is used, a target
          * method is required to annotate each parameter with a known annotation.
          */
-        static enum Empty implements DefaultsProvider<Annotation> {
+        static enum Empty implements DefaultsProvider {
 
             /**
              * The singleton instance.
@@ -187,16 +198,16 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
             INSTANCE;
 
             @Override
-            public Iterator<Annotation> makeIterator(Instrumentation.Target instrumentationTarget,
-                                                     MethodDescription source,
-                                                     MethodDescription target) {
+            public Iterator<AnnotationDescription> makeIterator(Instrumentation.Target instrumentationTarget,
+                                                                MethodDescription source,
+                                                                MethodDescription target) {
                 return EmptyIterator.INSTANCE;
             }
 
             /**
              * A trivial iterator without any elements.
              */
-            private static enum EmptyIterator implements Iterator<Annotation> {
+            private static enum EmptyIterator implements Iterator<AnnotationDescription> {
 
                 /**
                  * The singleton instance.
@@ -209,7 +220,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 }
 
                 @Override
-                public Annotation next() {
+                public AnnotationDescription next() {
                     throw new NoSuchElementException();
                 }
 
@@ -217,6 +228,57 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 public void remove() {
                     throw new NoSuchElementException();
                 }
+            }
+        }
+    }
+
+    /**
+     * Responsible for creating a {@link net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation}
+     * that is applied after the interception method is applied.
+     */
+    public static interface TerminationHandler {
+
+        /**
+         * Creates a stack manipulation that is to be applied after the method return.
+         *
+         * @param assigner The supplied assigner.
+         * @param source   The source method that is bound to the {@code target} method.
+         * @param target   The target method that is subject to be bound by the {@code source} method.
+         * @return A stack manipulation that is applied after the method return.
+         */
+        StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target);
+
+        /**
+         * A termination handler that returns the return value of the interception method.
+         */
+        static enum Returning implements TerminationHandler {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target) {
+                return new StackManipulation.Compound(assigner.assign(target.isConstructor() ? target.getDeclaringType() : target.getReturnType(),
+                        source.getReturnType(),
+                        RuntimeType.Verifier.check(target)), MethodReturn.returning(source.getReturnType()));
+            }
+        }
+
+        /**
+         * A termination handler that pops the return value of the interception method.
+         */
+        static enum Dropping implements TerminationHandler {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target) {
+                return Removal.pop(target.isConstructor() ? target.getDeclaringType() : target.getReturnType());
             }
         }
     }
@@ -233,7 +295,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          * A map of registered annotation types to the binder that is responsible for binding a parameter
          * that is annotated with the given annotation.
          */
-        private final Map<Class<? extends Annotation>, ParameterBinder<?>> argumentBinders;
+        private final Map<TypeDescription, ParameterBinder<?>> parameterBinders;
 
         /**
          * Creates a new delegation processor.
@@ -243,37 +305,37 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          *                         for a specific annotation.
          */
         private DelegationProcessor(List<ParameterBinder<?>> parameterBinders) {
-            Map<Class<? extends Annotation>, ParameterBinder<?>> argumentBinderMap = new HashMap<Class<? extends Annotation>, ParameterBinder<?>>();
+            Map<TypeDescription, ParameterBinder<?>> parameterBinderMap = new HashMap<TypeDescription, ParameterBinder<?>>();
             for (ParameterBinder<?> parameterBinder : parameterBinders) {
-                if (argumentBinderMap.put(parameterBinder.getHandledType(), parameterBinder) != null) {
+                if (parameterBinderMap.put(new TypeDescription.ForLoadedType(parameterBinder.getHandledType()), parameterBinder) != null) {
                     throw new IllegalArgumentException("Attempt to bind two handlers to " + parameterBinder.getHandledType());
                 }
             }
-            this.argumentBinders = Collections.unmodifiableMap(argumentBinderMap);
+            this.parameterBinders = Collections.unmodifiableMap(parameterBinderMap);
         }
 
         /**
          * Locates a handler which is responsible for processing the given parameter. If no explicit handler can
          * be located, a fallback handler is provided.
          *
-         * @param annotation The annotations of the parameter for which a handler should be provided.
-         * @param defaults   The defaults provider to be queried if no explicit handler mapping could be found.
+         * @param annotations The annotations of the parameter for which a handler should be provided.
+         * @param defaults    The defaults provider to be queried if no explicit handler mapping could be found.
          * @return A handler for processing the parameter with the given annotations.
          */
-        private Handler handler(Annotation[] annotation, Iterator<? extends Annotation> defaults) {
+        private Handler handler(List<AnnotationDescription> annotations, Iterator<AnnotationDescription> defaults) {
             Handler handler = null;
-            for (Annotation anAnnotation : annotation) {
-                ParameterBinder<?> parameterBinder = argumentBinders.get(anAnnotation.annotationType());
+            for (AnnotationDescription annotation : annotations) {
+                ParameterBinder<?> parameterBinder = parameterBinders.get(annotation.getAnnotationType());
                 if (parameterBinder != null && handler != null) {
                     throw new IllegalStateException("Ambiguous binding for parameter annotated with two handled annotation types");
                 } else if (parameterBinder != null /* && handler == null */) {
-                    handler = makeHandler(parameterBinder, anAnnotation);
+                    handler = makeHandler(parameterBinder, annotation);
                 }
             }
             if (handler == null) { // No handler was found: attempt using defaults provider.
                 if (defaults.hasNext()) {
-                    Annotation defaultAnnotation = defaults.next();
-                    ParameterBinder<?> parameterBinder = argumentBinders.get(defaultAnnotation.annotationType());
+                    AnnotationDescription defaultAnnotation = defaults.next();
+                    ParameterBinder<?> parameterBinder = parameterBinders.get(defaultAnnotation.getAnnotationType());
                     if (parameterBinder == null) {
                         return Handler.Unbound.INSTANCE;
                     } else {
@@ -294,25 +356,26 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          * @return A handler for processing the given annotation.
          */
         @SuppressWarnings("unchecked")
-        private Handler makeHandler(ParameterBinder<?> parameterBinder, Annotation annotation) {
-            return new Handler.Bound<Annotation>((ParameterBinder<Annotation>) parameterBinder, annotation);
+        private Handler makeHandler(ParameterBinder<?> parameterBinder, AnnotationDescription annotation) {
+            return new Handler.Bound<Annotation>((ParameterBinder<Annotation>) parameterBinder,
+                    (AnnotationDescription.Loadable<Annotation>) annotation.prepare(parameterBinder.getHandledType()));
         }
 
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && argumentBinders.equals(((DelegationProcessor) other).argumentBinders);
+                    && parameterBinders.equals(((DelegationProcessor) other).parameterBinders);
         }
 
         @Override
         public int hashCode() {
-            return argumentBinders.hashCode();
+            return parameterBinders.hashCode();
         }
 
         @Override
         public String toString() {
             return "TargetMethodAnnotationDrivenBinder.DelegationProcessor{" +
-                    "argumentBinders=" + argumentBinders +
+                    "parameterBinders=" + parameterBinders +
                     '}';
         }
 
@@ -374,7 +437,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 /**
                  * The annotation value that lead to the binding of this handler.
                  */
-                private final T annotation;
+                private final AnnotationDescription.Loadable<T> annotation;
 
                 /**
                  * Creates a new bound handler.
@@ -382,7 +445,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                  * @param parameterBinder The parameter binder that is actually responsible for binding the parameter.
                  * @param annotation      The annotation value that lead to the binding of this handler.
                  */
-                public Bound(ParameterBinder<T> parameterBinder, T annotation) {
+                public Bound(ParameterBinder<T> parameterBinder, AnnotationDescription.Loadable<T> annotation) {
                     this.parameterBinder = parameterBinder;
                     this.annotation = annotation;
                 }

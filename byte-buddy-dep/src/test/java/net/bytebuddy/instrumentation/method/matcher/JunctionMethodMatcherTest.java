@@ -2,6 +2,7 @@ package net.bytebuddy.instrumentation.method.matcher;
 
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -10,7 +11,6 @@ import org.mockito.Mock;
 
 import java.lang.reflect.Method;
 
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
@@ -49,15 +49,9 @@ public class JunctionMethodMatcherTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        assertThat(new JunctionMethodMatcher.Conjunction(first, second).hashCode(), is(new JunctionMethodMatcher.Conjunction(first, second).hashCode()));
-        assertThat(new JunctionMethodMatcher.Conjunction(first, second), is(new JunctionMethodMatcher.Conjunction(first, second)));
-        assertThat(new JunctionMethodMatcher.Conjunction(first, second).hashCode(), not(is(new JunctionMethodMatcher.Conjunction(second, first).hashCode())));
-        assertThat(new JunctionMethodMatcher.Conjunction(first, second), not(is(new JunctionMethodMatcher.Conjunction(second, first))));
-        assertThat(new JunctionMethodMatcher.Disjunction(first, second).hashCode(), is(new JunctionMethodMatcher.Disjunction(first, second).hashCode()));
-        assertThat(new JunctionMethodMatcher.Disjunction(first, second), is(new JunctionMethodMatcher.Disjunction(first, second)));
-        assertThat(new JunctionMethodMatcher.Disjunction(first, second).hashCode(), not(is(new JunctionMethodMatcher.Disjunction(second, first).hashCode())));
-        assertThat(new JunctionMethodMatcher.Disjunction(first, second), not(is(new JunctionMethodMatcher.Disjunction(second, first))));
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(JunctionMethodMatcher.Conjunction.class).skipToString().apply();
+        ObjectPropertyAssertion.of(JunctionMethodMatcher.Disjunction.class).skipToString().apply();
     }
 
     @SuppressWarnings("unused")

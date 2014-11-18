@@ -1,21 +1,26 @@
 package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.utility.JavaVersionRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.PrecompiledTypeClassLoader;
-import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 
-import java.io.Serializable;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
 
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isDeclaredBy;
 import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.not;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class DefaultMethodCallTest extends AbstractInstrumentationTest {
 
@@ -155,10 +160,28 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        assertThat(DefaultMethodCall.unambiguousOnly().hashCode(), is(DefaultMethodCall.unambiguousOnly().hashCode()));
-        assertThat(DefaultMethodCall.unambiguousOnly(), is(DefaultMethodCall.unambiguousOnly()));
-        assertThat(DefaultMethodCall.unambiguousOnly().hashCode(), CoreMatchers.not(is(DefaultMethodCall.prioritize(Serializable.class).hashCode())));
-        assertThat(DefaultMethodCall.unambiguousOnly(), CoreMatchers.not(is(DefaultMethodCall.prioritize(Serializable.class))));
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(DefaultMethodCall.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
+            @Override
+            public List<?> create() {
+                TypeDescription typeDescription = mock(TypeDescription.class);
+                when(typeDescription.isInterface()).thenReturn(true);
+                return Arrays.asList(typeDescription);
+            }
+        }).apply();
+        final TypeDescription removalType = mock(TypeDescription.class);
+        ObjectPropertyAssertion.of(DefaultMethodCall.Appender.class).refine(new ObjectPropertyAssertion.Refinement<Instrumentation.Target>() {
+            @Override
+            public void apply(Instrumentation.Target mock) {
+                TypeDescription typeDescription = mock(TypeDescription.class);
+                when(typeDescription.getInterfaces()).thenReturn(new TypeList.Explicit(Arrays.asList(removalType, mock(TypeDescription.class))));
+                when(mock.getTypeDescription()).thenReturn(typeDescription);
+            }
+        }).create(new ObjectPropertyAssertion.Creator<List<?>>() {
+            @Override
+            public List<?> create() {
+                return Arrays.asList(removalType, mock(TypeDescription.class));
+            }
+        }).apply();
     }
 }

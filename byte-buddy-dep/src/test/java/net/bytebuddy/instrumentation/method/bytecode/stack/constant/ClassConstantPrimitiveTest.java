@@ -40,6 +40,7 @@ public class ClassConstantPrimitiveTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {void.class, Void.class},
+                {boolean.class, Boolean.class},
                 {byte.class, Byte.class},
                 {short.class, Short.class},
                 {char.class, Character.class},

@@ -30,11 +30,15 @@ public class AnnotationVisibilityTest {
                 {IgnoreForBinding.class},
                 {Origin.class},
                 {RuntimeType.class},
+                {This.class},
                 {Super.class},
+                {Default.class},
                 {SuperCall.class},
                 {DefaultCall.class},
-                {This.class},
-                {Pipe.class}
+                {Empty.class},
+                {Pipe.class},
+                {Morph.class},
+                {Field.class}
         });
     }
 

@@ -1,10 +1,14 @@
 package net.bytebuddy.instrumentation;
 
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Test;
+
+import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
+import static org.mockito.Mockito.when;
 
 public class MethodDelegationEqualsHashCodeTest {
 
@@ -50,6 +54,20 @@ public class MethodDelegationEqualsHashCodeTest {
         assertThat(MethodDelegation.toConstructor(Foo.class), is(MethodDelegation.toConstructor(Foo.class)));
         assertThat(MethodDelegation.toConstructor(Foo.class).hashCode(), not(is(MethodDelegation.toConstructor(Bar.class).hashCode())));
         assertThat(MethodDelegation.toConstructor(Foo.class), not(is(MethodDelegation.toConstructor(Bar.class))));
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(MethodDelegation.class).refine(new ObjectPropertyAssertion.Refinement<List<?>>() {
+            @Override
+            public void apply(List<?> mock) {
+                when(mock.size()).thenReturn(1);
+            }
+        }).apply();
+        ObjectPropertyAssertion.of(MethodDelegation.Appender.class).apply();
+        ObjectPropertyAssertion.of(MethodDelegation.InstrumentationDelegate.ForStaticField.class).apply();
+        ObjectPropertyAssertion.of(MethodDelegation.InstrumentationDelegate.ForInstanceField.class).apply();
+        ObjectPropertyAssertion.of(MethodDelegation.InstrumentationDelegate.ForConstruction.class).apply();
     }
 
     public static class Foo {

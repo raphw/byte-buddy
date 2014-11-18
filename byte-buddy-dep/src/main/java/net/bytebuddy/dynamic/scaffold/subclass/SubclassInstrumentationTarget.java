@@ -80,7 +80,8 @@ public class SubclassInstrumentationTarget extends Instrumentation.Target.Abstra
                 "typeDescription=" + typeDescription +
                 ", defaultMethods=" + defaultMethods +
                 ", bridgeMethodResolver=" + bridgeMethodResolver +
-                ", targetTypeIdentifier=" + originTypeIdentifier +
+                ", superConstructors=" + superConstructors +
+                ", originTypeIdentifier=" + originTypeIdentifier +
                 '}';
     }
 
@@ -168,7 +169,7 @@ public class SubclassInstrumentationTarget extends Instrumentation.Target.Abstra
         public String toString() {
             return "SubclassInstrumentationTarget.Factory{" +
                     "bridgeMethodResolverFactory=" + bridgeMethodResolverFactory +
-                    "targetTypeIdentifier=" + originTypeIdentifier +
+                    "originTypeIdentifier=" + originTypeIdentifier +
                     '}';
         }
     }

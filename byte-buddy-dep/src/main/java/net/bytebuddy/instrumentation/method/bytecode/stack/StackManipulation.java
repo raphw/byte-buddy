@@ -43,7 +43,7 @@ public interface StackManipulation {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-            throw new IllegalStateException();
+            throw new IllegalStateException("An illegal stack manipulation must not be applied");
         }
     }
 
@@ -209,7 +209,7 @@ public interface StackManipulation {
 
         @Override
         public String toString() {
-            return "StackManipulation.Compound{" + Arrays.asList(stackManipulation) + "}";
+            return "StackManipulation.Compound{stackManipulation=" + Arrays.asList(stackManipulation) + "}";
         }
     }
 }

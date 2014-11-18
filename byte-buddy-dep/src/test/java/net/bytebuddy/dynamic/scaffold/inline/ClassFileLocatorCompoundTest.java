@@ -1,14 +1,13 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
-
-import java.io.InputStream;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -24,12 +23,18 @@ public class ClassFileLocatorCompoundTest {
     @Mock
     private TypeDescription typeDescription;
     @Mock
-    private InputStream inputStream;
+    private TypeDescription.BinaryRepresentation legal, illegal;
+
+    @Before
+    public void setUp() throws Exception {
+        when(legal.isValid()).thenReturn(true);
+    }
 
     @Test
     public void testApplicationOrderCallsSecond() throws Exception {
-        when(otherClassFileLocator.classFileFor(typeDescription)).thenReturn(inputStream);
-        assertThat(new ClassFileLocator.Compound(classFileLocator, otherClassFileLocator).classFileFor(typeDescription), is(inputStream));
+        when(classFileLocator.classFileFor(typeDescription)).thenReturn(illegal);
+        when(otherClassFileLocator.classFileFor(typeDescription)).thenReturn(legal);
+        assertThat(new ClassFileLocator.Compound(classFileLocator, otherClassFileLocator).classFileFor(typeDescription), is(legal));
         verify(classFileLocator).classFileFor(typeDescription);
         verifyNoMoreInteractions(classFileLocator);
         verify(otherClassFileLocator).classFileFor(typeDescription);
@@ -38,15 +43,15 @@ public class ClassFileLocatorCompoundTest {
 
     @Test
     public void testApplicationOrderDoesNotCallSecond() throws Exception {
-        when(classFileLocator.classFileFor(typeDescription)).thenReturn(inputStream);
-        assertThat(new ClassFileLocator.Compound(classFileLocator, otherClassFileLocator).classFileFor(typeDescription), is(inputStream));
+        when(classFileLocator.classFileFor(typeDescription)).thenReturn(legal);
+        assertThat(new ClassFileLocator.Compound(classFileLocator, otherClassFileLocator).classFileFor(typeDescription), is(legal));
         verify(classFileLocator).classFileFor(typeDescription);
         verifyNoMoreInteractions(classFileLocator);
         verifyZeroInteractions(otherClassFileLocator);
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(ClassFileLocator.Compound.class).apply();
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(ClassFileLocator.Compound.class).apply();
     }
 }

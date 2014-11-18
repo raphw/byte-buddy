@@ -12,6 +12,8 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import static net.bytebuddy.utility.ByteBuddyCommons.*;
+
 /**
  * This instrumentation forwards method invocations to another instance. For this, the intercepted method must be
  * defined on a super type of the given delegation target. Static methods cannot be forwarded as they are not
@@ -72,8 +74,8 @@ public class Forwarding implements Instrumentation {
      * @return A corresponding instrumentation.
      */
     public static Instrumentation to(Object delegate, String fieldName) {
-        return new Forwarding(fieldName,
-                new TypeDescription.ForLoadedType(delegate.getClass()),
+        return new Forwarding(isValidIdentifier(fieldName),
+                new TypeDescription.ForLoadedType(nonNull(delegate).getClass()),
                 new PreparationHandler.ForStaticInstance(delegate));
     }
 
@@ -86,8 +88,20 @@ public class Forwarding implements Instrumentation {
      * @return A corresponding instrumentation.
      */
     public static Instrumentation toStaticField(String fieldName, Class<?> fieldType) {
-        return new Forwarding(fieldName,
-                new TypeDescription.ForLoadedType(fieldType),
+        return toStaticField(fieldName, new TypeDescription.ForLoadedType(nonNull(fieldType)));
+    }
+
+    /**
+     * Forwards all intercepted method invocations to a {@code static} field of the instrumented class. The value
+     * of this field must be set explicitly.
+     *
+     * @param fieldName The name of the field in which the delegate should be stored.
+     * @param fieldType The type of the field and thus the type of which the delegate is assumed to be of.
+     * @return A corresponding instrumentation.
+     */
+    public static Instrumentation toStaticField(String fieldName, TypeDescription fieldType) {
+        return new Forwarding(isValidIdentifier(fieldName),
+                nonVoid(fieldType),
                 PreparationHandler.ForStaticField.INSTANCE);
     }
 
@@ -100,8 +114,20 @@ public class Forwarding implements Instrumentation {
      * @return A corresponding instrumentation.
      */
     public static Instrumentation toInstanceField(String fieldName, Class<?> fieldType) {
-        return new Forwarding(fieldName,
-                new TypeDescription.ForLoadedType(fieldType),
+        return toInstanceField(fieldName, new TypeDescription.ForLoadedType(nonNull(fieldType)));
+    }
+
+    /**
+     * Forwards all intercepted method invocations to an instance field of the instrumented class. The value
+     * of this field must be set explicitly.
+     *
+     * @param fieldName The name of the field in which the delegate should be stored.
+     * @param fieldType The type of the field and thus the type of which the delegate is assumed to be of.
+     * @return A corresponding instrumentation.
+     */
+    public static Instrumentation toInstanceField(String fieldName, TypeDescription fieldType) {
+        return new Forwarding(isValidIdentifier(fieldName),
+                nonNull(fieldType),
                 PreparationHandler.ForInstanceField.INSTANCE);
     }
 
@@ -269,7 +295,7 @@ public class Forwarding implements Instrumentation {
     /**
      * An appender for implementing a {@link net.bytebuddy.instrumentation.Forwarding} operation.
      */
-    private class Appender implements ByteCodeAppender {
+    protected class Appender implements ByteCodeAppender {
 
         /**
          * The stack manipulation for loading the delegate onto the stack, i.e. the field loading operation.

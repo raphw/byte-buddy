@@ -2,7 +2,7 @@ package net.bytebuddy.dynamic;
 
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.ClassFileExtraction;
-import net.bytebuddy.utility.HashCodeEqualsTester;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -42,8 +42,8 @@ public class ClassLoadingStrategyDefaultProtectionDomainInjectionTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(ClassLoadingStrategy.Default.ProtectionDomainInjection.class).apply();
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(ClassLoadingStrategy.Default.ProtectionDomainInjection.class).apply();
     }
 
     private static class Foo {

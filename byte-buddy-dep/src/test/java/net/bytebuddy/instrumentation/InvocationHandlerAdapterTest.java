@@ -2,6 +2,7 @@ package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.utility.CallTraceable;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
@@ -111,6 +112,14 @@ public class InvocationHandlerAdapterTest extends AbstractInstrumentationTest {
         assertThat(InvocationHandlerAdapter.toInstanceField(QUX), not(is(InvocationHandlerAdapter.toInstanceField(FOO))));
         assertThat(InvocationHandlerAdapter.toInstanceField(QUX).hashCode(), not(is(InvocationHandlerAdapter.of(new Foo(BAR), QUX).hashCode())));
         assertThat(InvocationHandlerAdapter.toInstanceField(QUX), not(is(InvocationHandlerAdapter.of(new Foo(BAR), QUX))));
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(InvocationHandlerAdapter.ForInstanceDelegation.class).apply();
+        ObjectPropertyAssertion.of(InvocationHandlerAdapter.ForInstanceDelegation.Appender.class).apply();
+        ObjectPropertyAssertion.of(InvocationHandlerAdapter.ForStaticDelegation.class).skipSynthetic().apply();
+        ObjectPropertyAssertion.of(InvocationHandlerAdapter.ForStaticDelegation.Appender.class).apply();
     }
 
     private static class Foo implements InvocationHandler {

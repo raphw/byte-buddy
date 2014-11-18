@@ -34,7 +34,7 @@ public @interface IgnoreForBinding {
          * @return {@code true} if the method should not be considered for binding.
          */
         public static boolean check(MethodDescription methodDescription) {
-            return methodDescription.isAnnotationPresent(IgnoreForBinding.class);
+            return methodDescription.getDeclaredAnnotations().isAnnotationPresent(IgnoreForBinding.class);
         }
     }
 }

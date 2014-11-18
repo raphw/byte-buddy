@@ -1,8 +1,9 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.utility.StreamDrainer;
 
-import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
@@ -23,14 +24,13 @@ public interface ClassFileLocator {
     static final String CLASS_FILE_EXTENSION = ".class";
 
     /**
-     * Locates the class file for a given type and returns the file as an input stream. Any requested
-     * {@link java.io.InputStream} is closed automatically after it is processed. If no class file can be located,
-     * {@code null} is returned.
+     * Locates the class file for a given type and returns the binary data of the class file.
      *
      * @param typeDescription The description of the type for which a class file is to be located.
-     * @return An input stream representing the given type.
+     * @return Any binary representation of the type which might be illegal.
+     * @throws java.io.IOException If reading a class file causes an error.
      */
-    InputStream classFileFor(TypeDescription typeDescription);
+    TypeDescription.BinaryRepresentation classFileFor(TypeDescription typeDescription) throws IOException;
 
     /**
      * Default implementations for a {@link net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator}.
@@ -42,22 +42,27 @@ public interface ClassFileLocator {
          */
         CLASS_PATH {
             @Override
-            public InputStream classFileFor(TypeDescription typeDescription) {
-                return ClassLoader.getSystemResourceAsStream(typeDescription.getInternalName() + CLASS_FILE_EXTENSION);
+            public TypeDescription.BinaryRepresentation classFileFor(TypeDescription typeDescription) throws IOException {
+                InputStream inputStream = ClassLoader.getSystemResourceAsStream(typeDescription.getInternalName() + CLASS_FILE_EXTENSION);
+                if (inputStream != null) {
+                    try {
+                        return new TypeDescription.BinaryRepresentation.Explicit(new StreamDrainer().drain(inputStream));
+                    } finally {
+                        inputStream.close();
+                    }
+                } else {
+                    return TypeDescription.BinaryRepresentation.Illegal.INSTANCE;
+                }
             }
         },
 
         /**
-         * Locates a class file from a {@link java.lang.ClassLoader}'s resource lookup. This is only possible if a
-         * type is described by a loaded {@link java.lang.Class}.
+         * Locates a class file a type description's attached description.
          */
         ATTACHED {
             @Override
-            public InputStream classFileFor(TypeDescription typeDescription) {
-                ClassLoader classLoader = typeDescription.getClassLoader();
-                return classLoader != null
-                        ? classLoader.getResourceAsStream(typeDescription.getInternalName() + CLASS_FILE_EXTENSION)
-                        : null;
+            public TypeDescription.BinaryRepresentation classFileFor(TypeDescription typeDescription) {
+                return typeDescription.toBinary();
             }
         }
     }
@@ -83,10 +88,12 @@ public interface ClassFileLocator {
          * Base for access to a reflective member to make the code more readable.
          */
         private static final Object STATIC_METHOD = null;
+
         /**
          * The instrumentation instance to use for looking up the binary format of a type.
          */
         private final Instrumentation instrumentation;
+
         /**
          * The class loader which is expected to load a class of a given binary format.
          */
@@ -125,7 +132,7 @@ public interface ClassFileLocator {
         }
 
         @Override
-        public InputStream classFileFor(TypeDescription typeDescription) {
+        public TypeDescription.BinaryRepresentation classFileFor(TypeDescription typeDescription) {
             try {
                 ExtractionClassFileTransformer classFileTransformer = new ExtractionClassFileTransformer(classLoader, typeDescription);
                 try {
@@ -133,8 +140,8 @@ public interface ClassFileLocator {
                     instrumentation.retransformClasses(classLoader.loadClass(typeDescription.getName()));
                     byte[] binaryRepresentation = classFileTransformer.getClassFile();
                     return binaryRepresentation == null
-                            ? null
-                            : new ByteArrayInputStream(binaryRepresentation);
+                            ? TypeDescription.BinaryRepresentation.Illegal.INSTANCE
+                            : new TypeDescription.BinaryRepresentation.Explicit(binaryRepresentation);
                 } finally {
                     instrumentation.removeTransformer(classFileTransformer);
                 }
@@ -280,11 +287,11 @@ public interface ClassFileLocator {
         }
 
         @Override
-        public InputStream classFileFor(TypeDescription typeDescription) {
+        public TypeDescription.BinaryRepresentation classFileFor(TypeDescription typeDescription) throws IOException {
             for (ClassFileLocator classFileLocator : this.classFileLocator) {
-                InputStream inputStream = classFileLocator.classFileFor(typeDescription);
-                if (inputStream != null) {
-                    return inputStream;
+                TypeDescription.BinaryRepresentation binaryRepresentation = classFileLocator.classFileFor(typeDescription);
+                if (binaryRepresentation.isValid()) {
+                    return binaryRepresentation;
                 }
             }
             return null;

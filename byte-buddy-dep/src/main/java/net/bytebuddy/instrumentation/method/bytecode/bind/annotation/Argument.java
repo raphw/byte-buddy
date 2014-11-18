@@ -1,6 +1,8 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
 import net.bytebuddy.instrumentation.Instrumentation;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MostSpecificTypeResolver;
@@ -143,12 +145,13 @@ public @interface Argument {
         }
 
         @Override
-        public MethodDelegationBinder.ParameterBinding<?> bind(Argument argument,
+        public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<Argument> annotation,
                                                                int targetParameterIndex,
                                                                MethodDescription source,
                                                                MethodDescription target,
                                                                Instrumentation.Target instrumentationTarget,
                                                                Assigner assigner) {
+            Argument argument = annotation.loadSilent();
             if (argument.value() < 0) {
                 throw new IllegalArgumentException(String.format("Argument annotation on %d's argument virtual " +
                         "%s holds negative index", targetParameterIndex, target));
@@ -193,21 +196,19 @@ public @interface Argument {
             for (int sourceIndex = 0; sourceIndex < source.getParameterTypes().size(); sourceIndex++) {
                 results.add(sourceIndex);
             }
-            for (Annotation[] parameterAnnotation : target.getParameterAnnotations()) {
-                for (Annotation aParameterAnnotation : parameterAnnotation) {
-                    if (aParameterAnnotation.annotationType() == Argument.class) {
-                        results.remove(((Argument) aParameterAnnotation).value());
-                        break;
-                    }
+            for (AnnotationList parameterAnnotations : target.getParameterAnnotations()) {
+                AnnotationDescription.Loadable<Argument> annotation = parameterAnnotations.ofType(Argument.class);
+                if (annotation != null) {
+                    results.remove(annotation.loadSilent().value());
                 }
             }
             return results.iterator();
         }
 
         @Override
-        public Iterator<Argument> makeIterator(Instrumentation.Target instrumentationTarget,
-                                               MethodDescription source,
-                                               MethodDescription target) {
+        public Iterator<AnnotationDescription> makeIterator(Instrumentation.Target instrumentationTarget,
+                                                            MethodDescription source,
+                                                            MethodDescription target) {
             return new NextUnboundArgumentIterator(makeFreeIndexList(source, target));
         }
 
@@ -215,7 +216,7 @@ public @interface Argument {
          * An iterator that creates {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument}
          * annotations for any non-referenced index of the source method.
          */
-        private static class NextUnboundArgumentIterator implements Iterator<Argument> {
+        protected static class NextUnboundArgumentIterator implements Iterator<AnnotationDescription> {
 
             /**
              * An iterator over all free indices.
@@ -228,7 +229,7 @@ public @interface Argument {
              *
              * @param iterator An iterator of free indices of the source method.
              */
-            private NextUnboundArgumentIterator(Iterator<Integer> iterator) {
+            protected NextUnboundArgumentIterator(Iterator<Integer> iterator) {
                 this.iterator = iterator;
             }
 
@@ -238,8 +239,8 @@ public @interface Argument {
             }
 
             @Override
-            public Argument next() {
-                return new DefaultArgument(iterator.next());
+            public AnnotationDescription next() {
+                return AnnotationDescription.ForLoadedAnnotation.of(new DefaultArgument(iterator.next()));
             }
 
             @Override
@@ -251,7 +252,17 @@ public @interface Argument {
              * A default implementation of an {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument}
              * annotation.
              */
-            private static class DefaultArgument implements Argument {
+            protected static class DefaultArgument implements Argument {
+
+                /**
+                 * The name of the value annotation parameter.
+                 */
+                private static final String VALUE = "value";
+
+                /**
+                 * The name of the value binding mechanic parameter.
+                 */
+                private static final String BINDING_MECHANIC = "bindingMechanic";
 
                 /**
                  * The index of the source method parameter to be bound.
@@ -263,7 +274,7 @@ public @interface Argument {
                  *
                  * @param parameterIndex The index of the source method parameter to be bound.
                  */
-                private DefaultArgument(int parameterIndex) {
+                protected DefaultArgument(int parameterIndex) {
                     this.parameterIndex = parameterIndex;
                 }
 
@@ -283,8 +294,20 @@ public @interface Argument {
                 }
 
                 @Override
+                public boolean equals(Object other) {
+                    return this == other || other instanceof Argument && parameterIndex == ((Argument) other).value();
+                }
+
+                @Override
+                public int hashCode() {
+                    return ((127 * BINDING_MECHANIC.hashCode()) ^ BindingMechanic.UNIQUE.hashCode())
+                            + ((127 * VALUE.hashCode()) ^ parameterIndex);
+                }
+
+                @Override
                 public String toString() {
-                    return "Argument.NextUnboundAsDefaultsProvider.DefaultArgument{parameterIndex=" + parameterIndex + '}';
+                    return "@" + Argument.class.getName() + "(bindingMechanic=" + BindingMechanic.UNIQUE.name()
+                            + ", value=" + parameterIndex + ")";
                 }
             }
         }

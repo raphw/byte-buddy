@@ -6,6 +6,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -17,7 +18,6 @@ import org.objectweb.asm.Opcodes;
 import java.util.Arrays;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -70,14 +70,21 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        assertThat(new MethodRebaseResolver.Resolution.ForRebasedConstructor(methodDescription, placeholderType).hashCode(),
-                is(new MethodRebaseResolver.Resolution.ForRebasedConstructor(methodDescription, placeholderType).hashCode()));
-        assertThat(new MethodRebaseResolver.Resolution.ForRebasedConstructor(methodDescription, placeholderType),
-                is(new MethodRebaseResolver.Resolution.ForRebasedConstructor(methodDescription, placeholderType)));
-        assertThat(new MethodRebaseResolver.Resolution.ForRebasedConstructor(methodDescription, placeholderType).hashCode(),
-                not(is(new MethodRebaseResolver.Resolution.ForRebasedConstructor(methodDescription, otherPlaceHolderType).hashCode())));
-        assertThat(new MethodRebaseResolver.Resolution.ForRebasedConstructor(methodDescription, placeholderType),
-                not(is(new MethodRebaseResolver.Resolution.ForRebasedConstructor(methodDescription, otherPlaceHolderType))));
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(MethodRebaseResolver.Resolution.ForRebasedConstructor.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription>() {
+            @Override
+            public void apply(MethodDescription mock) {
+                when(mock.getParameterTypes()).thenReturn(new TypeList.Empty());
+                when(mock.getExceptionTypes()).thenReturn(new TypeList.Empty());
+                when(mock.getDeclaringType()).thenReturn(mock(TypeDescription.class));
+                when(mock.getReturnType()).thenReturn(mock(TypeDescription.class));
+                when(mock.getInternalName()).thenReturn(FOO + System.identityHashCode(mock));
+            }
+        }).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
+            @Override
+            public void apply(TypeDescription mock) {
+                when(mock.getDescriptor()).thenReturn(FOO + System.identityHashCode(mock));
+            }
+        }).apply();
     }
 }

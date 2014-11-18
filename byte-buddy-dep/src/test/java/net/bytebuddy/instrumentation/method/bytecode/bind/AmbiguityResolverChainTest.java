@@ -1,6 +1,6 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind;
 
-import net.bytebuddy.utility.HashCodeEqualsTester;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -45,6 +45,6 @@ public class AmbiguityResolverChainTest extends AbstractAmbiguityResolverTest {
 
     @Test
     public void testEqualsHashCode() throws Exception {
-        HashCodeEqualsTester.of(MethodDelegationBinder.AmbiguityResolver.Chain.class).apply();
+        ObjectPropertyAssertion.of(MethodDelegationBinder.AmbiguityResolver.Chain.class).apply();
     }
 }

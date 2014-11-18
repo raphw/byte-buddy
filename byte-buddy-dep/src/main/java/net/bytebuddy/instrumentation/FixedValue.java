@@ -15,6 +15,9 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import static net.bytebuddy.utility.ByteBuddyCommons.isValidIdentifier;
+import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
+
 /**
  * This instrumentation returns a fixed value for a method. Other than the
  * {@link net.bytebuddy.instrumentation.StubMethod} instrumentation, this implementation allows
@@ -72,7 +75,7 @@ public abstract class FixedValue implements Instrumentation {
      * possible for integer types and types that are presented by integers inside the JVM ({@code boolean}, {@code byte},
      * {@code short}, {@code char}) and for the {@code null} value. Additionally, several common constants of
      * the {@code float}, {@code double} and {@code long} types can be represented by opcode constants. Note that the
-     * Java 7 types {@link java.lang.invoke.MethodHandle} and {@link java.lang.invoke.MethodType} are are currently not
+     * Java 7 types {@code java.lang.invoke.MethodHandle} and {@code java.lang.invoke.MethodType} are are currently not
      * supported for constant pool storage.
      *
      * @param fixedValue The fixed value to be returned by methods that are instrumented by this instrumentation.
@@ -81,54 +84,54 @@ public abstract class FixedValue implements Instrumentation {
     public static AssignerConfigurable value(Object fixedValue) {
         if (fixedValue == null) {
             return new ForPoolValue(NullConstant.INSTANCE,
-                    Object.class,
+                    new TypeDescription.ForLoadedType(Object.class),
                     defaultAssigner(),
                     true);
         }
         Class<?> type = fixedValue.getClass();
         if (type == String.class) {
             return new ForPoolValue(new TextConstant((String) fixedValue),
-                    String.class,
+                    new TypeDescription.ForLoadedType(String.class),
                     defaultAssigner(),
                     defaultConsiderRuntimeType());
         } else if (type == Boolean.class) {
             return new ForPoolValue(IntegerConstant.forValue((Boolean) fixedValue),
-                    boolean.class,
+                    new TypeDescription.ForLoadedType(boolean.class),
                     defaultAssigner(),
                     defaultConsiderRuntimeType());
         } else if (type == Byte.class) {
             return new ForPoolValue(IntegerConstant.forValue((Byte) fixedValue),
-                    byte.class,
+                    new TypeDescription.ForLoadedType(byte.class),
                     defaultAssigner(),
                     defaultConsiderRuntimeType());
         } else if (type == Short.class) {
             return new ForPoolValue(IntegerConstant.forValue((Short) fixedValue),
-                    short.class,
+                    new TypeDescription.ForLoadedType(short.class),
                     defaultAssigner(),
                     defaultConsiderRuntimeType());
         } else if (type == Character.class) {
             return new ForPoolValue(IntegerConstant.forValue((Character) fixedValue),
-                    char.class,
+                    new TypeDescription.ForLoadedType(char.class),
                     defaultAssigner(),
                     defaultConsiderRuntimeType());
         } else if (type == Integer.class) {
             return new ForPoolValue(IntegerConstant.forValue((Integer) fixedValue),
-                    int.class,
+                    new TypeDescription.ForLoadedType(int.class),
                     defaultAssigner(),
                     defaultConsiderRuntimeType());
         } else if (type == Long.class) {
             return new ForPoolValue(LongConstant.forValue((Long) fixedValue),
-                    long.class,
+                    new TypeDescription.ForLoadedType(long.class),
                     defaultAssigner(),
                     defaultConsiderRuntimeType());
         } else if (type == Float.class) {
             return new ForPoolValue(FloatConstant.forValue((Float) fixedValue),
-                    float.class,
+                    new TypeDescription.ForLoadedType(float.class),
                     defaultAssigner(),
                     defaultConsiderRuntimeType());
         } else if (type == Double.class) {
             return new ForPoolValue(DoubleConstant.forValue((Double) fixedValue),
-                    double.class,
+                    new TypeDescription.ForLoadedType(double.class),
                     defaultAssigner(),
                     defaultConsiderRuntimeType());
         } else {
@@ -151,7 +154,7 @@ public abstract class FixedValue implements Instrumentation {
     public static AssignerConfigurable reference(Object fixedValue) {
         if (fixedValue == null) {
             return new ForPoolValue(NullConstant.INSTANCE,
-                    Object.class,
+                    new TypeDescription.ForLoadedType(Object.class),
                     defaultAssigner(),
                     true);
         }
@@ -174,7 +177,7 @@ public abstract class FixedValue implements Instrumentation {
         if (fixedValue == null) {
             throw new IllegalArgumentException("The fixed value must not be null");
         }
-        return new ForStaticField(fieldName, fixedValue, defaultAssigner(), defaultConsiderRuntimeType());
+        return new ForStaticField(isValidIdentifier(fieldName), fixedValue, defaultAssigner(), defaultConsiderRuntimeType());
     }
 
     /**
@@ -226,10 +229,9 @@ public abstract class FixedValue implements Instrumentation {
 
     @Override
     public boolean equals(Object other) {
-        if (this == other) return true;
-        if (other == null || getClass() != other.getClass()) return false;
-        FixedValue that = (FixedValue) other;
-        return considerRuntimeType == that.considerRuntimeType && assigner.equals(that.assigner);
+        return this == other || !(other == null || getClass() != other.getClass())
+                && considerRuntimeType == ((FixedValue) other).considerRuntimeType
+                && assigner.equals(((FixedValue) other).assigner);
     }
 
     @Override
@@ -282,24 +284,6 @@ public abstract class FixedValue implements Instrumentation {
          * @param considerRuntimeType  If {@code true}, the runtime type of the given value will be considered for
          *                             assigning the return type.
          */
-        protected ForPoolValue(StackManipulation valueLoadInstruction,
-                               Class<?> loadedType,
-                               Assigner assigner,
-                               boolean considerRuntimeType) {
-            this(valueLoadInstruction, new TypeDescription.ForLoadedType(loadedType), assigner, considerRuntimeType);
-        }
-
-        /**
-         * Creates a new constant pool fixed value instrumentation.
-         *
-         * @param valueLoadInstruction The instruction that is responsible for loading the constant pool value onto the
-         *                             operand stack.
-         * @param loadedType           A type description representing the loaded type.
-         * @param assigner             The assigner to use for assigning the fixed value to the return type of the
-         *                             instrumented value.
-         * @param considerRuntimeType  If {@code true}, the runtime type of the given value will be considered for
-         *                             assigning the return type.
-         */
         private ForPoolValue(StackManipulation valueLoadInstruction,
                              TypeDescription loadedType,
                              Assigner assigner,
@@ -311,7 +295,7 @@ public abstract class FixedValue implements Instrumentation {
 
         @Override
         public Instrumentation withAssigner(Assigner assigner, boolean considerRuntimeType) {
-            return new ForPoolValue(valueLoadInstruction, loadedType, assigner, considerRuntimeType);
+            return new ForPoolValue(valueLoadInstruction, loadedType, nonNull(assigner), considerRuntimeType);
         }
 
         @Override
@@ -337,14 +321,17 @@ public abstract class FixedValue implements Instrumentation {
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
+                    && super.equals(other)
                     && loadedType.equals(((ForPoolValue) other).loadedType)
-                    && valueLoadInstruction.equals(((ForPoolValue) other).valueLoadInstruction)
-                    && super.equals(other);
+                    && valueLoadInstruction.equals(((ForPoolValue) other).valueLoadInstruction);
         }
 
         @Override
         public int hashCode() {
-            return 31 * 31 * super.hashCode() + 31 * valueLoadInstruction.hashCode() + loadedType.hashCode();
+            int result = super.hashCode();
+            result = 31 * result + valueLoadInstruction.hashCode();
+            result = 31 * result + loadedType.hashCode();
+            return result;
         }
 
         @Override
@@ -416,7 +403,7 @@ public abstract class FixedValue implements Instrumentation {
 
         @Override
         public Instrumentation withAssigner(Assigner assigner, boolean considerRuntimeType) {
-            return new ForStaticField(fieldName, fixedValue, assigner, considerRuntimeType);
+            return new ForStaticField(fieldName, fixedValue, nonNull(assigner), considerRuntimeType);
         }
 
         @Override
@@ -448,6 +435,7 @@ public abstract class FixedValue implements Instrumentation {
         public String toString() {
             return "FixedValue.ForStaticField{" +
                     "fieldName='" + fieldName + '\'' +
+                    ", fieldType=" + fieldType +
                     ", fixedValue=" + fixedValue +
                     ", assigner=" + assigner +
                     ", considerRuntimeType=" + considerRuntimeType +

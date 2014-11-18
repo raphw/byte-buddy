@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.loading;
 
-import net.bytebuddy.utility.HashCodeEqualsTester;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.lang.instrument.Instrumentation;
@@ -16,13 +16,11 @@ public class ClassReloadingStrategyNonAttachedTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(ClassReloadingStrategy.class).refine(new HashCodeEqualsTester.Refinement() {
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(ClassReloadingStrategy.class).refine(new ObjectPropertyAssertion.Refinement<Instrumentation>() {
             @Override
-            public void apply(Object mock) {
-                if (Instrumentation.class.isAssignableFrom(mock.getClass())) {
-                    when(((Instrumentation) mock).isRedefineClassesSupported()).thenReturn(true);
-                }
+            public void apply(Instrumentation mock) {
+                when(mock.isRedefineClassesSupported()).thenReturn(true);
             }
         }).apply();
     }

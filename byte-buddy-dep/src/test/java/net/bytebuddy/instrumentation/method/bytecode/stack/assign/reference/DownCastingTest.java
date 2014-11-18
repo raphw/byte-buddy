@@ -3,8 +3,8 @@ package net.bytebuddy.instrumentation.method.bytecode.stack.assign.reference;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.utility.HashCodeEqualsTester;
 import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -50,13 +50,11 @@ public class DownCastingTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
-        HashCodeEqualsTester.of(DownCasting.class).refine(new HashCodeEqualsTester.Refinement() {
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(DownCasting.class).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
             @Override
-            public void apply(Object mock) {
-                if (mock instanceof TypeDescription) {
-                    when(((TypeDescription) mock).getInternalName()).thenReturn(FOO + new Random().nextInt());
-                }
+            public void apply(TypeDescription mock) {
+                when((mock).getInternalName()).thenReturn(FOO + new Random().nextInt());
             }
         }).apply();
     }
