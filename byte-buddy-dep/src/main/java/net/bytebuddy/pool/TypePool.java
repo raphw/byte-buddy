@@ -1819,7 +1819,8 @@ public interface TypePool {
         }
 
         /**
-         * A value of a {@link net.bytebuddy.pool.TypePool.LazyTypeDescription.LazyAnnotationDescription}.
+         * A value of a {@link net.bytebuddy.pool.TypePool.LazyTypeDescription.LazyAnnotationDescription} which
+         * is not yet loaded by a class loader.
          *
          * @param <T> The type of the unloaded value of this annotation.
          * @param <S> The type of the loaded value of this annotation.
@@ -1841,7 +1842,73 @@ public interface TypePool {
              * @return The loaded value of this annotation.
              * @throws ClassNotFoundException If a type that represents a loaded value cannot be found.
              */
-            S load(ClassLoader classLoader) throws ClassNotFoundException;
+            Loaded<S> load(ClassLoader classLoader) throws ClassNotFoundException;
+
+            /**
+             * A loaded variant of a {@link net.bytebuddy.pool.TypePool.LazyTypeDescription.AnnotationValue}. While
+             * implementations of this value are required to be processed successfully by a
+             * {@link java.lang.ClassLoader} they might still be unresolved. Typical errors on loading an annotation
+             * value are:
+             * <ul>
+             * <li>{@link java.lang.annotation.IncompleteAnnotationException}: An annotation does not define a value
+             * even though no default value for a property is provided.</li>
+             * <li>{@link java.lang.EnumConstantNotPresentException}: An annotation defines an unknown value for
+             * a known enumeration.</li>
+             * <li>{@link java.lang.annotation.AnnotationTypeMismatchException}: An annotation property is not
+             * of the expected type.</li>
+             * </ul>
+             * Implementations of this interface must implement methods for {@link Object#hashCode()} and
+             * {@link Object#toString()} that resemble those used for the annotation values of an actual
+             * {@link java.lang.annotation.Annotation} implementation. Also, instances must implement
+             * {@link java.lang.Object#equals(Object)} to return {@code true} for other instances of
+             * this interface that represent the same annotation value.
+             *
+             * @param <U> The type of the loaded value of this annotation.
+             */
+            static interface Loaded<U> {
+
+                State getState();
+
+                /**
+                 * Resolves the value to the actual value of an annotation. Calling this method might throw a runtime
+                 * exception if this value is either not defined or not resolved.
+                 *
+                 * @return The actual annotation value represented by this instance.
+                 */
+                U resolve();
+
+                /**
+                 * Represents the state of a
+                 * {@link net.bytebuddy.pool.TypePool.LazyTypeDescription.AnnotationValue.Loaded} annotation property.
+                 */
+                static enum State {
+
+                    /**
+                     * A non-defined annotation value describes an annotation property which is missing such that
+                     * an {@link java.lang.annotation.IncompleteAnnotationException} would be thrown.
+                     */
+                    NON_DEFINED,
+
+                    /**
+                     * A non-resolved annotation value describes an annotation property which does not represent a
+                     * valid value but an exceptional state.
+                     */
+                    NON_RESOLVED,
+
+                    /**
+                     * A resolved annotation value describes an annotation property with an actual value.
+                     */
+                    RESOLVED;
+
+                    public boolean isDefined() {
+                        return this != NON_DEFINED;
+                    }
+
+                    public boolean isResolved() {
+                        return this == RESOLVED;
+                    }
+                }
+            }
 
             /**
              * Represents a primitive value, a {@link java.lang.String} or an array of the latter types.
@@ -1876,8 +1943,8 @@ public interface TypePool {
                 }
 
                 @Override
-                public U load(ClassLoader classLoader) {
-                    return propertyDispatcher.conditionalClone(value);
+                public AnnotationValue.Loaded<U> load(ClassLoader classLoader) {
+                    return new Loaded<U>(value, propertyDispatcher);
                 }
 
                 @Override
@@ -1895,8 +1962,66 @@ public interface TypePool {
                 public String toString() {
                     return "TypePool.LazyTypeDescription.AnnotationValue.Trivial{" +
                             "value=" + value +
-                            "propertyDispatcher=" + propertyDispatcher +
+                            ", propertyDispatcher=" + propertyDispatcher +
                             '}';
+                }
+
+                /**
+                 * Represents a trivial loaded value.
+                 *
+                 * @param <V> The annotation properties type.
+                 */
+                protected static class Loaded<V> implements AnnotationValue.Loaded<V> {
+
+                    /**
+                     * The represented value.
+                     */
+                    private final V value;
+
+                    /**
+                     * The property dispatcher for computing this value's hash code, string and equals implementation.
+                     */
+                    private final PropertyDispatcher propertyDispatcher;
+
+                    /**
+                     * Creates a new trivial loaded annotation value representation.
+                     *
+                     * @param value              The represented value.
+                     * @param propertyDispatcher The property dispatcher for computing this value's hash
+                     *                           code, string and equals implementation.
+                     */
+                    protected Loaded(V value, PropertyDispatcher propertyDispatcher) {
+                        this.value = value;
+                        this.propertyDispatcher = propertyDispatcher;
+                    }
+
+                    @Override
+                    public State getState() {
+                        return State.RESOLVED;
+                    }
+
+                    @Override
+                    public V resolve() {
+                        return propertyDispatcher.conditionalClone(value);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return propertyDispatcher.hashCode(value);
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (!(other instanceof AnnotationValue.Loaded<?>)) return false;
+                        AnnotationValue.Loaded<?> loadedOther = (AnnotationValue.Loaded<?>) other;
+                        return loadedOther.getState().isResolved() && propertyDispatcher.equals(value, loadedOther.resolve());
+                    }
+
+                    @Override
+                    public String toString() {
+                        return propertyDispatcher.toString(value);
+                    }
                 }
             }
 
@@ -1925,17 +2050,14 @@ public interface TypePool {
                 }
 
                 @Override
-                public Annotation load(ClassLoader classLoader) throws ClassNotFoundException {
-                    @SuppressWarnings("unchecked")
-                    Class<? extends Annotation> annotationType = (Class<? extends Annotation>) classLoader
-                            .loadClass(annotationToken.getDescriptor()
-                                    .substring(1, annotationToken.getDescriptor().length() - 1)
-                                    .replace('/', '.'));
-                    if (!annotationType.isAnnotation()) {
-                        throw new IncompatibleClassChangeError("Not an annotation type: " + annotationType.toString());
-                    }
-                    return (Annotation) Proxy.newProxyInstance(classLoader, new Class<?>[]{annotationType},
-                            new AnnotationInvocationHandler(classLoader, annotationType, annotationToken.getValues()));
+                @SuppressWarnings("unchecked")
+                public Loaded<Annotation> load(ClassLoader classLoader) throws ClassNotFoundException {
+                    Class<?> type = classLoader.loadClass(annotationToken.getDescriptor()
+                            .substring(1, annotationToken.getDescriptor().length() - 1)
+                            .replace('/', '.'));
+                    return type.isAnnotation()
+                            ? new LegalRuntimeType(classLoader, (Class<? extends Annotation>) type, annotationToken.getValues())
+                            : new IncompatibleRuntimeType(type);
                 }
 
                 @Override
@@ -1954,6 +2076,99 @@ public interface TypePool {
                     return "TypePool.LazyTypeDescription.AnnotationValue.ForAnnotation{" +
                             "annotationToken=" + annotationToken +
                             '}';
+                }
+
+                /**
+                 * Represents an annotation which was loaded representing a runtime type which is itself an annotation.
+                 */
+                protected static class LegalRuntimeType implements Loaded<Annotation> {
+
+                    /**
+                     * The loaded annotation.
+                     */
+                    private final Annotation annotation;
+
+                    /**
+                     * Creates a representation for an annotation value.
+                     *
+                     * @param classLoader      The class loader for loading the annotation's implementing type and its values.
+                     * @param annotationType   The loaded annotation type.
+                     * @param annotationValues The values of the annotation.
+                     * @throws ClassNotFoundException If a linked class cannot be found.
+                     */
+                    public LegalRuntimeType(ClassLoader classLoader,
+                                            Class<? extends Annotation> annotationType,
+                                            Map<String, AnnotationValue<?, ?>> annotationValues) throws ClassNotFoundException {
+                        annotation = (Annotation) Proxy.newProxyInstance(classLoader,
+                                new Class<?>[]{annotationType},
+                                new AnnotationInvocationHandler(classLoader, annotationType, annotationValues));
+                    }
+
+                    @Override
+                    public State getState() {
+                        return State.RESOLVED;
+                    }
+
+                    @Override
+                    public Annotation resolve() {
+                        return annotation;
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (!(other instanceof AnnotationValue.Loaded<?>)) return false;
+                        AnnotationValue.Loaded<?> loadedOther = (AnnotationValue.Loaded<?>) other;
+                        return loadedOther.getState().isResolved() && annotation.equals(loadedOther.resolve());
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return annotation.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return annotation.toString();
+                    }
+                }
+
+                /**
+                 * <p>
+                 * Represents an annotation value which was attempted to ba loaded by a type that does not represent
+                 * an annotation value.
+                 * </p>
+                 * <p>
+                 * <b>Note</b>: Neither of {@link Object#hashCode()}, {@link Object#toString()} and
+                 * {@link java.lang.Object#equals(Object)} are implemented specifically what resembles the way
+                 * such exceptional states are represented in the Open JDK's annotation implementations.
+                 * </p>
+                 */
+                protected static class IncompatibleRuntimeType implements Loaded<Annotation> {
+
+                    /**
+                     * The incompatible runtime type which is not an annotation type.
+                     */
+                    private final Class<?> incompatibleType;
+
+                    /**
+                     * Creates a new representation for an annotation with an incompatible runtime type.
+                     *
+                     * @param incompatibleType The incompatible runtime type which is not an annotation type.
+                     */
+                    public IncompatibleRuntimeType(Class<?> incompatibleType) {
+                        this.incompatibleType = incompatibleType;
+                    }
+
+                    @Override
+                    public State getState() {
+                        return State.NON_RESOLVED;
+                    }
+
+                    @Override
+                    public Annotation resolve() {
+                        throw new IncompatibleClassChangeError("Not an annotation type: " + incompatibleType.toString());
+                    }
                 }
             }
 
@@ -1990,16 +2205,15 @@ public interface TypePool {
 
                 @Override
                 @SuppressWarnings("unchecked")
-                public Enum<?> load(ClassLoader classLoader) throws ClassNotFoundException {
-                    Class<?> enumType = classLoader
-                            .loadClass(descriptor.substring(1, descriptor.length() - 1).replace('/', '.'));
-                    if (!enumType.isEnum()) {
-                        throw new IncompatibleClassChangeError("Not an enum: " + enumType.toString());
-                    }
+                public Loaded<Enum<?>> load(ClassLoader classLoader) throws ClassNotFoundException {
+                    Class<?> enumType = classLoader.loadClass(descriptor
+                            .substring(1, descriptor.length() - 1).replace('/', '.'));
                     try {
-                        return Enum.valueOf((Class) enumType, value);
+                        return enumType.isEnum()
+                                ? new LegalRuntimeEnumeration(Enum.valueOf((Class) enumType, value))
+                                : new IncompatibleRuntimeType(enumType);
                     } catch (IllegalArgumentException ignored) {
-                        throw new EnumConstantNotPresentException((Class) enumType, value);
+                        return new UnknownRuntimeEnumeration((Class) enumType, value);
                     }
                 }
 
@@ -2021,6 +2235,137 @@ public interface TypePool {
                             "descriptor='" + descriptor + '\'' +
                             ", value='" + value + '\'' +
                             '}';
+                }
+
+                /**
+                 * Represents an annotation's enumeration value which could be successfully resolved for a runtime
+                 * type.
+                 */
+                protected static class LegalRuntimeEnumeration implements Loaded<Enum<?>> {
+
+                    /**
+                     * The represented value.
+                     */
+                    private final Enum<?> value;
+
+                    /**
+                     * Creates a representation for an enumeration value.
+                     *
+                     * @param value The represented value.
+                     */
+                    public LegalRuntimeEnumeration(Enum<?> value) {
+                        this.value = value;
+                    }
+
+                    @Override
+                    public State getState() {
+                        return State.RESOLVED;
+                    }
+
+                    @Override
+                    public Enum<?> resolve() {
+                        return value;
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (!(other instanceof Loaded<?>)) return false;
+                        Loaded<?> loadedOther = (Loaded<?>) other;
+                        return loadedOther.getState().isResolved() && value.equals(loadedOther.resolve());
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return value.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return value.toString();
+                    }
+                }
+
+                /**
+                 * <p>
+                 * Represents an annotation's enumeration value for a constant that does not exist for the runtime
+                 * enumeration type.
+                 * </p>
+                 * <p>
+                 * <b>Note</b>: Neither of {@link Object#hashCode()}, {@link Object#toString()} and
+                 * {@link java.lang.Object#equals(Object)} are implemented specifically what resembles the way
+                 * such exceptional states are represented in the Open JDK's annotation implementations.
+                 * </p>
+                 */
+                protected static class UnknownRuntimeEnumeration implements Loaded<Enum<?>> {
+
+                    /**
+                     * The loaded enumeration type.
+                     */
+                    private final Class<? extends Enum<?>> enumType;
+
+                    /**
+                     * The value for which no enumeration constant exists at runtime.
+                     */
+                    private final String value;
+
+                    /**
+                     * Creates a new representation for an unknown enumeration constant of an annotation.
+                     *
+                     * @param enumType The loaded enumeration type.
+                     * @param value    The value for which no enumeration constant exists at runtime.
+                     */
+                    public UnknownRuntimeEnumeration(Class<? extends Enum<?>> enumType, String value) {
+                        this.enumType = enumType;
+                        this.value = value;
+                    }
+
+                    @Override
+                    public State getState() {
+                        return State.NON_RESOLVED;
+                    }
+
+                    @Override
+                    public Enum<?> resolve() {
+                        throw new EnumConstantNotPresentException(enumType, value);
+                    }
+                }
+
+                /**
+                 * <p>
+                 * Represents an annotation's enumeration value for a runtime type that is not an enumeration type.
+                 * </p>
+                 * <p>
+                 * <b>Note</b>: Neither of {@link Object#hashCode()}, {@link Object#toString()} and
+                 * {@link java.lang.Object#equals(Object)} are implemented specifically what resembles the way
+                 * such exceptional states are represented in the Open JDK's annotation implementations.
+                 * </p>
+                 */
+                protected static class IncompatibleRuntimeType implements Loaded<Enum<?>> {
+
+                    /**
+                     * The runtime type which is not an enumeration type.
+                     */
+                    private final Class<?> type;
+
+                    /**
+                     * Creates a new representation for an incompatible runtime type.
+                     *
+                     * @param type The runtime type which is not an enumeration type.
+                     */
+                    public IncompatibleRuntimeType(Class<?> type) {
+                        this.type = type;
+                    }
+
+                    @Override
+                    public State getState() {
+                        return State.NON_RESOLVED;
+                    }
+
+                    @Override
+                    public Enum<?> resolve() {
+                        throw new IncompatibleClassChangeError("Not an enumeration type: " + type.toString());
+                    }
                 }
 
                 /**
@@ -2091,8 +2436,8 @@ public interface TypePool {
                 }
 
                 @Override
-                public Class<?> load(ClassLoader classLoader) throws ClassNotFoundException {
-                    return Class.forName(name, NO_INITIALIZATION, classLoader);
+                public AnnotationValue.Loaded<Class<?>> load(ClassLoader classLoader) throws ClassNotFoundException {
+                    return new Loaded(Class.forName(name, NO_INITIALIZATION, classLoader));
                 }
 
                 @Override
@@ -2111,6 +2456,54 @@ public interface TypePool {
                     return "TypePool.LazyTypeDescription.AnnotationValue.ForType{" +
                             "name='" + name + '\'' +
                             '}';
+                }
+
+                /**
+                 * Represents a loaded annotation property that represents a type.
+                 */
+                protected static class Loaded implements AnnotationValue.Loaded<Class<?>> {
+
+                    /**
+                     * The type that is represented by an annotation property.
+                     */
+                    private final Class<?> type;
+
+                    /**
+                     * Creates a new representation for an annotation property referencing a type.
+                     *
+                     * @param type The type that is represented by an annotation property.
+                     */
+                    public Loaded(Class<?> type) {
+                        this.type = type;
+                    }
+
+                    @Override
+                    public State getState() {
+                        return State.RESOLVED;
+                    }
+
+                    @Override
+                    public Class<?> resolve() {
+                        return type;
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (!(other instanceof AnnotationValue.Loaded<?>)) return false;
+                        AnnotationValue.Loaded<?> loadedOther = (AnnotationValue.Loaded<?>) other;
+                        return loadedOther.getState().isResolved() && type.equals(loadedOther.resolve());
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return type.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return type.toString();
+                    }
                 }
             }
 
@@ -2166,14 +2559,12 @@ public interface TypePool {
                 }
 
                 @Override
-                public Object[] load(ClassLoader classLoader) throws ClassNotFoundException {
-                    Object[] array = (Object[]) Array.newInstance(classLoader
-                            .loadClass(componentTypeReference.lookup()), value.size());
-                    int index = 0;
-                    for (AnnotationValue<?, ?> annotationValue : value) {
-                        Array.set(array, index++, annotationValue.load(classLoader));
+                public AnnotationValue.Loaded<Object[]> load(ClassLoader classLoader) throws ClassNotFoundException {
+                    List<AnnotationValue.Loaded<?>> loadedValues = new ArrayList<AnnotationValue.Loaded<?>>(value.size());
+                    for (AnnotationValue<?, ?> value : this.value) {
+                        loadedValues.add(value.load(classLoader));
                     }
-                    return array;
+                    return new Loaded(classLoader.loadClass(componentTypeReference.lookup()), loadedValues);
                 }
 
                 @Override
@@ -2194,6 +2585,92 @@ public interface TypePool {
                             "value=" + value +
                             ", componentTypeReference=" + componentTypeReference +
                             '}';
+                }
+
+                /**
+                 * Represents a loaded annotation property representing a complex array.
+                 */
+                protected static class Loaded implements AnnotationValue.Loaded<Object[]> {
+
+                    /**
+                     * The array's loaded component type.
+                     */
+                    private final Class<?> componentType;
+
+                    /**
+                     * A list of loaded values of the represented complex array.
+                     */
+                    private final List<AnnotationValue.Loaded<?>> values;
+
+                    /**
+                     * Creates a new representation of an annotation property representing an array of
+                     * non-trivial values.
+                     *
+                     * @param componentType The array's loaded component type.
+                     * @param values        A list of loaded values of the represented complex array.
+                     */
+                    public Loaded(Class<?> componentType, List<AnnotationValue.Loaded<?>> values) {
+                        this.componentType = componentType;
+                        this.values = values;
+                    }
+
+                    @Override
+                    public State getState() {
+                        for (AnnotationValue.Loaded<?> value : values) {
+                            if (!value.getState().isResolved()) {
+                                return State.NON_RESOLVED;
+                            }
+                        }
+                        return State.RESOLVED;
+                    }
+
+                    @Override
+                    public Object[] resolve() {
+                        Object[] array = (Object[]) Array.newInstance(componentType, values.size());
+                        int index = 0;
+                        for (AnnotationValue.Loaded<?> annotationValue : values) {
+                            Array.set(array, index++, annotationValue.resolve());
+                        }
+                        return array;
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (!(other instanceof AnnotationValue.Loaded<?>)) return false;
+                        AnnotationValue.Loaded<?> loadedOther = (AnnotationValue.Loaded<?>) other;
+                        if (!loadedOther.getState().isResolved()) return false;
+                        Object otherValue = loadedOther.resolve();
+                        if (!(otherValue instanceof Object[])) return false;
+                        Object[] otherArrayValue = (Object[]) otherValue;
+                        if (values.size() != otherArrayValue.length) return false;
+                        Iterator<AnnotationValue.Loaded<?>> iterator = values.iterator();
+                        for (Object value : otherArrayValue) {
+                            AnnotationValue.Loaded<?> self = iterator.next();
+                            if (!self.getState().isResolved() || !self.resolve().equals(value)) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = 1;
+                        for (AnnotationValue.Loaded<?> value : values) {
+                            result = 31 * result + value.hashCode();
+                        }
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        StringBuilder stringBuilder = new StringBuilder("[");
+                        for (AnnotationValue.Loaded<?> value : values) {
+                            stringBuilder.append(value.toString());
+                        }
+                        return stringBuilder.append("]").toString();
+                    }
                 }
 
                 /**
@@ -2245,7 +2722,7 @@ public interface TypePool {
             /**
              * A sorted list of values of this annotation.
              */
-            private final LinkedHashMap<Method, Object> values;
+            private final LinkedHashMap<Method, AnnotationValue.Loaded<?>> values;
 
             /**
              * Creates a new invocation handler.
@@ -2261,7 +2738,7 @@ public interface TypePool {
                 this.classLoader = classLoader;
                 this.annotationType = annotationType;
                 Method[] declaredMethod = annotationType.getDeclaredMethods();
-                this.values = new LinkedHashMap<Method, Object>(declaredMethod.length);
+                this.values = new LinkedHashMap<Method, AnnotationValue.Loaded<?>>(declaredMethod.length);
                 TypeDescription thisType = new ForLoadedType(getClass());
                 for (Method method : declaredMethod) {
                     if (!new MethodDescription.ForLoadedMethod(method).isVisibleTo(thisType)) {
@@ -2269,7 +2746,7 @@ public interface TypePool {
                     }
                     AnnotationValue<?, ?> annotationValue = values.get(method.getName());
                     this.values.put(method, annotationValue == null
-                            ? method.getDefaultValue()
+                            ? DefaultValue.of(method)
                             : annotationValue.load(classLoader));
                 }
             }
@@ -2316,13 +2793,11 @@ public interface TypePool {
                         return annotationType;
                     }
                 }
-                Object value = values.get(method);
-                if (value == null) {
-                    throw new IncompleteAnnotationException(annotationType, method.getName());
-                } else if (!asWrapper(method.getReturnType()).isAssignableFrom(value.getClass())) {
+                Object value = values.get(method).resolve();
+                if (!asWrapper(method.getReturnType()).isAssignableFrom(value.getClass())) {
                     throw new AnnotationTypeMismatchException(method, value.getClass().toString());
                 }
-                return PropertyDispatcher.of(method.getReturnType()).conditionalClone(value);
+                return value;
             }
 
             /**
@@ -2336,7 +2811,10 @@ public interface TypePool {
                 toString.append(annotationType.getName());
                 toString.append('(');
                 boolean firstMember = true;
-                for (Map.Entry<Method, Object> entry : values.entrySet()) {
+                for (Map.Entry<Method, AnnotationValue.Loaded<?>> entry : values.entrySet()) {
+                    if (!entry.getValue().getState().isDefined()) {
+                        continue;
+                    }
                     if (firstMember) {
                         firstMember = false;
                     } else {
@@ -2344,7 +2822,7 @@ public interface TypePool {
                     }
                     toString.append(entry.getKey().getName());
                     toString.append('=');
-                    toString.append(PropertyDispatcher.of(entry.getKey().getReturnType()).toString(entry.getValue()));
+                    toString.append(entry.getValue().toString());
                 }
                 toString.append(')');
                 return toString.toString();
@@ -2357,9 +2835,11 @@ public interface TypePool {
              */
             private int hashCodeRepresentation() {
                 int hashCode = 0;
-                for (Map.Entry<Method, Object> entry : values.entrySet()) {
-                    hashCode += (127 * entry.getKey().getName().hashCode()) ^ PropertyDispatcher.of(entry.getKey().getReturnType())
-                            .hashCode(entry.getValue());
+                for (Map.Entry<Method, AnnotationValue.Loaded<?>> entry : values.entrySet()) {
+                    if (!entry.getValue().getState().isDefined()) {
+                        continue;
+                    }
+                    hashCode += (127 * entry.getKey().getName().hashCode()) ^ entry.getValue().hashCode();
                 }
                 return hashCode;
             }
@@ -2383,16 +2863,24 @@ public interface TypePool {
                     }
                 }
                 try {
-                    for (Method method : annotationType.getDeclaredMethods()) {
-                        Object thisValue = values.get(method);
-                        if (!PropertyDispatcher.of(thisValue.getClass()).equals(thisValue, method.invoke(other))) {
+                    for (Map.Entry<Method, AnnotationValue.Loaded<?>> entry : values.entrySet()) {
+                        if (entry.getValue().getState().isResolved()) {
+                            try {
+                                if (!PropertyDispatcher.of(entry.getKey().getReturnType())
+                                        .equals(entry.getValue().resolve(), entry.getKey().invoke(other))) {
+                                    return false;
+                                }
+                            } catch (RuntimeException e) {
+                                return false; // Incomplete annotations are not equal to one another.
+                            }
+                        } else {
                             return false;
                         }
                     }
                 } catch (InvocationTargetException ignored) {
                     return false;
-                } catch (IllegalAccessException ignored) {
-                    throw new AssertionError();
+                } catch (IllegalAccessException e) {
+                    throw new AssertionError(e);
                 }
                 return true;
             }
@@ -2431,6 +2919,113 @@ public interface TypePool {
                         ", classLoader=" + classLoader +
                         ", values=" + values +
                         '}';
+            }
+
+            /**
+             * Represents a default value for an annotation property that is not explicitly defined by
+             * an annotation.
+             */
+            protected static class DefaultValue implements AnnotationValue.Loaded<Object> {
+
+                /**
+                 * The represented default value.
+                 */
+                private final Object defaultValue;
+
+                /**
+                 * The property dispatcher for the type of the default value.
+                 */
+                private final PropertyDispatcher propertyDispatcher;
+
+                /**
+                 * Creates a default value representation for a given method which might or might not provide such
+                 * a default value.
+                 *
+                 * @param method The method for which a default value is to be extracted.
+                 * @return An annotation value representation for the given method.
+                 */
+                @SuppressWarnings("unchecked")
+                protected static AnnotationValue.Loaded<?> of(Method method) {
+                    Object defaultValue = method.getDefaultValue();
+                    return defaultValue == null
+                            ? new Missing((Class<? extends Annotation>) method.getDeclaringClass(), method.getName())
+                            : new DefaultValue(defaultValue);
+                }
+
+                /**
+                 * Creates a new representation of an existant default value.
+                 *
+                 * @param defaultValue The represented, non-{@code null} default value.
+                 */
+                private DefaultValue(Object defaultValue) {
+                    this.defaultValue = defaultValue;
+                    propertyDispatcher = PropertyDispatcher.of(defaultValue.getClass());
+                }
+
+                @Override
+                public State getState() {
+                    return State.RESOLVED;
+                }
+
+                @Override
+                public Object resolve() {
+                    return propertyDispatcher.conditionalClone(defaultValue);
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (!(other instanceof AnnotationValue.Loaded<?>)) return false;
+                    AnnotationValue.Loaded<?> loaded = (AnnotationValue.Loaded<?>) other;
+                    return loaded.getState().isResolved() && propertyDispatcher.equals(defaultValue, loaded.resolve());
+                }
+
+                @Override
+                public int hashCode() {
+                    return propertyDispatcher.hashCode(defaultValue);
+                }
+
+                @Override
+                public String toString() {
+                    return propertyDispatcher.toString(defaultValue);
+                }
+            }
+
+            /**
+             * Represents a missing annotation property which is not represented by a default value.
+             */
+            private static class Missing implements AnnotationValue.Loaded<Void> {
+
+                /**
+                 * The annotation type.
+                 */
+                private final Class<? extends Annotation> annotationType;
+
+                /**
+                 * The name of the property without an annotation value.
+                 */
+                private final String property;
+
+                /**
+                 * Creates a new representation for a missing annotation property.
+                 *
+                 * @param annotationType The annotation type.
+                 * @param property       The name of the property without an annotation value.
+                 */
+                private Missing(Class<? extends Annotation> annotationType, String property) {
+                    this.annotationType = annotationType;
+                    this.property = property;
+                }
+
+                @Override
+                public State getState() {
+                    return State.NON_DEFINED;
+                }
+
+                @Override
+                public Void resolve() {
+                    throw new IncompleteAnnotationException(annotationType, property);
+                }
             }
         }
 

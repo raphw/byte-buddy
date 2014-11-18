@@ -218,7 +218,7 @@ public interface MethodDescription extends ByteCodeElement {
 
         @Override
         public String getName() {
-            return isConstructor() ? getDeclaringType().getName() : getInternalName();
+            return isMethod() ? getInternalName() : getDeclaringType().getName();
         }
 
         @Override
@@ -317,8 +317,8 @@ public interface MethodDescription extends ByteCodeElement {
                 stringBuilder.append(Modifier.toString(modifiers)).append(" ");
             }
             if (isMethod()) {
-                stringBuilder.append(getReturnType().getJavaName()).append(" ");
-                stringBuilder.append(getDeclaringType().getJavaName()).append(".");
+                stringBuilder.append(getReturnType().getSourceCodeName()).append(" ");
+                stringBuilder.append(getDeclaringType().getSourceCodeName()).append(".");
             }
             stringBuilder.append(getName()).append("(");
             boolean first = true;
@@ -328,7 +328,7 @@ public interface MethodDescription extends ByteCodeElement {
                 } else {
                     first = false;
                 }
-                stringBuilder.append(typeDescription.getJavaName());
+                stringBuilder.append(typeDescription.getSourceCodeName());
             }
             stringBuilder.append(")");
             TypeList exceptionTypes = getExceptionTypes();

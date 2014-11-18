@@ -67,8 +67,8 @@ public interface FieldDescription extends ByteCodeElement {
             if (getModifiers() != 0) {
                 stringBuilder.append(Modifier.toString(getModifiers())).append(" ");
             }
-            stringBuilder.append(getFieldType().getJavaName()).append(" ");
-            stringBuilder.append(getDeclaringType().getJavaName()).append(".");
+            stringBuilder.append(getFieldType().getSourceCodeName()).append(" ");
+            stringBuilder.append(getDeclaringType().getSourceCodeName()).append(".");
             return stringBuilder.append(getName()).toString();
         }
     }

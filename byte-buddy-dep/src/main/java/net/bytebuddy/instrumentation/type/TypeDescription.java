@@ -255,7 +255,7 @@ public interface TypeDescription extends ByteCodeElement {
      *
      * @return The name of this type as represented in Java source code.
      */
-    String getJavaName();
+    String getSourceCodeName();
 
     /**
      * Returns the annotations that this type declares or inherits from super types.
@@ -472,7 +472,7 @@ public interface TypeDescription extends ByteCodeElement {
         }
 
         @Override
-        public String getJavaName() {
+        public String getSourceCodeName() {
             if (isArray()) {
                 TypeDescription typeDescription = this;
                 int dimensions = 0;
