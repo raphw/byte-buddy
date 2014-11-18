@@ -238,6 +238,99 @@ public @interface Morph {
         }
 
         /**
+         * A default method locator is responsible for looking up a default method to a given source method.
+         */
+        protected static interface DefaultMethodLocator {
+
+            /**
+             * Locates the correct default method to a given source method.
+             *
+             * @param instrumentationTarget The current instrumentation target.
+             * @param source                The source method for which a default method should be looked up.
+             * @return A special method invocation of the default method or an illegal special method invocation,
+             * if no suitable invocation could be located.
+             */
+            Instrumentation.SpecialMethodInvocation resolve(Instrumentation.Target instrumentationTarget,
+                                                            MethodDescription source);
+
+            /**
+             * An implicit default method locator that only permits the invocation of a default method if the source
+             * method itself represents a method that was defined on a default method interface.
+             */
+            static enum Implicit implements DefaultMethodLocator {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public Instrumentation.SpecialMethodInvocation resolve(Instrumentation.Target instrumentationTarget,
+                                                                       MethodDescription source) {
+                    String uniqueSignature = source.getUniqueSignature();
+                    Instrumentation.SpecialMethodInvocation specialMethodInvocation = null;
+                    for (TypeDescription candidate : instrumentationTarget.getTypeDescription().getInterfaces()) {
+                        if (source.isSpecializableFor(candidate)) {
+                            if (specialMethodInvocation != null) {
+                                return Instrumentation.SpecialMethodInvocation.Illegal.INSTANCE;
+                            }
+                            specialMethodInvocation = instrumentationTarget.invokeDefault(candidate, uniqueSignature);
+                        }
+                    }
+                    return specialMethodInvocation != null
+                            ? specialMethodInvocation
+                            : Instrumentation.SpecialMethodInvocation.Illegal.INSTANCE;
+                }
+            }
+
+            /**
+             * An explicit default method locator attempts to look up a default method in the specified interface type.
+             */
+            static class Explicit implements DefaultMethodLocator {
+
+                /**
+                 * A description of the type on which the default method should be invoked.
+                 */
+                private final TypeDescription typeDescription;
+
+                /**
+                 * Creates a new explicit default method locator.
+                 *
+                 * @param typeDescription The actual target interface as explicitly defined by
+                 *                        {@link DefaultCall#targetType()}.
+                 */
+                public Explicit(TypeDescription typeDescription) {
+                    this.typeDescription = typeDescription;
+                }
+
+                @Override
+                public Instrumentation.SpecialMethodInvocation resolve(Instrumentation.Target instrumentationTarget,
+                                                                       MethodDescription source) {
+                    if (!typeDescription.isInterface()) {
+                        throw new IllegalStateException(source + " method carries default method call parameter on non-interface type");
+                    }
+                    return instrumentationTarget.invokeDefault(typeDescription, source.getUniqueSignature());
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && typeDescription.equals(((Explicit) other).typeDescription);
+                }
+
+                @Override
+                public int hashCode() {
+                    return typeDescription.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "Morph.Binder.DefaultMethodLocator.Explicit{typeDescription=" + typeDescription + '}';
+                }
+            }
+        }
+
+        /**
          * A proxy that implements the installed interface in order to allow for a morphed super method invocation.
          */
         protected static class RedirectionProxy implements AuxiliaryType, StackManipulation {
@@ -729,99 +822,6 @@ public @interface Morph {
                         "binder=" + Binder.this +
                         ", typeDescription=" + typeDescription +
                         '}';
-            }
-        }
-
-        /**
-         * A default method locator is responsible for looking up a default method to a given source method.
-         */
-        protected static interface DefaultMethodLocator {
-
-            /**
-             * Locates the correct default method to a given source method.
-             *
-             * @param instrumentationTarget The current instrumentation target.
-             * @param source                The source method for which a default method should be looked up.
-             * @return A special method invocation of the default method or an illegal special method invocation,
-             * if no suitable invocation could be located.
-             */
-            Instrumentation.SpecialMethodInvocation resolve(Instrumentation.Target instrumentationTarget,
-                                                            MethodDescription source);
-
-            /**
-             * An implicit default method locator that only permits the invocation of a default method if the source
-             * method itself represents a method that was defined on a default method interface.
-             */
-            static enum Implicit implements DefaultMethodLocator {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                @Override
-                public Instrumentation.SpecialMethodInvocation resolve(Instrumentation.Target instrumentationTarget,
-                                                                       MethodDescription source) {
-                    String uniqueSignature = source.getUniqueSignature();
-                    Instrumentation.SpecialMethodInvocation specialMethodInvocation = null;
-                    for (TypeDescription candidate : instrumentationTarget.getTypeDescription().getInterfaces()) {
-                        if (source.isSpecializableFor(candidate)) {
-                            if (specialMethodInvocation != null) {
-                                return Instrumentation.SpecialMethodInvocation.Illegal.INSTANCE;
-                            }
-                            specialMethodInvocation = instrumentationTarget.invokeDefault(candidate, uniqueSignature);
-                        }
-                    }
-                    return specialMethodInvocation != null
-                            ? specialMethodInvocation
-                            : Instrumentation.SpecialMethodInvocation.Illegal.INSTANCE;
-                }
-            }
-
-            /**
-             * An explicit default method locator attempts to look up a default method in the specified interface type.
-             */
-            static class Explicit implements DefaultMethodLocator {
-
-                /**
-                 * A description of the type on which the default method should be invoked.
-                 */
-                private final TypeDescription typeDescription;
-
-                /**
-                 * Creates a new explicit default method locator.
-                 *
-                 * @param typeDescription The actual target interface as explicitly defined by
-                 *                        {@link DefaultCall#targetType()}.
-                 */
-                public Explicit(TypeDescription typeDescription) {
-                    this.typeDescription = typeDescription;
-                }
-
-                @Override
-                public Instrumentation.SpecialMethodInvocation resolve(Instrumentation.Target instrumentationTarget,
-                                                                       MethodDescription source) {
-                    if (!typeDescription.isInterface()) {
-                        throw new IllegalStateException(source + " method carries default method call parameter on non-interface type");
-                    }
-                    return instrumentationTarget.invokeDefault(typeDescription, source.getUniqueSignature());
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && typeDescription.equals(((Explicit) other).typeDescription);
-                }
-
-                @Override
-                public int hashCode() {
-                    return typeDescription.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "Morph.Binder.DefaultMethodLocator.Explicit{typeDescription=" + typeDescription + '}';
-                }
             }
         }
     }

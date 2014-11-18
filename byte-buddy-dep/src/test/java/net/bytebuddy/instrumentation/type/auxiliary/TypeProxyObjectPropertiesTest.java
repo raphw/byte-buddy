@@ -25,7 +25,7 @@ public class TypeProxyObjectPropertiesTest {
                 when(mock.getDeclaredFields()).thenReturn(new FieldList.Explicit(Arrays.asList(fieldDescription)));
             }
         }).skipSynthetic().apply();
-        ObjectPropertyAssertion.of(TypeProxy.MethodCall.Appender.AccessorMethodInvocation .class).skipSynthetic().apply();
+        ObjectPropertyAssertion.of(TypeProxy.MethodCall.Appender.AccessorMethodInvocation.class).skipSynthetic().apply();
         ObjectPropertyAssertion.of(TypeProxy.SilentConstruction.Appender.class).skipSynthetic().apply();
     }
 

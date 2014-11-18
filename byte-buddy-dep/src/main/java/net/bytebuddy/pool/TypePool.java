@@ -2605,6 +2605,19 @@ public interface TypePool {
                 }
 
                 /**
+                 * A lazy representation of the component type of an array.
+                 */
+                public static interface ComponentTypeReference {
+
+                    /**
+                     * Lazily returns the binary name of the array component type of an annotation value.
+                     *
+                     * @return The binary name of the component type.
+                     */
+                    String lookup();
+                }
+
+                /**
                  * Represents a loaded annotation property representing a complex array.
                  */
                 protected static class Loaded implements AnnotationValue.Loaded<Object[]> {
@@ -2688,19 +2701,6 @@ public interface TypePool {
                         }
                         return stringBuilder.append("]").toString();
                     }
-                }
-
-                /**
-                 * A lazy representation of the component type of an array.
-                 */
-                public static interface ComponentTypeReference {
-
-                    /**
-                     * Lazily returns the binary name of the array component type of an annotation value.
-                     *
-                     * @return The binary name of the component type.
-                     */
-                    String lookup();
                 }
             }
         }
@@ -2955,6 +2955,16 @@ public interface TypePool {
                 private final PropertyDispatcher propertyDispatcher;
 
                 /**
+                 * Creates a new representation of an existant default value.
+                 *
+                 * @param defaultValue The represented, non-{@code null} default value.
+                 */
+                private DefaultValue(Object defaultValue) {
+                    this.defaultValue = defaultValue;
+                    propertyDispatcher = PropertyDispatcher.of(defaultValue.getClass());
+                }
+
+                /**
                  * Creates a default value representation for a given method which might or might not provide such
                  * a default value.
                  *
@@ -2967,16 +2977,6 @@ public interface TypePool {
                     return defaultValue == null
                             ? new Missing((Class<? extends Annotation>) method.getDeclaringClass(), method.getName())
                             : new DefaultValue(defaultValue);
-                }
-
-                /**
-                 * Creates a new representation of an existant default value.
-                 *
-                 * @param defaultValue The represented, non-{@code null} default value.
-                 */
-                private DefaultValue(Object defaultValue) {
-                    this.defaultValue = defaultValue;
-                    propertyDispatcher = PropertyDispatcher.of(defaultValue.getClass());
                 }
 
                 @Override

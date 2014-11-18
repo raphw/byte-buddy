@@ -82,6 +82,7 @@ public class ByteBuddyCommonsTest {
         when(typeDescription.represents(void.class)).thenReturn(true);
         assertThat(nonVoid(typeDescription), sameInstance(typeDescription));
     }
+
     @Test
     public void testNonVoidCollection() throws Exception {
         List<TypeDescription> typeDescriptions = Arrays.asList(mock(TypeDescription.class));

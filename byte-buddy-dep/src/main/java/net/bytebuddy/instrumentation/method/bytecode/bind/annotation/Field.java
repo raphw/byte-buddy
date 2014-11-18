@@ -298,255 +298,6 @@ public @interface Field {
         }
 
         /**
-         * Represents an instrumentation for implementing a proxy type constructor when a non-static field is accessed.
-         */
-        protected static class InstanceFieldConstructor implements Instrumentation {
-
-            /**
-             * The instrumented type from which a field is to be accessed.
-             */
-            private final TypeDescription instrumentedType;
-
-            /**
-             * Creates a new instrumentation for implementing a field accessor proxy's constructor when accessing
-             * a non-static field.
-             *
-             * @param instrumentedType The instrumented type from which a field is to be accessed.
-             */
-            protected InstanceFieldConstructor(TypeDescription instrumentedType) {
-                this.instrumentedType = instrumentedType;
-            }
-
-            @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType.withField(AccessorProxy.FIELD_NAME,
-                        this.instrumentedType,
-                        Opcodes.ACC_FINAL | Opcodes.ACC_PRIVATE);
-            }
-
-            @Override
-            public ByteCodeAppender appender(Target instrumentationTarget) {
-                return new Appender(instrumentationTarget);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && instrumentedType.equals(((InstanceFieldConstructor) other).instrumentedType);
-            }
-
-            @Override
-            public int hashCode() {
-                return instrumentedType.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "Field.Binder.InstanceFieldConstructor{" +
-                        "instrumentedType=" + instrumentedType +
-                        '}';
-            }
-
-            /**
-             * An appender for implementing an
-             * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Field.Binder.InstanceFieldConstructor}.
-             */
-            protected static class Appender implements ByteCodeAppender {
-
-                /**
-                 * The field to be set within the constructor.
-                 */
-                private final FieldDescription fieldDescription;
-
-                /**
-                 * Creates a new appender.
-                 *
-                 * @param instrumentationTarget The instrumentation target of the current instrumentation.
-                 */
-                protected Appender(Target instrumentationTarget) {
-                    fieldDescription = instrumentationTarget.getTypeDescription()
-                            .getDeclaredFields()
-                            .named(AccessorProxy.FIELD_NAME);
-                }
-
-                @Override
-                public boolean appendsCode() {
-                    return true;
-                }
-
-                @Override
-                public Size apply(MethodVisitor methodVisitor,
-                                  Context instrumentationContext,
-                                  MethodDescription instrumentedMethod) {
-                    StackManipulation.Size stackSize = new StackManipulation.Compound(
-                            MethodVariableAccess.REFERENCE.loadFromIndex(0),
-                            MethodInvocation.invoke(StaticFieldConstructor.INSTANCE.objectTypeDefaultConstructor),
-                            MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
-                            FieldAccess.forField(fieldDescription).putter(),
-                            MethodReturn.VOID
-                    ).apply(methodVisitor, instrumentationContext);
-                    return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && fieldDescription.equals(((Appender) other).fieldDescription);
-                }
-
-                @Override
-                public int hashCode() {
-                    return fieldDescription.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "Field.Binder.InstanceFieldConstructor.Appender{" +
-                            "fieldDescription=" + fieldDescription +
-                            '}';
-                }
-            }
-        }
-
-        /**
-         * A proxy type for accessing a field either by a getter or a setter.
-         */
-        protected class AccessorProxy implements AuxiliaryType, StackManipulation {
-
-            /**
-             * The name of the field that stores the accessed instance if any.
-             */
-            protected static final String FIELD_NAME = "instance";
-
-            /**
-             * The field that is being accessed.
-             */
-            private final FieldDescription accessedField;
-
-            /**
-             * The type which is accessed.
-             */
-            private final TypeDescription instrumentedType;
-
-            /**
-             * The assigner to use.
-             */
-            private final Assigner assigner;
-
-            /**
-             * The access type to implement.
-             */
-            private final AccessType accessType;
-
-            /**
-             * {@code true} if the generated proxy should be serializable.
-             */
-            private final boolean serializableProxy;
-
-            /**
-             * @param accessedField     The field that is being accessed.
-             * @param assigner          The assigner to use.
-             * @param instrumentedType  The type which is accessed.
-             * @param accessType        The assigner to use.
-             * @param serializableProxy {@code true} if the generated proxy should be serializable.
-             */
-            protected AccessorProxy(FieldDescription accessedField,
-                                    Assigner assigner,
-                                    TypeDescription instrumentedType,
-                                    AccessType accessType,
-                                    boolean serializableProxy) {
-                this.accessedField = accessedField;
-                this.assigner = assigner;
-                this.instrumentedType = instrumentedType;
-                this.accessType = accessType;
-                this.serializableProxy = serializableProxy;
-            }
-
-            @Override
-            public DynamicType make(String auxiliaryTypeName,
-                                    ClassFileVersion classFileVersion,
-                                    MethodAccessorFactory methodAccessorFactory) {
-                return new ByteBuddy(classFileVersion)
-                        .subclass(accessType.proxyType(getterMethod, setterMethod), ConstructorStrategy.Default.NO_CONSTRUCTORS)
-                        .name(auxiliaryTypeName)
-                        .modifiers(DEFAULT_TYPE_MODIFIER)
-                        .implement(serializableProxy ? new Class<?>[]{Serializable.class} : new Class<?>[0])
-                        .defineConstructor(accessedField.isStatic()
-                                ? Collections.<TypeDescription>emptyList()
-                                : Collections.singletonList(instrumentedType))
-                        .intercept(accessedField.isStatic()
-                                ? StaticFieldConstructor.INSTANCE
-                                : new InstanceFieldConstructor(instrumentedType))
-                        .method(isDeclaredBy(accessType.proxyType(getterMethod, setterMethod)))
-                        .intercept(accessType.access(accessedField, assigner, methodAccessorFactory))
-                        .make();
-            }
-
-            @Override
-            public boolean isValid() {
-                return true;
-            }
-
-            @Override
-            public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-                TypeDescription auxiliaryType = instrumentationContext.register(this);
-                return new Compound(
-                        TypeCreation.forType(auxiliaryType),
-                        Duplication.SINGLE,
-                        accessedField.isStatic()
-                                ? LegalTrivial.INSTANCE
-                                : MethodVariableAccess.REFERENCE.loadFromIndex(0),
-                        MethodInvocation.invoke(auxiliaryType.getDeclaredMethods().filter(isConstructor()).getOnly())
-                ).apply(methodVisitor, instrumentationContext);
-            }
-
-            /**
-             * Returns the outer instance.
-             *
-             * @return The outer instance.
-             */
-            private Binder getOuter() {
-                return Binder.this;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                AccessorProxy that = (AccessorProxy) other;
-                return serializableProxy == that.serializableProxy
-                        && accessType == that.accessType
-                        && accessedField.equals(that.accessedField)
-                        && assigner.equals(that.assigner)
-                        && Binder.this.equals(that.getOuter())
-                        && instrumentedType.equals(that.instrumentedType);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = accessedField.hashCode();
-                result = 31 * result + instrumentedType.hashCode();
-                result = 31 * result + assigner.hashCode();
-                result = 31 * result + Binder.this.hashCode();
-                result = 31 * result + accessType.hashCode();
-                result = 31 * result + (serializableProxy ? 1 : 0);
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "Field.Binder.AccessorProxy{" +
-                        "accessedField=" + accessedField +
-                        ", instrumentedType=" + instrumentedType +
-                        ", assigner=" + assigner +
-                        ", accessType=" + accessType +
-                        ", serializableProxy=" + serializableProxy +
-                        ", binder=" + Binder.this +
-                        '}';
-            }
-        }
-
-        /**
          * Determines the way a field is to be accessed.
          */
         protected static enum AccessType {
@@ -897,6 +648,117 @@ public @interface Field {
                                 "typeDescription=" + typeDescription +
                                 '}';
                     }
+                }
+            }
+        }
+
+        /**
+         * Represents an instrumentation for implementing a proxy type constructor when a non-static field is accessed.
+         */
+        protected static class InstanceFieldConstructor implements Instrumentation {
+
+            /**
+             * The instrumented type from which a field is to be accessed.
+             */
+            private final TypeDescription instrumentedType;
+
+            /**
+             * Creates a new instrumentation for implementing a field accessor proxy's constructor when accessing
+             * a non-static field.
+             *
+             * @param instrumentedType The instrumented type from which a field is to be accessed.
+             */
+            protected InstanceFieldConstructor(TypeDescription instrumentedType) {
+                this.instrumentedType = instrumentedType;
+            }
+
+            @Override
+            public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                return instrumentedType.withField(AccessorProxy.FIELD_NAME,
+                        this.instrumentedType,
+                        Opcodes.ACC_FINAL | Opcodes.ACC_PRIVATE);
+            }
+
+            @Override
+            public ByteCodeAppender appender(Target instrumentationTarget) {
+                return new Appender(instrumentationTarget);
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && instrumentedType.equals(((InstanceFieldConstructor) other).instrumentedType);
+            }
+
+            @Override
+            public int hashCode() {
+                return instrumentedType.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "Field.Binder.InstanceFieldConstructor{" +
+                        "instrumentedType=" + instrumentedType +
+                        '}';
+            }
+
+            /**
+             * An appender for implementing an
+             * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Field.Binder.InstanceFieldConstructor}.
+             */
+            protected static class Appender implements ByteCodeAppender {
+
+                /**
+                 * The field to be set within the constructor.
+                 */
+                private final FieldDescription fieldDescription;
+
+                /**
+                 * Creates a new appender.
+                 *
+                 * @param instrumentationTarget The instrumentation target of the current instrumentation.
+                 */
+                protected Appender(Target instrumentationTarget) {
+                    fieldDescription = instrumentationTarget.getTypeDescription()
+                            .getDeclaredFields()
+                            .named(AccessorProxy.FIELD_NAME);
+                }
+
+                @Override
+                public boolean appendsCode() {
+                    return true;
+                }
+
+                @Override
+                public Size apply(MethodVisitor methodVisitor,
+                                  Context instrumentationContext,
+                                  MethodDescription instrumentedMethod) {
+                    StackManipulation.Size stackSize = new StackManipulation.Compound(
+                            MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                            MethodInvocation.invoke(StaticFieldConstructor.INSTANCE.objectTypeDefaultConstructor),
+                            MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
+                            FieldAccess.forField(fieldDescription).putter(),
+                            MethodReturn.VOID
+                    ).apply(methodVisitor, instrumentationContext);
+                    return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && fieldDescription.equals(((Appender) other).fieldDescription);
+                }
+
+                @Override
+                public int hashCode() {
+                    return fieldDescription.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "Field.Binder.InstanceFieldConstructor.Appender{" +
+                            "fieldDescription=" + fieldDescription +
+                            '}';
                 }
             }
         }
@@ -1274,6 +1136,144 @@ public @interface Field {
                 public String toString() {
                     return "Field.Binder.FieldLocator.Illegal{}";
                 }
+            }
+        }
+
+        /**
+         * A proxy type for accessing a field either by a getter or a setter.
+         */
+        protected class AccessorProxy implements AuxiliaryType, StackManipulation {
+
+            /**
+             * The name of the field that stores the accessed instance if any.
+             */
+            protected static final String FIELD_NAME = "instance";
+
+            /**
+             * The field that is being accessed.
+             */
+            private final FieldDescription accessedField;
+
+            /**
+             * The type which is accessed.
+             */
+            private final TypeDescription instrumentedType;
+
+            /**
+             * The assigner to use.
+             */
+            private final Assigner assigner;
+
+            /**
+             * The access type to implement.
+             */
+            private final AccessType accessType;
+
+            /**
+             * {@code true} if the generated proxy should be serializable.
+             */
+            private final boolean serializableProxy;
+
+            /**
+             * @param accessedField     The field that is being accessed.
+             * @param assigner          The assigner to use.
+             * @param instrumentedType  The type which is accessed.
+             * @param accessType        The assigner to use.
+             * @param serializableProxy {@code true} if the generated proxy should be serializable.
+             */
+            protected AccessorProxy(FieldDescription accessedField,
+                                    Assigner assigner,
+                                    TypeDescription instrumentedType,
+                                    AccessType accessType,
+                                    boolean serializableProxy) {
+                this.accessedField = accessedField;
+                this.assigner = assigner;
+                this.instrumentedType = instrumentedType;
+                this.accessType = accessType;
+                this.serializableProxy = serializableProxy;
+            }
+
+            @Override
+            public DynamicType make(String auxiliaryTypeName,
+                                    ClassFileVersion classFileVersion,
+                                    MethodAccessorFactory methodAccessorFactory) {
+                return new ByteBuddy(classFileVersion)
+                        .subclass(accessType.proxyType(getterMethod, setterMethod), ConstructorStrategy.Default.NO_CONSTRUCTORS)
+                        .name(auxiliaryTypeName)
+                        .modifiers(DEFAULT_TYPE_MODIFIER)
+                        .implement(serializableProxy ? new Class<?>[]{Serializable.class} : new Class<?>[0])
+                        .defineConstructor(accessedField.isStatic()
+                                ? Collections.<TypeDescription>emptyList()
+                                : Collections.singletonList(instrumentedType))
+                        .intercept(accessedField.isStatic()
+                                ? StaticFieldConstructor.INSTANCE
+                                : new InstanceFieldConstructor(instrumentedType))
+                        .method(isDeclaredBy(accessType.proxyType(getterMethod, setterMethod)))
+                        .intercept(accessType.access(accessedField, assigner, methodAccessorFactory))
+                        .make();
+            }
+
+            @Override
+            public boolean isValid() {
+                return true;
+            }
+
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+                TypeDescription auxiliaryType = instrumentationContext.register(this);
+                return new Compound(
+                        TypeCreation.forType(auxiliaryType),
+                        Duplication.SINGLE,
+                        accessedField.isStatic()
+                                ? LegalTrivial.INSTANCE
+                                : MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                        MethodInvocation.invoke(auxiliaryType.getDeclaredMethods().filter(isConstructor()).getOnly())
+                ).apply(methodVisitor, instrumentationContext);
+            }
+
+            /**
+             * Returns the outer instance.
+             *
+             * @return The outer instance.
+             */
+            private Binder getOuter() {
+                return Binder.this;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                AccessorProxy that = (AccessorProxy) other;
+                return serializableProxy == that.serializableProxy
+                        && accessType == that.accessType
+                        && accessedField.equals(that.accessedField)
+                        && assigner.equals(that.assigner)
+                        && Binder.this.equals(that.getOuter())
+                        && instrumentedType.equals(that.instrumentedType);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = accessedField.hashCode();
+                result = 31 * result + instrumentedType.hashCode();
+                result = 31 * result + assigner.hashCode();
+                result = 31 * result + Binder.this.hashCode();
+                result = 31 * result + accessType.hashCode();
+                result = 31 * result + (serializableProxy ? 1 : 0);
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "Field.Binder.AccessorProxy{" +
+                        "accessedField=" + accessedField +
+                        ", instrumentedType=" + instrumentedType +
+                        ", assigner=" + assigner +
+                        ", accessType=" + accessType +
+                        ", serializableProxy=" + serializableProxy +
+                        ", binder=" + Binder.this +
+                        '}';
             }
         }
     }

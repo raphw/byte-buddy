@@ -437,6 +437,22 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 private final DynamicType placeholderType;
 
                 /**
+                 * Creates a new prepared target handler for a rebase instrumentation.
+                 *
+                 * @param placeholderType The placeholder type to use for rebasing constructors.
+                 * @param ignoredMethods  The methods that should be ignored for rebasing.
+                 * @param randomString    A supplied for random strings.
+                 */
+                protected ForRebaseInstrumentation(DynamicType placeholderType,
+                                                   MethodMatcher ignoredMethods,
+                                                   RandomString randomString) {
+                    this.placeholderType = placeholderType;
+                    methodRebaseResolver = new MethodRebaseResolver.Default(ignoredMethods,
+                            placeholderType.getTypeDescription(),
+                            new MethodRebaseResolver.MethodNameTransformer.Suffixing(randomString));
+                }
+
+                /**
                  * Creates a target handler for a rebase instrumentation.
                  *
                  * @param ignoredMethods   The methods that should be ignored for rebasing.
@@ -468,22 +484,6 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                             instrumentedType.getName(),
                             SUFFIX,
                             randomString.nextString());
-                }
-
-                /**
-                 * Creates a new prepared target handler for a rebase instrumentation.
-                 *
-                 * @param placeholderType The placeholder type to use for rebasing constructors.
-                 * @param ignoredMethods  The methods that should be ignored for rebasing.
-                 * @param randomString    A supplied for random strings.
-                 */
-                protected ForRebaseInstrumentation(DynamicType placeholderType,
-                                                   MethodMatcher ignoredMethods,
-                                                   RandomString randomString) {
-                    this.placeholderType = placeholderType;
-                    methodRebaseResolver = new MethodRebaseResolver.Default(ignoredMethods,
-                            placeholderType.getTypeDescription(),
-                            new MethodRebaseResolver.MethodNameTransformer.Suffixing(randomString));
                 }
 
                 @Override

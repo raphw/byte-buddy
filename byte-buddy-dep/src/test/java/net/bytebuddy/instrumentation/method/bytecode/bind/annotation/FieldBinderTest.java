@@ -32,6 +32,10 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
     @Mock
     private FieldDescription fieldDescription;
 
+    public FieldBinderTest() {
+        super(Field.class);
+    }
+
     @Override
     @Before
     public void setUp() throws Exception {
@@ -40,10 +44,6 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         when(setterMethod.getDeclaringType()).thenReturn(setterType);
         when(instrumentedType.getDeclaredFields()).thenReturn(new FieldList.Explicit(Arrays.asList(fieldDescription)));
         when(fieldDescription.getFieldType()).thenReturn(fieldType);
-    }
-
-    public FieldBinderTest() {
-        super(Field.class);
     }
 
     @Override
