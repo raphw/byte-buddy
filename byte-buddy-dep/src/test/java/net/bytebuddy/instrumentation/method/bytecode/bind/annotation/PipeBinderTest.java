@@ -13,7 +13,6 @@ import org.mockito.Mock;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -37,9 +36,9 @@ public class PipeBinderTest extends AbstractAnnotationBinderTest<Pipe> {
         binder = new Pipe.Binder(targetMethod);
     }
 
-    @Test
-    public void testAnnotationType() throws Exception {
-        assertEquals(Pipe.class, binder.getHandledType());
+    @Override
+    protected TargetMethodAnnotationDrivenBinder.ParameterBinder<Pipe> getSimpleBinder() {
+        return binder;
     }
 
     @Test

@@ -33,6 +33,11 @@ public class SuperCallBinderTest extends AbstractAnnotationBinderTest<SuperCall>
                 .thenReturn(specialMethodInvocation);
     }
 
+    @Override
+    protected TargetMethodAnnotationDrivenBinder.ParameterBinder<SuperCall> getSimpleBinder() {
+        return SuperCall.Binder.INSTANCE;
+    }
+
     @Test
     public void testValidSuperMethodCall() throws Exception {
         when(targetParameterType.represents(any(Class.class))).thenReturn(true);

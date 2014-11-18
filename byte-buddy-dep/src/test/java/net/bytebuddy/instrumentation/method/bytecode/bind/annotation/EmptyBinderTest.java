@@ -48,6 +48,11 @@ public class EmptyBinderTest extends AbstractAnnotationBinderTest<Empty> {
         });
     }
 
+    @Override
+    protected TargetMethodAnnotationDrivenBinder.ParameterBinder<Empty> getSimpleBinder() {
+        return Empty.Binder.INSTANCE;
+    }
+
     @Test
     public void testEmptyValue() throws Exception {
         when(targetTypeList.get(0)).thenReturn(typeDescription);

@@ -13,7 +13,6 @@ import org.mockito.Mock;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
@@ -33,9 +32,9 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
         super(Morph.class);
     }
 
-    @Test
-    public void testHandledType() throws Exception {
-        assertEquals(Morph.class, new Morph.Binder(morphMethod).getHandledType());
+    @Override
+    protected TargetMethodAnnotationDrivenBinder.ParameterBinder<Morph> getSimpleBinder() {
+        return new Morph.Binder(morphMethod);
     }
 
     @Test(expected = IllegalStateException.class)

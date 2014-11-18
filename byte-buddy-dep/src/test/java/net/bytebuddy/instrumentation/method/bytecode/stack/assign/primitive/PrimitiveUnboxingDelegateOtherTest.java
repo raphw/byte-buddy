@@ -12,13 +12,12 @@ public class PrimitiveUnboxingDelegateOtherTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testName() throws Exception {
+    public void testVoidIllegal() throws Exception {
         PrimitiveUnboxingDelegate.forPrimitive(new TypeDescription.ForLoadedType(void.class));
-
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
+    public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(PrimitiveUnboxingDelegate.ImplicitlyTypedUnboxingResponsible.class).apply();
     }
 }

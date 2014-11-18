@@ -10,7 +10,6 @@ import java.lang.reflect.Method;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
@@ -37,9 +36,9 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
         when(targetTypeList.get(INDEX)).thenReturn(targetType);
     }
 
-    @Test
-    public void testAnnotationType() throws Exception {
-        assertEquals(Origin.class, Origin.Binder.INSTANCE.getHandledType());
+    @Override
+    protected TargetMethodAnnotationDrivenBinder.ParameterBinder<Origin> getSimpleBinder() {
+        return Origin.Binder.INSTANCE;
     }
 
     @Test

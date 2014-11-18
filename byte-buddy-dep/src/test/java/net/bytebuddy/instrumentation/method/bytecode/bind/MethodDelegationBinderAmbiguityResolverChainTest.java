@@ -9,7 +9,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
 
-public class AmbiguityResolverChainTest extends AbstractAmbiguityResolverTest {
+public class MethodDelegationBinderAmbiguityResolverChainTest extends AbstractAmbiguityResolverTest {
 
     @Mock
     private MethodDelegationBinder.AmbiguityResolver first, second, third;

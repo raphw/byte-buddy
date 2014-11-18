@@ -8,7 +8,6 @@ import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -35,9 +34,9 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
         when(annotation.constructorParameters()).thenReturn(new Class<?>[0]);
     }
 
-    @Test
-    public void testAnnotationType() throws Exception {
-        assertEquals(Super.class, Super.Binder.INSTANCE.getHandledType());
+    @Override
+    protected TargetMethodAnnotationDrivenBinder.ParameterBinder<Super> getSimpleBinder() {
+        return Super.Binder.INSTANCE;
     }
 
     @Test

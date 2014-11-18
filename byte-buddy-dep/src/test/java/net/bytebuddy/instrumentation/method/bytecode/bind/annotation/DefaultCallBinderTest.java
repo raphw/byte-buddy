@@ -41,6 +41,11 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
                 .thenReturn(specialMethodInvocation);
     }
 
+    @Override
+    protected TargetMethodAnnotationDrivenBinder.ParameterBinder<DefaultCall> getSimpleBinder() {
+        return DefaultCall.Binder.INSTANCE;
+    }
+
     @Test
     public void testImplicitLookupIsUnique() throws Exception {
         when(targetParameterType.represents(any(Class.class))).thenReturn(true);

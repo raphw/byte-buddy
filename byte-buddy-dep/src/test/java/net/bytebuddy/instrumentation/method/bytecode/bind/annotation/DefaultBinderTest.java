@@ -9,7 +9,6 @@ import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 
 public class DefaultBinderTest extends AbstractAnnotationBinderTest<Default> {
@@ -34,9 +33,9 @@ public class DefaultBinderTest extends AbstractAnnotationBinderTest<Default> {
         when(instrumentedType.getInterfaces()).thenReturn(interfaces);
     }
 
-    @Test
-    public void testAnnotationType() throws Exception {
-        assertEquals(Super.class, Super.Binder.INSTANCE.getHandledType());
+    @Override
+    protected TargetMethodAnnotationDrivenBinder.ParameterBinder<Default> getSimpleBinder() {
+        return Default.Binder.INSTANCE;
     }
 
     @Test

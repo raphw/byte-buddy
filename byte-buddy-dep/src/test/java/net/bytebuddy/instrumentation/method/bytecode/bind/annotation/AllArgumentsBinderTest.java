@@ -17,7 +17,6 @@ import java.util.Arrays;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArguments> {
@@ -41,9 +40,9 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         when(secondSourceType.getStackSize()).thenReturn(StackSize.SINGLE);
     }
 
-    @Test
-    public void testAnnotationType() throws Exception {
-        assertEquals(AllArguments.class, AllArguments.Binder.INSTANCE.getHandledType());
+    @Override
+    protected TargetMethodAnnotationDrivenBinder.ParameterBinder<AllArguments> getSimpleBinder() {
+        return AllArguments.Binder.INSTANCE;
     }
 
     @Test

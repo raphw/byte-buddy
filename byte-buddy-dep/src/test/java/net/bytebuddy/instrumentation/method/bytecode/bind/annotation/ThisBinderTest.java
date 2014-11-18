@@ -42,6 +42,11 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
         when(typeList.get(0)).thenReturn(parameterType);
     }
 
+    @Override
+    protected TargetMethodAnnotationDrivenBinder.ParameterBinder<This> getSimpleBinder() {
+        return This.Binder.INSTANCE;
+    }
+
     @Test
     public void testLegalBinding() throws Exception {
         when(stackManipulation.isValid()).thenReturn(true);

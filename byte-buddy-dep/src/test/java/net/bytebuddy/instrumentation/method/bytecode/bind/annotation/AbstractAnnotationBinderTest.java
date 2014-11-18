@@ -10,11 +10,13 @@ import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
 import java.lang.annotation.Annotation;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Mockito.*;
@@ -44,6 +46,13 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
 
     protected AbstractAnnotationBinderTest(Class<T> annotationType) {
         this.annotationType = annotationType;
+    }
+
+    protected abstract TargetMethodAnnotationDrivenBinder.ParameterBinder<T> getSimpleBinder();
+
+    @Test
+    public void testHandledType() throws Exception {
+        assertEquals(annotationType, getSimpleBinder().getHandledType());
     }
 
     @Before

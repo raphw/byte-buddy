@@ -14,7 +14,6 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
@@ -28,9 +27,9 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
         super(Argument.class);
     }
 
-    @Test
-    public void testAnnotationType() throws Exception {
-        assertEquals(Argument.class, Argument.Binder.INSTANCE.getHandledType());
+    @Override
+    protected TargetMethodAnnotationDrivenBinder.ParameterBinder<Argument> getSimpleBinder() {
+        return Argument.Binder.INSTANCE;
     }
 
     @Test
