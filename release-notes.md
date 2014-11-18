@@ -35,6 +35,16 @@ mainly for allowing the reuse of `Method` instances for the `@Origin` annotation
 - Added support for optionally specifying a `ProtectionDomain` for the built-in `ClassLoadingStrategy` implementations.
 - Fixed a bug in the resolution of resources of the `ByteArrayClassLoader` and its child-first implementation.
 
+### 18. November 2014: Version 0.4
+
+- Extended `Instrumentation.Context` to support field accessors.
+- Added the `TypePool` abstraction and added a default implementation.
+- Refactored annotations to have an intermediate form as `AnnotationDescription` which does not need to 
+  represent loaded values.
+- Refactored several built-in `Instrumentation`, among others, all implementations now support `TypeDescription` 
+  in addition to loaded `Class` as their arguments
+- Added several annotations that apply to the `MethodDelegation`.
+
 ### Current snapshot version
 
 *No changes yet*
