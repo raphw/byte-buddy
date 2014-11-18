@@ -460,7 +460,7 @@ public class ByteBuddyTutorialExamplesTest {
             if (!target.getParameterTypes().get(targetParameterIndex).represents(String.class)) {
                 throw new IllegalStateException(target + " makes wrong use of StringValue");
             }
-            StackManipulation constant = new TextConstant(annotation.loadSilent().value()); // TODO: Update documentation.
+            StackManipulation constant = new TextConstant(annotation.loadSilent().value());
             return new MethodDelegationBinder.ParameterBinding.Anonymous(constant);
         }
     }
