@@ -4,6 +4,7 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.dynamic.ClassLoadingStrategy;
+import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.dynamic.scaffold.FieldRegistry;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
@@ -24,11 +25,13 @@ import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.modifier.Visibility;
 import net.bytebuddy.utility.MockitoRule;
 import net.bytebuddy.utility.ObjectPropertyAssertion;
+import net.bytebuddy.utility.RandomString;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.asm.Type;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -529,6 +532,18 @@ public class InlineDynamicTypeBuilderTest {
                 return Arrays.asList(new Object());
             }
         }).apply();
+        ObjectPropertyAssertion.of(InlineDynamicTypeBuilder.TargetHandler.Prepared.ForRebaseInstrumentation.class).refine(new ObjectPropertyAssertion.Refinement<DynamicType>() {
+            @Override
+            public void apply(DynamicType mock) {
+                when(mock.getTypeDescription()).thenReturn(Mockito.mock(TypeDescription.class));
+            }
+        }).refine(new ObjectPropertyAssertion.Refinement<RandomString>() {
+            @Override
+            public void apply(RandomString mock) {
+                when(mock.nextString()).thenReturn(FOO + System.identityHashCode(mock));
+            }
+        }).apply();
+        ObjectPropertyAssertion.of(InlineDynamicTypeBuilder.TargetHandler.Prepared.ForRebaseInstrumentation.MethodRebaseDelegation.class).apply();
     }
 
     @Retention(RetentionPolicy.RUNTIME)

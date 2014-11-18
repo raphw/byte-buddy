@@ -343,9 +343,7 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
             public Prepared prepare(MethodMatcher ignoredMethods,
                                     ClassFileVersion classFileVersion,
                                     TypeDescription instrumentedType) {
-                return new Prepared.ForRebaseInstrumentation(ignoredMethods,
-                        classFileVersion,
-                        instrumentedType);
+                return Prepared.ForRebaseInstrumentation.of(ignoredMethods, classFileVersion, instrumentedType);
             }
         }
 
@@ -439,34 +437,53 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 private final DynamicType placeholderType;
 
                 /**
-                 * Creates a new prepared target handler for a rebase instrumentation.
+                 * Creates a target handler for a rebase instrumentation.
                  *
                  * @param ignoredMethods   The methods that should be ignored for rebasing.
                  * @param classFileVersion The class file version for the created dynamic type.
                  * @param instrumentedType The instrumented type.
+                 * @return A prepared target handler.
                  */
-                public ForRebaseInstrumentation(MethodMatcher ignoredMethods,
-                                                ClassFileVersion classFileVersion,
-                                                TypeDescription instrumentedType) {
-                    placeholderType = TrivialType.INSTANCE.make(trivialTypeNameFor(instrumentedType),
-                            classFileVersion,
-                            AuxiliaryType.MethodAccessorFactory.Illegal.INSTANCE);
-                    this.methodRebaseResolver = new MethodRebaseResolver.Default(ignoredMethods,
-                            placeholderType.getTypeDescription(),
-                            new MethodRebaseResolver.MethodNameTransformer.Suffixing(new RandomString()));
+                public static Prepared of(MethodMatcher ignoredMethods,
+                                          ClassFileVersion classFileVersion,
+                                          TypeDescription instrumentedType) {
+                    RandomString randomString = new RandomString();
+                    return new ForRebaseInstrumentation(TrivialType.INSTANCE
+                            .make(trivialTypeNameFor(instrumentedType, randomString),
+                                    classFileVersion,
+                                    AuxiliaryType.MethodAccessorFactory.Illegal.INSTANCE),
+                            ignoredMethods,
+                            randomString);
                 }
 
                 /**
                  * Creates a trivial name for the instrumented type.
                  *
                  * @param instrumentedType The instrumented type.
+                 * @param randomString     A random string supplier.
                  * @return A trivial name that is derived from the supplied instrumented type.
                  */
-                private static String trivialTypeNameFor(TypeDescription instrumentedType) {
+                private static String trivialTypeNameFor(TypeDescription instrumentedType, RandomString randomString) {
                     return String.format("%s$%s$%s",
                             instrumentedType.getName(),
                             SUFFIX,
-                            RandomString.make());
+                            randomString.nextString());
+                }
+
+                /**
+                 * Creates a new prepared target handler for a rebase instrumentation.
+                 *
+                 * @param placeholderType The placeholder type to use for rebasing constructors.
+                 * @param ignoredMethods  The methods that should be ignored for rebasing.
+                 * @param randomString    A supplied for random strings.
+                 */
+                protected ForRebaseInstrumentation(DynamicType placeholderType,
+                                                   MethodMatcher ignoredMethods,
+                                                   RandomString randomString) {
+                    this.placeholderType = placeholderType;
+                    methodRebaseResolver = new MethodRebaseResolver.Default(ignoredMethods,
+                            placeholderType.getTypeDescription(),
+                            new MethodRebaseResolver.MethodNameTransformer.Suffixing(randomString));
                 }
 
                 @Override
@@ -491,8 +508,24 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 }
 
                 @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    ForRebaseInstrumentation that = (ForRebaseInstrumentation) other;
+                    return methodRebaseResolver.equals(that.methodRebaseResolver)
+                            && placeholderType.equals(that.placeholderType);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = methodRebaseResolver.hashCode();
+                    result = 31 * result + placeholderType.hashCode();
+                    return result;
+                }
+
+                @Override
                 public String toString() {
-                    return "RebaseDynamicTypeBuilder.TargetHandler.Prepared.ForRebaseInstrumentation{" +
+                    return "InlineDynamicTypeBuilder.TargetHandler.Prepared.ForRebaseInstrumentation{" +
                             "methodRebaseResolver=" + methodRebaseResolver +
                             ", placeholderType=" + placeholderType +
                             '}';
@@ -501,7 +534,7 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 /**
                  * A method pool entry with a rebase implementation as its default behavior.
                  */
-                private static class MethodRebaseDelegation implements TypeWriter.MethodPool.Entry, ByteCodeAppender {
+                protected static class MethodRebaseDelegation implements TypeWriter.MethodPool.Entry, ByteCodeAppender {
 
                     /**
                      * The instrumentation target.
@@ -513,7 +546,7 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                      *
                      * @param instrumentationTarget The instrumentation target.
                      */
-                    private MethodRebaseDelegation(Instrumentation.Target instrumentationTarget) {
+                    protected MethodRebaseDelegation(Instrumentation.Target instrumentationTarget) {
                         this.instrumentationTarget = instrumentationTarget;
                     }
 
@@ -580,13 +613,15 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
 
                     @Override
                     public String toString() {
-                        return "RebaseDynamicTypeBuilder.MethodRebaseDelegation{instrumentationTarget=" + instrumentationTarget + '}';
+                        return "InlineDynamicTypeBuilder.TargetHandler.Prepared.ForRebaseInstrumentation.MethodRebaseDelegation{" +
+                                "instrumentationTarget=" + instrumentationTarget +
+                                '}';
                     }
 
                     /**
                      * A factory for creating a method rebase delegation entry.
                      */
-                    private static enum Factory implements TypeWriter.MethodPool.Entry.Factory {
+                    protected static enum Factory implements TypeWriter.MethodPool.Entry.Factory {
 
                         /**
                          * The singleton instance.
