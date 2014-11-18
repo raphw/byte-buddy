@@ -524,9 +524,9 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = byteBuddy.subclass(Object.class).mak
         type redefinition
     </dt>
     <dd>
-        When redefining a class, Byte Buddy allows for the extension of existing classes, either by adding fields and
-        methods or by replacing existing method implementations. Preexisting method implementations are however lost if
-        they are replaced by another implementation. For example, when redefining the following type<br/><br/>
+        When redefining a class, Byte Buddy allows for the alteration of an existing class, either by adding fields
+        and methods or by replacing existing method implementations. Preexisting method implementations are however
+        lost if they are replaced by another implementation. For example, when redefining the following type<br/><br/>
 <pre class="prettyprint">
 class Foo {
   String bar() { return "bar"; }
@@ -539,11 +539,11 @@ class Foo {
         type rebasing
     </dt>
     <dd>
-        When rebasing a class, Byte Buddy allows for the definition of an imaginary subclass. However, instead of
-        creating such a subclass directly, Byte Buddy merely copies all method implementations that are overridden
-        into renamed private methods with compatible signatures. This way, no implementations are lost while rebased
-        methods can continue to invoke their super implementations by calling the renamed methods. This way, the above
-        class <code>Foo</code> could be rebased to<br/><br/>
+        When rebasing a class, Byte Buddy retains any method implementations of the rebased class. Instead of
+        discarding overridden methods as when performing a <i>type redefinition</i>, Byte Buddy copies all such
+        method implementations into renamed private methods with compatible signatures. This way, no implementation is
+        such that rebased methods can continue to invoke the original implementation by calling the renamed methods.
+        This way, the above class <code>Foo</code> could be rebased to<br/><br/>
 <pre class="prettyprint">
 class Foo {
   String bar() { return "foo" + bar$original(); }
@@ -551,7 +551,11 @@ class Foo {
 }
 </pre>
         where the information that the <code>bar</code> method originally returned <code>"bar"</code> is preserved
-        within a copied method and therefore remains accessible.
+        within a copied method and therefore remains accessible. When rebasing a class, Byte Buddy treats all method
+        definitions such as if you were creating a subclass, i.e. it will call the rebased method if you attempt to
+        call a method's super method implementation. But instead, it eventually flattens this hypothetical super class
+        into the rebased type. All of this is handled transparently for you such that you could simply swap out the
+        <code>subclass</code> and <code>rebase</code> instructions without changing your interceptors.
     </dd>
 </dl>
 
@@ -774,6 +778,12 @@ assertThat(foo.m(), is("bar"));
     and Byte Buddy stands ready to promptly use this feature, once it is hopefully implemented. In the mean time, Byte
     Buddy's HotSwap support can be used for corner-cases where it seems useful. Otherwise, class rebasing and
     redefinition can be a convenient feature when enhancing existing classes from for example a build script.
+</p>
+
+<h4>Working with unloaded classes</h4>
+
+<p>
+    <b>(Coming soon.)</b>
 </p>
 
 </div>
@@ -2361,16 +2371,16 @@ enum StringValueBinder
   }
 
   @Override
-  public MethodDelegationBinder.ParameterBinding&lt;?&gt; bind(StringValue annotation,
+  public MethodDelegationBinder.ParameterBinding&lt;?&gt; bind(AnnotationDescription.Loaded&lt;StringValue&gt; annotation,
                                                          int targetParameterIndex,
                                                          MethodDescription source,
                                                          MethodDescription target,
                                                          Instrumentation.Target instrumentationTarget,
                                                          Assigner assigner) {
     if (!target.getParameterTypes().get(targetParameterIndex).represents(String.class)) {
-      throw new IllegalStateException(target + " makes wrong use of StringValue");
+      throw new IllegalStateException(target + " makes illegal use of @StringValue");
     }
-    StackManipulation constant = new TextConstant(annotation.value());
+    StackManipulation constant = new TextConstant(annotation.loadSilent().value());
     return new MethodDelegationBinder.ParameterBinding.Anonymous(constant);
   }
 }
