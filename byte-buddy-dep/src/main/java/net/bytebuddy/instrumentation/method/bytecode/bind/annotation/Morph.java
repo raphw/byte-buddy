@@ -677,6 +677,7 @@ public @interface Morph {
 
             /**
              * Creates a new precomputed finding.
+             *
              * @param typeDescription The type description to be used by the precomputed finding.
              */
             public PrecomputedFinding(TypeDescription typeDescription) {
@@ -701,6 +702,11 @@ public @interface Morph {
                 return Collections.emptyMap();
             }
 
+            /**
+             * Returns the outer instance.
+             *
+             * @return The outer instance.
+             */
             private Binder getBinder() {
                 return Binder.this;
             }

@@ -34,15 +34,15 @@ public class FieldBinderTest {
                 when(fieldList.named(any(String.class))).thenReturn(Mockito.mock(FieldDescription.class));
             }
         }).skipSynthetic().apply();
-        ObjectPropertyAssertion.of(Field.Binder.Getter.class).apply();
-        ObjectPropertyAssertion.of(Field.Binder.Getter.Appender.class).refine(new ObjectPropertyAssertion.Refinement<Instrumentation.Target>() {
+        ObjectPropertyAssertion.of(Field.Binder.AccessType.Getter.class).apply();
+        ObjectPropertyAssertion.of(Field.Binder.AccessType.Getter.Appender.class).refine(new ObjectPropertyAssertion.Refinement<Instrumentation.Target>() {
             @Override
             public void apply(Instrumentation.Target mock) {
                 when(mock.getTypeDescription()).thenReturn(Mockito.mock(TypeDescription.class));
             }
         }).skipSynthetic().apply();
-        ObjectPropertyAssertion.of(Field.Binder.Setter.class).apply();
-        ObjectPropertyAssertion.of(Field.Binder.Setter.Appender.class).refine(new ObjectPropertyAssertion.Refinement<Instrumentation.Target>() {
+        ObjectPropertyAssertion.of(Field.Binder.AccessType.Setter.class).apply();
+        ObjectPropertyAssertion.of(Field.Binder.AccessType.Setter.Appender.class).refine(new ObjectPropertyAssertion.Refinement<Instrumentation.Target>() {
             @Override
             public void apply(Instrumentation.Target mock) {
                 when(mock.getTypeDescription()).thenReturn(Mockito.mock(TypeDescription.class));

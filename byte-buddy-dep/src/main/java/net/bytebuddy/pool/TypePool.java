@@ -1867,6 +1867,11 @@ public interface TypePool {
              */
             static interface Loaded<U> {
 
+                /**
+                 * Returns the state of the represented loaded annotation value.
+                 *
+                 * @return The state represented by this instance.
+                 */
                 State getState();
 
                 /**
@@ -1900,10 +1905,22 @@ public interface TypePool {
                      */
                     RESOLVED;
 
+                    /**
+                     * Returns {@code true} if the related annotation value is defined, i.e. either represents
+                     * an actual value or an exceptional state.
+                     *
+                     * @return {@code true} if the related annotation value is defined.
+                     */
                     public boolean isDefined() {
                         return this != NON_DEFINED;
                     }
 
+                    /**
+                     * Returns {@code true} if the related annotation value is resolved, i.e. represents an actual
+                     * value.
+                     *
+                     * @return {@code true} if the related annotation value is resolved.
+                     */
                     public boolean isResolved() {
                         return this == RESOLVED;
                     }
