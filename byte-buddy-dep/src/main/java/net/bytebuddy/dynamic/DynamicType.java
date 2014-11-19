@@ -45,7 +45,13 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
 public interface DynamicType {
 
     /**
+     * <p>
      * Returns a description of this dynamic type.
+     * </p>
+     * <p>
+     * <b>Note</b>: This description will most likely differ from the binary representation of this type. Normally,
+     * annotations and intercepted methods are not added to this type description.
+     * </p>
      *
      * @return A description of this dynamic type.
      */
@@ -60,14 +66,26 @@ public interface DynamicType {
     byte[] getBytes();
 
     /**
+     * <p>
      * Returns a map of all auxiliary types that are required for making use of the main type.
+     * </p>
+     * <p>
+     * <b>Note</b>: The type descriptions will most likely differ from the binary representation of this type.
+     * Normally, annotations and intercepted methods are not added to the type descriptions of auxiliary types.
+     * </p>
      *
      * @return A map of all auxiliary types by their descriptions to their binary representation.
      */
     Map<TypeDescription, byte[]> getRawAuxiliaryTypes();
 
     /**
+     * <p>
      * Returns a map of all loaded type initializers for the main type and all auxiliary types, if any.
+     * </p>
+     * <p>
+     * <b>Note</b>: The type descriptions will most likely differ from the binary representation of this type.
+     * Normally, annotations and intercepted methods are not added to the type descriptions of auxiliary types.
+     * </p>
      *
      * @return A mapping of all types' descriptions to their loaded type initializers.
      */
@@ -84,11 +102,17 @@ public interface DynamicType {
     boolean hasAliveLoadedTypeInitializers();
 
     /**
+     * <p>
      * Saves a dynamic type in a given folder using the Java class file format while respecting the naming conventions
      * for saving compiled Java classes. All auxiliary types, if any, are saved in the same directory. The resulting
      * folder structure will resemble the structure that is required for Java run times, i.e. each folder representing
      * a segment of the package name. If the specified {@code folder} does not yet exist, it is created during the
      * call of this method.
+     * </p>
+     * <p>
+     * <b>Note</b>: The type descriptions will most likely differ from the binary representation of this type.
+     * Normally, annotations and intercepted methods are not added to the type descriptions of auxiliary types.
+     * </p>
      *
      * @param folder The base target folder for storing this dynamic type and its auxiliary types, if any.
      * @return A map of type descriptions pointing to files with their stored binary representations within {@code folder}.
@@ -2201,7 +2225,13 @@ public interface DynamicType {
         Class<? extends T> getLoaded();
 
         /**
+         * <p>
          * Returns a map of all loaded auxiliary types to this dynamic type.
+         * </p>
+         * <p>
+         * <b>Note</b>: The type descriptions will most likely differ from the binary representation of this type.
+         * Normally, annotations and intercepted methods are not added to the type descriptions of auxiliary types.
+         * </p>
          *
          * @return A mapping from the fully qualified names of all auxiliary types to their loaded class representations.
          */
