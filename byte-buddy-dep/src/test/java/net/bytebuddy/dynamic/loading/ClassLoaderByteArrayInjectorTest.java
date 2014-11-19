@@ -47,6 +47,11 @@ public class ClassLoaderByteArrayInjectorTest {
         classLoaderByteArrayInjector = new ClassLoaderByteArrayInjector(classLoader);
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testBootstrapClassLoader() throws Exception {
+        new ClassLoaderByteArrayInjector(null);
+    }
+
     @Test
     public void testInjection() throws Exception {
         classLoaderByteArrayInjector.inject(Foo.class.getName(), ClassFileExtraction.extract(Foo.class));
