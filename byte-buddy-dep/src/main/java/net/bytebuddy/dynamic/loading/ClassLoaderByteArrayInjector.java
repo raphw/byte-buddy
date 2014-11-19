@@ -85,7 +85,7 @@ public class ClassLoaderByteArrayInjector {
      * @param protectionDomain The protection domain to apply during class definition.
      */
     public ClassLoaderByteArrayInjector(ClassLoader classLoader, ProtectionDomain protectionDomain) {
-        if(classLoader == null) {
+        if (classLoader == null) {
             throw new IllegalArgumentException("Cannot inject classes into the bootstrap class loader");
         }
         this.classLoader = classLoader;

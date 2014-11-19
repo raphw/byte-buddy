@@ -19,6 +19,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocati
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.JavaVersionRule;
 import net.bytebuddy.utility.PrecompiledTypeClassLoader;
 import net.bytebuddy.utility.ToolsJarRule;
@@ -133,6 +134,17 @@ public class ByteBuddyTutorialExamplesTest {
         assertThat(foo.m(), is("bar"));
         ClassReloadingStrategy.fromInstalledAgent().reset(FooReloading.class);
         assertThat(foo.m(), is("foo"));
+    }
+
+    @Test
+    public void testTutorialGettingStartedTypePool() throws Exception {
+        TypePool typePool = TypePool.Default.ofClassPath();
+        new ByteBuddy()
+                .redefine(typePool.describe(getClass().getName() + "$UnloadedBar"))
+                .defineField("qux", String.class)
+                .make()
+                .load(ClassLoader.getSystemClassLoader(), ClassLoadingStrategy.Default.INJECTION);
+        assertThat(UnloadedBar.class.getDeclaredField("qux"), notNullValue(java.lang.reflect.Field.class));
     }
 
     @Test
@@ -739,5 +751,8 @@ public class ByteBuddyTutorialExamplesTest {
                 return LoggingMemoryDatabase.super.load(info);
             }
         }
+    }
+
+    private static class UnloadedBar {
     }
 }
