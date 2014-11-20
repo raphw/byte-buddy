@@ -1,11 +1,9 @@
 package net.bytebuddy.instrumentation.method;
 
-import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.matcher.FilterableList;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -13,14 +11,6 @@ import java.util.List;
  * Implementations represent a list of method descriptions.
  */
 public interface MethodList extends FilterableList<MethodDescription, MethodList> {
-
-    /**
-     * Returns a new list that only includes the methods that are matched by the given method matcher.
-     *
-     * @param methodMatcher A filter applied to this list.
-     * @return a new list where all methods match the given {@code methodMatcher}.
-     */
-    MethodList filter(MethodMatcher methodMatcher);
 
     /**
      * A method list implementation that returns all loaded byte code methods (methods and constructors) that
@@ -63,24 +53,6 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
         }
 
         @Override
-        public MethodList filter(MethodMatcher methodMatcher) {
-            List<MethodDescription> result = new ArrayList<MethodDescription>(size());
-            for (Method method : methods) {
-                MethodDescription methodDescription = new MethodDescription.ForLoadedMethod(method);
-                if (methodMatcher.matches(methodDescription)) {
-                    result.add(methodDescription);
-                }
-            }
-            for (Constructor<?> constructor : constructors) {
-                MethodDescription methodDescription = new MethodDescription.ForLoadedConstructor(constructor);
-                if (methodMatcher.matches(methodDescription)) {
-                    result.add(methodDescription);
-                }
-            }
-            return new Explicit(result);
-        }
-
-        @Override
         protected MethodList wrap(List<MethodDescription> values) {
             return new Explicit(values);
         }
@@ -116,17 +88,6 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
         }
 
         @Override
-        public MethodList filter(MethodMatcher methodMatcher) {
-            List<MethodDescription> result = new ArrayList<MethodDescription>(methodDescriptions.size());
-            for (MethodDescription methodDescription : methodDescriptions) {
-                if (methodMatcher.matches(methodDescription)) {
-                    result.add(methodDescription);
-                }
-            }
-            return new Explicit(result);
-        }
-
-        @Override
         protected MethodList wrap(List<MethodDescription> values) {
             return new Explicit(values);
         }
@@ -136,10 +97,5 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
      * An implementation of an empty method list.
      */
     static class Empty extends FilterableList.Empty<MethodDescription, MethodList> implements MethodList {
-
-        @Override
-        public MethodList filter(MethodMatcher methodMatcher) {
-            return this;
-        }
     }
 }

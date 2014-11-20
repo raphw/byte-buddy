@@ -8,7 +8,7 @@ import org.junit.Test;
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;

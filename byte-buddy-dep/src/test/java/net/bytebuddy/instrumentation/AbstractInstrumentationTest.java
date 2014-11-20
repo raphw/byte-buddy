@@ -13,17 +13,18 @@ import net.bytebuddy.dynamic.scaffold.subclass.SubclassDynamicTypeBuilder;
 import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
+import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
-import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.matcher.ElementMatcher;
 import org.hamcrest.CoreMatchers;
 import org.objectweb.asm.Opcodes;
 
 import java.util.Arrays;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isDeclaredBy;
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isSynthetic;
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
+import static net.bytebuddy.matcher.ElementMatchers.isSynthetic;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public abstract class AbstractInstrumentationTest {
@@ -38,7 +39,7 @@ public abstract class AbstractInstrumentationTest {
     protected <T> DynamicType.Loaded<T> instrument(Class<T> target,
                                                    Instrumentation instrumentation,
                                                    ClassLoader classLoader,
-                                                   MethodMatcher targetMethods,
+                                                   ElementMatcher<? super MethodDescription> targetMethods,
                                                    Class<?>... interfaces) {
         assertThat(target.isInterface(), CoreMatchers.is(false));
         for (Class<?> anInterface : interfaces) {

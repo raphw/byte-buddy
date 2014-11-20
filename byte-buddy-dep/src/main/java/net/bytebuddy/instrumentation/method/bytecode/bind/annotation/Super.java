@@ -15,8 +15,8 @@ import java.lang.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.named;
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.returns;
+import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.returns;
 
 /**
  * Parameters that are annotated with this annotation are assigned an instance of an auxiliary proxy type that allows calling

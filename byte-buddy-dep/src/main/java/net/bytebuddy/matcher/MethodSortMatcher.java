@@ -2,7 +2,7 @@ package net.bytebuddy.matcher;
 
 import net.bytebuddy.instrumentation.method.MethodDescription;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 public class MethodSortMatcher<T extends MethodDescription> extends ElementMatcher.Junction.AbstractBase<T> {
 
@@ -38,7 +38,7 @@ public class MethodSortMatcher<T extends MethodDescription> extends ElementMatch
             protected boolean isSort(MethodDescription target) {
                 return target.isBridge() && target.getDeclaringType()
                         .getDeclaredMethods()
-                        .filter(isMethod().and(not(is(target))).and(isBridgeMethodCompatibleTo(target)))
+                        .filter(isMethod().and(not(is(target))).and(isCompatibleTo(target)))
                         .size() == 0;
             }
         };

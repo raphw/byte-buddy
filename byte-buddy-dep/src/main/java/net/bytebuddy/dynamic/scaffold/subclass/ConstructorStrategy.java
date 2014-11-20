@@ -3,10 +3,11 @@ package net.bytebuddy.dynamic.scaffold.subclass;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.instrumentation.SuperMethodCall;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
+import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * A constructor strategy is responsible for creating bootstrap constructors for a
@@ -67,7 +68,7 @@ public interface ConstructorStrategy {
             public MethodList extractConstructors(TypeDescription instrumentedType) {
                 MethodList methodList = instrumentedType.getSupertype()
                         .getDeclaredMethods()
-                        .filter(isConstructor().and(takesArguments(0)).and(isVisibleTo(instrumentedType)));
+                        .filter(isConstructor().and(takesArguments(0)).<MethodDescription>and(isVisibleTo(instrumentedType)));
                 if (methodList.size() == 1) {
                     return methodList;
                 } else {
@@ -88,7 +89,7 @@ public interface ConstructorStrategy {
             public MethodList extractConstructors(TypeDescription instrumentedType) {
                 return instrumentedType.getSupertype()
                         .getDeclaredMethods()
-                        .filter(isConstructor().and(isVisibleTo(instrumentedType)));
+                        .filter(isConstructor().<MethodDescription>and(isVisibleTo(instrumentedType)));
             }
         },
 
@@ -102,7 +103,7 @@ public interface ConstructorStrategy {
             public MethodList extractConstructors(TypeDescription instrumentedType) {
                 return instrumentedType.getSupertype()
                         .getDeclaredMethods()
-                        .filter(isConstructor().and(isPublic()));
+                        .filter(isPublic().and(isConstructor()));
             }
         };
 

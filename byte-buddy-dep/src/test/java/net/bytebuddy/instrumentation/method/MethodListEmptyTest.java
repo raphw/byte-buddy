@@ -1,9 +1,9 @@
 package net.bytebuddy.instrumentation.method;
 
-import net.bytebuddy.instrumentation.method.matcher.MethodMatchers;
 import org.junit.Before;
 import org.junit.Test;
 
+import static net.bytebuddy.matcher.ElementMatchers.any;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -28,7 +28,7 @@ public class MethodListEmptyTest {
 
     @Test
     public void testIsIdenticalWhenFiltered() throws Exception {
-        assertThat(methodList.filter(MethodMatchers.any()), is(methodList));
+        assertThat(methodList.filter(any()), is(methodList));
     }
 
     @Test(expected = IndexOutOfBoundsException.class)

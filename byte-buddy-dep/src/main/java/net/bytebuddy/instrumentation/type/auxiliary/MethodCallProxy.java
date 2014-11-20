@@ -32,7 +32,7 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.Callable;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isConstructor;
+import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 
 /**
  * A method call proxy represents a class that is compiled against a particular method which can then be called whenever

@@ -1,6 +1,6 @@
 package net.bytebuddy.instrumentation.method;
 
-import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -39,7 +39,8 @@ public class MethodListExplicitTest {
 
     @Test
     public void testMethodListFilter() throws Exception {
-        MethodMatcher methodMatcher = mock(MethodMatcher.class);
+        @SuppressWarnings("unchecked")
+        ElementMatcher<? super MethodDescription> methodMatcher = mock(ElementMatcher.class);
         when(methodMatcher.matches(firstMethodDescription)).thenReturn(true);
         methodList = methodList.filter(methodMatcher);
         assertThat(methodList.size(), is(1));

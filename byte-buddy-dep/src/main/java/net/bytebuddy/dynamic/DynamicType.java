@@ -14,12 +14,11 @@ import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
-import net.bytebuddy.instrumentation.method.matcher.JunctionMethodMatcher;
-import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
-import net.bytebuddy.instrumentation.method.matcher.MethodMatchers;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.ElementMatchers;
 import org.objectweb.asm.Opcodes;
 
 import java.io.*;
@@ -31,7 +30,7 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.logging.Logger;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 import static net.bytebuddy.utility.ByteBuddyCommons.*;
 
 /**
@@ -209,7 +208,7 @@ public interface DynamicType {
          * @param ignoredMethods A method matcher characterizing the methods to be ignored.
          * @return A builder that will always ignore the methods matched by the given method matcher.
          */
-        Builder<T> ignoreMethods(MethodMatcher ignoredMethods);
+        Builder<T> ignoreMethods(ElementMatcher<? super MethodDescription> ignoredMethods);
 
         /**
          * Adds an attribute appender to the currently constructed type which will be applied on the creation of
@@ -328,8 +327,9 @@ public interface DynamicType {
         /**
          * Defines a new constructor for this type. A constructor must not be {@code static}. Instead, a static type
          * initializer is added automatically if such an initializer is required. See
-         * {@link net.bytebuddy.instrumentation.method.matcher.MethodMatchers#isTypeInitializer()} for a method
-         * matcher for the static constructor.
+         * {@link net.bytebuddy.matcher.ElementMatchers#isTypeInitializer()} for a matcher for this initializer
+         * which can be intercepted using
+         * {@link net.bytebuddy.dynamic.DynamicType.Builder#invokable(net.bytebuddy.matcher.ElementMatcher)}.
          * <p>&nbsp;</p>
          * Note that a constructor's implementation must call another constructor of the same class or a constructor of
          * its super class. This constructor call must be hardcoded inside of the constructor's method body. Before
@@ -347,19 +347,19 @@ public interface DynamicType {
         /**
          * Defines a new constructor for this type. A constructor must not be {@code static}. Instead, a static type
          * initializer is added automatically if such an initializer is required. See
-         * {@link net.bytebuddy.instrumentation.method.matcher.MethodMatchers#isTypeInitializer()} for a method
-         * matcher for the static constructor.
+         * {@link net.bytebuddy.matcher.ElementMatchers#isTypeInitializer()} for a matcher for this initializer
+         * which can be intercepted using
+         * {@link net.bytebuddy.dynamic.DynamicType.Builder#invokable(net.bytebuddy.matcher.ElementMatcher)}.
          * <p>&nbsp;</p>
          * Note that a constructor's implementation must call another constructor of the same class or a constructor of
          * its super class. This constructor call must be hardcoded inside of the constructor's method body. Before
          * this constructor call is made, it is not legal to call any methods or to read any fields of the instance
          * under construction.
          *
-         * @param parameterTypes The descriptions of the parameter types of this constructor where the current type can be
-         *                       represented by a description of {@link net.bytebuddy.dynamic.TargetType}.
+         * @param parameterTypes The parameter types of this constructor where the current type can be represented by
+         *                       {@link net.bytebuddy.dynamic.TargetType}.
          * @param modifier       The modifiers for this constructor.
          * @return An interception delegate that exclusively matches the new constructor.
-         * @see net.bytebuddy.instrumentation.method.matcher.MethodMatchers#isTypeInitializer()
          */
         ExceptionDeclarableMethodInterception<T> defineConstructor(List<? extends TypeDescription> parameterTypes,
                                                                    ModifierContributor.ForMethod... modifier);
@@ -370,7 +370,7 @@ public interface DynamicType {
          * @param methodMatcher A matcher describing the methods to be intercepted by this instrumentation.
          * @return An interception delegate for methods matching the given method matcher.
          */
-        MatchedMethodInterception<T> method(MethodMatcher methodMatcher);
+        MatchedMethodInterception<T> method(ElementMatcher<? super MethodDescription> methodMatcher);
 
         /**
          * Selects a set of constructors of this type for instrumentation.
@@ -378,7 +378,7 @@ public interface DynamicType {
          * @param methodMatcher A matcher describing the constructors to be intercepted by this instrumentation.
          * @return An interception delegate for constructors matching the given method matcher.
          */
-        MatchedMethodInterception<T> constructor(MethodMatcher methodMatcher);
+        MatchedMethodInterception<T> constructor(ElementMatcher<? super MethodDescription> methodMatcher);
 
         /**
          * Selects a set of byte code methods of this type for instrumentation.
@@ -386,7 +386,7 @@ public interface DynamicType {
          * @param methodMatcher A matcher describing the byte code methods to be intercepted by this instrumentation.
          * @return An interception delegate for byte code methods matching the given method matcher.
          */
-        MatchedMethodInterception<T> invokable(MethodMatcher methodMatcher);
+        MatchedMethodInterception<T> invokable(ElementMatcher<? super MethodDescription> methodMatcher);
 
         /**
          * Creates the dynamic type without loading it.
@@ -737,7 +737,7 @@ public interface DynamicType {
             /**
              * The method matcher for ignored method specified for this builder.
              */
-            protected final MethodMatcher ignoredMethods;
+            protected final ElementMatcher<? super MethodDescription> ignoredMethods;
 
             /**
              * The bridge method resolver factory specified for this builder.
@@ -816,7 +816,7 @@ public interface DynamicType {
                                    List<TypeDescription> interfaceTypes,
                                    int modifiers,
                                    TypeAttributeAppender attributeAppender,
-                                   MethodMatcher ignoredMethods,
+                                   ElementMatcher<? super MethodDescription> ignoredMethods,
                                    BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                                    ClassVisitorWrapper.Chain classVisitorWrapperChain,
                                    FieldRegistry fieldRegistry,
@@ -982,14 +982,14 @@ public interface DynamicType {
             }
 
             @Override
-            public Builder<S> ignoreMethods(MethodMatcher ignoredMethods) {
+            public Builder<S> ignoreMethods(ElementMatcher<? super MethodDescription> ignoredMethods) {
                 return materialize(classFileVersion,
                         namingStrategy,
                         targetType,
                         interfaceTypes,
                         modifiers,
                         attributeAppender,
-                        new JunctionMethodMatcher.Conjunction(this.ignoredMethods, nonNull(ignoredMethods)),
+                        new ElementMatcher.Junction.Conjunction<MethodDescription>(this.ignoredMethods, nonNull(ignoredMethods)),
                         bridgeMethodResolverFactory,
                         classVisitorWrapperChain,
                         fieldRegistry,
@@ -1123,17 +1123,17 @@ public interface DynamicType {
             }
 
             @Override
-            public MatchedMethodInterception<S> method(MethodMatcher methodMatcher) {
+            public MatchedMethodInterception<S> method(ElementMatcher<? super MethodDescription> methodMatcher) {
                 return invokable(isMethod().and(nonNull(methodMatcher)));
             }
 
             @Override
-            public MatchedMethodInterception<S> constructor(MethodMatcher methodMatcher) {
+            public MatchedMethodInterception<S> constructor(ElementMatcher<? super MethodDescription> methodMatcher) {
                 return invokable(isConstructor().and(nonNull(methodMatcher)));
             }
 
             @Override
-            public MatchedMethodInterception<S> invokable(MethodMatcher methodMatcher) {
+            public MatchedMethodInterception<S> invokable(ElementMatcher<? super MethodDescription> methodMatcher) {
                 return new DefaultMatchedMethodInterception(new MethodRegistry.LatentMethodMatcher.Simple(nonNull(methodMatcher)), methodTokens);
             }
 
@@ -1168,7 +1168,7 @@ public interface DynamicType {
                                                       List<TypeDescription> interfaceTypes,
                                                       int modifiers,
                                                       TypeAttributeAppender attributeAppender,
-                                                      MethodMatcher ignoredMethods,
+                                                      ElementMatcher<? super MethodDescription> ignoredMethods,
                                                       BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                                                       ClassVisitorWrapper.Chain classVisitorWrapperChain,
                                                       FieldRegistry fieldRegistry,
@@ -1294,10 +1294,12 @@ public interface DynamicType {
                 }
 
                 @Override
-                public MethodMatcher manifest(TypeDescription instrumentedType) {
-                    return MethodDescription.CONSTRUCTOR_INTERNAL_NAME.equals(internalName) ? isConstructor() : named(internalName)
-                            .and(MethodMatchers.returns(resolveReturnType(instrumentedType)))
-                            .and(takesArguments(resolveParameterTypes(instrumentedType)));
+                public ElementMatcher<? super MethodDescription> manifest(TypeDescription instrumentedType) {
+                    return (MethodDescription.CONSTRUCTOR_INTERNAL_NAME.equals(internalName)
+                            ? isConstructor()
+                            : ElementMatchers.<MethodDescription>named(internalName))
+                            .and(returns(resolveReturnType(instrumentedType)))
+                            .<MethodDescription>and(takesArguments(resolveParameterTypes(instrumentedType)));
                 }
 
                 /**
@@ -1544,7 +1546,7 @@ public interface DynamicType {
                 }
 
                 @Override
-                public Builder<U> ignoreMethods(MethodMatcher ignoredMethods) {
+                public Builder<U> ignoreMethods(ElementMatcher<? super MethodDescription> ignoredMethods) {
                     return materialize().ignoreMethods(ignoredMethods);
                 }
 
@@ -1616,17 +1618,17 @@ public interface DynamicType {
                 }
 
                 @Override
-                public MatchedMethodInterception<U> method(MethodMatcher methodMatcher) {
+                public MatchedMethodInterception<U> method(ElementMatcher<? super MethodDescription> methodMatcher) {
                     return materialize().method(methodMatcher);
                 }
 
                 @Override
-                public MatchedMethodInterception<U> constructor(MethodMatcher methodMatcher) {
+                public MatchedMethodInterception<U> constructor(ElementMatcher<? super MethodDescription> methodMatcher) {
                     return materialize().constructor(methodMatcher);
                 }
 
                 @Override
-                public MatchedMethodInterception<U> invokable(MethodMatcher methodMatcher) {
+                public MatchedMethodInterception<U> invokable(ElementMatcher<? super MethodDescription> methodMatcher) {
                     return materialize().invokable(methodMatcher);
                 }
 
@@ -2146,12 +2148,12 @@ public interface DynamicType {
 
                 @Override
                 public MethodAnnotationTarget<S> intercept(Instrumentation instrumentation) {
-                    return materialize().method(isDeclaredByAny(interfaceType)).intercept(nonNull(instrumentation));
+                    return materialize().method(isDeclaredBy(anyOf(interfaceType))).intercept(nonNull(instrumentation));
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> withoutCode() {
-                    return materialize().method(isDeclaredByAny(interfaceType)).withoutCode();
+                    return materialize().method(isDeclaredBy(anyOf(interfaceType))).withoutCode();
                 }
 
                 @Override

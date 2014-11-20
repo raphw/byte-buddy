@@ -12,10 +12,10 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.FieldAccess;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.matcher.ElementMatchers;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.utility.ByteBuddyCommons.isValidIdentifier;
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
@@ -460,7 +460,7 @@ public abstract class FixedValue implements Instrumentation {
              */
             private StaticFieldByteCodeAppender(TypeDescription instrumentedType) {
                 fieldGetAccess = FieldAccess.forField(instrumentedType.getDeclaredFields()
-                        .filter((ElementMatchers.named(fieldName))).getOnly()).getter();
+                        .filter((named(fieldName))).getOnly()).getter();
             }
 
             @Override

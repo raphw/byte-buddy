@@ -12,7 +12,7 @@ import net.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy;
 import java.lang.annotation.*;
 import java.util.concurrent.Callable;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
  * A parameter with this annotation is assigned a proxy for invoking a default method that fits the intercepted method.

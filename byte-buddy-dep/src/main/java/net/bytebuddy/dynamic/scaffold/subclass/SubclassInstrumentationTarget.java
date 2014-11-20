@@ -11,7 +11,7 @@ import net.bytebuddy.instrumentation.type.TypeList;
 import java.util.HashMap;
 import java.util.Map;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isConstructor;
+import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 
 /**
  * An instrumentation target for creating a subclass of a given type.

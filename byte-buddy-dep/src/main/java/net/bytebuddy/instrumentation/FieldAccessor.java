@@ -17,7 +17,7 @@ import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.utility.ByteBuddyCommons;
 import org.objectweb.asm.MethodVisitor;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 import static net.bytebuddy.utility.ByteBuddyCommons.*;
 
 /**

@@ -14,8 +14,8 @@ import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isDeclaredBy;
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.not;
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
+import static net.bytebuddy.matcher.ElementMatchers.not;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;

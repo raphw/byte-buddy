@@ -13,15 +13,15 @@ import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
-import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.matcher.ElementMatcher;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * Creates a dynamic type on basis of loaded types where the dynamic type extends the loaded types.
@@ -62,7 +62,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                       List<? extends TypeDescription> interfaceTypes,
                                       int modifiers,
                                       TypeAttributeAppender attributeAppender,
-                                      MethodMatcher ignoredMethods,
+                                      ElementMatcher<? super MethodDescription> ignoredMethods,
                                       BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                                       ClassVisitorWrapper.Chain classVisitorWrapperChain,
                                       FieldRegistry fieldRegistry,
@@ -122,7 +122,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                          List<TypeDescription> interfaceTypes,
                                          int modifiers,
                                          TypeAttributeAppender attributeAppender,
-                                         MethodMatcher ignoredMethods,
+                                         ElementMatcher<? super MethodDescription> ignoredMethods,
                                          BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                                          ClassVisitorWrapper.Chain classVisitorWrapperChain,
                                          FieldRegistry fieldRegistry,
@@ -159,7 +159,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                                  List<TypeDescription> interfaceTypes,
                                                  int modifiers,
                                                  TypeAttributeAppender attributeAppender,
-                                                 MethodMatcher ignoredMethods,
+                                                 ElementMatcher<? super MethodDescription> ignoredMethods,
                                                  BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                                                  ClassVisitorWrapper.Chain classVisitorWrapperChain,
                                                  FieldRegistry fieldRegistry,
@@ -211,7 +211,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                         classFileVersion,
                         compiledMethodRegistry.getInvokableMethods().filter(isOverridable()
                                 .and(not(ignoredMethods))
-                                .or(isDeclaredBy(compiledMethodRegistry.getInstrumentedType()))),
+                                .<MethodDescription>or(isDeclaredBy(compiledMethodRegistry.getInstrumentedType()))),
                         classVisitorWrapperChain,
                         attributeAppender,
                         fieldRegistry.prepare(compiledMethodRegistry.getInstrumentedType()).compile(TypeWriter.FieldPool.Entry.NoOp.INSTANCE),

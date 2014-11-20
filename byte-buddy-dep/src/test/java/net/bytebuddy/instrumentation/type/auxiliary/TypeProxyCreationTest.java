@@ -7,7 +7,6 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
-import net.bytebuddy.instrumentation.method.matcher.MethodMatchers;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.utility.MockitoRule;
@@ -25,7 +24,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
@@ -69,7 +68,7 @@ public class TypeProxyCreationTest {
         MethodLookupEngine methodLookupEngine = MethodLookupEngine.Default.Factory.INSTANCE.make(true);
         fooMethods = methodLookupEngine.process(foo)
                 .getInvokableMethods()
-                .filter(isOverridable().and(MethodMatchers.not(isDefaultFinalizer())));
+                .filter(isOverridable().and(not(isDefaultFinalizer())));
         when(proxyMethod.getParameterTypes()).thenReturn(new TypeList.Explicit(Arrays.asList(foo, foo, foo)));
         when(proxyMethod.getDeclaringType()).thenReturn(foo);
         when(proxyMethod.getInternalName()).thenReturn(FOO);

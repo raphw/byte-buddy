@@ -2,7 +2,7 @@ package net.bytebuddy.pool;
 
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
-import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
+import net.bytebuddy.matcher.ElementMatcher;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,7 +41,8 @@ public class TypePoolLazyMethodListTest {
 
     @Test
     public void testMethodListFilter() throws Exception {
-        MethodMatcher methodMatcher = mock(MethodMatcher.class);
+        @SuppressWarnings("unchecked")
+        ElementMatcher<? super MethodDescription> methodMatcher = mock(ElementMatcher.class);
         when(methodMatcher.matches(methodList.get(0))).thenReturn(true);
         methodList = methodList.filter(methodMatcher);
         assertThat(methodList.size(), is(1));

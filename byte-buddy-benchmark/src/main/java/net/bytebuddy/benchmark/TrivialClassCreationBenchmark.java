@@ -14,7 +14,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.concurrent.TimeUnit;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.any;
+import static net.bytebuddy.matcher.ElementMatchers.any;
 
 /**
  * <p>

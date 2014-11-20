@@ -7,13 +7,13 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
-import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.matcher.ElementMatcher;
 
 import java.util.*;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.is;
+import static net.bytebuddy.matcher.ElementMatchers.is;
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
 /**
@@ -132,7 +132,7 @@ public interface MethodRegistry {
          * @return A method matcher that represents the manifested version of this latent method matcher for the
          * given instrumented type description.
          */
-        MethodMatcher manifest(TypeDescription typeDescription);
+        ElementMatcher<? super MethodDescription> manifest(TypeDescription typeDescription);
 
         /**
          * An wrapper implementation for an already assembled method matcher.
@@ -142,19 +142,19 @@ public interface MethodRegistry {
             /**
              * The method matcher that is represented by this instance.
              */
-            private final MethodMatcher methodMatcher;
+            private final ElementMatcher<? super MethodDescription> methodMatcher;
 
             /**
              * Creates a new wrapper.
              *
              * @param methodMatcher The method matcher to be wrapped by this instance.
              */
-            public Simple(MethodMatcher methodMatcher) {
+            public Simple(ElementMatcher<? super MethodDescription> methodMatcher) {
                 this.methodMatcher = methodMatcher;
             }
 
             @Override
-            public MethodMatcher manifest(TypeDescription instrumentedType) {
+            public ElementMatcher<? super MethodDescription> manifest(TypeDescription instrumentedType) {
                 return methodMatcher;
             }
 
@@ -497,12 +497,12 @@ public interface MethodRegistry {
             /**
              * An entry of a compiled default method registry.
              */
-            protected static class Entry extends TypeWriter.MethodPool.Entry.Simple implements MethodMatcher {
+            protected static class Entry extends TypeWriter.MethodPool.Entry.Simple implements ElementMatcher<MethodDescription> {
 
                 /**
                  * The method matcher that represents this compiled entry.
                  */
-                private final MethodMatcher methodMatcher;
+                private final ElementMatcher<? super MethodDescription> methodMatcher;
 
                 /**
                  * Creates an entry of a compiled default method registry.
@@ -511,7 +511,7 @@ public interface MethodRegistry {
                  * @param byteCodeAppender  The byte code appender that represents this compiled entry.
                  * @param attributeAppender The method attribute appender that represents this compiled entry.
                  */
-                protected Entry(MethodMatcher methodMatcher,
+                protected Entry(ElementMatcher<? super MethodDescription> methodMatcher,
                                 ByteCodeAppender byteCodeAppender,
                                 MethodAttributeAppender attributeAppender) {
                     super(byteCodeAppender, attributeAppender);
@@ -549,7 +549,7 @@ public interface MethodRegistry {
         /**
          * A method matcher that matches methods that are found in only one of two lists.
          */
-        private static class ListDifferenceMethodMatcher implements MethodMatcher, LatentMethodMatcher {
+        private static class ListDifferenceMethodMatcher implements ElementMatcher<MethodDescription>, LatentMethodMatcher {
             /**
              * The methods that are matched by this instance.
              */
@@ -572,7 +572,7 @@ public interface MethodRegistry {
             }
 
             @Override
-            public MethodMatcher manifest(TypeDescription typeDescription) {
+            public ElementMatcher<? super MethodDescription> manifest(TypeDescription typeDescription) {
                 return this;
             }
 

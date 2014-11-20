@@ -11,7 +11,7 @@ import org.junit.rules.MethodRule;
 
 import java.lang.reflect.Method;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isDeclaredBy;
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 

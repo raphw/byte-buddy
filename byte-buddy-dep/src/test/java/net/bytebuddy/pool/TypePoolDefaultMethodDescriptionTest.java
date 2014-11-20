@@ -8,7 +8,7 @@ import org.junit.Before;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.is;
+import static net.bytebuddy.matcher.ElementMatchers.is;
 
 public class TypePoolDefaultMethodDescriptionTest extends AbstractMethodDescriptionTest {
 

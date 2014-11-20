@@ -8,9 +8,10 @@ import net.bytebuddy.instrumentation.ModifierContributor;
 import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
+import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
-import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.MockitoRule;
 import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -21,7 +22,7 @@ import org.mockito.Mock;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isMethod;
+import static net.bytebuddy.matcher.ElementMatchers.isMethod;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -44,7 +45,7 @@ public class ByteBuddyTest {
     @Mock
     private MethodAttributeAppender.Factory methodAttributeAppenderFactory;
     @Mock
-    private MethodMatcher methodMatcher;
+    private ElementMatcher<? super MethodDescription> methodMatcher;
     @Mock
     private TypeDescription typeDescription;
     @Mock
@@ -96,12 +97,13 @@ public class ByteBuddyTest {
                 .method(methodMatcher).intercept(instrumentation));
     }
 
+    @SuppressWarnings("unchecked")
     private void assertProperties(ByteBuddy byteBuddy) {
         assertThat(byteBuddy.getTypeAttributeAppender(), is(typeAttributeAppender));
         assertThat(byteBuddy.getClassFileVersion(), is(classFileVersion));
         assertThat(byteBuddy.getDefaultFieldAttributeAppenderFactory(), is(fieldAttributeAppenderFactory));
         assertThat(byteBuddy.getDefaultMethodAttributeAppenderFactory(), is(methodAttributeAppenderFactory));
-        assertThat(byteBuddy.getIgnoredMethods(), is(methodMatcher));
+        assertThat(byteBuddy.getIgnoredMethods(), is((ElementMatcher) methodMatcher));
         assertThat(byteBuddy.getBridgeMethodResolverFactory(), is(bridgeMethodResolverFactory));
         assertThat(byteBuddy.getInterfaceTypes().size(), is(1));
         assertThat(byteBuddy.getInterfaceTypes(), hasItem(typeDescription));

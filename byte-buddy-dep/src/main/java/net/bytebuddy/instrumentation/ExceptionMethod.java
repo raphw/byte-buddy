@@ -12,8 +12,8 @@ import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isConstructor;
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.takesArguments;
+import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
+import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**

@@ -3,9 +3,9 @@ package net.bytebuddy.dynamic.scaffold.inline;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
-import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.MockitoRule;
 import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -31,7 +31,7 @@ public class MethodRebaseResolverDefaultTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private MethodMatcher methodMatcher;
+    private ElementMatcher<? super MethodDescription> methodMatcher;
     @Mock
     private TypeDescription instrumentedType, placeholderType, returnType;
     @Mock

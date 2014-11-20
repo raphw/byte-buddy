@@ -3,7 +3,7 @@ package net.bytebuddy.matcher;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 
-public class MethodReturnTypeMatcher extends ElementMatcher.Junction.AbstractBase<MethodDescription> {
+public class MethodReturnTypeMatcher<T extends MethodDescription> extends ElementMatcher.Junction.AbstractBase<T> {
 
     private final ElementMatcher<? super TypeDescription> typeMatcher;
 
@@ -12,7 +12,7 @@ public class MethodReturnTypeMatcher extends ElementMatcher.Junction.AbstractBas
     }
 
     @Override
-    public boolean matches(MethodDescription target) {
+    public boolean matches(T target) {
         return typeMatcher.matches(target.getReturnType());
     }
 

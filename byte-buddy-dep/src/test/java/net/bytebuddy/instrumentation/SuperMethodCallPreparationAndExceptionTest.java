@@ -3,10 +3,10 @@ package net.bytebuddy.instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
-import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -58,17 +58,19 @@ public class SuperMethodCallPreparationAndExceptionTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
+    @SuppressWarnings("unchecked")
     public void testConstructor() throws Exception {
         when(typeDescription.getSupertype()).thenReturn(superType);
         when(methodDescription.isConstructor()).thenReturn(true);
         when(superType.getDeclaredMethods()).thenReturn(superTypeMethods);
-        when(superTypeMethods.filter(any(MethodMatcher.class))).thenReturn(superTypeMethods);
+        when(superTypeMethods.filter(any(ElementMatcher.class))).thenReturn(superTypeMethods);
         when(instrumentationTarget.invokeSuper(methodDescription, Instrumentation.Target.MethodLookup.Default.EXACT))
                 .thenReturn(Instrumentation.SpecialMethodInvocation.Illegal.INSTANCE);
         SuperMethodCall.INSTANCE.appender(instrumentationTarget).apply(methodVisitor, instrumentationContext, methodDescription);
     }
 
     @Test(expected = IllegalArgumentException.class)
+    @SuppressWarnings("unchecked")
     public void testStaticMethod() throws Exception {
         when(typeDescription.getSupertype()).thenReturn(superType);
         when(methodDescription.isStatic()).thenReturn(true);
@@ -77,13 +79,14 @@ public class SuperMethodCallPreparationAndExceptionTest {
         when(methodDescription.getReturnType()).thenReturn(returnType);
         when(returnType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(superType.getDeclaredMethods()).thenReturn(superTypeMethods);
-        when(superTypeMethods.filter(any(MethodMatcher.class))).thenReturn(superTypeMethods);
+        when(superTypeMethods.filter(any(ElementMatcher.class))).thenReturn(superTypeMethods);
         when(instrumentationTarget.invokeSuper(eq(methodDescription), any(Instrumentation.Target.MethodLookup.class)))
                 .thenReturn(Instrumentation.SpecialMethodInvocation.Illegal.INSTANCE);
         SuperMethodCall.INSTANCE.appender(instrumentationTarget).apply(methodVisitor, instrumentationContext, methodDescription);
     }
 
     @Test(expected = IllegalArgumentException.class)
+    @SuppressWarnings("unchecked")
     public void testNoSuper() throws Exception {
         when(typeDescription.getSupertype()).thenReturn(superType);
         when(methodDescription.getParameterTypes()).thenReturn(methodParameters);
@@ -93,7 +96,7 @@ public class SuperMethodCallPreparationAndExceptionTest {
         when(declaringType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(returnType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(superType.getDeclaredMethods()).thenReturn(superTypeMethods);
-        when(superTypeMethods.filter(any(MethodMatcher.class))).thenReturn(superTypeMethods);
+        when(superTypeMethods.filter(any(ElementMatcher.class))).thenReturn(superTypeMethods);
         when(instrumentationTarget.invokeSuper(eq(methodDescription), any(Instrumentation.Target.MethodLookup.class)))
                 .thenReturn(Instrumentation.SpecialMethodInvocation.Illegal.INSTANCE);
         SuperMethodCall.INSTANCE.appender(instrumentationTarget).apply(methodVisitor, instrumentationContext, methodDescription);

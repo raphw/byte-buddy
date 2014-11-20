@@ -1,16 +1,16 @@
 package net.bytebuddy.instrumentation.method;
 
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
-import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.matcher.ElementMatcher;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.*;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * A method lookup engine is responsible for finding all methods that can be invoked on a given
@@ -632,7 +632,7 @@ public interface MethodLookupEngine {
              * A method matcher that matches any method that is inherited by the
              * {@link net.bytebuddy.instrumentation.method.MethodLookupEngine.Default.MethodBucket#typeOfInterest}.
              */
-            private final MethodMatcher virtualMethodMatcher;
+            private final ElementMatcher<? super MethodDescription> virtualMethodMatcher;
 
             /**
              * Creates a new mutable method bucket.
@@ -644,9 +644,9 @@ public interface MethodLookupEngine {
                 classMethods = new HashMap<String, MethodDescription>();
                 interfaceMethods = new HashMap<String, MethodDescription>();
                 processedTypes = new HashSet<TypeDescription>();
-                virtualMethodMatcher = isMethod().and(not(isPrivate()
-                        .or(isStatic())
-                        .or(isPackagePrivate().and(not(isVisibleTo(typeOfInterest))))));
+                virtualMethodMatcher = isMethod().<MethodDescription>and(not(isPrivate()
+                        .<MethodDescription>or(isStatic())
+                        .<MethodDescription>or(isPackagePrivate().and(not(isVisibleTo(typeOfInterest))))));
                 pushClass(typeOfInterest, any());
             }
 
@@ -669,7 +669,7 @@ public interface MethodLookupEngine {
              * @param methodMatcher   The method matcher for filtering methods of interest that are declared by the
              *                        given type.
              */
-            private void pushClass(TypeDescription typeDescription, MethodMatcher methodMatcher) {
+            private void pushClass(TypeDescription typeDescription, ElementMatcher<? super MethodDescription> methodMatcher) {
                 if (processedTypes.add(typeDescription)) {
                     for (MethodDescription methodDescription : typeDescription.getDeclaredMethods().filter(methodMatcher)) {
                         String uniqueSignature = methodDescription.getUniqueSignature();

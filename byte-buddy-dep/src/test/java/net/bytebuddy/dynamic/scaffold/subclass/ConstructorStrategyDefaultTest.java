@@ -12,7 +12,7 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Matchers.any;
@@ -51,7 +51,7 @@ public class ConstructorStrategyDefaultTest {
 
     @Test
     public void testImitateSuperTypeStrategy() throws Exception {
-        when(methodList.filter(isConstructor().and(isVisibleTo(instrumentedType)))).thenReturn(filteredMethodList);
+        when(methodList.filter(isVisibleTo(instrumentedType).and(isConstructor()))).thenReturn(filteredMethodList);
         assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE.extractConstructors(instrumentedType), is(filteredMethodList));
         assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE.inject(methodRegistry, methodAttributeAppenderFactory), is(methodRegistry));
         verify(methodRegistry).prepend(any(MethodRegistry.LatentMethodMatcher.class), any(Instrumentation.class), eq(methodAttributeAppenderFactory));
@@ -62,7 +62,7 @@ public class ConstructorStrategyDefaultTest {
 
     @Test
     public void testImitateSuperTypePublicStrategy() throws Exception {
-        when(methodList.filter(isConstructor().and(isPublic()))).thenReturn(filteredMethodList);
+        when(methodList.filter(isPublic().and(isConstructor()))).thenReturn(filteredMethodList);
         assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE_PUBLIC.extractConstructors(instrumentedType), is(filteredMethodList));
         assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE_PUBLIC.inject(methodRegistry, methodAttributeAppenderFactory), is(methodRegistry));
         verify(methodRegistry).prepend(any(MethodRegistry.LatentMethodMatcher.class), any(Instrumentation.class), eq(methodAttributeAppenderFactory));
@@ -73,7 +73,7 @@ public class ConstructorStrategyDefaultTest {
 
     @Test
     public void testDefaultConstructorStrategy() throws Exception {
-        when(methodList.filter(isConstructor().and(takesArguments(0)).and(isVisibleTo(instrumentedType)))).thenReturn(filteredMethodList);
+        when(methodList.filter(takesArguments(0).and(isVisibleTo(instrumentedType).and(isConstructor())))).thenReturn(filteredMethodList);
         when(filteredMethodList.size()).thenReturn(1);
         assertThat(ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.extractConstructors(instrumentedType), is(filteredMethodList));
         assertThat(ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.inject(methodRegistry, methodAttributeAppenderFactory), is(methodRegistry));
@@ -85,7 +85,7 @@ public class ConstructorStrategyDefaultTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testDefaultConstructorStrategyNoDefault() throws Exception {
-        when(methodList.filter(isConstructor().and(takesArguments(0)).and(isVisibleTo(instrumentedType)))).thenReturn(filteredMethodList);
+        when(methodList.filter(takesArguments(0).and(isVisibleTo(instrumentedType).and(isConstructor())))).thenReturn(filteredMethodList);
         when(filteredMethodList.size()).thenReturn(0);
         ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.extractConstructors(instrumentedType);
     }

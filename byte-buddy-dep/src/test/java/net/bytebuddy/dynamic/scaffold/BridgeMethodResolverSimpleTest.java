@@ -12,7 +12,7 @@ import org.junit.rules.TestRule;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 import static net.bytebuddy.utility.CustomHamcrestMatchers.containsAllOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -38,7 +38,7 @@ public class BridgeMethodResolverSimpleTest {
         TypeDescription target = new TypeDescription.ForLoadedType(Bar.class);
         MethodList invokableMethods = new MethodLookupEngine.Default(MethodLookupEngine.Default.DefaultMethodLookup.DISABLED)
                 .process(target).getInvokableMethods();
-        MethodList relevantMethods = invokableMethods.filter(not(isConstructor().or(isDeclaredBy(Object.class))));
+        MethodList relevantMethods = invokableMethods.filter(not(isDeclaredBy(Object.class).or(isConstructor())));
         assertThat(relevantMethods.size(), is(2));
         BridgeMethodResolver bridgeMethodResolver = new BridgeMethodResolver.Simple(invokableMethods, conflictHandler);
         assertThat(bridgeMethodResolver.resolve(relevantMethods.filter(isBridge()).getOnly()),
@@ -51,7 +51,7 @@ public class BridgeMethodResolverSimpleTest {
         TypeDescription target = new TypeDescription.ForLoadedType(Qux.class);
         MethodList invokableMethods = new MethodLookupEngine.Default(MethodLookupEngine.Default.DefaultMethodLookup.DISABLED)
                 .process(target).getInvokableMethods();
-        MethodList relevantMethods = invokableMethods.filter(not(isConstructor().or(isDeclaredBy(Object.class))));
+        MethodList relevantMethods = invokableMethods.filter(not(isDeclaredBy(Object.class).or(isConstructor())));
         assertThat(relevantMethods.size(), is(3));
         BridgeMethodResolver bridgeMethodResolver = new BridgeMethodResolver.Simple(invokableMethods, conflictHandler);
         for (MethodDescription methodDescription : relevantMethods.filter(isBridge())) {
@@ -65,7 +65,7 @@ public class BridgeMethodResolverSimpleTest {
         TypeDescription target = new TypeDescription.ForLoadedType(Baz.class);
         MethodList invokableMethods = new MethodLookupEngine.Default(MethodLookupEngine.Default.DefaultMethodLookup.DISABLED)
                 .process(target).getInvokableMethods();
-        MethodList relevantMethods = invokableMethods.filter(not(isConstructor().or(isDeclaredBy(Object.class))));
+        MethodList relevantMethods = invokableMethods.filter(not(isDeclaredBy(Object.class).or(isConstructor())));
         assertThat(relevantMethods.size(), is(3));
         when(conflictHandler.choose(any(MethodDescription.class), any(MethodList.class))).thenReturn(bridgeTarget);
         when(bridgeTarget.isResolved()).thenReturn(true);

@@ -38,8 +38,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.not;
+import static net.bytebuddy.matcher.ElementMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.not;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;

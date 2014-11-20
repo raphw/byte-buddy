@@ -1,7 +1,8 @@
 package net.bytebuddy.instrumentation.method;
 
-import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.utility.JavaVersionRule;
 import net.bytebuddy.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.PrecompiledTypeClassLoader;
@@ -13,8 +14,8 @@ import org.junit.rules.MethodRule;
 
 import java.util.Set;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.not;
+import static net.bytebuddy.matcher.ElementMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.not;
 import static net.bytebuddy.utility.CustomHamcrestMatchers.containsAllOf;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
@@ -49,8 +50,9 @@ public class MethodLookupEngineDefaultTest {
     private MethodLookupEngine methodLookupEngine;
     private ClassLoader classLoader;
 
-    private static MethodMatcher isVirtualTo(TypeDescription typeDescription) {
-        return isMethod().and(not(isPrivate().or(isStatic()).or(isPackagePrivate().and(not(isVisibleTo(typeDescription))))));
+    private static ElementMatcher<? super MethodDescription> isVirtualTo(TypeDescription typeDescription) {
+        return isMethod().<MethodDescription>and(not(isPrivate().or(isStatic())
+                .or(isPackagePrivate().and(not(isVisibleTo(typeDescription))))));
     }
 
     private TypeDescription findType(String name) throws Exception {
@@ -81,7 +83,7 @@ public class MethodLookupEngineDefaultTest {
         assertThat(finding.getTypeDescription(), is(classOverridingToString));
         assertThat(finding.getInvokableMethods(), containsAllOf(classOverridingToString.getDeclaredMethods()));
         assertThat(finding.getInvokableMethods(), containsAllOf(objectType.getDeclaredMethods()
-                .filter(isVirtualTo(classOverridingToString)).filter(not(named(TO_STRING)))));
+                .filter(isVirtualTo(classOverridingToString)).filter(ElementMatchers.not(named(TO_STRING)))));
         assertThat(finding.getInvokableMethods().filter(named(TO_STRING)).getOnly().isSpecializableFor(classOverridingToString), is(true));
         assertThat(finding.getInvokableMethods().filter(named(TO_STRING)).getOnly().isSpecializableFor(objectType), is(true));
         assertThat(finding.getInvokableMethods().size(), is(classOverridingToString.getDeclaredMethods().size()
@@ -97,7 +99,7 @@ public class MethodLookupEngineDefaultTest {
         assertThat(finding.getTypeDescription(), is(classOverridingToStringAbstract));
         assertThat(finding.getInvokableMethods(), containsAllOf(classOverridingToStringAbstract.getDeclaredMethods()));
         assertThat(finding.getInvokableMethods(), containsAllOf(objectType.getDeclaredMethods()
-                .filter(isVirtualTo(classOverridingToStringAbstract)).filter(not(named(TO_STRING)))));
+                .filter(isVirtualTo(classOverridingToStringAbstract)).filter(ElementMatchers.not(named(TO_STRING)))));
         assertThat(finding.getInvokableMethods().filter(named(TO_STRING)).getOnly().isSpecializableFor(classOverridingToStringAbstract), is(false));
         assertThat(finding.getInvokableMethods().filter(named(TO_STRING)).getOnly().isSpecializableFor(objectType), is(true));
         assertThat(finding.getInvokableMethods().size(), is(classOverridingToStringAbstract.getDeclaredMethods().size()
@@ -114,7 +116,7 @@ public class MethodLookupEngineDefaultTest {
         assertThat(finding.getTypeDescription(), is(classReOverridingToStringManifest));
         assertThat(finding.getInvokableMethods(), containsAllOf(classReOverridingToStringManifest.getDeclaredMethods()));
         assertThat(finding.getInvokableMethods(), containsAllOf(objectType.getDeclaredMethods()
-                .filter(isVirtualTo(classReOverridingToStringManifest)).filter(not(named(TO_STRING)))));
+                .filter(isVirtualTo(classReOverridingToStringManifest)).filter(ElementMatchers.not(named(TO_STRING)))));
         assertThat(finding.getInvokableMethods().filter(named(TO_STRING)).getOnly().isSpecializableFor(classReOverridingToStringManifest), is(true));
         assertThat(finding.getInvokableMethods().filter(named(TO_STRING)).getOnly().isSpecializableFor(classOverridingToStringAbstract), is(false));
         assertThat(finding.getInvokableMethods().filter(named(TO_STRING)).getOnly().isSpecializableFor(objectType), is(true));

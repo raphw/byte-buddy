@@ -5,7 +5,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.constant.TextConstant
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import org.junit.Test;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isDeclaredBy;
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 

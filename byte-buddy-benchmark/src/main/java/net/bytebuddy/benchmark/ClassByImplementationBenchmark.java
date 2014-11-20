@@ -20,8 +20,8 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.concurrent.TimeUnit;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isDeclaredBy;
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.none;
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
+import static net.bytebuddy.matcher.ElementMatchers.none;
 
 /**
  * <p>

@@ -12,8 +12,8 @@ import org.junit.rules.MethodRule;
 
 import java.io.Serializable;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isDeclaredBy;
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.not;
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
+import static net.bytebuddy.matcher.ElementMatchers.not;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;

@@ -11,7 +11,7 @@ import org.junit.rules.MethodRule;
 
 import java.lang.instrument.Instrumentation;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.spy;

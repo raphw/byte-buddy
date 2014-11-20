@@ -18,17 +18,16 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.assign.primitive.Void
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.reference.ReferenceTypeAwareAssigner;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.FieldAccess;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess;
-import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.matcher.ElementMatchers;
+import net.bytebuddy.matcher.ElementMatcher;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.util.Arrays;
 import java.util.List;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 import static net.bytebuddy.utility.ByteBuddyCommons.*;
 
 /**
@@ -245,7 +244,7 @@ public class MethodDelegation implements Instrumentation {
      * This method will never bind to constructors but will consider methods that are defined in super types. Note
      * that this includes methods that were defined by the {@link java.lang.Object} class. You can narrow this default
      * selection by explicitly selecting methods with calling the
-     * {@link net.bytebuddy.instrumentation.MethodDelegation#filter(net.bytebuddy.instrumentation.method.matcher.MethodMatcher)}
+     * {@link net.bytebuddy.instrumentation.MethodDelegation#filter(net.bytebuddy.matcher.ElementMatcher)}
      * method on the returned method delegation as for example:
      * <pre>MethodDelegation.to(new Foo()).filter(MethodMatchers.not(isDeclaredBy(Object.class)));</pre>
      * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
@@ -287,7 +286,7 @@ public class MethodDelegation implements Instrumentation {
      * This method will never bind to constructors but will consider methods that are defined in super types. Note
      * that this includes methods that were defined by the {@link java.lang.Object} class. You can narrow this default
      * selection by explicitly selecting methods with calling the
-     * {@link net.bytebuddy.instrumentation.MethodDelegation#filter(net.bytebuddy.instrumentation.method.matcher.MethodMatcher)}
+     * {@link net.bytebuddy.instrumentation.MethodDelegation#filter(net.bytebuddy.matcher.ElementMatcher)}
      * method on the returned method delegation as for example:
      * <pre>MethodDelegation.to(new Foo()).filter(MethodMatchers.not(isDeclaredBy(Object.class)));</pre>
      * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
@@ -334,7 +333,7 @@ public class MethodDelegation implements Instrumentation {
      * {@link java.lang.NullPointerException}. Note that this includes methods that were defined by the
      * {@link java.lang.Object} class. You can narrow this default selection by explicitly selecting methods with
      * calling the
-     * {@link net.bytebuddy.instrumentation.MethodDelegation#filter(net.bytebuddy.instrumentation.method.matcher.MethodMatcher)}
+     * {@link net.bytebuddy.instrumentation.MethodDelegation#filter(net.bytebuddy.matcher.ElementMatcher)}
      * method on the returned method delegation as for example:
      * <pre>MethodDelegation.to(new Foo()).filter(MethodMatchers.not(isDeclaredBy(Object.class)));</pre>
      * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
@@ -358,7 +357,7 @@ public class MethodDelegation implements Instrumentation {
      * {@link java.lang.NullPointerException}. Note that this includes methods that were defined by the
      * {@link java.lang.Object} class. You can narrow this default selection by explicitly selecting methods with
      * calling the
-     * {@link net.bytebuddy.instrumentation.MethodDelegation#filter(net.bytebuddy.instrumentation.method.matcher.MethodMatcher)}
+     * {@link net.bytebuddy.instrumentation.MethodDelegation#filter(net.bytebuddy.matcher.ElementMatcher)}
      * method on the returned method delegation as for example:
      * <pre>MethodDelegation.to(new Foo()).filter(MethodMatchers.not(isDeclaredBy(Object.class)));</pre>
      * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
@@ -590,7 +589,7 @@ public class MethodDelegation implements Instrumentation {
      * @param methodMatcher A filter where only methods that match the filter are considered for delegation.
      * @return A method delegation with the filter applied.
      */
-    public MethodDelegation filter(MethodMatcher methodMatcher) {
+    public MethodDelegation filter(ElementMatcher<? super MethodDescription> methodMatcher) {
         return new MethodDelegation(instrumentationDelegate,
                 parameterBinders,
                 defaultsProvider,
@@ -790,7 +789,7 @@ public class MethodDelegation implements Instrumentation {
             @Override
             public StackManipulation getPreparingStackAssignment(TypeDescription instrumentedType) {
                 return FieldAccess.forField(instrumentedType.getDeclaredFields()
-                        .filter((ElementMatchers.named(fieldName))).getOnly()).getter();
+                        .filter((named(fieldName))).getOnly()).getter();
             }
 
             @Override
@@ -855,7 +854,7 @@ public class MethodDelegation implements Instrumentation {
             public StackManipulation getPreparingStackAssignment(TypeDescription instrumentedType) {
                 return new StackManipulation.Compound(MethodVariableAccess.forType(instrumentedType).loadFromIndex(0),
                         FieldAccess.forField(instrumentedType.getDeclaredFields()
-                                .filter((ElementMatchers.named(fieldName))).getOnly()).getter());
+                                .filter((named(fieldName))).getOnly()).getter());
             }
 
             @Override

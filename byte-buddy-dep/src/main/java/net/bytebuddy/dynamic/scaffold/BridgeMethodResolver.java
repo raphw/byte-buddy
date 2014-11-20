@@ -6,7 +6,7 @@ import net.bytebuddy.instrumentation.method.MethodList;
 import java.util.HashMap;
 import java.util.Map;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * Implementations of this interface serve as resolvers for bridge methods. For the Java compiler, a method
@@ -109,7 +109,7 @@ public interface BridgeMethodResolver {
                                                         ConflictHandler conflictHandler) {
             MethodList targetCandidates = bridgeMethod.getDeclaringType()
                     .getDeclaredMethods()
-                    .filter(not(isBridge()).and(isBridgeMethodCompatibleTo(bridgeMethod)));
+                    .filter(not(isBridge()).and(isCompatibleTo(bridgeMethod)));
             switch (targetCandidates.size()) {
                 case 0:
                     return new BridgeTarget.Resolved(bridgeMethod);

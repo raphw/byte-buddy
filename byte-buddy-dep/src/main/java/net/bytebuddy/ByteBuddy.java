@@ -14,10 +14,11 @@ import net.bytebuddy.instrumentation.ModifierContributor;
 import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
+import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
-import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.modifier.TypeManifestation;
 
 import java.lang.annotation.Annotation;
@@ -25,7 +26,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 import static net.bytebuddy.utility.ByteBuddyCommons.*;
 
 /**
@@ -36,7 +37,7 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
  * <p>&nbsp;</p>
  * Note that any configuration defines to ignore the instrumentation of any synthetic methods or the default finalizer
  * method {@link Object#finalize()}. This behavior can be altered by
- * {@link net.bytebuddy.ByteBuddy#withIgnoredMethods(net.bytebuddy.instrumentation.method.matcher.MethodMatcher)}.
+ * {@link net.bytebuddy.ByteBuddy#withIgnoredMethods(net.bytebuddy.matcher.ElementMatcher)}.
  */
 public class ByteBuddy {
 
@@ -63,7 +64,7 @@ public class ByteBuddy {
     /**
      * A matcher for identifying methods that should never be intercepted.
      */
-    protected final MethodMatcher ignoredMethods;
+    protected final ElementMatcher<? super MethodDescription> ignoredMethods;
 
     /**
      * The factory for generating a bridge method resolver for the current configuration.
@@ -159,7 +160,7 @@ public class ByteBuddy {
     protected ByteBuddy(ClassFileVersion classFileVersion,
                         NamingStrategy namingStrategy,
                         List<TypeDescription> interfaceTypes,
-                        MethodMatcher ignoredMethods,
+                        ElementMatcher<? super MethodDescription> ignoredMethods,
                         BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                         ClassVisitorWrapper.Chain classVisitorWrapperChain,
                         MethodRegistry methodRegistry,
@@ -214,7 +215,7 @@ public class ByteBuddy {
      *
      * @return The matcher for the ignored methods for the current configuration.
      */
-    public MethodMatcher getIgnoredMethods() {
+    public ElementMatcher<? super MethodDescription> getIgnoredMethods() {
         return ignoredMethods;
     }
 
@@ -705,7 +706,7 @@ public class ByteBuddy {
                 methodLookupEngineFactory,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
-                isDeclaredByAny(type));
+                isDeclaredBy(anyOf(type)));
     }
 
     /**
@@ -719,7 +720,7 @@ public class ByteBuddy {
      * @return A new configuration that represents this configuration with the given method matcher defining methods
      * that are to be ignored for any instrumentation.
      */
-    public ByteBuddy withIgnoredMethods(MethodMatcher ignoredMethods) {
+    public ByteBuddy withIgnoredMethods(ElementMatcher<? super MethodDescription> ignoredMethods) {
         return new ByteBuddy(classFileVersion,
                 namingStrategy,
                 interfaceTypes,
@@ -862,7 +863,7 @@ public class ByteBuddy {
      * @param methodMatcher The method matcher representing all byte code methods to intercept.
      * @return A matched method interception for the given selection.
      */
-    public MatchedMethodInterception invokable(MethodMatcher methodMatcher) {
+    public MatchedMethodInterception invokable(ElementMatcher<? super MethodDescription> methodMatcher) {
         return new MatchedMethodInterception(nonNull(methodMatcher));
     }
 
@@ -872,7 +873,7 @@ public class ByteBuddy {
      * @param methodMatcher The method matcher representing all methods to intercept.
      * @return A matched method interception for the given selection.
      */
-    public MatchedMethodInterception method(MethodMatcher methodMatcher) {
+    public MatchedMethodInterception method(ElementMatcher<? super MethodDescription> methodMatcher) {
         return invokable(isMethod().and(nonNull(methodMatcher)));
     }
 
@@ -882,7 +883,7 @@ public class ByteBuddy {
      * @param methodMatcher The method matcher representing all constructors to intercept.
      * @return A matched method interception for the given selection.
      */
-    public MatchedMethodInterception constructor(MethodMatcher methodMatcher) {
+    public MatchedMethodInterception constructor(ElementMatcher<? super MethodDescription> methodMatcher) {
         return invokable(isConstructor().and(nonNull(methodMatcher)));
     }
 
@@ -1079,7 +1080,7 @@ public class ByteBuddy {
         /**
          * The method matcher representing the current method selection.
          */
-        protected final MethodMatcher methodMatcher;
+        protected final ElementMatcher<? super MethodDescription> methodMatcher;
 
         /**
          * The instrumentation that was defined for the current method selection.
@@ -1120,7 +1121,7 @@ public class ByteBuddy {
         protected MethodAnnotationTarget(ClassFileVersion classFileVersion,
                                          NamingStrategy namingStrategy,
                                          List<TypeDescription> interfaceTypes,
-                                         MethodMatcher ignoredMethods,
+                                         ElementMatcher<? super MethodDescription> ignoredMethods,
                                          BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                                          ClassVisitorWrapper.Chain classVisitorWrapperChain,
                                          MethodRegistry methodRegistry,
@@ -1129,7 +1130,7 @@ public class ByteBuddy {
                                          MethodLookupEngine.Factory methodLookupEngineFactory,
                                          FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                                          MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
-                                         MethodMatcher methodMatcher,
+                                         ElementMatcher<? super MethodDescription> methodMatcher,
                                          Instrumentation instrumentation,
                                          MethodAttributeAppender.Factory attributeAppenderFactory) {
             super(classFileVersion,
@@ -1216,7 +1217,7 @@ public class ByteBuddy {
         }
 
         @Override
-        public MethodMatcher getIgnoredMethods() {
+        public ElementMatcher<? super MethodDescription> getIgnoredMethods() {
             return materialize().getIgnoredMethods();
         }
 
@@ -1326,7 +1327,7 @@ public class ByteBuddy {
         }
 
         @Override
-        public ByteBuddy withIgnoredMethods(MethodMatcher ignoredMethods) {
+        public ByteBuddy withIgnoredMethods(ElementMatcher<? super MethodDescription> ignoredMethods) {
             return materialize().withIgnoredMethods(ignoredMethods);
         }
 
@@ -1346,7 +1347,7 @@ public class ByteBuddy {
         }
 
         @Override
-        public MatchedMethodInterception invokable(MethodMatcher methodMatcher) {
+        public MatchedMethodInterception invokable(ElementMatcher<? super MethodDescription> methodMatcher) {
             return materialize().invokable(methodMatcher);
         }
 
@@ -1412,7 +1413,7 @@ public class ByteBuddy {
         /**
          * The method matcher that defines the selected that is represented by this instance.
          */
-        protected final MethodMatcher methodMatcher;
+        protected final ElementMatcher<? super MethodDescription> methodMatcher;
 
         /**
          * Creates a new optional method interception.
@@ -1439,7 +1440,7 @@ public class ByteBuddy {
         protected OptionalMethodInterception(ClassFileVersion classFileVersion,
                                              NamingStrategy namingStrategy,
                                              List<TypeDescription> interfaceTypes,
-                                             MethodMatcher ignoredMethods,
+                                             ElementMatcher<? super MethodDescription> ignoredMethods,
                                              BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                                              ClassVisitorWrapper.Chain classVisitorWrapperChain,
                                              MethodRegistry methodRegistry,
@@ -1448,7 +1449,7 @@ public class ByteBuddy {
                                              MethodLookupEngine.Factory methodLookupEngineFactory,
                                              FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                                              MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
-                                             MethodMatcher methodMatcher) {
+                                             ElementMatcher<? super MethodDescription> methodMatcher) {
             super(classFileVersion,
                     namingStrategy,
                     interfaceTypes,
@@ -1513,14 +1514,14 @@ public class ByteBuddy {
         /**
          * A method matcher that represents the current method selection.
          */
-        protected final MethodMatcher methodMatcher;
+        protected final ElementMatcher<? super MethodDescription> methodMatcher;
 
         /**
          * Creates a new matched method interception.
          *
          * @param methodMatcher The method matcher representing the current method selection.
          */
-        protected MatchedMethodInterception(MethodMatcher methodMatcher) {
+        protected MatchedMethodInterception(ElementMatcher<? super MethodDescription> methodMatcher) {
             this.methodMatcher = methodMatcher;
         }
 

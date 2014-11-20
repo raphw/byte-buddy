@@ -19,11 +19,10 @@ import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess;
-import net.bytebuddy.instrumentation.method.matcher.JunctionMethodMatcher;
-import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
 import net.bytebuddy.instrumentation.type.auxiliary.TrivialType;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
@@ -32,7 +31,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.*;
+
 
 /**
  * A dynamic type builder which enhances a given type without creating a subclass.
@@ -79,7 +79,7 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                                     List<? extends TypeDescription> interfaceTypes,
                                     int modifiers,
                                     TypeAttributeAppender attributeAppender,
-                                    MethodMatcher ignoredMethods,
+                                    ElementMatcher<? super MethodDescription> ignoredMethods,
                                     BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                                     ClassVisitorWrapper.Chain classVisitorWrapperChain,
                                     FieldRegistry fieldRegistry,
@@ -140,7 +140,7 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                                        List<TypeDescription> interfaceTypes,
                                        int modifiers,
                                        TypeAttributeAppender attributeAppender,
-                                       MethodMatcher ignoredMethods,
+                                       ElementMatcher<? super MethodDescription> ignoredMethods,
                                        BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                                        ClassVisitorWrapper.Chain classVisitorWrapperChain,
                                        FieldRegistry fieldRegistry,
@@ -171,20 +171,6 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
         this.targetHandler = targetHandler;
     }
 
-    /**
-     * Matches any method description of the list of given methods.
-     *
-     * @param methodDescriptions A list of method descriptions to match.
-     * @return A method matcher that matches the list of methods.
-     */
-    private static MethodMatcher anyOf(List<MethodDescription> methodDescriptions) {
-        JunctionMethodMatcher methodMatcher = none();
-        for (MethodDescription methodDescription : methodDescriptions) {
-            methodMatcher = methodMatcher.or(is(methodDescription));
-        }
-        return methodMatcher;
-    }
-
     @Override
     protected DynamicType.Builder<T> materialize(ClassFileVersion classFileVersion,
                                                  NamingStrategy namingStrategy,
@@ -192,7 +178,7 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                                                  List<TypeDescription> interfaceTypes,
                                                  int modifiers,
                                                  TypeAttributeAppender attributeAppender,
-                                                 MethodMatcher ignoredMethods,
+                                                 ElementMatcher<? super MethodDescription> ignoredMethods,
                                                  BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                                                  ClassVisitorWrapper.Chain classVisitorWrapperChain,
                                                  FieldRegistry fieldRegistry,
@@ -244,9 +230,9 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                         targetType,
                         classFileVersion,
                         compiledMethodRegistry.getInvokableMethods().filter(isOverridable()
-                                .or(isDeclaredBy(compiledMethodRegistry.getInstrumentedType()))
+                                .<MethodDescription>or(isDeclaredBy(compiledMethodRegistry.getInstrumentedType()))
                                 .and(not(ignoredMethods).or(isDeclaredBy(compiledMethodRegistry.getInstrumentedType())
-                                        .and(not(anyOf(targetType.getDeclaredMethods())))))),
+                                        .<MethodDescription>and(not(anyOf(targetType.getDeclaredMethods())))))),
                         classVisitorWrapperChain,
                         attributeAppender,
                         fieldRegistry.prepare(compiledMethodRegistry.getInstrumentedType()).compile(TypeWriter.FieldPool.Entry.NoOp.INSTANCE),
@@ -305,7 +291,7 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
          * @param instrumentedType The instrumented type.
          * @return A prepared target handler.
          */
-        Prepared prepare(MethodMatcher ignoredMethods,
+        Prepared prepare(ElementMatcher<? super MethodDescription> ignoredMethods,
                          ClassFileVersion classFileVersion,
                          TypeDescription instrumentedType);
 
@@ -321,7 +307,7 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
             INSTANCE;
 
             @Override
-            public Prepared prepare(MethodMatcher ignoredMethods,
+            public Prepared prepare(ElementMatcher<? super MethodDescription> ignoredMethods,
                                     ClassFileVersion classFileVersion,
                                     TypeDescription instrumentedType) {
                 return Prepared.ForRedefinitionInstrumentation.INSTANCE;
@@ -340,7 +326,7 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
             INSTANCE;
 
             @Override
-            public Prepared prepare(MethodMatcher ignoredMethods,
+            public Prepared prepare(ElementMatcher<? super MethodDescription> ignoredMethods,
                                     ClassFileVersion classFileVersion,
                                     TypeDescription instrumentedType) {
                 return Prepared.ForRebaseInstrumentation.of(ignoredMethods, classFileVersion, instrumentedType);
@@ -444,7 +430,7 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                  * @param randomString    A supplied for random strings.
                  */
                 protected ForRebaseInstrumentation(DynamicType placeholderType,
-                                                   MethodMatcher ignoredMethods,
+                                                   ElementMatcher<? super MethodDescription> ignoredMethods,
                                                    RandomString randomString) {
                     this.placeholderType = placeholderType;
                     methodRebaseResolver = new MethodRebaseResolver.Default(ignoredMethods,
@@ -460,7 +446,7 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                  * @param instrumentedType The instrumented type.
                  * @return A prepared target handler.
                  */
-                public static Prepared of(MethodMatcher ignoredMethods,
+                public static Prepared of(ElementMatcher<? super MethodDescription> ignoredMethods,
                                           ClassFileVersion classFileVersion,
                                           TypeDescription instrumentedType) {
                     RandomString randomString = new RandomString();

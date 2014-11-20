@@ -16,8 +16,8 @@ import org.objectweb.asm.Opcodes;
 import java.io.Serializable;
 import java.util.Collections;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isConstructor;
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.isMethod;
+import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
+import static net.bytebuddy.matcher.ElementMatchers.isMethod;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;

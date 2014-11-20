@@ -32,7 +32,7 @@ import java.io.Serializable;
 import java.lang.annotation.*;
 import java.util.*;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**

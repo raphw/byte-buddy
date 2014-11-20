@@ -24,7 +24,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * A type pool allows the retreival of {@link net.bytebuddy.instrumentation.type.TypeDescription} by its name.
@@ -1766,8 +1766,9 @@ public interface TypePool {
                 public MethodDescription getEnclosingMethod(TypePool typePool) {
                     return getEnclosingType(typePool).getDeclaredMethods()
                             .filter(MethodDescription.CONSTRUCTOR_INTERNAL_NAME.equals(methodName)
-                                    ? isConstructor() : named(methodName)
-                                    .and(hasMethodDescriptor(methodDescriptor))).getOnly();
+                                    ? isConstructor()
+                                    : named(methodName)
+                                    .<MethodDescription>and(hasDescriptor(methodDescriptor))).getOnly();
                 }
 
                 @Override

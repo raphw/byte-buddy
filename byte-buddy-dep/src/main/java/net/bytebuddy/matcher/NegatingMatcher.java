@@ -8,14 +8,14 @@ class NegatingMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
     /**
      * The method matcher to negate.
      */
-    private final ElementMatcher<T> negatedMatcher;
+    private final ElementMatcher<? super T> negatedMatcher;
 
     /**
      * Creates a new negating method matcher.
      *
      * @param negatedMatcher The method matcher to negate.
      */
-    public NegatingMatcher(ElementMatcher<T> negatedMatcher) {
+    public NegatingMatcher(ElementMatcher<? super T> negatedMatcher) {
         this.negatedMatcher = negatedMatcher;
     }
 

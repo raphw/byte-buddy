@@ -29,7 +29,7 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
-import static net.bytebuddy.instrumentation.method.matcher.MethodMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * A type proxy creates accessor methods for all overridable methods of a given type by subclassing the given type and
@@ -99,7 +99,7 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
                             ClassFileVersion classFileVersion,
                             MethodAccessorFactory methodAccessorFactory) {
         return new ByteBuddy(classFileVersion)
-                .withIgnoredMethods(ignoreFinalizer ? isFinalizer() : none())
+                .withIgnoredMethods(ignoreFinalizer ? isFinalizer() : ElementMatchers.<MethodDescription>none())
                 .subclass(proxiedType)
                 .name(auxiliaryTypeName)
                 .modifiers(DEFAULT_TYPE_MODIFIER)
@@ -591,7 +591,7 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
                     Duplication.SINGLE,
                     MethodVariableAccess.forType(instrumentationTarget.getTypeDescription()).loadFromIndex(0),
                     FieldAccess.forField(proxyType.getDeclaredFields()
-                            .filter((ElementMatchers.named(INSTANCE_FIELD))).getOnly()).putter()
+                            .filter((named(INSTANCE_FIELD))).getOnly()).putter()
             ).apply(methodVisitor, instrumentationContext);
         }
 
@@ -682,7 +682,7 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
                     Duplication.SINGLE,
                     MethodVariableAccess.forType(instrumentationTarget.getTypeDescription()).loadFromIndex(0),
                     FieldAccess.forField(proxyType.getDeclaredFields()
-                            .filter((ElementMatchers.named(INSTANCE_FIELD))).getOnly()).putter()
+                            .filter((named(INSTANCE_FIELD))).getOnly()).putter()
             ).apply(methodVisitor, instrumentationContext);
         }
 
@@ -791,7 +791,7 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
              */
             protected Appender(TypeDescription instrumentedType) {
                 fieldLoadingInstruction = FieldAccess.forField(instrumentedType.getDeclaredFields()
-                        .filter((ElementMatchers.named(INSTANCE_FIELD))).getOnly()).getter();
+                        .filter((named(INSTANCE_FIELD))).getOnly()).getter();
             }
 
             @Override

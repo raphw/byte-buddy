@@ -3,8 +3,8 @@ package net.bytebuddy.dynamic.scaffold.inline;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.constant.NullConstant;
-import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.Opcodes;
 
@@ -341,7 +341,7 @@ public interface MethodRebaseResolver {
         /**
          * Ignored methods which are never rebased.
          */
-        private final MethodMatcher ignoredMethods;
+        private final ElementMatcher<? super MethodDescription> ignoredMethods;
 
         /**
          * A placeholder type which is added to a rebased constructor.
@@ -360,7 +360,7 @@ public interface MethodRebaseResolver {
          * @param placeholderType       A placeholder type which is added to a rebased constructor.
          * @param methodNameTransformer A transformer for renaming a rebased method.
          */
-        public Default(MethodMatcher ignoredMethods,
+        public Default(ElementMatcher<? super MethodDescription> ignoredMethods,
                        TypeDescription placeholderType,
                        MethodNameTransformer methodNameTransformer) {
             this.ignoredMethods = ignoredMethods;

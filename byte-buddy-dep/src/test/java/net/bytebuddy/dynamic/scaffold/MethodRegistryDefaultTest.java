@@ -7,9 +7,9 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
-import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.MockitoRule;
 import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -52,7 +52,7 @@ public class MethodRegistryDefaultTest {
     @Mock
     private MethodRegistry.LatentMethodMatcher latentMatchesKnownMethod;
     @Mock
-    private MethodMatcher matchesKnownMethod;
+    private ElementMatcher<? super MethodDescription> matchesKnownMethod;
     @Mock
     private Instrumentation simpleInstrumentation, otherInstrumentation, extendingInstrumentation;
     @Mock
@@ -69,9 +69,10 @@ public class MethodRegistryDefaultTest {
     private LoadedTypeInitializer loadedTypeInitializer;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(fallbackFactory.compile(any(Instrumentation.Target.class))).thenReturn(fallback);
-        when(latentMatchesKnownMethod.manifest(any(TypeDescription.class))).thenReturn(matchesKnownMethod);
+        when(latentMatchesKnownMethod.manifest(any(TypeDescription.class))).thenReturn((ElementMatcher) matchesKnownMethod);
         when(matchesKnownMethod.matches(knownMethod)).thenReturn(true);
         when(basicInstrumentedType.getDeclaredMethods()).thenReturn(basicMethodList);
         when(basicMethodList.size()).thenReturn(BASIC_SIZE);
@@ -88,7 +89,7 @@ public class MethodRegistryDefaultTest {
         when(extendedMethodList.subList(anyInt(), anyInt())).thenReturn(croppedMethodList);
         when(zeroSize.size()).thenReturn(0);
         when(singleSize.size()).thenReturn(1);
-        when(croppedMethodList.filter(any(MethodMatcher.class))).thenAnswer(new Answer<MethodList>() {
+        when(croppedMethodList.filter(any(ElementMatcher.class))).thenAnswer(new Answer<MethodList>() {
             @Override
             public MethodList answer(InvocationOnMock invocation) throws Throwable {
                 Field field = invocation.getArguments()[0].getClass().getDeclaredField("methodDescription");
@@ -210,6 +211,7 @@ public class MethodRegistryDefaultTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testAppendedMethodsAreHandledByAppendingInstrumentation() throws Exception {
         MethodRegistry.Compiled compiled = new MethodRegistry.Default()
                 .append(latentMatchesKnownMethod, extendingInstrumentation, simpleAttributeAppenderFactory)
@@ -229,7 +231,7 @@ public class MethodRegistryDefaultTest {
         assertThat(compiled.target(instrumentationAppendedMethod).getByteCodeAppender(), is(simpleByteCodeAppender));
         assertThat(compiled.target(instrumentationAppendedMethod).getAttributeAppender(),
                 is((MethodAttributeAppender) MethodAttributeAppender.NoOp.INSTANCE));
-        verify(croppedMethodList, times(7) /* for 7 calls to compiled.target */).filter(any(MethodMatcher.class));
+        verify(croppedMethodList, times(7) /* for 7 calls to compiled.target */).filter(any(ElementMatcher.class));
         verify(fallbackFactory).compile(extendedInstrumentationTarget);
         verifyNoMoreInteractions(fallbackFactory);
     }
