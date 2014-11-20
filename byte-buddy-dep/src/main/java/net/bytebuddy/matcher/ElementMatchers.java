@@ -5,6 +5,7 @@ import net.bytebuddy.instrumentation.ModifierReviewable;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.RuntimeType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.instrumentation.type.TypeList;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -277,14 +278,17 @@ public class ElementMatchers {
     }
 
     public static ElementMatcher.Junction<MethodDescription> isBridgeMethodCompatibleTo(MethodDescription methodDescription) {
-        return methodDescription.isTypeInitializer()
-                ? new BooleanMatcher<MethodDescription>(false)
-                : (
-                methodDescription.isConstructor()
-                        ? isConstructor()
-                        : new NameMatcher<MethodDescription>(new StringMatcher(methodDescription.getName(), StringMatcher.Mode.EQUALS_FULLY)))
-                .and(returns(isSubTypeOf(methodDescription.getReturnType())))
-                .and(takesArguments(isSubTypeOf(methodDescription.getParameterTypes())));
+        if (methodDescription.isTypeInitializer()) {
+            return is(methodDescription);
+        }
+        TypeList parameterTypes = methodDescription.getParameterTypes();
+        List<ElementMatcher<TypeDescription>> matchers = new ArrayList<ElementMatcher<TypeDescription>>(parameterTypes.size());
+        for (TypeDescription typeDescription : parameterTypes) {
+            matchers.add(isSuperTypeOf(typeDescription));
+        }
+        return returns(isSubTypeOf(methodDescription.getReturnType()))
+                .and(takesArguments(new ListOneToOneMatcher<TypeDescription>(matchers)))
+                .and(named(methodDescription.getName()));
     }
 
     public static ElementMatcher.Junction<TypeDescription> isSubTypeOf(Class<?> type) {
@@ -293,14 +297,6 @@ public class ElementMatchers {
 
     public static ElementMatcher.Junction<TypeDescription> isSubTypeOf(TypeDescription typeDescription) {
         return new SubTypeMatcher<TypeDescription>(nonNull(typeDescription));
-    }
-
-    private static ElementMatcher.Junction<List<? extends TypeDescription>> isSubTypeOf(List<? extends TypeDescription> typeDescriptions) {
-        List<ElementMatcher<TypeDescription>> matchers = new ArrayList<ElementMatcher<TypeDescription>>(typeDescriptions.size());
-        for (TypeDescription typeDescription : typeDescriptions) {
-            matchers.add(isSubTypeOf(typeDescription));
-        }
-        return new ListOneToOneMatcher<TypeDescription>(matchers);
     }
 
     public static ElementMatcher.Junction<TypeDescription> isSuperTypeOf(Class<?> type) {

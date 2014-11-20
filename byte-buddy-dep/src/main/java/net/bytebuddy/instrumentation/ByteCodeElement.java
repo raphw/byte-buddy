@@ -24,6 +24,19 @@ public interface ByteCodeElement extends ModifierReviewable, DeclaredInType, Ann
     String getInternalName();
 
     /**
+     * Returns the name of this byte code element as it is defined in Java source code. This means:
+     * <ul>
+     * <li>For type descriptions, the main distinction is the display of arrays whose actual names are blended
+     * with internal names when calling {@link net.bytebuddy.instrumentation.ByteCodeElement#getName()}.</li>
+     * <li>For method descriptions, representations of constructors and the type initializer, return the
+     * empty string.</li>
+     * </ul>
+     *
+     * @return The name of this type as represented in Java source code.
+     */
+    String getSourceCodeName();
+
+    /**
      * Returns the descriptor of this byte code element.
      *
      * @return The descriptor of this byte code element.
@@ -36,6 +49,7 @@ public interface ByteCodeElement extends ModifierReviewable, DeclaredInType, Ann
      * @return The generic signature or {@code null} if this element is not generic.
      */
     String getGenericSignature();
+
 
     /**
      * Checks if this element is visible from a given type.

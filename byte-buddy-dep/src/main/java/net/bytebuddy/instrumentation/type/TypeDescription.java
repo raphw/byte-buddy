@@ -249,15 +249,6 @@ public interface TypeDescription extends ByteCodeElement {
     BinaryRepresentation toBinary();
 
     /**
-     * Returns the name of this type as it is defined in Java source code. The main distinction is the display
-     * of arrays which are merged with internal names when calling the
-     * {@link net.bytebuddy.instrumentation.ByteCodeElement#getName()} to match the convention of Java types.
-     *
-     * @return The name of this type as represented in Java source code.
-     */
-    String getSourceCodeName();
-
-    /**
      * Returns the annotations that this type declares or inherits from super types.
      *
      * @return A list of all inherited annotations.

@@ -12,7 +12,7 @@ public class NameMatcher<T extends ByteCodeElement> extends ElementMatcher.Junct
 
     @Override
     public boolean matches(T target) {
-        return nameMatcher.matches(target.getName());
+        return nameMatcher.matches(target.getSourceCodeName());
     }
 
     @Override

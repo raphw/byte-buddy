@@ -21,7 +21,7 @@ public class TypeProxyObjectPropertiesTest {
             @Override
             public void apply(TypeDescription mock) {
                 FieldDescription fieldDescription = Mockito.mock(FieldDescription.class);
-                when(fieldDescription.getName()).thenReturn(TypeProxy.INSTANCE_FIELD);
+                when(fieldDescription.getSourceCodeName()).thenReturn(TypeProxy.INSTANCE_FIELD);
                 when(mock.getDeclaredFields()).thenReturn(new FieldList.Explicit(Arrays.asList(fieldDescription)));
             }
         }).skipSynthetic().apply();

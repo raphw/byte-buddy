@@ -31,6 +31,11 @@ public interface FieldDescription extends ByteCodeElement {
         }
 
         @Override
+        public String getSourceCodeName() {
+            return getName();
+        }
+
+        @Override
         public String getDescriptor() {
             return getFieldType().getDescriptor();
         }

@@ -222,6 +222,11 @@ public interface MethodDescription extends ByteCodeElement {
         }
 
         @Override
+        public String getSourceCodeName() {
+            return isMethod() ? getName() : "";
+        }
+
+        @Override
         public String getDescriptor() {
             StringBuilder descriptor = new StringBuilder("(");
             for (TypeDescription parameterType : getParameterTypes()) {
