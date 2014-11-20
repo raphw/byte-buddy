@@ -1,15 +1,19 @@
 package net.bytebuddy.instrumentation.attribute.annotation;
 
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.matcher.FilterableList;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Inherited;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Defines a list of annotation instances.
  */
-public interface AnnotationList extends List<AnnotationDescription> {
+public interface AnnotationList extends FilterableList<AnnotationDescription, AnnotationList> {
 
     /**
      * Checks if this list contains an annotation of the given type.
@@ -37,13 +41,10 @@ public interface AnnotationList extends List<AnnotationDescription> {
      */
     AnnotationList inherited(Set<? extends TypeDescription> ignoredTypes);
 
-    @Override
-    AnnotationList subList(int fromIndex, int toIndex);
-
     /**
      * Describes an array of loaded {@link java.lang.annotation.Annotation}s as an annotatoon list.
      */
-    static class ForLoadedAnnotation extends AbstractList<AnnotationDescription> implements AnnotationList {
+    static class ForLoadedAnnotation extends AbstractBase<AnnotationDescription, AnnotationList> implements AnnotationList {
 
         /**
          * The represented annotations.
@@ -116,71 +117,15 @@ public interface AnnotationList extends List<AnnotationDescription> {
         }
 
         @Override
-        public AnnotationList subList(int fromIndex, int toIndex) {
-            return new Explicit(super.subList(fromIndex, toIndex));
-        }
-    }
-
-    /**
-     * Represents an empty annotation list.
-     */
-    static class Empty extends AbstractList<AnnotationDescription> implements AnnotationList {
-
-        /**
-         * Creates a list of empty annotation lists of the given dimension.
-         *
-         * @param length The length of the list.
-         * @return A list of empty annotation lists of the given length.
-         */
-        public static List<AnnotationList> asList(int length) {
-            List<AnnotationList> result = new ArrayList<AnnotationList>(length);
-            for (int i = 0; i < length; i++) {
-                result.add(new Empty());
-            }
-            return result;
-        }
-
-        @Override
-        public AnnotationDescription get(int index) {
-            throw new IndexOutOfBoundsException();
-        }
-
-        @Override
-        public int size() {
-            return 0;
-        }
-
-        @Override
-        public boolean isAnnotationPresent(Class<? extends Annotation> annotationType) {
-            return false;
-        }
-
-        @Override
-        public <T extends Annotation> AnnotationDescription.Loadable<T> ofType(Class<T> annotationType) {
-            return null;
-        }
-
-        @Override
-        public AnnotationList inherited(Set<? extends TypeDescription> ignoredTypes) {
-            return this;
-        }
-
-        @Override
-        public AnnotationList subList(int fromIndex, int toIndex) {
-            if (fromIndex == toIndex && toIndex == 0) {
-                return this;
-            } else if (fromIndex > toIndex) {
-                throw new IllegalArgumentException("fromIndex(" + fromIndex + ") > toIndex(" + toIndex + ")");
-            } else {
-                throw new IndexOutOfBoundsException("fromIndex = " + fromIndex);
-            }
+        protected AnnotationList wrap(List<AnnotationDescription> values) {
+            return new Explicit(values);
         }
     }
 
     /**
      * Represents a list of explicitly provided annotation descriptions.
      */
-    static class Explicit extends AbstractList<AnnotationDescription> implements AnnotationList {
+    static class Explicit extends AbstractBase<AnnotationDescription, AnnotationList> implements AnnotationList {
 
         /**
          * The list of represented annotation descriptions.
@@ -253,8 +198,43 @@ public interface AnnotationList extends List<AnnotationDescription> {
         }
 
         @Override
-        public AnnotationList subList(int fromIndex, int toIndex) {
-            return new Explicit(super.subList(fromIndex, toIndex));
+        protected AnnotationList wrap(List<AnnotationDescription> values) {
+            return new Explicit(values);
+        }
+    }
+
+    /**
+     * Represents an empty annotation list.
+     */
+    static class Empty extends FilterableList.Empty<AnnotationDescription, AnnotationList> implements AnnotationList {
+
+        /**
+         * Creates a list of empty annotation lists of the given dimension.
+         *
+         * @param length The length of the list.
+         * @return A list of empty annotation lists of the given length.
+         */
+        public static List<AnnotationList> asList(int length) {
+            List<AnnotationList> result = new ArrayList<AnnotationList>(length);
+            for (int i = 0; i < length; i++) {
+                result.add(new AnnotationList.Empty());
+            }
+            return result;
+        }
+
+        @Override
+        public boolean isAnnotationPresent(Class<? extends Annotation> annotationType) {
+            return false;
+        }
+
+        @Override
+        public <T extends Annotation> AnnotationDescription.Loadable<T> ofType(Class<T> annotationType) {
+            return null;
+        }
+
+        @Override
+        public AnnotationList inherited(Set<? extends TypeDescription> ignoredTypes) {
+            return this;
         }
     }
 }

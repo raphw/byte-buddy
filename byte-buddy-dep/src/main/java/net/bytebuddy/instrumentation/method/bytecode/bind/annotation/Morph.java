@@ -25,6 +25,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariable
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
+import net.bytebuddy.matcher.ElementMatchers;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -576,7 +577,8 @@ public @interface Morph {
                     protected Appender(Target instrumentationTarget) {
                         fieldDescription = instrumentationTarget.getTypeDescription()
                                 .getDeclaredFields()
-                                .named(RedirectionProxy.FIELD_NAME);
+                                .filter((ElementMatchers.named(RedirectionProxy.FIELD_NAME)))
+                                .getOnly();
                     }
 
                     @Override
@@ -717,7 +719,9 @@ public @interface Morph {
                                         ? LegalTrivial.INSTANCE
                                         : new StackManipulation.Compound(
                                         MethodVariableAccess.REFERENCE.loadFromIndex(0),
-                                        FieldAccess.forField(typeDescription.getDeclaredFields().named(RedirectionProxy.FIELD_NAME)).getter()),
+                                        FieldAccess.forField(typeDescription.getDeclaredFields()
+                                                .filter((ElementMatchers.named(RedirectionProxy.FIELD_NAME)))
+                                                .getOnly()).getter()),
                                 new StackManipulation.Compound(parameterLoading),
                                 MethodInvocation.invoke(accessorMethod),
                                 assigner.assign(accessorMethod.getReturnType(), instrumentedMethod.getReturnType(), false),

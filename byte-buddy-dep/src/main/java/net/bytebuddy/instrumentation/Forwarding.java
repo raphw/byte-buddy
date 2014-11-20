@@ -9,6 +9,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.matcher.ElementMatchers;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -144,7 +145,8 @@ public class Forwarding implements Instrumentation {
      */
     private StackManipulation loadDelegate(TypeDescription instrumentedType) {
         return new StackManipulation.Compound(preparationHandler.loadFieldOwner(),
-                FieldAccess.forField(instrumentedType.getDeclaredFields().named(fieldName)).getter());
+                FieldAccess.forField(instrumentedType.getDeclaredFields()
+                        .filter((ElementMatchers.named(fieldName))).getOnly()).getter());
     }
 
     @Override

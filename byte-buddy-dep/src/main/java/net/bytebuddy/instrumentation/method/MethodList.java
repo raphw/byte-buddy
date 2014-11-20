@@ -1,10 +1,10 @@
 package net.bytebuddy.instrumentation.method;
 
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
+import net.bytebuddy.matcher.FilterableList;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * Implementations represent a list of method descriptions.
  */
-public interface MethodList extends List<MethodDescription> {
+public interface MethodList extends FilterableList<MethodDescription, MethodList> {
 
     /**
      * Returns a new list that only includes the methods that are matched by the given method matcher.
@@ -22,22 +22,11 @@ public interface MethodList extends List<MethodDescription> {
      */
     MethodList filter(MethodMatcher methodMatcher);
 
-    @Override
-    MethodList subList(int fromIndex, int toIndex);
-
-    /**
-     * Returns the only element in this method list or throws an exception if there is more than or less than
-     * one element in this list.
-     *
-     * @return the only element of this list.
-     */
-    MethodDescription getOnly();
-
     /**
      * A method list implementation that returns all loaded byte code methods (methods and constructors) that
      * are declared for a given type.
      */
-    static class ForLoadedType extends AbstractList<MethodDescription> implements MethodList {
+    static class ForLoadedType extends AbstractBase<MethodDescription, MethodList> implements MethodList {
 
         /**
          * The loaded methods that are represented by this method list.
@@ -92,24 +81,15 @@ public interface MethodList extends List<MethodDescription> {
         }
 
         @Override
-        public MethodDescription getOnly() {
-            if (size() == 1) {
-                return get(0);
-            } else {
-                throw new IllegalStateException("Expected to find exactly one method but found " + size() + " methods");
-            }
-        }
-
-        @Override
-        public MethodList subList(int fromIndex, int toIndex) {
-            return new Explicit(super.subList(fromIndex, toIndex));
+        protected MethodList wrap(List<MethodDescription> values) {
+            return new Explicit(values);
         }
     }
 
     /**
      * A method list that is a wrapper for a given list of method descriptions.
      */
-    static class Explicit extends AbstractList<MethodDescription> implements MethodList {
+    static class Explicit extends AbstractBase<MethodDescription, MethodList> implements MethodList {
 
         /**
          * The list of methods that is represented by this method list.
@@ -147,54 +127,19 @@ public interface MethodList extends List<MethodDescription> {
         }
 
         @Override
-        public MethodDescription getOnly() {
-            if (methodDescriptions.size() == 1) {
-                return methodDescriptions.get(0);
-            } else {
-                throw new IllegalStateException("Expected to find exactly one method but found " + methodDescriptions.size());
-            }
-        }
-
-        @Override
-        public MethodList subList(int fromIndex, int toIndex) {
-            return new Explicit(super.subList(fromIndex, toIndex));
+        protected MethodList wrap(List<MethodDescription> values) {
+            return new Explicit(values);
         }
     }
 
     /**
      * An implementation of an empty method list.
      */
-    static class Empty extends AbstractList<MethodDescription> implements MethodList {
-
-        @Override
-        public MethodDescription get(int index) {
-            throw new IndexOutOfBoundsException("index = " + index);
-        }
-
-        @Override
-        public int size() {
-            return 0;
-        }
+    static class Empty extends FilterableList.Empty<MethodDescription, MethodList> implements MethodList {
 
         @Override
         public MethodList filter(MethodMatcher methodMatcher) {
             return this;
-        }
-
-        @Override
-        public MethodDescription getOnly() {
-            throw new IllegalStateException("Expected to find exactly one method but found none");
-        }
-
-        @Override
-        public MethodList subList(int fromIndex, int toIndex) {
-            if (fromIndex == toIndex && toIndex == 0) {
-                return this;
-            } else if (fromIndex > toIndex) {
-                throw new IllegalArgumentException("fromIndex(" + fromIndex + ") > toIndex(" + toIndex + ")");
-            } else {
-                throw new IndexOutOfBoundsException("fromIndex = " + fromIndex);
-            }
         }
     }
 }

@@ -19,6 +19,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.modifier.Ownership;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -486,7 +487,8 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
                             .filter(isConstructor().and(takesArguments(constructorParameters))).getOnly()),
                     Duplication.SINGLE,
                     MethodVariableAccess.forType(instrumentationTarget.getTypeDescription()).loadFromIndex(0),
-                    FieldAccess.forField(proxyType.getDeclaredFields().named(INSTANCE_FIELD)).putter()
+                    FieldAccess.forField(proxyType.getDeclaredFields()
+                            .filter((ElementMatchers.named(INSTANCE_FIELD))).getOnly()).putter()
             ).apply(methodVisitor, instrumentationContext);
         }
 
@@ -588,7 +590,8 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
                             .filter(named(REFLECTION_METHOD).and(takesArguments(0))).getOnly()),
                     Duplication.SINGLE,
                     MethodVariableAccess.forType(instrumentationTarget.getTypeDescription()).loadFromIndex(0),
-                    FieldAccess.forField(proxyType.getDeclaredFields().named(INSTANCE_FIELD)).putter()
+                    FieldAccess.forField(proxyType.getDeclaredFields()
+                            .filter((ElementMatchers.named(INSTANCE_FIELD))).getOnly()).putter()
             ).apply(methodVisitor, instrumentationContext);
         }
 
@@ -678,7 +681,8 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
                     MethodInvocation.invoke(proxyType.getDeclaredMethods().filter(isConstructor()).getOnly()),
                     Duplication.SINGLE,
                     MethodVariableAccess.forType(instrumentationTarget.getTypeDescription()).loadFromIndex(0),
-                    FieldAccess.forField(proxyType.getDeclaredFields().named(INSTANCE_FIELD)).putter()
+                    FieldAccess.forField(proxyType.getDeclaredFields()
+                            .filter((ElementMatchers.named(INSTANCE_FIELD))).getOnly()).putter()
             ).apply(methodVisitor, instrumentationContext);
         }
 
@@ -786,7 +790,8 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
              * @param instrumentedType The instrumented type that is proxied by the enclosing instrumentation.
              */
             protected Appender(TypeDescription instrumentedType) {
-                fieldLoadingInstruction = FieldAccess.forField(instrumentedType.getDeclaredFields().named(INSTANCE_FIELD)).getter();
+                fieldLoadingInstruction = FieldAccess.forField(instrumentedType.getDeclaredFields()
+                        .filter((ElementMatchers.named(INSTANCE_FIELD))).getOnly()).getter();
             }
 
             @Override

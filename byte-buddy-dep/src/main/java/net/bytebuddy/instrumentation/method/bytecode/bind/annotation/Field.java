@@ -23,6 +23,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariable
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
+import net.bytebuddy.matcher.ElementMatchers;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -465,7 +466,8 @@ public @interface Field {
                                         ? StackManipulation.LegalTrivial.INSTANCE
                                         : new StackManipulation.Compound(
                                         MethodVariableAccess.REFERENCE.loadFromIndex(0),
-                                        FieldAccess.forField(typeDescription.getDeclaredFields().named(AccessorProxy.FIELD_NAME)).getter()),
+                                        FieldAccess.forField(typeDescription.getDeclaredFields()
+                                                .filter((ElementMatchers.named(AccessorProxy.FIELD_NAME))).getOnly()).getter()),
                                 MethodInvocation.invoke(getterMethod),
                                 assigner.assign(getterMethod.getReturnType(), instrumentedMethod.getReturnType(), true),
                                 MethodReturn.returning(instrumentedMethod.getReturnType())
@@ -611,7 +613,8 @@ public @interface Field {
                                         ? StackManipulation.LegalTrivial.INSTANCE
                                         : new StackManipulation.Compound(
                                         MethodVariableAccess.REFERENCE.loadFromIndex(0),
-                                        FieldAccess.forField(typeDescription.getDeclaredFields().named(AccessorProxy.FIELD_NAME)).getter()),
+                                        FieldAccess.forField(typeDescription.getDeclaredFields()
+                                                .filter((ElementMatchers.named(AccessorProxy.FIELD_NAME))).getOnly()).getter()),
                                 MethodVariableAccess.forType(parameterType).loadFromIndex(1),
                                 assigner.assign(parameterType, setterMethod.getParameterTypes().get(0), true),
                                 MethodInvocation.invoke(setterMethod),
@@ -721,7 +724,8 @@ public @interface Field {
                 protected Appender(Target instrumentationTarget) {
                     fieldDescription = instrumentationTarget.getTypeDescription()
                             .getDeclaredFields()
-                            .named(AccessorProxy.FIELD_NAME);
+                            .filter((ElementMatchers.named(AccessorProxy.FIELD_NAME)))
+                            .getOnly();
                 }
 
                 @Override

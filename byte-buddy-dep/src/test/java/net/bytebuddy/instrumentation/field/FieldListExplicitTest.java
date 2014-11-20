@@ -11,7 +11,6 @@ import java.util.Arrays;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.mockito.Mockito.when;
 
 public class FieldListExplicitTest {
 
@@ -36,21 +35,21 @@ public class FieldListExplicitTest {
         assertThat(fieldList.get(0), is(firstFieldDescription));
         assertThat(fieldList.get(1), is(secondFieldDescription));
     }
-
-    @Test
-    public void testFieldListNamed() throws Exception {
-        when(firstFieldDescription.getInternalName()).thenReturn(FOO);
-        when(secondFieldDescription.getInternalName()).thenReturn(BAR);
-        FieldDescription fieldDescription = fieldList.named(FOO);
-        assertThat(fieldDescription, is(firstFieldDescription));
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testNamedIllegal() throws Exception {
-        when(firstFieldDescription.getInternalName()).thenReturn(BAR);
-        when(secondFieldDescription.getInternalName()).thenReturn(BAR);
-        fieldList.named(FOO);
-    }
+// TODO
+//    @Test
+//    public void testFieldListNamed() throws Exception {
+//        when(firstFieldDescription.getInternalName()).thenReturn(FOO);
+//        when(secondFieldDescription.getInternalName()).thenReturn(BAR);
+//        FieldDescription fieldDescription = fieldList.named(FOO);
+//        assertThat(fieldDescription, is(firstFieldDescription));
+//    }
+//
+//    @Test(expected = IllegalArgumentException.class)
+//    public void testNamedIllegal() throws Exception {
+//        when(firstFieldDescription.getInternalName()).thenReturn(BAR);
+//        when(secondFieldDescription.getInternalName()).thenReturn(BAR);
+//        fieldList.named(FOO);
+//    }
 
     @Test
     public void testSubList() throws Exception {

@@ -1,0 +1,84 @@
+package net.bytebuddy.matcher;
+
+import java.util.AbstractList;
+import java.util.ArrayList;
+import java.util.List;
+
+public interface FilterableList<T, S extends FilterableList<T, S>> extends List<T> {
+
+    S filter(ElementMatcher<? super T> elementMatcher);
+
+    T getOnly();
+
+    @Override
+    public S subList(int fromIndex, int toIndex);
+
+    static class Empty<T, S extends FilterableList<T, S>> extends AbstractList<T> implements FilterableList<T, S> {
+
+        @Override
+        public T get(int index) {
+            throw new IndexOutOfBoundsException("index = " + index);
+        }
+
+        @Override
+        public int size() {
+            return 0;
+        }
+
+        @Override
+        public T getOnly() {
+            throw new IllegalStateException("size = 0");
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public S filter(ElementMatcher<? super T> elementMatcher) {
+            return (S) this;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public S subList(int fromIndex, int toIndex) {
+            if (fromIndex == toIndex && toIndex == 0) {
+                return (S) this;
+            } else if (fromIndex > toIndex) {
+                throw new IllegalArgumentException("fromIndex(" + fromIndex + ") > toIndex(" + toIndex + ")");
+            } else {
+                throw new IndexOutOfBoundsException("fromIndex = " + fromIndex);
+            }
+        }
+    }
+
+    static abstract class AbstractBase<T, S extends FilterableList<T, S>> extends AbstractList<T> implements FilterableList<T, S> {
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public S filter(ElementMatcher<? super T> elementMatcher) {
+            List<T> filteredElements = new ArrayList<T>(size());
+            for (T value : this) {
+                if (elementMatcher.matches(value)) {
+                    filteredElements.add(value);
+                }
+            }
+            return filteredElements.size() == size() ?
+                    (S) this
+                    : wrap(filteredElements);
+        }
+
+        @Override
+        public T getOnly() {
+            if (size() != 1) {
+                throw new IllegalStateException("size = " + size());
+            } else {
+                return get(0);
+            }
+        }
+
+        @Override
+        public S subList(int fromIndex, int toIndex) {
+            return wrap(super.subList(fromIndex, toIndex));
+        }
+
+        protected abstract S wrap(List<T> values);
+    }
+}

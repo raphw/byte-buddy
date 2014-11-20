@@ -7,6 +7,8 @@ import org.junit.Before;
 
 import java.lang.reflect.Field;
 
+import static net.bytebuddy.matcher.ElementMatchers.named;
+
 public class TypePoolDefaultFieldDescriptionTest extends AbstractFieldDescriptionTest {
 
     private TypePool typePool;
@@ -24,6 +26,7 @@ public class TypePoolDefaultFieldDescriptionTest extends AbstractFieldDescriptio
 
     @Override
     protected FieldDescription describe(Field field) {
-        return typePool.describe(field.getDeclaringClass().getName()).getDeclaredFields().named(field.getName());
+        return typePool.describe(field.getDeclaringClass().getName())
+                .getDeclaredFields().filter(named(field.getName())).getOnly();
     }
 }

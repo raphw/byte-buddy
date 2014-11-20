@@ -21,6 +21,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariable
 import net.bytebuddy.instrumentation.method.matcher.MethodMatcher;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.matcher.ElementMatchers;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -788,7 +789,8 @@ public class MethodDelegation implements Instrumentation {
 
             @Override
             public StackManipulation getPreparingStackAssignment(TypeDescription instrumentedType) {
-                return FieldAccess.forField(instrumentedType.getDeclaredFields().named(fieldName)).getter();
+                return FieldAccess.forField(instrumentedType.getDeclaredFields()
+                        .filter((ElementMatchers.named(fieldName))).getOnly()).getter();
             }
 
             @Override
@@ -852,7 +854,8 @@ public class MethodDelegation implements Instrumentation {
             @Override
             public StackManipulation getPreparingStackAssignment(TypeDescription instrumentedType) {
                 return new StackManipulation.Compound(MethodVariableAccess.forType(instrumentedType).loadFromIndex(0),
-                        FieldAccess.forField(instrumentedType.getDeclaredFields().named(fieldName)).getter());
+                        FieldAccess.forField(instrumentedType.getDeclaredFields()
+                                .filter((ElementMatchers.named(fieldName))).getOnly()).getter());
             }
 
             @Override

@@ -8,6 +8,7 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.matcher.FilterableList;
 import net.bytebuddy.utility.PropertyDispatcher;
 import net.bytebuddy.utility.StreamDrainer;
 import org.objectweb.asm.*;
@@ -3801,7 +3802,7 @@ public interface TypePool {
         /**
          * A list that is constructing {@link net.bytebuddy.pool.TypePool.LazyTypeDescription}s.
          */
-        protected class LazyTypeList extends AbstractList<TypeDescription> implements TypeList {
+        protected class LazyTypeList extends FilterableList.AbstractBase<TypeDescription, TypeList> implements TypeList {
 
             /**
              * A list of binary names of the represented types.
@@ -3877,17 +3878,8 @@ public interface TypePool {
             }
 
             @Override
-            public TypeList subList(int fromIndex, int toIndex) {
-                if (fromIndex < 0) {
-                    throw new IndexOutOfBoundsException("fromIndex = " + fromIndex);
-                } else if (toIndex > internalName.length) {
-                    throw new IndexOutOfBoundsException("toIndex = " + toIndex);
-                } else if (fromIndex > toIndex) {
-                    throw new IllegalArgumentException("fromIndex(" + fromIndex + ") > toIndex(" + toIndex + ")");
-                }
-                return new LazyTypeList(Arrays.asList(internalName)
-                        .subList(fromIndex, toIndex)
-                        .toArray(new String[toIndex - fromIndex]));
+            protected TypeList wrap(List<TypeDescription> values) {
+                return new Explicit(values);
             }
         }
     }

@@ -11,6 +11,7 @@ import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -156,7 +157,9 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
             public void apply(Instrumentation.Target mock) {
                 TypeDescription typeDescription = mock(TypeDescription.class);
                 FieldList fieldList = mock(FieldList.class);
-                when(fieldList.named(Morph.Binder.RedirectionProxy.FIELD_NAME)).thenReturn(mock(FieldDescription.class));
+                FieldList filteredFieldList = mock(FieldList.class);
+                when(fieldList.filter(named(Morph.Binder.RedirectionProxy.FIELD_NAME))).thenReturn(filteredFieldList);
+                when(filteredFieldList.getOnly()).thenReturn(mock(FieldDescription.class));
                 when(typeDescription.getDeclaredFields()).thenReturn(fieldList);
                 when(mock.getTypeDescription()).thenReturn(typeDescription);
             }

@@ -1,30 +1,19 @@
 package net.bytebuddy.instrumentation.field;
 
+import net.bytebuddy.matcher.FilterableList;
+
 import java.lang.reflect.Field;
-import java.util.AbstractList;
 import java.util.List;
 
 /**
  * Implementations represent a list of field descriptions.
  */
-public interface FieldList extends List<FieldDescription> {
-
-    /**
-     * Identifies a single field description in this list that is named {@code fieldName} and returns this field
-     * description. If no such field is in the list, an exception is thrown.
-     *
-     * @param fieldName The internalName of the required field.
-     * @return The field named {@code fieldName}.
-     */
-    FieldDescription named(String fieldName);
-
-    @Override
-    FieldList subList(int fromIndex, int toIndex);
+public interface FieldList extends FilterableList<FieldDescription, FieldList> {
 
     /**
      * An implementation of a field list for an array of loaded fields.
      */
-    static class ForLoadedField extends AbstractList<FieldDescription> implements FieldList {
+    static class ForLoadedField extends AbstractBase<FieldDescription, FieldList> implements FieldList {
 
         /**
          * The loaded fields this field list represents.
@@ -51,25 +40,15 @@ public interface FieldList extends List<FieldDescription> {
         }
 
         @Override
-        public FieldDescription named(String fieldName) {
-            for (Field field : this.field) {
-                if (field.getName().equals(fieldName)) {
-                    return new FieldDescription.ForLoadedField(field);
-                }
-            }
-            throw new IllegalArgumentException("Expected to find a field named '" + fieldName + "'");
-        }
-
-        @Override
-        public FieldList subList(int fromIndex, int toIndex) {
-            return new Explicit(super.subList(fromIndex, toIndex));
+        protected FieldList wrap(List<FieldDescription> values) {
+            return new Explicit(values);
         }
     }
 
     /**
      * A wrapper implementation of a field list for a given list of field descriptions.
      */
-    static class Explicit extends AbstractList<FieldDescription> implements FieldList {
+    static class Explicit extends AbstractBase<FieldDescription, FieldList> implements FieldList {
 
         /**
          * The list of field descriptions this list represents.
@@ -96,50 +75,14 @@ public interface FieldList extends List<FieldDescription> {
         }
 
         @Override
-        public FieldDescription named(String fieldName) {
-            for (FieldDescription fieldDescription : fieldDescriptions) {
-                if (fieldDescription.getInternalName().equals(fieldName)) {
-                    return fieldDescription;
-                }
-            }
-            throw new IllegalArgumentException("Expected to find a field " + fieldName);
-        }
-
-        @Override
-        public FieldList subList(int fromIndex, int toIndex) {
-            return new Explicit(super.subList(fromIndex, toIndex));
+        protected FieldList wrap(List<FieldDescription> values) {
+            return new Explicit(values);
         }
     }
 
     /**
      * An implementation of an empty field list.
      */
-    static class Empty extends AbstractList<FieldDescription> implements FieldList {
-
-        @Override
-        public FieldDescription get(int index) {
-            throw new IndexOutOfBoundsException();
-        }
-
-        @Override
-        public int size() {
-            return 0;
-        }
-
-        @Override
-        public FieldDescription named(String fieldName) {
-            throw new IllegalArgumentException("Expected to find a field " + fieldName + " but found none");
-        }
-
-        @Override
-        public FieldList subList(int fromIndex, int toIndex) {
-            if (fromIndex == toIndex && toIndex == 0) {
-                return this;
-            } else if (fromIndex > toIndex) {
-                throw new IllegalArgumentException("fromIndex(" + fromIndex + ") > toIndex(" + toIndex + ")");
-            } else {
-                throw new IndexOutOfBoundsException("fromIndex = " + fromIndex);
-            }
-        }
+    static class Empty extends FilterableList.Empty<FieldDescription, FieldList> implements FieldList {
     }
 }

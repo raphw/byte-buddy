@@ -13,6 +13,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.utility.ByteBuddyCommons;
 import org.objectweb.asm.MethodVisitor;
 
@@ -356,7 +357,7 @@ public abstract class FieldAccessor implements Instrumentation {
 
             @Override
             public FieldDescription locate(String name) {
-                FieldDescription fieldDescription = targetType.getDeclaredFields().named(name);
+                FieldDescription fieldDescription = targetType.getDeclaredFields().filter(ElementMatchers.named(name)).getOnly();
                 if (!fieldDescription.isVisibleTo(instrumentedType)) {
                     throw new IllegalArgumentException(fieldDescription + " is not visible to " + instrumentedType);
                 }

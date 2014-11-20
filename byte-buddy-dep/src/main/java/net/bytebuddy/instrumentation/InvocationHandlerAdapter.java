@@ -16,6 +16,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariable
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.matcher.ElementMatchers;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -155,7 +156,8 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
         TypeDescription invocationHandlerType = new TypeDescription.ForLoadedType(InvocationHandler.class);
         StackManipulation.Size stackSize = new StackManipulation.Compound(
                 preparingManipulation,
-                FieldAccess.forField(instrumentedType.getDeclaredFields().named(fieldName)).getter(),
+                FieldAccess.forField(instrumentedType.getDeclaredFields()
+                        .filter((ElementMatchers.named(fieldName))).getOnly()).getter(),
                 MethodVariableAccess.forType(objectType).loadFromIndex(0),
                 cacheMethods
                         ? MethodConstant.forMethod(instrumentedMethod).cached()

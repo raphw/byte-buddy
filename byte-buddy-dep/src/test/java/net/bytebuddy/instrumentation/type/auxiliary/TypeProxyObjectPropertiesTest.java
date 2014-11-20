@@ -14,14 +14,14 @@ import static org.mockito.Mockito.when;
 public class TypeProxyObjectPropertiesTest {
 
     @Test
-    public void testEqualsHashCode() throws Exception {
+    public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypeProxy.class).apply();
         ObjectPropertyAssertion.of(TypeProxy.MethodCall.class).skipSynthetic().apply();
         ObjectPropertyAssertion.of(TypeProxy.MethodCall.Appender.class).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
             @Override
             public void apply(TypeDescription mock) {
                 FieldDescription fieldDescription = Mockito.mock(FieldDescription.class);
-                when(fieldDescription.getInternalName()).thenReturn(TypeProxy.INSTANCE_FIELD);
+                when(fieldDescription.getName()).thenReturn(TypeProxy.INSTANCE_FIELD);
                 when(mock.getDeclaredFields()).thenReturn(new FieldList.Explicit(Arrays.asList(fieldDescription)));
             }
         }).skipSynthetic().apply();

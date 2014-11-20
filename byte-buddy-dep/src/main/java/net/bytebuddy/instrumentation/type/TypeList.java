@@ -1,16 +1,16 @@
 package net.bytebuddy.instrumentation.type;
 
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
+import net.bytebuddy.matcher.FilterableList;
 import org.objectweb.asm.Type;
 
-import java.util.AbstractList;
 import java.util.Arrays;
 import java.util.List;
 
 /**
  * Implementations represent a list of type descriptions.
  */
-public interface TypeList extends List<TypeDescription> {
+public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
     /**
      * Returns a list of internal names of all types represented by this list.
@@ -26,13 +26,10 @@ public interface TypeList extends List<TypeDescription> {
      */
     int getStackSize();
 
-    @Override
-    TypeList subList(int fromIndex, int toIndex);
-
     /**
      * Implementation of a type list for an array of loaded types.
      */
-    static class ForLoadedType extends AbstractList<TypeDescription> implements TypeList {
+    static class ForLoadedType extends AbstractBase<TypeDescription, TypeList> implements TypeList {
 
         /**
          * The loaded types this type list represents.
@@ -83,15 +80,15 @@ public interface TypeList extends List<TypeDescription> {
         }
 
         @Override
-        public TypeList subList(int fromIndex, int toIndex) {
-            return new Explicit(super.subList(fromIndex, toIndex));
+        protected TypeList wrap(List<TypeDescription> values) {
+            return new Explicit(values);
         }
     }
 
     /**
      * A wrapper implementation of an explicit list of types.
      */
-    static class Explicit extends AbstractList<TypeDescription> implements TypeList {
+    static class Explicit extends AbstractBase<TypeDescription, TypeList> implements TypeList {
 
         /**
          * The list of type descriptions this list represents.
@@ -137,25 +134,15 @@ public interface TypeList extends List<TypeDescription> {
         }
 
         @Override
-        public TypeList subList(int fromIndex, int toIndex) {
-            return new Explicit(super.subList(fromIndex, toIndex));
+        protected TypeList wrap(List<TypeDescription> values) {
+            return new Explicit(values);
         }
     }
 
     /**
      * An implementation of an empty type list.
      */
-    static class Empty extends AbstractList<TypeDescription> implements TypeList {
-
-        @Override
-        public TypeDescription get(int index) {
-            throw new IndexOutOfBoundsException("index = " + index);
-        }
-
-        @Override
-        public int size() {
-            return 0;
-        }
+    static class Empty extends FilterableList.Empty<TypeDescription, TypeList> implements TypeList {
 
         @Override
         public String[] toInternalNames() {
@@ -165,17 +152,6 @@ public interface TypeList extends List<TypeDescription> {
         @Override
         public int getStackSize() {
             return 0;
-        }
-
-        @Override
-        public TypeList subList(int fromIndex, int toIndex) {
-            if (fromIndex == toIndex && toIndex == 0) {
-                return this;
-            } else if (fromIndex > toIndex) {
-                throw new IllegalArgumentException("fromIndex(" + fromIndex + ") > toIndex(" + toIndex + ")");
-            } else {
-                throw new IndexOutOfBoundsException("fromIndex = " + fromIndex);
-            }
         }
     }
 }

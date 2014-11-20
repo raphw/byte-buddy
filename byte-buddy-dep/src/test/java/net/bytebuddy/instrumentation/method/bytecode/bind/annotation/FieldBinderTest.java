@@ -7,6 +7,7 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
@@ -235,12 +236,15 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         ObjectPropertyAssertion.of(Field.Binder.InstanceFieldConstructor.class).apply();
         ObjectPropertyAssertion.of(Field.Binder.InstanceFieldConstructor.Appender.class).refine(new ObjectPropertyAssertion.Refinement<Instrumentation.Target>() {
             @Override
+            @SuppressWarnings("unchecked")
             public void apply(Instrumentation.Target mock) {
                 TypeDescription typeDescription = mock(TypeDescription.class);
                 when(mock.getTypeDescription()).thenReturn(typeDescription);
                 FieldList fieldList = mock(FieldList.class);
+                FieldList filteredFieldList = mock(FieldList.class);
                 when(typeDescription.getDeclaredFields()).thenReturn(fieldList);
-                when(fieldList.named(any(String.class))).thenReturn(mock(FieldDescription.class));
+                when(fieldList.filter(any(ElementMatcher.class))).thenReturn(filteredFieldList);
+                when(filteredFieldList.getOnly()).thenReturn(mock(FieldDescription.class));
             }
         }).skipSynthetic().apply();
         ObjectPropertyAssertion.of(Field.Binder.AccessType.Getter.class).apply();
