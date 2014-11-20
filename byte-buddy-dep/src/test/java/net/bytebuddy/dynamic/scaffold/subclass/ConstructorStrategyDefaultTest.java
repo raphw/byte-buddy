@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic.scaffold.subclass;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
+import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.utility.MockitoRule;
@@ -51,7 +52,7 @@ public class ConstructorStrategyDefaultTest {
 
     @Test
     public void testImitateSuperTypeStrategy() throws Exception {
-        when(methodList.filter(isVisibleTo(instrumentedType).and(isConstructor()))).thenReturn(filteredMethodList);
+        when(methodList.filter(isConstructor().<MethodDescription>and(isVisibleTo(instrumentedType)))).thenReturn(filteredMethodList);
         assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE.extractConstructors(instrumentedType), is(filteredMethodList));
         assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE.inject(methodRegistry, methodAttributeAppenderFactory), is(methodRegistry));
         verify(methodRegistry).prepend(any(MethodRegistry.LatentMethodMatcher.class), any(Instrumentation.class), eq(methodAttributeAppenderFactory));
@@ -73,7 +74,7 @@ public class ConstructorStrategyDefaultTest {
 
     @Test
     public void testDefaultConstructorStrategy() throws Exception {
-        when(methodList.filter(takesArguments(0).and(isVisibleTo(instrumentedType).and(isConstructor())))).thenReturn(filteredMethodList);
+        when(methodList.filter(isConstructor().and(takesArguments(0)).<MethodDescription>and(isVisibleTo(instrumentedType)))).thenReturn(filteredMethodList);
         when(filteredMethodList.size()).thenReturn(1);
         assertThat(ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.extractConstructors(instrumentedType), is(filteredMethodList));
         assertThat(ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.inject(methodRegistry, methodAttributeAppenderFactory), is(methodRegistry));
@@ -85,7 +86,7 @@ public class ConstructorStrategyDefaultTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testDefaultConstructorStrategyNoDefault() throws Exception {
-        when(methodList.filter(takesArguments(0).and(isVisibleTo(instrumentedType).and(isConstructor())))).thenReturn(filteredMethodList);
+        when(methodList.filter(isConstructor().and(takesArguments(0)).<MethodDescription>and(isVisibleTo(instrumentedType)))).thenReturn(filteredMethodList);
         when(filteredMethodList.size()).thenReturn(0);
         ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.extractConstructors(instrumentedType);
     }

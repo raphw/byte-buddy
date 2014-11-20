@@ -72,6 +72,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         when(source.getReturnType()).thenReturn(fieldType);
         when(source.getParameterTypes()).thenReturn(new TypeList.Empty());
         when(source.getName()).thenReturn("getFoo");
+        when(source.getSourceCodeName()).thenReturn("getFoo");
         when(source.getInternalName()).thenReturn("getFoo");
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> binding = new Field.Binder(getterMethod, setterMethod).bind(annotationDescription,
@@ -112,6 +113,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         when(source.getReturnType()).thenReturn(fieldType);
         when(source.getParameterTypes()).thenReturn(new TypeList.Empty());
         when(source.getName()).thenReturn("getFoo");
+        when(source.getSourceCodeName()).thenReturn("getFoo");
         when(source.getInternalName()).thenReturn("getFoo");
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> binding = new Field.Binder(getterMethod, setterMethod).bind(annotationDescription,
@@ -151,7 +153,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         when(fieldDescription.getInternalName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
         when(source.getParameterTypes()).thenReturn(new TypeList.Explicit(Arrays.asList(fieldType)));
-        when(source.getName()).thenReturn("setFoo");
+        when(source.getSourceCodeName()).thenReturn("setFoo");
         when(source.getInternalName()).thenReturn("setFoo");
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> binding = new Field.Binder(getterMethod, setterMethod).bind(annotationDescription,
@@ -192,6 +194,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
         when(source.getParameterTypes()).thenReturn(new TypeList.Explicit(Arrays.asList(fieldType)));
         when(source.getName()).thenReturn("setFoo");
+        when(source.getSourceCodeName()).thenReturn("setFoo");
         when(source.getInternalName()).thenReturn("setFoo");
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> binding = new Field.Binder(getterMethod, setterMethod).bind(annotationDescription,

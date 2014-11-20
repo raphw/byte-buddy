@@ -315,7 +315,7 @@ public class ElementMatchers {
         TypeList parameterTypes = methodDescription.getParameterTypes();
         List<ElementMatcher<TypeDescription>> matchers = new ArrayList<ElementMatcher<TypeDescription>>(parameterTypes.size());
         for (TypeDescription typeDescription : parameterTypes) {
-            matchers.add(isSuperTypeOf(typeDescription));
+            matchers.add(isSubTypeOf(typeDescription));
         }
         return (methodDescription.isStatic() ? isStatic() : not(isStatic()))
                 .and(named(methodDescription.getName()))

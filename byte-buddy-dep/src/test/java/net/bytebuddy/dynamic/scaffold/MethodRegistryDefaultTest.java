@@ -92,7 +92,7 @@ public class MethodRegistryDefaultTest {
         when(croppedMethodList.filter(any(ElementMatcher.class))).thenAnswer(new Answer<MethodList>() {
             @Override
             public MethodList answer(InvocationOnMock invocation) throws Throwable {
-                Field field = invocation.getArguments()[0].getClass().getDeclaredField("methodDescription");
+                Field field = invocation.getArguments()[0].getClass().getDeclaredField("value");
                 field.setAccessible(true);
                 return field.get(invocation.getArguments()[0]) == instrumentationAppendedMethod ? singleSize : zeroSize;
             }

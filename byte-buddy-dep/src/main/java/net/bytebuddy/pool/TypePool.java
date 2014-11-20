@@ -8,6 +8,7 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.matcher.FilterableList;
 import net.bytebuddy.utility.PropertyDispatcher;
 import net.bytebuddy.utility.StreamDrainer;
@@ -1765,9 +1766,9 @@ public interface TypePool {
                 @Override
                 public MethodDescription getEnclosingMethod(TypePool typePool) {
                     return getEnclosingType(typePool).getDeclaredMethods()
-                            .filter(MethodDescription.CONSTRUCTOR_INTERNAL_NAME.equals(methodName)
+                            .filter((MethodDescription.CONSTRUCTOR_INTERNAL_NAME.equals(methodName)
                                     ? isConstructor()
-                                    : named(methodName)
+                                    : ElementMatchers.<MethodDescription>named(methodName))
                                     .<MethodDescription>and(hasDescriptor(methodDescriptor))).getOnly();
                 }
 

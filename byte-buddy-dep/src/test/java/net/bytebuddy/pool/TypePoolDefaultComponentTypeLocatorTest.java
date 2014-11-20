@@ -30,7 +30,7 @@ public class TypePoolDefaultComponentTypeLocatorTest {
         when(typePool.describe(BAR)).thenReturn(typeDescription);
         MethodDescription methodDescription = mock(MethodDescription.class);
         when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Explicit(Arrays.asList(methodDescription)));
-        when(methodDescription.getName()).thenReturn(FOO);
+        when(methodDescription.getSourceCodeName()).thenReturn(FOO);
         TypeDescription returnType = mock(TypeDescription.class);
         when(methodDescription.getReturnType()).thenReturn(returnType);
         TypeDescription componentType = mock(TypeDescription.class);

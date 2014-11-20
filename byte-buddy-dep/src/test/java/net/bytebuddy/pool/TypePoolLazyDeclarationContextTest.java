@@ -86,9 +86,9 @@ public class TypePoolLazyDeclarationContextTest {
     @Test
     public void testDeclaredInMethodGetMethodIsNull() throws Exception {
         MethodDescription methodDescription = mock(MethodDescription.class);
-        TypeDescription typeDescription = mock(TypeDescription.class);
-        when(methodDescription.getName()).thenReturn(BAR);
+        when(methodDescription.getSourceCodeName()).thenReturn(BAR);
         when(methodDescription.getDescriptor()).thenReturn(QUX);
+        TypeDescription typeDescription = mock(TypeDescription.class);
         TypePool typePool = mock(TypePool.class);
         when(typePool.describe(FOO)).thenReturn(typeDescription);
         when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Explicit(Arrays.asList(methodDescription)));

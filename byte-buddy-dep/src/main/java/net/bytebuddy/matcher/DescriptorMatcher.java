@@ -12,7 +12,7 @@ public class DescriptorMatcher<T extends ByteCodeElement> extends ElementMatcher
 
     @Override
     public boolean matches(T target) {
-        return descriptorMatcher.matches(target.getName());
+        return descriptorMatcher.matches(target.getDescriptor());
     }
 
     @Override
