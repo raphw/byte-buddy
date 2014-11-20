@@ -262,6 +262,10 @@ public class ElementMatchers {
         return new MethodSortMatcher<T>(MethodSortMatcher.Sort.OVERRIDABLE);
     }
 
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isDefaultMethod() {
+        return new MethodSortMatcher<T>(MethodSortMatcher.Sort.DEFAULT_METHOD);
+    }
+
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isDefaultFinalizer() {
         return isFinalizer().and(isDeclaredBy(Object.class));
     }

@@ -12,7 +12,7 @@ public class MethodParameterLengthMatcher<T extends MethodDescription> extends E
 
     @Override
     public boolean matches(T target) {
-        return false;
+        return target.getParameterTypes().size() == length;
     }
 
     @Override

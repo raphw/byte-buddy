@@ -7,6 +7,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 public class MethodSortMatcher<T extends MethodDescription> extends ElementMatcher.Junction.AbstractBase<T> {
 
     public static enum Sort {
+
         METHOD("isMethod()") {
             @Override
             protected boolean isSort(MethodDescription target) {
@@ -27,12 +28,14 @@ public class MethodSortMatcher<T extends MethodDescription> extends ElementMatch
                 return target.isTypeInitializer();
             }
         },
+
         OVERRIDABLE("isOverridable()") {
             @Override
             protected boolean isSort(MethodDescription target) {
                 return target.isOverridable();
             }
         },
+
         VISIBILITY_BRIDGE("isVisibilityBridge()") {
             @Override
             protected boolean isSort(MethodDescription target) {
@@ -40,6 +43,13 @@ public class MethodSortMatcher<T extends MethodDescription> extends ElementMatch
                         .getDeclaredMethods()
                         .filter(isMethod().and(not(is(target))).and(isCompatibleTo(target)))
                         .size() == 0;
+            }
+        },
+
+        DEFAULT_METHOD("isDefaultMethod()") {
+            @Override
+            protected boolean isSort(MethodDescription target) {
+                return target.isDefaultMethod();
             }
         };
 
