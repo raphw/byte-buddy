@@ -277,16 +277,14 @@ public class ElementMatchers {
         return isGetter().and(returns(type));
     }
 
-    public static ElementMatcher.Junction<MethodDescription> isBridgeMethodCompatibleTo(MethodDescription methodDescription) {
-        if (methodDescription.isTypeInitializer()) {
-            return is(methodDescription);
-        }
+    public static ElementMatcher.Junction<MethodDescription> isCompatibleTo(MethodDescription methodDescription) {
         TypeList parameterTypes = methodDescription.getParameterTypes();
         List<ElementMatcher<TypeDescription>> matchers = new ArrayList<ElementMatcher<TypeDescription>>(parameterTypes.size());
         for (TypeDescription typeDescription : parameterTypes) {
             matchers.add(isSuperTypeOf(typeDescription));
         }
-        return returns(isSubTypeOf(methodDescription.getReturnType()))
+        return (methodDescription.isStatic() ? isStatic() : not(isStatic()))
+                .and(returns(isSubTypeOf(methodDescription.getReturnType())))
                 .and(takesArguments(new ListOneToOneMatcher<TypeDescription>(matchers)))
                 .and(named(methodDescription.getName()));
     }
