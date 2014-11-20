@@ -2,9 +2,9 @@ package net.bytebuddy.matcher;
 
 public class EqualityMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
 
-    private final T value;
+    private final Object value;
 
-    public EqualityMatcher(T value) {
+    public EqualityMatcher(Object value) {
         this.value = value;
     }
 

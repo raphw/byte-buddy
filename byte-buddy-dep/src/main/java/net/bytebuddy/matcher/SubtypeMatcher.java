@@ -12,7 +12,7 @@ public class SubTypeMatcher<T extends TypeDescription> extends ElementMatcher.Ju
 
     @Override
     public boolean matches(T target) {
-        return target.isAssignableFrom(typeDescription);
+        return target.isAssignableTo(typeDescription);
     }
 
     @Override

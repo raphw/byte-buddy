@@ -1,46 +1,36 @@
 package net.bytebuddy.matcher;
 
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotatedElement;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 
-import java.lang.annotation.Annotation;
+import java.util.List;
 
-/**
- * Matches a method by its annotations.
- */
-class AnnotationMatcher extends ElementMatcher.Junction.AbstractBase<AnnotatedElement> {
+public class AnnotationMatcher<T extends AnnotatedElement> extends ElementMatcher.Junction.AbstractBase<T> {
 
-    /**
-     * The annotation type to match to be present on a method.
-     */
-    private final Class<? extends Annotation> annotationType;
+    private final ElementMatcher<? super List<? extends AnnotationDescription>> annotationTypeMatcher;
 
-    /**
-     * Creates a new annotation method matcher.
-     *
-     * @param annotationType The annotation type to match to be present on a method.
-     */
-    AnnotationMatcher(Class<? extends Annotation> annotationType) {
-        this.annotationType = annotationType;
+    public AnnotationMatcher(ElementMatcher<? super List<? extends AnnotationDescription>> annotationTypeMatcher) {
+        this.annotationTypeMatcher = annotationTypeMatcher;
     }
 
     @Override
-    public boolean matches(AnnotatedElement target) {
-        return target.getDeclaredAnnotations().isAnnotationPresent(annotationType);
+    public boolean matches(T target) {
+        return annotationTypeMatcher.matches(target.getDeclaredAnnotations());
     }
 
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && annotationType.equals(((AnnotationMatcher) other).annotationType);
+                && annotationTypeMatcher.equals(((AnnotationMatcher) other).annotationTypeMatcher);
     }
 
     @Override
     public int hashCode() {
-        return annotationType.hashCode();
+        return annotationTypeMatcher.hashCode();
     }
 
     @Override
     public String toString() {
-        return "isAnnotatedBy(" + annotationType.getName() + ')';
+        return "annotation(" + annotationTypeMatcher + ')';
     }
 }

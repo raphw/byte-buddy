@@ -2,6 +2,8 @@ package net.bytebuddy.matcher;
 
 import net.bytebuddy.instrumentation.ByteCodeElement;
 import net.bytebuddy.instrumentation.ModifierReviewable;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotatedElement;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.RuntimeType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
@@ -18,8 +20,8 @@ import static net.bytebuddy.utility.ByteBuddyCommons.nonVoid;
 
 public class ElementMatchers {
 
-    public static <T, S extends T> ElementMatcher.Junction<S> not(ElementMatcher<T> elementMatcher) {
-        return new NegatingMatcher<S>(nonNull(elementMatcher));
+    public static <T> ElementMatcher.Junction<T> not(ElementMatcher<? super T> elementMatcher) {
+        return new NegatingMatcher<T>(nonNull(elementMatcher));
     }
 
     public static <T> ElementMatcher.Junction<T> any() {
@@ -52,26 +54,6 @@ public class ElementMatchers {
             matcher = matcher.and(not(new EqualityMatcher<T>(value)));
         }
         return matcher;
-    }
-
-    public static <T extends TypeDescription> ElementMatcher.Junction<T> is(T typeDescription) {
-        return new EqualityMatcher<T>(nonNull(typeDescription));
-    }
-
-    public static ElementMatcher.Junction<TypeDescription> is(Class<?> type) {
-        return is((TypeDescription) new TypeDescription.ForLoadedType(nonNull(type)));
-    }
-
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> is(T methodDescription) {
-        return new EqualityMatcher<T>(nonNull(methodDescription));
-    }
-
-    public static ElementMatcher.Junction<MethodDescription> is(Method method) {
-        return is((MethodDescription) new MethodDescription.ForLoadedMethod(nonNull(method)));
-    }
-
-    public static ElementMatcher.Junction<MethodDescription> is(Constructor<?> constructor) {
-        return is((MethodDescription) new MethodDescription.ForLoadedConstructor(nonNull(constructor)));
     }
 
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> named(String name) {
@@ -134,6 +116,22 @@ public class ElementMatchers {
         return new DescriptorMatcher<T>(new StringMatcher(methodDescriptor, StringMatcher.Mode.EQUALS_FULLY));
     }
 
+    public static <T extends AnnotatedElement> ElementMatcher.Junction<T> isAnnotatedWith(TypeDescription typeDescription) {
+        return isAnnotatedWith(is(typeDescription));
+    }
+
+    public static <T extends AnnotatedElement> ElementMatcher.Junction<T> isAnnotatedWith(Class<?> type) {
+        return isAnnotatedWith(is(type));
+    }
+
+    public static <T extends AnnotatedElement> ElementMatcher.Junction<T> isAnnotatedWith(ElementMatcher<? super TypeDescription> annotationTypeMatcher) {
+        return hasAnnotation(new AnnotationTypeMatcher<AnnotationDescription>(annotationTypeMatcher));
+    }
+
+    public static <T extends AnnotatedElement> ElementMatcher.Junction<T> hasAnnotation(ElementMatcher<? super AnnotationDescription> annotationDescription) {
+        return new AnnotationMatcher<T>(new ListItemMatcher<AnnotationDescription>(annotationDescription, ListItemMatcher.Mode.MATCH_ANY));
+    }
+
     public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isPublic() {
         return new ModifierMatcher<T>(ModifierMatcher.MatchMode.PUBLIC);
     }
@@ -180,6 +178,18 @@ public class ElementMatchers {
 
     public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isBridge() {
         return new ModifierMatcher<T>(ModifierMatcher.MatchMode.BRIDGE);
+    }
+
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> is(T methodDescription) {
+        return new EqualityMatcher<T>(nonNull(methodDescription));
+    }
+
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> is(Method method) {
+        return new EqualityMatcher<T>(nonNull(new MethodDescription.ForLoadedMethod(nonNull(method))));
+    }
+
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> is(Constructor<?> constructor) {
+        return new EqualityMatcher<T>(nonNull(new MethodDescription.ForLoadedConstructor(nonNull(constructor))));
     }
 
     public static <T extends MethodDescription> ElementMatcher.Junction<T> returns(Class<?> type) {
@@ -321,6 +331,14 @@ public class ElementMatchers {
                 .and(named(methodDescription.getName()))
                 .and(returns(isSubTypeOf(methodDescription.getReturnType())))
                 .and(takesArguments(new ListOneToOneMatcher<TypeDescription>(matchers)));
+    }
+
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> is(T typeDescription) {
+        return new EqualityMatcher<T>(nonNull(typeDescription));
+    }
+
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> is(Class<?> type) {
+        return new EqualityMatcher<T>(new TypeDescription.ForLoadedType(nonNull(type)));
     }
 
     public static <T extends TypeDescription> ElementMatcher.Junction<T> isSubTypeOf(Class<?> type) {

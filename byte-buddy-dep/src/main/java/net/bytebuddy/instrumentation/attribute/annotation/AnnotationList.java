@@ -24,6 +24,14 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
     boolean isAnnotationPresent(Class<? extends Annotation> annotationType);
 
     /**
+     * Checks if this list contains an annotation of the given type.
+     *
+     * @param annotationType The type to find in the list.
+     * @return {@code true} if the list contains the annotation type.
+     */
+    boolean isAnnotationPresent(TypeDescription annotationType);
+
+    /**
      * Finds the first annotation of the given type and returns it.
      *
      * @param annotationType The type to be found in the list.
@@ -88,6 +96,16 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
         public boolean isAnnotationPresent(Class<? extends Annotation> annotationType) {
             for (Annotation anAnnotation : annotation) {
                 if (anAnnotation.annotationType().equals(annotationType)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public boolean isAnnotationPresent(TypeDescription annotationType) {
+            for (Annotation anAnnotation : annotation) {
+                if (annotationType.represents(anAnnotation.getClass())) {
                     return true;
                 }
             }
@@ -176,6 +194,16 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
         }
 
         @Override
+        public boolean isAnnotationPresent(TypeDescription annotationType) {
+            for (AnnotationDescription annotationDescription : annotationDescriptions) {
+                if (annotationDescription.getAnnotationType().equals(annotationType)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
         public <T extends Annotation> AnnotationDescription.Loadable<T> ofType(Class<T> annotationType) {
             for (AnnotationDescription annotationDescription : annotationDescriptions) {
                 if (annotationDescription.getAnnotationType().represents(annotationType)) {
@@ -224,6 +252,11 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
 
         @Override
         public boolean isAnnotationPresent(Class<? extends Annotation> annotationType) {
+            return false;
+        }
+
+        @Override
+        public boolean isAnnotationPresent(TypeDescription annotationType) {
             return false;
         }
 
