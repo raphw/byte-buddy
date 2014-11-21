@@ -226,11 +226,11 @@ public class ElementMatchers {
     }
 
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(ElementMatcher<? super List<? extends TypeDescription>> parameterMatcher) {
-        return new MethodParameterTypeMatcher<T>(nonNull(parameterMatcher));
+        return new MethodParameterTypesMatcher<T>(nonNull(parameterMatcher));
     }
 
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(int length) {
-        return new MethodParameterLengthMatcher<T>(length);
+        return new MethodParameterTypesMatcher<T>(new ListLengthMatcher<List<? extends TypeDescription>>(length));
     }
 
     public static <T extends MethodDescription> ElementMatcher.Junction<T> canThrow(Class<? extends Throwable> exceptionType) {

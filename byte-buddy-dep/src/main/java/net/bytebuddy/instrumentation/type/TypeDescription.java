@@ -472,7 +472,7 @@ public interface TypeDescription extends ByteCodeElement {
                     typeDescription = typeDescription.getComponentType();
                 } while (typeDescription.isArray());
                 StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append(typeDescription.getName());
+                stringBuilder.append(typeDescription.getSourceCodeName());
                 for (int i = 0; i < dimensions; i++) {
                     stringBuilder.append("[]");
                 }

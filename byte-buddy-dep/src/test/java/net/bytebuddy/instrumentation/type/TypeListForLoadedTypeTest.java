@@ -1,5 +1,6 @@
 package net.bytebuddy.instrumentation.type;
 
+import net.bytebuddy.matcher.ElementMatchers;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.asm.Type;
@@ -33,6 +34,18 @@ public class TypeListForLoadedTypeTest {
         assertThat(internalName[0], is(Type.getInternalName(Object.class)));
         assertThat(internalName[1], is(Type.getInternalName(Integer.class)));
         assertThat(internalName[2], is(Type.getInternalName(long.class)));
+    }
+
+    @Test
+    public void testMethodListFilter() throws Exception {
+        typeList = typeList.filter(ElementMatchers.is(Object.class));
+        assertThat(typeList.size(), is(1));
+        assertThat(typeList.getOnly(), is((TypeDescription) new TypeDescription.ForLoadedType(Object.class)));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testGetOnly() throws Exception {
+        typeList.getOnly();
     }
 
     @Test

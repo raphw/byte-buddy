@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
+import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -35,17 +36,16 @@ public class TypePoolLazyFieldListTest {
         assertThat(fieldList.get(1), is((FieldDescription) new FieldDescription.ForLoadedField(Sample.class.getDeclaredField("second"))));
     }
 
-    //TODO
-//    @Test
-//    public void testFieldListNamed() throws Exception {
-//        FieldDescription fieldDescription = fieldList.named("first");
-//        assertThat(fieldDescription, is(is((FieldDescription) new FieldDescription.ForLoadedField(Sample.class.getDeclaredField("first")))));
-//    }
-//
-//    @Test(expected = IllegalArgumentException.class)
-//    public void testNamedIllegal() throws Exception {
-//        fieldList.named("foo");
-//    }
+    @Test
+    public void testFieldListNamed() throws Exception {
+        FieldDescription fieldDescription = fieldList.filter(named("first")).getOnly();
+        assertThat(fieldDescription, is(is((FieldDescription) new FieldDescription.ForLoadedField(Sample.class.getDeclaredField("first")))));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNamedIllegal() throws Exception {
+        fieldList.filter(named("foo")).getOnly();
+    }
 
     @Test
     public void testSubList() throws Exception {

@@ -68,7 +68,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         when(targetTypeList.get(0)).thenReturn(getterType);
         doReturn(void.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(Field.BEAN_PROPERTY);
-        when(fieldDescription.getInternalName()).thenReturn(FOO);
+        when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(fieldType);
         when(source.getParameterTypes()).thenReturn(new TypeList.Empty());
         when(source.getName()).thenReturn("getFoo");
@@ -89,7 +89,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         when(targetTypeList.get(0)).thenReturn(getterType);
         doReturn(void.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(FOO);
-        when(fieldDescription.getInternalName()).thenReturn(FOO);
+        when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(fieldType);
         when(source.getParameterTypes()).thenReturn(new TypeList.Empty());
         when(source.getName()).thenReturn("getFoo");
@@ -150,7 +150,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         when(targetTypeList.get(0)).thenReturn(setterType);
         doReturn(void.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(Field.BEAN_PROPERTY);
-        when(fieldDescription.getInternalName()).thenReturn(FOO);
+        when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
         when(source.getParameterTypes()).thenReturn(new TypeList.Explicit(Arrays.asList(fieldType)));
         when(source.getSourceCodeName()).thenReturn("setFoo");
@@ -170,7 +170,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         when(targetTypeList.get(0)).thenReturn(setterType);
         doReturn(void.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(FOO);
-        when(fieldDescription.getInternalName()).thenReturn(FOO);
+        when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
         when(source.getParameterTypes()).thenReturn(new TypeList.Explicit(Arrays.asList(fieldType)));
         when(source.getName()).thenReturn("setFoo");
@@ -190,7 +190,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         when(targetTypeList.get(0)).thenReturn(setterType);
         doReturn(Foo.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(Field.BEAN_PROPERTY);
-        when(fieldDescription.getInternalName()).thenReturn(FOO);
+        when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
         when(source.getParameterTypes()).thenReturn(new TypeList.Explicit(Arrays.asList(fieldType)));
         when(source.getName()).thenReturn("setFoo");
@@ -211,7 +211,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         when(targetTypeList.get(0)).thenReturn(setterType);
         doReturn(Foo.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(FOO);
-        when(fieldDescription.getInternalName()).thenReturn(FOO);
+        when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
         when(source.getParameterTypes()).thenReturn(new TypeList.Explicit(Arrays.asList(fieldType)));
         when(source.getName()).thenReturn("setFoo");

@@ -3,6 +3,7 @@ package net.bytebuddy.instrumentation.type;
 import org.junit.Before;
 import org.junit.Test;
 
+import static net.bytebuddy.matcher.ElementMatchers.any;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.nullValue;
@@ -39,6 +40,16 @@ public class TypeListEmptyTest {
     @Test
     public void testSubList() throws Exception {
         assertThat(typeList.subList(0, 0), is(typeList));
+    }
+
+    @Test
+    public void testIsIdenticalWhenFiltered() throws Exception {
+        assertThat(typeList.filter(any()), is(typeList));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testOnlyElement() throws Exception {
+        typeList.getOnly();
     }
 
     @Test(expected = IndexOutOfBoundsException.class)

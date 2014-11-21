@@ -5,10 +5,23 @@ import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 
 import java.util.List;
 
+/**
+ * An element matcher that matches the annotations that are declared by an annotated element.
+ *
+ * @param <T> The exact type of the annotated element that is matched.
+ */
 public class AnnotationMatcher<T extends AnnotatedElement> extends ElementMatcher.Junction.AbstractBase<T> {
 
+    /**
+     * The element matcher to match the declared annotations against.
+     */
     private final ElementMatcher<? super List<? extends AnnotationDescription>> annotationTypeMatcher;
 
+    /**
+     * Creates a new matcher for the declared annotations of an annotated element.
+     *
+     * @param annotationTypeMatcher The element matcher to match the declared annotations against.
+     */
     public AnnotationMatcher(ElementMatcher<? super List<? extends AnnotationDescription>> annotationTypeMatcher) {
         this.annotationTypeMatcher = annotationTypeMatcher;
     }
@@ -31,6 +44,6 @@ public class AnnotationMatcher<T extends AnnotatedElement> extends ElementMatche
 
     @Override
     public String toString() {
-        return "annotation(" + annotationTypeMatcher + ')';
+        return "hasAnnotation(" + annotationTypeMatcher + ')';
     }
 }

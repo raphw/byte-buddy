@@ -1,19 +1,21 @@
 package net.bytebuddy.matcher;
 
 /**
- * Matches a method by a boolean property.
+ * Element matcher that returns a fixed result.
+ *
+ * @param <T> The actual matched type of this matcher.
  */
-public class BooleanMatcher<T> extends ElementMatcher.Junction.AbstractBase<T>  {
+public class BooleanMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
-     * The result of any attempt to match a method.
+     * The predefined result.
      */
     private final boolean matches;
 
     /**
-     * Creates a new boolean method matcher.
+     * Creates a new boolean element matcher.
      *
-     * @param matches The result of any attempt to match a method.
+     * @param matches The predefined result.
      */
     public BooleanMatcher(boolean matches) {
         this.matches = matches;
@@ -37,6 +39,6 @@ public class BooleanMatcher<T> extends ElementMatcher.Junction.AbstractBase<T>  
 
     @Override
     public String toString() {
-        return Boolean.toString(matches);
+        return (matches ? "any" : "none") + "()";
     }
 }

@@ -14,8 +14,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.doReturn;
 
 public class AnnotationListForLoadedAnnotationTest {

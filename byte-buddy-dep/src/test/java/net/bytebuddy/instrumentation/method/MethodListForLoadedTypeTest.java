@@ -43,6 +43,11 @@ public class MethodListForLoadedTypeTest {
         }
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testGetOnly() throws Exception {
+        methodList.getOnly();
+    }
+
     @Test
     public void testSubList() throws Exception {
         assertThat(methodList.subList(0, 1).size(), is(1));

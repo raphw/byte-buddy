@@ -5,11 +5,24 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 
 import java.util.List;
 
-public class MethodParameterTypeMatcher<T extends MethodDescription> extends ElementMatcher.Junction.AbstractBase<T> {
+/**
+ * An element matcher that matches a method' parameter types.
+ *
+ * @param <T> The type of the matched entity.
+ */
+public class MethodParameterTypesMatcher<T extends MethodDescription> extends ElementMatcher.Junction.AbstractBase<T> {
 
+    /**
+     * The matcher to apply to the parameter types.
+     */
     private final ElementMatcher<? super List<? extends TypeDescription>> parameterMatcher;
 
-    public MethodParameterTypeMatcher(ElementMatcher<? super List<? extends TypeDescription>> parameterMatcher) {
+    /**
+     * Creates a new matcher for a method's parameter types.
+     *
+     * @param parameterMatcher The matcher to apply to the parameter types.
+     */
+    public MethodParameterTypesMatcher(ElementMatcher<? super List<? extends TypeDescription>> parameterMatcher) {
         this.parameterMatcher = parameterMatcher;
     }
 
@@ -21,7 +34,7 @@ public class MethodParameterTypeMatcher<T extends MethodDescription> extends Ele
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && parameterMatcher.equals(((MethodParameterTypeMatcher) other).parameterMatcher);
+                && parameterMatcher.equals(((MethodParameterTypesMatcher) other).parameterMatcher);
     }
 
     @Override
@@ -31,6 +44,6 @@ public class MethodParameterTypeMatcher<T extends MethodDescription> extends Ele
 
     @Override
     public String toString() {
-        return "takesArguments(" + parameterMatcher + ")";
+        return "parameters(" + parameterMatcher + ")";
     }
 }

@@ -1,5 +1,6 @@
 package net.bytebuddy.instrumentation.field;
 
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -11,6 +12,8 @@ import java.util.Arrays;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class FieldListExplicitTest {
 
@@ -35,21 +38,21 @@ public class FieldListExplicitTest {
         assertThat(fieldList.get(0), is(firstFieldDescription));
         assertThat(fieldList.get(1), is(secondFieldDescription));
     }
-// TODO
-//    @Test
-//    public void testFieldListNamed() throws Exception {
-//        when(firstFieldDescription.getInternalName()).thenReturn(FOO);
-//        when(secondFieldDescription.getInternalName()).thenReturn(BAR);
-//        FieldDescription fieldDescription = fieldList.named(FOO);
-//        assertThat(fieldDescription, is(firstFieldDescription));
-//    }
-//
-//    @Test(expected = IllegalArgumentException.class)
-//    public void testNamedIllegal() throws Exception {
-//        when(firstFieldDescription.getInternalName()).thenReturn(BAR);
-//        when(secondFieldDescription.getInternalName()).thenReturn(BAR);
-//        fieldList.named(FOO);
-//    }
+
+    @Test
+    public void testMethodListFilter() throws Exception {
+        @SuppressWarnings("unchecked")
+        ElementMatcher<? super FieldDescription> fieldMatcher = mock(ElementMatcher.class);
+        when(fieldMatcher.matches(firstFieldDescription)).thenReturn(true);
+        fieldList = fieldList.filter(fieldMatcher);
+        assertThat(fieldList.size(), is(1));
+        assertThat(fieldList.getOnly(), is(firstFieldDescription));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testGetOnly() throws Exception {
+        fieldList.getOnly();
+    }
 
     @Test
     public void testSubList() throws Exception {

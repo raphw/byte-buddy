@@ -1,19 +1,21 @@
 package net.bytebuddy.matcher;
 
 /**
- * Matches a method by negating another method matcher.
+ * An element matcher that reverses the matching result of another matcher.
+ *
+ * @param <T> The type of the matched entity.
  */
-class NegatingMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
+public class NegatingMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
-     * The method matcher to negate.
+     * The element matcher to be negated.
      */
     private final ElementMatcher<? super T> negatedMatcher;
 
     /**
-     * Creates a new negating method matcher.
+     * Creates a new negating element matcher.
      *
-     * @param negatedMatcher The method matcher to negate.
+     * @param negatedMatcher The element matcher to be negated.
      */
     public NegatingMatcher(ElementMatcher<? super T> negatedMatcher) {
         this.negatedMatcher = negatedMatcher;

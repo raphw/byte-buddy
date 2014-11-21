@@ -1,6 +1,7 @@
 package net.bytebuddy.instrumentation.type;
 
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -14,6 +15,7 @@ import java.util.Collections;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class TypeListExplicitTest {
@@ -47,6 +49,21 @@ public class TypeListExplicitTest {
         when(firstTypeDescription.getInternalName()).thenReturn(FOO);
         when(secondTypeDescription.getInternalName()).thenReturn(BAR);
         assertThat(typeList.toInternalNames(), is(new String[]{FOO, BAR}));
+    }
+
+    @Test
+    public void testMethodListFilter() throws Exception {
+        @SuppressWarnings("unchecked")
+        ElementMatcher<? super TypeDescription> typeMatcher = mock(ElementMatcher.class);
+        when(typeMatcher.matches(firstTypeDescription)).thenReturn(true);
+        typeList = typeList.filter(typeMatcher);
+        assertThat(typeList.size(), is(1));
+        assertThat(typeList.getOnly(), is(firstTypeDescription));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testGetOnly() throws Exception {
+        typeList.getOnly();
     }
 
     @Test

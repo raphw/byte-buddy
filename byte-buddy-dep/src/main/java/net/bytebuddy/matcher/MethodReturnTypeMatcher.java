@@ -3,10 +3,23 @@ package net.bytebuddy.matcher;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 
+/**
+ * An element matcher that matches its argument's return type against a given type matcher.
+ *
+ * @param <T> The type of the matched entity.
+ */
 public class MethodReturnTypeMatcher<T extends MethodDescription> extends ElementMatcher.Junction.AbstractBase<T> {
 
+    /**
+     * The type matcher to apply to the matched element's return type.
+     */
     private final ElementMatcher<? super TypeDescription> typeMatcher;
 
+    /**
+     * Creates a new matcher for a matched element's return type.
+     *
+     * @param typeMatcher The type matcher to apply to the matched element's return type.
+     */
     public MethodReturnTypeMatcher(ElementMatcher<? super TypeDescription> typeMatcher) {
         this.typeMatcher = typeMatcher;
     }
@@ -29,6 +42,6 @@ public class MethodReturnTypeMatcher<T extends MethodDescription> extends Elemen
 
     @Override
     public String toString() {
-        return "returns(" + typeMatcher + ");";
+        return "returns(" + typeMatcher + ")";
     }
 }

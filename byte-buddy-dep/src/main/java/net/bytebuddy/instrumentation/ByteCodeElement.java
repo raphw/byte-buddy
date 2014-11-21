@@ -50,7 +50,6 @@ public interface ByteCodeElement extends ModifierReviewable, DeclaredInType, Ann
      */
     String getGenericSignature();
 
-
     /**
      * Checks if this element is visible from a given type.
      *

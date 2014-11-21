@@ -2,10 +2,23 @@ package net.bytebuddy.matcher;
 
 import net.bytebuddy.instrumentation.ByteCodeElement;
 
+/**
+ * An element matcher that matches a Java descriptor.
+ *
+ * @param <T> The type of the matched entity.
+ */
 public class DescriptorMatcher<T extends ByteCodeElement> extends ElementMatcher.Junction.AbstractBase<T> {
 
+    /**
+     * A matcher to apply to the descriptor.
+     */
     private final ElementMatcher<String> descriptorMatcher;
 
+    /**
+     * Creates a new matcher for an element's descriptor.
+     *
+     * @param descriptorMatcher A matcher to apply to the descriptor.
+     */
     public DescriptorMatcher(ElementMatcher<String> descriptorMatcher) {
         this.descriptorMatcher = descriptorMatcher;
     }
@@ -28,6 +41,6 @@ public class DescriptorMatcher<T extends ByteCodeElement> extends ElementMatcher
 
     @Override
     public String toString() {
-        return "descriptor(" + descriptorMatcher + ")";
+        return "hasDescriptor(" + descriptorMatcher + ")";
     }
 }
