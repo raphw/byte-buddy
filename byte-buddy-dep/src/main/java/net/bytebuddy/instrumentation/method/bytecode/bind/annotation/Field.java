@@ -8,6 +8,7 @@ import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.field.FieldDescription;
+import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
@@ -959,10 +960,9 @@ public @interface Field {
                     protected Resolution resolve(TypeDescription instrumentedType) {
                         TypeDescription currentType = instrumentedType;
                         do {
-                            for (FieldDescription fieldDescription : currentType.getDeclaredFields()) {
-                                if (fieldDescription.getInternalName().equals(fieldName) && fieldDescription.isVisibleTo(instrumentedType)) {
-                                    return new Resolution.Resolved(fieldDescription);
-                                }
+                            FieldList fieldList = currentType.getDeclaredFields().filter(named(fieldName).and(isVisibleTo(instrumentedType)));
+                            if (fieldList.size() == 1) {
+                                return new Resolution.Resolved(fieldList.getOnly());
                             }
                         } while ((currentType = currentType.getSupertype()) != null);
                         return new Resolution.Unresolved();
@@ -1015,14 +1015,10 @@ public @interface Field {
 
                     @Override
                     protected Resolution resolve(TypeDescription instrumentedType) {
-                        for (FieldDescription fieldDescription : typeDescription.getDeclaredFields()) {
-                            if (fieldDescription.getInternalName().equals(fieldName)) {
-                                return fieldDescription.isVisibleTo(instrumentedType)
-                                        ? new Resolution.Resolved(fieldDescription)
-                                        : new Resolution.Unresolved();
-                            }
-                        }
-                        return new Resolution.Unresolved();
+                        FieldList fieldList = typeDescription.getDeclaredFields().filter(named(fieldName).and(isVisibleTo(instrumentedType)));
+                        return fieldList.size() == 1
+                                ? new Resolution.Resolved(fieldList.getOnly())
+                                : new Resolution.Unresolved();
                     }
 
                     @Override

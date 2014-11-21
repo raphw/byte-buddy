@@ -327,9 +327,9 @@ public class ElementMatchers {
         for (TypeDescription typeDescription : parameterTypes) {
             matchers.add(isSubTypeOf(typeDescription));
         }
-        return (methodDescription.isStatic() ? isStatic() : not(isStatic()))
-                .and(named(methodDescription.getName()))
-                .and(returns(isSubTypeOf(methodDescription.getReturnType())))
+        return (methodDescription.isStatic() ? ElementMatchers.<T>isStatic() : ElementMatchers.<T>not(isStatic()))
+                .<T>and(named(methodDescription.getName()))
+                .<T>and(returns(isSubTypeOf(methodDescription.getReturnType())))
                 .and(takesArguments(new ListOneToOneMatcher<TypeDescription>(matchers)));
     }
 

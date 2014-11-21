@@ -2,6 +2,7 @@ package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.instrumentation.field.FieldDescription;
+import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
@@ -13,7 +14,6 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.utility.ByteBuddyCommons;
 import org.objectweb.asm.MethodVisitor;
 
@@ -287,10 +287,9 @@ public abstract class FieldAccessor implements Instrumentation {
             public FieldDescription locate(String name) {
                 TypeDescription currentType = instrumentedType;
                 do {
-                    for (FieldDescription fieldDescription : currentType.getDeclaredFields()) {
-                        if (fieldDescription.getName().equals(name) && fieldDescription.isVisibleTo(instrumentedType)) {
-                            return fieldDescription;
-                        }
+                    FieldList fieldList = currentType.getDeclaredFields().filter(named(name).and(isVisibleTo(instrumentedType)));
+                    if (fieldList.size() == 1) {
+                        return fieldList.getOnly();
                     }
                 } while (!(currentType = currentType.getSupertype()).represents(Object.class));
                 throw new IllegalArgumentException("There is no field '" + name + " that is visible to " + instrumentedType);
@@ -357,11 +356,11 @@ public abstract class FieldAccessor implements Instrumentation {
 
             @Override
             public FieldDescription locate(String name) {
-                FieldDescription fieldDescription = targetType.getDeclaredFields().filter(ElementMatchers.named(name)).getOnly();
-                if (!fieldDescription.isVisibleTo(instrumentedType)) {
-                    throw new IllegalArgumentException(fieldDescription + " is not visible to " + instrumentedType);
+                FieldList fieldList = targetType.getDeclaredFields().filter(named(name).and(isVisibleTo(instrumentedType)));
+                if (fieldList.size() != 1) {
+                    throw new IllegalArgumentException("No field named " + name + " on " + targetType + " is visible to " + instrumentedType);
                 }
-                return fieldDescription;
+                return fieldList.getOnly();
             }
 
             @Override
