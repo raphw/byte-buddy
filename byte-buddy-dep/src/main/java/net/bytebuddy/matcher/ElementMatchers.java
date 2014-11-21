@@ -180,7 +180,7 @@ public class ElementMatchers {
         return new ModifierMatcher<T>(ModifierMatcher.MatchMode.BRIDGE);
     }
 
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> is(T methodDescription) {
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> is(MethodDescription methodDescription) {
         return new EqualityMatcher<T>(nonNull(methodDescription));
     }
 
