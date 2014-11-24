@@ -4,6 +4,7 @@ import net.bytebuddy.instrumentation.ByteCodeElement;
 import net.bytebuddy.instrumentation.ModifierReviewable;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotatedElement;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
+import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.RuntimeType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
@@ -13,12 +14,13 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 import static net.bytebuddy.utility.ByteBuddyCommons.nonVoid;
 
-public class ElementMatchers {
+public final class ElementMatchers {
 
     public static <T> ElementMatcher.Junction<T> not(ElementMatcher<? super T> elementMatcher) {
         return new NegatingMatcher<T>(nonNull(elementMatcher));
@@ -36,7 +38,7 @@ public class ElementMatchers {
         return anyOf(Arrays.asList(value));
     }
 
-    public static <T> ElementMatcher.Junction<T> anyOf(List<? extends T> values) {
+    public static <T> ElementMatcher.Junction<T> anyOf(Iterable<? extends T> values) {
         ElementMatcher.Junction<T> matcher = none();
         for (T value : values) {
             matcher = matcher.or(new EqualityMatcher<T>(value));
@@ -48,7 +50,7 @@ public class ElementMatchers {
         return noneOf(Arrays.asList(value));
     }
 
-    public static <T> ElementMatcher.Junction<T> noneOf(List<? extends T> values) {
+    public static <T> ElementMatcher.Junction<T> noneOf(Iterable<? extends T> values) {
         ElementMatcher.Junction<T> matcher = any();
         for (T value : values) {
             matcher = matcher.and(not(new EqualityMatcher<T>(value)));
@@ -125,19 +127,19 @@ public class ElementMatchers {
     }
 
     public static <T extends AnnotatedElement> ElementMatcher.Junction<T> isAnnotatedWith(ElementMatcher<? super TypeDescription> annotationTypeMatcher) {
-        return hasAnnotation(new AnnotationTypeMatcher<AnnotationDescription>(annotationTypeMatcher));
+        return declaresAnnotation(new AnnotationTypeMatcher<AnnotationDescription>(nonNull(annotationTypeMatcher)));
     }
 
-    public static <T extends AnnotatedElement> ElementMatcher.Junction<T> hasAnnotation(ElementMatcher<? super AnnotationDescription> annotationDescription) {
-        return new AnnotationMatcher<T>(new ListItemMatcher<AnnotationDescription>(annotationDescription, ListItemMatcher.Mode.MATCH_ANY));
+    public static <T extends AnnotatedElement> ElementMatcher.Junction<T> declaresAnnotation(ElementMatcher<? super AnnotationDescription> annotationDescription) {
+        return new DeclaringAnnotationMatcher<T>(new CollectionItemMatcher<AnnotationDescription>(nonNull(annotationDescription)));
     }
 
     public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isPublic() {
-        return new ModifierMatcher<T>(ModifierMatcher.MatchMode.PUBLIC);
+        return new ModifierMatcher<T>(ModifierMatcher.Mode.PUBLIC);
     }
 
     public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isProtected() {
-        return new ModifierMatcher<T>(ModifierMatcher.MatchMode.PROTECTED);
+        return new ModifierMatcher<T>(ModifierMatcher.Mode.PROTECTED);
     }
 
     public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isPackagePrivate() {
@@ -145,39 +147,39 @@ public class ElementMatchers {
     }
 
     public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isPrivate() {
-        return new ModifierMatcher<T>(ModifierMatcher.MatchMode.PRIVATE);
+        return new ModifierMatcher<T>(ModifierMatcher.Mode.PRIVATE);
     }
 
     public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isFinal() {
-        return new ModifierMatcher<T>(ModifierMatcher.MatchMode.FINAL);
+        return new ModifierMatcher<T>(ModifierMatcher.Mode.FINAL);
     }
 
     public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isStatic() {
-        return new ModifierMatcher<T>(ModifierMatcher.MatchMode.STATIC);
+        return new ModifierMatcher<T>(ModifierMatcher.Mode.STATIC);
     }
 
     public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isSynchronized() {
-        return new ModifierMatcher<T>(ModifierMatcher.MatchMode.SYNCHRONIZED);
+        return new ModifierMatcher<T>(ModifierMatcher.Mode.SYNCHRONIZED);
     }
 
     public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isNative() {
-        return new ModifierMatcher<T>(ModifierMatcher.MatchMode.NATIVE);
+        return new ModifierMatcher<T>(ModifierMatcher.Mode.NATIVE);
     }
 
     public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isStrict() {
-        return new ModifierMatcher<T>(ModifierMatcher.MatchMode.STRICT);
+        return new ModifierMatcher<T>(ModifierMatcher.Mode.STRICT);
     }
 
     public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isVarArgs() {
-        return new ModifierMatcher<T>(ModifierMatcher.MatchMode.VAR_ARGS);
+        return new ModifierMatcher<T>(ModifierMatcher.Mode.VAR_ARGS);
     }
 
     public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isSynthetic() {
-        return new ModifierMatcher<T>(ModifierMatcher.MatchMode.SYNTHETIC);
+        return new ModifierMatcher<T>(ModifierMatcher.Mode.SYNTHETIC);
     }
 
     public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isBridge() {
-        return new ModifierMatcher<T>(ModifierMatcher.MatchMode.BRIDGE);
+        return new ModifierMatcher<T>(ModifierMatcher.Mode.BRIDGE);
     }
 
     public static <T extends MethodDescription> ElementMatcher.Junction<T> is(MethodDescription methodDescription) {
@@ -217,12 +219,12 @@ public class ElementMatchers {
         return takesArguments((Arrays.asList(typeDescriptions)));
     }
 
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(List<? extends TypeDescription> typeDescriptions) {
-        List<ElementMatcher<? super TypeDescription>> typeMatchers = new ArrayList<ElementMatcher<? super TypeDescription>>(typeDescriptions.size());
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(Iterable<? extends TypeDescription> typeDescriptions) {
+        List<ElementMatcher<? super TypeDescription>> typeMatchers = new LinkedList<ElementMatcher<? super TypeDescription>>();
         for (TypeDescription typeDescription : typeDescriptions) {
             typeMatchers.add(is(nonVoid(typeDescription)));
         }
-        return takesArguments(new ListOneToOneMatcher<TypeDescription>(typeMatchers));
+        return takesArguments(new CollectionOneToOneMatcher<TypeDescription>(typeMatchers));
     }
 
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(ElementMatcher<? super List<? extends TypeDescription>> parameterMatcher) {
@@ -230,7 +232,7 @@ public class ElementMatchers {
     }
 
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(int length) {
-        return new MethodParameterTypesMatcher<T>(new ListLengthMatcher<List<? extends TypeDescription>>(length));
+        return new MethodParameterTypesMatcher<T>(new CollectionSizeMatcher<List<? extends TypeDescription>>(length));
     }
 
     public static <T extends MethodDescription> ElementMatcher.Junction<T> canThrow(Class<? extends Throwable> exceptionType) {
@@ -241,8 +243,7 @@ public class ElementMatchers {
         if (exceptionType.isAssignableTo(Throwable.class)) {
             return exceptionType.isAssignableTo(RuntimeType.class) || exceptionType.isAssignableTo(Error.class)
                     ? new BooleanMatcher<T>(true)
-                    : ElementMatchers.<T>canThrow(new ListItemMatcher<TypeDescription>(new SubTypeMatcher<TypeDescription>(exceptionType),
-                    ListItemMatcher.Mode.MATCH_ANY));
+                    : ElementMatchers.<T>canThrow(new CollectionItemMatcher<TypeDescription>(new SubTypeMatcher<TypeDescription>(exceptionType)));
         } else {
             throw new IllegalArgumentException(exceptionType + " is not an exception type");
         }
@@ -321,7 +322,7 @@ public class ElementMatchers {
         return isGetter().and(returns(type));
     }
 
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> isCompatibleTo(MethodDescription methodDescription) {
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isSpecializationOf(MethodDescription methodDescription) {
         TypeList parameterTypes = methodDescription.getParameterTypes();
         List<ElementMatcher<TypeDescription>> matchers = new ArrayList<ElementMatcher<TypeDescription>>(parameterTypes.size());
         for (TypeDescription typeDescription : parameterTypes) {
@@ -330,7 +331,7 @@ public class ElementMatchers {
         return (methodDescription.isStatic() ? ElementMatchers.<T>isStatic() : ElementMatchers.<T>not(isStatic()))
                 .<T>and(named(methodDescription.getName()))
                 .<T>and(returns(isSubTypeOf(methodDescription.getReturnType())))
-                .and(takesArguments(new ListOneToOneMatcher<TypeDescription>(matchers)));
+                .and(takesArguments(new CollectionOneToOneMatcher<TypeDescription>(matchers)));
     }
 
     public static <T extends TypeDescription> ElementMatcher.Junction<T> is(T typeDescription) {
@@ -355,6 +356,30 @@ public class ElementMatchers {
 
     public static <T extends TypeDescription> ElementMatcher.Junction<T> isSuperTypeOf(TypeDescription typeDescription) {
         return new SuperTypeMatcher<T>(nonNull(typeDescription));
+    }
+
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> inheritsAnnotation(TypeDescription typeDescription) {
+        return inheritsAnnotation(is(typeDescription));
+    }
+
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> inheritsAnnotation(Class<?> type) {
+        return inheritsAnnotation(is(type));
+    }
+
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> inheritsAnnotation(ElementMatcher<? super TypeDescription> annotationTypeMatcher) {
+        return hasAnnotation(new AnnotationTypeMatcher<AnnotationDescription>(nonNull(annotationTypeMatcher)));
+    }
+
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> hasAnnotation(ElementMatcher<? super AnnotationDescription> annotationDescription) {
+        return new InheritedAnnotationMatcher<T>(new CollectionItemMatcher<AnnotationDescription>(nonNull(annotationDescription)));
+    }
+
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> declaresField(ElementMatcher<? super FieldDescription> fieldMatcher) {
+        return new DeclaringFieldMatcher<T>(new CollectionItemMatcher<FieldDescription>(nonNull(fieldMatcher)));
+    }
+
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> declaresMethod(ElementMatcher<? super MethodDescription> methodMatcher) {
+        return new DeclaringMethodMatcher<T>(new CollectionItemMatcher<MethodDescription>(nonNull(methodMatcher)));
     }
 
     private ElementMatchers() {

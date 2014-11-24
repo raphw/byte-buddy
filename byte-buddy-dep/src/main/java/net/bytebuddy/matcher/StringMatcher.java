@@ -1,7 +1,14 @@
 package net.bytebuddy.matcher;
 
+/**
+ * An element matcher that compares two strings by a given pattern which is characterized by a
+ * {@link net.bytebuddy.matcher.StringMatcher.Mode}.
+ */
 public class StringMatcher extends ElementMatcher.Junction.AbstractBase<String> {
 
+    /**
+     * Defines the mode a {@link net.bytebuddy.matcher.StringMatcher} compares to strings with.
+     */
     public static enum Mode {
 
         /**
@@ -122,8 +129,8 @@ public class StringMatcher extends ElementMatcher.Junction.AbstractBase<String> 
         /**
          * Matches a string against another string.
          *
-         * @param expected The target of the comparison against which the source string is compared.
-         * @param actual The source which is subject of the comparison to another string.
+         * @param expected The target of the comparison against which the {@code actual} string is compared.
+         * @param actual   The source which is subject of the comparison to the {@code expected} value.
          * @return {@code true} if the source matches the target.
          */
         protected abstract boolean matches(String expected, String actual);
@@ -142,7 +149,7 @@ public class StringMatcher extends ElementMatcher.Junction.AbstractBase<String> 
     /**
      * Creates a new method name matcher.
      *
-     * @param name      The name to be matched.
+     * @param name The name to be matched.
      * @param mode The mode of matching the given name.
      */
     public StringMatcher(String name, Mode mode) {

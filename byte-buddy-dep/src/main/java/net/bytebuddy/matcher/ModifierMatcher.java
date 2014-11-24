@@ -4,71 +4,144 @@ import net.bytebuddy.instrumentation.ModifierReviewable;
 import org.objectweb.asm.Opcodes;
 
 /**
- * Matches a method by a modifier. The method is matched if any bit of the modifier is set on a method.
+ * An element matcher that matches a byte code element by its modifiers.
+ *
+ * @param <T> The type of the matched entity.
  */
-class ModifierMatcher<T extends ModifierReviewable> extends ElementMatcher.Junction.AbstractBase<T> {
+public class ModifierMatcher<T extends ModifierReviewable> extends ElementMatcher.Junction.AbstractBase<T> {
 
-    public static enum MatchMode {
+    /**
+     * Determines the type of modifier to be matched by a {@link net.bytebuddy.matcher.ModifierMatcher}.
+     */
+    public static enum Mode {
 
+        /**
+         * Matches an element that is considered {@code public}.
+         */
         PUBLIC(Opcodes.ACC_PUBLIC, "isPublic()"),
+
+        /**
+         * Matches an element that is considered {@code protected}.
+         */
         PROTECTED(Opcodes.ACC_PROTECTED, "isProtected()"),
+
+        /**
+         * Matches an element that is considered {@code private}.
+         */
         PRIVATE(Opcodes.ACC_PRIVATE, "isPrivate()"),
+
+        /**
+         * Matches an element that is considered {@code final}.
+         */
         FINAL(Opcodes.ACC_FINAL, "isFinal()"),
+
+        /**
+         * Matches an element that is considered {@code static}.
+         */
         STATIC(Opcodes.ACC_STATIC, "isStatic()"),
+
+        /**
+         * Matches an element that is considered {@code synchronized}.
+         */
         SYNCHRONIZED(Opcodes.ACC_SYNCHRONIZED, "isSynchronized()"),
+
+        /**
+         * Matches an element that is considered {@code native}.
+         */
         NATIVE(Opcodes.ACC_NATIVE, "isNative()"),
+
+        /**
+         * Matches an element that is considered {@code strict}.
+         */
         STRICT(Opcodes.ACC_STRICT, "isStrict()"),
+
+        /**
+         * Matches an element that is considered to be varargs.
+         */
         VAR_ARGS(Opcodes.ACC_VARARGS, "isVarArgs()"),
+
+        /**
+         * Matches an element that is considered {@code synthetic}.
+         */
         SYNTHETIC(Opcodes.ACC_SYNTHETIC, "isSynthetic()"),
+
+        /**
+         * Matches an element that is considered a bridge method.
+         */
         BRIDGE(Opcodes.ACC_BRIDGE, "isBridge()");
 
-        private final int modifier;
+        /**
+         * The mask of the modifier to match.
+         */
+        private final int modifiers;
 
+        /**
+         * The textual representation of this instance's matching mode.
+         */
         private final String description;
 
-        private MatchMode(int modifier, String description) {
-            this.modifier = modifier;
+        /**
+         * Creates a new modifier matcher mode.
+         *
+         * @param modifiers   The mask of the modifier to match.
+         * @param description The textual representation of this instance's matching mode.
+         */
+        private Mode(int modifiers, String description) {
+            this.modifiers = modifiers;
             this.description = description;
         }
 
         /**
-         * Returns the description of this match mode.
+         * Returns the textual description of this mode.
          *
-         * @return The description of this match mode.
+         * @return The textual description of this mode.
          */
         protected String getDescription() {
             return description;
         }
 
+        /**
+         * Returns the modifiers to match by this mode.
+         *
+         * @return The modifiers to match by this mode.
+         */
         protected int getModifiers() {
-            return modifier;
+            return modifiers;
         }
     }
 
-    private final MatchMode matchMode;
+    /**
+     * The matching mode to apply by this modifier matcher.
+     */
+    private final Mode mode;
 
-    public ModifierMatcher(MatchMode matchMode) {
-        this.matchMode = matchMode;
+    /**
+     * Creates a new element matcher that matches an element by its modifier.
+     *
+     * @param Mode The match mode to apply to the matched element's modifier.
+     */
+    public ModifierMatcher(Mode Mode) {
+        this.mode = Mode;
     }
 
     @Override
     public boolean matches(T target) {
-        return (matchMode.getModifiers() & target.getModifiers()) != 0;
+        return (mode.getModifiers() & target.getModifiers()) != 0;
     }
 
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && matchMode == ((ModifierMatcher) other).matchMode;
+                && mode == ((ModifierMatcher) other).mode;
     }
 
     @Override
     public int hashCode() {
-        return matchMode.hashCode();
+        return mode.hashCode();
     }
 
     @Override
     public String toString() {
-        return matchMode.getDescription();
+        return mode.getDescription();
     }
 }

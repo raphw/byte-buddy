@@ -22,10 +22,14 @@ public abstract class AbstractElementMatcherTest<T extends ElementMatcher<?>> {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(type).specificToString(makeRegex(startsWith)).apply();
+        modify(ObjectPropertyAssertion.of(type)).specificToString(makeRegex(startsWith)).apply();
     }
 
     protected String makeRegex(String startsWith) {
         return "^" + startsWith + "\\(.*\\)$";
+    }
+
+    protected <S> ObjectPropertyAssertion<S> modify(ObjectPropertyAssertion<S> propertyAssertion) {
+        return propertyAssertion;
     }
 }

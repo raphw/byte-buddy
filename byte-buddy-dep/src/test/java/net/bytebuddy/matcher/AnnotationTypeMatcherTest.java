@@ -23,7 +23,7 @@ public class AnnotationTypeMatcherTest extends AbstractElementMatcherTest<Annota
 
     @SuppressWarnings("unchecked")
     public AnnotationTypeMatcherTest() {
-        super((Class<AnnotationTypeMatcher<?>>) (Object) AnnotationTypeMatcher.class, "annotationType");
+        super((Class<AnnotationTypeMatcher<?>>) (Object) AnnotationTypeMatcher.class, "ofAnnotationType");
     }
 
     @Before

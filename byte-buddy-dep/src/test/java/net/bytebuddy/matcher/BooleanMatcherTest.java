@@ -30,12 +30,12 @@ public class BooleanMatcherTest extends AbstractElementMatcherTest<BooleanMatche
 
     @Test
     public void testToString() throws Exception {
-        assertThat(new BooleanMatcher<Object>(true).toString(), is("any()"));
-        assertThat(new BooleanMatcher<Object>(false).toString(), is("none()"));
+        assertThat(new BooleanMatcher<Object>(true).toString(), is("true"));
+        assertThat(new BooleanMatcher<Object>(false).toString(), is("false"));
     }
 
     @Override
     protected String makeRegex(String startsWith) {
-        return "(any)|(none)\\(\\)";
+        return "(true)|(false)";
     }
 }

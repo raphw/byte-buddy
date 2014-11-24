@@ -109,7 +109,7 @@ public interface BridgeMethodResolver {
                                                         ConflictHandler conflictHandler) {
             MethodList targetCandidates = bridgeMethod.getDeclaringType()
                     .getDeclaredMethods()
-                    .filter(not(isBridge()).and(isCompatibleTo(bridgeMethod)));
+                    .filter(not(isBridge()).and(isSpecializationOf(bridgeMethod)));
             switch (targetCandidates.size()) {
                 case 0:
                     return new BridgeTarget.Resolved(bridgeMethod);

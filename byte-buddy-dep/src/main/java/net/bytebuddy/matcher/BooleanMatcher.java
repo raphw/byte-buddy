@@ -39,6 +39,6 @@ public class BooleanMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
 
     @Override
     public String toString() {
-        return (matches ? "any" : "none") + "()";
+        return Boolean.toString(matches);
     }
 }

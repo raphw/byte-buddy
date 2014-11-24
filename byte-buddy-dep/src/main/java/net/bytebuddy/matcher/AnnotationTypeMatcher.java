@@ -42,6 +42,6 @@ public class AnnotationTypeMatcher<T extends AnnotationDescription> extends Elem
 
     @Override
     public String toString() {
-        return "annotationType(" + typeMatcher + ')';
+        return "ofAnnotationType(" + typeMatcher + ')';
     }
 }

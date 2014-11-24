@@ -44,6 +44,8 @@ public class ObjectPropertyAssertion<T> {
 
     private final String optionalToStringRegex;
 
+    private final boolean skipToString;
+
     private final Set<String> ignoredFields;
 
     private ObjectPropertyAssertion(Class<T> type,
@@ -51,6 +53,7 @@ public class ObjectPropertyAssertion<T> {
                                     ApplicableRefinement refinement,
                                     ApplicableCreator creator,
                                     boolean skipSynthetic,
+                                    boolean skipToString,
                                     String optionalToStringRegex,
                                     Set<String> ignoredFields) {
         this.type = type;
@@ -58,6 +61,7 @@ public class ObjectPropertyAssertion<T> {
         this.refinement = refinement;
         this.creator = creator;
         this.skipSynthetic = skipSynthetic;
+        this.skipToString = skipToString;
         this.optionalToStringRegex = optionalToStringRegex;
         this.ignoredFields = ignoredFields;
     }
@@ -67,6 +71,7 @@ public class ObjectPropertyAssertion<T> {
                 new ApplicableGenerator(),
                 new ApplicableRefinement(),
                 new ApplicableCreator(),
+                false,
                 false,
                 null,
                 new HashSet<String>());
@@ -78,6 +83,7 @@ public class ObjectPropertyAssertion<T> {
                 this.refinement.with(refinement),
                 creator,
                 skipSynthetic,
+                skipToString,
                 optionalToStringRegex,
                 ignoredFields);
     }
@@ -88,6 +94,7 @@ public class ObjectPropertyAssertion<T> {
                 refinement,
                 creator,
                 skipSynthetic,
+                skipToString,
                 optionalToStringRegex,
                 ignoredFields);
     }
@@ -98,22 +105,27 @@ public class ObjectPropertyAssertion<T> {
                 refinement,
                 this.creator.with(creator),
                 skipSynthetic,
+                skipToString,
                 optionalToStringRegex,
                 ignoredFields);
     }
 
     public ObjectPropertyAssertion<T> skipSynthetic() {
-        return new ObjectPropertyAssertion<T>(type, generator, refinement, creator, true, optionalToStringRegex, ignoredFields);
+        return new ObjectPropertyAssertion<T>(type, generator, refinement, creator, true, skipToString, optionalToStringRegex, ignoredFields);
+    }
+
+    public ObjectPropertyAssertion<T> skipToString() {
+        return new ObjectPropertyAssertion<T>(type, generator, refinement, creator, skipSynthetic, true, optionalToStringRegex, ignoredFields);
     }
 
     public ObjectPropertyAssertion<T> specificToString(String stringRegex) {
-        return new ObjectPropertyAssertion<T>(type, generator, refinement, creator, skipSynthetic, stringRegex, ignoredFields);
+        return new ObjectPropertyAssertion<T>(type, generator, refinement, creator, skipSynthetic, skipToString, stringRegex, ignoredFields);
     }
 
     public ObjectPropertyAssertion<T> ignoreFields(String... field) {
         Set<String> ignoredFields = new HashSet<String>(this.ignoredFields);
         ignoredFields.addAll(Arrays.asList(field));
-        return new ObjectPropertyAssertion<T>(type, generator, refinement, creator, skipSynthetic, optionalToStringRegex, ignoredFields);
+        return new ObjectPropertyAssertion<T>(type, generator, refinement, creator, skipSynthetic, skipToString, optionalToStringRegex, ignoredFields);
     }
 
     public void apply() throws IllegalAccessException, InvocationTargetException, InstantiationException {
@@ -138,7 +150,9 @@ public class ObjectPropertyAssertion<T> {
             Object similarInstance = constructor.newInstance(actualArguments);
             assertThat(instance.hashCode(), is(similarInstance.hashCode()));
             assertThat(instance, is(similarInstance));
-            if (optionalToStringRegex == null) {
+            if (skipToString) {
+                assertThat(instance.toString(), notNullValue());
+            } else if (optionalToStringRegex == null) {
                 checkString(instance);
             } else {
                 assertThat(instance.toString(), new RegexMatcher(optionalToStringRegex));
@@ -319,7 +333,7 @@ public class ObjectPropertyAssertion<T> {
             this.creators = creators;
         }
 
-        private Object replace(Class<?> type, ApplicableGenerator generator, boolean alterative) {
+        private Object replace(Class<?> type, ApplicableGenerator generator, boolean alternative) {
             for (Creator<?> creator : creators) {
                 ParameterizedType generic = (ParameterizedType) creator.getClass().getGenericInterfaces()[0];
                 Class<?> restrained = generic.getActualTypeArguments()[0] instanceof ParameterizedType
@@ -329,7 +343,7 @@ public class ObjectPropertyAssertion<T> {
                     return creator.create();
                 }
             }
-            return generator.generate(type, alterative);
+            return generator.generate(type, alternative);
         }
 
         private ApplicableCreator with(Creator<?> creator) {
