@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.asm.Opcodes;
 
 import java.io.Serializable;
+import java.lang.annotation.Retention;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
@@ -131,6 +132,18 @@ public class ByteBuddyCommonsTest {
     @Test(expected = IllegalArgumentException.class)
     public void testIsInterfaceListThrowsException() throws Exception {
         isInterface(Arrays.asList(new TypeDescription.ForLoadedType(Runnable.class), new TypeDescription.ForLoadedType(Object.class)));
+    }
+
+    @Test
+    public void testIsAnnotation() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Retention.class);
+        assertThat(isAnnotation(typeDescription), is(typeDescription));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testIsAnnotationThrowsException() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Object.class);
+        assertThat(isAnnotation(typeDescription), is(typeDescription));
     }
 
     @Test

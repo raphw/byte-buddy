@@ -10,6 +10,7 @@ import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.RuntimeType
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -17,36 +18,78 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
-import static net.bytebuddy.utility.ByteBuddyCommons.nonVoid;
+import static net.bytebuddy.utility.ByteBuddyCommons.*;
 
 /**
  * A utility class that contains a human-readable language for creating {@link net.bytebuddy.matcher.ElementMatcher}s.
  */
 public final class ElementMatchers {
 
+    /**
+     * Matches the given value which can also be {@code null} by the {@link java.lang.Object#equals(Object)} method or
+     * by a null-check.
+     *
+     * @param value The value that is to be matched.
+     * @param <T>   The type of the matched object.
+     * @return A matcher that matches an exact value.
+     */
     public static <T> ElementMatcher.Junction<T> is(Object value) {
         return value == null
                 ? new NullMatcher<T>()
                 : new EqualityMatcher<T>(value);
     }
 
-    public static <T> ElementMatcher.Junction<T> not(ElementMatcher<? super T> elementMatcher) {
-        return new NegatingMatcher<T>(nonNull(elementMatcher));
+    /**
+     * Inverts another matcher.
+     *
+     * @param matcher The matcher to invert.
+     * @param <T>     The type of the matched object.
+     * @return An inverted version of the given {@code matcher}.
+     */
+    public static <T> ElementMatcher.Junction<T> not(ElementMatcher<? super T> matcher) {
+        return new NegatingMatcher<T>(nonNull(matcher));
     }
 
+    /**
+     * Creates a matcher that always returns {@code true}.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher that matches anything.
+     */
     public static <T> ElementMatcher.Junction<T> any() {
         return new BooleanMatcher<T>(true);
     }
 
+    /**
+     * Creates a matcher that always returns {@code false}.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher that matches nothing.
+     */
     public static <T> ElementMatcher.Junction<T> none() {
         return new BooleanMatcher<T>(false);
     }
 
-    public static <T> ElementMatcher.Junction<T> anyOf(T... value) {
+    /**
+     * Creates a matcher that matches any of the given objects by the {@link java.lang.Object#equals(Object)} method.
+     * None of the values must be {@code null}.
+     *
+     * @param value The input values to be compared against.
+     * @param <T>   The type of the matched object.
+     * @return A matcher that checks for the equality with any of the given objects.
+     */
+    public static <T> ElementMatcher.Junction<T> anyOf(Object... value) {
         return anyOf(Arrays.asList(value));
     }
 
+    /**
+     * Creates a matcher that matches any of the given objects by the {@link java.lang.Object#equals(Object)} method.
+     * None of the values must be {@code null}.
+     *
+     * @param values The input values to be compared against.
+     * @param <T>    The type of the matched object.
+     * @return A matcher that checks for the equality with any of the given objects.
+     */
     public static <T> ElementMatcher.Junction<T> anyOf(Iterable<?> values) {
         ElementMatcher.Junction<T> matcher = none();
         for (Object value : values) {
@@ -55,10 +98,26 @@ public final class ElementMatchers {
         return matcher;
     }
 
-    public static <T> ElementMatcher.Junction<T> noneOf(T... value) {
+    /**
+     * Creates a matcher that matches none of the given objects by the {@link java.lang.Object#equals(Object)} method.
+     * None of the values must be {@code null}.
+     *
+     * @param value The input values to be compared against.
+     * @param <T>   The type of the matched object.
+     * @return A matcher that checks for the equality with none of the given objects.
+     */
+    public static <T> ElementMatcher.Junction<T> noneOf(Object... value) {
         return noneOf(Arrays.asList(value));
     }
 
+    /**
+     * Creates a matcher that matches none of the given objects by the {@link java.lang.Object#equals(Object)} method.
+     * None of the values must be {@code null}.
+     *
+     * @param values The input values to be compared against.
+     * @param <T>    The type of the matched object.
+     * @return A matcher that checks for the equality with none of the given objects.
+     */
     public static <T> ElementMatcher.Junction<T> noneOf(Iterable<?> values) {
         ElementMatcher.Junction<T> matcher = any();
         for (Object value : values) {
@@ -67,127 +126,354 @@ public final class ElementMatchers {
         return matcher;
     }
 
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.ByteCodeElement} for its exact name.
+     *
+     * @param name The expected name.
+     * @param <T>  The type of the matched object.
+     * @return An element matcher for a byte code element's exact name.
+     */
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> named(String name) {
         return new NameMatcher<T>(new StringMatcher(nonNull(name), StringMatcher.Mode.EQUALS_FULLY));
     }
 
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.ByteCodeElement} for its name. The name's
+     * capitalization is ignored.
+     *
+     * @param name The expected name.
+     * @param <T>  The type of the matched object.
+     * @return An element matcher for a byte code element's name.
+     */
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> namedIgnoreCase(String name) {
         return new NameMatcher<T>(new StringMatcher(nonNull(name), StringMatcher.Mode.EQUALS_FULLY_IGNORE_CASE));
     }
 
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.ByteCodeElement} for its name's prefix.
+     *
+     * @param prefix The expected name's prefix.
+     * @param <T>    The type of the matched object.
+     * @return An element matcher for a byte code element's name's prefix.
+     */
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> nameStartsWith(String prefix) {
         return new NameMatcher<T>(new StringMatcher(nonNull(prefix), StringMatcher.Mode.STARTS_WITH));
     }
 
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.ByteCodeElement} for its name's prefix. The name's
+     * capitalization is ignored.
+     *
+     * @param prefix The expected name's prefix.
+     * @param <T>    The type of the matched object.
+     * @return An element matcher for a byte code element's name's prefix.
+     */
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> nameStartsWithIgnoreCase(String prefix) {
         return new NameMatcher<T>(new StringMatcher(nonNull(prefix), StringMatcher.Mode.STARTS_WITH_IGNORE_CASE));
     }
 
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.ByteCodeElement} for its name's suffix.
+     *
+     * @param suffix The expected name's suffix.
+     * @param <T>    The type of the matched object.
+     * @return An element matcher for a byte code element's name's suffix.
+     */
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> nameEndsWith(String suffix) {
         return new NameMatcher<T>(new StringMatcher(nonNull(suffix), StringMatcher.Mode.ENDS_WITH));
     }
 
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.ByteCodeElement} for its name's suffix. The name's
+     * capitalization is ignored.
+     *
+     * @param suffix The expected name's suffix.
+     * @param <T>    The type of the matched object.
+     * @return An element matcher for a byte code element's name's suffix.
+     */
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> nameEndsWithIgnoreCase(String suffix) {
         return new NameMatcher<T>(new StringMatcher(nonNull(suffix), StringMatcher.Mode.ENDS_WITH_IGNORE_CASE));
     }
 
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.ByteCodeElement} for an infix of its name.
+     *
+     * @param infix The expected infix of the name.
+     * @param <T>   The type of the matched object.
+     * @return An element matcher for a byte code element's name's infix.
+     */
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> nameContains(String infix) {
         return new NameMatcher<T>(new StringMatcher(nonNull(infix), StringMatcher.Mode.CONTAINS));
     }
 
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.ByteCodeElement} for an infix of its name. The name's
+     * capitalization is ignored.
+     *
+     * @param infix The expected infix of the name.
+     * @param <T>   The type of the matched object.
+     * @return An element matcher for a byte code element's name's infix.
+     */
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> nameContainsIgnoreCase(String infix) {
         return new NameMatcher<T>(new StringMatcher(nonNull(infix), StringMatcher.Mode.CONTAINS_IGNORE_CASE));
     }
 
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.ByteCodeElement} name against a regular expression.
+     *
+     * @param regex The regular expression to match the name against.
+     * @param <T>   The type of the matched object.
+     * @return An element matcher for a byte code element's name's against the given regular expression.
+     */
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> nameMatches(String regex) {
         return new NameMatcher<T>(new StringMatcher(nonNull(regex), StringMatcher.Mode.MATCHES));
     }
 
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.ByteCodeElement}'s descriptor against a given value.
+     *
+     * @param descriptor The expected descriptor.
+     * @param <T>        The type of the matched object.
+     * @return A matcher for the given {@code descriptor}.
+     */
+    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> hasDescriptor(String descriptor) {
+        return new DescriptorMatcher<T>(new StringMatcher(descriptor, StringMatcher.Mode.EQUALS_FULLY));
+    }
+
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.ByteCodeElement} for being declared by a given
+     * {@link net.bytebuddy.instrumentation.type.TypeDescription}.
+     *
+     * @param type The type that is expected to declare the matched byte code element.
+     * @param <T>  The type of the matched object.
+     * @return A matcher for byte code elements being declared by the given {@code type}.
+     */
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isDeclaredBy(TypeDescription type) {
         return isDeclaredBy(is(nonNull(type)));
     }
 
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.ByteCodeElement} for being declared by a given
+     * {@link java.lang.Class}.
+     *
+     * @param type The type that is expected to declare the matched byte code element.
+     * @param <T>  The type of the matched object.
+     * @return A matcher for byte code elements being declared by the given {@code type}.
+     */
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isDeclaredBy(Class<?> type) {
         return isDeclaredBy(new TypeDescription.ForLoadedType(nonNull(type)));
     }
 
-    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isDeclaredBy(ElementMatcher<? super TypeDescription> typeMatcher) {
-        return new DeclaringTypeMatcher<T>(nonNull(typeMatcher));
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.ByteCodeElement} for being declared by a
+     * {@link net.bytebuddy.instrumentation.type.TypeDescription} that is matched by the given matcher.
+     *
+     * @param matcher A matcher for the declaring type of the matched byte code element as long as it
+     *                is not {@code null}.
+     * @param <T>     The type of the matched object.
+     * @return A matcher for byte code elements being declared by a type matched by the given {@code matcher}.
+     */
+    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isDeclaredBy(ElementMatcher<? super TypeDescription> matcher) {
+        return new DeclaringTypeMatcher<T>(nonNull(matcher));
     }
 
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.ByteCodeElement} that is visible to a given {@link java.lang.Class}.
+     *
+     * @param type The type that a matched byte code element is expected to be visible to.
+     * @param <T>  The type of the matched object.
+     * @return A matcher for a byte code element to be visible to a given {@code type}.
+     */
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isVisibleTo(Class<?> type) {
         return isVisibleTo(new TypeDescription.ForLoadedType(nonNull(type)));
     }
 
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.ByteCodeElement} that is visible to a given
+     * {@link net.bytebuddy.instrumentation.type.TypeDescription}.
+     *
+     * @param typeDescription The type that a matched byte code element is expected to be visible to.
+     * @param <T>             The type of the matched object.
+     * @return A matcher for a byte code element to be visible to a given {@code typeDescription}.
+     */
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isVisibleTo(TypeDescription typeDescription) {
         return new VisibilityMatcher<T>(typeDescription);
     }
 
-    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> hasDescriptor(String methodDescriptor) {
-        return new DescriptorMatcher<T>(new StringMatcher(methodDescriptor, StringMatcher.Mode.EQUALS_FULLY));
+    /**
+     * Matches an {@link net.bytebuddy.instrumentation.attribute.annotation.AnnotatedElement} for declared annotations.
+     * This matcher does not match inherited annotations which only exist for classes. Use
+     * {@link net.bytebuddy.matcher.ElementMatchers#inheritsAnnotation(Class)} for matching inherited annotations.
+     *
+     * @param type The annotation type to match against.
+     * @param <T>  The type of the matched object.
+     * @return A matcher that validates that an annotated element is annotated with an annotation of {@code type}.
+     */
+    public static <T extends AnnotatedElement> ElementMatcher.Junction<T> isAnnotatedWith(Class<? extends Annotation> type) {
+        return isAnnotatedWith(new TypeDescription.ForLoadedType(nonNull(type)));
     }
 
+    /**
+     * Matches an {@link net.bytebuddy.instrumentation.attribute.annotation.AnnotatedElement} for declared annotations.
+     * This matcher does not match inherited annotations which only exist for classes. Use
+     * {@link net.bytebuddy.matcher.ElementMatchers#inheritsAnnotation(net.bytebuddy.instrumentation.type.TypeDescription)}
+     * for matching inherited annotations.
+     *
+     * @param typeDescription The annotation type to match against.
+     * @param <T>             The type of the matched object.
+     * @return A matcher that validates that an annotated element is annotated with an annotation of {@code typeDescription}.
+     */
     public static <T extends AnnotatedElement> ElementMatcher.Junction<T> isAnnotatedWith(TypeDescription typeDescription) {
-        return isAnnotatedWith(is(typeDescription));
+        return isAnnotatedWith(is(isAnnotation(typeDescription)));
     }
 
-    public static <T extends AnnotatedElement> ElementMatcher.Junction<T> isAnnotatedWith(Class<?> type) {
-        return isAnnotatedWith(is(type));
+    /**
+     * Matches an {@link net.bytebuddy.instrumentation.attribute.annotation.AnnotatedElement} for declared annotations.
+     * This matcher does not match inherited annotations which only exist for classes. Use
+     * {@link net.bytebuddy.matcher.ElementMatchers#inheritsAnnotation(net.bytebuddy.matcher.ElementMatcher)}
+     * for matching inherited annotations.
+     *
+     * @param matcher The matcher to apply to any annotation's type found on the matched annotated element.
+     * @param <T>     The type of the matched object.
+     * @return A matcher that validates that an annotated element is annotated with an annotation of a type
+     * that matches the given {@code matcher}.
+     */
+    public static <T extends AnnotatedElement> ElementMatcher.Junction<T> isAnnotatedWith(ElementMatcher<? super TypeDescription> matcher) {
+        return declaresAnnotation(new AnnotationTypeMatcher<AnnotationDescription>(nonNull(matcher)));
     }
 
-    public static <T extends AnnotatedElement> ElementMatcher.Junction<T> isAnnotatedWith(ElementMatcher<? super TypeDescription> annotationTypeMatcher) {
-        return declaresAnnotation(new AnnotationTypeMatcher<AnnotationDescription>(nonNull(annotationTypeMatcher)));
+    /**
+     * Matches an {@link net.bytebuddy.instrumentation.attribute.annotation.AnnotatedElement} to declare any annotation
+     * that matches the given matcher. Note that this matcher does not match inherited annotations that only exist
+     * for types. Use {@link net.bytebuddy.matcher.ElementMatchers#inheritsAnnotation(net.bytebuddy.matcher.ElementMatcher)}
+     * for matching inherited annotations.
+     *
+     * @param matcher A matcher to apply on any declared annotation of the matched annotated element.
+     * @param <T>     The type of the matched object.
+     * @return A matcher that validates that an annotated element is annotated with an annotation that matches
+     * the given {@code matcher}.
+     */
+    public static <T extends AnnotatedElement> ElementMatcher.Junction<T> declaresAnnotation(ElementMatcher<? super AnnotationDescription> matcher) {
+        return new DeclaringAnnotationMatcher<T>(new CollectionItemMatcher<AnnotationDescription>(nonNull(matcher)));
     }
 
-    public static <T extends AnnotatedElement> ElementMatcher.Junction<T> declaresAnnotation(ElementMatcher<? super AnnotationDescription> annotationDescription) {
-        return new DeclaringAnnotationMatcher<T>(new CollectionItemMatcher<AnnotationDescription>(nonNull(annotationDescription)));
-    }
-
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.ModifierReviewable} that is {@code public}.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher for a {@code public} modifier reviewable.
+     */
     public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isPublic() {
         return new ModifierMatcher<T>(ModifierMatcher.Mode.PUBLIC);
     }
 
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.ModifierReviewable} that is {@code protected}.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher for a {@code protected} modifier reviewable.
+     */
     public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isProtected() {
         return new ModifierMatcher<T>(ModifierMatcher.Mode.PROTECTED);
     }
 
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.ModifierReviewable} that is package-private.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher for a package-private modifier reviewable.
+     */
     public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isPackagePrivate() {
         return not(isPublic().or(isProtected()).or(isPrivate()));
     }
 
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.ModifierReviewable} that is {@code private}.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher for a {@code private} modifier reviewable.
+     */
     public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isPrivate() {
         return new ModifierMatcher<T>(ModifierMatcher.Mode.PRIVATE);
     }
 
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.ModifierReviewable} that is {@code final}.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher for a {@code final} modifier reviewable.
+     */
     public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isFinal() {
         return new ModifierMatcher<T>(ModifierMatcher.Mode.FINAL);
     }
 
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.ModifierReviewable} that is {@code static}.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher for a {@code static} modifier reviewable.
+     */
     public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isStatic() {
         return new ModifierMatcher<T>(ModifierMatcher.Mode.STATIC);
     }
 
-    public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isSynchronized() {
-        return new ModifierMatcher<T>(ModifierMatcher.Mode.SYNCHRONIZED);
-    }
-
-    public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isNative() {
-        return new ModifierMatcher<T>(ModifierMatcher.Mode.NATIVE);
-    }
-
-    public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isStrict() {
-        return new ModifierMatcher<T>(ModifierMatcher.Mode.STRICT);
-    }
-
-    public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isVarArgs() {
-        return new ModifierMatcher<T>(ModifierMatcher.Mode.VAR_ARGS);
-    }
-
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.ModifierReviewable} that is synthetic.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher for a synthetic modifier reviewable.
+     */
     public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isSynthetic() {
         return new ModifierMatcher<T>(ModifierMatcher.Mode.SYNTHETIC);
     }
 
-    public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isBridge() {
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} that is {@code synchronized}.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher for a {@code synchronized} method description.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isSynchronized() {
+        return new ModifierMatcher<T>(ModifierMatcher.Mode.SYNCHRONIZED);
+    }
+
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} that is {@code native}.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher for a {@code native} method description.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isNative() {
+        return new ModifierMatcher<T>(ModifierMatcher.Mode.NATIVE);
+    }
+
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} that is {@code strictfp}.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher for a {@code strictfp} method description.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isStrict() {
+        return new ModifierMatcher<T>(ModifierMatcher.Mode.STRICT);
+    }
+
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} that is a var-args.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher for a var-args method description.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isVarArgs() {
+        return new ModifierMatcher<T>(ModifierMatcher.Mode.VAR_ARGS);
+    }
+
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} that is a bridge.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher for a bridge method.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isBridge() {
         return new ModifierMatcher<T>(ModifierMatcher.Mode.BRIDGE);
     }
 
@@ -320,7 +606,7 @@ public final class ElementMatchers {
 
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter() {
         return takesArguments(0).and(not(returns(void.class))).and(nameStartsWith("get")
-                .or(nameStartsWith("is").and(returns(boolean.class).or(returns(Boolean.class)))));
+                .or(nameStartsWith("is").and(returns(anyOf(boolean.class, Boolean.class)))));
     }
 
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter(Class<?> type) {
@@ -375,8 +661,8 @@ public final class ElementMatchers {
         return inheritsAnnotation(is(type));
     }
 
-    public static <T extends TypeDescription> ElementMatcher.Junction<T> inheritsAnnotation(ElementMatcher<? super TypeDescription> annotationTypeMatcher) {
-        return hasAnnotation(new AnnotationTypeMatcher<AnnotationDescription>(nonNull(annotationTypeMatcher)));
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> inheritsAnnotation(ElementMatcher<? super TypeDescription> matcher) {
+        return hasAnnotation(new AnnotationTypeMatcher<AnnotationDescription>(nonNull(matcher)));
     }
 
     public static <T extends TypeDescription> ElementMatcher.Junction<T> hasAnnotation(ElementMatcher<? super AnnotationDescription> annotationDescription) {

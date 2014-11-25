@@ -176,6 +176,11 @@ public interface ClassFileLocator {
         protected static class ExtractionClassFileTransformer implements ClassFileTransformer {
 
             /**
+             * An indicator that an attempted class file transformation did not alter the handed class file.
+             */
+            private static final byte[] DO_NOT_TRANSFORM = null;
+
+            /**
              * The class loader that is expected to have loaded the looked-up a class.
              */
             private final ClassLoader classLoader;
@@ -210,7 +215,7 @@ public interface ClassFileLocator {
                 if (isChild(classLoader) && typeDescription.represents(redefinedType)) {
                     this.classFile = classFile;
                 }
-                return classFile;
+                return DO_NOT_TRANSFORM;
             }
 
             /**

@@ -127,14 +127,14 @@ public final class ByteBuddyCommons {
     }
 
     /**
-     * Validates if a type is an interface.
+     * Validates if a type represents an interface.
      *
      * @param type The type to validate.
      * @return The input value.
      */
     public static TypeDescription isInterface(TypeDescription type) {
         if (!nonNull(type).isInterface()) {
-            throw new IllegalArgumentException(type + " is not an interface");
+            throw new IllegalArgumentException(type + " is not an interface type");
         }
         return type;
     }
@@ -150,6 +150,19 @@ public final class ByteBuddyCommons {
             isInterface(typeDescription);
         }
         return types;
+    }
+
+    /**
+     * Validates if a type is an annotation type.
+     *
+     * @param type The type to validate.
+     * @return The input value.
+     */
+    public static TypeDescription isAnnotation(TypeDescription type) {
+        if (!nonNull(type).isAnnotation()) {
+            throw new IllegalArgumentException(type + " is not an annotation type");
+        }
+        return type;
     }
 
     /**

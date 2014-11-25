@@ -2148,12 +2148,12 @@ public interface DynamicType {
 
                 @Override
                 public MethodAnnotationTarget<S> intercept(Instrumentation instrumentation) {
-                    return materialize().method(isDeclaredBy(anyOf(interfaceType))).intercept(nonNull(instrumentation));
+                    return materialize().method(isDeclaredBy(anyOf((Object[]) interfaceType))).intercept(nonNull(instrumentation));
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> withoutCode() {
-                    return materialize().method(isDeclaredBy(anyOf(interfaceType))).withoutCode();
+                    return materialize().method(isDeclaredBy(anyOf((Object[]) interfaceType))).withoutCode();
                 }
 
                 @Override

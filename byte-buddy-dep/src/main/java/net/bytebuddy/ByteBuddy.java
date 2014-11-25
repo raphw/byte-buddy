@@ -706,7 +706,7 @@ public class ByteBuddy {
                 methodLookupEngineFactory,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
-                isDeclaredBy(anyOf(type)));
+                isDeclaredBy(anyOf((Object[]) type)));
     }
 
     /**
