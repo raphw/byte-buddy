@@ -3,7 +3,8 @@ package net.bytebuddy.matcher;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import java.util.Collection;
+import java.util.Arrays;
+import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -17,21 +18,31 @@ public class CollectionSizeMatcherTest extends AbstractElementMatcherTest<Collec
     }
 
     @Mock
-    private Collection<?> collection;
+    private Iterable<Object> collection;
 
     @Test
     public void testMatch() throws Exception {
-        when(collection.size()).thenReturn(1);
-        assertThat(new CollectionSizeMatcher<Collection<?>>(1).matches(collection), is(true));
-        verify(collection).size();
+        when(collection.iterator()).thenReturn(Arrays.asList(new Object()).iterator());
+        assertThat(new CollectionSizeMatcher<Iterable<?>>(1).matches(collection), is(true));
+        verify(collection).iterator();
         verifyNoMoreInteractions(collection);
     }
 
     @Test
+    public void testMatchCollection() throws Exception {
+        assertThat(new CollectionSizeMatcher<Iterable<?>>(1).matches(Arrays.asList(new Object())), is(true));
+    }
+
+    @Test
     public void testNoMatch() throws Exception {
-        when(collection.size()).thenReturn(0);
-        assertThat(new CollectionSizeMatcher<Collection<?>>(1).matches(collection), is(false));
-        verify(collection).size();
+        when(collection.iterator()).thenReturn(Collections.emptyList().iterator());
+        assertThat(new CollectionSizeMatcher<Iterable<?>>(1).matches(collection), is(false));
+        verify(collection).iterator();
         verifyNoMoreInteractions(collection);
+    }
+
+    @Test
+    public void testNoMatchCollection() throws Exception {
+        assertThat(new CollectionSizeMatcher<Iterable<?>>(0).matches(Arrays.asList(new Object())), is(false));
     }
 }

@@ -477,43 +477,109 @@ public final class ElementMatchers {
         return new ModifierMatcher<T>(ModifierMatcher.Mode.BRIDGE);
     }
 
+    /**
+     * Exactly matches a given {@link net.bytebuddy.instrumentation.method.MethodDescription}.
+     *
+     * @param methodDescription The method description to match.
+     * @param <T>               The type of the matched object.
+     * @return An element matcher that matches the given method description.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> is(MethodDescription methodDescription) {
         return new EqualityMatcher<T>(nonNull(methodDescription));
     }
 
+    /**
+     * Exactly matches a given method as a {@link net.bytebuddy.instrumentation.method.MethodDescription}.
+     *
+     * @param method The method to match by its description
+     * @param <T>    The type of the matched object.
+     * @return An element matcher that exactly matches the given method.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> is(Method method) {
         return new EqualityMatcher<T>(nonNull(new MethodDescription.ForLoadedMethod(nonNull(method))));
     }
 
+    /**
+     * Exactly matches a given constructor as a {@link net.bytebuddy.instrumentation.method.MethodDescription}.
+     *
+     * @param constructor The constructor to match by its description
+     * @param <T>         The type of the matched object.
+     * @return An element matcher that exactly matches the given constructor.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> is(Constructor<?> constructor) {
         return new EqualityMatcher<T>(nonNull(new MethodDescription.ForLoadedConstructor(nonNull(constructor))));
     }
 
+    /**
+     * Matches {@link net.bytebuddy.instrumentation.method.MethodDescription}s that returns a given
+     * {@link java.lang.Class}.
+     *
+     * @param type The type the matched method is expected to return.
+     * @param <T>  The type of the matched object.
+     * @return An element matcher that matches a given return type for a method description.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> returns(Class<?> type) {
-        return returns(is(nonNull(type)));
+        return returns(new TypeDescription.ForLoadedType(nonNull(type)));
     }
 
+    /**
+     * Matches {@link net.bytebuddy.instrumentation.method.MethodDescription}s that returns a given
+     * {@link net.bytebuddy.instrumentation.type.TypeDescription}.
+     *
+     * @param typeDescription The type the matched method is expected to return.
+     * @param <T>             The type of the matched object.
+     * @return An element matcher that matches a given return type for a method description.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> returns(TypeDescription typeDescription) {
         return returns(is(nonNull(typeDescription)));
     }
 
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> returns(ElementMatcher<? super TypeDescription> typeMatcher) {
-        return new MethodReturnTypeMatcher<T>(nonNull(typeMatcher));
+    /**
+     * Matches {@link net.bytebuddy.instrumentation.method.MethodDescription}s that matches a matched method's
+     * return type.
+     *
+     * @param matcher A matcher to apply onto a matched method's return type.
+     * @param <T>     The type of the matched object.
+     * @return An element matcher that matches a given return type against another {@code matcher}.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> returns(ElementMatcher<? super TypeDescription> matcher) {
+        return new MethodReturnTypeMatcher<T>(nonNull(matcher));
     }
 
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(Class<?>... types) {
-        TypeDescription[] typeDescription = new TypeDescription[types.length];
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} by its exact parameter types.
+     *
+     * @param type The parameter types of a method in their order.
+     * @param <T>  The type of the matched object.
+     * @return An element matcher that matches a method by its exact argument types.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(Class<?>... type) {
+        TypeDescription[] typeDescription = new TypeDescription[type.length];
         int index = 0;
-        for (Class<?> type : types) {
-            typeDescription[index++] = new TypeDescription.ForLoadedType(type);
+        for (Class<?> aType : type) {
+            typeDescription[index++] = new TypeDescription.ForLoadedType(nonNull(aType));
         }
         return takesArguments(typeDescription);
     }
 
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(TypeDescription... typeDescriptions) {
-        return takesArguments((Arrays.asList(typeDescriptions)));
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} by its exact parameter types.
+     *
+     * @param typeDescription The parameter types of a method in their order.
+     * @param <T>             The type of the matched object.
+     * @return An element matcher that matches a method by its exact argument types.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(TypeDescription... typeDescription) {
+        return takesArguments((Arrays.asList(typeDescription)));
     }
 
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} by its exact parameter types.
+     *
+     * @param typeDescriptions The parameter types of a method in their order.
+     * @param <T>              The type of the matched object.
+     * @return An element matcher that matches a method by its exact argument types.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(Iterable<? extends TypeDescription> typeDescriptions) {
         List<ElementMatcher<? super TypeDescription>> typeMatchers = new LinkedList<ElementMatcher<? super TypeDescription>>();
         for (TypeDescription typeDescription : typeDescriptions) {
@@ -522,10 +588,26 @@ public final class ElementMatchers {
         return takesArguments(new CollectionOneToOneMatcher<TypeDescription>(typeMatchers));
     }
 
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(ElementMatcher<? super List<? extends TypeDescription>> parameterMatcher) {
-        return new MethodParameterTypesMatcher<T>(nonNull(parameterMatcher));
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} by applying an iterable collection
+     * of element matcher on any parameter's {@link net.bytebuddy.instrumentation.type.TypeDescription}.
+     *
+     * @param matchers The matcher that are applied onto the parameter types of the matched method description.
+     * @param <T>      The type of the matched object.
+     * @return A matcher that matches a method description by applying another element matcher onto each
+     * parameter's type.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(ElementMatcher<? super Iterable<? extends TypeDescription>> matchers) {
+        return new MethodParameterTypesMatcher<T>(nonNull(matchers));
     }
 
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} by the number of its parameters.
+     *
+     * @param length The expected length.
+     * @param <T>    The type of the matched object.
+     * @return A matcher that matches a method description by the number of its parameters.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(int length) {
         return new MethodParameterTypesMatcher<T>(new CollectionSizeMatcher<List<? extends TypeDescription>>(length));
     }
@@ -629,12 +711,12 @@ public final class ElementMatchers {
                 .and(takesArguments(new CollectionOneToOneMatcher<TypeDescription>(matchers)));
     }
 
-    public static <T extends TypeDescription> ElementMatcher.Junction<T> is(TypeDescription typeDescription) {
-        return new EqualityMatcher<T>(nonNull(typeDescription));
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> is(Class<?> type) {
+        return is(new TypeDescription.ForLoadedType(nonNull(type)));
     }
 
-    public static <T extends TypeDescription> ElementMatcher.Junction<T> is(Class<?> type) {
-        return new EqualityMatcher<T>(new TypeDescription.ForLoadedType(nonNull(type)));
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> is(TypeDescription typeDescription) {
+        return new EqualityMatcher<T>(nonNull(typeDescription));
     }
 
     public static <T extends TypeDescription> ElementMatcher.Junction<T> isSubTypeOf(Class<?> type) {
@@ -653,12 +735,12 @@ public final class ElementMatchers {
         return new SuperTypeMatcher<T>(nonNull(typeDescription));
     }
 
-    public static <T extends TypeDescription> ElementMatcher.Junction<T> inheritsAnnotation(TypeDescription typeDescription) {
-        return inheritsAnnotation(is(typeDescription));
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> inheritsAnnotation(Class<?> type) {
+        return inheritsAnnotation(new TypeDescription.ForLoadedType(nonNull(type)));
     }
 
-    public static <T extends TypeDescription> ElementMatcher.Junction<T> inheritsAnnotation(Class<?> type) {
-        return inheritsAnnotation(is(type));
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> inheritsAnnotation(TypeDescription typeDescription) {
+        return inheritsAnnotation(is(typeDescription));
     }
 
     public static <T extends TypeDescription> ElementMatcher.Junction<T> inheritsAnnotation(ElementMatcher<? super TypeDescription> matcher) {

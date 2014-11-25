@@ -101,9 +101,10 @@ public final class ByteBuddyCommons {
      * Validates that a type description is not representing the {@code void} type.
      *
      * @param typeDescription The type description to validate.
+     * @param <T>             The type of the input value.
      * @return The input value.
      */
-    public static TypeDescription nonVoid(TypeDescription typeDescription) {
+    public static <T extends TypeDescription> T nonVoid(T typeDescription) {
         if (nonNull(typeDescription).represents(void.class)) {
             throw new IllegalArgumentException("Type must not be void");
         }
@@ -129,69 +130,73 @@ public final class ByteBuddyCommons {
     /**
      * Validates if a type represents an interface.
      *
-     * @param type The type to validate.
+     * @param typeDescription The type to validate.
+     * @param <T>             The type of the input.
      * @return The input value.
      */
-    public static TypeDescription isInterface(TypeDescription type) {
-        if (!nonNull(type).isInterface()) {
-            throw new IllegalArgumentException(type + " is not an interface type");
+    public static <T extends TypeDescription> T isInterface(T typeDescription) {
+        if (!nonNull(typeDescription).isInterface()) {
+            throw new IllegalArgumentException(typeDescription + " is not an interface type");
         }
-        return type;
+        return typeDescription;
     }
 
     /**
      * Validates if an array of type only contains interfaces.
      *
-     * @param types The types to validate.
+     * @param typeDescription The types to validate.
+     * @param <T>             The component type of the input value.
      * @return The input value.
      */
-    public static TypeDescription[] isInterface(TypeDescription[] types) {
-        for (TypeDescription typeDescription : types) {
-            isInterface(typeDescription);
+    public static <T extends TypeDescription> T[] isInterface(T[] typeDescription) {
+        for (TypeDescription aTypeDescription : typeDescription) {
+            isInterface(aTypeDescription);
         }
-        return types;
+        return typeDescription;
     }
 
     /**
      * Validates if a type is an annotation type.
      *
-     * @param type The type to validate.
+     * @param typeDescriptions The type to validate.
+     * @param <T>              The type of the input value.
      * @return The input value.
      */
-    public static TypeDescription isAnnotation(TypeDescription type) {
-        if (!nonNull(type).isAnnotation()) {
-            throw new IllegalArgumentException(type + " is not an annotation type");
+    public static <T extends TypeDescription> T isAnnotation(T typeDescriptions) {
+        if (!nonNull(typeDescriptions).isAnnotation()) {
+            throw new IllegalArgumentException(typeDescriptions + " is not an annotation type");
         }
-        return type;
+        return typeDescriptions;
     }
 
     /**
      * Validates if a list of type only contains interfaces.
      *
-     * @param types The types to validate.
-     * @param <T>   The list's type.
+     * @param typeDescriptions The types to validate.
+     * @param <T>              The input list type.
      * @return The input value.
      */
-    public static <T extends TypeDescription> List<T> isInterface(List<T> types) {
-        for (TypeDescription typeDescription : types) {
+    public static <T extends Iterable<? extends TypeDescription>> T isInterface(T typeDescriptions) {
+        for (TypeDescription typeDescription : typeDescriptions) {
             isInterface(typeDescription);
         }
-        return types;
+        return typeDescriptions;
     }
 
     /**
      * Validates that a type can be implemented, i.e. is not an array or a primitive.
      *
-     * @param type The type to be validated.
+     * @param typeDescription The type to be validated.
+     * @param <T>              The input type.
      * @return The input value.
      */
-    public static TypeDescription isExtendable(TypeDescription type) {
-        if (nonNull(type).isArray() || type.isPrimitive()) {
-            throw new IllegalArgumentException(type + " is not implementable");
-        } else if (type.isFinal()) {
-            throw new IllegalArgumentException("Cannot implement a final class such as " + type);
+    public static <T extends TypeDescription> T isExtendable(T typeDescription) {
+        if (nonNull(typeDescription).isArray() || typeDescription.isPrimitive()) {
+            throw new IllegalArgumentException(typeDescription + " is not implementable");
+        } else if (typeDescription.isFinal()) {
+            throw new IllegalArgumentException("Cannot implement a final class such as " + typeDescription);
         }
-        return type;
+        return typeDescription;
     }
 
     /**

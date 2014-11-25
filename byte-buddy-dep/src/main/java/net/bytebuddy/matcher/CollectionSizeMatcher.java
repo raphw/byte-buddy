@@ -7,7 +7,7 @@ import java.util.Collection;
  *
  * @param <T> The type of the matched entity.
  */
-public class CollectionSizeMatcher<T extends Collection<?>> extends ElementMatcher.Junction.AbstractBase<T> {
+public class CollectionSizeMatcher<T extends Iterable<?>> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
      * The expected size of the matched collection.
@@ -25,7 +25,15 @@ public class CollectionSizeMatcher<T extends Collection<?>> extends ElementMatch
 
     @Override
     public boolean matches(T target) {
-        return target.size() == size;
+        if (target instanceof Collection) {
+            return ((Collection<?>) target).size() == size;
+        } else {
+            int size = 0;
+            for (Object ignored : target) {
+                size++;
+            }
+            return size == this.size;
+        }
     }
 
     @Override

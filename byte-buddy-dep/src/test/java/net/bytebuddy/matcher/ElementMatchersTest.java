@@ -144,6 +144,15 @@ public class ElementMatchersTest {
     }
 
     @Test
+    public void testNameMatches() throws Exception {
+        ByteCodeElement byteCodeElement = mock(ByteCodeElement.class);
+        when(byteCodeElement.getSourceCodeName()).thenReturn(FOO);
+        assertThat(ElementMatchers.nameMatches("^" + FOO + "$").matches(byteCodeElement), is(true));
+        assertThat(ElementMatchers.nameMatches(FOO.toUpperCase()).matches(byteCodeElement), is(false));
+        assertThat(ElementMatchers.nameMatches(BAR).matches(byteCodeElement), is(false));
+    }
+
+    @Test
     public void testHasDescriptor() throws Exception {
         ByteCodeElement byteCodeElement = mock(ByteCodeElement.class);
         when(byteCodeElement.getDescriptor()).thenReturn(FOO);
@@ -268,6 +277,40 @@ public class ElementMatchersTest {
         assertThat(ElementMatchers.isBridge().matches(mock(MethodDescription.class)), is(false));
     }
 
+    @Test
+    public void testIsMethod() throws Exception {
+        assertThat(ElementMatchers.is(IsEqual.class.getDeclaredMethod(FOO))
+                .matches(new MethodDescription.ForLoadedMethod(IsEqual.class.getDeclaredMethod(FOO))), is(true));
+        assertThat(ElementMatchers.is(IsEqual.class.getDeclaredMethod(FOO)).matches(mock(MethodDescription.class)), is(false));
+        assertThat(ElementMatchers.is(IsEqual.class.getDeclaredConstructor())
+                .matches(new MethodDescription.ForLoadedConstructor(IsEqual.class.getDeclaredConstructor())), is(true));
+        assertThat(ElementMatchers.is(IsEqual.class.getDeclaredConstructor()).matches(mock(MethodDescription.class)), is(false));
+    }
+
+    @Test
+    public void testReturns() throws Exception {
+        assertThat(ElementMatchers.returns(void.class).matches(new MethodDescription.ForLoadedMethod(Returns.class.getDeclaredMethod(FOO))), is(true));
+        assertThat(ElementMatchers.returns(void.class).matches(new MethodDescription.ForLoadedMethod(Returns.class.getDeclaredMethod(BAR))), is(false));
+        assertThat(ElementMatchers.returns(String.class).matches(new MethodDescription.ForLoadedMethod(Returns.class.getDeclaredMethod(BAR))), is(true));
+        assertThat(ElementMatchers.returns(String.class).matches(new MethodDescription.ForLoadedMethod(Returns.class.getDeclaredMethod(FOO))), is(false));
+    }
+
+    @Test
+    public void testTakesArguments() throws Exception {
+        assertThat(ElementMatchers.takesArguments(Void.class).matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(FOO, Void.class))), is(true));
+        assertThat(ElementMatchers.takesArguments(Void.class, Object.class).matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(FOO, Void.class))), is(false));
+        assertThat(ElementMatchers.takesArguments(String.class, int.class).matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(BAR, String.class, int.class))), is(true));
+        assertThat(ElementMatchers.takesArguments(String.class, Integer.class).matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(BAR, String.class, int.class))), is(false));
+    }
+
+    @Test
+    public void testTakesArgumentsLength() throws Exception {
+        assertThat(ElementMatchers.takesArguments(1).matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(FOO, Void.class))), is(true));
+        assertThat(ElementMatchers.takesArguments(2).matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(FOO, Void.class))), is(false));
+        assertThat(ElementMatchers.takesArguments(2).matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(BAR, String.class, int.class))), is(true));
+        assertThat(ElementMatchers.takesArguments(3).matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(BAR, String.class, int.class))), is(false));
+    }
+
     @Test(expected = UnsupportedOperationException.class)
     public void testConstructorIsHidden() throws Exception {
         assertThat(Modifier.isPrivate(ElementMatchers.class.getDeclaredConstructor().getModifiers()), is(true));
@@ -304,5 +347,24 @@ public class ElementMatchersTest {
     @Retention(RetentionPolicy.RUNTIME)
     private static @interface IsAnnotatedWithAnnotation {
 
+    }
+
+    private static abstract class IsEqual {
+
+        abstract void foo();
+    }
+
+    private static abstract class Returns {
+
+        abstract void foo();
+
+        abstract String bar();
+    }
+
+    private static abstract class TakesArguments {
+
+        abstract void foo(Void a);
+
+        abstract void bar(String a, int b);
     }
 }
