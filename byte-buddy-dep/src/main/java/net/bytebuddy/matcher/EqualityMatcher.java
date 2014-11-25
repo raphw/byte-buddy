@@ -23,7 +23,7 @@ public class EqualityMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> 
 
     @Override
     public boolean matches(T target) {
-        return target.equals(value);
+        return value.equals(target);
     }
 
     @Override

@@ -122,7 +122,7 @@ public class StringMatcher extends ElementMatcher.Junction.AbstractBase<String> 
          *
          * @return The description of this match mode.
          */
-        private String getDescription() {
+        protected String getDescription() {
             return description;
         }
 
@@ -137,45 +137,45 @@ public class StringMatcher extends ElementMatcher.Junction.AbstractBase<String> 
     }
 
     /**
-     * The name to match the method's name against.
+     * The text value to match against.
      */
-    private final String name;
+    private final String value;
 
     /**
-     * The mode of matching the given name.
+     * The mode to apply for matching the given value against the matcher's input.
      */
     private final Mode mode;
 
     /**
-     * Creates a new method name matcher.
+     * Creates a new string matcher.
      *
-     * @param name The name to be matched.
-     * @param mode The mode of matching the given name.
+     * @param value The value that is the base of the matching.
+     * @param mode The mode to apply for matching the given value against the matcher's input
      */
-    public StringMatcher(String name, Mode mode) {
-        this.name = name;
+    public StringMatcher(String value, Mode mode) {
+        this.value = value;
         this.mode = mode;
     }
 
     @Override
     public boolean matches(String target) {
-        return mode.matches(name, target);
+        return mode.matches(value, target);
     }
 
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
                 && mode == ((StringMatcher) other).mode
-                && name.equals(((StringMatcher) other).name);
+                && value.equals(((StringMatcher) other).value);
     }
 
     @Override
     public int hashCode() {
-        return 31 * name.hashCode() + mode.hashCode();
+        return 31 * value.hashCode() + mode.hashCode();
     }
 
     @Override
     public String toString() {
-        return mode.getDescription() + '(' + name + ')';
+        return mode.getDescription() + '(' + value + ')';
     }
 }

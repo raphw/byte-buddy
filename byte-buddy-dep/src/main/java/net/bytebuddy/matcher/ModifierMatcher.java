@@ -118,10 +118,10 @@ public class ModifierMatcher<T extends ModifierReviewable> extends ElementMatche
     /**
      * Creates a new element matcher that matches an element by its modifier.
      *
-     * @param Mode The match mode to apply to the matched element's modifier.
+     * @param mode The match mode to apply to the matched element's modifier.
      */
-    public ModifierMatcher(Mode Mode) {
-        this.mode = Mode;
+    public ModifierMatcher(Mode mode) {
+        this.mode = mode;
     }
 
     @Override

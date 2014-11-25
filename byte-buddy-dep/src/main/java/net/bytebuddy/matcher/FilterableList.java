@@ -81,7 +81,7 @@ public interface FilterableList<T, S extends FilterableList<T, S>> extends List<
      * @param <T> The type of the collection's elements.
      * @param <S> The type of this list.
      */
-    static abstract class AbstractBase<T, S extends FilterableList<T, S>> extends AbstractList<T> implements FilterableList<T, S> {
+    abstract static class AbstractBase<T, S extends FilterableList<T, S>> extends AbstractList<T> implements FilterableList<T, S> {
 
         @Override
         @SuppressWarnings("unchecked")

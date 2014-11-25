@@ -20,7 +20,16 @@ import java.util.List;
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 import static net.bytebuddy.utility.ByteBuddyCommons.nonVoid;
 
+/**
+ * A utility class that contains a human-readable language for creating {@link net.bytebuddy.matcher.ElementMatcher}s.
+ */
 public final class ElementMatchers {
+
+    public static <T> ElementMatcher.Junction<T> is(Object value) {
+        return value == null
+                ? new NullMatcher<T>()
+                : new EqualityMatcher<T>(value);
+    }
 
     public static <T> ElementMatcher.Junction<T> not(ElementMatcher<? super T> elementMatcher) {
         return new NegatingMatcher<T>(nonNull(elementMatcher));
@@ -38,10 +47,10 @@ public final class ElementMatchers {
         return anyOf(Arrays.asList(value));
     }
 
-    public static <T> ElementMatcher.Junction<T> anyOf(Iterable<? extends T> values) {
+    public static <T> ElementMatcher.Junction<T> anyOf(Iterable<?> values) {
         ElementMatcher.Junction<T> matcher = none();
-        for (T value : values) {
-            matcher = matcher.or(new EqualityMatcher<T>(value));
+        for (Object value : values) {
+            matcher = matcher.or(is(value));
         }
         return matcher;
     }
@@ -50,10 +59,10 @@ public final class ElementMatchers {
         return noneOf(Arrays.asList(value));
     }
 
-    public static <T> ElementMatcher.Junction<T> noneOf(Iterable<? extends T> values) {
+    public static <T> ElementMatcher.Junction<T> noneOf(Iterable<?> values) {
         ElementMatcher.Junction<T> matcher = any();
-        for (T value : values) {
-            matcher = matcher.and(not(new EqualityMatcher<T>(value)));
+        for (Object value : values) {
+            matcher = matcher.and(not(is(value)));
         }
         return matcher;
     }
@@ -334,7 +343,7 @@ public final class ElementMatchers {
                 .and(takesArguments(new CollectionOneToOneMatcher<TypeDescription>(matchers)));
     }
 
-    public static <T extends TypeDescription> ElementMatcher.Junction<T> is(T typeDescription) {
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> is(TypeDescription typeDescription) {
         return new EqualityMatcher<T>(nonNull(typeDescription));
     }
 
@@ -382,6 +391,9 @@ public final class ElementMatchers {
         return new DeclaringMethodMatcher<T>(new CollectionItemMatcher<MethodDescription>(nonNull(methodMatcher)));
     }
 
+    /**
+     * A private constructor that must not be invoked.
+     */
     private ElementMatchers() {
         throw new UnsupportedOperationException();
     }
