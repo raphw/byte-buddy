@@ -32,6 +32,51 @@ public interface ClassFileLocator {
      */
     TypeDescription.BinaryRepresentation classFileFor(TypeDescription typeDescription) throws IOException;
 
+    static class ForClassLoader implements ClassFileLocator {
+
+        public static ClassFileLocator ofClassPath() {
+            return new ForClassLoader(ClassLoader.getSystemClassLoader());
+        }
+
+        private final ClassLoader classLoader;
+
+        public ForClassLoader(ClassLoader classLoader) {
+            this.classLoader = classLoader;
+        }
+
+        @Override
+        public TypeDescription.BinaryRepresentation classFileFor(TypeDescription typeDescription) throws IOException {
+            InputStream inputStream = classLoader.getResourceAsStream(typeDescription.getInternalName() + CLASS_FILE_EXTENSION);
+            if (inputStream != null) {
+                try {
+                    return new TypeDescription.BinaryRepresentation.Explicit(new StreamDrainer().drain(inputStream));
+                } finally {
+                    inputStream.close();
+                }
+            } else {
+                return TypeDescription.BinaryRepresentation.Illegal.INSTANCE;
+            }
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && classLoader.equals(((ForClassLoader) other).classLoader);
+        }
+
+        @Override
+        public int hashCode() {
+            return classLoader.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "ClassFileLocator.ForClassLoader{" +
+                    "classLoader=" + classLoader +
+                    '}';
+        }
+    }
+
     /**
      * Default implementations for a {@link net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator}.
      */
@@ -41,18 +86,12 @@ public interface ClassFileLocator {
          * Locates a class file from the class path.
          */
         CLASS_PATH {
+
+            private final ClassFileLocator classFileLocator = ForClassLoader.ofClassPath();
+
             @Override
             public TypeDescription.BinaryRepresentation classFileFor(TypeDescription typeDescription) throws IOException {
-                InputStream inputStream = ClassLoader.getSystemResourceAsStream(typeDescription.getInternalName() + CLASS_FILE_EXTENSION);
-                if (inputStream != null) {
-                    try {
-                        return new TypeDescription.BinaryRepresentation.Explicit(new StreamDrainer().drain(inputStream));
-                    } finally {
-                        inputStream.close();
-                    }
-                } else {
-                    return TypeDescription.BinaryRepresentation.Illegal.INSTANCE;
-                }
+                return classFileLocator.classFileFor(typeDescription);
             }
         },
 

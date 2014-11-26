@@ -122,7 +122,7 @@ public class ByteBuddy {
      * @param classFileVersion The class file version to apply.
      */
     public ByteBuddy(ClassFileVersion classFileVersion) {
-        this(classFileVersion,
+        this(nonNull(classFileVersion),
                 new NamingStrategy.SuffixingRandom(BYTE_BUDDY_DEFAULT_PREFIX),
                 new TypeList.Empty(),
                 isDefaultFinalizer().or(isSynthetic().and(not(isVisibilityBridge()))),
