@@ -6,18 +6,33 @@ import net.bytebuddy.dynamic.loading.ClassLoaderByteArrayInjector;
 import net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator;
 import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
 import net.bytebuddy.instrumentation.LoadedTypeInitializer;
+import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
+import net.bytebuddy.instrumentation.method.bytecode.stack.Removal;
+import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import net.bytebuddy.instrumentation.method.bytecode.stack.collection.ArrayFactory;
+import net.bytebuddy.instrumentation.method.bytecode.stack.constant.ClassConstant;
+import net.bytebuddy.instrumentation.method.bytecode.stack.constant.NullConstant;
+import net.bytebuddy.instrumentation.method.bytecode.stack.constant.TextConstant;
+import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocation;
+import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.utility.StreamDrainer;
 
 import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
-import static net.bytebuddy.matcher.ElementMatchers.any;
+import static net.bytebuddy.matcher.ElementMatchers.*;
+import static net.bytebuddy.utility.ByteBuddyCommons.join;
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 public interface AgentBuilder {
@@ -34,6 +49,8 @@ public interface AgentBuilder {
     AgentBuilder withListener(Listener listener);
 
     AgentBuilder withNativeMethodPrefix(String prefix);
+
+    AgentBuilder disableSelfInitialization();
 
     AgentBuilder allowRetransformation();
 
@@ -81,6 +98,8 @@ public interface AgentBuilder {
 
         private final String nativeMethodPrefix;
 
+        private final boolean disableSelfInitialization;
+
         private final boolean retransformation;
 
         private final List<Entry> entries;
@@ -96,6 +115,7 @@ public interface AgentBuilder {
                     Listener.NoOp.INSTANCE,
                     NO_NATIVE_PREFIX,
                     false,
+                    false,
                     Collections.<Entry>emptyList());
         }
 
@@ -103,12 +123,14 @@ public interface AgentBuilder {
                           BinaryLocator binaryLocator,
                           Listener listener,
                           String nativeMethodPrefix,
+                          boolean disableSelfInitialization,
                           boolean retransformation,
                           List<Entry> entries) {
             this.byteBuddy = byteBuddy;
             this.binaryLocator = binaryLocator;
             this.listener = listener;
             this.nativeMethodPrefix = nativeMethodPrefix;
+            this.disableSelfInitialization = disableSelfInitialization;
             this.retransformation = retransformation;
             this.entries = entries;
         }
@@ -135,17 +157,8 @@ public interface AgentBuilder {
                     binaryLocator,
                     listener,
                     nativeMethodPrefix,
+                    disableSelfInitialization,
                     retransformation,
-                    entries);
-        }
-
-        @Override
-        public AgentBuilder allowRetransformation() {
-            return new Default(byteBuddy,
-                    binaryLocator,
-                    listener,
-                    nativeMethodPrefix,
-                    true,
                     entries);
         }
 
@@ -155,6 +168,7 @@ public interface AgentBuilder {
                     binaryLocator,
                     new Listener.Compound(this.listener, nonNull(listener)),
                     nativeMethodPrefix,
+                    disableSelfInitialization,
                     retransformation,
                     entries);
         }
@@ -165,13 +179,36 @@ public interface AgentBuilder {
                     binaryLocator,
                     listener,
                     nonNull(prefix),
+                    disableSelfInitialization,
+                    retransformation,
+                    entries);
+        }
+
+        @Override
+        public AgentBuilder allowRetransformation() {
+            return new Default(byteBuddy,
+                    binaryLocator,
+                    listener,
+                    nativeMethodPrefix,
+                    disableSelfInitialization,
+                    true,
+                    entries);
+        }
+
+        @Override
+        public AgentBuilder disableSelfInitialization() {
+            return new Default(byteBuddy,
+                    binaryLocator,
+                    listener,
+                    nativeMethodPrefix,
+                    true,
                     retransformation,
                     entries);
         }
 
         @Override
         public ClassFileTransformer makeRaw() {
-            return new TransformationEngine();
+            return new ExecutingTransformer();
         }
 
         @Override
@@ -205,6 +242,7 @@ public interface AgentBuilder {
                     && byteBuddy.equals(aDefault.byteBuddy)
                     && listener.equals(aDefault.listener)
                     && nativeMethodPrefix.equals(aDefault.nativeMethodPrefix)
+                    && disableSelfInitialization == aDefault.disableSelfInitialization
                     && retransformation == aDefault.retransformation
                     && entries.equals(aDefault.entries);
 
@@ -216,6 +254,7 @@ public interface AgentBuilder {
             result = 31 * result + binaryLocator.hashCode();
             result = 31 * result + listener.hashCode();
             result = 31 * result + nativeMethodPrefix.hashCode();
+            result = 31 * result + (disableSelfInitialization ? 1 : 0);
             result = 31 * result + (retransformation ? 1 : 0);
             result = 31 * result + entries.hashCode();
             return result;
@@ -228,21 +267,27 @@ public interface AgentBuilder {
                     ", binaryLocator=" + binaryLocator +
                     ", listener=" + listener +
                     ", nativeMethodPrefix=" + nativeMethodPrefix +
+                    ", disableSelfInitialization=" + disableSelfInitialization +
                     ", retransformation=" + retransformation +
                     ", entries=" + entries +
                     '}';
         }
 
-        protected class TransformationEngine implements ClassFileTransformer {
+        protected class ExecutingTransformer implements ClassFileTransformer {
 
             private final MethodRebaseResolver.MethodNameTransformer methodNameTransformer;
 
+            private final InitializationStrategy initializationStrategy;
+
             private final Set<String> ignoredTypes;
 
-            public TransformationEngine() {
+            public ExecutingTransformer() {
                 methodNameTransformer = NO_NATIVE_PREFIX.equals(nativeMethodPrefix)
                         ? new MethodRebaseResolver.MethodNameTransformer.Suffixing()
                         : new MethodRebaseResolver.MethodNameTransformer.Prefixing(nativeMethodPrefix);
+                initializationStrategy = disableSelfInitialization
+                        ? InitializationStrategy.NoOp.INSTANCE
+                        : new InitializationStrategy.SelfInjection();
                 ignoredTypes = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
             }
 
@@ -261,13 +306,12 @@ public interface AgentBuilder {
                     TypeDescription typeDescription = initialized.getTypePool().describe(binaryTypeName);
                     for (Entry entry : entries) {
                         if (entry.matches(typeDescription, classLoader, classBeingRedefined, protectionDomain)) {
-                            DynamicType.Unloaded<?> dynamicType = entry.transform(byteBuddy.rebase(typeDescription,
-                                    initialized.getClassFileLocator(),
-                                    methodNameTransformer)).make();
+                            DynamicType.Unloaded<?> dynamicType = initializationStrategy.apply(
+                                    entry.transform(byteBuddy.rebase(typeDescription,
+                                            initialized.getClassFileLocator(),
+                                            methodNameTransformer))).make();
                             Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
-                            if (loadedTypeInitializers.get(typeDescription).isAlive()) {
-                                throw new IllegalArgumentException("Found illegal loaded type initializer for " + typeDescription);
-                            } else if (loadedTypeInitializers.size() > 1) {
+                            if (loadedTypeInitializers.size() > 1) {
                                 ClassLoaderByteArrayInjector injector = new ClassLoaderByteArrayInjector(classLoader, protectionDomain);
                                 for (Map.Entry<TypeDescription, byte[]> auxiliary : dynamicType.getRawAuxiliaryTypes().entrySet()) {
                                     ignoredTypes.add(auxiliary.getKey().getName());
@@ -275,6 +319,9 @@ public interface AgentBuilder {
                                     loadedTypeInitializers.get(auxiliary.getValue()).onLoad(type);
                                 }
                             }
+                            initializationStrategy.register(binaryTypeName,
+                                    classLoader,
+                                    loadedTypeInitializers.get(dynamicType.getTypeDescription()));
                             listener.onTransformation(dynamicType);
                             return dynamicType.getBytes();
                         }
@@ -290,7 +337,7 @@ public interface AgentBuilder {
 
             @Override
             public String toString() {
-                return "AgentBuilder.Default.TransformationEngine{" +
+                return "AgentBuilder.Default.ExecutingTransformer{" +
                         "agentBuilder=" + Default.this +
                         ", methodNameTransformer=" + methodNameTransformer +
                         ", ignoredTypes=" + ignoredTypes +
@@ -394,6 +441,11 @@ public interface AgentBuilder {
             }
 
             @Override
+            public AgentBuilder disableSelfInitialization() {
+                return materialize().disableSelfInitialization();
+            }
+
+            @Override
             public AgentBuilder allowRetransformation() {
                 return materialize().allowRetransformation();
             }
@@ -418,8 +470,9 @@ public interface AgentBuilder {
                         binaryLocator,
                         listener,
                         nativeMethodPrefix,
+                        disableSelfInitialization,
                         retransformation,
-                        entries);
+                        join(new Entry(rawMatcher, transformer), entries));
             }
 
             private Default getOuter() {
@@ -450,6 +503,174 @@ public interface AgentBuilder {
                         ", agentBuilder=" + Default.this +
                         '}';
             }
+        }
+
+        public static interface InitializationStrategy {
+
+            static class SelfInjection implements InitializationStrategy, net.bytebuddy.instrumentation.Instrumentation {
+
+                private final Nexus.Accessor accessor;
+
+                public SelfInjection() {
+                    accessor = Nexus.Accessor.INSTANCE;
+                }
+
+                @Override
+                public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder) {
+                    return builder.invokable(none()).intercept(this);
+                }
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType.withInitializer(accessor.initializerFor(instrumentedType));
+                }
+
+                @Override
+                public ByteCodeAppender appender(Target instrumentationTarget) {
+                    throw new IllegalStateException("The initialization strategy instrumentation must not be used");
+                }
+
+                @Override
+                public void register(String name, ClassLoader classLoader, LoadedTypeInitializer loadedTypeInitializer) {
+                    if (loadedTypeInitializer.isAlive()) {
+                        accessor.register(name, classLoader, loadedTypeInitializer);
+                    }
+                }
+
+                public static class Nexus {
+
+                    private final String name;
+
+                    private final ClassLoader classLoader;
+
+                    public Nexus(Class<?> type) {
+                        name = type.getName();
+                        classLoader = type.getClassLoader();
+                    }
+
+                    public Nexus(String name, ClassLoader classLoader) {
+                        this.name = name;
+                        this.classLoader = classLoader;
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && classLoader.equals(((Nexus) other).classLoader)
+                                && name.equals(((Nexus) other).name);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = name.hashCode();
+                        result = 31 * result + classLoader.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "AgentBuilder.Default.InitializationStrategy.SelfInjection.Nexus{" +
+                                "name='" + name + '\'' +
+                                ", classLoader=" + classLoader +
+                                '}';
+                    }
+
+                    private static final ConcurrentMap<Nexus, Object> TYPE_INITIALIZERS = new ConcurrentHashMap<Nexus, Object>();
+
+                    public static void initialize(Class<?> type)
+                            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+                        Object typeInitializer = TYPE_INITIALIZERS.remove(new Nexus(type));
+                        if (typeInitializer != null) {
+                            typeInitializer.getClass().getMethod("onLoad", Class.class).invoke(typeInitializer, type);
+                        }
+                    }
+
+                    public static void register(String name, ClassLoader classLoader, Object typeInitializer) {
+                        TYPE_INITIALIZERS.put(new Nexus(name, classLoader), typeInitializer);
+                    }
+
+                    protected static enum Accessor {
+
+                        INSTANCE;
+
+                        private final Method registration;
+
+                        private final MethodDescription systemClassLoader;
+
+                        private final MethodDescription loadClass;
+
+                        private final MethodDescription findMethod;
+
+                        private final MethodDescription invokeMethod;
+
+                        private Accessor() {
+                            try {
+                                ClassLoader classLoader = ClassLoader.getSystemClassLoader();
+                                ClassLoaderByteArrayInjector injector = new ClassLoaderByteArrayInjector(classLoader);
+                                Class<?> nexus = injector.inject(Nexus.class.getName(), new StreamDrainer().drain(classLoader
+                                        .getResourceAsStream(Nexus.class.getName().replace('.', '/') + ".class")));
+                                registration = nexus.getDeclaredMethod("register", String.class, ClassLoader.class, Object.class);
+                                systemClassLoader = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()
+                                        .filter(named("getSystemClassLoader")).getOnly();
+                                loadClass = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()
+                                        .filter(named("loadClass").and(takesArguments(String.class))).getOnly();
+                                findMethod = new TypeDescription.ForLoadedType(Class.class).getDeclaredMethods()
+                                        .filter(named("getDeclaredMethod").and(takesArguments(String.class, Class[].class))).getOnly();
+                                invokeMethod = new TypeDescription.ForLoadedType(Class.class).getDeclaredMethods()
+                                        .filter(named("getDeclaredMethod").and(takesArguments(String.class, Class[].class))).getOnly();
+                            } catch (Exception e) {
+                                throw new IllegalStateException("Cannot create type initialization accessor", e);
+                            }
+                        }
+
+                        public void register(String name, ClassLoader classLoader, Object typeInitializer) {
+                            try {
+                                registration.invoke(null, name, classLoader, typeInitializer);
+                            } catch (IllegalAccessException e) {
+                                throw new IllegalStateException("Cannot register type initializer for " + name, e);
+                            } catch (InvocationTargetException e) {
+                                throw new IllegalStateException("Cannot register type initializer for " + name, e.getCause());
+                            }
+                        }
+
+                        public StackManipulation initializerFor(TypeDescription instrumentedType) {
+                            return new StackManipulation.Compound(
+                                    MethodInvocation.invoke(systemClassLoader),
+                                    new TextConstant(Nexus.class.getName()),
+                                    MethodInvocation.invoke(loadClass),
+                                    new TextConstant("initialize"),
+                                    ArrayFactory.targeting(new TypeDescription.ForLoadedType(Class.class))
+                                            .withValues(Collections.singletonList(ClassConstant.of(new TypeDescription.ForLoadedType(Class.class)))),
+                                    MethodInvocation.invoke(findMethod),
+                                    NullConstant.INSTANCE,
+                                    ArrayFactory.targeting(new TypeDescription.ForLoadedType(Object.class))
+                                            .withValues(Collections.singletonList(ClassConstant.of(instrumentedType))),
+                                    MethodInvocation.invoke(invokeMethod),
+                                    Removal.SINGLE
+                            );
+                        }
+                    }
+                }
+            }
+
+            static enum NoOp implements InitializationStrategy {
+
+                INSTANCE;
+
+                @Override
+                public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder) {
+                    return builder;
+                }
+
+                @Override
+                public void register(String name, ClassLoader classLoader, LoadedTypeInitializer loadedTypeInitializer) {
+                    /* do nothing */
+                }
+            }
+
+            DynamicType.Builder<?> apply(DynamicType.Builder<?> builder);
+
+            void register(String name, ClassLoader classLoader, LoadedTypeInitializer loadedTypeInitializer);
         }
     }
 
