@@ -318,18 +318,40 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
          * Performs a rebase instrumentation which creates a redefinition of the given type by rebasing the original
          * code of redefined method and by invoking these methods when a super method should be invoked.
          */
-        static enum ForRebaseInstrumentation implements TargetHandler {
+        static class ForRebaseInstrumentation implements TargetHandler {
 
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
+            private final MethodRebaseResolver.MethodNameTransformer methodNameTransformer;
+
+            public ForRebaseInstrumentation(MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
+                this.methodNameTransformer = methodNameTransformer;
+            }
 
             @Override
             public Prepared prepare(ElementMatcher<? super MethodDescription> ignoredMethods,
                                     ClassFileVersion classFileVersion,
                                     TypeDescription instrumentedType) {
-                return Prepared.ForRebaseInstrumentation.of(ignoredMethods, classFileVersion, instrumentedType);
+                return Prepared.ForRebaseInstrumentation.of(ignoredMethods,
+                        classFileVersion,
+                        instrumentedType,
+                        methodNameTransformer);
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && methodNameTransformer.equals(((ForRebaseInstrumentation) other).methodNameTransformer);
+            }
+
+            @Override
+            public int hashCode() {
+                return methodNameTransformer.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "InlineDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation{" +
+                        "methodNameTransformer=" + methodNameTransformer +
+                        '}';
             }
         }
 
@@ -425,17 +447,18 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 /**
                  * Creates a new prepared target handler for a rebase instrumentation.
                  *
-                 * @param placeholderType The placeholder type to use for rebasing constructors.
-                 * @param ignoredMethods  The methods that should be ignored for rebasing.
-                 * @param randomString    A supplied for random strings.
+                 * @param placeholderType       The placeholder type to use for rebasing constructors.
+                 * @param ignoredMethods        The methods that should be ignored for rebasing.
+                 * @param methodNameTransformer The method name transformer to be applied by the created
+                 *                              method rebase resolver.
                  */
                 protected ForRebaseInstrumentation(DynamicType placeholderType,
                                                    ElementMatcher<? super MethodDescription> ignoredMethods,
-                                                   RandomString randomString) {
+                                                   MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
                     this.placeholderType = placeholderType;
                     methodRebaseResolver = new MethodRebaseResolver.Default(ignoredMethods,
                             placeholderType.getTypeDescription(),
-                            new MethodRebaseResolver.MethodNameTransformer.Suffixing(randomString));
+                            methodNameTransformer);
                 }
 
                 /**
@@ -448,14 +471,15 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                  */
                 public static Prepared of(ElementMatcher<? super MethodDescription> ignoredMethods,
                                           ClassFileVersion classFileVersion,
-                                          TypeDescription instrumentedType) {
+                                          TypeDescription instrumentedType,
+                                          MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
                     RandomString randomString = new RandomString();
                     return new ForRebaseInstrumentation(TrivialType.INSTANCE
                             .make(trivialTypeNameFor(instrumentedType, randomString),
                                     classFileVersion,
                                     AuxiliaryType.MethodAccessorFactory.Illegal.INSTANCE),
                             ignoredMethods,
-                            randomString);
+                            methodNameTransformer);
                 }
 
                 /**

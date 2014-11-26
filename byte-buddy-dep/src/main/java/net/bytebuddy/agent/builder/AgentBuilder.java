@@ -4,6 +4,7 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoaderByteArrayInjector;
 import net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator;
+import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
 import net.bytebuddy.instrumentation.LoadedTypeInitializer;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -32,9 +33,11 @@ public interface AgentBuilder {
 
     AgentBuilder withListener(Listener listener);
 
+    AgentBuilder withNativeMethodPrefix(String prefix);
+
     AgentBuilder allowRetransformation();
 
-    ClassFileTransformer make();
+    ClassFileTransformer makeRaw();
 
     ClassFileTransformer registerWith(Instrumentation instrumentation);
 
@@ -66,6 +69,8 @@ public interface AgentBuilder {
          */
         private static final Object STATIC_METHOD = null;
 
+        public static final String NO_NATIVE_PREFIX = "";
+
         private static final byte[] NO_TRANSFORMATION = null;
 
         private final ByteBuddy byteBuddy;
@@ -74,9 +79,12 @@ public interface AgentBuilder {
 
         private final Listener listener;
 
-        private final List<Entry> entries;
+        private final String nativeMethodPrefix;
 
         private final boolean retransformation;
+
+        private final List<Entry> entries;
+
 
         public Default() {
             this(new ByteBuddy());
@@ -86,6 +94,7 @@ public interface AgentBuilder {
             this(nonNull(byteBuddy),
                     BinaryLocator.Default.INSTANCE,
                     Listener.NoOp.INSTANCE,
+                    NO_NATIVE_PREFIX,
                     false,
                     Collections.<Entry>emptyList());
         }
@@ -93,11 +102,13 @@ public interface AgentBuilder {
         protected Default(ByteBuddy byteBuddy,
                           BinaryLocator binaryLocator,
                           Listener listener,
+                          String nativeMethodPrefix,
                           boolean retransformation,
                           List<Entry> entries) {
             this.byteBuddy = byteBuddy;
             this.binaryLocator = binaryLocator;
             this.listener = listener;
+            this.nativeMethodPrefix = nativeMethodPrefix;
             this.retransformation = retransformation;
             this.entries = entries;
         }
@@ -120,12 +131,22 @@ public interface AgentBuilder {
 
         @Override
         public AgentBuilder withByteBuddy(ByteBuddy byteBuddy) {
-            return new Default(nonNull(byteBuddy), binaryLocator, listener, retransformation, entries);
+            return new Default(nonNull(byteBuddy),
+                    binaryLocator,
+                    listener,
+                    nativeMethodPrefix,
+                    retransformation,
+                    entries);
         }
 
         @Override
         public AgentBuilder allowRetransformation() {
-            return new Default(byteBuddy, binaryLocator, listener, true, entries);
+            return new Default(byteBuddy,
+                    binaryLocator,
+                    listener,
+                    nativeMethodPrefix,
+                    true,
+                    entries);
         }
 
         @Override
@@ -133,18 +154,32 @@ public interface AgentBuilder {
             return new Default(byteBuddy,
                     binaryLocator,
                     new Listener.Compound(this.listener, nonNull(listener)),
+                    nativeMethodPrefix,
                     retransformation,
                     entries);
         }
 
         @Override
-        public ClassFileTransformer make() {
+        public AgentBuilder withNativeMethodPrefix(String prefix) {
+            return new Default(byteBuddy,
+                    binaryLocator,
+                    listener,
+                    nonNull(prefix),
+                    retransformation,
+                    entries);
+        }
+
+        @Override
+        public ClassFileTransformer makeRaw() {
             return new TransformationEngine();
         }
 
         @Override
         public ClassFileTransformer registerWith(Instrumentation instrumentation) {
-            ClassFileTransformer classFileTransformer = make();
+            ClassFileTransformer classFileTransformer = makeRaw();
+            if (!NO_NATIVE_PREFIX.equals(nonNull(nativeMethodPrefix))) {
+                instrumentation.setNativeMethodPrefix(classFileTransformer, nativeMethodPrefix);
+            }
             instrumentation.addTransformer(classFileTransformer, retransformation);
             return classFileTransformer;
         }
@@ -168,8 +203,10 @@ public interface AgentBuilder {
             Default aDefault = (Default) other;
             return binaryLocator.equals(aDefault.binaryLocator)
                     && byteBuddy.equals(aDefault.byteBuddy)
-                    && entries.equals(aDefault.entries)
-                    && listener.equals(aDefault.listener);
+                    && listener.equals(aDefault.listener)
+                    && nativeMethodPrefix.equals(aDefault.nativeMethodPrefix)
+                    && retransformation == aDefault.retransformation
+                    && entries.equals(aDefault.entries);
 
         }
 
@@ -178,6 +215,8 @@ public interface AgentBuilder {
             int result = byteBuddy.hashCode();
             result = 31 * result + binaryLocator.hashCode();
             result = 31 * result + listener.hashCode();
+            result = 31 * result + nativeMethodPrefix.hashCode();
+            result = 31 * result + (retransformation ? 1 : 0);
             result = 31 * result + entries.hashCode();
             return result;
         }
@@ -188,15 +227,22 @@ public interface AgentBuilder {
                     "byteBuddy=" + byteBuddy +
                     ", binaryLocator=" + binaryLocator +
                     ", listener=" + listener +
+                    ", nativeMethodPrefix=" + nativeMethodPrefix +
+                    ", retransformation=" + retransformation +
                     ", entries=" + entries +
                     '}';
         }
 
         protected class TransformationEngine implements ClassFileTransformer {
 
+            private final MethodRebaseResolver.MethodNameTransformer methodNameTransformer;
+
             private final Set<String> ignoredTypes;
 
             public TransformationEngine() {
+                methodNameTransformer = NO_NATIVE_PREFIX.equals(nativeMethodPrefix)
+                        ? new MethodRebaseResolver.MethodNameTransformer.Suffixing()
+                        : new MethodRebaseResolver.MethodNameTransformer.Prefixing(nativeMethodPrefix);
                 ignoredTypes = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
             }
 
@@ -215,7 +261,9 @@ public interface AgentBuilder {
                     TypeDescription typeDescription = initialized.getTypePool().describe(binaryTypeName);
                     for (Entry entry : entries) {
                         if (entry.matches(typeDescription, classLoader, classBeingRedefined, protectionDomain)) {
-                            DynamicType.Unloaded<?> dynamicType = entry.transform(byteBuddy.rebase(typeDescription, initialized.getClassFileLocator())).make();
+                            DynamicType.Unloaded<?> dynamicType = entry.transform(byteBuddy.rebase(typeDescription,
+                                    initialized.getClassFileLocator(),
+                                    methodNameTransformer)).make();
                             Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
                             if (loadedTypeInitializers.get(typeDescription).isAlive()) {
                                 throw new IllegalArgumentException("Found illegal loaded type initializer for " + typeDescription);
@@ -244,6 +292,7 @@ public interface AgentBuilder {
             public String toString() {
                 return "AgentBuilder.Default.TransformationEngine{" +
                         "agentBuilder=" + Default.this +
+                        ", methodNameTransformer=" + methodNameTransformer +
                         ", ignoredTypes=" + ignoredTypes +
                         '}';
             }
@@ -340,13 +389,18 @@ public interface AgentBuilder {
             }
 
             @Override
+            public AgentBuilder withNativeMethodPrefix(String prefix) {
+                return materialize().withNativeMethodPrefix(prefix);
+            }
+
+            @Override
             public AgentBuilder allowRetransformation() {
                 return materialize().allowRetransformation();
             }
 
             @Override
-            public ClassFileTransformer make() {
-                return materialize().make();
+            public ClassFileTransformer makeRaw() {
+                return materialize().makeRaw();
             }
 
             @Override
@@ -360,7 +414,12 @@ public interface AgentBuilder {
             }
 
             protected AgentBuilder materialize() {
-                return new Default(byteBuddy, binaryLocator, listener, retransformation, entries);
+                return new Default(byteBuddy,
+                        binaryLocator,
+                        listener,
+                        nativeMethodPrefix,
+                        retransformation,
+                        entries);
             }
 
             private Default getOuter() {

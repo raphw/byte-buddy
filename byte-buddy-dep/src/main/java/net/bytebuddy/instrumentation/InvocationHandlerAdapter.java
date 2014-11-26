@@ -184,21 +184,27 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
 
     @Override
     public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && cacheMethods == ((InvocationHandlerAdapter) other).cacheMethods
-                && fieldName.equals(((InvocationHandlerAdapter) other).fieldName);
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+        InvocationHandlerAdapter that = (InvocationHandlerAdapter) other;
+        return cacheMethods == that.cacheMethods
+                && assigner.equals(that.assigner)
+                && fieldName.equals(that.fieldName);
     }
 
     @Override
     public int hashCode() {
-        return 31 * fieldName.hashCode() + (cacheMethods ? 1 : 0);
+        int result = fieldName.hashCode();
+        result = 31 * result + assigner.hashCode();
+        result = 31 * result + (cacheMethods ? 1 : 0);
+        return result;
     }
 
     /**
      * Allows for the configuration of an {@link net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner}
      * of an {@link net.bytebuddy.instrumentation.InvocationHandlerAdapter}.
      */
-    protected static interface AssignerConfigurable {
+    protected static interface AssignerConfigurable extends Instrumentation {
 
         /**
          * Configures an assigner to use with this invocation handler adapter.

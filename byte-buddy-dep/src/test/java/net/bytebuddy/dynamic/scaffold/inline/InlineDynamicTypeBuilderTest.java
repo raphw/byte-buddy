@@ -177,7 +177,7 @@ public class InlineDynamicTypeBuilderTest {
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ClassFileLocator.Default.CLASS_PATH,
-                InlineDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation.INSTANCE)
+                new InlineDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation(new MethodRebaseResolver.MethodNameTransformer.Suffixing()))
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -259,7 +259,7 @@ public class InlineDynamicTypeBuilderTest {
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ClassFileLocator.Default.CLASS_PATH,
-                InlineDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation.INSTANCE)
+                new InlineDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation(new MethodRebaseResolver.MethodNameTransformer.Suffixing()))
                 .defineField(BAR, long.class, Visibility.PUBLIC)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
@@ -347,7 +347,7 @@ public class InlineDynamicTypeBuilderTest {
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ClassFileLocator.Default.CLASS_PATH,
-                InlineDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation.INSTANCE)
+                new InlineDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation(new MethodRebaseResolver.MethodNameTransformer.Suffixing()))
                 .defineMethod(BAR, int.class, Arrays.<Class<?>>asList(long.class, Object.class), Visibility.PUBLIC)
                 .intercept(simpleInstrumentation)
                 .make()
@@ -443,7 +443,7 @@ public class InlineDynamicTypeBuilderTest {
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ClassFileLocator.Default.CLASS_PATH,
-                InlineDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation.INSTANCE)
+                new InlineDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation(new MethodRebaseResolver.MethodNameTransformer.Suffixing()))
                 .defineMethod(BAR, int.class, Arrays.<Class<?>>asList(long.class, Object.class), Visibility.PUBLIC)
                 .throwing(IOException.class)
                 .withoutCode()

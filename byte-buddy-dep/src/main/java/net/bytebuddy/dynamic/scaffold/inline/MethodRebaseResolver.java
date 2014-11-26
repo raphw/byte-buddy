@@ -5,7 +5,6 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.constant.NullConstant;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.Opcodes;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
@@ -66,7 +65,7 @@ public interface MethodRebaseResolver {
         String transform(String originalName);
 
         /**
-         * A method name transformer that adds a fixed suffix to an original method name.
+         * A method name transformer that adds a fixed suffix to an original method name, separated by a {@code $}.
          */
         static class Suffixing implements MethodNameTransformer {
 
@@ -81,51 +80,96 @@ public interface MethodRebaseResolver {
             private final String suffix;
 
             /**
-             * The seed to append to a method name.
+             * Creates a new suffixing method name transformer which adds a default suffix.
              */
-            private final String seed;
-
-            /**
-             * Creates a new suffixing method name transformer which adds a default suffix and a random seed.
-             *
-             * @param randomString A provider for a random seed.
-             */
-            public Suffixing(RandomString randomString) {
-                this(randomString, DEFAULT_SUFFIX);
+            public Suffixing() {
+                this(DEFAULT_SUFFIX);
             }
 
             /**
              * Creates a new suffixing method name transformer.
              *
-             * @param randomString A provider for a random seed.
-             * @param suffix       The suffix to add to the method name before the seed.
+             * @param suffix The suffix to add to the method name before the seed.
              */
-            public Suffixing(RandomString randomString, String suffix) {
+            public Suffixing(String suffix) {
                 this.suffix = suffix;
-                seed = randomString.nextString();
             }
 
             @Override
             public String transform(String originalName) {
-                return String.format("%s$%s$%s", originalName, suffix, seed);
+                return String.format("%s$%s", originalName, suffix);
             }
 
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && seed.equals(((Suffixing) other).seed) && suffix.equals(((Suffixing) other).suffix);
+                        && suffix.equals(((Suffixing) other).suffix);
             }
 
             @Override
             public int hashCode() {
-                return 31 * suffix.hashCode() + seed.hashCode();
+                return suffix.hashCode();
             }
 
             @Override
             public String toString() {
                 return "MethodRebaseResolver.MethodNameTransformer.Suffixing{" +
                         "suffix='" + suffix + '\'' +
-                        ", seed='" + seed + '\'' +
+                        '}';
+            }
+        }
+
+        /**
+         * A method name transformer that adds a fixed prefix to an original method name.
+         */
+        static class Prefixing implements MethodNameTransformer {
+
+            /**
+             * The default prefix to add to an original method name.
+             */
+            private static final String DEFAULT_PREFIX = "original";
+
+            /**
+             * The prefix that is appended.
+             */
+            private final String prefix;
+
+            /**
+             * Creates a new prefixing method name transformer using a default prefix.
+             */
+            public Prefixing() {
+                this(DEFAULT_PREFIX);
+            }
+
+            /**
+             * Creates a new prefixing method name transformer.
+             *
+             * @param prefix The prefix being used.
+             */
+            public Prefixing(String prefix) {
+                this.prefix = prefix;
+            }
+
+            @Override
+            public String transform(String originalName) {
+                return String.format("%s%s", prefix, originalName);
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && prefix.equals(((Prefixing) other).prefix);
+            }
+
+            @Override
+            public int hashCode() {
+                return prefix.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "MethodRebaseResolver.MethodNameTransformer.Prefixing{" +
+                        "prefix='" + prefix + '\'' +
                         '}';
             }
         }

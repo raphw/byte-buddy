@@ -7,6 +7,7 @@ import net.bytebuddy.dynamic.scaffold.FieldRegistry;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator;
 import net.bytebuddy.dynamic.scaffold.inline.InlineDynamicTypeBuilder;
+import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.dynamic.scaffold.subclass.SubclassDynamicTypeBuilder;
 import net.bytebuddy.instrumentation.Instrumentation;
@@ -305,7 +306,7 @@ public class ByteBuddy {
      * @return A dynamic type builder for this configuration that extends or implements the given loaded type.
      */
     public <T> DynamicType.Builder<T> subclass(Class<T> superType) {
-        return subclass(superType, ConstructorStrategy.Default.IMITATE_SUPER_TYPE);
+        return subclass(new TypeDescription.ForLoadedType(nonNull(superType)));
     }
 
     /**
@@ -317,7 +318,7 @@ public class ByteBuddy {
      * @return A dynamic type builder for this configuration that extends or implements the given loaded type.
      */
     public <T> DynamicType.Builder<T> subclass(Class<T> superType, ConstructorStrategy constructorStrategy) {
-        return subclass(new TypeDescription.ForLoadedType(superType), constructorStrategy);
+        return subclass(new TypeDescription.ForLoadedType(nonNull(superType)), constructorStrategy);
     }
 
     /**
@@ -383,7 +384,7 @@ public class ByteBuddy {
      * @return A dynamic type builder for this configuration that redefines the given type description.
      */
     public <T> DynamicType.Builder<T> redefine(Class<T> levelType) {
-        return redefine(new TypeDescription.ForLoadedType(levelType), ClassFileLocator.Compound.makeDefault());
+        return redefine(new TypeDescription.ForLoadedType(nonNull(levelType)));
     }
 
     /**
@@ -402,7 +403,7 @@ public class ByteBuddy {
      * @return A dynamic type builder for this configuration that redefines the given type description.
      */
     public <T> DynamicType.Builder<T> redefine(Class<T> levelType, ClassFileLocator classFileLocator) {
-        return redefine(new TypeDescription.ForLoadedType(levelType), classFileLocator);
+        return redefine(new TypeDescription.ForLoadedType(nonNull(levelType)), classFileLocator);
     }
 
     /**
@@ -479,7 +480,7 @@ public class ByteBuddy {
      * @return A dynamic type builder for this configuration that creates a rebased version of the given type.
      */
     public <T> DynamicType.Builder<T> rebase(Class<T> levelType) {
-        return rebase(new TypeDescription.ForLoadedType(levelType), ClassFileLocator.Compound.makeDefault());
+        return rebase(new TypeDescription.ForLoadedType(nonNull(levelType)));
     }
 
     /**
@@ -500,7 +501,31 @@ public class ByteBuddy {
      * @return A dynamic type builder for this configuration that creates a rebased version of the given type.
      */
     public <T> DynamicType.Builder<T> rebase(Class<T> levelType, ClassFileLocator classFileLocator) {
-        return rebase(new TypeDescription.ForLoadedType(levelType), classFileLocator);
+        return rebase(new TypeDescription.ForLoadedType(nonNull(levelType)), classFileLocator);
+    }
+
+    /**
+     * <p>
+     * Creates a dynamic type by weaving any changes into an already defined <i>level type</i>. The rebased type is
+     * created by adding methods to the <i>level type</i> where the original method implementations are copied to
+     * renamed, private methods within the created dynamic type and therefore remain invokable as super method calls.
+     * The result is a rebased type with subclass semantics.
+     * </p>
+     * <p>
+     * <b>Note</b>: It is possible to experience unexpected errors in case that the provided {@code levelType} and the
+     * corresponding class file get out of sync, i.e. a type is rebased several times without updating the class file.
+     * </p>
+     *
+     * @param levelType             The type which is to be rebased.
+     * @param classFileLocator      A locator for finding a class file that represents a type.
+     * @param methodNameTransformer The method name transformer that is used for rebasing methods.
+     * @param <T>                   The most specific known type that the created dynamic type represents.
+     * @return A dynamic type builder for this configuration that creates a rebased version of the given type.
+     */
+    public <T> DynamicType.Builder<T> rebase(Class<T> levelType,
+                                             ClassFileLocator classFileLocator,
+                                             MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
+        return rebase(new TypeDescription.ForLoadedType(nonNull(levelType)), classFileLocator, methodNameTransformer);
     }
 
     /**
@@ -543,9 +568,33 @@ public class ByteBuddy {
      * @return A dynamic type builder for this configuration that creates a rebased version of the given type.
      */
     public <T> DynamicType.Builder<T> rebase(TypeDescription levelType, ClassFileLocator classFileLocator) {
+        return rebase(levelType, classFileLocator, new MethodRebaseResolver.MethodNameTransformer.Suffixing());
+    }
+
+    /**
+     * <p>
+     * Creates a dynamic type by weaving any changes into an already defined <i>level type</i>. The rebased type is
+     * created by adding methods to the <i>level type</i> where the original method implementations are copied to
+     * renamed, private methods within the created dynamic type and therefore remain invokable as super method calls.
+     * The result is a rebased type with subclass semantics.
+     * </p>
+     * <p>
+     * <b>Note</b>: It is possible to experience unexpected errors in case that the provided {@code levelType} and the
+     * corresponding class file get out of sync, i.e. a type is rebased several times without updating the class file.
+     * </p>
+     *
+     * @param levelType             The type which is to be rebased.
+     * @param classFileLocator      A locator for finding a class file that represents a type.
+     * @param methodNameTransformer The method name transformer that is used for rebasing methods.
+     * @param <T>                   The most specific known type that the created dynamic type represents.
+     * @return A dynamic type builder for this configuration that creates a rebased version of the given type.
+     */
+    public <T> DynamicType.Builder<T> rebase(TypeDescription levelType,
+                                             ClassFileLocator classFileLocator,
+                                             MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
         return new InlineDynamicTypeBuilder<T>(classFileVersion,
                 new NamingStrategy.Fixed(levelType.getName()),
-                nonNull(levelType),
+                levelType,
                 interfaceTypes,
                 modifiers.resolve(levelType.getModifiers()),
                 TypeAttributeAppender.NoOp.INSTANCE,
@@ -558,7 +607,7 @@ public class ByteBuddy {
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
                 nonNull(classFileLocator),
-                InlineDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation.INSTANCE);
+                new InlineDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation(nonNull(methodNameTransformer)));
     }
 
     /**
