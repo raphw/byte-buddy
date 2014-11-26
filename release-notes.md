@@ -53,4 +53,6 @@ mainly for allowing the reuse of `Method` instances for the `@Origin` annotation
 
 ### Current snapshot version
 
+- Added the `DeclaringTypeResolver` as a component in the default chain which selects the most specific method out
+  of two. This is mainly meant to avoid the accidental matching of the methods that are declared by the `Object` type.
 - Replaced the `MethodMatcher` API with the `ElementMatcher` API which allows for a more sophisticated matching DSL.
