@@ -67,6 +67,8 @@ public class MethodRegistryDefaultTest {
     private MethodLookupEngine.Finding basicFinding, extendedFinding;
     @Mock
     private LoadedTypeInitializer loadedTypeInitializer;
+    @Mock
+    private InstrumentedType.TypeInitializer typeInitializer;
 
     @Before
     @SuppressWarnings("unchecked")
@@ -109,6 +111,8 @@ public class MethodRegistryDefaultTest {
         when(extendedInstrumentedType.detach()).thenReturn(extendedInstrumentedType);
         when(basicInstrumentedType.getLoadedTypeInitializer()).thenReturn(loadedTypeInitializer);
         when(extendedInstrumentedType.getLoadedTypeInitializer()).thenReturn(loadedTypeInitializer);
+        when(basicInstrumentedType.getTypeInitializer()).thenReturn(typeInitializer);
+        when(extendedInstrumentedType.getTypeInitializer()).thenReturn(typeInitializer);
     }
 
     @Test

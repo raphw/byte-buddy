@@ -82,6 +82,7 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
      * @param fieldDescriptions     A list of field descriptions to be applied for this instrumentation.
      * @param methodDescriptions    A list of method descriptions to be applied for this instrumentation.
      * @param loadedTypeInitializer A loaded type initializer to be applied for this instrumentation.
+     * @param typeInitializer       A type initializer to be applied for this instrumentation.
      */
     protected SubclassInstrumentedType(ClassFileVersion classFileVersion,
                                        TypeDescription superClass,

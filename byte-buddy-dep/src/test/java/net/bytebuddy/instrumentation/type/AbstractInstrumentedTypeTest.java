@@ -1,7 +1,9 @@
 package net.bytebuddy.instrumentation.type;
 
+import net.bytebuddy.instrumentation.LoadedTypeInitializer;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.utility.MockitoRule;
 import org.junit.Rule;
@@ -115,6 +117,61 @@ public abstract class AbstractInstrumentedTypeTest {
         makePlainInstrumentedType()
                 .withMethod(BAR, returnType, Collections.<TypeDescription>emptyList(), Collections.<TypeDescription>emptyList(), Opcodes.ACC_PUBLIC)
                 .withMethod(BAR, returnType, Collections.<TypeDescription>emptyList(), Collections.<TypeDescription>emptyList(), Opcodes.ACC_PUBLIC);
+    }
+
+    @Test
+    public void testWithLoadedTypeInitializerInitial() throws Exception {
+        LoadedTypeInitializer loadedTypeInitializer = makePlainInstrumentedType().getLoadedTypeInitializer();
+        assertThat(loadedTypeInitializer.isAlive(), is(false));
+    }
+
+    @Test
+    public void testWithLoadedTypeInitializerSingle() throws Exception {
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.getDeclaredFields().size(), is(0));
+        LoadedTypeInitializer loadedTypeInitializer = mock(LoadedTypeInitializer.class);
+        instrumentedType = instrumentedType.withInitializer(loadedTypeInitializer);
+        assertThat(instrumentedType.getLoadedTypeInitializer(),
+                is((LoadedTypeInitializer) new LoadedTypeInitializer.Compound(LoadedTypeInitializer.NoOp.INSTANCE, loadedTypeInitializer)));
+    }
+
+    @Test
+    public void testWithLoadedTypeInitializerDouble() throws Exception {
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.getDeclaredFields().size(), is(0));
+        LoadedTypeInitializer first = mock(LoadedTypeInitializer.class), second = mock(LoadedTypeInitializer.class);
+        instrumentedType = instrumentedType.withInitializer(first).withInitializer(second);
+        assertThat(instrumentedType.getLoadedTypeInitializer(),
+                is((LoadedTypeInitializer) new LoadedTypeInitializer.Compound(new LoadedTypeInitializer
+                        .Compound(LoadedTypeInitializer.NoOp.INSTANCE, first), second)));
+    }
+
+    @Test
+    public void testWithTypeInitializerInitial() throws Exception {
+        InstrumentedType.TypeInitializer typeInitializer = makePlainInstrumentedType().getTypeInitializer();
+        assertThat(typeInitializer.isDefined(), is(false));
+    }
+
+    @Test
+    public void testWithTypeInitializerSingle() throws Exception {
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.getDeclaredFields().size(), is(0));
+        StackManipulation stackManipulation = mock(StackManipulation.class);
+        instrumentedType = instrumentedType.withInitializer(stackManipulation);
+        InstrumentedType.TypeInitializer typeInitializer = instrumentedType.getTypeInitializer();
+        assertThat(typeInitializer.isDefined(), is(true));
+        assertThat(typeInitializer.getStackManipulation(), is(stackManipulation));
+    }
+
+    @Test
+    public void testWithTypeInitializerDouble() throws Exception {
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.getDeclaredFields().size(), is(0));
+        StackManipulation first = mock(StackManipulation.class), second = mock(StackManipulation.class);
+        instrumentedType = instrumentedType.withInitializer(first).withInitializer(second);
+        InstrumentedType.TypeInitializer typeInitializer = instrumentedType.getTypeInitializer();
+        assertThat(typeInitializer.isDefined(), is(true));
+        assertThat(typeInitializer.getStackManipulation(), is((StackManipulation) new StackManipulation.Compound(first, second)));
     }
 
     @Test
