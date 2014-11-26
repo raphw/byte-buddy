@@ -25,7 +25,7 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
  * methods {@code foo(Object)} and {@code bar(String)}, this ambiguity resolver will detect that the {@code String} type
  * is more specific than the {@code Object} type and determine {@code bar(String)} as the dominant binding.
  */
-public enum MostSpecificTypeResolver implements MethodDelegationBinder.AmbiguityResolver {
+public enum ArgumentTypeResolver implements MethodDelegationBinder.AmbiguityResolver {
 
     /**
      * The singleton instance.

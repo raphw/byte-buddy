@@ -18,7 +18,7 @@ import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.*;
 
 @RunWith(Parameterized.class)
-public class MostSpecificTypeResolverPrimitiveTest extends AbstractMostSpecificTypeResolverTest {
+public class ArgumentTypeResolverPrimitiveTest extends AbstractArgumentTypeResolverTest {
 
     private final Class<?> firstType;
     private final Class<?> secondType;
@@ -27,7 +27,7 @@ public class MostSpecificTypeResolverPrimitiveTest extends AbstractMostSpecificT
     @Mock
     private TypeDescription secondPrimitive;
 
-    public MostSpecificTypeResolverPrimitiveTest(Class<?> firstType, Class<?> secondType) {
+    public ArgumentTypeResolverPrimitiveTest(Class<?> firstType, Class<?> secondType) {
         this.firstType = firstType;
         this.secondType = secondType;
     }
@@ -114,13 +114,13 @@ public class MostSpecificTypeResolverPrimitiveTest extends AbstractMostSpecificT
         when(sourceTypeList.size()).thenReturn(2);
         when(sourceType.isPrimitive()).thenReturn(true);
         when(leftTypeList.get(0)).thenReturn(leftPrimitive);
-        when(left.getTargetParameterIndex(any(MostSpecificTypeResolver.ParameterIndexToken.class)))
+        when(left.getTargetParameterIndex(any(ArgumentTypeResolver.ParameterIndexToken.class)))
                 .thenAnswer(new TokenAnswer(new int[][]{{0, 0}}));
         when(rightTypeList.get(0)).thenReturn(rightPrimitive);
-        when(right.getTargetParameterIndex(any(MostSpecificTypeResolver.ParameterIndexToken.class)))
+        when(right.getTargetParameterIndex(any(ArgumentTypeResolver.ParameterIndexToken.class)))
                 .thenAnswer(new TokenAnswer(new int[][]{{0, 0}}));
         MethodDelegationBinder.AmbiguityResolver.Resolution resolution =
-                MostSpecificTypeResolver.INSTANCE.resolve(source, left, right);
+                ArgumentTypeResolver.INSTANCE.resolve(source, left, right);
         assertThat(resolution, is(expected));
         verify(source, atLeast(1)).getParameterTypes();
         verify(leftMethod, atLeast(1)).getParameterTypes();

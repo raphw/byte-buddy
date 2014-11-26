@@ -1,8 +1,8 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
+import net.bytebuddy.instrumentation.method.bytecode.bind.ArgumentTypeResolver;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
-import net.bytebuddy.instrumentation.method.bytecode.bind.MostSpecificTypeResolver;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import org.junit.Test;
@@ -74,7 +74,7 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Argument.Binder.INSTANCE
                 .bind(annotationDescription, targetIndex, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
-        Object expectedToken = new MostSpecificTypeResolver.ParameterIndexToken(sourceIndex);
+        Object expectedToken = new ArgumentTypeResolver.ParameterIndexToken(sourceIndex);
         if (bindingMechanic == Argument.BindingMechanic.UNIQUE) {
             assertThat(parameterBinding.getIdentificationToken(), equalTo(expectedToken));
             assertThat(parameterBinding.getIdentificationToken().hashCode(), equalTo(expectedToken.hashCode()));

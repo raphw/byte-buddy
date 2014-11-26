@@ -19,15 +19,15 @@ import static org.hamcrest.core.AnyOf.anyOf;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.when;
 
-public class AbstractMostSpecificTypeResolverTest extends AbstractAmbiguityResolverTest {
+public class AbstractArgumentTypeResolverTest extends AbstractAmbiguityResolverTest {
 
     @Mock
     protected TypeList sourceTypeList, leftTypeList, rightTypeList;
     @Mock
     protected TypeDescription sourceType;
 
-    protected static Matcher<? super MostSpecificTypeResolver.ParameterIndexToken> describesArgument(int... index) {
-        Matcher<? super MostSpecificTypeResolver.ParameterIndexToken> token = CoreMatchers.anything();
+    protected static Matcher<? super ArgumentTypeResolver.ParameterIndexToken> describesArgument(int... index) {
+        Matcher<? super ArgumentTypeResolver.ParameterIndexToken> token = CoreMatchers.anything();
         for (int anIndex : index) {
             token = anyOf(new IndexTokenMatcher(anIndex), token);
         }
@@ -44,7 +44,7 @@ public class AbstractMostSpecificTypeResolverTest extends AbstractAmbiguityResol
         when(rightMethod.getParameterTypes()).thenReturn(rightTypeList);
     }
 
-    private static class IndexTokenMatcher extends BaseMatcher<MostSpecificTypeResolver.ParameterIndexToken> {
+    private static class IndexTokenMatcher extends BaseMatcher<ArgumentTypeResolver.ParameterIndexToken> {
 
         private final int index;
 
@@ -55,7 +55,7 @@ public class AbstractMostSpecificTypeResolverTest extends AbstractAmbiguityResol
 
         @Override
         public boolean matches(Object item) {
-            return new MostSpecificTypeResolver.ParameterIndexToken(index).equals(item);
+            return new ArgumentTypeResolver.ParameterIndexToken(index).equals(item);
         }
 
         @Override
@@ -66,15 +66,15 @@ public class AbstractMostSpecificTypeResolverTest extends AbstractAmbiguityResol
 
     protected static class TokenAnswer implements Answer<Integer> {
 
-        private final Map<MostSpecificTypeResolver.ParameterIndexToken, Integer> indexMapping;
+        private final Map<ArgumentTypeResolver.ParameterIndexToken, Integer> indexMapping;
 
         protected TokenAnswer(int[][] mapping) {
-            Map<MostSpecificTypeResolver.ParameterIndexToken, Integer> indexMapping = new HashMap<MostSpecificTypeResolver.ParameterIndexToken, Integer>();
+            Map<ArgumentTypeResolver.ParameterIndexToken, Integer> indexMapping = new HashMap<ArgumentTypeResolver.ParameterIndexToken, Integer>();
             for (int[] entry : mapping) {
                 assert entry.length == 2;
                 assert entry[0] >= 0;
                 assert entry[1] >= 0;
-                Object override = indexMapping.put(new MostSpecificTypeResolver.ParameterIndexToken(entry[0]), entry[1]);
+                Object override = indexMapping.put(new ArgumentTypeResolver.ParameterIndexToken(entry[0]), entry[1]);
                 assert override == null;
             }
             this.indexMapping = Collections.unmodifiableMap(indexMapping);

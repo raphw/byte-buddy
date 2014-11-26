@@ -4,8 +4,8 @@ import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.bytecode.bind.ArgumentTypeResolver;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
-import net.bytebuddy.instrumentation.method.bytecode.bind.MostSpecificTypeResolver;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess;
@@ -43,7 +43,7 @@ public @interface Argument {
 
     /**
      * Determines if the argument binding is to be considered by a
-     * {@link net.bytebuddy.instrumentation.method.bytecode.bind.MostSpecificTypeResolver}
+     * {@link net.bytebuddy.instrumentation.method.bytecode.bind.ArgumentTypeResolver}
      * for resolving ambiguous bindings of two methods. If
      * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument.BindingMechanic#UNIQUE},
      * of two bindable target methods such as for example {@code foo(String)} and {@code bar(Object)}, the {@code foo}
@@ -53,7 +53,7 @@ public @interface Argument {
      * option is used for any other binding.
      *
      * @return The binding type that should be applied to this parameter binding.
-     * @see net.bytebuddy.instrumentation.method.bytecode.bind.MostSpecificTypeResolver
+     * @see net.bytebuddy.instrumentation.method.bytecode.bind.ArgumentTypeResolver
      */
     BindingMechanic bindingMechanic() default BindingMechanic.UNIQUE;
 
@@ -61,7 +61,7 @@ public @interface Argument {
      * Determines if a parameter binding should be considered for resolving ambiguous method bindings.
      *
      * @see Argument#bindingMechanic()
-     * @see net.bytebuddy.instrumentation.method.bytecode.bind.MostSpecificTypeResolver
+     * @see net.bytebuddy.instrumentation.method.bytecode.bind.ArgumentTypeResolver
      */
     static enum BindingMechanic {
 
@@ -82,7 +82,7 @@ public @interface Argument {
                         new StackManipulation.Compound(
                                 MethodVariableAccess.forType(sourceType).loadFromIndex(parameterOffset),
                                 assigner.assign(sourceType, targetType, considerRuntimeType)),
-                        new MostSpecificTypeResolver.ParameterIndexToken(sourceParameterIndex)
+                        new ArgumentTypeResolver.ParameterIndexToken(sourceParameterIndex)
                 );
             }
         },

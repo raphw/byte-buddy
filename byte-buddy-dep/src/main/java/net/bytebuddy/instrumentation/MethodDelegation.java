@@ -4,10 +4,7 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
-import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
-import net.bytebuddy.instrumentation.method.bytecode.bind.MethodNameEqualityResolver;
-import net.bytebuddy.instrumentation.method.bytecode.bind.MostSpecificTypeResolver;
-import net.bytebuddy.instrumentation.method.bytecode.bind.ParameterLengthResolver;
+import net.bytebuddy.instrumentation.method.bytecode.bind.*;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.*;
 import net.bytebuddy.instrumentation.method.bytecode.stack.Duplication;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
@@ -113,10 +110,13 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
  * A method that is annotated with this annotation is given a specific priority where the default priority is set
  * to {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.BindingPriority#DEFAULT}
  * for non-annotated method. A method with a higher priority is considered a better target for delegation.</li>
+ * <li>{@link net.bytebuddy.instrumentation.method.bytecode.bind.DeclaringTypeResolver}:
+ * If a target method is declared by a more specific type than another method, the method with the most specific
+ * type is bound.</li>
  * <li>{@link net.bytebuddy.instrumentation.method.bytecode.bind.MethodNameEqualityResolver}:
  * If a source method {@code Baz#qux} is the source method, it will rather be assigned to {@code Foo#qux} because
  * of their equal names. Similar names and case-insensitive equality are not considered.</li>
- * <li>{@link net.bytebuddy.instrumentation.method.bytecode.bind.MostSpecificTypeResolver}:
+ * <li>{@link net.bytebuddy.instrumentation.method.bytecode.bind.ArgumentTypeResolver}:
  * The most specific type resolver will consider all bindings that are using the
  * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument}
  * annotation for resolving a binding conflict. In this context, the resolution will equal the most-specific
@@ -469,8 +469,9 @@ public class MethodDelegation implements Instrumentation {
      */
     private static MethodDelegationBinder.AmbiguityResolver defaultAmbiguityResolver() {
         return MethodDelegationBinder.AmbiguityResolver.Chain.of(BindingPriority.Resolver.INSTANCE,
+                DeclaringTypeResolver.INSTANCE,
+                ArgumentTypeResolver.INSTANCE,
                 MethodNameEqualityResolver.INSTANCE,
-                MostSpecificTypeResolver.INSTANCE,
                 ParameterLengthResolver.INSTANCE);
     }
 
