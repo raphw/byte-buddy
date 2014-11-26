@@ -70,6 +70,7 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
      * @param fieldName    The name of the field.
      * @param cacheMethods Determines if the {@link java.lang.reflect.Method} instances that are handed to the
      *                     intercepted methods are cached in {@code static} fields.
+     * @param assigner     The assigner to apply when defining this instrumentation.
      */
     protected InvocationHandlerAdapter(String fieldName, boolean cacheMethods, Assigner assigner) {
         this.fieldName = fieldName;
@@ -230,10 +231,11 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
          * Creates a new invocation handler adapter for delegating invocations to an invocation handler that is stored
          * in a static field.
          *
-         * @param invocationHandler The invocation handler to which all method calls are delegated.
          * @param fieldName         The name of the field.
          * @param cacheMethods      Determines if the {@link java.lang.reflect.Method} instances that are handed to the
          *                          intercepted methods are cached in {@code static} fields.
+         * @param assigner          The assigner to apply when defining this instrumentation.
+         * @param invocationHandler The invocation handler to which all method calls are delegated.
          */
         protected ForStaticDelegation(String fieldName,
                                       boolean cacheMethods,
@@ -365,6 +367,7 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
          * @param fieldName    The name of the field.
          * @param cacheMethods Determines if the {@link java.lang.reflect.Method} instances that are handed to the
          *                     intercepted methods are cached in {@code static} fields.
+         * @param assigner     The assigner to apply when defining this instrumentation.
          */
         protected ForInstanceDelegation(String fieldName, boolean cacheMethods, Assigner assigner) {
             super(fieldName, cacheMethods, assigner);

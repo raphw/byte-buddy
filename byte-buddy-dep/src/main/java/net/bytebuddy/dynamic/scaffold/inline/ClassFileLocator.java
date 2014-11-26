@@ -32,15 +32,34 @@ public interface ClassFileLocator {
      */
     TypeDescription.BinaryRepresentation classFileFor(TypeDescription typeDescription) throws IOException;
 
+    /**
+     * A class file locator that queries a class loader for binary representations of class files.
+     */
     static class ForClassLoader implements ClassFileLocator {
 
+        /**
+         * Creates a class file locator that queries the system class loader.
+         *
+         * @return A class file locator that queries the system class loader.
+         */
         public static ClassFileLocator ofClassPath() {
             return new ForClassLoader(ClassLoader.getSystemClassLoader());
         }
 
+        /**
+         * The class loader to query.
+         */
         private final ClassLoader classLoader;
 
+        /**
+         * Creates a new class file locator for the given class loader.
+         *
+         * @param classLoader The class loader to query which must not be the bootstrap class loader, i.e. {@code null}.
+         */
         public ForClassLoader(ClassLoader classLoader) {
+            if (classLoader == null) {
+                throw new IllegalArgumentException("Cannot directly query the bootstrap class loader");
+            }
             this.classLoader = classLoader;
         }
 
@@ -87,6 +106,9 @@ public interface ClassFileLocator {
          */
         CLASS_PATH {
 
+            /**
+             * A class file locator that queries the system class loader for binary representations.
+             */
             private final ClassFileLocator classFileLocator = ForClassLoader.ofClassPath();
 
             @Override

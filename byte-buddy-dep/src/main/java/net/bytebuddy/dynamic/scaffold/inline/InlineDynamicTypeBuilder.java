@@ -320,8 +320,16 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
          */
         static class ForRebaseInstrumentation implements TargetHandler {
 
+            /**
+             * The method name transformer to apply during instrumentation.
+             */
             private final MethodRebaseResolver.MethodNameTransformer methodNameTransformer;
 
+            /**
+             * Creates a new rebase instrumentation target handler.
+             *
+             * @param methodNameTransformer The method name transformer to apply during instrumentation.
+             */
             public ForRebaseInstrumentation(MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
                 this.methodNameTransformer = methodNameTransformer;
             }
@@ -464,9 +472,11 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 /**
                  * Creates a target handler for a rebase instrumentation.
                  *
-                 * @param ignoredMethods   The methods that should be ignored for rebasing.
-                 * @param classFileVersion The class file version for the created dynamic type.
-                 * @param instrumentedType The instrumented type.
+                 * @param ignoredMethods        The methods that should be ignored for rebasing.
+                 * @param classFileVersion      The class file version for the created dynamic type.
+                 * @param instrumentedType      The instrumented type.
+                 * @param methodNameTransformer The method name transformer to be applied by the created
+                 *                              method rebase resolver.
                  * @return A prepared target handler.
                  */
                 public static Prepared of(ElementMatcher<? super MethodDescription> ignoredMethods,
