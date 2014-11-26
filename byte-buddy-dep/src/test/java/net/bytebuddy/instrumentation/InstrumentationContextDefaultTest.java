@@ -9,6 +9,7 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
+import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
@@ -45,6 +46,8 @@ public class InstrumentationContextDefaultTest {
 
     @Mock
     private TypeDescription instrumentedType, firstDescription, secondDescription;
+    @Mock
+    private InstrumentedType.TypeInitializer typeInitializer;
     @Mock
     private ClassFileVersion classFileVersion;
     @Mock
@@ -156,7 +159,9 @@ public class InstrumentationContextDefaultTest {
 
     @Test
     public void testInitialContextIsEmpty() throws Exception {
-        Instrumentation.Context.ExtractableView instrumentationContext = new Instrumentation.Context.Default(instrumentedType, classFileVersion);
+        Instrumentation.Context.ExtractableView instrumentationContext = new Instrumentation.Context.Default(instrumentedType,
+                typeInitializer,
+                classFileVersion);
         assertThat(instrumentationContext.getRegisteredAuxiliaryTypes().size(), is(0));
         instrumentationContext.drain(classVisitor, methodPool, injectedCode);
         verifyZeroInteractions(classVisitor);
@@ -168,7 +173,9 @@ public class InstrumentationContextDefaultTest {
 
     @Test
     public void testAuxiliaryTypeRegistration() throws Exception {
-        Instrumentation.Context.ExtractableView instrumentationContext = new Instrumentation.Context.Default(instrumentedType, classFileVersion);
+        Instrumentation.Context.ExtractableView instrumentationContext = new Instrumentation.Context.Default(instrumentedType,
+                typeInitializer,
+                classFileVersion);
         assertThat(instrumentationContext.getRegisteredAuxiliaryTypes().size(), is(0));
         assertThat(instrumentationContext.register(auxiliaryType), is(firstDescription));
         assertThat(instrumentationContext.getRegisteredAuxiliaryTypes().size(), is(1));
@@ -185,7 +192,9 @@ public class InstrumentationContextDefaultTest {
 
     @Test
     public void testFieldCachingWithoutUserCodeOrInjectedCode() throws Exception {
-        Instrumentation.Context.ExtractableView instrumentationContext = new Instrumentation.Context.Default(instrumentedType, classFileVersion);
+        Instrumentation.Context.ExtractableView instrumentationContext = new Instrumentation.Context.Default(instrumentedType,
+                typeInitializer,
+                classFileVersion);
         FieldDescription firstField = instrumentationContext.cache(firstFieldValue, firstFieldType);
         assertThat(instrumentationContext.cache(firstFieldValue, firstFieldType), is(firstField));
         FieldDescription secondField = instrumentationContext.cache(secondFieldValue, secondFieldType);
@@ -224,7 +233,9 @@ public class InstrumentationContextDefaultTest {
     public void testFieldCachingWithUserCodeAndWithoutInjectedCode() throws Exception {
         when(entry.isDefineMethod()).thenReturn(true);
         when(byteCodeAppender.appendsCode()).thenReturn(true);
-        Instrumentation.Context.ExtractableView instrumentationContext = new Instrumentation.Context.Default(instrumentedType, classFileVersion);
+        Instrumentation.Context.ExtractableView instrumentationContext = new Instrumentation.Context.Default(instrumentedType,
+                typeInitializer,
+                classFileVersion);
         FieldDescription firstField = instrumentationContext.cache(firstFieldValue, firstFieldType);
         assertThat(instrumentationContext.cache(firstFieldValue, firstFieldType), is(firstField));
         FieldDescription secondField = instrumentationContext.cache(secondFieldValue, secondFieldType);
@@ -264,7 +275,10 @@ public class InstrumentationContextDefaultTest {
     public void testFieldCachingWithoutUserCodeAndWithInjectedCode() throws Exception {
         when(byteCodeAppender.appendsCode()).thenReturn(true);
         when(injectedCode.isInjected()).thenReturn(true);
-        Instrumentation.Context.ExtractableView instrumentationContext = new Instrumentation.Context.Default(instrumentedType, classFileVersion);
+        when(typeInitializer.expandWith(injectedCodeAppender)).thenReturn(new InstrumentedType.TypeInitializer.Simple(injectedCodeAppender));
+        Instrumentation.Context.ExtractableView instrumentationContext = new Instrumentation.Context.Default(instrumentedType,
+                typeInitializer,
+                classFileVersion);
         FieldDescription firstField = instrumentationContext.cache(firstFieldValue, firstFieldType);
         assertThat(instrumentationContext.cache(firstFieldValue, firstFieldType), is(firstField));
         FieldDescription secondField = instrumentationContext.cache(secondFieldValue, secondFieldType);
@@ -288,6 +302,8 @@ public class InstrumentationContextDefaultTest {
         verify(injectedCode).getInjectedCode();
         verify(injectedCodeAppender).apply(methodVisitor, instrumentationContext);
         verifyNoMoreInteractions(injectedCode);
+        verify(typeInitializer).expandWith(injectedCodeAppender);
+        verifyNoMoreInteractions(typeInitializer);
         verify(entry).isDefineMethod();
         verify(methodVisitor).visitInsn(Opcodes.RETURN);
         verify(methodVisitor).visitMaxs(0, 0);
@@ -306,7 +322,10 @@ public class InstrumentationContextDefaultTest {
         when(entry.isDefineMethod()).thenReturn(true);
         when(byteCodeAppender.appendsCode()).thenReturn(true);
         when(injectedCode.isInjected()).thenReturn(true);
-        Instrumentation.Context.ExtractableView instrumentationContext = new Instrumentation.Context.Default(instrumentedType, classFileVersion);
+        when(typeInitializer.expandWith(injectedCodeAppender)).thenReturn(new InstrumentedType.TypeInitializer.Simple(injectedCodeAppender));
+        Instrumentation.Context.ExtractableView instrumentationContext = new Instrumentation.Context.Default(instrumentedType,
+                typeInitializer,
+                classFileVersion);
         FieldDescription firstField = instrumentationContext.cache(firstFieldValue, firstFieldType);
         assertThat(instrumentationContext.cache(firstFieldValue, firstFieldType), is(firstField));
         FieldDescription secondField = instrumentationContext.cache(secondFieldValue, secondFieldType);
@@ -330,6 +349,8 @@ public class InstrumentationContextDefaultTest {
         verify(injectedCode).getInjectedCode();
         verify(injectedCodeAppender).apply(methodVisitor, instrumentationContext);
         verifyNoMoreInteractions(injectedCode);
+        verify(typeInitializer).expandWith(injectedCodeAppender);
+        verifyNoMoreInteractions(typeInitializer);
         verify(entry).isDefineMethod();
         verify(entry, atLeast(1)).getAttributeAppender();
         verify(attributeAppender).apply(methodVisitor, MethodDescription.Latent.typeInitializerOf(instrumentedType));
@@ -348,7 +369,9 @@ public class InstrumentationContextDefaultTest {
 
     @Test(expected = IllegalStateException.class)
     public void testCannotRegisterFieldAfterDraining() throws Exception {
-        Instrumentation.Context.ExtractableView instrumentationContext = new Instrumentation.Context.Default(instrumentedType, classFileVersion);
+        Instrumentation.Context.ExtractableView instrumentationContext = new Instrumentation.Context.Default(instrumentedType,
+                typeInitializer,
+                classFileVersion);
         instrumentationContext.drain(classVisitor, methodPool, injectedCode);
         verifyZeroInteractions(classVisitor);
         verify(methodPool).target(MethodDescription.Latent.typeInitializerOf(instrumentedType));
@@ -360,7 +383,9 @@ public class InstrumentationContextDefaultTest {
 
     @Test
     public void testAccessorMethodRegistration() throws Exception {
-        Instrumentation.Context.Default instrumentationContext = new Instrumentation.Context.Default(instrumentedType, classFileVersion);
+        Instrumentation.Context.Default instrumentationContext = new Instrumentation.Context.Default(instrumentedType,
+                typeInitializer,
+                classFileVersion);
         MethodDescription firstMethodDescription = instrumentationContext.registerAccessorFor(firstSpecialInvocation);
         assertThat(firstMethodDescription.getParameterTypes(), is((TypeList) new TypeList.Explicit(Arrays.asList(firstSpecialParameterType))));
         assertThat(firstMethodDescription.getReturnType(), is(firstSpecialReturnType));
@@ -386,7 +411,9 @@ public class InstrumentationContextDefaultTest {
 
     @Test
     public void testAccessorMethodRegistrationWritesFirst() throws Exception {
-        Instrumentation.Context.Default instrumentationContext = new Instrumentation.Context.Default(instrumentedType, classFileVersion);
+        Instrumentation.Context.Default instrumentationContext = new Instrumentation.Context.Default(instrumentedType,
+                typeInitializer,
+                classFileVersion);
         MethodDescription firstMethodDescription = instrumentationContext.registerAccessorFor(firstSpecialInvocation);
         assertThat(instrumentationContext.registerAccessorFor(firstSpecialInvocation), is(firstMethodDescription));
         instrumentationContext.drain(classVisitor, methodPool, injectedCode);
@@ -404,7 +431,9 @@ public class InstrumentationContextDefaultTest {
     @Test
     public void testAccessorMethodRegistrationWritesSecond() throws Exception {
         when(secondSpecialMethod.isStatic()).thenReturn(true);
-        Instrumentation.Context.Default instrumentationContext = new Instrumentation.Context.Default(instrumentedType, classFileVersion);
+        Instrumentation.Context.Default instrumentationContext = new Instrumentation.Context.Default(instrumentedType,
+                typeInitializer,
+                classFileVersion);
         MethodDescription secondMethodDescription = instrumentationContext.registerAccessorFor(secondSpecialInvocation);
         assertThat(instrumentationContext.registerAccessorFor(secondSpecialInvocation), is(secondMethodDescription));
         instrumentationContext.drain(classVisitor, methodPool, injectedCode);
@@ -420,7 +449,9 @@ public class InstrumentationContextDefaultTest {
 
     @Test
     public void testFieldGetterRegistration() throws Exception {
-        Instrumentation.Context.Default instrumentationContext = new Instrumentation.Context.Default(instrumentedType, classFileVersion);
+        Instrumentation.Context.Default instrumentationContext = new Instrumentation.Context.Default(instrumentedType,
+                typeInitializer,
+                classFileVersion);
         MethodDescription firstFieldGetter = instrumentationContext.registerGetterFor(firstField);
         assertThat(firstFieldGetter.getParameterTypes(), is((TypeList) new TypeList.Empty()));
         assertThat(firstFieldGetter.getReturnType(), is(firstFieldType));
@@ -446,7 +477,9 @@ public class InstrumentationContextDefaultTest {
 
     @Test
     public void testFieldGetterRegistrationWritesFirst() throws Exception {
-        Instrumentation.Context.Default instrumentationContext = new Instrumentation.Context.Default(instrumentedType, classFileVersion);
+        Instrumentation.Context.Default instrumentationContext = new Instrumentation.Context.Default(instrumentedType,
+                typeInitializer,
+                classFileVersion);
         MethodDescription firstMethodDescription = instrumentationContext.registerGetterFor(firstField);
         assertThat(instrumentationContext.registerGetterFor(firstField), is(firstMethodDescription));
         instrumentationContext.drain(classVisitor, methodPool, injectedCode);
@@ -463,7 +496,9 @@ public class InstrumentationContextDefaultTest {
     @Test
     public void testFieldGetterRegistrationWritesSecond() throws Exception {
         when(secondField.isStatic()).thenReturn(true);
-        Instrumentation.Context.Default instrumentationContext = new Instrumentation.Context.Default(instrumentedType, classFileVersion);
+        Instrumentation.Context.Default instrumentationContext = new Instrumentation.Context.Default(instrumentedType,
+                typeInitializer,
+                classFileVersion);
         MethodDescription secondMethodDescription = instrumentationContext.registerGetterFor(secondField);
         assertThat(instrumentationContext.registerGetterFor(secondField), is(secondMethodDescription));
         instrumentationContext.drain(classVisitor, methodPool, injectedCode);
@@ -478,7 +513,9 @@ public class InstrumentationContextDefaultTest {
 
     @Test
     public void testFieldSetterRegistration() throws Exception {
-        Instrumentation.Context.Default instrumentationContext = new Instrumentation.Context.Default(instrumentedType, classFileVersion);
+        Instrumentation.Context.Default instrumentationContext = new Instrumentation.Context.Default(instrumentedType,
+                typeInitializer,
+                classFileVersion);
         MethodDescription firstFieldSetter = instrumentationContext.registerSetterFor(firstField);
         assertThat(firstFieldSetter.getParameterTypes(), is((TypeList) new TypeList.Explicit(Arrays.asList(firstFieldType))));
         assertThat(firstFieldSetter.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(void.class)));
@@ -504,7 +541,9 @@ public class InstrumentationContextDefaultTest {
 
     @Test
     public void testFieldSetterRegistrationWritesFirst() throws Exception {
-        Instrumentation.Context.Default instrumentationContext = new Instrumentation.Context.Default(instrumentedType, classFileVersion);
+        Instrumentation.Context.Default instrumentationContext = new Instrumentation.Context.Default(instrumentedType,
+                typeInitializer,
+                classFileVersion);
         MethodDescription firstMethodDescription = instrumentationContext.registerSetterFor(firstField);
         assertThat(instrumentationContext.registerSetterFor(firstField), is(firstMethodDescription));
         instrumentationContext.drain(classVisitor, methodPool, injectedCode);
@@ -522,7 +561,9 @@ public class InstrumentationContextDefaultTest {
     @Test
     public void testFieldSetterRegistrationWritesSecond() throws Exception {
         when(secondField.isStatic()).thenReturn(true);
-        Instrumentation.Context.Default instrumentationContext = new Instrumentation.Context.Default(instrumentedType, classFileVersion);
+        Instrumentation.Context.Default instrumentationContext = new Instrumentation.Context.Default(instrumentedType,
+                typeInitializer,
+                classFileVersion);
         MethodDescription secondMethodDescription = instrumentationContext.registerSetterFor(secondField);
         assertThat(instrumentationContext.registerSetterFor(secondField), is(secondMethodDescription));
         instrumentationContext.drain(classVisitor, methodPool, injectedCode);
@@ -538,6 +579,10 @@ public class InstrumentationContextDefaultTest {
 
     @Test
     public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(Instrumentation.Context.Default.class)
+                .apply(new Instrumentation.Context.Default(mock(TypeDescription.class),
+                        mock(InstrumentedType.TypeInitializer.class),
+                        mock(ClassFileVersion.class)));
         ObjectPropertyAssertion.of(Instrumentation.Context.Default.FieldCacheAppender.class);
         ObjectPropertyAssertion.of(Instrumentation.Context.Default.FieldCacheEntry.class);
         ObjectPropertyAssertion.of(Instrumentation.Context.Default.AccessorMethodDelegation.class);

@@ -6,6 +6,7 @@ import net.bytebuddy.instrumentation.LoadedTypeInitializer;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
@@ -57,6 +58,7 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
                                   int modifiers,
                                   NamingStrategy namingStrategy) {
         super(LoadedTypeInitializer.NoOp.INSTANCE,
+                TypeInitializer.None.INSTANCE,
                 levelType.getName(),
                 levelType.getDeclaredFields(),
                 levelType.getDeclaredMethods());
@@ -81,6 +83,7 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
      * @param fieldDescriptions     A list of field descriptions for this instrumented type.
      * @param methodDescriptions    A list of method descriptions for this instrumented type.
      * @param loadedTypeInitializer A loaded type initializer for this instrumented type.
+     * @param typeInitializer       A type initializer for this instrumented type.
      */
     protected InlineInstrumentedType(TypeDescription levelType,
                                      String name,
@@ -88,8 +91,13 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
                                      int modifiers,
                                      List<? extends FieldDescription> fieldDescriptions,
                                      List<? extends MethodDescription> methodDescriptions,
-                                     LoadedTypeInitializer loadedTypeInitializer) {
-        super(loadedTypeInitializer, name, fieldDescriptions, methodDescriptions);
+                                     LoadedTypeInitializer loadedTypeInitializer,
+                                     TypeInitializer typeInitializer) {
+        super(loadedTypeInitializer,
+                typeInitializer,
+                name,
+                fieldDescriptions,
+                methodDescriptions);
         this.levelType = levelType;
         this.name = name;
         this.modifiers = modifiers;
@@ -112,7 +120,8 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
                 this.modifiers,
                 fieldDescriptions,
                 methodDescriptions,
-                loadedTypeInitializer);
+                loadedTypeInitializer,
+                typeInitializer);
     }
 
     @Override
@@ -137,7 +146,8 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
                 this.modifiers,
                 fieldDescriptions,
                 methodDescriptions,
-                loadedTypeInitializer);
+                loadedTypeInitializer,
+                typeInitializer);
     }
 
     @Override
@@ -148,7 +158,20 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
                 modifiers,
                 fieldDescriptions,
                 methodDescriptions,
-                new LoadedTypeInitializer.Compound(this.loadedTypeInitializer, loadedTypeInitializer));
+                new LoadedTypeInitializer.Compound(this.loadedTypeInitializer, loadedTypeInitializer),
+                typeInitializer);
+    }
+
+    @Override
+    public InstrumentedType withInitializer(StackManipulation stackManipulation) {
+        return new InlineInstrumentedType(levelType,
+                name,
+                interfaces,
+                modifiers,
+                fieldDescriptions,
+                methodDescriptions,
+                loadedTypeInitializer,
+                typeInitializer.expandWith(stackManipulation));
     }
 
     @Override
@@ -159,7 +182,8 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
                 modifiers,
                 fieldDescriptions,
                 methodDescriptions,
-                LoadedTypeInitializer.NoOp.INSTANCE);
+                LoadedTypeInitializer.NoOp.INSTANCE,
+                TypeInitializer.None.INSTANCE);
     }
 
     @Override

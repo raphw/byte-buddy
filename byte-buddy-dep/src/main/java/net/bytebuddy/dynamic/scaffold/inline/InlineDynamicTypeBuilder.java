@@ -224,6 +224,7 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 preparedTargetHandler.getMethodPoolEntryDefault());
         return new TypeWriter.Default<T>(compiledMethodRegistry.getInstrumentedType(),
                 compiledMethodRegistry.getLoadedTypeInitializer(),
+                compiledMethodRegistry.getTypeInitializer(),
                 preparedTargetHandler.getAuxiliaryTypes(),
                 classFileVersion,
                 new TypeWriter.Engine.ForRedefinition(compiledMethodRegistry.getInstrumentedType(),

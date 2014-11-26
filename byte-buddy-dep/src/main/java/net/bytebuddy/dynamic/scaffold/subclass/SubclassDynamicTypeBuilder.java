@@ -205,6 +205,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                         MethodRegistry.Compiled.Entry.Skip.INSTANCE);
         return new TypeWriter.Default<T>(compiledMethodRegistry.getInstrumentedType(),
                 compiledMethodRegistry.getLoadedTypeInitializer(),
+                compiledMethodRegistry.getTypeInitializer(),
                 Collections.<DynamicType>emptyList(),
                 classFileVersion,
                 new TypeWriter.Engine.ForCreation(compiledMethodRegistry.getInstrumentedType(),

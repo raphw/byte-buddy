@@ -6,6 +6,7 @@ import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
+import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -57,12 +58,29 @@ public interface InstrumentedType extends TypeDescription {
     InstrumentedType withInitializer(LoadedTypeInitializer loadedTypeInitializer);
 
     /**
+     * Creates a new instrumented type that executes the given initializer in the instrumented type's
+     * type initializer.
+     *
+     * @param stackManipulation The stack manipulation to execute.
+     * @return A new instrumented type that is equal to this instrumented type but with the given stack manipulation
+     * attached to its type initializer.
+     */
+    InstrumentedType withInitializer(StackManipulation stackManipulation);
+
+    /**
      * Returns the {@link net.bytebuddy.instrumentation.LoadedTypeInitializer}s that were registered
      * for this instrumented type.
      *
      * @return The registered loaded type initializers for this instrumented type.
      */
     LoadedTypeInitializer getLoadedTypeInitializer();
+
+    /**
+     * Returns this instrumented type's type initializer.
+     *
+     * @return This instrumented type's type initializer.
+     */
+    TypeInitializer getTypeInitializer();
 
     /**
      * Creates a <i>compressed</i> version of this instrumented type which only needs to fulfil the
@@ -74,6 +92,115 @@ public interface InstrumentedType extends TypeDescription {
     TypeDescription detach();
 
     /**
+     * A type initializer is responsible for defining a type's static initialization block.
+     */
+    static interface TypeInitializer {
+
+        /**
+         * A simple, defined type initializer that executes a given
+         * {@link net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation}.
+         */
+        static class Simple implements TypeInitializer {
+
+            /**
+             * The stack manipulation to apply within the type initializer.
+             */
+            private final StackManipulation stackManipulation;
+
+            /**
+             * Creates a new simple type initializer.
+             *
+             * @param stackManipulation The stack manipulation to apply within the type initializer.
+             */
+            public Simple(StackManipulation stackManipulation) {
+                this.stackManipulation = stackManipulation;
+            }
+
+            @Override
+            public boolean isDefined() {
+                return true;
+            }
+
+            @Override
+            public TypeInitializer expandWith(StackManipulation stackManipulation) {
+                return new Simple(new StackManipulation.Compound(this.stackManipulation, stackManipulation));
+            }
+
+            @Override
+            public StackManipulation getStackManipulation() {
+                return stackManipulation;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && stackManipulation.equals(((Simple) other).stackManipulation);
+            }
+
+            @Override
+            public int hashCode() {
+                return stackManipulation.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "InstrumentedType.TypeInitializer.Simple{" +
+                        "stackManipulation=" + stackManipulation +
+                        '}';
+            }
+        }
+
+        /**
+         * Canonical implementation of a non-defined type initializer.
+         */
+        static enum None implements TypeInitializer {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public boolean isDefined() {
+                return false;
+            }
+
+            @Override
+            public TypeInitializer expandWith(StackManipulation stackManipulation) {
+                return new Simple(stackManipulation);
+            }
+
+            @Override
+            public StackManipulation getStackManipulation() {
+                throw new IllegalStateException("Cannot execute a non-defined type initializer");
+            }
+        }
+
+        /**
+         * Indicates if this type initializer is defined.
+         *
+         * @return {@code true} if this type initializer is defined.
+         */
+        boolean isDefined();
+
+        /**
+         * Expands this type initializer with a stack manipulation.
+         *
+         * @param stackManipulation The stack manipulation to apply within the type initializer.
+         * @return A defined type initializer.
+         */
+        TypeInitializer expandWith(StackManipulation stackManipulation);
+
+        /**
+         * Returns the stack manipulation of this type initializer. This method must only be called
+         * if this type initializer is defined.
+         *
+         * @return The stack manipulation of this type initializer.
+         */
+        StackManipulation getStackManipulation();
+    }
+
+    /**
      * An abstract base implementation of an instrumented type.
      */
     abstract static class AbstractBase extends AbstractTypeDescription.OfSimpleType implements InstrumentedType {
@@ -82,6 +209,11 @@ public interface InstrumentedType extends TypeDescription {
          * The loaded type initializer for this instrumented type.
          */
         protected final LoadedTypeInitializer loadedTypeInitializer;
+
+        /**
+         * The type initializer for this instrumented type.
+         */
+        protected final TypeInitializer typeInitializer;
 
         /**
          * A list of field descriptions registered for this instrumented type.
@@ -99,6 +231,7 @@ public interface InstrumentedType extends TypeDescription {
          */
         protected AbstractBase() {
             loadedTypeInitializer = LoadedTypeInitializer.NoOp.INSTANCE;
+            typeInitializer = TypeInitializer.None.INSTANCE;
             fieldDescriptions = Collections.emptyList();
             methodDescriptions = Collections.emptyList();
         }
@@ -109,15 +242,18 @@ public interface InstrumentedType extends TypeDescription {
          * type as given by {@code typeInternalName} are replaced by references to {@code this}.
          *
          * @param loadedTypeInitializer A loaded type initializer for this instrumented type.
+         * @param typeInitializer       A type initializer for this instrumented type.
          * @param typeName              The non-internal name of this instrumented type.
          * @param fieldDescriptions     A list of field descriptions for this instrumented type.
          * @param methodDescriptions    A list of method descriptions for this instrumented type.
          */
         protected AbstractBase(LoadedTypeInitializer loadedTypeInitializer,
+                               TypeInitializer typeInitializer,
                                String typeName,
                                List<? extends FieldDescription> fieldDescriptions,
                                List<? extends MethodDescription> methodDescriptions) {
             this.loadedTypeInitializer = loadedTypeInitializer;
+            this.typeInitializer = typeInitializer;
             this.fieldDescriptions = new ArrayList<FieldDescription>(fieldDescriptions.size());
             for (FieldDescription fieldDescription : fieldDescriptions) {
                 this.fieldDescriptions.add(new FieldToken(typeName, fieldDescription));
@@ -188,6 +324,11 @@ public interface InstrumentedType extends TypeDescription {
         @Override
         public LoadedTypeInitializer getLoadedTypeInitializer() {
             return loadedTypeInitializer;
+        }
+
+        @Override
+        public TypeInitializer getTypeInitializer() {
+            return typeInitializer;
         }
 
         /**

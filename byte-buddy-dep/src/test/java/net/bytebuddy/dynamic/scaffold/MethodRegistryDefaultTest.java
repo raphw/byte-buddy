@@ -239,6 +239,10 @@ public class MethodRegistryDefaultTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(MethodRegistry.Default.class).apply();
+        ObjectPropertyAssertion.of(MethodRegistry.Default.Entry.class).apply();
+        ObjectPropertyAssertion.of(MethodRegistry.Default.Prepared.class).apply();
+        ObjectPropertyAssertion.of(MethodRegistry.Default.Compiled.class).apply();
+        ObjectPropertyAssertion.of(MethodRegistry.Default.Compiled.Entry.class).apply();
     }
 
     @Test

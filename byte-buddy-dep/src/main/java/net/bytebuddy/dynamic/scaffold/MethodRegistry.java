@@ -104,12 +104,20 @@ public interface MethodRegistry {
         TypeDescription getInstrumentedType();
 
         /**
-         * The type initializer as it is required by this instance's
+         * The loaded type initializer as it is required by this instance's
          * {@link net.bytebuddy.instrumentation.Instrumentation}s.
          *
          * @return The final loaded type initializer.
          */
         LoadedTypeInitializer getLoadedTypeInitializer();
+
+        /**
+         * The type initializer as it is required by this instance's
+         * {@link net.bytebuddy.instrumentation.Instrumentation}s.
+         *
+         * @return The final type initializer.
+         */
+        InstrumentedType.TypeInitializer getTypeInitializer();
 
         /**
          * Returns a list of all methods that are invokable on the instrumented type.
@@ -242,6 +250,7 @@ public interface MethodRegistry {
             }
             return new Prepared(instrumentedType.detach(),
                     instrumentedType.getLoadedTypeInitializer(),
+                    instrumentedType.getTypeInitializer(),
                     entries,
                     additionalEntries);
         }
@@ -283,6 +292,11 @@ public interface MethodRegistry {
             private final LoadedTypeInitializer loadedTypeInitializer;
 
             /**
+             * The type initializer this method registry was prepared for.
+             */
+            private final InstrumentedType.TypeInitializer typeInitializer;
+
+            /**
              * All entries in their application order.
              */
             private final List<Entry> entries;
@@ -297,15 +311,18 @@ public interface MethodRegistry {
              *
              * @param instrumentedType      The instrumented type this method registry was prepared for.
              * @param loadedTypeInitializer The loaded type initializer this method registry was prepared for.
+             * @param typeInitializer       The type initializer this method registry was prepared for.
              * @param entries               All entries in their application order.
              * @param additionalEntries     All additional entries that were added during preparation.
              */
             protected Prepared(TypeDescription instrumentedType,
                                LoadedTypeInitializer loadedTypeInitializer,
+                               InstrumentedType.TypeInitializer typeInitializer,
                                List<Entry> entries,
                                List<Entry> additionalEntries) {
                 this.instrumentedType = instrumentedType;
                 this.loadedTypeInitializer = loadedTypeInitializer;
+                this.typeInitializer = typeInitializer;
                 this.entries = entries;
                 this.additionalEntries = additionalEntries;
             }
@@ -348,6 +365,7 @@ public interface MethodRegistry {
                 }
                 return new Compiled(instrumentedType,
                         loadedTypeInitializer,
+                        typeInitializer,
                         finding.getInvokableMethods(),
                         new ArrayList<Compiled.Entry>(compiledEntries),
                         fallback.compile(instrumentationTarget));
@@ -361,13 +379,15 @@ public interface MethodRegistry {
                 return additionalEntries.equals(prepared.additionalEntries)
                         && entries.equals(prepared.entries)
                         && instrumentedType.equals(prepared.instrumentedType)
-                        && loadedTypeInitializer.equals(prepared.loadedTypeInitializer);
+                        && loadedTypeInitializer.equals(prepared.loadedTypeInitializer)
+                        && typeInitializer.equals(prepared.typeInitializer);
             }
 
             @Override
             public int hashCode() {
                 int result = instrumentedType.hashCode();
                 result = 31 * result + loadedTypeInitializer.hashCode();
+                result = 31 * result + typeInitializer.hashCode();
                 result = 31 * result + entries.hashCode();
                 result = 31 * result + additionalEntries.hashCode();
                 return result;
@@ -378,6 +398,7 @@ public interface MethodRegistry {
                 return "MethodRegistry.Default.Prepared{" +
                         "instrumentedType=" + instrumentedType +
                         ", loadedTypeInitializer=" + loadedTypeInitializer +
+                        ", typeInitializer=" + typeInitializer +
                         ", entries=" + entries +
                         ", additionalEntries=" + additionalEntries +
                         '}';
@@ -400,6 +421,11 @@ public interface MethodRegistry {
             private final LoadedTypeInitializer loadedTypeInitializer;
 
             /**
+             * The type initializer.
+             */
+            private final InstrumentedType.TypeInitializer typeInitializer;
+
+            /**
              * A list of all methods that can be invoked on the instrumented type.
              */
             private final MethodList invokableMethods;
@@ -419,6 +445,7 @@ public interface MethodRegistry {
              *
              * @param instrumentedType      The instrumented type.
              * @param loadedTypeInitializer The loaded type initializer.
+             * @param typeInitializer       The type initializer.
              * @param invokableMethods      A list of all methods that can be invoked on the instrumented type.
              * @param entries               The list of all compiled entries of this compiled method registry.
              * @param fallback              The fallback entry to apply for any method that is not matched by any of
@@ -426,11 +453,13 @@ public interface MethodRegistry {
              */
             protected Compiled(TypeDescription instrumentedType,
                                LoadedTypeInitializer loadedTypeInitializer,
+                               InstrumentedType.TypeInitializer typeInitializer,
                                MethodList invokableMethods,
                                List<Entry> entries,
                                MethodRegistry.Compiled.Entry fallback) {
                 this.instrumentedType = instrumentedType;
                 this.loadedTypeInitializer = loadedTypeInitializer;
+                this.typeInitializer = typeInitializer;
                 this.invokableMethods = invokableMethods;
                 this.entries = entries;
                 this.fallback = fallback;
@@ -444,6 +473,11 @@ public interface MethodRegistry {
             @Override
             public LoadedTypeInitializer getLoadedTypeInitializer() {
                 return loadedTypeInitializer;
+            }
+
+            @Override
+            public InstrumentedType.TypeInitializer getTypeInitializer() {
+                return typeInitializer;
             }
 
             @Override
@@ -470,13 +504,15 @@ public interface MethodRegistry {
                         && fallback.equals(compiled.fallback)
                         && instrumentedType.equals(compiled.instrumentedType)
                         && invokableMethods.equals(compiled.invokableMethods)
-                        && loadedTypeInitializer.equals(compiled.loadedTypeInitializer);
+                        && loadedTypeInitializer.equals(compiled.loadedTypeInitializer)
+                        && typeInitializer.equals(compiled.typeInitializer);
             }
 
             @Override
             public int hashCode() {
                 int result = instrumentedType.hashCode();
                 result = 31 * result + loadedTypeInitializer.hashCode();
+                result = 31 * result + typeInitializer.hashCode();
                 result = 31 * result + invokableMethods.hashCode();
                 result = 31 * result + entries.hashCode();
                 result = 31 * result + fallback.hashCode();
@@ -488,6 +524,7 @@ public interface MethodRegistry {
                 return "MethodRegistry.Default.Compiled{" +
                         "instrumentedType=" + instrumentedType +
                         ", loadedTypeInitializer=" + loadedTypeInitializer +
+                        ", typeInitializer=" + typeInitializer +
                         ", invokableMethods=" + invokableMethods +
                         ", entries=" + entries +
                         ", fallback=" + fallback +
@@ -549,7 +586,8 @@ public interface MethodRegistry {
         /**
          * A method matcher that matches methods that are found in only one of two lists.
          */
-        private static class ListDifferenceMethodMatcher implements ElementMatcher<MethodDescription>, LatentMethodMatcher {
+        protected static class ListDifferenceMethodMatcher implements ElementMatcher<MethodDescription>, LatentMethodMatcher {
+
             /**
              * The methods that are matched by this instance.
              */
@@ -562,7 +600,7 @@ public interface MethodRegistry {
              * @param afterMethods  The same list after adding additional methods. The order of the methods in
              *                      this list must not be altered.
              */
-            private ListDifferenceMethodMatcher(MethodList beforeMethods, MethodList afterMethods) {
+            protected ListDifferenceMethodMatcher(MethodList beforeMethods, MethodList afterMethods) {
                 matchedMethods = afterMethods.subList(beforeMethods.size(), afterMethods.size());
             }
 
@@ -598,7 +636,7 @@ public interface MethodRegistry {
          * is to be applied on any method that is matched by the method matcher that is extracted from the latent
          * matcher's manifestation and a method attribute appender factory that is applied to any intercepted method.
          */
-        private static class Entry {
+        protected static class Entry {
 
             /**
              * The latent method matcher that is representing this entry.
@@ -623,9 +661,9 @@ public interface MethodRegistry {
              * @param attributeAppenderFactory The attribute appender factory that is responsible for implementing
              *                                 this method.
              */
-            private Entry(LatentMethodMatcher latentMethodMatcher,
-                          Instrumentation instrumentation,
-                          MethodAttributeAppender.Factory attributeAppenderFactory) {
+            protected Entry(LatentMethodMatcher latentMethodMatcher,
+                            Instrumentation instrumentation,
+                            MethodAttributeAppender.Factory attributeAppenderFactory) {
                 this.latentMethodMatcher = latentMethodMatcher;
                 this.instrumentation = instrumentation;
                 this.attributeAppenderFactory = attributeAppenderFactory;

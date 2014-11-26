@@ -4,6 +4,7 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.LoadedTypeInitializer;
+import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.MockitoRule;
 import net.bytebuddy.utility.ObjectPropertyAssertion;
@@ -33,6 +34,8 @@ public class TypeWriterDefaultTest {
     @Mock
     private LoadedTypeInitializer loadedTypeInitializer;
     @Mock
+    private InstrumentedType.TypeInitializer typeInitializer;
+    @Mock
     private ClassFileVersion classFileVersion;
     @Mock
     private TypeWriter.Engine engine, otherEngine;
@@ -53,6 +56,7 @@ public class TypeWriterDefaultTest {
     public void testDynamicTypeCreation() throws Exception {
         DynamicType dynamicType = new TypeWriter.Default<Object>(instrumentedType,
                 loadedTypeInitializer,
+                typeInitializer,
                 explicitAuxiliaryTypes,
                 classFileVersion,
                 engine).make();

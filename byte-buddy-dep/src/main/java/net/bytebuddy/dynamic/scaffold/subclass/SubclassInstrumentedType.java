@@ -6,6 +6,7 @@ import net.bytebuddy.instrumentation.LoadedTypeInitializer;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
@@ -89,8 +90,13 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
                                        String name,
                                        List<? extends FieldDescription> fieldDescriptions,
                                        List<? extends MethodDescription> methodDescriptions,
-                                       LoadedTypeInitializer loadedTypeInitializer) {
-        super(loadedTypeInitializer, name, fieldDescriptions, methodDescriptions);
+                                       LoadedTypeInitializer loadedTypeInitializer,
+                                       TypeInitializer typeInitializer) {
+        super(loadedTypeInitializer,
+                typeInitializer,
+                name,
+                fieldDescriptions,
+                methodDescriptions);
         this.classFileVersion = classFileVersion;
         this.superClass = superClass;
         this.interfaces = interfaces;
@@ -115,7 +121,8 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
                 name,
                 fieldDescriptions,
                 methodDescriptions,
-                loadedTypeInitializer);
+                loadedTypeInitializer,
+                typeInitializer);
     }
 
     @Override
@@ -141,7 +148,8 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
                 name,
                 fieldDescriptions,
                 methodDescriptions,
-                loadedTypeInitializer);
+                loadedTypeInitializer,
+                typeInitializer);
     }
 
     @Override
@@ -153,7 +161,21 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
                 name,
                 fieldDescriptions,
                 methodDescriptions,
-                new LoadedTypeInitializer.Compound(this.loadedTypeInitializer, loadedTypeInitializer));
+                new LoadedTypeInitializer.Compound(this.loadedTypeInitializer, loadedTypeInitializer),
+                typeInitializer);
+    }
+
+    @Override
+    public InstrumentedType withInitializer(StackManipulation stackManipulation) {
+        return new SubclassInstrumentedType(classFileVersion,
+                superClass,
+                interfaces,
+                modifiers,
+                name,
+                fieldDescriptions,
+                methodDescriptions,
+                loadedTypeInitializer,
+                typeInitializer.expandWith(stackManipulation));
     }
 
     @Override
@@ -165,7 +187,8 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
                 name,
                 fieldDescriptions,
                 methodDescriptions,
-                LoadedTypeInitializer.NoOp.INSTANCE);
+                LoadedTypeInitializer.NoOp.INSTANCE,
+                TypeInitializer.None.INSTANCE);
     }
 
     @Override

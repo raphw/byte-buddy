@@ -599,6 +599,11 @@ public interface Instrumentation {
             private final TypeDescription instrumentedType;
 
             /**
+             * The type initializer of the created instrumented type.
+             */
+            private final InstrumentedType.TypeInitializer typeInitializer;
+
+            /**
              * The class file version that the instrumented type is written in.
              */
             private final ClassFileVersion classFileVersion;
@@ -665,10 +670,14 @@ public interface Instrumentation {
              * method and registered auxiliary types.
              *
              * @param instrumentedType The description of the type that is currently subject of creation.
+             * @param typeInitializer  The type initializer of the created instrumented type.
              * @param classFileVersion The class file version of the created class.
              */
-            public Default(TypeDescription instrumentedType, ClassFileVersion classFileVersion) {
+            public Default(TypeDescription instrumentedType,
+                           InstrumentedType.TypeInitializer typeInitializer,
+                           ClassFileVersion classFileVersion) {
                 this(instrumentedType,
+                        typeInitializer,
                         classFileVersion,
                         DEFAULT_ACCESSOR_METHOD_SUFFIX,
                         DEFAULT_FIELD_CACHE_PREFIX,
@@ -679,6 +688,7 @@ public interface Instrumentation {
              * Creates a new delegate.
              *
              * @param instrumentedType            The description of the type that is currently subject of creation.
+             * @param typeInitializer             The type initializer of the created instrumented type.
              * @param classFileVersion            The class file version of the created class.
              * @param accessorMethodSuffix        A suffix that is added to any accessor method where the method name is
              *                                    prefixed by the accessed method's name.
@@ -686,11 +696,13 @@ public interface Instrumentation {
              * @param auxiliaryTypeNamingStrategy The naming strategy for naming an auxiliary type.
              */
             public Default(TypeDescription instrumentedType,
+                           InstrumentedType.TypeInitializer typeInitializer,
                            ClassFileVersion classFileVersion,
                            String accessorMethodSuffix,
                            String fieldCachePrefix,
                            AuxiliaryTypeNamingStrategy auxiliaryTypeNamingStrategy) {
                 this.instrumentedType = instrumentedType;
+                this.typeInitializer = typeInitializer;
                 this.classFileVersion = classFileVersion;
                 this.accessorMethodSuffix = accessorMethodSuffix;
                 this.fieldCachePrefix = fieldCachePrefix;
@@ -852,8 +864,11 @@ public interface Instrumentation {
             public void drain(ClassVisitor classVisitor, TypeWriter.MethodPool methodPool, InjectedCode injectedCode) {
                 canRegisterFieldCache = false;
                 MethodDescription typeInitializer = MethodDescription.Latent.typeInitializerOf(instrumentedType);
-                FieldCacheAppender.resolve(methodPool.target(typeInitializer), registeredFieldCacheEntries, injectedCode)
-                        .apply(classVisitor, this, typeInitializer);
+                FieldCacheAppender.resolve(methodPool.target(typeInitializer),
+                        registeredFieldCacheEntries,
+                        injectedCode.isInjected()
+                                ? this.typeInitializer.expandWith(injectedCode.getInjectedCode())
+                                : this.typeInitializer).apply(classVisitor, this, typeInitializer);
                 for (FieldDescription fieldDescription : registeredFieldCacheEntries.values()) {
                     classVisitor.visitField(fieldDescription.getModifiers(),
                             fieldDescription.getInternalName(),
@@ -870,11 +885,14 @@ public interface Instrumentation {
             public String toString() {
                 return "Instrumentation.Context.Default{" +
                         "instrumentedType=" + instrumentedType +
+                        ", typeInitializer=" + typeInitializer +
                         ", classFileVersion=" + classFileVersion +
                         ", accessorMethodSuffix='" + accessorMethodSuffix + '\'' +
                         ", fieldCachePrefix='" + fieldCachePrefix + '\'' +
                         ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
                         ", registeredAccessorMethods=" + registeredAccessorMethods +
+                        ", registeredGetters=" + registeredGetters +
+                        ", registeredSetters=" + registeredSetters +
                         ", accessorMethodEntries=" + accessorMethodEntries +
                         ", auxiliaryTypes=" + auxiliaryTypes +
                         ", registeredFieldCacheEntries=" + registeredFieldCacheEntries +
@@ -971,18 +989,18 @@ public interface Instrumentation {
                  *
                  * @param originalEntry               The original entry that is provided by the user.
                  * @param registeredFieldCacheEntries A map of registered field cache entries.
-                 * @param injectedCode                The explicitly supplied injected code.
+                 * @param typeInitializer             The type initializer to resolve.
                  * @return The entry to apply to the type initializer.
                  */
                 protected static TypeWriter.MethodPool.Entry resolve(TypeWriter.MethodPool.Entry originalEntry,
                                                                      Map<FieldCacheEntry, FieldDescription> registeredFieldCacheEntries,
-                                                                     InjectedCode injectedCode) {
+                                                                     InstrumentedType.TypeInitializer typeInitializer) {
                     boolean defineMethod = originalEntry.isDefineMethod();
-                    boolean injectCode = injectedCode.isInjected();
-                    return registeredFieldCacheEntries.size() == 0 && !injectCode
+                    boolean defineInitializer = typeInitializer.isDefined();
+                    return registeredFieldCacheEntries.size() == 0 && !defineInitializer
                             ? originalEntry
                             : new TypeWriter.MethodPool.Entry.Simple(new Compound(new FieldCacheAppender(registeredFieldCacheEntries),
-                            new Simple(injectCode ? injectedCode.getInjectedCode() : StackManipulation.LegalTrivial.INSTANCE),
+                            new Simple(defineInitializer ? typeInitializer.getStackManipulation() : StackManipulation.LegalTrivial.INSTANCE),
                             defineMethod && originalEntry.getByteCodeAppender().appendsCode()
                                     ? originalEntry.getByteCodeAppender()
                                     : new Simple(MethodReturn.VOID)),

@@ -15,6 +15,7 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocation;
+import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.utility.RandomString;
@@ -1099,6 +1100,11 @@ public interface TypeWriter<T> {
         private final LoadedTypeInitializer loadedTypeInitializer;
 
         /**
+         * The type initializer of the instrumented type.
+         */
+        private final InstrumentedType.TypeInitializer typeInitializer;
+
+        /**
          * A list of explicit auxiliary types that are to be added to the created dynamic type.
          */
         private final List<DynamicType> explicitAuxiliaryTypes;
@@ -1118,6 +1124,7 @@ public interface TypeWriter<T> {
          *
          * @param instrumentedType       The instrumented type that is to be written.
          * @param loadedTypeInitializer  The loaded type initializer of the instrumented type.
+         * @param typeInitializer        The type initializer of the instrumented type.
          * @param explicitAuxiliaryTypes A list of explicit auxiliary types that are to be added to the created
          *                               dynamic type.
          * @param classFileVersion       The class file version of the type that is to be written.
@@ -1125,11 +1132,13 @@ public interface TypeWriter<T> {
          */
         public Default(TypeDescription instrumentedType,
                        LoadedTypeInitializer loadedTypeInitializer,
+                       InstrumentedType.TypeInitializer typeInitializer,
                        List<DynamicType> explicitAuxiliaryTypes,
                        ClassFileVersion classFileVersion,
                        Engine engine) {
             this.instrumentedType = instrumentedType;
             this.loadedTypeInitializer = loadedTypeInitializer;
+            this.typeInitializer = typeInitializer;
             this.explicitAuxiliaryTypes = explicitAuxiliaryTypes;
             this.classFileVersion = classFileVersion;
             this.engine = engine;
@@ -1138,6 +1147,7 @@ public interface TypeWriter<T> {
         @Override
         public DynamicType.Unloaded<S> make() {
             Instrumentation.Context.ExtractableView instrumentationContext = new Instrumentation.Context.Default(instrumentedType,
+                    typeInitializer,
                     classFileVersion);
             return new DynamicType.Default.Unloaded<S>(instrumentedType,
                     engine.create(instrumentationContext),
@@ -1154,13 +1164,15 @@ public interface TypeWriter<T> {
                     && explicitAuxiliaryTypes.equals(aDefault.explicitAuxiliaryTypes)
                     && instrumentedType.equals(aDefault.instrumentedType)
                     && classFileVersion.equals(aDefault.classFileVersion)
-                    && loadedTypeInitializer.equals(aDefault.loadedTypeInitializer);
+                    && loadedTypeInitializer.equals(aDefault.loadedTypeInitializer)
+                    && typeInitializer.equals(aDefault.typeInitializer);
         }
 
         @Override
         public int hashCode() {
             int result = instrumentedType.hashCode();
             result = 31 * result + loadedTypeInitializer.hashCode();
+            result = 31 * result + typeInitializer.hashCode();
             result = 31 * result + explicitAuxiliaryTypes.hashCode();
             result = 31 * result + engine.hashCode();
             result = 31 * result + classFileVersion.hashCode();
@@ -1172,6 +1184,7 @@ public interface TypeWriter<T> {
             return "TypeWriter.Default{" +
                     "instrumentedType=" + instrumentedType +
                     ", loadedTypeInitializer=" + loadedTypeInitializer +
+                    ", typeInitializer=" + typeInitializer +
                     ", explicitAuxiliaryTypes=" + explicitAuxiliaryTypes +
                     ", classFileVersion=" + classFileVersion +
                     ", engine=" + engine +
