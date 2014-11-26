@@ -577,6 +577,7 @@ public interface AgentBuilder {
 
                     private static final ConcurrentMap<Nexus, Object> TYPE_INITIALIZERS = new ConcurrentHashMap<Nexus, Object>();
 
+                    @SuppressWarnings("unused")
                     public static void initialize(Class<?> type)
                             throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
                         Object typeInitializer = TYPE_INITIALIZERS.remove(new Nexus(type));
@@ -585,6 +586,7 @@ public interface AgentBuilder {
                         }
                     }
 
+                    @SuppressWarnings("unused")
                     public static void register(String name, ClassLoader classLoader, Object typeInitializer) {
                         TYPE_INITIALIZERS.put(new Nexus(name, classLoader), typeInitializer);
                     }
