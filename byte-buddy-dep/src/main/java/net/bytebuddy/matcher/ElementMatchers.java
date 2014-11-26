@@ -620,7 +620,7 @@ public final class ElementMatchers {
         if (exceptionType.isAssignableTo(Throwable.class)) {
             return exceptionType.isAssignableTo(RuntimeType.class) || exceptionType.isAssignableTo(Error.class)
                     ? new BooleanMatcher<T>(true)
-                    : ElementMatchers.<T>canThrow(new CollectionItemMatcher<TypeDescription>(new SubTypeMatcher<TypeDescription>(exceptionType)));
+                    : ElementMatchers.<T>canThrow(new CollectionItemMatcher<TypeDescription>(new SubTypeMatcher2<TypeDescription>(exceptionType)));
         } else {
             throw new IllegalArgumentException(exceptionType + " is not an exception type");
         }
@@ -706,7 +706,7 @@ public final class ElementMatchers {
             matchers.add(isSubTypeOf(typeDescription));
         }
         return (methodDescription.isStatic() ? ElementMatchers.<T>isStatic() : ElementMatchers.<T>not(isStatic()))
-                .<T>and(named(methodDescription.getName()))
+                .<T>and(named(methodDescription.getSourceCodeName()))
                 .<T>and(returns(isSubTypeOf(methodDescription.getReturnType())))
                 .and(takesArguments(new CollectionOneToOneMatcher<TypeDescription>(matchers)));
     }
@@ -724,7 +724,7 @@ public final class ElementMatchers {
     }
 
     public static <T extends TypeDescription> ElementMatcher.Junction<T> isSubTypeOf(TypeDescription typeDescription) {
-        return new SubTypeMatcher<T>(nonNull(typeDescription));
+        return new SubTypeMatcher2<T>(nonNull(typeDescription));
     }
 
     public static <T extends TypeDescription> ElementMatcher.Junction<T> isSuperTypeOf(Class<?> type) {

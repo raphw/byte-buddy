@@ -3,6 +3,7 @@ package net.bytebuddy.matcher;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -20,6 +21,8 @@ import static org.mockito.Mockito.when;
 
 @RunWith(Parameterized.class)
 public class MethodSortMatcherTest extends AbstractElementMatcherTest<MethodSortMatcher<?>> {
+
+    private static final String FOO = "foo";
 
     private static enum MockEngine {
 
@@ -69,6 +72,9 @@ public class MethodSortMatcherTest extends AbstractElementMatcherTest<MethodSort
                 when(typeDescription.getDeclaredMethods()).thenReturn(methodList);
                 when(methodList.filter(any(ElementMatcher.class))).thenReturn(methodList);
                 when(methodList.size()).thenReturn(0);
+                when(mock.getParameterTypes()).thenReturn(new TypeList.Empty());
+                when(mock.getReturnType()).thenReturn(Mockito.mock(TypeDescription.class));
+                when(mock.getSourceCodeName()).thenReturn(FOO);
             }
         };
 
