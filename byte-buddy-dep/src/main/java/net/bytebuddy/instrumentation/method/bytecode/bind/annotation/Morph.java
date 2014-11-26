@@ -720,7 +720,7 @@ public @interface Morph {
                                         FieldAccess.forField(typeDescription.getDeclaredFields().named(RedirectionProxy.FIELD_NAME)).getter()),
                                 new StackManipulation.Compound(parameterLoading),
                                 MethodInvocation.invoke(accessorMethod),
-                                assigner.assign(accessorMethod.getReturnType(), instrumentedMethod.getReturnType(), false),
+                                assigner.assign(accessorMethod.getReturnType(), instrumentedMethod.getReturnType(), true),
                                 MethodReturn.REFERENCE
                         ).apply(methodVisitor, instrumentationContext);
                         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());

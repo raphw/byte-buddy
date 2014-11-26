@@ -41,7 +41,7 @@ public class VoidAwareAssignerTest {
     public void testAssignVoidToVoid() throws Exception {
         when(sourceTypeDescription.represents(void.class)).thenReturn(true);
         when(targetTypeDescription.represents(void.class)).thenReturn(true);
-        Assigner voidAwareAssigner = new VoidAwareAssigner(chainedAssigner, true);
+        Assigner voidAwareAssigner = new VoidAwareAssigner(chainedAssigner);
         StackManipulation stackManipulation = voidAwareAssigner.assign(sourceTypeDescription, targetTypeDescription, false);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, instrumentationContext);
@@ -52,7 +52,7 @@ public class VoidAwareAssignerTest {
 
     @Test
     public void testAssignNonVoidToNonVoid() throws Exception {
-        Assigner voidAwareAssigner = new VoidAwareAssigner(chainedAssigner, true);
+        Assigner voidAwareAssigner = new VoidAwareAssigner(chainedAssigner);
         StackManipulation chainedStackManipulation = mock(StackManipulation.class);
         when(chainedAssigner.assign(sourceTypeDescription, targetTypeDescription, false)).thenReturn(chainedStackManipulation);
         StackManipulation stackManipulation = voidAwareAssigner.assign(sourceTypeDescription, targetTypeDescription, false);

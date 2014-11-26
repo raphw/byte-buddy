@@ -440,7 +440,7 @@ public class ByteBuddyTutorialExamplesTest {
         @Override
         public StackManipulation assign(TypeDescription sourceType,
                                         TypeDescription targetType,
-                                        boolean considerRuntimeType) {
+                                        boolean dynamicallyTyped) {
             if (!sourceType.isPrimitive() && targetType.represents(String.class)) {
                 MethodDescription toStringMethod = new TypeDescription.ForLoadedType(Object.class)
                         .getDeclaredMethods()

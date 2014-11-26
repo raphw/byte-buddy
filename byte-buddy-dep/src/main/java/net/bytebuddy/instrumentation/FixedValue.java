@@ -186,7 +186,7 @@ public abstract class FixedValue implements Instrumentation {
      * @return The default assigner that is to be used if no other assigner was explicitly specified.
      */
     private static Assigner defaultAssigner() {
-        return new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE), false);
+        return new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE));
     }
 
     /**

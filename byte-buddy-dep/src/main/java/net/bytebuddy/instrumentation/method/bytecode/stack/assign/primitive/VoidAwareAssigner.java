@@ -25,51 +25,41 @@ public class VoidAwareAssigner implements Assigner {
     private final Assigner chained;
 
     /**
-     * If {@code true}, this assigner handles an assignment of a {@code void} type to a non-{@code void} type
-     * as the creation of a default value. Note that this does not reassemble the behavior of the Java compiler.
-     */
-    private final boolean returnDefaultValue;
-
-    /**
      * Creates a new assigner that is capable of handling void types.
      *
-     * @param chained            A chained assigner which will be queried by this assigner to handle assignments that
-     *                           do not involve a {@code void} type.
-     * @param returnDefaultValue Determines if this assigner will load a target type's default value onto the stack if
-     *                           a {@code void} type is assigned to a non-{@code void} type.
+     * @param chained A chained assigner which will be queried by this assigner to handle assignments that
+     *                do not involve a {@code void} type.
      */
-    public VoidAwareAssigner(Assigner chained, boolean returnDefaultValue) {
+    public VoidAwareAssigner(Assigner chained) {
         this.chained = chained;
-        this.returnDefaultValue = returnDefaultValue;
     }
 
     @Override
-    public StackManipulation assign(TypeDescription sourceType, TypeDescription targetType, boolean considerRuntimeType) {
+    public StackManipulation assign(TypeDescription sourceType, TypeDescription targetType, boolean dynamicallyTyped) {
         if (sourceType.represents(void.class) && targetType.represents(void.class)) {
             return StackManipulation.LegalTrivial.INSTANCE;
         } else if (sourceType.represents(void.class) /* && subType != void.class */) {
-            return returnDefaultValue ? DefaultValue.of(targetType) : StackManipulation.Illegal.INSTANCE;
+            return dynamicallyTyped ? DefaultValue.of(targetType) : StackManipulation.Illegal.INSTANCE;
         } else if (/* superType != void.class && */ targetType.represents(void.class)) {
             return Removal.pop(sourceType);
         } else /* superType != void.class && subType != void.class */ {
-            return chained.assign(sourceType, targetType, considerRuntimeType);
+            return chained.assign(sourceType, targetType, dynamicallyTyped);
         }
     }
 
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && returnDefaultValue == ((VoidAwareAssigner) other).returnDefaultValue
                 && chained.equals(((VoidAwareAssigner) other).chained);
     }
 
     @Override
     public int hashCode() {
-        return 31 * chained.hashCode() + (returnDefaultValue ? 1 : 0);
+        return chained.hashCode();
     }
 
     @Override
     public String toString() {
-        return "VoidAwareAssigner{chained=" + chained + ", returnDefaultValue=" + returnDefaultValue + '}';
+        return "VoidAwareAssigner{chained=" + chained + '}';
     }
 }

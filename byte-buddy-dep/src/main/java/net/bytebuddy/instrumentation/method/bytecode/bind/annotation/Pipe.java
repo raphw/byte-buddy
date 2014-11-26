@@ -584,7 +584,7 @@ public @interface Pipe {
                                 assigner.assign(new TypeDescription.ForLoadedType(Object.class), redirectedMethod.getDeclaringType(), true),
                                 new StackManipulation.Compound(fieldLoading),
                                 MethodInvocation.invoke(redirectedMethod),
-                                assigner.assign(redirectedMethod.getReturnType(), instrumentedMethod.getReturnType(), false),
+                                assigner.assign(redirectedMethod.getReturnType(), instrumentedMethod.getReturnType(), true),
                                 MethodReturn.REFERENCE
                         ).apply(methodVisitor, instrumentationContext);
                         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());

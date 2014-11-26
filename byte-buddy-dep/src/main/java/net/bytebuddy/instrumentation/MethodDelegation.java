@@ -480,7 +480,7 @@ public class MethodDelegation implements Instrumentation {
      * @return The assigner that is to be used if no other is specified explicitly.
      */
     private static Assigner defaultAssigner() {
-        return new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE), false);
+        return new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE));
     }
 
     /**
