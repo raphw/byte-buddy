@@ -65,7 +65,7 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
     protected InvocationHandlerAdapter(String fieldName, boolean cacheMethods) {
         this.fieldName = fieldName;
         this.cacheMethods = cacheMethods;
-        assigner = new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE), true);
+        assigner = new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE));
     }
 
     /**
@@ -110,12 +110,15 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
      * @param instrumentedMethod The method that is instrumented.
      * @return A list of stack manipulation that loads all arguments of an instrumented method.
      */
-    private static List<StackManipulation> argumentValuesOf(MethodDescription instrumentedMethod) {
+    private List<StackManipulation> argumentValuesOf(MethodDescription instrumentedMethod) {
         TypeList parameterTypes = instrumentedMethod.getParameterTypes();
         List<StackManipulation> instruction = new ArrayList<StackManipulation>(parameterTypes.size());
+        TypeDescription objectType = new TypeDescription.ForLoadedType(Object.class);
         int currentIndex = 1;
         for (TypeDescription parameterType : parameterTypes) {
-            instruction.add(MethodVariableAccess.forType(parameterType).loadFromIndex(currentIndex));
+            instruction.add(new StackManipulation.Compound(
+                    MethodVariableAccess.forType(parameterType).loadFromIndex(currentIndex),
+                    assigner.assign(parameterType, objectType, false)));
             currentIndex += parameterType.getStackSize().getSize();
         }
         return instruction;

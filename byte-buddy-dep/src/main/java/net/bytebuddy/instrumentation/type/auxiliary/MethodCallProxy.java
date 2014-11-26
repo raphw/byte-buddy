@@ -80,7 +80,7 @@ public class MethodCallProxy implements AuxiliaryType {
                            boolean serializableProxy) {
         this(specialMethodInvocation,
                 serializableProxy,
-                new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE), true));
+                new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE)));
     }
 
     /**
@@ -417,7 +417,7 @@ public class MethodCallProxy implements AuxiliaryType {
                 StackManipulation.Size stackSize = new StackManipulation.Compound(
                         new StackManipulation.Compound(fieldLoading),
                         MethodInvocation.invoke(accessorMethod),
-                        assigner.assign(accessorMethod.getReturnType(), instrumentedMethod.getReturnType(), false),
+                        assigner.assign(accessorMethod.getReturnType(), instrumentedMethod.getReturnType(), true),
                         MethodReturn.returning(instrumentedMethod.getReturnType())
                 ).apply(methodVisitor, instrumentationContext);
                 return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());

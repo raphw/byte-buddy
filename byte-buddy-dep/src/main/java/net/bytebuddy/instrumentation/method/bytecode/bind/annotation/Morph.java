@@ -723,7 +723,7 @@ public @interface Morph {
                                                 .getOnly()).getter()),
                                 new StackManipulation.Compound(parameterLoading),
                                 MethodInvocation.invoke(accessorMethod),
-                                assigner.assign(accessorMethod.getReturnType(), instrumentedMethod.getReturnType(), false),
+                                assigner.assign(accessorMethod.getReturnType(), instrumentedMethod.getReturnType(), true),
                                 MethodReturn.REFERENCE
                         ).apply(methodVisitor, instrumentationContext);
                         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());

@@ -18,7 +18,9 @@ import static org.hamcrest.core.IsNot.not;
 
 public class InvocationHandlerAdapterTest extends AbstractInstrumentationTest {
 
-    public static final String FOO = "foo", BAR = "bar", QUX = "qux";
+    private static final String FOO = "foo", BAR = "bar", QUX = "qux";
+
+    private static final int BAZ = 42;
 
     @Test
     public void testStaticAdapterWithoutCache() throws Exception {
@@ -33,6 +35,18 @@ public class InvocationHandlerAdapterTest extends AbstractInstrumentationTest {
         assertThat(instance.bar(FOO), is((Object) instance));
         assertThat(foo.methods.size(), is(2));
         assertThat(foo.methods.get(0), not(sameInstance(foo.methods.get(1))));
+        instance.assertZeroCalls();
+    }
+
+    @Test
+    public void testStaticAdapterWithoutCacheForPrimitiveValue() throws Exception {
+        Qux qux = new Qux();
+        DynamicType.Loaded<Baz> loaded = instrument(Baz.class, InvocationHandlerAdapter.of(qux));
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
+        Baz instance = loaded.getLoaded().newInstance();
+        assertThat(instance.bar(BAZ), is(BAZ * 2L));
         instance.assertZeroCalls();
     }
 
@@ -162,6 +176,22 @@ public class InvocationHandlerAdapterTest extends AbstractInstrumentationTest {
     public static class Bar extends CallTraceable {
 
         public Object bar(Object o) {
+            register(BAR);
+            return o;
+        }
+    }
+
+    private static class Qux implements InvocationHandler {
+
+        @Override
+        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            return ((Integer) args[0]) * 2L;
+        }
+    }
+
+    public static class Baz extends CallTraceable {
+
+        public long bar(int o) {
             register(BAR);
             return o;
         }

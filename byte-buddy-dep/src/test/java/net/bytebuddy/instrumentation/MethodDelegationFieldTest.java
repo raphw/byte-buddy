@@ -94,6 +94,72 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
         assertThat(explicitInherited.foo, is(QUX));
     }
 
+    @Test(expected = ClassCastException.class)
+    public void testIncompatibleGetterTypeThrowsException() throws Exception {
+        DynamicType.Loaded<Explicit> loaded = instrument(Explicit.class, MethodDelegation.to(GetterIncompatible.class)
+                .appendParameterBinder(Field.Binder.install(Get.class, Set.class)));
+        Explicit explicit = loaded.getLoaded().newInstance();
+        explicit.swap();
+    }
+
+    @Test(expected = ClassCastException.class)
+    public void testIncompatibleSetterTypeThrowsException() throws Exception {
+        DynamicType.Loaded<Explicit> loaded = instrument(Explicit.class, MethodDelegation.to(SetterIncompatible.class)
+                .appendParameterBinder(Field.Binder.install(Get.class, Set.class)));
+        Explicit explicit = loaded.getLoaded().newInstance();
+        explicit.swap();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetterTypeDoesNotDeclareCorrectMethodThrowsException() throws Exception {
+        MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(Field.Binder.install(Serializable.class, Set.class));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSetterTypeDoesNotDeclareCorrectMethodThrowsException() throws Exception {
+        MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(Field.Binder.install(Get.class, Serializable.class));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetterTypeDoesInheritFromOtherTypeThrowsException() throws Exception {
+        MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(Field.Binder.install(GetInherited.class, Set.class));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSetterTypeDoesInheritFromOtherTypeThrowsException() throws Exception {
+        MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(Field.Binder.install(Get.class, SetInherited.class));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetterTypeNonPublicThrowsException() throws Exception {
+        MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(Field.Binder.install(GetPrivate.class, Set.class));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSetterTypeNonPublicThrowsException() throws Exception {
+        MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(Field.Binder.install(Get.class, SetPrivate.class));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSetterTypeIncorrectSignatureThrowsException() throws Exception {
+        MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(Field.Binder.install(GetIncorrect.class, Set.class));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetterTypeIncorrectSignatureThrowsException() throws Exception {
+        MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(Field.Binder.install(Get.class, SetIncorrect.class));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetterTypeNotInterfaceThrowsException() throws Exception {
+        MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(Field.Binder.install(Object.class, Set.class));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSetterTypeNotInterfaceThrowsException() throws Exception {
+        MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(Field.Binder.install(Get.class, Object.class));
+    }
+
     public static interface Get<T> {
 
         T get();
@@ -198,5 +264,47 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
             assertThat(setter, instanceOf(Serializable.class));
             setter.set(getter.get() + BAR);
         }
+    }
+
+    public static class GetterIncompatible {
+
+        public static void swap(@Field(FOO) Get<Integer> getter, @Field(FOO) Set<String> setter) {
+            Integer value = getter.get();
+        }
+    }
+
+    public static class SetterIncompatible {
+
+        public static void swap(@Field(FOO) Get<String> getter, @Field(FOO) Set<Integer> setter) {
+            setter.set(0);
+        }
+    }
+
+    public static interface GetInherited<T> extends Get<T> {
+        /* empty */
+    }
+
+    public static interface SetInherited<T> extends Set<T> {
+        /* empty */
+    }
+
+    private static interface GetPrivate<T> {
+
+        T get();
+    }
+
+    private static interface SetPrivate<T> {
+
+        void set(T value);
+    }
+
+    public static interface GetIncorrect<T> {
+
+        T get(Object value);
+    }
+
+    public static interface SetIncorrect<T> {
+
+        Object set(T value);
     }
 }

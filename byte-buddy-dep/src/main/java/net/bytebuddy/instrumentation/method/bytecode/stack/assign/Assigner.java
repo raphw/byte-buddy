@@ -12,12 +12,13 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 public interface Assigner {
 
     /**
-     * @param sourceType          The original type that is to be transformed into the {@code targetType}.
-     * @param targetType          The target type into which the {@code sourceType} is to be converted.
-     * @param considerRuntimeType A hint whether the assignment should consider the runtime type of the source type,
-     *                            i.e. if type down or cross castings are allowed.
+     * @param sourceType       The original type that is to be transformed into the {@code targetType}.
+     * @param targetType       The target type into which the {@code sourceType} is to be converted.
+     * @param dynamicallyTyped A hint whether the assignment should consider the runtime type of the source type,
+     *                         i.e. if type down or cross castings are allowed. If this hint is set, this is
+     *                         also an indication that {@code void} to non-{@code void} assignments are permitted.
      * @return A stack manipulation that transforms the {@code sourceType} into the {@code targetType} if this
      * is possible. An illegal stack manipulation otherwise.
      */
-    StackManipulation assign(TypeDescription sourceType, TypeDescription targetType, boolean considerRuntimeType);
+    StackManipulation assign(TypeDescription sourceType, TypeDescription targetType, boolean dynamicallyTyped);
 }

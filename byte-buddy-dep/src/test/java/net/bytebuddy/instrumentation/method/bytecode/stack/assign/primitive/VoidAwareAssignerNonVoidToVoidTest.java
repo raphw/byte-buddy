@@ -87,8 +87,8 @@ public class VoidAwareAssignerNonVoidToVoidTest {
     }
 
     private void testAssignDefaultValue(boolean defaultValue) throws Exception {
-        Assigner voidAwareAssigner = new VoidAwareAssigner(chainedAssigner, defaultValue);
-        StackManipulation stackManipulation = voidAwareAssigner.assign(sourceTypeDescription, targetTypeDescription, false);
+        Assigner voidAwareAssigner = new VoidAwareAssigner(chainedAssigner);
+        StackManipulation stackManipulation = voidAwareAssigner.assign(sourceTypeDescription, targetTypeDescription, defaultValue);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, instrumentationContext);
         assertThat(size.getSizeImpact(), is(-1 * StackSize.of(sourceType).getSize()));

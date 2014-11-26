@@ -2,6 +2,8 @@ package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Pipe;
+import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.RuntimeType;
+import net.bytebuddy.utility.CallTraceable;
 import org.junit.Test;
 
 import java.io.Serializable;
@@ -14,12 +16,32 @@ public class MethodDelegationPipeTest extends AbstractInstrumentationTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
+    private static final int BAZ = 42;
+
     @Test
     public void testPipeToIdenticalType() throws Exception {
         DynamicType.Loaded<Foo> loaded = instrument(Foo.class, MethodDelegation.to(new ForwardingInterceptor(new Foo(FOO)))
                 .defineParameterBinder(Pipe.Binder.install(ForwardingType.class)));
         Foo instance = loaded.getLoaded().newInstance();
         assertThat(instance.foo(QUX), is(FOO + QUX));
+    }
+
+    @Test
+    public void testPipeToIdenticalTypeVoid() throws Exception {
+        DynamicType.Loaded<Qux> loaded = instrument(Qux.class, MethodDelegation.to(new ForwardingInterceptor(new Qux()))
+                .defineParameterBinder(Pipe.Binder.install(ForwardingType.class)));
+        Qux instance = loaded.getLoaded().newInstance();
+        instance.foo();
+        instance.assertZeroCalls();
+    }
+
+    @Test
+    public void testPipeToIdenticalTypePrimitive() throws Exception {
+        DynamicType.Loaded<Baz> loaded = instrument(Baz.class, MethodDelegation.to(new PrimitiveForwardingInterceptor(new Baz()))
+                .defineParameterBinder(Pipe.Binder.install(ForwardingType.class)));
+        Baz instance = loaded.getLoaded().newInstance();
+        assertThat(instance.foo(BAZ), is(BAZ * 2L));
+        instance.assertZeroCalls();
     }
 
     @Test
@@ -136,6 +158,36 @@ public class MethodDelegationPipeTest extends AbstractInstrumentationTest {
 
         public Bar(String prefix) {
             super(prefix);
+        }
+    }
+
+    public static class Qux extends CallTraceable {
+
+        public void foo() {
+            register(FOO);
+        }
+    }
+
+    public static class PrimitiveForwardingInterceptor {
+
+        private final Object target;
+
+        public PrimitiveForwardingInterceptor(Object target) {
+            this.target = target;
+        }
+
+        @RuntimeType
+        public Object intercept(@Pipe ForwardingType<Object, Object> pipe) {
+            assertThat(pipe, not(instanceOf(Serializable.class)));
+            return pipe.doPipe(target);
+        }
+    }
+
+    public static class Baz extends CallTraceable {
+
+        public long foo(int value) {
+            register(FOO);
+            return value * 2L;
         }
     }
 

@@ -18,7 +18,7 @@ public enum ReferenceTypeAwareAssigner implements Assigner {
     @Override
     public StackManipulation assign(TypeDescription sourceType,
                                     TypeDescription targetType,
-                                    boolean considerRuntimeType) {
+                                    boolean dynamicallyTyped) {
         if (sourceType.isPrimitive() || targetType.isPrimitive()) {
             if (sourceType.equals(targetType)) {
                 return StackManipulation.LegalTrivial.INSTANCE;
@@ -27,7 +27,7 @@ public enum ReferenceTypeAwareAssigner implements Assigner {
             }
         } else if (targetType.isAssignableFrom(sourceType)) {
             return StackManipulation.LegalTrivial.INSTANCE;
-        } else if (considerRuntimeType) {
+        } else if (dynamicallyTyped) {
             return new DownCasting(targetType);
         } else {
             return StackManipulation.Illegal.INSTANCE;
