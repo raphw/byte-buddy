@@ -45,6 +45,12 @@ mainly for allowing the reuse of `Method` instances for the `@Origin` annotation
   in addition to loaded `Class` as their arguments
 - Added several annotations that apply to the `MethodDelegation`.
 
+### 26. November 2014: Version 0.4.1
+
+- Refactored the implementation of the `VoidAwareAssigner` which would otherwise cause unexpected behavior in its 
+  default state.
+- Added a missing boxing instruction to the `InvocationHandlerAdapter`.
+
 ### Current snapshot version
 
 *No changes yet*
