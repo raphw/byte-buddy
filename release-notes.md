@@ -53,4 +53,4 @@ mainly for allowing the reuse of `Method` instances for the `@Origin` annotation
 
 ### Current snapshot version
 
-*No changes yet*
+- Replaced the `MethodMatcher` API with the `ElementMatcher` API which allows for a more sophisticated matching DSL.
