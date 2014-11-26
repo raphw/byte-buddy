@@ -44,3 +44,4 @@ public class SubTypeMatcher<T extends TypeDescription> extends ElementMatcher.Ju
         return "isSubTypeOf(" + typeDescription + ')';
     }
 }
+

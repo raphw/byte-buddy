@@ -7,7 +7,7 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
  *
  * @param <T> The type of the matched entity.
  */
-public class SubTypeMatcher2<T extends TypeDescription> extends ElementMatcher.Junction.AbstractBase<T> {
+public class SubTypeMatcher<T extends TypeDescription> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
      * The type to be matched being a super type of the matched type.
@@ -19,7 +19,7 @@ public class SubTypeMatcher2<T extends TypeDescription> extends ElementMatcher.J
      *
      * @param typeDescription The type to be matched being a super type of the matched type.
      */
-    public SubTypeMatcher2(TypeDescription typeDescription) {
+    public SubTypeMatcher(TypeDescription typeDescription) {
         this.typeDescription = typeDescription;
     }
 
@@ -31,7 +31,7 @@ public class SubTypeMatcher2<T extends TypeDescription> extends ElementMatcher.J
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && typeDescription.equals(((SubTypeMatcher2) other).typeDescription);
+                && typeDescription.equals(((SubTypeMatcher) other).typeDescription);
     }
 
     @Override

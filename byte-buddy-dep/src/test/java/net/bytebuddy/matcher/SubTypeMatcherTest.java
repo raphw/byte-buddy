@@ -8,11 +8,11 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
-public class SubTypeMatcherTest extends AbstractElementMatcherTest<SubTypeMatcher2<?>> {
+public class SubTypeMatcherTest extends AbstractElementMatcherTest<SubTypeMatcher<?>> {
 
     @SuppressWarnings("unchecked")
     public SubTypeMatcherTest() {
-        super((Class<? extends SubTypeMatcher2<?>>) (Object) SubTypeMatcher2.class, "isSubTypeOf");
+        super((Class<? extends SubTypeMatcher<?>>) (Object) SubTypeMatcher.class, "isSubTypeOf");
     }
 
     @Mock
@@ -21,7 +21,7 @@ public class SubTypeMatcherTest extends AbstractElementMatcherTest<SubTypeMatche
     @Test
     public void testMatch() throws Exception {
         when(otherType.isAssignableTo(typeDescription)).thenReturn(true);
-        assertThat(new SubTypeMatcher2<TypeDescription>(typeDescription).matches(otherType), is(true));
+        assertThat(new SubTypeMatcher<TypeDescription>(typeDescription).matches(otherType), is(true));
         verify(otherType).isAssignableTo(typeDescription);
         verifyNoMoreInteractions(otherType);
         verifyZeroInteractions(typeDescription);
@@ -30,7 +30,7 @@ public class SubTypeMatcherTest extends AbstractElementMatcherTest<SubTypeMatche
     @Test
     public void testNoMatch() throws Exception {
         when(otherType.isAssignableTo(typeDescription)).thenReturn(false);
-        assertThat(new SubTypeMatcher2<TypeDescription>(typeDescription).matches(otherType), is(false));
+        assertThat(new SubTypeMatcher<TypeDescription>(typeDescription).matches(otherType), is(false));
         verify(otherType).isAssignableTo(typeDescription);
         verifyNoMoreInteractions(otherType);
         verifyZeroInteractions(typeDescription);
