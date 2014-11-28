@@ -866,9 +866,8 @@ public interface Instrumentation {
                 MethodDescription typeInitializer = MethodDescription.Latent.typeInitializerOf(instrumentedType);
                 FieldCacheAppender.resolve(methodPool.target(typeInitializer),
                         registeredFieldCacheEntries,
-                        injectedCode.isInjected()
-                                ? this.typeInitializer.expandWith(injectedCode.getInjectedCode())
-                                : this.typeInitializer).apply(classVisitor, this, typeInitializer);
+                        this.typeInitializer,
+                        injectedCode).apply(classVisitor, this, typeInitializer);
                 for (FieldDescription fieldDescription : registeredFieldCacheEntries.values()) {
                     classVisitor.visitField(fieldDescription.getModifiers(),
                             fieldDescription.getInternalName(),
@@ -989,22 +988,28 @@ public interface Instrumentation {
                  *
                  * @param originalEntry               The original entry that is provided by the user.
                  * @param registeredFieldCacheEntries A map of registered field cache entries.
-                 * @param typeInitializer             The type initializer to resolve.
+                 * @param typeInitializer             Any explicitly specified type initializer to execute.
+                 * @param injectedCode                Potential code that is to be injected into the type initializer.
                  * @return The entry to apply to the type initializer.
                  */
                 protected static TypeWriter.MethodPool.Entry resolve(TypeWriter.MethodPool.Entry originalEntry,
                                                                      Map<FieldCacheEntry, FieldDescription> registeredFieldCacheEntries,
-                                                                     InstrumentedType.TypeInitializer typeInitializer) {
-                    boolean defineMethod = originalEntry.isDefineMethod();
-                    boolean defineInitializer = typeInitializer.isDefined();
-                    return registeredFieldCacheEntries.size() == 0 && !defineInitializer
-                            ? originalEntry
-                            : new TypeWriter.MethodPool.Entry.Simple(new Compound(new FieldCacheAppender(registeredFieldCacheEntries),
-                            new Simple(defineInitializer ? typeInitializer.getStackManipulation() : StackManipulation.LegalTrivial.INSTANCE),
-                            defineMethod && originalEntry.getByteCodeAppender().appendsCode()
-                                    ? originalEntry.getByteCodeAppender()
-                                    : new Simple(MethodReturn.VOID)),
-                            defineMethod
+                                                                     InstrumentedType.TypeInitializer typeInitializer,
+                                                                     InjectedCode injectedCode) {
+                    if (registeredFieldCacheEntries.size() == 0 && !typeInitializer.isDefined() && !injectedCode.isInjected()) {
+                        return originalEntry;
+                    }
+                    StackManipulation manipulation = injectedCode.isInjected()
+                            ? injectedCode.getInjectedCode()
+                            : StackManipulation.LegalTrivial.INSTANCE;
+                    manipulation = typeInitializer.isDefined()
+                            ? new StackManipulation.Compound(typeInitializer.getStackManipulation(), manipulation)
+                            : manipulation;
+                    ByteCodeAppender byteCodeAppender = originalEntry.isDefineMethod()
+                            ? new Compound(new Simple(manipulation), originalEntry.getByteCodeAppender())
+                            : new Simple(manipulation, MethodReturn.VOID);
+                    return new TypeWriter.MethodPool.Entry.Simple(new Compound(new FieldCacheAppender(registeredFieldCacheEntries), byteCodeAppender),
+                            originalEntry.isDefineMethod()
                                     ? originalEntry.getAttributeAppender()
                                     : MethodAttributeAppender.NoOp.INSTANCE);
                 }

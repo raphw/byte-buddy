@@ -20,6 +20,7 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.StreamDrainer;
+import org.objectweb.asm.MethodVisitor;
 
 import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
@@ -37,12 +38,12 @@ import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 public interface AgentBuilder {
 
-    Transformable redefine(RawMatcher rawMatcher);
+    Transformable rebase(RawMatcher rawMatcher);
 
-    Transformable redefine(ElementMatcher<? super TypeDescription> typeMatcher);
+    Transformable rebase(ElementMatcher<? super TypeDescription> typeMatcher);
 
-    Transformable redefine(ElementMatcher<? super TypeDescription> typeMatcher,
-                           ElementMatcher<? super ClassLoader> classLoaderMatcher);
+    Transformable rebase(ElementMatcher<? super TypeDescription> typeMatcher,
+                         ElementMatcher<? super ClassLoader> classLoaderMatcher);
 
     AgentBuilder withByteBuddy(ByteBuddy byteBuddy);
 
@@ -104,7 +105,6 @@ public interface AgentBuilder {
 
         private final List<Entry> entries;
 
-
         public Default() {
             this(new ByteBuddy());
         }
@@ -136,19 +136,19 @@ public interface AgentBuilder {
         }
 
         @Override
-        public Transformable redefine(RawMatcher rawMatcher) {
+        public Transformable rebase(RawMatcher rawMatcher) {
             return new Matched(nonNull(rawMatcher), Transformer.NoOp.INSTANCE);
         }
 
         @Override
-        public Transformable redefine(ElementMatcher<? super TypeDescription> typeMatcher) {
-            return redefine(typeMatcher, any());
+        public Transformable rebase(ElementMatcher<? super TypeDescription> typeMatcher) {
+            return rebase(typeMatcher, any());
         }
 
         @Override
-        public Transformable redefine(ElementMatcher<? super TypeDescription> typeMatcher,
-                                      ElementMatcher<? super ClassLoader> classLoaderMatcher) {
-            return redefine(new RawMatcher.ForElementMatcherPair(nonNull(typeMatcher), nonNull(classLoaderMatcher)));
+        public Transformable rebase(ElementMatcher<? super TypeDescription> typeMatcher,
+                                    ElementMatcher<? super ClassLoader> classLoaderMatcher) {
+            return rebase(new RawMatcher.ForElementMatcherPair(nonNull(typeMatcher), nonNull(classLoaderMatcher)));
         }
 
         @Override
@@ -316,7 +316,7 @@ public interface AgentBuilder {
                                 for (Map.Entry<TypeDescription, byte[]> auxiliary : dynamicType.getRawAuxiliaryTypes().entrySet()) {
                                     ignoredTypes.add(auxiliary.getKey().getName());
                                     Class<?> type = injector.inject(auxiliary.getKey().getName(), auxiliary.getValue());
-                                    loadedTypeInitializers.get(auxiliary.getValue()).onLoad(type);
+                                    loadedTypeInitializers.get(auxiliary.getKey()).onLoad(type);
                                 }
                             }
                             initializationStrategy.register(binaryTypeName,
@@ -410,19 +410,19 @@ public interface AgentBuilder {
             }
 
             @Override
-            public Transformable redefine(RawMatcher rawMatcher) {
-                return materialize().redefine(rawMatcher);
+            public Transformable rebase(RawMatcher rawMatcher) {
+                return materialize().rebase(rawMatcher);
             }
 
             @Override
-            public Transformable redefine(ElementMatcher<? super TypeDescription> typeMatcher) {
-                return materialize().redefine(typeMatcher);
+            public Transformable rebase(ElementMatcher<? super TypeDescription> typeMatcher) {
+                return materialize().rebase(typeMatcher);
             }
 
             @Override
-            public Transformable redefine(ElementMatcher<? super TypeDescription> typeMatcher,
-                                          ElementMatcher<? super ClassLoader> classLoaderMatcher) {
-                return materialize().redefine(typeMatcher, classLoaderMatcher);
+            public Transformable rebase(ElementMatcher<? super TypeDescription> typeMatcher,
+                                        ElementMatcher<? super ClassLoader> classLoaderMatcher) {
+                return materialize().rebase(typeMatcher, classLoaderMatcher);
             }
 
             @Override
@@ -507,7 +507,7 @@ public interface AgentBuilder {
 
         public static interface InitializationStrategy {
 
-            static class SelfInjection implements InitializationStrategy, net.bytebuddy.instrumentation.Instrumentation {
+            static class SelfInjection implements InitializationStrategy, net.bytebuddy.instrumentation.Instrumentation, ByteCodeAppender {
 
                 private final Nexus.Accessor accessor;
 
@@ -527,7 +527,17 @@ public interface AgentBuilder {
 
                 @Override
                 public ByteCodeAppender appender(Target instrumentationTarget) {
-                    throw new IllegalStateException("The initialization strategy instrumentation must not be used");
+                    return this;
+                }
+
+                @Override
+                public boolean appendsCode() {
+                    return true;
+                }
+
+                @Override
+                public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
+                    throw new IllegalStateException("Initialization strategy illegally applied to " + instrumentedMethod);
                 }
 
                 @Override
@@ -618,8 +628,8 @@ public interface AgentBuilder {
                                         .filter(named("loadClass").and(takesArguments(String.class))).getOnly();
                                 findMethod = new TypeDescription.ForLoadedType(Class.class).getDeclaredMethods()
                                         .filter(named("getDeclaredMethod").and(takesArguments(String.class, Class[].class))).getOnly();
-                                invokeMethod = new TypeDescription.ForLoadedType(Class.class).getDeclaredMethods()
-                                        .filter(named("getDeclaredMethod").and(takesArguments(String.class, Class[].class))).getOnly();
+                                invokeMethod = new TypeDescription.ForLoadedType(Method.class).getDeclaredMethods()
+                                        .filter(named("invoke").and(takesArguments(Object.class, Object[].class))).getOnly();
                             } catch (Exception e) {
                                 throw new IllegalStateException("Cannot create type initialization accessor", e);
                             }
