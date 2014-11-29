@@ -541,18 +541,18 @@ public interface Instrumentation {
 
                 /**
                  * Returns the injected code. This method must only be called if there is actual code injected as
-                 * signaled by {@link net.bytebuddy.instrumentation.Instrumentation.Context.ExtractableView.InjectedCode#isInjected()}.
+                 * signaled by {@link net.bytebuddy.instrumentation.Instrumentation.Context.ExtractableView.InjectedCode#isDefined()}.
                  *
                  * @return A stack manipulation that represents the injected code.
                  */
                 StackManipulation getInjectedCode();
 
                 /**
-                 * Checks if code is injected.
+                 * Checks if there is actually code defined to be injected.
                  *
-                 * @return {@code true} if code is injected.
+                 * @return {@code true} if code is to be injected.
                  */
-                boolean isInjected();
+                boolean isDefined();
 
                 /**
                  * A canonical implementation of non-applicable injected code.
@@ -570,7 +570,7 @@ public interface Instrumentation {
                     }
 
                     @Override
-                    public boolean isInjected() {
+                    public boolean isDefined() {
                         return false;
                     }
                 }
@@ -996,10 +996,10 @@ public interface Instrumentation {
                                                                      Map<FieldCacheEntry, FieldDescription> registeredFieldCacheEntries,
                                                                      InstrumentedType.TypeInitializer typeInitializer,
                                                                      InjectedCode injectedCode) {
-                    if (registeredFieldCacheEntries.size() == 0 && !typeInitializer.isDefined() && !injectedCode.isInjected()) {
+                    if (registeredFieldCacheEntries.size() == 0 && !typeInitializer.isDefined() && !injectedCode.isDefined()) {
                         return originalEntry;
                     }
-                    StackManipulation manipulation = injectedCode.isInjected()
+                    StackManipulation manipulation = injectedCode.isDefined()
                             ? injectedCode.getInjectedCode()
                             : StackManipulation.LegalTrivial.INSTANCE;
                     manipulation = typeInitializer.isDefined()

@@ -69,7 +69,7 @@ public class InstrumentationContextDefaultTest {
     @Mock
     private TypeDescription firstFieldType, secondFieldType;
     @Mock
-    private StackManipulation firstFieldValue, secondFieldValue, injectedCodeAppender;
+    private StackManipulation firstFieldValue, secondFieldValue, injectedCodeAppender, typeInitializerAppender;
     @Mock
     private MethodAttributeAppender attributeAppender;
     @Mock
@@ -116,6 +116,9 @@ public class InstrumentationContextDefaultTest {
                 .thenReturn(new ByteCodeAppender.Size(0, 0));
         when(injectedCode.getInjectedCode()).thenReturn(injectedCodeAppender);
         when(injectedCodeAppender.apply(any(MethodVisitor.class), any(Instrumentation.Context.class)))
+                .thenReturn(new StackManipulation.Size(0, 0));
+        when(typeInitializer.getStackManipulation()).thenReturn(typeInitializerAppender);
+        when(typeInitializerAppender.apply(any(MethodVisitor.class), any(Instrumentation.Context.class)))
                 .thenReturn(new StackManipulation.Size(0, 0));
         when(firstSpecialInvocation.getMethodDescription()).thenReturn(firstSpecialMethod);
         when(firstSpecialInvocation.getTypeDescription()).thenReturn(firstSpecialType);
@@ -167,7 +170,7 @@ public class InstrumentationContextDefaultTest {
         verifyZeroInteractions(classVisitor);
         verify(methodPool).target(MethodDescription.Latent.typeInitializerOf(instrumentedType));
         verifyNoMoreInteractions(methodPool);
-        verify(injectedCode).isInjected();
+        verify(injectedCode).isDefined();
         verifyNoMoreInteractions(injectedCode);
     }
 
@@ -191,7 +194,16 @@ public class InstrumentationContextDefaultTest {
     }
 
     @Test
-    public void testFieldCachingWithoutUserCodeOrInjectedCode() throws Exception {
+    public void testDrainEmpty() throws Exception {
+        Instrumentation.Context.ExtractableView instrumentationContext = new Instrumentation.Context.Default(instrumentedType,
+                typeInitializer,
+                classFileVersion);
+        instrumentationContext.drain(classVisitor, methodPool, injectedCode);
+        verifyZeroInteractions(classFileVersion);
+    }
+
+    @Test
+    public void testDrainNoUserCodeNoInjectedCodeNoTypeInitializer() throws Exception {
         Instrumentation.Context.ExtractableView instrumentationContext = new Instrumentation.Context.Default(instrumentedType,
                 typeInitializer,
                 classFileVersion);
@@ -222,17 +234,19 @@ public class InstrumentationContextDefaultTest {
         verifyNoMoreInteractions(secondFieldValue);
         verify(methodPool).target(MethodDescription.Latent.typeInitializerOf(instrumentedType));
         verifyNoMoreInteractions(methodPool);
-        verify(injectedCode).isInjected();
+        verify(injectedCode).isDefined();
         verifyNoMoreInteractions(injectedCode);
+        verify(typeInitializer).isDefined();
+        verifyNoMoreInteractions(typeInitializer);
         verifyZeroInteractions(injectedCodeAppender);
+        verifyZeroInteractions(typeInitializerAppender);
         verifyZeroInteractions(attributeAppender);
         verifyZeroInteractions(byteCodeAppender);
     }
 
     @Test
-    public void testFieldCachingWithUserCodeAndWithoutInjectedCode() throws Exception {
+    public void testDrainUserCodeNoInjectedCodeNoTypeInitializer() throws Exception {
         when(entry.isDefineMethod()).thenReturn(true);
-        when(byteCodeAppender.appendsCode()).thenReturn(true);
         Instrumentation.Context.ExtractableView instrumentationContext = new Instrumentation.Context.Default(instrumentedType,
                 typeInitializer,
                 classFileVersion);
@@ -256,7 +270,6 @@ public class InstrumentationContextDefaultTest {
         verify(secondFieldValue).apply(methodVisitor, instrumentationContext);
         verify(methodVisitor).visitFieldInsn(eq(Opcodes.PUTSTATIC), eq(BAZ), any(String.class), eq(QUX));
         verify(attributeAppender).apply(methodVisitor, MethodDescription.Latent.typeInitializerOf(instrumentedType));
-        verify(byteCodeAppender).appendsCode();
         verify(byteCodeAppender).apply(methodVisitor, instrumentationContext, MethodDescription.Latent.typeInitializerOf(instrumentedType));
         verifyNoMoreInteractions(byteCodeAppender);
         verify(methodVisitor).visitMaxs(0, 0);
@@ -266,16 +279,17 @@ public class InstrumentationContextDefaultTest {
         verifyNoMoreInteractions(secondFieldValue);
         verify(methodPool).target(MethodDescription.Latent.typeInitializerOf(instrumentedType));
         verifyNoMoreInteractions(methodPool);
-        verify(injectedCode).isInjected();
+        verify(injectedCode).isDefined();
         verifyNoMoreInteractions(injectedCode);
+        verify(typeInitializer).isDefined();
+        verifyNoMoreInteractions(typeInitializer);
         verifyZeroInteractions(injectedCodeAppender);
+        verifyZeroInteractions(typeInitializerAppender);
     }
 
     @Test
-    public void testFieldCachingWithoutUserCodeAndWithInjectedCode() throws Exception {
-        when(byteCodeAppender.appendsCode()).thenReturn(true);
-        when(injectedCode.isInjected()).thenReturn(true);
-        when(typeInitializer.expandWith(injectedCodeAppender)).thenReturn(new InstrumentedType.TypeInitializer.Simple(injectedCodeAppender));
+    public void testDrainNoUserCodeInjectedCodeNoTypeInitializer() throws Exception {
+        when(injectedCode.isDefined()).thenReturn(true);
         Instrumentation.Context.ExtractableView instrumentationContext = new Instrumentation.Context.Default(instrumentedType,
                 typeInitializer,
                 classFileVersion);
@@ -298,13 +312,13 @@ public class InstrumentationContextDefaultTest {
         verify(methodVisitor).visitFieldInsn(eq(Opcodes.PUTSTATIC), eq(BAZ), any(String.class), eq(BAR));
         verify(secondFieldValue).apply(methodVisitor, instrumentationContext);
         verify(methodVisitor).visitFieldInsn(eq(Opcodes.PUTSTATIC), eq(BAZ), any(String.class), eq(QUX));
-        verify(injectedCode).isInjected();
+        verify(injectedCode).isDefined();
         verify(injectedCode).getInjectedCode();
         verify(injectedCodeAppender).apply(methodVisitor, instrumentationContext);
         verifyNoMoreInteractions(injectedCode);
-        verify(typeInitializer).expandWith(injectedCodeAppender);
+        verify(typeInitializer).isDefined();
         verifyNoMoreInteractions(typeInitializer);
-        verify(entry).isDefineMethod();
+        verify(entry, atLeast(1)).isDefineMethod();
         verify(methodVisitor).visitInsn(Opcodes.RETURN);
         verify(methodVisitor).visitMaxs(0, 0);
         verify(methodVisitor).visitEnd();
@@ -313,16 +327,16 @@ public class InstrumentationContextDefaultTest {
         verifyNoMoreInteractions(secondFieldValue);
         verify(methodPool).target(MethodDescription.Latent.typeInitializerOf(instrumentedType));
         verifyNoMoreInteractions(methodPool);
+        verify(typeInitializer).isDefined();
+        verifyNoMoreInteractions(typeInitializer);
+        verifyZeroInteractions(typeInitializerAppender);
         verifyZeroInteractions(attributeAppender);
         verifyZeroInteractions(byteCodeAppender);
     }
 
     @Test
-    public void testFieldCachingWithUserCodeAndWithInjectedCode() throws Exception {
-        when(entry.isDefineMethod()).thenReturn(true);
-        when(byteCodeAppender.appendsCode()).thenReturn(true);
-        when(injectedCode.isInjected()).thenReturn(true);
-        when(typeInitializer.expandWith(injectedCodeAppender)).thenReturn(new InstrumentedType.TypeInitializer.Simple(injectedCodeAppender));
+    public void testDrainNoUserCodeNoInjectedCodeTypeInitializer() throws Exception {
+        when(typeInitializer.isDefined()).thenReturn(true);
         Instrumentation.Context.ExtractableView instrumentationContext = new Instrumentation.Context.Default(instrumentedType,
                 typeInitializer,
                 classFileVersion);
@@ -345,19 +359,14 @@ public class InstrumentationContextDefaultTest {
         verify(methodVisitor).visitFieldInsn(eq(Opcodes.PUTSTATIC), eq(BAZ), any(String.class), eq(BAR));
         verify(secondFieldValue).apply(methodVisitor, instrumentationContext);
         verify(methodVisitor).visitFieldInsn(eq(Opcodes.PUTSTATIC), eq(BAZ), any(String.class), eq(QUX));
-        verify(injectedCode).isInjected();
-        verify(injectedCode).getInjectedCode();
-        verify(injectedCodeAppender).apply(methodVisitor, instrumentationContext);
+        verify(injectedCode).isDefined();
         verifyNoMoreInteractions(injectedCode);
-        verify(typeInitializer).expandWith(injectedCodeAppender);
+        verify(typeInitializer).isDefined();
+        verify(typeInitializer).getStackManipulation();
+        verify(typeInitializerAppender).apply(methodVisitor, instrumentationContext);
         verifyNoMoreInteractions(typeInitializer);
-        verify(entry).isDefineMethod();
-        verify(entry, atLeast(1)).getAttributeAppender();
-        verify(attributeAppender).apply(methodVisitor, MethodDescription.Latent.typeInitializerOf(instrumentedType));
-        verify(entry, atLeast(1)).getByteCodeAppender();
-        verify(byteCodeAppender).appendsCode();
-        verify(byteCodeAppender).apply(methodVisitor, instrumentationContext, MethodDescription.Latent.typeInitializerOf(instrumentedType));
-        verifyNoMoreInteractions(byteCodeAppender);
+        verify(entry, atLeast(1)).isDefineMethod();
+        verify(methodVisitor).visitInsn(Opcodes.RETURN);
         verify(methodVisitor).visitMaxs(0, 0);
         verify(methodVisitor).visitEnd();
         verifyNoMoreInteractions(methodVisitor);
@@ -365,6 +374,11 @@ public class InstrumentationContextDefaultTest {
         verifyNoMoreInteractions(secondFieldValue);
         verify(methodPool).target(MethodDescription.Latent.typeInitializerOf(instrumentedType));
         verifyNoMoreInteractions(methodPool);
+        verify(injectedCode).isDefined();
+        verifyNoMoreInteractions(injectedCode);
+        verifyZeroInteractions(injectedCodeAppender);
+        verifyZeroInteractions(attributeAppender);
+        verifyZeroInteractions(byteCodeAppender);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -376,7 +390,7 @@ public class InstrumentationContextDefaultTest {
         verifyZeroInteractions(classVisitor);
         verify(methodPool).target(MethodDescription.Latent.typeInitializerOf(instrumentedType));
         verifyNoMoreInteractions(methodPool);
-        verify(injectedCode).isInjected();
+        verify(injectedCode).isDefined();
         verifyNoMoreInteractions(injectedCode);
         instrumentationContext.cache(firstFieldValue, firstFieldType);
     }

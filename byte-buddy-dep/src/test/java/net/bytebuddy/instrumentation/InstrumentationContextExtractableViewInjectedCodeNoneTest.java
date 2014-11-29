@@ -9,7 +9,7 @@ public class InstrumentationContextExtractableViewInjectedCodeNoneTest {
 
     @Test
     public void testNoInjectedCode() throws Exception {
-        assertThat(Instrumentation.Context.ExtractableView.InjectedCode.None.INSTANCE.isInjected(), is(false));
+        assertThat(Instrumentation.Context.ExtractableView.InjectedCode.None.INSTANCE.isDefined(), is(false));
     }
 
     @Test(expected = IllegalStateException.class)

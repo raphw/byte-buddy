@@ -581,7 +581,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public boolean isInjected() {
+                    public boolean isDefined() {
                         return true;
                     }
 
