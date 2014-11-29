@@ -4,19 +4,17 @@ import net.bytebuddy.instrumentation.ByteCodeElement;
 import net.bytebuddy.instrumentation.ModifierReviewable;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotatedElement;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.RuntimeType;
+import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.*;
 
@@ -37,6 +35,83 @@ public final class ElementMatchers {
         return value == null
                 ? new NullMatcher<T>()
                 : new EqualityMatcher<T>(value);
+    }
+
+    /**
+     * Exactly matches a given method as a {@link net.bytebuddy.instrumentation.method.MethodDescription}.
+     *
+     * @param method The method to match by its description
+     * @param <T>    The type of the matched object.
+     * @return An element matcher that exactly matches the given method.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> is(Method method) {
+        return is(new MethodDescription.ForLoadedMethod(nonNull(method)));
+    }
+
+    /**
+     * Exactly matches a given constructor as a {@link net.bytebuddy.instrumentation.method.MethodDescription}.
+     *
+     * @param constructor The constructor to match by its description
+     * @param <T>         The type of the matched object.
+     * @return An element matcher that exactly matches the given constructor.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> is(Constructor<?> constructor) {
+        return is(new MethodDescription.ForLoadedConstructor(nonNull(constructor)));
+    }
+
+    /**
+     * Exactly matches a given {@link net.bytebuddy.instrumentation.method.MethodDescription}.
+     *
+     * @param methodDescription The method description to match.
+     * @param <T>               The type of the matched object.
+     * @return An element matcher that matches the given method description.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> is(MethodDescription methodDescription) {
+        return new EqualityMatcher<T>(nonNull(methodDescription));
+    }
+
+    /**
+     * Exactly matches a given type as a {@link net.bytebuddy.instrumentation.type.TypeDescription}.
+     *
+     * @param type The type to match by its description
+     * @param <T>  The type of the matched object.
+     * @return An element matcher that exactly matches the given type.
+     */
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> is(Class<?> type) {
+        return is(new TypeDescription.ForLoadedType(nonNull(type)));
+    }
+
+    /**
+     * Exactly matches a given {@link net.bytebuddy.instrumentation.type.TypeDescription}.
+     *
+     * @param typeDescription The type to match by its description
+     * @param <T>             The type of the matched object.
+     * @return An element matcher that exactly matches the given type.
+     */
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> is(TypeDescription typeDescription) {
+        return new EqualityMatcher<T>(nonNull(typeDescription));
+    }
+
+    /**
+     * Exactly matches a given annotation as an {@link net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription}.
+     *
+     * @param annotation The annotation to match by its description.
+     * @param <T>        The type of the matched object.
+     * @return An element matcher that exactly matches the given annotation.
+     */
+    public static <T extends AnnotationDescription> ElementMatcher.Junction<T> is(Annotation annotation) {
+        return is(AnnotationDescription.ForLoadedAnnotation.of(nonNull(annotation)));
+    }
+
+    /**
+     * Exactly matches a given {@link net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription}.
+     *
+     * @param annotationDescription The annotation description to match.
+     * @param <T>                   The type of the matched object.
+     * @return An element matcher that exactly matches the given annotation.
+     */
+    public static <T extends AnnotationDescription> ElementMatcher.Junction<T> is(AnnotationDescription annotationDescription) {
+        return new EqualityMatcher<T>(nonNull(annotationDescription));
     }
 
     /**
@@ -79,7 +154,7 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with any of the given objects.
      */
     public static <T> ElementMatcher.Junction<T> anyOf(Object... value) {
-        return anyOf(Arrays.asList(value));
+        return anyOf(Arrays.asList(nonNull(value)));
     }
 
     /**
@@ -96,6 +171,54 @@ public final class ElementMatchers {
             matcher = matcher.or(is(value));
         }
         return matcher;
+    }
+
+    /**
+     * Creates a matcher that matches any of the given types as {@link net.bytebuddy.instrumentation.type.TypeDescription}s
+     * by the {@link java.lang.Object#equals(Object)} method. None of the values must be {@code null}.
+     *
+     * @param value The input values to be compared against.
+     * @param <T>   The type of the matched object.
+     * @return A matcher that checks for the equality with any of the given objects.
+     */
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> anyOf(Class<?>... value) {
+        return anyOf(new TypeList.ForLoadedType(nonNull(value)));
+    }
+
+    /**
+     * Creates a matcher that matches any of the given constructors as {@link net.bytebuddy.instrumentation.method.MethodDescription}s
+     * by the {@link java.lang.Object#equals(Object)} method. None of the values must be {@code null}.
+     *
+     * @param value The input values to be compared against.
+     * @param <T>   The type of the matched object.
+     * @return A matcher that checks for the equality with any of the given objects.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> anyOf(Constructor<?>... value) {
+        return anyOf(new MethodList.ForLoadedType(nonNull(value), new Method[0]));
+    }
+
+    /**
+     * Creates a matcher that matches any of the given methods as {@link net.bytebuddy.instrumentation.method.MethodDescription}s
+     * by the {@link java.lang.Object#equals(Object)} method. None of the values must be {@code null}.
+     *
+     * @param value The input values to be compared against.
+     * @param <T>   The type of the matched object.
+     * @return A matcher that checks for the equality with any of the given objects.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> anyOf(Method... value) {
+        return anyOf(new MethodList.ForLoadedType(new Constructor<?>[0], nonNull(value)));
+    }
+
+    /**
+     * Creates a matcher that matches any of the given annotations as {@link net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription}s
+     * by the {@link java.lang.Object#equals(Object)} method. None of the values must be {@code null}.
+     *
+     * @param value The input values to be compared against.
+     * @param <T>   The type of the matched object.
+     * @return A matcher that checks for the equality with any of the given objects.
+     */
+    public static <T extends AnnotationDescription> ElementMatcher.Junction<T> anyOf(Annotation... value) {
+        return anyOf(new AnnotationList.ForLoadedAnnotation(nonNull(value)));
     }
 
     /**
@@ -124,6 +247,54 @@ public final class ElementMatchers {
             matcher = matcher.and(not(is(value)));
         }
         return matcher;
+    }
+
+    /**
+     * Creates a matcher that matches none of the given types as {@link net.bytebuddy.instrumentation.type.TypeDescription}s
+     * by the {@link java.lang.Object#equals(Object)} method. None of the values must be {@code null}.
+     *
+     * @param value The input values to be compared against.
+     * @param <T>   The type of the matched object.
+     * @return A matcher that checks for the equality with none of the given objects.
+     */
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> noneOf(Class<?>... value) {
+        return noneOf(new TypeList.ForLoadedType(nonNull(value)));
+    }
+
+    /**
+     * Creates a matcher that matches none of the given constructors as {@link net.bytebuddy.instrumentation.method.MethodDescription}s
+     * by the {@link java.lang.Object#equals(Object)} method. None of the values must be {@code null}.
+     *
+     * @param value The input values to be compared against.
+     * @param <T>   The type of the matched object.
+     * @return A matcher that checks for the equality with none of the given objects.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> noneOf(Constructor<?>... value) {
+        return noneOf(new MethodList.ForLoadedType(nonNull(value), new Method[0]));
+    }
+
+    /**
+     * Creates a matcher that matches none of the given methods as {@link net.bytebuddy.instrumentation.method.MethodDescription}s
+     * by the {@link java.lang.Object#equals(Object)} method. None of the values must be {@code null}.
+     *
+     * @param value The input values to be compared against.
+     * @param <T>   The type of the matched object.
+     * @return A matcher that checks for the equality with none of the given objects.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> noneOf(Method... value) {
+        return noneOf(new MethodList.ForLoadedType(new Constructor<?>[0], nonNull(value)));
+    }
+
+    /**
+     * Creates a matcher that matches none of the given annotations as {@link net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription}s
+     * by the {@link java.lang.Object#equals(Object)} method. None of the values must be {@code null}.
+     *
+     * @param value The input values to be compared against.
+     * @param <T>   The type of the matched object.
+     * @return A matcher that checks for the equality with any of the given objects.
+     */
+    public static <T extends AnnotationDescription> ElementMatcher.Junction<T> noneOf(Annotation... value) {
+        return noneOf(new AnnotationList.ForLoadedAnnotation(nonNull(value)));
     }
 
     /**
@@ -478,39 +649,6 @@ public final class ElementMatchers {
     }
 
     /**
-     * Exactly matches a given {@link net.bytebuddy.instrumentation.method.MethodDescription}.
-     *
-     * @param methodDescription The method description to match.
-     * @param <T>               The type of the matched object.
-     * @return An element matcher that matches the given method description.
-     */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> is(MethodDescription methodDescription) {
-        return new EqualityMatcher<T>(nonNull(methodDescription));
-    }
-
-    /**
-     * Exactly matches a given method as a {@link net.bytebuddy.instrumentation.method.MethodDescription}.
-     *
-     * @param method The method to match by its description
-     * @param <T>    The type of the matched object.
-     * @return An element matcher that exactly matches the given method.
-     */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> is(Method method) {
-        return new EqualityMatcher<T>(nonNull(new MethodDescription.ForLoadedMethod(nonNull(method))));
-    }
-
-    /**
-     * Exactly matches a given constructor as a {@link net.bytebuddy.instrumentation.method.MethodDescription}.
-     *
-     * @param constructor The constructor to match by its description
-     * @param <T>         The type of the matched object.
-     * @return An element matcher that exactly matches the given constructor.
-     */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> is(Constructor<?> constructor) {
-        return new EqualityMatcher<T>(nonNull(new MethodDescription.ForLoadedConstructor(nonNull(constructor))));
-    }
-
-    /**
      * Matches {@link net.bytebuddy.instrumentation.method.MethodDescription}s that returns a given
      * {@link java.lang.Class}.
      *
@@ -612,93 +750,277 @@ public final class ElementMatchers {
         return new MethodParameterTypesMatcher<T>(new CollectionSizeMatcher<List<? extends TypeDescription>>(length));
     }
 
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} by its capability to throw a given
+     * checked exception. For specifying a non-checked exception, any method is matched.
+     *
+     * @param exceptionType The type of the exception that should be declared by the method to be matched.
+     * @param <T>           The type of the matched object.
+     * @return A matcher that matches a method description by its declaration of throwing a checked exception.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> canThrow(Class<? extends Throwable> exceptionType) {
         return canThrow(new TypeDescription.ForLoadedType(nonNull(exceptionType)));
     }
 
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} by its capability to throw a given
+     * checked exception. For specifying a non-checked exception, any method is matched.
+     *
+     * @param exceptionType The type of the exception that should be declared by the method to be matched.
+     * @param <T>           The type of the matched object.
+     * @return A matcher that matches a method description by its declaration of throwing a checked exception.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> canThrow(TypeDescription exceptionType) {
         if (exceptionType.isAssignableTo(Throwable.class)) {
-            return exceptionType.isAssignableTo(RuntimeType.class) || exceptionType.isAssignableTo(Error.class)
+            return exceptionType.isAssignableTo(RuntimeException.class) || exceptionType.isAssignableTo(Error.class)
                     ? new BooleanMatcher<T>(true)
-                    : ElementMatchers.<T>canThrow(new CollectionItemMatcher<TypeDescription>(new SubTypeMatcher<TypeDescription>(exceptionType)));
+                    : ElementMatchers.<T>throwing(new CollectionItemMatcher<TypeDescription>(new SubTypeMatcher<TypeDescription>(exceptionType)));
         } else {
             throw new IllegalArgumentException(exceptionType + " is not an exception type");
         }
     }
 
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> canThrow(ElementMatcher<? super List<? extends TypeDescription>> exceptionMatcher) {
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} by its declared exceptions.
+     *
+     * @param exceptionMatcher A matcher that is applied by to the declared exceptions.
+     * @param <T>              The type of the matched object.
+     * @return A matcher that matches a method description by its declared exceptions.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> throwing(ElementMatcher<? super List<? extends TypeDescription>> exceptionMatcher) {
         return new MethodExceptionTypeMatcher<T>(exceptionMatcher);
     }
 
+    /**
+     * Only matches method descriptions that represent a {@link java.lang.reflect.Method}.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher that only matches method descriptions that represent a Java method.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isMethod() {
         return new MethodSortMatcher<T>(MethodSortMatcher.Sort.METHOD);
     }
 
+    /**
+     * Only matches method descriptions that represent a {@link java.lang.reflect.Constructor}.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher that only matches method descriptions that represent a Java constructor.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isConstructor() {
         return new MethodSortMatcher<T>(MethodSortMatcher.Sort.CONSTRUCTOR);
     }
 
+    /**
+     * Only matches method descriptions that represent a {@link java.lang.Class} type initializer.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher that only matches method descriptions that represent the type initializer.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isTypeInitializer() {
         return new MethodSortMatcher<T>(MethodSortMatcher.Sort.TYPE_INITIALIZER);
     }
 
+    /**
+     * Only matches method descriptions that represent a visibility bridge. A visibility bridge is a Java bridge
+     * method that was inserted by the compiler in order to increase the visibility of a method when inheriting
+     * a {@link public} method from a package-private type. In this case, the package-private type's method
+     * is declared to be package-private itself such that the bridge method needs to increase the visibility and
+     * delegates the call to the original, package-private implementation.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher that matches visibility bridge methods.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isVisibilityBridge() {
         return new MethodSortMatcher<T>(MethodSortMatcher.Sort.VISIBILITY_BRIDGE);
     }
 
+    /**
+     * Only matches methods that are overridable, i.e. non-final and dispatched virtually.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher that only matches overridable methods.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isOverridable() {
         return new MethodSortMatcher<T>(MethodSortMatcher.Sort.OVERRIDABLE);
     }
 
+    /**
+     * Only matches Java 8 default methods.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher that only matches Java 8 default methods.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isDefaultMethod() {
         return new MethodSortMatcher<T>(MethodSortMatcher.Sort.DEFAULT_METHOD);
     }
 
+    /**
+     * Matches a default constructor, i.e. a constructor without arguments.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher that matches a default constructor.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isDefaultConstructor() {
+        return isConstructor().and(takesArguments(0));
+    }
+
+    /**
+     * Only matches the {@link Object#finalize()} method if it was not overridden.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher that only matches a non-overridden {@link Object#finalize()} method.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isDefaultFinalizer() {
         return isFinalizer().and(isDeclaredBy(Object.class));
     }
 
+    /**
+     * Only matches the {@link Object#finalize()} method, even if it was overridden.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher that only matches the {@link Object#finalize()} method.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isFinalizer() {
         return named("finalize").and(takesArguments(0)).and(returns(void.class));
     }
 
+    /**
+     * Only matches the {@link Object#toString()} method, also if it was overridden.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher that only matches the {@link Object#toString()} method.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isHashCode() {
         return named("hashCode").and(takesArguments(0)).and(returns(int.class));
     }
 
+    /**
+     * Only matches the {@link Object#equals(Object)} method, also if it was overridden.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher that only matches the {@link Object#equals(Object)} method.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isEquals() {
         return named("equals").and(takesArguments(Object.class)).and(returns(boolean.class));
     }
 
+    /**
+     * Only matches the {@link Object#clone()} method, also if it was overridden.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher that only matches the {@link Object#clone()} method.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isClone() {
+        return named("clone").and(takesArguments(0)).and(returns(Object.class));
+    }
+
+    /**
+     * Only matches the {@link Object#toString()} method, also if it was overridden.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher that only matches the {@link Object#toString()} method.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isToString() {
         return named("toString").and(takesArguments(0)).and(returns(String.class));
     }
 
+    /**
+     * Matches any Java bean setter method.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher that matches any setter method.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isSetter() {
         return nameStartsWith("set").and(takesArguments(1)).and(returns(void.class));
     }
 
+    /**
+     * Matches any Java bean setter method which takes an argument the given type.
+     *
+     * @param type The required setter type.
+     * @param <T>  The type of the matched object.
+     * @return A matcher that matches any setter method.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isSetter(Class<?> type) {
         return isSetter(new TypeDescription.ForLoadedType(nonNull(type)));
     }
 
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> isSetter(TypeDescription type) {
-        return isSetter().and(takesArguments(type));
+    /**
+     * Matches any Java bean setter method which takes an argument the given type.
+     *
+     * @param typeDescription The required setter type.
+     * @param <T>             The type of the matched object.
+     * @return A matcher that matches a setter method with the specified argument type.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isSetter(TypeDescription typeDescription) {
+        return isSetter(is(nonVoid(typeDescription)));
     }
 
+    /**
+     * Matches any Java bean setter method which takes an argument that matches the supplied matcher.
+     *
+     * @param matcher A matcher to be allied to a setter method's argument type.
+     * @param <T>     The type of the matched object.
+     * @return A matcher that matches a setter method with an argument type that matches the supplied matcher.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isSetter(ElementMatcher<? super TypeDescription> matcher) {
+        return isSetter().and(takesArguments(new CollectionOneToOneMatcher<TypeDescription>(Collections.singletonList(nonNull(matcher)))));
+    }
+
+    /**
+     * Matches any Java bean getter method.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher that matches any getter method.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter() {
         return takesArguments(0).and(not(returns(void.class))).and(nameStartsWith("get")
                 .or(nameStartsWith("is").and(returns(anyOf(boolean.class, Boolean.class)))));
     }
 
+    /**
+     * Matches any Java bean getter method which returns the given type.
+     *
+     * @param type The required getter type.
+     * @param <T>  The type of the matched object.
+     * @return A matcher that matches a getter method with the given type.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter(Class<?> type) {
         return isGetter(new TypeDescription.ForLoadedType(nonNull(type)));
     }
 
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter(TypeDescription type) {
-        return isGetter().and(returns(type));
+    /**
+     * Matches any Java bean getter method which returns the given type.
+     *
+     * @param typeDescription The required getter type.
+     * @param <T>             The type of the matched object.
+     * @return A matcher that matches a getter method with the given type.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter(TypeDescription typeDescription) {
+        return isGetter(is(nonVoid(typeDescription)));
     }
 
+    /**
+     * Matches any Java bean getter method which returns an value with a type matches the supplied matcher.
+     *
+     * @param matcher A matcher to be allied to a getter method's argument type.
+     * @param <T>     The type of the matched object.
+     * @return A matcher that matches a getter method with a return type that matches the supplied matcher.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter(ElementMatcher<? super TypeDescription> matcher) {
+        return isGetter().and(returns(nonNull(matcher)));
+    }
+
+    /**
+     * Matches a <i>specialized</i> version of a given method. This method is characterized by an identical name and
+     * by a return type that is a sub type of the given method's return type and by parameter types that are sub types
+     * of the the given method's parameter types.
+     *
+     * @param methodDescription The method description to match.
+     * @param <T>               The type of the matched object.
+     * @return A matcher that matches a specialized version of the given method.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isSpecializationOf(MethodDescription methodDescription) {
         TypeList parameterTypes = methodDescription.getParameterTypes();
         List<ElementMatcher<TypeDescription>> matchers = new ArrayList<ElementMatcher<TypeDescription>>(parameterTypes.size());
@@ -711,50 +1033,116 @@ public final class ElementMatchers {
                 .and(takesArguments(new CollectionOneToOneMatcher<TypeDescription>(matchers)));
     }
 
-    public static <T extends TypeDescription> ElementMatcher.Junction<T> is(Class<?> type) {
-        return is(new TypeDescription.ForLoadedType(nonNull(type)));
-    }
-
-    public static <T extends TypeDescription> ElementMatcher.Junction<T> is(TypeDescription typeDescription) {
-        return new EqualityMatcher<T>(nonNull(typeDescription));
-    }
-
+    /**
+     * Matches any type description that is a subtype of the given type.
+     *
+     * @param type The type to be checked being a super type of the matched type.
+     * @param <T>  The type of the matched object.
+     * @return A matcher that matches any type description that represents a sub type of the given type.
+     */
     public static <T extends TypeDescription> ElementMatcher.Junction<T> isSubTypeOf(Class<?> type) {
         return isSubTypeOf(new TypeDescription.ForLoadedType(nonNull(type)));
     }
 
+    /**
+     * Matches any type description that is a subtype of the given type.
+     *
+     * @param typeDescription The type to be checked being a super type of the matched type.
+     * @param <T>             The type of the matched object.
+     * @return A matcher that matches any type description that represents a sub type of the given type.
+     */
     public static <T extends TypeDescription> ElementMatcher.Junction<T> isSubTypeOf(TypeDescription typeDescription) {
         return new SubTypeMatcher<T>(nonNull(typeDescription));
     }
 
+    /**
+     * Matches any type description that is a super type of the given type.
+     *
+     * @param type The type to be checked being a subtype of the matched type.
+     * @param <T>  The type of the matched object.
+     * @return A matcher that matches any type description that represents a super type of the given type.
+     */
     public static <T extends TypeDescription> ElementMatcher.Junction<T> isSuperTypeOf(Class<?> type) {
         return isSuperTypeOf(new TypeDescription.ForLoadedType(nonNull(type)));
     }
 
+    /**
+     * Matches any type description that is a super type of the given type.
+     *
+     * @param typeDescription The type to be checked being a subtype of the matched type.
+     * @param <T>             The type of the matched object.
+     * @return A matcher that matches any type description that represents a super type of the given type.
+     */
     public static <T extends TypeDescription> ElementMatcher.Junction<T> isSuperTypeOf(TypeDescription typeDescription) {
         return new SuperTypeMatcher<T>(nonNull(typeDescription));
     }
 
+    /**
+     * Matches any annotations by their type on a type that declared these annotations or inherited them from its
+     * super classes.
+     *
+     * @param type The annotation type to be matched.
+     * @param <T>  The type of the matched object.
+     * @return A matcher that matches any inherited annotation by their type.
+     */
     public static <T extends TypeDescription> ElementMatcher.Junction<T> inheritsAnnotation(Class<?> type) {
         return inheritsAnnotation(new TypeDescription.ForLoadedType(nonNull(type)));
     }
 
+    /**
+     * Matches any annotations by their type on a type that declared these annotations or inherited them from its
+     * super classes.
+     *
+     * @param typeDescription The annotation type to be matched.
+     * @param <T>             The type of the matched object.
+     * @return A matcher that matches any inherited annotation by their type.
+     */
     public static <T extends TypeDescription> ElementMatcher.Junction<T> inheritsAnnotation(TypeDescription typeDescription) {
         return inheritsAnnotation(is(typeDescription));
     }
 
+    /**
+     * Matches any annotations by a given matcher on a type that declared these annotations or inherited them from its
+     * super classes.
+     *
+     * @param matcher A matcher to apply onto the inherited annotations.
+     * @param <T>     The type of the matched object.
+     * @return A matcher that matches any inherited annotation by a given matcher.
+     */
     public static <T extends TypeDescription> ElementMatcher.Junction<T> inheritsAnnotation(ElementMatcher<? super TypeDescription> matcher) {
         return hasAnnotation(new AnnotationTypeMatcher<AnnotationDescription>(nonNull(matcher)));
     }
 
-    public static <T extends TypeDescription> ElementMatcher.Junction<T> hasAnnotation(ElementMatcher<? super AnnotationDescription> annotationDescription) {
-        return new InheritedAnnotationMatcher<T>(new CollectionItemMatcher<AnnotationDescription>(nonNull(annotationDescription)));
+    /**
+     * Matches a list of annotations by a given matcher on a type that declared these annotations or inherited them
+     * from its super classes.
+     *
+     * @param matcher A matcher to apply onto a list of inherited annotations.
+     * @param <T>     The type of the matched object.
+     * @return A matcher that matches a list of inherited annotation by a given matcher.
+     */
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> hasAnnotation(ElementMatcher<? super AnnotationDescription> matcher) {
+        return new InheritedAnnotationMatcher<T>(new CollectionItemMatcher<AnnotationDescription>(nonNull(matcher)));
     }
 
+    /**
+     * Matches a type by a another matcher that is applied on any of its declared fields.
+     *
+     * @param fieldMatcher The matcher that is applied onto each declared field.
+     * @param <T>          The type of the matched object.
+     * @return A matcher that matches any type where another matcher is matched positively on at least on declared field.
+     */
     public static <T extends TypeDescription> ElementMatcher.Junction<T> declaresField(ElementMatcher<? super FieldDescription> fieldMatcher) {
         return new DeclaringFieldMatcher<T>(new CollectionItemMatcher<FieldDescription>(nonNull(fieldMatcher)));
     }
 
+    /**
+     * Matches a type by a another matcher that is applied on any of its declared methods.
+     *
+     * @param methodMatcher The matcher that is applied onto each declared method.
+     * @param <T>           The type of the matched object.
+     * @return A matcher that matches any type where another matcher is matched positively on at least on declared methods.
+     */
     public static <T extends TypeDescription> ElementMatcher.Junction<T> declaresMethod(ElementMatcher<? super MethodDescription> methodMatcher) {
         return new DeclaringMethodMatcher<T>(new CollectionItemMatcher<MethodDescription>(nonNull(methodMatcher)));
     }

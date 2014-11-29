@@ -114,7 +114,7 @@ public class InstrumentationContextDefaultTest {
         when(entry.getByteCodeAppender()).thenReturn(byteCodeAppender);
         when(byteCodeAppender.apply(any(MethodVisitor.class), any(Instrumentation.Context.class), any(MethodDescription.class)))
                 .thenReturn(new ByteCodeAppender.Size(0, 0));
-        when(injectedCode.getInjectedCode()).thenReturn(injectedCodeAppender);
+        when(injectedCode.getStackManipulation()).thenReturn(injectedCodeAppender);
         when(injectedCodeAppender.apply(any(MethodVisitor.class), any(Instrumentation.Context.class)))
                 .thenReturn(new StackManipulation.Size(0, 0));
         when(typeInitializer.getStackManipulation()).thenReturn(typeInitializerAppender);
@@ -313,7 +313,7 @@ public class InstrumentationContextDefaultTest {
         verify(secondFieldValue).apply(methodVisitor, instrumentationContext);
         verify(methodVisitor).visitFieldInsn(eq(Opcodes.PUTSTATIC), eq(BAZ), any(String.class), eq(QUX));
         verify(injectedCode).isDefined();
-        verify(injectedCode).getInjectedCode();
+        verify(injectedCode).getStackManipulation();
         verify(injectedCodeAppender).apply(methodVisitor, instrumentationContext);
         verifyNoMoreInteractions(injectedCode);
         verify(typeInitializer).isDefined();

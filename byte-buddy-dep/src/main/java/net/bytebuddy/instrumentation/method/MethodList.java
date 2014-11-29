@@ -34,8 +34,18 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
          * @param type The type to be represented by this method list.
          */
         public ForLoadedType(Class<?> type) {
-            methods = type.getDeclaredMethods();
             constructors = type.getDeclaredConstructors();
+            methods = type.getDeclaredMethods();
+        }
+
+        /**
+         *
+         * @param methods
+         * @param constructors
+         */
+        public ForLoadedType(Constructor<?>[] constructors, Method[] methods) {
+            this.constructors = constructors;
+            this.methods = methods;
         }
 
         @Override

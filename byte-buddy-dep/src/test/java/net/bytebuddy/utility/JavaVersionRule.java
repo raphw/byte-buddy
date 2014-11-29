@@ -13,9 +13,12 @@ import java.util.logging.Logger;
 
 public class JavaVersionRule implements MethodRule {
 
+    private final int requiredVersion;
+
     private final boolean supportsVersion;
 
     public JavaVersionRule(int javaVersion) {
+        requiredVersion = javaVersion;
         supportsVersion = ClassFileVersion.forCurrentJavaVersion().compareTo(ClassFileVersion.forKnownJavaVersion(javaVersion)) >= 0;
     }
 
@@ -32,11 +35,11 @@ public class JavaVersionRule implements MethodRule {
         /* empty */
     }
 
-    private static class NoOpStatement extends Statement {
+    private class NoOpStatement extends Statement {
 
         @Override
         public void evaluate() throws Throwable {
-            Logger.getAnonymousLogger().warning("Ignored test case that requires a newer JVM version");
+            Logger.getAnonymousLogger().warning("Ignored test case that requires a Java version " + requiredVersion);
         }
     }
 }

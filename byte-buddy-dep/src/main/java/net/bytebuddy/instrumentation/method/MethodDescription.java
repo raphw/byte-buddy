@@ -258,7 +258,7 @@ public interface MethodDescription extends ByteCodeElement {
 
         @Override
         public boolean isOverridable() {
-            return !(isConstructor() || isFinal() || isPrivate() || isStatic() || getDeclaringType().isFinal());
+            return !(isConstructor() || isFinal() || isPrivate() || isStatic());
         }
 
         @Override

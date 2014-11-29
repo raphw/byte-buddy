@@ -576,7 +576,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public StackManipulation getInjectedCode() {
+                    public StackManipulation getStackManipulation() {
                         return MethodInvocation.invoke(injectorProxyMethod);
                     }
 

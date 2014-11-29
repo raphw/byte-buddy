@@ -545,7 +545,7 @@ public interface Instrumentation {
                  *
                  * @return A stack manipulation that represents the injected code.
                  */
-                StackManipulation getInjectedCode();
+                StackManipulation getStackManipulation();
 
                 /**
                  * Checks if there is actually code defined to be injected.
@@ -565,7 +565,7 @@ public interface Instrumentation {
                     INSTANCE;
 
                     @Override
-                    public StackManipulation getInjectedCode() {
+                    public StackManipulation getStackManipulation() {
                         throw new IllegalStateException();
                     }
 
@@ -1000,7 +1000,7 @@ public interface Instrumentation {
                         return originalEntry;
                     }
                     StackManipulation manipulation = injectedCode.isDefined()
-                            ? injectedCode.getInjectedCode()
+                            ? injectedCode.getStackManipulation()
                             : StackManipulation.LegalTrivial.INSTANCE;
                     manipulation = typeInitializer.isDefined()
                             ? new StackManipulation.Compound(typeInitializer.getStackManipulation(), manipulation)
