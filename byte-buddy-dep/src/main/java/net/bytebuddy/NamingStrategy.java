@@ -218,6 +218,92 @@ public interface NamingStrategy {
     }
 
     /**
+     * An unbound {@link net.bytebuddy.NamingStrategy} where the actual naming strategy is still to be determined
+     * in dependency of whether a type is to be subclasses, redefined or rebased.
+     */
+    static interface Unbound {
+
+        /**
+         * Returns a naming strategy for subclassing a type.
+         *
+         * @param typeDescription The type that the user specified to be subclasses.
+         * @return A naming strategy for naming the generated subclass.
+         */
+        NamingStrategy subclass(TypeDescription typeDescription);
+
+        /**
+         * Returns a naming strategy for redefining a type.
+         *
+         * @param typeDescription The type that the user specified to be subclasses.
+         * @return A naming strategy for naming the redefined class.
+         */
+        NamingStrategy redefine(TypeDescription typeDescription);
+
+        /**
+         * Returns a naming strategy for rebasing a type.
+         *
+         * @param typeDescription The type that the user specified to be subclasses.
+         * @return A naming strategy for naming the rebased class.
+         */
+        NamingStrategy rebase(TypeDescription typeDescription);
+
+        /**
+         * A default unbound {@link net.bytebuddy.NamingStrategy} where rebased or redefined classes keep
+         * their original name and where subclasses are named using a {@link net.bytebuddy.NamingStrategy.SuffixingRandom}
+         * strategy.
+         */
+        static class Default implements Unbound {
+
+            /**
+             * The suffix to apply for generated subclasses.
+             */
+            private final String suffix;
+
+            /**
+             * Creates a default unbound naming strategy.
+             *
+             * @param suffix The suffix to apply for generated subclasses
+             */
+            public Default(String suffix) {
+                this.suffix = suffix;
+            }
+
+            @Override
+            public NamingStrategy subclass(TypeDescription typeDescription) {
+                return new SuffixingRandom(suffix, new SuffixingRandom.BaseNameResolver.ForGivenType(typeDescription));
+            }
+
+            @Override
+            public NamingStrategy redefine(TypeDescription typeDescription) {
+                return new Fixed(typeDescription.getName());
+            }
+
+            @Override
+            public NamingStrategy rebase(TypeDescription typeDescription) {
+                return new Fixed(typeDescription.getName());
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && suffix.equals(((Default) other).suffix);
+            }
+
+            @Override
+            public int hashCode() {
+                return suffix.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "NamingStrategy.Unbound.Default{" +
+                        "suffix='" + suffix + '\'' +
+                        '}';
+            }
+        }
+    }
+
+    /**
      * A naming strategy that creates a name by concatenating:
      * <ol>
      * <li>The super classes package and name</li>
@@ -241,7 +327,7 @@ public interface NamingStrategy {
          * The default package for defining types that are renamed to not be contained in the
          * {@link net.bytebuddy.NamingStrategy.SuffixingRandom#JAVA_PACKAGE} package.
          */
-        private static final String BYTE_BUDDY_RENAME_PACKAGE = "net.bytebuddy.renamed";
+        public static final String BYTE_BUDDY_RENAME_PACKAGE = "net.bytebuddy.renamed";
 
         /**
          * The suffix to attach to a super type name.
@@ -259,13 +345,23 @@ public interface NamingStrategy {
         private final RandomString randomString;
 
         /**
+         * A resolver for the base name for naming the unnamed type.
+         */
+        private final BaseNameResolver baseNameResolver;
+
+        /**
          * Creates an immutable naming strategy with a given suffix but moves types that subclass types within
-         * the {@code java.lang} package into ByteBuddy's package namespace.
+         * the {@code java.lang} package into ByteBuddy's package namespace. All names are derived from the
+         * unnamed type's super type.
          *
          * @param suffix The suffix for the generated class.
          */
         public SuffixingRandom(String suffix) {
-            this(suffix, BYTE_BUDDY_RENAME_PACKAGE);
+            this(suffix, BaseNameResolver.ForUnnamedType.INSTANCE, BYTE_BUDDY_RENAME_PACKAGE);
+        }
+
+        public SuffixingRandom(String suffix, BaseNameResolver baseNameResolver) {
+            this(suffix, baseNameResolver, BYTE_BUDDY_RENAME_PACKAGE);
         }
 
         /**
@@ -276,15 +372,16 @@ public interface NamingStrategy {
          * @param javaLangPackagePrefix The fallback namespace for type's that subclass types within the
          *                              {@code java.lang} namespace.
          */
-        public SuffixingRandom(String suffix, String javaLangPackagePrefix) {
+        public SuffixingRandom(String suffix, BaseNameResolver baseNameResolver, String javaLangPackagePrefix) {
             this.suffix = suffix;
+            this.baseNameResolver = baseNameResolver;
             this.javaLangPackagePrefix = javaLangPackagePrefix;
             randomString = new RandomString();
         }
 
         @Override
         public String name(UnnamedType unnamedType) {
-            String superClassName = unnamedType.getSuperClass().getName();
+            String superClassName = baseNameResolver.resolve(unnamedType);
             if (superClassName.startsWith(JAVA_PACKAGE) || unnamedType.getSuperClass().isSealed()) {
                 superClassName = javaLangPackagePrefix + "." + superClassName;
             }
@@ -297,13 +394,15 @@ public interface NamingStrategy {
             if (other == null || getClass() != other.getClass()) return false;
             SuffixingRandom that = (SuffixingRandom) other;
             return javaLangPackagePrefix.equals(that.javaLangPackagePrefix)
-                    && suffix.equals(that.suffix);
+                    && suffix.equals(that.suffix)
+                    && baseNameResolver.equals(that.baseNameResolver);
         }
 
         @Override
         public int hashCode() {
             int result = suffix.hashCode();
             result = 31 * result + javaLangPackagePrefix.hashCode();
+            result = 31 * result + baseNameResolver.hashCode();
             return result;
         }
 
@@ -312,8 +411,82 @@ public interface NamingStrategy {
             return "NamingStrategy.SuffixingRandom{" +
                     "suffix='" + suffix + '\'' +
                     ", javaLangPackagePrefix='" + javaLangPackagePrefix + '\'' +
+                    ", baseNameResolver=" + baseNameResolver +
                     ", randomString=" + randomString +
                     '}';
+        }
+
+        /**
+         * A base name resolver is responsible for resolving a name onto which the suffix is appended.
+         */
+        public static interface BaseNameResolver {
+
+            /**
+             * Returns the resolved name.
+             *
+             * @param unnamedType The unnamed type which is to be named.
+             * @return The resolved name.
+             */
+            String resolve(UnnamedType unnamedType);
+
+            /**
+             * Uses the unnamed type's super type's name as the resolved name.
+             */
+            static enum ForUnnamedType implements BaseNameResolver {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public String resolve(UnnamedType unnamedType) {
+                    return unnamedType.getSuperClass().getName();
+                }
+            }
+
+            /**
+             * Uses a specific type's name as the resolved name.
+             */
+            static class ForGivenType implements BaseNameResolver {
+
+                /**
+                 * The type description which represents the resolved name.
+                 */
+                private final TypeDescription typeDescription;
+
+                /**
+                 * Creates a new base name resolver that resolves a using the name of a given type.
+                 *
+                 * @param typeDescription The type description which represents the resolved name.
+                 */
+                public ForGivenType(TypeDescription typeDescription) {
+                    this.typeDescription = typeDescription;
+                }
+
+                @Override
+                public String resolve(UnnamedType unnamedType) {
+                    return typeDescription.getName();
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && typeDescription.equals(((ForGivenType) other).typeDescription);
+                }
+
+                @Override
+                public int hashCode() {
+                    return typeDescription.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "NamingStrategy.SuffixingRandom.BaseNameResolver.ForGivenType{" +
+                            "typeDescription=" + typeDescription +
+                            '}';
+                }
+            }
         }
     }
 

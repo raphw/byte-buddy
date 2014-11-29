@@ -24,6 +24,9 @@ public class NamingStrategyTest {
     @Mock
     private NamingStrategy.UnnamedType unnamedType;
 
+    @Mock
+    private NamingStrategy.SuffixingRandom.BaseNameResolver baseNameResolver;
+
     @Test
     public void testSuffixingRandomNonConflictingPackage() throws Exception {
         when(unnamedType.getSuperClass()).thenReturn(new TypeDescription.ForLoadedType(MethodVisitor.class));
@@ -35,16 +38,18 @@ public class NamingStrategyTest {
 
     @Test
     public void testSuffixingRandomConflictingPackage() throws Exception {
-        when(unnamedType.getSuperClass()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
-        NamingStrategy namingStrategy = new NamingStrategy.SuffixingRandom(FOO, BAR);
+        when(baseNameResolver.resolve(unnamedType)).thenReturn(Object.class.getName());
+        NamingStrategy namingStrategy = new NamingStrategy.SuffixingRandom(FOO, baseNameResolver, BAR);
         assertThat(namingStrategy.name(unnamedType), startsWith(BAR + "." + Object.class.getName() + "$" + FOO + "$"));
-        verify(unnamedType, atLeast(1)).getSuperClass();
-        verifyNoMoreInteractions(unnamedType);
+        verifyZeroInteractions(unnamedType);
+        verify(baseNameResolver).resolve(unnamedType);
+        verifyNoMoreInteractions(baseNameResolver);
     }
 
     @Test
-    public void testSuffixingRandomEqualsHashCode() throws Exception {
+    public void testSuffixingRandomObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(NamingStrategy.SuffixingRandom.class).apply();
+        ObjectPropertyAssertion.of(NamingStrategy.SuffixingRandom.BaseNameResolver.ForGivenType.class).apply();
     }
 
     @Test
@@ -55,7 +60,7 @@ public class NamingStrategyTest {
     }
 
     @Test
-    public void testFixedEqualsHashCode() throws Exception {
+    public void testFixedObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(NamingStrategy.Fixed.class).apply();
     }
 

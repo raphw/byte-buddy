@@ -45,7 +45,7 @@ public class ByteBuddy {
     /**
      * The default prefix for the default {@link net.bytebuddy.NamingStrategy}.
      */
-    private static final String BYTE_BUDDY_DEFAULT_PREFIX = "ByteBuddy";
+    public static final String BYTE_BUDDY_DEFAULT_PREFIX = "ByteBuddy";
 
     /**
      * The class file version of the current configuration.
@@ -55,7 +55,7 @@ public class ByteBuddy {
     /**
      * The naming strategy of the current configuration.
      */
-    protected final NamingStrategy namingStrategy;
+    protected final NamingStrategy.Unbound namingStrategy;
 
     /**
      * A list of interface types to be implemented by any class that is implemented by the current configuration.
@@ -124,7 +124,7 @@ public class ByteBuddy {
      */
     public ByteBuddy(ClassFileVersion classFileVersion) {
         this(nonNull(classFileVersion),
-                new NamingStrategy.SuffixingRandom(BYTE_BUDDY_DEFAULT_PREFIX),
+                new NamingStrategy.Unbound.Default(BYTE_BUDDY_DEFAULT_PREFIX),
                 new TypeList.Empty(),
                 isDefaultFinalizer().or(isSynthetic().and(not(isVisibilityBridge()))),
                 BridgeMethodResolver.Simple.Factory.FAIL_ON_REQUEST,
@@ -159,7 +159,7 @@ public class ByteBuddy {
      *                                              method definition or instrumentation.
      */
     protected ByteBuddy(ClassFileVersion classFileVersion,
-                        NamingStrategy namingStrategy,
+                        NamingStrategy.Unbound namingStrategy,
                         List<TypeDescription> interfaceTypes,
                         ElementMatcher<? super MethodDescription> ignoredMethods,
                         BridgeMethodResolver.Factory bridgeMethodResolverFactory,
@@ -198,7 +198,7 @@ public class ByteBuddy {
      *
      * @return The naming strategy for the current configuration.
      */
-    public NamingStrategy getNamingStrategy() {
+    public NamingStrategy.Unbound getNamingStrategy() {
         return namingStrategy;
     }
 
@@ -350,7 +350,7 @@ public class ByteBuddy {
             interfaceTypes = join(superType, interfaceTypes);
         }
         return new SubclassDynamicTypeBuilder<T>(classFileVersion,
-                namingStrategy,
+                nonNull(namingStrategy.subclass(superType)),
                 actualSuperType,
                 interfaceTypes,
                 modifiers.resolve(superType.getModifiers() & ~TypeManifestation.INTERFACE.getMask()),
@@ -443,7 +443,7 @@ public class ByteBuddy {
      */
     public <T> DynamicType.Builder<T> redefine(TypeDescription levelType, ClassFileLocator classFileLocator) {
         return new InlineDynamicTypeBuilder<T>(classFileVersion,
-                new NamingStrategy.Fixed(levelType.getName()),
+                nonNull(namingStrategy.redefine(levelType)),
                 nonNull(levelType),
                 interfaceTypes,
                 modifiers.resolve(levelType.getModifiers()),
@@ -593,7 +593,7 @@ public class ByteBuddy {
                                              ClassFileLocator classFileLocator,
                                              MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
         return new InlineDynamicTypeBuilder<T>(classFileVersion,
-                new NamingStrategy.Fixed(levelType.getName()),
+                nonNull(namingStrategy.rebase(levelType)),
                 levelType,
                 interfaceTypes,
                 modifiers.resolve(levelType.getModifiers()),
@@ -637,7 +637,7 @@ public class ByteBuddy {
      * @param namingStrategy The class format version to define for this configuration.
      * @return A new configuration that represents this configuration with the given class format version.
      */
-    public ByteBuddy withNamingStrategy(NamingStrategy namingStrategy) {
+    public ByteBuddy withNamingStrategy(NamingStrategy.Unbound namingStrategy) {
         return new ByteBuddy(classFileVersion,
                 nonNull(namingStrategy),
                 interfaceTypes,
@@ -1168,7 +1168,7 @@ public class ByteBuddy {
          *                                              current method selection.
          */
         protected MethodAnnotationTarget(ClassFileVersion classFileVersion,
-                                         NamingStrategy namingStrategy,
+                                         NamingStrategy.Unbound namingStrategy,
                                          List<TypeDescription> interfaceTypes,
                                          ElementMatcher<? super MethodDescription> ignoredMethods,
                                          BridgeMethodResolver.Factory bridgeMethodResolverFactory,
@@ -1256,7 +1256,7 @@ public class ByteBuddy {
         }
 
         @Override
-        public NamingStrategy getNamingStrategy() {
+        public NamingStrategy.Unbound getNamingStrategy() {
             return materialize().getNamingStrategy();
         }
 
@@ -1361,7 +1361,7 @@ public class ByteBuddy {
         }
 
         @Override
-        public ByteBuddy withNamingStrategy(NamingStrategy namingStrategy) {
+        public ByteBuddy withNamingStrategy(NamingStrategy.Unbound namingStrategy) {
             return materialize().withNamingStrategy(namingStrategy);
         }
 
@@ -1487,7 +1487,7 @@ public class ByteBuddy {
          * @param methodMatcher                         The method matcher representing the current method selection.
          */
         protected OptionalMethodInterception(ClassFileVersion classFileVersion,
-                                             NamingStrategy namingStrategy,
+                                             NamingStrategy.Unbound namingStrategy,
                                              List<TypeDescription> interfaceTypes,
                                              ElementMatcher<? super MethodDescription> ignoredMethods,
                                              BridgeMethodResolver.Factory bridgeMethodResolverFactory,

@@ -103,8 +103,8 @@ public class ByteBuddyTutorialExamplesTest {
     @Test
     public void testTutorialGettingStartedNamingStrategy() throws Exception {
         DynamicType.Unloaded<?> dynamicType = new ByteBuddy()
-                .withNamingStrategy(new GettingStartedNamingStrategy())
                 .subclass(Object.class)
+                .name(new GettingStartedNamingStrategy()) // TODO: change tutorial
                 .make();
         assertThat(dynamicType, notNullValue());
         Class<?> type = dynamicType.load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER).getLoaded();

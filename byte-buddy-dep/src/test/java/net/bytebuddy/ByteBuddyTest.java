@@ -53,7 +53,7 @@ public class ByteBuddyTest {
     @Mock
     private ModifierContributor.ForType modifierContributorForType;
     @Mock
-    private NamingStrategy namingStrategy;
+    private NamingStrategy.Unbound namingStrategy;
     @Mock
     private Instrumentation instrumentation;
 

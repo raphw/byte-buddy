@@ -193,6 +193,14 @@ public interface DynamicType {
         Builder<T> name(String name);
 
         /**
+         * Names the currently created dynamic type by the given naming strategy.
+         *
+         * @param namingStrategy The naming strategy to apply.
+         * @return A builder that creates a type by applying the given naming strategy.
+         */
+        Builder<T> name(NamingStrategy namingStrategy);
+
+        /**
          * Defines modifiers for the created dynamic type.
          *
          * @param modifier A collection of modifiers to be reflected by the created dynamic type.
@@ -962,6 +970,26 @@ public interface DynamicType {
             }
 
             @Override
+            public Builder<S> name(NamingStrategy namingStrategy) {
+                return materialize(classFileVersion,
+                        nonNull(namingStrategy),
+                        targetType,
+                        interfaceTypes,
+                        modifiers,
+                        attributeAppender,
+                        ignoredMethods,
+                        bridgeMethodResolverFactory,
+                        classVisitorWrapperChain,
+                        fieldRegistry,
+                        methodRegistry,
+                        methodLookupEngineFactory,
+                        defaultFieldAttributeAppenderFactory,
+                        defaultMethodAttributeAppenderFactory,
+                        fieldTokens,
+                        methodTokens);
+            }
+
+            @Override
             public Builder<S> modifiers(ModifierContributor.ForType... modifier) {
                 return materialize(classFileVersion,
                         namingStrategy,
@@ -1538,6 +1566,11 @@ public interface DynamicType {
                 @Override
                 public Builder<U> name(String name) {
                     return materialize().name(name);
+                }
+
+                @Override
+                public Builder<U> name(NamingStrategy namingStrategy) {
+                    return materialize().name(namingStrategy);
                 }
 
                 @Override
