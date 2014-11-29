@@ -316,7 +316,7 @@ public interface AgentBuilder {
                                 for (Map.Entry<TypeDescription, byte[]> auxiliary : dynamicType.getRawAuxiliaryTypes().entrySet()) {
                                     ignoredTypes.add(auxiliary.getKey().getName());
                                     Class<?> type = injector.inject(auxiliary.getKey().getName(), auxiliary.getValue());
-                                    loadedTypeInitializers.get(auxiliary.getKey()).onLoad(type);
+                                    initializationStrategy.initialize(type, loadedTypeInitializers.get(auxiliary.getKey()));
                                 }
                             }
                             initializationStrategy.register(binaryTypeName,
@@ -507,6 +507,8 @@ public interface AgentBuilder {
 
         public static interface InitializationStrategy {
 
+            void initialize(Class<?> type, LoadedTypeInitializer loadedTypeInitializer);
+
             static class SelfInjection implements InitializationStrategy, net.bytebuddy.instrumentation.Instrumentation, ByteCodeAppender {
 
                 private final Nexus.Accessor accessor;
@@ -518,6 +520,11 @@ public interface AgentBuilder {
                 @Override
                 public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder) {
                     return builder.invokable(none()).intercept(this);
+                }
+
+                @Override
+                public void initialize(Class<?> type, LoadedTypeInitializer loadedTypeInitializer) {
+                    loadedTypeInitializer.onLoad(type);
                 }
 
                 @Override
@@ -670,9 +677,15 @@ public interface AgentBuilder {
                 INSTANCE;
 
                 @Override
+                public void initialize(Class<?> type, LoadedTypeInitializer loadedTypeInitializer) {
+                    /* do nothing */
+                }
+
+                @Override
                 public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder) {
                     return builder;
                 }
+
 
                 @Override
                 public void register(String name, ClassLoader classLoader, LoadedTypeInitializer loadedTypeInitializer) {
