@@ -10,20 +10,13 @@
             android:layout_height="wrap_content"
             android:text="@string/info"
             />
-
-    <TextView
-            android:id="@+id/no_dx_jar"
-            android:layout_marginTop="5pt"
-            android:textColor="@color/red"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/no_dx_jar"
-            />
     <Button
             android:id="@+id/run_test"
             android:layout_marginTop="10pt"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:paddingLeft="5pt"
+            android:paddingRight="5pt"
             android:text="@string/run_test"
             />
 </LinearLayout>

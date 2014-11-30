@@ -25,6 +25,10 @@
     <artifactId>byte-buddy-android</artifactId>
     <packaging>jar</packaging>
 
+    <properties>
+        <version.android.sdk.dx>1.7</version.android.sdk.dx>
+    </properties>
+
     <name>Byte Buddy for Android</name>
     <description>Byte Buddy Android allows for limited support of code generation on an Android runtime.</description>
 
@@ -44,6 +48,11 @@
             <groupId>com.google.android</groupId>
             <artifactId>android</artifactId>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.android.tools</groupId>
+            <artifactId>dx</artifactId>
+            <version>${version.android.sdk.dx}</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>

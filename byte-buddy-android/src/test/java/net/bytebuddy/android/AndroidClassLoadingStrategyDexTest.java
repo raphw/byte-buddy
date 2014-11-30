@@ -6,12 +6,9 @@ import net.bytebuddy.dynamic.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.FixedValue;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.test.utility.DexCompilerRule;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.MethodRule;
 
 import java.io.File;
 import java.util.Map;
@@ -25,9 +22,6 @@ import static org.junit.Assert.assertEquals;
 public class AndroidClassLoadingStrategyDexTest {
 
     private static final String FOO = "foo", TEMP = "tmp";
-
-    @Rule
-    public MethodRule dexCompilerRule = new DexCompilerRule();
 
     private File directory;
 
@@ -50,7 +44,6 @@ public class AndroidClassLoadingStrategyDexTest {
     }
 
     @Test
-    @DexCompilerRule.Enforce
     public void testStubbedClassLoading() throws Exception {
         ClassLoadingStrategy classLoadingStrategy = new AndroidClassLoadingStrategy(directory);
         Map<TypeDescription, Class<?>> map = classLoadingStrategy.load(getClass().getClassLoader(), dynamicType.getAllTypes());

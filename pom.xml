@@ -23,6 +23,7 @@
         <module>byte-buddy-benchmark</module>
         <module>byte-buddy-agent</module>
         <module>byte-buddy-android</module>
+        <module>byte-buddy-android-test</module>
     </modules>
 
     <properties>
@@ -37,9 +38,9 @@
         <cobertura.exclude.benchmark.runner>
             net/bytebuddy/benchmark/runner/**/*.class
         </cobertura.exclude.benchmark.runner>
-        <cobertura.exclude.android>
-            net/bytebuddy/android/**/*.class
-        </cobertura.exclude.android>
+        <cobertura.exclude.android.test>
+            net/bytebuddy/android/test/**/*.class
+        </cobertura.exclude.android.test>
         <distribution.bintray>https://api.bintray.com/maven/raphw/maven/ByteBuddy</distribution.bintray>
         <shade.source>org.objectweb.asm</shade.source>
         <shade.target>net.bytebuddy.jar.asm</shade.target>
@@ -155,7 +156,7 @@
                             <exclude>${cobertura.exclude.benchmark.generated}</exclude>
                             <exclude>${cobertura.exclude.benchmark.jmh}</exclude>
                             <exclude>${cobertura.exclude.benchmark.runner}</exclude>
-                            <exclude>${cobertura.exclude.android}</exclude>
+                            <exclude>${cobertura.exclude.android.test}</exclude>
                         </excludes>
                     </instrumentation>
                     <formats>
@@ -313,17 +314,6 @@
                     </plugin>
                 </plugins>
             </build>
-        </profile>
-        <profile>
-            <id>android</id>
-            <modules>
-                <module>byte-buddy</module>
-                <module>byte-buddy-dep</module>
-                <module>byte-buddy-benchmark</module>
-                <module>byte-buddy-agent</module>
-                <module>byte-buddy-android</module>
-                <module>byte-buddy-android-test</module>
-            </modules>
         </profile>
     </profiles>
 

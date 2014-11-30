@@ -2,15 +2,9 @@
 <resources>
     <string name="app_name">Byte Buddy Android test</string>
     <string name="info">
-        This application creates several subclasses using Byte Buddy and loads these classes using Byte Buddy\'s
-        class loading strategy for Android. For this to work, one needs to manually add the Android SDK\'s dex
-        compiler \'dex.jar\' before deploying this application. Because of the SDK\'s license agreement, it is not
-        permitted to distribute this dex compiler outside of the SDK. It is the responsibility of the user of this
-        application to fulfill this license agreement.
-    </string>
-    <string name="no_dx_jar">
-        It seems like the required \'dx.jar\' was not added to the application. Please redeploy this application
-        after adding this jar file.
+        This application creates a runtime subclass using Byte Buddy and loads the generated classes using Byte
+        Buddy\'s class loading strategy for Android. For this, it uses version 1.7 of the Android SDK\'s dex
+        compiler as it is available from Maven Central.
     </string>
     <string name="run_test">Run test</string>
 </resources>

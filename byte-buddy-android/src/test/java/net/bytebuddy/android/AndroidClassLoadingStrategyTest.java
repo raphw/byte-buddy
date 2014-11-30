@@ -1,5 +1,7 @@
 package net.bytebuddy.android;
 
+import com.android.dx.dex.DexOptions;
+import com.android.dx.dex.file.DexFile;
 import dalvik.system.DexClassLoader;
 import net.bytebuddy.dynamic.ClassLoadingStrategy;
 import net.bytebuddy.instrumentation.type.TypeDescription;
@@ -13,7 +15,7 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
 import java.io.File;
-import java.io.Writer;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -56,7 +58,7 @@ public class AndroidClassLoadingStrategyTest {
     public void testProcessing() throws Exception {
         AndroidClassLoadingStrategy.DexProcessor dexProcessor = mock(AndroidClassLoadingStrategy.DexProcessor.class);
         AndroidClassLoadingStrategy.DexProcessor.Process process = mock(AndroidClassLoadingStrategy.DexProcessor.Process.class);
-        when(dexProcessor.createNewDexFile()).thenReturn(process);
+        when(dexProcessor.makeDexFile()).thenReturn(process);
         ClassLoadingStrategy classLoadingStrategy = new AndroidClassLoadingStrategy(directory, dexProcessor);
         Map<TypeDescription, byte[]> unloaded = new HashMap<TypeDescription, byte[]>();
         unloaded.put(first, QUX);
@@ -65,11 +67,11 @@ public class AndroidClassLoadingStrategyTest {
         assertThat(loaded.size(), is(2));
         assertEquals(DexClassLoader.Target.class, loaded.get(first));
         assertEquals(DexClassLoader.Target.class, loaded.get(second));
-        verify(dexProcessor).createNewDexFile();
+        verify(dexProcessor).makeDexFile();
         verifyNoMoreInteractions(dexProcessor);
         verify(process).register(FOO, QUX);
         verify(process).register(BAR, BAZ);
-        verify(process).store(any(Writer.class));
+        verify(process).store(any(OutputStream.class));
         verifyNoMoreInteractions(process);
     }
 
@@ -84,9 +86,12 @@ public class AndroidClassLoadingStrategyTest {
         ObjectPropertyAssertion.of(AndroidClassLoadingStrategy.class)
                 .apply(new AndroidClassLoadingStrategy(directory, mock(AndroidClassLoadingStrategy.DexProcessor.class)));
         ObjectPropertyAssertion.of(AndroidClassLoadingStrategy.DexProcessor.class).apply();
-        ObjectPropertyAssertion.of(AndroidClassLoadingStrategy.DexProcessor.ForSdkCompiler.Process.class).apply();
-        ObjectPropertyAssertion.of(AndroidClassLoadingStrategy.DexProcessor.ForSdkCompiler.Handler.Default.class).apply();
-        ObjectPropertyAssertion.of(AndroidClassLoadingStrategy.DexProcessor.ForSdkCompiler.Handler.Exceptional.class).apply();
+        ObjectPropertyAssertion.of(AndroidClassLoadingStrategy.DexProcessor.ForSdkCompiler.Process.class).create(new ObjectPropertyAssertion.Creator<DexFile>() {
+            @Override
+            public DexFile create() {
+                return new DexFile(new DexOptions());
+            }
+        }).apply();
         ObjectPropertyAssertion.of(AndroidClassLoadingStrategy.DexCreator.class).apply();
         ObjectPropertyAssertion.of(AndroidClassLoadingStrategy.DexCreator.Creation.class).apply();
     }
