@@ -2,7 +2,7 @@ package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;

@@ -3,7 +3,7 @@ package net.bytebuddy.dynamic.scaffold.inline;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.utility.ToolsJarRule;
+import net.bytebuddy.test.utility.ToolsJarRule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;

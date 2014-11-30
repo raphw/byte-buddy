@@ -3,7 +3,7 @@ package net.bytebuddy.instrumentation;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.RuntimeType;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.SuperCall;
-import net.bytebuddy.utility.CallTraceable;
+import net.bytebuddy.test.utility.CallTraceable;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 

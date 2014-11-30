@@ -2,8 +2,8 @@ package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.DefaultCall;
-import net.bytebuddy.utility.JavaVersionRule;
-import net.bytebuddy.utility.PrecompiledTypeClassLoader;
+import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;

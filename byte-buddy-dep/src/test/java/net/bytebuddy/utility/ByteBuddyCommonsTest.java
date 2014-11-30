@@ -6,6 +6,7 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.modifier.FieldManifestation;
 import net.bytebuddy.modifier.Ownership;
 import net.bytebuddy.modifier.Visibility;
+import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;

@@ -1,6 +1,6 @@
 package net.bytebuddy.pool;
 
-import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;

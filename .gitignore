@@ -20,8 +20,11 @@ site/
 .gradle/
 build/
 
-#jRebel
+# jRebel
 rebel.xml
 
-#Shade plugin
+# Shade plugin
 byte-buddy/dependency-reduced-pom.xml
+
+# Dalvik compiler
+byte-buddy-android/dx.jar

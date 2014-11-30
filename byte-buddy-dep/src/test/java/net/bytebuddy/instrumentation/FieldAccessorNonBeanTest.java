@@ -1,7 +1,7 @@
 package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.utility.CallTraceable;
+import net.bytebuddy.test.utility.CallTraceable;
 import org.junit.Test;
 
 import java.lang.reflect.Field;

@@ -1,4 +1,4 @@
-package net.bytebuddy.utility;
+package net.bytebuddy.test.utility;
 
 /**
  * A collection targeting opcodes that are not contained within {@link org.objectweb.asm.Opcodes}.

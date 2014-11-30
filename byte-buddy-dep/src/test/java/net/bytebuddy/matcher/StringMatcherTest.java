@@ -1,7 +1,7 @@
 package net.bytebuddy.matcher;
 
 import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.utility.ObjectPropertyAssertion;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;

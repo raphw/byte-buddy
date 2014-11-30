@@ -1,8 +1,8 @@
 package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.utility.MockitoRule;
-import net.bytebuddy.utility.ObjectPropertyAssertion;
+import net.bytebuddy.test.utility.MockitoRule;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;

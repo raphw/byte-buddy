@@ -1,4 +1,4 @@
-package net.bytebuddy.utility;
+package net.bytebuddy.test.utility;
 
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;

@@ -2,7 +2,7 @@ package net.bytebuddy.instrumentation.type.auxiliary;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;

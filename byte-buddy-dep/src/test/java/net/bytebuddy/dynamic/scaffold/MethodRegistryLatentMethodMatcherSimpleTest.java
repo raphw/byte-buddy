@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.scaffold;
 
-import net.bytebuddy.utility.ObjectPropertyAssertion;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 public class MethodRegistryLatentMethodMatcherSimpleTest {

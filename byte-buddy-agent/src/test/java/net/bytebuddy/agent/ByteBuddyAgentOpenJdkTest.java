@@ -1,6 +1,6 @@
 package net.bytebuddy.agent;
 
-import net.bytebuddy.utility.ToolsJarRule;
+import net.bytebuddy.test.utility.ToolsJarRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;

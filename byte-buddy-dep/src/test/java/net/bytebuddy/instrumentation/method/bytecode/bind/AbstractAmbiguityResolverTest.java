@@ -1,7 +1,7 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind;
 
 import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.utility.MockitoRule;
+import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestRule;

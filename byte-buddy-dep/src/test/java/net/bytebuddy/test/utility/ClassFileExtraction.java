@@ -1,4 +1,4 @@
-package net.bytebuddy.utility;
+package net.bytebuddy.test.utility;
 
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import org.junit.Test;

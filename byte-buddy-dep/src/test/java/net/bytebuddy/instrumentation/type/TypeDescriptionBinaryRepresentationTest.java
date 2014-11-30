@@ -2,7 +2,7 @@ package net.bytebuddy.instrumentation.type;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.ClassLoadingStrategy;
-import net.bytebuddy.utility.ObjectPropertyAssertion;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.StreamDrainer;
 import org.junit.Test;
 

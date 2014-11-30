@@ -2,7 +2,7 @@ package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.modifier.Visibility;
-import net.bytebuddy.utility.CallTraceable;
+import net.bytebuddy.test.utility.CallTraceable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;

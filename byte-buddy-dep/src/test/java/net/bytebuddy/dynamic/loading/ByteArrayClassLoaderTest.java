@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.loading;
 
-import net.bytebuddy.utility.ClassFileExtraction;
+import net.bytebuddy.test.utility.ClassFileExtraction;
 import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.Test;

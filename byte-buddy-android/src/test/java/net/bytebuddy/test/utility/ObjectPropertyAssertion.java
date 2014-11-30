@@ -1,4 +1,4 @@
-package net.bytebuddy.utility;
+package net.bytebuddy.test.utility;
 
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Description;

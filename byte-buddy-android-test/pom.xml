@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <artifactId>byte-buddy-parent</artifactId>
+        <groupId>net.bytebuddy</groupId>
+        <version>0.5-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>byte-buddy-android-test</artifactId>
+    <packaging>apk</packaging>
+
+    <name>Byte Buddy for Android (test application)</name>
+    <description>An Android test application that runs Byte Buddy in an Android environment.</description>
+
+    <properties>
+        <version.maven.android>3.8.2</version.maven.android>
+        <android.sdk.platform>4</android.sdk.platform>
+        <android.sdk.emulator>19</android.sdk.emulator>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>byte-buddy-android</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>android</groupId>
+            <artifactId>dex-jar</artifactId>
+            <version>0</version>
+            <scope>system</scope>
+            <systemPath>${project.baseDir}/byte-buddy-android/android/dx.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>com.google.android</groupId>
+            <artifactId>android</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>com.jayway.maven.plugins.android.generation2</groupId>
+                    <artifactId>android-maven-plugin</artifactId>
+                    <version>${version.maven.android}</version>
+                    <extensions>true</extensions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>com.jayway.maven.plugins.android.generation2</groupId>
+                <artifactId>android-maven-plugin</artifactId>
+                <configuration>
+                    <run>
+                        <debug>true</debug>
+                    </run>
+                    <sdk>
+                        <platform>${android.sdk.platform}</platform>
+                    </sdk>
+                    <emulator>
+                        <avd>${android.sdk.platform}</avd>
+                    </emulator>
+                    <undeployBeforeDeploy>true</undeployBeforeDeploy>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

@@ -3,7 +3,7 @@ package net.bytebuddy.dynamic.loading;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.instrumentation.FixedValue;
-import net.bytebuddy.utility.ToolsJarRule;
+import net.bytebuddy.test.utility.ToolsJarRule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;

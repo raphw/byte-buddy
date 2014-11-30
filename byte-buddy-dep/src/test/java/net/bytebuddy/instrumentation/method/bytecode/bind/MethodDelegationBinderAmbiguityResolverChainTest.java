@@ -1,6 +1,6 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind;
 
-import net.bytebuddy.utility.ObjectPropertyAssertion;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

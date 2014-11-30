@@ -78,6 +78,14 @@ public interface DynamicType {
     Map<TypeDescription, byte[]> getRawAuxiliaryTypes();
 
     /**
+     * Returns all types that are implied by this dynamic type.
+     *
+     * @return A mapping from all type descriptions, the actual type and its auxiliary types to their binary
+     * representation
+     */
+    Map<TypeDescription, byte[]> getAllTypes();
+
+    /**
      * <p>
      * Returns a map of all loaded type initializers for the main type and all auxiliary types, if any.
      * </p>
@@ -2366,8 +2374,18 @@ public interface DynamicType {
         }
 
         @Override
+        public Map<TypeDescription, byte[]> getAllTypes() {
+            Map<TypeDescription, byte[]> allTypes = new HashMap<TypeDescription, byte[]>(auxiliaryTypes.size() + 1);
+            for (DynamicType auxiliaryType : auxiliaryTypes) {
+                allTypes.putAll(auxiliaryType.getAllTypes());
+            }
+            allTypes.put(typeDescription, binaryRepresentation);
+            return allTypes;
+        }
+
+        @Override
         public Map<TypeDescription, LoadedTypeInitializer> getLoadedTypeInitializers() {
-            Map<TypeDescription, LoadedTypeInitializer> classLoadingCallbacks = new HashMap<TypeDescription, LoadedTypeInitializer>();
+            Map<TypeDescription, LoadedTypeInitializer> classLoadingCallbacks = new HashMap<TypeDescription, LoadedTypeInitializer>(auxiliaryTypes.size() + 1);
             for (DynamicType auxiliaryType : auxiliaryTypes) {
                 classLoadingCallbacks.putAll(auxiliaryType.getLoadedTypeInitializers());
             }

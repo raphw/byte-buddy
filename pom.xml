@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.bytebuddy</groupId>
@@ -21,6 +22,7 @@
         <module>byte-buddy-dep</module>
         <module>byte-buddy-benchmark</module>
         <module>byte-buddy-agent</module>
+        <module>byte-buddy-android</module>
     </modules>
 
     <properties>
@@ -35,6 +37,9 @@
         <cobertura.exclude.benchmark.runner>
             net/bytebuddy/benchmark/runner/**/*.class
         </cobertura.exclude.benchmark.runner>
+        <cobertura.exclude.android>
+            net/bytebuddy/android/**/*.class
+        </cobertura.exclude.android>
         <distribution.bintray>https://api.bintray.com/maven/raphw/maven/ByteBuddy</distribution.bintray>
         <shade.source>org.objectweb.asm</shade.source>
         <shade.target>net.bytebuddy.jar.asm</shade.target>
@@ -43,6 +48,7 @@
         <version.mockito>1.10.8</version.mockito>
         <version.plugin.compiler>3.1</version.plugin.compiler>
         <version.plugin.install>2.5.1</version.plugin.install>
+        <version.plugin.deploy>2.8.2</version.plugin.deploy>
         <version.plugin.javadoc>2.9.1</version.plugin.javadoc>
         <version.plugin.source>2.2.1</version.plugin.source>
         <version.plugin.shade>2.2</version.plugin.shade>
@@ -53,6 +59,7 @@
         <version.plugin.cobertura>2.6</version.plugin.cobertura>
         <version.plugin.coveralls>2.2.0</version.plugin.coveralls>
         <version.plugin.checkstyle>2.13</version.plugin.checkstyle>
+        <version.android.sdk>4.1.1.4</version.android.sdk>
     </properties>
 
     <licenses>
@@ -116,6 +123,11 @@
                 <artifactId>mockito-core</artifactId>
                 <version>${version.mockito}</version>
             </dependency>
+            <dependency>
+                <groupId>com.google.android</groupId>
+                <artifactId>android</artifactId>
+                <version>${version.android.sdk}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -143,13 +155,14 @@
                             <exclude>${cobertura.exclude.benchmark.generated}</exclude>
                             <exclude>${cobertura.exclude.benchmark.jmh}</exclude>
                             <exclude>${cobertura.exclude.benchmark.runner}</exclude>
+                            <exclude>${cobertura.exclude.android}</exclude>
                         </excludes>
                     </instrumentation>
                     <formats>
                         <format>html</format>
                         <format>xml</format>
                     </formats>
-                    <check />
+                    <check/>
                 </configuration>
             </plugin>
             <!-- Generate coveralls reports from Travis -->
@@ -171,6 +184,11 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-install-plugin</artifactId>
                     <version>${version.plugin.install}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>${version.plugin.deploy}</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -295,6 +313,17 @@
                     </plugin>
                 </plugins>
             </build>
+        </profile>
+        <profile>
+            <id>android</id>
+            <modules>
+                <module>byte-buddy</module>
+                <module>byte-buddy-dep</module>
+                <module>byte-buddy-benchmark</module>
+                <module>byte-buddy-agent</module>
+                <module>byte-buddy-android</module>
+                <module>byte-buddy-android-test</module>
+            </modules>
         </profile>
     </profiles>
 

@@ -2,8 +2,8 @@ package net.bytebuddy.instrumentation.attribute.annotation;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
-import net.bytebuddy.utility.MockitoRule;
-import net.bytebuddy.utility.ObjectPropertyAssertion;
+import net.bytebuddy.test.utility.MockitoRule;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;

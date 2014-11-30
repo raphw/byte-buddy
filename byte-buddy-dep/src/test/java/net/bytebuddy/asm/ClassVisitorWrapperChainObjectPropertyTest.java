@@ -1,6 +1,6 @@
 package net.bytebuddy.asm;
 
-import net.bytebuddy.utility.ObjectPropertyAssertion;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 public class ClassVisitorWrapperChainObjectPropertyTest {

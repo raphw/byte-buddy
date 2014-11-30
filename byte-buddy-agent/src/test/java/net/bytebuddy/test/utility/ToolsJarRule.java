@@ -1,4 +1,4 @@
-package net.bytebuddy.utility;
+package net.bytebuddy.test.utility;
 
 import org.junit.rules.MethodRule;
 import org.junit.runners.model.FrameworkMethod;

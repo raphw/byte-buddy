@@ -2,8 +2,8 @@ package net.bytebuddy;
 
 import net.bytebuddy.dynamic.ClassLoadingStrategy;
 import net.bytebuddy.instrumentation.FixedValue;
-import net.bytebuddy.utility.JavaVersionRule;
-import net.bytebuddy.utility.PrecompiledTypeClassLoader;
+import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;

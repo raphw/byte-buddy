@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <artifactId>byte-buddy-parent</artifactId>
+        <groupId>net.bytebuddy</groupId>
+        <version>0.5-SNAPSHOT</version>
+    </parent>
+
+    <!--
+      Byte Buddy's Android support relies on the dex compiler 'dx.jar' of the Android SDK. This compiler cannot
+      be distributed together with Byte Buddy according to the terms and conditions for using the SDK
+      (https://developer.android.com/sdk/terms.html). It is therefore the responsibility of the user of Byte Buddy's
+      Android support to comply to this license when using the Android SDK's dex compiler.
+
+      For the reasons named above, the dex compiler 'dx.jar' is not a part of this artifact and must be added to the
+      class path in order to make Byte Buddy's Android support function. During test cases it is explicitly looked for
+      under this project's project directory at the 'android/dx.jar' path and is added automatically if it is found.
+      If the compiler is not found, only test cases that do not require the compiler are executed.
+    -->
+
+    <artifactId>byte-buddy-android</artifactId>
+    <packaging>jar</packaging>
+
+    <name>Byte Buddy for Android</name>
+    <description>Byte Buddy Android allows for limited support of code generation on an Android runtime.</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>byte-buddy</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- Important: Add JUnit first to shadow the stubbed JUnit that comes with Android SDK dependency. -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.android</groupId>
+            <artifactId>android</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>byte-buddy-agent</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

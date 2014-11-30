@@ -4,7 +4,7 @@ import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.FixedValue;
 import net.bytebuddy.instrumentation.MethodDelegation;
-import net.bytebuddy.utility.ToolsJarRule;
+import net.bytebuddy.test.utility.ToolsJarRule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;

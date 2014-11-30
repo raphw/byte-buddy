@@ -1,6 +1,6 @@
 package net.bytebuddy.instrumentation.method.bytecode.stack;
 
-import net.bytebuddy.utility.ObjectPropertyAssertion;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
