@@ -10,18 +10,6 @@
         <version>0.5-SNAPSHOT</version>
     </parent>
 
-    <!--
-      Byte Buddy's Android support relies on the dex compiler 'dx.jar' of the Android SDK. This compiler cannot
-      be distributed together with Byte Buddy according to the terms and conditions for using the SDK
-      (https://developer.android.com/sdk/terms.html). It is therefore the responsibility of the user of Byte Buddy's
-      Android support to comply to this license when using the Android SDK's dex compiler.
-
-      For the reasons named above, the dex compiler 'dx.jar' is not a part of this artifact and must be added to the
-      class path in order to make Byte Buddy's Android support function. During test cases it is explicitly looked for
-      under this project's project directory at the 'android/dx.jar' path and is added automatically if it is found.
-      If the compiler is not found, only test cases that do not require the compiler are executed.
-    -->
-
     <artifactId>byte-buddy-android</artifactId>
     <packaging>jar</packaging>
 
