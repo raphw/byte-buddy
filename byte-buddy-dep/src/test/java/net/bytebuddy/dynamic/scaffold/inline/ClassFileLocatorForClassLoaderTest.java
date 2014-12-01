@@ -35,6 +35,15 @@ public class ClassFileLocatorForClassLoaderTest {
     }
 
     @Test
+    public void testCreation() throws Exception {
+        ClassLoader classLoader = mock(ClassLoader.class);
+        assertThat(ClassFileLocator.ForClassLoader.of(classLoader),
+                is((ClassFileLocator) new ClassFileLocator.ForClassLoader(classLoader)));
+        assertThat(ClassFileLocator.ForClassLoader.of(null),
+                is((ClassFileLocator) new ClassFileLocator.ForClassLoader(ClassLoader.getSystemClassLoader())));
+    }
+
+    @Test
     public void testLocatable() throws Exception {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[]{1, 2, 3});
         when(classLoader.getResourceAsStream(FOOBAR + ".class")).thenReturn(inputStream);
@@ -55,11 +64,6 @@ public class ClassFileLocatorForClassLoaderTest {
         verifyNoMoreInteractions(classLoader);
         binaryRepresentation.getData();
         fail();
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testBootstrapThrowsException() throws Exception {
-        new ClassFileLocator.ForClassLoader(null);
     }
 
     @Test

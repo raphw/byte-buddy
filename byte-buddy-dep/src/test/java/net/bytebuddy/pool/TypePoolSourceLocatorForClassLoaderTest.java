@@ -9,10 +9,20 @@ import java.io.InputStream;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
 
 public class TypePoolSourceLocatorForClassLoaderTest {
 
     private static final String FOO = "foo";
+
+    @Test
+    public void testCreation() throws Exception {
+        ClassLoader classLoader = mock(ClassLoader.class);
+        assertThat(TypePool.SourceLocator.ForClassLoader.of(classLoader),
+                is((TypePool.SourceLocator) new TypePool.SourceLocator.ForClassLoader(classLoader)));
+        assertThat(TypePool.SourceLocator.ForClassLoader.of(null),
+                is((TypePool.SourceLocator) new TypePool.SourceLocator.ForClassLoader(ClassLoader.getSystemClassLoader())));
+    }
 
     @Test
     public void testSuccessful() throws Exception {

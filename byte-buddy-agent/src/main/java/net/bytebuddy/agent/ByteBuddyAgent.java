@@ -44,14 +44,19 @@ public class ByteBuddyAgent {
     private static final String AGENT_CLASS_PROPERTY = "Agent-Class";
 
     /**
-     * The manifest property specifying the <i>can redefine</i> class property.
+     * The manifest property specifying the <i>can redefine</i> property.
      */
     private static final String CAN_REDEFINE_CLASSES_PROPERTY = "Can-Redefine-Classes";
 
     /**
-     * The manifest property specifying the <i>can retransform</i> class property.
+     * The manifest property specifying the <i>can retransform</i> property.
      */
     private static final String CAN_RETRANSFORM_CLASSES_PROPERTY = "Can-Retransform-Classes";
+
+    /**
+     * The manifest property specifying the <i>can set native method prefix</i> property.
+     */
+    private static final String CAN_SET_NATIVE_METHOD_PREFIX = "Can-Set-Native-Method-Prefix";
 
     /**
      * The manifest property value for the manifest version.
@@ -220,6 +225,7 @@ public class ByteBuddyAgent {
             manifest.getMainAttributes().put(new Attributes.Name(AGENT_CLASS_PROPERTY), ByteBuddyAgent.Installer.class.getName());
             manifest.getMainAttributes().put(new Attributes.Name(CAN_REDEFINE_CLASSES_PROPERTY), Boolean.TRUE.toString());
             manifest.getMainAttributes().put(new Attributes.Name(CAN_RETRANSFORM_CLASSES_PROPERTY), Boolean.TRUE.toString());
+            manifest.getMainAttributes().put(new Attributes.Name(CAN_SET_NATIVE_METHOD_PREFIX), Boolean.TRUE.toString());
             JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(agentFile), manifest);
             try {
                 jarOutputStream.putNextEntry(new JarEntry('/' + ByteBuddyAgent.Installer.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION));

@@ -168,11 +168,25 @@ public interface TypePool {
             private final ClassLoader classLoader;
 
             /**
+             * Creates a source locator for a given class loader.
+             *
+             * @param classLoader The class loader to be used. If this class loader represents the bootstrap class
+             *                    loader which is represented by the {@code null} value, this system class loader
+             *                    is used instead.
+             * @return A corresponding source locator.
+             */
+            public static SourceLocator of(ClassLoader classLoader) {
+                return new ForClassLoader(classLoader == null
+                        ? ClassLoader.getSystemClassLoader()
+                        : classLoader);
+            }
+
+            /**
              * Creates a new class loader source locator.
              *
              * @param classLoader The class loader to query.
              */
-            public ForClassLoader(ClassLoader classLoader) {
+            protected ForClassLoader(ClassLoader classLoader) {
                 this.classLoader = classLoader;
             }
 

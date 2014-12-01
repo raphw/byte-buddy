@@ -36,37 +36,170 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
+/**
+ * <p>
+ * An agent builder provides a convenience API for defining a
+ * <a href="http://docs.oracle.com/javase/6/docs/api/java/lang/instrument/package-summary.html">Java agent</a> using
+ * Byte Buddy's {@link net.bytebuddy.ByteBuddy#rebase(net.bytebuddy.instrumentation.type.TypeDescription)}.
+ * </p>
+ * <p>
+ * When defining several {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s, the agent builder always
+ * applies the transformers that were supplied with the last applicable matcher. Therefore, more general transfromers
+ * should be defined first.
+ * </p>
+ */
 public interface AgentBuilder {
 
-    Transformable rebase(RawMatcher rawMatcher);
+    /**
+     * Matches a type being loaded in order to apply the supplied
+     * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s before loading this type.
+     *
+     * @param matcher A matcher that decides if the entailed
+     *                {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s should be applied for a type that
+     *                is being loaded.
+     * @return A definable that represents this agent builder which allows for the definition of one or several
+     * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s to be applied when the given {@code matcher}
+     * indicates a match.
+     */
+    Identified rebase(RawMatcher matcher);
 
-    Transformable rebase(ElementMatcher<? super TypeDescription> typeMatcher);
+    /**
+     * Matches a type being loaded in order to apply the supplied
+     * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s before loading this type.
+     *
+     * @param typeMatcher An {@link net.bytebuddy.matcher.ElementMatcher} that is applied on the type being loaded that
+     *                    decides if the entailed
+     *                    {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s should be applied for that
+     *                    type.
+     * @return A definable that represents this agent builder which allows for the definition of one or several
+     * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s to be applied when the given {@code typeMatcher}
+     * indicates a match.
+     */
+    Identified rebase(ElementMatcher<? super TypeDescription> typeMatcher);
 
-    Transformable rebase(ElementMatcher<? super TypeDescription> typeMatcher,
-                         ElementMatcher<? super ClassLoader> classLoaderMatcher);
+    /**
+     * Matches a type being loaded in order to apply the supplied
+     * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s before loading this type.
+     *
+     * @param typeMatcher        An {@link net.bytebuddy.matcher.ElementMatcher} that is applied on the type being
+     *                           loaded that decides if the entailed
+     *                           {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s should be applied for
+     *                           that type.
+     * @param classLoaderMatcher An {@link net.bytebuddy.matcher.ElementMatcher} that is applied to the
+     *                           {@link java.lang.ClassLoader} that is loading the type being loaded. This matcher
+     *                           is always applied first where the type matcher is not applied in case that this
+     *                           matcher does not indicate a match.
+     * @return A definable that represents this agent builder which allows for the definition of one or several
+     * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s to be applied when both the given
+     * {@code typeMatcher} and {@code classLoaderMatcher} indicate a match.
+     */
+    Identified rebase(ElementMatcher<? super TypeDescription> typeMatcher,
+                      ElementMatcher<? super ClassLoader> classLoaderMatcher);
 
+    /**
+     * Defines the given {@link net.bytebuddy.ByteBuddy} instance to be used by the created agent.
+     *
+     * @param byteBuddy The Byte Buddy instance to be used.
+     * @return A new instance of this agent builder which makes use of the given {@code byteBuddy} instance.
+     */
     AgentBuilder withByteBuddy(ByteBuddy byteBuddy);
 
+    /**
+     * Defines the given {@link net.bytebuddy.agent.builder.AgentBuilder.Listener} to be notified by the created agent.
+     * The given listener is notified after any other listener that is already registered. If a listener is registered
+     * twice, it is also notified twice.
+     *
+     * @param listener The listener to be notified.
+     * @return A new instance of this agent builder which creates an agent that informs the given listener about
+     * events.
+     */
     AgentBuilder withListener(Listener listener);
 
+    /**
+     * Enables the use of the given native method prefix for instrumented methods. Note that this prefix is also
+     * applied when preserving non-native methods. The use of this prefix is also registered when installing the
+     * final agent with an {@link java.lang.instrument.Instrumentation}.
+     *
+     * @param prefix The prefix to be used.
+     * @return A new instance of this agent builder which uses the given native method prefix.
+     */
     AgentBuilder withNativeMethodPrefix(String prefix);
 
+    /**
+     * <p>
+     * Disables the execution of any {@link net.bytebuddy.instrumentation.LoadedTypeInitializer}s that are registered
+     * with a {@link net.bytebuddy.dynamic.DynamicType}. This might cause the dynamic type to malfunction if the
+     * {@link net.bytebuddy.instrumentation.LoadedTypeInitializer} are not executed elsewhere before an instrumented
+     * type is put in use for the first time.
+     * </p>
+     * <p>
+     * In order to execute a self initialization, Byte Buddy adds a call back into any dynamic type's type initializer.
+     * This call back requires the injection of a call back dispatcher into the system class loader what might not
+     * be a feasible solution on distributed applications where classes are shared among different JVMs where a
+     * different strategy for executing {@link net.bytebuddy.instrumentation.LoadedTypeInitializer}s might be
+     * more appropriate.
+     * </p>
+     *
+     * @return A new instance of this agent builder which does not apply self initialization.
+     */
     AgentBuilder disableSelfInitialization();
 
+    /**
+     * Enables retransformation when this agent is installed. Note that retransformation on does not currently allow
+     * for adding or removing fields or methods on the Hot Spot Virtual machine.
+     *
+     * @return A new instance of this agent builder which does not apply self initialization.
+     */
     AgentBuilder allowRetransformation();
 
+    /**
+     * Creates a {@link java.lang.instrument.ClassFileTransformer} that implements the configuration of this
+     * agent builder.
+     *
+     * @return A class file transformer that implements the configuration of this agent builder.
+     */
     ClassFileTransformer makeRaw();
 
+    /**
+     * Creates and installs a {@link java.lang.instrument.ClassFileTransformer} that implements the configuration of
+     * this agent builder with a given {@link java.lang.instrument.Instrumentation}.
+     *
+     * @param instrumentation The instrumentation on which this agent builder's configuration is to be installed.
+     * @return The installed class file transformer.
+     */
     ClassFileTransformer registerWith(Instrumentation instrumentation);
 
+    /**
+     * Creates and installs a {@link java.lang.instrument.ClassFileTransformer} that implements the configuration of
+     * this agent builder with the Byte Buddy-agent which must be installed prior to calling this method.
+     *
+     * @return The installed class file transformer.
+     */
     ClassFileTransformer registerWithByteBuddyAgent();
 
-    static interface Transformable {
+    /**
+     * Describes an {@link net.bytebuddy.agent.builder.AgentBuilder} which was handed a matcher for identifying
+     * types to instrumented in order to supply one or several
+     * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s.
+     */
+    static interface Identified {
 
-        static interface Extendable extends AgentBuilder, Transformable {
+        /**
+         * This interface is used to allow for optionally providing several
+         * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer} to applied when a matcher identifies a type
+         * to be instrumented. Any subsequent transformers are applied in the order they are registered.
+         */
+        static interface Extendable extends AgentBuilder, Identified {
             /* this is merely a unionizing interface that does not declare methods */
         }
 
+        /**
+         * Applies the given transformer for the already supplied matcher.
+         *
+         * @param transformer The transformer to apply.
+         * @return This agent builder with the transformer being applied when the previously supplied matcher
+         * identified a type for instrumentation which also allows for the registration of subsequent transformers.
+         */
         Extendable transform(Transformer transformer);
     }
 
@@ -87,7 +220,7 @@ public interface AgentBuilder {
          */
         private static final Object STATIC_METHOD = null;
 
-        public static final String NO_NATIVE_PREFIX = "";
+        protected static final String NO_NATIVE_PREFIX = "";
 
         private static final byte[] NO_TRANSFORMATION = null;
 
@@ -136,18 +269,18 @@ public interface AgentBuilder {
         }
 
         @Override
-        public Transformable rebase(RawMatcher rawMatcher) {
-            return new Matched(nonNull(rawMatcher), Transformer.NoOp.INSTANCE);
+        public Identified rebase(RawMatcher matcher) {
+            return new Matched(nonNull(matcher), Transformer.NoOp.INSTANCE);
         }
 
         @Override
-        public Transformable rebase(ElementMatcher<? super TypeDescription> typeMatcher) {
+        public Identified rebase(ElementMatcher<? super TypeDescription> typeMatcher) {
             return rebase(typeMatcher, any());
         }
 
         @Override
-        public Transformable rebase(ElementMatcher<? super TypeDescription> typeMatcher,
-                                    ElementMatcher<? super ClassLoader> classLoaderMatcher) {
+        public Identified rebase(ElementMatcher<? super TypeDescription> typeMatcher,
+                                 ElementMatcher<? super ClassLoader> classLoaderMatcher) {
             return rebase(new RawMatcher.ForElementMatcherPair(nonNull(typeMatcher), nonNull(classLoaderMatcher)));
         }
 
@@ -175,10 +308,13 @@ public interface AgentBuilder {
 
         @Override
         public AgentBuilder withNativeMethodPrefix(String prefix) {
+            if (nonNull(prefix).length() == 0) {
+                throw new IllegalArgumentException("The empty string is not a legal value for a native method prefix");
+            }
             return new Default(byteBuddy,
                     binaryLocator,
                     listener,
-                    nonNull(prefix),
+                    prefix,
                     disableSelfInitialization,
                     retransformation,
                     entries);
@@ -214,10 +350,10 @@ public interface AgentBuilder {
         @Override
         public ClassFileTransformer registerWith(Instrumentation instrumentation) {
             ClassFileTransformer classFileTransformer = makeRaw();
+            instrumentation.addTransformer(classFileTransformer, retransformation);
             if (!NO_NATIVE_PREFIX.equals(nonNull(nativeMethodPrefix))) {
                 instrumentation.setNativeMethodPrefix(classFileTransformer, nativeMethodPrefix);
             }
-            instrumentation.addTransformer(classFileTransformer, retransformation);
             return classFileTransformer;
         }
 
@@ -326,12 +462,13 @@ public interface AgentBuilder {
                             return dynamicType.getBytes();
                         }
                     }
+                    listener.onIgnored(binaryTypeName);
                     return NO_TRANSFORMATION;
                 } catch (Throwable throwable) {
-                    listener.onError(throwable);
+                    listener.onError(binaryTypeName, throwable);
                     return NO_TRANSFORMATION;
                 } finally {
-                    listener.afterTransformation(binaryTypeName);
+                    listener.onComplete(binaryTypeName);
                 }
             }
 
@@ -340,6 +477,7 @@ public interface AgentBuilder {
                 return "AgentBuilder.Default.ExecutingTransformer{" +
                         "agentBuilder=" + Default.this +
                         ", methodNameTransformer=" + methodNameTransformer +
+                        ", initializationStrategy=" + initializationStrategy +
                         ", ignoredTypes=" + ignoredTypes +
                         '}';
             }
@@ -392,7 +530,7 @@ public interface AgentBuilder {
             }
         }
 
-        protected class Matched implements Transformable.Extendable {
+        protected class Matched implements Identified.Extendable {
 
             private final RawMatcher rawMatcher;
 
@@ -405,23 +543,23 @@ public interface AgentBuilder {
             }
 
             @Override
-            public Transformable.Extendable transform(Transformer transformer) {
+            public Identified.Extendable transform(Transformer transformer) {
                 return new Matched(rawMatcher, new Transformer.Compound(this.transformer, nonNull(transformer)));
             }
 
             @Override
-            public Transformable rebase(RawMatcher rawMatcher) {
-                return materialize().rebase(rawMatcher);
+            public Identified rebase(RawMatcher matcher) {
+                return materialize().rebase(matcher);
             }
 
             @Override
-            public Transformable rebase(ElementMatcher<? super TypeDescription> typeMatcher) {
+            public Identified rebase(ElementMatcher<? super TypeDescription> typeMatcher) {
                 return materialize().rebase(typeMatcher);
             }
 
             @Override
-            public Transformable rebase(ElementMatcher<? super TypeDescription> typeMatcher,
-                                        ElementMatcher<? super ClassLoader> classLoaderMatcher) {
+            public Identified rebase(ElementMatcher<? super TypeDescription> typeMatcher,
+                                     ElementMatcher<? super ClassLoader> classLoaderMatcher) {
                 return materialize().rebase(typeMatcher, classLoaderMatcher);
             }
 
@@ -554,6 +692,24 @@ public interface AgentBuilder {
                     }
                 }
 
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && accessor == ((SelfInjection) other).accessor;
+                }
+
+                @Override
+                public int hashCode() {
+                    return accessor.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.Default.InitializationStrategy.SelfInjection{" +
+                            "accessor=" + accessor +
+                            '}';
+                }
+
                 public static class Nexus {
 
                     private final String name;
@@ -572,15 +728,17 @@ public interface AgentBuilder {
 
                     @Override
                     public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && classLoader.equals(((Nexus) other).classLoader)
-                                && name.equals(((Nexus) other).name);
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        Nexus nexus = (Nexus) other;
+                        return !(classLoader != null ? !classLoader.equals(nexus.classLoader) : nexus.classLoader != null)
+                                && name.equals(nexus.name);
                     }
 
                     @Override
                     public int hashCode() {
                         int result = name.hashCode();
-                        result = 31 * result + classLoader.hashCode();
+                        result = 31 * result + (classLoader != null ? classLoader.hashCode() : 0);
                         return result;
                     }
 
@@ -699,19 +857,56 @@ public interface AgentBuilder {
         }
     }
 
+    /**
+     * A raw matcher allows to decide upon
+     */
     static interface RawMatcher {
 
+        /**
+         * Decides if the given {@code typeDescription} should be instrumented with the entailed
+         * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s.
+         *
+         * @param typeDescription     A description of the type to be instrumented.
+         * @param classLoader         The class loader of the instrumented type. Might be {@code null} if this class
+         *                            loader represents the bootstrap class loader.
+         * @param classBeingRedefined The class being redefined which is only not {@code null} if a retransofmration
+         *                            is applied.
+         * @param protectionDomain    The protection domain of the type being transformed.
+         * @return {@code true} if the entailed {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s should
+         * be applied for the given {@code typeDescription}.
+         */
         boolean matches(TypeDescription typeDescription,
                         ClassLoader classLoader,
                         Class<?> classBeingRedefined,
                         ProtectionDomain protectionDomain);
 
+        /**
+         * A raw matcher implementation that checks a {@link net.bytebuddy.instrumentation.type.TypeDescription}
+         * and its {@link java.lang.ClassLoader} against two suitable matchers in order to determine if the matched
+         * type should be instrumented.
+         */
         static class ForElementMatcherPair implements RawMatcher {
 
+            /**
+             * The type matcher to apply to a {@link net.bytebuddy.instrumentation.type.TypeDescription}.
+             */
             private final ElementMatcher<? super TypeDescription> typeMatcher;
 
+            /**
+             * The class loader to apply to a {@link java.lang.ClassLoader}.
+             */
             private final ElementMatcher<? super ClassLoader> classLoaderMatcher;
 
+            /**
+             * Creates a new {@link net.bytebuddy.agent.builder.AgentBuilder.RawMatcher} that only matches the
+             * supplied {@link net.bytebuddy.instrumentation.type.TypeDescription} and its
+             * {@link java.lang.ClassLoader} against two matcher in order to decied if an instrumentation should
+             * be conducted.
+             *
+             * @param typeMatcher        The type matcher to apply to a
+             *                           {@link net.bytebuddy.instrumentation.type.TypeDescription}.
+             * @param classLoaderMatcher The class loader to apply to a {@link java.lang.ClassLoader}.
+             */
             public ForElementMatcherPair(ElementMatcher<? super TypeDescription> typeMatcher,
                                          ElementMatcher<? super ClassLoader> classLoaderMatcher) {
                 this.typeMatcher = typeMatcher;
@@ -750,10 +945,21 @@ public interface AgentBuilder {
         }
     }
 
+    /**
+     * A transformer allows to apply modifications to a {@link net.bytebuddy.dynamic.DynamicType}. Such a modification
+     * is then applied to any instrumented type that was matched by the preceding matcher.
+     */
     static interface Transformer {
 
+        /**
+         * A no-op implementation of a {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer} that does
+         * not modify the supplied dynamic type.
+         */
         static enum NoOp implements Transformer {
 
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
             @Override
@@ -762,10 +968,22 @@ public interface AgentBuilder {
             }
         }
 
+        /**
+         * A compound transformer that allows to group several
+         * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s as a single transformer.
+         */
         static class Compound implements Transformer {
 
+            /**
+             * The transformers to apply in their application order.
+             */
             private final Transformer[] transformer;
 
+            /**
+             * Creates a new compound transformer.
+             *
+             * @param transformer The transformers to apply in their application order.
+             */
             public Compound(Transformer... transformer) {
                 this.transformer = transformer;
             }
@@ -797,40 +1015,99 @@ public interface AgentBuilder {
             }
         }
 
+        /**
+         * Allows for a transformation of a {@link net.bytebuddy.dynamic.DynamicType.Builder}.
+         *
+         * @param builder The dynamic builder to transform.
+         * @return A transformed version of the supplied {@code builder}.
+         */
         DynamicType.Builder<?> transform(DynamicType.Builder<?> builder);
     }
 
+    /**
+     * A binary locator allows to specify how binary data is located by an
+     * {@link net.bytebuddy.agent.builder.AgentBuilder}.
+     */
     static interface BinaryLocator {
 
+        /**
+         * Initializes this binary locator.
+         *
+         * @param typeName             The binary name of the type that is being instrumented.
+         * @param binaryRepresentation The binary representation of the instrumented type.
+         * @param classLoader          The class loader of the instrumented type. Might be {@code null} if this class
+         *                             loader represents the bootstrap class loader.
+         * @return This binary locator in its initialized form.
+         */
         Initialized initialize(String typeName, byte[] binaryRepresentation, ClassLoader classLoader);
 
+        /**
+         * A default implementation of a {@link net.bytebuddy.agent.builder.AgentBuilder.BinaryLocator} that
+         * is using a {@link net.bytebuddy.pool.TypePool.Default} with a
+         * {@link net.bytebuddy.pool.TypePool.CacheProvider.Simple} and a
+         * {@link net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator.ForClassLoader}.
+         */
         static enum Default implements BinaryLocator {
 
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
             @Override
             public BinaryLocator.Initialized initialize(String typeName,
                                                         byte[] binaryRepresentation,
                                                         ClassLoader classLoader) {
-                return new Initialized(typeName, binaryRepresentation, classLoader);
+                return new Initialized(typeName,
+                        binaryRepresentation,
+                        new TypePool.CacheProvider.Simple(),
+                        TypePool.SourceLocator.ForClassLoader.of(classLoader),
+                        ClassFileLocator.ForClassLoader.of(classLoader));
             }
 
-
+            /**
+             * The {@link net.bytebuddy.agent.builder.AgentBuilder.BinaryLocator.Default} in its initialized form.
+             */
             protected static class Initialized implements BinaryLocator.Initialized, ClassFileLocator {
 
+                /**
+                 * The binary name of the instrumented type.
+                 */
                 private final String typeName;
 
+                /**
+                 * The binary representation of the instrumented type.
+                 */
                 private final byte[] binaryRepresentation;
 
-                private final TypePool typePool;
-
+                /**
+                 * The class file locator to use.
+                 */
                 private final ClassFileLocator classFileLocator;
 
-                public Initialized(String typeName, byte[] binaryRepresentation, ClassLoader classLoader) {
+                /**
+                 * The type pool to use.
+                 */
+                private final TypePool typePool;
+
+                /**
+                 * Creates a new initialized form of a default binary locator.
+                 *
+                 * @param typeName             The binary name of the type that is being instrumented.
+                 * @param binaryRepresentation The binary representation of the instrumented type.
+                 * @param cacheProvider        The cache provider to use.
+                 * @param sourceLocator        The source locator to use.
+                 * @param classFileLocator     The class file locator to use.
+                 */
+                public Initialized(String typeName,
+                                   byte[] binaryRepresentation,
+                                   TypePool.CacheProvider cacheProvider,
+                                   TypePool.SourceLocator sourceLocator,
+                                   ClassFileLocator classFileLocator) {
                     this.typeName = typeName;
                     this.binaryRepresentation = binaryRepresentation;
-                    this.typePool = new TypePool.Default(new TypePool.CacheProvider.Simple(), new TypePool.SourceLocator.ForClassLoader(classLoader));
-                    this.classFileLocator = new ClassFileLocator.ForClassLoader(classLoader);
+                    typePool = new TypePool.Default(cacheProvider, new ProxySourceLocator(typeName, binaryRepresentation, sourceLocator));
+                    this.classFileLocator = classFileLocator;
                 }
 
                 @Override
@@ -865,8 +1142,8 @@ public interface AgentBuilder {
                 public int hashCode() {
                     int result = typeName.hashCode();
                     result = 31 * result + Arrays.hashCode(binaryRepresentation);
-                    result = 31 * result + typePool.hashCode();
                     result = 31 * result + classFileLocator.hashCode();
+                    result = 31 * result + typePool.hashCode();
                     return result;
                 }
 
@@ -875,31 +1152,150 @@ public interface AgentBuilder {
                     return "AgentBuilder.BinaryLocator.Default.Initialized{" +
                             "typeName='" + typeName + '\'' +
                             ", binaryRepresentation=" + Arrays.toString(binaryRepresentation) +
-                            ", typePool=" + typePool +
                             ", classFileLocator=" + classFileLocator +
+                            ", typePool=" + typePool +
                             '}';
+                }
+
+                /**
+                 * A {@link net.bytebuddy.pool.TypePool.SourceLocator} that intercepts look-ups of the instrumented
+                 * type's binary representation by returning the binary representation that is already known via the
+                 * Java instrumentation API.
+                 */
+                protected static class ProxySourceLocator implements TypePool.SourceLocator {
+
+                    /**
+                     * The binary name of the instrumented type.
+                     */
+                    private final String typeName;
+
+                    /**
+                     * The binary representation of the instrumented type.
+                     */
+                    private final byte[] binaryRepresentation;
+
+                    /**
+                     * A fallback source locator for looking up any type's binary representation that is not
+                     * the instrumented type.
+                     */
+                    private final TypePool.SourceLocator sourceLocator;
+
+                    /**
+                     * Creates a new proxy source locator.
+                     *
+                     * @param typeName             The binary name of the instrumented type.
+                     * @param binaryRepresentation The binary representation of the instrumented type.
+                     * @param sourceLocator        A fallback source locator for looking up any type's binary
+                     *                             representation that is not the instrumented type.
+                     */
+                    public ProxySourceLocator(String typeName,
+                                              byte[] binaryRepresentation,
+                                              TypePool.SourceLocator sourceLocator) {
+                        this.typeName = typeName;
+                        this.binaryRepresentation = binaryRepresentation;
+                        this.sourceLocator = sourceLocator;
+                    }
+
+                    @Override
+                    public TypeDescription.BinaryRepresentation locate(String typeName) {
+                        return this.typeName.equals(typeName)
+                                ? new TypeDescription.BinaryRepresentation.Explicit(binaryRepresentation)
+                                : sourceLocator.locate(typeName);
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        ProxySourceLocator that = (ProxySourceLocator) other;
+                        return Arrays.equals(binaryRepresentation, that.binaryRepresentation)
+                                && sourceLocator.equals(that.sourceLocator)
+                                && typeName.equals(that.typeName);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = typeName.hashCode();
+                        result = 31 * result + Arrays.hashCode(binaryRepresentation);
+                        result = 31 * result + sourceLocator.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "AgentBuilder.BinaryLocator.Default.Initialized.ProxySourceLocator{" +
+                                "typeName='" + typeName + '\'' +
+                                ", binaryRepresentation=" + Arrays.toString(binaryRepresentation) +
+                                ", sourceLocator=" + sourceLocator +
+                                '}';
+                    }
                 }
             }
         }
 
+        /**
+         * A {@link net.bytebuddy.agent.builder.AgentBuilder.BinaryLocator} in initialized state.
+         */
         static interface Initialized {
 
+            /**
+             * Returns the type pool to be used of an {@link net.bytebuddy.agent.builder.AgentBuilder}.
+             *
+             * @return The type pool to use.
+             */
             TypePool getTypePool();
 
+            /**
+             * Returns the class file locator to be used of an {@link net.bytebuddy.agent.builder.AgentBuilder}.
+             *
+             * @return The class file locator to use.
+             */
             ClassFileLocator getClassFileLocator();
         }
     }
 
+    /**
+     * A listener that is informed about events that occur during an instrumentation process.
+     */
     static interface Listener {
 
+        /**
+         * Invoked right before a successful transformation is applied.
+         *
+         * @param dynamicType The dynamic type that was created.
+         */
         void onTransformation(DynamicType dynamicType);
 
-        void onError(Throwable throwable);
+        /**
+         * Invoked when an error has occurred.
+         *
+         * @param typeName  The binary name of the instrumented type.
+         * @param throwable The occurred error.
+         */
+        void onError(String typeName, Throwable throwable);
 
-        void afterTransformation(String typeName);
+        /**
+         * Invokes when a type is not transformed.
+         *
+         * @param typeName The binary name of the type.
+         */
+        void onIgnored(String typeName);
 
+        /**
+         * Invoked after a class was attempted to be loaded, independently of its treatment.
+         *
+         * @param typeName The binary name of the instrumented type.
+         */
+        void onComplete(String typeName);
+
+        /**
+         * A no-op implementation of a {@link net.bytebuddy.agent.builder.AgentBuilder.Listener}.
+         */
         static enum NoOp implements Listener {
 
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
             @Override
@@ -908,20 +1304,36 @@ public interface AgentBuilder {
             }
 
             @Override
-            public void onError(Throwable throwable) {
+            public void onError(String typeName, Throwable throwable) {
                 /* do nothing */
             }
 
             @Override
-            public void afterTransformation(String typeName) {
+            public void onIgnored(String typeName) {
+                /* do nothing */
+            }
+
+            @Override
+            public void onComplete(String typeName) {
                 /* do nothing */
             }
         }
 
+        /**
+         * A compound listener that allows to group several listeners in one instance.
+         */
         static class Compound implements Listener {
 
+            /**
+             * The listeners that are represented by this compound listener in their application order.
+             */
             private final Listener[] listener;
 
+            /**
+             * Creates a new compound listener.
+             *
+             * @param listener The listeners to apply in their application order.
+             */
             public Compound(Listener... listener) {
                 this.listener = listener;
             }
@@ -934,16 +1346,23 @@ public interface AgentBuilder {
             }
 
             @Override
-            public void onError(Throwable throwable) {
+            public void onError(String typeName, Throwable throwable) {
                 for (Listener listener : this.listener) {
-                    listener.onError(throwable);
+                    listener.onError(typeName, throwable);
                 }
             }
 
             @Override
-            public void afterTransformation(String typeName) {
+            public void onIgnored(String typeName) {
                 for (Listener listener : this.listener) {
-                    listener.afterTransformation(typeName);
+                    listener.onIgnored(typeName);
+                }
+            }
+
+            @Override
+            public void onComplete(String typeName) {
+                for (Listener listener : this.listener) {
+                    listener.onComplete(typeName);
                 }
             }
 
@@ -960,8 +1379,8 @@ public interface AgentBuilder {
 
             @Override
             public String toString() {
-                return "AgentBuilder.ExceptionRegistrant.Compound{" +
-                        "exceptionRegistrant=" + Arrays.toString(listener) +
+                return "AgentBuilder.Listener.Compound{" +
+                        "listener=" + Arrays.toString(listener) +
                         '}';
             }
         }

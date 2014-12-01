@@ -52,14 +52,25 @@ public interface ClassFileLocator {
         private final ClassLoader classLoader;
 
         /**
+         * Creates a class file locator for a given class loader.
+         *
+         * @param classLoader The class loader to be used. If this class loader represents the bootstrap class
+         *                    loader which is represented by the {@code null} value, this system class loader
+         *                    is used instead.
+         * @return A corresponding source locator.
+         */
+        public static ClassFileLocator of(ClassLoader classLoader) {
+            return new ForClassLoader(classLoader == null
+                    ? ClassLoader.getSystemClassLoader()
+                    : classLoader);
+        }
+
+        /**
          * Creates a new class file locator for the given class loader.
          *
          * @param classLoader The class loader to query which must not be the bootstrap class loader, i.e. {@code null}.
          */
-        public ForClassLoader(ClassLoader classLoader) {
-            if (classLoader == null) {
-                throw new IllegalArgumentException("Cannot directly query the bootstrap class loader");
-            }
+        protected ForClassLoader(ClassLoader classLoader) {
             this.classLoader = classLoader;
         }
 
@@ -176,7 +187,7 @@ public interface ClassFileLocator {
 
         /**
          * Returns an agent-based class file locator for the given class loader and an already installed
-         * Byte Buddy agent.
+         * Byte Buddy-agent.
          *
          * @param classLoader The class loader that is expected to load the looked-up a class.
          * @return A class file locator for the given class loader based on a Byte Buddy agent.
