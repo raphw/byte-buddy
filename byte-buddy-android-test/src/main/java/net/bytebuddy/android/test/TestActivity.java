@@ -21,10 +21,19 @@ import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
+/**
+ * This activity allows to run a code generation on an Android device.
+ */
 public class TestActivity extends Activity {
 
+    /**
+     * A sample String to be returned by an instrumented {@link Object#toString()} method.
+     */
     private static final String FOO = "foo";
 
+    /**
+     * The tag to be used for Android's log messages.
+     */
     private static final String BYTE_BUDDY_TAG = "net.bytebuddy";
 
     @Override
@@ -40,7 +49,7 @@ public class TestActivity extends Activity {
                     byteBuddy = new ByteBuddy(ClassFileVersion.JAVA_V6);
                 } catch (Throwable e) {
                     Log.w(BYTE_BUDDY_TAG, e);
-                    Toast.makeText(TestActivity.this, "Failure: Could not create Byte Buddy instance ("
+                    Toast.makeText(TestActivity.this, "Failure: Could not create Byte Buddy instance. ("
                             + e.getMessage() + ")", Toast.LENGTH_LONG).show();
                     return;
                 }
@@ -57,7 +66,7 @@ public class TestActivity extends Activity {
                                 .load(TestActivity.class.getClassLoader(), new AndroidClassLoadingStrategy(file));
                     } catch (Throwable e) {
                         Log.w(BYTE_BUDDY_TAG, e);
-                        Toast.makeText(TestActivity.this, "Failure: Could not load dynamic type ("
+                        Toast.makeText(TestActivity.this, "Failure: Could not load dynamic type. ("
                                 + e.getMessage() + ")", Toast.LENGTH_LONG).show();
                         return;
                     }
@@ -65,25 +74,38 @@ public class TestActivity extends Activity {
                         String value = dynamicType.getLoaded().newInstance().toString();
                         Toast.makeText(TestActivity.this,
                                 FOO.equals(value)
-                                        ? "Success: Created type and verified instrumentation"
-                                        : "Failure: Expected different value by instrumented method (was: " + value + ")",
+                                        ? "Success: Created type and verified instrumentation."
+                                        : "Failure: Expected different value by instrumented method. (was: " + value + ")",
                                 Toast.LENGTH_LONG).show();
                     } catch (Throwable e) {
                         Log.w(BYTE_BUDDY_TAG, e);
-                        Toast.makeText(TestActivity.this, "Failure: Could create dynamic instance ("
+                        Toast.makeText(TestActivity.this, "Failure: Could create dynamic instance. ("
                                 + e.getMessage() + ")", Toast.LENGTH_LONG).show();
                     }
                 } catch (Throwable e) {
                     Log.w(BYTE_BUDDY_TAG, e);
-                    Toast.makeText(TestActivity.this, "Failure: Could not create temporary file ("
+                    Toast.makeText(TestActivity.this, "Failure: Could not create temporary file. ("
                             + e.getMessage() + ")", Toast.LENGTH_LONG).show();
                 }
             }
         });
     }
 
+    /**
+     * An interceptor to be used in the instrumentation of the {@link Object#toString()} method. Of course, this
+     * could also be achieved by using a {@link net.bytebuddy.instrumentation.FixedValue} instrumentation. However,
+     * the instrumentation should generate an {@link net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType}
+     * to validate their functionality.
+     */
     public static class Interceptor {
 
+        /**
+         * The interception method to be applied.
+         *
+         * @param zuper A proxy to call the super method to validate the functioning og creating an auxiliary type.
+         * @return The value to be returned by the instrumented {@link Object#toString()} method.
+         * @throws Exception If an exception occurs.
+         */
         public static String intercept(@SuperCall Callable<String> zuper) throws Exception {
             String toString = zuper.call();
             if (toString.equals(FOO)) {

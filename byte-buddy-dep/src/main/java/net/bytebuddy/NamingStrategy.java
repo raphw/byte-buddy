@@ -351,7 +351,7 @@ public interface NamingStrategy {
 
         /**
          * Creates an immutable naming strategy with a given suffix but moves types that subclass types within
-         * the {@code java.lang} package into ByteBuddy's package namespace. All names are derived from the
+         * the {@code java.lang} package into Byte Buddy's package namespace. All names are derived from the
          * unnamed type's super type.
          *
          * @param suffix The suffix for the generated class.
@@ -360,6 +360,13 @@ public interface NamingStrategy {
             this(suffix, BaseNameResolver.ForUnnamedType.INSTANCE, BYTE_BUDDY_RENAME_PACKAGE);
         }
 
+        /**
+         * Creates an immutable naming strategy with a given suffix but moves types that subclass types within
+         * the {@code java.lang} package into Byte Buddy's package namespace.
+         *
+         * @param suffix           The suffix for the generated class.
+         * @param baseNameResolver The base name resolver that is queried for locating the base name.
+         */
         public SuffixingRandom(String suffix, BaseNameResolver baseNameResolver) {
             this(suffix, baseNameResolver, BYTE_BUDDY_RENAME_PACKAGE);
         }
@@ -369,6 +376,7 @@ public interface NamingStrategy {
          * the {@code java.lang} package into a given namespace.
          *
          * @param suffix                The suffix for the generated class.
+         * @param baseNameResolver      The base name resolver that is queried for locating the base name.
          * @param javaLangPackagePrefix The fallback namespace for type's that subclass types within the
          *                              {@code java.lang} namespace.
          */

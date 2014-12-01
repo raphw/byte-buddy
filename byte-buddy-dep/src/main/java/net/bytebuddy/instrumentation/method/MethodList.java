@@ -39,9 +39,11 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
         }
 
         /**
+         * Creates a method list that represents the given constructors and methods in their given order. The
+         * constructors are assigned the indices before the methods.
          *
-         * @param methods
-         * @param constructors
+         * @param constructors The constructors to be represented by the method list.
+         * @param methods      The methods to be represented by the method list.
          */
         public ForLoadedType(Constructor<?>[] constructors, Method[] methods) {
             this.constructors = constructors;

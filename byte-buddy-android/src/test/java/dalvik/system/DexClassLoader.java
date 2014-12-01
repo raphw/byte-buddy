@@ -3,7 +3,7 @@ package dalvik.system;
 import java.io.File;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class DexClassLoader extends ClassLoader {
@@ -15,8 +15,8 @@ public class DexClassLoader extends ClassLoader {
     public DexClassLoader(String dexPath, String optimizedDirectory, String libraryPath, ClassLoader parent) {
         super(parent);
         assertThat(new File(dexPath).isFile(), is(true));
-        assertThat(new File(optimizedDirectory).isFile(), is(true));
-        assertThat(libraryPath, notNullValue());
+        assertThat(new File(optimizedDirectory).isDirectory(), is(true));
+        assertThat(libraryPath, nullValue());
     }
 
     @Override
