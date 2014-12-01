@@ -225,7 +225,7 @@ public interface TypeDescription extends ByteCodeElement {
      *
      * @return The package internalName of the type described by this instance.
      */
-    String getPackageName();
+    PackageDescription getPackage();
 
     /**
      * Returns the size of the type described by this instance.
@@ -427,8 +427,10 @@ public interface TypeDescription extends ByteCodeElement {
 
         @Override
         public boolean isSamePackage(TypeDescription typeDescription) {
-            String thisPackage = getPackageName(), otherPackage = typeDescription.getPackageName();
-            return (thisPackage == null && otherPackage == null) || (thisPackage != null && thisPackage.equals(otherPackage));
+            PackageDescription thisPackage = getPackage(), otherPackage = typeDescription.getPackage();
+            return thisPackage == null || otherPackage == null
+                    ? thisPackage == otherPackage
+                    : thisPackage.equals(otherPackage);
         }
 
         @Override
@@ -480,6 +482,14 @@ public interface TypeDescription extends ByteCodeElement {
             } else {
                 return getName();
             }
+        }
+
+        protected String getPackageName() {
+            String name = getName();
+            int packageIndex = name.lastIndexOf('.');
+            return packageIndex == -1
+                    ? null
+                    : name.substring(0, packageIndex);
         }
 
         @Override
@@ -594,14 +604,6 @@ public interface TypeDescription extends ByteCodeElement {
                 int simpleNameIndex = getInternalName().lastIndexOf('$');
                 simpleNameIndex = simpleNameIndex == -1 ? getInternalName().lastIndexOf('/') : simpleNameIndex;
                 return simpleNameIndex == -1 ? getInternalName() : getInternalName().substring(simpleNameIndex + 1);
-            }
-
-            @Override
-            public String getPackageName() {
-                int packageIndex = getName().lastIndexOf('.');
-                return packageIndex == -1
-                        ? null
-                        : getName().substring(0, packageIndex);
             }
 
             @Override
@@ -758,9 +760,11 @@ public interface TypeDescription extends ByteCodeElement {
         }
 
         @Override
-        public String getPackageName() {
-            Package packageReference = type.getPackage();
-            return packageReference == null ? null : packageReference.getName();
+        public PackageDescription getPackage() {
+            Package aPackage = type.getPackage();
+            return aPackage == null
+                    ? null
+                    : new PackageDescription.ForLoadedPackage(aPackage);
         }
 
         @Override
@@ -1008,7 +1012,7 @@ public interface TypeDescription extends ByteCodeElement {
         }
 
         @Override
-        public String getPackageName() {
+        public PackageDescription getPackage() {
             return null;
         }
 

@@ -5,6 +5,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.fail;
+
 public class TypePoolDefaultTest {
 
     private TypePool typePool;
@@ -24,9 +28,12 @@ public class TypePoolDefaultTest {
         typePool.describe("/");
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = IllegalStateException.class)
     public void testCannotFindClass() throws Exception {
-        typePool.describe("foo");
+        TypePool.Resolution resolution = typePool.describe("foo");
+        assertThat(resolution.isResolved(), is(false));
+        resolution.resolve();
+        fail();
     }
 
     @Test

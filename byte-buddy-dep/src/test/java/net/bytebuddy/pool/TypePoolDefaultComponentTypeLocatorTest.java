@@ -27,7 +27,7 @@ public class TypePoolDefaultComponentTypeLocatorTest {
     public void testForAnnotationProperty() throws Exception {
         TypePool typePool = mock(TypePool.class);
         TypeDescription typeDescription = mock(TypeDescription.class);
-        when(typePool.describe(BAR)).thenReturn(typeDescription);
+        when(typePool.describe(BAR)).thenReturn(new TypePool.Resolution.Simple(typeDescription));
         MethodDescription methodDescription = mock(MethodDescription.class);
         when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Explicit(Arrays.asList(methodDescription)));
         when(methodDescription.getSourceCodeName()).thenReturn(FOO);

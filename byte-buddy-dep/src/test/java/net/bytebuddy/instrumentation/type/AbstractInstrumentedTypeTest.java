@@ -242,8 +242,8 @@ public abstract class AbstractInstrumentedTypeTest {
     }
 
     @Test
-    public void testPackageName() {
-        assertThat(makePlainInstrumentedType().getPackageName(), is(FOO));
+    public void testPackage() {
+        assertThat(makePlainInstrumentedType().getPackage().getName(), is(FOO));
     }
 
     @Test

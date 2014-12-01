@@ -43,6 +43,8 @@ public class TypePoolDefaultPrimitiveTypeTest {
 
     @Test
     public void testPrimitiveLookup() throws Exception {
-        assertThat(typePool.describe(primitiveType.getName()).represents(primitiveType), is(true));
+        assertThat(typePool.describe(primitiveType.getName())
+                .resolve()
+                .represents(primitiveType), is(true));
     }
 }

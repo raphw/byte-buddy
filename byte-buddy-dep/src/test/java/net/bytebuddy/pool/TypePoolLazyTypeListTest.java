@@ -22,7 +22,7 @@ public class TypePoolLazyTypeListTest {
     @Before
     public void setUp() throws Exception {
         typePool = TypePool.Default.ofClassPath();
-        typeList = typePool.describe(Sample.class.getName()).getInterfaces();
+        typeList = typePool.describe(Sample.class.getName()).resolve().getInterfaces();
     }
 
     @After

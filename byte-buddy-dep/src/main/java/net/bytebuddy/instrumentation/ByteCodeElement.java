@@ -7,14 +7,7 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 /**
  * Implementations describe an element represented in byte code, i.e. a type, a field or a method or a constructor.
  */
-public interface ByteCodeElement extends ModifierReviewable, DeclaredInType, AnnotatedElement {
-
-    /**
-     * Returns the internalName of this byte code element.
-     *
-     * @return The internalName of this byte code element as visible from within a running Java application.
-     */
-    String getName();
+public interface ByteCodeElement extends NamedElement, ModifierReviewable, DeclaredInType, AnnotatedElement {
 
     /**
      * Returns the internal internalName of this byte code element.

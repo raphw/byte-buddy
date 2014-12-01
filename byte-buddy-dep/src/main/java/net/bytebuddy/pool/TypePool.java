@@ -6,6 +6,7 @@ import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
+import net.bytebuddy.instrumentation.type.PackageDescription;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.matcher.ElementMatchers;
@@ -40,12 +41,93 @@ public interface TypePool {
      *             on a loaded {@link java.lang.Class}.
      * @return A description of the given type.
      */
-    TypeDescription describe(String name);
+    Resolution describe(String name);
 
     /**
      * Clears this type pool's cache.
      */
     void clear();
+
+    static interface Resolution {
+
+        boolean isResolved();
+
+        TypeDescription resolve();
+
+        static class Simple implements Resolution {
+
+            private final TypeDescription typeDescription;
+
+            public Simple(TypeDescription typeDescription) {
+                this.typeDescription = typeDescription;
+            }
+
+            @Override
+            public boolean isResolved() {
+                return true;
+            }
+
+            @Override
+            public TypeDescription resolve() {
+                return typeDescription;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && typeDescription.equals(((Simple) other).typeDescription);
+            }
+
+            @Override
+            public int hashCode() {
+                return typeDescription.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "TypePool.Resolution.Simple{" +
+                        "typeDescription=" + typeDescription +
+                        '}';
+            }
+        }
+
+        static class Illegal implements Resolution {
+
+            private final String name;
+
+            public Illegal(String name) {
+                this.name = name;
+            }
+
+            @Override
+            public boolean isResolved() {
+                return false;
+            }
+
+            @Override
+            public TypeDescription resolve() {
+                throw new IllegalStateException("Cannot resolve type for " + name);
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && name.equals(((Illegal) other).name);
+            }
+
+            @Override
+            public int hashCode() {
+                return name.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "TypePool.Resolution.Illegal{" +
+                        "name='" + name + '\'' +
+                        '}';
+            }
+        }
+    }
 
     /**
      * A cache provider for a {@link net.bytebuddy.pool.TypePool}.
@@ -58,7 +140,7 @@ public interface TypePool {
          * @param name The name of the type to describe.
          * @return A description of the type or {@code null} if no such type can be found in the cache..
          */
-        TypeDescription find(String name);
+        Resolution find(String name);
 
         /**
          * Registers a type in this cache. If a type of this name already exists in the cache, it should be discarded.
@@ -66,7 +148,7 @@ public interface TypePool {
          * @param typeDescription The type to register.
          * @return The oldest version of this type description that is currently registered in the cache.
          */
-        TypeDescription register(TypeDescription typeDescription);
+        Resolution register(String name, Resolution typeDescription);
 
         /**
          * Clears this cache.
@@ -84,13 +166,13 @@ public interface TypePool {
             INSTANCE;
 
             @Override
-            public TypeDescription find(String name) {
+            public Resolution find(String name) {
                 return null;
             }
 
             @Override
-            public TypeDescription register(TypeDescription typeDescription) {
-                return typeDescription;
+            public Resolution register(String name, Resolution resolution) {
+                return resolution;
             }
 
             @Override
@@ -107,24 +189,24 @@ public interface TypePool {
             /**
              * A map containing all cached values.
              */
-            private final ConcurrentMap<String, TypeDescription> cache;
+            private final ConcurrentMap<String, Resolution> cache;
 
             /**
              * Creates a new simple cache.
              */
             public Simple() {
-                cache = new ConcurrentHashMap<String, TypeDescription>();
+                cache = new ConcurrentHashMap<String, Resolution>();
             }
 
             @Override
-            public TypeDescription find(String name) {
+            public Resolution find(String name) {
                 return cache.get(name);
             }
 
             @Override
-            public TypeDescription register(TypeDescription typeDescription) {
-                TypeDescription cached = cache.putIfAbsent(typeDescription.getName(), typeDescription);
-                return cached == null ? typeDescription : cached;
+            public Resolution register(String name, Resolution resolution) {
+                Resolution cached = cache.putIfAbsent(name, resolution);
+                return cached == null ? resolution : cached;
             }
 
             @Override
@@ -342,7 +424,7 @@ public interface TypePool {
         }
 
         @Override
-        public TypeDescription describe(String name) {
+        public Resolution describe(String name) {
             if (name.contains("/")) {
                 throw new IllegalArgumentException(name + " contains the illegal character '/'");
             }
@@ -356,10 +438,16 @@ public interface TypePool {
                 name = primitiveName == null ? name.substring(1, name.length() - 1) : primitiveName;
             }
             TypeDescription typeDescription = PRIMITIVE_TYPES.get(name);
-            typeDescription = typeDescription == null ? cacheProvider.find(name) : typeDescription;
-            return TypeDescription.ArrayProjection.of(typeDescription == null
-                    ? cacheProvider.register(doDescribe(name))
-                    : typeDescription, arity);
+            Resolution resolution = typeDescription == null
+                    ? cacheProvider.find(name)
+                    : new Resolution.Simple(typeDescription);
+            if (resolution == null) {
+                resolution = doDescribe(name);
+                cacheProvider.register(name, resolution);
+            }
+            return resolution.isResolved()
+                    ? new Resolution.Simple(TypeDescription.ArrayProjection.of(resolution.resolve(), arity))
+                    : resolution;
         }
 
         @Override
@@ -374,7 +462,7 @@ public interface TypePool {
          * @param name The name of the type to describe.
          * @return A description of the type.
          */
-        protected abstract TypeDescription doDescribe(String name);
+        protected abstract Resolution doDescribe(String name);
 
         @Override
         public boolean equals(Object other) {
@@ -432,12 +520,11 @@ public interface TypePool {
         }
 
         @Override
-        protected TypeDescription doDescribe(String name) {
+        protected Resolution doDescribe(String name) {
             TypeDescription.BinaryRepresentation binaryRepresentation = sourceLocator.locate(name);
-            if (!binaryRepresentation.isValid()) {
-                throw new IllegalArgumentException("Cannot locate " + name + " using " + sourceLocator);
-            }
-            return parse(binaryRepresentation.getData());
+            return binaryRepresentation.isValid()
+                    ? new Resolution.Simple(parse(binaryRepresentation.getData()))
+                    : new Resolution.Illegal(name);
         }
 
         /**
@@ -599,6 +686,7 @@ public interface TypePool {
                     @Override
                     public String lookup() {
                         return typePool.describe(annotationName)
+                                .resolve()
                                 .getDeclaredMethods()
                                 .filter(named(name))
                                 .getOnly()
@@ -1516,7 +1604,7 @@ public interface TypePool {
         public TypeDescription getSupertype() {
             return superTypeName == null || isInterface()
                     ? null
-                    : typePool.describe(superTypeName);
+                    : typePool.describe(superTypeName).resolve();
         }
 
         @Override
@@ -1564,6 +1652,14 @@ public interface TypePool {
         @Override
         public MethodList getDeclaredMethods() {
             return new MethodList.Explicit(declaredMethods);
+        }
+
+        @Override
+        public PackageDescription getPackage() {
+            String packageName = getPackageName();
+            return packageName == null
+                    ? null
+                    : new LazyPackageDescription(packageName);
         }
 
         @Override
@@ -1707,7 +1803,7 @@ public interface TypePool {
 
                 @Override
                 public TypeDescription getEnclosingType(TypePool typePool) {
-                    return typePool.describe(name);
+                    return typePool.describe(name).resolve();
                 }
 
                 @Override
@@ -1788,7 +1884,7 @@ public interface TypePool {
 
                 @Override
                 public TypeDescription getEnclosingType(TypePool typePool) {
-                    return typePool.describe(name);
+                    return typePool.describe(name).resolve();
                 }
 
                 @Override
@@ -2428,7 +2524,7 @@ public interface TypePool {
 
                     @Override
                     public TypeDescription getEnumerationType() {
-                        return typePool.describe(descriptor.substring(1, descriptor.length() - 1).replace('/', '.'));
+                        return typePool.describe(descriptor.substring(1, descriptor.length() - 1).replace('/', '.')).resolve();
                     }
 
                     @Override
@@ -2466,7 +2562,7 @@ public interface TypePool {
 
                 @Override
                 public TypeDescription resolve(TypePool typePool) {
-                    return typePool.describe(name);
+                    return typePool.describe(name).resolve();
                 }
 
                 @Override
@@ -2571,7 +2667,9 @@ public interface TypePool {
 
                 @Override
                 public Object[] resolve(TypePool typePool) {
-                    TypeDescription componentTypeDescription = typePool.describe(componentTypeReference.lookup());
+                    TypeDescription componentTypeDescription = typePool
+                            .describe(componentTypeReference.lookup())
+                            .resolve();
                     Class<?> componentType;
                     if (componentTypeDescription.represents(Class.class)) {
                         componentType = TypeDescription.class;
@@ -3504,7 +3602,7 @@ public interface TypePool {
 
             @Override
             public TypeDescription getAnnotationType() {
-                return typePool.describe(descriptor.substring(1, descriptor.length() - 1).replace('/', '.'));
+                return typePool.describe(descriptor.substring(1, descriptor.length() - 1).replace('/', '.')).resolve();
             }
 
             @Override
@@ -3627,7 +3725,7 @@ public interface TypePool {
 
             @Override
             public TypeDescription getFieldType() {
-                return typePool.describe(fieldTypeName);
+                return typePool.describe(fieldTypeName).resolve();
             }
 
             @Override
@@ -3749,7 +3847,7 @@ public interface TypePool {
 
             @Override
             public TypeDescription getReturnType() {
-                return typePool.describe(returnTypeName);
+                return typePool.describe(returnTypeName).resolve();
             }
 
             @Override
@@ -3815,6 +3913,30 @@ public interface TypePool {
             }
         }
 
+        private class LazyPackageDescription extends PackageDescription.AbstractPackageDescription {
+
+            private static final String PACKAGE_INFO = ".package-info";
+
+            private final String name;
+
+            private LazyPackageDescription(String name) {
+                this.name = name;
+            }
+
+            @Override
+            public AnnotationList getDeclaredAnnotations() {
+                Resolution resolution = typePool.describe(name + PACKAGE_INFO);
+                return resolution.isResolved()
+                        ? resolution.resolve().getDeclaredAnnotations()
+                        : new AnnotationList.Empty();
+            }
+
+            @Override
+            public String getName() {
+                return name;
+            }
+        }
+
         /**
          * A list that is constructing {@link net.bytebuddy.pool.TypePool.LazyTypeDescription}s.
          */
@@ -3875,7 +3997,7 @@ public interface TypePool {
 
             @Override
             public TypeDescription get(int index) {
-                return typePool.describe(name[index]);
+                return typePool.describe(name[index]).resolve();
             }
 
             @Override

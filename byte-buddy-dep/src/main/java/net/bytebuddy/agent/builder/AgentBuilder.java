@@ -439,7 +439,7 @@ public interface AgentBuilder {
                 }
                 try {
                     BinaryLocator.Initialized initialized = binaryLocator.initialize(binaryTypeName, binaryRepresentation, classLoader);
-                    TypeDescription typeDescription = initialized.getTypePool().describe(binaryTypeName);
+                    TypeDescription typeDescription = initialized.getTypePool().describe(binaryTypeName).resolve();
                     for (Entry entry : entries) {
                         if (entry.matches(typeDescription, classLoader, classBeingRedefined, protectionDomain)) {
                             DynamicType.Unloaded<?> dynamicType = initializationStrategy.apply(

@@ -1,9 +1,7 @@
 package net.bytebuddy.pool;
 
-import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -13,7 +11,6 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class TypePoolCacheProviderTest {
 
@@ -23,35 +20,29 @@ public class TypePoolCacheProviderTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeDescription typeDescription;
-
-    @Before
-    public void setUp() throws Exception {
-        when(typeDescription.getName()).thenReturn(FOO);
-    }
+    private TypePool.Resolution resolution;
 
     @Test
     public void testNoOp() throws Exception {
-        assertThat(TypePool.CacheProvider.NoOp.INSTANCE.find(FOO), nullValue(TypeDescription.class));
-        assertThat(TypePool.CacheProvider.NoOp.INSTANCE.register(typeDescription), sameInstance(typeDescription));
-        assertThat(TypePool.CacheProvider.NoOp.INSTANCE.find(FOO), nullValue(TypeDescription.class));
+        assertThat(TypePool.CacheProvider.NoOp.INSTANCE.find(FOO), nullValue(TypePool.Resolution.class));
+        assertThat(TypePool.CacheProvider.NoOp.INSTANCE.register(FOO, resolution), sameInstance(resolution));
+        assertThat(TypePool.CacheProvider.NoOp.INSTANCE.find(FOO), nullValue(TypePool.Resolution.class));
         TypePool.CacheProvider.NoOp.INSTANCE.clear();
     }
 
     @Test
     public void testSimple() throws Exception {
         TypePool.CacheProvider simple = new TypePool.CacheProvider.Simple();
-        assertThat(simple.find(FOO), nullValue(TypeDescription.class));
-        assertThat(simple.register(typeDescription), sameInstance(typeDescription));
-        assertThat(simple.find(FOO), sameInstance(typeDescription));
-        TypeDescription typeDescription = mock(TypeDescription.class);
-        when(typeDescription.getName()).thenReturn(FOO);
-        assertThat(simple.register(typeDescription), sameInstance(this.typeDescription));
-        assertThat(simple.find(FOO), sameInstance(this.typeDescription));
+        assertThat(simple.find(FOO), nullValue(TypePool.Resolution.class));
+        assertThat(simple.register(FOO, resolution), sameInstance(resolution));
+        assertThat(simple.find(FOO), sameInstance(resolution));
+        TypePool.Resolution resolution = mock(TypePool.Resolution.class);
+        assertThat(simple.register(FOO, resolution), sameInstance(this.resolution));
+        assertThat(simple.find(FOO), sameInstance(this.resolution));
         simple.clear();
-        assertThat(simple.find(FOO), nullValue(TypeDescription.class));
-        assertThat(simple.register(typeDescription), sameInstance(typeDescription));
-        assertThat(simple.find(FOO), sameInstance(typeDescription));
+        assertThat(simple.find(FOO), nullValue(TypePool.Resolution.class));
+        assertThat(simple.register(FOO, resolution), sameInstance(resolution));
+        assertThat(simple.find(FOO), sameInstance(resolution));
     }
 
     @Test

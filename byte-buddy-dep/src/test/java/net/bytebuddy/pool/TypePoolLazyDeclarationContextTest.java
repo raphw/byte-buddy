@@ -53,7 +53,7 @@ public class TypePoolLazyDeclarationContextTest {
     public void testDeclaredInTypeGetTypeIsNotNull() throws Exception {
         TypePool typePool = mock(TypePool.class);
         TypeDescription typeDescription = mock(TypeDescription.class);
-        when(typePool.describe(FOO)).thenReturn(typeDescription);
+        when(typePool.describe(FOO)).thenReturn(new TypePool.Resolution.Simple(typeDescription));
         assertThat(new TypePool.LazyTypeDescription.DeclarationContext.DeclaredInType(FOO_INTERNAL)
                 .getEnclosingType(typePool), is(typeDescription));
     }
@@ -78,7 +78,7 @@ public class TypePoolLazyDeclarationContextTest {
     public void testDeclaredInMethodGetTypeIsNotNull() throws Exception {
         TypeDescription typeDescription = mock(TypeDescription.class);
         TypePool typePool = mock(TypePool.class);
-        when(typePool.describe(FOO)).thenReturn(typeDescription);
+        when(typePool.describe(FOO)).thenReturn(new TypePool.Resolution.Simple(typeDescription));
         assertThat(new TypePool.LazyTypeDescription.DeclarationContext.DeclaredInMethod(FOO_INTERNAL, BAR, QUX)
                 .getEnclosingType(typePool), is(typeDescription));
     }
@@ -90,7 +90,7 @@ public class TypePoolLazyDeclarationContextTest {
         when(methodDescription.getDescriptor()).thenReturn(QUX);
         TypeDescription typeDescription = mock(TypeDescription.class);
         TypePool typePool = mock(TypePool.class);
-        when(typePool.describe(FOO)).thenReturn(typeDescription);
+        when(typePool.describe(FOO)).thenReturn(new TypePool.Resolution.Simple(typeDescription));
         when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Explicit(Arrays.asList(methodDescription)));
         assertThat(new TypePool.LazyTypeDescription.DeclarationContext.DeclaredInMethod(FOO_INTERNAL, BAR, QUX)
                 .getEnclosingMethod(typePool), is(methodDescription));

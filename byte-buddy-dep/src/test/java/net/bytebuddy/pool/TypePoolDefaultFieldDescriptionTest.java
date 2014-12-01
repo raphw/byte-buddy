@@ -27,6 +27,7 @@ public class TypePoolDefaultFieldDescriptionTest extends AbstractFieldDescriptio
     @Override
     protected FieldDescription describe(Field field) {
         return typePool.describe(field.getDeclaringClass().getName())
+                .resolve()
                 .getDeclaredFields().filter(named(field.getName())).getOnly();
     }
 }

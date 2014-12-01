@@ -24,7 +24,7 @@ public class TypePoolLazyAnnotationListTest {
     @Before
     public void setUp() throws Exception {
         typePool = TypePool.Default.ofClassPath();
-        annotationList = typePool.describe(Carrier.class.getName()).getDeclaredAnnotations();
+        annotationList = typePool.describe(Carrier.class.getName()).resolve().getDeclaredAnnotations();
     }
 
     @After

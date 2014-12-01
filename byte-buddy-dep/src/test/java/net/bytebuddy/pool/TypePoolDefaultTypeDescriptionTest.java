@@ -21,6 +21,6 @@ public class TypePoolDefaultTypeDescriptionTest extends AbstractTypeDescriptionT
 
     @Override
     protected TypeDescription describe(Class<?> type) {
-        return typePool.describe(type.getName());
+        return typePool.describe(type.getName()).resolve();
     }
 }

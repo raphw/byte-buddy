@@ -12,9 +12,9 @@ public class TypePoolDefaultCacheTest {
     @Test
     public void testCache() throws Exception {
         TypePool typePool = TypePool.Default.ofClassPath();
-        TypeDescription typeDescription = typePool.describe(Void.class.getName());
-        assertThat(typePool.describe(Void.class.getName()), sameInstance(typeDescription));
+        TypeDescription typeDescription = typePool.describe(Void.class.getName()).resolve();
+        assertThat(typePool.describe(Void.class.getName()).resolve(), sameInstance(typeDescription));
         typePool.clear();
-        assertThat(typePool.describe(Void.class.getName()), not(sameInstance(typeDescription)));
+        assertThat(typePool.describe(Void.class.getName()).resolve(), not(sameInstance(typeDescription)));
     }
 }

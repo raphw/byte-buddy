@@ -26,7 +26,7 @@ public class TypePoolDefaultEnumerationValueTest extends AbstractEnumerationValu
     protected AnnotationDescription.EnumerationValue describe(Enum<?> enumeration,
                                                               Class<?> carrierType,
                                                               MethodDescription annotationMethod) {
-        TypeDescription typeDescription = typePool.describe(carrierType.getName());
+        TypeDescription typeDescription = typePool.describe(carrierType.getName()).resolve();
         for (AnnotationDescription annotationDescription : typeDescription.getDeclaredAnnotations()) {
             if (annotationDescription.getAnnotationType().equals(annotationDescription.getAnnotationType())) {
                 return annotationDescription.getValue(annotationMethod, AnnotationDescription.EnumerationValue.class);

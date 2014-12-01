@@ -4,10 +4,7 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodList;
-import net.bytebuddy.instrumentation.type.AbstractInstrumentedTypeTest;
-import net.bytebuddy.instrumentation.type.InstrumentedType;
-import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.instrumentation.type.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -29,12 +26,17 @@ public class InlineInstrumentedTypeTest extends AbstractInstrumentedTypeTest {
     @Mock
     private TypeDescription targetType;
 
+    @Mock
+    private PackageDescription packageDescription;
+
     @Before
     public void setUp() throws Exception {
         when(targetType.getDeclaredMethods()).thenReturn(new MethodList.Empty());
         when(targetType.getDeclaredFields()).thenReturn(new FieldList.Empty());
         when(targetType.getInterfaces()).thenReturn(new TypeList.Empty());
         when(targetType.getSupertype()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
+        when(targetType.getPackage()).thenReturn(packageDescription);
+        when(packageDescription.getName()).thenReturn(FOO);
     }
 
     @Override

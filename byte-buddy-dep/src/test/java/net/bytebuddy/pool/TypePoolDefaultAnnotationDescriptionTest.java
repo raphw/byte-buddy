@@ -24,6 +24,7 @@ public class TypePoolDefaultAnnotationDescriptionTest extends AbstractAnnotation
 
     @Override
     protected AnnotationDescription describe(Annotation annotation, Class<?> declaringType) {
-        return typePool.describe(declaringType.getName()).getDeclaredAnnotations().ofType(annotation.annotationType());
+        return typePool.describe(declaringType.getName()).resolve()
+                .getDeclaredAnnotations().ofType(annotation.annotationType());
     }
 }

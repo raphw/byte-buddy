@@ -21,7 +21,7 @@ public class TypePoolLazyFieldListTest {
     @Before
     public void setUp() throws Exception {
         typePool = TypePool.Default.ofClassPath();
-        fieldList = typePool.describe(Sample.class.getName()).getDeclaredFields();
+        fieldList = typePool.describe(Sample.class.getName()).resolve().getDeclaredFields();
     }
 
     @After

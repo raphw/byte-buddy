@@ -23,7 +23,7 @@ public class TypePoolLazyMethodListTest {
     @Before
     public void setUp() throws Exception {
         typePool = TypePool.Default.ofClassPath();
-        methodList = typePool.describe(Sample.class.getName()).getDeclaredMethods();
+        methodList = typePool.describe(Sample.class.getName()).resolve().getDeclaredMethods();
     }
 
     @After

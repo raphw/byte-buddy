@@ -193,10 +193,12 @@ public abstract class AbstractTypeDescriptionTest {
     }
 
     @Test
-    public void testPackageName() throws Exception {
-        assertThat(describe(SampleClass.class).getPackageName(), is(SampleClass.class.getPackage().getName()));
-        assertThat(describe(Object.class).getPackageName(), is(Object.class.getPackage().getName()));
-        assertThat(describe(Object[].class).getPackageName(), nullValue(String.class));
+    public void testPackage() throws Exception {
+        assertThat(describe(SampleClass.class).getPackage(),
+                is((PackageDescription) new PackageDescription.ForLoadedPackage(SampleClass.class.getPackage())));
+        assertThat(describe(Object.class).getPackage(),
+                is((PackageDescription) new PackageDescription.ForLoadedPackage(Object.class.getPackage())));
+        assertThat(describe(Object[].class).getPackage(), nullValue(PackageDescription.class));
     }
 
     @Test
