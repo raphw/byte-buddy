@@ -442,12 +442,9 @@ public interface TypePool {
                     ? cacheProvider.find(name)
                     : new Resolution.Simple(typeDescription);
             if (resolution == null) {
-                resolution = doDescribe(name);
-                cacheProvider.register(name, resolution);
+                resolution = cacheProvider.register(name, doDescribe(name));
             }
-            return resolution.isResolved()
-                    ? new Resolution.Simple(TypeDescription.ArrayProjection.of(resolution.resolve(), arity))
-                    : resolution;
+            return ArrayTypeResolution.of(resolution, arity);
         }
 
         @Override
@@ -473,6 +470,56 @@ public interface TypePool {
         @Override
         public int hashCode() {
             return cacheProvider.hashCode();
+        }
+
+        protected static class ArrayTypeResolution implements Resolution {
+
+            private final Resolution resolution;
+
+            private final int arity;
+
+            protected ArrayTypeResolution(Resolution resolution, int arity) {
+                this.resolution = resolution;
+                this.arity = arity;
+            }
+
+            public static Resolution of(Resolution resolution, int arity) {
+                return arity == 0
+                        ? resolution
+                        : new ArrayTypeResolution(resolution, arity);
+            }
+
+            @Override
+            public boolean isResolved() {
+                return resolution.isResolved();
+            }
+
+            @Override
+            public TypeDescription resolve() {
+                return TypeDescription.ArrayProjection.of(resolution.resolve(), arity);
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && arity == ((ArrayTypeResolution) other).arity
+                        && resolution.equals(((ArrayTypeResolution) other).resolution);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = resolution.hashCode();
+                result = 31 * result + arity;
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "TypePool.AbstractBase.ArrayTypeResolution{" +
+                        "resolution=" + resolution +
+                        ", arity=" + arity +
+                        '}';
+            }
         }
     }
 
