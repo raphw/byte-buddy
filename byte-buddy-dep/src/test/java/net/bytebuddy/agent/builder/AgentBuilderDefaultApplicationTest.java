@@ -41,7 +41,7 @@ public class AgentBuilderDefaultApplicationTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .disableSelfInitialization()
                 .rebase(isAnnotatedWith(ShouldRebase.class)).transform(new FooTransformer())
-                .registerWithByteBuddyAgent();
+                .installOnByteBuddyAgent();
         try {
             assertThat(new Foo().foo(), is(BAR));
         } finally {
@@ -56,7 +56,7 @@ public class AgentBuilderDefaultApplicationTest {
                 .disableSelfInitialization()
                 .withNativeMethodPrefix(FOO)
                 .rebase(isAnnotatedWith(ShouldRebase.class)).transform(new FooTransformer())
-                .registerWithByteBuddyAgent();
+                .installOnByteBuddyAgent();
         try {
             assertThat(new Foo().foo(), is(BAR));
         } finally {
@@ -69,7 +69,7 @@ public class AgentBuilderDefaultApplicationTest {
     public void testAgentSelfInitialization() throws Exception {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .rebase(isAnnotatedWith(ShouldRebase.class)).transform(new BarTransformer())
-                .registerWithByteBuddyAgent();
+                .installOnByteBuddyAgent();
         try {
             assertThat(new Bar().foo(), is(BAR));
         } finally {
@@ -82,7 +82,7 @@ public class AgentBuilderDefaultApplicationTest {
     public void testAgentSelfInitializationAuxiliaryTypes() throws Exception {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .rebase(isAnnotatedWith(ShouldRebase.class)).transform(new QuxTransformer())
-                .registerWithByteBuddyAgent();
+                .installOnByteBuddyAgent();
         try {
             assertThat(new Qux().foo(), is(FOO + BAR));
         } finally {

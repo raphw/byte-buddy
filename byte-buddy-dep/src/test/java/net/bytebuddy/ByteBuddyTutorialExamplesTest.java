@@ -1,6 +1,7 @@
 package net.bytebuddy;
 
 import net.bytebuddy.agent.ByteBuddyAgent;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
@@ -140,7 +141,8 @@ public class ByteBuddyTutorialExamplesTest {
     public void testTutorialGettingStartedTypePool() throws Exception {
         TypePool typePool = TypePool.Default.ofClassPath();
         new ByteBuddy()
-                .redefine(typePool.describe(getClass().getName() + "$UnloadedBar").resolve()) // TODO: Adapt tutorial
+                .redefine(typePool.describe(getClass().getName() + "$UnloadedBar").resolve(),
+                        ClassFileLocator.ForClassLoader.of(getClass().getClassLoader())) // TODO: Adapt tutorial
                 .defineField("qux", String.class)
                 .make()
                 .load(ClassLoader.getSystemClassLoader(), ClassLoadingStrategy.Default.INJECTION);

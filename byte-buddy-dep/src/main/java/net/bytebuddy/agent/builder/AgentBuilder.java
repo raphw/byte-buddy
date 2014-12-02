@@ -43,7 +43,8 @@ import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
  * <p>
  * An agent builder provides a convenience API for defining a
  * <a href="http://docs.oracle.com/javase/6/docs/api/java/lang/instrument/package-summary.html">Java agent</a> using
- * Byte Buddy's {@link net.bytebuddy.ByteBuddy#rebase(net.bytebuddy.instrumentation.type.TypeDescription)}.
+ * Byte Buddy's
+ * {@link net.bytebuddy.ByteBuddy#rebase(net.bytebuddy.instrumentation.type.TypeDescription, net.bytebuddy.dynamic.ClassFileLocator)}.
  * </p>
  * <p>
  * When defining several {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s, the agent builder always
@@ -119,6 +120,14 @@ public interface AgentBuilder {
     AgentBuilder withListener(Listener listener);
 
     /**
+     * Defines the use of the given binary locator for locating binary data to given class names.
+     *
+     * @param binaryLocator The binary locator to use.
+     * @return A new instance of this agent builder which uses the given binary locator for looking up class files.
+     */
+    AgentBuilder withBinaryLocator(BinaryLocator binaryLocator);
+
+    /**
      * Enables the use of the given native method prefix for instrumented methods. Note that this prefix is also
      * applied when preserving non-native methods. The use of this prefix is also registered when installing the
      * final agent with an {@link java.lang.instrument.Instrumentation}.
@@ -170,7 +179,7 @@ public interface AgentBuilder {
      * @param instrumentation The instrumentation on which this agent builder's configuration is to be installed.
      * @return The installed class file transformer.
      */
-    ClassFileTransformer registerWith(Instrumentation instrumentation);
+    ClassFileTransformer installOn(Instrumentation instrumentation);
 
     /**
      * Creates and installs a {@link java.lang.instrument.ClassFileTransformer} that implements the configuration of
@@ -178,7 +187,7 @@ public interface AgentBuilder {
      *
      * @return The installed class file transformer.
      */
-    ClassFileTransformer registerWithByteBuddyAgent();
+    ClassFileTransformer installOnByteBuddyAgent();
 
     /**
      * Describes an {@link net.bytebuddy.agent.builder.AgentBuilder} which was handed a matcher for identifying
@@ -310,6 +319,17 @@ public interface AgentBuilder {
         }
 
         @Override
+        public AgentBuilder withBinaryLocator(BinaryLocator binaryLocator) {
+            return new Default(byteBuddy,
+                    nonNull(binaryLocator),
+                    listener,
+                    nativeMethodPrefix,
+                    disableSelfInitialization,
+                    retransformation,
+                    entries);
+        }
+
+        @Override
         public AgentBuilder withNativeMethodPrefix(String prefix) {
             if (nonNull(prefix).length() == 0) {
                 throw new IllegalArgumentException("The empty string is not a legal value for a native method prefix");
@@ -351,7 +371,7 @@ public interface AgentBuilder {
         }
 
         @Override
-        public ClassFileTransformer registerWith(Instrumentation instrumentation) {
+        public ClassFileTransformer installOn(Instrumentation instrumentation) {
             ClassFileTransformer classFileTransformer = makeRaw();
             instrumentation.addTransformer(classFileTransformer, retransformation);
             if (!NO_NATIVE_PREFIX.equals(nonNull(nativeMethodPrefix))) {
@@ -361,9 +381,9 @@ public interface AgentBuilder {
         }
 
         @Override
-        public ClassFileTransformer registerWithByteBuddyAgent() {
+        public ClassFileTransformer installOnByteBuddyAgent() {
             try {
-                return registerWith((Instrumentation) ClassLoader.getSystemClassLoader()
+                return installOn((Instrumentation) ClassLoader.getSystemClassLoader()
                         .loadClass(BYTE_BUDDY_AGENT_TYPE)
                         .getDeclaredMethod(GET_INSTRUMENTATION_METHOD)
                         .invoke(STATIC_METHOD));
@@ -569,6 +589,11 @@ public interface AgentBuilder {
             }
 
             @Override
+            public AgentBuilder withBinaryLocator(BinaryLocator binaryLocator) {
+                return materialize().withBinaryLocator(binaryLocator);
+            }
+
+            @Override
             public AgentBuilder withNativeMethodPrefix(String prefix) {
                 return materialize().withNativeMethodPrefix(prefix);
             }
@@ -589,13 +614,13 @@ public interface AgentBuilder {
             }
 
             @Override
-            public ClassFileTransformer registerWith(Instrumentation instrumentation) {
-                return materialize().registerWith(instrumentation);
+            public ClassFileTransformer installOn(Instrumentation instrumentation) {
+                return materialize().installOn(instrumentation);
             }
 
             @Override
-            public ClassFileTransformer registerWithByteBuddyAgent() {
-                return materialize().registerWithByteBuddyAgent();
+            public ClassFileTransformer installOnByteBuddyAgent() {
+                return materialize().installOnByteBuddyAgent();
             }
 
             protected AgentBuilder materialize() {
