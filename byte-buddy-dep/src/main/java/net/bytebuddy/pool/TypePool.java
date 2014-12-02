@@ -16,7 +16,6 @@ import net.bytebuddy.utility.PropertyDispatcher;
 import org.objectweb.asm.*;
 import org.objectweb.asm.Type;
 
-import javax.xml.transform.SourceLocator;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.AnnotationTypeMismatchException;
@@ -467,7 +466,8 @@ public interface TypePool {
         /**
          * Creates a new default type pool.
          *
-         * @param cacheProvider The cache provider to be used.
+         * @param cacheProvider    The cache provider to be used.
+         * @param classFileLocator The class file locator to be used.
          */
         public Default(CacheProvider cacheProvider, ClassFileLocator classFileLocator) {
             super(cacheProvider);
@@ -3912,7 +3912,7 @@ public interface TypePool {
 
             @Override
             public boolean isSealed() {
-                return false; // TODO: How to determine?
+                return false;
             }
         }
 

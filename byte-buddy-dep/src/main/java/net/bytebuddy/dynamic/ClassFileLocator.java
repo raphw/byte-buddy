@@ -25,6 +25,7 @@ public interface ClassFileLocator {
     /**
      * Locates the class file for a given type and returns the binary data of the class file.
      *
+     * @param typeName The name of the type to locate a class file representation for.
      * @return Any binary representation of the type which might be illegal.
      * @throws java.io.IOException If reading a class file causes an error.
      */
@@ -288,7 +289,7 @@ public interface ClassFileLocator {
                 try {
                     instrumentation.addTransformer(classFileTransformer, true);
                     instrumentation.retransformClasses(classLoader.loadClass(typeName));
-                    byte[] binaryRepresentation = classFileTransformer.getClassFile();
+                    byte[] binaryRepresentation = classFileTransformer.getBinaryRepresentation();
                     return binaryRepresentation == null
                             ? Resolution.Illegal.INSTANCE
                             : new Resolution.Explicit(binaryRepresentation);
@@ -335,17 +336,21 @@ public interface ClassFileLocator {
              */
             private final ClassLoader classLoader;
 
+            /**
+             * The name of the type to look up.
+             */
             private final String typeName;
 
             /**
              * The binary representation of the looked-up class.
              */
-            private volatile byte[] classFile;
+            private volatile byte[] binaryRepresentation;
 
             /**
              * Creates a class file transformer for the purpose of extraction.
              *
              * @param classLoader The class loader that is expected to have loaded the looked-up a class.
+             * @param typeName    The name of the type to look up.
              */
             protected ExtractionClassFileTransformer(ClassLoader classLoader, String typeName) {
                 this.classLoader = classLoader;
@@ -359,7 +364,7 @@ public interface ClassFileLocator {
                                     ProtectionDomain protectionDomain,
                                     byte[] classFile) throws IllegalClassFormatException {
                 if (isChild(classLoader) && typeName.equals(redefinedType.getName())) {
-                    this.classFile = classFile;
+                    this.binaryRepresentation = classFile;
                 }
                 return DO_NOT_TRANSFORM;
             }
@@ -388,8 +393,8 @@ public interface ClassFileLocator {
              * @return The binary representation of the class file or {@code null} if no such class file could
              * be located.
              */
-            protected byte[] getClassFile() {
-                return classFile;
+            protected byte[] getBinaryRepresentation() {
+                return binaryRepresentation;
             }
 
             @Override
@@ -397,7 +402,7 @@ public interface ClassFileLocator {
                 return "ClassFileLocator.AgentBased.ExtractionClassFileTransformer{" +
                         "classLoader=" + classLoader +
                         ", typeName=" + typeName +
-                        ", classFile=" + Arrays.toString(classFile) +
+                        ", binaryRepresentation=" + Arrays.toString(binaryRepresentation) +
                         '}';
             }
         }
