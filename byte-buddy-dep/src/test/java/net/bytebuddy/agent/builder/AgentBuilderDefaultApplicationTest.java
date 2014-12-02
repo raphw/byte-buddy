@@ -4,6 +4,7 @@ import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.FixedValue;
 import net.bytebuddy.instrumentation.MethodDelegation;
+import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.SuperCall;
 import net.bytebuddy.test.utility.ToolsJarRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -14,6 +15,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
+import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -46,6 +48,7 @@ public class AgentBuilderDefaultApplicationTest {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
         }
     }
+
     @Test
     @ToolsJarRule.Enforce
     public void testAgentWithoutSelfInitializationButWithNativeMethodPrefix() throws Exception {
@@ -69,6 +72,19 @@ public class AgentBuilderDefaultApplicationTest {
                 .registerWithByteBuddyAgent();
         try {
             assertThat(new Bar().foo(), is(BAR));
+        } finally {
+            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+        }
+    }
+
+    @Test
+    @ToolsJarRule.Enforce
+    public void testAgentSelfInitializationAuxiliaryTypes() throws Exception {
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
+                .rebase(isAnnotatedWith(ShouldRebase.class)).transform(new QuxTransformer())
+                .registerWithByteBuddyAgent();
+        try {
+            assertThat(new Qux().foo(), is(FOO + BAR));
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
         }
@@ -107,6 +123,28 @@ public class AgentBuilderDefaultApplicationTest {
 
     @ShouldRebase
     private static class Bar {
+
+        public String foo() {
+            return FOO;
+        }
+    }
+
+    public static class QuxTransformer implements AgentBuilder.Transformer {
+
+        @Override
+        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder) {
+            return builder.method(named(FOO)).intercept(MethodDelegation.to(new QuxTransformer.Interceptor()));
+        }
+
+        public static class Interceptor {
+
+            public String intercept(@SuperCall Callable<String> zuper) throws Exception {
+                return zuper.call() + BAR;
+            }
+        }
+    }
+    @ShouldRebase
+    private static class Qux {
 
         public String foo() {
             return FOO;

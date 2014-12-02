@@ -28,7 +28,10 @@ import java.lang.instrument.Instrumentation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.ProtectionDomain;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -415,8 +418,6 @@ public interface AgentBuilder {
 
             private final InitializationStrategy initializationStrategy;
 
-            private final Set<NameClassLoaderPair> ignoredTypes;
-
             public ExecutingTransformer() {
                 methodNameTransformer = NO_NATIVE_PREFIX.equals(nativeMethodPrefix)
                         ? new MethodRebaseResolver.MethodNameTransformer.Suffixing()
@@ -424,7 +425,6 @@ public interface AgentBuilder {
                 initializationStrategy = disableSelfInitialization
                         ? InitializationStrategy.NoOp.INSTANCE
                         : new InitializationStrategy.SelfInjection();
-                ignoredTypes = Collections.newSetFromMap(new ConcurrentHashMap<NameClassLoaderPair, Boolean>());
             }
 
             @Override
@@ -434,9 +434,6 @@ public interface AgentBuilder {
                                     ProtectionDomain protectionDomain,
                                     byte[] binaryRepresentation) {
                 String binaryTypeName = internalTypeName.replace('/', '.');
-                if (ignoredTypes.remove(new NameClassLoaderPair(binaryTypeName, classLoader))) {
-                    return NO_TRANSFORMATION;
-                }
                 try {
                     BinaryLocator.Initialized initialized = binaryLocator.initialize(binaryTypeName, binaryRepresentation, classLoader);
                     TypeDescription typeDescription = initialized.getTypePool().describe(binaryTypeName).resolve();
@@ -450,7 +447,6 @@ public interface AgentBuilder {
                             if (loadedTypeInitializers.size() > 1) {
                                 ClassLoaderByteArrayInjector injector = new ClassLoaderByteArrayInjector(classLoader, protectionDomain);
                                 for (Map.Entry<TypeDescription, byte[]> auxiliary : dynamicType.getRawAuxiliaryTypes().entrySet()) {
-                                    ignoredTypes.add(new NameClassLoaderPair(auxiliary.getKey().getName(), classLoader));
                                     Class<?> type = injector.inject(auxiliary.getKey().getName(), auxiliary.getValue());
                                     initializationStrategy.initialize(type, loadedTypeInitializers.get(auxiliary.getKey()));
                                 }
@@ -478,7 +474,6 @@ public interface AgentBuilder {
                         "agentBuilder=" + Default.this +
                         ", methodNameTransformer=" + methodNameTransformer +
                         ", initializationStrategy=" + initializationStrategy +
-                        ", ignoredTypes=" + ignoredTypes +
                         '}';
             }
         }
@@ -526,42 +521,6 @@ public interface AgentBuilder {
                 return "AgentBuilder.Default.Entry{" +
                         "rawMatcher=" + rawMatcher +
                         ", transformer=" + transformer +
-                        '}';
-            }
-        }
-
-        protected static class NameClassLoaderPair {
-
-            private final String name;
-
-            private final ClassLoader classLoader;
-
-            protected NameClassLoaderPair(String name, ClassLoader classLoader) {
-                this.name = name;
-                this.classLoader = classLoader;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                NameClassLoaderPair that = (NameClassLoaderPair) other;
-                return !(classLoader != null ? !classLoader.equals(that.classLoader) : that.classLoader != null)
-                        && name.equals(that.name);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = name.hashCode();
-                result = 31 * result + (classLoader != null ? classLoader.hashCode() : 0);
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.Default.NameClassLoaderPair{" +
-                        "name='" + name + '\'' +
-                        ", classLoader=" + classLoader +
                         '}';
             }
         }
