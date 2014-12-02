@@ -34,12 +34,13 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 public interface TypePool {
 
     /**
-     * Locates and describes the given type by its name. If no such type can be found, an
-     * {@link java.lang.IllegalArgumentException} is thrown.
+     * Locates and describes the given type by its name.
      *
      * @param name The name of the type to describe. The name is to be written as when calling {@link Object#toString()}
      *             on a loaded {@link java.lang.Class}.
-     * @return A description of the given type.
+     * @return A resolution of the type to describe. If the type to be described was found, the returned
+     * {@link net.bytebuddy.pool.TypePool.Resolution} represents this type. Otherwise, an illegal resolution is
+     * returned.
      */
     Resolution describe(String name);
 
@@ -48,16 +49,41 @@ public interface TypePool {
      */
     void clear();
 
+    /**
+     * A resolution of a {@link net.bytebuddy.pool.TypePool} which was queried for a description.
+     */
     static interface Resolution {
 
+        /**
+         * Determines if this resolution represents a {@link net.bytebuddy.instrumentation.type.TypeDescription}.
+         *
+         * @return {@code true} if the queried type could be resolved.
+         */
         boolean isResolved();
 
+        /**
+         * Resolves this resolution to the represented type description. This method must only be invoked if this
+         * instance could be resolved. Otherwise, an exception is thrown on calling this method.
+         *
+         * @return The type description that is represented by this resolution.
+         */
         TypeDescription resolve();
 
+        /**
+         * A simple resolution that represents a given {@link net.bytebuddy.instrumentation.type.TypeDescription}.
+         */
         static class Simple implements Resolution {
 
+            /**
+             * The represented type description.
+             */
             private final TypeDescription typeDescription;
 
+            /**
+             * Creates a new successful resolution of a given type description.
+             *
+             * @param typeDescription The represented type description.
+             */
             public Simple(TypeDescription typeDescription) {
                 this.typeDescription = typeDescription;
             }
@@ -91,10 +117,21 @@ public interface TypePool {
             }
         }
 
+        /**
+         * A canonical representation of a non-successful resolution of a {@link net.bytebuddy.pool.TypePool}.
+         */
         static class Illegal implements Resolution {
 
+            /**
+             * The name of the unresolved type.
+             */
             private final String name;
 
+            /**
+             * Creates a new illegal resolution.
+             *
+             * @param name The name of the unresolved type.
+             */
             public Illegal(String name) {
                 this.name = name;
             }
@@ -135,20 +172,23 @@ public interface TypePool {
     static interface CacheProvider {
 
         /**
-         * Attempts to find a type in this cache.
+         * Attempts to find a resolution in this cache.
          *
          * @param name The name of the type to describe.
-         * @return A description of the type or {@code null} if no such type can be found in the cache..
+         * @return A resolution of the type or {@code null} if no such resolution can be found in the cache..
          */
         Resolution find(String name);
 
         /**
-         * Registers a type in this cache. If a type of this name already exists in the cache, it should be discarded.
+         * Registers a resolution in this cache. If a resolution to the given name already exists in the
+         * cache, it should be discarded.
          *
-         * @param typeDescription The type to register.
-         * @return The oldest version of this type description that is currently registered in the cache.
+         * @param name       The name of the type that is to be registered.
+         * @param resolution The resolution to register.
+         * @return The oldest version of a resolution that is currently registered in the cache which might
+         * be the given resolution or another resolution that was previously registered.
          */
-        Resolution register(String name, Resolution typeDescription);
+        Resolution register(String name, Resolution resolution);
 
         /**
          * Clears this cache.
@@ -187,7 +227,7 @@ public interface TypePool {
         static class Simple implements CacheProvider {
 
             /**
-             * A map containing all cached values.
+             * A map containing all cached resolutions by their names.
              */
             private final ConcurrentMap<String, Resolution> cache;
 
@@ -453,11 +493,10 @@ public interface TypePool {
         }
 
         /**
-         * Looks up a description of a non-primitive, non-array type. If no such type can be found, an
-         * {@link java.lang.IllegalArgumentException} is thrown.
+         * Determines a resolution to a non-primitive, non-array type.
          *
          * @param name The name of the type to describe.
-         * @return A description of the type.
+         * @return A resolution to the type to describe.
          */
         protected abstract Resolution doDescribe(String name);
 
@@ -472,18 +511,43 @@ public interface TypePool {
             return cacheProvider.hashCode();
         }
 
+        /**
+         * A resolution for a type that, if resolved, represents an array type.
+         */
         protected static class ArrayTypeResolution implements Resolution {
 
+            /**
+             * The underlying resolution that is represented by this instance.
+             */
             private final Resolution resolution;
 
+            /**
+             * The arity of the represented array.
+             */
             private final int arity;
 
+            /**
+             * Creates a wrapper for another resolution that, if resolved, represents an array type.
+             *
+             * @param resolution The underlying resolution that is represented by this instance.
+             * @param arity      The arity of the represented array.
+             */
             protected ArrayTypeResolution(Resolution resolution, int arity) {
                 this.resolution = resolution;
                 this.arity = arity;
             }
 
-            public static Resolution of(Resolution resolution, int arity) {
+            /**
+             * Creates a wrapper for another resolution that, if resolved, represents an array type. The wrapper
+             * is only created if the arity is not zero. If the arity is zero, the given resolution is simply
+             * returned instead.
+             *
+             * @param resolution The underlying resolution that is represented by this instance.
+             * @param arity      The arity of the represented array.
+             * @return A wrapper for another resolution that, if resolved, represents an array type or the
+             * given resolution if the given arity is zero.
+             */
+            protected static Resolution of(Resolution resolution, int arity) {
                 return arity == 0
                         ? resolution
                         : new ArrayTypeResolution(resolution, arity);
@@ -3960,12 +4024,27 @@ public interface TypePool {
             }
         }
 
+        /**
+         * An implementation of a {@link net.bytebuddy.instrumentation.type.PackageDescription} that only
+         * loads its annotations on requirement.
+         */
         private class LazyPackageDescription extends PackageDescription.AbstractPackageDescription {
 
+            /**
+             * The name of the {@code package-info} class that represents a compiled Java package.
+             */
             private static final String PACKAGE_INFO = ".package-info";
 
+            /**
+             * The name of the package.
+             */
             private final String name;
 
+            /**
+             * Creates a new lazy package description.
+             *
+             * @param name The name of the package.
+             */
             private LazyPackageDescription(String name) {
                 this.name = name;
             }

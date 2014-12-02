@@ -484,6 +484,11 @@ public interface TypeDescription extends ByteCodeElement {
             }
         }
 
+        /**
+         * Returns the name of this type's package.
+         *
+         * @return The name of this type's package or {@code null} if this type is defined in the default package.
+         */
         protected String getPackageName() {
             String name = getName();
             int packageIndex = name.lastIndexOf('.');

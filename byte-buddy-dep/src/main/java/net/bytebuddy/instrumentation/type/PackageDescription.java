@@ -4,17 +4,15 @@ import net.bytebuddy.instrumentation.NamedElement;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotatedElement;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 
+/**
+ * A package description represents a Java package.
+ */
 public interface PackageDescription extends NamedElement, AnnotatedElement {
 
+    /**
+     * An abstract base implementation of a package description.
+     */
     public abstract static class AbstractPackageDescription implements PackageDescription {
-
-        protected String getParentName() {
-            String name = getName();
-            int packageIndex = name.lastIndexOf('.');
-            return packageIndex == -1
-                    ? null
-                    : name.substring(0, packageIndex);
-        }
 
         @Override
         public int hashCode() {
@@ -33,10 +31,21 @@ public interface PackageDescription extends NamedElement, AnnotatedElement {
         }
     }
 
+    /**
+     * A simple implementation of a package without annotations.
+     */
     public static class Simple extends AbstractPackageDescription {
 
+        /**
+         * The name of the package.
+         */
         private final String name;
 
+        /**
+         * Creates a new simple package.
+         *
+         * @param name The name of the package.
+         */
         public Simple(String name) {
             this.name = name;
         }
@@ -52,10 +61,22 @@ public interface PackageDescription extends NamedElement, AnnotatedElement {
         }
     }
 
+    /**
+     * Represents a loaded {@link java.lang.Package} wrapped as a
+     * {@link net.bytebuddy.instrumentation.type.PackageDescription}.
+     */
     public static class ForLoadedPackage extends AbstractPackageDescription {
 
+        /**
+         * The represented package.
+         */
         private final Package aPackage;
 
+        /**
+         * Creates a new loaded package representation.
+         *
+         * @param aPackage The represented package.
+         */
         protected ForLoadedPackage(Package aPackage) {
             this.aPackage = aPackage;
         }

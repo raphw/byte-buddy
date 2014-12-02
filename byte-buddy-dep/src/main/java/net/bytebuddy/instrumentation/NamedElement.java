@@ -1,5 +1,8 @@
 package net.bytebuddy.instrumentation;
 
+/**
+ * Represents a Java element with a name.
+ */
 public interface NamedElement {
 
     /**
