@@ -8,7 +8,6 @@ import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
-import net.bytebuddy.instrumentation.type.PackageDescription;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 
@@ -195,11 +194,6 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
     @Override
     public TypeList getInterfaces() {
         return new TypeList.Explicit(interfaces);
-    }
-
-    @Override
-    public PackageDescription getPackage() {
-        return levelType.getPackage();
     }
 
     @Override

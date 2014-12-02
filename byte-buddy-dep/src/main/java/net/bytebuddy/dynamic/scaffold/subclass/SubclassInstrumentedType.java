@@ -8,7 +8,6 @@ import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
-import net.bytebuddy.instrumentation.type.PackageDescription;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 
@@ -211,14 +210,6 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
     @Override
     public int getModifiers() {
         return modifiers;
-    }
-
-    @Override
-    public PackageDescription getPackage() {
-        String packageName = getPackageName();
-        return packageName == null
-                ? null
-                : new PackageDescription.Simple(packageName);
     }
 
     @Override

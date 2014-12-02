@@ -8,6 +8,14 @@ public interface PackageDescription extends NamedElement, AnnotatedElement {
 
     public abstract static class AbstractPackageDescription implements PackageDescription {
 
+        protected String getParentName() {
+            String name = getName();
+            int packageIndex = name.lastIndexOf('.');
+            return packageIndex == -1
+                    ? null
+                    : name.substring(0, packageIndex);
+        }
+
         @Override
         public int hashCode() {
             return getName().hashCode();

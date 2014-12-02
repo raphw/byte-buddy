@@ -331,6 +331,14 @@ public interface InstrumentedType extends TypeDescription {
             return typeInitializer;
         }
 
+        @Override
+        public PackageDescription getPackage() {
+            String packageName = getPackageName();
+            return packageName == null
+                    ? null
+                    : new PackageDescription.Simple(packageName);
+        }
+
         /**
          * An implementation of a new field for the enclosing instrumented type.
          */
