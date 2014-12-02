@@ -197,11 +197,6 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
     }
 
     @Override
-    public boolean isSealed() {
-        return levelType.isSealed();
-    }
-
-    @Override
     public String getName() {
         return name;
     }

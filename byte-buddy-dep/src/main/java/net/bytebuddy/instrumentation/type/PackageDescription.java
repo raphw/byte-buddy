@@ -10,6 +10,13 @@ import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 public interface PackageDescription extends NamedElement, AnnotatedElement {
 
     /**
+     * Checks if this package description represents a sealed package.
+     *
+     * @return {@code true} if this package is sealed.
+     */
+    boolean isSealed();
+
+    /**
      * An abstract base implementation of a package description.
      */
     public abstract static class AbstractPackageDescription implements PackageDescription {
@@ -59,6 +66,11 @@ public interface PackageDescription extends NamedElement, AnnotatedElement {
         public String getName() {
             return name;
         }
+
+        @Override
+        public boolean isSealed() {
+            return false;
+        }
     }
 
     /**
@@ -89,6 +101,11 @@ public interface PackageDescription extends NamedElement, AnnotatedElement {
         @Override
         public String getName() {
             return aPackage.getName();
+        }
+
+        @Override
+        public boolean isSealed() {
+            return aPackage.isSealed();
         }
     }
 }

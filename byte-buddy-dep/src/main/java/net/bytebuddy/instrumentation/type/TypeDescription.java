@@ -231,13 +231,6 @@ public interface TypeDescription extends ByteCodeElement {
     StackSize getStackSize();
 
     /**
-     * Checks if this type is defined in a sealed package.
-     *
-     * @return {@code true} if the class is defined in a sealed package.
-     */
-    boolean isSealed();
-
-    /**
      * Returns the annotations that this type declares or inherits from super types.
      *
      * @return A list of all inherited annotations.
@@ -675,11 +668,6 @@ public interface TypeDescription extends ByteCodeElement {
         public AnnotationList getInheritedAnnotations() {
             return new AnnotationList.ForLoadedAnnotation(type.getAnnotations());
         }
-
-        @Override
-        public boolean isSealed() {
-            return type.getPackage() != null && type.getPackage().isSealed();
-        }
     }
 
     /**
@@ -863,11 +851,6 @@ public interface TypeDescription extends ByteCodeElement {
         @Override
         public StackSize getStackSize() {
             return StackSize.SINGLE;
-        }
-
-        @Override
-        public boolean isSealed() {
-            return componentType.isSealed();
         }
 
         @Override

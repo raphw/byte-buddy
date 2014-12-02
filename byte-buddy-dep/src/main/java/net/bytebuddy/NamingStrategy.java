@@ -389,11 +389,11 @@ public interface NamingStrategy {
 
         @Override
         public String name(UnnamedType unnamedType) {
-            String superClassName = baseNameResolver.resolve(unnamedType);
-            if (superClassName.startsWith(JAVA_PACKAGE) || unnamedType.getSuperClass().isSealed()) {
-                superClassName = javaLangPackagePrefix + "." + superClassName;
+            String baseName = baseNameResolver.resolve(unnamedType);
+            if (baseName.startsWith(JAVA_PACKAGE)) {
+                baseName = javaLangPackagePrefix + "." + baseName;
             }
-            return String.format("%s$%s$%s", superClassName, suffix, randomString.nextString());
+            return String.format("%s$%s$%s", baseName, suffix, randomString.nextString());
         }
 
         @Override

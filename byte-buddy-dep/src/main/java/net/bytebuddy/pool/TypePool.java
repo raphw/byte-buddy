@@ -1632,11 +1632,6 @@ public interface TypePool {
         }
 
         @Override
-        public boolean isSealed() {
-            return false;
-        }
-
-        @Override
         public String getName() {
             return name;
         }
@@ -3913,6 +3908,11 @@ public interface TypePool {
             @Override
             public String getName() {
                 return name;
+            }
+
+            @Override
+            public boolean isSealed() {
+                return false; // TODO: How to determine?
             }
         }
 
