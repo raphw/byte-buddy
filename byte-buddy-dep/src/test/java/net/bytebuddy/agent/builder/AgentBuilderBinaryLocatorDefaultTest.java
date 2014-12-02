@@ -1,6 +1,6 @@
 package net.bytebuddy.agent.builder;
 
-import net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;

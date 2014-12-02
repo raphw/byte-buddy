@@ -1,6 +1,5 @@
-package net.bytebuddy.dynamic.scaffold.inline;
+package net.bytebuddy.dynamic;
 
-import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
@@ -38,22 +37,22 @@ public class ClassFileLocatorForClassLoaderTest {
     public void testLocatable() throws Exception {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[]{1, 2, 3});
         when(classLoader.getResourceAsStream(FOOBAR + ".class")).thenReturn(inputStream);
-        TypeDescription.BinaryRepresentation binaryRepresentation = new ClassFileLocator.ForClassLoader(classLoader)
-                .classFileFor(FOOBAR);
-        assertThat(binaryRepresentation.isValid(), is(true));
-        assertThat(binaryRepresentation.getData(), is(new byte[]{1, 2, 3}));
+        ClassFileLocator.Resolution resolution = new ClassFileLocator.ForClassLoader(classLoader)
+                .locate(FOOBAR);
+        assertThat(resolution.isResolved(), is(true));
+        assertThat(resolution.resolve(), is(new byte[]{1, 2, 3}));
         verify(classLoader).getResourceAsStream(FOOBAR + ".class");
         verifyNoMoreInteractions(classLoader);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testNonLocatable() throws Exception {
-        TypeDescription.BinaryRepresentation binaryRepresentation = new ClassFileLocator.ForClassLoader(classLoader)
-                .classFileFor(FOOBAR);
-        assertThat(binaryRepresentation.isValid(), is(false));
+        ClassFileLocator.Resolution resolution = new ClassFileLocator.ForClassLoader(classLoader)
+                .locate(FOOBAR);
+        assertThat(resolution.isResolved(), is(false));
         verify(classLoader).getResourceAsStream(FOOBAR + ".class");
         verifyNoMoreInteractions(classLoader);
-        binaryRepresentation.getData();
+        resolution.resolve();
         fail();
     }
 

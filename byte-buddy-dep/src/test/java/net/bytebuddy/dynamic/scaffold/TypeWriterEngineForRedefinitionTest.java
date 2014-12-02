@@ -2,7 +2,7 @@ package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.ClassVisitorWrapper;
-import net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
@@ -82,7 +82,7 @@ public class TypeWriterEngineForRedefinitionTest {
     @Mock
     private MethodRebaseResolver.Resolution barResolution;
     @Mock
-    private TypeDescription.BinaryRepresentation binaryRepresentation;
+    private ClassFileLocator.Resolution resolution;
 
     private List<MethodDescription> invokableMethods;
 
@@ -146,7 +146,7 @@ public class TypeWriterEngineForRedefinitionTest {
         when(barExceptionTypes.toInternalNames()).thenReturn(new String[]{BAZ + QUX});
         when(barResolutionMethod.getExceptionTypes()).thenReturn(barExceptionTypes);
         when(classFileVersion.compareTo(any(ClassFileVersion.class))).thenReturn(1);
-        when(classFileLocator.classFileFor(Foo.class.getName())).thenReturn(binaryRepresentation);
+        when(classFileLocator.locate(Foo.class.getName())).thenReturn(resolution);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -165,10 +165,10 @@ public class TypeWriterEngineForRedefinitionTest {
 
     @Test
     public void testTypeCreationWithRebase() throws Exception {
-        when(binaryRepresentation.isValid()).thenReturn(true);
+        when(resolution.isResolved()).thenReturn(true);
         InputStream inputStream = getClass().getClassLoader().getResourceAsStream(Foo.class.getName().replace('.', '/') + ".class");
         try {
-            when(binaryRepresentation.getData()).thenReturn(new StreamDrainer().drain(inputStream));
+            when(resolution.resolve()).thenReturn(new StreamDrainer().drain(inputStream));
         } finally {
             inputStream.close();
         }
@@ -223,10 +223,10 @@ public class TypeWriterEngineForRedefinitionTest {
 
     @Test
     public void testTypeCreationWithoutRebase() throws Exception {
-        when(binaryRepresentation.isValid()).thenReturn(true);
+        when(resolution.isResolved()).thenReturn(true);
         InputStream inputStream = getClass().getClassLoader().getResourceAsStream(Foo.class.getName().replace('.', '/') + ".class");
         try {
-            when(binaryRepresentation.getData()).thenReturn(new StreamDrainer().drain(inputStream));
+            when(resolution.resolve()).thenReturn(new StreamDrainer().drain(inputStream));
         } finally {
             inputStream.close();
         }

@@ -1,4 +1,4 @@
-package net.bytebuddy.dynamic.scaffold.inline;
+package net.bytebuddy.dynamic;
 
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;

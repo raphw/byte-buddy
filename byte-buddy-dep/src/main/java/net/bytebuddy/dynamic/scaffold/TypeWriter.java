@@ -2,8 +2,8 @@ package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.ClassVisitorWrapper;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator;
 import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.LoadedTypeInitializer;
@@ -168,12 +168,12 @@ public interface TypeWriter<T> {
             @Override
             public byte[] create(Instrumentation.Context.ExtractableView instrumentationContext) {
                 try {
-                    TypeDescription.BinaryRepresentation binaryRepresentation = classFileLocator.classFileFor(targetType.getName());
-                    if (!binaryRepresentation.isValid()) {
+                    ClassFileLocator.Resolution resolution = classFileLocator.locate(targetType.getName());
+                    if (!resolution.isResolved()) {
                         throw new IllegalArgumentException("Cannot locate the class file for "
                                 + targetType + " using " + classFileLocator);
                     }
-                    return doCreate(instrumentationContext, binaryRepresentation.getData());
+                    return doCreate(instrumentationContext, resolution.resolve());
                 } catch (IOException e) {
                     throw new RuntimeException("The class file could not be written", e);
                 }

@@ -1,9 +1,9 @@
 package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoaderByteArrayInjector;
-import net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator;
 import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
 import net.bytebuddy.instrumentation.LoadedTypeInitializer;
 import net.bytebuddy.instrumentation.method.MethodDescription;
@@ -1081,7 +1081,7 @@ public interface AgentBuilder {
          * A default implementation of a {@link net.bytebuddy.agent.builder.AgentBuilder.BinaryLocator} that
          * is using a {@link net.bytebuddy.pool.TypePool.Default} with a
          * {@link net.bytebuddy.pool.TypePool.CacheProvider.Simple} and a
-         * {@link net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator.ForClassLoader}.
+         * {@link net.bytebuddy.dynamic.ClassFileLocator.ForClassLoader}.
          */
         static enum Default implements BinaryLocator {
 
@@ -1154,10 +1154,10 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public TypeDescription.BinaryRepresentation classFileFor(String typeName) throws IOException {
+                public ClassFileLocator.Resolution locate(String typeName) throws IOException {
                     return typeName.equals(typeName)
-                            ? new TypeDescription.BinaryRepresentation.Explicit(binaryRepresentation)
-                            : classFileLocator.classFileFor(typeName);
+                            ? new ClassFileLocator.Resolution.Explicit(binaryRepresentation)
+                            : classFileLocator.locate(typeName);
                 }
 
                 @Override

@@ -1,11 +1,11 @@
 package net.bytebuddy;
 
 import net.bytebuddy.asm.ClassVisitorWrapper;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.dynamic.scaffold.FieldRegistry;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
-import net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator;
 import net.bytebuddy.dynamic.scaffold.inline.InlineDynamicTypeBuilder;
 import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
@@ -371,7 +371,7 @@ public class ByteBuddy {
      * Creates a dynamic type builder for redefining of the given type. The given class must be found on the
      * class path or by the class's {@link java.lang.ClassLoader}. Otherwise, the class file to the redefined class
      * must be located explicitly by providing a locator by
-     * {@link net.bytebuddy.ByteBuddy#redefine(Class, net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator)}.
+     * {@link net.bytebuddy.ByteBuddy#redefine(Class, net.bytebuddy.dynamic.ClassFileLocator)}.
      * </p>
      * <p>
      * <b>Note</b>: It is possible to experience unexpected errors in case that the provided {@code levelType} and the
@@ -410,7 +410,7 @@ public class ByteBuddy {
      * <p>
      * Creates a dynamic type builder for redefining of the given type. The given class must be found on the
      * class path. Otherwise, the class file to the redefined class must be located explicitly by providing a locator
-     * by {@link net.bytebuddy.ByteBuddy#redefine(Class, net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator)}.
+     * by {@link net.bytebuddy.ByteBuddy#redefine(Class, net.bytebuddy.dynamic.ClassFileLocator)}.
      * </p>
      * <p>
      * <b>Note</b>: It is possible to experience unexpected errors in case that the provided {@code levelType} and the
@@ -468,7 +468,7 @@ public class ByteBuddy {
      * The result is a rebased type with subclass semantics. The given class must be found on the class path or
      * by the provided class's {@link java.lang.ClassLoader}. Otherwise, the class file to the redefined class
      * must be located explicitly by providing a locator by
-     * {@link net.bytebuddy.ByteBuddy#rebase(Class, net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator)}.
+     * {@link net.bytebuddy.ByteBuddy#rebase(Class, net.bytebuddy.dynamic.ClassFileLocator)}.
      * </p>
      * <p>
      * <b>Note</b>: It is possible to experience unexpected errors in case that the provided {@code levelType} and the
@@ -535,7 +535,7 @@ public class ByteBuddy {
      * renamed, private methods within the created dynamic type and therefore remain invokable as super method calls.
      * The result is a rebased type with subclass semantics. The given class must be found on the class path.
      * Otherwise, the class file to the redefined class must be located explicitly by providing a locator by
-     * {@link net.bytebuddy.ByteBuddy#rebase(Class, net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator)}.
+     * {@link net.bytebuddy.ByteBuddy#rebase(Class, net.bytebuddy.dynamic.ClassFileLocator)}.
      * </p>
      * <p>
      * <b>Note</b>: It is possible to experience unexpected errors in case that the provided {@code levelType} and the

@@ -1,6 +1,5 @@
-package net.bytebuddy.dynamic.scaffold.inline;
+package net.bytebuddy.dynamic;
 
-import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -23,29 +22,29 @@ public class ClassFileLocatorCompoundTest {
     @Mock
     private ClassFileLocator classFileLocator, otherClassFileLocator;
     @Mock
-    private TypeDescription.BinaryRepresentation legal, illegal;
+    private ClassFileLocator.Resolution legal, illegal;
 
     @Before
     public void setUp() throws Exception {
-        when(legal.isValid()).thenReturn(true);
+        when(legal.isResolved()).thenReturn(true);
     }
 
     @Test
     public void testApplicationOrderCallsSecond() throws Exception {
-        when(classFileLocator.classFileFor(FOO)).thenReturn(illegal);
-        when(otherClassFileLocator.classFileFor(FOO)).thenReturn(legal);
-        assertThat(new ClassFileLocator.Compound(classFileLocator, otherClassFileLocator).classFileFor(FOO), is(legal));
-        verify(classFileLocator).classFileFor(FOO);
+        when(classFileLocator.locate(FOO)).thenReturn(illegal);
+        when(otherClassFileLocator.locate(FOO)).thenReturn(legal);
+        assertThat(new ClassFileLocator.Compound(classFileLocator, otherClassFileLocator).locate(FOO), is(legal));
+        verify(classFileLocator).locate(FOO);
         verifyNoMoreInteractions(classFileLocator);
-        verify(otherClassFileLocator).classFileFor(FOO);
+        verify(otherClassFileLocator).locate(FOO);
         verifyNoMoreInteractions(otherClassFileLocator);
     }
 
     @Test
     public void testApplicationOrderDoesNotCallSecond() throws Exception {
-        when(classFileLocator.classFileFor(FOO)).thenReturn(legal);
-        assertThat(new ClassFileLocator.Compound(classFileLocator, otherClassFileLocator).classFileFor(FOO), is(legal));
-        verify(classFileLocator).classFileFor(FOO);
+        when(classFileLocator.locate(FOO)).thenReturn(legal);
+        assertThat(new ClassFileLocator.Compound(classFileLocator, otherClassFileLocator).locate(FOO), is(legal));
+        verify(classFileLocator).locate(FOO);
         verifyNoMoreInteractions(classFileLocator);
         verifyZeroInteractions(otherClassFileLocator);
     }

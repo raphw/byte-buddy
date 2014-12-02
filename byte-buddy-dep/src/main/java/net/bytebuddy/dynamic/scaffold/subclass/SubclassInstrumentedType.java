@@ -218,11 +218,6 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
     }
 
     @Override
-    public BinaryRepresentation toBinary() {
-        return BinaryRepresentation.Illegal.INSTANCE;
-    }
-
-    @Override
     public AnnotationList getDeclaredAnnotations() {
         return new AnnotationList.Empty();
     }

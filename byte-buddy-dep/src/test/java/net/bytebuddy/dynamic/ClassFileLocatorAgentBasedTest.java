@@ -1,8 +1,7 @@
-package net.bytebuddy.dynamic.scaffold.inline;
+package net.bytebuddy.dynamic;
 
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
-import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.test.utility.ToolsJarRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -34,9 +33,9 @@ public class ClassFileLocatorAgentBasedTest {
     @ToolsJarRule.Enforce
     public void testExtraction() throws Exception {
         ClassFileLocator classFileLocator = ClassFileLocator.AgentBased.fromInstalledAgent(getClass().getClassLoader());
-        TypeDescription.BinaryRepresentation binaryRepresentation = classFileLocator.classFileFor(Foo.class.getName());
-        assertThat(binaryRepresentation.isValid(), is(true));
-        assertThat(binaryRepresentation.getData(), notNullValue(byte[].class));
+        ClassFileLocator.Resolution resolution = classFileLocator.locate(Foo.class.getName());
+        assertThat(resolution.isResolved(), is(true));
+        assertThat(resolution.resolve(), notNullValue(byte[].class));
     }
 
     private static class Foo {

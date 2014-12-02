@@ -1,6 +1,5 @@
-package net.bytebuddy.dynamic.scaffold.inline;
+package net.bytebuddy.dynamic;
 
-import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.StreamDrainer;
 
 import java.io.IOException;
@@ -29,7 +28,119 @@ public interface ClassFileLocator {
      * @return Any binary representation of the type which might be illegal.
      * @throws java.io.IOException If reading a class file causes an error.
      */
-    TypeDescription.BinaryRepresentation classFileFor(String typeName) throws IOException;
+    Resolution locate(String typeName) throws IOException;
+
+    /**
+     * Represents a class file as binary data.
+     */
+    static interface Resolution {
+
+        /**
+         * Checks if this binary representation is valid.
+         *
+         * @return {@code true} if this binary representation is valid.
+         */
+        boolean isResolved();
+
+        /**
+         * Finds the data of this binary representation. Calling this method is only legal for resolved instances.
+         * For non-resolved instances, an exception is thrown.
+         *
+         * @return The requested binary data. The returned array must not be altered.
+         */
+        byte[] resolve();
+
+        /**
+         * A canonical representation of an illegal binary representation.
+         */
+        static enum Illegal implements Resolution {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public boolean isResolved() {
+                return false;
+            }
+
+            @Override
+            public byte[] resolve() {
+                throw new IllegalStateException("Could not read binary data");
+            }
+        }
+
+        /**
+         * Represents a byte array as binary data.
+         */
+        static class Explicit implements Resolution {
+
+            /**
+             * The represented data.
+             */
+            private final byte[] binaryRepresentation;
+
+            /**
+             * Creates a new explicit resolution of a given array of binary data.
+             *
+             * @param binaryRepresentation The binary data to represent.
+             */
+            public Explicit(byte[] binaryRepresentation) {
+                this.binaryRepresentation = binaryRepresentation;
+            }
+
+            /**
+             * Attemts to create a binary representation of a loaded type by requesting data from its
+             * {@link java.lang.ClassLoader}.
+             *
+             * @param type The type of interest.
+             * @return The binary data to this type which might be illegal.
+             */
+            public static Resolution of(Class<?> type) {
+                InputStream inputStream = (type.getClassLoader() == null
+                        ? ClassLoader.getSystemClassLoader()
+                        : type.getClassLoader()).getResourceAsStream(type.getName().replace('.', '/') + CLASS_FILE_EXTENSION);
+                if (inputStream == null) {
+                    return Illegal.INSTANCE;
+                } else {
+                    try {
+                        return new Explicit(new StreamDrainer().drain(inputStream));
+                    } catch (IOException e) {
+                        throw new IllegalStateException(e);
+                    }
+                }
+            }
+
+            @Override
+            public boolean isResolved() {
+                return true;
+            }
+
+            @Override
+            public byte[] resolve() {
+                return binaryRepresentation;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && Arrays.equals(binaryRepresentation, ((Explicit) other).binaryRepresentation);
+            }
+
+            @Override
+            public int hashCode() {
+                return Arrays.hashCode(binaryRepresentation);
+            }
+
+            @Override
+            public String toString() {
+                return "ClassFileLocator.Resolution.Explicit{" +
+                        "binaryRepresentation=" + Arrays.toString(binaryRepresentation) +
+                        '}';
+            }
+        }
+    }
 
     /**
      * A class file locator that queries a class loader for binary representations of class files.
@@ -74,16 +185,16 @@ public interface ClassFileLocator {
         }
 
         @Override
-        public TypeDescription.BinaryRepresentation classFileFor(String typeName) throws IOException {
+        public Resolution locate(String typeName) throws IOException {
             InputStream inputStream = classLoader.getResourceAsStream(typeName.replace('.', '/') + CLASS_FILE_EXTENSION);
             if (inputStream != null) {
                 try {
-                    return new TypeDescription.BinaryRepresentation.Explicit(new StreamDrainer().drain(inputStream));
+                    return new Resolution.Explicit(new StreamDrainer().drain(inputStream));
                 } finally {
                     inputStream.close();
                 }
             } else {
-                return TypeDescription.BinaryRepresentation.Illegal.INSTANCE;
+                return Resolution.Illegal.INSTANCE;
             }
         }
 
@@ -171,7 +282,7 @@ public interface ClassFileLocator {
         }
 
         @Override
-        public TypeDescription.BinaryRepresentation classFileFor(String typeName) {
+        public Resolution locate(String typeName) {
             try {
                 ExtractionClassFileTransformer classFileTransformer = new ExtractionClassFileTransformer(classLoader, typeName);
                 try {
@@ -179,8 +290,8 @@ public interface ClassFileLocator {
                     instrumentation.retransformClasses(classLoader.loadClass(typeName));
                     byte[] binaryRepresentation = classFileTransformer.getClassFile();
                     return binaryRepresentation == null
-                            ? TypeDescription.BinaryRepresentation.Illegal.INSTANCE
-                            : new TypeDescription.BinaryRepresentation.Explicit(binaryRepresentation);
+                            ? Resolution.Illegal.INSTANCE
+                            : new Resolution.Explicit(binaryRepresentation);
                 } finally {
                     instrumentation.removeTransformer(classFileTransformer);
                 }
@@ -234,7 +345,7 @@ public interface ClassFileLocator {
             /**
              * Creates a class file transformer for the purpose of extraction.
              *
-             * @param classLoader     The class loader that is expected to have loaded the looked-up a class.
+             * @param classLoader The class loader that is expected to have loaded the looked-up a class.
              */
             protected ExtractionClassFileTransformer(ClassLoader classLoader, String typeName) {
                 this.classLoader = classLoader;
@@ -293,14 +404,14 @@ public interface ClassFileLocator {
     }
 
     /**
-     * A compound {@link net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator} that chains several locators.
+     * A compound {@link ClassFileLocator} that chains several locators.
      * Any class file locator is queried in the supplied order until one locator is able to provide an input
      * stream of the class file.
      */
     static class Compound implements ClassFileLocator {
 
         /**
-         * The {@link net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator}s which are represented by this compound
+         * The {@link ClassFileLocator}s which are represented by this compound
          * class file locator  in the order of their application.
          */
         private final ClassFileLocator[] classFileLocator;
@@ -308,7 +419,7 @@ public interface ClassFileLocator {
         /**
          * Creates a new compound class file locator.
          *
-         * @param classFileLocator The {@link net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator}s to be
+         * @param classFileLocator The {@link ClassFileLocator}s to be
          *                         represented by this compound class file locator in the order of their application.
          */
         public Compound(ClassFileLocator... classFileLocator) {
@@ -316,11 +427,11 @@ public interface ClassFileLocator {
         }
 
         @Override
-        public TypeDescription.BinaryRepresentation classFileFor(String typeName) throws IOException {
+        public Resolution locate(String typeName) throws IOException {
             for (ClassFileLocator classFileLocator : this.classFileLocator) {
-                TypeDescription.BinaryRepresentation binaryRepresentation = classFileLocator.classFileFor(typeName);
-                if (binaryRepresentation.isValid()) {
-                    return binaryRepresentation;
+                Resolution resolution = classFileLocator.locate(typeName);
+                if (resolution.isResolved()) {
+                    return resolution;
                 }
             }
             return null;

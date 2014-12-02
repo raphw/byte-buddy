@@ -1,6 +1,6 @@
 package net.bytebuddy.pool;
 
-import net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.field.FieldDescription;
@@ -487,9 +487,9 @@ public interface TypePool {
         @Override
         protected Resolution doDescribe(String name) {
             try {
-                TypeDescription.BinaryRepresentation binaryRepresentation = classFileLocator.classFileFor(name);
-                return binaryRepresentation.isValid()
-                        ? new Resolution.Simple(parse(binaryRepresentation.getData()))
+                ClassFileLocator.Resolution resolution = classFileLocator.locate(name);
+                return resolution.isResolved()
+                        ? new Resolution.Simple(parse(resolution.resolve()))
                         : new Resolution.Illegal(name);
             } catch (IOException e) {
                 throw new IllegalStateException("Error while reading class file", e);
@@ -1634,11 +1634,6 @@ public interface TypePool {
         @Override
         public boolean isSealed() {
             return false;
-        }
-
-        @Override
-        public BinaryRepresentation toBinary() {
-            return BinaryRepresentation.Illegal.INSTANCE;
         }
 
         @Override

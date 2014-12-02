@@ -7,17 +7,13 @@ import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
-import net.bytebuddy.utility.StreamDrainer;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -242,13 +238,6 @@ public interface TypeDescription extends ByteCodeElement {
     boolean isSealed();
 
     /**
-     * Returns a binary representation of this type if possible.
-     *
-     * @return A binary representation of this type.
-     */
-    BinaryRepresentation toBinary();
-
-    /**
      * Returns the annotations that this type declares or inherits from super types.
      *
      * @return A list of all inherited annotations.
@@ -262,121 +251,6 @@ public interface TypeDescription extends ByteCodeElement {
      * @return {@code true} if this type and the given type are in the same package.
      */
     boolean isSamePackage(TypeDescription typeDescription);
-
-    /**
-     * Represents a class file as binary data.
-     */
-    static interface BinaryRepresentation {
-
-        /**
-         * Checks if this binary representation is valid.
-         *
-         * @return {@code true} if this binary representation is valid.
-         */
-        boolean isValid();
-
-        /**
-         * Finds the data of this binary representation. Calling this method is only legal for valid representations.
-         *
-         * @return The requested binary data. The returned array must not be altered.
-         */
-        byte[] getData();
-
-        /**
-         * A canonical representation of an illegal binary representation.
-         */
-        static enum Illegal implements BinaryRepresentation {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
-            @Override
-            public boolean isValid() {
-                return false;
-            }
-
-            @Override
-            public byte[] getData() {
-                throw new IllegalStateException("Could not read binary data");
-            }
-        }
-
-        /**
-         * Represents a byte array as binary data.
-         */
-        static class Explicit implements BinaryRepresentation {
-
-            /**
-             * The file extension of Java class files.
-             */
-            private static final String CLASS_FILE_EXTENSION = ".class";
-            /**
-             * The represented data.
-             */
-            private final byte[] data;
-
-            /**
-             * Creates a new explicit representation.
-             *
-             * @param data The data to represent.
-             */
-            public Explicit(byte[] data) {
-                this.data = data;
-            }
-
-            /**
-             * Attemts to create a binary representation of a loaded type by requesting data from its
-             * {@link java.lang.ClassLoader}.
-             *
-             * @param type The type of interest.
-             * @return The binary data to this type which might be illegal.
-             */
-            public static BinaryRepresentation of(Class<?> type) {
-                InputStream inputStream = (type.getClassLoader() == null
-                        ? ClassLoader.getSystemClassLoader()
-                        : type.getClassLoader()).getResourceAsStream(type.getName().replace('.', '/') + CLASS_FILE_EXTENSION);
-                if (inputStream == null) {
-                    return Illegal.INSTANCE;
-                } else {
-                    try {
-                        return new Explicit(new StreamDrainer().drain(inputStream));
-                    } catch (IOException e) {
-                        throw new IllegalStateException(e);
-                    }
-                }
-            }
-
-            @Override
-            public boolean isValid() {
-                return true;
-            }
-
-            @Override
-            public byte[] getData() {
-                return data;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && Arrays.equals(data, ((Explicit) other).data);
-            }
-
-            @Override
-            public int hashCode() {
-                return Arrays.hashCode(data);
-            }
-
-            @Override
-            public String toString() {
-                return "TypeDescription.BinaryRepresentation.Explicit{" +
-                        "data=" + Arrays.toString(data) +
-                        '}';
-            }
-        }
-    }
 
     /**
      * An abstract base implementation of a type description.
@@ -806,11 +680,6 @@ public interface TypeDescription extends ByteCodeElement {
         public boolean isSealed() {
             return type.getPackage() != null && type.getPackage().isSealed();
         }
-
-        @Override
-        public BinaryRepresentation toBinary() {
-            return BinaryRepresentation.Explicit.of(type);
-        }
     }
 
     /**
@@ -999,11 +868,6 @@ public interface TypeDescription extends ByteCodeElement {
         @Override
         public boolean isSealed() {
             return componentType.isSealed();
-        }
-
-        @Override
-        public BinaryRepresentation toBinary() {
-            return BinaryRepresentation.Illegal.INSTANCE;
         }
 
         @Override
