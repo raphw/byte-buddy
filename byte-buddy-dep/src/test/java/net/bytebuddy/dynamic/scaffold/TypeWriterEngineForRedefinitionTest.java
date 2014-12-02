@@ -146,7 +146,7 @@ public class TypeWriterEngineForRedefinitionTest {
         when(barExceptionTypes.toInternalNames()).thenReturn(new String[]{BAZ + QUX});
         when(barResolutionMethod.getExceptionTypes()).thenReturn(barExceptionTypes);
         when(classFileVersion.compareTo(any(ClassFileVersion.class))).thenReturn(1);
-        when(classFileLocator.classFileFor(targetType)).thenReturn(binaryRepresentation);
+        when(classFileLocator.classFileFor(Foo.class.getName())).thenReturn(binaryRepresentation);
     }
 
     @Test(expected = IllegalArgumentException.class)

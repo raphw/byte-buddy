@@ -3,7 +3,6 @@ package net.bytebuddy.dynamic.scaffold.inline;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -26,14 +25,6 @@ public class ClassFileLocatorForClassLoaderTest {
     @Mock
     private ClassLoader classLoader;
 
-    @Mock
-    private TypeDescription typeDescription;
-
-    @Before
-    public void setUp() throws Exception {
-        when(typeDescription.getInternalName()).thenReturn(FOOBAR);
-    }
-
     @Test
     public void testCreation() throws Exception {
         ClassLoader classLoader = mock(ClassLoader.class);
@@ -48,7 +39,7 @@ public class ClassFileLocatorForClassLoaderTest {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[]{1, 2, 3});
         when(classLoader.getResourceAsStream(FOOBAR + ".class")).thenReturn(inputStream);
         TypeDescription.BinaryRepresentation binaryRepresentation = new ClassFileLocator.ForClassLoader(classLoader)
-                .classFileFor(typeDescription);
+                .classFileFor(FOOBAR);
         assertThat(binaryRepresentation.isValid(), is(true));
         assertThat(binaryRepresentation.getData(), is(new byte[]{1, 2, 3}));
         verify(classLoader).getResourceAsStream(FOOBAR + ".class");
@@ -58,7 +49,7 @@ public class ClassFileLocatorForClassLoaderTest {
     @Test(expected = IllegalStateException.class)
     public void testNonLocatable() throws Exception {
         TypeDescription.BinaryRepresentation binaryRepresentation = new ClassFileLocator.ForClassLoader(classLoader)
-                .classFileFor(typeDescription);
+                .classFileFor(FOOBAR);
         assertThat(binaryRepresentation.isValid(), is(false));
         verify(classLoader).getResourceAsStream(FOOBAR + ".class");
         verifyNoMoreInteractions(classLoader);

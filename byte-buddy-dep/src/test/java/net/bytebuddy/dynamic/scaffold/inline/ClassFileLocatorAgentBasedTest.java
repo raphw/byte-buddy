@@ -34,7 +34,7 @@ public class ClassFileLocatorAgentBasedTest {
     @ToolsJarRule.Enforce
     public void testExtraction() throws Exception {
         ClassFileLocator classFileLocator = ClassFileLocator.AgentBased.fromInstalledAgent(getClass().getClassLoader());
-        TypeDescription.BinaryRepresentation binaryRepresentation = classFileLocator.classFileFor(new TypeDescription.ForLoadedType(Foo.class));
+        TypeDescription.BinaryRepresentation binaryRepresentation = classFileLocator.classFileFor(Foo.class.getName());
         assertThat(binaryRepresentation.isValid(), is(true));
         assertThat(binaryRepresentation.getData(), notNullValue(byte[].class));
     }

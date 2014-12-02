@@ -1,5 +1,6 @@
 package net.bytebuddy.pool;
 
+import net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.type.TypeDescription;
@@ -56,7 +57,7 @@ public class TypePoolDefaultComponentTypeLocatorTest {
                 return "()L" + RandomString.make() + ";";
             }
         }).apply();
-        TypePool.Default.TypeExtractor typeExtractor = new TypePool.Default(mock(TypePool.CacheProvider.class), mock(TypePool.SourceLocator.class))
+        TypePool.Default.TypeExtractor typeExtractor = new TypePool.Default(mock(TypePool.CacheProvider.class), mock(ClassFileLocator.class))
                 .new TypeExtractor();
         ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.OnTypeCollector.class).apply(typeExtractor.new OnTypeCollector(FOO));
         ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.MethodExtractor.class).apply(typeExtractor.new MethodExtractor(0, FOO, "()" + BAR_DESCRIPTOR, null));

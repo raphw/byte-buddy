@@ -384,7 +384,7 @@ public class ByteBuddy {
      * @return A dynamic type builder for this configuration that redefines the given type description.
      */
     public <T> DynamicType.Builder<T> redefine(Class<T> levelType) {
-        return redefine(new TypeDescription.ForLoadedType(nonNull(levelType)));
+        return redefine(levelType, ClassFileLocator.ForClassLoader.of(levelType.getClassLoader()));
     }
 
     /**
@@ -423,7 +423,7 @@ public class ByteBuddy {
      * @return A dynamic type builder for this configuration that redefines the given type description.
      */
     public <T> DynamicType.Builder<T> redefine(TypeDescription levelType) {
-        return redefine(levelType, ClassFileLocator.Compound.makeDefault());
+        return redefine(levelType, ClassFileLocator.ForClassLoader.ofClassPath());
     }
 
     /**
@@ -480,7 +480,7 @@ public class ByteBuddy {
      * @return A dynamic type builder for this configuration that creates a rebased version of the given type.
      */
     public <T> DynamicType.Builder<T> rebase(Class<T> levelType) {
-        return rebase(new TypeDescription.ForLoadedType(nonNull(levelType)));
+        return rebase(levelType, ClassFileLocator.ForClassLoader.of(levelType.getClassLoader()));
     }
 
     /**
@@ -547,7 +547,7 @@ public class ByteBuddy {
      * @return A dynamic type builder for this configuration that creates a rebased version of the given type.
      */
     public <T> DynamicType.Builder<T> rebase(TypeDescription levelType) {
-        return rebase(levelType, ClassFileLocator.Compound.makeDefault());
+        return rebase(levelType, ClassFileLocator.ForClassLoader.ofClassPath());
     }
 
     /**

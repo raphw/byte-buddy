@@ -168,7 +168,7 @@ public interface TypeWriter<T> {
             @Override
             public byte[] create(Instrumentation.Context.ExtractableView instrumentationContext) {
                 try {
-                    TypeDescription.BinaryRepresentation binaryRepresentation = classFileLocator.classFileFor(targetType);
+                    TypeDescription.BinaryRepresentation binaryRepresentation = classFileLocator.classFileFor(targetType.getName());
                     if (!binaryRepresentation.isValid()) {
                         throw new IllegalArgumentException("Cannot locate the class file for "
                                 + targetType + " using " + classFileLocator);

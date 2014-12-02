@@ -39,6 +39,5 @@ public class AgentBuilderBinaryLocatorDefaultTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.BinaryLocator.Default.Initialized.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.BinaryLocator.Default.Initialized.ProxySourceLocator.class).apply();
     }
 }

@@ -1,5 +1,6 @@
 package net.bytebuddy.pool;
 
+import net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.field.FieldDescription;
@@ -12,12 +13,11 @@ import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.matcher.FilterableList;
 import net.bytebuddy.utility.PropertyDispatcher;
-import net.bytebuddy.utility.StreamDrainer;
 import org.objectweb.asm.*;
 import org.objectweb.asm.Type;
 
+import javax.xml.transform.SourceLocator;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.AnnotationTypeMismatchException;
 import java.lang.annotation.IncompleteAnnotationException;
@@ -262,151 +262,6 @@ public interface TypePool {
     }
 
     /**
-     * A source locator is responsible for finding the binary representation of a given type by its name.
-     */
-    static interface SourceLocator {
-
-        /**
-         * Locates the binary source of a non-array, non-primitive type.
-         *
-         * @param typeName The binary name of the type to locate.
-         * @return The binary representation of a type which might or might not be legal.
-         */
-        TypeDescription.BinaryRepresentation locate(String typeName);
-
-        /**
-         * A source locator that queries a class loader for a class's binary source.
-         */
-        static class ForClassLoader implements SourceLocator {
-
-            /**
-             * The file ending of Java class files.
-             */
-            private static final String CLASS_FILE_SUFFIX = ".class";
-
-            /**
-             * The class loader to query.
-             */
-            private final ClassLoader classLoader;
-
-            /**
-             * Creates a source locator for a given class loader.
-             *
-             * @param classLoader The class loader to be used. If this class loader represents the bootstrap class
-             *                    loader which is represented by the {@code null} value, this system class loader
-             *                    is used instead.
-             * @return A corresponding source locator.
-             */
-            public static SourceLocator of(ClassLoader classLoader) {
-                return new ForClassLoader(classLoader == null
-                        ? ClassLoader.getSystemClassLoader()
-                        : classLoader);
-            }
-
-            /**
-             * Creates a new class loader source locator.
-             *
-             * @param classLoader The class loader to query.
-             */
-            protected ForClassLoader(ClassLoader classLoader) {
-                this.classLoader = classLoader;
-            }
-
-            /**
-             * Creates a source locator for querying the class path.
-             *
-             * @return A source locator for the system class loader.
-             */
-            public static SourceLocator ofSystemClassLoader() {
-                return new ForClassLoader(ClassLoader.getSystemClassLoader());
-            }
-
-            @Override
-            public TypeDescription.BinaryRepresentation locate(String typeName) {
-                InputStream resource = classLoader.getResourceAsStream(typeName.replace('.', '/') + CLASS_FILE_SUFFIX);
-                if (resource == null) {
-                    return TypeDescription.BinaryRepresentation.Illegal.INSTANCE;
-                }
-                try {
-                    try {
-                        return new TypeDescription.BinaryRepresentation.Explicit(new StreamDrainer().drain(resource));
-                    } finally {
-                        resource.close();
-                    }
-                } catch (IOException e) {
-                    throw new IllegalStateException("Error while reading resource stream for " + typeName, e);
-                }
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && classLoader.equals(((ForClassLoader) other).classLoader);
-            }
-
-            @Override
-            public int hashCode() {
-                return classLoader.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "TypePool.SourceLocator.ForClassLoader{classLoader=" + classLoader + '}';
-            }
-        }
-
-        /**
-         * A compound {@link net.bytebuddy.pool.TypePool.SourceLocator} for querying several source locators in
-         * a given order.
-         */
-        static class Compound implements SourceLocator {
-
-            /**
-             * The source locators to query.
-             */
-            private final SourceLocator[] sourceLocator;
-
-            /**
-             * Creates a new compound source locator.
-             *
-             * @param sourceLocator Source locators in the order of their application.
-             */
-            public Compound(SourceLocator... sourceLocator) {
-                this.sourceLocator = sourceLocator;
-            }
-
-            @Override
-            public TypeDescription.BinaryRepresentation locate(String typeName) {
-                for (SourceLocator sourceLocator : this.sourceLocator) {
-                    TypeDescription.BinaryRepresentation binaryRepresentation = sourceLocator.locate(typeName);
-                    if (binaryRepresentation.isValid()) {
-                        return binaryRepresentation;
-                    }
-                }
-                return TypeDescription.BinaryRepresentation.Illegal.INSTANCE;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && Arrays.equals(sourceLocator, ((Compound) other).sourceLocator);
-            }
-
-            @Override
-            public int hashCode() {
-                return Arrays.hashCode(sourceLocator);
-            }
-
-            @Override
-            public String toString() {
-                return "TypePool.SourceLocator.Compound{" +
-                        "sourceLocator=" + Arrays.toString(sourceLocator) +
-                        '}';
-            }
-        }
-    }
-
-    /**
      * A base implementation of a {@link net.bytebuddy.pool.TypePool} that is managing a cache provider and
      * that handles the description of array and primitive types.
      */
@@ -607,17 +462,16 @@ public interface TypePool {
         /**
          * The locator to query for finding binary data of a type.
          */
-        private final SourceLocator sourceLocator;
+        private final ClassFileLocator classFileLocator;
 
         /**
          * Creates a new default type pool.
          *
          * @param cacheProvider The cache provider to be used.
-         * @param sourceLocator The type source locator to be used.
          */
-        public Default(CacheProvider cacheProvider, SourceLocator sourceLocator) {
+        public Default(CacheProvider cacheProvider, ClassFileLocator classFileLocator) {
             super(cacheProvider);
-            this.sourceLocator = sourceLocator;
+            this.classFileLocator = classFileLocator;
         }
 
         /**
@@ -627,15 +481,19 @@ public interface TypePool {
          * @return A type pool that reads its data from the system class path.
          */
         public static TypePool ofClassPath() {
-            return new Default(new CacheProvider.Simple(), SourceLocator.ForClassLoader.ofSystemClassLoader());
+            return new Default(new CacheProvider.Simple(), ClassFileLocator.ForClassLoader.ofClassPath());
         }
 
         @Override
         protected Resolution doDescribe(String name) {
-            TypeDescription.BinaryRepresentation binaryRepresentation = sourceLocator.locate(name);
-            return binaryRepresentation.isValid()
-                    ? new Resolution.Simple(parse(binaryRepresentation.getData()))
-                    : new Resolution.Illegal(name);
+            try {
+                TypeDescription.BinaryRepresentation binaryRepresentation = classFileLocator.classFileFor(name);
+                return binaryRepresentation.isValid()
+                        ? new Resolution.Simple(parse(binaryRepresentation.getData()))
+                        : new Resolution.Illegal(name);
+            } catch (IOException e) {
+                throw new IllegalStateException("Error while reading class file", e);
+            }
         }
 
         /**
@@ -655,18 +513,18 @@ public interface TypePool {
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
                     && super.equals(other)
-                    && sourceLocator.equals(((Default) other).sourceLocator);
+                    && classFileLocator.equals(((Default) other).classFileLocator);
         }
 
         @Override
         public int hashCode() {
-            return 31 * super.hashCode() + sourceLocator.hashCode();
+            return 31 * super.hashCode() + classFileLocator.hashCode();
         }
 
         @Override
         public String toString() {
             return "TypePool.Default{" +
-                    "sourceLocator=" + sourceLocator +
+                    "classFileLocator=" + classFileLocator +
                     ", cacheProvider=" + cacheProvider +
                     '}';
         }

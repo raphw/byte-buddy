@@ -1097,7 +1097,6 @@ public interface AgentBuilder {
                 return new Initialized(typeName,
                         binaryRepresentation,
                         new TypePool.CacheProvider.Simple(),
-                        TypePool.SourceLocator.ForClassLoader.of(classLoader),
                         ClassFileLocator.ForClassLoader.of(classLoader));
             }
 
@@ -1132,17 +1131,15 @@ public interface AgentBuilder {
                  * @param typeName             The binary name of the type that is being instrumented.
                  * @param binaryRepresentation The binary representation of the instrumented type.
                  * @param cacheProvider        The cache provider to use.
-                 * @param sourceLocator        The source locator to use.
                  * @param classFileLocator     The class file locator to use.
                  */
                 public Initialized(String typeName,
                                    byte[] binaryRepresentation,
                                    TypePool.CacheProvider cacheProvider,
-                                   TypePool.SourceLocator sourceLocator,
                                    ClassFileLocator classFileLocator) {
                     this.typeName = typeName;
                     this.binaryRepresentation = binaryRepresentation;
-                    typePool = new TypePool.Default(cacheProvider, new ProxySourceLocator(typeName, binaryRepresentation, sourceLocator));
+                    typePool = new TypePool.Default(cacheProvider, classFileLocator);
                     this.classFileLocator = classFileLocator;
                 }
 
@@ -1157,10 +1154,10 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public TypeDescription.BinaryRepresentation classFileFor(TypeDescription typeDescription) throws IOException {
-                    return typeDescription.getName().equals(typeName)
+                public TypeDescription.BinaryRepresentation classFileFor(String typeName) throws IOException {
+                    return typeName.equals(typeName)
                             ? new TypeDescription.BinaryRepresentation.Explicit(binaryRepresentation)
-                            : classFileLocator.classFileFor(typeDescription);
+                            : classFileLocator.classFileFor(typeName);
                 }
 
                 @Override
@@ -1191,80 +1188,6 @@ public interface AgentBuilder {
                             ", classFileLocator=" + classFileLocator +
                             ", typePool=" + typePool +
                             '}';
-                }
-
-                /**
-                 * A {@link net.bytebuddy.pool.TypePool.SourceLocator} that intercepts look-ups of the instrumented
-                 * type's binary representation by returning the binary representation that is already known via the
-                 * Java instrumentation API.
-                 */
-                protected static class ProxySourceLocator implements TypePool.SourceLocator {
-
-                    /**
-                     * The binary name of the instrumented type.
-                     */
-                    private final String typeName;
-
-                    /**
-                     * The binary representation of the instrumented type.
-                     */
-                    private final byte[] binaryRepresentation;
-
-                    /**
-                     * A fallback source locator for looking up any type's binary representation that is not
-                     * the instrumented type.
-                     */
-                    private final TypePool.SourceLocator sourceLocator;
-
-                    /**
-                     * Creates a new proxy source locator.
-                     *
-                     * @param typeName             The binary name of the instrumented type.
-                     * @param binaryRepresentation The binary representation of the instrumented type.
-                     * @param sourceLocator        A fallback source locator for looking up any type's binary
-                     *                             representation that is not the instrumented type.
-                     */
-                    public ProxySourceLocator(String typeName,
-                                              byte[] binaryRepresentation,
-                                              TypePool.SourceLocator sourceLocator) {
-                        this.typeName = typeName;
-                        this.binaryRepresentation = binaryRepresentation;
-                        this.sourceLocator = sourceLocator;
-                    }
-
-                    @Override
-                    public TypeDescription.BinaryRepresentation locate(String typeName) {
-                        return this.typeName.equals(typeName)
-                                ? new TypeDescription.BinaryRepresentation.Explicit(binaryRepresentation)
-                                : sourceLocator.locate(typeName);
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        ProxySourceLocator that = (ProxySourceLocator) other;
-                        return Arrays.equals(binaryRepresentation, that.binaryRepresentation)
-                                && sourceLocator.equals(that.sourceLocator)
-                                && typeName.equals(that.typeName);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = typeName.hashCode();
-                        result = 31 * result + Arrays.hashCode(binaryRepresentation);
-                        result = 31 * result + sourceLocator.hashCode();
-                        return result;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.BinaryLocator.Default.Initialized.ProxySourceLocator{" +
-                                "typeName='" + typeName + '\'' +
-                                ", binaryRepresentation=" + Arrays.toString(binaryRepresentation) +
-                                ", sourceLocator=" + sourceLocator +
-                                '}';
-                    }
                 }
             }
         }

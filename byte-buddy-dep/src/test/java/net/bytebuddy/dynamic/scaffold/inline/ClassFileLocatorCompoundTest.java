@@ -15,13 +15,13 @@ import static org.mockito.Mockito.*;
 
 public class ClassFileLocatorCompoundTest {
 
+    private static final String FOO = "foo";
+
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
     private ClassFileLocator classFileLocator, otherClassFileLocator;
-    @Mock
-    private TypeDescription typeDescription;
     @Mock
     private TypeDescription.BinaryRepresentation legal, illegal;
 
@@ -32,20 +32,20 @@ public class ClassFileLocatorCompoundTest {
 
     @Test
     public void testApplicationOrderCallsSecond() throws Exception {
-        when(classFileLocator.classFileFor(typeDescription)).thenReturn(illegal);
-        when(otherClassFileLocator.classFileFor(typeDescription)).thenReturn(legal);
-        assertThat(new ClassFileLocator.Compound(classFileLocator, otherClassFileLocator).classFileFor(typeDescription), is(legal));
-        verify(classFileLocator).classFileFor(typeDescription);
+        when(classFileLocator.classFileFor(FOO)).thenReturn(illegal);
+        when(otherClassFileLocator.classFileFor(FOO)).thenReturn(legal);
+        assertThat(new ClassFileLocator.Compound(classFileLocator, otherClassFileLocator).classFileFor(FOO), is(legal));
+        verify(classFileLocator).classFileFor(FOO);
         verifyNoMoreInteractions(classFileLocator);
-        verify(otherClassFileLocator).classFileFor(typeDescription);
+        verify(otherClassFileLocator).classFileFor(FOO);
         verifyNoMoreInteractions(otherClassFileLocator);
     }
 
     @Test
     public void testApplicationOrderDoesNotCallSecond() throws Exception {
-        when(classFileLocator.classFileFor(typeDescription)).thenReturn(legal);
-        assertThat(new ClassFileLocator.Compound(classFileLocator, otherClassFileLocator).classFileFor(typeDescription), is(legal));
-        verify(classFileLocator).classFileFor(typeDescription);
+        when(classFileLocator.classFileFor(FOO)).thenReturn(legal);
+        assertThat(new ClassFileLocator.Compound(classFileLocator, otherClassFileLocator).classFileFor(FOO), is(legal));
+        verify(classFileLocator).classFileFor(FOO);
         verifyNoMoreInteractions(classFileLocator);
         verifyZeroInteractions(otherClassFileLocator);
     }

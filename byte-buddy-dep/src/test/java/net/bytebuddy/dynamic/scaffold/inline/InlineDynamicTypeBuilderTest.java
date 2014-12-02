@@ -176,7 +176,7 @@ public class InlineDynamicTypeBuilderTest {
                 MethodLookupEngine.Default.Factory.INSTANCE,
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
-                ClassFileLocator.Default.CLASS_PATH,
+                ClassFileLocator.ForClassLoader.ofClassPath(),
                 new InlineDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation(new MethodRebaseResolver.MethodNameTransformer.Suffixing()))
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
@@ -219,7 +219,7 @@ public class InlineDynamicTypeBuilderTest {
                 MethodLookupEngine.Default.Factory.INSTANCE,
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
-                ClassFileLocator.Default.CLASS_PATH,
+                ClassFileLocator.ForClassLoader.ofClassPath(),
                 InlineDynamicTypeBuilder.TargetHandler.ForRedefinitionInstrumentation.INSTANCE)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
@@ -258,7 +258,7 @@ public class InlineDynamicTypeBuilderTest {
                 MethodLookupEngine.Default.Factory.INSTANCE,
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
-                ClassFileLocator.Default.CLASS_PATH,
+                ClassFileLocator.ForClassLoader.ofClassPath(),
                 new InlineDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation(new MethodRebaseResolver.MethodNameTransformer.Suffixing()))
                 .defineField(BAR, long.class, Visibility.PUBLIC)
                 .make()
@@ -304,7 +304,7 @@ public class InlineDynamicTypeBuilderTest {
                 MethodLookupEngine.Default.Factory.INSTANCE,
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
-                ClassFileLocator.Default.CLASS_PATH,
+                ClassFileLocator.ForClassLoader.ofClassPath(),
                 InlineDynamicTypeBuilder.TargetHandler.ForRedefinitionInstrumentation.INSTANCE)
                 .defineField(BAR, long.class, Visibility.PUBLIC)
                 .make()
@@ -346,7 +346,7 @@ public class InlineDynamicTypeBuilderTest {
                 MethodLookupEngine.Default.Factory.INSTANCE,
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
-                ClassFileLocator.Default.CLASS_PATH,
+                ClassFileLocator.ForClassLoader.ofClassPath(),
                 new InlineDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation(new MethodRebaseResolver.MethodNameTransformer.Suffixing()))
                 .defineMethod(BAR, int.class, Arrays.<Class<?>>asList(long.class, Object.class), Visibility.PUBLIC)
                 .intercept(simpleInstrumentation)
@@ -396,7 +396,7 @@ public class InlineDynamicTypeBuilderTest {
                 MethodLookupEngine.Default.Factory.INSTANCE,
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
-                ClassFileLocator.Default.CLASS_PATH,
+                ClassFileLocator.ForClassLoader.ofClassPath(),
                 InlineDynamicTypeBuilder.TargetHandler.ForRedefinitionInstrumentation.INSTANCE)
                 .defineMethod(BAR, int.class, Arrays.<Class<?>>asList(long.class, Object.class), Visibility.PUBLIC)
                 .intercept(simpleInstrumentation)
@@ -442,7 +442,7 @@ public class InlineDynamicTypeBuilderTest {
                 MethodLookupEngine.Default.Factory.INSTANCE,
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
-                ClassFileLocator.Default.CLASS_PATH,
+                ClassFileLocator.ForClassLoader.ofClassPath(),
                 new InlineDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation(new MethodRebaseResolver.MethodNameTransformer.Suffixing()))
                 .defineMethod(BAR, int.class, Arrays.<Class<?>>asList(long.class, Object.class), Visibility.PUBLIC)
                 .throwing(IOException.class)
@@ -493,7 +493,7 @@ public class InlineDynamicTypeBuilderTest {
                 MethodLookupEngine.Default.Factory.INSTANCE,
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
-                ClassFileLocator.Default.CLASS_PATH,
+                ClassFileLocator.ForClassLoader.ofClassPath(),
                 InlineDynamicTypeBuilder.TargetHandler.ForRedefinitionInstrumentation.INSTANCE)
                 .defineMethod(BAR, int.class, Arrays.<Class<?>>asList(long.class, Object.class), Visibility.PUBLIC)
                 .throwing(IOException.class)

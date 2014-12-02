@@ -26,11 +26,10 @@ public interface ClassFileLocator {
     /**
      * Locates the class file for a given type and returns the binary data of the class file.
      *
-     * @param typeDescription The description of the type for which a class file is to be located.
      * @return Any binary representation of the type which might be illegal.
      * @throws java.io.IOException If reading a class file causes an error.
      */
-    TypeDescription.BinaryRepresentation classFileFor(TypeDescription typeDescription) throws IOException;
+    TypeDescription.BinaryRepresentation classFileFor(String typeName) throws IOException;
 
     /**
      * A class file locator that queries a class loader for binary representations of class files.
@@ -75,8 +74,8 @@ public interface ClassFileLocator {
         }
 
         @Override
-        public TypeDescription.BinaryRepresentation classFileFor(TypeDescription typeDescription) throws IOException {
-            InputStream inputStream = classLoader.getResourceAsStream(typeDescription.getInternalName() + CLASS_FILE_EXTENSION);
+        public TypeDescription.BinaryRepresentation classFileFor(String typeName) throws IOException {
+            InputStream inputStream = classLoader.getResourceAsStream(typeName.replace('.', '/') + CLASS_FILE_EXTENSION);
             if (inputStream != null) {
                 try {
                     return new TypeDescription.BinaryRepresentation.Explicit(new StreamDrainer().drain(inputStream));
@@ -104,38 +103,6 @@ public interface ClassFileLocator {
             return "ClassFileLocator.ForClassLoader{" +
                     "classLoader=" + classLoader +
                     '}';
-        }
-    }
-
-    /**
-     * Default implementations for a {@link net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator}.
-     */
-    static enum Default implements ClassFileLocator {
-
-        /**
-         * Locates a class file from the class path.
-         */
-        CLASS_PATH {
-
-            /**
-             * A class file locator that queries the system class loader for binary representations.
-             */
-            private final ClassFileLocator classFileLocator = ForClassLoader.ofClassPath();
-
-            @Override
-            public TypeDescription.BinaryRepresentation classFileFor(TypeDescription typeDescription) throws IOException {
-                return classFileLocator.classFileFor(typeDescription);
-            }
-        },
-
-        /**
-         * Locates a class file a type description's attached description.
-         */
-        ATTACHED {
-            @Override
-            public TypeDescription.BinaryRepresentation classFileFor(TypeDescription typeDescription) {
-                return typeDescription.toBinary();
-            }
         }
     }
 
@@ -204,12 +171,12 @@ public interface ClassFileLocator {
         }
 
         @Override
-        public TypeDescription.BinaryRepresentation classFileFor(TypeDescription typeDescription) {
+        public TypeDescription.BinaryRepresentation classFileFor(String typeName) {
             try {
-                ExtractionClassFileTransformer classFileTransformer = new ExtractionClassFileTransformer(classLoader, typeDescription);
+                ExtractionClassFileTransformer classFileTransformer = new ExtractionClassFileTransformer(classLoader, typeName);
                 try {
                     instrumentation.addTransformer(classFileTransformer, true);
-                    instrumentation.retransformClasses(classLoader.loadClass(typeDescription.getName()));
+                    instrumentation.retransformClasses(classLoader.loadClass(typeName));
                     byte[] binaryRepresentation = classFileTransformer.getClassFile();
                     return binaryRepresentation == null
                             ? TypeDescription.BinaryRepresentation.Illegal.INSTANCE
@@ -257,10 +224,7 @@ public interface ClassFileLocator {
              */
             private final ClassLoader classLoader;
 
-            /**
-             * A description of the type to look up.
-             */
-            private final TypeDescription typeDescription;
+            private final String typeName;
 
             /**
              * The binary representation of the looked-up class.
@@ -271,11 +235,10 @@ public interface ClassFileLocator {
              * Creates a class file transformer for the purpose of extraction.
              *
              * @param classLoader     The class loader that is expected to have loaded the looked-up a class.
-             * @param typeDescription A description of the type to look up.
              */
-            protected ExtractionClassFileTransformer(ClassLoader classLoader, TypeDescription typeDescription) {
+            protected ExtractionClassFileTransformer(ClassLoader classLoader, String typeName) {
                 this.classLoader = classLoader;
-                this.typeDescription = typeDescription;
+                this.typeName = typeName;
             }
 
             @Override
@@ -284,7 +247,7 @@ public interface ClassFileLocator {
                                     Class<?> redefinedType,
                                     ProtectionDomain protectionDomain,
                                     byte[] classFile) throws IllegalClassFormatException {
-                if (isChild(classLoader) && typeDescription.represents(redefinedType)) {
+                if (isChild(classLoader) && typeName.equals(redefinedType.getName())) {
                     this.classFile = classFile;
                 }
                 return DO_NOT_TRANSFORM;
@@ -322,7 +285,7 @@ public interface ClassFileLocator {
             public String toString() {
                 return "ClassFileLocator.AgentBased.ExtractionClassFileTransformer{" +
                         "classLoader=" + classLoader +
-                        ", typeDescription=" + typeDescription +
+                        ", typeName=" + typeName +
                         ", classFile=" + Arrays.toString(classFile) +
                         '}';
             }
@@ -352,21 +315,10 @@ public interface ClassFileLocator {
             this.classFileLocator = classFileLocator;
         }
 
-        /**
-         * Creates a default class file locator by chaining the
-         * {@link net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator.Default#ATTACHED} and the
-         * {@link net.bytebuddy.dynamic.scaffold.inline.ClassFileLocator.Default#CLASS_PATH} class file locator.
-         *
-         * @return A default class file locator.
-         */
-        public static ClassFileLocator makeDefault() {
-            return new Compound(Default.ATTACHED, Default.CLASS_PATH);
-        }
-
         @Override
-        public TypeDescription.BinaryRepresentation classFileFor(TypeDescription typeDescription) throws IOException {
+        public TypeDescription.BinaryRepresentation classFileFor(String typeName) throws IOException {
             for (ClassFileLocator classFileLocator : this.classFileLocator) {
-                TypeDescription.BinaryRepresentation binaryRepresentation = classFileLocator.classFileFor(typeDescription);
+                TypeDescription.BinaryRepresentation binaryRepresentation = classFileLocator.classFileFor(typeName);
                 if (binaryRepresentation.isValid()) {
                     return binaryRepresentation;
                 }
