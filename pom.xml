@@ -23,7 +23,6 @@
         <module>byte-buddy-benchmark</module>
         <module>byte-buddy-agent</module>
         <module>byte-buddy-android</module>
-        <module>byte-buddy-android-test</module>
     </modules>
 
     <properties>
@@ -314,6 +313,17 @@
                     </plugin>
                 </plugins>
             </build>
+        </profile>
+        <profile>
+            <id>android</id>
+            <modules>
+                <module>byte-buddy</module>
+                <module>byte-buddy-dep</module>
+                <module>byte-buddy-benchmark</module>
+                <module>byte-buddy-agent</module>
+                <module>byte-buddy-android</module>
+                <module>byte-buddy-android-test</module>
+            </modules>
         </profile>
     </profiles>
 
