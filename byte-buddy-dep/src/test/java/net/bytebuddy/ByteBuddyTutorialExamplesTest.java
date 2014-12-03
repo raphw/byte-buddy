@@ -142,7 +142,7 @@ public class ByteBuddyTutorialExamplesTest {
         TypePool typePool = TypePool.Default.ofClassPath();
         new ByteBuddy()
                 .redefine(typePool.describe(getClass().getName() + "$UnloadedBar").resolve(),
-                        ClassFileLocator.ForClassLoader.of(getClass().getClassLoader())) // TODO: Adapt tutorial
+                        ClassFileLocator.ForClassLoader.ofClassPath())
                 .defineField("qux", String.class)
                 .make()
                 .load(ClassLoader.getSystemClassLoader(), ClassLoadingStrategy.Default.INJECTION);
