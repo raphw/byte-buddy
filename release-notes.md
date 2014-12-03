@@ -57,3 +57,5 @@ mainly for allowing the reuse of `Method` instances for the `@Origin` annotation
   of two. This is mainly meant to avoid the accidental matching of the methods that are declared by the `Object` type.
 - Added `TypeInitializer`s in order to allow `Instrumentation`s to define type initializer blocks.
 - Replaced the `MethodMatcher` API with the `ElementMatcher` API which allows for a more sophisticated matching DSL.
+- Added a `ClassLoadingStrategy` for Android in its own module.
+- Introduced an `AgentBuilder` API and implementation.
