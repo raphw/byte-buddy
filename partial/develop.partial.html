@@ -48,8 +48,8 @@ mvn package
     </p>
 
     <p>
-        The project is currently organized in three different modules. The root project <code>byte-buddy-parent</code>
-        serves as a common ground for the configuration of any Byte Buddy module. The project's implementation is found
+        The project is organized in different modules. The root project <code>byte-buddy-parent</code> serves as a
+        common ground for the configuration of any Byte Buddy module. The project's implementation is found
         in the <code>byte-buddy-dev</code> module. This module is configured to rely on a direct dependency onto the
         <a href="http://asm.ow2.org/">ASM</a> library, thus the <i>dev</i> qualifier in the module's name. Because the
         ASM library does <a href="http://asm.ow2.org/doc/faq.html#Q15">not guarantee to respect
@@ -62,6 +62,10 @@ mvn package
         will furthermore cause the creation of artifacts for source code and javadoc. As another module,
         <code>byte-buddy-benchmark</code> contains a <a href="http://openjdk.java.net/projects/code-tools/jmh/">JMH</a>
         benchmark for measuring Byte Buddy's runtime behavior compared to other code generation libraries.
+        The <code>byte-buddy-agent</code> module supplies a Java agent that allows to enhance Byte Buddy's general API.
+        The <code>byte-buddy-android</code> module contains a <code>ClassLoadingStrategy</code> that functions on the
+        Android platform where <code>byte-buddy-android-test</code> defines a test application to apply this strategy.
+        It is only built when the <code>android</code> profile is used as it requires an Android SDK to run.
     </p>
 
     <h2>Contribute</h2>
@@ -106,12 +110,6 @@ mvn package
     </p>
 
     <dl>
-        <dt>0.5</dt>
-        <dd>
-            A convenience agent-builder for writing custom Java agents is introduced. This requires a
-            generalization of the current <code>MethodMatcher</code> API to allow for other matchers such as
-            <code>TypeMatcher</code>s.
-        </dd>
         <dt>0.6</dt>
         <dd>
             Better support for generics: In this version, generic types should be written to created class files as
@@ -121,9 +119,7 @@ mvn package
     </dl>
 
     <p>
-        Additionally, there is a plan to implement a <code>ClassLoadingStrategy</code> for offering limited support
-        for Android. Android requires preprocessed byte code in the <i>dex</i> format which can however be created at
-        runtime by emulating the dex compiler. This extension is still in the experimental phase and might be
-        deployed in between versions as its own module.
+        Additionally, there is a plan to expose some additional information on types, methods and fields by their
+        descriptions which are optional and only available when parsing a class file using a <code>TypePool</code>.
     </p>
 </div>
