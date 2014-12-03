@@ -17,6 +17,13 @@
     </description>
     <url>http://bytebuddy.net</url>
 
+    <!--
+      There are several build profiles available:
+      - extras: Creates additional artifacts containing source files and javadoc. (activated on release)
+      - checks: Applies style checks to the source files. (activated by default, activated on release)
+      - android: Builds an Android test application. An Android SDK is required for doing so. (excluded from release)
+    -->
+
     <modules>
         <module>byte-buddy</module>
         <module>byte-buddy-dep</module>
