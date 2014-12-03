@@ -824,7 +824,7 @@ public final class ElementMatchers {
     /**
      * Only matches method descriptions that represent a visibility bridge. A visibility bridge is a Java bridge
      * method that was inserted by the compiler in order to increase the visibility of a method when inheriting
-     * a {@link public} method from a package-private type. In this case, the package-private type's method
+     * a {@code public} method from a package-private type. In this case, the package-private type's method
      * is declared to be package-private itself such that the bridge method needs to increase the visibility and
      * delegates the call to the original, package-private implementation.
      *
