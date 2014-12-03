@@ -51,7 +51,7 @@ mainly for allowing the reuse of `Method` instances for the `@Origin` annotation
   default state.
 - Added a missing boxing instruction to the `InvocationHandlerAdapter`.
 
-### Current snapshot version
+### 3. December 2014: Version 0.5
 
 - Added the `DeclaringTypeResolver` as a component in the default chain which selects the most specific method out
   of two. This is mainly meant to avoid the accidental matching of the methods that are declared by the `Object` type.
@@ -59,3 +59,7 @@ mainly for allowing the reuse of `Method` instances for the `@Origin` annotation
 - Replaced the `MethodMatcher` API with the `ElementMatcher` API which allows for a more sophisticated matching DSL.
 - Added a `ClassLoadingStrategy` for Android in its own module.
 - Introduced an `AgentBuilder` API and implementation.
+
+### Current snapshot
+
+No changes.
