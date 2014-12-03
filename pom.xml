@@ -322,6 +322,7 @@
         </profile>
         <profile>
             <id>android</id>
+            <!-- Only build the Android test application on demand -->
             <modules>
                 <module>byte-buddy</module>
                 <module>byte-buddy-dep</module>
