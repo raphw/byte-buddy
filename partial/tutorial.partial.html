@@ -854,18 +854,63 @@ class MyApplication {
     <code>TypePool</code> to provide a description. If we did use a class literal for <code>foo.Bar</code>, the JVM
     would have loaded this class before we had a change to redefine it and our redefinition attempt would be without
     effect. Also, note that when working with unloaded classes, we further need to specify a
-    <code>ClassFileLocator></code> which allows to locate a class's class file. In the example above, we simply
+    <code>ClassFileLocator</code> which allows to locate a class's class file. In the example above, we simply
     create a class file locator which scans the running application's class path for such files.
 </p>
 
+<h4>Creating Java agents</h4>
+
 <p>
-    As your application grows bigger and becomes more modular, this is of course a cumbersome constraint to enforce.
-    And there is indeed a better way to apply such class redefinitions. Using a
+    When an application grows bigger and becomes more modular, applying such a transformation at a specific program
+    point is of course a cumbersome constraint to enforce. And there is indeed a better way to apply such class
+    redefinitions <i>on demand</i>. Using a
     <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/instrument/package-summary.html">Java agent</a>,
-    it is possible to directly intercept any class loading that is conducted within a Java application. For this,
-    a Java agent allows for the registration of a <code>ClassFileTransformer</code> where one is required to
-    return the binary representation of the redefined class. As we have seen, using <code>ByteBuddy</code> and a
-    <code>TypePool</code>, this is a straight-forward operation.
+    it is possible to directly intercept any class loading activity that is conducted within a Java application. A
+    Java agent is implemented as a simple <i>jar</i> file with an entry point that is specified in this jar file's
+    manifest file as it is described under the linked resource. Using Byte Buddy, the implementation of such an
+    agent is straight forward by using an <code>AgentBuilder</code>. Assuming that we previously defined a simple
+    annotation named <code>ToString</code>, it would be trivial to implement <code>toString</code> methods
+    for all annotated classes simply by implementing the Agent's <code>premain</code> method as follows:
+</p>
+
+<pre class="prettyprint">
+class ToStringAgent {
+  public static void premain(String arguments, Instrumentation instrumentation) {
+    new AgentBuilder.Default()
+        .rebase(isAnnotatedWith(ToString.class))
+        .transform(new AgentBuilder.Transformer() {
+      @Override
+      public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder) {
+        return builder.method(named("toString"))
+                      .intercept(FixedValue.value("transformed"));
+      }
+    }).installOn(instrumentation);
+  }
+}
+</pre>
+
+<p>
+    As a result of the applying the above <code>AgentBuilder.Transformer</code>, all <code>toString</code> methods
+    of the annotated classes would now return <code>transformed</code>. We will learn all about Byte Buddy's
+    <code>DynamicType.Builder</code> in the upcoming sections, do not worry about this class for now. The above
+    code results of course in a trivial and meaningless application. Using this concept right, renders however a
+    powerful tool for easily implementing aspect-oriented programing.
+</p>
+
+<h4>Loading classes in Android applications</h4>
+
+<p>
+    Android uses a different class file format using <i>dex</i> files which are not in the layout of the Java class
+    file format. Furthermore, with the <i>ART</i> runtime which succeeds the Dalvik virtual machine, Android
+    applications are compiled into native machine code before being installed on an Android device. As a result,
+    Byte Buddy cannot longer redefine or rebase classes as long as an applications is not explicitly deployed
+    together with its Java sources as there is otherwise no intermediate code representation to interpret. Byte
+    Buddy is however still capable to define new classes using a <code>DexClassLoader</code> together with a built-in
+    <i>dex compiler</i>. For this purpose, Byte Buddy offers the <code>byte-buddy-android</code> module which contains
+    the <code>AndroidClassLoadingStrategy</code> which allows the loading of dynamically created classes from within
+    an Android application. In order to function, it requires a folder for writing temporary files and compiled
+    class files. This folder must not be shared among different applications as this is forbidden by Android's
+    security manager.
 </p>
 
 </div>
@@ -1677,18 +1722,18 @@ class Qux extends Foo&lt;Integer&gt; {
 </p>
 
 <ul class="colored-list padded">
-    <li>
+    <li><span>
         <code>@Empty</code>: Applying this annotation, Byte Buddy injects the parameter type's default value. For
         primitive types, this is the equivalent of the number zero, for reference types, this is <code>null</code>.
         Using this annotation is meant for voiding an interceptor's parameter.
-    </li>
-    <li>
+    </span></li>
+    <li><span>
         <code>@Field</code>: Using this annotation, Byte Buddy injects an accessor for a given field. The accessed
         field can either be specified explicitly by its name or it is derived from a getter or setter methods name,
         in case that the intercepted method represents such a method. Before this annotation can be used, it needs
         to be installed and registered explicitly, similarly to the <code>@Pipe</code> annotation.
-    </li>
-    <li>
+    </span></li>
+    <li><span>
         <code>@Morph</code>: This annotation works very similar to the <code>@SuperCall</code> annotation. However,
         using this annotation allows to specify the arguments that should be used for invoking the super method.
         Note that you should only use this annotation when you need to invoke a super method with different arguments
@@ -1696,7 +1741,7 @@ class Qux extends Foo&lt;Integer&gt; {
         all arguments. If you want to invoke a specific super method, consider using the <code>@Super</code>
         annotation for creating a type-safe proxy. Before this annotation can be used, it needs to be installed and
         registered explicitly, similarly to the <code>@Pipe</code> annotation.
-    </li>
+    </span></li>
 </ul>
 
 
