@@ -837,7 +837,8 @@ class MyApplication {
   public static void main(String[] args) {
     TypePool typePool = TypePool.Default.ofClassPath();
     new ByteBuddy()
-      .redefine(typePool.describe("foo.Bar")) // do not use 'Bar.class'
+      .redefine(typePool.describe("foo.Bar").resolve(), // do not use 'Bar.class'
+                ClassFileLocator.ForClassLoader.ofClassPath())
       .defineField("qux", String.class) // we learn more about defining fields later
       .make()
       .load(ClassLoader.getSystemClassLoader(), ClassLoadingStrategy.Default.INJECTION);
@@ -852,7 +853,9 @@ class MyApplication {
     our application's runtime. Note however that we do not reference the class by a class literal when we use the
     <code>TypePool</code> to provide a description. If we did use a class literal for <code>foo.Bar</code>, the JVM
     would have loaded this class before we had a change to redefine it and our redefinition attempt would be without
-    effect.
+    effect. Also, note that when working with unloaded classes, we further need to specify a
+    <code>ClassFileLocator></code> which allows to locate a class's class file. In the example above, we simply
+    create a class file locator which scans the running application's class path for such files.
 </p>
 
 <p>
