@@ -58,8 +58,8 @@ public class AgentBuilderDefaultApplicationTest {
                 .rebase(isAnnotatedWith(ShouldRebase.class)).transform(new FooTransformer())
                 .installOnByteBuddyAgent();
         try {
-            assertThat(new Foo().foo(), is(BAR));
-            assertThat(Foo.class.getDeclaredMethod(QUX + FOO), notNullValue(Method.class));
+            assertThat(new Baz().foo(), is(BAR));
+            assertThat(Baz.class.getDeclaredMethod(QUX + FOO), notNullValue(Method.class));
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
         }
@@ -107,6 +107,14 @@ public class AgentBuilderDefaultApplicationTest {
         }
     }
 
+    @ShouldRebase
+    private static class Baz {
+
+        public String foo() {
+            return FOO;
+        }
+    }
+
     public static class BarTransformer implements AgentBuilder.Transformer {
 
         @Override
@@ -144,6 +152,7 @@ public class AgentBuilderDefaultApplicationTest {
             }
         }
     }
+
     @ShouldRebase
     private static class Qux {
 

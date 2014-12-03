@@ -631,7 +631,7 @@ public interface AgentBuilder {
 
             @Override
             public String toString() {
-                return "AgentBuilder.Default.Entry{" +
+                return "AgentBuilder.Default.Transformation{" +
                         "rawMatcher=" + rawMatcher +
                         ", transformer=" + transformer +
                         '}';
