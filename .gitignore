@@ -24,7 +24,4 @@ build/
 rebel.xml
 
 # Shade plugin
-byte-buddy/dependency-reduced-pom.xml
-
-# Dalvik compiler
-byte-buddy-android/dx.jar
+byte-buddy-benchmark/dependency-reduced-pom.xml
