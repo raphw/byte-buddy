@@ -129,10 +129,7 @@ public class AndroidClassLoadingStrategy implements ClassLoadingStrategy {
             } finally {
                 zipOutputStream.close();
             }
-            ClassLoader dexClassLoader = new DexClassLoader(zipFile.getAbsolutePath(),
-                    privateDirectory.getAbsolutePath(),
-                    EMPTY_LIBRARY_PATH,
-                    classLoader);
+            ClassLoader dexClassLoader = dexProcessor.makeClassLoader(zipFile, privateDirectory, classLoader);
             Map<TypeDescription, Class<?>> loadedTypes = new HashMap<TypeDescription, Class<?>>(types.size());
             for (TypeDescription typeDescription : types.keySet()) {
                 try {
@@ -172,6 +169,17 @@ public class AndroidClassLoadingStrategy implements ClassLoadingStrategy {
          * @return A mutable conversion process.
          */
         Conversion create();
+
+        /**
+         * Creates a class loader capable of loading dex files.
+         *
+         * @param zipFile           The zip file containing a <i>classes.dex</i> file.
+         * @param privateDirectory  A directory that is <b>not shared with other applications</b> to be used for
+         *                          storing generated classes and their processed forms.
+         * @param parentClassLoader The parent class loader.
+         * @return A class loader for the specified data.
+         */
+        ClassLoader makeClassLoader(File zipFile, File privateDirectory, ClassLoader parentClassLoader);
 
         /**
          * Represents an ongoing conversion of several Java class files into an Android dex file.
@@ -240,6 +248,14 @@ public class AndroidClassLoadingStrategy implements ClassLoadingStrategy {
             @Override
             public DexProcessor.Conversion create() {
                 return new Conversion(new DexFile(dexFileOptions));
+            }
+
+            @Override
+            public ClassLoader makeClassLoader(File zipFile, File privateDirectory, ClassLoader parentClassLoader) {
+                return new DexClassLoader(zipFile.getAbsolutePath(),
+                        privateDirectory.getAbsolutePath(),
+                        EMPTY_LIBRARY_PATH,
+                        parentClassLoader);
             }
 
             @Override

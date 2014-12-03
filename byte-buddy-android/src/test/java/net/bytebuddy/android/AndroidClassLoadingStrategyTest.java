@@ -1,8 +1,8 @@
 package net.bytebuddy.android;
 
 import com.android.dx.dex.DexOptions;
+import com.android.dx.dex.cf.CfOptions;
 import com.android.dx.dex.file.DexFile;
-import dalvik.system.DexClassLoader;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.ClassLoadingStrategy;
@@ -62,17 +62,23 @@ public class AndroidClassLoadingStrategyTest {
     @Test
     public void testProcessing() throws Exception {
         AndroidClassLoadingStrategy.DexProcessor dexProcessor = mock(AndroidClassLoadingStrategy.DexProcessor.class);
+        ClassLoader classLoader = mock(ClassLoader.class);
+        doReturn(Object.class).when(classLoader).loadClass(FOO);
+        doReturn(Void.class).when(classLoader).loadClass(BAR);
+        when(dexProcessor.makeClassLoader(any(File.class), eq(directory), any(ClassLoader.class))).thenReturn(classLoader);
         AndroidClassLoadingStrategy.DexProcessor.Conversion conversion = mock(AndroidClassLoadingStrategy.DexProcessor.Conversion.class);
         when(dexProcessor.create()).thenReturn(conversion);
         ClassLoadingStrategy classLoadingStrategy = new AndroidClassLoadingStrategy(directory, dexProcessor);
         Map<TypeDescription, byte[]> unloaded = new HashMap<TypeDescription, byte[]>();
         unloaded.put(first, QUX);
         unloaded.put(second, BAZ);
-        Map<TypeDescription, Class<?>> loaded = classLoadingStrategy.load(mock(ClassLoader.class), unloaded);
+        ClassLoader parentClassLoader = mock(ClassLoader.class);
+        Map<TypeDescription, Class<?>> loaded = classLoadingStrategy.load(parentClassLoader, unloaded);
         assertThat(loaded.size(), is(2));
-        assertEquals(DexClassLoader.Target.class, loaded.get(first));
-        assertEquals(DexClassLoader.Target.class, loaded.get(second));
+        assertEquals(Object.class, loaded.get(first));
+        assertEquals(Void.class, loaded.get(second));
         verify(dexProcessor).create();
+        verify(dexProcessor).makeClassLoader(any(File.class), eq(directory), eq(parentClassLoader));
         verifyNoMoreInteractions(dexProcessor);
         verify(conversion).register(FOO, QUX);
         verify(conversion).register(BAR, BAZ);
@@ -90,10 +96,31 @@ public class AndroidClassLoadingStrategyTest {
         DynamicType dynamicType = new ByteBuddy(ClassFileVersion.JAVA_V6).subclass(Object.class)
                 .method(named(TO_STRING)).intercept(FixedValue.value(FOO))
                 .make();
-        ClassLoadingStrategy classLoadingStrategy = new AndroidClassLoadingStrategy(directory);
+        ClassLoader classLoader = mock(ClassLoader.class);
+        doReturn(Void.class).when(classLoader).loadClass(any(String.class));
+        ClassLoadingStrategy classLoadingStrategy = new AndroidClassLoadingStrategy(directory, new StubbedClassLoaderDexCompilation(classLoader));
         Map<TypeDescription, Class<?>> map = classLoadingStrategy.load(getClass().getClassLoader(), dynamicType.getAllTypes());
         assertThat(map.size(), is(1));
-        assertEquals(DexClassLoader.Target.class, map.get(dynamicType.getTypeDescription()));
+        assertEquals(Void.class, map.get(dynamicType.getTypeDescription()));
+    }
+
+    private static class StubbedClassLoaderDexCompilation implements AndroidClassLoadingStrategy.DexProcessor {
+
+        private final ClassLoader classLoader;
+
+        private StubbedClassLoaderDexCompilation(ClassLoader classLoader) {
+            this.classLoader = classLoader;
+        }
+
+        @Override
+        public Conversion create() {
+            return new AndroidClassLoadingStrategy.DexProcessor.ForSdkCompiler(new DexOptions(), new CfOptions()).create();
+        }
+
+        @Override
+        public ClassLoader makeClassLoader(File zipFile, File privateDirectory, ClassLoader parentClassLoader) {
+            return classLoader;
+        }
     }
 
     @Test
