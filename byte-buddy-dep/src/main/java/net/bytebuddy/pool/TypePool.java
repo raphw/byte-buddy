@@ -444,7 +444,7 @@ public interface TypePool {
     /**
      * A default implementation of a {@link net.bytebuddy.pool.TypePool} that models binary data in the
      * Java byte code format into a {@link net.bytebuddy.instrumentation.type.TypeDescription}. The data lookup
-     * is delegated to a {@link SourceLocator}.
+     * is delegated to a {@link net.bytebuddy.dynamic.ClassFileLocator}.
      */
     static class Default extends AbstractBase {
 
