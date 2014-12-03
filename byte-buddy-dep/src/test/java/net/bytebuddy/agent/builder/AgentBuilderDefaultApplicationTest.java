@@ -15,17 +15,17 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
+import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
 import static net.bytebuddy.matcher.ElementMatchers.named;
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class AgentBuilderDefaultApplicationTest {
 
-    private static final String FOO = "foo", BAR = "bar";
+    private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
     @Rule
     public MethodRule toolsJarRule = new ToolsJarRule();
@@ -51,14 +51,15 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @ToolsJarRule.Enforce
-    public void testAgentWithoutSelfInitializationButWithNativeMethodPrefix() throws Exception {
+    public void testAgentWithoutSelfInitializationWithNativeMethodPrefix() throws Exception {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .disableSelfInitialization()
-                .withNativeMethodPrefix(FOO)
+                .withNativeMethodPrefix(QUX)
                 .rebase(isAnnotatedWith(ShouldRebase.class)).transform(new FooTransformer())
                 .installOnByteBuddyAgent();
         try {
             assertThat(new Foo().foo(), is(BAR));
+            assertThat(Foo.class.getDeclaredMethod(QUX + FOO), notNullValue(Method.class));
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
         }

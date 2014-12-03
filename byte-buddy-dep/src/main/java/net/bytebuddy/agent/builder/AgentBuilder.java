@@ -215,6 +215,9 @@ public interface AgentBuilder {
         Extendable transform(Transformer transformer);
     }
 
+    /**
+     * The default implementation of an {@link net.bytebuddy.agent.builder.AgentBuilder}.
+     */
     static class Default implements AgentBuilder {
 
         /**
@@ -232,28 +235,70 @@ public interface AgentBuilder {
          */
         private static final Object STATIC_METHOD = null;
 
+        /**
+         * The string value that is used to indicate that no name prefix for native methods should be used.
+         * This value is not a valid prefix.
+         */
         protected static final String NO_NATIVE_PREFIX = "";
 
+        /**
+         * The value that is to be returned from a {@link java.lang.instrument.ClassFileTransformer} to indicate
+         * that no class file transformation is to be applied.
+         */
         private static final byte[] NO_TRANSFORMATION = null;
 
+        /**
+         * The {@link net.bytebuddy.ByteBuddy} instance to be used.
+         */
         private final ByteBuddy byteBuddy;
 
+        /**
+         * The binary locator to use.
+         */
         private final BinaryLocator binaryLocator;
 
+        /**
+         * The listener to notify on transformations.
+         */
         private final Listener listener;
 
+        /**
+         * The native method prefix to use which might also represent
+         * {@link net.bytebuddy.agent.builder.AgentBuilder.Default#NO_NATIVE_PREFIX} to indicate that no
+         * prefix should be added but rather a random suffix.
+         */
         private final String nativeMethodPrefix;
 
+        /**
+         * {@code true} if generated types should not create a callback inside their type initializer in order
+         * to call their potential {@link net.bytebuddy.instrumentation.LoadedTypeInitializer}.
+         */
         private final boolean disableSelfInitialization;
 
+        /**
+         * {@code true} if the generated {@link java.lang.instrument.ClassFileTransformer} should also apply for
+         * retransformations..
+         */
         private final boolean retransformation;
 
-        private final List<Entry> entries;
+        /**
+         * The list of transformation entries that are registered with this agent builder.
+         */
+        private final List<Transformation> entries;
 
+        /**
+         * Creates a new default agent builder that uses a default {@link net.bytebuddy.ByteBuddy} instance for
+         * creating classes.
+         */
         public Default() {
             this(new ByteBuddy());
         }
 
+        /**
+         * Creates a new default agent builder.
+         *
+         * @param byteBuddy The Byte Buddy instance to be used.
+         */
         public Default(ByteBuddy byteBuddy) {
             this(nonNull(byteBuddy),
                     BinaryLocator.Default.INSTANCE,
@@ -261,16 +306,34 @@ public interface AgentBuilder {
                     NO_NATIVE_PREFIX,
                     false,
                     false,
-                    Collections.<Entry>emptyList());
+                    Collections.<Transformation>emptyList());
         }
 
+        /**
+         * Creates a new default agent builder.
+         *
+         * @param byteBuddy                 The Byte Buddy instance to be used.
+         * @param binaryLocator             The binary locator to use.
+         * @param listener                  The listener to notify on transformations.
+         * @param nativeMethodPrefix        The native method prefix to use which might also represent
+         *                                  {@link net.bytebuddy.agent.builder.AgentBuilder.Default#NO_NATIVE_PREFIX}
+         *                                  to indicate that no prefix should be added but rather a random suffix.
+         * @param disableSelfInitialization {@code true} if generated types should not create a callback inside their
+         *                                  type initializer in order to call their potential
+         *                                  {@link net.bytebuddy.instrumentation.LoadedTypeInitializer}.
+         * @param retransformation          {@code true} if the generated
+         *                                  {@link java.lang.instrument.ClassFileTransformer} should also apply
+         *                                  for retransformations.
+         * @param entries                   The list of transformation entries that are registered with this
+         *                                  agent builder.
+         */
         protected Default(ByteBuddy byteBuddy,
                           BinaryLocator binaryLocator,
                           Listener listener,
                           String nativeMethodPrefix,
                           boolean disableSelfInitialization,
                           boolean retransformation,
-                          List<Entry> entries) {
+                          List<Transformation> entries) {
             this.byteBuddy = byteBuddy;
             this.binaryLocator = binaryLocator;
             this.listener = listener;
@@ -432,12 +495,25 @@ public interface AgentBuilder {
                     '}';
         }
 
+        /**
+         * A {@link java.lang.instrument.ClassFileTransformer} that implements the enclosing agent builder's
+         * configuration.
+         */
         protected class ExecutingTransformer implements ClassFileTransformer {
 
+            /**
+             * The method name transformer to be used for rebasing methods.
+             */
             private final MethodRebaseResolver.MethodNameTransformer methodNameTransformer;
 
+            /**
+             * The initialization strategy to use.
+             */
             private final InitializationStrategy initializationStrategy;
 
+            /**
+             * Creates a new executing transformer that reflects the enclosing agent builder's configuration.
+             */
             public ExecutingTransformer() {
                 methodNameTransformer = NO_NATIVE_PREFIX.equals(nativeMethodPrefix)
                         ? new MethodRebaseResolver.MethodNameTransformer.Suffixing()
@@ -457,10 +533,10 @@ public interface AgentBuilder {
                 try {
                     BinaryLocator.Initialized initialized = binaryLocator.initialize(binaryTypeName, binaryRepresentation, classLoader);
                     TypeDescription typeDescription = initialized.getTypePool().describe(binaryTypeName).resolve();
-                    for (Entry entry : entries) {
-                        if (entry.matches(typeDescription, classLoader, classBeingRedefined, protectionDomain)) {
+                    for (Transformation transformation : entries) {
+                        if (transformation.matches(typeDescription, classLoader, classBeingRedefined, protectionDomain)) {
                             DynamicType.Unloaded<?> dynamicType = initializationStrategy.apply(
-                                    entry.transform(byteBuddy.rebase(typeDescription,
+                                    transformation.transform(byteBuddy.rebase(typeDescription,
                                             initialized.getClassFileLocator(),
                                             methodNameTransformer))).make();
                             Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
@@ -498,13 +574,30 @@ public interface AgentBuilder {
             }
         }
 
-        protected static class Entry implements RawMatcher, Transformer {
+        /**
+         * A registered transformation as a combination of a
+         * {@link net.bytebuddy.agent.builder.AgentBuilder.RawMatcher} and a
+         * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}.
+         */
+        protected static class Transformation implements RawMatcher, Transformer {
 
+            /**
+             * The raw matcher that is represented by this transformation.
+             */
             private final RawMatcher rawMatcher;
 
+            /**
+             * The transformer that is represented by this transformation.
+             */
             private final Transformer transformer;
 
-            public Entry(RawMatcher rawMatcher, Transformer transformer) {
+            /**
+             * Creates a new transformation.
+             *
+             * @param rawMatcher  The raw matcher that is represented by this transformation.
+             * @param transformer The transformer that is represented by this transformation.
+             */
+            protected Transformation(RawMatcher rawMatcher, Transformer transformer) {
                 this.rawMatcher = rawMatcher;
                 this.transformer = transformer;
             }
@@ -525,8 +618,8 @@ public interface AgentBuilder {
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && rawMatcher.equals(((Entry) other).rawMatcher)
-                        && transformer.equals(((Entry) other).transformer);
+                        && rawMatcher.equals(((Transformation) other).rawMatcher)
+                        && transformer.equals(((Transformation) other).transformer);
             }
 
             @Override
@@ -545,14 +638,31 @@ public interface AgentBuilder {
             }
         }
 
+        /**
+         * A helper class that describes a {@link net.bytebuddy.agent.builder.AgentBuilder.Default} after supplying
+         * a {@link net.bytebuddy.agent.builder.AgentBuilder.RawMatcher} such that one or several
+         * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s can be supplied.
+         */
         protected class Matched implements Identified.Extendable {
 
+            /**
+             * The supplied raw matcher.
+             */
             private final RawMatcher rawMatcher;
 
+            /**
+             * The supplied transformer.
+             */
             private final Transformer transformer;
 
-            public Matched(RawMatcher rawMatcher,
-                           Transformer transformer) {
+            /**
+             * Creates a new matched default agent builder.
+             *
+             * @param rawMatcher  The supplied raw matcher.
+             * @param transformer The supplied transformer.
+             */
+            protected Matched(RawMatcher rawMatcher,
+                              Transformer transformer) {
                 this.rawMatcher = rawMatcher;
                 this.transformer = transformer;
             }
@@ -623,6 +733,11 @@ public interface AgentBuilder {
                 return materialize().installOnByteBuddyAgent();
             }
 
+            /**
+             * Materializes the currently described {@link net.bytebuddy.agent.builder.AgentBuilder.Default.Transformation}.
+             *
+             * @return An agent builder that represents the currently described entry of this instance.
+             */
             protected AgentBuilder materialize() {
                 return new Default(byteBuddy,
                         binaryLocator,
@@ -630,9 +745,14 @@ public interface AgentBuilder {
                         nativeMethodPrefix,
                         disableSelfInitialization,
                         retransformation,
-                        join(new Entry(rawMatcher, transformer), entries));
+                        join(new Transformation(rawMatcher, transformer), entries));
             }
 
+            /**
+             * Returns the outer instance.
+             *
+             * @return The outer instance.
+             */
             private Default getOuter() {
                 return Default.this;
             }
@@ -663,14 +783,36 @@ public interface AgentBuilder {
             }
         }
 
+        /**
+         * An initialization strategy which determines the handling of
+         * {@link net.bytebuddy.instrumentation.LoadedTypeInitializer}s.
+         */
         public static interface InitializationStrategy {
 
+            /**
+             * Determines if and how a loaded type initializer is to be applied to a loaded type.
+             *
+             * @param type                  The loaded type.
+             * @param loadedTypeInitializer The {@code type}'s loaded type initializer.
+             */
             void initialize(Class<?> type, LoadedTypeInitializer loadedTypeInitializer);
 
-            static class SelfInjection implements InitializationStrategy, net.bytebuddy.instrumentation.Instrumentation, ByteCodeAppender {
+            /**
+             * An initialization strategy that adds a code block to an instrumented type's type initializer which
+             * then calls a specific class that is responsible for the explicit initialization.
+             */
+            static class SelfInjection implements InitializationStrategy,
+                    net.bytebuddy.instrumentation.Instrumentation, ByteCodeAppender {
 
+                /**
+                 * An accessor for the initialization nexus that makes sure that the Nexus is loaded by the
+                 * system class loader is accessed.
+                 */
                 private final Nexus.Accessor accessor;
 
+                /**
+                 * Creates a new self injection strategy.
+                 */
                 public SelfInjection() {
                     accessor = Nexus.Accessor.INSTANCE;
                 }
@@ -730,18 +872,51 @@ public interface AgentBuilder {
                             '}';
                 }
 
+                /**
+                 * <p>
+                 * This nexus is a global dispatcher for initializing classes with
+                 * {@link net.bytebuddy.instrumentation.LoadedTypeInitializer}s. To do so, this class is to be loaded
+                 * by the system class loader in an explicit manner. Any instrumented class is then injected a code
+                 * block into its static type initializer that makes a call to this very same nexus which had the
+                 * loaded type initializer registered before hand.
+                 * </p>
+                 * <p>
+                 * <b>Important</b>: The nexus must never be accessed directly but only by its
+                 * {@link net.bytebuddy.agent.builder.AgentBuilder.Default.InitializationStrategy.SelfInjection.Nexus.Accessor}
+                 * which makes sure that the nexus is loaded by the system class loader. Otherwise, a class might not
+                 * be able to initialize itself if it is loaded by different class loader that does not have the
+                 * system class loader in its hierarchy.
+                 * </p>
+                 */
                 public static class Nexus {
 
+                    /**
+                     * The name of a type for which a loaded type initializer is registered.
+                     */
                     private final String name;
 
+                    /**
+                     * The class loader for which a loaded type initializer is registered.
+                     */
                     private final ClassLoader classLoader;
 
-                    public Nexus(Class<?> type) {
+                    /**
+                     * Creates a key for identifying a loaded type initializer.
+                     *
+                     * @param type The loaded type for which a key is to be created.
+                     */
+                    private Nexus(Class<?> type) {
                         name = type.getName();
                         classLoader = type.getClassLoader();
                     }
 
-                    public Nexus(String name, ClassLoader classLoader) {
+                    /**
+                     * Creates a key for identifying a loaded type initializer.
+                     *
+                     * @param name        The name of a type for which a loaded type initializer is registered.
+                     * @param classLoader The class loader for which a loaded type initializer is registered.
+                     */
+                    private Nexus(String name, ClassLoader classLoader) {
                         this.name = name;
                         this.classLoader = classLoader;
                     }
@@ -770,36 +945,85 @@ public interface AgentBuilder {
                                 '}';
                     }
 
+                    /**
+                     * A map of keys identifying a loaded type by its name and class loader mapping their
+                     * potential {@link net.bytebuddy.instrumentation.LoadedTypeInitializer} where the class
+                     * loader of these initializers is however irrelevant.
+                     */
                     private static final ConcurrentMap<Nexus, Object> TYPE_INITIALIZERS = new ConcurrentHashMap<Nexus, Object>();
 
+                    /**
+                     * Initializes a loaded type.
+                     *
+                     * @param type The loaded type to initialize.
+                     * @throws Exception If an exception occurs.
+                     */
                     @SuppressWarnings("unused")
-                    public static void initialize(Class<?> type)
-                            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+                    public static void initialize(Class<?> type) throws Exception {
                         Object typeInitializer = TYPE_INITIALIZERS.remove(new Nexus(type));
                         if (typeInitializer != null) {
                             typeInitializer.getClass().getMethod("onLoad", Class.class).invoke(typeInitializer, type);
                         }
                     }
 
+                    /**
+                     * @param name            The name of the type for the loaded type initializer.
+                     * @param classLoader     The class loader of the type for the loaded type initializer.
+                     * @param typeInitializer The type initializer to register. The initializer must be an instance
+                     *                        of {@link net.bytebuddy.instrumentation.LoadedTypeInitializer} where
+                     *                        it does however not matter which class loader loaded this latter type.
+                     */
                     @SuppressWarnings("unused")
                     public static void register(String name, ClassLoader classLoader, Object typeInitializer) {
                         TYPE_INITIALIZERS.put(new Nexus(name, classLoader), typeInitializer);
                     }
 
+                    /**
+                     * An accessor for making sure that the accessed
+                     * {@link net.bytebuddy.agent.builder.AgentBuilder.Default.InitializationStrategy.SelfInjection.Nexus}
+                     * is loaded by the system class loader.
+                     */
                     protected static enum Accessor {
 
+                        /**
+                         * The singleton instance.
+                         */
                         INSTANCE;
 
+                        /**
+                         * Indicates that a static method is invoked by reflection.
+                         */
+                        private static final Object STATIC_METHOD = null;
+
+                        /**
+                         * The method for registering a type initializer in the system class loader's
+                         * {@link net.bytebuddy.agent.builder.AgentBuilder.Default.InitializationStrategy.SelfInjection.Nexus}.
+                         */
                         private final Method registration;
 
+                        /**
+                         * The {@link ClassLoader#getSystemClassLoader()} method.
+                         */
                         private final MethodDescription systemClassLoader;
 
+                        /**
+                         * The {@link java.lang.ClassLoader#loadClass(String)} method.
+                         */
                         private final MethodDescription loadClass;
 
-                        private final MethodDescription findMethod;
+                        /**
+                         * The {@link java.lang.Class#getDeclaredMethod(String, Class[])} method.
+                         */
+                        private final MethodDescription getDeclaredMethod;
 
+                        /**
+                         * The {@link java.lang.reflect.Method#invoke(Object, Object...)} method.
+                         */
                         private final MethodDescription invokeMethod;
 
+                        /**
+                         * Creates the singleton accessor.
+                         */
                         private Accessor() {
                             try {
                                 ClassLoader classLoader = ClassLoader.getSystemClassLoader();
@@ -811,7 +1035,7 @@ public interface AgentBuilder {
                                         .filter(named("getSystemClassLoader")).getOnly();
                                 loadClass = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()
                                         .filter(named("loadClass").and(takesArguments(String.class))).getOnly();
-                                findMethod = new TypeDescription.ForLoadedType(Class.class).getDeclaredMethods()
+                                getDeclaredMethod = new TypeDescription.ForLoadedType(Class.class).getDeclaredMethods()
                                         .filter(named("getDeclaredMethod").and(takesArguments(String.class, Class[].class))).getOnly();
                                 invokeMethod = new TypeDescription.ForLoadedType(Method.class).getDeclaredMethods()
                                         .filter(named("invoke").and(takesArguments(Object.class, Object[].class))).getOnly();
@@ -820,9 +1044,16 @@ public interface AgentBuilder {
                             }
                         }
 
+                        /**
+                         * Registers a type initializer with the class loader's nexus.
+                         *
+                         * @param name            The name of a type for which a loaded type initializer is registered.
+                         * @param classLoader     The class loader for which a loaded type initializer is registered.
+                         * @param typeInitializer The loaded type initializer to be registered.
+                         */
                         public void register(String name, ClassLoader classLoader, Object typeInitializer) {
                             try {
-                                registration.invoke(null, name, classLoader, typeInitializer);
+                                registration.invoke(STATIC_METHOD, name, classLoader, typeInitializer);
                             } catch (IllegalAccessException e) {
                                 throw new IllegalStateException("Cannot register type initializer for " + name, e);
                             } catch (InvocationTargetException e) {
@@ -830,6 +1061,13 @@ public interface AgentBuilder {
                             }
                         }
 
+                        /**
+                         * Creates a stack manipulation for a given instrumented type that injects a code block for
+                         * calling the system class loader's nexus in order to apply a self-initialization.
+                         *
+                         * @param instrumentedType The instrumented type for which the code block is to be injected.
+                         * @return A stack manipulation that implements the self-initialization.
+                         */
                         public StackManipulation initializerFor(TypeDescription instrumentedType) {
                             return new StackManipulation.Compound(
                                     MethodInvocation.invoke(systemClassLoader),
@@ -838,7 +1076,7 @@ public interface AgentBuilder {
                                     new TextConstant("initialize"),
                                     ArrayFactory.targeting(new TypeDescription.ForLoadedType(Class.class))
                                             .withValues(Collections.singletonList(ClassConstant.of(new TypeDescription.ForLoadedType(Class.class)))),
-                                    MethodInvocation.invoke(findMethod),
+                                    MethodInvocation.invoke(getDeclaredMethod),
                                     NullConstant.INSTANCE,
                                     ArrayFactory.targeting(new TypeDescription.ForLoadedType(Object.class))
                                             .withValues(Collections.singletonList(ClassConstant.of(instrumentedType))),
@@ -850,8 +1088,14 @@ public interface AgentBuilder {
                 }
             }
 
+            /**
+             * A non-initializing initialization strategy.
+             */
             static enum NoOp implements InitializationStrategy {
 
+                /**
+                 * The singleton instance.
+                 */
                 INSTANCE;
 
                 @Override
@@ -864,15 +1108,29 @@ public interface AgentBuilder {
                     return builder;
                 }
 
-
                 @Override
                 public void register(String name, ClassLoader classLoader, LoadedTypeInitializer loadedTypeInitializer) {
                     /* do nothing */
                 }
             }
 
+            /**
+             * Transforms the instrumented type to implement an appropriate initialization strategy.
+             *
+             * @param builder The builder which should implement the initialization strategy.
+             * @return The given {@code builder} with the initialization strategy applied.
+             */
             DynamicType.Builder<?> apply(DynamicType.Builder<?> builder);
 
+            /**
+             * Registers a loaded type initializer for a type name and class loader pair.
+             *
+             * @param name                  The name of the type for which the loaded type initializer is to be
+             *                              registered.
+             * @param classLoader           The class loader of the instrumented type. Might be {@code null} if
+             *                              this class loader represents the bootstrap class loader.
+             * @param loadedTypeInitializer The loaded type initializer that is being registered.
+             */
             void register(String name, ClassLoader classLoader, LoadedTypeInitializer loadedTypeInitializer);
         }
     }

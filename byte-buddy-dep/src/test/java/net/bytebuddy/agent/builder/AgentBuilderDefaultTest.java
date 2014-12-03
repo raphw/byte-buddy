@@ -201,7 +201,7 @@ public class AgentBuilderDefaultTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.Default.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.Matched.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.Entry.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.class)
                 .apply(new AgentBuilder.Default().new ExecutingTransformer());
         ObjectPropertyAssertion.of(AgentBuilder.Default.InitializationStrategy.SelfInjection.class).apply();
