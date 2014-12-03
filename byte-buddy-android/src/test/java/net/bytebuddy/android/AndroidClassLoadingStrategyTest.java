@@ -4,6 +4,7 @@ import com.android.dx.dex.DexOptions;
 import com.android.dx.dex.file.DexFile;
 import dalvik.system.DexClassLoader;
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.FixedValue;
@@ -86,7 +87,7 @@ public class AndroidClassLoadingStrategyTest {
 
     @Test
     public void testStubbedClassLoading() throws Exception {
-        DynamicType dynamicType = new ByteBuddy().subclass(Object.class)
+        DynamicType dynamicType = new ByteBuddy(ClassFileVersion.JAVA_V6).subclass(Object.class)
                 .method(named(TO_STRING)).intercept(FixedValue.value(FOO))
                 .make();
         ClassLoadingStrategy classLoadingStrategy = new AndroidClassLoadingStrategy(directory);
