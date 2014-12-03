@@ -301,6 +301,59 @@ public interface NamingStrategy {
                         '}';
             }
         }
+
+        /**
+         * A unified unbound naming strategy which always applies a given naming strategy.
+         */
+        static class Unified implements Unbound {
+
+            /**
+             * The unified naming strategy.
+             */
+            private final NamingStrategy namingStrategy;
+
+            /**
+             * Creates a new unified naming strategy.
+             *
+             * @param namingStrategy The unified naming strategy.
+             */
+            public Unified(NamingStrategy namingStrategy) {
+                this.namingStrategy = namingStrategy;
+            }
+
+            @Override
+            public NamingStrategy subclass(TypeDescription typeDescription) {
+                return namingStrategy;
+            }
+
+            @Override
+            public NamingStrategy redefine(TypeDescription typeDescription) {
+                return namingStrategy;
+            }
+
+            @Override
+            public NamingStrategy rebase(TypeDescription typeDescription) {
+                return namingStrategy;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && namingStrategy.equals(((Unified) other).namingStrategy);
+            }
+
+            @Override
+            public int hashCode() {
+                return namingStrategy.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "NamingStrategy.Unbound.Unified{" +
+                        "namingStrategy=" + namingStrategy +
+                        '}';
+            }
+        }
     }
 
     /**

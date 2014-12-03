@@ -592,8 +592,8 @@ public class ByteBuddy {
     /**
      * Defines a new naming strategy for this configuration.
      *
-     * @param namingStrategy The class format version to define for this configuration.
-     * @return A new configuration that represents this configuration with the given class format version.
+     * @param namingStrategy The unbound naming strategy to apply to the current configuration.
+     * @return A new configuration that represents this configuration with the given unbound naming strategy.
      */
     public ByteBuddy withNamingStrategy(NamingStrategy.Unbound namingStrategy) {
         return new ByteBuddy(classFileVersion,
@@ -608,6 +608,16 @@ public class ByteBuddy {
                 methodLookupEngineFactory,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory);
+    }
+
+    /**
+     * Defines a new naming strategy for this configuration.
+     *
+     * @param namingStrategy The naming strategy to apply to the current configuration.
+     * @return A new configuration that represents this configuration with the given naming strategy.
+     */
+    public ByteBuddy withNamingStrategy(NamingStrategy namingStrategy) {
+        return withNamingStrategy(new NamingStrategy.Unbound.Unified(nonNull(namingStrategy)));
     }
 
     /**
@@ -1082,7 +1092,7 @@ public class ByteBuddy {
      * A {@link net.bytebuddy.ByteBuddy} configuration with a selected set of methods for which annotations can
      * be defined.
      */
-    public static class MethodAnnotationTarget extends ByteBuddy {
+    public static class MethodAnnotationTarget extends Proxy {
 
         /**
          * The method matcher representing the current method selection.
@@ -1209,160 +1219,6 @@ public class ByteBuddy {
         }
 
         @Override
-        public ClassFileVersion getClassFileVersion() {
-            return materialize().getClassFileVersion();
-        }
-
-        @Override
-        public NamingStrategy.Unbound getNamingStrategy() {
-            return materialize().getNamingStrategy();
-        }
-
-        @Override
-        public List<TypeDescription> getInterfaceTypes() {
-            return materialize().getInterfaceTypes();
-        }
-
-        @Override
-        public ElementMatcher<? super MethodDescription> getIgnoredMethods() {
-            return materialize().getIgnoredMethods();
-        }
-
-        @Override
-        public ClassVisitorWrapper.Chain getClassVisitorWrapperChain() {
-            return materialize().getClassVisitorWrapperChain();
-        }
-
-        @Override
-        public BridgeMethodResolver.Factory getBridgeMethodResolverFactory() {
-            return materialize().getBridgeMethodResolverFactory();
-        }
-
-        @Override
-        public MethodRegistry getMethodRegistry() {
-            return materialize().getMethodRegistry();
-        }
-
-        @Override
-        public Definable<Integer> getModifiers() {
-            return materialize().getModifiers();
-        }
-
-        @Override
-        public MethodLookupEngine.Factory getMethodLookupEngineFactory() {
-            return materialize().getMethodLookupEngineFactory();
-        }
-
-        @Override
-        public TypeAttributeAppender getTypeAttributeAppender() {
-            return materialize().getTypeAttributeAppender();
-        }
-
-        @Override
-        public ByteBuddy withMethodLookupEngine(MethodLookupEngine.Factory methodLookupEngineFactory) {
-            return materialize().withMethodLookupEngine(methodLookupEngineFactory);
-        }
-
-        @Override
-        public FieldAttributeAppender.Factory getDefaultFieldAttributeAppenderFactory() {
-            return materialize().getDefaultFieldAttributeAppenderFactory();
-        }
-
-        @Override
-        public MethodAttributeAppender.Factory getDefaultMethodAttributeAppenderFactory() {
-            return materialize().getDefaultMethodAttributeAppenderFactory();
-        }
-
-        @Override
-        public <T> DynamicType.Builder<T> subclass(Class<T> superType) {
-            return materialize().subclass(superType);
-        }
-
-        @Override
-        public <T> DynamicType.Builder<T> subclass(Class<T> superType, ConstructorStrategy constructorStrategy) {
-            return materialize().subclass(superType, constructorStrategy);
-        }
-
-        @Override
-        public <T> DynamicType.Builder<T> subclass(TypeDescription superType) {
-            return materialize().subclass(superType);
-        }
-
-        @Override
-        public <T> DynamicType.Builder<T> subclass(TypeDescription superType, ConstructorStrategy constructorStrategy) {
-            return materialize().subclass(superType, constructorStrategy);
-        }
-
-        @Override
-        public ByteBuddy withModifiers(ModifierContributor.ForType... modifierContributor) {
-            return materialize().withModifiers(modifierContributor);
-        }
-
-        @Override
-        public ByteBuddy withAttribute(TypeAttributeAppender typeAttributeAppender) {
-            return materialize().withAttribute(typeAttributeAppender);
-        }
-
-        @Override
-        public ByteBuddy withBridgeMethodResolver(BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
-            return materialize().withBridgeMethodResolver(bridgeMethodResolverFactory);
-        }
-
-        @Override
-        public ByteBuddy withTypeAnnotation(Annotation... annotation) {
-            return materialize().withTypeAnnotation(annotation);
-        }
-
-        @Override
-        public ByteBuddy withClassFileVersion(ClassFileVersion classFileVersion) {
-            return materialize().withClassFileVersion(classFileVersion);
-        }
-
-        @Override
-        public ByteBuddy withNamingStrategy(NamingStrategy.Unbound namingStrategy) {
-            return materialize().withNamingStrategy(namingStrategy);
-        }
-
-        @Override
-        public OptionalMethodInterception withImplementing(Class<?>... type) {
-            return materialize().withImplementing(type);
-        }
-
-        @Override
-        public OptionalMethodInterception withImplementing(TypeDescription... type) {
-            return materialize().withImplementing(type);
-        }
-
-        @Override
-        public ByteBuddy withIgnoredMethods(ElementMatcher<? super MethodDescription> ignoredMethods) {
-            return materialize().withIgnoredMethods(ignoredMethods);
-        }
-
-        @Override
-        public ByteBuddy withClassVisitor(ClassVisitorWrapper classVisitorWrapper) {
-            return materialize().withClassVisitor(classVisitorWrapper);
-        }
-
-        @Override
-        public ByteBuddy withDefaultFieldAttributeAppender(FieldAttributeAppender.Factory attributeAppenderFactory) {
-            return materialize().withDefaultFieldAttributeAppender(attributeAppenderFactory);
-        }
-
-        @Override
-        public ByteBuddy withDefaultMethodAttributeAppender(MethodAttributeAppender.Factory attributeAppenderFactory) {
-            return materialize().withDefaultMethodAttributeAppender(attributeAppenderFactory);
-        }
-
-        @Override
-        public MatchedMethodInterception invokable(ElementMatcher<? super MethodDescription> methodMatcher) {
-            return materialize().invokable(methodMatcher);
-        }
-
-        /**
-         * Materializes this configuration as new {@code ByteBuddy} instance.
-         *
-         * @return A {@code ByteBuddy} instance representing the current configuration.
-         */
         protected ByteBuddy materialize() {
             return new ByteBuddy(classFileVersion,
                     namingStrategy,
@@ -1556,7 +1412,6 @@ public class ByteBuddy {
             return intercept(Instrumentation.ForAbstractMethod.INSTANCE);
         }
 
-
         /**
          * Returns the outer class instance of this instance.
          *
@@ -1585,5 +1440,281 @@ public class ByteBuddy {
                     "byteBuddy=" + ByteBuddy.this.toString() +
                     '}';
         }
+    }
+
+    /**
+     * A proxy implementation for extending Byte Buddy while allowing for enhancing a {@link net.bytebuddy.ByteBuddy}
+     * configuration.
+     */
+    protected abstract static class Proxy extends ByteBuddy {
+
+        /**
+         * Defines a new proxy configuration for {@code ByteBuddy}.
+         *
+         * @param classFileVersion                      The currently defined class file version.
+         * @param namingStrategy                        The currently defined naming strategy.
+         * @param interfaceTypes                        The currently defined collection of interfaces to be
+         *                                              implemented by any dynamically created type.
+         * @param ignoredMethods                        The methods to always be ignored.
+         * @param bridgeMethodResolverFactory           The bridge method resolver factory to be applied to any
+         *                                              instrumentation process.
+         * @param classVisitorWrapperChain              The class visitor wrapper chain to be applied to any
+         *                                              instrumentation process.
+         * @param methodRegistry                        The currently valid method registry.
+         * @param modifiers                             The modifiers to define for any instrumentation process.
+         * @param typeAttributeAppender                 The type attribute appender to apply to any instrumentation
+         *                                              process.
+         * @param methodLookupEngineFactory             The method lookup engine factory to apply to this configuration.
+         * @param defaultFieldAttributeAppenderFactory  The field attribute appender to apply as a default for any
+         *                                              field definition.
+         * @param defaultMethodAttributeAppenderFactory The method attribute appender to apply as a default for any
+         *                                              method definition or instrumentation.
+         */
+        protected Proxy(ClassFileVersion classFileVersion,
+                        NamingStrategy.Unbound namingStrategy,
+                        List<TypeDescription> interfaceTypes,
+                        ElementMatcher<? super MethodDescription> ignoredMethods,
+                        BridgeMethodResolver.Factory bridgeMethodResolverFactory,
+                        ClassVisitorWrapper.Chain classVisitorWrapperChain,
+                        MethodRegistry methodRegistry,
+                        Definable<Integer> modifiers,
+                        TypeAttributeAppender typeAttributeAppender,
+                        MethodLookupEngine.Factory methodLookupEngineFactory,
+                        FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
+                        MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
+            super(classFileVersion,
+                    namingStrategy,
+                    interfaceTypes,
+                    ignoredMethods,
+                    bridgeMethodResolverFactory,
+                    classVisitorWrapperChain,
+                    methodRegistry,
+                    modifiers,
+                    typeAttributeAppender,
+                    methodLookupEngineFactory,
+                    defaultFieldAttributeAppenderFactory,
+                    defaultMethodAttributeAppenderFactory);
+        }
+
+        @Override
+        public ClassFileVersion getClassFileVersion() {
+            return materialize().getClassFileVersion();
+        }
+
+        @Override
+        public NamingStrategy.Unbound getNamingStrategy() {
+            return materialize().getNamingStrategy();
+        }
+
+        @Override
+        public List<TypeDescription> getInterfaceTypes() {
+            return materialize().getInterfaceTypes();
+        }
+
+        @Override
+        public ElementMatcher<? super MethodDescription> getIgnoredMethods() {
+            return materialize().getIgnoredMethods();
+        }
+
+        @Override
+        public BridgeMethodResolver.Factory getBridgeMethodResolverFactory() {
+            return materialize().getBridgeMethodResolverFactory();
+        }
+
+        @Override
+        public ClassVisitorWrapper.Chain getClassVisitorWrapperChain() {
+            return materialize().getClassVisitorWrapperChain();
+        }
+
+        @Override
+        public MethodRegistry getMethodRegistry() {
+            return materialize().getMethodRegistry();
+        }
+
+        @Override
+        public Definable<Integer> getModifiers() {
+            return materialize().getModifiers();
+        }
+
+        @Override
+        public MethodLookupEngine.Factory getMethodLookupEngineFactory() {
+            return materialize().getMethodLookupEngineFactory();
+        }
+
+        @Override
+        public TypeAttributeAppender getTypeAttributeAppender() {
+            return materialize().getTypeAttributeAppender();
+        }
+
+        @Override
+        public FieldAttributeAppender.Factory getDefaultFieldAttributeAppenderFactory() {
+            return materialize().getDefaultFieldAttributeAppenderFactory();
+        }
+
+        @Override
+        public MethodAttributeAppender.Factory getDefaultMethodAttributeAppenderFactory() {
+            return materialize().getDefaultMethodAttributeAppenderFactory();
+        }
+
+        @Override
+        public <T> DynamicType.Builder<T> subclass(Class<T> superType) {
+            return materialize().subclass(superType);
+        }
+
+        @Override
+        public <T> DynamicType.Builder<T> subclass(Class<T> superType, ConstructorStrategy constructorStrategy) {
+            return materialize().subclass(superType, constructorStrategy);
+        }
+
+        @Override
+        public <T> DynamicType.Builder<T> subclass(TypeDescription superType) {
+            return materialize().subclass(superType);
+        }
+
+        @Override
+        public <T> DynamicType.Builder<T> subclass(TypeDescription superType,
+                                                   ConstructorStrategy constructorStrategy) {
+            return materialize().subclass(superType, constructorStrategy);
+        }
+
+        @Override
+        public <T> DynamicType.Builder<T> redefine(Class<T> levelType) {
+            return materialize().redefine(levelType);
+        }
+
+        @Override
+        public <T> DynamicType.Builder<T> redefine(Class<T> levelType,
+                                                   ClassFileLocator classFileLocator) {
+            return materialize().redefine(levelType, classFileLocator);
+        }
+
+        @Override
+        public <T> DynamicType.Builder<T> redefine(TypeDescription levelType,
+                                                   ClassFileLocator classFileLocator) {
+            return materialize().redefine(levelType, classFileLocator);
+        }
+
+        @Override
+        public <T> DynamicType.Builder<T> rebase(Class<T> levelType) {
+            return materialize().rebase(levelType);
+        }
+
+        @Override
+        public <T> DynamicType.Builder<T> rebase(Class<T> levelType,
+                                                 ClassFileLocator classFileLocator) {
+            return materialize().rebase(levelType, classFileLocator);
+        }
+
+        @Override
+        public <T> DynamicType.Builder<T> rebase(Class<T> levelType,
+                                                 ClassFileLocator classFileLocator,
+                                                 MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
+            return materialize().rebase(levelType, classFileLocator, methodNameTransformer);
+        }
+
+        @Override
+        public <T> DynamicType.Builder<T> rebase(TypeDescription levelType,
+                                                 ClassFileLocator classFileLocator) {
+            return materialize().rebase(levelType, classFileLocator);
+        }
+
+        @Override
+        public <T> DynamicType.Builder<T> rebase(TypeDescription levelType,
+                                                 ClassFileLocator classFileLocator,
+                                                 MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
+            return super.rebase(levelType, classFileLocator, methodNameTransformer);
+        }
+
+        @Override
+        public ByteBuddy withClassFileVersion(ClassFileVersion classFileVersion) {
+            return materialize().withClassFileVersion(classFileVersion);
+        }
+
+        @Override
+        public ByteBuddy withNamingStrategy(NamingStrategy.Unbound namingStrategy) {
+            return materialize().withNamingStrategy(namingStrategy);
+        }
+
+        @Override
+        public ByteBuddy withNamingStrategy(NamingStrategy namingStrategy) {
+            return materialize().withNamingStrategy(namingStrategy);
+        }
+
+        @Override
+        public ByteBuddy withModifiers(ModifierContributor.ForType... modifierContributor) {
+            return materialize().withModifiers(modifierContributor);
+        }
+
+        @Override
+        public ByteBuddy withAttribute(TypeAttributeAppender typeAttributeAppender) {
+            return materialize().withAttribute(typeAttributeAppender);
+        }
+
+        @Override
+        public ByteBuddy withTypeAnnotation(Annotation... annotation) {
+            return materialize().withTypeAnnotation(annotation);
+        }
+
+        @Override
+        public OptionalMethodInterception withImplementing(Class<?>... type) {
+            return materialize().withImplementing(type);
+        }
+
+        @Override
+        public OptionalMethodInterception withImplementing(TypeDescription... type) {
+            return materialize().withImplementing(type);
+        }
+
+        @Override
+        public ByteBuddy withIgnoredMethods(ElementMatcher<? super MethodDescription> ignoredMethods) {
+            return materialize().withIgnoredMethods(ignoredMethods);
+        }
+
+        @Override
+        public ByteBuddy withBridgeMethodResolver(BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
+            return materialize().withBridgeMethodResolver(bridgeMethodResolverFactory);
+        }
+
+        @Override
+        public ByteBuddy withClassVisitor(ClassVisitorWrapper classVisitorWrapper) {
+            return materialize().withClassVisitor(classVisitorWrapper);
+        }
+
+        @Override
+        public ByteBuddy withMethodLookupEngine(MethodLookupEngine.Factory methodLookupEngineFactory) {
+            return materialize().withMethodLookupEngine(methodLookupEngineFactory);
+        }
+
+        @Override
+        public ByteBuddy withDefaultFieldAttributeAppender(FieldAttributeAppender.Factory attributeAppenderFactory) {
+            return materialize().withDefaultFieldAttributeAppender(attributeAppenderFactory);
+        }
+
+        @Override
+        public ByteBuddy withDefaultMethodAttributeAppender(MethodAttributeAppender.Factory attributeAppenderFactory) {
+            return materialize().withDefaultMethodAttributeAppender(attributeAppenderFactory);
+        }
+
+        @Override
+        public MatchedMethodInterception invokable(ElementMatcher<? super MethodDescription> methodMatcher) {
+            return materialize().invokable(methodMatcher);
+        }
+
+        @Override
+        public MatchedMethodInterception method(ElementMatcher<? super MethodDescription> methodMatcher) {
+            return materialize().method(methodMatcher);
+        }
+
+        @Override
+        public MatchedMethodInterception constructor(ElementMatcher<? super MethodDescription> methodMatcher) {
+            return materialize().constructor(methodMatcher);
+        }
+
+        /**
+         * Materializes the current extended configuration.
+         *
+         * @return The materialized Byte Buddy configuration.
+         */
+        protected abstract ByteBuddy materialize();
     }
 }
