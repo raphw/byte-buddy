@@ -1,6 +1,7 @@
 package net.bytebuddy;
 
 import net.bytebuddy.agent.ByteBuddyAgent;
+import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.DynamicType;
@@ -44,6 +45,7 @@ import static net.bytebuddy.matcher.ElementMatchers.not;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
 
 public class ByteBuddyTutorialExamplesTest {
 
@@ -140,13 +142,22 @@ public class ByteBuddyTutorialExamplesTest {
     @Test
     public void testTutorialGettingStartedTypePool() throws Exception {
         TypePool typePool = TypePool.Default.ofClassPath();
-        new ByteBuddy()
-                .redefine(typePool.describe(getClass().getName() + "$UnloadedBar").resolve(),
-                        ClassFileLocator.ForClassLoader.ofClassPath())
+        new ByteBuddy().redefine(typePool.describe(getClass().getName() + "$UnloadedBar").resolve(),
+                ClassFileLocator.ForClassLoader.ofClassPath())
                 .defineField("qux", String.class)
                 .make()
                 .load(ClassLoader.getSystemClassLoader(), ClassLoadingStrategy.Default.INJECTION);
         assertThat(UnloadedBar.class.getDeclaredField("qux"), notNullValue(java.lang.reflect.Field.class));
+    }
+
+    @Test
+    public void testTutorialGettingStartedJavaAgent() throws Exception {
+        new AgentBuilder.Default().rebase(isAnnotatedWith(Rebase.class)).transform(new AgentBuilder.Transformer() {
+            @Override
+            public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder) {
+                return builder.method(named("toString")).intercept(FixedValue.value("transformed"));
+            }
+        }).installOn(mock(java.lang.instrument.Instrumentation.class));
     }
 
     @Test
@@ -756,5 +767,9 @@ public class ByteBuddyTutorialExamplesTest {
     }
 
     private static class UnloadedBar {
+    }
+
+    private static @interface Rebase {
+
     }
 }
