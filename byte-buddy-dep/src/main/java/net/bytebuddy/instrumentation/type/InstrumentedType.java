@@ -97,6 +97,55 @@ public interface InstrumentedType extends TypeDescription {
     static interface TypeInitializer {
 
         /**
+         * Indicates if this type initializer is defined.
+         *
+         * @return {@code true} if this type initializer is defined.
+         */
+        boolean isDefined();
+
+        /**
+         * Expands this type initializer with a stack manipulation.
+         *
+         * @param stackManipulation The stack manipulation to apply within the type initializer.
+         * @return A defined type initializer.
+         */
+        TypeInitializer expandWith(StackManipulation stackManipulation);
+
+        /**
+         * Returns the stack manipulation of this type initializer. This method must only be called
+         * if this type initializer is defined.
+         *
+         * @return The stack manipulation of this type initializer.
+         */
+        StackManipulation getStackManipulation();
+
+        /**
+         * Canonical implementation of a non-defined type initializer.
+         */
+        static enum None implements TypeInitializer {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public boolean isDefined() {
+                return false;
+            }
+
+            @Override
+            public TypeInitializer expandWith(StackManipulation stackManipulation) {
+                return new Simple(stackManipulation);
+            }
+
+            @Override
+            public StackManipulation getStackManipulation() {
+                throw new IllegalStateException("Cannot execute a non-defined type initializer");
+            }
+        }
+
+        /**
          * A simple, defined type initializer that executes a given
          * {@link net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation}.
          */
@@ -149,55 +198,6 @@ public interface InstrumentedType extends TypeDescription {
                         '}';
             }
         }
-
-        /**
-         * Canonical implementation of a non-defined type initializer.
-         */
-        static enum None implements TypeInitializer {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
-            @Override
-            public boolean isDefined() {
-                return false;
-            }
-
-            @Override
-            public TypeInitializer expandWith(StackManipulation stackManipulation) {
-                return new Simple(stackManipulation);
-            }
-
-            @Override
-            public StackManipulation getStackManipulation() {
-                throw new IllegalStateException("Cannot execute a non-defined type initializer");
-            }
-        }
-
-        /**
-         * Indicates if this type initializer is defined.
-         *
-         * @return {@code true} if this type initializer is defined.
-         */
-        boolean isDefined();
-
-        /**
-         * Expands this type initializer with a stack manipulation.
-         *
-         * @param stackManipulation The stack manipulation to apply within the type initializer.
-         * @return A defined type initializer.
-         */
-        TypeInitializer expandWith(StackManipulation stackManipulation);
-
-        /**
-         * Returns the stack manipulation of this type initializer. This method must only be called
-         * if this type initializer is defined.
-         *
-         * @return The stack manipulation of this type initializer.
-         */
-        StackManipulation getStackManipulation();
     }
 
     /**

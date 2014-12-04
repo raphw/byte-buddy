@@ -91,6 +91,10 @@ public class AgentBuilderDefaultApplicationTest {
         }
     }
 
+    @Retention(RetentionPolicy.RUNTIME)
+    private static @interface ShouldRebase {
+    }
+
     private static class FooTransformer implements AgentBuilder.Transformer {
 
         @Override
@@ -159,9 +163,5 @@ public class AgentBuilderDefaultApplicationTest {
         public String foo() {
             return FOO;
         }
-    }
-
-    @Retention(RetentionPolicy.RUNTIME)
-    private static @interface ShouldRebase {
     }
 }

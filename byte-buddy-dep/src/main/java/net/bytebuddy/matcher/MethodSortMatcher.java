@@ -13,6 +13,41 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 public class MethodSortMatcher<T extends MethodDescription> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
+     * The sort of method description to be matched by this element matcher.
+     */
+    private final Sort sort;
+
+    /**
+     * Creates a new element matcher that matches a specific sort of method description.
+     *
+     * @param sort The sort of method description to be matched by this element matcher.
+     */
+    public MethodSortMatcher(Sort sort) {
+        this.sort = sort;
+    }
+
+    @Override
+    public boolean matches(T target) {
+        return sort.isSort(target);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        return this == other || !(other == null || getClass() != other.getClass())
+                && sort == ((MethodSortMatcher) other).sort;
+    }
+
+    @Override
+    public int hashCode() {
+        return sort.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return sort.getDescription();
+    }
+
+    /**
      * Represents a specific characteristic of a method description.
      */
     public static enum Sort {
@@ -112,40 +147,5 @@ public class MethodSortMatcher<T extends MethodDescription> extends ElementMatch
         protected String getDescription() {
             return description;
         }
-    }
-
-    /**
-     * The sort of method description to be matched by this element matcher.
-     */
-    private final Sort sort;
-
-    /**
-     * Creates a new element matcher that matches a specific sort of method description.
-     *
-     * @param sort The sort of method description to be matched by this element matcher.
-     */
-    public MethodSortMatcher(Sort sort) {
-        this.sort = sort;
-    }
-
-    @Override
-    public boolean matches(T target) {
-        return sort.isSort(target);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && sort == ((MethodSortMatcher) other).sort;
-    }
-
-    @Override
-    public int hashCode() {
-        return sort.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return sort.getDescription();
     }
 }

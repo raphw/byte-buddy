@@ -12,17 +12,15 @@ import static org.mockito.Mockito.*;
 
 public class CollectionItemMatcherTest extends AbstractElementMatcherTest<CollectionItemMatcher<?>> {
 
+    private Iterable<Object> iterable;
+    private Object first, second;
+    @Mock
+    private ElementMatcher<Object> elementMatcher;
+
     @SuppressWarnings("unchecked")
     public CollectionItemMatcherTest() {
         super((Class<CollectionItemMatcher<?>>) (Object) CollectionItemMatcher.class, "whereOne");
     }
-
-    private Iterable<Object> iterable;
-
-    private Object first, second;
-
-    @Mock
-    private ElementMatcher<Object> elementMatcher;
 
     @Before
     public void setUp() throws Exception {

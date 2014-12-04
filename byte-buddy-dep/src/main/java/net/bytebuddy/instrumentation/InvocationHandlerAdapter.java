@@ -56,15 +56,6 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
     protected final boolean cacheMethods;
 
     /**
-     * Creates a default assigner to use.
-     *
-     * @return The default assigner.
-     */
-    private static Assigner defaultAssigner() {
-        return new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE));
-    }
-
-    /**
      * Creates a new invocation handler for a given field.
      *
      * @param fieldName    The name of the field.
@@ -76,6 +67,15 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
         this.fieldName = fieldName;
         this.cacheMethods = cacheMethods;
         this.assigner = assigner;
+    }
+
+    /**
+     * Creates a default assigner to use.
+     *
+     * @return The default assigner.
+     */
+    private static Assigner defaultAssigner() {
+        return new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE));
     }
 
     /**

@@ -14,17 +14,15 @@ import static org.mockito.Mockito.*;
 
 public class CollectionOneToOneMatcherTest extends AbstractElementMatcherTest<CollectionOneToOneMatcher<?>> {
 
+    private Iterable<Object> iterable;
+    private Object first, second;
+    @Mock
+    private ElementMatcher<Object> firstMatcher, secondMatcher;
+
     @SuppressWarnings("unchecked")
     public CollectionOneToOneMatcherTest() {
         super((Class<CollectionOneToOneMatcher<?>>) (Object) CollectionOneToOneMatcher.class, "containing");
     }
-
-    private Iterable<Object> iterable;
-
-    private Object first, second;
-
-    @Mock
-    private ElementMatcher<Object> firstMatcher, secondMatcher;
 
     @Before
     public void setUp() throws Exception {

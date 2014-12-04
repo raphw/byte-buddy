@@ -170,6 +170,34 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
         void set(T value);
     }
 
+    public static interface GetInherited<T> extends Get<T> {
+        /* empty */
+    }
+
+    public static interface SetInherited<T> extends Set<T> {
+        /* empty */
+    }
+
+    private static interface GetPrivate<T> {
+
+        T get();
+    }
+
+    private static interface SetPrivate<T> {
+
+        void set(T value);
+    }
+
+    public static interface GetIncorrect<T> {
+
+        T get(Object value);
+    }
+
+    public static interface SetIncorrect<T> {
+
+        Object set(T value);
+    }
+
     public static class Swap {
 
         public static void swap(@Field(FOO) Get<String> getter, @Field(FOO) Set<String> setter) {
@@ -278,33 +306,5 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
         public static void swap(@Field(FOO) Get<String> getter, @Field(FOO) Set<Integer> setter) {
             setter.set(0);
         }
-    }
-
-    public static interface GetInherited<T> extends Get<T> {
-        /* empty */
-    }
-
-    public static interface SetInherited<T> extends Set<T> {
-        /* empty */
-    }
-
-    private static interface GetPrivate<T> {
-
-        T get();
-    }
-
-    private static interface SetPrivate<T> {
-
-        void set(T value);
-    }
-
-    public static interface GetIncorrect<T> {
-
-        T get(Object value);
-    }
-
-    public static interface SetIncorrect<T> {
-
-        Object set(T value);
     }
 }

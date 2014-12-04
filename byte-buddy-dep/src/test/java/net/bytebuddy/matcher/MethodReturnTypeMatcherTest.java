@@ -10,21 +10,19 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
-public class MethodReturnTypeMatcherTest  extends AbstractElementMatcherTest<MethodReturnTypeMatcher<?>> {
+public class MethodReturnTypeMatcherTest extends AbstractElementMatcherTest<MethodReturnTypeMatcher<?>> {
+
+    @Mock
+    private ElementMatcher<? super TypeDescription> typeMatcher;
+    @Mock
+    private TypeDescription returnType;
+    @Mock
+    private MethodDescription methodDescription;
 
     @SuppressWarnings("unchecked")
     public MethodReturnTypeMatcherTest() {
         super((Class<? extends MethodReturnTypeMatcher<?>>) (Object) MethodReturnTypeMatcher.class, "returns");
     }
-
-    @Mock
-    private ElementMatcher<? super TypeDescription> typeMatcher;
-
-    @Mock
-    private TypeDescription returnType;
-
-    @Mock
-    private MethodDescription methodDescription;
 
     @Before
     public void setUp() throws Exception {

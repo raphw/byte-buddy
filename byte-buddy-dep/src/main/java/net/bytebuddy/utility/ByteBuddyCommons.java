@@ -187,7 +187,7 @@ public final class ByteBuddyCommons {
      * Validates that a type can be implemented, i.e. is not an array or a primitive.
      *
      * @param typeDescription The type to be validated.
-     * @param <T>              The input type.
+     * @param <T>             The input type.
      * @return The input value.
      */
     public static <T extends TypeDescription> T isExtendable(T typeDescription) {

@@ -23,6 +23,50 @@ import static org.mockito.Mockito.when;
 public class MethodSortMatcherTest extends AbstractElementMatcherTest<MethodSortMatcher<?>> {
 
     private static final String FOO = "foo";
+    private final MethodSortMatcher.Sort sort;
+    private final MockEngine mockEngine;
+    @Mock
+    private MethodDescription methodDescription;
+
+    @SuppressWarnings("unchecked")
+    public MethodSortMatcherTest(MethodSortMatcher.Sort sort, MockEngine mockEngine) {
+        super((Class<MethodSortMatcher<?>>) (Object) MethodSortMatcher.class, sort.getDescription());
+        this.sort = sort;
+        this.mockEngine = mockEngine;
+    }
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+                {MethodSortMatcher.Sort.CONSTRUCTOR, MockEngine.CONSTRUCTOR},
+                {MethodSortMatcher.Sort.DEFAULT_METHOD, MockEngine.DEFAULT_METHOD},
+                {MethodSortMatcher.Sort.METHOD, MockEngine.METHOD},
+                {MethodSortMatcher.Sort.OVERRIDABLE, MockEngine.OVERRIDABLE},
+                {MethodSortMatcher.Sort.TYPE_INITIALIZER, MockEngine.TYPE_INITIALIZER},
+                {MethodSortMatcher.Sort.VISIBILITY_BRIDGE, MockEngine.VISIBILITY_BRIDGE}
+        });
+    }
+
+    @Test
+    public void testMatch() throws Exception {
+        mockEngine.prepare(methodDescription);
+        assertThat(new MethodSortMatcher<MethodDescription>(sort).matches(methodDescription), is(true));
+    }
+
+    @Test
+    public void testNoMatch() throws Exception {
+        assertThat(new MethodSortMatcher<MethodDescription>(sort).matches(methodDescription), is(false));
+    }
+
+    @Override
+    protected <S> ObjectPropertyAssertion<S> modify(ObjectPropertyAssertion<S> propertyAssertion) {
+        return propertyAssertion.skipToString();
+    }
+
+    @Test
+    public void testToString() throws Exception {
+        assertThat(new MethodSortMatcher<MethodDescription>(sort).toString(), is(sort.getDescription()));
+    }
 
     private static enum MockEngine {
 
@@ -79,52 +123,5 @@ public class MethodSortMatcherTest extends AbstractElementMatcherTest<MethodSort
         };
 
         protected abstract void prepare(MethodDescription mock);
-    }
-
-    @Parameterized.Parameters
-    public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-                {MethodSortMatcher.Sort.CONSTRUCTOR, MockEngine.CONSTRUCTOR},
-                {MethodSortMatcher.Sort.DEFAULT_METHOD, MockEngine.DEFAULT_METHOD},
-                {MethodSortMatcher.Sort.METHOD, MockEngine.METHOD},
-                {MethodSortMatcher.Sort.OVERRIDABLE, MockEngine.OVERRIDABLE},
-                {MethodSortMatcher.Sort.TYPE_INITIALIZER, MockEngine.TYPE_INITIALIZER},
-                {MethodSortMatcher.Sort.VISIBILITY_BRIDGE, MockEngine.VISIBILITY_BRIDGE}
-        });
-    }
-
-    private final MethodSortMatcher.Sort sort;
-
-    private final MockEngine mockEngine;
-
-    @SuppressWarnings("unchecked")
-    public MethodSortMatcherTest(MethodSortMatcher.Sort sort, MockEngine mockEngine) {
-        super((Class<MethodSortMatcher<?>>) (Object) MethodSortMatcher.class, sort.getDescription());
-        this.sort = sort;
-        this.mockEngine = mockEngine;
-    }
-
-    @Mock
-    private MethodDescription methodDescription;
-
-    @Test
-    public void testMatch() throws Exception {
-        mockEngine.prepare(methodDescription);
-        assertThat(new MethodSortMatcher<MethodDescription>(sort).matches(methodDescription), is(true));
-    }
-
-    @Test
-    public void testNoMatch() throws Exception {
-        assertThat(new MethodSortMatcher<MethodDescription>(sort).matches(methodDescription), is(false));
-    }
-
-    @Override
-    protected <S> ObjectPropertyAssertion<S> modify(ObjectPropertyAssertion<S> propertyAssertion) {
-        return propertyAssertion.skipToString();
-    }
-
-    @Test
-    public void testToString() throws Exception {
-        assertThat(new MethodSortMatcher<MethodDescription>(sort).toString(), is(sort.getDescription()));
     }
 }

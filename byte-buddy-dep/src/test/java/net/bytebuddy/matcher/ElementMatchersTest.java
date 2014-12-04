@@ -595,6 +595,16 @@ public class ElementMatchersTest {
         }
     }
 
+    @Retention(RetentionPolicy.RUNTIME)
+    private static @interface IsAnnotatedWithAnnotation {
+
+    }
+
+    @Inherited
+    @Retention(RetentionPolicy.RUNTIME)
+    public static @interface OtherAnnotation {
+    }
+
     private static class IsDeclaredBy {
 
         static class Inner {
@@ -612,11 +622,6 @@ public class ElementMatchersTest {
 
     @IsAnnotatedWithAnnotation
     private static class IsAnnotatedWith {
-
-    }
-
-    @Retention(RetentionPolicy.RUNTIME)
-    private static @interface IsAnnotatedWithAnnotation {
 
     }
 
@@ -702,11 +707,11 @@ public class ElementMatchersTest {
 
     public static class IsOverridable {
 
-        private void foo() {
+        public static void bar() {
             /* empty */
         }
 
-        public static void bar() {
+        private void foo() {
             /* empty */
         }
 
@@ -782,11 +787,6 @@ public class ElementMatchersTest {
     }
 
     public static class OtherInherited extends Other {
-    }
-
-    @Inherited
-    @Retention(RetentionPolicy.RUNTIME)
-    public static @interface OtherAnnotation {
     }
 
     public static class IsSpecialization {

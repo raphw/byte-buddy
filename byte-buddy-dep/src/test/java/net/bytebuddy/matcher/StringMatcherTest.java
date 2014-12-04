@@ -18,6 +18,17 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class StringMatcherTest extends AbstractElementMatcherTest<StringMatcher> {
 
     private static final String FOO = "foo";
+    private final StringMatcher.Mode mode;
+    private final String matching, nonMatching;
+    @Mock
+    private MethodDescription methodDescription;
+
+    public StringMatcherTest(StringMatcher.Mode mode, String matching, String nonMatching) {
+        super(StringMatcher.class, mode.getDescription());
+        this.mode = mode;
+        this.matching = matching;
+        this.nonMatching = nonMatching;
+    }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
@@ -33,20 +44,6 @@ public class StringMatcherTest extends AbstractElementMatcherTest<StringMatcher>
                 {StringMatcher.Mode.STARTS_WITH_IGNORE_CASE, "FO", "fooo"},
         });
     }
-
-    private final StringMatcher.Mode mode;
-
-    private final String matching, nonMatching;
-
-    public StringMatcherTest(StringMatcher.Mode mode, String matching, String nonMatching) {
-        super(StringMatcher.class, mode.getDescription());
-        this.mode = mode;
-        this.matching = matching;
-        this.nonMatching = nonMatching;
-    }
-
-    @Mock
-    private MethodDescription methodDescription;
 
     @Test
     public void testMatch() throws Exception {

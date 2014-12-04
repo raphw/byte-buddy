@@ -534,6 +534,10 @@ public class ByteBuddyTutorialExamplesTest {
         String value();
     }
 
+    private static @interface Rebase {
+
+    }
+
     public static class ComparisonInterceptor {
 
         public int intercept(Object first, Object second) {
@@ -721,6 +725,9 @@ public class ByteBuddyTutorialExamplesTest {
         }
     }
 
+    private static class UnloadedBar {
+    }
+
     public class ForwardingLoggerInterceptor {
 
         private final MemoryDatabase memoryDatabase;
@@ -764,12 +771,5 @@ public class ByteBuddyTutorialExamplesTest {
                 return LoggingMemoryDatabase.super.load(info);
             }
         }
-    }
-
-    private static class UnloadedBar {
-    }
-
-    private static @interface Rebase {
-
     }
 }

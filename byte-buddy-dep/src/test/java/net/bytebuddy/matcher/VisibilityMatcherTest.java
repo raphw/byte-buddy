@@ -11,16 +11,15 @@ import static org.mockito.Mockito.*;
 
 public class VisibilityMatcherTest extends AbstractElementMatcherTest<VisibilityMatcher<?>> {
 
+    @Mock
+    private TypeDescription typeDescription;
+    @Mock
+    private ByteCodeElement byteCodeElement;
+
     @SuppressWarnings("unchecked")
     public VisibilityMatcherTest() {
         super((Class<? extends VisibilityMatcher<?>>) (Object) VisibilityMatcher.class, "isVisibleTo");
     }
-
-    @Mock
-    private TypeDescription typeDescription;
-
-    @Mock
-    private ByteCodeElement byteCodeElement;
 
     @Test
     public void testMatch() throws Exception {

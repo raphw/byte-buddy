@@ -9,13 +9,13 @@ import static org.mockito.Mockito.*;
 
 public class NegatingMatcherTest extends AbstractElementMatcherTest<NegatingMatcher<?>> {
 
+    @Mock
+    private ElementMatcher<? super Object> elementMatcher;
+
     @SuppressWarnings("unchecked")
     public NegatingMatcherTest() {
         super((Class<NegatingMatcher<?>>) (Object) NegatingMatcher.class, "not");
     }
-
-    @Mock
-    private ElementMatcher<? super Object> elementMatcher;
 
     @Test
     public void testNegateToPositive() throws Exception {

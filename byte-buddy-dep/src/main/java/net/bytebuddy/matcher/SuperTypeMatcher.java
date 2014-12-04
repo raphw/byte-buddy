@@ -7,7 +7,7 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
  *
  * @param <T> The type of the matched entity.
  */
-public class SuperTypeMatcher<T extends TypeDescription> extends ElementMatcher.Junction.AbstractBase<T>  {
+public class SuperTypeMatcher<T extends TypeDescription> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
      * The type to be matched being a sub type of the matched type.

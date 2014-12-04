@@ -104,6 +104,19 @@ public class AndroidClassLoadingStrategyTest {
         assertEquals(Void.class, map.get(dynamicType.getTypeDescription()));
     }
 
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(AndroidClassLoadingStrategy.class)
+                .apply(new AndroidClassLoadingStrategy(directory, mock(AndroidClassLoadingStrategy.DexProcessor.class)));
+        ObjectPropertyAssertion.of(AndroidClassLoadingStrategy.DexProcessor.ForSdkCompiler.class).apply();
+        ObjectPropertyAssertion.of(AndroidClassLoadingStrategy.DexProcessor.ForSdkCompiler.Conversion.class).create(new ObjectPropertyAssertion.Creator<DexFile>() {
+            @Override
+            public DexFile create() {
+                return new DexFile(new DexOptions());
+            }
+        }).apply();
+    }
+
     private static class StubbedClassLoaderDexCompilation implements AndroidClassLoadingStrategy.DexProcessor {
 
         private final ClassLoader classLoader;
@@ -121,18 +134,5 @@ public class AndroidClassLoadingStrategyTest {
         public ClassLoader makeClassLoader(File zipFile, File privateDirectory, ClassLoader parentClassLoader) {
             return classLoader;
         }
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AndroidClassLoadingStrategy.class)
-                .apply(new AndroidClassLoadingStrategy(directory, mock(AndroidClassLoadingStrategy.DexProcessor.class)));
-        ObjectPropertyAssertion.of(AndroidClassLoadingStrategy.DexProcessor.ForSdkCompiler.class).apply();
-        ObjectPropertyAssertion.of(AndroidClassLoadingStrategy.DexProcessor.ForSdkCompiler.Conversion.class).create(new ObjectPropertyAssertion.Creator<DexFile>() {
-            @Override
-            public DexFile create() {
-                return new DexFile(new DexOptions());
-            }
-        }).apply();
     }
 }

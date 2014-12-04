@@ -24,6 +24,13 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
 public final class ElementMatchers {
 
     /**
+     * A private constructor that must not be invoked.
+     */
+    private ElementMatchers() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
      * Matches the given value which can also be {@code null} by the {@link java.lang.Object#equals(Object)} method or
      * by a null-check.
      *
@@ -1145,12 +1152,5 @@ public final class ElementMatchers {
      */
     public static <T extends TypeDescription> ElementMatcher.Junction<T> declaresMethod(ElementMatcher<? super MethodDescription> methodMatcher) {
         return new DeclaringMethodMatcher<T>(new CollectionItemMatcher<MethodDescription>(nonNull(methodMatcher)));
-    }
-
-    /**
-     * A private constructor that must not be invoked.
-     */
-    private ElementMatchers() {
-        throw new UnsupportedOperationException();
     }
 }

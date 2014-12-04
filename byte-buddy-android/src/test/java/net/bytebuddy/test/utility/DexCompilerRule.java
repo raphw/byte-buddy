@@ -20,6 +20,10 @@ public class DexCompilerRule implements MethodRule {
 
     private static volatile boolean dexCompilerOnClassPath = false;
 
+    public DexCompilerRule() {
+        initialize();
+    }
+
     private static synchronized void initialize() {
         if (!initialized) {
             initialized = true;
@@ -45,10 +49,6 @@ public class DexCompilerRule implements MethodRule {
                 Logger.getAnonymousLogger().warning("Cannot append dx.jar to class path: " + e.getMessage());
             }
         }
-    }
-
-    public DexCompilerRule() {
-        initialize();
     }
 
     @Override

@@ -11,6 +11,41 @@ import org.objectweb.asm.Opcodes;
 public class ModifierMatcher<T extends ModifierReviewable> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
+     * The matching mode to apply by this modifier matcher.
+     */
+    private final Mode mode;
+
+    /**
+     * Creates a new element matcher that matches an element by its modifier.
+     *
+     * @param mode The match mode to apply to the matched element's modifier.
+     */
+    public ModifierMatcher(Mode mode) {
+        this.mode = mode;
+    }
+
+    @Override
+    public boolean matches(T target) {
+        return (mode.getModifiers() & target.getModifiers()) != 0;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        return this == other || !(other == null || getClass() != other.getClass())
+                && mode == ((ModifierMatcher) other).mode;
+    }
+
+    @Override
+    public int hashCode() {
+        return mode.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return mode.getDescription();
+    }
+
+    /**
      * Determines the type of modifier to be matched by a {@link net.bytebuddy.matcher.ModifierMatcher}.
      */
     public static enum Mode {
@@ -108,40 +143,5 @@ public class ModifierMatcher<T extends ModifierReviewable> extends ElementMatche
         protected int getModifiers() {
             return modifiers;
         }
-    }
-
-    /**
-     * The matching mode to apply by this modifier matcher.
-     */
-    private final Mode mode;
-
-    /**
-     * Creates a new element matcher that matches an element by its modifier.
-     *
-     * @param mode The match mode to apply to the matched element's modifier.
-     */
-    public ModifierMatcher(Mode mode) {
-        this.mode = mode;
-    }
-
-    @Override
-    public boolean matches(T target) {
-        return (mode.getModifiers() & target.getModifiers()) != 0;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && mode == ((ModifierMatcher) other).mode;
-    }
-
-    @Override
-    public int hashCode() {
-        return mode.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return mode.getDescription();
     }
 }

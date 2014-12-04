@@ -9,13 +9,13 @@ import static org.mockito.Mockito.*;
 
 public class ElementMatcherJunctionConjunctionTest extends AbstractElementMatcherTest<ElementMatcher.Junction.Conjunction<?>> {
 
+    @Mock
+    private ElementMatcher<? super Object> first, second;
+
     @SuppressWarnings("unchecked")
     public ElementMatcherJunctionConjunctionTest() {
         super((Class<? extends ElementMatcher.Junction.Conjunction<?>>) (Object) ElementMatcher.Junction.Conjunction.class, "");
     }
-
-    @Mock
-    private ElementMatcher<? super Object> first, second;
 
     @Test
     public void testApplicationBoth() throws Exception {

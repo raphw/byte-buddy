@@ -149,6 +149,20 @@ public interface ClassFileLocator {
     static class ForClassLoader implements ClassFileLocator {
 
         /**
+         * The class loader to query.
+         */
+        private final ClassLoader classLoader;
+
+        /**
+         * Creates a new class file locator for the given class loader.
+         *
+         * @param classLoader The class loader to query which must not be the bootstrap class loader, i.e. {@code null}.
+         */
+        protected ForClassLoader(ClassLoader classLoader) {
+            this.classLoader = classLoader;
+        }
+
+        /**
          * Creates a class file locator that queries the system class loader.
          *
          * @return A class file locator that queries the system class loader.
@@ -156,11 +170,6 @@ public interface ClassFileLocator {
         public static ClassFileLocator ofClassPath() {
             return new ForClassLoader(ClassLoader.getSystemClassLoader());
         }
-
-        /**
-         * The class loader to query.
-         */
-        private final ClassLoader classLoader;
 
         /**
          * Creates a class file locator for a given class loader.
@@ -174,15 +183,6 @@ public interface ClassFileLocator {
             return new ForClassLoader(classLoader == null
                     ? ClassLoader.getSystemClassLoader()
                     : classLoader);
-        }
-
-        /**
-         * Creates a new class file locator for the given class loader.
-         *
-         * @param classLoader The class loader to query which must not be the bootstrap class loader, i.e. {@code null}.
-         */
-        protected ForClassLoader(ClassLoader classLoader) {
-            this.classLoader = classLoader;
         }
 
         @Override

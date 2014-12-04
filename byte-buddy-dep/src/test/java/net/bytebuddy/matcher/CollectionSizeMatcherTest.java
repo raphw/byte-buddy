@@ -12,13 +12,13 @@ import static org.mockito.Mockito.*;
 
 public class CollectionSizeMatcherTest extends AbstractElementMatcherTest<CollectionSizeMatcher<?>> {
 
+    @Mock
+    private Iterable<Object> collection;
+
     @SuppressWarnings("unchecked")
     public CollectionSizeMatcherTest() {
         super((Class<CollectionSizeMatcher<?>>) (Object) CollectionSizeMatcher.class, "ofSize");
     }
-
-    @Mock
-    private Iterable<Object> collection;
 
     @Test
     public void testMatch() throws Exception {

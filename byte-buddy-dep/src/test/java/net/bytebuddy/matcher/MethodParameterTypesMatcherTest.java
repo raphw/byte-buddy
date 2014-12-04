@@ -15,19 +15,17 @@ import static org.mockito.Mockito.*;
 
 public class MethodParameterTypesMatcherTest extends AbstractElementMatcherTest<MethodParameterTypesMatcher<?>> {
 
+    @Mock
+    private ElementMatcher<? super List<? extends TypeDescription>> parameterMatcher;
+    @Mock
+    private MethodDescription methodDescription;
+    @Mock
+    private TypeList typeList;
+
     @SuppressWarnings("unchecked")
     public MethodParameterTypesMatcherTest() {
         super((Class<MethodParameterTypesMatcher<?>>) (Object) MethodParameterTypesMatcher.class, "parameters");
     }
-
-    @Mock
-    private ElementMatcher<? super List<? extends TypeDescription>> parameterMatcher;
-
-    @Mock
-    private MethodDescription methodDescription;
-
-    @Mock
-    private TypeList typeList;
 
     @Before
     public void setUp() throws Exception {

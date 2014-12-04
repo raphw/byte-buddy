@@ -317,55 +317,6 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
         }
 
         /**
-         * Performs a rebase instrumentation which creates a redefinition of the given type by rebasing the original
-         * code of redefined method and by invoking these methods when a super method should be invoked.
-         */
-        static class ForRebaseInstrumentation implements TargetHandler {
-
-            /**
-             * The method name transformer to apply during instrumentation.
-             */
-            private final MethodRebaseResolver.MethodNameTransformer methodNameTransformer;
-
-            /**
-             * Creates a new rebase instrumentation target handler.
-             *
-             * @param methodNameTransformer The method name transformer to apply during instrumentation.
-             */
-            public ForRebaseInstrumentation(MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
-                this.methodNameTransformer = methodNameTransformer;
-            }
-
-            @Override
-            public Prepared prepare(ElementMatcher<? super MethodDescription> ignoredMethods,
-                                    ClassFileVersion classFileVersion,
-                                    TypeDescription instrumentedType) {
-                return Prepared.ForRebaseInstrumentation.of(ignoredMethods,
-                        classFileVersion,
-                        instrumentedType,
-                        methodNameTransformer);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && methodNameTransformer.equals(((ForRebaseInstrumentation) other).methodNameTransformer);
-            }
-
-            @Override
-            public int hashCode() {
-                return methodNameTransformer.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "InlineDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation{" +
-                        "methodNameTransformer=" + methodNameTransformer +
-                        '}';
-            }
-        }
-
-        /**
          * A prepared {@link InlineDynamicTypeBuilder.TargetHandler}.
          */
         static interface Prepared {
@@ -656,6 +607,55 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                         }
                     }
                 }
+            }
+        }
+
+        /**
+         * Performs a rebase instrumentation which creates a redefinition of the given type by rebasing the original
+         * code of redefined method and by invoking these methods when a super method should be invoked.
+         */
+        static class ForRebaseInstrumentation implements TargetHandler {
+
+            /**
+             * The method name transformer to apply during instrumentation.
+             */
+            private final MethodRebaseResolver.MethodNameTransformer methodNameTransformer;
+
+            /**
+             * Creates a new rebase instrumentation target handler.
+             *
+             * @param methodNameTransformer The method name transformer to apply during instrumentation.
+             */
+            public ForRebaseInstrumentation(MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
+                this.methodNameTransformer = methodNameTransformer;
+            }
+
+            @Override
+            public Prepared prepare(ElementMatcher<? super MethodDescription> ignoredMethods,
+                                    ClassFileVersion classFileVersion,
+                                    TypeDescription instrumentedType) {
+                return Prepared.ForRebaseInstrumentation.of(ignoredMethods,
+                        classFileVersion,
+                        instrumentedType,
+                        methodNameTransformer);
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && methodNameTransformer.equals(((ForRebaseInstrumentation) other).methodNameTransformer);
+            }
+
+            @Override
+            public int hashCode() {
+                return methodNameTransformer.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "InlineDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation{" +
+                        "methodNameTransformer=" + methodNameTransformer +
+                        '}';
             }
         }
     }

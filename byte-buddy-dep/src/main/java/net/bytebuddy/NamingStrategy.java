@@ -371,17 +371,15 @@ public interface NamingStrategy {
     static class SuffixingRandom implements NamingStrategy {
 
         /**
-         * The package prefix of the {@code java.**} packages for which the definition of non-bootstrap types is
-         * illegal.
-         */
-        private static final String JAVA_PACKAGE = "java.";
-
-        /**
          * The default package for defining types that are renamed to not be contained in the
          * {@link net.bytebuddy.NamingStrategy.SuffixingRandom#JAVA_PACKAGE} package.
          */
         public static final String BYTE_BUDDY_RENAME_PACKAGE = "net.bytebuddy.renamed";
-
+        /**
+         * The package prefix of the {@code java.**} packages for which the definition of non-bootstrap types is
+         * illegal.
+         */
+        private static final String JAVA_PACKAGE = "java.";
         /**
          * The suffix to attach to a super type name.
          */

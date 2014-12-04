@@ -7,6 +7,48 @@ package net.bytebuddy.matcher;
 public class StringMatcher extends ElementMatcher.Junction.AbstractBase<String> {
 
     /**
+     * The text value to match against.
+     */
+    private final String value;
+    /**
+     * The mode to apply for matching the given value against the matcher's input.
+     */
+    private final Mode mode;
+
+    /**
+     * Creates a new string matcher.
+     *
+     * @param value The value that is the base of the matching.
+     * @param mode  The mode to apply for matching the given value against the matcher's input
+     */
+    public StringMatcher(String value, Mode mode) {
+        this.value = value;
+        this.mode = mode;
+    }
+
+    @Override
+    public boolean matches(String target) {
+        return mode.matches(value, target);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        return this == other || !(other == null || getClass() != other.getClass())
+                && mode == ((StringMatcher) other).mode
+                && value.equals(((StringMatcher) other).value);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * value.hashCode() + mode.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return mode.getDescription() + '(' + value + ')';
+    }
+
+    /**
      * Defines the mode a {@link net.bytebuddy.matcher.StringMatcher} compares to strings with.
      */
     public static enum Mode {
@@ -134,48 +176,5 @@ public class StringMatcher extends ElementMatcher.Junction.AbstractBase<String> 
          * @return {@code true} if the source matches the target.
          */
         protected abstract boolean matches(String expected, String actual);
-    }
-
-    /**
-     * The text value to match against.
-     */
-    private final String value;
-
-    /**
-     * The mode to apply for matching the given value against the matcher's input.
-     */
-    private final Mode mode;
-
-    /**
-     * Creates a new string matcher.
-     *
-     * @param value The value that is the base of the matching.
-     * @param mode The mode to apply for matching the given value against the matcher's input
-     */
-    public StringMatcher(String value, Mode mode) {
-        this.value = value;
-        this.mode = mode;
-    }
-
-    @Override
-    public boolean matches(String target) {
-        return mode.matches(value, target);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && mode == ((StringMatcher) other).mode
-                && value.equals(((StringMatcher) other).value);
-    }
-
-    @Override
-    public int hashCode() {
-        return 31 * value.hashCode() + mode.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return mode.getDescription() + '(' + value + ')';
     }
 }

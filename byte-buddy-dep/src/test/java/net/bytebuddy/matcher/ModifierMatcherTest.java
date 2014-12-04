@@ -18,6 +18,18 @@ import static org.mockito.Mockito.*;
 @RunWith(Parameterized.class)
 public class ModifierMatcherTest extends AbstractElementMatcherTest<ModifierMatcher<?>> {
 
+    private final ModifierMatcher.Mode mode;
+    private final int modifiers;
+    @Mock
+    private ModifierReviewable modifierReviewable;
+
+    @SuppressWarnings("unchecked")
+    public ModifierMatcherTest(ModifierMatcher.Mode mode, int modifiers) {
+        super((Class<ModifierMatcher<?>>) (Object) ModifierMatcher.class, mode.getDescription());
+        this.mode = mode;
+        this.modifiers = modifiers;
+    }
+
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
@@ -33,20 +45,6 @@ public class ModifierMatcherTest extends AbstractElementMatcherTest<ModifierMatc
                 {ModifierMatcher.Mode.SYNTHETIC, Opcodes.ACC_SYNTHETIC}
         });
     }
-
-    private final ModifierMatcher.Mode mode;
-
-    private final int modifiers;
-
-    @SuppressWarnings("unchecked")
-    public ModifierMatcherTest(ModifierMatcher.Mode mode, int modifiers) {
-        super((Class<ModifierMatcher<?>>) (Object) ModifierMatcher.class, mode.getDescription());
-        this.mode = mode;
-        this.modifiers = modifiers;
-    }
-
-    @Mock
-    private ModifierReviewable modifierReviewable;
 
     @Test
     public void testMatch() throws Exception {

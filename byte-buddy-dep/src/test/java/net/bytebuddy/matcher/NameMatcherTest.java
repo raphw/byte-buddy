@@ -12,17 +12,15 @@ import static org.mockito.Mockito.*;
 public class NameMatcherTest extends AbstractElementMatcherTest<NameMatcher<?>> {
 
     private static final String FOO = "foo";
+    @Mock
+    private ByteCodeElement byteCodeElement;
+    @Mock
+    private ElementMatcher<String> nameMatcher;
 
     @SuppressWarnings("unchecked")
     public NameMatcherTest() {
         super((Class<NameMatcher<?>>) (Object) NameMatcher.class, "name");
     }
-
-    @Mock
-    private ByteCodeElement byteCodeElement;
-
-    @Mock
-    private ElementMatcher<String> nameMatcher;
 
     @Before
     public void setUp() throws Exception {

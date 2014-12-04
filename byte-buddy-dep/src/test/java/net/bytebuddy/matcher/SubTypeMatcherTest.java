@@ -10,13 +10,13 @@ import static org.mockito.Mockito.*;
 
 public class SubTypeMatcherTest extends AbstractElementMatcherTest<SubTypeMatcher<?>> {
 
+    @Mock
+    private TypeDescription typeDescription, otherType;
+
     @SuppressWarnings("unchecked")
     public SubTypeMatcherTest() {
         super((Class<? extends SubTypeMatcher<?>>) (Object) SubTypeMatcher.class, "isSubTypeOf");
     }
-
-    @Mock
-    private TypeDescription typeDescription, otherType;
 
     @Test
     public void testMatch() throws Exception {
