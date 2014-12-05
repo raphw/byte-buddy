@@ -3,7 +3,7 @@ Byte Buddy release notes
 
 ### 02. Mai 2014: Version 0.1
 
-First general release. (This is a pre-release.)
+First general release.
 
 ### 16. June 2014: Version 0.2
 
@@ -59,6 +59,11 @@ mainly for allowing the reuse of `Method` instances for the `@Origin` annotation
 - Replaced the `MethodMatcher` API with the `ElementMatcher` API which allows for a more sophisticated matching DSL.
 - Added a `ClassLoadingStrategy` for Android in its own module.
 - Introduced an `AgentBuilder` API and implementation.
+
+### 5. December 2014: Version 0.5.1
+
+- Added the `andThen` method to the `SuperMethodCall` instrumentation in order to allow for a more 
+convenient constructor interception where a hard-coded super method call is required by the Java verifier.
 
 ### Current snapshot
 
