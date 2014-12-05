@@ -1,12 +1,16 @@
 package net.bytebuddy.instrumentation;
 
+import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
+import net.bytebuddy.instrumentation.method.bytecode.stack.constant.TextConstant;
+import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -24,7 +28,9 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-public class SuperMethodCallPreparationAndExceptionTest {
+public class SuperMethodCallOtherTest extends AbstractInstrumentationTest {
+
+    private static final String FOO = "foo";
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -100,5 +106,22 @@ public class SuperMethodCallPreparationAndExceptionTest {
         when(instrumentationTarget.invokeSuper(eq(methodDescription), any(Instrumentation.Target.MethodLookup.class)))
                 .thenReturn(Instrumentation.SpecialMethodInvocation.Illegal.INSTANCE);
         SuperMethodCall.INSTANCE.appender(instrumentationTarget).apply(methodVisitor, instrumentationContext, methodDescription);
+    }
+
+    @Test
+    public void testAndThen() throws Exception {
+        DynamicType.Loaded<Foo> loaded = instrument(Foo.class, SuperMethodCall.INSTANCE
+                .andThen(new Instrumentation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE)));
+        Foo foo = loaded.getLoaded().newInstance();
+        assertThat(foo.foo(), is(FOO));
+        foo.assertOnlyCall(FOO);
+    }
+
+    public static class Foo extends CallTraceable {
+
+        public String foo() {
+            register(FOO);
+            return null;
+        }
     }
 }
