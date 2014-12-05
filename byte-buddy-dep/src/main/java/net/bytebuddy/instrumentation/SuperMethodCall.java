@@ -120,17 +120,21 @@ public enum SuperMethodCall implements Instrumentation {
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && instrumentationTarget.equals(((Appender) other).instrumentationTarget);
+                    && instrumentationTarget.equals(((Appender) other).instrumentationTarget)
+                    && terminationHandler.equals(((Appender) other).terminationHandler);
         }
 
         @Override
         public int hashCode() {
-            return instrumentationTarget.hashCode();
+            return instrumentationTarget.hashCode() + 31 * terminationHandler.hashCode();
         }
 
         @Override
         public String toString() {
-            return "SuperMethodCall.Appender{instrumentationTarget=" + instrumentationTarget + '}';
+            return "SuperMethodCall.Appender{" +
+                    "instrumentationTarget=" + instrumentationTarget +
+                    ", terminationHandler=" + terminationHandler +
+                    '}';
         }
 
         /**
