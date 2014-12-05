@@ -62,8 +62,8 @@ mainly for allowing the reuse of `Method` instances for the `@Origin` annotation
 
 ### 5. December 2014: Version 0.5.1
 
-Added the `andThen` method to the `SuperMethodCall` instrumentation in order to allow for a more 
-convenient constructor interception where a hard-coded super method call is required by the Java verifier.
+Added the `andThen` method to the `SuperMethodCall` instrumentation in order to allow for a more convenient 
+constructor interception where a hard-coded super method call is required by the Java verifier.
 
 ### Current snapshot
 
