@@ -193,8 +193,8 @@ public class ByteBuddyAgent {
                 .invoke(STATIC_MEMBER, runtimeName.substring(0, runtimeName.indexOf('@')));
         try {
             File agentFile = File.createTempFile(AGENT_FILE_NAME, JAR_FILE_EXTENSION);
-            saveAgentJar(agentFile);
             try {
+                saveAgentJar(agentFile);
                 virtualMachine.getDeclaredMethod(LOAD_AGENT_METHOD_NAME, String.class, String.class)
                         .invoke(virtualMachineInstance, agentFile.getAbsolutePath(), WITHOUT_ARGUMENTS);
             } finally {
