@@ -121,8 +121,9 @@ it figures out a *best match* for an interceptor method as long as no further ma
 the `MethodDelegation`. The matching logic is described in detail in the *javadoc* of the `MethodDelegation` and can be 
 customized for specific use-cases. 
 
-Interceptors can take more generic inputs and outputs using annotations. An example for a more general interceptor
-would be the following class:
+Interceptors can work with more generic inputs and outputs using annotations. Byte Buddy then simply injects all 
+dependencies that are declared by an interceptor. An example for a more general interceptor would be the following 
+class:
 
 ```java
 public class GeneralInterceptor {
