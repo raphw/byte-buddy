@@ -113,6 +113,9 @@ Class<? extends Comparator> dynamicType = new ByteBuddy()
 assertThat(dynamicType.newInstance().compare(3, 1), is(2));
 ```
 
+Note that the hash code of an integer is the integer value such that `3 - 1 = 2` is indeed the expected return value of 
+the `ComparisonInterceptor::compare` method. 
+
 Byte Buddy matches the `Comparator::compare` method and delegates its invocation to the provided interceptor. Doing so, 
 it figures out a *best match* for an interceptor method as long as no further matching information is provided to
 the `MethodDelegation`. The matching logic is described in detail in the *javadoc* of the `MethodDelegation` and can be 
