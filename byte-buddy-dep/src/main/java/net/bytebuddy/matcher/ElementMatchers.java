@@ -31,6 +31,17 @@ public final class ElementMatchers {
     }
 
     /**
+     * Matches any {@link java.lang.ClassLoader} but the bootstrap class loader. The returned matcher is a synonym to
+     * a matcher matching anything but {@code null}.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher that matches any class loader but the bootstrap class loader.
+     */
+    public static <T extends ClassLoader> ElementMatcher<T> notBootstrap() {
+        return not(new NullMatcher<T>());
+    }
+
+    /**
      * Matches the given value which can also be {@code null} by the {@link java.lang.Object#equals(Object)} method or
      * by a null-check.
      *

@@ -46,6 +46,12 @@ public class ElementMatchersTest {
     }
 
     @Test
+    public void testNotBootstrap() throws Exception {
+        assertThat(ElementMatchers.notBootstrap().matches(mock(ClassLoader.class)), is(true));
+        assertThat(ElementMatchers.notBootstrap().matches(null), is(false));
+    }
+
+    @Test
     public void testIs() throws Exception {
         Object value = new Object();
         assertThat(ElementMatchers.is(value).matches(value), is(true));
