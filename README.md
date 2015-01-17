@@ -211,8 +211,19 @@ cd byte-buddy
 mvn package
 ```
 
+To build the no-dependancy verision as well use the command:
+```shell
+mvn package -Pextras
+```
+
 On these commands, Byte Buddy is cloned from GitHub and built on your machine. Byte Buddy is currently tested for the
-[*OpenJDK*](http://openjdk.java.net/) versions 6 and 7 and the *Oracle JDK* versions 7 and 8 using Travis CI. Please
+[*OpenJDK*](http://openjdk.java.net/) versions 6 and 7 and the *Oracle JDK* versions 7 and 8 using Travis CI. 
+
+The no dependancy jar file is generated into byte-buddy/target/byte-buddy-#.#-SNAPSHOT.jar
+
+The asm dependancy jar file is generated into byte-buddy-dep/target/byte-buddy-dep-#.#-SNAPSHOT.jar
+
+Please
 use GitHub's [issue tracker](https://github.com/raphw/byte-buddy/issues) for reporting bugs. When committing code,
 please provide test cases that prove the functionality of your features or that demonstrate a bug fix. Furthermore,
 make sure you are not breaking any existing test cases. If possible, please take the time to write some documentation.
