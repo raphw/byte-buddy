@@ -39,7 +39,7 @@ public interface ConstructorStrategy {
      * this strategy.
      */
     MethodRegistry inject(MethodRegistry methodRegistry,
-                          MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory);
+            MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory);
 
     /**
      * Default implementations of constructor strategies.
@@ -68,7 +68,8 @@ public interface ConstructorStrategy {
             public MethodList extractConstructors(TypeDescription instrumentedType) {
                 MethodList methodList = instrumentedType.getSupertype()
                         .getDeclaredMethods()
-                        .filter(isConstructor().and(takesArguments(0)).<MethodDescription>and(isVisibleTo(instrumentedType)));
+                        .filter(isConstructor().and(takesArguments(0))
+                                .<MethodDescription>and(isVisibleTo(instrumentedType)));
                 if (methodList.size() == 1) {
                     return methodList;
                 } else {
@@ -87,8 +88,10 @@ public interface ConstructorStrategy {
         IMITATE_SUPER_TYPE {
             @Override
             public MethodList extractConstructors(TypeDescription instrumentedType) {
-                return instrumentedType.getSupertype()
-                        .getDeclaredMethods()
+                TypeDescription superType = instrumentedType.getSupertype();
+                return superType == null
+                        ? new MethodList.Empty()
+                        : superType.getDeclaredMethods()
                         .filter(isConstructor().<MethodDescription>and(isVisibleTo(instrumentedType)));
             }
         },
@@ -109,18 +112,18 @@ public interface ConstructorStrategy {
 
         @Override
         public MethodRegistry inject(MethodRegistry methodRegistry,
-                                     MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
+                MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
             switch (this) {
-                case NO_CONSTRUCTORS:
-                    return methodRegistry;
-                case DEFAULT_CONSTRUCTOR:
-                case IMITATE_SUPER_TYPE:
-                case IMITATE_SUPER_TYPE_PUBLIC:
-                    return methodRegistry.prepend(new MethodRegistry.LatentMethodMatcher.Simple(isConstructor()),
-                            SuperMethodCall.INSTANCE,
-                            defaultMethodAttributeAppenderFactory);
-                default:
-                    throw new AssertionError();
+            case NO_CONSTRUCTORS:
+                return methodRegistry;
+            case DEFAULT_CONSTRUCTOR:
+            case IMITATE_SUPER_TYPE:
+            case IMITATE_SUPER_TYPE_PUBLIC:
+                return methodRegistry.prepend(new MethodRegistry.LatentMethodMatcher.Simple(isConstructor()),
+                        SuperMethodCall.INSTANCE,
+                        defaultMethodAttributeAppenderFactory);
+            default:
+                throw new AssertionError();
             }
         }
     }

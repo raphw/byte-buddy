@@ -1,6 +1,7 @@
 package net.bytebuddy;
 
 import net.bytebuddy.asm.ClassVisitorWrapper;
+import net.bytebuddy.dynamic.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.instrumentation.Instrumentation;
@@ -12,6 +13,7 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.modifier.TypeManifestation;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -25,6 +27,7 @@ import org.objectweb.asm.Opcodes;
 import static net.bytebuddy.matcher.ElementMatchers.isMethod;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 public class ByteBuddyTest {
@@ -128,10 +131,57 @@ public class ByteBuddyTest {
     }
 
     @Test
+    public void testInterfaceImplicit() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .subclass(Object.class)
+                .modifiers(TypeManifestation.INTERFACE)
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.isInterface(), is(true));
+        assertThat(type.getDeclaredMethods().length, is(0));
+        assertThat(type.getDeclaredFields().length, is(0));
+        assertThat(type.getInterfaces().length, is(0));
+    }
+
+    @Test
+    public void testInterfaceExplicit() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .makeInterface()
+                .modifiers(TypeManifestation.INTERFACE)
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.isInterface(), is(true));
+        assertThat(type.getDeclaredMethods().length, is(0));
+        assertThat(type.getDeclaredFields().length, is(0));
+        assertThat(type.getInterfaces().length, is(0));
+    }
+
+    @Test
+    public void testInterfaceExplicitInheritance() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .makeInterface(Foo.class)
+                .modifiers(TypeManifestation.INTERFACE)
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.isInterface(), is(true));
+        assertThat(type.getDeclaredMethods().length, is(0));
+        assertThat(type.getDeclaredFields().length, is(0));
+        assertThat(type.getInterfaces().length, is(1));
+        assertEquals(Foo.class, type.getInterfaces()[0]);
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(ByteBuddy.class).apply();
         ObjectPropertyAssertion.of(ByteBuddy.MatchedMethodInterception.class).apply();
         ObjectPropertyAssertion.of(ByteBuddy.MethodAnnotationTarget.class).apply();
         ObjectPropertyAssertion.of(ByteBuddy.OptionalMethodInterception.class).apply();
+    }
+
+    public static interface Foo {
+        /* empty */
     }
 }

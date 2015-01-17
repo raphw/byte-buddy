@@ -36,10 +36,13 @@ public class SubclassInstrumentationTarget extends Instrumentation.Target.Abstra
      * @param originTypeIdentifier        The origin type identifier to use.
      */
     protected SubclassInstrumentationTarget(MethodLookupEngine.Finding finding,
-                                            BridgeMethodResolver.Factory bridgeMethodResolverFactory,
-                                            OriginTypeIdentifier originTypeIdentifier) {
+            BridgeMethodResolver.Factory bridgeMethodResolverFactory,
+            OriginTypeIdentifier originTypeIdentifier) {
         super(finding, bridgeMethodResolverFactory);
-        MethodList superConstructors = finding.getTypeDescription().getSupertype().getDeclaredMethods().filter(isConstructor());
+        TypeDescription superType = finding.getTypeDescription().getSupertype();
+        MethodList superConstructors = superType == null
+                ? new MethodList.Empty()
+                : superType.getDeclaredMethods().filter(isConstructor());
         this.superConstructors = new HashMap<TypeList, MethodDescription>(superConstructors.size());
         for (MethodDescription superConstructor : superConstructors) {
             this.superConstructors.put(superConstructor.getParameterTypes(), superConstructor);
@@ -143,7 +146,7 @@ public class SubclassInstrumentationTarget extends Instrumentation.Target.Abstra
          * @param originTypeIdentifier        The origin type identifier to use.
          */
         public Factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory,
-                       OriginTypeIdentifier originTypeIdentifier) {
+                OriginTypeIdentifier originTypeIdentifier) {
             this.bridgeMethodResolverFactory = bridgeMethodResolverFactory;
             this.originTypeIdentifier = originTypeIdentifier;
         }
