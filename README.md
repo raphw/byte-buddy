@@ -218,6 +218,9 @@ including the zero-dependency jar of Byte Buddy, use the `extras` profile:
 mvn package -Pextras
 ```
 
+When using this profile, Maven will also sign any created artifact. Therefore, your machine must be set up for 
+[gpg signing](http://blog.sonatype.com/2010/01/how-to-generate-pgp-signatures-with-maven/).
+
 On these commands, Byte Buddy is cloned from GitHub and built on your machine. Byte Buddy is currently tested for the
 [*OpenJDK*](http://openjdk.java.net/) versions 6 and 7 and the *Oracle JDK* versions 7 and 8 using Travis CI. 
 
