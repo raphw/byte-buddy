@@ -66,8 +66,10 @@ public interface ConstructorStrategy {
         DEFAULT_CONSTRUCTOR {
             @Override
             public MethodList extractConstructors(TypeDescription instrumentedType) {
-                MethodList methodList = instrumentedType.getSupertype()
-                        .getDeclaredMethods()
+                TypeDescription superType = instrumentedType.getSupertype();
+                MethodList methodList = superType == null
+                        ? new MethodList.Empty()
+                        : superType.getDeclaredMethods()
                         .filter(isConstructor().and(takesArguments(0))
                                 .<MethodDescription>and(isVisibleTo(instrumentedType)));
                 if (methodList.size() == 1) {
@@ -104,9 +106,10 @@ public interface ConstructorStrategy {
         IMITATE_SUPER_TYPE_PUBLIC {
             @Override
             public MethodList extractConstructors(TypeDescription instrumentedType) {
-                return instrumentedType.getSupertype()
-                        .getDeclaredMethods()
-                        .filter(isPublic().and(isConstructor()));
+                TypeDescription superType = instrumentedType.getSupertype();
+                return superType == null
+                        ? new MethodList.Empty()
+                        : superType.getDeclaredMethods().filter(isPublic().and(isConstructor()));
             }
         };
 
