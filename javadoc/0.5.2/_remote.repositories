@@ -1,0 +1,10 @@
+#NOTE: This is an Aether internal implementation file, its format can be changed without prior notice.
+#Sun Jan 18 17:51:44 CET 2015
+byte-buddy-dep-0.5.2.pom.asc>=
+byte-buddy-dep-0.5.2.jar.asc>=
+byte-buddy-dep-0.5.2-javadoc.jar.asc>=
+byte-buddy-dep-0.5.2-javadoc.jar>=
+byte-buddy-dep-0.5.2.jar>=
+byte-buddy-dep-0.5.2-sources.jar.asc>=
+byte-buddy-dep-0.5.2.pom>=
+byte-buddy-dep-0.5.2-sources.jar>=
