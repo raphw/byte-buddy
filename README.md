@@ -211,7 +211,9 @@ cd byte-buddy
 mvn package
 ```
 
-To build the no-dependancy verision as well use the command:
+Note that the above build is optimized for its runtime and does not create all artifacts. To build the all artifacts,
+including the zero-dependency jar of Byte Buddy, use the `extras` profile:
+
 ```shell
 mvn package -Pextras
 ```
