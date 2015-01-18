@@ -221,7 +221,7 @@ including the zero-dependency jar of Byte Buddy, use the `extras` profile:
 mvn package -Pextras
 ```
 
-The zero dependency jar file is then saved in *byte-buddy/target/byte-buddy-#.#-SNAPSHOT.jar*. The regular jar is 
+The zero-dependency jar file is then saved in *byte-buddy/target/byte-buddy-#.#-SNAPSHOT.jar*. The regular jar is 
 saved in *byte-buddy-dep/target/byte-buddy-dep-#.#-SNAPSHOT.jar*. When using this profile, Maven will also sign 
 any created artifact. Therefore, your machine must be set up for 
 [gpg signing](http://blog.sonatype.com/2010/01/how-to-generate-pgp-signatures-with-maven/). See the 
