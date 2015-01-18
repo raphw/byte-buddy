@@ -50,8 +50,8 @@
         <shade.source>org.objectweb.asm</shade.source>
         <shade.target>net.bytebuddy.jar.asm</shade.target>
         <version.asm>5.0.3</version.asm>
-        <version.junit>4.11</version.junit>
-        <version.mockito>1.10.8</version.mockito>
+        <version.junit>4.12</version.junit>
+        <version.mockito>1.10.19</version.mockito>
         <version.plugin.compiler>3.1</version.plugin.compiler>
         <version.plugin.install>2.5.1</version.plugin.install>
         <version.plugin.deploy>2.8.2</version.plugin.deploy>
