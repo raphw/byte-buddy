@@ -1,7 +1,7 @@
 package net.bytebuddy.matcher;
 
 /**
- * Element matcher that returns a fixed result.
+ * An element matcher that returns a fixed result.
  *
  * @param <T> The actual matched type of this matcher.
  */

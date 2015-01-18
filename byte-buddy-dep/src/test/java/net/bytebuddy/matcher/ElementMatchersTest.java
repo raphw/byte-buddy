@@ -22,6 +22,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.sql.SQLException;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -46,12 +48,6 @@ public class ElementMatchersTest {
     }
 
     @Test
-    public void testNotBootstrap() throws Exception {
-        assertThat(ElementMatchers.notBootstrap().matches(mock(ClassLoader.class)), is(true));
-        assertThat(ElementMatchers.notBootstrap().matches(null), is(false));
-    }
-
-    @Test
     public void testIs() throws Exception {
         Object value = new Object();
         assertThat(ElementMatchers.is(value).matches(value), is(true));
@@ -63,22 +59,30 @@ public class ElementMatchersTest {
     @Test
     public void testIsType() throws Exception {
         assertThat(ElementMatchers.is(Object.class).matches(new TypeDescription.ForLoadedType(Object.class)), is(true));
-        assertThat(ElementMatchers.is(String.class).matches(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(ElementMatchers.is(String.class).matches(new TypeDescription.ForLoadedType(Object.class)),
+                is(false));
     }
 
     @Test
     public void testIsMethodOrConstructor() throws Exception {
-        assertThat(ElementMatchers.is(Object.class.getDeclaredMethod("toString")).matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(true));
-        assertThat(ElementMatchers.is(Object.class.getDeclaredMethod("toString")).matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("hashCode"))), is(false));
-        assertThat(ElementMatchers.is(Object.class.getDeclaredConstructor()).matches(new MethodDescription.ForLoadedConstructor(Object.class.getDeclaredConstructor())), is(true));
-        assertThat(ElementMatchers.is(Object.class.getDeclaredConstructor()).matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("hashCode"))), is(false));
+        assertThat(ElementMatchers.is(Object.class.getDeclaredMethod("toString"))
+                .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(true));
+        assertThat(ElementMatchers.is(Object.class.getDeclaredMethod("toString"))
+                .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("hashCode"))), is(false));
+        assertThat(ElementMatchers.is(Object.class.getDeclaredConstructor())
+                .matches(new MethodDescription.ForLoadedConstructor(Object.class.getDeclaredConstructor())), is(true));
+        assertThat(ElementMatchers.is(Object.class.getDeclaredConstructor())
+                .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("hashCode"))), is(false));
     }
 
     @Test
     public void testIsAnnotation() throws Exception {
-        AnnotationDescription annotationDescription = new TypeDescription.ForLoadedType(IsAnnotatedWith.class).getDeclaredAnnotations().ofType(IsAnnotatedWithAnnotation.class);
-        assertThat(ElementMatchers.is(IsAnnotatedWith.class.getAnnotation(IsAnnotatedWithAnnotation.class)).matches(annotationDescription), is(true));
-        assertThat(ElementMatchers.is(Other.class.getAnnotation(OtherAnnotation.class)).matches(annotationDescription), is(false));
+        AnnotationDescription annotationDescription = new TypeDescription.ForLoadedType(IsAnnotatedWith.class)
+                .getDeclaredAnnotations().ofType(IsAnnotatedWithAnnotation.class);
+        assertThat(ElementMatchers.is(IsAnnotatedWith.class.getAnnotation(IsAnnotatedWithAnnotation.class))
+                .matches(annotationDescription), is(true));
+        assertThat(ElementMatchers.is(Other.class.getAnnotation(OtherAnnotation.class)).matches(annotationDescription),
+                is(false));
     }
 
     @Test
@@ -102,28 +106,44 @@ public class ElementMatchersTest {
 
     @Test
     public void testAnyType() throws Exception {
-        assertThat(ElementMatchers.anyOf(Object.class).matches(new TypeDescription.ForLoadedType(Object.class)), is(true));
-        assertThat(ElementMatchers.anyOf(String.class, Object.class).matches(new TypeDescription.ForLoadedType(Object.class)), is(true));
-        assertThat(ElementMatchers.anyOf(String.class).matches(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(ElementMatchers.anyOf(Object.class).matches(new TypeDescription.ForLoadedType(Object.class)),
+                is(true));
+        assertThat(ElementMatchers.anyOf(String.class, Object.class)
+                .matches(new TypeDescription.ForLoadedType(Object.class)), is(true));
+        assertThat(ElementMatchers.anyOf(String.class).matches(new TypeDescription.ForLoadedType(Object.class)),
+                is(false));
     }
 
     @Test
     public void testAnyMethodOrConstructor() throws Exception {
-        Method toString = Object.class.getDeclaredMethod("toString"), hashCode = Object.class.getDeclaredMethod("hashCode");
-        assertThat(ElementMatchers.anyOf(toString).matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(true));
-        assertThat(ElementMatchers.anyOf(toString, hashCode).matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(true));
-        assertThat(ElementMatchers.anyOf(toString).matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("hashCode"))), is(false));
-        assertThat(ElementMatchers.anyOf(Object.class.getDeclaredConstructor()).matches(new MethodDescription.ForLoadedConstructor(Object.class.getDeclaredConstructor())), is(true));
-        assertThat(ElementMatchers.anyOf(Object.class.getDeclaredConstructor(), String.class.getDeclaredConstructor(String.class)).matches(new MethodDescription.ForLoadedConstructor(Object.class.getDeclaredConstructor())), is(true));
-        assertThat(ElementMatchers.anyOf(Object.class.getDeclaredConstructor()).matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("hashCode"))), is(false));
+        Method toString = Object.class.getDeclaredMethod("toString"), hashCode = Object.class
+                .getDeclaredMethod("hashCode");
+        assertThat(ElementMatchers.anyOf(toString)
+                .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(true));
+        assertThat(ElementMatchers.anyOf(toString, hashCode)
+                .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(true));
+        assertThat(ElementMatchers.anyOf(toString)
+                .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("hashCode"))), is(false));
+        assertThat(ElementMatchers.anyOf(Object.class.getDeclaredConstructor())
+                .matches(new MethodDescription.ForLoadedConstructor(Object.class.getDeclaredConstructor())), is(true));
+        assertThat(ElementMatchers
+                .anyOf(Object.class.getDeclaredConstructor(), String.class.getDeclaredConstructor(String.class))
+                .matches(new MethodDescription.ForLoadedConstructor(Object.class.getDeclaredConstructor())), is(true));
+        assertThat(ElementMatchers.anyOf(Object.class.getDeclaredConstructor())
+                .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("hashCode"))), is(false));
     }
 
     @Test
     public void testAnyAnnotation() throws Exception {
-        AnnotationDescription annotationDescription = new TypeDescription.ForLoadedType(IsAnnotatedWith.class).getDeclaredAnnotations().ofType(IsAnnotatedWithAnnotation.class);
-        assertThat(ElementMatchers.anyOf(IsAnnotatedWith.class.getAnnotation(IsAnnotatedWithAnnotation.class)).matches(annotationDescription), is(true));
-        assertThat(ElementMatchers.anyOf(IsAnnotatedWith.class.getAnnotation(IsAnnotatedWithAnnotation.class), Other.class.getAnnotation(OtherAnnotation.class)).matches(annotationDescription), is(true));
-        assertThat(ElementMatchers.anyOf(Other.class.getAnnotation(OtherAnnotation.class)).matches(annotationDescription), is(false));
+        AnnotationDescription annotationDescription = new TypeDescription.ForLoadedType(IsAnnotatedWith.class)
+                .getDeclaredAnnotations().ofType(IsAnnotatedWithAnnotation.class);
+        assertThat(ElementMatchers.anyOf(IsAnnotatedWith.class.getAnnotation(IsAnnotatedWithAnnotation.class))
+                .matches(annotationDescription), is(true));
+        assertThat(ElementMatchers.anyOf(IsAnnotatedWith.class.getAnnotation(IsAnnotatedWithAnnotation.class),
+                Other.class.getAnnotation(OtherAnnotation.class)).matches(annotationDescription), is(true));
+        assertThat(
+                ElementMatchers.anyOf(Other.class.getAnnotation(OtherAnnotation.class)).matches(annotationDescription),
+                is(false));
     }
 
     @Test
@@ -133,28 +153,44 @@ public class ElementMatchersTest {
 
     @Test
     public void testNoneType() throws Exception {
-        assertThat(ElementMatchers.noneOf(Object.class).matches(new TypeDescription.ForLoadedType(Object.class)), is(false));
-        assertThat(ElementMatchers.noneOf(String.class, Object.class).matches(new TypeDescription.ForLoadedType(Object.class)), is(false));
-        assertThat(ElementMatchers.noneOf(String.class).matches(new TypeDescription.ForLoadedType(Object.class)), is(true));
+        assertThat(ElementMatchers.noneOf(Object.class).matches(new TypeDescription.ForLoadedType(Object.class)),
+                is(false));
+        assertThat(ElementMatchers.noneOf(String.class, Object.class)
+                .matches(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(ElementMatchers.noneOf(String.class).matches(new TypeDescription.ForLoadedType(Object.class)),
+                is(true));
     }
 
     @Test
     public void testNoneMethodOrConstructor() throws Exception {
-        Method toString = Object.class.getDeclaredMethod("toString"), hashCode = Object.class.getDeclaredMethod("hashCode");
-        assertThat(ElementMatchers.noneOf(toString).matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(false));
-        assertThat(ElementMatchers.noneOf(toString, hashCode).matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(false));
-        assertThat(ElementMatchers.noneOf(toString).matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("hashCode"))), is(true));
-        assertThat(ElementMatchers.noneOf(Object.class.getDeclaredConstructor()).matches(new MethodDescription.ForLoadedConstructor(Object.class.getDeclaredConstructor())), is(false));
-        assertThat(ElementMatchers.noneOf(Object.class.getDeclaredConstructor(), String.class.getDeclaredConstructor(String.class)).matches(new MethodDescription.ForLoadedConstructor(Object.class.getDeclaredConstructor())), is(false));
-        assertThat(ElementMatchers.noneOf(Object.class.getDeclaredConstructor()).matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("hashCode"))), is(true));
+        Method toString = Object.class.getDeclaredMethod("toString"), hashCode = Object.class
+                .getDeclaredMethod("hashCode");
+        assertThat(ElementMatchers.noneOf(toString)
+                .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(false));
+        assertThat(ElementMatchers.noneOf(toString, hashCode)
+                .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(false));
+        assertThat(ElementMatchers.noneOf(toString)
+                .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("hashCode"))), is(true));
+        assertThat(ElementMatchers.noneOf(Object.class.getDeclaredConstructor())
+                .matches(new MethodDescription.ForLoadedConstructor(Object.class.getDeclaredConstructor())), is(false));
+        assertThat(ElementMatchers
+                .noneOf(Object.class.getDeclaredConstructor(), String.class.getDeclaredConstructor(String.class))
+                .matches(new MethodDescription.ForLoadedConstructor(Object.class.getDeclaredConstructor())), is(false));
+        assertThat(ElementMatchers.noneOf(Object.class.getDeclaredConstructor())
+                .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("hashCode"))), is(true));
     }
 
     @Test
     public void testNoneAnnotation() throws Exception {
-        AnnotationDescription annotationDescription = new TypeDescription.ForLoadedType(IsAnnotatedWith.class).getDeclaredAnnotations().ofType(IsAnnotatedWithAnnotation.class);
-        assertThat(ElementMatchers.noneOf(IsAnnotatedWith.class.getAnnotation(IsAnnotatedWithAnnotation.class)).matches(annotationDescription), is(false));
-        assertThat(ElementMatchers.noneOf(IsAnnotatedWith.class.getAnnotation(IsAnnotatedWithAnnotation.class), Other.class.getAnnotation(OtherAnnotation.class)).matches(annotationDescription), is(false));
-        assertThat(ElementMatchers.noneOf(Other.class.getAnnotation(OtherAnnotation.class)).matches(annotationDescription), is(true));
+        AnnotationDescription annotationDescription = new TypeDescription.ForLoadedType(IsAnnotatedWith.class)
+                .getDeclaredAnnotations().ofType(IsAnnotatedWithAnnotation.class);
+        assertThat(ElementMatchers.noneOf(IsAnnotatedWith.class.getAnnotation(IsAnnotatedWithAnnotation.class))
+                .matches(annotationDescription), is(false));
+        assertThat(ElementMatchers.noneOf(IsAnnotatedWith.class.getAnnotation(IsAnnotatedWithAnnotation.class),
+                Other.class.getAnnotation(OtherAnnotation.class)).matches(annotationDescription), is(false));
+        assertThat(
+                ElementMatchers.noneOf(Other.class.getAnnotation(OtherAnnotation.class)).matches(annotationDescription),
+                is(true));
     }
 
     @Test
@@ -196,7 +232,8 @@ public class ElementMatchersTest {
         ByteCodeElement byteCodeElement = mock(ByteCodeElement.class);
         when(byteCodeElement.getSourceCodeName()).thenReturn(FOO);
         assertThat(ElementMatchers.nameStartsWith(FOO.substring(0, 2)).matches(byteCodeElement), is(true));
-        assertThat(ElementMatchers.nameStartsWith(FOO.substring(0, 2).toUpperCase()).matches(byteCodeElement), is(false));
+        assertThat(ElementMatchers.nameStartsWith(FOO.substring(0, 2).toUpperCase()).matches(byteCodeElement),
+                is(false));
         assertThat(ElementMatchers.nameStartsWith(BAR).matches(byteCodeElement), is(false));
     }
 
@@ -205,7 +242,8 @@ public class ElementMatchersTest {
         ByteCodeElement byteCodeElement = mock(ByteCodeElement.class);
         when(byteCodeElement.getSourceCodeName()).thenReturn(FOO);
         assertThat(ElementMatchers.nameStartsWithIgnoreCase(FOO.substring(0, 2)).matches(byteCodeElement), is(true));
-        assertThat(ElementMatchers.nameStartsWithIgnoreCase(FOO.substring(0, 2).toUpperCase()).matches(byteCodeElement), is(true));
+        assertThat(ElementMatchers.nameStartsWithIgnoreCase(FOO.substring(0, 2).toUpperCase()).matches(byteCodeElement),
+                is(true));
         assertThat(ElementMatchers.nameStartsWithIgnoreCase(BAR).matches(byteCodeElement), is(false));
     }
 
@@ -223,7 +261,8 @@ public class ElementMatchersTest {
         ByteCodeElement byteCodeElement = mock(ByteCodeElement.class);
         when(byteCodeElement.getSourceCodeName()).thenReturn(FOO);
         assertThat(ElementMatchers.nameEndsWithIgnoreCase(FOO.substring(1)).matches(byteCodeElement), is(true));
-        assertThat(ElementMatchers.nameEndsWithIgnoreCase(FOO.substring(1).toUpperCase()).matches(byteCodeElement), is(true));
+        assertThat(ElementMatchers.nameEndsWithIgnoreCase(FOO.substring(1).toUpperCase()).matches(byteCodeElement),
+                is(true));
         assertThat(ElementMatchers.nameEndsWithIgnoreCase(BAR).matches(byteCodeElement), is(false));
     }
 
@@ -241,7 +280,8 @@ public class ElementMatchersTest {
         ByteCodeElement byteCodeElement = mock(ByteCodeElement.class);
         when(byteCodeElement.getSourceCodeName()).thenReturn(FOO);
         assertThat(ElementMatchers.nameContainsIgnoreCase(FOO.substring(1, 2)).matches(byteCodeElement), is(true));
-        assertThat(ElementMatchers.nameContainsIgnoreCase(FOO.substring(1, 2).toUpperCase()).matches(byteCodeElement), is(true));
+        assertThat(ElementMatchers.nameContainsIgnoreCase(FOO.substring(1, 2).toUpperCase()).matches(byteCodeElement),
+                is(true));
         assertThat(ElementMatchers.nameContainsIgnoreCase(BAR).matches(byteCodeElement), is(false));
     }
 
@@ -265,21 +305,27 @@ public class ElementMatchersTest {
 
     @Test
     public void testIsDeclaredBy() throws Exception {
-        assertThat(ElementMatchers.isDeclaredBy(IsDeclaredBy.class).matches(new TypeDescription.ForLoadedType(IsDeclaredBy.Inner.class)), is(true));
+        assertThat(ElementMatchers.isDeclaredBy(IsDeclaredBy.class)
+                .matches(new TypeDescription.ForLoadedType(IsDeclaredBy.Inner.class)), is(true));
         assertThat(ElementMatchers.isDeclaredBy(IsDeclaredBy.class).matches(mock(ByteCodeElement.class)), is(false));
         assertThat(ElementMatchers.isDeclaredBy(Object.class).matches(mock(ByteCodeElement.class)), is(false));
     }
 
     @Test
     public void testIsVisibleTo() throws Exception {
-        assertThat(ElementMatchers.isVisibleTo(Object.class).matches(new TypeDescription.ForLoadedType(IsVisibleTo.class)), is(true));
-        assertThat(ElementMatchers.isVisibleTo(Object.class).matches(new TypeDescription.ForLoadedType(IsNotVisibleTo.class)), is(false));
+        assertThat(
+                ElementMatchers.isVisibleTo(Object.class).matches(new TypeDescription.ForLoadedType(IsVisibleTo.class)),
+                is(true));
+        assertThat(ElementMatchers.isVisibleTo(Object.class)
+                .matches(new TypeDescription.ForLoadedType(IsNotVisibleTo.class)), is(false));
     }
 
     @Test
     public void testIsAnnotatedWith() throws Exception {
-        assertThat(ElementMatchers.isAnnotatedWith(IsAnnotatedWithAnnotation.class).matches(new TypeDescription.ForLoadedType(IsAnnotatedWith.class)), is(true));
-        assertThat(ElementMatchers.isAnnotatedWith(IsAnnotatedWithAnnotation.class).matches(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(ElementMatchers.isAnnotatedWith(IsAnnotatedWithAnnotation.class)
+                .matches(new TypeDescription.ForLoadedType(IsAnnotatedWith.class)), is(true));
+        assertThat(ElementMatchers.isAnnotatedWith(IsAnnotatedWithAnnotation.class)
+                .matches(new TypeDescription.ForLoadedType(Object.class)), is(false));
     }
 
     @Test
@@ -301,7 +347,8 @@ public class ElementMatchersTest {
     @Test
     public void testIsPackagePrivate() throws Exception {
         ModifierReviewable modifierReviewable = mock(ModifierReviewable.class);
-        when(modifierReviewable.getModifiers()).thenReturn(Opcodes.ACC_PUBLIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED);
+        when(modifierReviewable.getModifiers())
+                .thenReturn(Opcodes.ACC_PUBLIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED);
         assertThat(ElementMatchers.isPackagePrivate().matches(mock(ModifierReviewable.class)), is(true));
         assertThat(ElementMatchers.isPackagePrivate().matches(modifierReviewable), is(false));
     }
@@ -382,46 +429,74 @@ public class ElementMatchersTest {
     public void testIsMethod() throws Exception {
         assertThat(ElementMatchers.is(IsEqual.class.getDeclaredMethod(FOO))
                 .matches(new MethodDescription.ForLoadedMethod(IsEqual.class.getDeclaredMethod(FOO))), is(true));
-        assertThat(ElementMatchers.is(IsEqual.class.getDeclaredMethod(FOO)).matches(mock(MethodDescription.class)), is(false));
+        assertThat(ElementMatchers.is(IsEqual.class.getDeclaredMethod(FOO)).matches(mock(MethodDescription.class)),
+                is(false));
         assertThat(ElementMatchers.is(IsEqual.class.getDeclaredConstructor())
                 .matches(new MethodDescription.ForLoadedConstructor(IsEqual.class.getDeclaredConstructor())), is(true));
-        assertThat(ElementMatchers.is(IsEqual.class.getDeclaredConstructor()).matches(mock(MethodDescription.class)), is(false));
+        assertThat(ElementMatchers.is(IsEqual.class.getDeclaredConstructor()).matches(mock(MethodDescription.class)),
+                is(false));
     }
 
     @Test
     public void testReturns() throws Exception {
-        assertThat(ElementMatchers.returns(void.class).matches(new MethodDescription.ForLoadedMethod(Returns.class.getDeclaredMethod(FOO))), is(true));
-        assertThat(ElementMatchers.returns(void.class).matches(new MethodDescription.ForLoadedMethod(Returns.class.getDeclaredMethod(BAR))), is(false));
-        assertThat(ElementMatchers.returns(String.class).matches(new MethodDescription.ForLoadedMethod(Returns.class.getDeclaredMethod(BAR))), is(true));
-        assertThat(ElementMatchers.returns(String.class).matches(new MethodDescription.ForLoadedMethod(Returns.class.getDeclaredMethod(FOO))), is(false));
+        assertThat(ElementMatchers.returns(void.class)
+                .matches(new MethodDescription.ForLoadedMethod(Returns.class.getDeclaredMethod(FOO))), is(true));
+        assertThat(ElementMatchers.returns(void.class)
+                .matches(new MethodDescription.ForLoadedMethod(Returns.class.getDeclaredMethod(BAR))), is(false));
+        assertThat(ElementMatchers.returns(String.class)
+                .matches(new MethodDescription.ForLoadedMethod(Returns.class.getDeclaredMethod(BAR))), is(true));
+        assertThat(ElementMatchers.returns(String.class)
+                .matches(new MethodDescription.ForLoadedMethod(Returns.class.getDeclaredMethod(FOO))), is(false));
     }
 
     @Test
     public void testTakesArguments() throws Exception {
-        assertThat(ElementMatchers.takesArguments(Void.class).matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(FOO, Void.class))), is(true));
-        assertThat(ElementMatchers.takesArguments(Void.class, Object.class).matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(FOO, Void.class))), is(false));
-        assertThat(ElementMatchers.takesArguments(String.class, int.class).matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(BAR, String.class, int.class))), is(true));
-        assertThat(ElementMatchers.takesArguments(String.class, Integer.class).matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(BAR, String.class, int.class))), is(false));
+        assertThat(ElementMatchers.takesArguments(Void.class).matches(
+                        new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(FOO, Void.class))),
+                is(true));
+        assertThat(ElementMatchers.takesArguments(Void.class, Object.class).matches(
+                        new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(FOO, Void.class))),
+                is(false));
+        assertThat(ElementMatchers.takesArguments(String.class, int.class).matches(
+                new MethodDescription.ForLoadedMethod(
+                        TakesArguments.class.getDeclaredMethod(BAR, String.class, int.class))), is(true));
+        assertThat(ElementMatchers.takesArguments(String.class, Integer.class).matches(
+                new MethodDescription.ForLoadedMethod(
+                        TakesArguments.class.getDeclaredMethod(BAR, String.class, int.class))), is(false));
     }
 
     @Test
     public void testTakesArgumentsLength() throws Exception {
-        assertThat(ElementMatchers.takesArguments(1).matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(FOO, Void.class))), is(true));
-        assertThat(ElementMatchers.takesArguments(2).matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(FOO, Void.class))), is(false));
-        assertThat(ElementMatchers.takesArguments(2).matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(BAR, String.class, int.class))), is(true));
-        assertThat(ElementMatchers.takesArguments(3).matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(BAR, String.class, int.class))), is(false));
+        assertThat(ElementMatchers.takesArguments(1).matches(
+                        new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(FOO, Void.class))),
+                is(true));
+        assertThat(ElementMatchers.takesArguments(2).matches(
+                        new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(FOO, Void.class))),
+                is(false));
+        assertThat(ElementMatchers.takesArguments(2).matches(new MethodDescription.ForLoadedMethod(
+                TakesArguments.class.getDeclaredMethod(BAR, String.class, int.class))), is(true));
+        assertThat(ElementMatchers.takesArguments(3).matches(new MethodDescription.ForLoadedMethod(
+                TakesArguments.class.getDeclaredMethod(BAR, String.class, int.class))), is(false));
     }
 
     @Test
     public void testCanThrow() throws Exception {
-        assertThat(ElementMatchers.canThrow(IOException.class).matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(FOO))), is(true));
-        assertThat(ElementMatchers.canThrow(SQLException.class).matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(FOO))), is(false));
-        assertThat(ElementMatchers.canThrow(Error.class).matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(FOO))), is(true));
-        assertThat(ElementMatchers.canThrow(RuntimeException.class).matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(FOO))), is(true));
-        assertThat(ElementMatchers.canThrow(IOException.class).matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(BAR))), is(false));
-        assertThat(ElementMatchers.canThrow(SQLException.class).matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(BAR))), is(false));
-        assertThat(ElementMatchers.canThrow(Error.class).matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(BAR))), is(true));
-        assertThat(ElementMatchers.canThrow(RuntimeException.class).matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(BAR))), is(true));
+        assertThat(ElementMatchers.canThrow(IOException.class)
+                .matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(FOO))), is(true));
+        assertThat(ElementMatchers.canThrow(SQLException.class)
+                .matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(FOO))), is(false));
+        assertThat(ElementMatchers.canThrow(Error.class)
+                .matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(FOO))), is(true));
+        assertThat(ElementMatchers.canThrow(RuntimeException.class)
+                .matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(FOO))), is(true));
+        assertThat(ElementMatchers.canThrow(IOException.class)
+                .matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(BAR))), is(false));
+        assertThat(ElementMatchers.canThrow(SQLException.class)
+                .matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(BAR))), is(false));
+        assertThat(ElementMatchers.canThrow(Error.class)
+                .matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(BAR))), is(true));
+        assertThat(ElementMatchers.canThrow(RuntimeException.class)
+                .matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(BAR))), is(true));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -432,160 +507,324 @@ public class ElementMatchersTest {
 
     @Test
     public void testSortIsMethod() throws Exception {
-        assertThat(ElementMatchers.isMethod().matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(true));
-        assertThat(ElementMatchers.isMethod().matches(new MethodDescription.ForLoadedConstructor(Object.class.getDeclaredConstructor())), is(false));
-        assertThat(ElementMatchers.isMethod().matches(MethodDescription.Latent.typeInitializerOf(mock(TypeDescription.class))), is(false));
+        assertThat(ElementMatchers.isMethod()
+                .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(true));
+        assertThat(ElementMatchers.isMethod()
+                .matches(new MethodDescription.ForLoadedConstructor(Object.class.getDeclaredConstructor())), is(false));
+        assertThat(ElementMatchers.isMethod()
+                .matches(MethodDescription.Latent.typeInitializerOf(mock(TypeDescription.class))), is(false));
     }
 
     @Test
     public void testSortIsConstructor() throws Exception {
-        assertThat(ElementMatchers.isConstructor().matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(false));
-        assertThat(ElementMatchers.isConstructor().matches(new MethodDescription.ForLoadedConstructor(Object.class.getDeclaredConstructor())), is(true));
-        assertThat(ElementMatchers.isConstructor().matches(MethodDescription.Latent.typeInitializerOf(mock(TypeDescription.class))), is(false));
+        assertThat(ElementMatchers.isConstructor()
+                .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(false));
+        assertThat(ElementMatchers.isConstructor()
+                .matches(new MethodDescription.ForLoadedConstructor(Object.class.getDeclaredConstructor())), is(true));
+        assertThat(ElementMatchers.isConstructor()
+                .matches(MethodDescription.Latent.typeInitializerOf(mock(TypeDescription.class))), is(false));
     }
 
     @Test
     @JavaVersionRule.Enforce
     public void testIsDefaultMethod() throws Exception {
-        assertThat(ElementMatchers.isDefaultMethod().matches(new MethodDescription.ForLoadedMethod(classLoader.loadClass(SINGLE_DEFAULT_METHOD).getDeclaredMethod(FOO))), is(true));
-        assertThat(ElementMatchers.isDefaultMethod().matches(new MethodDescription.ForLoadedMethod(Runnable.class.getDeclaredMethod("run"))), is(false));
+        assertThat(ElementMatchers.isDefaultMethod().matches(new MethodDescription.ForLoadedMethod(
+                classLoader.loadClass(SINGLE_DEFAULT_METHOD).getDeclaredMethod(FOO))), is(true));
+        assertThat(ElementMatchers.isDefaultMethod()
+                .matches(new MethodDescription.ForLoadedMethod(Runnable.class.getDeclaredMethod("run"))), is(false));
     }
 
     @Test
     public void testSortIsTypeInitializer() throws Exception {
-        assertThat(ElementMatchers.isTypeInitializer().matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(false));
-        assertThat(ElementMatchers.isTypeInitializer().matches(new MethodDescription.ForLoadedConstructor(Object.class.getDeclaredConstructor())), is(false));
-        assertThat(ElementMatchers.isTypeInitializer().matches(MethodDescription.Latent.typeInitializerOf(mock(TypeDescription.class))), is(true));
+        assertThat(ElementMatchers.isTypeInitializer()
+                .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(false));
+        assertThat(ElementMatchers.isTypeInitializer()
+                .matches(new MethodDescription.ForLoadedConstructor(Object.class.getDeclaredConstructor())), is(false));
+        assertThat(ElementMatchers.isTypeInitializer()
+                .matches(MethodDescription.Latent.typeInitializerOf(mock(TypeDescription.class))), is(true));
     }
 
     @Test
     public void testSortIsVisibilityBridge() throws Exception {
-        assertThat(ElementMatchers.isVisibilityBridge().matches(new MethodDescription.ForLoadedMethod(IsVisibilityBridge.class.getDeclaredMethod(FOO))), is(true));
-        assertThat(ElementMatchers.isVisibilityBridge().matches(new MethodDescription.ForLoadedMethod(IsBridge.class.getDeclaredMethod(FOO, Object.class))), is(false));
-        assertThat(ElementMatchers.isVisibilityBridge().matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(false));
+        assertThat(ElementMatchers.isVisibilityBridge()
+                        .matches(
+                                new MethodDescription.ForLoadedMethod(IsVisibilityBridge.class.getDeclaredMethod(FOO))),
+                is(true));
+        assertThat(ElementMatchers.isVisibilityBridge()
+                        .matches(new MethodDescription.ForLoadedMethod(
+                                IsBridge.class.getDeclaredMethod(FOO, Object.class))),
+                is(false));
+        assertThat(ElementMatchers.isVisibilityBridge()
+                .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(false));
     }
 
     @Test
     public void testSortIsBridge() throws Exception {
-        assertThat(ElementMatchers.isBridge().matches(new MethodDescription.ForLoadedMethod(IsVisibilityBridge.class.getDeclaredMethod(FOO))), is(true));
-        assertThat(ElementMatchers.isBridge().matches(new MethodDescription.ForLoadedMethod(IsBridge.class.getDeclaredMethod(FOO, Object.class))), is(true));
-        assertThat(ElementMatchers.isBridge().matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(false));
+        assertThat(ElementMatchers.isBridge()
+                        .matches(
+                                new MethodDescription.ForLoadedMethod(IsVisibilityBridge.class.getDeclaredMethod(FOO))),
+                is(true));
+        assertThat(ElementMatchers.isBridge()
+                        .matches(new MethodDescription.ForLoadedMethod(
+                                IsBridge.class.getDeclaredMethod(FOO, Object.class))),
+                is(true));
+        assertThat(ElementMatchers.isBridge()
+                .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(false));
     }
 
     @Test
     public void testIsOverridable() throws Exception {
-        assertThat(ElementMatchers.isOverridable().matches(new MethodDescription.ForLoadedMethod(IsOverridable.class.getDeclaredMethod("baz"))), is(true));
-        assertThat(ElementMatchers.isOverridable().matches(new MethodDescription.ForLoadedMethod(IsOverridable.class.getDeclaredMethod("foo"))), is(false));
-        assertThat(ElementMatchers.isOverridable().matches(new MethodDescription.ForLoadedMethod(IsOverridable.class.getDeclaredMethod("bar"))), is(false));
-        assertThat(ElementMatchers.isOverridable().matches(new MethodDescription.ForLoadedMethod(IsOverridable.class.getDeclaredMethod("qux"))), is(false));
-        assertThat(ElementMatchers.isOverridable().matches(new MethodDescription.ForLoadedConstructor(IsOverridable.class.getDeclaredConstructor())), is(false));
+        assertThat(ElementMatchers.isOverridable()
+                        .matches(new MethodDescription.ForLoadedMethod(IsOverridable.class.getDeclaredMethod("baz"))),
+                is(true));
+        assertThat(ElementMatchers.isOverridable()
+                        .matches(new MethodDescription.ForLoadedMethod(IsOverridable.class.getDeclaredMethod("foo"))),
+                is(false));
+        assertThat(ElementMatchers.isOverridable()
+                        .matches(new MethodDescription.ForLoadedMethod(IsOverridable.class.getDeclaredMethod("bar"))),
+                is(false));
+        assertThat(ElementMatchers.isOverridable()
+                        .matches(new MethodDescription.ForLoadedMethod(IsOverridable.class.getDeclaredMethod("qux"))),
+                is(false));
+        assertThat(ElementMatchers.isOverridable()
+                        .matches(new MethodDescription.ForLoadedConstructor(
+                                IsOverridable.class.getDeclaredConstructor())),
+                is(false));
     }
 
     @Test
     public void testIsDefaultFinalizer() throws Exception {
-        assertThat(ElementMatchers.isDefaultFinalizer().matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("finalize"))), is(true));
-        assertThat(ElementMatchers.isDefaultFinalizer().matches(new MethodDescription.ForLoadedMethod(ObjectMethods.class.getDeclaredMethod("finalize"))), is(false));
-        assertThat(ElementMatchers.isDefaultFinalizer().matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(false));
+        assertThat(ElementMatchers.isDefaultFinalizer()
+                .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("finalize"))), is(true));
+        assertThat(ElementMatchers.isDefaultFinalizer()
+                        .matches(new MethodDescription.ForLoadedMethod(
+                                ObjectMethods.class.getDeclaredMethod("finalize"))),
+                is(false));
+        assertThat(ElementMatchers.isDefaultFinalizer()
+                .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(false));
     }
 
     @Test
     public void testIsFinalizer() throws Exception {
-        assertThat(ElementMatchers.isFinalizer().matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("finalize"))), is(true));
-        assertThat(ElementMatchers.isFinalizer().matches(new MethodDescription.ForLoadedMethod(ObjectMethods.class.getDeclaredMethod("finalize"))), is(true));
-        assertThat(ElementMatchers.isFinalizer().matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(false));
+        assertThat(ElementMatchers.isFinalizer()
+                .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("finalize"))), is(true));
+        assertThat(ElementMatchers.isFinalizer()
+                        .matches(new MethodDescription.ForLoadedMethod(
+                                ObjectMethods.class.getDeclaredMethod("finalize"))),
+                is(true));
+        assertThat(ElementMatchers.isFinalizer()
+                .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(false));
     }
 
     @Test
     public void testIsHashCode() throws Exception {
-        assertThat(ElementMatchers.isHashCode().matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("hashCode"))), is(true));
-        assertThat(ElementMatchers.isHashCode().matches(new MethodDescription.ForLoadedMethod(ObjectMethods.class.getDeclaredMethod("hashCode"))), is(true));
-        assertThat(ElementMatchers.isHashCode().matches(new MethodDescription.ForLoadedMethod(Runnable.class.getDeclaredMethod("run"))), is(false));
+        assertThat(ElementMatchers.isHashCode()
+                .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("hashCode"))), is(true));
+        assertThat(ElementMatchers.isHashCode()
+                        .matches(new MethodDescription.ForLoadedMethod(
+                                ObjectMethods.class.getDeclaredMethod("hashCode"))),
+                is(true));
+        assertThat(ElementMatchers.isHashCode()
+                .matches(new MethodDescription.ForLoadedMethod(Runnable.class.getDeclaredMethod("run"))), is(false));
     }
 
     @Test
     public void testIsEquals() throws Exception {
-        assertThat(ElementMatchers.isEquals().matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("equals", Object.class))), is(true));
-        assertThat(ElementMatchers.isEquals().matches(new MethodDescription.ForLoadedMethod(ObjectMethods.class.getDeclaredMethod("equals", Object.class))), is(true));
-        assertThat(ElementMatchers.isEquals().matches(new MethodDescription.ForLoadedMethod(Runnable.class.getDeclaredMethod("run"))), is(false));
+        assertThat(ElementMatchers.isEquals()
+                        .matches(new MethodDescription.ForLoadedMethod(
+                                Object.class.getDeclaredMethod("equals", Object.class))),
+                is(true));
+        assertThat(ElementMatchers.isEquals().matches(
+                        new MethodDescription.ForLoadedMethod(
+                                ObjectMethods.class.getDeclaredMethod("equals", Object.class))),
+                is(true));
+        assertThat(ElementMatchers.isEquals()
+                .matches(new MethodDescription.ForLoadedMethod(Runnable.class.getDeclaredMethod("run"))), is(false));
     }
 
     @Test
     public void testIsClone() throws Exception {
-        assertThat(ElementMatchers.isClone().matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("clone"))), is(true));
-        assertThat(ElementMatchers.isClone().matches(new MethodDescription.ForLoadedMethod(ObjectMethods.class.getDeclaredMethod("clone"))), is(true));
-        assertThat(ElementMatchers.isClone().matches(new MethodDescription.ForLoadedMethod(Runnable.class.getDeclaredMethod("run"))), is(false));
+        assertThat(ElementMatchers.isClone()
+                .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("clone"))), is(true));
+        assertThat(ElementMatchers.isClone()
+                        .matches(new MethodDescription.ForLoadedMethod(ObjectMethods.class.getDeclaredMethod("clone"))),
+                is(true));
+        assertThat(ElementMatchers.isClone()
+                .matches(new MethodDescription.ForLoadedMethod(Runnable.class.getDeclaredMethod("run"))), is(false));
     }
 
     @Test
     public void testIsToString() throws Exception {
-        assertThat(ElementMatchers.isToString().matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(true));
-        assertThat(ElementMatchers.isToString().matches(new MethodDescription.ForLoadedMethod(ObjectMethods.class.getDeclaredMethod("toString"))), is(true));
-        assertThat(ElementMatchers.isToString().matches(new MethodDescription.ForLoadedMethod(Runnable.class.getDeclaredMethod("run"))), is(false));
+        assertThat(ElementMatchers.isToString()
+                .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(true));
+        assertThat(ElementMatchers.isToString()
+                        .matches(new MethodDescription.ForLoadedMethod(
+                                ObjectMethods.class.getDeclaredMethod("toString"))),
+                is(true));
+        assertThat(ElementMatchers.isToString()
+                .matches(new MethodDescription.ForLoadedMethod(Runnable.class.getDeclaredMethod("run"))), is(false));
     }
 
     @Test
     public void testIsDefaultConstructor() throws Exception {
-        assertThat(ElementMatchers.isDefaultConstructor().matches(new MethodDescription.ForLoadedConstructor(Object.class.getDeclaredConstructor())), is(true));
-        assertThat(ElementMatchers.isDefaultConstructor().matches(new MethodDescription.ForLoadedConstructor(String.class.getDeclaredConstructor(String.class))), is(false));
-        assertThat(ElementMatchers.isDefaultConstructor().matches(new MethodDescription.ForLoadedMethod(Runnable.class.getDeclaredMethod("run"))), is(false));
+        assertThat(ElementMatchers.isDefaultConstructor()
+                .matches(new MethodDescription.ForLoadedConstructor(Object.class.getDeclaredConstructor())), is(true));
+        assertThat(ElementMatchers.isDefaultConstructor()
+                        .matches(new MethodDescription.ForLoadedConstructor(
+                                String.class.getDeclaredConstructor(String.class))),
+                is(false));
+        assertThat(ElementMatchers.isDefaultConstructor()
+                .matches(new MethodDescription.ForLoadedMethod(Runnable.class.getDeclaredMethod("run"))), is(false));
     }
 
     @Test
     public void testIsGetter() throws Exception {
-        assertThat(ElementMatchers.isGetter().matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("getFoo"))), is(false));
-        assertThat(ElementMatchers.isGetter().matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("isQux"))), is(true));
-        assertThat(ElementMatchers.isGetter().matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("getQux"))), is(true));
-        assertThat(ElementMatchers.isGetter().matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("isBar"))), is(true));
-        assertThat(ElementMatchers.isGetter().matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("getBar"))), is(true));
-        assertThat(ElementMatchers.isGetter().matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("isBaz"))), is(false));
-        assertThat(ElementMatchers.isGetter().matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("getBaz"))), is(true));
-        assertThat(ElementMatchers.isGetter().matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("getBaz", Void.class))), is(false));
-        assertThat(ElementMatchers.isGetter(String.class).matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("getBaz"))), is(true));
-        assertThat(ElementMatchers.isGetter(Void.class).matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("getBaz"))), is(false));
+        assertThat(ElementMatchers.isGetter()
+                .matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("getFoo"))), is(false));
+        assertThat(ElementMatchers.isGetter()
+                .matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("isQux"))), is(true));
+        assertThat(ElementMatchers.isGetter()
+                .matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("getQux"))), is(true));
+        assertThat(ElementMatchers.isGetter()
+                .matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("isBar"))), is(true));
+        assertThat(ElementMatchers.isGetter()
+                .matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("getBar"))), is(true));
+        assertThat(ElementMatchers.isGetter()
+                .matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("isBaz"))), is(false));
+        assertThat(ElementMatchers.isGetter()
+                .matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("getBaz"))), is(true));
+        assertThat(ElementMatchers.isGetter()
+                        .matches(new MethodDescription.ForLoadedMethod(
+                                Getters.class.getDeclaredMethod("getBaz", Void.class))),
+                is(false));
+        assertThat(ElementMatchers.isGetter(String.class)
+                .matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("getBaz"))), is(true));
+        assertThat(ElementMatchers.isGetter(Void.class)
+                .matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("getBaz"))), is(false));
     }
 
     @Test
     public void testIsSetter() throws Exception {
-        assertThat(ElementMatchers.isSetter().matches(new MethodDescription.ForLoadedMethod(Setters.class.getDeclaredMethod("setFoo"))), is(false));
-        assertThat(ElementMatchers.isSetter().matches(new MethodDescription.ForLoadedMethod(Setters.class.getDeclaredMethod("setBar", boolean.class))), is(true));
-        assertThat(ElementMatchers.isSetter().matches(new MethodDescription.ForLoadedMethod(Setters.class.getDeclaredMethod("setQux", Boolean.class))), is(true));
-        assertThat(ElementMatchers.isSetter().matches(new MethodDescription.ForLoadedMethod(Setters.class.getDeclaredMethod("setBaz", String.class))), is(true));
-        assertThat(ElementMatchers.isSetter().matches(new MethodDescription.ForLoadedMethod(Setters.class.getDeclaredMethod("setBaz", String.class, Void.class))), is(false));
-        assertThat(ElementMatchers.isSetter(String.class).matches(new MethodDescription.ForLoadedMethod(Setters.class.getDeclaredMethod("setBaz", String.class))), is(true));
-        assertThat(ElementMatchers.isSetter(Void.class).matches(new MethodDescription.ForLoadedMethod(Setters.class.getDeclaredMethod("setBaz", String.class))), is(false));
+        assertThat(ElementMatchers.isSetter()
+                .matches(new MethodDescription.ForLoadedMethod(Setters.class.getDeclaredMethod("setFoo"))), is(false));
+        assertThat(ElementMatchers.isSetter().matches(
+                        new MethodDescription.ForLoadedMethod(
+                                Setters.class.getDeclaredMethod("setBar", boolean.class))),
+                is(true));
+        assertThat(ElementMatchers.isSetter().matches(
+                        new MethodDescription.ForLoadedMethod(
+                                Setters.class.getDeclaredMethod("setQux", Boolean.class))),
+                is(true));
+        assertThat(ElementMatchers.isSetter().matches(
+                        new MethodDescription.ForLoadedMethod(Setters.class.getDeclaredMethod("setBaz", String.class))),
+                is(true));
+        assertThat(ElementMatchers.isSetter().matches(new MethodDescription.ForLoadedMethod(
+                Setters.class.getDeclaredMethod("setBaz", String.class, Void.class))), is(false));
+        assertThat(ElementMatchers.isSetter(String.class).matches(
+                        new MethodDescription.ForLoadedMethod(Setters.class.getDeclaredMethod("setBaz", String.class))),
+                is(true));
+        assertThat(ElementMatchers.isSetter(Void.class).matches(
+                        new MethodDescription.ForLoadedMethod(Setters.class.getDeclaredMethod("setBaz", String.class))),
+                is(false));
     }
 
     @Test
     public void testisSpecializationOf() throws Exception {
-        MethodDescription methodDescription = new MethodDescription.ForLoadedMethod(IsSpecialization.class.getDeclaredMethod(FOO, Number.class));
-        assertThat(ElementMatchers.isSpecializationOf(methodDescription).matches(new MethodDescription.ForLoadedMethod(IsSpecialization.class.getDeclaredMethod(FOO, Number.class))), is(true));
-        assertThat(ElementMatchers.isSpecializationOf(methodDescription).matches(new MethodDescription.ForLoadedMethod(IsSpecialization.class.getDeclaredMethod(FOO, Integer.class))), is(true));
-        assertThat(ElementMatchers.isSpecializationOf(methodDescription).matches(new MethodDescription.ForLoadedMethod(IsSpecialization.class.getDeclaredMethod(FOO, String.class))), is(false));
-        assertThat(ElementMatchers.isSpecializationOf(methodDescription).matches(new MethodDescription.ForLoadedMethod(IsSpecialization.class.getDeclaredMethod(BAR, Integer.class))), is(false));
+        MethodDescription methodDescription = new MethodDescription.ForLoadedMethod(
+                IsSpecialization.class.getDeclaredMethod(FOO, Number.class));
+        assertThat(ElementMatchers.isSpecializationOf(methodDescription).matches(
+                        new MethodDescription.ForLoadedMethod(
+                                IsSpecialization.class.getDeclaredMethod(FOO, Number.class))),
+                is(true));
+        assertThat(ElementMatchers.isSpecializationOf(methodDescription).matches(
+                        new MethodDescription.ForLoadedMethod(
+                                IsSpecialization.class.getDeclaredMethod(FOO, Integer.class))),
+                is(true));
+        assertThat(ElementMatchers.isSpecializationOf(methodDescription).matches(
+                        new MethodDescription.ForLoadedMethod(
+                                IsSpecialization.class.getDeclaredMethod(FOO, String.class))),
+                is(false));
+        assertThat(ElementMatchers.isSpecializationOf(methodDescription).matches(
+                        new MethodDescription.ForLoadedMethod(
+                                IsSpecialization.class.getDeclaredMethod(BAR, Integer.class))),
+                is(false));
     }
 
     @Test
     public void testIsSubOrSuperType() throws Exception {
-        assertThat(ElementMatchers.isSubTypeOf(String.class).matches(new TypeDescription.ForLoadedType(Object.class)), is(false));
-        assertThat(ElementMatchers.isSubTypeOf(Object.class).matches(new TypeDescription.ForLoadedType(String.class)), is(true));
-        assertThat(ElementMatchers.isSubTypeOf(Serializable.class).matches(new TypeDescription.ForLoadedType(String.class)), is(true));
-        assertThat(ElementMatchers.isSuperTypeOf(Object.class).matches(new TypeDescription.ForLoadedType(String.class)), is(false));
-        assertThat(ElementMatchers.isSuperTypeOf(String.class).matches(new TypeDescription.ForLoadedType(Object.class)), is(true));
-        assertThat(ElementMatchers.isSuperTypeOf(String.class).matches(new TypeDescription.ForLoadedType(Serializable.class)), is(true));
+        assertThat(ElementMatchers.isSubTypeOf(String.class).matches(new TypeDescription.ForLoadedType(Object.class)),
+                is(false));
+        assertThat(ElementMatchers.isSubTypeOf(Object.class).matches(new TypeDescription.ForLoadedType(String.class)),
+                is(true));
+        assertThat(ElementMatchers.isSubTypeOf(Serializable.class)
+                .matches(new TypeDescription.ForLoadedType(String.class)), is(true));
+        assertThat(ElementMatchers.isSuperTypeOf(Object.class).matches(new TypeDescription.ForLoadedType(String.class)),
+                is(false));
+        assertThat(ElementMatchers.isSuperTypeOf(String.class).matches(new TypeDescription.ForLoadedType(Object.class)),
+                is(true));
+        assertThat(ElementMatchers.isSuperTypeOf(String.class)
+                .matches(new TypeDescription.ForLoadedType(Serializable.class)), is(true));
     }
 
     @Test
     public void testIsAnnotatedInheritedWith() throws Exception {
-        assertThat(ElementMatchers.inheritsAnnotation(OtherAnnotation.class).matches(new TypeDescription.ForLoadedType(OtherInherited.class)), is(true));
-        assertThat(ElementMatchers.isAnnotatedWith(OtherAnnotation.class).matches(new TypeDescription.ForLoadedType(OtherInherited.class)), is(false));
+        assertThat(ElementMatchers.inheritsAnnotation(OtherAnnotation.class)
+                .matches(new TypeDescription.ForLoadedType(OtherInherited.class)), is(true));
+        assertThat(ElementMatchers.isAnnotatedWith(OtherAnnotation.class)
+                .matches(new TypeDescription.ForLoadedType(OtherInherited.class)), is(false));
     }
 
     @Test
     public void testDeclaresField() throws Exception {
-        assertThat(ElementMatchers.declaresField(ElementMatchers.isAnnotatedWith(OtherAnnotation.class)).matches(new TypeDescription.ForLoadedType(DeclaresFieldOrMethod.class)), is(true));
-        assertThat(ElementMatchers.declaresField(ElementMatchers.isAnnotatedWith(OtherAnnotation.class)).matches(new TypeDescription.ForLoadedType(Object.class)), is(false));
-        assertThat(ElementMatchers.declaresMethod(ElementMatchers.isAnnotatedWith(OtherAnnotation.class)).matches(new TypeDescription.ForLoadedType(DeclaresFieldOrMethod.class)), is(true));
-        assertThat(ElementMatchers.declaresMethod(ElementMatchers.isAnnotatedWith(OtherAnnotation.class)).matches(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(ElementMatchers.declaresField(ElementMatchers.isAnnotatedWith(OtherAnnotation.class))
+                .matches(new TypeDescription.ForLoadedType(DeclaresFieldOrMethod.class)), is(true));
+        assertThat(ElementMatchers.declaresField(ElementMatchers.isAnnotatedWith(OtherAnnotation.class))
+                .matches(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(ElementMatchers.declaresMethod(ElementMatchers.isAnnotatedWith(OtherAnnotation.class))
+                .matches(new TypeDescription.ForLoadedType(DeclaresFieldOrMethod.class)), is(true));
+        assertThat(ElementMatchers.declaresMethod(ElementMatchers.isAnnotatedWith(OtherAnnotation.class))
+                .matches(new TypeDescription.ForLoadedType(Object.class)), is(false));
+    }
+
+    @Test
+    public void testIsBootstrapClassLoader() throws Exception {
+        assertThat(ElementMatchers.isBootstrapClassLoader().matches(null), is(true));
+        assertThat(ElementMatchers.isBootstrapClassLoader().matches(mock(ClassLoader.class)), is(false));
+    }
+
+    @Test
+    public void testIsSystemClassLoader() throws Exception {
+        assertThat(ElementMatchers.isSystemClassLoader().matches(ClassLoader.getSystemClassLoader()), is(true));
+        assertThat(ElementMatchers.isSystemClassLoader().matches(null), is(false));
+        assertThat(ElementMatchers.isSystemClassLoader().matches(ClassLoader.getSystemClassLoader().getParent()), is(false));
+        assertThat(ElementMatchers.isSystemClassLoader().matches(mock(ClassLoader.class)), is(false));
+    }
+
+    @Test
+    public void testIsExtensionClassLoader() throws Exception {
+        assertThat(ElementMatchers.isExtensionClassLoader().matches(ClassLoader.getSystemClassLoader().getParent()), is(true));
+        assertThat(ElementMatchers.isExtensionClassLoader().matches(ClassLoader.getSystemClassLoader()), is(false));
+        assertThat(ElementMatchers.isExtensionClassLoader().matches(null), is(false));
+        assertThat(ElementMatchers.isExtensionClassLoader().matches(mock(ClassLoader.class)), is(false));
+    }
+
+    @Test
+    public void testIsChildOf() throws Exception {
+        ClassLoader parent = new URLClassLoader(new URL[0], null);
+        assertThat(ElementMatchers.isChildOf(parent).matches(new URLClassLoader(new URL[0], parent)), is(true));
+        assertThat(ElementMatchers.isChildOf(parent).matches(new URLClassLoader(new URL[0], null)), is(false));
+        assertThat(ElementMatchers.isChildOf(parent).matches(null), is(false));
+        assertThat(ElementMatchers.isChildOf(null).matches(mock(ClassLoader.class)), is(true));
+    }
+
+    @Test
+    public void testIsParentOf() throws Exception {
+        ClassLoader parent = new URLClassLoader(new URL[0], null);
+        assertThat(ElementMatchers.isParentOf(new URLClassLoader(new URL[0], parent)).matches(parent), is(true));
+        assertThat(ElementMatchers.isParentOf(new URLClassLoader(new URL[0], null)).matches(parent), is(false));
+        assertThat(ElementMatchers.isParentOf(null).matches(new URLClassLoader(new URL[0], null)), is(false));
+        assertThat(ElementMatchers.isParentOf(null).matches(null), is(true));
+        assertThat(ElementMatchers.isParentOf(mock(ClassLoader.class)).matches(null), is(true));
     }
 
     @Test(expected = UnsupportedOperationException.class)
