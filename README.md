@@ -211,6 +211,9 @@ cd byte-buddy
 mvn package
 ```
 
+On these commands, Byte Buddy is cloned from GitHub and built on your machine. Byte Buddy is currently tested for the
+[*OpenJDK*](http://openjdk.java.net/) versions 6 and 7 and the *Oracle JDK* versions 7 and 8 using Travis CI. 
+
 Note that the above build is optimized for its runtime and does not create all artifacts. To build the all artifacts,
 including the zero-dependency jar of Byte Buddy, use the `extras` profile:
 
@@ -218,15 +221,11 @@ including the zero-dependency jar of Byte Buddy, use the `extras` profile:
 mvn package -Pextras
 ```
 
-When using this profile, Maven will also sign any created artifact. Therefore, your machine must be set up for 
-[gpg signing](http://blog.sonatype.com/2010/01/how-to-generate-pgp-signatures-with-maven/).
-
-On these commands, Byte Buddy is cloned from GitHub and built on your machine. Byte Buddy is currently tested for the
-[*OpenJDK*](http://openjdk.java.net/) versions 6 and 7 and the *Oracle JDK* versions 7 and 8 using Travis CI. 
-
-The no dependancy jar file is generated into byte-buddy/target/byte-buddy-#.#-SNAPSHOT.jar
-
-The asm dependancy jar file is generated into byte-buddy-dep/target/byte-buddy-dep-#.#-SNAPSHOT.jar
+The zero dependency jar file is then saved in *byte-buddy/target/byte-buddy-#.#-SNAPSHOT.jar*. The regular jar is 
+saved in *byte-buddy-dep/target/byte-buddy-dep-#.#-SNAPSHOT.jar*. When using this profile, Maven will also sign 
+any created artifact. Therefore, your machine must be set up for 
+[gpg signing](http://blog.sonatype.com/2010/01/how-to-generate-pgp-signatures-with-maven/). See the 
+[developer page](http://bytebuddy.net/#/develop) for further information on building the project.
 
 Please use GitHub's [issue tracker](https://github.com/raphw/byte-buddy/issues) for reporting bugs. When committing
 code, please provide test cases that prove the functionality of your features or that demonstrate a bug fix.
