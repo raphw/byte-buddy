@@ -7,10 +7,10 @@ Byte Buddy
 
 runtime code generation for the Java platform
 
-[![Build Status](https://travis-ci.org/raphw/byte-buddy.svg?branch=master)](https://travis-ci.org/raphw/byte-buddy) 
+[![Build Status](https://travis-ci.org/raphw/byte-buddy.svg?branch=master)](https://travis-ci.org/raphw/byte-buddy)
 [![Coverage Status](http://img.shields.io/coveralls/raphw/byte-buddy/master.svg)](https://coveralls.io/r/raphw/byte-buddy?branch=master)
-[![Bintray](https://api.bintray.com/packages/raphw/maven/ByteBuddy/images/download.svg)](https://bintray.com/raphw/maven/ByteBuddy/_latestVersion) 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.bytebuddy/byte-buddy-parent/badge.svg)](https://maven-badges.herokuapp.com/maven-central/net.bytebuddy/byte-buddy-parent)
+[![Bintray](https://api.bintray.com/packages/raphw/maven/ByteBuddy/images/download.svg)](https://bintray.com/raphw/maven/ByteBuddy/_latestVersion)
 
 Byte Buddy is a code generation library for creating Java classes during the runtime of a Java application and without
 the help of a compiler. Other than the code generation utilities that
@@ -211,22 +211,21 @@ cd byte-buddy
 mvn package
 ```
 
-Note that the above build is optimized for its runtime and does not create all artifacts. To build the all artifacts,
+On these commands, Byte Buddy is cloned from GitHub and built on your machine. Byte Buddy is currently tested for the
+[*OpenJDK*](http://openjdk.java.net/) versions 6 and 7 and the *Oracle JDK* versions 7 and 8 using Travis CI. 
+
+Note that the above build is optimized for its runtime and does not create all artifacts. To build all artifacts,
 including the zero-dependency jar of Byte Buddy, use the `extras` profile:
 
 ```shell
 mvn package -Pextras
 ```
 
-When using this profile, Maven will also sign any created artifact. Therefore, your machine must be set up for 
-[gpg signing](http://blog.sonatype.com/2010/01/how-to-generate-pgp-signatures-with-maven/).
-
-On these commands, Byte Buddy is cloned from GitHub and built on your machine. Byte Buddy is currently tested for the
-[*OpenJDK*](http://openjdk.java.net/) versions 6 and 7 and the *Oracle JDK* versions 7 and 8 using Travis CI. 
-
-The no dependancy jar file is generated into byte-buddy/target/byte-buddy-#.#-SNAPSHOT.jar
-
-The asm dependancy jar file is generated into byte-buddy-dep/target/byte-buddy-dep-#.#-SNAPSHOT.jar
+The zero-dependency jar file is then saved in *byte-buddy/target/byte-buddy-#.#-SNAPSHOT.jar*. The regular jar 
+file is saved in *byte-buddy-dep/target/byte-buddy-dep-#.#-SNAPSHOT.jar*. When using this profile, Maven will also 
+attempt to sign any created artifact. For this to be possible your machine must be set up for 
+[gpg signing](http://blog.sonatype.com/2010/01/how-to-generate-pgp-signatures-with-maven/). See the 
+[developer page](http://bytebuddy.net/#/develop) for further information on building the project.
 
 Please use GitHub's [issue tracker](https://github.com/raphw/byte-buddy/issues) for reporting bugs. When committing
 code, please provide test cases that prove the functionality of your features or that demonstrate a bug fix.

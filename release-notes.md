@@ -65,6 +65,11 @@ mainly for allowing the reuse of `Method` instances for the `@Origin` annotation
 Added the `andThen` method to the `SuperMethodCall` instrumentation in order to allow for a more convenient 
 constructor interception where a hard-coded super method call is required by the Java verifier.
 
+### 18. January 2015: Version 0.5.2
+
+- Fixed a bug where interface generation would result in a `NullPointerException`.
+- Added additional `ElementMatcher`s that allow to identify class loaders.
+
 ### Current snapshot
 
 No changes.
