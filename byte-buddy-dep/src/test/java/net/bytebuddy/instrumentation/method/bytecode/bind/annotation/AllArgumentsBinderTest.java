@@ -58,7 +58,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         testLegalStrictBinding(new Annotation[][]{{}, {runtimeType}}, true);
     }
 
-    private void testLegalStrictBinding(Annotation[][] targetAnnotations, boolean considerRuntimeType) throws Exception {
+    private void testLegalStrictBinding(Annotation[][] targetAnnotations, boolean dynamicallyTyped) throws Exception {
         when(annotation.value()).thenReturn(AllArguments.Assignment.STRICT);
         when(stackManipulation.isValid()).thenReturn(true);
         when(sourceTypeList.iterator()).thenReturn(Arrays.asList(firstSourceType, secondSourceType).iterator());
@@ -76,8 +76,8 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         verify(source, atLeast(1)).isStatic();
         verify(target, atLeast(1)).getParameterTypes();
         verify(target, atLeast(1)).getParameterAnnotations();
-        verify(assigner).assign(firstSourceType, componentType, considerRuntimeType);
-        verify(assigner).assign(secondSourceType, componentType, considerRuntimeType);
+        verify(assigner).assign(firstSourceType, componentType, dynamicallyTyped);
+        verify(assigner).assign(secondSourceType, componentType, dynamicallyTyped);
         verifyNoMoreInteractions(assigner);
     }
 

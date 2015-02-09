@@ -184,6 +184,8 @@ public interface MethodDescription extends ByteCodeElement {
      */
     <T> T getDefaultValue(Class<T> type);
 
+    boolean isInvokableOn(TypeDescription typeDescription);
+
     /**
      * An abstract base implementation of a method description.
      */
@@ -295,6 +297,11 @@ public interface MethodDescription extends ByteCodeElement {
         @Override
         public <T> T getDefaultValue(Class<T> type) {
             return type.cast(getDefaultValue());
+        }
+
+        @Override
+        public boolean isInvokableOn(TypeDescription typeDescription) {
+            return isVisibleTo(typeDescription) && getDeclaringType().isAssignableFrom(typeDescription);
         }
 
         @Override

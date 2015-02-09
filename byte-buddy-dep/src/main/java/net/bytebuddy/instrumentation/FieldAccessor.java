@@ -41,17 +41,17 @@ public abstract class FieldAccessor implements Instrumentation {
      * {@code true} if the runtime type of the field's value should be considered when a field
      * is accessed.
      */
-    protected final boolean considerRuntimeType;
+    protected final boolean dynamicallyTyped;
 
     /**
      * Creates a new field accessor.
      *
      * @param assigner            The assigner to use.
-     * @param considerRuntimeType {@code true} if a field value's runtime type should be considered.
+     * @param dynamicallyTyped {@code true} if a field value's runtime type should be considered.
      */
-    protected FieldAccessor(Assigner assigner, boolean considerRuntimeType) {
+    protected FieldAccessor(Assigner assigner, boolean dynamicallyTyped) {
         this.assigner = assigner;
-        this.considerRuntimeType = considerRuntimeType;
+        this.dynamicallyTyped = dynamicallyTyped;
     }
 
     /**
@@ -120,7 +120,7 @@ public abstract class FieldAccessor implements Instrumentation {
                                                 MethodDescription methodDescription) {
         StackManipulation stackManipulation = assigner.assign(fieldDescription.getFieldType(),
                 methodDescription.getReturnType(),
-                considerRuntimeType);
+                dynamicallyTyped);
         if (!stackManipulation.isValid()) {
             throw new IllegalStateException("Getter type of " + methodDescription + " is not compatible with " + fieldDescription);
         }
@@ -150,7 +150,7 @@ public abstract class FieldAccessor implements Instrumentation {
                                                 MethodDescription methodDescription) {
         StackManipulation stackManipulation = assigner.assign(methodDescription.getParameterTypes().get(0),
                 fieldDescription.getFieldType(),
-                considerRuntimeType);
+                dynamicallyTyped);
         if (!stackManipulation.isValid()) {
             throw new IllegalStateException("Setter type of " + methodDescription + " is not compatible with " + fieldDescription);
         } else if (fieldDescription.isFinal()) {
@@ -209,13 +209,13 @@ public abstract class FieldAccessor implements Instrumentation {
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && considerRuntimeType == ((FieldAccessor) other).considerRuntimeType
+                && dynamicallyTyped == ((FieldAccessor) other).dynamicallyTyped
                 && assigner.equals(((FieldAccessor) other).assigner);
     }
 
     @Override
     public int hashCode() {
-        return 31 * assigner.hashCode() + (considerRuntimeType ? 1 : 0);
+        return 31 * assigner.hashCode() + (dynamicallyTyped ? 1 : 0);
     }
 
     /**
@@ -481,10 +481,10 @@ public abstract class FieldAccessor implements Instrumentation {
          * and runtime type use configuration.
          *
          * @param assigner            The assigner to use.
-         * @param considerRuntimeType {@code true} if a field value's runtime type should be considered.
+         * @param dynamicallyTyped {@code true} if a field value's runtime type should be considered.
          * @return This field accessor with the given assigner and runtime type use configuration.
          */
-        Instrumentation withAssigner(Assigner assigner, boolean considerRuntimeType);
+        Instrumentation withAssigner(Assigner assigner, boolean dynamicallyTyped);
     }
 
     /**
@@ -564,14 +564,14 @@ public abstract class FieldAccessor implements Instrumentation {
          * Creates a new field accessor instrumentation.
          *
          * @param assigner            The assigner to use.
-         * @param considerRuntimeType {@code true} if a field value's runtime type should be considered.
+         * @param dynamicallyTyped {@code true} if a field value's runtime type should be considered.
          * @param fieldNameExtractor  The field name extractor to use.
          */
         protected ForUnnamedField(Assigner assigner,
-                                  boolean considerRuntimeType,
+                                  boolean dynamicallyTyped,
                                   FieldNameExtractor fieldNameExtractor) {
             this(assigner,
-                    considerRuntimeType,
+                    dynamicallyTyped,
                     fieldNameExtractor,
                     FieldLocator.ForInstrumentedTypeHierarchy.Factory.INSTANCE);
         }
@@ -580,23 +580,23 @@ public abstract class FieldAccessor implements Instrumentation {
          * Creates a new field accessor instrumentation.
          *
          * @param assigner            The assigner to use.
-         * @param considerRuntimeType {@code true} if a field value's runtime type should be considered.
+         * @param dynamicallyTyped {@code true} if a field value's runtime type should be considered.
          * @param fieldNameExtractor  The field name extractor to use.
          * @param fieldLocatorFactory A factory that will produce a field locator that will be used to find locate
          *                            a field to be accessed.
          */
         protected ForUnnamedField(Assigner assigner,
-                                  boolean considerRuntimeType,
+                                  boolean dynamicallyTyped,
                                   FieldNameExtractor fieldNameExtractor,
                                   FieldLocator.Factory fieldLocatorFactory) {
-            super(assigner, considerRuntimeType);
+            super(assigner, dynamicallyTyped);
             this.fieldNameExtractor = fieldNameExtractor;
             this.fieldLocatorFactory = fieldLocatorFactory;
         }
 
         @Override
         public AssignerConfigurable in(FieldLocator.Factory fieldLocatorFactory) {
-            return new ForUnnamedField(assigner, considerRuntimeType, fieldNameExtractor, nonNull(fieldLocatorFactory));
+            return new ForUnnamedField(assigner, dynamicallyTyped, fieldNameExtractor, nonNull(fieldLocatorFactory));
         }
 
         @Override
@@ -612,8 +612,8 @@ public abstract class FieldAccessor implements Instrumentation {
         }
 
         @Override
-        public Instrumentation withAssigner(Assigner assigner, boolean considerRuntimeType) {
-            return new ForUnnamedField(nonNull(assigner), considerRuntimeType, fieldNameExtractor, fieldLocatorFactory);
+        public Instrumentation withAssigner(Assigner assigner, boolean dynamicallyTyped) {
+            return new ForUnnamedField(nonNull(assigner), dynamicallyTyped, fieldNameExtractor, fieldLocatorFactory);
         }
 
         @Override
@@ -648,7 +648,7 @@ public abstract class FieldAccessor implements Instrumentation {
         public String toString() {
             return "FieldAccessor.ForUnnamedField{" +
                     "assigner=" + assigner +
-                    "considerRuntimeType=" + considerRuntimeType +
+                    "dynamicallyTyped=" + dynamicallyTyped +
                     "fieldLocatorFactory=" + fieldLocatorFactory +
                     "fieldNameExtractor=" + fieldNameExtractor +
                     '}';
@@ -679,13 +679,13 @@ public abstract class FieldAccessor implements Instrumentation {
          * Creates a field accessor instrumentation for a field of a given name.
          *
          * @param assigner            The assigner to use.
-         * @param considerRuntimeType {@code true} if a field value's runtime type should be considered.
+         * @param dynamicallyTyped {@code true} if a field value's runtime type should be considered.
          * @param fieldName           The name of the field.
          */
         protected ForNamedField(Assigner assigner,
-                                boolean considerRuntimeType,
+                                boolean dynamicallyTyped,
                                 String fieldName) {
-            super(assigner, considerRuntimeType);
+            super(assigner, dynamicallyTyped);
             this.fieldName = fieldName;
             preparationHandler = PreparationHandler.NoOp.INSTANCE;
             fieldLocatorFactory = FieldLocator.ForInstrumentedTypeHierarchy.Factory.INSTANCE;
@@ -699,14 +699,14 @@ public abstract class FieldAccessor implements Instrumentation {
          * @param fieldLocatorFactory A factory that will produce a field locator that will be used to find locate
          *                            a field to be accessed.
          * @param assigner            The assigner to use.
-         * @param considerRuntimeType {@code true} if a field value's runtime type should be considered.
+         * @param dynamicallyTyped {@code true} if a field value's runtime type should be considered.
          */
         private ForNamedField(Assigner assigner,
-                              boolean considerRuntimeType,
+                              boolean dynamicallyTyped,
                               String fieldName,
                               PreparationHandler preparationHandler,
                               FieldLocator.Factory fieldLocatorFactory) {
-            super(assigner, considerRuntimeType);
+            super(assigner, dynamicallyTyped);
             this.fieldName = fieldName;
             this.preparationHandler = preparationHandler;
             this.fieldLocatorFactory = fieldLocatorFactory;
@@ -720,7 +720,7 @@ public abstract class FieldAccessor implements Instrumentation {
         @Override
         public AssignerConfigurable defineAs(TypeDescription typeDescription, ModifierContributor.ForField... modifier) {
             return new ForNamedField(assigner,
-                    considerRuntimeType,
+                    dynamicallyTyped,
                     fieldName,
                     new PreparationHandler.FieldDefiner(fieldName, nonVoid(typeDescription), nonNull(modifier)),
                     FieldLocator.ForInstrumentedType.INSTANCE);
@@ -729,7 +729,7 @@ public abstract class FieldAccessor implements Instrumentation {
         @Override
         public AssignerConfigurable in(FieldLocator.Factory fieldLocatorFactory) {
             return new ForNamedField(assigner,
-                    considerRuntimeType,
+                    dynamicallyTyped,
                     fieldName,
                     preparationHandler,
                     nonNull(fieldLocatorFactory));
@@ -748,9 +748,9 @@ public abstract class FieldAccessor implements Instrumentation {
         }
 
         @Override
-        public Instrumentation withAssigner(Assigner assigner, boolean considerRuntimeType) {
+        public Instrumentation withAssigner(Assigner assigner, boolean dynamicallyTyped) {
             return new ForNamedField(nonNull(assigner),
-                    considerRuntimeType,
+                    dynamicallyTyped,
                     fieldName,
                     preparationHandler,
                     fieldLocatorFactory);
@@ -795,7 +795,7 @@ public abstract class FieldAccessor implements Instrumentation {
         public String toString() {
             return "FieldAccessor.ForNamedField{" +
                     "assigner=" + assigner +
-                    "considerRuntimeType=" + considerRuntimeType +
+                    "dynamicallyTyped=" + dynamicallyTyped +
                     "fieldName='" + fieldName + '\'' +
                     ", preparationHandler=" + preparationHandler +
                     ", fieldLocatorFactory=" + fieldLocatorFactory +

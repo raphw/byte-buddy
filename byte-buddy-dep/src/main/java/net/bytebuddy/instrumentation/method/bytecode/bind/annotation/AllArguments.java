@@ -124,11 +124,11 @@ public @interface AllArguments {
             ArrayFactory arrayFactory = ArrayFactory.targeting(targetType.getComponentType());
             List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(source.getParameterTypes().size());
             int offset = source.isStatic() ? 0 : 1;
-            boolean considerRuntimeType = RuntimeType.Verifier.check(target, targetParameterIndex);
+            boolean dynamicallyTyped = RuntimeType.Verifier.check(target, targetParameterIndex);
             for (TypeDescription sourceParameter : source.getParameterTypes()) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         MethodVariableAccess.forType(sourceParameter).loadFromIndex(offset),
-                        assigner.assign(sourceParameter, arrayFactory.getComponentType(), considerRuntimeType));
+                        assigner.assign(sourceParameter, arrayFactory.getComponentType(), dynamicallyTyped));
                 if (stackManipulation.isValid()) {
                     stackManipulations.add(stackManipulation);
                 } else if (annotation.loadSilent().value().isStrict()) {

@@ -35,18 +35,18 @@ public abstract class FixedValue implements Instrumentation {
     /**
      * Determines if the runtime type of a fixed value should be considered for the assignment to a return type.
      */
-    protected final boolean considerRuntimeType;
+    protected final boolean dynamicallyTyped;
 
     /**
      * Creates a new fixed value instrumentation.
      *
      * @param assigner            The assigner to use for assigning the fixed value to the return type of the instrumented value.
-     * @param considerRuntimeType If {@code true}, the runtime type of the given value will be considered for assigning
+     * @param dynamicallyTyped If {@code true}, the runtime type of the given value will be considered for assigning
      *                            the return type.
      */
-    protected FixedValue(Assigner assigner, boolean considerRuntimeType) {
+    protected FixedValue(Assigner assigner, boolean dynamicallyTyped) {
         this.assigner = assigner;
-        this.considerRuntimeType = considerRuntimeType;
+        this.dynamicallyTyped = dynamicallyTyped;
     }
 
     /**
@@ -216,7 +216,8 @@ public abstract class FixedValue implements Instrumentation {
                                           MethodDescription instrumentedMethod,
                                           TypeDescription fixedValueType,
                                           StackManipulation valueLoadingInstruction) {
-        StackManipulation assignment = assigner.assign(fixedValueType, instrumentedMethod.getReturnType(), considerRuntimeType);
+        StackManipulation assignment = assigner.assign(fixedValueType, instrumentedMethod.getReturnType(),
+                dynamicallyTyped);
         if (!assignment.isValid()) {
             throw new IllegalArgumentException("Cannot return value of type " + fixedValueType + " for " + instrumentedMethod);
         }
@@ -231,13 +232,13 @@ public abstract class FixedValue implements Instrumentation {
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && considerRuntimeType == ((FixedValue) other).considerRuntimeType
+                && dynamicallyTyped == ((FixedValue) other).dynamicallyTyped
                 && assigner.equals(((FixedValue) other).assigner);
     }
 
     @Override
     public int hashCode() {
-        return 31 * assigner.hashCode() + (considerRuntimeType ? 1 : 0);
+        return 31 * assigner.hashCode() + (dynamicallyTyped ? 1 : 0);
     }
 
     /**
@@ -251,11 +252,11 @@ public abstract class FixedValue implements Instrumentation {
          *
          * @param assigner            The assigner to use for assigning the fixed value to the return type of the
          *                            instrumented value.
-         * @param considerRuntimeType If {@code true}, the runtime type of the given value will be considered for
+         * @param dynamicallyTyped If {@code true}, the runtime type of the given value will be considered for
          *                            assigning the return type.
          * @return A fixed value instrumentation that makes use of the given assigner.
          */
-        Instrumentation withAssigner(Assigner assigner, boolean considerRuntimeType);
+        Instrumentation withAssigner(Assigner assigner, boolean dynamicallyTyped);
     }
 
     /**
@@ -282,21 +283,21 @@ public abstract class FixedValue implements Instrumentation {
          * @param loadedType           A type description representing the loaded type.
          * @param assigner             The assigner to use for assigning the fixed value to the return type of the
          *                             instrumented value.
-         * @param considerRuntimeType  If {@code true}, the runtime type of the given value will be considered for
+         * @param dynamicallyTyped  If {@code true}, the runtime type of the given value will be considered for
          *                             assigning the return type.
          */
         private ForPoolValue(StackManipulation valueLoadInstruction,
                              TypeDescription loadedType,
                              Assigner assigner,
-                             boolean considerRuntimeType) {
-            super(assigner, considerRuntimeType);
+                             boolean dynamicallyTyped) {
+            super(assigner, dynamicallyTyped);
             this.valueLoadInstruction = valueLoadInstruction;
             this.loadedType = loadedType;
         }
 
         @Override
-        public Instrumentation withAssigner(Assigner assigner, boolean considerRuntimeType) {
-            return new ForPoolValue(valueLoadInstruction, loadedType, nonNull(assigner), considerRuntimeType);
+        public Instrumentation withAssigner(Assigner assigner, boolean dynamicallyTyped) {
+            return new ForPoolValue(valueLoadInstruction, loadedType, nonNull(assigner), dynamicallyTyped);
         }
 
         @Override
@@ -341,7 +342,7 @@ public abstract class FixedValue implements Instrumentation {
                     "valueLoadInstruction=" + valueLoadInstruction +
                     ", loadedType=" + loadedType +
                     ", assigner=" + assigner +
-                    ", considerRuntimeType=" + considerRuntimeType +
+                    ", dynamicallyTyped=" + dynamicallyTyped +
                     '}';
         }
     }
@@ -378,11 +379,11 @@ public abstract class FixedValue implements Instrumentation {
          * @param fixedValue          The fixed value to be returned.
          * @param assigner            The assigner to use for assigning the fixed value to the return type of the
          *                            instrumented value.
-         * @param considerRuntimeType If {@code true}, the runtime type of the given value will be considered for
+         * @param dynamicallyTyped If {@code true}, the runtime type of the given value will be considered for
          *                            assigning the return type.
          */
-        protected ForStaticField(Object fixedValue, Assigner assigner, boolean considerRuntimeType) {
-            this(String.format("%s$%d", PREFIX, Math.abs(fixedValue.hashCode())), fixedValue, assigner, considerRuntimeType);
+        protected ForStaticField(Object fixedValue, Assigner assigner, boolean dynamicallyTyped) {
+            this(String.format("%s$%d", PREFIX, Math.abs(fixedValue.hashCode())), fixedValue, assigner, dynamicallyTyped);
         }
 
         /**
@@ -392,19 +393,19 @@ public abstract class FixedValue implements Instrumentation {
          * @param fixedValue          The fixed value to be returned.
          * @param assigner            The assigner to use for assigning the fixed value to the return type of the
          *                            instrumented value.
-         * @param considerRuntimeType If {@code true}, the runtime type of the given value will be considered for
+         * @param dynamicallyTyped If {@code true}, the runtime type of the given value will be considered for
          *                            assigning the return type.
          */
-        protected ForStaticField(String fieldName, Object fixedValue, Assigner assigner, boolean considerRuntimeType) {
-            super(assigner, considerRuntimeType);
+        protected ForStaticField(String fieldName, Object fixedValue, Assigner assigner, boolean dynamicallyTyped) {
+            super(assigner, dynamicallyTyped);
             this.fieldName = fieldName;
             this.fixedValue = fixedValue;
             fieldType = new TypeDescription.ForLoadedType(fixedValue.getClass());
         }
 
         @Override
-        public Instrumentation withAssigner(Assigner assigner, boolean considerRuntimeType) {
-            return new ForStaticField(fieldName, fixedValue, nonNull(assigner), considerRuntimeType);
+        public Instrumentation withAssigner(Assigner assigner, boolean dynamicallyTyped) {
+            return new ForStaticField(fieldName, fixedValue, nonNull(assigner), dynamicallyTyped);
         }
 
         @Override
@@ -439,7 +440,7 @@ public abstract class FixedValue implements Instrumentation {
                     ", fieldType=" + fieldType +
                     ", fixedValue=" + fixedValue +
                     ", assigner=" + assigner +
-                    ", considerRuntimeType=" + considerRuntimeType +
+                    ", dynamicallyTyped=" + dynamicallyTyped +
                     '}';
         }
 

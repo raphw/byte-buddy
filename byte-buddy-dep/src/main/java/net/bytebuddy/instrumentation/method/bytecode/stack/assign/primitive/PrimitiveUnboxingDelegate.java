@@ -240,7 +240,7 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
         }
 
         @Override
-        public StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, boolean considerRuntimeType) {
+        public StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, boolean dynamicallyTyped) {
             return new Compound(
                     primitiveUnboxingDelegate,
                     PrimitiveWideningDelegate.forPrimitive(primitiveUnboxingDelegate.primitiveType).widenTo(targetType));
@@ -258,11 +258,11 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
          *
          * @param targetType          The type that is the desired outcome of the assignment.
          * @param assigner            The assigner used to assign the unboxed type to the target type.
-         * @param considerRuntimeType If {@code true}, unsafe castings are allowed for this assignment.
+         * @param dynamicallyTyped If {@code true}, unsafe castings are allowed for this assignment.
          * @return A stack manipulation representing this assignment if such an assignment is possible. An illegal
          * assignment otherwise.
          */
-        StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, boolean considerRuntimeType);
+        StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, boolean dynamicallyTyped);
     }
 
     /**
@@ -287,10 +287,10 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
         }
 
         @Override
-        public StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, boolean considerRuntimeType) {
+        public StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, boolean dynamicallyTyped) {
             PrimitiveUnboxingDelegate primitiveUnboxingDelegate = PrimitiveUnboxingDelegate.forPrimitive(targetType);
             return new Compound(
-                    assigner.assign(originalType, primitiveUnboxingDelegate.wrapperType, considerRuntimeType),
+                    assigner.assign(originalType, primitiveUnboxingDelegate.wrapperType, dynamicallyTyped),
                     primitiveUnboxingDelegate);
         }
 

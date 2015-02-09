@@ -323,7 +323,7 @@ public class Forwarding implements Instrumentation {
         public Size apply(MethodVisitor methodVisitor,
                           Context instrumentationContext,
                           MethodDescription instrumentedMethod) {
-            if (!instrumentedMethod.getDeclaringType().isAssignableFrom(fieldType)) {
+            if (!instrumentedMethod.isInvokableOn(fieldType)) {
                 throw new IllegalArgumentException("Cannot forward " + instrumentedMethod + " to " + fieldType);
             } else if (instrumentedMethod.isStatic()) {
                 throw new IllegalArgumentException("Cannot forward the static method " + instrumentedMethod);

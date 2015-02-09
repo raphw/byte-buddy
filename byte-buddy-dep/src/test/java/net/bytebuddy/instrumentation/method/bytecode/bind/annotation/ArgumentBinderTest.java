@@ -57,7 +57,7 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
     }
 
     private void assertBinding(Annotation[][] annotations,
-                               boolean considerRuntimeType,
+                               boolean dynamicallyTyped,
                                Argument.BindingMechanic bindingMechanic) throws Exception {
         final int sourceIndex = 2, targetIndex = 1;
         when(stackManipulation.isValid()).thenReturn(true);
@@ -86,7 +86,7 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
         verify(source, atLeast(1)).getParameterTypes();
         verify(target, atLeast(1)).getParameterTypes();
         verify(target, atLeast(1)).getParameterAnnotations();
-        verify(assigner).assign(sourceType, targetType, considerRuntimeType);
+        verify(assigner).assign(sourceType, targetType, dynamicallyTyped);
         verifyNoMoreInteractions(assigner);
     }
 
