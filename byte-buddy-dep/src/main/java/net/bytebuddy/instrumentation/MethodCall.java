@@ -1,7 +1,10 @@
 package net.bytebuddy.instrumentation;
 
+import net.bytebuddy.instrumentation.field.FieldDescription;
+import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
+import net.bytebuddy.instrumentation.method.bytecode.stack.Duplication;
 import net.bytebuddy.instrumentation.method.bytecode.stack.Removal;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.TypeCreation;
@@ -202,7 +205,7 @@ public class MethodCall implements Instrumentation {
     public MethodCall with(Object... argument) {
         List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>(argument.length);
         for (Object anArgument : argument) {
-            argumentLoaders.add(ArgumentLoader.ForStaticFieldValue.of(anArgument));
+            argumentLoaders.add(ArgumentLoader.ForStaticField.of(anArgument));
         }
         return new MethodCall(methodLocator,
                 targetHandler,
@@ -226,7 +229,7 @@ public class MethodCall implements Instrumentation {
         for (Object anArgument : argument) {
             argumentLoaders.add(anArgument == null
                     ? ArgumentLoader.ForNullConstant.INSTANCE
-                    : new ArgumentLoader.ForStaticFieldValue(anArgument));
+                    : new ArgumentLoader.ForStaticField(anArgument));
         }
         return new MethodCall(methodLocator,
                 targetHandler,
@@ -260,8 +263,24 @@ public class MethodCall implements Instrumentation {
     }
 
     /**
+     * Assigns the {@code this} reference to the next parameter.
+     *
+     * @return This method call where the next parameter is a assigned a reference to the {@code this} reference
+     * of the instance of the intercepted method.
+     */
+    public MethodCall withThis() {
+        return new MethodCall(methodLocator,
+                targetHandler,
+                join(argumentLoaders, ArgumentLoader.ForThisReference.INSTANCE),
+                methodInvoker,
+                terminationHandler,
+                assigner,
+                dynamicallyTyped);
+    }
+
+    /**
      * Defines a method call which fetches a value from an instance field. The value of the field needs to be
-     * defined manually and is initialized with {@code null}.
+     * defined manually and is initialized with {@code null}. The field itself is defined by this instrumentation.
      *
      * @param type The type of the field.
      * @param name The name of the field.
@@ -273,7 +292,7 @@ public class MethodCall implements Instrumentation {
 
     /**
      * Defines a method call which fetches a value from an instance field. The value of the field needs to be
-     * defined manually and is initialized with {@code null}.
+     * defined manually and is initialized with {@code null}. The field itself is defined by this instrumentation.
      *
      * @param typeDescription The type of the field.
      * @param name            The name of the field.
@@ -282,11 +301,33 @@ public class MethodCall implements Instrumentation {
     public MethodCall withInstanceField(TypeDescription typeDescription, String name) {
         return new MethodCall(methodLocator,
                 targetHandler,
-                join(argumentLoaders, new ArgumentLoader.ForInstanceFieldValue(nonNull(typeDescription), nonNull(name))),
+                join(argumentLoaders, new ArgumentLoader.ForInstanceField(nonNull(typeDescription), nonNull(name))),
                 methodInvoker,
                 terminationHandler,
                 assigner,
                 dynamicallyTyped);
+    }
+
+    /**
+     * Defines a method call which fetches a value from an existing field. The field is not defines by this
+     * instrumentation.
+     *
+     * @param fieldName The name of the field.
+     * @return A method call which assigns the next parameter to the value of the given field.
+     */
+    public MethodCall withField(String... fieldName) {
+        List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>(fieldName.length);
+        for (String aFieldName : fieldName) {
+            argumentLoaders.add(new ArgumentLoader.ForExistingField(aFieldName));
+        }
+        return new MethodCall(methodLocator,
+                targetHandler,
+                join(this.argumentLoaders, argumentLoaders),
+                methodInvoker,
+                terminationHandler,
+                assigner,
+                dynamicallyTyped);
+
     }
 
     /**
@@ -540,7 +581,9 @@ public class MethodCall implements Instrumentation {
 
         /**
          * Invokes the given method by a super method invocation on the instance of the instrumented type.
-         * Note that
+         * Note that the super method is resolved depending on the type of instrumentation when this method is called.
+         * In case that a subclass is created, the super type is invoked. If a type is rebased, the rebased method
+         * is invoked if such a method exists.
          *
          * @return A method call where the given method is invoked as a super method invocation.
          */
@@ -554,6 +597,11 @@ public class MethodCall implements Instrumentation {
                     dynamicallyTyped);
         }
 
+        /**
+         * Invokes the given method by a Java 8default method invocation on the instance of the instrumented type.
+         *
+         * @return A method call where the given method is invoked as a super method invocation.
+         */
         public MethodCall onDefault() {
             return new MethodCall(methodLocator,
                     TargetHandler.ForSelfOrStaticInvocation.INSTANCE,
@@ -851,7 +899,7 @@ public class MethodCall implements Instrumentation {
 
             @Override
             public StackManipulation resolve(MethodDescription methodDescription, TypeDescription instrumentedType) {
-                return TypeCreation.forType(methodDescription.getDeclaringType());
+                return new StackManipulation.Compound(TypeCreation.forType(methodDescription.getDeclaringType()), Duplication.SINGLE);
             }
 
             @Override
@@ -921,7 +969,7 @@ public class MethodCall implements Instrumentation {
                 }
                 TypeDescription originType = interceptedMethod.getParameterTypes().get(index);
                 StackManipulation stackManipulation = new StackManipulation.Compound(
-                        MethodVariableAccess.forType(originType).loadFromIndex(index),
+                        MethodVariableAccess.forType(originType).loadFromIndex(interceptedMethod.getParameterOffset(index)),
                         assigner.assign(originType, targetType, dynamicallyTyped));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign " + originType + " to " + targetType
@@ -957,7 +1005,7 @@ public class MethodCall implements Instrumentation {
         /**
          * Loads a value onto the operand stack that is stored in a static field.
          */
-        static class ForStaticFieldValue implements ArgumentLoader {
+        static class ForStaticField implements ArgumentLoader {
 
             /**
              * The name prefix of the field to store the argument.
@@ -1007,7 +1055,7 @@ public class MethodCall implements Instrumentation {
                 } else if (value.getClass() == Double.class) {
                     return new ForDoubleConstant((Double) value);
                 } else {
-                    return new ForStaticFieldValue(value);
+                    return new ForStaticField(value);
                 }
             }
 
@@ -1016,7 +1064,7 @@ public class MethodCall implements Instrumentation {
              *
              * @param value The value to be stored and loaded onto the operand stack.
              */
-            protected ForStaticFieldValue(Object value) {
+            protected ForStaticField(Object value) {
                 this.value = value;
                 fieldName = String.format("%s$%s", FIELD_PREFIX, RandomString.make());
             }
@@ -1047,7 +1095,7 @@ public class MethodCall implements Instrumentation {
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && value.equals(((ForStaticFieldValue) other).value);
+                        && value.equals(((ForStaticField) other).value);
             }
 
             @Override
@@ -1057,7 +1105,7 @@ public class MethodCall implements Instrumentation {
 
             @Override
             public String toString() {
-                return "MethodCall.ArgumentLoader.ForStaticFieldValue{" +
+                return "MethodCall.ArgumentLoader.ForStaticField{" +
                         "value=" + value +
                         ", fieldName='" + fieldName + '\'' +
                         '}';
@@ -1067,7 +1115,7 @@ public class MethodCall implements Instrumentation {
         /**
          * Loads a value onto the operand stack that is stored in an instance field.
          */
-        static class ForInstanceFieldValue implements ArgumentLoader {
+        static class ForInstanceField implements ArgumentLoader {
 
             /**
              * The modifier to be applied to the instance field.
@@ -1090,7 +1138,7 @@ public class MethodCall implements Instrumentation {
              * @param fieldType The name of the field.
              * @param fieldName The type of the field.
              */
-            public ForInstanceFieldValue(TypeDescription fieldType, String fieldName) {
+            public ForInstanceField(TypeDescription fieldType, String fieldName) {
                 this.fieldType = fieldType;
                 this.fieldName = fieldName;
             }
@@ -1101,7 +1149,11 @@ public class MethodCall implements Instrumentation {
                                              TypeDescription targetType,
                                              Assigner assigner,
                                              boolean dynamicallyTyped) {
+                if (interceptedMethod.isStatic()) {
+                    throw new IllegalStateException("Cannot access instance field from static " + interceptedMethod);
+                }
                 StackManipulation stackManipulation = new StackManipulation.Compound(
+                        MethodVariableAccess.REFERENCE.loadFromIndex(0),
                         FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName)).getOnly()).getter(),
                         assigner.assign(fieldType, targetType, dynamicallyTyped));
                 if (!stackManipulation.isValid()) {
@@ -1120,7 +1172,7 @@ public class MethodCall implements Instrumentation {
             public boolean equals(Object other) {
                 if (this == other) return true;
                 if (other == null || getClass() != other.getClass()) return false;
-                ForInstanceFieldValue that = (ForInstanceFieldValue) other;
+                ForInstanceField that = (ForInstanceField) other;
                 return fieldName.equals(that.fieldName) && fieldType.equals(that.fieldType);
             }
 
@@ -1133,10 +1185,78 @@ public class MethodCall implements Instrumentation {
 
             @Override
             public String toString() {
-                return "MethodCall.ArgumentLoader.ForInstanceFieldValue{" +
+                return "MethodCall.ArgumentLoader.ForInstanceField{" +
                         "fieldType=" + fieldType +
                         ", fieldName='" + fieldName + '\'' +
                         '}';
+            }
+        }
+
+        /**
+         * Loads the value of an existing field onto the operand stack.
+         */
+        static class ForExistingField implements ArgumentLoader {
+
+            /**
+             * The name of the field.
+             */
+            private final String fieldName;
+
+            /**
+             * Creates a new arugment loader for an existing field.
+             *
+             * @param fieldName The name of the field.
+             */
+            public ForExistingField(String fieldName) {
+                this.fieldName = fieldName;
+            }
+
+            @Override
+            public StackManipulation resolve(TypeDescription instrumentedType,
+                                             MethodDescription interceptedMethod,
+                                             TypeDescription targetType,
+                                             Assigner assigner,
+                                             boolean dynamicallyTyped) {
+                FieldList fieldList = instrumentedType.getDeclaredFields().filter(named(fieldName));
+                if (fieldList.size() == 0) {
+                    throw new IllegalStateException("No field named " + fieldName + " on " + instrumentedType);
+                }
+                FieldDescription fieldDescription = fieldList.getOnly();
+                if (!fieldDescription.isStatic() && interceptedMethod.isStatic()) {
+                    throw new IllegalStateException("Cannot access non-static " + fieldDescription + " from " + interceptedMethod);
+                }
+                StackManipulation stackManipulation = new StackManipulation.Compound(
+                        fieldDescription.isStatic()
+                                ? StackManipulation.LegalTrivial.INSTANCE
+                                : MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                        FieldAccess.forField(fieldDescription).getter(),
+                        assigner.assign(fieldDescription.getFieldType(), targetType, dynamicallyTyped)
+                );
+                if (!stackManipulation.isValid()) {
+                    throw new IllegalStateException("Cannot assign " + fieldDescription + " to " + targetType);
+                }
+                return stackManipulation;
+            }
+
+            @Override
+            public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                return instrumentedType;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && fieldName.equals(((ForExistingField) other).fieldName);
+            }
+
+            @Override
+            public int hashCode() {
+                return fieldName.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "MethodCall.ArgumentLoader.ForExistingField{fieldName='" + fieldName + '\'' + '}';
             }
         }
 
@@ -1160,6 +1280,40 @@ public class MethodCall implements Instrumentation {
                     throw new IllegalStateException("Cannot assign null to " + targetType);
                 }
                 return NullConstant.INSTANCE;
+            }
+
+            @Override
+            public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                return instrumentedType;
+            }
+        }
+
+        /**
+         * An argument loader that assigns the {@code this} reference to a parameter.
+         */
+        static enum ForThisReference implements ArgumentLoader {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public StackManipulation resolve(TypeDescription instrumentedType,
+                                             MethodDescription interceptedMethod,
+                                             TypeDescription targetType,
+                                             Assigner assigner,
+                                             boolean dynamicallyTyped) {
+                if (interceptedMethod.isStatic()) {
+                    throw new IllegalStateException(interceptedMethod + " has no instance");
+                }
+                StackManipulation stackManipulation = new StackManipulation.Compound(
+                        MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                        assigner.assign(instrumentedType, targetType, dynamicallyTyped));
+                if (!stackManipulation.isValid()) {
+                    throw new IllegalStateException("Cannot assign " + instrumentedType + " to " + targetType);
+                }
+                return stackManipulation;
             }
 
             @Override
@@ -1796,9 +1950,9 @@ public class MethodCall implements Instrumentation {
                                              MethodDescription interceptedMethod,
                                              Assigner assigner,
                                              boolean dynamicallyTyped) {
-                StackManipulation stackManipulation = assigner.assign(invokedMethod.getReturnType(),
-                        interceptedMethod.getReturnType(),
-                        dynamicallyTyped);
+                StackManipulation stackManipulation = assigner.assign(invokedMethod.isConstructor()
+                        ? invokedMethod.getDeclaringType()
+                        : invokedMethod.getReturnType(), interceptedMethod.getReturnType(), dynamicallyTyped);
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot return " + invokedMethod.getReturnType()
                             + " from " + interceptedMethod);
@@ -1824,7 +1978,9 @@ public class MethodCall implements Instrumentation {
                                              MethodDescription interceptedMethod,
                                              Assigner assigner,
                                              boolean dynamicallyTyped) {
-                return Removal.pop(invokedMethod.getReturnType());
+                return Removal.pop(invokedMethod.isConstructor()
+                        ? invokedMethod.getDeclaringType()
+                        : invokedMethod.getReturnType());
             }
         }
     }

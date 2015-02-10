@@ -8,7 +8,9 @@ import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
 public class MethodCallTest extends AbstractInstrumentationTest {
@@ -108,6 +110,29 @@ public class MethodCallTest extends AbstractInstrumentationTest {
         /* empty */
     }
 
+    @Test
+    public void testObjectConstruction() throws Exception {
+        DynamicType.Loaded<SelfReference> loaded = instrument(SelfReference.class,
+                MethodCall.construct(SelfReference.class.getDeclaredConstructor()));
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredConstructors().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        SelfReference instance = loaded.getLoaded().newInstance();
+        SelfReference created = instance.foo();
+        assertEquals(SelfReference.class, created.getClass());
+        assertNotEquals(SelfReference.class, instance.getClass());
+        assertThat(instance, instanceOf(SelfReference.class));
+        assertThat(created, not(instance));
+    }
+
+    public static class SelfReference {
+
+        public SelfReference foo() {
+            return null;
+        }
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testMethodTypeIncompatible() throws Exception {
         instrument(InstanceMethod.class,
@@ -161,8 +186,9 @@ public class MethodCallTest extends AbstractInstrumentationTest {
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForByteConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForCharacterConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForDoubleConstant.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForStaticFieldValue.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForInstanceFieldValue.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForStaticField.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForInstanceField.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForExistingField.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForFloatConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForIntegerConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForLongConstant.class).apply();
