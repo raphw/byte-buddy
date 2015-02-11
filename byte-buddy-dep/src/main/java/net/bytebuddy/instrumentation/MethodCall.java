@@ -833,8 +833,11 @@ public class MethodCall implements Instrumentation {
                 if (methodDescription.isStatic() || !methodDescription.isInvokableOn(fieldType)) {
                     throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + fieldType);
                 }
-                return FieldAccess.forField(instrumentedType.getDeclaredFields()
-                        .filter(named(fieldName)).getOnly()).getter();
+                return new StackManipulation.Compound(
+                        methodDescription.isStatic()
+                                ? StackManipulation.LegalTrivial.INSTANCE
+                                : MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                        FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName)).getOnly()).getter());
             }
 
             @Override

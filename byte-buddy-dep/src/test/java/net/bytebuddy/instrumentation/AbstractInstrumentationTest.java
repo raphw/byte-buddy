@@ -1,5 +1,6 @@
 package net.bytebuddy.instrumentation;
 
+import jdk.nashorn.internal.runtime.Debug;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.asm.ClassVisitorWrapper;
