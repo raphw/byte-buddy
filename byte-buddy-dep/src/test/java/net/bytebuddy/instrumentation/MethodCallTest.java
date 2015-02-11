@@ -40,7 +40,7 @@ public class MethodCallTest extends AbstractInstrumentationTest {
     public TestRule methodRule = new MockitoRule(this);
 
     @Rule
-    public MethodRule javaVersionRule = new JavaVersionRule(7);
+    public MethodRule javaVersionRule = new JavaVersionRule(8);
 
     @Mock
     private Assigner nonAssigner;
