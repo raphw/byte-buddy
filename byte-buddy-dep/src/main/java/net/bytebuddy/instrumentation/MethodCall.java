@@ -120,12 +120,12 @@ public class MethodCall implements Instrumentation {
     }
 
     /**
-     * Invokes the method that is instrumented by the returned instance.
+     * Invokes the method that is instrumented by the returned instance by a super method invocation.
      *
      * @return A method call that invokes the method being instrumented.
      */
-    public static MethodCall.WithoutSpecifiedTarget invokeSelf() {
-        return new WithoutSpecifiedTarget(MethodLocator.ForInterceptedMethod.INSTANCE);
+    public static MethodCall invokeSuper() {
+        return new WithoutSpecifiedTarget(MethodLocator.ForInterceptedMethod.INSTANCE).onSuper();
     }
 
     /**
@@ -245,12 +245,15 @@ public class MethodCall implements Instrumentation {
      * to the invoked method as an argument.
      *
      * @param index The parameter indices of the instrumented method to be handed to the invoked method as an
-     *              argument in their order.
+     *              argument in their order. The indices are zero-based.
      * @return A method call that hands the provided arguments to the invoked method.
      */
     public MethodCall withArgument(int... index) {
         List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>(index.length);
         for (int anIndex : index) {
+            if (anIndex < 0) {
+                throw new IllegalArgumentException("Negative index: " + anIndex);
+            }
             argumentLoaders.add(new ArgumentLoader.ForMethodParameter(anIndex));
         }
         return new MethodCall(methodLocator,
@@ -453,8 +456,7 @@ public class MethodCall implements Instrumentation {
             MethodDescription invokedMethod = methodLocator.resolve(instrumentedMethod);
             TypeList methodParameters = invokedMethod.getParameterTypes();
             if (methodParameters.size() != argumentLoaders.size()) {
-                throw new IllegalStateException(invokedMethod + " does not take "
-                        + argumentLoaders.size() + " arguments");
+                throw new IllegalStateException(invokedMethod + " does not take " + argumentLoaders.size() + " arguments");
             }
             int index = 0;
             StackManipulation[] argumentInstruction = new StackManipulation[argumentLoaders.size()];
@@ -964,8 +966,8 @@ public class MethodCall implements Instrumentation {
                                              TypeDescription targetType,
                                              Assigner assigner,
                                              boolean dynamicallyTyped) {
-                if (interceptedMethod.getParameterTypes().size() < index) {
-                    throw new IllegalStateException(interceptedMethod + " does not have a parameter " + index);
+                if (interceptedMethod.getParameterTypes().size() <= index) {
+                    throw new IllegalStateException(interceptedMethod + " does not have a parameter with index " + index);
                 }
                 TypeDescription originType = interceptedMethod.getParameterTypes().get(index);
                 StackManipulation stackManipulation = new StackManipulation.Compound(
