@@ -1219,12 +1219,19 @@ public class MethodCall implements Instrumentation {
                                              TypeDescription targetType,
                                              Assigner assigner,
                                              boolean dynamicallyTyped) {
-                FieldList fieldList = instrumentedType.getDeclaredFields().filter(named(fieldName));
-                if (fieldList.size() == 0) {
-                    throw new IllegalStateException("No field named " + fieldName + " on " + instrumentedType);
-                }
-                FieldDescription fieldDescription = fieldList.getOnly();
-                if (!fieldDescription.isStatic() && interceptedMethod.isStatic()) {
+                TypeDescription currentType = instrumentedType;
+                FieldDescription fieldDescription = null;
+                do {
+                    FieldList fieldList = currentType.getDeclaredFields().filter(named(fieldName));
+                    if (fieldList.size() != 0) {
+                        fieldDescription = fieldList.getOnly();
+                    }
+                    currentType = currentType.getSupertype();
+                } while (currentType != null
+                        && (fieldDescription == null || !fieldDescription.isVisibleTo(instrumentedType)));
+                if (fieldDescription == null) {
+                    throw new IllegalStateException(instrumentedType + " does not define a visible field " + fieldName);
+                } else if (!fieldDescription.isStatic() && interceptedMethod.isStatic()) {
                     throw new IllegalStateException("Cannot access non-static " + fieldDescription + " from " + interceptedMethod);
                 }
                 StackManipulation stackManipulation = new StackManipulation.Compound(
