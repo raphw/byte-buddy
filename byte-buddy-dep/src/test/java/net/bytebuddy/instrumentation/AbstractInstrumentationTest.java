@@ -1,6 +1,5 @@
 package net.bytebuddy.instrumentation;
 
-import jdk.nashorn.internal.runtime.Debug;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.asm.ClassVisitorWrapper;
@@ -19,10 +18,8 @@ import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.test.utility.DebuggingWrapper;
 import org.hamcrest.CoreMatchers;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.util.Textifier;
 
 import java.util.Arrays;
 
