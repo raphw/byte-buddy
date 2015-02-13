@@ -77,7 +77,7 @@ public class InvokeDynamic implements Instrumentation {
             return false;
         }
         TypeDescription currentParameter = parameterTypes.previous();
-        if(currentParameter.represents(Object[].class)) {
+        if (currentParameter.represents(Object[].class)) {
             return true;
         }
         // TODO: Implement validation.
