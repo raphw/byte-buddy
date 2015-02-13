@@ -2,8 +2,12 @@ package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.utility.JavaType;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 import org.mockito.Mock;
 
 import java.lang.reflect.Method;
@@ -16,11 +20,10 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
 
     private static final String FOO = "foo";
 
-    private static final String METHOD_HANDLE_TYPE_INTERNAL_NAME = "java/lang/invoke/MethodHandle";
-
-    private static final String METHOD_TYPE_TYPE_INTERNAL_NAME = "java/lang/invoke/MethodType";
-
     private static final int INDEX = 0;
+
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule(7);
 
     @Mock
     private TypeDescription targetType;
@@ -70,8 +73,10 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     }
 
     @Test
+    @JavaVersionRule.Enforce
     public void testMethodHandleBinding() throws Exception {
-        when(targetType.getInternalName()).thenReturn(METHOD_HANDLE_TYPE_INTERNAL_NAME);
+        targetType = new TypeDescription.ForLoadedType(JavaType.METHOD_HANDLE.load());
+        when(targetTypeList.get(INDEX)).thenReturn(targetType);
         when(source.getDeclaringType()).thenReturn(mock(TypeDescription.class));
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
                 .bind(annotationDescription, INDEX, source, target, instrumentationTarget, assigner);
@@ -79,8 +84,10 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     }
 
     @Test
+    @JavaVersionRule.Enforce
     public void testMethodTypeBinding() throws Exception {
-        when(targetType.getInternalName()).thenReturn(METHOD_TYPE_TYPE_INTERNAL_NAME);
+        targetType = new TypeDescription.ForLoadedType(JavaType.METHOD_TYPE.load());
+        when(targetTypeList.get(INDEX)).thenReturn(targetType);
         when(source.getDescriptor()).thenReturn(FOO);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
                 .bind(annotationDescription, INDEX, source, target, instrumentationTarget, assigner);

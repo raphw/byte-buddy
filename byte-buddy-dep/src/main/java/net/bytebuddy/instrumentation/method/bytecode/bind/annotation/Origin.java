@@ -7,6 +7,7 @@ import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import net.bytebuddy.instrumentation.method.bytecode.stack.constant.*;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.utility.JavaType;
 
 import java.lang.annotation.*;
 import java.lang.reflect.Method;
@@ -100,9 +101,9 @@ public @interface Origin {
                         : MethodConstant.forMethod(source));
             } else if (parameterType.represents(String.class)) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(new TextConstant(source.getUniqueSignature()));
-            } else if (MethodHandleConstant.isRepresentedBy(parameterType)) {
+            } else if (JavaType.METHOD_HANDLE.representedBy(parameterType)) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(MethodHandleConstant.of(source));
-            } else if (MethodTypeConstant.isRepresentedBy(parameterType)) {
+            } else if (JavaType.METHOD_TYPE.representedBy(parameterType)) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(new MethodTypeConstant(source));
             } else {
                 throw new IllegalStateException("The " + target + " method's " + targetParameterIndex +

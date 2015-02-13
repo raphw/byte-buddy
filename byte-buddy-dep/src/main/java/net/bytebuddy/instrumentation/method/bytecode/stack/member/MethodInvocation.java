@@ -3,9 +3,13 @@ package net.bytebuddy.instrumentation.method.bytecode.stack.member;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+
+import java.util.List;
 
 /**
  * A builder for a method invocation.
@@ -15,35 +19,40 @@ public enum MethodInvocation {
     /**
      * A virtual method invocation.
      */
-    VIRTUAL(Opcodes.INVOKEVIRTUAL),
+    VIRTUAL(Opcodes.INVOKEVIRTUAL, Opcodes.H_INVOKEVIRTUAL),
 
     /**
      * An interface-typed virtual method invocation.
      */
-    INTERFACE(Opcodes.INVOKEINTERFACE),
+    INTERFACE(Opcodes.INVOKEINTERFACE, Opcodes.H_INVOKEINTERFACE),
 
     /**
      * A static method invocation.
      */
-    STATIC(Opcodes.INVOKESTATIC),
+    STATIC(Opcodes.INVOKESTATIC, Opcodes.H_INVOKESTATIC),
 
     /**
      * A specialized virtual method invocation.
      */
-    SPECIAL(Opcodes.INVOKESPECIAL);
+    SPECIAL(Opcodes.INVOKESPECIAL, Opcodes.H_INVOKESPECIAL),
+
+    SPECIAL_CONSTRUCTOR(Opcodes.INVOKESPECIAL, Opcodes.H_NEWINVOKESPECIAL);
 
     /**
      * The opcode for invoking a method.
      */
     private final int invocationOpcode;
 
+    private final int handle;
+
     /**
      * Creates a new type of method invocation.
      *
      * @param callOpcode The opcode for invoking a method.
      */
-    private MethodInvocation(int callOpcode) {
+    private MethodInvocation(int callOpcode, int handle) {
         this.invocationOpcode = callOpcode;
+        this.handle = handle;
     }
 
     /**
@@ -57,7 +66,9 @@ public enum MethodInvocation {
             return IllegalInvocation.INSTANCE;
         } else if (methodDescription.isStatic()) { // Check this property first, private static methods must use INVOKESTATIC
             return STATIC.new Invocation(methodDescription);
-        } else if (methodDescription.isPrivate() || methodDescription.isConstructor() || methodDescription.isDefaultMethod()) {
+        } else if (methodDescription.isConstructor()) {
+            return SPECIAL_CONSTRUCTOR.new Invocation(methodDescription); // Check this property second, constructors might be private
+        } else if (methodDescription.isPrivate() || methodDescription.isDefaultMethod()) {
             return SPECIAL.new Invocation(methodDescription);
         } else if (methodDescription.getDeclaringType().isInterface()) { // Check this property last, default methods must be called by INVOKESPECIAL
             return INTERFACE.new Invocation(methodDescription);
@@ -83,6 +94,14 @@ public enum MethodInvocation {
 
         @Override
         public StackManipulation special(TypeDescription invocationTarget) {
+            return Illegal.INSTANCE;
+        }
+
+        @Override
+        public StackManipulation dynamic(String methodName,
+                                         TypeDescription returnType,
+                                         List<? extends TypeDescription> methodType,
+                                         List<?> arguments) {
             return Illegal.INSTANCE;
         }
 
@@ -118,6 +137,11 @@ public enum MethodInvocation {
          * @return A stack manipulation representing this method invocation.
          */
         StackManipulation special(TypeDescription invocationTarget);
+
+        StackManipulation dynamic(String methodName,
+                                  TypeDescription returnType,
+                                  List<? extends TypeDescription> methodType,
+                                  List<?> arguments);
     }
 
     /**
@@ -192,6 +216,16 @@ public enum MethodInvocation {
             return SPECIAL.new Invocation(methodDescription, invocationTarget);
         }
 
+        @Override
+        public StackManipulation dynamic(String methodName,
+                                         TypeDescription returnType,
+                                         List<? extends TypeDescription> methodType,
+                                         List<?> arguments) {
+            return methodDescription.isBootstrap()
+                    ? new DynamicInvocation(methodName, returnType, methodType, methodDescription, arguments)
+                    : Illegal.INSTANCE;
+        }
+
         /**
          * Returns the outer instance.
          *
@@ -229,6 +263,51 @@ public enum MethodInvocation {
                     "typeDescription=" + typeDescription +
                     ", methodDescription=" + methodDescription +
                     '}';
+        }
+    }
+
+    protected class DynamicInvocation implements StackManipulation {
+
+        private final String methodName;
+
+        private final String methodDescriptor;
+
+        private final MethodDescription bootstrapMethod;
+
+        private final List<?> arguments;
+
+        public DynamicInvocation(String methodName,
+                                 TypeDescription returnType,
+                                 List<? extends TypeDescription> parameterTypes,
+                                 MethodDescription bootstrapMethod,
+                                 List<?> arguments) {
+            this.methodName = methodName;
+            StringBuilder stringBuilder = new StringBuilder("(");
+            for (TypeDescription parameterType : parameterTypes) {
+                stringBuilder.append(parameterType.getDescriptor());
+            }
+            methodDescriptor = stringBuilder.append(')').append(returnType.getDescriptor()).toString();
+            this.bootstrapMethod = bootstrapMethod;
+            this.arguments = arguments;
+        }
+
+        @Override
+        public boolean isValid() {
+            return true;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+            methodVisitor.visitInvokeDynamicInsn(methodName,
+                    methodDescriptor,
+                    new Handle(handle,
+                            bootstrapMethod.getDeclaringType().getInternalName(),
+                            bootstrapMethod.getInternalName(),
+                            bootstrapMethod.getDescriptor()),
+                    arguments.toArray(new Object[arguments.size()]));
+            return (bootstrapMethod.isConstructor()
+                    ? StackSize.SINGLE
+                    : bootstrapMethod.getReturnType().getStackSize()).toIncreasingSize();
         }
     }
 }

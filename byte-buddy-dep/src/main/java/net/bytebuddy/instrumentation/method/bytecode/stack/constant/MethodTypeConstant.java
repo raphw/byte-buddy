@@ -14,14 +14,10 @@ import org.objectweb.asm.Type;
 public class MethodTypeConstant implements StackManipulation {
 
     /**
-     * The type description for a method type. This way, we avoid a compile time dependency to this
-     * type which allows us to run Byte Buddy in Java 6.
-     */
-    private static final String METHOD_TYPE_TYPE_INTERNAL_NAME = "java/lang/invoke/MethodType";
-    /**
      * The size of a {@code java.lang.invoke.MethodType} on the operand stack.
      */
     private static final Size SIZE = StackSize.SINGLE.toIncreasingSize();
+
     /**
      * The represented method type.
      */
@@ -34,16 +30,6 @@ public class MethodTypeConstant implements StackManipulation {
      */
     public MethodTypeConstant(MethodDescription methodDescription) {
         methodType = Type.getMethodType(methodDescription.getDescriptor());
-    }
-
-    /**
-     * Checks if a type represents the {@code java.lang.invoke.MethodType} type.
-     *
-     * @param typeDescription The type to be checked.
-     * @return {@code true} if the given type represents a {@code java.lang.invoke.MethodType}.
-     */
-    public static boolean isRepresentedBy(TypeDescription typeDescription) {
-        return typeDescription.getInternalName().equals(METHOD_TYPE_TYPE_INTERNAL_NAME);
     }
 
     @Override

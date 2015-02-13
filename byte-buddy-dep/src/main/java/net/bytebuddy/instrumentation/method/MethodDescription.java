@@ -5,6 +5,7 @@ import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.utility.JavaType;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
@@ -186,6 +187,8 @@ public interface MethodDescription extends ByteCodeElement {
 
     boolean isInvokableOn(TypeDescription typeDescription);
 
+    boolean isBootstrap();
+
     /**
      * An abstract base implementation of a method description.
      */
@@ -302,6 +305,42 @@ public interface MethodDescription extends ByteCodeElement {
         @Override
         public boolean isInvokableOn(TypeDescription typeDescription) {
             return isVisibleTo(typeDescription) && getDeclaringType().isAssignableFrom(typeDescription);
+        }
+
+        @Override
+        public boolean isBootstrap() {
+            if ((isMethod() && (!isStatic() || !JavaType.CALL_SITE.isAssignableFromOrTo(getReturnType())))
+                    || (isConstructor() && !JavaType.CALL_SITE.isAssignableFrom(getDeclaringType()))) {
+                return false;
+            }
+            TypeList parameterTypes = getParameterTypes();
+            switch (parameterTypes.size()) {
+                case 0:
+                    return false;
+                case 1:
+                    return parameterTypes.getOnly().represents(Object[].class);
+                case 2:
+                    return JavaType.METHOD_TYPES_LOOKUP.isAssignableTo(parameterTypes.get(0))
+                            && parameterTypes.get(1).represents(Object[].class);
+                case 3:
+                    return JavaType.METHOD_TYPES_LOOKUP.isAssignableTo(parameterTypes.get(0))
+                            && (parameterTypes.get(1).represents(Object.class) || parameterTypes.get(1).represents(String.class))
+                            && (parameterTypes.get(2).represents(Object[].class) || JavaType.METHOD_TYPE.isAssignableTo(parameterTypes.get(2)));
+                default:
+                    if (!(JavaType.METHOD_TYPES_LOOKUP.isAssignableTo(parameterTypes.get(0))
+                            && (parameterTypes.get(1).represents(Object.class) || parameterTypes.get(1).represents(String.class))
+                            && (JavaType.METHOD_TYPE.isAssignableTo(parameterTypes.get(2))))) {
+                        return false;
+                    }
+                    int parameterIndex = 4;
+                    for (TypeDescription parameterType : parameterTypes.subList(3, parameterTypes.size())) {
+                        if (!parameterType.represents(Object.class) && !parameterType.isConstantPool()) {
+                            return parameterType.represents(Object[].class) && parameterIndex == parameterTypes.size();
+                        }
+                        parameterIndex++;
+                    }
+                    return true;
+            }
         }
 
         @Override

@@ -7,6 +7,7 @@ import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
+import net.bytebuddy.utility.JavaType;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
@@ -245,6 +246,10 @@ public interface TypeDescription extends ByteCodeElement {
      */
     boolean isSamePackage(TypeDescription typeDescription);
 
+    boolean isConstantPool();
+
+    boolean isWrapper();
+
     /**
      * An abstract base implementation of a type description.
      */
@@ -362,6 +367,26 @@ public interface TypeDescription extends ByteCodeElement {
             return packageIndex == -1
                     ? null
                     : name.substring(0, packageIndex);
+        }
+
+        @Override
+        public boolean isConstantPool() {
+            return isPrimitive()
+                    || represents(String.class)
+                    || JavaType.METHOD_HANDLE.representedBy(this)
+                    || JavaType.METHOD_TYPE.representedBy(this);
+        }
+
+        @Override
+        public boolean isWrapper() {
+            return represents(Boolean.class)
+                    || represents(Byte.class)
+                    || represents(Short.class)
+                    || represents(Character.class)
+                    || represents(Integer.class)
+                    || represents(Long.class)
+                    || represents(Float.class)
+                    || represents(Double.class);
         }
 
         @Override
