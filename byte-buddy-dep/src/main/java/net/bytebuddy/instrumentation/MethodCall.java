@@ -64,7 +64,7 @@ public class MethodCall implements Instrumentation {
      * @param method The method to invoke.
      * @return A method call instrumentation that invokes the given method without providing any arguments.
      */
-    public static MethodCall.WithoutSpecifiedTarget invoke(Method method) {
+    public static WithoutSpecifiedTarget invoke(Method method) {
         return invoke(new MethodDescription.ForLoadedMethod(nonNull(method)));
     }
 
@@ -74,7 +74,7 @@ public class MethodCall implements Instrumentation {
      * @param constructor The constructor to invoke.
      * @return A method call instrumentation that invokes the given constructor without providing any arguments.
      */
-    public static MethodCall.WithoutSpecifiedTarget invoke(Constructor<?> constructor) {
+    public static WithoutSpecifiedTarget invoke(Constructor<?> constructor) {
         return invoke(new MethodDescription.ForLoadedConstructor(nonNull(constructor)));
     }
 
@@ -86,7 +86,7 @@ public class MethodCall implements Instrumentation {
      * @param methodDescription The method to invoke.
      * @return A method call instrumentation that invokes the given method without providing any arguments.
      */
-    public static MethodCall.WithoutSpecifiedTarget invoke(MethodDescription methodDescription) {
+    public static WithoutSpecifiedTarget invoke(MethodDescription methodDescription) {
         return new WithoutSpecifiedTarget(new MethodLocator.ForExplicitMethod(nonNull(methodDescription)));
     }
 
