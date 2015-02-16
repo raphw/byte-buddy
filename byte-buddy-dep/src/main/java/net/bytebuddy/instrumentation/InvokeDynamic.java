@@ -72,15 +72,10 @@ public class InvokeDynamic implements Instrumentation {
     }
 
     private static boolean bootstrapCompatible(MethodDescription bootstrapMethod, List<?> arguments) {
-        ListIterator<TypeDescription> parameterTypes = bootstrapMethod.getParameterTypes().listIterator();
-        if (!parameterTypes.hasPrevious()) {
-            return false;
+        if (!bootstrapMethod.isBootstrap()) {
+            throw new IllegalArgumentException("Not a bootstrap method: " + bootstrapMethod);
         }
-        TypeDescription currentParameter = parameterTypes.previous();
-        if (currentParameter.represents(Object[].class)) {
-            return true;
-        }
-        // TODO: Implement validation.
+        // TODO: Implement validation if arguments match parameters
         return true;
     }
 
@@ -102,9 +97,6 @@ public class InvokeDynamic implements Instrumentation {
                             TerminationHandler terminationHandler,
                             Assigner assigner,
                             boolean dynamicallyTyped) {
-        if (!bootstrapMethod.isBootstrap()) {
-            throw new IllegalArgumentException("Not a valid bootstrap method: " + bootstrapMethod);
-        }
         this.bootstrapMethod = bootstrapMethod;
         this.handleArguments = handleArguments;
         this.targetProvider = targetProvider;
