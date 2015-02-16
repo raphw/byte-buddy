@@ -10,7 +10,7 @@ runtime code generation for the Java platform
 [![Build Status](https://travis-ci.org/raphw/byte-buddy.svg?branch=master)](https://travis-ci.org/raphw/byte-buddy)
 [![Coverage Status](http://img.shields.io/coveralls/raphw/byte-buddy/master.svg)](https://coveralls.io/r/raphw/byte-buddy?branch=master)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.bytebuddy/byte-buddy-parent/badge.svg)](https://maven-badges.herokuapp.com/maven-central/net.bytebuddy/byte-buddy-parent)
-[![Bintray](https://api.bintray.com/packages/raphw/maven/ByteBuddy/images/download.svg)](https://bintray.com/raphw/maven/ByteBuddy/_latestVersion)
+[![Download from Bintray](https://api.bintray.com/packages/raphw/maven/ByteBuddy/images/download.svg) ](https://bintray.com/raphw/maven/ByteBuddy/_latestVersion) 
 
 Byte Buddy is a code generation library for creating Java classes during the runtime of a Java application and without
 the help of a compiler. Other than the code generation utilities that
