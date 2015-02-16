@@ -59,6 +59,4 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
             return null;
         }
     }
-
-    // TODO: Test illegal bootstrap methods and bootstrap with arguments - Implement argument loader similar to MethodCall instrumentation?
 }

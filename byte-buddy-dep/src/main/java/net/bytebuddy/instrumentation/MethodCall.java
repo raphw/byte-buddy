@@ -1020,7 +1020,7 @@ public class MethodCall implements Instrumentation {
             /**
              * The modifier of the field.
              */
-            private static final int FIELD_MODIFIER = Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC;
+            private static final int FIELD_MODIFIER = Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC;
 
             /**
              * The value to be stored in the field.
@@ -1125,7 +1125,7 @@ public class MethodCall implements Instrumentation {
             /**
              * The modifier to be applied to the instance field.
              */
-            private static final int MODIFIERS = Opcodes.ACC_PRIVATE;
+            private static final int MODIFIERS = Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
 
             /**
              * The type of the field.

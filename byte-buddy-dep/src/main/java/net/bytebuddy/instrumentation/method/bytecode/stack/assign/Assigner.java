@@ -21,4 +21,42 @@ public interface Assigner {
      * is possible. An illegal stack manipulation otherwise.
      */
     StackManipulation assign(TypeDescription sourceType, TypeDescription targetType, boolean dynamicallyTyped);
+
+    /**
+     * An assigner that only allows to assign types if they are equal to another.
+     */
+    static enum EqualTypesOnly implements Assigner {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        @Override
+        public StackManipulation assign(TypeDescription sourceType,
+                                        TypeDescription targetType,
+                                        boolean dynamicallyTyped) {
+            return sourceType.equals(targetType)
+                    ? StackManipulation.LegalTrivial.INSTANCE
+                    : StackManipulation.Illegal.INSTANCE;
+        }
+    }
+
+    /**
+     * An assigner that does not allow any assignments.
+     */
+    static enum Refusing implements Assigner {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        @Override
+        public StackManipulation assign(TypeDescription sourceType,
+                                        TypeDescription targetType,
+                                        boolean dynamicallyTyped) {
+            return StackManipulation.Illegal.INSTANCE;
+        }
+    }
 }

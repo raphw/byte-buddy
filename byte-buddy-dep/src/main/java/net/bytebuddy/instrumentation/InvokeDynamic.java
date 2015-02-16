@@ -1,5 +1,7 @@
 package net.bytebuddy.instrumentation;
 
+import net.bytebuddy.instrumentation.field.FieldDescription;
+import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.method.bytecode.stack.Removal;
@@ -8,10 +10,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.primitive.PrimitiveTypeAwareAssigner;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.primitive.VoidAwareAssigner;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.reference.ReferenceTypeAwareAssigner;
-import net.bytebuddy.instrumentation.method.bytecode.stack.constant.DoubleConstant;
-import net.bytebuddy.instrumentation.method.bytecode.stack.constant.FloatConstant;
-import net.bytebuddy.instrumentation.method.bytecode.stack.constant.IntegerConstant;
-import net.bytebuddy.instrumentation.method.bytecode.stack.constant.LongConstant;
+import net.bytebuddy.instrumentation.method.bytecode.stack.constant.*;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.FieldAccess;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
@@ -230,7 +229,40 @@ public class InvokeDynamic implements Instrumentation {
     public InvokeDynamic withValue(Object... value) {
         List<TargetProvider.ArgumentProvider> argumentProviders = new ArrayList<TargetProvider.ArgumentProvider>(value.length);
         for (Object aValue : value) {
+            argumentProviders.add(TargetProvider.ArgumentProvider.ConstantPoolWrapper.of(nonNull(aValue)));
+        }
+        return new InvokeDynamic(bootstrapMethod,
+                handleArguments,
+                targetProvider.withArguments(argumentProviders),
+                terminationHandler,
+                assigner,
+                dynamicallyTyped);
+    }
+
+    public InvokeDynamic withReference(Object... value) {
+        List<TargetProvider.ArgumentProvider> argumentProviders = new ArrayList<TargetProvider.ArgumentProvider>(value.length);
+        for (Object aValue : value) {
             argumentProviders.add(new TargetProvider.ArgumentProvider.ForStaticField(nonNull(aValue)));
+        }
+        return new InvokeDynamic(bootstrapMethod,
+                handleArguments,
+                targetProvider.withArguments(argumentProviders),
+                terminationHandler,
+                assigner,
+                dynamicallyTyped);
+    }
+
+    public InvokeDynamic withNullValue(Class<?>... type) {
+        return withNullValue(new TypeList.ForLoadedType(nonNull(type)).toArray(new TypeDescription[type.length]));
+    }
+
+    public InvokeDynamic withNullValue(TypeDescription... typeDescription) {
+        List<TargetProvider.ArgumentProvider> argumentProviders = new ArrayList<TargetProvider.ArgumentProvider>(typeDescription.length);
+        for (TypeDescription aTypeDescription : typeDescription) {
+            if (aTypeDescription.isPrimitive()) {
+                throw new IllegalArgumentException("Cannot assign null to primitive type: " + aTypeDescription);
+            }
+            argumentProviders.add(new TargetProvider.ArgumentProvider.ForNullValue(aTypeDescription));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
@@ -243,6 +275,9 @@ public class InvokeDynamic implements Instrumentation {
     public InvokeDynamic withArgument(int... index) {
         List<TargetProvider.ArgumentProvider> argumentProviders = new ArrayList<TargetProvider.ArgumentProvider>(index.length);
         for (int anIndex : index) {
+            if (anIndex < 0) {
+                throw new IllegalArgumentException("Method parameter indices cannot be negative: " + anIndex);
+            }
             argumentProviders.add(new TargetProvider.ArgumentProvider.ForMethodParameter(anIndex));
         }
         return new InvokeDynamic(bootstrapMethod,
@@ -258,6 +293,33 @@ public class InvokeDynamic implements Instrumentation {
                 handleArguments,
                 targetProvider.withArguments(Collections.<TargetProvider.ArgumentProvider>singletonList(TargetProvider
                         .ArgumentProvider.ForThisInstance.INSTANCE)),
+                terminationHandler,
+                assigner,
+                dynamicallyTyped);
+    }
+
+    public InvokeDynamic withInstanceField(String fieldName, Class<?> fieldType) {
+        return withInstanceField(fieldName, new TypeDescription.ForLoadedType(nonNull(fieldType)));
+    }
+
+    public InvokeDynamic withInstanceField(String fieldName, TypeDescription fieldType) {
+        return new InvokeDynamic(bootstrapMethod,
+                handleArguments,
+                targetProvider.withArguments(Collections.<TargetProvider.ArgumentProvider>singletonList(new TargetProvider
+                        .ArgumentProvider.ForInstanceField(nonNull(fieldName), nonNull(fieldType)))),
+                terminationHandler,
+                assigner,
+                dynamicallyTyped);
+    }
+
+    public InvokeDynamic withField(String... fieldName) {
+        List<TargetProvider.ArgumentProvider> argumentProviders = new ArrayList<TargetProvider.ArgumentProvider>(fieldName.length);
+        for (String aFieldName : fieldName) {
+            argumentProviders.add(new TargetProvider.ArgumentProvider.ForExistingField(nonNull(aFieldName)));
+        }
+        return new InvokeDynamic(bootstrapMethod,
+                handleArguments,
+                targetProvider.withArguments(argumentProviders),
                 terminationHandler,
                 assigner,
                 dynamicallyTyped);
@@ -309,16 +371,16 @@ public class InvokeDynamic implements Instrumentation {
         public Size apply(MethodVisitor methodVisitor,
                           Context instrumentationContext,
                           MethodDescription instrumentedMethod) {
-            TargetProvider.Target target = targetProvider.resolve(instrumentedMethod);
-            TypeDescription returnType = target.getReturnType();
+            TargetProvider.Target.Resolved target = targetProvider.make(instrumentedMethod)
+                    .resolve(instrumentedType, assigner, dynamicallyTyped);
             StackManipulation.Size size = new StackManipulation.Compound(
-                    target.resolve(instrumentedType),
+                    target.getStackManipulation(),
                     MethodInvocation.invoke(bootstrapMethod)
                             .dynamic(target.getInternalName(),
-                                    returnType,
-                                    target.resolveParameterTypes(instrumentedType),
+                                    target.getReturnType(),
+                                    target.getParameterTypes(),
                                     handleArguments),
-                    terminationHandler.resolve(instrumentedMethod, returnType, assigner, dynamicallyTyped)
+                    terminationHandler.resolve(instrumentedMethod, target.getReturnType(), assigner, dynamicallyTyped)
             ).apply(methodVisitor, instrumentationContext);
             return new Size(size.getMaximalSize(), instrumentedMethod.getStackSize());
         }
@@ -387,7 +449,7 @@ public class InvokeDynamic implements Instrumentation {
 
     protected static interface TargetProvider {
 
-        Target resolve(MethodDescription methodDescription);
+        Target make(MethodDescription methodDescription);
 
         TargetProvider withArguments(List<ForSyntheticCall.ArgumentProvider> argumentProviders);
 
@@ -395,15 +457,61 @@ public class InvokeDynamic implements Instrumentation {
 
         static interface Target {
 
-            StackManipulation resolve(TypeDescription instrumentedType);
+            Resolved resolve(TypeDescription instrumentedType, Assigner assigner, boolean dynamicallyTyped);
 
-            String getInternalName();
+            static interface Resolved {
 
-            TypeDescription getReturnType();
+                StackManipulation getStackManipulation();
 
-            List<? extends TypeDescription> resolveParameterTypes(TypeDescription instrumentedType);
+                TypeDescription getReturnType();
 
-            static class ForMethodDescription implements Target {
+                String getInternalName();
+
+                List<TypeDescription> getParameterTypes();
+
+                static class Simple implements Resolved {
+
+                    private final StackManipulation stackManipulation;
+
+                    private final String internalName;
+
+                    private final TypeDescription returnType;
+
+                    private final List<TypeDescription> parameterTypes;
+
+                    public Simple(StackManipulation stackManipulation,
+                                  String internalName,
+                                  TypeDescription returnType,
+                                  List<TypeDescription> parameterTypes) {
+                        this.stackManipulation = stackManipulation;
+                        this.internalName = internalName;
+                        this.returnType = returnType;
+                        this.parameterTypes = parameterTypes;
+                    }
+
+                    @Override
+                    public StackManipulation getStackManipulation() {
+                        return stackManipulation;
+                    }
+
+                    @Override
+                    public TypeDescription getReturnType() {
+                        return returnType;
+                    }
+
+                    @Override
+                    public String getInternalName() {
+                        return internalName;
+                    }
+
+                    @Override
+                    public List<TypeDescription> getParameterTypes() {
+                        return parameterTypes;
+                    }
+                }
+            }
+
+            static class ForMethodDescription implements Target, Target.Resolved {
 
                 private final MethodDescription methodDescription;
 
@@ -412,8 +520,8 @@ public class InvokeDynamic implements Instrumentation {
                 }
 
                 @Override
-                public StackManipulation resolve(TypeDescription instrumentedType) {
-                    return MethodVariableAccess.loadArguments(methodDescription);
+                public Resolved resolve(TypeDescription instrumentedType, Assigner assigner, boolean dynamicallyTyped) {
+                    return this;
                 }
 
                 @Override
@@ -427,7 +535,12 @@ public class InvokeDynamic implements Instrumentation {
                 }
 
                 @Override
-                public List<? extends TypeDescription> resolveParameterTypes(TypeDescription instrumentedType) {
+                public StackManipulation getStackManipulation() {
+                    return MethodVariableAccess.loadThisReferenceAndArguments(methodDescription);
+                }
+
+                @Override
+                public List<TypeDescription> getParameterTypes() {
                     return methodDescription.getParameterTypes();
                 }
             }
@@ -435,9 +548,10 @@ public class InvokeDynamic implements Instrumentation {
 
         static interface ArgumentProvider {
 
-            StackManipulation resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod);
-
-            TypeDescription resolveType(TypeDescription instrumentedType, MethodDescription instrumentedMethod);
+            Resolved resolve(TypeDescription instrumentedType,
+                             MethodDescription instrumentedMethod,
+                             Assigner assigner,
+                             boolean dynamicallyTyped);
 
             InstrumentedType prepare(InstrumentedType instrumentedType);
 
@@ -445,7 +559,7 @@ public class InvokeDynamic implements Instrumentation {
 
                 private static final String FIELD_PREFIX = "dynamicCall";
 
-                private static final int FIELD_MODIFIER = Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC;
+                private static final int FIELD_MODIFIER = Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC;
 
                 private final Object value;
 
@@ -457,13 +571,12 @@ public class InvokeDynamic implements Instrumentation {
                 }
 
                 @Override
-                public StackManipulation resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
-                    return FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(name)).getOnly()).getter();
-                }
-
-                @Override
-                public TypeDescription resolveType(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
-                    return new TypeDescription.ForLoadedType(value.getClass());
+                public Resolved resolve(TypeDescription instrumentedType,
+                                        MethodDescription instrumentedMethod,
+                                        Assigner assigner,
+                                        boolean dynamicallyTyped) {
+                    FieldDescription fieldDescription = instrumentedType.getDeclaredFields().filter(named(name)).getOnly();
+                    return new Resolved.Simple(FieldAccess.forField(fieldDescription).getter(), fieldDescription.getFieldType());
                 }
 
                 @Override
@@ -471,6 +584,76 @@ public class InvokeDynamic implements Instrumentation {
                     return instrumentedType
                             .withField(name, new TypeDescription.ForLoadedType(value.getClass()), FIELD_MODIFIER)
                             .withInitializer(LoadedTypeInitializer.ForStaticField.nonAccessible(name, value));
+                }
+            }
+
+            static class ForInstanceField implements ArgumentProvider {
+
+                private static final int FIELD_MODIFIER = Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
+
+                private final String fieldName;
+
+                private final TypeDescription fieldType;
+
+                public ForInstanceField(String fieldName, TypeDescription fieldType) {
+                    this.fieldName = fieldName;
+                    this.fieldType = fieldType;
+                }
+
+                @Override
+                public Resolved resolve(TypeDescription instrumentedType,
+                                        MethodDescription instrumentedMethod,
+                                        Assigner assigner,
+                                        boolean dynamicallyTyped) {
+                    return new Resolved.Simple(FieldAccess.forField(instrumentedType.getDeclaredFields()
+                            .filter(named(fieldName)).getOnly()).getter(), fieldType);
+                }
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType.withField(fieldName, fieldType, FIELD_MODIFIER);
+                }
+            }
+
+            static class ForExistingField implements ArgumentProvider {
+
+                private final String fieldName;
+
+                public ForExistingField(String fieldName) {
+                    this.fieldName = fieldName;
+                }
+
+                @Override
+                public Resolved resolve(TypeDescription instrumentedType,
+                                        MethodDescription instrumentedMethod,
+                                        Assigner assigner,
+                                        boolean dynamicallyTyped) {
+                    TypeDescription currentType = instrumentedType;
+                    FieldDescription fieldDescription = null;
+                    do {
+                        FieldList fieldList = currentType.getDeclaredFields().filter(named(fieldName));
+                        if (fieldList.size() != 0) {
+                            fieldDescription = fieldList.getOnly();
+                        }
+                        currentType = currentType.getSupertype();
+                    } while (currentType != null
+                            && (fieldDescription == null || !fieldDescription.isVisibleTo(instrumentedType)));
+                    if (fieldDescription == null) {
+                        throw new IllegalStateException(instrumentedType + " does not define a visible field " + fieldName);
+                    } else if (!fieldDescription.isStatic() && instrumentedMethod.isStatic()) {
+                        throw new IllegalStateException("Cannot access non-static " + fieldDescription + " from " + instrumentedMethod);
+                    }
+                    return new Resolved.Simple(new StackManipulation.Compound(
+                            fieldDescription.isStatic()
+                                    ? StackManipulation.LegalTrivial.INSTANCE
+                                    : MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                            FieldAccess.forField(fieldDescription).getter()
+                    ), fieldDescription.getFieldType());
+                }
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
                 }
             }
 
@@ -483,21 +666,16 @@ public class InvokeDynamic implements Instrumentation {
                 }
 
                 @Override
-                public StackManipulation resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                public Resolved resolve(TypeDescription instrumentedType,
+                                        MethodDescription instrumentedMethod,
+                                        Assigner assigner,
+                                        boolean dynamicallyTyped) {
                     TypeList parameterTypes = instrumentedMethod.getParameterTypes();
                     if (parameterTypes.size() >= index) {
                         throw new IllegalArgumentException("No parameter " + index + " for " + instrumentedMethod);
                     }
-                    return MethodVariableAccess.forType(parameterTypes.get(index)).loadFromIndex(instrumentedMethod.getParameterOffset(index));
-                }
-
-                @Override
-                public TypeDescription resolveType(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
-                    TypeList parameterTypes = instrumentedMethod.getParameterTypes();
-                    if (parameterTypes.size() >= index) {
-                        throw new IllegalArgumentException("No parameter " + index + " for " + instrumentedMethod);
-                    }
-                    return parameterTypes.get(index);
+                    return new Resolved.Simple(MethodVariableAccess.forType(parameterTypes.get(index))
+                            .loadFromIndex(instrumentedMethod.getParameterOffset(index)), parameterTypes.get(index));
                 }
 
                 @Override
@@ -511,16 +689,14 @@ public class InvokeDynamic implements Instrumentation {
                 INSTANCE;
 
                 @Override
-                public StackManipulation resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                public Resolved resolve(TypeDescription instrumentedType,
+                                        MethodDescription instrumentedMethod,
+                                        Assigner assigner,
+                                        boolean dynamicallyTyped) {
                     if (instrumentedMethod.isStatic()) {
                         throw new IllegalStateException("Cannot get this instance from static method: " + instrumentedMethod);
                     }
-                    return MethodVariableAccess.REFERENCE.loadFromIndex(0);
-                }
-
-                @Override
-                public TypeDescription resolveType(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
-                    return instrumentedType;
+                    return new Resolved.Simple(MethodVariableAccess.REFERENCE.loadFromIndex(0), instrumentedType);
                 }
 
                 @Override
@@ -538,13 +714,11 @@ public class InvokeDynamic implements Instrumentation {
                 }
 
                 @Override
-                public StackManipulation resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
-                    return IntegerConstant.forValue(value);
-                }
-
-                @Override
-                public TypeDescription resolveType(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
-                    return new TypeDescription.ForLoadedType(boolean.class);
+                public Resolved resolve(TypeDescription instrumentedType,
+                                        MethodDescription instrumentedMethod,
+                                        Assigner assigner,
+                                        boolean dynamicallyTyped) {
+                    return new Resolved.Simple(IntegerConstant.forValue(value), new TypeDescription.ForLoadedType(boolean.class));
                 }
 
                 @Override
@@ -562,13 +736,11 @@ public class InvokeDynamic implements Instrumentation {
                 }
 
                 @Override
-                public StackManipulation resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
-                    return IntegerConstant.forValue(value);
-                }
-
-                @Override
-                public TypeDescription resolveType(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
-                    return new TypeDescription.ForLoadedType(byte.class);
+                public Resolved resolve(TypeDescription instrumentedType,
+                                        MethodDescription instrumentedMethod,
+                                        Assigner assigner,
+                                        boolean dynamicallyTyped) {
+                    return new Resolved.Simple(IntegerConstant.forValue(value), new TypeDescription.ForLoadedType(byte.class));
                 }
 
                 @Override
@@ -586,13 +758,11 @@ public class InvokeDynamic implements Instrumentation {
                 }
 
                 @Override
-                public StackManipulation resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
-                    return IntegerConstant.forValue(value);
-                }
-
-                @Override
-                public TypeDescription resolveType(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
-                    return new TypeDescription.ForLoadedType(short.class);
+                public Resolved resolve(TypeDescription instrumentedType,
+                                        MethodDescription instrumentedMethod,
+                                        Assigner assigner,
+                                        boolean dynamicallyTyped) {
+                    return new Resolved.Simple(IntegerConstant.forValue(value), new TypeDescription.ForLoadedType(short.class));
                 }
 
                 @Override
@@ -610,13 +780,11 @@ public class InvokeDynamic implements Instrumentation {
                 }
 
                 @Override
-                public StackManipulation resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
-                    return IntegerConstant.forValue(value);
-                }
-
-                @Override
-                public TypeDescription resolveType(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
-                    return new TypeDescription.ForLoadedType(char.class);
+                public Resolved resolve(TypeDescription instrumentedType,
+                                        MethodDescription instrumentedMethod,
+                                        Assigner assigner,
+                                        boolean dynamicallyTyped) {
+                    return new Resolved.Simple(IntegerConstant.forValue(value), new TypeDescription.ForLoadedType(char.class));
                 }
 
                 @Override
@@ -634,13 +802,11 @@ public class InvokeDynamic implements Instrumentation {
                 }
 
                 @Override
-                public StackManipulation resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
-                    return IntegerConstant.forValue(value);
-                }
-
-                @Override
-                public TypeDescription resolveType(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
-                    return new TypeDescription.ForLoadedType(int.class);
+                public Resolved resolve(TypeDescription instrumentedType,
+                                        MethodDescription instrumentedMethod,
+                                        Assigner assigner,
+                                        boolean dynamicallyTyped) {
+                    return new Resolved.Simple(IntegerConstant.forValue(value), new TypeDescription.ForLoadedType(int.class));
                 }
 
                 @Override
@@ -658,13 +824,11 @@ public class InvokeDynamic implements Instrumentation {
                 }
 
                 @Override
-                public StackManipulation resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
-                    return LongConstant.forValue(value);
-                }
-
-                @Override
-                public TypeDescription resolveType(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
-                    return new TypeDescription.ForLoadedType(long.class);
+                public Resolved resolve(TypeDescription instrumentedType,
+                                        MethodDescription instrumentedMethod,
+                                        Assigner assigner,
+                                        boolean dynamicallyTyped) {
+                    return new Resolved.Simple(LongConstant.forValue(value), new TypeDescription.ForLoadedType(long.class));
                 }
 
                 @Override
@@ -682,13 +846,11 @@ public class InvokeDynamic implements Instrumentation {
                 }
 
                 @Override
-                public StackManipulation resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
-                    return FloatConstant.forValue(value);
-                }
-
-                @Override
-                public TypeDescription resolveType(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
-                    return new TypeDescription.ForLoadedType(float.class);
+                public Resolved resolve(TypeDescription instrumentedType,
+                                        MethodDescription instrumentedMethod,
+                                        Assigner assigner,
+                                        boolean dynamicallyTyped) {
+                    return new Resolved.Simple(FloatConstant.forValue(value), new TypeDescription.ForLoadedType(float.class));
                 }
 
                 @Override
@@ -706,13 +868,11 @@ public class InvokeDynamic implements Instrumentation {
                 }
 
                 @Override
-                public StackManipulation resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
-                    return DoubleConstant.forValue(value);
-                }
-
-                @Override
-                public TypeDescription resolveType(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
-                    return new TypeDescription.ForLoadedType(double.class);
+                public Resolved resolve(TypeDescription instrumentedType,
+                                        MethodDescription instrumentedMethod,
+                                        Assigner assigner,
+                                        boolean dynamicallyTyped) {
+                    return new Resolved.Simple(DoubleConstant.forValue(value), new TypeDescription.ForLoadedType(double.class));
                 }
 
                 @Override
@@ -721,23 +881,160 @@ public class InvokeDynamic implements Instrumentation {
                 }
             }
 
-            static enum ConstantPoolWrapper implements ArgumentProvider {
+            static class ForStringValue implements ArgumentProvider {
 
-                BOOLEAN(boolean.class, Boolean.class),
+                private final String value;
 
-                BYTE(byte.class, Byte.class),
+                public ForStringValue(String value) {
+                    this.value = value;
+                }
 
-                SHORT(short.class, Short.class),
+                @Override
+                public Resolved resolve(TypeDescription instrumentedType,
+                                        MethodDescription instrumentedMethod,
+                                        Assigner assigner,
+                                        boolean dynamicallyTyped) {
+                    return new Resolved.Simple(new TextConstant(value), new TypeDescription.ForLoadedType(String.class));
+                }
 
-                CHARACTER(char.class, Character.class),
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
+                }
+            }
 
-                INTEGER(int.class, Integer.class),
+            static class ForNullValue implements ArgumentProvider {
 
-                LONG(long.class, Long.class),
+                private final TypeDescription typeDescription;
 
-                FLOAT(float.class, Float.class),
+                public ForNullValue(TypeDescription typeDescription) {
+                    this.typeDescription = typeDescription;
+                }
 
-                DOUBLE(double.class, Double.class);
+                @Override
+                public Resolved resolve(TypeDescription instrumentedType,
+                                        MethodDescription instrumentedMethod,
+                                        Assigner assigner,
+                                        boolean dynamicallyTyped) {
+                    return new Resolved.Simple(NullConstant.INSTANCE, typeDescription);
+                }
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
+                }
+            }
+
+            static interface Resolved {
+
+                StackManipulation getLoadInstruction();
+
+                TypeDescription getLoadedType();
+
+                static class Simple implements Resolved {
+
+                    private final StackManipulation stackManipulation;
+
+                    private final TypeDescription loadedType;
+
+                    public Simple(StackManipulation stackManipulation, TypeDescription loadedType) {
+                        this.stackManipulation = stackManipulation;
+                        this.loadedType = loadedType;
+                    }
+
+                    @Override
+                    public StackManipulation getLoadInstruction() {
+                        return stackManipulation;
+                    }
+
+                    @Override
+                    public TypeDescription getLoadedType() {
+                        return loadedType;
+                    }
+                }
+            }
+
+            static enum ConstantPoolWrapper {
+
+                BOOLEAN(boolean.class, Boolean.class) {
+                    @Override
+                    protected ArgumentProvider make(Object value) {
+                        return new WrappingArgumentProvider(IntegerConstant.forValue((Boolean) value));
+                    }
+                },
+
+                BYTE(byte.class, Byte.class) {
+                    @Override
+                    protected ArgumentProvider make(Object value) {
+                        return new WrappingArgumentProvider(IntegerConstant.forValue((Byte) value));
+                    }
+                },
+
+                SHORT(short.class, Short.class) {
+                    @Override
+                    protected ArgumentProvider make(Object value) {
+                        return new WrappingArgumentProvider(IntegerConstant.forValue((Short) value));
+                    }
+                },
+
+                CHARACTER(char.class, Character.class) {
+                    @Override
+                    protected ArgumentProvider make(Object value) {
+                        return new WrappingArgumentProvider(IntegerConstant.forValue((Character) value));
+                    }
+                },
+
+                INTEGER(int.class, Integer.class) {
+                    @Override
+                    protected ArgumentProvider make(Object value) {
+                        return new WrappingArgumentProvider(IntegerConstant.forValue((Integer) value));
+                    }
+                },
+
+                LONG(long.class, Long.class) {
+                    @Override
+                    protected ArgumentProvider make(Object value) {
+                        return new WrappingArgumentProvider(LongConstant.forValue((Long) value));
+                    }
+                },
+
+                FLOAT(float.class, Float.class) {
+                    @Override
+                    protected ArgumentProvider make(Object value) {
+                        return new WrappingArgumentProvider(FloatConstant.forValue((Float) value));
+                    }
+                },
+
+                DOUBLE(double.class, Double.class) {
+                    @Override
+                    protected ArgumentProvider make(Object value) {
+                        return new WrappingArgumentProvider(DoubleConstant.forValue((Double) value));
+                    }
+                };
+
+                public static ArgumentProvider of(Object value) {
+                    if (value instanceof Boolean) {
+                        return BOOLEAN.make(value);
+                    } else if (value instanceof Byte) {
+                        return BYTE.make(value);
+                    } else if (value instanceof Short) {
+                        return SHORT.make(value);
+                    } else if (value instanceof Character) {
+                        return CHARACTER.make(value);
+                    } else if (value instanceof Integer) {
+                        return INTEGER.make(value);
+                    } else if (value instanceof Long) {
+                        return LONG.make(value);
+                    } else if (value instanceof Float) {
+                        return FLOAT.make(value);
+                    } else if (value instanceof Double) {
+                        return DOUBLE.make(value);
+                    } else if (value instanceof String) {
+                        return new ForStringValue((String) value);
+                    } else {
+                        return new ForStaticField(value);
+                    }
+                }
 
                 private final TypeDescription primitiveType;
 
@@ -748,19 +1045,29 @@ public class InvokeDynamic implements Instrumentation {
                     this.wrapperType = new TypeDescription.ForLoadedType(wrapperType);
                 }
 
-                @Override
-                public StackManipulation resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
-                    return null;
-                }
+                protected abstract ArgumentProvider make(Object value);
 
-                @Override
-                public TypeDescription resolveType(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
-                    return wrapperType;
-                }
+                protected class WrappingArgumentProvider implements ArgumentProvider {
 
-                @Override
-                public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType;
+                    private final StackManipulation stackManipulation;
+
+                    protected WrappingArgumentProvider(StackManipulation stackManipulation) {
+                        this.stackManipulation = stackManipulation;
+                    }
+
+                    @Override
+                    public Resolved resolve(TypeDescription instrumentedType,
+                                            MethodDescription instrumentedMethod,
+                                            Assigner assigner,
+                                            boolean dynamicallyTyped) {
+                        return new Resolved.Simple(new StackManipulation.Compound(stackManipulation,
+                                assigner.assign(primitiveType, wrapperType, dynamicallyTyped)), wrapperType);
+                    }
+
+                    @Override
+                    public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                        return instrumentedType;
+                    }
                 }
             }
         }
@@ -770,7 +1077,7 @@ public class InvokeDynamic implements Instrumentation {
             INSTANCE;
 
             @Override
-            public Target resolve(MethodDescription methodDescription) {
+            public Target make(MethodDescription methodDescription) {
                 return new Target.ForMethodDescription(methodDescription);
             }
 
@@ -805,7 +1112,7 @@ public class InvokeDynamic implements Instrumentation {
             }
 
             @Override
-            public Target resolve(MethodDescription methodDescription) {
+            public Target make(MethodDescription methodDescription) {
                 return new Target(nameProvider.resolve(methodDescription),
                         returnTypeProvider.resolve(methodDescription),
                         argumentProviders,
@@ -906,32 +1213,24 @@ public class InvokeDynamic implements Instrumentation {
                 }
 
                 @Override
-                public StackManipulation resolve(TypeDescription instrumentedType) {
+                public TargetProvider.Target.Resolved resolve(TypeDescription instrumentedType,
+                                                              Assigner assigner,
+                                                              boolean dynamicallyTyped) {
                     StackManipulation[] stackManipulation = new StackManipulation[argumentProviders.size()];
+                    List<TypeDescription> parameterTypes = new ArrayList<TypeDescription>(argumentProviders.size());
                     int index = 0;
                     for (ArgumentProvider argumentProvider : argumentProviders) {
-                        stackManipulation[index++] = argumentProvider.resolve(instrumentedType, instrumentedMethod);
+                        ArgumentProvider.Resolved resolved = argumentProvider.resolve(instrumentedType,
+                                instrumentedMethod,
+                                assigner,
+                                dynamicallyTyped);
+                        parameterTypes.add(resolved.getLoadedType());
+                        stackManipulation[index++] = resolved.getLoadInstruction();
                     }
-                    return new StackManipulation.Compound(stackManipulation);
-                }
-
-                @Override
-                public String getInternalName() {
-                    return internalName;
-                }
-
-                @Override
-                public TypeDescription getReturnType() {
-                    return returnType;
-                }
-
-                @Override
-                public List<? extends TypeDescription> resolveParameterTypes(TypeDescription instrumentedType) {
-                    List<TypeDescription> parameterTypes = new ArrayList<TypeDescription>(argumentProviders.size());
-                    for (ArgumentProvider argumentProvider : argumentProviders) {
-                        parameterTypes.add(argumentProvider.resolveType(instrumentedType, instrumentedMethod));
-                    }
-                    return parameterTypes;
+                    return new Resolved.Simple(new StackManipulation.Compound(stackManipulation),
+                            internalName,
+                            returnType,
+                            parameterTypes);
                 }
             }
         }
@@ -1001,7 +1300,4 @@ public class InvokeDynamic implements Instrumentation {
             }
         }
     }
-
-    // TODO: Add possibility for constant pool storage of wrapper typpes and string?
-    // TODO: Add possibility to add instance field or existing field.
 }
