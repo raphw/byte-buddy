@@ -25,10 +25,7 @@ import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.utility.ByteBuddyCommons.*;
@@ -78,8 +75,26 @@ public class InvokeDynamic implements Instrumentation {
         if (!bootstrapMethod.isBootstrap()) {
             throw new IllegalArgumentException("Not a bootstrap method: " + bootstrapMethod);
         }
-        // TODO: Implement validation if arguments match parameters
-        return true;
+        for (Object argument : arguments) {
+            if (!new TypeDescription.ForLoadedType(argument.getClass()).isConstantPool()) {
+                throw new IllegalArgumentException("Not a constant pool value: " + argument);
+            }
+        }
+        List<TypeDescription> parameterTypes = bootstrapMethod.getParameterTypes();
+        // The following assumes that the bootstrap method is a valid bootstrap method.
+        if (parameterTypes.size() < 3) {
+            return arguments.size() == 0 || parameterTypes.get(parameterTypes.size() - 1).represents(Object[].class);
+        } else {
+            int index = 3;
+            Iterator<?> argumentIterator = arguments.iterator();
+            for (TypeDescription parameterType : parameterTypes.subList(3, parameterTypes.size())) {
+                if (!argumentIterator.hasNext() || !parameterType.isAssignableFrom(argumentIterator.next().getClass())) {
+                    return index == parameterTypes.size() && parameterType.represents(Object[].class);
+                }
+                index++;
+            }
+            return true;
+        }
     }
 
     protected final MethodDescription bootstrapMethod;
