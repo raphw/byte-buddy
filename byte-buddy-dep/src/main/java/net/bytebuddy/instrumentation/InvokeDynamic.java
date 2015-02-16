@@ -310,14 +310,15 @@ public class InvokeDynamic implements Instrumentation {
                           Context instrumentationContext,
                           MethodDescription instrumentedMethod) {
             TargetProvider.Target target = targetProvider.resolve(instrumentedMethod);
+            TypeDescription returnType = target.getReturnType();
             StackManipulation.Size size = new StackManipulation.Compound(
                     target.resolve(instrumentedType),
                     MethodInvocation.invoke(bootstrapMethod)
                             .dynamic(target.getInternalName(),
-                                    target.getReturnType(),
+                                    returnType,
                                     target.resolveParameterTypes(instrumentedType),
                                     handleArguments),
-                    terminationHandler.resolve(instrumentedMethod)
+                    terminationHandler.resolve(instrumentedMethod, returnType, assigner, dynamicallyTyped)
             ).apply(methodVisitor, instrumentationContext);
             return new Size(size.getMaximalSize(), instrumentedMethod.getStackSize());
         }
@@ -719,6 +720,49 @@ public class InvokeDynamic implements Instrumentation {
                     return instrumentedType;
                 }
             }
+
+            static enum ConstantPoolWrapper implements ArgumentProvider {
+
+                BOOLEAN(boolean.class, Boolean.class),
+
+                BYTE(byte.class, Byte.class),
+
+                SHORT(short.class, Short.class),
+
+                CHARACTER(char.class, Character.class),
+
+                INTEGER(int.class, Integer.class),
+
+                LONG(long.class, Long.class),
+
+                FLOAT(float.class, Float.class),
+
+                DOUBLE(double.class, Double.class);
+
+                private final TypeDescription primitiveType;
+
+                private final TypeDescription wrapperType;
+
+                private ConstantPoolWrapper(Class<?> primitiveType, Class<?> wrapperType) {
+                    this.primitiveType = new TypeDescription.ForLoadedType(primitiveType);
+                    this.wrapperType = new TypeDescription.ForLoadedType(wrapperType);
+                }
+
+                @Override
+                public StackManipulation resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                    return null;
+                }
+
+                @Override
+                public TypeDescription resolveType(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                    return wrapperType;
+                }
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
+                }
+            }
         }
 
         static enum ForInterceptedMethod implements TargetProvider {
@@ -903,9 +947,14 @@ public class InvokeDynamic implements Instrumentation {
          * Returns a stack manipulation that handles the method return.
          *
          * @param interceptedMethod The method being intercepted.
-         * @return A stack manipulation that handles the method return.
+         * @param returnType
+         * @param assigner
+         * @param dynamicallyTyped  @return A stack manipulation that handles the method return.
          */
-        StackManipulation resolve(MethodDescription interceptedMethod);
+        StackManipulation resolve(MethodDescription interceptedMethod,
+                                  TypeDescription returnType,
+                                  Assigner assigner,
+                                  boolean dynamicallyTyped);
 
         /**
          * Returns the return value if the method call from the intercepted method.
@@ -918,8 +967,15 @@ public class InvokeDynamic implements Instrumentation {
             INSTANCE;
 
             @Override
-            public StackManipulation resolve(MethodDescription interceptedMethod) {
-                return MethodReturn.returning(interceptedMethod.getReturnType());
+            public StackManipulation resolve(MethodDescription interceptedMethod,
+                                             TypeDescription returnType,
+                                             Assigner assigner,
+                                             boolean dynamicallyTyped) {
+                StackManipulation stackManipulation = assigner.assign(returnType, interceptedMethod.getReturnType(), dynamicallyTyped);
+                if (!stackManipulation.isValid()) {
+                    throw new IllegalStateException("Cannot return " + returnType + " from " + interceptedMethod);
+                }
+                return new StackManipulation.Compound(stackManipulation, MethodReturn.returning(interceptedMethod.getReturnType()));
             }
         }
 
@@ -935,7 +991,10 @@ public class InvokeDynamic implements Instrumentation {
             INSTANCE;
 
             @Override
-            public StackManipulation resolve(MethodDescription interceptedMethod) {
+            public StackManipulation resolve(MethodDescription interceptedMethod,
+                                             TypeDescription returnType,
+                                             Assigner assigner,
+                                             boolean dynamicallyTyped) {
                 return Removal.pop(interceptedMethod.isConstructor()
                         ? interceptedMethod.getDeclaringType()
                         : interceptedMethod.getReturnType());

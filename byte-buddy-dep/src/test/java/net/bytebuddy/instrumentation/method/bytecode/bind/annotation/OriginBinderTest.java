@@ -96,7 +96,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
 
     @Test(expected = IllegalStateException.class)
     public void testIllegalBinding() throws Exception {
-        when(targetType.getInternalName()).thenReturn(FOO);
+        when(targetType.getName()).thenReturn(FOO);
         Origin.Binder.INSTANCE.bind(annotationDescription, INDEX, source, target, instrumentationTarget, assigner);
     }
 }
