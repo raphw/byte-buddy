@@ -17,34 +17,30 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 @RunWith(Parameterized.class)
 public class AssignerEqualTypesOnlyTest {
 
-    @Parameterized.Parameters
-    public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[] {false}, new Object[] {true});
-    }
-
     private final boolean dynamicallyTyped;
+    @Rule
+    public TestRule mockitoRule = new MockitoRule(this);
+    @Mock
+    private TypeDescription first, second;
+    @Mock
+    private MethodVisitor methodVisitor;
+    @Mock
+    private Instrumentation.Context instrumentationContext;
 
     public AssignerEqualTypesOnlyTest(boolean dynamicallyTyped) {
         this.dynamicallyTyped = dynamicallyTyped;
     }
 
-    @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
-
-    @Mock
-    private TypeDescription first, second;
-
-    @Mock
-    private MethodVisitor methodVisitor;
-
-    @Mock
-    private Instrumentation.Context instrumentationContext;
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[]{false}, new Object[]{true});
+    }
 
     @After
     public void tearDown() throws Exception {

@@ -50,9 +50,99 @@ public enum JavaType {
     };
 
     /**
+     * A handler that is responsible for the lookup of a given type.
+     */
+    private final TypeLookup typeLookup;
+
+    /**
+     * Creates a new Java type representative.
+     *
+     * @param typeName The fully-qualified name of the type.
+     */
+    private JavaType(String typeName) {
+        TypeLookup typeLookup;
+        try {
+            typeLookup = new TypeLookup.ForLoadedType(Class.forName(typeName));
+        } catch (Exception ignored) {
+            typeLookup = new TypeLookup.ForNamedType(typeName);
+        }
+        this.typeLookup = typeLookup;
+    }
+
+    /**
+     * Checks if a type is assignable from this type.
+     *
+     * @param typeDescription The type that is to be checked.
+     * @return {@code true} if this type is assignable from the provided type.
+     */
+    public boolean isAssignableFrom(TypeDescription typeDescription) {
+        return typeLookup.isAssignableFrom(typeDescription);
+    }
+
+    /**
+     * Checks if a type is assignable to this type.
+     *
+     * @param typeDescription The type that is to be checked.
+     * @return {@code true} if this type is assignable to the provided type.
+     */
+    public boolean isAssignableTo(TypeDescription typeDescription) {
+        return representedBy(typeDescription) || isSubTypeOf(typeDescription);
+    }
+
+    /**
+     * Checks if a given type is a subtype of the given type.
+     *
+     * @param typeDescription The type that is to be checked.
+     * @return {@code true} if this type is a subtype of the provided type.
+     */
+    protected abstract boolean isSubTypeOf(TypeDescription typeDescription);
+
+    /**
+     * Checks if this type represents the provided type.
+     *
+     * @param typeDescription The type that is to be checked.
+     * @return {@code true} if this type represents the provided type.
+     */
+    public boolean representedBy(TypeDescription typeDescription) {
+        return typeLookup.represents(typeDescription);
+    }
+
+    /**
+     * Loads the provided type if this is possible or throws an exception if not.
+     *
+     * @return The loaded type.
+     */
+    public Class<?> load() {
+        return typeLookup.load();
+    }
+
+    /**
      * A handler for querying type information.
      */
     protected static interface TypeLookup {
+
+        /**
+         * Checks if a type is assignable from this type.
+         *
+         * @param typeDescription The type that is to be checked.
+         * @return {@code true} if this type is assignable from the provided type.
+         */
+        boolean isAssignableFrom(TypeDescription typeDescription);
+
+        /**
+         * Checks if this type represents the provided type.
+         *
+         * @param typeDescription The type that is to be checked.
+         * @return {@code true} if this type represents the provided type.
+         */
+        boolean represents(TypeDescription typeDescription);
+
+        /**
+         * Loads the provided type if this is possible or throws an exception if not.
+         *
+         * @return The loaded type.
+         */
+        Class<?> load();
 
         /**
          * Represents information on a type that cannot be loaded.
@@ -165,95 +255,5 @@ public enum JavaType {
                         '}';
             }
         }
-
-        /**
-         * Checks if a type is assignable from this type.
-         *
-         * @param typeDescription The type that is to be checked.
-         * @return {@code true} if this type is assignable from the provided type.
-         */
-        boolean isAssignableFrom(TypeDescription typeDescription);
-
-        /**
-         * Checks if this type represents the provided type.
-         *
-         * @param typeDescription The type that is to be checked.
-         * @return {@code true} if this type represents the provided type.
-         */
-        boolean represents(TypeDescription typeDescription);
-
-        /**
-         * Loads the provided type if this is possible or throws an exception if not.
-         *
-         * @return The loaded type.
-         */
-        Class<?> load();
-    }
-
-    /**
-     * A handler that is responsible for the lookup of a given type.
-     */
-    private final TypeLookup typeLookup;
-
-    /**
-     * Creates a new Java type representative.
-     *
-     * @param typeName The fully-qualified name of the type.
-     */
-    private JavaType(String typeName) {
-        TypeLookup typeLookup;
-        try {
-            typeLookup = new TypeLookup.ForLoadedType(Class.forName(typeName));
-        } catch (Exception ignored) {
-            typeLookup = new TypeLookup.ForNamedType(typeName);
-        }
-        this.typeLookup = typeLookup;
-    }
-
-    /**
-     * Checks if a type is assignable from this type.
-     *
-     * @param typeDescription The type that is to be checked.
-     * @return {@code true} if this type is assignable from the provided type.
-     */
-    public boolean isAssignableFrom(TypeDescription typeDescription) {
-        return typeLookup.isAssignableFrom(typeDescription);
-    }
-
-    /**
-     * Checks if a type is assignable to this type.
-     *
-     * @param typeDescription The type that is to be checked.
-     * @return {@code true} if this type is assignable to the provided type.
-     */
-    public boolean isAssignableTo(TypeDescription typeDescription) {
-        return representedBy(typeDescription) || isSubTypeOf(typeDescription);
-    }
-
-    /**
-     * Checks if a given type is a subtype of the given type.
-     *
-     * @param typeDescription The type that is to be checked.
-     * @return {@code true} if this type is a subtype of the provided type.
-     */
-    protected abstract boolean isSubTypeOf(TypeDescription typeDescription);
-
-    /**
-     * Checks if this type represents the provided type.
-     *
-     * @param typeDescription The type that is to be checked.
-     * @return {@code true} if this type represents the provided type.
-     */
-    public boolean representedBy(TypeDescription typeDescription) {
-        return typeLookup.represents(typeDescription);
-    }
-
-    /**
-     * Loads the provided type if this is possible or throws an exception if not.
-     *
-     * @return The loaded type.
-     */
-    public Class<?> load() {
-        return typeLookup.load();
     }
 }

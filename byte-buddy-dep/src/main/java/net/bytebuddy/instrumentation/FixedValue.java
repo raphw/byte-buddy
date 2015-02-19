@@ -40,9 +40,9 @@ public abstract class FixedValue implements Instrumentation {
     /**
      * Creates a new fixed value instrumentation.
      *
-     * @param assigner            The assigner to use for assigning the fixed value to the return type of the instrumented value.
+     * @param assigner         The assigner to use for assigning the fixed value to the return type of the instrumented value.
      * @param dynamicallyTyped If {@code true}, the runtime type of the given value will be considered for assigning
-     *                            the return type.
+     *                         the return type.
      */
     protected FixedValue(Assigner assigner, boolean dynamicallyTyped) {
         this.assigner = assigner;
@@ -250,10 +250,10 @@ public abstract class FixedValue implements Instrumentation {
         /**
          * Defines an explicit assigner to this fixed value instrumentation.
          *
-         * @param assigner            The assigner to use for assigning the fixed value to the return type of the
-         *                            instrumented value.
+         * @param assigner         The assigner to use for assigning the fixed value to the return type of the
+         *                         instrumented value.
          * @param dynamicallyTyped If {@code true}, the runtime type of the given value will be considered for
-         *                            assigning the return type.
+         *                         assigning the return type.
          * @return A fixed value instrumentation that makes use of the given assigner.
          */
         Instrumentation withAssigner(Assigner assigner, boolean dynamicallyTyped);
@@ -283,7 +283,7 @@ public abstract class FixedValue implements Instrumentation {
          * @param loadedType           A type description representing the loaded type.
          * @param assigner             The assigner to use for assigning the fixed value to the return type of the
          *                             instrumented value.
-         * @param dynamicallyTyped  If {@code true}, the runtime type of the given value will be considered for
+         * @param dynamicallyTyped     If {@code true}, the runtime type of the given value will be considered for
          *                             assigning the return type.
          */
         private ForPoolValue(StackManipulation valueLoadInstruction,
@@ -376,11 +376,11 @@ public abstract class FixedValue implements Instrumentation {
          * Creates a new static field fixed value instrumentation with a random name for the field containing the fixed
          * value.
          *
-         * @param fixedValue          The fixed value to be returned.
-         * @param assigner            The assigner to use for assigning the fixed value to the return type of the
-         *                            instrumented value.
+         * @param fixedValue       The fixed value to be returned.
+         * @param assigner         The assigner to use for assigning the fixed value to the return type of the
+         *                         instrumented value.
          * @param dynamicallyTyped If {@code true}, the runtime type of the given value will be considered for
-         *                            assigning the return type.
+         *                         assigning the return type.
          */
         protected ForStaticField(Object fixedValue, Assigner assigner, boolean dynamicallyTyped) {
             this(String.format("%s$%d", PREFIX, Math.abs(fixedValue.hashCode())), fixedValue, assigner, dynamicallyTyped);
@@ -389,12 +389,12 @@ public abstract class FixedValue implements Instrumentation {
         /**
          * Creates a new static field fixed value instrumentation.
          *
-         * @param fieldName           The name of the field for storing the fixed value.
-         * @param fixedValue          The fixed value to be returned.
-         * @param assigner            The assigner to use for assigning the fixed value to the return type of the
-         *                            instrumented value.
+         * @param fieldName        The name of the field for storing the fixed value.
+         * @param fixedValue       The fixed value to be returned.
+         * @param assigner         The assigner to use for assigning the fixed value to the return type of the
+         *                         instrumented value.
          * @param dynamicallyTyped If {@code true}, the runtime type of the given value will be considered for
-         *                            assigning the return type.
+         *                         assigning the return type.
          */
         protected ForStaticField(String fieldName, Object fixedValue, Assigner assigner, boolean dynamicallyTyped) {
             super(assigner, dynamicallyTyped);

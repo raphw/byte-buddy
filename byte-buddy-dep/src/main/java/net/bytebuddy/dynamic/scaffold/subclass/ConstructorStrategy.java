@@ -39,7 +39,7 @@ public interface ConstructorStrategy {
      * this strategy.
      */
     MethodRegistry inject(MethodRegistry methodRegistry,
-            MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory);
+                          MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory);
 
     /**
      * Default implementations of constructor strategies.
@@ -115,18 +115,18 @@ public interface ConstructorStrategy {
 
         @Override
         public MethodRegistry inject(MethodRegistry methodRegistry,
-                MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
+                                     MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
             switch (this) {
-            case NO_CONSTRUCTORS:
-                return methodRegistry;
-            case DEFAULT_CONSTRUCTOR:
-            case IMITATE_SUPER_TYPE:
-            case IMITATE_SUPER_TYPE_PUBLIC:
-                return methodRegistry.prepend(new MethodRegistry.LatentMethodMatcher.Simple(isConstructor()),
-                        SuperMethodCall.INSTANCE,
-                        defaultMethodAttributeAppenderFactory);
-            default:
-                throw new AssertionError();
+                case NO_CONSTRUCTORS:
+                    return methodRegistry;
+                case DEFAULT_CONSTRUCTOR:
+                case IMITATE_SUPER_TYPE:
+                case IMITATE_SUPER_TYPE_PUBLIC:
+                    return methodRegistry.prepend(new MethodRegistry.LatentMethodMatcher.Simple(isConstructor()),
+                            SuperMethodCall.INSTANCE,
+                            defaultMethodAttributeAppenderFactory);
+                default:
+                    throw new AssertionError();
             }
         }
     }

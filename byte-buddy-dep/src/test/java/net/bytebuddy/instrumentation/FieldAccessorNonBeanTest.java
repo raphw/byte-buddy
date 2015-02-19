@@ -43,20 +43,20 @@ public class FieldAccessorNonBeanTest extends AbstractInstrumentationTest {
 
     public static class SampleGetter extends CallTraceable {
 
+        protected Object foo = STRING_VALUE;
+
         public Object bar() {
             register(FOO);
             return STRING_DEFAULT_VALUE;
         }
-
-        protected Object foo = STRING_VALUE;
     }
 
     public static class SampleSetter extends CallTraceable {
 
+        protected Object foo = STRING_DEFAULT_VALUE;
+
         public void bar(Object foo) {
             register(FOO, foo);
         }
-
-        protected Object foo = STRING_DEFAULT_VALUE;
     }
 }

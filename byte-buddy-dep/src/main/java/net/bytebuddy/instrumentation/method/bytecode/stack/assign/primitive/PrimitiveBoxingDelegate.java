@@ -123,8 +123,8 @@ public enum PrimitiveBoxingDelegate {
      * Creates a stack manipulation that boxes the represented primitive type and applies a chained assignment
      * to the result of this boxing operation.
      *
-     * @param targetType          The type that is target of the assignment operation.
-     * @param chainedAssigner     The assigner that is to be used to perform the chained assignment.
+     * @param targetType       The type that is target of the assignment operation.
+     * @param chainedAssigner  The assigner that is to be used to perform the chained assignment.
      * @param dynamicallyTyped If {@code true}, unsafe cast operations are allowed for performing an assignment.
      * @return A stack manipulation that represents the described assignment operation.
      */

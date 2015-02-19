@@ -27,13 +27,63 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
-import static net.bytebuddy.utility.ByteBuddyCommons.*;
+import static net.bytebuddy.utility.ByteBuddyCommons.join;
+import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
  * An instrumentation that applies a
  * <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/invoke/package-summary.html">dynamic method invocation</a>.
  */
 public class InvokeDynamic implements Instrumentation {
+
+    /**
+     * The bootstrap method.
+     */
+    protected final MethodDescription bootstrapMethod;
+    /**
+     * The arguments that are provided to the bootstrap method.
+     */
+    protected final List<?> handleArguments;
+    /**
+     * The target provided that identifies the method to be bootstrapped.
+     */
+    protected final InvocationProvider invocationProvider;
+    /**
+     * A handler that handles the method return.
+     */
+    protected final TerminationHandler terminationHandler;
+    /**
+     * The assigner to be used.
+     */
+    protected final Assigner assigner;
+    /**
+     * {@code true} if the assigner should attempt dynamically-typed assignments.
+     */
+    protected final boolean dynamicallyTyped;
+
+    /**
+     * Creates a new invoke dynamic instrumentation.
+     *
+     * @param bootstrapMethod    The bootstrap method.
+     * @param handleArguments    The arguments that are provided to the bootstrap method.
+     * @param invocationProvider The target provided that identifies the method to be bootstrapped.
+     * @param terminationHandler A handler that handles the method return.
+     * @param assigner           The assigner to be used.
+     * @param dynamicallyTyped   {@code true} if the assigner should attempt dynamically-typed assignments.
+     */
+    protected InvokeDynamic(MethodDescription bootstrapMethod,
+                            List<?> handleArguments,
+                            InvocationProvider invocationProvider,
+                            TerminationHandler terminationHandler,
+                            Assigner assigner,
+                            boolean dynamicallyTyped) {
+        this.bootstrapMethod = bootstrapMethod;
+        this.handleArguments = handleArguments;
+        this.invocationProvider = invocationProvider;
+        this.terminationHandler = terminationHandler;
+        this.assigner = assigner;
+        this.dynamicallyTyped = dynamicallyTyped;
+    }
 
     /**
      * Returns the default assigner to be used by this instrumentation.
@@ -106,60 +156,6 @@ public class InvokeDynamic implements Instrumentation {
                 TerminationHandler.ForMethodReturn.INSTANCE,
                 defaultAssigner(),
                 defaultDynamicallyTyped());
-    }
-
-    /**
-     * The bootstrap method.
-     */
-    protected final MethodDescription bootstrapMethod;
-
-    /**
-     * The arguments that are provided to the bootstrap method.
-     */
-    protected final List<?> handleArguments;
-
-    /**
-     * The target provided that identifies the method to be bootstrapped.
-     */
-    protected final InvocationProvider invocationProvider;
-
-    /**
-     * A handler that handles the method return.
-     */
-    protected final TerminationHandler terminationHandler;
-
-    /**
-     * The assigner to be used.
-     */
-    protected final Assigner assigner;
-
-    /**
-     * {@code true} if the assigner should attempt dynamically-typed assignments.
-     */
-    protected final boolean dynamicallyTyped;
-
-    /**
-     * Creates a new invoke dynamic instrumentation.
-     *
-     * @param bootstrapMethod    The bootstrap method.
-     * @param handleArguments    The arguments that are provided to the bootstrap method.
-     * @param invocationProvider The target provided that identifies the method to be bootstrapped.
-     * @param terminationHandler A handler that handles the method return.
-     * @param assigner           The assigner to be used.
-     * @param dynamicallyTyped   {@code true} if the assigner should attempt dynamically-typed assignments.
-     */
-    protected InvokeDynamic(MethodDescription bootstrapMethod,
-                            List<?> handleArguments,
-                            InvocationProvider invocationProvider,
-                            TerminationHandler terminationHandler,
-                            Assigner assigner,
-                            boolean dynamicallyTyped) {
-        this.bootstrapMethod = bootstrapMethod;
-        this.handleArguments = handleArguments;
-        this.invocationProvider = invocationProvider;
-        this.terminationHandler = terminationHandler;
-        this.assigner = assigner;
-        this.dynamicallyTyped = dynamicallyTyped;
     }
 
     /**
@@ -566,278 +562,6 @@ public class InvokeDynamic implements Instrumentation {
     }
 
     /**
-     * The byte code appender to be used by the {@link net.bytebuddy.instrumentation.InvokeDynamic} instrumentation.
-     */
-    protected class Appender implements ByteCodeAppender {
-
-        /**
-         * The instrumented type of the current instrumentation.
-         */
-        private final TypeDescription instrumentedType;
-
-        /**
-         * Creates a new byte code appender for an invoke dynamic instrumentation.
-         *
-         * @param instrumentedType The instrumented type of the current instrumentation.
-         */
-        public Appender(TypeDescription instrumentedType) {
-            this.instrumentedType = instrumentedType;
-        }
-
-        @Override
-        public boolean appendsCode() {
-            return true;
-        }
-
-        @Override
-        public Size apply(MethodVisitor methodVisitor,
-                          Context instrumentationContext,
-                          MethodDescription instrumentedMethod) {
-            InvocationProvider.Target.Resolved target = invocationProvider.make(instrumentedMethod)
-                    .resolve(instrumentedType, assigner, dynamicallyTyped);
-            StackManipulation.Size size = new StackManipulation.Compound(
-                    target.getStackManipulation(),
-                    MethodInvocation.invoke(bootstrapMethod)
-                            .dynamic(target.getInternalName(),
-                                    target.getReturnType(),
-                                    target.getParameterTypes(),
-                                    handleArguments),
-                    terminationHandler.resolve(instrumentedMethod, target.getReturnType(), assigner, dynamicallyTyped)
-            ).apply(methodVisitor, instrumentationContext);
-            return new Size(size.getMaximalSize(), instrumentedMethod.getStackSize());
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            Appender appender = (Appender) other;
-            return instrumentedType.equals(appender.instrumentedType)
-                    && InvokeDynamic.this.equals(appender.getOuter());
-        }
-
-        /**
-         * Returns the outer instance.
-         *
-         * @return The outer instance.
-         */
-        private InvokeDynamic getOuter() {
-            return InvokeDynamic.this;
-        }
-
-        @Override
-        public int hashCode() {
-            return instrumentedType.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "InvokeDynamic.Appender{" +
-                    "invokeDynamic=" + InvokeDynamic.this +
-                    ", instrumentedType=" + instrumentedType +
-                    '}';
-        }
-    }
-
-    /**
-     * Representation of an {@link net.bytebuddy.instrumentation.InvokeDynamic} instrumentation where the bootstrapped
-     * method is passed a {@code this} reference, if available, and any arguments of the instrumented method.
-     */
-    public static class WithImplicitArguments extends InvokeDynamic {
-
-        /**
-         * Creates a new dynamic method invocation with implicit arguments.
-         *
-         * @param bootstrapMethod    The bootstrap method.
-         * @param handleArguments    The arguments that are provided to the bootstrap method.
-         * @param invocationProvider The target provided that identifies the method to be bootstrapped.
-         * @param terminationHandler A handler that handles the method return.
-         * @param assigner           The assigner to be used.
-         * @param dynamicallyTyped   {@code true} if the assigner should attempt dynamically-typed assignments.
-         */
-        protected WithImplicitArguments(MethodDescription bootstrapMethod,
-                                        List<?> handleArguments,
-                                        InvocationProvider invocationProvider,
-                                        TerminationHandler terminationHandler,
-                                        Assigner assigner,
-                                        boolean dynamicallyTyped) {
-            super(bootstrapMethod,
-                    handleArguments,
-                    invocationProvider,
-                    terminationHandler,
-                    assigner,
-                    dynamicallyTyped);
-        }
-
-        /**
-         * Returns an instance of this instrumentation where the bootstrapped method is not passed any arguments.
-         *
-         * @return This instrumentation where the bootstrapped method is not passed any arguments.
-         */
-        public InvokeDynamic withoutArguments() {
-            return new WithImplicitArguments(bootstrapMethod,
-                    handleArguments,
-                    invocationProvider.withoutArguments(),
-                    terminationHandler,
-                    assigner,
-                    dynamicallyTyped);
-        }
-
-        /**
-         * Returns an instance of this instrumentation where only the explicit arguments of an intercepted method but
-         * not the {@code this} reference, if available, are passed to the bootstrapped method.
-         *
-         * @return This instrumentation where only the arguments of the intercepted method but not the {@code this}
-         * reference of the intercepted method, if available, are passed to the bootstrapped method.
-         */
-        public InvokeDynamic withMethodArgumentsOnly() {
-            return new WithImplicitArguments(bootstrapMethod,
-                    handleArguments,
-                    invocationProvider
-                            .withoutArguments()
-                            .appendArgument(InvocationProvider.ArgumentProvider.ForInterceptedMethodParameters.INSTANCE),
-                    terminationHandler,
-                    assigner,
-                    dynamicallyTyped);
-        }
-
-        @Override
-        public String toString() {
-            return "InvokeDynamic.WithImplicitArguments{" +
-                    "bootstrapMethod=" + bootstrapMethod +
-                    ", handleArguments=" + handleArguments +
-                    ", invocationProvider=" + invocationProvider +
-                    ", terminationHandler=" + terminationHandler +
-                    ", assigner=" + assigner +
-                    ", dynamicallyTyped=" + dynamicallyTyped +
-                    '}';
-        }
-    }
-
-    /**
-     * Representation of an {@link net.bytebuddy.instrumentation.InvokeDynamic} instrumentation where the bootstrapped
-     * method is passed a {@code this} reference, if available, and any arguments of the instrumented method and
-     * where the invocation target is implicit.
-     */
-    public static class WithImplicitTarget extends WithImplicitArguments {
-
-        /**
-         * Creates a new dynamic method invocation with implicit arguments and an implicit invocation target.
-         *
-         * @param bootstrapMethod    The bootstrap method.
-         * @param handleArguments    The arguments that are provided to the bootstrap method.
-         * @param invocationProvider The target provided that identifies the method to be bootstrapped.
-         * @param terminationHandler A handler that handles the method return.
-         * @param assigner           The assigner to be used.
-         * @param dynamicallyTyped   {@code true} if the assigner should attempt dynamically-typed assignments.
-         */
-        protected WithImplicitTarget(MethodDescription bootstrapMethod,
-                                     List<?> handleArguments,
-                                     InvocationProvider invocationProvider,
-                                     TerminationHandler terminationHandler,
-                                     Assigner assigner,
-                                     boolean dynamicallyTyped) {
-            super(bootstrapMethod,
-                    handleArguments,
-                    invocationProvider,
-                    terminationHandler,
-                    assigner,
-                    dynamicallyTyped);
-        }
-
-        /**
-         * Requests the bootstrap method to bind a method with the given return type. The return type
-         * is he assigned to the intercepted method's return type.
-         *
-         * @param returnType The return type to request from the bootstrapping method.
-         * @return This instrumentation where the bootstrap method is requested to bind a method with the given
-         * return type.
-         */
-        public InvokeDynamic.WithImplicitArguments invoke(Class<?> returnType) {
-            return invoke(new TypeDescription.ForLoadedType(nonNull(returnType)));
-        }
-
-        /**
-         * Requests the bootstrap method to bind a method with the given return type. The return type
-         * is he assigned to the intercepted method's return type.
-         *
-         * @param returnType The return type to request from the bootstrapping method.
-         * @return This instrumentation where the bootstrap method is requested to bind a method with the given
-         * return type.
-         */
-        public InvokeDynamic.WithImplicitArguments invoke(TypeDescription returnType) {
-            return new WithImplicitArguments(bootstrapMethod,
-                    handleArguments,
-                    invocationProvider.withReturnTypeProvider(new InvocationProvider.ReturnTypeProvider.ForExplicitType(nonNull(returnType))),
-                    terminationHandler,
-                    assigner,
-                    dynamicallyTyped);
-        }
-
-        /**
-         * Requests the bootstrap method is passed the given method name.
-         *
-         * @param methodName The method name to pass to the bootstrapping method.
-         * @return This instrumentation where the bootstrap method is passed the given method name.
-         */
-        public InvokeDynamic.WithImplicitArguments invoke(String methodName) {
-            return new WithImplicitArguments(bootstrapMethod,
-                    handleArguments,
-                    invocationProvider.withNameProvider(new InvocationProvider.NameProvider.ForExplicitName(nonNull(methodName))),
-                    terminationHandler,
-                    assigner,
-                    dynamicallyTyped);
-        }
-
-        /**
-         * Requests the bootstrap method to bind a method with the given return type. The return type
-         * is he assigned to the intercepted method's return type. Also, the bootstrap method is passed the
-         * given method name,
-         *
-         * @param methodName The method name to pass to the bootstrapping method.
-         * @param returnType The return type to request from the bootstrapping method.
-         * @return This instrumentation where the bootstrap method is requested to bind a method with the given
-         * return type while being passed the given method name.
-         */
-        public InvokeDynamic.WithImplicitArguments invoke(String methodName, Class<?> returnType) {
-            return invoke(methodName, new TypeDescription.ForLoadedType(nonNull(returnType)));
-        }
-
-        /**
-         * Requests the bootstrap method to bind a method with the given return type. The return type
-         * is he assigned to the intercepted method's return type. Also, the bootstrap method is passed the
-         * given method name,
-         *
-         * @param methodName The method name to pass to the bootstrapping method.
-         * @param returnType The return type to request from the bootstrapping method.
-         * @return This instrumentation where the bootstrap method is requested to bind a method with the given
-         * return type while being passed the given method name.
-         */
-        public InvokeDynamic.WithImplicitArguments invoke(String methodName, TypeDescription returnType) {
-            return new WithImplicitArguments(bootstrapMethod,
-                    handleArguments,
-                    invocationProvider
-                            .withNameProvider(new InvocationProvider.NameProvider.ForExplicitName(nonNull(methodName)))
-                            .withReturnTypeProvider(new InvocationProvider.ReturnTypeProvider.ForExplicitType(nonNull(returnType))),
-                    terminationHandler,
-                    assigner,
-                    dynamicallyTyped);
-        }
-
-        @Override
-        public String toString() {
-            return "InvokeDynamic.WithImplicitTarget{" +
-                    "bootstrapMethod=" + bootstrapMethod +
-                    ", handleArguments=" + handleArguments +
-                    ", invocationProvider=" + invocationProvider +
-                    ", terminationHandler=" + terminationHandler +
-                    ", assigner=" + assigner +
-                    ", dynamicallyTyped=" + dynamicallyTyped +
-                    '}';
-        }
-    }
-
-    /**
      * An invocation provider is responsible for loading the arguments of the invoked method onto the operand
      * stack and for creating the actual <i>invoke dynamic</i> instruction.
      */
@@ -1137,6 +861,294 @@ public class InvokeDynamic implements Instrumentation {
              * @return The prepared instrumented type.
              */
             InstrumentedType prepare(InstrumentedType instrumentedType);
+
+            /**
+             * An argument provider that loads a reference to the intercepted instance and all arguments of
+             * the intercepted method.
+             */
+            static enum ForInterceptedMethodInstanceAndParameters implements ArgumentProvider {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public Resolved resolve(TypeDescription instrumentedType,
+                                        MethodDescription instrumentedMethod,
+                                        Assigner assigner,
+                                        boolean dynamicallyTyped) {
+                    return new Resolved.Simple(MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
+                            instrumentedMethod.isStatic()
+                                    ? instrumentedMethod.getParameterTypes()
+                                    : join(instrumentedType, instrumentedMethod.getParameterTypes()));
+                }
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
+                }
+            }
+
+            /**
+             * An argument provider that loads all arguments of the intercepted method.
+             */
+            static enum ForInterceptedMethodParameters implements ArgumentProvider {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public Resolved resolve(TypeDescription instrumentedType,
+                                        MethodDescription instrumentedMethod,
+                                        Assigner assigner,
+                                        boolean dynamicallyTyped) {
+                    return new Resolved.Simple(MethodVariableAccess.loadArguments(instrumentedMethod), instrumentedMethod.getParameterTypes());
+                }
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
+                }
+            }
+
+            /**
+             * An argument provider that loads the intercepted instance.
+             */
+            static enum ForThisInstance implements ArgumentProvider {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public Resolved resolve(TypeDescription instrumentedType,
+                                        MethodDescription instrumentedMethod,
+                                        Assigner assigner,
+                                        boolean dynamicallyTyped) {
+                    if (instrumentedMethod.isStatic()) {
+                        throw new IllegalStateException("Cannot get this instance from static method: " + instrumentedMethod);
+                    }
+                    return new Resolved.Simple(MethodVariableAccess.REFERENCE.loadFromIndex(0), instrumentedType);
+                }
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
+                }
+            }
+
+            /**
+             * Represents wrapper types and types that could be stored in a class's constant pool as such
+             * constant pool values.
+             */
+            static enum ConstantPoolWrapper {
+
+                /**
+                 * Stores a {@link java.lang.Boolean} as a {@code boolean} and wraps it on load.
+                 */
+                BOOLEAN(boolean.class, Boolean.class) {
+                    @Override
+                    protected ArgumentProvider make(Object value) {
+                        return new WrappingArgumentProvider(IntegerConstant.forValue((Boolean) value));
+                    }
+                },
+
+                /**
+                 * Stores a {@link java.lang.Byte} as a {@code byte} and wraps it on load.
+                 */
+                BYTE(byte.class, Byte.class) {
+                    @Override
+                    protected ArgumentProvider make(Object value) {
+                        return new WrappingArgumentProvider(IntegerConstant.forValue((Byte) value));
+                    }
+                },
+
+                /**
+                 * Stores a {@link java.lang.Short} as a {@code short} and wraps it on load.
+                 */
+                SHORT(short.class, Short.class) {
+                    @Override
+                    protected ArgumentProvider make(Object value) {
+                        return new WrappingArgumentProvider(IntegerConstant.forValue((Short) value));
+                    }
+                },
+
+                /**
+                 * Stores a {@link java.lang.Character} as a {@code char} and wraps it on load.
+                 */
+                CHARACTER(char.class, Character.class) {
+                    @Override
+                    protected ArgumentProvider make(Object value) {
+                        return new WrappingArgumentProvider(IntegerConstant.forValue((Character) value));
+                    }
+                },
+
+                /**
+                 * Stores a {@link java.lang.Integer} as a {@code int} and wraps it on load.
+                 */
+                INTEGER(int.class, Integer.class) {
+                    @Override
+                    protected ArgumentProvider make(Object value) {
+                        return new WrappingArgumentProvider(IntegerConstant.forValue((Integer) value));
+                    }
+                },
+
+                /**
+                 * Stores a {@link java.lang.Long} as a {@code long} and wraps it on load.
+                 */
+                LONG(long.class, Long.class) {
+                    @Override
+                    protected ArgumentProvider make(Object value) {
+                        return new WrappingArgumentProvider(LongConstant.forValue((Long) value));
+                    }
+                },
+
+                /**
+                 * Stores a {@link java.lang.Float} as a {@code float} and wraps it on load.
+                 */
+                FLOAT(float.class, Float.class) {
+                    @Override
+                    protected ArgumentProvider make(Object value) {
+                        return new WrappingArgumentProvider(FloatConstant.forValue((Float) value));
+                    }
+                },
+
+                /**
+                 * Stores a {@link java.lang.Double} as a {@code double} and wraps it on load.
+                 */
+                DOUBLE(double.class, Double.class) {
+                    @Override
+                    protected ArgumentProvider make(Object value) {
+                        return new WrappingArgumentProvider(DoubleConstant.forValue((Double) value));
+                    }
+                };
+
+                /**
+                 * The primitive type that can be stored on the constant pool.
+                 */
+                private final TypeDescription primitiveType;
+                /**
+                 * The wrapper type that is to be represented.
+                 */
+                private final TypeDescription wrapperType;
+
+                /**
+                 * Creates a new wrapper delegate for a primitive type.
+                 *
+                 * @param primitiveType The primitive type that can be stored on the constant pool.
+                 * @param wrapperType   The wrapper type that is to be represented.
+                 */
+                private ConstantPoolWrapper(Class<?> primitiveType, Class<?> wrapperType) {
+                    this.primitiveType = new TypeDescription.ForLoadedType(primitiveType);
+                    this.wrapperType = new TypeDescription.ForLoadedType(wrapperType);
+                }
+
+                /**
+                 * Represents the given value by a constant pool value or as a field if this is not possible.
+                 *
+                 * @param value The value to provide to the bootstrapped method.
+                 * @return An argument provider for this value.
+                 */
+                public static ArgumentProvider of(Object value) {
+                    if (value instanceof Boolean) {
+                        return BOOLEAN.make(value);
+                    } else if (value instanceof Byte) {
+                        return BYTE.make(value);
+                    } else if (value instanceof Short) {
+                        return SHORT.make(value);
+                    } else if (value instanceof Character) {
+                        return CHARACTER.make(value);
+                    } else if (value instanceof Integer) {
+                        return INTEGER.make(value);
+                    } else if (value instanceof Long) {
+                        return LONG.make(value);
+                    } else if (value instanceof Float) {
+                        return FLOAT.make(value);
+                    } else if (value instanceof Double) {
+                        return DOUBLE.make(value);
+                    } else if (value instanceof String) {
+                        return new ForStringValue((String) value);
+                    } else {
+                        return new ForStaticField(value);
+                    }
+                }
+
+                /**
+                 * Creates an argument provider for a given primitive value.
+                 *
+                 * @param value The wrapper-type value to provide to the bootstrapped method.
+                 * @return An argument provider for this value.
+                 */
+                protected abstract ArgumentProvider make(Object value);
+
+                /**
+                 * An argument provider that loads a primitive value from the constant pool and wraps it.
+                 */
+                protected class WrappingArgumentProvider implements ArgumentProvider {
+
+                    /**
+                     * The stack manipulation that represents the loading of the primitive value.
+                     */
+                    private final StackManipulation stackManipulation;
+
+                    /**
+                     * Creates a new wrapping argument provider.
+                     *
+                     * @param stackManipulation The stack manipulation that represents the loading of the
+                     *                          primitive value.
+                     */
+                    protected WrappingArgumentProvider(StackManipulation stackManipulation) {
+                        this.stackManipulation = stackManipulation;
+                    }
+
+                    @Override
+                    public Resolved resolve(TypeDescription instrumentedType,
+                                            MethodDescription instrumentedMethod,
+                                            Assigner assigner,
+                                            boolean dynamicallyTyped) {
+                        return new Resolved.Simple(new StackManipulation.Compound(stackManipulation,
+                                assigner.assign(primitiveType, wrapperType, dynamicallyTyped)), wrapperType);
+                    }
+
+                    @Override
+                    public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                        return instrumentedType;
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && ConstantPoolWrapper.this.equals(((WrappingArgumentProvider) other).getOuter())
+                                && stackManipulation.equals(((WrappingArgumentProvider) other).stackManipulation);
+                    }
+
+                    /**
+                     * Returns the outer instance.
+                     *
+                     * @return The outer instance.
+                     */
+                    private ConstantPoolWrapper getOuter() {
+                        return ConstantPoolWrapper.this;
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return stackManipulation.hashCode() + 31 * ConstantPoolWrapper.this.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "InvokeDynamic.InvocationProvider.ArgumentProvider.ConstantPoolWrapper.WrappingArgumentProvider{" +
+                                "constantPoolWrapper=" + ConstantPoolWrapper.this +
+                                ", stackManipulation=" + stackManipulation +
+                                '}';
+                    }
+                }
+            }
 
             /**
              * A resolved {@link net.bytebuddy.instrumentation.InvokeDynamic.InvocationProvider.ArgumentProvider}.
@@ -1494,85 +1506,6 @@ public class InvokeDynamic implements Instrumentation {
                     return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForMethodParameter{" +
                             "index=" + index +
                             '}';
-                }
-            }
-
-            /**
-             * An argument provider that loads a reference to the intercepted instance and all arguments of
-             * the intercepted method.
-             */
-            static enum ForInterceptedMethodInstanceAndParameters implements ArgumentProvider {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                @Override
-                public Resolved resolve(TypeDescription instrumentedType,
-                                        MethodDescription instrumentedMethod,
-                                        Assigner assigner,
-                                        boolean dynamicallyTyped) {
-                    return new Resolved.Simple(MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
-                            instrumentedMethod.isStatic()
-                                    ? instrumentedMethod.getParameterTypes()
-                                    : join(instrumentedType, instrumentedMethod.getParameterTypes()));
-                }
-
-                @Override
-                public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType;
-                }
-            }
-
-            /**
-             * An argument provider that loads all arguments of the intercepted method.
-             */
-            static enum ForInterceptedMethodParameters implements ArgumentProvider {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                @Override
-                public Resolved resolve(TypeDescription instrumentedType,
-                                        MethodDescription instrumentedMethod,
-                                        Assigner assigner,
-                                        boolean dynamicallyTyped) {
-                    return new Resolved.Simple(MethodVariableAccess.loadArguments(instrumentedMethod), instrumentedMethod.getParameterTypes());
-                }
-
-                @Override
-                public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType;
-                }
-            }
-
-            /**
-             * An argument provider that loads the intercepted instance.
-             */
-            static enum ForThisInstance implements ArgumentProvider {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                @Override
-                public Resolved resolve(TypeDescription instrumentedType,
-                                        MethodDescription instrumentedMethod,
-                                        Assigner assigner,
-                                        boolean dynamicallyTyped) {
-                    if (instrumentedMethod.isStatic()) {
-                        throw new IllegalStateException("Cannot get this instance from static method: " + instrumentedMethod);
-                    }
-                    return new Resolved.Simple(MethodVariableAccess.REFERENCE.loadFromIndex(0), instrumentedType);
-                }
-
-                @Override
-                public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType;
                 }
             }
 
@@ -2086,216 +2019,6 @@ public class InvokeDynamic implements Instrumentation {
                             '}';
                 }
             }
-
-            /**
-             * Represents wrapper types and types that could be stored in a class's constant pool as such
-             * constant pool values.
-             */
-            static enum ConstantPoolWrapper {
-
-                /**
-                 * Stores a {@link java.lang.Boolean} as a {@code boolean} and wraps it on load.
-                 */
-                BOOLEAN(boolean.class, Boolean.class) {
-                    @Override
-                    protected ArgumentProvider make(Object value) {
-                        return new WrappingArgumentProvider(IntegerConstant.forValue((Boolean) value));
-                    }
-                },
-
-                /**
-                 * Stores a {@link java.lang.Byte} as a {@code byte} and wraps it on load.
-                 */
-                BYTE(byte.class, Byte.class) {
-                    @Override
-                    protected ArgumentProvider make(Object value) {
-                        return new WrappingArgumentProvider(IntegerConstant.forValue((Byte) value));
-                    }
-                },
-
-                /**
-                 * Stores a {@link java.lang.Short} as a {@code short} and wraps it on load.
-                 */
-                SHORT(short.class, Short.class) {
-                    @Override
-                    protected ArgumentProvider make(Object value) {
-                        return new WrappingArgumentProvider(IntegerConstant.forValue((Short) value));
-                    }
-                },
-
-                /**
-                 * Stores a {@link java.lang.Character} as a {@code char} and wraps it on load.
-                 */
-                CHARACTER(char.class, Character.class) {
-                    @Override
-                    protected ArgumentProvider make(Object value) {
-                        return new WrappingArgumentProvider(IntegerConstant.forValue((Character) value));
-                    }
-                },
-
-                /**
-                 * Stores a {@link java.lang.Integer} as a {@code int} and wraps it on load.
-                 */
-                INTEGER(int.class, Integer.class) {
-                    @Override
-                    protected ArgumentProvider make(Object value) {
-                        return new WrappingArgumentProvider(IntegerConstant.forValue((Integer) value));
-                    }
-                },
-
-                /**
-                 * Stores a {@link java.lang.Long} as a {@code long} and wraps it on load.
-                 */
-                LONG(long.class, Long.class) {
-                    @Override
-                    protected ArgumentProvider make(Object value) {
-                        return new WrappingArgumentProvider(LongConstant.forValue((Long) value));
-                    }
-                },
-
-                /**
-                 * Stores a {@link java.lang.Float} as a {@code float} and wraps it on load.
-                 */
-                FLOAT(float.class, Float.class) {
-                    @Override
-                    protected ArgumentProvider make(Object value) {
-                        return new WrappingArgumentProvider(FloatConstant.forValue((Float) value));
-                    }
-                },
-
-                /**
-                 * Stores a {@link java.lang.Double} as a {@code double} and wraps it on load.
-                 */
-                DOUBLE(double.class, Double.class) {
-                    @Override
-                    protected ArgumentProvider make(Object value) {
-                        return new WrappingArgumentProvider(DoubleConstant.forValue((Double) value));
-                    }
-                };
-
-                /**
-                 * Represents the given value by a constant pool value or as a field if this is not possible.
-                 *
-                 * @param value The value to provide to the bootstrapped method.
-                 * @return An argument provider for this value.
-                 */
-                public static ArgumentProvider of(Object value) {
-                    if (value instanceof Boolean) {
-                        return BOOLEAN.make(value);
-                    } else if (value instanceof Byte) {
-                        return BYTE.make(value);
-                    } else if (value instanceof Short) {
-                        return SHORT.make(value);
-                    } else if (value instanceof Character) {
-                        return CHARACTER.make(value);
-                    } else if (value instanceof Integer) {
-                        return INTEGER.make(value);
-                    } else if (value instanceof Long) {
-                        return LONG.make(value);
-                    } else if (value instanceof Float) {
-                        return FLOAT.make(value);
-                    } else if (value instanceof Double) {
-                        return DOUBLE.make(value);
-                    } else if (value instanceof String) {
-                        return new ForStringValue((String) value);
-                    } else {
-                        return new ForStaticField(value);
-                    }
-                }
-
-                /**
-                 * The primitive type that can be stored on the constant pool.
-                 */
-                private final TypeDescription primitiveType;
-
-                /**
-                 * The wrapper type that is to be represented.
-                 */
-                private final TypeDescription wrapperType;
-
-                /**
-                 * Creates a new wrapper delegate for a primitive type.
-                 *
-                 * @param primitiveType The primitive type that can be stored on the constant pool.
-                 * @param wrapperType   The wrapper type that is to be represented.
-                 */
-                private ConstantPoolWrapper(Class<?> primitiveType, Class<?> wrapperType) {
-                    this.primitiveType = new TypeDescription.ForLoadedType(primitiveType);
-                    this.wrapperType = new TypeDescription.ForLoadedType(wrapperType);
-                }
-
-                /**
-                 * Creates an argument provider for a given primitive value.
-                 *
-                 * @param value The wrapper-type value to provide to the bootstrapped method.
-                 * @return An argument provider for this value.
-                 */
-                protected abstract ArgumentProvider make(Object value);
-
-                /**
-                 * An argument provider that loads a primitive value from the constant pool and wraps it.
-                 */
-                protected class WrappingArgumentProvider implements ArgumentProvider {
-
-                    /**
-                     * The stack manipulation that represents the loading of the primitive value.
-                     */
-                    private final StackManipulation stackManipulation;
-
-                    /**
-                     * Creates a new wrapping argument provider.
-                     *
-                     * @param stackManipulation The stack manipulation that represents the loading of the
-                     *                          primitive value.
-                     */
-                    protected WrappingArgumentProvider(StackManipulation stackManipulation) {
-                        this.stackManipulation = stackManipulation;
-                    }
-
-                    @Override
-                    public Resolved resolve(TypeDescription instrumentedType,
-                                            MethodDescription instrumentedMethod,
-                                            Assigner assigner,
-                                            boolean dynamicallyTyped) {
-                        return new Resolved.Simple(new StackManipulation.Compound(stackManipulation,
-                                assigner.assign(primitiveType, wrapperType, dynamicallyTyped)), wrapperType);
-                    }
-
-                    @Override
-                    public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                        return instrumentedType;
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && ConstantPoolWrapper.this.equals(((WrappingArgumentProvider) other).getOuter())
-                                && stackManipulation.equals(((WrappingArgumentProvider) other).stackManipulation);
-                    }
-
-                    /**
-                     * Returns the outer instance.
-                     *
-                     * @return The outer instance.
-                     */
-                    private ConstantPoolWrapper getOuter() {
-                        return ConstantPoolWrapper.this;
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return stackManipulation.hashCode() + 31 * ConstantPoolWrapper.this.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "InvokeDynamic.InvocationProvider.ArgumentProvider.ConstantPoolWrapper.WrappingArgumentProvider{" +
-                                "constantPoolWrapper=" + ConstantPoolWrapper.this +
-                                ", stackManipulation=" + stackManipulation +
-                                '}';
-                    }
-                }
-            }
         }
 
         /**
@@ -2728,6 +2451,278 @@ public class InvokeDynamic implements Instrumentation {
                         ? interceptedMethod.getDeclaringType()
                         : interceptedMethod.getReturnType());
             }
+        }
+    }
+
+    /**
+     * Representation of an {@link net.bytebuddy.instrumentation.InvokeDynamic} instrumentation where the bootstrapped
+     * method is passed a {@code this} reference, if available, and any arguments of the instrumented method.
+     */
+    public static class WithImplicitArguments extends InvokeDynamic {
+
+        /**
+         * Creates a new dynamic method invocation with implicit arguments.
+         *
+         * @param bootstrapMethod    The bootstrap method.
+         * @param handleArguments    The arguments that are provided to the bootstrap method.
+         * @param invocationProvider The target provided that identifies the method to be bootstrapped.
+         * @param terminationHandler A handler that handles the method return.
+         * @param assigner           The assigner to be used.
+         * @param dynamicallyTyped   {@code true} if the assigner should attempt dynamically-typed assignments.
+         */
+        protected WithImplicitArguments(MethodDescription bootstrapMethod,
+                                        List<?> handleArguments,
+                                        InvocationProvider invocationProvider,
+                                        TerminationHandler terminationHandler,
+                                        Assigner assigner,
+                                        boolean dynamicallyTyped) {
+            super(bootstrapMethod,
+                    handleArguments,
+                    invocationProvider,
+                    terminationHandler,
+                    assigner,
+                    dynamicallyTyped);
+        }
+
+        /**
+         * Returns an instance of this instrumentation where the bootstrapped method is not passed any arguments.
+         *
+         * @return This instrumentation where the bootstrapped method is not passed any arguments.
+         */
+        public InvokeDynamic withoutArguments() {
+            return new WithImplicitArguments(bootstrapMethod,
+                    handleArguments,
+                    invocationProvider.withoutArguments(),
+                    terminationHandler,
+                    assigner,
+                    dynamicallyTyped);
+        }
+
+        /**
+         * Returns an instance of this instrumentation where only the explicit arguments of an intercepted method but
+         * not the {@code this} reference, if available, are passed to the bootstrapped method.
+         *
+         * @return This instrumentation where only the arguments of the intercepted method but not the {@code this}
+         * reference of the intercepted method, if available, are passed to the bootstrapped method.
+         */
+        public InvokeDynamic withMethodArgumentsOnly() {
+            return new WithImplicitArguments(bootstrapMethod,
+                    handleArguments,
+                    invocationProvider
+                            .withoutArguments()
+                            .appendArgument(InvocationProvider.ArgumentProvider.ForInterceptedMethodParameters.INSTANCE),
+                    terminationHandler,
+                    assigner,
+                    dynamicallyTyped);
+        }
+
+        @Override
+        public String toString() {
+            return "InvokeDynamic.WithImplicitArguments{" +
+                    "bootstrapMethod=" + bootstrapMethod +
+                    ", handleArguments=" + handleArguments +
+                    ", invocationProvider=" + invocationProvider +
+                    ", terminationHandler=" + terminationHandler +
+                    ", assigner=" + assigner +
+                    ", dynamicallyTyped=" + dynamicallyTyped +
+                    '}';
+        }
+    }
+
+    /**
+     * Representation of an {@link net.bytebuddy.instrumentation.InvokeDynamic} instrumentation where the bootstrapped
+     * method is passed a {@code this} reference, if available, and any arguments of the instrumented method and
+     * where the invocation target is implicit.
+     */
+    public static class WithImplicitTarget extends WithImplicitArguments {
+
+        /**
+         * Creates a new dynamic method invocation with implicit arguments and an implicit invocation target.
+         *
+         * @param bootstrapMethod    The bootstrap method.
+         * @param handleArguments    The arguments that are provided to the bootstrap method.
+         * @param invocationProvider The target provided that identifies the method to be bootstrapped.
+         * @param terminationHandler A handler that handles the method return.
+         * @param assigner           The assigner to be used.
+         * @param dynamicallyTyped   {@code true} if the assigner should attempt dynamically-typed assignments.
+         */
+        protected WithImplicitTarget(MethodDescription bootstrapMethod,
+                                     List<?> handleArguments,
+                                     InvocationProvider invocationProvider,
+                                     TerminationHandler terminationHandler,
+                                     Assigner assigner,
+                                     boolean dynamicallyTyped) {
+            super(bootstrapMethod,
+                    handleArguments,
+                    invocationProvider,
+                    terminationHandler,
+                    assigner,
+                    dynamicallyTyped);
+        }
+
+        /**
+         * Requests the bootstrap method to bind a method with the given return type. The return type
+         * is he assigned to the intercepted method's return type.
+         *
+         * @param returnType The return type to request from the bootstrapping method.
+         * @return This instrumentation where the bootstrap method is requested to bind a method with the given
+         * return type.
+         */
+        public InvokeDynamic.WithImplicitArguments invoke(Class<?> returnType) {
+            return invoke(new TypeDescription.ForLoadedType(nonNull(returnType)));
+        }
+
+        /**
+         * Requests the bootstrap method to bind a method with the given return type. The return type
+         * is he assigned to the intercepted method's return type.
+         *
+         * @param returnType The return type to request from the bootstrapping method.
+         * @return This instrumentation where the bootstrap method is requested to bind a method with the given
+         * return type.
+         */
+        public InvokeDynamic.WithImplicitArguments invoke(TypeDescription returnType) {
+            return new WithImplicitArguments(bootstrapMethod,
+                    handleArguments,
+                    invocationProvider.withReturnTypeProvider(new InvocationProvider.ReturnTypeProvider.ForExplicitType(nonNull(returnType))),
+                    terminationHandler,
+                    assigner,
+                    dynamicallyTyped);
+        }
+
+        /**
+         * Requests the bootstrap method is passed the given method name.
+         *
+         * @param methodName The method name to pass to the bootstrapping method.
+         * @return This instrumentation where the bootstrap method is passed the given method name.
+         */
+        public InvokeDynamic.WithImplicitArguments invoke(String methodName) {
+            return new WithImplicitArguments(bootstrapMethod,
+                    handleArguments,
+                    invocationProvider.withNameProvider(new InvocationProvider.NameProvider.ForExplicitName(nonNull(methodName))),
+                    terminationHandler,
+                    assigner,
+                    dynamicallyTyped);
+        }
+
+        /**
+         * Requests the bootstrap method to bind a method with the given return type. The return type
+         * is he assigned to the intercepted method's return type. Also, the bootstrap method is passed the
+         * given method name,
+         *
+         * @param methodName The method name to pass to the bootstrapping method.
+         * @param returnType The return type to request from the bootstrapping method.
+         * @return This instrumentation where the bootstrap method is requested to bind a method with the given
+         * return type while being passed the given method name.
+         */
+        public InvokeDynamic.WithImplicitArguments invoke(String methodName, Class<?> returnType) {
+            return invoke(methodName, new TypeDescription.ForLoadedType(nonNull(returnType)));
+        }
+
+        /**
+         * Requests the bootstrap method to bind a method with the given return type. The return type
+         * is he assigned to the intercepted method's return type. Also, the bootstrap method is passed the
+         * given method name,
+         *
+         * @param methodName The method name to pass to the bootstrapping method.
+         * @param returnType The return type to request from the bootstrapping method.
+         * @return This instrumentation where the bootstrap method is requested to bind a method with the given
+         * return type while being passed the given method name.
+         */
+        public InvokeDynamic.WithImplicitArguments invoke(String methodName, TypeDescription returnType) {
+            return new WithImplicitArguments(bootstrapMethod,
+                    handleArguments,
+                    invocationProvider
+                            .withNameProvider(new InvocationProvider.NameProvider.ForExplicitName(nonNull(methodName)))
+                            .withReturnTypeProvider(new InvocationProvider.ReturnTypeProvider.ForExplicitType(nonNull(returnType))),
+                    terminationHandler,
+                    assigner,
+                    dynamicallyTyped);
+        }
+
+        @Override
+        public String toString() {
+            return "InvokeDynamic.WithImplicitTarget{" +
+                    "bootstrapMethod=" + bootstrapMethod +
+                    ", handleArguments=" + handleArguments +
+                    ", invocationProvider=" + invocationProvider +
+                    ", terminationHandler=" + terminationHandler +
+                    ", assigner=" + assigner +
+                    ", dynamicallyTyped=" + dynamicallyTyped +
+                    '}';
+        }
+    }
+
+    /**
+     * The byte code appender to be used by the {@link net.bytebuddy.instrumentation.InvokeDynamic} instrumentation.
+     */
+    protected class Appender implements ByteCodeAppender {
+
+        /**
+         * The instrumented type of the current instrumentation.
+         */
+        private final TypeDescription instrumentedType;
+
+        /**
+         * Creates a new byte code appender for an invoke dynamic instrumentation.
+         *
+         * @param instrumentedType The instrumented type of the current instrumentation.
+         */
+        public Appender(TypeDescription instrumentedType) {
+            this.instrumentedType = instrumentedType;
+        }
+
+        @Override
+        public boolean appendsCode() {
+            return true;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor,
+                          Context instrumentationContext,
+                          MethodDescription instrumentedMethod) {
+            InvocationProvider.Target.Resolved target = invocationProvider.make(instrumentedMethod)
+                    .resolve(instrumentedType, assigner, dynamicallyTyped);
+            StackManipulation.Size size = new StackManipulation.Compound(
+                    target.getStackManipulation(),
+                    MethodInvocation.invoke(bootstrapMethod)
+                            .dynamic(target.getInternalName(),
+                                    target.getReturnType(),
+                                    target.getParameterTypes(),
+                                    handleArguments),
+                    terminationHandler.resolve(instrumentedMethod, target.getReturnType(), assigner, dynamicallyTyped)
+            ).apply(methodVisitor, instrumentationContext);
+            return new Size(size.getMaximalSize(), instrumentedMethod.getStackSize());
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            Appender appender = (Appender) other;
+            return instrumentedType.equals(appender.instrumentedType)
+                    && InvokeDynamic.this.equals(appender.getOuter());
+        }
+
+        /**
+         * Returns the outer instance.
+         *
+         * @return The outer instance.
+         */
+        private InvokeDynamic getOuter() {
+            return InvokeDynamic.this;
+        }
+
+        @Override
+        public int hashCode() {
+            return instrumentedType.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "InvokeDynamic.Appender{" +
+                    "invokeDynamic=" + InvokeDynamic.this +
+                    ", instrumentedType=" + instrumentedType +
+                    '}';
         }
     }
 }

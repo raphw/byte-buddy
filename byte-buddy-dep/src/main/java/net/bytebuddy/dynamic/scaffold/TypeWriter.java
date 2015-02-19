@@ -144,15 +144,15 @@ public interface TypeWriter<T> {
              * @param methodRebaseResolver A resolver for method rebasing.
              */
             public ForRedefinition(TypeDescription instrumentedType,
-                    TypeDescription targetType,
-                    ClassFileVersion classFileVersion,
-                    List<? extends MethodDescription> invokableMethods,
-                    ClassVisitorWrapper classVisitorWrapper,
-                    TypeAttributeAppender attributeAppender,
-                    TypeWriter.FieldPool fieldPool,
-                    TypeWriter.MethodPool methodPool,
-                    ClassFileLocator classFileLocator,
-                    MethodRebaseResolver methodRebaseResolver) {
+                                   TypeDescription targetType,
+                                   ClassFileVersion classFileVersion,
+                                   List<? extends MethodDescription> invokableMethods,
+                                   ClassVisitorWrapper classVisitorWrapper,
+                                   TypeAttributeAppender attributeAppender,
+                                   TypeWriter.FieldPool fieldPool,
+                                   TypeWriter.MethodPool methodPool,
+                                   ClassFileLocator classFileLocator,
+                                   MethodRebaseResolver methodRebaseResolver) {
                 this.instrumentedType = instrumentedType;
                 this.targetType = targetType;
                 this.classFileVersion = classFileVersion;
@@ -187,7 +187,7 @@ public interface TypeWriter<T> {
              * @return The byte array representing the created class.
              */
             private byte[] doCreate(Instrumentation.Context.ExtractableView instrumentationContext,
-                    byte[] binaryRepresentation) {
+                                    byte[] binaryRepresentation) {
                 ClassReader classReader = new ClassReader(binaryRepresentation);
                 ClassWriter classWriter = new ClassWriter(classReader, ASM_MANUAL_FLAG);
                 classReader.accept(writeTo(classVisitorWrapper.wrap(classWriter), instrumentationContext),
@@ -203,7 +203,7 @@ public interface TypeWriter<T> {
              * @return A class visitor which is capable of applying the changes.
              */
             private ClassVisitor writeTo(ClassVisitor classVisitor,
-                    Instrumentation.Context.ExtractableView instrumentationContext) {
+                                         Instrumentation.Context.ExtractableView instrumentationContext) {
                 String originalName = targetType.getInternalName();
                 String targetName = instrumentedType.getInternalName();
                 ClassVisitor targetClassVisitor = new RedefinitionClassVisitor(classVisitor, instrumentationContext);
@@ -296,7 +296,7 @@ public interface TypeWriter<T> {
                  * @param instrumentationContext The instrumentation context to use for implementing the class file.
                  */
                 protected RedefinitionClassVisitor(ClassVisitor classVisitor,
-                        Instrumentation.Context.ExtractableView instrumentationContext) {
+                                                   Instrumentation.Context.ExtractableView instrumentationContext) {
                     super(ASM_API_VERSION, classVisitor);
                     this.instrumentationContext = instrumentationContext;
                     List<? extends FieldDescription> fieldDescriptions = instrumentedType.getDeclaredFields();
@@ -313,11 +313,11 @@ public interface TypeWriter<T> {
 
                 @Override
                 public void visit(int classFileVersionNumber,
-                        int modifiers,
-                        String internalName,
-                        String genericSignature,
-                        String superTypeInternalName,
-                        String[] interfaceTypeInternalName) {
+                                  int modifiers,
+                                  String internalName,
+                                  String genericSignature,
+                                  String superTypeInternalName,
+                                  String[] interfaceTypeInternalName) {
                     ClassFileVersion originalClassFileVersion = new ClassFileVersion(classFileVersionNumber);
                     super.visit((classFileVersion.compareTo(originalClassFileVersion) > 0
                                     ? classFileVersion
@@ -334,20 +334,20 @@ public interface TypeWriter<T> {
 
                 @Override
                 public FieldVisitor visitField(int modifiers,
-                        String internalName,
-                        String descriptor,
-                        String genericSignature,
-                        Object defaultValue) {
+                                               String internalName,
+                                               String descriptor,
+                                               String genericSignature,
+                                               Object defaultValue) {
                     declaredFields.remove(internalName); // Ignore in favor of the class file definition.
                     return super.visitField(modifiers, internalName, descriptor, genericSignature, defaultValue);
                 }
 
                 @Override
                 public MethodVisitor visitMethod(int modifiers,
-                        String internalName,
-                        String descriptor,
-                        String genericSignature,
-                        String[] exceptionTypeInternalName) {
+                                                 String internalName,
+                                                 String descriptor,
+                                                 String genericSignature,
+                                                 String[] exceptionTypeInternalName) {
                     if (internalName.equals(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME)) {
                         TypeInitializerInjection injectedCode = new TypeInitializerInjection();
                         this.injectedCode = injectedCode;
@@ -447,8 +447,8 @@ public interface TypeWriter<T> {
                      * @param methodDescription   A description of the actual method.
                      */
                     private CodePreservingMethodVisitor(MethodVisitor actualMethodVisitor,
-                            ByteCodeAppender byteCodeAppender,
-                            MethodDescription methodDescription) {
+                                                        ByteCodeAppender byteCodeAppender,
+                                                        MethodDescription methodDescription) {
                         super(ASM_API_VERSION, actualMethodVisitor);
                         this.actualMethodVisitor = actualMethodVisitor;
                         this.byteCodeAppender = byteCodeAppender;
@@ -522,8 +522,8 @@ public interface TypeWriter<T> {
                      * @param methodDescription   A description of the method that is currently written.
                      */
                     public AttributeObtainingMethodVisitor(MethodVisitor actualMethodVisitor,
-                            ByteCodeAppender byteCodeAppender,
-                            MethodDescription methodDescription) {
+                                                           ByteCodeAppender byteCodeAppender,
+                                                           MethodDescription methodDescription) {
                         super(ASM_API_VERSION, actualMethodVisitor);
                         this.actualMethodVisitor = actualMethodVisitor;
                         this.byteCodeAppender = byteCodeAppender;
@@ -674,12 +674,12 @@ public interface TypeWriter<T> {
              * @param methodPool          The method pool to use for writing methods.
              */
             public ForCreation(TypeDescription instrumentedType,
-                    ClassFileVersion classFileVersion,
-                    List<? extends MethodDescription> invokableMethods,
-                    ClassVisitorWrapper classVisitorWrapper,
-                    TypeAttributeAppender attributeAppender,
-                    TypeWriter.FieldPool fieldPool,
-                    TypeWriter.MethodPool methodPool) {
+                               ClassFileVersion classFileVersion,
+                               List<? extends MethodDescription> invokableMethods,
+                               ClassVisitorWrapper classVisitorWrapper,
+                               TypeAttributeAppender attributeAppender,
+                               TypeWriter.FieldPool fieldPool,
+                               TypeWriter.MethodPool methodPool) {
                 this.instrumentedType = instrumentedType;
                 this.classFileVersion = classFileVersion;
                 this.invokableMethods = invokableMethods;
@@ -969,8 +969,8 @@ public interface TypeWriter<T> {
              * @param methodDescription      A description of the method that is to be written
              */
             void apply(ClassVisitor classVisitor,
-                    Instrumentation.Context instrumentationContext,
-                    MethodDescription methodDescription);
+                       Instrumentation.Context instrumentationContext,
+                       MethodDescription methodDescription);
 
             /**
              * A skip entry that instructs to ignore a method.
@@ -999,8 +999,8 @@ public interface TypeWriter<T> {
 
                 @Override
                 public void apply(ClassVisitor classVisitor,
-                        Instrumentation.Context instrumentationContext,
-                        MethodDescription methodDescription) {
+                                  Instrumentation.Context instrumentationContext,
+                                  MethodDescription methodDescription) {
                     /* do nothing */
                 }
 
@@ -1068,8 +1068,8 @@ public interface TypeWriter<T> {
 
                 @Override
                 public void apply(ClassVisitor classVisitor,
-                        Instrumentation.Context instrumentationContext,
-                        MethodDescription methodDescription) {
+                                  Instrumentation.Context instrumentationContext,
+                                  MethodDescription methodDescription) {
                     boolean appendsCode = byteCodeAppender.appendsCode();
                     MethodVisitor methodVisitor = classVisitor
                             .visitMethod(methodDescription.getAdjustedModifiers(appendsCode),
@@ -1159,11 +1159,11 @@ public interface TypeWriter<T> {
          * @param engine                 An engine for writing the actual class file for the instrumented type.
          */
         public Default(TypeDescription instrumentedType,
-                LoadedTypeInitializer loadedTypeInitializer,
-                InstrumentedType.TypeInitializer typeInitializer,
-                List<DynamicType> explicitAuxiliaryTypes,
-                ClassFileVersion classFileVersion,
-                Engine engine) {
+                       LoadedTypeInitializer loadedTypeInitializer,
+                       InstrumentedType.TypeInitializer typeInitializer,
+                       List<DynamicType> explicitAuxiliaryTypes,
+                       ClassFileVersion classFileVersion,
+                       Engine engine) {
             this.instrumentedType = instrumentedType;
             this.loadedTypeInitializer = loadedTypeInitializer;
             this.typeInitializer = typeInitializer;

@@ -13,13 +13,8 @@ import java.io.Writer;
 @SuppressWarnings("unused")
 public class DebuggingWrapper implements ClassVisitorWrapper {
 
-    public static ClassVisitorWrapper makeDefault() {
-        return new DebuggingWrapper(System.out, new Textifier());
-    }
-
     private final PrintWriter printWriter;
     private final Printer printer;
-
     public DebuggingWrapper(Writer writer, Printer printer) {
         printWriter = new PrintWriter(writer);
         this.printer = printer;
@@ -28,6 +23,10 @@ public class DebuggingWrapper implements ClassVisitorWrapper {
     public DebuggingWrapper(OutputStream outputStream, Printer printer) {
         printWriter = new PrintWriter(outputStream);
         this.printer = printer;
+    }
+
+    public static ClassVisitorWrapper makeDefault() {
+        return new DebuggingWrapper(System.out, new Textifier());
     }
 
     @Override

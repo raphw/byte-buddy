@@ -209,11 +209,11 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
 
     public static class Explicit {
 
+        protected String foo = FOO;
+
         public void swap() {
             /* do nothing */
         }
-
-        protected String foo = FOO;
 
 
     }
@@ -249,11 +249,11 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
 
     public static class ImplicitGetter {
 
+        protected String foo = FOO;
+
         public String getFoo() {
             return null;
         }
-
-        protected String foo = FOO;
 
 
     }
@@ -268,11 +268,11 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
 
     public static class ImplicitSetter {
 
+        protected String foo = FOO;
+
         public void setFoo(String value) {
             /* do nothing */
         }
-
-        protected String foo = FOO;
 
 
     }

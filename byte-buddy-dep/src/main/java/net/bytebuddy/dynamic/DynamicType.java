@@ -295,8 +295,8 @@ public interface DynamicType {
          * @return An interception delegate that exclusively matches the new method.
          */
         FieldValueTarget<T> defineField(String name,
-                Class<?> fieldType,
-                ModifierContributor.ForField... modifier);
+                                        Class<?> fieldType,
+                                        ModifierContributor.ForField... modifier);
 
         /**
          * Defines a new field for this type.
@@ -308,8 +308,8 @@ public interface DynamicType {
          * @return An interception delegate that exclusively matches the new method.
          */
         FieldValueTarget<T> defineField(String name,
-                TypeDescription fieldTypeDescription,
-                ModifierContributor.ForField... modifier);
+                                        TypeDescription fieldTypeDescription,
+                                        ModifierContributor.ForField... modifier);
 
         /**
          * Defines a new field for this type.
@@ -321,8 +321,8 @@ public interface DynamicType {
          * @return An interception delegate that exclusively matches the new method.
          */
         FieldValueTarget<T> defineField(String name,
-                Class<?> fieldType,
-                int modifiers);
+                                        Class<?> fieldType,
+                                        int modifiers);
 
         /**
          * Defines a new field for this type.
@@ -334,8 +334,8 @@ public interface DynamicType {
          * @return An interception delegate that exclusively matches the new method.
          */
         FieldValueTarget<T> defineField(String name,
-                TypeDescription fieldTypeDescription,
-                int modifiers);
+                                        TypeDescription fieldTypeDescription,
+                                        int modifiers);
 
         /**
          * Defines a new field for this type.
@@ -361,9 +361,9 @@ public interface DynamicType {
          * @return An interception delegate that exclusively matches the new method.
          */
         ExceptionDeclarableMethodInterception<T> defineMethod(String name,
-                Class<?> returnType,
-                List<Class<?>> parameterTypes,
-                ModifierContributor.ForMethod... modifier);
+                                                              Class<?> returnType,
+                                                              List<Class<?>> parameterTypes,
+                                                              ModifierContributor.ForMethod... modifier);
 
         /**
          * Defines a new method for this type.
@@ -381,9 +381,9 @@ public interface DynamicType {
          * @return An interception delegate that exclusively matches the new method.
          */
         ExceptionDeclarableMethodInterception<T> defineMethod(String name,
-                TypeDescription returnType,
-                List<? extends TypeDescription> parameterTypes,
-                ModifierContributor.ForMethod... modifier);
+                                                              TypeDescription returnType,
+                                                              List<? extends TypeDescription> parameterTypes,
+                                                              ModifierContributor.ForMethod... modifier);
 
         /**
          * Defines a new method for this type.
@@ -401,9 +401,9 @@ public interface DynamicType {
          * @return An interception delegate that exclusively matches the new method.
          */
         ExceptionDeclarableMethodInterception<T> defineMethod(String name,
-                Class<?> returnType,
-                List<Class<?>> parameterTypes,
-                int modifiers);
+                                                              Class<?> returnType,
+                                                              List<Class<?>> parameterTypes,
+                                                              int modifiers);
 
         /**
          * Defines a new method for this type.
@@ -421,9 +421,9 @@ public interface DynamicType {
          * @return An interception delegate that exclusively matches the new method.
          */
         ExceptionDeclarableMethodInterception<T> defineMethod(String name,
-                TypeDescription returnType,
-                List<? extends TypeDescription> parameterTypes,
-                int modifiers);
+                                                              TypeDescription returnType,
+                                                              List<? extends TypeDescription> parameterTypes,
+                                                              int modifiers);
 
         /**
          * Defines a new method for this type.
@@ -455,7 +455,7 @@ public interface DynamicType {
          * @return An interception delegate that exclusively matches the new constructor.
          */
         ExceptionDeclarableMethodInterception<T> defineConstructor(Iterable<Class<?>> parameterTypes,
-                ModifierContributor.ForMethod... modifier);
+                                                                   ModifierContributor.ForMethod... modifier);
 
         /**
          * Defines a new constructor for this type. A constructor must not be {@code static}. Instead, a static type
@@ -475,7 +475,7 @@ public interface DynamicType {
          * @return An interception delegate that exclusively matches the new constructor.
          */
         ExceptionDeclarableMethodInterception<T> defineConstructor(List<? extends TypeDescription> parameterTypes,
-                ModifierContributor.ForMethod... modifier);
+                                                                   ModifierContributor.ForMethod... modifier);
 
         /**
          * Defines a new constructor for this type. A constructor must not be {@code static}. Instead, a static type
@@ -495,7 +495,7 @@ public interface DynamicType {
          * @return An interception delegate that exclusively matches the new constructor.
          */
         ExceptionDeclarableMethodInterception<T> defineConstructor(Iterable<Class<?>> parameterTypes,
-                int modifiers);
+                                                                   int modifiers);
 
         /**
          * Defines a new constructor for this type. A constructor must not be {@code static}. Instead, a static type
@@ -515,7 +515,7 @@ public interface DynamicType {
          * @return An interception delegate that exclusively matches the new constructor.
          */
         ExceptionDeclarableMethodInterception<T> defineConstructor(List<? extends TypeDescription> parameterTypes,
-                int modifiers);
+                                                                   int modifiers);
 
         /**
          * Defines a new constructor for this type. A constructor must not be {@code static}. Instead, a static type
@@ -981,21 +981,21 @@ public interface DynamicType {
              *                                              dynamic type.
              */
             protected AbstractBase(ClassFileVersion classFileVersion,
-                    NamingStrategy namingStrategy,
-                    TypeDescription targetType,
-                    List<TypeDescription> interfaceTypes,
-                    int modifiers,
-                    TypeAttributeAppender attributeAppender,
-                    ElementMatcher<? super MethodDescription> ignoredMethods,
-                    BridgeMethodResolver.Factory bridgeMethodResolverFactory,
-                    ClassVisitorWrapper.Chain classVisitorWrapperChain,
-                    FieldRegistry fieldRegistry,
-                    MethodRegistry methodRegistry,
-                    MethodLookupEngine.Factory methodLookupEngineFactory,
-                    FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
-                    MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
-                    List<FieldToken> fieldTokens,
-                    List<MethodToken> methodTokens) {
+                                   NamingStrategy namingStrategy,
+                                   TypeDescription targetType,
+                                   List<TypeDescription> interfaceTypes,
+                                   int modifiers,
+                                   TypeAttributeAppender attributeAppender,
+                                   ElementMatcher<? super MethodDescription> ignoredMethods,
+                                   BridgeMethodResolver.Factory bridgeMethodResolverFactory,
+                                   ClassVisitorWrapper.Chain classVisitorWrapperChain,
+                                   FieldRegistry fieldRegistry,
+                                   MethodRegistry methodRegistry,
+                                   MethodLookupEngine.Factory methodLookupEngineFactory,
+                                   FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
+                                   MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
+                                   List<FieldToken> fieldTokens,
+                                   List<MethodToken> methodTokens) {
                 this.classFileVersion = classFileVersion;
                 this.namingStrategy = namingStrategy;
                 this.targetType = targetType;
@@ -1023,7 +1023,7 @@ public interface DynamicType {
              * @return The actually represented type.
              */
             private static TypeDescription considerSubstitution(TypeDescription type,
-                    TypeDescription instrumentedType) {
+                                                                TypeDescription instrumentedType) {
                 return type.represents(TargetType.class) ? instrumentedType : type;
             }
 
@@ -1061,16 +1061,16 @@ public interface DynamicType {
 
             @Override
             public FieldValueTarget<S> defineField(String name,
-                    Class<?> fieldType,
-                    ModifierContributor.ForField... modifier) {
+                                                   Class<?> fieldType,
+                                                   ModifierContributor.ForField... modifier) {
                 return defineField(name, new TypeDescription.ForLoadedType(fieldType), modifier);
             }
 
             @Override
             public ExceptionDeclarableMethodInterception<S> defineMethod(String name,
-                    Class<?> returnType,
-                    List<Class<?>> parameterTypes,
-                    ModifierContributor.ForMethod... modifier) {
+                                                                         Class<?> returnType,
+                                                                         List<Class<?>> parameterTypes,
+                                                                         ModifierContributor.ForMethod... modifier) {
                 return defineMethod(name,
                         new TypeDescription.ForLoadedType(returnType),
                         new TypeList.ForLoadedType(parameterTypes),
@@ -1079,7 +1079,7 @@ public interface DynamicType {
 
             @Override
             public ExceptionDeclarableMethodInterception<S> defineConstructor(Iterable<Class<?>> parameterTypes,
-                    ModifierContributor.ForMethod... modifier) {
+                                                                              ModifierContributor.ForMethod... modifier) {
                 List<Class<?>> parameterTypesList;
                 if (parameterTypes instanceof List) {
                     parameterTypesList = (List<Class<?>>) parameterTypes;
@@ -1305,8 +1305,8 @@ public interface DynamicType {
 
             @Override
             public FieldValueTarget<S> defineField(String name,
-                    TypeDescription fieldType,
-                    ModifierContributor.ForField... modifier) {
+                                                   TypeDescription fieldType,
+                                                   ModifierContributor.ForField... modifier) {
                 return defineField(name,
                         fieldType,
                         resolveModifierContributors(FIELD_MODIFIER_MASK, nonNull(modifier)));
@@ -1314,8 +1314,8 @@ public interface DynamicType {
 
             @Override
             public FieldValueTarget<S> defineField(String name,
-                    Class<?> fieldType,
-                    int modifiers) {
+                                                   Class<?> fieldType,
+                                                   int modifiers) {
                 return defineField(name,
                         new TypeDescription.ForLoadedType(nonNull(fieldType)),
                         modifiers);
@@ -1323,8 +1323,8 @@ public interface DynamicType {
 
             @Override
             public FieldValueTarget<S> defineField(String name,
-                    TypeDescription fieldTypeDescription,
-                    int modifiers) {
+                                                   TypeDescription fieldTypeDescription,
+                                                   int modifiers) {
                 return new DefaultFieldValueTarget(
                         new FieldToken(isValidIdentifier(name),
                                 nonVoid(fieldTypeDescription),
@@ -1341,9 +1341,9 @@ public interface DynamicType {
 
             @Override
             public ExceptionDeclarableMethodInterception<S> defineMethod(String name,
-                    TypeDescription returnType,
-                    List<? extends TypeDescription> parameterTypes,
-                    ModifierContributor.ForMethod... modifier) {
+                                                                         TypeDescription returnType,
+                                                                         List<? extends TypeDescription> parameterTypes,
+                                                                         ModifierContributor.ForMethod... modifier) {
                 return new DefaultExceptionDeclarableMethodInterception(new MethodToken(isValidIdentifier(name),
                         nonNull(returnType),
                         nonVoid(parameterTypes),
@@ -1361,9 +1361,9 @@ public interface DynamicType {
 
             @Override
             public ExceptionDeclarableMethodInterception<S> defineMethod(String name,
-                    Class<?> returnType,
-                    List<Class<?>> parameterTypes,
-                    int modifiers) {
+                                                                         Class<?> returnType,
+                                                                         List<Class<?>> parameterTypes,
+                                                                         int modifiers) {
                 return defineMethod(name,
                         new TypeDescription.ForLoadedType(nonNull(returnType)),
                         new TypeList.ForLoadedType(nonNull(parameterTypes)),
@@ -1372,9 +1372,9 @@ public interface DynamicType {
 
             @Override
             public ExceptionDeclarableMethodInterception<S> defineMethod(String name,
-                    TypeDescription returnType,
-                    List<? extends TypeDescription> parameterTypes,
-                    int modifiers) {
+                                                                         TypeDescription returnType,
+                                                                         List<? extends TypeDescription> parameterTypes,
+                                                                         int modifiers) {
                 return new DefaultExceptionDeclarableMethodInterception(new MethodToken(isValidIdentifier(name),
                         nonNull(returnType),
                         nonVoid(parameterTypes),
@@ -1458,21 +1458,21 @@ public interface DynamicType {
              * @return A dynamic type builder that represents the given arguments.
              */
             protected abstract Builder<S> materialize(ClassFileVersion classFileVersion,
-                    NamingStrategy namingStrategy,
-                    TypeDescription targetType,
-                    List<TypeDescription> interfaceTypes,
-                    int modifiers,
-                    TypeAttributeAppender attributeAppender,
-                    ElementMatcher<? super MethodDescription> ignoredMethods,
-                    BridgeMethodResolver.Factory bridgeMethodResolverFactory,
-                    ClassVisitorWrapper.Chain classVisitorWrapperChain,
-                    FieldRegistry fieldRegistry,
-                    MethodRegistry methodRegistry,
-                    MethodLookupEngine.Factory methodLookupEngineFactory,
-                    FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
-                    MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
-                    List<FieldToken> fieldTokens,
-                    List<MethodToken> methodTokens);
+                                                      NamingStrategy namingStrategy,
+                                                      TypeDescription targetType,
+                                                      List<TypeDescription> interfaceTypes,
+                                                      int modifiers,
+                                                      TypeAttributeAppender attributeAppender,
+                                                      ElementMatcher<? super MethodDescription> ignoredMethods,
+                                                      BridgeMethodResolver.Factory bridgeMethodResolverFactory,
+                                                      ClassVisitorWrapper.Chain classVisitorWrapperChain,
+                                                      FieldRegistry fieldRegistry,
+                                                      MethodRegistry methodRegistry,
+                                                      MethodLookupEngine.Factory methodLookupEngineFactory,
+                                                      FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
+                                                      MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
+                                                      List<FieldToken> fieldTokens,
+                                                      List<MethodToken> methodTokens);
 
             @Override
             public boolean equals(Object other) {
@@ -1560,8 +1560,8 @@ public interface DynamicType {
                  * @param modifiers      The modifiers of the constructor.
                  */
                 public MethodToken(List<? extends TypeDescription> parameterTypes,
-                        List<? extends TypeDescription> exceptionTypes,
-                        int modifiers) {
+                                   List<? extends TypeDescription> exceptionTypes,
+                                   int modifiers) {
                     this(MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
                             new TypeDescription.ForLoadedType(void.class),
                             parameterTypes,
@@ -1579,10 +1579,10 @@ public interface DynamicType {
                  * @param modifiers      The modifiers of the method.
                  */
                 public MethodToken(String internalName,
-                        TypeDescription returnType,
-                        List<? extends TypeDescription> parameterTypes,
-                        List<? extends TypeDescription> exceptionTypes,
-                        int modifiers) {
+                                   TypeDescription returnType,
+                                   List<? extends TypeDescription> parameterTypes,
+                                   List<? extends TypeDescription> exceptionTypes,
+                                   int modifiers) {
                     this.internalName = internalName;
                     this.returnType = returnType;
                     this.parameterTypes = Collections.unmodifiableList(new ArrayList<TypeDescription>(parameterTypes));
@@ -1885,15 +1885,15 @@ public interface DynamicType {
 
                 @Override
                 public FieldValueTarget<U> defineField(String name,
-                        Class<?> fieldType,
-                        ModifierContributor.ForField... modifier) {
+                                                       Class<?> fieldType,
+                                                       ModifierContributor.ForField... modifier) {
                     return materialize().defineField(name, fieldType, modifier);
                 }
 
                 @Override
                 public FieldValueTarget<U> defineField(String name,
-                        TypeDescription fieldTypeDescription,
-                        ModifierContributor.ForField... modifier) {
+                                                       TypeDescription fieldTypeDescription,
+                                                       ModifierContributor.ForField... modifier) {
                     return materialize().defineField(name, fieldTypeDescription, modifier);
                 }
 
@@ -1909,40 +1909,40 @@ public interface DynamicType {
 
                 @Override
                 public FieldValueTarget<U> defineField(String name,
-                        TypeDescription fieldTypeDescription,
-                        int modifiers) {
+                                                       TypeDescription fieldTypeDescription,
+                                                       int modifiers) {
                     return materialize().defineField(name, fieldTypeDescription, modifiers);
                 }
 
                 @Override
                 public ExceptionDeclarableMethodInterception<U> defineMethod(String name,
-                        Class<?> returnType,
-                        List<Class<?>> parameterTypes,
-                        ModifierContributor.ForMethod... modifier) {
+                                                                             Class<?> returnType,
+                                                                             List<Class<?>> parameterTypes,
+                                                                             ModifierContributor.ForMethod... modifier) {
                     return materialize().defineMethod(name, returnType, parameterTypes, modifier);
                 }
 
                 @Override
                 public ExceptionDeclarableMethodInterception<U> defineMethod(String name,
-                        TypeDescription returnType,
-                        List<? extends TypeDescription> parameterTypes,
-                        ModifierContributor.ForMethod... modifier) {
+                                                                             TypeDescription returnType,
+                                                                             List<? extends TypeDescription> parameterTypes,
+                                                                             ModifierContributor.ForMethod... modifier) {
                     return materialize().defineMethod(name, returnType, parameterTypes, modifier);
                 }
 
                 @Override
                 public ExceptionDeclarableMethodInterception<U> defineMethod(String name,
-                        Class<?> returnType,
-                        List<Class<?>> parameterTypes,
-                        int modifiers) {
+                                                                             Class<?> returnType,
+                                                                             List<Class<?>> parameterTypes,
+                                                                             int modifiers) {
                     return materialize().defineMethod(name, returnType, parameterTypes, modifiers);
                 }
 
                 @Override
                 public ExceptionDeclarableMethodInterception<U> defineMethod(String name,
-                        TypeDescription returnType,
-                        List<? extends TypeDescription> parameterTypes,
-                        int modifiers) {
+                                                                             TypeDescription returnType,
+                                                                             List<? extends TypeDescription> parameterTypes,
+                                                                             int modifiers) {
                     return materialize().defineMethod(name, returnType, parameterTypes, modifiers);
                 }
 
@@ -1953,7 +1953,7 @@ public interface DynamicType {
 
                 @Override
                 public ExceptionDeclarableMethodInterception<U> defineConstructor(Iterable<Class<?>> parameterTypes,
-                        ModifierContributor.ForMethod... modifier) {
+                                                                                  ModifierContributor.ForMethod... modifier) {
                     return materialize().defineConstructor(parameterTypes, modifier);
                 }
 
@@ -2048,7 +2048,7 @@ public interface DynamicType {
                  * @param attributeAppenderFactory The attribute appender factory that was defined for this field token.
                  */
                 private DefaultFieldValueTarget(FieldToken fieldToken,
-                        FieldAttributeAppender.Factory attributeAppenderFactory) {
+                                                FieldAttributeAppender.Factory attributeAppenderFactory) {
                     this(fieldToken, attributeAppenderFactory, null);
                 }
 
@@ -2060,8 +2060,8 @@ public interface DynamicType {
                  * @param defaultValue             The default value to define for the recently defined field.
                  */
                 private DefaultFieldValueTarget(FieldToken fieldToken,
-                        FieldAttributeAppender.Factory attributeAppenderFactory,
-                        Object defaultValue) {
+                                                FieldAttributeAppender.Factory attributeAppenderFactory,
+                                                Object defaultValue) {
                     this.fieldToken = fieldToken;
                     this.attributeAppenderFactory = attributeAppenderFactory;
                     this.defaultValue = defaultValue;
@@ -2231,7 +2231,7 @@ public interface DynamicType {
                  * @param methodTokens        A list of all method tokens that were previously defined.
                  */
                 private DefaultMatchedMethodInterception(MethodRegistry.LatentMethodMatcher latentMethodMatcher,
-                        List<MethodToken> methodTokens) {
+                                                         List<MethodToken> methodTokens) {
                     this.latentMethodMatcher = latentMethodMatcher;
                     this.methodTokens = methodTokens;
                 }
@@ -2415,9 +2415,9 @@ public interface DynamicType {
                  * @param attributeAppenderFactory The method attribute appender factory to be applied to the matched methods.
                  */
                 private DefaultMethodAnnotationTarget(List<MethodToken> methodTokens,
-                        MethodRegistry.LatentMethodMatcher latentMethodMatcher,
-                        Instrumentation instrumentation,
-                        MethodAttributeAppender.Factory attributeAppenderFactory) {
+                                                      MethodRegistry.LatentMethodMatcher latentMethodMatcher,
+                                                      Instrumentation instrumentation,
+                                                      MethodAttributeAppender.Factory attributeAppenderFactory) {
                     this.latentMethodMatcher = latentMethodMatcher;
                     this.methodTokens = methodTokens;
                     this.instrumentation = instrumentation;
@@ -2704,9 +2704,9 @@ public interface DynamicType {
          * @param auxiliaryTypes        The auxiliary type required for this dynamic type.
          */
         public Default(TypeDescription typeDescription,
-                byte[] binaryRepresentation,
-                LoadedTypeInitializer loadedTypeInitializer,
-                List<? extends DynamicType> auxiliaryTypes) {
+                       byte[] binaryRepresentation,
+                       LoadedTypeInitializer loadedTypeInitializer,
+                       List<? extends DynamicType> auxiliaryTypes) {
             this.typeDescription = typeDescription;
             this.binaryRepresentation = binaryRepresentation;
             this.loadedTypeInitializer = loadedTypeInitializer;
@@ -2926,9 +2926,9 @@ public interface DynamicType {
              * @param auxiliaryTypes        The auxiliary types that are required for this dynamic type.
              */
             public Unloaded(TypeDescription typeDescription,
-                    byte[] typeByte,
-                    LoadedTypeInitializer loadedTypeInitializer,
-                    List<? extends DynamicType> auxiliaryTypes) {
+                            byte[] typeByte,
+                            LoadedTypeInitializer loadedTypeInitializer,
+                            List<? extends DynamicType> auxiliaryTypes) {
                 super(typeDescription, typeByte, loadedTypeInitializer, auxiliaryTypes);
             }
 
@@ -2992,10 +2992,10 @@ public interface DynamicType {
              * @param loadedTypes           A map of loaded types for this dynamic type and all its auxiliary types.
              */
             protected Loaded(TypeDescription typeDescription,
-                    byte[] typeByte,
-                    LoadedTypeInitializer loadedTypeInitializer,
-                    List<? extends DynamicType> auxiliaryTypes,
-                    Map<TypeDescription, Class<?>> loadedTypes) {
+                             byte[] typeByte,
+                             LoadedTypeInitializer loadedTypeInitializer,
+                             List<? extends DynamicType> auxiliaryTypes,
+                             Map<TypeDescription, Class<?>> loadedTypes) {
                 super(typeDescription, typeByte, loadedTypeInitializer, auxiliaryTypes);
                 this.loadedTypes = loadedTypes;
             }

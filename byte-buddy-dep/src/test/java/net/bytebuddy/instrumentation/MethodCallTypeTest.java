@@ -18,8 +18,6 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static net.bytebuddy.matcher.ElementMatchers.named;
-import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertNotEquals;
@@ -47,6 +45,10 @@ public class MethodCallTypeTest extends AbstractInstrumentationTest {
     private final boolean definesFieldReference;
 
     private final boolean definesFieldConstantPool;
+    @Rule
+    public TestRule methodRule = new MockitoRule(this);
+    @Mock
+    private Assigner nonAssigner;
 
     public MethodCallTypeTest(Object value, boolean definesFieldReference, boolean definesFieldConstantPool) {
         this.value = value;
@@ -70,12 +72,6 @@ public class MethodCallTypeTest extends AbstractInstrumentationTest {
                 {REFERENCE_VALUE, true, true}
         });
     }
-
-    @Rule
-    public TestRule methodRule = new MockitoRule(this);
-
-    @Mock
-    private Assigner nonAssigner;
 
     @Before
     public void setUp() throws Exception {

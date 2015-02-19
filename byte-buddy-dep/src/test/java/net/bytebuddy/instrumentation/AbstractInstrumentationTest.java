@@ -18,7 +18,6 @@ import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.test.utility.DebuggingWrapper;
 import org.hamcrest.CoreMatchers;
 import org.objectweb.asm.Opcodes;
 

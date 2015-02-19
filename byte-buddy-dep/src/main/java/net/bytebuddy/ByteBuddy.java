@@ -160,17 +160,17 @@ public class ByteBuddy {
      *                                              method definition or instrumentation.
      */
     protected ByteBuddy(ClassFileVersion classFileVersion,
-            NamingStrategy.Unbound namingStrategy,
-            List<TypeDescription> interfaceTypes,
-            ElementMatcher<? super MethodDescription> ignoredMethods,
-            BridgeMethodResolver.Factory bridgeMethodResolverFactory,
-            ClassVisitorWrapper.Chain classVisitorWrapperChain,
-            MethodRegistry methodRegistry,
-            Definable<Integer> modifiers,
-            TypeAttributeAppender typeAttributeAppender,
-            MethodLookupEngine.Factory methodLookupEngineFactory,
-            FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
-            MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
+                        NamingStrategy.Unbound namingStrategy,
+                        List<TypeDescription> interfaceTypes,
+                        ElementMatcher<? super MethodDescription> ignoredMethods,
+                        BridgeMethodResolver.Factory bridgeMethodResolverFactory,
+                        ClassVisitorWrapper.Chain classVisitorWrapperChain,
+                        MethodRegistry methodRegistry,
+                        Definable<Integer> modifiers,
+                        TypeAttributeAppender typeAttributeAppender,
+                        MethodLookupEngine.Factory methodLookupEngineFactory,
+                        FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
+                        MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
         this.classFileVersion = classFileVersion;
         this.namingStrategy = namingStrategy;
         this.interfaceTypes = interfaceTypes;
@@ -564,8 +564,8 @@ public class ByteBuddy {
      * @return A dynamic type builder for this configuration that creates a rebased version of the given type.
      */
     public <T> DynamicType.Builder<T> rebase(Class<T> levelType,
-            ClassFileLocator classFileLocator,
-            MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
+                                             ClassFileLocator classFileLocator,
+                                             MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
         return rebase(new TypeDescription.ForLoadedType(nonNull(levelType)), classFileLocator, methodNameTransformer);
     }
 
@@ -609,8 +609,8 @@ public class ByteBuddy {
      * @return A dynamic type builder for this configuration that creates a rebased version of the given type.
      */
     public <T> DynamicType.Builder<T> rebase(TypeDescription levelType,
-            ClassFileLocator classFileLocator,
-            MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
+                                             ClassFileLocator classFileLocator,
+                                             MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
         return new InlineDynamicTypeBuilder<T>(classFileVersion,
                 nonNull(namingStrategy.rebase(levelType)),
                 levelType,
@@ -1200,20 +1200,20 @@ public class ByteBuddy {
          *                                              current method selection.
          */
         protected MethodAnnotationTarget(ClassFileVersion classFileVersion,
-                NamingStrategy.Unbound namingStrategy,
-                List<TypeDescription> interfaceTypes,
-                ElementMatcher<? super MethodDescription> ignoredMethods,
-                BridgeMethodResolver.Factory bridgeMethodResolverFactory,
-                ClassVisitorWrapper.Chain classVisitorWrapperChain,
-                MethodRegistry methodRegistry,
-                Definable<Integer> modifiers,
-                TypeAttributeAppender typeAttributeAppender,
-                MethodLookupEngine.Factory methodLookupEngineFactory,
-                FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
-                MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
-                ElementMatcher<? super MethodDescription> methodMatcher,
-                Instrumentation instrumentation,
-                MethodAttributeAppender.Factory attributeAppenderFactory) {
+                                         NamingStrategy.Unbound namingStrategy,
+                                         List<TypeDescription> interfaceTypes,
+                                         ElementMatcher<? super MethodDescription> ignoredMethods,
+                                         BridgeMethodResolver.Factory bridgeMethodResolverFactory,
+                                         ClassVisitorWrapper.Chain classVisitorWrapperChain,
+                                         MethodRegistry methodRegistry,
+                                         Definable<Integer> modifiers,
+                                         TypeAttributeAppender typeAttributeAppender,
+                                         MethodLookupEngine.Factory methodLookupEngineFactory,
+                                         FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
+                                         MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
+                                         ElementMatcher<? super MethodDescription> methodMatcher,
+                                         Instrumentation instrumentation,
+                                         MethodAttributeAppender.Factory attributeAppenderFactory) {
             super(classFileVersion,
                     namingStrategy,
                     interfaceTypes,
@@ -1369,18 +1369,18 @@ public class ByteBuddy {
          * @param methodMatcher                         The method matcher representing the current method selection.
          */
         protected OptionalMethodInterception(ClassFileVersion classFileVersion,
-                NamingStrategy.Unbound namingStrategy,
-                List<TypeDescription> interfaceTypes,
-                ElementMatcher<? super MethodDescription> ignoredMethods,
-                BridgeMethodResolver.Factory bridgeMethodResolverFactory,
-                ClassVisitorWrapper.Chain classVisitorWrapperChain,
-                MethodRegistry methodRegistry,
-                Definable<Integer> modifiers,
-                TypeAttributeAppender typeAttributeAppender,
-                MethodLookupEngine.Factory methodLookupEngineFactory,
-                FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
-                MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
-                ElementMatcher<? super MethodDescription> methodMatcher) {
+                                             NamingStrategy.Unbound namingStrategy,
+                                             List<TypeDescription> interfaceTypes,
+                                             ElementMatcher<? super MethodDescription> ignoredMethods,
+                                             BridgeMethodResolver.Factory bridgeMethodResolverFactory,
+                                             ClassVisitorWrapper.Chain classVisitorWrapperChain,
+                                             MethodRegistry methodRegistry,
+                                             Definable<Integer> modifiers,
+                                             TypeAttributeAppender typeAttributeAppender,
+                                             MethodLookupEngine.Factory methodLookupEngineFactory,
+                                             FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
+                                             MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
+                                             ElementMatcher<? super MethodDescription> methodMatcher) {
             super(classFileVersion,
                     namingStrategy,
                     interfaceTypes,
@@ -1466,17 +1466,17 @@ public class ByteBuddy {
          *                                              method definition or instrumentation.
          */
         protected Proxy(ClassFileVersion classFileVersion,
-                NamingStrategy.Unbound namingStrategy,
-                List<TypeDescription> interfaceTypes,
-                ElementMatcher<? super MethodDescription> ignoredMethods,
-                BridgeMethodResolver.Factory bridgeMethodResolverFactory,
-                ClassVisitorWrapper.Chain classVisitorWrapperChain,
-                MethodRegistry methodRegistry,
-                Definable<Integer> modifiers,
-                TypeAttributeAppender typeAttributeAppender,
-                MethodLookupEngine.Factory methodLookupEngineFactory,
-                FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
-                MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
+                        NamingStrategy.Unbound namingStrategy,
+                        List<TypeDescription> interfaceTypes,
+                        ElementMatcher<? super MethodDescription> ignoredMethods,
+                        BridgeMethodResolver.Factory bridgeMethodResolverFactory,
+                        ClassVisitorWrapper.Chain classVisitorWrapperChain,
+                        MethodRegistry methodRegistry,
+                        Definable<Integer> modifiers,
+                        TypeAttributeAppender typeAttributeAppender,
+                        MethodLookupEngine.Factory methodLookupEngineFactory,
+                        FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
+                        MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
             super(classFileVersion,
                     namingStrategy,
                     interfaceTypes,
@@ -1568,7 +1568,7 @@ public class ByteBuddy {
 
         @Override
         public <T> DynamicType.Builder<T> subclass(TypeDescription superType,
-                ConstructorStrategy constructorStrategy) {
+                                                   ConstructorStrategy constructorStrategy) {
             return materialize().subclass(superType, constructorStrategy);
         }
 
@@ -1579,13 +1579,13 @@ public class ByteBuddy {
 
         @Override
         public <T> DynamicType.Builder<T> redefine(Class<T> levelType,
-                ClassFileLocator classFileLocator) {
+                                                   ClassFileLocator classFileLocator) {
             return materialize().redefine(levelType, classFileLocator);
         }
 
         @Override
         public <T> DynamicType.Builder<T> redefine(TypeDescription levelType,
-                ClassFileLocator classFileLocator) {
+                                                   ClassFileLocator classFileLocator) {
             return materialize().redefine(levelType, classFileLocator);
         }
 
@@ -1596,27 +1596,27 @@ public class ByteBuddy {
 
         @Override
         public <T> DynamicType.Builder<T> rebase(Class<T> levelType,
-                ClassFileLocator classFileLocator) {
+                                                 ClassFileLocator classFileLocator) {
             return materialize().rebase(levelType, classFileLocator);
         }
 
         @Override
         public <T> DynamicType.Builder<T> rebase(Class<T> levelType,
-                ClassFileLocator classFileLocator,
-                MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
+                                                 ClassFileLocator classFileLocator,
+                                                 MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
             return materialize().rebase(levelType, classFileLocator, methodNameTransformer);
         }
 
         @Override
         public <T> DynamicType.Builder<T> rebase(TypeDescription levelType,
-                ClassFileLocator classFileLocator) {
+                                                 ClassFileLocator classFileLocator) {
             return materialize().rebase(levelType, classFileLocator);
         }
 
         @Override
         public <T> DynamicType.Builder<T> rebase(TypeDescription levelType,
-                ClassFileLocator classFileLocator,
-                MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
+                                                 ClassFileLocator classFileLocator,
+                                                 MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
             return super.rebase(levelType, classFileLocator, methodNameTransformer);
         }
 

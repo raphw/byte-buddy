@@ -59,13 +59,6 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
         }
     }
 
-    public static class Simple {
-
-        public String foo() {
-            return null;
-        }
-    }
-
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(InvokeDynamic.class).apply();
@@ -91,5 +84,12 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForStaticField.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.Resolved.Simple.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ConstantPoolWrapper.WrappingArgumentProvider.class).apply();
+    }
+
+    public static class Simple {
+
+        public String foo() {
+            return null;
+        }
     }
 }

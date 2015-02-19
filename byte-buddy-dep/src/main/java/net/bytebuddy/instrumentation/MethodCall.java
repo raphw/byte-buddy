@@ -40,6 +40,65 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
 public class MethodCall implements Instrumentation {
 
     /**
+     * The method locator to use.
+     */
+    protected final MethodLocator methodLocator;
+    /**
+     * The target handler to use.
+     */
+    protected final TargetHandler targetHandler;
+    /**
+     * The argument loader to load arguments onto the operand stack in their application order.
+     */
+    protected final List<ArgumentLoader> argumentLoaders;
+    /**
+     * The method invoker to use.
+     */
+    protected final MethodInvoker methodInvoker;
+    /**
+     * The termination handler to use.
+     */
+    protected final TerminationHandler terminationHandler;
+    /**
+     * The assigner to use.
+     */
+    protected final Assigner assigner;
+    /**
+     * {@code true} if a return value of the called method should be attempted to be type-casted to the return
+     * type of the instrumented method.
+     */
+    protected final boolean dynamicallyTyped;
+
+    /**
+     * Creates a new method call instrumentation.
+     *
+     * @param methodLocator      The method locator to use.
+     * @param targetHandler      The target handler to use.
+     * @param argumentLoaders    The argument loader to load arguments onto the operand stack in
+     *                           their application order.
+     * @param methodInvoker      The method invoker to use.
+     * @param terminationHandler The termination handler to use.
+     * @param assigner           The assigner to use.
+     * @param dynamicallyTyped   {@code true} if a return value of the called method should be attempted
+     *                           to be type-casted to the return type of the instrumented method.
+     */
+    protected MethodCall(MethodLocator methodLocator,
+                         TargetHandler targetHandler,
+                         List<ArgumentLoader> argumentLoaders,
+                         MethodInvoker methodInvoker,
+                         TerminationHandler terminationHandler,
+                         Assigner assigner,
+                         boolean dynamicallyTyped) {
+        this.methodLocator = methodLocator;
+        this.targetHandler = targetHandler;
+        this.argumentLoaders = argumentLoaders;
+        this.methodInvoker = methodInvoker;
+        this.terminationHandler = terminationHandler;
+        this.assigner = assigner;
+        this.dynamicallyTyped = dynamicallyTyped;
+    }
+
+    /**
      * Returns the default assigner to be used by this instrumentation.
      *
      * @return The default assigner to be used by this instrumentation.
@@ -126,71 +185,6 @@ public class MethodCall implements Instrumentation {
      */
     public static MethodCall invokeSuper() {
         return new WithoutSpecifiedTarget(MethodLocator.ForInterceptedMethod.INSTANCE).onSuper();
-    }
-
-    /**
-     * The method locator to use.
-     */
-    protected final MethodLocator methodLocator;
-
-    /**
-     * The target handler to use.
-     */
-    protected final TargetHandler targetHandler;
-
-    /**
-     * The argument loader to load arguments onto the operand stack in their application order.
-     */
-    protected final List<ArgumentLoader> argumentLoaders;
-
-    /**
-     * The method invoker to use.
-     */
-    protected final MethodInvoker methodInvoker;
-
-    /**
-     * The termination handler to use.
-     */
-    protected final TerminationHandler terminationHandler;
-
-    /**
-     * The assigner to use.
-     */
-    protected final Assigner assigner;
-
-    /**
-     * {@code true} if a return value of the called method should be attempted to be type-casted to the return
-     * type of the instrumented method.
-     */
-    protected final boolean dynamicallyTyped;
-
-    /**
-     * Creates a new method call instrumentation.
-     *
-     * @param methodLocator      The method locator to use.
-     * @param targetHandler      The target handler to use.
-     * @param argumentLoaders    The argument loader to load arguments onto the operand stack in
-     *                           their application order.
-     * @param methodInvoker      The method invoker to use.
-     * @param terminationHandler The termination handler to use.
-     * @param assigner           The assigner to use.
-     * @param dynamicallyTyped   {@code true} if a return value of the called method should be attempted
-     *                           to be type-casted to the return type of the instrumented method.
-     */
-    protected MethodCall(MethodLocator methodLocator,
-                         TargetHandler targetHandler,
-                         List<ArgumentLoader> argumentLoaders,
-                         MethodInvoker methodInvoker,
-                         TerminationHandler terminationHandler,
-                         Assigner assigner,
-                         boolean dynamicallyTyped) {
-        this.methodLocator = methodLocator;
-        this.targetHandler = targetHandler;
-        this.argumentLoaders = argumentLoaders;
-        this.methodInvoker = methodInvoker;
-        this.terminationHandler = terminationHandler;
-        this.assigner = assigner;
-        this.dynamicallyTyped = dynamicallyTyped;
     }
 
     /**
@@ -426,209 +420,6 @@ public class MethodCall implements Instrumentation {
     }
 
     /**
-     * The appender being used to implement a {@link net.bytebuddy.instrumentation.MethodCall}.
-     */
-    protected class Appender implements ByteCodeAppender {
-
-        /**
-         * The instrumentation target of the current instrumentation.
-         */
-        private final Target instrumentationTarget;
-
-        /**
-         * Creates a new appender.
-         *
-         * @param instrumentationTarget The instrumentation target of the current instrumentation.
-         */
-        protected Appender(Target instrumentationTarget) {
-            this.instrumentationTarget = instrumentationTarget;
-        }
-
-        @Override
-        public boolean appendsCode() {
-            return true;
-        }
-
-        @Override
-        public Size apply(MethodVisitor methodVisitor,
-                          Context instrumentationContext,
-                          MethodDescription instrumentedMethod) {
-            MethodDescription invokedMethod = methodLocator.resolve(instrumentedMethod);
-            TypeList methodParameters = invokedMethod.getParameterTypes();
-            if (methodParameters.size() != argumentLoaders.size()) {
-                throw new IllegalStateException(invokedMethod + " does not take " + argumentLoaders.size() + " arguments");
-            }
-            int index = 0;
-            StackManipulation[] argumentInstruction = new StackManipulation[argumentLoaders.size()];
-            for (ArgumentLoader argumentLoader : argumentLoaders) {
-                argumentInstruction[index] = argumentLoader.resolve(instrumentationTarget.getTypeDescription(),
-                        invokedMethod,
-                        methodParameters.get(index++),
-                        assigner,
-                        dynamicallyTyped);
-            }
-            StackManipulation.Size size = new StackManipulation.Compound(
-                    targetHandler.resolve(invokedMethod, instrumentationTarget.getTypeDescription()),
-                    new StackManipulation.Compound(argumentInstruction),
-                    methodInvoker.invoke(invokedMethod, instrumentationTarget),
-                    terminationHandler.resolve(invokedMethod, instrumentedMethod, assigner, dynamicallyTyped)
-            ).apply(methodVisitor, instrumentationContext);
-            return new Size(size.getMaximalSize(), instrumentedMethod.getStackSize());
-        }
-
-        /**
-         * Returns the outer instance.
-         *
-         * @return The outer instance.
-         */
-        private MethodCall getOuter() {
-            return MethodCall.this;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (this == other)
-                return true;
-            if (other == null || getClass() != other.getClass())
-                return false;
-            Appender appender = (Appender) other;
-            return instrumentationTarget.equals(appender.instrumentationTarget)
-                    && MethodCall.this.equals(appender.getOuter());
-
-        }
-
-        @Override
-        public int hashCode() {
-            return instrumentationTarget.hashCode() + 31 * MethodCall.this.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "MethodCall.Appender{" +
-                    "methodCall=" + MethodCall.this +
-                    ", instrumentationTarget=" + instrumentationTarget +
-                    '}';
-        }
-    }
-
-    /**
-     * Represents a {@link net.bytebuddy.instrumentation.MethodCall} that invokes a method without specifying
-     * an invocation method. Some methods can for example be invoked both virtually or as a super method invocation.
-     * Similarly, interface methods can be invoked virtually or as an explicit invocation of a default method. If
-     * no explicit invocation type is set, a method is always invoked virtually unless the method
-     * represents a static methods or a constructor.
-     */
-    public static class WithoutSpecifiedTarget extends MethodCall {
-
-        /**
-         * Creates a new method call without a specified target.
-         *
-         * @param methodLocator The method locator to use.
-         */
-        protected WithoutSpecifiedTarget(MethodLocator methodLocator) {
-            super(methodLocator,
-                    TargetHandler.ForSelfOrStaticInvocation.INSTANCE,
-                    Collections.<ArgumentLoader>emptyList(),
-                    MethodInvoker.ForStandardInvocation.INSTANCE,
-                    TerminationHandler.ForMethodReturn.INSTANCE,
-                    defaultAssigner(),
-                    defaultDynamicallyTyped());
-        }
-
-        /**
-         * Invokes the specified method on the given instance.
-         *
-         * @param target The object on which the method is to be invoked upon.
-         * @return A method call that invokes the provided method on the given object.
-         */
-        public MethodCall on(Object target) {
-            return new MethodCall(methodLocator,
-                    new TargetHandler.ForStaticField(nonNull(target)),
-                    argumentLoaders,
-                    MethodInvoker.ForStandardInvocation.INSTANCE,
-                    TerminationHandler.ForMethodReturn.INSTANCE,
-                    assigner,
-                    dynamicallyTyped);
-        }
-
-        /**
-         * Invokes the given method on an instance that is stored in an instance field. This field's value needs
-         * to be set by the user such that the method call does not throw a {@link java.lang.NullPointerException}.
-         *
-         * @param type      The type of the field.
-         * @param fieldName The name of the field.
-         * @return A method call that invokes the given method on an instance that is read from an instance field.
-         */
-        public MethodCall onInstanceField(Class<?> type, String fieldName) {
-            return onInstanceField(new TypeDescription.ForLoadedType(nonNull(type)), nonNull(fieldName));
-        }
-
-        /**
-         * Invokes the given method on an instance that is stored in an instance field. This field's value needs
-         * to be set by the user such that the method call does not throw a {@link java.lang.NullPointerException}.
-         *
-         * @param typeDescription The type of the field.
-         * @param fieldName       The name of the field.
-         * @return A method call that invokes the given method on an instance that is read from an instance field.
-         */
-        public MethodCall onInstanceField(TypeDescription typeDescription, String fieldName) {
-            return new MethodCall(methodLocator,
-                    new TargetHandler.ForInstanceField(nonNull(fieldName), nonVoid(typeDescription)),
-                    argumentLoaders,
-                    MethodInvoker.ForStandardInvocation.INSTANCE,
-                    TerminationHandler.ForMethodReturn.INSTANCE,
-                    assigner,
-                    dynamicallyTyped);
-        }
-
-        /**
-         * Invokes the given method by a super method invocation on the instance of the instrumented type.
-         * Note that the super method is resolved depending on the type of instrumentation when this method is called.
-         * In case that a subclass is created, the super type is invoked. If a type is rebased, the rebased method
-         * is invoked if such a method exists.
-         *
-         * @return A method call where the given method is invoked as a super method invocation.
-         */
-        public MethodCall onSuper() {
-            return new MethodCall(methodLocator,
-                    TargetHandler.ForSelfOrStaticInvocation.INSTANCE,
-                    argumentLoaders,
-                    MethodInvoker.ForSuperMethodInvocation.INSTANCE,
-                    TerminationHandler.ForMethodReturn.INSTANCE,
-                    assigner,
-                    dynamicallyTyped);
-        }
-
-        /**
-         * Invokes the given method by a Java 8default method invocation on the instance of the instrumented type.
-         *
-         * @return A method call where the given method is invoked as a super method invocation.
-         */
-        public MethodCall onDefault() {
-            return new MethodCall(methodLocator,
-                    TargetHandler.ForSelfOrStaticInvocation.INSTANCE,
-                    argumentLoaders,
-                    MethodInvoker.ForDefaultMethodInvocation.INSTANCE,
-                    TerminationHandler.ForMethodReturn.INSTANCE,
-                    assigner,
-                    dynamicallyTyped);
-        }
-
-        @Override
-        public String toString() {
-            return "MethodCall.WithoutSpecifiedTarget{" +
-                    "methodLocator=" + methodLocator +
-                    ", targetHandler=" + targetHandler +
-                    ", argumentLoaders=" + argumentLoaders +
-                    ", methodInvoker=" + methodInvoker +
-                    ", terminationHandler=" + terminationHandler +
-                    ", assigner=" + assigner +
-                    ", dynamicallyTyped=" + dynamicallyTyped +
-                    '}';
-        }
-    }
-
-    /**
      * A method locator is responsible for identifying the method that is to be invoked
      * by a {@link net.bytebuddy.instrumentation.MethodCall}.
      */
@@ -641,6 +432,22 @@ public class MethodCall implements Instrumentation {
          * @return The method to invoke.
          */
         MethodDescription resolve(MethodDescription instrumentedMethod);
+
+        /**
+         * A method locator that simply returns the intercepted method.
+         */
+        static enum ForInterceptedMethod implements MethodLocator {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public MethodDescription resolve(MethodDescription instrumentedMethod) {
+                return instrumentedMethod;
+            }
+        }
 
         /**
          * Invokes a given method.
@@ -684,22 +491,6 @@ public class MethodCall implements Instrumentation {
                         '}';
             }
         }
-
-        /**
-         * A method locator that simply returns the intercepted method.
-         */
-        static enum ForInterceptedMethod implements MethodLocator {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
-            @Override
-            public MethodDescription resolve(MethodDescription instrumentedMethod) {
-                return instrumentedMethod;
-            }
-        }
     }
 
     /**
@@ -724,6 +515,51 @@ public class MethodCall implements Instrumentation {
          * @return The prepared instrumented type.
          */
         InstrumentedType prepare(InstrumentedType instrumentedType);
+
+        /**
+         * A target handler that invokes a method either on the instance of the instrumented
+         * type or as a static method.
+         */
+        static enum ForSelfOrStaticInvocation implements TargetHandler {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public StackManipulation resolve(MethodDescription methodDescription, TypeDescription instrumentedType) {
+                return methodDescription.isStatic()
+                        ? StackManipulation.LegalTrivial.INSTANCE
+                        : MethodVariableAccess.REFERENCE.loadFromIndex(0);
+            }
+
+            @Override
+            public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                return instrumentedType;
+            }
+        }
+
+        /**
+         * Invokes a method in order to construct a new instance.
+         */
+        static enum ForConstructingInvocation implements TargetHandler {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public StackManipulation resolve(MethodDescription methodDescription, TypeDescription instrumentedType) {
+                return new StackManipulation.Compound(TypeCreation.forType(methodDescription.getDeclaringType()), Duplication.SINGLE);
+            }
+
+            @Override
+            public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                return instrumentedType;
+            }
+        }
 
         /**
          * A target handler that invokes a method on an instance that is stored in a static field.
@@ -867,51 +703,6 @@ public class MethodCall implements Instrumentation {
                         '}';
             }
         }
-
-        /**
-         * A target handler that invokes a method either on the instance of the instrumented
-         * type or as a static method.
-         */
-        static enum ForSelfOrStaticInvocation implements TargetHandler {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
-            @Override
-            public StackManipulation resolve(MethodDescription methodDescription, TypeDescription instrumentedType) {
-                return methodDescription.isStatic()
-                        ? StackManipulation.LegalTrivial.INSTANCE
-                        : MethodVariableAccess.REFERENCE.loadFromIndex(0);
-            }
-
-            @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType;
-            }
-        }
-
-        /**
-         * Invokes a method in order to construct a new instance.
-         */
-        static enum ForConstructingInvocation implements TargetHandler {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
-            @Override
-            public StackManipulation resolve(MethodDescription methodDescription, TypeDescription instrumentedType) {
-                return new StackManipulation.Compound(TypeCreation.forType(methodDescription.getDeclaringType()), Duplication.SINGLE);
-            }
-
-            @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType;
-            }
-        }
     }
 
     /**
@@ -943,6 +734,68 @@ public class MethodCall implements Instrumentation {
          * @return The prepared instrumented type.
          */
         InstrumentedType prepare(InstrumentedType instrumentedType);
+
+        /**
+         * An argument loader that loads the {@code null} value onto the operand stack.
+         */
+        static enum ForNullConstant implements ArgumentLoader {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public StackManipulation resolve(TypeDescription instrumentedType,
+                                             MethodDescription interceptedMethod,
+                                             TypeDescription targetType,
+                                             Assigner assigner,
+                                             boolean dynamicallyTyped) {
+                if (targetType.isPrimitive()) {
+                    throw new IllegalStateException("Cannot assign null to " + targetType);
+                }
+                return NullConstant.INSTANCE;
+            }
+
+            @Override
+            public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                return instrumentedType;
+            }
+        }
+
+        /**
+         * An argument loader that assigns the {@code this} reference to a parameter.
+         */
+        static enum ForThisReference implements ArgumentLoader {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public StackManipulation resolve(TypeDescription instrumentedType,
+                                             MethodDescription interceptedMethod,
+                                             TypeDescription targetType,
+                                             Assigner assigner,
+                                             boolean dynamicallyTyped) {
+                if (interceptedMethod.isStatic()) {
+                    throw new IllegalStateException(interceptedMethod + " has no instance");
+                }
+                StackManipulation stackManipulation = new StackManipulation.Compound(
+                        MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                        assigner.assign(instrumentedType, targetType, dynamicallyTyped));
+                if (!stackManipulation.isValid()) {
+                    throw new IllegalStateException("Cannot assign " + instrumentedType + " to " + targetType);
+                }
+                return stackManipulation;
+            }
+
+            @Override
+            public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                return instrumentedType;
+            }
+        }
 
         /**
          * Loads a parameter of the instrumented method onto the operand stack.
@@ -1033,6 +886,16 @@ public class MethodCall implements Instrumentation {
             private final String fieldName;
 
             /**
+             * Creates a new argument loader that stores the value in a field.
+             *
+             * @param value The value to be stored and loaded onto the operand stack.
+             */
+            protected ForStaticField(Object value) {
+                this.value = value;
+                fieldName = String.format("%s$%s", FIELD_PREFIX, RandomString.make());
+            }
+
+            /**
              * Resolves a value to be stored to be stored in the constant pool of the class, if possible.
              *
              * @param value The value to be stored in the field.
@@ -1062,16 +925,6 @@ public class MethodCall implements Instrumentation {
                 } else {
                     return new ForStaticField(value);
                 }
-            }
-
-            /**
-             * Creates a new argument loader that stores the value in a field.
-             *
-             * @param value The value to be stored and loaded onto the operand stack.
-             */
-            protected ForStaticField(Object value) {
-                this.value = value;
-                fieldName = String.format("%s$%s", FIELD_PREFIX, RandomString.make());
             }
 
             @Override
@@ -1269,68 +1122,6 @@ public class MethodCall implements Instrumentation {
             @Override
             public String toString() {
                 return "MethodCall.ArgumentLoader.ForExistingField{fieldName='" + fieldName + '\'' + '}';
-            }
-        }
-
-        /**
-         * An argument loader that loads the {@code null} value onto the operand stack.
-         */
-        static enum ForNullConstant implements ArgumentLoader {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
-            @Override
-            public StackManipulation resolve(TypeDescription instrumentedType,
-                                             MethodDescription interceptedMethod,
-                                             TypeDescription targetType,
-                                             Assigner assigner,
-                                             boolean dynamicallyTyped) {
-                if (targetType.isPrimitive()) {
-                    throw new IllegalStateException("Cannot assign null to " + targetType);
-                }
-                return NullConstant.INSTANCE;
-            }
-
-            @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType;
-            }
-        }
-
-        /**
-         * An argument loader that assigns the {@code this} reference to a parameter.
-         */
-        static enum ForThisReference implements ArgumentLoader {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
-            @Override
-            public StackManipulation resolve(TypeDescription instrumentedType,
-                                             MethodDescription interceptedMethod,
-                                             TypeDescription targetType,
-                                             Assigner assigner,
-                                             boolean dynamicallyTyped) {
-                if (interceptedMethod.isStatic()) {
-                    throw new IllegalStateException(interceptedMethod + " has no instance");
-                }
-                StackManipulation stackManipulation = new StackManipulation.Compound(
-                        MethodVariableAccess.REFERENCE.loadFromIndex(0),
-                        assigner.assign(instrumentedType, targetType, dynamicallyTyped));
-                if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot assign " + instrumentedType + " to " + targetType);
-                }
-                return stackManipulation;
-            }
-
-            @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType;
             }
         }
 
@@ -1992,6 +1783,209 @@ public class MethodCall implements Instrumentation {
                         ? invokedMethod.getDeclaringType()
                         : invokedMethod.getReturnType());
             }
+        }
+    }
+
+    /**
+     * Represents a {@link net.bytebuddy.instrumentation.MethodCall} that invokes a method without specifying
+     * an invocation method. Some methods can for example be invoked both virtually or as a super method invocation.
+     * Similarly, interface methods can be invoked virtually or as an explicit invocation of a default method. If
+     * no explicit invocation type is set, a method is always invoked virtually unless the method
+     * represents a static methods or a constructor.
+     */
+    public static class WithoutSpecifiedTarget extends MethodCall {
+
+        /**
+         * Creates a new method call without a specified target.
+         *
+         * @param methodLocator The method locator to use.
+         */
+        protected WithoutSpecifiedTarget(MethodLocator methodLocator) {
+            super(methodLocator,
+                    TargetHandler.ForSelfOrStaticInvocation.INSTANCE,
+                    Collections.<ArgumentLoader>emptyList(),
+                    MethodInvoker.ForStandardInvocation.INSTANCE,
+                    TerminationHandler.ForMethodReturn.INSTANCE,
+                    defaultAssigner(),
+                    defaultDynamicallyTyped());
+        }
+
+        /**
+         * Invokes the specified method on the given instance.
+         *
+         * @param target The object on which the method is to be invoked upon.
+         * @return A method call that invokes the provided method on the given object.
+         */
+        public MethodCall on(Object target) {
+            return new MethodCall(methodLocator,
+                    new TargetHandler.ForStaticField(nonNull(target)),
+                    argumentLoaders,
+                    MethodInvoker.ForStandardInvocation.INSTANCE,
+                    TerminationHandler.ForMethodReturn.INSTANCE,
+                    assigner,
+                    dynamicallyTyped);
+        }
+
+        /**
+         * Invokes the given method on an instance that is stored in an instance field. This field's value needs
+         * to be set by the user such that the method call does not throw a {@link java.lang.NullPointerException}.
+         *
+         * @param type      The type of the field.
+         * @param fieldName The name of the field.
+         * @return A method call that invokes the given method on an instance that is read from an instance field.
+         */
+        public MethodCall onInstanceField(Class<?> type, String fieldName) {
+            return onInstanceField(new TypeDescription.ForLoadedType(nonNull(type)), nonNull(fieldName));
+        }
+
+        /**
+         * Invokes the given method on an instance that is stored in an instance field. This field's value needs
+         * to be set by the user such that the method call does not throw a {@link java.lang.NullPointerException}.
+         *
+         * @param typeDescription The type of the field.
+         * @param fieldName       The name of the field.
+         * @return A method call that invokes the given method on an instance that is read from an instance field.
+         */
+        public MethodCall onInstanceField(TypeDescription typeDescription, String fieldName) {
+            return new MethodCall(methodLocator,
+                    new TargetHandler.ForInstanceField(nonNull(fieldName), nonVoid(typeDescription)),
+                    argumentLoaders,
+                    MethodInvoker.ForStandardInvocation.INSTANCE,
+                    TerminationHandler.ForMethodReturn.INSTANCE,
+                    assigner,
+                    dynamicallyTyped);
+        }
+
+        /**
+         * Invokes the given method by a super method invocation on the instance of the instrumented type.
+         * Note that the super method is resolved depending on the type of instrumentation when this method is called.
+         * In case that a subclass is created, the super type is invoked. If a type is rebased, the rebased method
+         * is invoked if such a method exists.
+         *
+         * @return A method call where the given method is invoked as a super method invocation.
+         */
+        public MethodCall onSuper() {
+            return new MethodCall(methodLocator,
+                    TargetHandler.ForSelfOrStaticInvocation.INSTANCE,
+                    argumentLoaders,
+                    MethodInvoker.ForSuperMethodInvocation.INSTANCE,
+                    TerminationHandler.ForMethodReturn.INSTANCE,
+                    assigner,
+                    dynamicallyTyped);
+        }
+
+        /**
+         * Invokes the given method by a Java 8default method invocation on the instance of the instrumented type.
+         *
+         * @return A method call where the given method is invoked as a super method invocation.
+         */
+        public MethodCall onDefault() {
+            return new MethodCall(methodLocator,
+                    TargetHandler.ForSelfOrStaticInvocation.INSTANCE,
+                    argumentLoaders,
+                    MethodInvoker.ForDefaultMethodInvocation.INSTANCE,
+                    TerminationHandler.ForMethodReturn.INSTANCE,
+                    assigner,
+                    dynamicallyTyped);
+        }
+
+        @Override
+        public String toString() {
+            return "MethodCall.WithoutSpecifiedTarget{" +
+                    "methodLocator=" + methodLocator +
+                    ", targetHandler=" + targetHandler +
+                    ", argumentLoaders=" + argumentLoaders +
+                    ", methodInvoker=" + methodInvoker +
+                    ", terminationHandler=" + terminationHandler +
+                    ", assigner=" + assigner +
+                    ", dynamicallyTyped=" + dynamicallyTyped +
+                    '}';
+        }
+    }
+
+    /**
+     * The appender being used to implement a {@link net.bytebuddy.instrumentation.MethodCall}.
+     */
+    protected class Appender implements ByteCodeAppender {
+
+        /**
+         * The instrumentation target of the current instrumentation.
+         */
+        private final Target instrumentationTarget;
+
+        /**
+         * Creates a new appender.
+         *
+         * @param instrumentationTarget The instrumentation target of the current instrumentation.
+         */
+        protected Appender(Target instrumentationTarget) {
+            this.instrumentationTarget = instrumentationTarget;
+        }
+
+        @Override
+        public boolean appendsCode() {
+            return true;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor,
+                          Context instrumentationContext,
+                          MethodDescription instrumentedMethod) {
+            MethodDescription invokedMethod = methodLocator.resolve(instrumentedMethod);
+            TypeList methodParameters = invokedMethod.getParameterTypes();
+            if (methodParameters.size() != argumentLoaders.size()) {
+                throw new IllegalStateException(invokedMethod + " does not take " + argumentLoaders.size() + " arguments");
+            }
+            int index = 0;
+            StackManipulation[] argumentInstruction = new StackManipulation[argumentLoaders.size()];
+            for (ArgumentLoader argumentLoader : argumentLoaders) {
+                argumentInstruction[index] = argumentLoader.resolve(instrumentationTarget.getTypeDescription(),
+                        invokedMethod,
+                        methodParameters.get(index++),
+                        assigner,
+                        dynamicallyTyped);
+            }
+            StackManipulation.Size size = new StackManipulation.Compound(
+                    targetHandler.resolve(invokedMethod, instrumentationTarget.getTypeDescription()),
+                    new StackManipulation.Compound(argumentInstruction),
+                    methodInvoker.invoke(invokedMethod, instrumentationTarget),
+                    terminationHandler.resolve(invokedMethod, instrumentedMethod, assigner, dynamicallyTyped)
+            ).apply(methodVisitor, instrumentationContext);
+            return new Size(size.getMaximalSize(), instrumentedMethod.getStackSize());
+        }
+
+        /**
+         * Returns the outer instance.
+         *
+         * @return The outer instance.
+         */
+        private MethodCall getOuter() {
+            return MethodCall.this;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other)
+                return true;
+            if (other == null || getClass() != other.getClass())
+                return false;
+            Appender appender = (Appender) other;
+            return instrumentationTarget.equals(appender.instrumentationTarget)
+                    && MethodCall.this.equals(appender.getOuter());
+
+        }
+
+        @Override
+        public int hashCode() {
+            return instrumentationTarget.hashCode() + 31 * MethodCall.this.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "MethodCall.Appender{" +
+                    "methodCall=" + MethodCall.this +
+                    ", instrumentationTarget=" + instrumentationTarget +
+                    '}';
         }
     }
 }

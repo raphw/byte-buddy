@@ -113,7 +113,7 @@ public @interface Argument {
          * @param targetType           The target type the {@code sourceType} is to be bound to.
          * @param sourceParameterIndex The index of the source parameter.
          * @param assigner             The assigner that is used to perform the assignment.
-         * @param dynamicallyTyped  If {@code true}, the assignment is allowed to consider runtime types.
+         * @param dynamicallyTyped     If {@code true}, the assignment is allowed to consider runtime types.
          * @param parameterOffset      The offset of the source method's parameter.
          * @return A binding considering the chosen binding mechanic.
          */

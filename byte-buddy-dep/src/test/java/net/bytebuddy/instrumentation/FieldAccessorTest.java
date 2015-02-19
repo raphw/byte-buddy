@@ -219,343 +219,343 @@ public class FieldAccessorTest<T extends CallTraceable,
 
     public static class BooleanInstanceGetter extends CallTraceable {
 
+        protected boolean foo = BOOLEAN_VALUE;
+
         public boolean getFoo() {
             register(FOO);
             return BOOLEAN_DEFAULT_VALUE;
         }
-
-        protected boolean foo = BOOLEAN_VALUE;
     }
 
     public static class BooleanInstanceSetter extends CallTraceable {
 
+        protected boolean foo = BOOLEAN_DEFAULT_VALUE;
+
         public void setFoo(boolean foo) {
             register(FOO, foo);
         }
-
-        protected boolean foo = BOOLEAN_DEFAULT_VALUE;
     }
 
     public static class BooleanClassGetter extends CallTraceable {
+
+        protected static boolean foo = BOOLEAN_VALUE;
 
         public boolean getFoo() {
             register(FOO);
             return BOOLEAN_DEFAULT_VALUE;
         }
-
-        protected static boolean foo = BOOLEAN_VALUE;
     }
 
     public static class BooleanClassSetter extends CallTraceable {
 
+        protected static boolean foo = BOOLEAN_DEFAULT_VALUE;
+
         public void setFoo(boolean foo) {
             register(FOO, foo);
         }
-
-        protected static boolean foo = BOOLEAN_DEFAULT_VALUE;
     }
 
     public static class ByteInstanceGetter extends CallTraceable {
 
+        protected byte foo = BYTE_VALUE;
+
         public byte getFoo() {
             register(FOO);
             return BYTE_DEFAULT_VALUE;
         }
-
-        protected byte foo = BYTE_VALUE;
     }
 
     public static class ByteInstanceSetter extends CallTraceable {
 
+        protected byte foo = BYTE_DEFAULT_VALUE;
+
         public void setFoo(byte foo) {
             register(FOO, foo);
         }
-
-        protected byte foo = BYTE_DEFAULT_VALUE;
     }
 
     public static class ByteClassGetter extends CallTraceable {
+
+        protected static byte foo = BYTE_VALUE;
 
         public byte getFoo() {
             register(FOO);
             return BYTE_DEFAULT_VALUE;
         }
-
-        protected static byte foo = BYTE_VALUE;
     }
 
     public static class ByteClassSetter extends CallTraceable {
 
+        protected static byte foo = BYTE_DEFAULT_VALUE;
+
         public void setFoo(byte foo) {
             register(FOO, foo);
         }
-
-        protected static byte foo = BYTE_DEFAULT_VALUE;
     }
 
     public static class ShortInstanceGetter extends CallTraceable {
 
+        protected short foo = SHORT_VALUE;
+
         public short getFoo() {
             register(FOO);
             return SHORT_DEFAULT_VALUE;
         }
-
-        protected short foo = SHORT_VALUE;
     }
 
     public static class ShortInstanceSetter extends CallTraceable {
 
+        protected short foo = SHORT_DEFAULT_VALUE;
+
         public void setFoo(short foo) {
             register(FOO, foo);
         }
-
-        protected short foo = SHORT_DEFAULT_VALUE;
     }
 
     public static class ShortClassGetter extends CallTraceable {
+
+        protected static short foo = SHORT_VALUE;
 
         public short getFoo() {
             register(FOO);
             return SHORT_DEFAULT_VALUE;
         }
-
-        protected static short foo = SHORT_VALUE;
     }
 
     public static class ShortClassSetter extends CallTraceable {
 
+        protected static short foo = SHORT_DEFAULT_VALUE;
+
         public void setFoo(short foo) {
             register(FOO, foo);
         }
-
-        protected static short foo = SHORT_DEFAULT_VALUE;
     }
 
     public static class IntegerInstanceGetter extends CallTraceable {
 
+        protected int foo = INT_VALUE;
+
         public int getFoo() {
             register(FOO);
             return INT_DEFAULT_VALUE;
         }
-
-        protected int foo = INT_VALUE;
     }
 
     public static class IntegerInstanceSetter extends CallTraceable {
 
+        protected int foo = INT_DEFAULT_VALUE;
+
         public void setFoo(int foo) {
             register(FOO, foo);
         }
-
-        protected int foo = INT_DEFAULT_VALUE;
     }
 
     public static class IntegerClassGetter extends CallTraceable {
+
+        protected static int foo = INT_VALUE;
 
         public int getFoo() {
             register(FOO);
             return INT_DEFAULT_VALUE;
         }
-
-        protected static int foo = INT_VALUE;
     }
 
     public static class IntegerClassSetter extends CallTraceable {
 
+        protected static int foo = INT_DEFAULT_VALUE;
+
         public void setFoo(int foo) {
             register(FOO, foo);
         }
-
-        protected static int foo = INT_DEFAULT_VALUE;
     }
 
     public static class CharacterInstanceGetter extends CallTraceable {
 
+        protected char foo = CHAR_VALUE;
+
         public char getFoo() {
             register(FOO);
             return CHAR_DEFAULT_VALUE;
         }
-
-        protected char foo = CHAR_VALUE;
     }
 
     public static class CharacterInstanceSetter extends CallTraceable {
 
+        protected char foo = CHAR_DEFAULT_VALUE;
+
         public void setFoo(char foo) {
             register(FOO, foo);
         }
-
-        protected char foo = CHAR_DEFAULT_VALUE;
     }
 
     public static class CharacterClassGetter extends CallTraceable {
+
+        protected static char foo = CHAR_VALUE;
 
         public char getFoo() {
             register(FOO);
             return CHAR_DEFAULT_VALUE;
         }
-
-        protected static char foo = CHAR_VALUE;
     }
 
     public static class CharacterClassSetter extends CallTraceable {
 
+        protected static char foo = CHAR_DEFAULT_VALUE;
+
         public void setFoo(char foo) {
             register(FOO, foo);
         }
-
-        protected static char foo = CHAR_DEFAULT_VALUE;
     }
 
     public static class LongInstanceGetter extends CallTraceable {
 
+        protected long foo = LONG_VALUE;
+
         public long getFoo() {
             register(FOO);
             return LONG_DEFAULT_VALUE;
         }
-
-        protected long foo = LONG_VALUE;
     }
 
     public static class LongInstanceSetter extends CallTraceable {
 
+        protected long foo = LONG_DEFAULT_VALUE;
+
         public void setFoo(long foo) {
             register(FOO, foo);
         }
-
-        protected long foo = LONG_DEFAULT_VALUE;
     }
 
     public static class LongClassGetter extends CallTraceable {
+
+        protected static long foo = LONG_VALUE;
 
         public long getFoo() {
             register(FOO);
             return LONG_DEFAULT_VALUE;
         }
-
-        protected static long foo = LONG_VALUE;
     }
 
     public static class LongClassSetter extends CallTraceable {
 
+        protected static long foo = LONG_DEFAULT_VALUE;
+
         public void setFoo(long foo) {
             register(FOO, foo);
         }
-
-        protected static long foo = LONG_DEFAULT_VALUE;
     }
 
     public static class FloatInstanceGetter extends CallTraceable {
 
+        protected float foo = FLOAT_VALUE;
+
         public float getFoo() {
             register(FOO);
             return FLOAT_DEFAULT_VALUE;
         }
-
-        protected float foo = FLOAT_VALUE;
     }
 
     public static class FloatInstanceSetter extends CallTraceable {
 
+        protected float foo = FLOAT_DEFAULT_VALUE;
+
         public void setFoo(float foo) {
             register(FOO, foo);
         }
-
-        protected float foo = FLOAT_DEFAULT_VALUE;
     }
 
     public static class FloatClassGetter extends CallTraceable {
+
+        protected static float foo = FLOAT_VALUE;
 
         public float getFoo() {
             register(FOO);
             return FLOAT_DEFAULT_VALUE;
         }
-
-        protected static float foo = FLOAT_VALUE;
     }
 
     public static class FloatClassSetter extends CallTraceable {
 
+        protected static float foo = FLOAT_DEFAULT_VALUE;
+
         public void setFoo(float foo) {
             register(FOO, foo);
         }
-
-        protected static float foo = FLOAT_DEFAULT_VALUE;
     }
 
     public static class DoubleInstanceGetter extends CallTraceable {
 
+        protected double foo = DOUBLE_VALUE;
+
         public double getFoo() {
             register(FOO);
             return DOUBLE_DEFAULT_VALUE;
         }
-
-        protected double foo = DOUBLE_VALUE;
     }
 
     public static class DoubleInstanceSetter extends CallTraceable {
 
+        protected double foo = DOUBLE_DEFAULT_VALUE;
+
         public void setFoo(double foo) {
             register(FOO, foo);
         }
-
-        protected double foo = DOUBLE_DEFAULT_VALUE;
     }
 
     public static class DoubleClassGetter extends CallTraceable {
+
+        protected static double foo = DOUBLE_VALUE;
 
         public double getFoo() {
             register(FOO);
             return DOUBLE_DEFAULT_VALUE;
         }
-
-        protected static double foo = DOUBLE_VALUE;
     }
 
     public static class DoubleClassSetter extends CallTraceable {
 
+        protected static double foo = DOUBLE_DEFAULT_VALUE;
+
         public void setFoo(double foo) {
             register(FOO, foo);
         }
-
-        protected static double foo = DOUBLE_DEFAULT_VALUE;
     }
 
     public static class ObjectInstanceGetter extends CallTraceable {
 
+        protected Object foo = STRING_VALUE;
+
         public Object getFoo() {
             register(FOO);
             return STRING_DEFAULT_VALUE;
         }
-
-        protected Object foo = STRING_VALUE;
     }
 
     public static class ObjectInstanceSetter extends CallTraceable {
 
+        protected Object foo = STRING_DEFAULT_VALUE;
+
         public void setFoo(Object foo) {
             register(FOO, foo);
         }
-
-        protected Object foo = STRING_DEFAULT_VALUE;
     }
 
     public static class ObjectClassGetter extends CallTraceable {
+
+        protected static Object foo = STRING_VALUE;
 
         public Object getFoo() {
             register(FOO);
             return STRING_DEFAULT_VALUE;
         }
-
-        protected static Object foo = STRING_VALUE;
     }
 
     public static class ObjectClassSetter extends CallTraceable {
 
+        protected static Object foo = STRING_DEFAULT_VALUE;
+
         public void setFoo(Object foo) {
             register(FOO, foo);
         }
-
-        protected static Object foo = STRING_DEFAULT_VALUE;
     }
 }

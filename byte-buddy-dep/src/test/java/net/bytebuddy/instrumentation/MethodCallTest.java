@@ -70,17 +70,6 @@ public class MethodCallTest extends AbstractInstrumentationTest {
         assertThat(instance, instanceOf(StaticMethod.class));
     }
 
-    public static class StaticMethod {
-
-        public String foo() {
-            return null;
-        }
-
-        public String bar() {
-            return BAR;
-        }
-    }
-
     @Test
     public void testExternalStaticMethodInvocationWithoutArguments() throws Exception {
         DynamicType.Loaded<StaticMethod> loaded = instrument(StaticMethod.class,
@@ -94,13 +83,6 @@ public class MethodCallTest extends AbstractInstrumentationTest {
         assertThat(instance.foo(), is(BAR));
         assertNotEquals(StaticMethod.class, instance.getClass());
         assertThat(instance, instanceOf(StaticMethod.class));
-    }
-
-    public static class StaticExternalMethod {
-
-        public static String bar() {
-            return BAR;
-        }
     }
 
     @Test
@@ -118,17 +100,6 @@ public class MethodCallTest extends AbstractInstrumentationTest {
         assertThat(instance, instanceOf(InstanceMethod.class));
     }
 
-    public static class InstanceMethod {
-
-        public String foo() {
-            return null;
-        }
-
-        public String bar() {
-            return BAR;
-        }
-    }
-
     @Test
     public void testSuperConstructorInvocationWithoutArguments() throws Exception {
         DynamicType.Loaded<SuperConstructorCall> loaded = instrument(SuperConstructorCall.class,
@@ -142,10 +113,6 @@ public class MethodCallTest extends AbstractInstrumentationTest {
         SuperConstructorCall instance = loaded.getLoaded().newInstance();
         assertNotEquals(SuperConstructorCall.class, instance.getClass());
         assertThat(instance, instanceOf(SuperConstructorCall.class));
-    }
-
-    public static class SuperConstructorCall {
-        /* empty */
     }
 
     @Test
@@ -164,13 +131,6 @@ public class MethodCallTest extends AbstractInstrumentationTest {
         assertThat(created, not(instance));
     }
 
-    public static class SelfReference {
-
-        public SelfReference foo() {
-            return null;
-        }
-    }
-
     @Test
     public void testSuperInvocation() throws Exception {
         DynamicType.Loaded<SuperMethodInvocation> loaded = instrument(SuperMethodInvocation.class,
@@ -186,13 +146,6 @@ public class MethodCallTest extends AbstractInstrumentationTest {
         assertNotEquals(SuperMethodInvocation.class, instance.getClass());
         assertThat(instance, instanceOf(SuperMethodInvocation.class));
         assertThat(instance.foo(), is(FOO));
-    }
-
-    public static class SuperMethodInvocation {
-
-        public String foo() {
-            return FOO;
-        }
     }
 
     @Test
@@ -281,13 +234,6 @@ public class MethodCallTest extends AbstractInstrumentationTest {
                 .withArgument(0).withAssigner(nonAssigner, false));
     }
 
-    public static class MethodCallWithExplicitArgument {
-
-        public String foo(String value) {
-            return value;
-        }
-    }
-
     @Test
     public void testWithField() throws Exception {
         DynamicType.Loaded<MethodCallWithField> loaded = instrument(MethodCallWithField.class,
@@ -314,15 +260,6 @@ public class MethodCallTest extends AbstractInstrumentationTest {
         instrument(MethodCallWithField.class, MethodCall.invokeSuper().withField(FOO).withAssigner(nonAssigner, false));
     }
 
-    public static class MethodCallWithField {
-
-        public String foo;
-
-        public String foo(String value) {
-            return value;
-        }
-    }
-
     @Test
     public void testWithFieldHierarchyVisibility() throws Exception {
         DynamicType.Loaded<InvisibleMethodCallWithField> loaded = instrument(InvisibleMethodCallWithField.class,
@@ -339,20 +276,6 @@ public class MethodCallTest extends AbstractInstrumentationTest {
         assertThat(instance.foo(BAR), is(FOO));
     }
 
-    public static class InvisibleMethodCallWithField extends InvisibleBase {
-
-        private String foo;
-
-        public String foo(String value) {
-            return value;
-        }
-    }
-
-    public static class InvisibleBase {
-
-        public String foo;
-    }
-
     @Test
     public void testWithThis() throws Exception {
         DynamicType.Loaded<MethodCallWithThis> loaded = instrument(MethodCallWithThis.class,
@@ -366,13 +289,6 @@ public class MethodCallTest extends AbstractInstrumentationTest {
         assertNotEquals(MethodCallWithThis.class, instance.getClass());
         assertThat(instance, instanceOf(MethodCallWithThis.class));
         assertThat(instance.foo(null), is(instance));
-    }
-
-    public static class MethodCallWithThis {
-
-        public MethodCallWithThis foo(MethodCallWithThis value) {
-            return value;
-        }
     }
 
     @Test
@@ -408,14 +324,6 @@ public class MethodCallTest extends AbstractInstrumentationTest {
         instance.assertZeroCalls();
     }
 
-    public static class MethodCallAppending extends CallTraceable {
-
-        public Object foo() {
-            register(FOO);
-            return null;
-        }
-    }
-
     @Test
     public void testWithExplicitTarget() throws Exception {
         Object target = new Object();
@@ -449,13 +357,6 @@ public class MethodCallTest extends AbstractInstrumentationTest {
         assertNotEquals(ExplicitTarget.class, instance.getClass());
         assertThat(instance, instanceOf(ExplicitTarget.class));
         assertThat(instance.foo(), is(target.toString()));
-    }
-
-    public static class ExplicitTarget {
-
-        public String foo() {
-            return null;
-        }
     }
 
     @Test
@@ -511,13 +412,6 @@ public class MethodCallTest extends AbstractInstrumentationTest {
                 named(FOO));
     }
 
-    public static class StaticIncompatibleExternalMethod {
-
-        public static String bar(String value) {
-            return null;
-        }
-    }
-
     @Test(expected = IllegalArgumentException.class)
     public void testConstructNonConstructorThrowsException() throws Exception {
         MethodCall.construct(mock(MethodDescription.class));
@@ -549,5 +443,111 @@ public class MethodCallTest extends AbstractInstrumentationTest {
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameter.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForShortConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForTextConstant.class).apply();
+    }
+
+    public static class StaticMethod {
+
+        public String foo() {
+            return null;
+        }
+
+        public String bar() {
+            return BAR;
+        }
+    }
+
+    public static class StaticExternalMethod {
+
+        public static String bar() {
+            return BAR;
+        }
+    }
+
+    public static class InstanceMethod {
+
+        public String foo() {
+            return null;
+        }
+
+        public String bar() {
+            return BAR;
+        }
+    }
+
+    public static class SuperConstructorCall {
+        /* empty */
+    }
+
+    public static class SelfReference {
+
+        public SelfReference foo() {
+            return null;
+        }
+    }
+
+    public static class SuperMethodInvocation {
+
+        public String foo() {
+            return FOO;
+        }
+    }
+
+    public static class MethodCallWithExplicitArgument {
+
+        public String foo(String value) {
+            return value;
+        }
+    }
+
+    public static class MethodCallWithField {
+
+        public String foo;
+
+        public String foo(String value) {
+            return value;
+        }
+    }
+
+    public static class InvisibleMethodCallWithField extends InvisibleBase {
+
+        private String foo;
+
+        public String foo(String value) {
+            return value;
+        }
+    }
+
+    public static class InvisibleBase {
+
+        public String foo;
+    }
+
+    public static class MethodCallWithThis {
+
+        public MethodCallWithThis foo(MethodCallWithThis value) {
+            return value;
+        }
+    }
+
+    public static class MethodCallAppending extends CallTraceable {
+
+        public Object foo() {
+            register(FOO);
+            return null;
+        }
+    }
+
+    public static class ExplicitTarget {
+
+        public String foo() {
+            return null;
+        }
+    }
+
+    public static class StaticIncompatibleExternalMethod {
+
+        public static String bar(String value) {
+            return null;
+        }
     }
 }
