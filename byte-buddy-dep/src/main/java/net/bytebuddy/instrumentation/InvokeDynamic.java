@@ -162,157 +162,125 @@ public class InvokeDynamic implements Instrumentation {
      * Requires the bootstrap method to bootstrap a method that takes the specified {@code boolean} arguments
      * as its next parameters.
      *
-     * @param value The arguments to pass to the bootstrapped method.
-     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
+     * @param value The argument to pass to the bootstrapped method.
+     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified argument.
      */
-    public InvokeDynamic withValue(boolean... value) {
-        List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
-        for (boolean aValue : value) {
-            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForBooleanValue(aValue));
-        }
+    public InvokeDynamic withValue(boolean value) {
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
-                invocationProvider.appendArguments(argumentProviders),
+                invocationProvider.appendArgument(new InvocationProvider.ArgumentProvider.ForBooleanValue(value)),
                 terminationHandler,
                 assigner,
                 dynamicallyTyped);
     }
 
     /**
-     * Requires the bootstrap method to bootstrap a method that takes the specified {@code byte} arguments
+     * Requires the bootstrap method to bootstrap a method that takes the specified {@code byte} argument
      * as its next parameters.
      *
-     * @param value The arguments to pass to the bootstrapped method.
-     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
+     * @param value The argument to pass to the bootstrapped method.
+     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified argument.
      */
-    public InvokeDynamic withValue(byte... value) {
-        List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
-        for (byte aValue : value) {
-            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForByteValue(aValue));
-        }
+    public InvokeDynamic withValue(byte value) {
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
-                invocationProvider.appendArguments(argumentProviders),
+                invocationProvider.appendArgument(new InvocationProvider.ArgumentProvider.ForByteValue(value)),
                 terminationHandler,
                 assigner,
                 dynamicallyTyped);
     }
 
     /**
-     * Requires the bootstrap method to bootstrap a method that takes the specified {@code short} arguments
+     * Requires the bootstrap method to bootstrap a method that takes the specified {@code short} argument
      * as its next parameters.
      *
-     * @param value The arguments to pass to the bootstrapped method.
-     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
+     * @param value The argument to pass to the bootstrapped method.
+     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified argument.
      */
-    public InvokeDynamic withValue(short... value) {
-        List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
-        for (short aValue : value) {
-            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForShortValue(aValue));
-        }
+    public InvokeDynamic withValue(short value) {
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
-                invocationProvider.appendArguments(argumentProviders),
+                invocationProvider.appendArgument(new InvocationProvider.ArgumentProvider.ForShortValue(value)),
                 terminationHandler,
                 assigner,
                 dynamicallyTyped);
     }
 
     /**
-     * Requires the bootstrap method to bootstrap a method that takes the specified {@code char} arguments
+     * Requires the bootstrap method to bootstrap a method that takes the specified {@code char} argument
      * as its next parameters.
      *
-     * @param value The arguments to pass to the bootstrapped method.
-     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
+     * @param value The argument to pass to the bootstrapped method.
+     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified argument.
      */
-    public InvokeDynamic withValue(char... value) {
-        List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
-        for (char aValue : value) {
-            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForCharacterValue(aValue));
-        }
+    public InvokeDynamic withValue(char value) {
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
-                invocationProvider.appendArguments(argumentProviders),
+                invocationProvider.appendArgument(new InvocationProvider.ArgumentProvider.ForCharacterValue(value)),
                 terminationHandler,
                 assigner,
                 dynamicallyTyped);
     }
 
     /**
-     * Requires the bootstrap method to bootstrap a method that takes the specified {@code int} arguments
+     * Requires the bootstrap method to bootstrap a method that takes the specified {@code int} argument
      * as its next parameters.
      *
-     * @param value The arguments to pass to the bootstrapped method.
-     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
+     * @param value The argument to pass to the bootstrapped method.
+     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified argument.
      */
-    public InvokeDynamic withValue(int... value) {
-        List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
-        for (int aValue : value) {
-            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForIntegerValue(aValue));
-        }
+    public InvokeDynamic withValue(int value) {
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
-                invocationProvider.appendArguments(argumentProviders),
+                invocationProvider.appendArgument(new InvocationProvider.ArgumentProvider.ForIntegerValue(value)),
                 terminationHandler,
                 assigner,
                 dynamicallyTyped);
     }
 
     /**
-     * Requires the bootstrap method to bootstrap a method that takes the specified {@code long} arguments
+     * Requires the bootstrap method to bootstrap a method that takes the specified {@code long} argument
      * as its next parameters.
      *
-     * @param value The arguments to pass to the bootstrapped method.
-     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
+     * @param value The argument to pass to the bootstrapped method.
+     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified argument.
      */
-    public InvokeDynamic withValue(long... value) {
-        List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
-        for (long aValue : value) {
-            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForLongValue(aValue));
-        }
+    public InvokeDynamic withValue(long value) {
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
-                invocationProvider.appendArguments(argumentProviders),
+                invocationProvider.appendArgument(new InvocationProvider.ArgumentProvider.ForLongValue(value)),
                 terminationHandler,
                 assigner,
                 dynamicallyTyped);
     }
 
     /**
-     * Requires the bootstrap method to bootstrap a method that takes the specified {@code float} arguments
+     * Requires the bootstrap method to bootstrap a method that takes the specified {@code float} argument
      * as its next parameters.
      *
-     * @param value The arguments to pass to the bootstrapped method.
-     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
+     * @param value The argument to pass to the bootstrapped method.
+     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified argument.
      */
-    public InvokeDynamic withValue(float... value) {
-        List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
-        for (float aValue : value) {
-            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForFloatValue(aValue));
-        }
+    public InvokeDynamic withValue(float value) {
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
-                invocationProvider.appendArguments(argumentProviders),
+                invocationProvider.appendArgument(new InvocationProvider.ArgumentProvider.ForFloatValue(value)),
                 terminationHandler,
                 assigner,
                 dynamicallyTyped);
     }
 
     /**
-     * Requires the bootstrap method to bootstrap a method that takes the specified {@code double} arguments
+     * Requires the bootstrap method to bootstrap a method that takes the specified {@code double} argument
      * as its next parameters.
      *
-     * @param value The arguments to pass to the bootstrapped method.
-     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
+     * @param value The argument to pass to the bootstrapped method.
+     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified argument.
      */
-    public InvokeDynamic withValue(double... value) {
-        List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
-        for (double aValue : value) {
-            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForDoubleValue(aValue));
-        }
+    public InvokeDynamic withValue(double value) {
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
-                invocationProvider.appendArguments(argumentProviders),
+                invocationProvider.appendArgument(new InvocationProvider.ArgumentProvider.ForDoubleValue(value)),
                 terminationHandler,
                 assigner,
                 dynamicallyTyped);

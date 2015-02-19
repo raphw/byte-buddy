@@ -12,6 +12,7 @@ import org.objectweb.asm.Type;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -382,13 +383,26 @@ public interface MethodDescription extends ByteCodeElement {
             }
             List<TypeDescription> parameterTypes = getParameterTypes();
             // The following assumes that the bootstrap method is a valid bootstrap method.
-            if (parameterTypes.size() < 3) {
+            if (parameterTypes.size() < 4) {
                 return arguments.size() == 0 || parameterTypes.get(parameterTypes.size() - 1).represents(Object[].class);
             } else {
-                int index = 3;
+                int index = 4;
                 Iterator<?> argumentIterator = arguments.iterator();
                 for (TypeDescription parameterType : parameterTypes.subList(3, parameterTypes.size())) {
-                    if (!argumentIterator.hasNext() || !parameterType.isAssignableFrom(argumentIterator.next().getClass())) {
+                    boolean finalParameterCheck = !argumentIterator.hasNext();
+                    if (!finalParameterCheck) {
+                        Class<?> argumentType = argumentIterator.next().getClass();
+                        finalParameterCheck = !parameterType.isAssignableFrom(argumentType)
+                                && !(parameterType.represents(int.class) && Arrays.<Class<?>>asList(Boolean.class,
+                                Byte.class,
+                                Short.class,
+                                Character.class,
+                                Integer.class).contains(argumentType))
+                                && !(parameterType.represents(long.class) && argumentType == Long.class)
+                                && !(parameterType.represents(float.class) && argumentType == Float.class)
+                                && !(parameterType.represents(double.class) && argumentType == Double.class);
+                    }
+                    if (finalParameterCheck) {
                         return index == parameterTypes.size() && parameterType.represents(Object[].class);
                     }
                     index++;

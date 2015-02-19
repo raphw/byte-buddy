@@ -10,6 +10,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.utility.JavaType;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.signature.SignatureWriter;
 
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
@@ -247,7 +248,9 @@ public interface TypeDescription extends ByteCodeElement {
     boolean isSamePackage(TypeDescription typeDescription);
 
     /**
-     * Checks if instances of this type can be stored in the constant pool of a class.
+     * Checks if instances of this type can be stored in the constant pool of a class. Note that any primitive
+     * type that is smaller than an {@code int} cannot be stored in the constant pool as those types are represented
+     * as {@code int} values internally.
      *
      * @return {@code true} if instances of this type can be stored in the constant pool of a class.
      */
@@ -382,7 +385,10 @@ public interface TypeDescription extends ByteCodeElement {
 
         @Override
         public boolean isConstantPool() {
-            return isPrimitive()
+            return represents(int.class)
+                    || represents(long.class)
+                    || represents(float.class)
+                    || represents(double.class)
                     || represents(String.class)
                     || JavaType.METHOD_HANDLE.representedBy(this)
                     || JavaType.METHOD_TYPE.representedBy(this);
