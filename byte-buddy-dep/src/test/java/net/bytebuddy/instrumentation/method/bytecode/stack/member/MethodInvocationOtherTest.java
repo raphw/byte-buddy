@@ -10,6 +10,8 @@ import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.MethodVisitor;
 
+import java.util.List;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
@@ -41,6 +43,8 @@ public class MethodInvocationOtherTest {
         assertThat(MethodInvocation.IllegalInvocation.INSTANCE.special(mock(TypeDescription.class)),
                 is((StackManipulation) StackManipulation.Illegal.INSTANCE));
         assertThat(MethodInvocation.IllegalInvocation.INSTANCE.virtual(mock(TypeDescription.class)),
+                is((StackManipulation) StackManipulation.Illegal.INSTANCE));
+        assertThat(MethodInvocation.IllegalInvocation.INSTANCE.dynamic(FOO, mock(TypeDescription.class), mock(TypeList.class), mock(List.class)),
                 is((StackManipulation) StackManipulation.Illegal.INSTANCE));
         MethodInvocation.IllegalInvocation.INSTANCE.apply(mock(MethodVisitor.class), mock(Instrumentation.Context.class));
     }

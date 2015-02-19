@@ -882,7 +882,7 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
 
                 @Override
                 public boolean isValid() {
-                    return true;
+                    return specialMethodInvocation.isValid();
                 }
 
                 @Override

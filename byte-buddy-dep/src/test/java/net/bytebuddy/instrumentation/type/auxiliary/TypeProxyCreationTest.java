@@ -3,12 +3,15 @@ package net.bytebuddy.instrumentation.type.auxiliary;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.ModifierContributor;
+import net.bytebuddy.instrumentation.field.FieldDescription;
+import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.MoreOpcodes;
 import org.junit.Before;
@@ -311,8 +314,31 @@ public class TypeProxyCreationTest {
     }
 
     @Test
-    public void testInstrumentationsValid() throws Exception {
+    public void testInstrumentationIsValid() throws Exception {
         assertThat(TypeProxy.AbstractMethodErrorThrow.INSTANCE.isValid(), is(true));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testAccessorIsValid() throws Exception {
+        TypeProxy typeProxy = new TypeProxy(mock(TypeDescription.class),
+                mock(Instrumentation.Target.class),
+                mock(TypeProxy.InvocationFactory.class),
+                false,
+                false);
+        TypeProxy.MethodCall methodCall = typeProxy.new MethodCall(mock(AuxiliaryType.MethodAccessorFactory.class));
+        TypeDescription instrumentedType = mock(TypeDescription.class);
+        FieldList fieldList = mock(FieldList.class);
+        when(fieldList.filter(any(ElementMatcher.class))).thenReturn(fieldList);
+        when(fieldList.getOnly()).thenReturn(mock(FieldDescription.class));
+        when(instrumentedType.getDeclaredFields()).thenReturn(fieldList);
+        TypeProxy.MethodCall.Appender appender = methodCall.new Appender(instrumentedType);
+        Instrumentation.SpecialMethodInvocation specialMethodInvocation = mock(Instrumentation.SpecialMethodInvocation.class);
+        when(specialMethodInvocation.isValid()).thenReturn(true);
+        StackManipulation stackManipulation = appender.new AccessorMethodInvocation(mock(MethodDescription.class), specialMethodInvocation);
+        assertThat(stackManipulation.isValid(), is(true));
+        verify(specialMethodInvocation).isValid();
+        verifyNoMoreInteractions(specialMethodInvocation);
     }
 
     public static class Foo {
