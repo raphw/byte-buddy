@@ -347,6 +347,28 @@ public abstract class AbstractTypeDescriptionTest {
         assertThat(describe(Object[].class).getComponentType(), is(describe(Object.class)));
     }
 
+    @Test
+    public void testWrapperType() throws Exception {
+        assertThat(describe(Object.class).isWrapper(), is(false));
+        assertThat(describe(Boolean.class).isWrapper(), is(true));
+        assertThat(describe(Byte.class).isWrapper(), is(true));
+        assertThat(describe(Short.class).isWrapper(), is(true));
+        assertThat(describe(Character.class).isWrapper(), is(true));
+        assertThat(describe(Integer.class).isWrapper(), is(true));
+        assertThat(describe(Long.class).isWrapper(), is(true));
+        assertThat(describe(Float.class).isWrapper(), is(true));
+        assertThat(describe(Double.class).isWrapper(), is(true));
+        assertThat(describe(Void.class).isWrapper(), is(false));
+    }
+
+    @Test
+    public void testConstantPool() throws Exception {
+        assertThat(describe(Object.class).isConstantPool(), is(false));
+        assertThat(describe(Boolean.class).isConstantPool(), is(false));
+        assertThat(describe(boolean.class).isConstantPool(), is(true));
+        assertThat(describe(String.class).isConstantPool(), is(true));
+    }
+
     protected static interface SampleInterface {
     }
 

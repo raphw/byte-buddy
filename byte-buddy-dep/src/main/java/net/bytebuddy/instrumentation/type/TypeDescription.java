@@ -246,8 +246,19 @@ public interface TypeDescription extends ByteCodeElement {
      */
     boolean isSamePackage(TypeDescription typeDescription);
 
+    /**
+     * Checks if instances of this type can be stored in the constant pool of a class.
+     *
+     * @return {@code true} if instances of this type can be stored in the constant pool of a class.
+     */
     boolean isConstantPool();
 
+    /**
+     * Checks if this type represents a wrapper type for a primitive type. The {@link java.lang.Void} type is
+     * not considered to be a wrapper type.
+     *
+     * @return {@code true} if this type represents a wrapper type.
+     */
     boolean isWrapper();
 
     /**

@@ -3,8 +3,8 @@ package net.bytebuddy.instrumentation.method.bytecode.stack.member;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
-import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.instrumentation.type.TypeList;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -32,10 +32,13 @@ public enum MethodInvocation {
     STATIC(Opcodes.INVOKESTATIC, Opcodes.H_INVOKESTATIC),
 
     /**
-     * A specialized virtual method invocation.
+     * A specialized pseudo-virtual method invocation for a non-constructor.
      */
     SPECIAL(Opcodes.INVOKESPECIAL, Opcodes.H_INVOKESPECIAL),
 
+    /**
+     * A specialized pseudo-virtual method invocation for a constructor.
+     */
     SPECIAL_CONSTRUCTOR(Opcodes.INVOKESPECIAL, Opcodes.H_NEWINVOKESPECIAL);
 
     /**
@@ -43,12 +46,16 @@ public enum MethodInvocation {
      */
     private final int invocationOpcode;
 
+    /**
+     * The handle being used for a dynamic method invocation.
+     */
     private final int handle;
 
     /**
      * Creates a new type of method invocation.
      *
      * @param callOpcode The opcode for invoking a method.
+     * @param handle     The handle being used for a dynamic method invocation.
      */
     private MethodInvocation(int callOpcode, int handle) {
         this.invocationOpcode = callOpcode;
@@ -138,6 +145,17 @@ public enum MethodInvocation {
          */
         StackManipulation special(TypeDescription invocationTarget);
 
+        /**
+         * Invokes the method as a bootstrap method to bind a call site with the given properties. Note that the
+         * Java virtual machine currently only knows how to resolve bootstrap methods that link static methods
+         * or a constructor.
+         *
+         * @param methodName The name of the method to be bound.
+         * @param returnType The return type of the method to be bound.
+         * @param methodType The parameter types of the method to be bound.
+         * @param arguments  The arguments to be passed to the bootstrap method.
+         * @return A stack manipulation that represents the dynamic method invocation.
+         */
         StackManipulation dynamic(String methodName,
                                   TypeDescription returnType,
                                   List<? extends TypeDescription> methodType,
@@ -221,8 +239,8 @@ public enum MethodInvocation {
                                          TypeDescription returnType,
                                          List<? extends TypeDescription> methodType,
                                          List<?> arguments) {
-            return methodDescription.isBootstrap()
-                    ? new DynamicInvocation(methodName, returnType, methodType, methodDescription, arguments)
+            return methodDescription.isBootstrap(arguments)
+                    ? new DynamicInvocation(methodName, returnType, new TypeList.Explicit(methodType), methodDescription, arguments)
                     : Illegal.INSTANCE;
         }
 
@@ -266,27 +284,53 @@ public enum MethodInvocation {
         }
     }
 
+    /**
+     * Performs a dynamic method invocation of the given method.
+     */
     protected class DynamicInvocation implements StackManipulation {
 
+        /**
+         * The internal name of the method that is to be bootstrapped.
+         */
         private final String methodName;
 
-        private final String methodDescriptor;
+        /**
+         * The return type of the method to be bootstrapped.
+         */
+        private final TypeDescription returnType;
 
+        /**
+         * The parameter types of the method to be bootstrapped.
+         */
+        private final TypeList parameterTypes;
+
+        /**
+         * The bootstrap method.
+         */
         private final MethodDescription bootstrapMethod;
 
+        /**
+         * The list of arguments to be handed over to the bootstrap method.
+         */
         private final List<?> arguments;
 
+        /**
+         * Creates a new dynamic method invocation.
+         *
+         * @param methodName      The internal name of the method that is to be bootstrapped.
+         * @param returnType      The return type of the method to be bootstrapped.
+         * @param parameterTypes  The type of the parameters to be bootstrapped.
+         * @param bootstrapMethod The bootstrap method.
+         * @param arguments       The list of arguments to be handed over to the bootstrap method.
+         */
         public DynamicInvocation(String methodName,
                                  TypeDescription returnType,
-                                 List<? extends TypeDescription> parameterTypes,
+                                 TypeList parameterTypes,
                                  MethodDescription bootstrapMethod,
                                  List<?> arguments) {
             this.methodName = methodName;
-            StringBuilder stringBuilder = new StringBuilder("(");
-            for (TypeDescription parameterType : parameterTypes) {
-                stringBuilder.append(parameterType.getDescriptor());
-            }
-            methodDescriptor = stringBuilder.append(')').append(returnType.getDescriptor()).toString();
+            this.returnType = returnType;
+            this.parameterTypes = parameterTypes;
             this.bootstrapMethod = bootstrapMethod;
             this.arguments = arguments;
         }
@@ -298,6 +342,11 @@ public enum MethodInvocation {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+            StringBuilder stringBuilder = new StringBuilder("(");
+            for (TypeDescription parameterType : parameterTypes) {
+                stringBuilder.append(parameterType.getDescriptor());
+            }
+            String methodDescriptor = stringBuilder.append(')').append(returnType.getDescriptor()).toString();
             methodVisitor.visitInvokeDynamicInsn(methodName,
                     methodDescriptor,
                     new Handle(handle,
@@ -305,9 +354,53 @@ public enum MethodInvocation {
                             bootstrapMethod.getInternalName(),
                             bootstrapMethod.getDescriptor()),
                     arguments.toArray(new Object[arguments.size()]));
-            return (bootstrapMethod.isConstructor()
-                    ? StackSize.SINGLE
-                    : bootstrapMethod.getReturnType().getStackSize()).toIncreasingSize();
+            int stackSize = returnType.getStackSize().getSize() - parameterTypes.getStackSize();
+            return new Size(stackSize, Math.max(stackSize, 0));
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            DynamicInvocation that = (DynamicInvocation) other;
+            return MethodInvocation.this == that.getOuter()
+                    && arguments.equals(that.arguments)
+                    && bootstrapMethod.equals(that.bootstrapMethod)
+                    && returnType.equals(that.returnType)
+                    && parameterTypes.equals(that.parameterTypes)
+                    && methodName.equals(that.methodName);
+        }
+
+        /**
+         * Returns the outer instance.
+         *
+         * @return The outer instance.
+         */
+        private MethodInvocation getOuter() {
+            return MethodInvocation.this;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = methodName.hashCode();
+            result = 31 * result + MethodInvocation.this.hashCode();
+            result = 31 * result + returnType.hashCode();
+            result = 31 * result + parameterTypes.hashCode();
+            result = 31 * result + bootstrapMethod.hashCode();
+            result = 31 * result + arguments.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "MethodInvocation.DynamicInvocation{" +
+                    "methodInvocation=" + MethodInvocation.this +
+                    ", methodName='" + methodName + '\'' +
+                    ", returnType=" + returnType +
+                    ", parameterTypes=" + parameterTypes +
+                    ", bootstrapMethod=" + bootstrapMethod +
+                    ", arguments=" + arguments +
+                    '}';
         }
     }
 }

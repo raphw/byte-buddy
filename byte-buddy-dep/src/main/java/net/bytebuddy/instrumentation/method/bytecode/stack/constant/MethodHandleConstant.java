@@ -39,7 +39,9 @@ public class MethodHandleConstant implements StackManipulation {
      * @return A stack manipulation that represents the loading of the handle.
      */
     public static StackManipulation of(MethodDescription methodDescription) {
-        return new MethodHandleConstant(new Handle(tagFor(methodDescription),
+        return methodDescription.isTypeInitializer()
+                ? Illegal.INSTANCE
+                : new MethodHandleConstant(new Handle(tagFor(methodDescription),
                 methodDescription.getDeclaringType().getInternalName(),
                 methodDescription.getInternalName(),
                 methodDescription.getDescriptor()));
@@ -54,7 +56,7 @@ public class MethodHandleConstant implements StackManipulation {
     private static int tagFor(MethodDescription methodDescription) {
         if (methodDescription.isConstructor()) {
             return Opcodes.H_NEWINVOKESPECIAL;
-        } else if (methodDescription.isStatic() || methodDescription.isTypeInitializer()) {
+        } else if (methodDescription.isStatic()) {
             return Opcodes.H_INVOKESTATIC;
         } else if (methodDescription.isPrivate() || methodDescription.isDefaultMethod()) {
             return Opcodes.H_INVOKESPECIAL;

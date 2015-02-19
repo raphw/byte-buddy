@@ -126,6 +126,13 @@ public class MethodHandleConstantTest {
     }
 
     @Test
+    public void testMethodHandleForTypeInitializer() throws Exception {
+        when(methodDescription.isTypeInitializer()).thenReturn(true);
+        StackManipulation stackManipulation = MethodHandleConstant.of(methodDescription);
+        assertThat(stackManipulation.isValid(), is(false));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         final Iterator<String> iterator = Arrays.asList(FOO, BAR).iterator();
         ObjectPropertyAssertion.of(MethodHandleConstant.class).create(new ObjectPropertyAssertion.Creator<Handle>() {

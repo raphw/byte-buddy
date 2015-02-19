@@ -1872,10 +1872,8 @@ public class MethodCall implements Instrumentation {
 
             @Override
             public StackManipulation invoke(MethodDescription methodDescription, Target instrumentationTarget) {
-                if (!methodDescription.isStatic()
-                        && !methodDescription.isInvokableOn(instrumentationTarget.getTypeDescription())) {
-                    throw new IllegalStateException("Cannot invoke " + methodDescription
-                            + " for " + instrumentationTarget);
+                if (!methodDescription.isStatic() && !methodDescription.isInvokableOn(instrumentationTarget.getTypeDescription())) {
+                    throw new IllegalStateException("Cannot invoke " + methodDescription + " for " + instrumentationTarget);
                 }
                 return MethodInvocation.invoke(methodDescription);
             }
@@ -1948,7 +1946,7 @@ public class MethodCall implements Instrumentation {
                                   boolean dynamicallyTyped);
 
         /**
-         * Returns the return value if the method call from the intercepted method.
+         * Returns the return value of the method call from the intercepted method.
          */
         static enum ForMethodReturn implements TerminationHandler {
 

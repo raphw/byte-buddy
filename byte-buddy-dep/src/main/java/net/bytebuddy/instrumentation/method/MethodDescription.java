@@ -13,6 +13,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -185,9 +186,30 @@ public interface MethodDescription extends ByteCodeElement {
      */
     <T> T getDefaultValue(Class<T> type);
 
+    /**
+     * Asserts if this method is invokable on an instance of the given type, i.e. the method is an instance method or
+     * a constructor and the method is visible to the type and can be invoked on the given instance.
+     *
+     * @param typeDescription The type to check.
+     * @return {@code true} if this method is invokable on an instance of the given type.
+     */
     boolean isInvokableOn(TypeDescription typeDescription);
 
+    /**
+     * Checks if the method is a bootstrap method.
+     *
+     * @return {@code true} if the method is a bootstrap method.
+     */
     boolean isBootstrap();
+
+    /**
+     * Checks if the method is a bootstrap method that accepts the given arguments.
+     *
+     * @param arguments The arguments that the bootstrap method is expected to accept where primitive values
+     *                  are to be represented as their wrapper types.
+     * @return {@code true} if the method is a bootstrap method that accepts the given arguments.
+     */
+    boolean isBootstrap(List<?> arguments);
 
     /**
      * An abstract base implementation of a method description.
@@ -304,12 +326,16 @@ public interface MethodDescription extends ByteCodeElement {
 
         @Override
         public boolean isInvokableOn(TypeDescription typeDescription) {
-            return isVisibleTo(typeDescription) && getDeclaringType().isAssignableFrom(typeDescription);
+            return !isStatic()
+                    && !isTypeInitializer()
+                    && isVisibleTo(typeDescription)
+                    && getDeclaringType().isAssignableFrom(typeDescription);
         }
 
         @Override
         public boolean isBootstrap() {
-            if ((isMethod() && (!isStatic() || !JavaType.CALL_SITE.isAssignableFromOrTo(getReturnType())))
+            if ((isMethod() && (!isStatic()
+                    || !(JavaType.CALL_SITE.isAssignableFrom(getReturnType()) || JavaType.CALL_SITE.isAssignableTo(getReturnType()))))
                     || (isConstructor() && !JavaType.CALL_SITE.isAssignableFrom(getDeclaringType()))) {
                 return false;
             }
@@ -340,6 +366,34 @@ public interface MethodDescription extends ByteCodeElement {
                         parameterIndex++;
                     }
                     return true;
+            }
+        }
+
+        @Override
+        public boolean isBootstrap(List<?> arguments) {
+            if (!isBootstrap()) {
+                return false;
+            }
+            for (Object argument : arguments) {
+                TypeDescription typeDescription = new TypeDescription.ForLoadedType(argument.getClass());
+                if (!typeDescription.isConstantPool() && !typeDescription.isWrapper()) {
+                    throw new IllegalArgumentException("Not a bootstrap argument: " + argument);
+                }
+            }
+            List<TypeDescription> parameterTypes = getParameterTypes();
+            // The following assumes that the bootstrap method is a valid bootstrap method.
+            if (parameterTypes.size() < 3) {
+                return arguments.size() == 0 || parameterTypes.get(parameterTypes.size() - 1).represents(Object[].class);
+            } else {
+                int index = 3;
+                Iterator<?> argumentIterator = arguments.iterator();
+                for (TypeDescription parameterType : parameterTypes.subList(3, parameterTypes.size())) {
+                    if (!argumentIterator.hasNext() || !parameterType.isAssignableFrom(argumentIterator.next().getClass())) {
+                        return index == parameterTypes.size() && parameterType.represents(Object[].class);
+                    }
+                    index++;
+                }
+                return true;
             }
         }
 

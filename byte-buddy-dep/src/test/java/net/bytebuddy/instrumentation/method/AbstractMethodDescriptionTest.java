@@ -421,6 +421,14 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(firstConstructor).isSpecializableFor(new TypeDescription.ForLoadedType(SampleSub.class)), is(false));
     }
 
+    @Test
+    public void testInvokable() throws Exception {
+        assertThat(describe(firstMethod).isInvokableOn(new TypeDescription.ForLoadedType(Sample.class)), is(false));
+        assertThat(describe(secondMethod).isInvokableOn(new TypeDescription.ForLoadedType(Sample.class)), is(true));
+        assertThat(describe(secondMethod).isInvokableOn(new TypeDescription.ForLoadedType(SampleSub.class)), is(true));
+        assertThat(describe(secondMethod).isInvokableOn(new TypeDescription.ForLoadedType(Object.class)), is(false));
+    }
+
     @Retention(RetentionPolicy.RUNTIME)
     private static @interface SampleAnnotation {
     }

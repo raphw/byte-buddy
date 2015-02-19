@@ -6,9 +6,13 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.pool.TypePoolDefaultEnumerationValueTest;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.MethodVisitor;
+
+import java.util.Arrays;
+import java.util.Iterator;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -32,6 +36,7 @@ public class MethodInvocationOtherTest {
                 when(mock.getParameterTypes()).thenReturn(new TypeList.Empty());
             }
         }).apply();
+        ObjectPropertyAssertion.of(MethodInvocation.DynamicInvocation.class).apply();
     }
 
     @Test(expected = IllegalStateException.class)

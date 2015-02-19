@@ -61,8 +61,8 @@ public class InvokeDynamic implements Instrumentation {
      * @param argument The arguments that are handed to the bootstrap method. Any argument must be saved in the
      *                 constant pool, i.e. primitive types (represented as their wrapper types), the
      *                 {@link java.lang.String} type as well as {@code MethodType} and {@code MethodHandle} instances.
-     * @return An instrumentation where a {@code this} reference and all arguments of the instrumented method
-     * are passed to the bootstrapped method unless explicit parameters are specified.
+     * @return An instrumentation where a {@code this} reference, if available, and all arguments of the
+     * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      */
     public static WithImplicitTarget bootstrap(Method method, Object... argument) {
         return bootstrap(new MethodDescription.ForLoadedMethod(nonNull(method)), argument);
@@ -76,8 +76,8 @@ public class InvokeDynamic implements Instrumentation {
      * @param argument    The arguments that are handed to the bootstrap method. Any argument must be saved in the
      *                    constant pool, i.e. primitive types (represented as their wrapper types), the
      *                    {@link java.lang.String} type as well as {@code MethodType} and {@code MethodHandle} instances.
-     * @return An instrumentation where a {@code this} reference and all arguments of the instrumented method
-     * are passed to the bootstrapped method unless explicit parameters are specified.
+     * @return An instrumentation where a {@code this} reference, if available, and all arguments of the
+     * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      */
     public static WithImplicitTarget bootstrap(Constructor<?> constructor, Object... argument) {
         return bootstrap(new MethodDescription.ForLoadedConstructor(nonNull(constructor)), argument);
@@ -92,53 +92,20 @@ public class InvokeDynamic implements Instrumentation {
      *                        constant pool, i.e. primitive types (represented as their wrapper types), the
      *                        {@link java.lang.String} type as well as {@code MethodType} and {@code MethodHandle}
      *                        instances.
-     * @return An instrumentation where a {@code this} reference and all arguments of the instrumented method
-     * are passed to the bootstrapped method unless explicit parameters are specified.
+     * @return An instrumentation where a {@code this} reference, if available, and all arguments of the
+     * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      */
     public static WithImplicitTarget bootstrap(MethodDescription bootstrapMethod, Object... argument) {
         List<?> arguments = Arrays.asList(nonNull(argument));
-        if (!bootstrapCompatible(bootstrapMethod, arguments)) {
-            throw new IllegalArgumentException("Bootstrap method " + bootstrapMethod + " does not accept " + arguments);
+        if (!bootstrapMethod.isBootstrap(arguments)) {
+            throw new IllegalArgumentException("Not a valid bootstrap method " + bootstrapMethod + " for " + arguments);
         }
-        return new WithImplicitTarget(nonNull(bootstrapMethod),
+        return new WithImplicitTarget(bootstrapMethod,
                 arguments,
-                TargetProvider.ForInterceptedMethod.INSTANCE,
+                new InvocationProvider.Default(),
                 TerminationHandler.ForMethodReturn.INSTANCE,
                 defaultAssigner(),
                 defaultDynamicallyTyped());
-    }
-
-    /**
-     * Validates if a bootstrap method is compatible to the provided arguments.
-     *
-     * @param bootstrapMethod The bootstrap method.
-     * @param arguments       The arguments that are provided to the bootstrap method.
-     * @return {@code true} if the bootstrap method is compatible to the provided arguments.
-     */
-    private static boolean bootstrapCompatible(MethodDescription bootstrapMethod, List<?> arguments) {
-        if (!bootstrapMethod.isBootstrap()) {
-            throw new IllegalArgumentException("Not a bootstrap method: " + bootstrapMethod);
-        }
-        for (Object argument : arguments) {
-            if (!new TypeDescription.ForLoadedType(argument.getClass()).isConstantPool()) {
-                throw new IllegalArgumentException("Not a constant pool value: " + argument);
-            }
-        }
-        List<TypeDescription> parameterTypes = bootstrapMethod.getParameterTypes();
-        // The following assumes that the bootstrap method is a valid bootstrap method.
-        if (parameterTypes.size() < 3) {
-            return arguments.size() == 0 || parameterTypes.get(parameterTypes.size() - 1).represents(Object[].class);
-        } else {
-            int index = 3;
-            Iterator<?> argumentIterator = arguments.iterator();
-            for (TypeDescription parameterType : parameterTypes.subList(3, parameterTypes.size())) {
-                if (!argumentIterator.hasNext() || !parameterType.isAssignableFrom(argumentIterator.next().getClass())) {
-                    return index == parameterTypes.size() && parameterType.represents(Object[].class);
-                }
-                index++;
-            }
-            return true;
-        }
     }
 
     /**
@@ -154,7 +121,7 @@ public class InvokeDynamic implements Instrumentation {
     /**
      * The target provided that identifies the method to be bootstrapped.
      */
-    protected final TargetProvider targetProvider;
+    protected final InvocationProvider invocationProvider;
 
     /**
      * A handler that handles the method return.
@@ -176,20 +143,20 @@ public class InvokeDynamic implements Instrumentation {
      *
      * @param bootstrapMethod    The bootstrap method.
      * @param handleArguments    The arguments that are provided to the bootstrap method.
-     * @param targetProvider     The target provided that identifies the method to be bootstrapped.
+     * @param invocationProvider The target provided that identifies the method to be bootstrapped.
      * @param terminationHandler A handler that handles the method return.
      * @param assigner           The assigner to be used.
      * @param dynamicallyTyped   {@code true} if the assigner should attempt dynamically-typed assignments.
      */
     protected InvokeDynamic(MethodDescription bootstrapMethod,
                             List<?> handleArguments,
-                            TargetProvider targetProvider,
+                            InvocationProvider invocationProvider,
                             TerminationHandler terminationHandler,
                             Assigner assigner,
                             boolean dynamicallyTyped) {
         this.bootstrapMethod = bootstrapMethod;
         this.handleArguments = handleArguments;
-        this.targetProvider = targetProvider;
+        this.invocationProvider = invocationProvider;
         this.terminationHandler = terminationHandler;
         this.assigner = assigner;
         this.dynamicallyTyped = dynamicallyTyped;
@@ -203,13 +170,13 @@ public class InvokeDynamic implements Instrumentation {
      * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
      */
     public InvokeDynamic withValue(boolean... value) {
-        List<TargetProvider.ArgumentProvider> argumentProviders = new ArrayList<TargetProvider.ArgumentProvider>(value.length);
+        List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
         for (boolean aValue : value) {
-            argumentProviders.add(new TargetProvider.ArgumentProvider.ForBooleanValue(aValue));
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForBooleanValue(aValue));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
-                targetProvider.withArguments(argumentProviders),
+                invocationProvider.appendArguments(argumentProviders),
                 terminationHandler,
                 assigner,
                 dynamicallyTyped);
@@ -223,13 +190,13 @@ public class InvokeDynamic implements Instrumentation {
      * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
      */
     public InvokeDynamic withValue(byte... value) {
-        List<TargetProvider.ArgumentProvider> argumentProviders = new ArrayList<TargetProvider.ArgumentProvider>(value.length);
+        List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
         for (byte aValue : value) {
-            argumentProviders.add(new TargetProvider.ArgumentProvider.ForByteValue(aValue));
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForByteValue(aValue));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
-                targetProvider.withArguments(argumentProviders),
+                invocationProvider.appendArguments(argumentProviders),
                 terminationHandler,
                 assigner,
                 dynamicallyTyped);
@@ -243,13 +210,13 @@ public class InvokeDynamic implements Instrumentation {
      * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
      */
     public InvokeDynamic withValue(short... value) {
-        List<TargetProvider.ArgumentProvider> argumentProviders = new ArrayList<TargetProvider.ArgumentProvider>(value.length);
+        List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
         for (short aValue : value) {
-            argumentProviders.add(new TargetProvider.ArgumentProvider.ForShortValue(aValue));
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForShortValue(aValue));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
-                targetProvider.withArguments(argumentProviders),
+                invocationProvider.appendArguments(argumentProviders),
                 terminationHandler,
                 assigner,
                 dynamicallyTyped);
@@ -263,13 +230,13 @@ public class InvokeDynamic implements Instrumentation {
      * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
      */
     public InvokeDynamic withValue(char... value) {
-        List<TargetProvider.ArgumentProvider> argumentProviders = new ArrayList<TargetProvider.ArgumentProvider>(value.length);
+        List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
         for (char aValue : value) {
-            argumentProviders.add(new TargetProvider.ArgumentProvider.ForCharacterValue(aValue));
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForCharacterValue(aValue));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
-                targetProvider.withArguments(argumentProviders),
+                invocationProvider.appendArguments(argumentProviders),
                 terminationHandler,
                 assigner,
                 dynamicallyTyped);
@@ -283,13 +250,13 @@ public class InvokeDynamic implements Instrumentation {
      * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
      */
     public InvokeDynamic withValue(int... value) {
-        List<TargetProvider.ArgumentProvider> argumentProviders = new ArrayList<TargetProvider.ArgumentProvider>(value.length);
+        List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
         for (int aValue : value) {
-            argumentProviders.add(new TargetProvider.ArgumentProvider.ForIntegerValue(aValue));
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForIntegerValue(aValue));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
-                targetProvider.withArguments(argumentProviders),
+                invocationProvider.appendArguments(argumentProviders),
                 terminationHandler,
                 assigner,
                 dynamicallyTyped);
@@ -303,13 +270,13 @@ public class InvokeDynamic implements Instrumentation {
      * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
      */
     public InvokeDynamic withValue(long... value) {
-        List<TargetProvider.ArgumentProvider> argumentProviders = new ArrayList<TargetProvider.ArgumentProvider>(value.length);
+        List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
         for (long aValue : value) {
-            argumentProviders.add(new TargetProvider.ArgumentProvider.ForLongValue(aValue));
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForLongValue(aValue));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
-                targetProvider.withArguments(argumentProviders),
+                invocationProvider.appendArguments(argumentProviders),
                 terminationHandler,
                 assigner,
                 dynamicallyTyped);
@@ -323,13 +290,13 @@ public class InvokeDynamic implements Instrumentation {
      * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
      */
     public InvokeDynamic withValue(float... value) {
-        List<TargetProvider.ArgumentProvider> argumentProviders = new ArrayList<TargetProvider.ArgumentProvider>(value.length);
+        List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
         for (float aValue : value) {
-            argumentProviders.add(new TargetProvider.ArgumentProvider.ForFloatValue(aValue));
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForFloatValue(aValue));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
-                targetProvider.withArguments(argumentProviders),
+                invocationProvider.appendArguments(argumentProviders),
                 terminationHandler,
                 assigner,
                 dynamicallyTyped);
@@ -343,13 +310,13 @@ public class InvokeDynamic implements Instrumentation {
      * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
      */
     public InvokeDynamic withValue(double... value) {
-        List<TargetProvider.ArgumentProvider> argumentProviders = new ArrayList<TargetProvider.ArgumentProvider>(value.length);
+        List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
         for (double aValue : value) {
-            argumentProviders.add(new TargetProvider.ArgumentProvider.ForDoubleValue(aValue));
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForDoubleValue(aValue));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
-                targetProvider.withArguments(argumentProviders),
+                invocationProvider.appendArguments(argumentProviders),
                 terminationHandler,
                 assigner,
                 dynamicallyTyped);
@@ -365,13 +332,13 @@ public class InvokeDynamic implements Instrumentation {
      * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
      */
     public InvokeDynamic withValue(Object... value) {
-        List<TargetProvider.ArgumentProvider> argumentProviders = new ArrayList<TargetProvider.ArgumentProvider>(value.length);
+        List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
         for (Object aValue : value) {
-            argumentProviders.add(TargetProvider.ArgumentProvider.ConstantPoolWrapper.of(nonNull(aValue)));
+            argumentProviders.add(InvocationProvider.ArgumentProvider.ConstantPoolWrapper.of(nonNull(aValue)));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
-                targetProvider.withArguments(argumentProviders),
+                invocationProvider.appendArguments(argumentProviders),
                 terminationHandler,
                 assigner,
                 dynamicallyTyped);
@@ -386,13 +353,13 @@ public class InvokeDynamic implements Instrumentation {
      * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
      */
     public InvokeDynamic withReference(Object... value) {
-        List<TargetProvider.ArgumentProvider> argumentProviders = new ArrayList<TargetProvider.ArgumentProvider>(value.length);
+        List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
         for (Object aValue : value) {
-            argumentProviders.add(new TargetProvider.ArgumentProvider.ForStaticField(nonNull(aValue)));
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForStaticField(nonNull(aValue)));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
-                targetProvider.withArguments(argumentProviders),
+                invocationProvider.appendArguments(argumentProviders),
                 terminationHandler,
                 assigner,
                 dynamicallyTyped);
@@ -415,16 +382,16 @@ public class InvokeDynamic implements Instrumentation {
      * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
      */
     public InvokeDynamic withNullValue(TypeDescription... typeDescription) {
-        List<TargetProvider.ArgumentProvider> argumentProviders = new ArrayList<TargetProvider.ArgumentProvider>(typeDescription.length);
+        List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(typeDescription.length);
         for (TypeDescription aTypeDescription : typeDescription) {
             if (aTypeDescription.isPrimitive()) {
                 throw new IllegalArgumentException("Cannot assign null to primitive type: " + aTypeDescription);
             }
-            argumentProviders.add(new TargetProvider.ArgumentProvider.ForNullValue(aTypeDescription));
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForNullValue(aTypeDescription));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
-                targetProvider.withArguments(argumentProviders),
+                invocationProvider.appendArguments(argumentProviders),
                 terminationHandler,
                 assigner,
                 dynamicallyTyped);
@@ -437,16 +404,16 @@ public class InvokeDynamic implements Instrumentation {
      * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
      */
     public InvokeDynamic withArgument(int... index) {
-        List<TargetProvider.ArgumentProvider> argumentProviders = new ArrayList<TargetProvider.ArgumentProvider>(index.length);
+        List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(index.length);
         for (int anIndex : index) {
             if (anIndex < 0) {
                 throw new IllegalArgumentException("Method parameter indices cannot be negative: " + anIndex);
             }
-            argumentProviders.add(new TargetProvider.ArgumentProvider.ForMethodParameter(anIndex));
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForMethodParameter(anIndex));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
-                targetProvider.withArguments(argumentProviders),
+                invocationProvider.appendArguments(argumentProviders),
                 terminationHandler,
                 assigner,
                 dynamicallyTyped);
@@ -461,8 +428,7 @@ public class InvokeDynamic implements Instrumentation {
     public InvokeDynamic withThis() {
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
-                targetProvider.withArguments(Collections.<TargetProvider.ArgumentProvider>singletonList(TargetProvider
-                        .ArgumentProvider.ForThisInstance.INSTANCE)),
+                invocationProvider.appendArgument(InvocationProvider.ArgumentProvider.ForThisInstance.INSTANCE),
                 terminationHandler,
                 assigner,
                 dynamicallyTyped);
@@ -493,8 +459,7 @@ public class InvokeDynamic implements Instrumentation {
     public InvokeDynamic withInstanceField(String fieldName, TypeDescription fieldType) {
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
-                targetProvider.withArguments(Collections.<TargetProvider.ArgumentProvider>singletonList(new TargetProvider
-                        .ArgumentProvider.ForInstanceField(nonNull(fieldName), nonNull(fieldType)))),
+                invocationProvider.appendArgument(new InvocationProvider.ArgumentProvider.ForInstanceField(nonNull(fieldName), nonNull(fieldType))),
                 terminationHandler,
                 assigner,
                 dynamicallyTyped);
@@ -508,13 +473,13 @@ public class InvokeDynamic implements Instrumentation {
      * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
      */
     public InvokeDynamic withField(String... fieldName) {
-        List<TargetProvider.ArgumentProvider> argumentProviders = new ArrayList<TargetProvider.ArgumentProvider>(fieldName.length);
+        List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(fieldName.length);
         for (String aFieldName : fieldName) {
-            argumentProviders.add(new TargetProvider.ArgumentProvider.ForExistingField(nonNull(aFieldName)));
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForExistingField(nonNull(aFieldName)));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
-                targetProvider.withArguments(argumentProviders),
+                invocationProvider.appendArguments(argumentProviders),
                 terminationHandler,
                 assigner,
                 dynamicallyTyped);
@@ -531,7 +496,7 @@ public class InvokeDynamic implements Instrumentation {
     public InvokeDynamic withAssigner(Assigner assigner, boolean dynamicallyTyped) {
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
-                targetProvider,
+                invocationProvider,
                 terminationHandler,
                 nonNull(assigner),
                 dynamicallyTyped);
@@ -547,7 +512,7 @@ public class InvokeDynamic implements Instrumentation {
     public Instrumentation andThen(Instrumentation instrumentation) {
         return new Instrumentation.Compound(new InvokeDynamic(bootstrapMethod,
                 handleArguments,
-                targetProvider,
+                invocationProvider,
                 TerminationHandler.ForChainedInvocation.INSTANCE,
                 assigner,
                 dynamicallyTyped),
@@ -556,7 +521,7 @@ public class InvokeDynamic implements Instrumentation {
 
     @Override
     public InstrumentedType prepare(InstrumentedType instrumentedType) {
-        return targetProvider.prepare(instrumentedType);
+        return invocationProvider.prepare(instrumentedType);
     }
 
     @Override
@@ -573,7 +538,7 @@ public class InvokeDynamic implements Instrumentation {
                 && assigner.equals(that.assigner)
                 && bootstrapMethod.equals(that.bootstrapMethod)
                 && handleArguments.equals(that.handleArguments)
-                && targetProvider.equals(that.targetProvider)
+                && invocationProvider.equals(that.invocationProvider)
                 && terminationHandler.equals(that.terminationHandler);
     }
 
@@ -581,7 +546,7 @@ public class InvokeDynamic implements Instrumentation {
     public int hashCode() {
         int result = bootstrapMethod.hashCode();
         result = 31 * result + handleArguments.hashCode();
-        result = 31 * result + targetProvider.hashCode();
+        result = 31 * result + invocationProvider.hashCode();
         result = 31 * result + terminationHandler.hashCode();
         result = 31 * result + assigner.hashCode();
         result = 31 * result + (dynamicallyTyped ? 1 : 0);
@@ -593,7 +558,7 @@ public class InvokeDynamic implements Instrumentation {
         return "InvokeDynamic{" +
                 "bootstrapMethod=" + bootstrapMethod +
                 ", handleArguments=" + handleArguments +
-                ", targetProvider=" + targetProvider +
+                ", invocationProvider=" + invocationProvider +
                 ", terminationHandler=" + terminationHandler +
                 ", assigner=" + assigner +
                 ", dynamicallyTyped=" + dynamicallyTyped +
@@ -628,7 +593,7 @@ public class InvokeDynamic implements Instrumentation {
         public Size apply(MethodVisitor methodVisitor,
                           Context instrumentationContext,
                           MethodDescription instrumentedMethod) {
-            TargetProvider.Target.Resolved target = targetProvider.make(instrumentedMethod)
+            InvocationProvider.Target.Resolved target = invocationProvider.make(instrumentedMethod)
                     .resolve(instrumentedType, assigner, dynamicallyTyped);
             StackManipulation.Size size = new StackManipulation.Compound(
                     target.getStackManipulation(),
@@ -675,73 +640,185 @@ public class InvokeDynamic implements Instrumentation {
     }
 
     /**
-     * An invoke dynamic instrumentation where the boostrapped method is instructed to bootstrap the intercepted method.
+     * Representation of an {@link net.bytebuddy.instrumentation.InvokeDynamic} instrumentation where the bootstrapped
+     * method is passed a {@code this} reference, if available, and any arguments of the instrumented method.
      */
-    public static class WithImplicitTarget extends InvokeDynamic {
+    public static class WithImplicitArguments extends InvokeDynamic {
 
         /**
-         * Creates a new invoke dynamic instrumentation with an implicit target for the bootstrapping.
+         * Creates a new dynamic method invocation with implicit arguments.
          *
          * @param bootstrapMethod    The bootstrap method.
          * @param handleArguments    The arguments that are provided to the bootstrap method.
-         * @param targetProvider     The target provided that identifies the method to be bootstrapped.
+         * @param invocationProvider The target provided that identifies the method to be bootstrapped.
+         * @param terminationHandler A handler that handles the method return.
+         * @param assigner           The assigner to be used.
+         * @param dynamicallyTyped   {@code true} if the assigner should attempt dynamically-typed assignments.
+         */
+        protected WithImplicitArguments(MethodDescription bootstrapMethod,
+                                        List<?> handleArguments,
+                                        InvocationProvider invocationProvider,
+                                        TerminationHandler terminationHandler,
+                                        Assigner assigner,
+                                        boolean dynamicallyTyped) {
+            super(bootstrapMethod,
+                    handleArguments,
+                    invocationProvider,
+                    terminationHandler,
+                    assigner,
+                    dynamicallyTyped);
+        }
+
+        /**
+         * Returns an instance of this instrumentation where the bootstrapped method is not passed any arguments.
+         *
+         * @return This instrumentation where the bootstrapped method is not passed any arguments.
+         */
+        public InvokeDynamic withoutArguments() {
+            return new WithImplicitArguments(bootstrapMethod,
+                    handleArguments,
+                    invocationProvider.withoutArguments(),
+                    terminationHandler,
+                    assigner,
+                    dynamicallyTyped);
+        }
+
+        /**
+         * Returns an instance of this instrumentation where only the explicit arguments of an intercepted method but
+         * not the {@code this} reference, if available, are passed to the bootstrapped method.
+         *
+         * @return This instrumentation where only the arguments of the intercepted method but not the {@code this}
+         * reference of the intercepted method, if available, are passed to the bootstrapped method.
+         */
+        public InvokeDynamic withMethodArgumentsOnly() {
+            return new WithImplicitArguments(bootstrapMethod,
+                    handleArguments,
+                    invocationProvider
+                            .withoutArguments()
+                            .appendArgument(InvocationProvider.ArgumentProvider.ForInterceptedMethodParameters.INSTANCE),
+                    terminationHandler,
+                    assigner,
+                    dynamicallyTyped);
+        }
+
+        @Override
+        public String toString() {
+            return "InvokeDynamic.WithImplicitArguments{" +
+                    "bootstrapMethod=" + bootstrapMethod +
+                    ", handleArguments=" + handleArguments +
+                    ", invocationProvider=" + invocationProvider +
+                    ", terminationHandler=" + terminationHandler +
+                    ", assigner=" + assigner +
+                    ", dynamicallyTyped=" + dynamicallyTyped +
+                    '}';
+        }
+    }
+
+    /**
+     * Representation of an {@link net.bytebuddy.instrumentation.InvokeDynamic} instrumentation where the bootstrapped
+     * method is passed a {@code this} reference, if available, and any arguments of the instrumented method and
+     * where the invocation target is implicit.
+     */
+    public static class WithImplicitTarget extends WithImplicitArguments {
+
+        /**
+         * Creates a new dynamic method invocation with implicit arguments and an implicit invocation target.
+         *
+         * @param bootstrapMethod    The bootstrap method.
+         * @param handleArguments    The arguments that are provided to the bootstrap method.
+         * @param invocationProvider The target provided that identifies the method to be bootstrapped.
          * @param terminationHandler A handler that handles the method return.
          * @param assigner           The assigner to be used.
          * @param dynamicallyTyped   {@code true} if the assigner should attempt dynamically-typed assignments.
          */
         protected WithImplicitTarget(MethodDescription bootstrapMethod,
                                      List<?> handleArguments,
-                                     TargetProvider targetProvider,
+                                     InvocationProvider invocationProvider,
                                      TerminationHandler terminationHandler,
                                      Assigner assigner,
                                      boolean dynamicallyTyped) {
             super(bootstrapMethod,
                     handleArguments,
-                    targetProvider,
+                    invocationProvider,
                     terminationHandler,
                     assigner,
                     dynamicallyTyped);
         }
 
-        public InvokeDynamic invoke(Class<?> returnType) {
+        /**
+         * Requests the bootstrap method to bind a method with the given return type. The return type
+         * is he assigned to the intercepted method's return type.
+         *
+         * @param returnType The return type to request from the bootstrapping method.
+         * @return This instrumentation where the bootstrap method is requested to bind a method with the given
+         * return type.
+         */
+        public InvokeDynamic.WithImplicitArguments invoke(Class<?> returnType) {
             return invoke(new TypeDescription.ForLoadedType(nonNull(returnType)));
         }
 
-        public InvokeDynamic invoke(TypeDescription returnType) {
-            return invoke(TargetProvider.ForSyntheticCall.NameProvider.ForInterceptedMethod.INSTANCE,
-                    new TargetProvider.ForSyntheticCall.ReturnTypeProvider.ForExplicitType(returnType));
-        }
-
-        public InvokeDynamic invoke(String methodName) {
-            return invoke(new TargetProvider.ForSyntheticCall.NameProvider.ForExplicitName(isValidIdentifier(methodName)),
-                    TargetProvider.ForSyntheticCall.ReturnTypeProvider.ForInterceptedMethod.INSTANCE);
-        }
-
-        public InvokeDynamic invoke(String methodName, Class<?> returnType) {
-            return invoke(methodName, new TypeDescription.ForLoadedType(nonNull(returnType)));
-        }
-
-        public InvokeDynamic invoke(String methodName, TypeDescription returnType) {
-            return invoke(new TargetProvider.ForSyntheticCall.NameProvider.ForExplicitName(isValidIdentifier(methodName)),
-                    new TargetProvider.ForSyntheticCall.ReturnTypeProvider.ForExplicitType(returnType));
-        }
-
-        private InvokeDynamic invoke(TargetProvider.ForSyntheticCall.NameProvider nameProvider,
-                                     TargetProvider.ForSyntheticCall.ReturnTypeProvider returnTypeProvider) {
-            return new InvokeDynamic(bootstrapMethod,
+        /**
+         * Requests the bootstrap method to bind a method with the given return type. The return type
+         * is he assigned to the intercepted method's return type.
+         *
+         * @param returnType The return type to request from the bootstrapping method.
+         * @return This instrumentation where the bootstrap method is requested to bind a method with the given
+         * return type.
+         */
+        public InvokeDynamic.WithImplicitArguments invoke(TypeDescription returnType) {
+            return new WithImplicitArguments(bootstrapMethod,
                     handleArguments,
-                    new TargetProvider.ForSyntheticCall(nameProvider, returnTypeProvider, Collections.<TargetProvider.ArgumentProvider>emptyList()),
+                    invocationProvider.withReturnTypeProvider(new InvocationProvider.ReturnTypeProvider.ForExplicitType(nonNull(returnType))),
                     terminationHandler,
                     assigner,
                     dynamicallyTyped);
         }
 
-        public InvokeDynamic withoutArguments() {
-            return new InvokeDynamic(bootstrapMethod,
+        /**
+         * Requests the bootstrap method is passed the given method name.
+         *
+         * @param methodName The method name to pass to the bootstrapping method.
+         * @return This instrumentation where the bootstrap method is passed the given method name.
+         */
+        public InvokeDynamic.WithImplicitArguments invoke(String methodName) {
+            return new WithImplicitArguments(bootstrapMethod,
                     handleArguments,
-                    new TargetProvider.ForSyntheticCall(TargetProvider.ForSyntheticCall.NameProvider.ForInterceptedMethod.INSTANCE,
-                            TargetProvider.ForSyntheticCall.ReturnTypeProvider.ForInterceptedMethod.INSTANCE,
-                            Collections.<TargetProvider.ArgumentProvider>emptyList()),
+                    invocationProvider.withNameProvider(new InvocationProvider.NameProvider.ForExplicitName(nonNull(methodName))),
+                    terminationHandler,
+                    assigner,
+                    dynamicallyTyped);
+        }
+
+        /**
+         * Requests the bootstrap method to bind a method with the given return type. The return type
+         * is he assigned to the intercepted method's return type. Also, the bootstrap method is passed the
+         * given method name,
+         *
+         * @param methodName The method name to pass to the bootstrapping method.
+         * @param returnType The return type to request from the bootstrapping method.
+         * @return This instrumentation where the bootstrap method is requested to bind a method with the given
+         * return type while being passed the given method name.
+         */
+        public InvokeDynamic.WithImplicitArguments invoke(String methodName, Class<?> returnType) {
+            return invoke(methodName, new TypeDescription.ForLoadedType(nonNull(returnType)));
+        }
+
+        /**
+         * Requests the bootstrap method to bind a method with the given return type. The return type
+         * is he assigned to the intercepted method's return type. Also, the bootstrap method is passed the
+         * given method name,
+         *
+         * @param methodName The method name to pass to the bootstrapping method.
+         * @param returnType The return type to request from the bootstrapping method.
+         * @return This instrumentation where the bootstrap method is requested to bind a method with the given
+         * return type while being passed the given method name.
+         */
+        public InvokeDynamic.WithImplicitArguments invoke(String methodName, TypeDescription returnType) {
+            return new WithImplicitArguments(bootstrapMethod,
+                    handleArguments,
+                    invocationProvider
+                            .withNameProvider(new InvocationProvider.NameProvider.ForExplicitName(nonNull(methodName)))
+                            .withReturnTypeProvider(new InvocationProvider.ReturnTypeProvider.ForExplicitType(nonNull(returnType))),
                     terminationHandler,
                     assigner,
                     dynamicallyTyped);
@@ -752,7 +829,7 @@ public class InvokeDynamic implements Instrumentation {
             return "InvokeDynamic.WithImplicitTarget{" +
                     "bootstrapMethod=" + bootstrapMethod +
                     ", handleArguments=" + handleArguments +
-                    ", targetProvider=" + targetProvider +
+                    ", invocationProvider=" + invocationProvider +
                     ", terminationHandler=" + terminationHandler +
                     ", assigner=" + assigner +
                     ", dynamicallyTyped=" + dynamicallyTyped +
@@ -760,38 +837,150 @@ public class InvokeDynamic implements Instrumentation {
         }
     }
 
-    protected static interface TargetProvider {
+    /**
+     * An invocation provider is responsible for loading the arguments of the invoked method onto the operand
+     * stack and for creating the actual <i>invoke dynamic</i> instruction.
+     */
+    protected static interface InvocationProvider {
 
+        /**
+         * Creates a target for the invocation.
+         *
+         * @param methodDescription The method that is being intercepted.
+         * @return The target for the invocation.
+         */
         Target make(MethodDescription methodDescription);
 
-        TargetProvider withArguments(List<ForSyntheticCall.ArgumentProvider> argumentProviders);
+        /**
+         * Appends the given arguments to the invocation to be loaded onto the operand stack.
+         *
+         * @param argumentProviders The next arguments to be loaded onto the operand stack.
+         * @return An invocation provider for this target that loads the given arguments onto the operand stack.
+         */
+        InvocationProvider appendArguments(List<ArgumentProvider> argumentProviders);
 
+        /**
+         * Appends the given argument to the invocation to be loaded onto the operand stack.
+         *
+         * @param argumentProvider The next argument to be loaded onto the operand stack.
+         * @return An invocation provider for this target that loads the given arguments onto the operand stack.
+         */
+        InvocationProvider appendArgument(ArgumentProvider argumentProvider);
+
+        /**
+         * Returns a copy of this invocation provider that does not add any arguments.
+         *
+         * @return A copy of this invocation provider that does not add any arguments.
+         */
+        InvocationProvider withoutArguments();
+
+        /**
+         * Returns a copy of this invocation provider that applies the given name provider.
+         *
+         * @param nameProvider The name provider to be used.
+         * @return A copy of this invocation provider that applies the given name provider.
+         */
+        InvocationProvider withNameProvider(NameProvider nameProvider);
+
+        /**
+         * Returns a copy of this invocation provider that applies the given return type provider.
+         *
+         * @param returnTypeProvider The return type provider to be used.
+         * @return A copy of this invocation provider that applies the given return type provider.
+         */
+        InvocationProvider withReturnTypeProvider(ReturnTypeProvider returnTypeProvider);
+
+        /**
+         * Prepares the instrumented type.
+         *
+         * @param instrumentedType The instrumented type to prepare.
+         * @return The prepared instrumented type.
+         */
         InstrumentedType prepare(InstrumentedType instrumentedType);
 
+        /**
+         * A target for a dynamic method invocation.
+         */
         static interface Target {
 
+            /**
+             * Resolves the target.
+             *
+             * @param instrumentedType The instrumented type.
+             * @param assigner         The assigner to be used.
+             * @param dynamicallyTyped {@code true} if the assigner should attempt to assign objects by their
+             *                         runtime type.
+             * @return The resolved target.
+             */
             Resolved resolve(TypeDescription instrumentedType, Assigner assigner, boolean dynamicallyTyped);
 
+            /**
+             * Represents a resolved {@link net.bytebuddy.instrumentation.InvokeDynamic.InvocationProvider.Target}.
+             */
             static interface Resolved {
 
+                /**
+                 * Returns the stack manipulation that loads the arguments onto the operand stack.
+                 *
+                 * @return The stack manipulation that loads the arguments onto the operand stack.
+                 */
                 StackManipulation getStackManipulation();
 
+                /**
+                 * Returns the requested return type.
+                 *
+                 * @return The requested return type.
+                 */
                 TypeDescription getReturnType();
 
+                /**
+                 * Returns the internal name of the requested method.
+                 *
+                 * @return The internal name of the requested method.
+                 */
                 String getInternalName();
 
+                /**
+                 * Returns the types of the values on the operand stack.
+                 *
+                 * @return The types of the values on the operand stack.
+                 */
                 List<TypeDescription> getParameterTypes();
 
+                /**
+                 * A simple implementation of
+                 * {@link net.bytebuddy.instrumentation.InvokeDynamic.InvocationProvider.Target.Resolved}.
+                 */
                 static class Simple implements Resolved {
 
+                    /**
+                     * The stack manipulation that loads the arguments onto the operand stack.
+                     */
                     private final StackManipulation stackManipulation;
 
+                    /**
+                     * The internal name of the requested method.
+                     */
                     private final String internalName;
 
+                    /**
+                     * The requested return type.
+                     */
                     private final TypeDescription returnType;
 
+                    /**
+                     * The types of the values on the operand stack.
+                     */
                     private final List<TypeDescription> parameterTypes;
 
+                    /**
+                     * Creates a new simple instance.
+                     *
+                     * @param stackManipulation The stack manipulation that loads the arguments onto the operand stack.
+                     * @param internalName      The internal name of the requested method.
+                     * @param returnType        The requested return type.
+                     * @param parameterTypes    The types of the values on the operand stack.
+                     */
                     public Simple(StackManipulation stackManipulation,
                                   String internalName,
                                   TypeDescription returnType,
@@ -821,13 +1010,54 @@ public class InvokeDynamic implements Instrumentation {
                     public List<TypeDescription> getParameterTypes() {
                         return parameterTypes;
                     }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        Simple simple = (Simple) other;
+                        return internalName.equals(simple.internalName)
+                                && parameterTypes.equals(simple.parameterTypes)
+                                && returnType.equals(simple.returnType)
+                                && stackManipulation.equals(simple.stackManipulation);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = stackManipulation.hashCode();
+                        result = 31 * result + internalName.hashCode();
+                        result = 31 * result + returnType.hashCode();
+                        result = 31 * result + parameterTypes.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "InvokeDynamic.InvocationProvider.Target.Resolved.Simple{" +
+                                "stackManipulation=" + stackManipulation +
+                                ", internalName='" + internalName + '\'' +
+                                ", returnType=" + returnType +
+                                ", parameterTypes=" + parameterTypes +
+                                '}';
+                    }
                 }
             }
 
+            /**
+             * A target that requests to dynamically invoke a method to substitute for a given method.
+             */
             static class ForMethodDescription implements Target, Target.Resolved {
 
+                /**
+                 * The method that is being substituted.
+                 */
                 private final MethodDescription methodDescription;
 
+                /**
+                 * Creates a new target for substituting a given method.
+                 *
+                 * @param methodDescription The method that is being substituted.
+                 */
                 protected ForMethodDescription(MethodDescription methodDescription) {
                     this.methodDescription = methodDescription;
                 }
@@ -854,30 +1084,182 @@ public class InvokeDynamic implements Instrumentation {
 
                 @Override
                 public List<TypeDescription> getParameterTypes() {
-                    return methodDescription.getParameterTypes();
+                    return methodDescription.isStatic()
+                            ? methodDescription.getParameterTypes()
+                            : new TypeList.Explicit(join(methodDescription.getDeclaringType(), methodDescription.getParameterTypes()));
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && methodDescription.equals(((ForMethodDescription) other).methodDescription);
+                }
+
+                @Override
+                public int hashCode() {
+                    return methodDescription.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "InvokeDynamic.InvocationProvider.Target.ForMethodDescription{" +
+                            "methodDescription=" + methodDescription +
+                            '}';
                 }
             }
         }
 
+        /**
+         * An argument provider is responsible for loading arguments to a bootstrapped method onto the operand
+         * stack and providing the types of these arguments.
+         */
         static interface ArgumentProvider {
 
+            /**
+             * Resolves an argument provider.
+             *
+             * @param instrumentedType   The instrumented type.
+             * @param instrumentedMethod The instrumented method.
+             * @param assigner           The assigner to be used.
+             * @param dynamicallyTyped   {@code true} if the assigner should attempt to resolve an assigned type
+             *                           at runtime.
+             * @return A resolved version of this argument provider.
+             */
             Resolved resolve(TypeDescription instrumentedType,
                              MethodDescription instrumentedMethod,
                              Assigner assigner,
                              boolean dynamicallyTyped);
 
+            /**
+             * Prepares the instrumented type.
+             *
+             * @param instrumentedType The instrumented type.
+             * @return The prepared instrumented type.
+             */
             InstrumentedType prepare(InstrumentedType instrumentedType);
 
+            /**
+             * A resolved {@link net.bytebuddy.instrumentation.InvokeDynamic.InvocationProvider.ArgumentProvider}.
+             */
+            static interface Resolved {
+
+                /**
+                 * Returns a stack manipulation that loads the arguments onto the operand stack.
+                 *
+                 * @return A stack manipulation that loads the arguments onto the operand stack.
+                 */
+                StackManipulation getLoadInstruction();
+
+                /**
+                 * Returns a list of all types of the arguments that were loaded onto the operand stack.
+                 *
+                 * @return A list of all types of the arguments that were loaded onto the operand stack.
+                 */
+                List<TypeDescription> getLoadedTypes();
+
+                /**
+                 * A simple implementation of a resolved argument provider.
+                 */
+                static class Simple implements Resolved {
+
+                    /**
+                     * A stack manipulation that loads the arguments onto the operand stack.
+                     */
+                    private final StackManipulation stackManipulation;
+
+                    /**
+                     * A list of all types of the arguments that were loaded onto the operand stack.
+                     */
+                    private final List<TypeDescription> loadedTypes;
+
+                    /**
+                     * Creates a simple resolved argument provider.
+                     *
+                     * @param stackManipulation A stack manipulation that loads the argument onto the operand stack.
+                     * @param loadedType        The type of the arguments that is loaded onto the operand stack.
+                     */
+                    public Simple(StackManipulation stackManipulation, TypeDescription loadedType) {
+                        this(stackManipulation, Collections.singletonList(loadedType));
+                    }
+
+                    /**
+                     * Creates a simple resolved argument provider.
+                     *
+                     * @param stackManipulation A stack manipulation that loads the arguments onto the operand stack.
+                     * @param loadedTypes       A list of all types of the arguments that were loaded onto the
+                     *                          operand stack.
+                     */
+                    public Simple(StackManipulation stackManipulation, List<TypeDescription> loadedTypes) {
+                        this.stackManipulation = stackManipulation;
+                        this.loadedTypes = loadedTypes;
+                    }
+
+                    @Override
+                    public StackManipulation getLoadInstruction() {
+                        return stackManipulation;
+                    }
+
+                    @Override
+                    public List<TypeDescription> getLoadedTypes() {
+                        return loadedTypes;
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        Simple simple = (Simple) other;
+                        return loadedTypes.equals(simple.loadedTypes)
+                                && stackManipulation.equals(simple.stackManipulation);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = stackManipulation.hashCode();
+                        result = 31 * result + loadedTypes.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "InvokeDynamic.InvocationProvider.ArgumentProvider.Resolved.Simple{" +
+                                "stackManipulation=" + stackManipulation +
+                                ", loadedTypes=" + loadedTypes +
+                                '}';
+                    }
+                }
+            }
+
+            /**
+             * An argument provider for a value that is stored in a randomly named static field.
+             */
             static class ForStaticField implements ArgumentProvider {
 
-                private static final String FIELD_PREFIX = "dynamicCall";
+                /**
+                 * The prefix of any field generated by this argument provider.
+                 */
+                private static final String FIELD_PREFIX = "invokeDynamic";
 
+                /**
+                 * The field modifier for the randomly created fields.
+                 */
                 private static final int FIELD_MODIFIER = Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC;
 
+                /**
+                 * The value that is stored in the static field.
+                 */
                 private final Object value;
 
+                /**
+                 * The name of the field.
+                 */
                 private final String name;
 
+                /**
+                 * Creates a new argument provider that stores the given value in a static field.
+                 *
+                 * @param value The value that is to be provided to the bootstrapped method.
+                 */
                 public ForStaticField(Object value) {
                     this.value = value;
                     name = String.format("%s$%s", FIELD_PREFIX, RandomString.make());
@@ -898,16 +1280,53 @@ public class InvokeDynamic implements Instrumentation {
                             .withField(name, new TypeDescription.ForLoadedType(value.getClass()), FIELD_MODIFIER)
                             .withInitializer(LoadedTypeInitializer.ForStaticField.nonAccessible(name, value));
                 }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && value.equals(((ForStaticField) other).value);
+                }
+
+                @Override
+                public int hashCode() {
+                    return value.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForStaticField{" +
+                            "value=" + value +
+                            ", name='" + name + '\'' +
+                            '}';
+                }
             }
 
+            /**
+             * An argument provider that loads a value from an instance field.
+             */
             static class ForInstanceField implements ArgumentProvider {
 
+                /**
+                 * The modifier for the generated instance fields.
+                 */
                 private static final int FIELD_MODIFIER = Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
 
+                /**
+                 * The name of the field.
+                 */
                 private final String fieldName;
 
+                /**
+                 * The type of the field.
+                 */
                 private final TypeDescription fieldType;
 
+                /**
+                 * Creates a new argument provider that provides a value from an instance field.
+                 *
+                 * @param fieldName The name of the field.
+                 * @param fieldType The type of the field.
+                 */
                 public ForInstanceField(String fieldName, TypeDescription fieldType) {
                     this.fieldName = fieldName;
                     this.fieldType = fieldType;
@@ -926,12 +1345,46 @@ public class InvokeDynamic implements Instrumentation {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType.withField(fieldName, fieldType, FIELD_MODIFIER);
                 }
+
+                @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    ForInstanceField that = (ForInstanceField) other;
+                    return fieldName.equals(that.fieldName) && fieldType.equals(that.fieldType);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = fieldName.hashCode();
+                    result = 31 * result + fieldType.hashCode();
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForInstanceField{" +
+                            "fieldName='" + fieldName + '\'' +
+                            ", fieldType=" + fieldType +
+                            '}';
+                }
             }
 
+            /**
+             * Provides an argument from an existing field.
+             */
             static class ForExistingField implements ArgumentProvider {
 
+                /**
+                 * The name of the field.
+                 */
                 private final String fieldName;
 
+                /**
+                 * Creates a new argument provider that loads the value of an existing field.
+                 *
+                 * @param fieldName The name of the field.
+                 */
                 public ForExistingField(String fieldName) {
                     this.fieldName = fieldName;
                 }
@@ -968,12 +1421,41 @@ public class InvokeDynamic implements Instrumentation {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && fieldName.equals(((ForExistingField) other).fieldName);
+                }
+
+                @Override
+                public int hashCode() {
+                    return fieldName.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForExistingField{" +
+                            "fieldName='" + fieldName + '\'' +
+                            '}';
+                }
             }
 
+            /**
+             * An argument provider that loads an argument of the intercepted method.
+             */
             static class ForMethodParameter implements ArgumentProvider {
 
+                /**
+                 * The index of the parameter.
+                 */
                 private final int index;
 
+                /**
+                 * Creates an argument provider for an argument of the intercepted method.
+                 *
+                 * @param index The index of the parameter.
+                 */
                 public ForMethodParameter(int index) {
                     this.index = index;
                 }
@@ -995,10 +1477,86 @@ public class InvokeDynamic implements Instrumentation {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && index == ((ForMethodParameter) other).index;
+                }
+
+                @Override
+                public int hashCode() {
+                    return index;
+                }
+
+                @Override
+                public String toString() {
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForMethodParameter{" +
+                            "index=" + index +
+                            '}';
+                }
             }
 
+            /**
+             * An argument provider that loads a reference to the intercepted instance and all arguments of
+             * the intercepted method.
+             */
+            static enum ForInterceptedMethodInstanceAndParameters implements ArgumentProvider {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public Resolved resolve(TypeDescription instrumentedType,
+                                        MethodDescription instrumentedMethod,
+                                        Assigner assigner,
+                                        boolean dynamicallyTyped) {
+                    return new Resolved.Simple(MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
+                            instrumentedMethod.isStatic()
+                                    ? instrumentedMethod.getParameterTypes()
+                                    : join(instrumentedType, instrumentedMethod.getParameterTypes()));
+                }
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
+                }
+            }
+
+            /**
+             * An argument provider that loads all arguments of the intercepted method.
+             */
+            static enum ForInterceptedMethodParameters implements ArgumentProvider {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public Resolved resolve(TypeDescription instrumentedType,
+                                        MethodDescription instrumentedMethod,
+                                        Assigner assigner,
+                                        boolean dynamicallyTyped) {
+                    return new Resolved.Simple(MethodVariableAccess.loadArguments(instrumentedMethod), instrumentedMethod.getParameterTypes());
+                }
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
+                }
+            }
+
+            /**
+             * An argument provider that loads the intercepted instance.
+             */
             static enum ForThisInstance implements ArgumentProvider {
 
+                /**
+                 * The singleton instance.
+                 */
                 INSTANCE;
 
                 @Override
@@ -1018,10 +1576,21 @@ public class InvokeDynamic implements Instrumentation {
                 }
             }
 
+            /**
+             * An argument provider for a {@code boolean} value.
+             */
             static class ForBooleanValue implements ArgumentProvider {
 
+                /**
+                 * The represented {@code boolean} value.
+                 */
                 private final boolean value;
 
+                /**
+                 * Creates a new argument provider for a {@code boolean} value.
+                 *
+                 * @param value The represented {@code boolean} value.
+                 */
                 public ForBooleanValue(boolean value) {
                     this.value = value;
                 }
@@ -1038,12 +1607,41 @@ public class InvokeDynamic implements Instrumentation {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && value == ((ForBooleanValue) other).value;
+                }
+
+                @Override
+                public int hashCode() {
+                    return (value ? 1 : 0);
+                }
+
+                @Override
+                public String toString() {
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForBooleanValue{" +
+                            "value=" + value +
+                            '}';
+                }
             }
 
+            /**
+             * An argument provider for a {@code byte} value.
+             */
             static class ForByteValue implements ArgumentProvider {
 
+                /**
+                 * The represented {@code byte} value.
+                 */
                 private final byte value;
 
+                /**
+                 * Creates a new argument provider for a {@code byte} value.
+                 *
+                 * @param value The represented {@code byte} value.
+                 */
                 public ForByteValue(byte value) {
                     this.value = value;
                 }
@@ -1060,12 +1658,41 @@ public class InvokeDynamic implements Instrumentation {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && value == ((ForByteValue) other).value;
+                }
+
+                @Override
+                public int hashCode() {
+                    return (int) value;
+                }
+
+                @Override
+                public String toString() {
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForByteValue{" +
+                            "value=" + value +
+                            '}';
+                }
             }
 
+            /**
+             * An argument provider for a {@code short} value.
+             */
             static class ForShortValue implements ArgumentProvider {
 
+                /**
+                 * The represented {@code short} value.
+                 */
                 private final short value;
 
+                /**
+                 * Creates a new argument provider for a {@code short} value.
+                 *
+                 * @param value The represented {@code short} value.
+                 */
                 public ForShortValue(short value) {
                     this.value = value;
                 }
@@ -1082,12 +1709,41 @@ public class InvokeDynamic implements Instrumentation {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && value == ((ForShortValue) other).value;
+                }
+
+                @Override
+                public int hashCode() {
+                    return (int) value;
+                }
+
+                @Override
+                public String toString() {
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForShortValue{" +
+                            "value=" + value +
+                            '}';
+                }
             }
 
+            /**
+             * An argument provider for a {@code char} value.
+             */
             static class ForCharacterValue implements ArgumentProvider {
 
+                /**
+                 * The represented {@code char} value.
+                 */
                 private final char value;
 
+                /**
+                 * Creates a new argument provider for a {@code char} value.
+                 *
+                 * @param value The represented {@code char} value.
+                 */
                 public ForCharacterValue(char value) {
                     this.value = value;
                 }
@@ -1104,12 +1760,41 @@ public class InvokeDynamic implements Instrumentation {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && value == ((ForCharacterValue) other).value;
+                }
+
+                @Override
+                public int hashCode() {
+                    return (int) value;
+                }
+
+                @Override
+                public String toString() {
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForCharacterValue{" +
+                            "value=" + value +
+                            '}';
+                }
             }
 
+            /**
+             * An argument provider for a {@code int} value.
+             */
             static class ForIntegerValue implements ArgumentProvider {
 
+                /**
+                 * The represented {@code int} value.
+                 */
                 private final int value;
 
+                /**
+                 * Creates a new argument provider for a {@code int} value.
+                 *
+                 * @param value The represented {@code int} value.
+                 */
                 public ForIntegerValue(int value) {
                     this.value = value;
                 }
@@ -1126,12 +1811,41 @@ public class InvokeDynamic implements Instrumentation {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && value == ((ForIntegerValue) other).value;
+                }
+
+                @Override
+                public int hashCode() {
+                    return value;
+                }
+
+                @Override
+                public String toString() {
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForIntegerValue{" +
+                            "value=" + value +
+                            '}';
+                }
             }
 
+            /**
+             * An argument provider for a {@code long} value.
+             */
             static class ForLongValue implements ArgumentProvider {
 
+                /**
+                 * The represented {@code long} value.
+                 */
                 private final long value;
 
+                /**
+                 * Creates a new argument provider for a {@code long} value.
+                 *
+                 * @param value The represented {@code long} value.
+                 */
                 public ForLongValue(long value) {
                     this.value = value;
                 }
@@ -1148,12 +1862,41 @@ public class InvokeDynamic implements Instrumentation {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && value == ((ForLongValue) other).value;
+                }
+
+                @Override
+                public int hashCode() {
+                    return (int) (value ^ (value >>> 32));
+                }
+
+                @Override
+                public String toString() {
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForLongValue{" +
+                            "value=" + value +
+                            '}';
+                }
             }
 
+            /**
+             * An argument provider for a {@code float} value.
+             */
             static class ForFloatValue implements ArgumentProvider {
 
+                /**
+                 * The represented {@code float} value.
+                 */
                 private final float value;
 
+                /**
+                 * Creates a new argument provider for a {@code float} value.
+                 *
+                 * @param value The represented {@code float} value.
+                 */
                 public ForFloatValue(float value) {
                     this.value = value;
                 }
@@ -1170,12 +1913,41 @@ public class InvokeDynamic implements Instrumentation {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && Float.compare(((ForFloatValue) other).value, value) == 0;
+                }
+
+                @Override
+                public int hashCode() {
+                    return (value != +0.0f ? Float.floatToIntBits(value) : 0);
+                }
+
+                @Override
+                public String toString() {
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForFloatValue{" +
+                            "value=" + value +
+                            '}';
+                }
             }
 
+            /**
+             * An argument provider for a {@code double} value.
+             */
             static class ForDoubleValue implements ArgumentProvider {
 
+                /**
+                 * The represented {@code double} value.
+                 */
                 private final double value;
 
+                /**
+                 * Creates a new argument provider for a {@code double} value.
+                 *
+                 * @param value The represented {@code double} value.
+                 */
                 public ForDoubleValue(double value) {
                     this.value = value;
                 }
@@ -1192,12 +1964,42 @@ public class InvokeDynamic implements Instrumentation {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && Double.compare(((ForDoubleValue) other).value, value) == 0;
+                }
+
+                @Override
+                public int hashCode() {
+                    long temp = Double.doubleToLongBits(value);
+                    return (int) (temp ^ (temp >>> 32));
+                }
+
+                @Override
+                public String toString() {
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForDoubleValue{" +
+                            "value=" + value +
+                            '}';
+                }
             }
 
+            /**
+             * An argument provider for a {@link java.lang.String} value.
+             */
             static class ForStringValue implements ArgumentProvider {
 
+                /**
+                 * The represented {@link java.lang.String} value.
+                 */
                 private final String value;
 
+                /**
+                 * Creates a new argument provider for a {@link java.lang.String} value.
+                 *
+                 * @param value The represented {@link java.lang.String} value.
+                 */
                 public ForStringValue(String value) {
                     this.value = value;
                 }
@@ -1214,12 +2016,41 @@ public class InvokeDynamic implements Instrumentation {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && value.equals(((ForStringValue) other).value);
+                }
+
+                @Override
+                public int hashCode() {
+                    return value.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForStringValue{" +
+                            "value='" + value + '\'' +
+                            '}';
+                }
             }
 
+            /**
+             * An argument provider for the {@code null} value.
+             */
             static class ForNullValue implements ArgumentProvider {
 
+                /**
+                 * The type to be represented by the {@code null} value.
+                 */
                 private final TypeDescription typeDescription;
 
+                /**
+                 * Creates a new argument provider for the {@code null} value.
+                 *
+                 * @param typeDescription The type to be represented by the {@code null} value.
+                 */
                 public ForNullValue(TypeDescription typeDescription) {
                     this.typeDescription = typeDescription;
                 }
@@ -1236,39 +2067,35 @@ public class InvokeDynamic implements Instrumentation {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
-            }
 
-            static interface Resolved {
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && typeDescription.equals(((ForNullValue) other).typeDescription);
+                }
 
-                StackManipulation getLoadInstruction();
+                @Override
+                public int hashCode() {
+                    return typeDescription.hashCode();
+                }
 
-                TypeDescription getLoadedType();
-
-                static class Simple implements Resolved {
-
-                    private final StackManipulation stackManipulation;
-
-                    private final TypeDescription loadedType;
-
-                    public Simple(StackManipulation stackManipulation, TypeDescription loadedType) {
-                        this.stackManipulation = stackManipulation;
-                        this.loadedType = loadedType;
-                    }
-
-                    @Override
-                    public StackManipulation getLoadInstruction() {
-                        return stackManipulation;
-                    }
-
-                    @Override
-                    public TypeDescription getLoadedType() {
-                        return loadedType;
-                    }
+                @Override
+                public String toString() {
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForNullValue{" +
+                            "typeDescription=" + typeDescription +
+                            '}';
                 }
             }
 
+            /**
+             * Represents wrapper types and types that could be stored in a class's constant pool as such
+             * constant pool values.
+             */
             static enum ConstantPoolWrapper {
 
+                /**
+                 * Stores a {@link java.lang.Boolean} as a {@code boolean} and wraps it on load.
+                 */
                 BOOLEAN(boolean.class, Boolean.class) {
                     @Override
                     protected ArgumentProvider make(Object value) {
@@ -1276,6 +2103,9 @@ public class InvokeDynamic implements Instrumentation {
                     }
                 },
 
+                /**
+                 * Stores a {@link java.lang.Byte} as a {@code byte} and wraps it on load.
+                 */
                 BYTE(byte.class, Byte.class) {
                     @Override
                     protected ArgumentProvider make(Object value) {
@@ -1283,6 +2113,9 @@ public class InvokeDynamic implements Instrumentation {
                     }
                 },
 
+                /**
+                 * Stores a {@link java.lang.Short} as a {@code short} and wraps it on load.
+                 */
                 SHORT(short.class, Short.class) {
                     @Override
                     protected ArgumentProvider make(Object value) {
@@ -1290,6 +2123,9 @@ public class InvokeDynamic implements Instrumentation {
                     }
                 },
 
+                /**
+                 * Stores a {@link java.lang.Character} as a {@code char} and wraps it on load.
+                 */
                 CHARACTER(char.class, Character.class) {
                     @Override
                     protected ArgumentProvider make(Object value) {
@@ -1297,6 +2133,9 @@ public class InvokeDynamic implements Instrumentation {
                     }
                 },
 
+                /**
+                 * Stores a {@link java.lang.Integer} as a {@code int} and wraps it on load.
+                 */
                 INTEGER(int.class, Integer.class) {
                     @Override
                     protected ArgumentProvider make(Object value) {
@@ -1304,6 +2143,9 @@ public class InvokeDynamic implements Instrumentation {
                     }
                 },
 
+                /**
+                 * Stores a {@link java.lang.Long} as a {@code long} and wraps it on load.
+                 */
                 LONG(long.class, Long.class) {
                     @Override
                     protected ArgumentProvider make(Object value) {
@@ -1311,6 +2153,9 @@ public class InvokeDynamic implements Instrumentation {
                     }
                 },
 
+                /**
+                 * Stores a {@link java.lang.Float} as a {@code float} and wraps it on load.
+                 */
                 FLOAT(float.class, Float.class) {
                     @Override
                     protected ArgumentProvider make(Object value) {
@@ -1318,6 +2163,9 @@ public class InvokeDynamic implements Instrumentation {
                     }
                 },
 
+                /**
+                 * Stores a {@link java.lang.Double} as a {@code double} and wraps it on load.
+                 */
                 DOUBLE(double.class, Double.class) {
                     @Override
                     protected ArgumentProvider make(Object value) {
@@ -1325,6 +2173,12 @@ public class InvokeDynamic implements Instrumentation {
                     }
                 };
 
+                /**
+                 * Represents the given value by a constant pool value or as a field if this is not possible.
+                 *
+                 * @param value The value to provide to the bootstrapped method.
+                 * @return An argument provider for this value.
+                 */
                 public static ArgumentProvider of(Object value) {
                     if (value instanceof Boolean) {
                         return BOOLEAN.make(value);
@@ -1349,21 +2203,51 @@ public class InvokeDynamic implements Instrumentation {
                     }
                 }
 
+                /**
+                 * The primitive type that can be stored on the constant pool.
+                 */
                 private final TypeDescription primitiveType;
 
+                /**
+                 * The wrapper type that is to be represented.
+                 */
                 private final TypeDescription wrapperType;
 
+                /**
+                 * Creates a new wrapper delegate for a primitive type.
+                 *
+                 * @param primitiveType The primitive type that can be stored on the constant pool.
+                 * @param wrapperType   The wrapper type that is to be represented.
+                 */
                 private ConstantPoolWrapper(Class<?> primitiveType, Class<?> wrapperType) {
                     this.primitiveType = new TypeDescription.ForLoadedType(primitiveType);
                     this.wrapperType = new TypeDescription.ForLoadedType(wrapperType);
                 }
 
+                /**
+                 * Creates an argument provider for a given primitive value.
+                 *
+                 * @param value The wrapper-type value to provide to the bootstrapped method.
+                 * @return An argument provider for this value.
+                 */
                 protected abstract ArgumentProvider make(Object value);
 
+                /**
+                 * An argument provider that loads a primitive value from the constant pool and wraps it.
+                 */
                 protected class WrappingArgumentProvider implements ArgumentProvider {
 
+                    /**
+                     * The stack manipulation that represents the loading of the primitive value.
+                     */
                     private final StackManipulation stackManipulation;
 
+                    /**
+                     * Creates a new wrapping argument provider.
+                     *
+                     * @param stackManipulation The stack manipulation that represents the loading of the
+                     *                          primitive value.
+                     */
                     protected WrappingArgumentProvider(StackManipulation stackManipulation) {
                         this.stackManipulation = stackManipulation;
                     }
@@ -1381,44 +2265,226 @@ public class InvokeDynamic implements Instrumentation {
                     public InstrumentedType prepare(InstrumentedType instrumentedType) {
                         return instrumentedType;
                     }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && ConstantPoolWrapper.this.equals(((WrappingArgumentProvider) other).getOuter())
+                                && stackManipulation.equals(((WrappingArgumentProvider) other).stackManipulation);
+                    }
+
+                    /**
+                     * Returns the outer instance.
+                     *
+                     * @return The outer instance.
+                     */
+                    private ConstantPoolWrapper getOuter() {
+                        return ConstantPoolWrapper.this;
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return stackManipulation.hashCode() + 31 * ConstantPoolWrapper.this.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "InvokeDynamic.InvocationProvider.ArgumentProvider.ConstantPoolWrapper.WrappingArgumentProvider{" +
+                                "constantPoolWrapper=" + ConstantPoolWrapper.this +
+                                ", stackManipulation=" + stackManipulation +
+                                '}';
+                    }
                 }
             }
         }
 
-        static enum ForInterceptedMethod implements TargetProvider {
+        /**
+         * Provides the name of the method that is to be bound by a dynamic method call.
+         */
+        static interface NameProvider {
 
-            INSTANCE;
+            /**
+             * Resolves the name given the intercepted method.
+             *
+             * @param methodDescription The intercepted method.
+             * @return The name of the method to be bound by the bootstrap method.
+             */
+            String resolve(MethodDescription methodDescription);
 
-            @Override
-            public Target make(MethodDescription methodDescription) {
-                return new Target.ForMethodDescription(methodDescription);
+            /**
+             * A name provider that provides the name of the intercepted method.
+             */
+            static enum ForInterceptedMethod implements NameProvider {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public String resolve(MethodDescription methodDescription) {
+                    return methodDescription.getInternalName();
+                }
             }
 
-            @Override
-            public TargetProvider withArguments(List<ArgumentProvider> argumentProviders) {
-                return new ForSyntheticCall(ForSyntheticCall.NameProvider.ForInterceptedMethod.INSTANCE,
-                        ForSyntheticCall.ReturnTypeProvider.ForInterceptedMethod.INSTANCE,
-                        argumentProviders);
-            }
+            /**
+             * A name provider that provides an explicit name.
+             */
+            static class ForExplicitName implements NameProvider {
 
-            @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType;
-            }
+                /**
+                 * The name to be provided.
+                 */
+                private final String internalName;
 
+                /**
+                 * Creates a new name provider for an explicit name.
+                 *
+                 * @param internalName The name to be provided.
+                 */
+                public ForExplicitName(String internalName) {
+                    this.internalName = internalName;
+                }
+
+                @Override
+                public String resolve(MethodDescription methodDescription) {
+                    return internalName;
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && internalName.equals(((ForExplicitName) other).internalName);
+                }
+
+                @Override
+                public int hashCode() {
+                    return internalName.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "InvokeDynamic.InvocationProvider.NameProvider.ForExplicitName{" +
+                            "internalName='" + internalName + '\'' +
+                            '}';
+                }
+            }
         }
 
-        static class ForSyntheticCall implements TargetProvider {
+        /**
+         * Provides the return type that is requested from the bootstrap method.
+         */
+        static interface ReturnTypeProvider {
 
+            /**
+             * Resolves the return type that is requested from the bootstrap method.
+             *
+             * @param methodDescription The intercepted method.
+             * @return The return type that is requested from the bootstrap method.
+             */
+            TypeDescription resolve(MethodDescription methodDescription);
+
+            /**
+             * Requests the return type of the intercepted method.
+             */
+            static enum ForInterceptedMethod implements ReturnTypeProvider {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public TypeDescription resolve(MethodDescription methodDescription) {
+                    return methodDescription.getReturnType();
+                }
+            }
+
+            /**
+             * Requests an explicit return type.
+             */
+            static class ForExplicitType implements ReturnTypeProvider {
+
+                /**
+                 * The requested return type.
+                 */
+                private final TypeDescription typeDescription;
+
+                /**
+                 * Creates a new return type provider for an explicit return type.
+                 *
+                 * @param typeDescription The requested return type.
+                 */
+                public ForExplicitType(TypeDescription typeDescription) {
+                    this.typeDescription = typeDescription;
+                }
+
+                @Override
+                public TypeDescription resolve(MethodDescription methodDescription) {
+                    return typeDescription;
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && typeDescription.equals(((ForExplicitType) other).typeDescription);
+                }
+
+                @Override
+                public int hashCode() {
+                    return typeDescription.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "InvokeDynamic.InvocationProvider.ReturnTypeProvider.ForExplicitType{" +
+                            "typeDescription=" + typeDescription +
+                            '}';
+                }
+            }
+        }
+
+        /**
+         * An invocation provider that requests a synthetic dynamic invocation where all arguments are explicitly
+         * provided by the user.
+         */
+        static class Default implements InvocationProvider {
+
+            /**
+             * The provider for the name of the intercepted method.
+             */
             private final NameProvider nameProvider;
 
+            /**
+             * The provider for the required return type.
+             */
             private final ReturnTypeProvider returnTypeProvider;
 
+            /**
+             * The providers for the method arguments in their order.
+             */
             private final List<ArgumentProvider> argumentProviders;
 
-            public ForSyntheticCall(NameProvider nameProvider,
-                                    ReturnTypeProvider returnTypeProvider,
-                                    List<ArgumentProvider> argumentProviders) {
+            /**
+             * Creates a new default invocation provider that provides information and arguments of the
+             * intercepted method.
+             */
+            public Default() {
+                this(NameProvider.ForInterceptedMethod.INSTANCE,
+                        ReturnTypeProvider.ForInterceptedMethod.INSTANCE,
+                        Collections.<ArgumentProvider>singletonList(ArgumentProvider.ForInterceptedMethodInstanceAndParameters.INSTANCE));
+            }
+
+            /**
+             * Creates a new default invocation provider.
+             *
+             * @param nameProvider       The provider for the name of the intercepted method.
+             * @param returnTypeProvider The provider for the required return type.
+             * @param argumentProviders  The providers for the method arguments in their order.
+             */
+            public Default(NameProvider nameProvider,
+                           ReturnTypeProvider returnTypeProvider,
+                           List<ArgumentProvider> argumentProviders) {
                 this.nameProvider = nameProvider;
                 this.returnTypeProvider = returnTypeProvider;
                 this.argumentProviders = argumentProviders;
@@ -1433,10 +2499,38 @@ public class InvokeDynamic implements Instrumentation {
             }
 
             @Override
-            public TargetProvider withArguments(List<ArgumentProvider> argumentProviders) {
-                return new ForSyntheticCall(nameProvider,
+            public InvocationProvider appendArguments(List<ArgumentProvider> argumentProviders) {
+                return new Default(nameProvider,
                         returnTypeProvider,
                         join(this.argumentProviders, argumentProviders));
+            }
+
+            @Override
+            public InvocationProvider appendArgument(ArgumentProvider argumentProvider) {
+                return new Default(nameProvider,
+                        returnTypeProvider,
+                        join(this.argumentProviders, argumentProvider));
+            }
+
+            @Override
+            public InvocationProvider withoutArguments() {
+                return new Default(nameProvider,
+                        returnTypeProvider,
+                        Collections.<ArgumentProvider>emptyList());
+            }
+
+            @Override
+            public InvocationProvider withNameProvider(NameProvider nameProvider) {
+                return new Default(nameProvider,
+                        returnTypeProvider,
+                        argumentProviders);
+            }
+
+            @Override
+            public InvocationProvider withReturnTypeProvider(ReturnTypeProvider returnTypeProvider) {
+                return new Default(nameProvider,
+                        returnTypeProvider,
+                        argumentProviders);
             }
 
             @Override
@@ -1447,74 +2541,66 @@ public class InvokeDynamic implements Instrumentation {
                 return instrumentedType;
             }
 
-            protected static interface NameProvider {
-
-                String resolve(MethodDescription methodDescription);
-
-                static enum ForInterceptedMethod implements NameProvider {
-
-                    INSTANCE;
-
-                    @Override
-                    public String resolve(MethodDescription methodDescription) {
-                        return methodDescription.getInternalName();
-                    }
-                }
-
-                static class ForExplicitName implements NameProvider {
-
-                    private final String internalName;
-
-                    public ForExplicitName(String internalName) {
-                        this.internalName = internalName;
-                    }
-
-                    @Override
-                    public String resolve(MethodDescription methodDescription) {
-                        return internalName;
-                    }
-                }
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                Default that = (Default) other;
+                return argumentProviders.equals(that.argumentProviders)
+                        && nameProvider.equals(that.nameProvider)
+                        && returnTypeProvider.equals(that.returnTypeProvider);
             }
 
-            protected static interface ReturnTypeProvider {
-
-                TypeDescription resolve(MethodDescription methodDescription);
-
-                static enum ForInterceptedMethod implements ReturnTypeProvider {
-
-                    INSTANCE;
-
-                    @Override
-                    public TypeDescription resolve(MethodDescription methodDescription) {
-                        return methodDescription.getReturnType();
-                    }
-                }
-
-                static class ForExplicitType implements ReturnTypeProvider {
-
-                    private final TypeDescription typeDescription;
-
-                    public ForExplicitType(TypeDescription typeDescription) {
-                        this.typeDescription = typeDescription;
-                    }
-
-                    @Override
-                    public TypeDescription resolve(MethodDescription methodDescription) {
-                        return typeDescription;
-                    }
-                }
+            @Override
+            public int hashCode() {
+                int result = nameProvider.hashCode();
+                result = 31 * result + returnTypeProvider.hashCode();
+                result = 31 * result + argumentProviders.hashCode();
+                return result;
             }
 
-            protected static class Target implements TargetProvider.Target {
+            @Override
+            public String toString() {
+                return "InvokeDynamic.InvocationProvider.Default{" +
+                        "nameProvider=" + nameProvider +
+                        ", returnTypeProvider=" + returnTypeProvider +
+                        ", argumentProviders=" + argumentProviders +
+                        '}';
+            }
 
+            /**
+             * A target for a synthetically bound method call.
+             */
+            protected static class Target implements InvocationProvider.Target {
+
+                /**
+                 * The name to be passed to the bootstrap method.
+                 */
                 private final String internalName;
 
+                /**
+                 * The return type to be requested from the bootstrapping method.
+                 */
                 private final TypeDescription returnType;
 
+                /**
+                 * The arguments to be passed to the bootstrap method.
+                 */
                 private final List<ArgumentProvider> argumentProviders;
 
+                /**
+                 * The intercepted method.
+                 */
                 private final MethodDescription instrumentedMethod;
 
+                /**
+                 * Creates a new target.
+                 *
+                 * @param internalName       The name to be passed to the bootstrap method.
+                 * @param returnType         The return type to be requested from the bootstrapping method.
+                 * @param argumentProviders  The arguments to be passed to the bootstrap method.
+                 * @param instrumentedMethod The intercepted method.
+                 */
                 public Target(String internalName,
                               TypeDescription returnType,
                               List<ArgumentProvider> argumentProviders,
@@ -1526,18 +2612,18 @@ public class InvokeDynamic implements Instrumentation {
                 }
 
                 @Override
-                public TargetProvider.Target.Resolved resolve(TypeDescription instrumentedType,
-                                                              Assigner assigner,
-                                                              boolean dynamicallyTyped) {
+                public InvocationProvider.Target.Resolved resolve(TypeDescription instrumentedType,
+                                                                  Assigner assigner,
+                                                                  boolean dynamicallyTyped) {
                     StackManipulation[] stackManipulation = new StackManipulation[argumentProviders.size()];
-                    List<TypeDescription> parameterTypes = new ArrayList<TypeDescription>(argumentProviders.size());
+                    List<TypeDescription> parameterTypes = new LinkedList<TypeDescription>();
                     int index = 0;
                     for (ArgumentProvider argumentProvider : argumentProviders) {
                         ArgumentProvider.Resolved resolved = argumentProvider.resolve(instrumentedType,
                                 instrumentedMethod,
                                 assigner,
                                 dynamicallyTyped);
-                        parameterTypes.add(resolved.getLoadedType());
+                        parameterTypes.addAll(resolved.getLoadedTypes());
                         stackManipulation[index++] = resolved.getLoadInstruction();
                     }
                     return new Resolved.Simple(new StackManipulation.Compound(stackManipulation),
@@ -1545,13 +2631,43 @@ public class InvokeDynamic implements Instrumentation {
                             returnType,
                             parameterTypes);
                 }
+
+                @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    Target target = (Target) other;
+                    return argumentProviders.equals(target.argumentProviders)
+                            && instrumentedMethod.equals(target.instrumentedMethod)
+                            && internalName.equals(target.internalName)
+                            && returnType.equals(target.returnType);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = internalName.hashCode();
+                    result = 31 * result + returnType.hashCode();
+                    result = 31 * result + argumentProviders.hashCode();
+                    result = 31 * result + instrumentedMethod.hashCode();
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "InvokeDynamic.InvocationProvider.Default.Target{" +
+                            "internalName='" + internalName + '\'' +
+                            ", returnType=" + returnType +
+                            ", argumentProviders=" + argumentProviders +
+                            ", instrumentedMethod=" + instrumentedMethod +
+                            '}';
+                }
             }
         }
     }
 
     /**
      * A termination handler is responsible to handle the return value of a method that is invoked via a
-     * {@link net.bytebuddy.instrumentation.MethodCall}.
+     * {@link net.bytebuddy.instrumentation.InvokeDynamic}.
      */
     protected static interface TerminationHandler {
 
@@ -1570,7 +2686,7 @@ public class InvokeDynamic implements Instrumentation {
                                   boolean dynamicallyTyped);
 
         /**
-         * Returns the return value if the method call from the intercepted method.
+         * Returns the return value of the dynamic invocation from the intercepted method.
          */
         static enum ForMethodReturn implements TerminationHandler {
 
@@ -1593,8 +2709,8 @@ public class InvokeDynamic implements Instrumentation {
         }
 
         /**
-         * Drops the return value of the called method from the operand stack without returning from the intercepted
-         * method.
+         * Drops the return value of the dynamic invocation from the operand stack without returning from the
+         * intercepted method.
          */
         static enum ForChainedInvocation implements TerminationHandler {
 
