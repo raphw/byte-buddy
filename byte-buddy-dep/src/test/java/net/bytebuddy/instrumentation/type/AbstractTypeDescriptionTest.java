@@ -27,7 +27,7 @@ public abstract class AbstractTypeDescriptionTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
-    private static final List<Class<?>> TYPES = Arrays.<Class<?>>asList(Object.class,
+    private static final List<Class<?>> TYPES = Arrays.asList(Object.class,
             SampleClass.class,
             void.class,
             byte.class,
@@ -364,8 +364,9 @@ public abstract class AbstractTypeDescriptionTest {
     @Test
     public void testConstantPool() throws Exception {
         assertThat(describe(Object.class).isConstantPool(), is(false));
-        assertThat(describe(Boolean.class).isConstantPool(), is(false));
-        assertThat(describe(boolean.class).isConstantPool(), is(true));
+        assertThat(describe(boolean.class).isConstantPool(), is(false));
+        assertThat(describe(int.class).isConstantPool(), is(true));
+        assertThat(describe(Integer.class).isConstantPool(), is(false));
         assertThat(describe(String.class).isConstantPool(), is(true));
     }
 

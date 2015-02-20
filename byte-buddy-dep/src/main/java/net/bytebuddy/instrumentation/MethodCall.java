@@ -822,7 +822,7 @@ public class MethodCall implements Instrumentation {
                                              TypeDescription targetType,
                                              Assigner assigner,
                                              boolean dynamicallyTyped) {
-                if (interceptedMethod.getParameterTypes().size() <= index) {
+                if (index >= interceptedMethod.getParameterTypes().size()) {
                     throw new IllegalStateException(interceptedMethod + " does not have a parameter with index " + index);
                 }
                 TypeDescription originType = interceptedMethod.getParameterTypes().get(index);
@@ -1083,9 +1083,9 @@ public class MethodCall implements Instrumentation {
                         fieldDescription = fieldList.getOnly();
                     }
                     currentType = currentType.getSupertype();
-                } while (currentType != null
-                        && (fieldDescription == null || !fieldDescription.isVisibleTo(instrumentedType)));
-                if (fieldDescription == null) {
+                }
+                while (currentType != null && (fieldDescription == null || !fieldDescription.isVisibleTo(instrumentedType)));
+                if (fieldDescription == null || !fieldDescription.isVisibleTo(instrumentedType)) {
                     throw new IllegalStateException(instrumentedType + " does not define a visible field " + fieldName);
                 } else if (!fieldDescription.isStatic() && interceptedMethod.isStatic()) {
                     throw new IllegalStateException("Cannot access non-static " + fieldDescription + " from " + interceptedMethod);

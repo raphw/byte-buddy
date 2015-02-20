@@ -10,7 +10,6 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.utility.JavaType;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.signature.SignatureWriter;
 
 import java.io.Serializable;
 import java.lang.reflect.Constructor;

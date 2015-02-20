@@ -24,4 +24,4 @@ build/
 rebel.xml
 
 # Shade plugin
-byte-buddy-benchmark/dependency-reduced-pom.xml
+dependency-reduced-pom.xml
