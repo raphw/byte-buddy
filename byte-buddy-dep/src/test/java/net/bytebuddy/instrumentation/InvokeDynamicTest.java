@@ -219,6 +219,7 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce
     public void testBootstrapWithFieldCreation() throws Exception {
         Class<?> type = classLoader.loadClass(ARGUMENT_BOOTSTRAP);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
@@ -238,6 +239,7 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce
     public void testBootstrapWithFieldUse() throws Exception {
         Class<?> type = classLoader.loadClass(ARGUMENT_BOOTSTRAP);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
@@ -257,6 +259,7 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    @JavaVersionRule.Enforce
     public void testBootstrapWithFieldUseInvisible() throws Exception {
         Class<?> type = classLoader.loadClass(ARGUMENT_BOOTSTRAP);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
@@ -270,6 +273,7 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce
     public void testBootstrapWithNullValue() throws Exception {
         Class<?> type = classLoader.loadClass(ARGUMENT_BOOTSTRAP);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
@@ -285,6 +289,7 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce
     public void testBootstrapWithThisValue() throws Exception {
         Class<?> type = classLoader.loadClass(ARGUMENT_BOOTSTRAP);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
@@ -301,6 +306,7 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce
     public void testBootstrapWithArgument() throws Exception {
         Class<?> type = classLoader.loadClass(ARGUMENT_BOOTSTRAP);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
@@ -316,6 +322,7 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
+    @JavaVersionRule.Enforce
     public void testNegativeArgumentThrowsException() throws Exception {
         Class<?> type = classLoader.loadClass(ARGUMENT_BOOTSTRAP);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
@@ -326,6 +333,7 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    @JavaVersionRule.Enforce
     public void testNonExistentArgumentThrowsException() throws Exception {
         Class<?> type = classLoader.loadClass(ARGUMENT_BOOTSTRAP);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
@@ -339,6 +347,7 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce
     public void testChainedInvocation() throws Exception {
         Class<?> type = classLoader.loadClass(ARGUMENT_BOOTSTRAP);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
@@ -355,6 +364,7 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce
     public void testBootstrapWithImplicitArgument() throws Exception {
         Class<?> type = classLoader.loadClass(ARGUMENT_BOOTSTRAP);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
