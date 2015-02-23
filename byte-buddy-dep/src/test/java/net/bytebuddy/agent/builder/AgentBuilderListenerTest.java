@@ -1,6 +1,7 @@
 package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
@@ -27,11 +28,14 @@ public class AgentBuilderListenerTest {
     private DynamicType dynamicType;
 
     @Mock
+    private TypeDescription typeDescription;
+
+    @Mock
     private Throwable throwable;
 
     @Test
     public void testNoOp() throws Exception {
-        AgentBuilder.Listener.NoOp.INSTANCE.onTransformation(dynamicType);
+        AgentBuilder.Listener.NoOp.INSTANCE.onTransformation(typeDescription, dynamicType);
         verifyZeroInteractions(dynamicType);
         AgentBuilder.Listener.NoOp.INSTANCE.onError(FOO, throwable);
         verifyZeroInteractions(throwable);
@@ -41,10 +45,10 @@ public class AgentBuilderListenerTest {
 
     @Test
     public void testCompoundOnTransformation() throws Exception {
-        new AgentBuilder.Listener.Compound(first, second).onTransformation(dynamicType);
-        verify(first).onTransformation(dynamicType);
+        new AgentBuilder.Listener.Compound(first, second).onTransformation(typeDescription, dynamicType);
+        verify(first).onTransformation(typeDescription, dynamicType);
         verifyNoMoreInteractions(first);
-        verify(second).onTransformation(dynamicType);
+        verify(second).onTransformation(typeDescription, dynamicType);
         verifyNoMoreInteractions(second);
     }
 

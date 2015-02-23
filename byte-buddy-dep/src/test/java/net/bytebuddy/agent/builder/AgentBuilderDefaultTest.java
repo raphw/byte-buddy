@@ -123,7 +123,7 @@ public class AgentBuilderDefaultTest {
                 .installOn(instrumentation);
         assertThat(instrumentations.size(), is(1));
         assertThat(instrumentations.get(0).transform(classLoader, FOO, REDEFINED, protectionDomain, QUX), is(BAZ));
-        verify(listener).onTransformation(unloaded);
+        verify(listener).onTransformation(typeDescription, unloaded);
         verify(listener).onComplete(FOO);
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
@@ -144,7 +144,7 @@ public class AgentBuilderDefaultTest {
                 .installOn(instrumentation);
         assertThat(instrumentations.size(), is(1));
         assertThat(instrumentations.get(0).transform(classLoader, FOO, REDEFINED, protectionDomain, QUX), is(BAZ));
-        verify(listener).onTransformation(unloaded);
+        verify(listener).onTransformation(typeDescription, unloaded);
         verify(listener).onComplete(FOO);
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, true);
