@@ -142,7 +142,7 @@ public interface TypePool {
 
             @Override
             public TypeDescription resolve() {
-                throw new IllegalStateException("Cannot resolve type for " + name);
+                throw new IllegalStateException("Cannot resolve type description for " + name);
             }
 
             @Override

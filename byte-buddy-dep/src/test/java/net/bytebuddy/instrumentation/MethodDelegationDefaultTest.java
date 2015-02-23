@@ -25,7 +25,7 @@ public class MethodDelegationDefaultTest extends AbstractInstrumentationTest {
     private static final String DELEGATION_TARGET_SERIALIZABLE = "net.bytebuddy.test.precompiled.DelegationDefaultTargetSerializable";
 
     @Rule
-    public MethodRule java8Rule = new JavaVersionRule(8);
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     private ClassLoader classLoader;
 
@@ -35,7 +35,7 @@ public class MethodDelegationDefaultTest extends AbstractInstrumentationTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce
+    @JavaVersionRule.Enforce(8)
     public void testDefaultInterface() throws Exception {
         DynamicType.Loaded<?> loaded = instrument(Object.class,
                 MethodDelegation.to(classLoader.loadClass(DELEGATION_TARGET)),
@@ -47,7 +47,7 @@ public class MethodDelegationDefaultTest extends AbstractInstrumentationTest {
     }
 
     @Test(expected = AbstractMethodError.class)
-    @JavaVersionRule.Enforce
+    @JavaVersionRule.Enforce(8)
     public void testNoDefaultInterface() throws Exception {
         DynamicType.Loaded<?> loaded = instrument(Object.class,
                 MethodDelegation.to(DelegationNoDefaultInterfaceInterceptor.class),
@@ -59,7 +59,7 @@ public class MethodDelegationDefaultTest extends AbstractInstrumentationTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce
+    @JavaVersionRule.Enforce(8)
     public void testDefaultInterfaceSerializableProxy() throws Exception {
         DynamicType.Loaded<?> loaded = instrument(Object.class,
                 MethodDelegation.to(classLoader.loadClass(DELEGATION_TARGET_SERIALIZABLE)),

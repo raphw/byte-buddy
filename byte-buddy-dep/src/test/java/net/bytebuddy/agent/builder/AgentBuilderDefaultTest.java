@@ -104,7 +104,7 @@ public class AgentBuilderDefaultTest {
         Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = new HashMap<TypeDescription, LoadedTypeInitializer>();
         loadedTypeInitializers.put(typeDescription, loadedTypeInitializer);
         when(unloaded.getLoadedTypeInitializers()).thenReturn(loadedTypeInitializers);
-        when(transformer.transform(builder)).thenReturn((DynamicType.Builder) builder);
+        when(transformer.transform(builder, typeDescription)).thenReturn((DynamicType.Builder) builder);
         when(binaryLocator.initialize(FOO, QUX, classLoader)).thenReturn(initialized);
         when(initialized.getTypePool()).thenReturn(typePool);
         when(typePool.describe(FOO)).thenReturn(resolution);
@@ -205,7 +205,7 @@ public class AgentBuilderDefaultTest {
         ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.class)
                 .apply(new AgentBuilder.Default().new ExecutingTransformer());
         ObjectPropertyAssertion.of(AgentBuilder.Default.InitializationStrategy.SelfInjection.class).apply();
-        final Iterator<Class<?>> iterator = Arrays.<Class<?>>asList(Object.class, AgentBuilderDefaultTest.class).iterator();
+        final Iterator<Class<?>> iterator = Arrays.asList(Object.class, AgentBuilderDefaultTest.class).iterator();
         ObjectPropertyAssertion.of(AgentBuilder.Default.InitializationStrategy.SelfInjection.Nexus.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
             @Override
             public Class<?> create() {

@@ -23,7 +23,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     private static final int INDEX = 0;
 
     @Rule
-    public MethodRule javaVersionRule = new JavaVersionRule(7);
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Mock
     private TypeDescription targetType;
@@ -73,7 +73,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     }
 
     @Test
-    @JavaVersionRule.Enforce
+    @JavaVersionRule.Enforce(7)
     public void testMethodHandleBinding() throws Exception {
         targetType = new TypeDescription.ForLoadedType(JavaType.METHOD_HANDLE.load());
         when(targetTypeList.get(INDEX)).thenReturn(targetType);
@@ -84,7 +84,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     }
 
     @Test
-    @JavaVersionRule.Enforce
+    @JavaVersionRule.Enforce(7)
     public void testMethodTypeBinding() throws Exception {
         targetType = new TypeDescription.ForLoadedType(JavaType.METHOD_TYPE.load());
         when(targetTypeList.get(INDEX)).thenReturn(targetType);

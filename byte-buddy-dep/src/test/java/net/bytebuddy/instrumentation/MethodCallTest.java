@@ -40,7 +40,7 @@ public class MethodCallTest extends AbstractInstrumentationTest {
     public TestRule methodRule = new MockitoRule(this);
 
     @Rule
-    public MethodRule javaVersionRule = new JavaVersionRule(8);
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Mock
     private Assigner nonAssigner;
@@ -360,7 +360,7 @@ public class MethodCallTest extends AbstractInstrumentationTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce
+    @JavaVersionRule.Enforce(8)
     public void testDefaultMethod() throws Exception {
         DynamicType.Loaded<?> loaded = instrument(Object.class,
                 MethodCall.invoke(classLoader.loadClass(SINGLE_DEFAULT_METHOD).getDeclaredMethod(FOO)).onDefault(),

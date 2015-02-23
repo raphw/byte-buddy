@@ -314,10 +314,11 @@ public interface AgentBuilder {
         /**
          * Allows for a transformation of a {@link net.bytebuddy.dynamic.DynamicType.Builder}.
          *
-         * @param builder The dynamic builder to transform.
+         * @param builder         The dynamic builder to transform.
+         * @param typeDescription The description of the type currently being instrumented.
          * @return A transformed version of the supplied {@code builder}.
          */
-        DynamicType.Builder<?> transform(DynamicType.Builder<?> builder);
+        DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription);
 
         /**
          * A no-op implementation of a {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer} that does
@@ -331,7 +332,7 @@ public interface AgentBuilder {
             INSTANCE;
 
             @Override
-            public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder) {
+            public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
                 return builder;
             }
         }
@@ -357,9 +358,9 @@ public interface AgentBuilder {
             }
 
             @Override
-            public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder) {
+            public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
                 for (Transformer transformer : this.transformer) {
-                    builder = transformer.transform(builder);
+                    builder = transformer.transform(builder, typeDescription);
                 }
                 return builder;
             }
@@ -1331,8 +1332,8 @@ public interface AgentBuilder {
             }
 
             @Override
-            public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder) {
-                return transformer.transform(builder);
+            public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
+                return transformer.transform(builder, typeDescription);
             }
 
             @Override
@@ -1401,7 +1402,7 @@ public interface AgentBuilder {
                             DynamicType.Unloaded<?> dynamicType = initializationStrategy.apply(
                                     transformation.transform(byteBuddy.rebase(typeDescription,
                                             initialized.getClassFileLocator(),
-                                            methodNameTransformer))).make();
+                                            methodNameTransformer), typeDescription)).make();
                             Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
                             if (loadedTypeInitializers.size() > 1) {
                                 ClassLoaderByteArrayInjector injector = new ClassLoaderByteArrayInjector(classLoader, protectionDomain);

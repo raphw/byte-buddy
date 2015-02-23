@@ -53,7 +53,7 @@ public class ByteBuddyTutorialExamplesTest {
     private static final String CONFLICTING_DEFAULT_METHOD_INTERFACE = "net.bytebuddy.test.precompiled.SingleDefaultMethodConflictingInterface";
 
     @Rule
-    public MethodRule java8Rule = new JavaVersionRule(8);
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Rule
     public MethodRule toolsJarRule = new ToolsJarRule();
@@ -154,7 +154,7 @@ public class ByteBuddyTutorialExamplesTest {
     public void testTutorialGettingStartedJavaAgent() throws Exception {
         new AgentBuilder.Default().rebase(isAnnotatedWith(Rebase.class)).transform(new AgentBuilder.Transformer() {
             @Override
-            public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder) {
+            public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
                 return builder.method(named("toString")).intercept(FixedValue.value("transformed"));
             }
         }).installOn(mock(java.lang.instrument.Instrumentation.class));
@@ -248,7 +248,7 @@ public class ByteBuddyTutorialExamplesTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce
+    @JavaVersionRule.Enforce(8)
     public void testFieldsAndMethodMethodDefaultCall() throws Exception {
         // This test differs from the tutorial by only conditionally expressing the Java 8 types.
         ClassLoader classLoader = new PrecompiledTypeClassLoader(getClass().getClassLoader());

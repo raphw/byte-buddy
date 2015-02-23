@@ -228,10 +228,9 @@ public enum MethodInvocation {
 
         @Override
         public StackManipulation special(TypeDescription invocationTarget) {
-            if (!methodDescription.isSpecializableFor(invocationTarget)) {
-                return Illegal.INSTANCE;
-            }
-            return SPECIAL.new Invocation(methodDescription, invocationTarget);
+            return methodDescription.isSpecializableFor(invocationTarget)
+                    ? SPECIAL.new Invocation(methodDescription, invocationTarget)
+                    : Illegal.INSTANCE;
         }
 
         @Override

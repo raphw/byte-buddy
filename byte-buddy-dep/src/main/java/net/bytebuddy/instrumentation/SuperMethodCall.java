@@ -13,13 +13,13 @@ import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
  * This instrumentation will create a new method which simply calls its super method. If no such method is defined,
- * an exception will be thrown. Note that methods that were explicitly defined for an instrumentation are never
- * considered to have a super method even if there is a method with a compatible signature. Constructors are
- * considered to have a "super method" if the direct super type defines a constructor with identical signature.
- * If a method is found to not have a super method, e.g. when instrumenting a static method, an exception is thrown.
- * <p>&nbsp;</p>
- * Besides implementing constructors, this instrumentation is useful when a method of a super type is not supposed
- * to be altered but should be equipped with additional annotations.
+ * an exception will be thrown. Constructors are considered to have a super method if the direct super class defines
+ * a constructor with an identical signature. Default methods are invoked as such if they are non-ambiguous. Static
+ * methods can have a (pseudo) super method if a type that defines such a method is rebased. Rebased types can also
+ * shadow constructors or methods of an actual super class. Besides implementing constructors, this instrumentation
+ * is useful when a method of a super type is not supposed to be altered but should be equipped with additional
+ * annotations. Furthermore, this instrumentation allows to hard code a super method call to be performed after
+ * performing another {@link net.bytebuddy.instrumentation.Instrumentation}.
  */
 public enum SuperMethodCall implements Instrumentation {
 
@@ -105,9 +105,12 @@ public enum SuperMethodCall implements Instrumentation {
         public Size apply(MethodVisitor methodVisitor,
                           Instrumentation.Context instrumentationContext,
                           MethodDescription instrumentedMethod) {
-            StackManipulation superMethodCall = instrumentationTarget.invokeSuper(instrumentedMethod, Target.MethodLookup.Default.EXACT);
+            StackManipulation superMethodCall = instrumentedMethod.isDefaultMethod()
+                    && instrumentationTarget.getTypeDescription().getInterfaces().contains(instrumentedMethod.getDeclaringType())
+                    ? instrumentationTarget.invokeDefault(instrumentedMethod.getDeclaringType(), instrumentedMethod.getUniqueSignature())
+                    : instrumentationTarget.invokeSuper(instrumentedMethod, Target.MethodLookup.Default.EXACT);
             if (!superMethodCall.isValid()) {
-                throw new IllegalArgumentException("Cannot call super method of " + instrumentedMethod);
+                throw new IllegalStateException("Cannot call super (or default) method of " + instrumentedMethod);
             }
             StackManipulation.Size stackSize = new StackManipulation.Compound(
                     MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),

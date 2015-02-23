@@ -24,7 +24,7 @@ public class MethodDelegationOriginTest extends AbstractInstrumentationTest {
     private static final String ORIGIN_METHOD_HANDLE = "net.bytebuddy.test.precompiled.OriginMethodHandle";
     private static final String ORIGIN_METHOD_TYPE = "net.bytebuddy.test.precompiled.OriginMethodType";
     @Rule
-    public MethodRule java7Rule = new JavaVersionRule(7);
+    public MethodRule javaVersionRule = new JavaVersionRule();
     private ClassLoader classLoader;
 
     @Before
@@ -70,7 +70,7 @@ public class MethodDelegationOriginTest extends AbstractInstrumentationTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce
+    @JavaVersionRule.Enforce(7)
     public void testOriginMethodHandle() throws Throwable {
         Class<?> originMethodHandle = classLoader.loadClass(ORIGIN_METHOD_HANDLE);
         DynamicType.Loaded<Foo> loaded = instrument(Foo.class, MethodDelegation.to(originMethodHandle));
@@ -79,7 +79,7 @@ public class MethodDelegationOriginTest extends AbstractInstrumentationTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce
+    @JavaVersionRule.Enforce(7)
     public void testOriginMethodType() throws Throwable {
         Class<?> originMethodType = classLoader.loadClass(ORIGIN_METHOD_TYPE);
         DynamicType.Loaded<Foo> loaded = instrument(Foo.class, MethodDelegation.to(originMethodType));

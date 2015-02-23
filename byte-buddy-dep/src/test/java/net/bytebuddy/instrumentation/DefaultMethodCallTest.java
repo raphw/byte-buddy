@@ -32,7 +32,7 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
     private static final String NON_OVERRIDING_INTERFACE = "net.bytebuddy.test.precompiled.SingleDefaultMethodNonOverridingInterface";
 
     @Rule
-    public MethodRule java8Rule = new JavaVersionRule(8);
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     private ClassLoader classLoader;
 
@@ -42,7 +42,7 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce
+    @JavaVersionRule.Enforce(8)
     public void testUnambiguousDefaultMethod() throws Exception {
         DynamicType.Loaded<?> loaded = instrument(Object.class,
                 DefaultMethodCall.unambiguousOnly(),
@@ -55,8 +55,8 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
         assertThat(method.invoke(instance), is((Object) FOO));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    @JavaVersionRule.Enforce
+    @Test(expected = IllegalStateException.class)
+    @JavaVersionRule.Enforce(8)
     public void testAmbiguousDefaultMethodThrowsException() throws Exception {
         instrument(Object.class,
                 DefaultMethodCall.unambiguousOnly(),
@@ -66,7 +66,7 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce
+    @JavaVersionRule.Enforce(8)
     public void testAmbiguousDefaultMethodWithExplicitPreference() throws Exception {
         Class<?> singleMethodInterface = classLoader.loadClass(SINGLE_DEFAULT_METHOD);
         Class<?> conflictingInterface = classLoader.loadClass(CONFLICTING_INTERFACE);
@@ -93,8 +93,8 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
         assertThat(method.invoke(instance), is(expectedResult));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    @JavaVersionRule.Enforce
+    @Test(expected = IllegalStateException.class)
+    @JavaVersionRule.Enforce(8)
     public void testUnrelatedPreferredDefaultMethodThrowsException() throws Exception {
         instrument(Object.class,
                 DefaultMethodCall.prioritize(classLoader.loadClass(NON_OVERRIDING_INTERFACE)),
@@ -103,8 +103,8 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
                 classLoader.loadClass(SINGLE_DEFAULT_METHOD), classLoader.loadClass(CONFLICTING_INTERFACE));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    @JavaVersionRule.Enforce
+    @Test(expected = IllegalStateException.class)
+    @JavaVersionRule.Enforce(8)
     public void testNonDeclaredDefaultMethodThrowsException() throws Exception {
         instrument(classLoader.loadClass(SINGLE_DEFAULT_METHOD_CLASS),
                 DefaultMethodCall.unambiguousOnly(),
@@ -112,8 +112,8 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
                 not(isDeclaredBy(Object.class)));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    @JavaVersionRule.Enforce
+    @Test(expected = IllegalStateException.class)
+    @JavaVersionRule.Enforce(8)
     public void testNonDeclaredPreferredDefaultMethodThrowsException() throws Exception {
         instrument(classLoader.loadClass(SINGLE_DEFAULT_METHOD_CLASS),
                 DefaultMethodCall.prioritize(classLoader.loadClass(SINGLE_DEFAULT_METHOD)),
@@ -122,7 +122,7 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce
+    @JavaVersionRule.Enforce(8)
     public void testDeclaredAndImplementedMethod() throws Exception {
         DynamicType.Loaded<?> loaded = instrument(classLoader.loadClass(SINGLE_DEFAULT_METHOD_CLASS),
                 DefaultMethodCall.unambiguousOnly(),
@@ -135,8 +135,8 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
         assertThat(method.invoke(instance), is((Object) FOO));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    @JavaVersionRule.Enforce
+    @Test(expected = IllegalStateException.class)
+    @JavaVersionRule.Enforce(8)
     public void testDeclaredAndImplementedAmbiguousMethodThrowsException() throws Exception {
         instrument(classLoader.loadClass(SINGLE_DEFAULT_METHOD_CLASS),
                 DefaultMethodCall.unambiguousOnly(),
@@ -146,7 +146,7 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce
+    @JavaVersionRule.Enforce(8)
     public void testDeclaredAndImplementedAmbiguousMethodWithPreference() throws Exception {
         DynamicType.Loaded<?> loaded = instrument(classLoader.loadClass(SINGLE_DEFAULT_METHOD_CLASS),
                 DefaultMethodCall.prioritize(classLoader.loadClass(SINGLE_DEFAULT_METHOD)),

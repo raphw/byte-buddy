@@ -5,6 +5,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.FixedValue;
 import net.bytebuddy.instrumentation.MethodDelegation;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.SuperCall;
+import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.test.utility.ToolsJarRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -98,7 +99,7 @@ public class AgentBuilderDefaultApplicationTest {
     private static class FooTransformer implements AgentBuilder.Transformer {
 
         @Override
-        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder) {
+        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
             return builder.method(named(FOO)).intercept(FixedValue.value(BAR));
         }
     }
@@ -122,7 +123,7 @@ public class AgentBuilderDefaultApplicationTest {
     public static class BarTransformer implements AgentBuilder.Transformer {
 
         @Override
-        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder) {
+        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
             return builder.method(named(FOO)).intercept(MethodDelegation.to(new BarTransformer.Interceptor()));
         }
 
@@ -145,7 +146,7 @@ public class AgentBuilderDefaultApplicationTest {
     public static class QuxTransformer implements AgentBuilder.Transformer {
 
         @Override
-        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder) {
+        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
             return builder.method(named(FOO)).intercept(MethodDelegation.to(new QuxTransformer.Interceptor()));
         }
 

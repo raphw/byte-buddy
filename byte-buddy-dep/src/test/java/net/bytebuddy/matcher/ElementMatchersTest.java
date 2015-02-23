@@ -38,7 +38,7 @@ public class ElementMatchersTest {
     private static final String SINGLE_DEFAULT_METHOD = "net.bytebuddy.test.precompiled.SingleDefaultMethodInterface";
 
     @Rule
-    public MethodRule java8Rule = new JavaVersionRule(8);
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     private ClassLoader classLoader;
 
@@ -526,7 +526,7 @@ public class ElementMatchersTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce
+    @JavaVersionRule.Enforce(8)
     public void testIsDefaultMethod() throws Exception {
         assertThat(ElementMatchers.isDefaultMethod().matches(new MethodDescription.ForLoadedMethod(
                 classLoader.loadClass(SINGLE_DEFAULT_METHOD).getDeclaredMethod(FOO))), is(true));

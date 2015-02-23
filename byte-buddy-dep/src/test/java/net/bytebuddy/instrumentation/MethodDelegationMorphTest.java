@@ -32,7 +32,7 @@ public class MethodDelegationMorphTest extends AbstractInstrumentationTest {
     private static final String DEFAULT_INTERFACE_TARGET_IMPLICIT = "net.bytebuddy.test.precompiled.MorphDefaultDelegationTargetImplicit";
 
     @Rule
-    public MethodRule java8Rule = new JavaVersionRule(8);
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     private ClassLoader classLoader;
 
@@ -116,7 +116,7 @@ public class MethodDelegationMorphTest extends AbstractInstrumentationTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce
+    @JavaVersionRule.Enforce(8)
     public void testDefaultMethodExplicit() throws Exception {
         DynamicType.Loaded<?> loaded = instrument(Object.class,
                 MethodDelegation.to(classLoader.loadClass(DEFAULT_INTERFACE_TARGET_EXPLICIT))
@@ -130,7 +130,7 @@ public class MethodDelegationMorphTest extends AbstractInstrumentationTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce
+    @JavaVersionRule.Enforce(8)
     public void testDefaultMethodImplicit() throws Exception {
         DynamicType.Loaded<?> loaded = instrument(Object.class,
                 MethodDelegation.to(classLoader.loadClass(DEFAULT_INTERFACE_TARGET_IMPLICIT))

@@ -13,29 +13,34 @@ import java.util.logging.Logger;
 
 public class JavaVersionRule implements MethodRule {
 
-    private final int requiredVersion;
+    private final ClassFileVersion supportedVersion;
 
-    private final boolean supportsVersion;
-
-    public JavaVersionRule(int javaVersion) {
-        requiredVersion = javaVersion;
-        supportsVersion = ClassFileVersion.forCurrentJavaVersion().compareTo(ClassFileVersion.forKnownJavaVersion(javaVersion)) >= 0;
+    public JavaVersionRule() {
+        supportedVersion = ClassFileVersion.forCurrentJavaVersion();
     }
 
     @Override
     public Statement apply(Statement base, FrameworkMethod method, Object target) {
-        return supportsVersion || method.getAnnotation(Enforce.class) == null
+        Enforce enforce = method.getAnnotation(Enforce.class);
+        return enforce == null || ClassFileVersion.forKnownJavaVersion(enforce.value()).compareTo(supportedVersion) <= 0
                 ? base
-                : new NoOpStatement();
+                : new NoOpStatement(method.getAnnotation(Enforce.class).value());
     }
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
     public static @interface Enforce {
-        /* empty */
+
+        int value();
     }
 
     private class NoOpStatement extends Statement {
+
+        private final int requiredVersion;
+
+        public NoOpStatement(int requiredVersion) {
+            this.requiredVersion = requiredVersion;
+        }
 
         @Override
         public void evaluate() throws Throwable {

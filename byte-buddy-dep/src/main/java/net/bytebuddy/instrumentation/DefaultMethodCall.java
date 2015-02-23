@@ -182,7 +182,7 @@ public class DefaultMethodCall implements Instrumentation {
         public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
             StackManipulation defaultMethodInvocation = locateDefault(instrumentedMethod);
             if (!defaultMethodInvocation.isValid()) {
-                throw new IllegalArgumentException("Cannot invoke default method on " + instrumentedMethod);
+                throw new IllegalStateException("Cannot invoke default method on " + instrumentedMethod);
             }
             StackManipulation.Size stackSize = new StackManipulation.Compound(
                     MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
@@ -211,7 +211,7 @@ public class DefaultMethodCall implements Instrumentation {
             for (TypeDescription typeDescription : nonPrioritizedInterfaces) {
                 SpecialMethodInvocation other = instrumentationTarget.invokeDefault(typeDescription, uniqueMethodSignature);
                 if (specialMethodInvocation.isValid() && other.isValid()) {
-                    throw new IllegalArgumentException(methodDescription + " has an ambiguous default method with "
+                    throw new IllegalStateException(methodDescription + " has an ambiguous default method with "
                             + other.getMethodDescription() + " and " + specialMethodInvocation.getMethodDescription());
                 }
                 specialMethodInvocation = other;

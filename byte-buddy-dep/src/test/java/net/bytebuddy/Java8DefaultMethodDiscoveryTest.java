@@ -25,7 +25,7 @@ public class Java8DefaultMethodDiscoveryTest {
     private static final String INTERFACE_STATIC_FIELD_NAME = "FOO";
 
     @Rule
-    public MethodRule java8Rule = new JavaVersionRule(8);
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     private ClassLoader classLoader;
     private Object interfaceMarker;
@@ -41,7 +41,7 @@ public class Java8DefaultMethodDiscoveryTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce
+    @JavaVersionRule.Enforce(8)
     public void testDefaultMethodNonOverridden() throws Exception {
         Class<?> dynamicType = new ByteBuddy()
                 .subclass(interfaceType)
@@ -54,7 +54,7 @@ public class Java8DefaultMethodDiscoveryTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce
+    @JavaVersionRule.Enforce(8)
     public void testDefaultMethodOverridden() throws Exception {
         Class<?> dynamicType = new ByteBuddy()
                 .subclass(interfaceType)

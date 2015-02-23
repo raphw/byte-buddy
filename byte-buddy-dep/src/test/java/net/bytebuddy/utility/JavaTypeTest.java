@@ -17,7 +17,7 @@ import static org.junit.Assert.assertThat;
 public class JavaTypeTest {
 
     @Rule
-    public MethodRule javaVersionRule = new JavaVersionRule(7);
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Test
     public void testIsAssignableTo() throws Exception {
@@ -52,7 +52,7 @@ public class JavaTypeTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce
+    @JavaVersionRule.Enforce(7)
     public void testLoading() throws Exception {
         JavaType.METHOD_HANDLE.load();
         JavaType.METHOD_TYPE.load();
@@ -63,7 +63,7 @@ public class JavaTypeTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(JavaType.TypeLookup.ForNamedType.class).apply();
-        final Iterator<Class<?>> iterator = Arrays.<Class<?>>asList(Object.class, String.class).iterator();
+        final Iterator<Class<?>> iterator = Arrays.asList(Object.class, String.class).iterator();
         ObjectPropertyAssertion.of(JavaType.TypeLookup.ForLoadedType.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
             @Override
             public Class<?> create() {

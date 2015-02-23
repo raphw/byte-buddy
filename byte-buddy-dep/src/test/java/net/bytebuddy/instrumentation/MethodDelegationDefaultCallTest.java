@@ -30,7 +30,7 @@ public class MethodDelegationDefaultCallTest extends AbstractInstrumentationTest
     private static final String CONFLICTING_PREFERRING_INTERCEPTOR = "net.bytebuddy.test.precompiled.SingleDefaultMethodConflictingPreferringInterceptor";
 
     @Rule
-    public MethodRule java8Rule = new JavaVersionRule(8);
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     private ClassLoader classLoader;
 
@@ -40,7 +40,7 @@ public class MethodDelegationDefaultCallTest extends AbstractInstrumentationTest
     }
 
     @Test
-    @JavaVersionRule.Enforce
+    @JavaVersionRule.Enforce(8)
     public void testRunnableDefaultCall() throws Exception {
         DynamicType.Loaded<?> loaded = instrument(Object.class,
                 MethodDelegation.to(RunnableClass.class),
@@ -53,7 +53,7 @@ public class MethodDelegationDefaultCallTest extends AbstractInstrumentationTest
     }
 
     @Test
-    @JavaVersionRule.Enforce
+    @JavaVersionRule.Enforce(8)
     public void testCallableDefaultCall() throws Exception {
         DynamicType.Loaded<?> loaded = instrument(Object.class,
                 MethodDelegation.to(CallableClass.class),
@@ -66,7 +66,7 @@ public class MethodDelegationDefaultCallTest extends AbstractInstrumentationTest
     }
 
     @Test(expected = IllegalArgumentException.class)
-    @JavaVersionRule.Enforce
+    @JavaVersionRule.Enforce(8)
     public void testImplicitAmbiguousDefaultCallCannotBeBound() throws Exception {
         instrument(Object.class,
                 MethodDelegation.to(CallableClass.class),
@@ -76,7 +76,7 @@ public class MethodDelegationDefaultCallTest extends AbstractInstrumentationTest
     }
 
     @Test
-    @JavaVersionRule.Enforce
+    @JavaVersionRule.Enforce(8)
     public void testExplicitDefaultCall() throws Exception {
         DynamicType.Loaded<?> loaded = instrument(Object.class,
                 MethodDelegation.to(classLoader.loadClass(PREFERRING_INTERCEPTOR)),
@@ -89,7 +89,7 @@ public class MethodDelegationDefaultCallTest extends AbstractInstrumentationTest
     }
 
     @Test
-    @JavaVersionRule.Enforce
+    @JavaVersionRule.Enforce(8)
     public void testExplicitDefaultCallToOtherInterface() throws Exception {
         DynamicType.Loaded<?> loaded = instrument(Object.class,
                 MethodDelegation.to(classLoader.loadClass(CONFLICTING_PREFERRING_INTERCEPTOR)),
@@ -102,7 +102,7 @@ public class MethodDelegationDefaultCallTest extends AbstractInstrumentationTest
     }
 
     @Test(expected = IllegalStateException.class)
-    @JavaVersionRule.Enforce
+    @JavaVersionRule.Enforce(8)
     public void testIllegalDefaultCallThrowsException() throws Exception {
         instrument(Object.class,
                 MethodDelegation.to(IllegalAnnotation.class),
@@ -112,7 +112,7 @@ public class MethodDelegationDefaultCallTest extends AbstractInstrumentationTest
     }
 
     @Test
-    @JavaVersionRule.Enforce
+    @JavaVersionRule.Enforce(8)
     public void testSerializableProxy() throws Exception {
         DynamicType.Loaded<?> loaded = instrument(Object.class,
                 MethodDelegation.to(SerializationCheck.class),

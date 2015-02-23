@@ -1,6 +1,7 @@
 package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
@@ -23,21 +24,24 @@ public class AgentBuilderTransformerTest {
     @Mock
     private AgentBuilder.Transformer first, second;
 
+    @Mock
+    private TypeDescription typeDescription;
+
     @Test
     @SuppressWarnings("unchecked")
     public void testNoOp() throws Exception {
-        assertThat(AgentBuilder.Transformer.NoOp.INSTANCE.transform(builder), sameInstance((DynamicType.Builder) builder));
+        assertThat(AgentBuilder.Transformer.NoOp.INSTANCE.transform(builder, typeDescription), sameInstance((DynamicType.Builder) builder));
     }
 
     @Test
     @SuppressWarnings("unchecked")
     public void testCompound() throws Exception {
-        when(first.transform(builder)).thenReturn((DynamicType.Builder) builder);
-        when(second.transform(builder)).thenReturn((DynamicType.Builder) builder);
-        assertThat(new AgentBuilder.Transformer.Compound(first, second).transform(builder), sameInstance((DynamicType.Builder) builder));
-        verify(first).transform(builder);
+        when(first.transform(builder, typeDescription)).thenReturn((DynamicType.Builder) builder);
+        when(second.transform(builder, typeDescription)).thenReturn((DynamicType.Builder) builder);
+        assertThat(new AgentBuilder.Transformer.Compound(first, second).transform(builder, typeDescription), sameInstance((DynamicType.Builder) builder));
+        verify(first).transform(builder, typeDescription);
         verifyNoMoreInteractions(first);
-        verify(second).transform(builder);
+        verify(second).transform(builder, typeDescription);
         verifyNoMoreInteractions(second);
     }
 
