@@ -508,7 +508,7 @@ public interface AgentBuilder {
                 public String toString() {
                     return "AgentBuilder.BinaryLocator.Default.Initialized{" +
                             "typeName='" + typeName + '\'' +
-                            ", binaryRepresentation=" + Arrays.toString(binaryRepresentation) +
+                            ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
                             ", classFileLocator=" + classFileLocator +
                             ", typePool=" + typePool +
                             '}';

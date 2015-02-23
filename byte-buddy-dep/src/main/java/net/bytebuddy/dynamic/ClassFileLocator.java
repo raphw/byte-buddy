@@ -137,7 +137,7 @@ public interface ClassFileLocator {
             @Override
             public String toString() {
                 return "ClassFileLocator.Resolution.Explicit{" +
-                        "binaryRepresentation=" + Arrays.toString(binaryRepresentation) +
+                        "binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
                         '}';
             }
         }

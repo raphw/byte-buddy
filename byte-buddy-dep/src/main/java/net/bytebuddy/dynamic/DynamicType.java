@@ -2903,7 +2903,7 @@ public interface DynamicType {
         public String toString() {
             return "DynamicType.Default{" +
                     "typeDescription='" + typeDescription + '\'' +
-                    ", binaryRepresentation=" + Arrays.toString(binaryRepresentation) +
+                    ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
                     ", loadedTypeInitializer=" + loadedTypeInitializer +
                     ", auxiliaryTypes=" + auxiliaryTypes +
                     '}';
@@ -2962,7 +2962,7 @@ public interface DynamicType {
             public String toString() {
                 return "DynamicType.Default.Unloaded{" +
                         "typeDescription='" + typeDescription + '\'' +
-                        ", binaryRepresentation=" + Arrays.toString(binaryRepresentation) +
+                        ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
                         ", typeInitializer=" + loadedTypeInitializer +
                         ", auxiliaryTypes=" + auxiliaryTypes +
                         '}';
@@ -3029,7 +3029,7 @@ public interface DynamicType {
             public String toString() {
                 return "DynamicType.Default.Loaded{" +
                         "typeDescription='" + typeDescription + '\'' +
-                        ", binaryRepresentation=" + Arrays.toString(binaryRepresentation) +
+                        ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
                         ", typeInitializer=" + loadedTypeInitializer +
                         ", auxiliaryTypes=" + auxiliaryTypes +
                         ", loadedTypes=" + loadedTypes +
