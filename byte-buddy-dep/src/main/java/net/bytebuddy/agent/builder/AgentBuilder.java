@@ -546,9 +546,10 @@ public interface AgentBuilder {
         /**
          * Invoked right before a successful transformation is applied.
          *
+         * @param typeDescription The type that is being transformed.
          * @param dynamicType The dynamic type that was created.
          */
-        void onTransformation(DynamicType dynamicType);
+        void onTransformation(TypeDescription typeDescription, DynamicType dynamicType);
 
         /**
          * Invoked when an error has occurred.
@@ -583,7 +584,7 @@ public interface AgentBuilder {
             INSTANCE;
 
             @Override
-            public void onTransformation(DynamicType dynamicType) {
+            public void onTransformation(TypeDescription typeDescription, DynamicType dynamicType) {
                 /* do nothing */
             }
 
@@ -623,9 +624,9 @@ public interface AgentBuilder {
             }
 
             @Override
-            public void onTransformation(DynamicType dynamicType) {
+            public void onTransformation(TypeDescription typeDescription, DynamicType dynamicType) {
                 for (Listener listener : this.listener) {
-                    listener.onTransformation(dynamicType);
+                    listener.onTransformation(typeDescription, dynamicType);
                 }
             }
 
@@ -1414,7 +1415,7 @@ public interface AgentBuilder {
                             initializationStrategy.register(binaryTypeName,
                                     classLoader,
                                     loadedTypeInitializers.get(dynamicType.getTypeDescription()));
-                            listener.onTransformation(dynamicType);
+                            listener.onTransformation(typeDescription, dynamicType);
                             return dynamicType.getBytes();
                         }
                     }
