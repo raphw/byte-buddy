@@ -77,6 +77,7 @@ constructor interception where a hard-coded super method call is required by the
 - Added a `MethodCall` instrumentation that allows hard-coding a method call.
 - Added an `InvokeDynamic` instrumentation that allows runtime dispatching by bootstrap methods.
 - Fixed the default `TypePool` to retain generic signatures in order to avoid that agents delete such signatures.
+- Fixed a bug in all of the the default `ConstructorStrategy` that effectively prevented intercepting of constructors.
 
 ### Current snapshot
 
