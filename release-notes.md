@@ -72,8 +72,9 @@ constructor interception where a hard-coded super method call is required by the
 
 ### 24. February 2015: Version 0.5.3
 
-- Changed the `SuperMethodCall` instrumentation to fall back to a default method call if required as different behavior
-  is surprising and introduces subtle bugs in user code.
+- Changed the `SuperMethodCall` instrumentation to fall back to a default method call if required. A different
+  behavior was found to surprise users and would introduce subtle bugs in user code as the super method instrumentation
+  would always work with subclassing due to Java super method call semantics.
 - Added a `MethodCall` instrumentation that allows hard-coding a method call.
 - Added an `InvokeDynamic` instrumentation that allows runtime dispatching by bootstrap methods.
 - Fixed the default `TypePool` to retain generic signatures in order to avoid that agents delete such signatures.
