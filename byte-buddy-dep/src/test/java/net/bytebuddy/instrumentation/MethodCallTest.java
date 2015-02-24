@@ -102,17 +102,17 @@ public class MethodCallTest extends AbstractInstrumentationTest {
 
     @Test
     public void testSuperConstructorInvocationWithoutArguments() throws Exception {
-        DynamicType.Loaded<SuperConstructorCall> loaded = instrument(SuperConstructorCall.class,
-                MethodCall.invoke(Object.class.getDeclaredConstructor()),
-                SuperConstructorCall.class.getClassLoader(),
+        DynamicType.Loaded<Object> loaded = instrument(Object.class,
+                MethodCall.invoke(Object.class.getDeclaredConstructor()).onSuper(),
+                Object.class.getClassLoader(),
                 isConstructor());
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(0));
         assertThat(loaded.getLoaded().getDeclaredConstructors().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
-        SuperConstructorCall instance = loaded.getLoaded().newInstance();
-        assertNotEquals(SuperConstructorCall.class, instance.getClass());
-        assertThat(instance, instanceOf(SuperConstructorCall.class));
+        Object instance = loaded.getLoaded().newInstance();
+        assertNotEquals(Object.class, instance.getClass());
+        assertThat(instance, instanceOf(Object.class));
     }
 
     @Test
@@ -365,7 +365,7 @@ public class MethodCallTest extends AbstractInstrumentationTest {
         DynamicType.Loaded<?> loaded = instrument(Object.class,
                 MethodCall.invoke(classLoader.loadClass(SINGLE_DEFAULT_METHOD).getDeclaredMethod(FOO)).onDefault(),
                 classLoader,
-                ElementMatchers.not(isDeclaredBy(Object.class)),
+                ElementMatchers.isMethod().and(ElementMatchers.not(isDeclaredBy(Object.class))),
                 classLoader.loadClass(SINGLE_DEFAULT_METHOD));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         Method method = loaded.getLoaded().getDeclaredMethod(FOO);

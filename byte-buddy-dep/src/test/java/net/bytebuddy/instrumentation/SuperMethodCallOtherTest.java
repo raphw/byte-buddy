@@ -25,8 +25,7 @@ import org.objectweb.asm.MethodVisitor;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
-import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
-import static net.bytebuddy.matcher.ElementMatchers.not;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
@@ -139,7 +138,7 @@ public class SuperMethodCallOtherTest extends AbstractInstrumentationTest {
         DynamicType.Loaded<?> loaded = instrument(Object.class,
                 SuperMethodCall.INSTANCE,
                 classLoader,
-                not(isDeclaredBy(Object.class)),
+                isMethod().and(not(isDeclaredBy(Object.class))),
                 classLoader.loadClass(SINGLE_DEFAULT_METHOD));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         Method method = loaded.getLoaded().getDeclaredMethod(FOO);
@@ -165,7 +164,7 @@ public class SuperMethodCallOtherTest extends AbstractInstrumentationTest {
         DynamicType.Loaded<?> loaded = instrument(classLoader.loadClass(SINGLE_DEFAULT_METHOD_CLASS),
                 SuperMethodCall.INSTANCE,
                 classLoader,
-                not(isDeclaredBy(Object.class)));
+                isMethod().and(not(isDeclaredBy(Object.class))));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         Method method = loaded.getLoaded().getDeclaredMethod(FOO);
         Object instance = loaded.getLoaded().newInstance();

@@ -122,7 +122,7 @@ public interface ConstructorStrategy {
                 case DEFAULT_CONSTRUCTOR:
                 case IMITATE_SUPER_TYPE:
                 case IMITATE_SUPER_TYPE_PUBLIC:
-                    return methodRegistry.prepend(new MethodRegistry.LatentMethodMatcher.Simple(isConstructor()),
+                    return methodRegistry.append(new MethodRegistry.LatentMethodMatcher.Simple(isConstructor()),
                             SuperMethodCall.INSTANCE,
                             defaultMethodAttributeAppenderFactory);
                 default:

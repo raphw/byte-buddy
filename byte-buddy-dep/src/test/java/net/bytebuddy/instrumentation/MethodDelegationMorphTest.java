@@ -13,8 +13,7 @@ import org.junit.rules.MethodRule;
 
 import java.io.Serializable;
 
-import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
-import static net.bytebuddy.matcher.ElementMatchers.not;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -122,7 +121,7 @@ public class MethodDelegationMorphTest extends AbstractInstrumentationTest {
                 MethodDelegation.to(classLoader.loadClass(DEFAULT_INTERFACE_TARGET_EXPLICIT))
                         .appendParameterBinder(Morph.Binder.install(Morphing.class)),
                 classLoader,
-                not(isDeclaredBy(Object.class)),
+                isMethod().and(not(isDeclaredBy(Object.class))),
                 classLoader.loadClass(DEFAULT_INTERFACE));
         Object instance = loaded.getLoaded().newInstance();
         assertThat(instance.getClass().getDeclaredMethod(FOO, String.class)
@@ -136,7 +135,7 @@ public class MethodDelegationMorphTest extends AbstractInstrumentationTest {
                 MethodDelegation.to(classLoader.loadClass(DEFAULT_INTERFACE_TARGET_IMPLICIT))
                         .appendParameterBinder(Morph.Binder.install(Morphing.class)),
                 classLoader,
-                not(isDeclaredBy(Object.class)),
+                isMethod().and(not(isDeclaredBy(Object.class))),
                 classLoader.loadClass(DEFAULT_INTERFACE));
         Object instance = loaded.getLoaded().newInstance();
         assertThat(instance.getClass().getDeclaredMethod(FOO, String.class)

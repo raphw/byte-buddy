@@ -6,6 +6,7 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
+import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.instrumentation.*;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
@@ -21,6 +22,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocati
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.modifier.Visibility;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
@@ -45,6 +47,7 @@ import static net.bytebuddy.matcher.ElementMatchers.not;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertNotEquals;
 import static org.mockito.Mockito.mock;
 
 public class ByteBuddyTutorialExamplesTest {
@@ -249,7 +252,7 @@ public class ByteBuddyTutorialExamplesTest {
 
     @Test
     @JavaVersionRule.Enforce(8)
-    public void testFieldsAndMethodMethodDefaultCall() throws Exception {
+    public void testFieldsAndMethodsMethodDefaultCall() throws Exception {
         // This test differs from the tutorial by only conditionally expressing the Java 8 types.
         ClassLoader classLoader = new PrecompiledTypeClassLoader(getClass().getClassLoader());
         Object instance = new ByteBuddy(ClassFileVersion.JAVA_V8)
@@ -263,6 +266,20 @@ public class ByteBuddyTutorialExamplesTest {
                 .newInstance();
         Method method = instance.getClass().getMethod("foo");
         assertThat(method.invoke(instance), is((Object) "foo"));
+    }
+
+    @Test
+    public void testFieldsAndMethodsExplicitMethodCall() throws Exception {
+        Object object = new ByteBuddy()
+                .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
+                .defineConstructor(Arrays.<Class<?>>asList(int.class), Visibility.PUBLIC)
+                .intercept(MethodCall.invoke(Object.class.getDeclaredConstructor()))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded()
+                .getDeclaredConstructor(int.class)
+                .newInstance(42);
+        assertNotEquals(Object.class, object.getClass());
     }
 
     @Test

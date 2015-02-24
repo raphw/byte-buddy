@@ -14,8 +14,7 @@ import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
 
-import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
-import static net.bytebuddy.matcher.ElementMatchers.not;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -45,7 +44,7 @@ public class MethodDelegationDefaultCallTest extends AbstractInstrumentationTest
         DynamicType.Loaded<?> loaded = instrument(Object.class,
                 MethodDelegation.to(RunnableClass.class),
                 classLoader,
-                not(isDeclaredBy(Object.class)),
+                isMethod().and(not(isDeclaredBy(Object.class))),
                 classLoader.loadClass(SINGLE_DEFAULT_METHOD));
         Object instance = loaded.getLoaded().newInstance();
         Method method = loaded.getLoaded().getMethod(FOO);
@@ -58,7 +57,7 @@ public class MethodDelegationDefaultCallTest extends AbstractInstrumentationTest
         DynamicType.Loaded<?> loaded = instrument(Object.class,
                 MethodDelegation.to(CallableClass.class),
                 classLoader,
-                not(isDeclaredBy(Object.class)),
+                isMethod().and(not(isDeclaredBy(Object.class))),
                 classLoader.loadClass(SINGLE_DEFAULT_METHOD));
         Object instance = loaded.getLoaded().newInstance();
         Method method = loaded.getLoaded().getMethod(FOO);
@@ -81,7 +80,7 @@ public class MethodDelegationDefaultCallTest extends AbstractInstrumentationTest
         DynamicType.Loaded<?> loaded = instrument(Object.class,
                 MethodDelegation.to(classLoader.loadClass(PREFERRING_INTERCEPTOR)),
                 classLoader,
-                not(isDeclaredBy(Object.class)),
+                isMethod().and(not(isDeclaredBy(Object.class))),
                 classLoader.loadClass(SINGLE_DEFAULT_METHOD), classLoader.loadClass(CONFLICTING_INTERFACE));
         Object instance = loaded.getLoaded().newInstance();
         Method method = loaded.getLoaded().getMethod(FOO);
@@ -94,7 +93,7 @@ public class MethodDelegationDefaultCallTest extends AbstractInstrumentationTest
         DynamicType.Loaded<?> loaded = instrument(Object.class,
                 MethodDelegation.to(classLoader.loadClass(CONFLICTING_PREFERRING_INTERCEPTOR)),
                 classLoader,
-                not(isDeclaredBy(Object.class)),
+                isMethod().and(not(isDeclaredBy(Object.class))),
                 classLoader.loadClass(SINGLE_DEFAULT_METHOD), classLoader.loadClass(CONFLICTING_INTERFACE));
         Object instance = loaded.getLoaded().newInstance();
         Method method = loaded.getLoaded().getMethod(FOO);
@@ -117,7 +116,7 @@ public class MethodDelegationDefaultCallTest extends AbstractInstrumentationTest
         DynamicType.Loaded<?> loaded = instrument(Object.class,
                 MethodDelegation.to(SerializationCheck.class),
                 classLoader,
-                not(isDeclaredBy(Object.class)),
+                isMethod().and(not(isDeclaredBy(Object.class))),
                 classLoader.loadClass(SINGLE_DEFAULT_METHOD));
         Object instance = loaded.getLoaded().newInstance();
         Method method = loaded.getLoaded().getMethod(FOO);

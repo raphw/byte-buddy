@@ -9,8 +9,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 
-import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
-import static net.bytebuddy.matcher.ElementMatchers.not;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -40,7 +39,7 @@ public class MethodDelegationDefaultTest extends AbstractInstrumentationTest {
         DynamicType.Loaded<?> loaded = instrument(Object.class,
                 MethodDelegation.to(classLoader.loadClass(DELEGATION_TARGET)),
                 classLoader,
-                not(isDeclaredBy(Object.class)),
+                isMethod().and(not(isDeclaredBy(Object.class))),
                 classLoader.loadClass(DEFAULT_INTERFACE));
         Object instance = loaded.getLoaded().newInstance();
         assertThat(instance.getClass().getDeclaredMethod(FOO).invoke(instance), is((Object) (FOO + BAR)));
@@ -52,7 +51,7 @@ public class MethodDelegationDefaultTest extends AbstractInstrumentationTest {
         DynamicType.Loaded<?> loaded = instrument(Object.class,
                 MethodDelegation.to(DelegationNoDefaultInterfaceInterceptor.class),
                 classLoader,
-                not(isDeclaredBy(Object.class)),
+                isMethod().and(not(isDeclaredBy(Object.class))),
                 DelegationNoDefaultInterface.class);
         DelegationNoDefaultInterface instance = (DelegationNoDefaultInterface) loaded.getLoaded().newInstance();
         instance.foo();
@@ -64,7 +63,7 @@ public class MethodDelegationDefaultTest extends AbstractInstrumentationTest {
         DynamicType.Loaded<?> loaded = instrument(Object.class,
                 MethodDelegation.to(classLoader.loadClass(DELEGATION_TARGET_SERIALIZABLE)),
                 classLoader,
-                not(isDeclaredBy(Object.class)),
+                isMethod().and(not(isDeclaredBy(Object.class))),
                 classLoader.loadClass(DEFAULT_INTERFACE));
         Object instance = loaded.getLoaded().newInstance();
         assertThat(instance.getClass().getDeclaredMethod(FOO).invoke(instance), is((Object) (FOO + BAR)));

@@ -61,7 +61,7 @@ public abstract class AbstractInstrumentationTest {
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ConstructorStrategy.Default.IMITATE_SUPER_TYPE)
-                .method(targetMethods).intercept(instrumentation)
+                .invokable(targetMethods).intercept(instrumentation)
                 .make()
                 .load(classLoader, ClassLoadingStrategy.Default.WRAPPER);
     }

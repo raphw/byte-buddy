@@ -15,8 +15,7 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 
-import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
-import static net.bytebuddy.matcher.ElementMatchers.not;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
@@ -47,7 +46,7 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
         DynamicType.Loaded<?> loaded = instrument(Object.class,
                 DefaultMethodCall.unambiguousOnly(),
                 classLoader,
-                not(isDeclaredBy(Object.class)),
+                isMethod().and(not(isDeclaredBy(Object.class))),
                 classLoader.loadClass(SINGLE_DEFAULT_METHOD));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         Method method = loaded.getLoaded().getDeclaredMethod(FOO);
@@ -85,7 +84,7 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
         DynamicType.Loaded<?> loaded = instrument(Object.class,
                 DefaultMethodCall.prioritize(preferredInterfaces),
                 classLoader,
-                not(isDeclaredBy(Object.class)),
+                isMethod().and(not(isDeclaredBy(Object.class))),
                 preferredInterface, secondInterface);
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         Method method = loaded.getLoaded().getDeclaredMethod(FOO);
@@ -127,7 +126,7 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
         DynamicType.Loaded<?> loaded = instrument(classLoader.loadClass(SINGLE_DEFAULT_METHOD_CLASS),
                 DefaultMethodCall.unambiguousOnly(),
                 classLoader,
-                not(isDeclaredBy(Object.class)),
+                isMethod().and(not(isDeclaredBy(Object.class))),
                 classLoader.loadClass(SINGLE_DEFAULT_METHOD));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         Method method = loaded.getLoaded().getDeclaredMethod(FOO);
@@ -151,7 +150,7 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
         DynamicType.Loaded<?> loaded = instrument(classLoader.loadClass(SINGLE_DEFAULT_METHOD_CLASS),
                 DefaultMethodCall.prioritize(classLoader.loadClass(SINGLE_DEFAULT_METHOD)),
                 classLoader,
-                not(isDeclaredBy(Object.class)),
+                isMethod().and(not(isDeclaredBy(Object.class))),
                 classLoader.loadClass(SINGLE_DEFAULT_METHOD), classLoader.loadClass(CONFLICTING_INTERFACE));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         Method method = loaded.getLoaded().getDeclaredMethod(FOO);

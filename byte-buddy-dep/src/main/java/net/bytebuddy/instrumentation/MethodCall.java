@@ -529,9 +529,14 @@ public class MethodCall implements Instrumentation {
 
             @Override
             public StackManipulation resolve(MethodDescription methodDescription, TypeDescription instrumentedType) {
-                return methodDescription.isStatic()
-                        ? StackManipulation.LegalTrivial.INSTANCE
-                        : MethodVariableAccess.REFERENCE.loadFromIndex(0);
+                return new StackManipulation.Compound(
+                        methodDescription.isStatic()
+                                ? StackManipulation.LegalTrivial.INSTANCE
+                                : MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                        methodDescription.isConstructor()
+                                ? Duplication.SINGLE
+                                : StackManipulation.LegalTrivial.INSTANCE
+                );
             }
 
             @Override
