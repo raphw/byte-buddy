@@ -17,7 +17,7 @@ import static org.mockito.Mockito.when;
 
 public class TypePoolDefaultComponentTypeLocatorTest {
 
-    private static final String FOO = "foo", BAR = "bar", BAR_DESCRIPTOR = "L" + BAR + ";", QUX = "qux";
+    private static final String FOO = "foo", BAR = "bar", BAR_DESCRIPTOR = "L" + BAR + ";", QUX = "qux", BAZ = "baz";
 
     @Test(expected = IllegalStateException.class)
     public void testIllegal() throws Exception {
@@ -60,14 +60,14 @@ public class TypePoolDefaultComponentTypeLocatorTest {
         TypePool.Default.TypeExtractor typeExtractor = new TypePool.Default(mock(TypePool.CacheProvider.class), mock(ClassFileLocator.class))
                 .new TypeExtractor();
         ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.OnTypeCollector.class).apply(typeExtractor.new OnTypeCollector(FOO));
-        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.MethodExtractor.class).apply(typeExtractor.new MethodExtractor(0, FOO, "()" + BAR_DESCRIPTOR, null));
+        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.MethodExtractor.class).apply(typeExtractor.new MethodExtractor(0, FOO, "()" + BAR_DESCRIPTOR, BAZ, null));
         ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.MethodExtractor.OnMethodCollector.class).apply(typeExtractor
-                .new MethodExtractor(0, FOO, "()" + BAR_DESCRIPTOR, null).new OnMethodCollector(FOO));
+                .new MethodExtractor(0, FOO, "()" + BAR_DESCRIPTOR, BAZ, null).new OnMethodCollector(FOO));
         ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.MethodExtractor.OnMethodParameterCollector.class).apply(typeExtractor
-                .new MethodExtractor(0, FOO, "()" + BAR_DESCRIPTOR, null).new OnMethodParameterCollector(FOO, 0));
-        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.FieldExtractor.class).apply(typeExtractor.new FieldExtractor(0, FOO, BAR_DESCRIPTOR));
+                .new MethodExtractor(0, FOO, "()" + BAR_DESCRIPTOR, BAZ, null).new OnMethodParameterCollector(FOO, 0));
+        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.FieldExtractor.class).apply(typeExtractor.new FieldExtractor(0, FOO, BAR_DESCRIPTOR, BAZ));
         ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.FieldExtractor.OnFieldCollector.class).apply(typeExtractor
-                .new FieldExtractor(0, FOO, BAR_DESCRIPTOR).new OnFieldCollector(FOO));
+                .new FieldExtractor(0, FOO, BAR_DESCRIPTOR, BAZ).new OnFieldCollector(FOO));
         ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.AnnotationExtractor.class).apply(typeExtractor
                 .new AnnotationExtractor(mock(TypePool.Default.AnnotationRegistrant.class), mock(TypePool.Default.ComponentTypeLocator.class)));
         ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.AnnotationExtractor.ArrayLookup.class).apply(typeExtractor

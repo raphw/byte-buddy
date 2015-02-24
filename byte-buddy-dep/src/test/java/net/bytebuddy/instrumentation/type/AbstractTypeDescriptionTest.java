@@ -27,6 +27,7 @@ public abstract class AbstractTypeDescriptionTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
+    @SuppressWarnings("unchecked")
     private static final List<Class<?>> TYPES = Arrays.asList(Object.class,
             SampleClass.class,
             void.class,
