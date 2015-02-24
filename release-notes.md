@@ -70,6 +70,14 @@ constructor interception where a hard-coded super method call is required by the
 - Fixed a bug where interface generation would result in a `NullPointerException`.
 - Added additional `ElementMatcher`s that allow to identify class loaders.
 
+### 24. February 2015: Version 0.5.3
+
+- Changed the `SuperMethodCall` instrumentation to fall back to a default method call if required as different behavior
+  is surprising and introduces subtle bugs in user code.
+- Added a `MethodCall` instrumentation that allows hard-coding a method call.
+- Added an `InvokeDynamic` instrumentation that allows runtime dispatching by bootstrap methods.
+- Fixed the default `TypePool` to retain generic signatures in order to avoid that agents delete such signatures.
+
 ### Current snapshot
 
 No changes.
