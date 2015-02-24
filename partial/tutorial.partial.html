@@ -880,7 +880,8 @@ class ToStringAgent {
         .rebase(isAnnotatedWith(ToString.class))
         .transform(new AgentBuilder.Transformer() {
       @Override
-      public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder) {
+      public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
+                                              TypeDescription typeDescription) {
         return builder.method(named("toString"))
                       .intercept(FixedValue.value("transformed"));
       }
@@ -1864,6 +1865,51 @@ new ByteBuddy(ClassFileVersion.JAVA_V8)
     prioritized interface was found to define a method with a compatible signature.
 </p>
 
+<h4>Calling a specific method</h4>
+
+<p>
+    In some cases, the above instrumentations are not sufficient to implement more custom behavior. For example, one
+    might want to implement a custom class with explicit behavior. For example, we might want to implement the
+    following Java class with a constructor that does not have a super constructor with identical arguments:
+</p>
+
+<pre class="prettyprint">
+public class SampleClass {
+  public SampleClass(int unusedValue) {
+    super();
+  }
+}
+</pre>
+
+<p>
+    The previous <code>SuperMethodCall</code> instrumentation could not be used to implement this class as the
+    <code>Object</code> class does not define a constructor that takes an <code>int</code> as its parameter. Instead,
+    we can invoke the <code>Object</code> super constructor explicitly:
+</p>
+
+<pre class="prettyprint">
+new ByteBuddy()
+  .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
+  .defineConstructor(Arrays.&lt;Class&lt;?&gt;&gt;asList(int.class), Visibility.PUBLIC)
+  .intercept(MethodCall.invoke(Object.class.getDeclaredConstructor()))
+  .make()
+</pre>
+
+<p>
+    With the above code, we have created a simple subclass of <code>Object</code> that defines a single constructor
+    which takes a single <code>int</code> parameter that is not used. The latter constructor is then implemented by
+    an explicit method call to the <code>Object</code> super constructor.
+</p>
+
+<p>
+    The <code>MethodCall</code> instrumentation can also be used when passing arguments. These arguments are either
+    passed explicitly as a value, as a value for an instance field that needs to be set manually or as a given
+    parameter value. Also, the instrumentation allows to invoke methods on other instances than the one being
+    instrumented. Furthermore, it allows for the construction of new instances to be returned from an
+    intercepted method. The documentation of the <code>MethodCall</code> class provides detailed information on these
+    features.
+</p>
+
 <h4>Accessing fields</h4>
 
 <p>
@@ -2015,6 +2061,11 @@ UserType userType = (UserType) factory.makeInstance();
         The <code>InvocationHandlerAdapter</code> allows to use existing <code>InvocationHandler</code>s from the
         for the <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Proxy.html">proxy classes</a>
         that ship with the Java Class Library.
+    </span></li>
+    <li><span>
+        The <code>InvokeDynamic</code> instrumentation allows to bind a method dynamically at runtime using
+        <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/invoke/package-summary.html">a bootstrap methods</a>
+        which are accessible from Java 7 on.
     </span></li>
     <li><span>
         Finally, <code>Instrumentation.ForAbstractMethod</code> allows to define an abstract method. Defining abstract
