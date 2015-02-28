@@ -57,16 +57,16 @@ Class<?> dynamicType = new ByteBuddy()
 assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
 ```
 
-The default `ByteBuddy` configuration which is used in the above example creatse a Java class in the newest version of
+The default `ByteBuddy` configuration which is used in the above example creates a Java class in the newest version of
 the class file format that is understood by the processing Java virtual machine. As hopefully obvious from
-the example code, the created type will extend the `Object` class and intercept its `toString` method which should
-return a fixed value of `Hello World!`. The method to be intercepted is identified by a so-called `ElementMatcher`. In 
+the example code, the created type will extend the `Object` class and overrides its `toString` method which should
+return a fixed value of `Hello World!`. The method to be overridden is identified by a so-called `ElementMatcher`. In 
 the above example, a predefined element matcher `named(String)` is used which identifies methods by their exact names. 
 Byte Buddy comes with numerous predefined and well-tested matchers which are collected in the `ElementMatchers`
 class and which can be easily composed. The creation of custom matchers is however as simple as implementing the
 ([functional](http://docs.oracle.com/javase/8/docs/api/java/lang/FunctionalInterface.html)) `ElementMatcher` interface.
 
-For implementing the `toString` method, the `FixedValue` class defines a constant return value for the intercepted
+For implementing the `toString` method, the `FixedValue` class defines a constant return value for the overridden
 method. Defining a constant value is only one example of many method interceptors that ship with Byte Buddy. By
 implementing the `Instrumentation` interface, a method could however even be defined by custom byte code.
 
