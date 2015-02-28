@@ -95,22 +95,23 @@ assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
 </pre>
 
         <p>
-            The default <code>ByteBuddy</code> configuration which is used in the above example will create a Java
-            class in the version of the class file format that is related by the version of the processing Java
-            virtual machine. As hopefully obvious from the example code, the created type will extend the
-            <code>Object</code> class and intercept its toString method which should return a fixed value of
-            <code>Hello World!</code>. The method to be intercepted is identified by a method matcher. In the
-            example, a predefined method matcher <code>named(String)</code> is used which identifies a method by its
-            exact name. Byte Buddy comes with numerous predefined and well-tested method matchers which are collected
-            in the <code>MethodMatchers</code> class. The creation of custom matchers is however as simple as
-            implementing the
+            The default <code>ByteBuddy</code> configuration which is used in the above example creates a Java
+            class in the newest version of the class file format that is understood by the processing Java
+            virtual machine. As hopefully obvious from the example code, the created type will extend the 
+            <code>Object</code> class and overrides its <code>toString</code> method which should return a 
+            fixed value of <code>Hello World!</code>. The method to be overridden is identified by a so-called 
+            <code>ElementMatcher</code>. In the above example, a predefined element matcher
+            <code>named(String)</code> is used which identifies methods by their exact names. Byte Buddy comes 
+            with numerous predefined and well-tested matchers which are collected in the 
+            <code>ElementMatchers</code> class and which can be easily composed. The creation of custom matchers 
+            is however as simple as implementing the
             (<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/FunctionalInterface.html">functional</a>)
-            <code>MethodMatcher</code> interface.
+            <code>ElementMatcher</code> interface.
         </p>
 
         <p>
             For implementing the <code>toString</code> method, the <code>FixedValue</code> class defines a constant
-            return value for the intercepted method. Defining a constant value is only one example of many method
+            return value for the overridden method. Defining a constant value is only one example of many method
             interceptors that ship with Byte Buddy. By implementing the <code>Instrumentation</code> interface, a
             method could however even be defined by custom byte code.
         </p>
