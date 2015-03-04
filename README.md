@@ -223,10 +223,9 @@ mvn package -Pextras
 ```
 
 The zero-dependency jar file is then saved in *byte-buddy/target/byte-buddy-#.#-SNAPSHOT.jar*. The regular jar 
-file is saved in *byte-buddy-dep/target/byte-buddy-dep-#.#-SNAPSHOT.jar*. When using this profile, Maven will also 
-attempt to sign any created artifact. For this to be possible your machine must be set up for 
-[gpg signing](http://blog.sonatype.com/2010/01/how-to-generate-pgp-signatures-with-maven/). See the 
-[developer page](http://bytebuddy.net/#/develop) for further information on building the project.
+file is saved in *byte-buddy-dep/target/byte-buddy-dep-#.#-SNAPSHOT.jar*. Additionally, source code and javadoc
+artifacts are built when using this profile.See the [developer page](http://bytebuddy.net/#/develop) for further
+information on building the project.
 
 Please use GitHub's [issue tracker](https://github.com/raphw/byte-buddy/issues) for reporting bugs. When committing
 code, please provide test cases that prove the functionality of your features or that demonstrate a bug fix.

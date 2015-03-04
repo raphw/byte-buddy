@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.bytebuddy</groupId>
@@ -19,6 +20,7 @@
     <!--
       There are several build profiles available:
       - extras: Creates additional artifacts containing source files and javadoc. (activated on release)
+      - gpg: Sign all artifacts using gpg. (activated on release)
       - checks: Applies style checks to the source files. (activated by default, activated on release)
       - android: Builds an Android test application. An Android SDK is required for doing so. (excluded from release)
     -->
@@ -145,7 +147,7 @@
                 <version>${version.plugin.release}</version>
                 <configuration>
                     <useReleaseProfile>false</useReleaseProfile>
-                    <releaseProfiles>extras</releaseProfiles>
+                    <releaseProfiles>extras,gpg</releaseProfiles>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                 </configuration>
             </plugin>
@@ -168,7 +170,7 @@
                         <format>html</format>
                         <format>xml</format>
                     </formats>
-                    <check />
+                    <check/>
                 </configuration>
             </plugin>
             <!-- Generate coveralls reports from Travis -->
@@ -272,6 +274,16 @@
                             <!--</execution>-->
                         </executions>
                     </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>gpg</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
                     <!-- Sign artifacts -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
