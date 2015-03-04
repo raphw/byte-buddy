@@ -59,16 +59,16 @@ mvn package
         On its build, all dependencies are resolved and a dependency-free deployment descriptor is created. Further
         information can be found in the section on <a href="#/dependency">how to define a dependency onto Byte Buddy</a>.
         In order to activate this repacking, you need to run the Maven build using the <code>extras</code> profile which
-        will furthermore cause the creation of artifacts for source code and javadoc. Additionally, Maven attempts to
-        sign all artifacts if this profile is set such that
+        will furthermore cause the creation of artifacts for source code and javadoc. If the <code>gpg</code>Maven
+        attempts to sign all artifacts. For this to be possible,
         <a href="http://blog.sonatype.com/2010/01/how-to-generate-pgp-signatures-with-maven/">the gpg plugin must be
-            configured correctly</a>. As another module, <code>byte-buddy-benchmark</code> contains a
+            configured correctly</a> by the signer. As another module, <code>byte-buddy-benchmark</code> contains a
         <a href="http://openjdk.java.net/projects/code-tools/jmh/">JMH</a> benchmark for measuring Byte Buddy's runtime
         behavior compared to other code generation libraries. The <code>byte-buddy-agent</code> module supplies a
         Java agent that allows to enhance Byte Buddy's general API. The <code>byte-buddy-android</code> module
         contains a <code>ClassLoadingStrategy</code> that functions on the Android platform where
         <code>byte-buddy-android-test</code> defines a test application to apply this strategy. It is only built
-        when the <code>android</code> profile is used as it requires an Android SDK to run.
+        if the <code>android</code> profile is activated as building the module requires an Android SDK.
     </p>
 
     <h2>Contribute</h2>
