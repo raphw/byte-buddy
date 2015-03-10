@@ -146,7 +146,19 @@ public class MethodCall implements Instrumentation {
      * @return A method call instrumentation that invokes the given method without providing any arguments.
      */
     public static WithoutSpecifiedTarget invoke(MethodDescription methodDescription) {
-        return new WithoutSpecifiedTarget(new MethodLocator.ForExplicitMethod(nonNull(methodDescription)));
+        return invoke(new MethodLocator.ForExplicitMethod(nonNull(methodDescription)));
+    }
+
+    /**
+     * Invokes a method using the provided method locator.
+     *
+     * @param methodLocator The method locator to apply for locating the method to invoke given the instrumented
+     *                      method.
+     * @return A method call instrumentation that uses the provided method locator for resolving the method
+     * to be invoked.
+     */
+    public static WithoutSpecifiedTarget invoke(MethodLocator methodLocator) {
+        return new WithoutSpecifiedTarget(nonNull(methodLocator));
     }
 
     /**
@@ -423,7 +435,7 @@ public class MethodCall implements Instrumentation {
      * A method locator is responsible for identifying the method that is to be invoked
      * by a {@link net.bytebuddy.instrumentation.MethodCall}.
      */
-    protected static interface MethodLocator {
+    public static interface MethodLocator {
 
         /**
          * Resolves the method to be invoked.
