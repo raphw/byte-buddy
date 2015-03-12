@@ -36,6 +36,14 @@ public @interface SuperCall {
     boolean serializableProxy() default false;
 
     /**
+     * Determines if the injected proxy should invoke the default method to the intercepted method if a common
+     * super method invocation is not applicable. For this to be possible, the default method must not be ambiguous.
+     *
+     * @return {@code true} if the invocation should fall back to invoking the default method.
+     */
+    boolean fallbackToDefault() default true;
+
+    /**
      * A binder for handling the
      * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.SuperCall}
      * annotation.
@@ -67,6 +75,12 @@ public @interface SuperCall {
             }
             Instrumentation.SpecialMethodInvocation specialMethodInvocation = instrumentationTarget.invokeSuper(source,
                     Instrumentation.Target.MethodLookup.Default.EXACT);
+            if (!specialMethodInvocation.isValid()
+                    && source.isDefaultMethod()
+                    && instrumentationTarget.getTypeDescription().getInterfaces().contains(source.getDeclaringType())
+                    && annotation.loadSilent().fallbackToDefault()) {
+                specialMethodInvocation = instrumentationTarget.invokeDefault(source.getDeclaringType(), source.getUniqueSignature());
+            }
             return specialMethodInvocation.isValid()
                     ? new MethodDelegationBinder.ParameterBinding.Anonymous(new MethodCallProxy.AssignableSignatureCall(specialMethodInvocation, annotation.loadSilent().serializableProxy()))
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
