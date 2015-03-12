@@ -78,6 +78,7 @@ public class MethodDelegationSuperCallTest extends AbstractInstrumentationTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(8)
     public void testDefaultMethodFallback() throws Exception {
         DynamicType.Loaded<?> loaded = instrument(Object.class,
                 MethodDelegation.to(NonVoidTarget.class),
@@ -90,6 +91,7 @@ public class MethodDelegationSuperCallTest extends AbstractInstrumentationTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
+    @JavaVersionRule.Enforce(8)
     public void testDefaultMethodFallbackDisabled() throws Exception {
         instrument(Object.class,
                 MethodDelegation.to(NoFallback.class),
@@ -99,6 +101,7 @@ public class MethodDelegationSuperCallTest extends AbstractInstrumentationTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
+    @JavaVersionRule.Enforce(8)
     public void testDefaultMethodFallbackAmbiguous() throws Exception {
         instrument(Object.class,
                 MethodDelegation.to(NonVoidTarget.class),
