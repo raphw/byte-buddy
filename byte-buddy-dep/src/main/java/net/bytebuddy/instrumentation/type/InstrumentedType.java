@@ -1,6 +1,7 @@
 package net.bytebuddy.instrumentation.type;
 
 import net.bytebuddy.instrumentation.LoadedTypeInitializer;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.field.FieldList;
@@ -8,8 +9,6 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -360,6 +359,11 @@ public interface InstrumentedType extends TypeDescription {
             private final int modifiers;
 
             /**
+             * The declared annotations of this field.
+             */
+            private final List<AnnotationDescription> declaredAnnotations;
+
+            /**
              * Creates a new field for the enclosing instrumented type.
              *
              * @param name      The internalName of the field.
@@ -370,6 +374,7 @@ public interface InstrumentedType extends TypeDescription {
                 this.name = name;
                 this.fieldType = fieldType;
                 this.modifiers = modifiers;
+                declaredAnnotations = Collections.emptyList();
             }
 
             /**
@@ -382,6 +387,7 @@ public interface InstrumentedType extends TypeDescription {
                 name = fieldDescription.getName();
                 fieldType = withSubstitutedSelfReference(typeName, fieldDescription.getFieldType());
                 modifiers = fieldDescription.getModifiers();
+                declaredAnnotations = fieldDescription.getDeclaredAnnotations();
             }
 
             @Override
@@ -391,7 +397,7 @@ public interface InstrumentedType extends TypeDescription {
 
             @Override
             public AnnotationList getDeclaredAnnotations() {
-                return new AnnotationList.Empty();
+                return new AnnotationList.Explicit(declaredAnnotations);
             }
 
             @Override
@@ -446,6 +452,21 @@ public interface InstrumentedType extends TypeDescription {
             private final int modifiers;
 
             /**
+             * The declared annotations of this method.
+             */
+            private final List<AnnotationDescription> declaredAnnotations;
+
+            /**
+             * The declared annotations of this method's parameters.
+             */
+            private final List<AnnotationList> parameterAnnotations;
+
+            /**
+             * The default value of this method or {@code null} if no such value exists.
+             */
+            private final Object defaultValue;
+
+            /**
              * Creates a new method or constructor for the enclosing instrumented type.
              *
              * @param internalName   The internal internalName of the method or constructor.
@@ -464,6 +485,9 @@ public interface InstrumentedType extends TypeDescription {
                 this.parameterTypes = new ArrayList<TypeDescription>(parameterTypes);
                 this.exceptionTypes = new ArrayList<TypeDescription>(exceptionTypes);
                 this.modifiers = modifiers;
+                declaredAnnotations = Collections.emptyList();
+                parameterAnnotations = Collections.emptyList();
+                defaultValue = null;
             }
 
             /**
@@ -484,6 +508,9 @@ public interface InstrumentedType extends TypeDescription {
                     exceptionTypes.add(withSubstitutedSelfReference(typeName, typeDescription));
                 }
                 modifiers = methodDescription.getModifiers();
+                declaredAnnotations = methodDescription.getDeclaredAnnotations();
+                parameterAnnotations = methodDescription.getParameterAnnotations();
+                defaultValue = methodDescription.getDefaultValue();
             }
 
             @Override
@@ -502,33 +529,13 @@ public interface InstrumentedType extends TypeDescription {
             }
 
             @Override
-            public boolean isConstructor() {
-                return CONSTRUCTOR_INTERNAL_NAME.equals(internalName);
-            }
-
-            @Override
-            public boolean isTypeInitializer() {
-                return false;
-            }
-
-            @Override
-            public boolean represents(Method method) {
-                return false;
-            }
-
-            @Override
-            public boolean represents(Constructor<?> constructor) {
-                return false;
-            }
-
-            @Override
             public List<AnnotationList> getParameterAnnotations() {
-                return AnnotationList.Empty.asList(parameterTypes.size());
+                return parameterAnnotations;
             }
 
             @Override
             public AnnotationList getDeclaredAnnotations() {
-                return new AnnotationList.Empty();
+                return new AnnotationList.Explicit(declaredAnnotations);
             }
 
             @Override
@@ -548,7 +555,7 @@ public interface InstrumentedType extends TypeDescription {
 
             @Override
             public Object getDefaultValue() {
-                return null;
+                return defaultValue;
             }
         }
     }

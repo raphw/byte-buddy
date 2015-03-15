@@ -3936,16 +3936,6 @@ public interface TypePool {
             }
 
             @Override
-            public boolean isConstructor() {
-                return internalName.equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME);
-            }
-
-            @Override
-            public boolean isTypeInitializer() {
-                return false;
-            }
-
-            @Override
             public List<AnnotationList> getParameterAnnotations() {
                 return AnnotationList.Explicit.asList(declaredParameterAnnotations);
             }
@@ -3953,16 +3943,6 @@ public interface TypePool {
             @Override
             public AnnotationList getDeclaredAnnotations() {
                 return new AnnotationList.Explicit(declaredAnnotations);
-            }
-
-            @Override
-            public boolean represents(Method method) {
-                return equals(new ForLoadedMethod(method));
-            }
-
-            @Override
-            public boolean represents(Constructor<?> constructor) {
-                return equals(new ForLoadedConstructor(constructor));
             }
 
             @Override

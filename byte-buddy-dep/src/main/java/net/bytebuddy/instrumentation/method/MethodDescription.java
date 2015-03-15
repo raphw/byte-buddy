@@ -245,6 +245,26 @@ public interface MethodDescription extends ByteCodeElement {
         }
 
         @Override
+        public boolean isConstructor() {
+            return CONSTRUCTOR_INTERNAL_NAME.equals(getInternalName());
+        }
+
+        @Override
+        public boolean isTypeInitializer() {
+            return TYPE_INITIALIZER_INTERNAL_NAME.equals(getInternalName());
+        }
+
+        @Override
+        public boolean represents(Method method) {
+            return equals(new ForLoadedMethod(method));
+        }
+
+        @Override
+        public boolean represents(Constructor<?> constructor) {
+            return equals(new ForLoadedConstructor(constructor));
+        }
+
+        @Override
         public String getName() {
             return isMethod() ? getInternalName() : getDeclaringType().getName();
         }
@@ -777,26 +797,6 @@ public interface MethodDescription extends ByteCodeElement {
         @Override
         public TypeList getExceptionTypes() {
             return new TypeList.Explicit(exceptionTypes);
-        }
-
-        @Override
-        public boolean isConstructor() {
-            return CONSTRUCTOR_INTERNAL_NAME.equals(internalName);
-        }
-
-        @Override
-        public boolean isTypeInitializer() {
-            return TYPE_INITIALIZER_INTERNAL_NAME.equals(internalName);
-        }
-
-        @Override
-        public boolean represents(Method method) {
-            return equals(new ForLoadedMethod(method));
-        }
-
-        @Override
-        public boolean represents(Constructor<?> constructor) {
-            return equals(new ForLoadedConstructor(constructor));
         }
 
         @Override
