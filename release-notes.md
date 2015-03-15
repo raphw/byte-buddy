@@ -80,6 +80,11 @@ constructor interception where a hard-coded super method call is required by the
 - Fixed the default `TypePool` to retain generic signatures in order to avoid that agents delete such signatures.
 - Fixed a bug in all of the the default `ConstructorStrategy` that effectively prevented intercepting of constructors.
 
+### 15. March 2015: Version 0.5.4
+
+- Fixed missing retention of method annotations of instrumented types.
+- Allowed dynamic lookup of methods for the `MethodCall` instrumentation.
+
 ### Current snapshot
 
 No changes.
