@@ -297,7 +297,7 @@ public interface ClassFileLocator {
                     instrumentation.removeTransformer(classFileTransformer);
                 }
             } catch (Exception ignored) {
-                return null;
+                return Resolution.Illegal.INSTANCE;
             }
         }
 
@@ -439,7 +439,7 @@ public interface ClassFileLocator {
                     return resolution;
                 }
             }
-            return null;
+            return Resolution.Illegal.INSTANCE;
         }
 
         @Override
