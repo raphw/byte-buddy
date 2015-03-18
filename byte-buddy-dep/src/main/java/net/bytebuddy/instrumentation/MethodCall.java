@@ -845,10 +845,10 @@ public class MethodCall implements Instrumentation {
                                              TypeDescription targetType,
                                              Assigner assigner,
                                              boolean dynamicallyTyped) {
-                if (index >= interceptedMethod.getParameterTypes().size()) {
+                if (index >= interceptedMethod.getParameters().size()) {
                     throw new IllegalStateException(interceptedMethod + " does not have a parameter with index " + index);
                 }
-                TypeDescription originType = interceptedMethod.getParameterTypes().get(index);
+                TypeDescription originType = interceptedMethod.getParameters().get(index).getTypeDescription();
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         MethodVariableAccess.forType(originType).loadFromIndex(interceptedMethod.getParameterOffset(index)),
                         assigner.assign(originType, targetType, dynamicallyTyped));
@@ -1955,7 +1955,7 @@ public class MethodCall implements Instrumentation {
                           Context instrumentationContext,
                           MethodDescription instrumentedMethod) {
             MethodDescription invokedMethod = methodLocator.resolve(instrumentedMethod);
-            TypeList methodParameters = invokedMethod.getParameterTypes();
+            TypeList methodParameters = invokedMethod.getParameters().asTypeList();
             if (methodParameters.size() != argumentLoaders.size()) {
                 throw new IllegalStateException(invokedMethod + " does not take " + argumentLoaders.size() + " arguments");
             }

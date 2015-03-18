@@ -145,7 +145,7 @@ public enum MethodVariableAccess {
     private static StackManipulation loadArguments(MethodDescription methodDescription,
                                                    TypeCastingHandler typeCastingHandler,
                                                    boolean includeThisReference) {
-        int stackValues = (!includeThisReference || methodDescription.isStatic() ? 0 : 1) + methodDescription.getParameterTypes().size();
+        int stackValues = (!includeThisReference || methodDescription.isStatic() ? 0 : 1) + methodDescription.getParameters().size();
         StackManipulation[] stackManipulation = new StackManipulation[stackValues];
         int parameterIndex = 0, stackIndex;
         if (!methodDescription.isStatic()) {
@@ -156,7 +156,7 @@ public enum MethodVariableAccess {
         } else {
             stackIndex = StackSize.ZERO.getSize();
         }
-        for (TypeDescription parameterType : methodDescription.getParameterTypes()) {
+        for (TypeDescription parameterType : methodDescription.getParameters().asTypeList()) {
             stackManipulation[parameterIndex++] = typeCastingHandler
                     .wrapNext(forType(parameterType).loadFromIndex(stackIndex), parameterType);
             stackIndex += parameterType.getStackSize().getSize();
@@ -229,7 +229,7 @@ public enum MethodVariableAccess {
              * @param targetMethod The target of the bridge method.
              */
             public ForBridgeTarget(MethodDescription targetMethod) {
-                typeIterator = targetMethod.getParameterTypes().iterator();
+                typeIterator = targetMethod.getParameters().asTypeList().iterator();
             }
 
             @Override

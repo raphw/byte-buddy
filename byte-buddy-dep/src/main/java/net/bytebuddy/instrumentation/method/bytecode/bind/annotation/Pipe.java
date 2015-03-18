@@ -170,7 +170,7 @@ public @interface Pipe {
             MethodDescription methodDescription = methodCandidates.getOnly();
             if (!methodDescription.getReturnType().represents(Object.class)) {
                 throw new IllegalArgumentException(methodDescription + " does not return an Object-type");
-            } else if (methodDescription.getParameterTypes().size() != 1 || !methodDescription.getParameterTypes().get(0).represents(Object.class)) {
+            } else if (methodDescription.getParameters().size() != 1 || !methodDescription.getParameters().get(0).getTypeDescription().represents(Object.class)) {
                 throw new IllegalArgumentException(methodDescription + " does not take a single Object-typed argument");
             }
             return methodDescription;
@@ -291,7 +291,7 @@ public @interface Pipe {
              * given method.
              */
             private static LinkedHashMap<String, TypeDescription> extractFields(MethodDescription methodDescription) {
-                TypeList parameterTypes = methodDescription.getParameterTypes();
+                TypeList parameterTypes = methodDescription.getParameters().asTypeList();
                 LinkedHashMap<String, TypeDescription> typeDescriptions = new LinkedHashMap<String, TypeDescription>(parameterTypes.size());
                 int currentIndex = 0;
                 for (TypeDescription parameterType : parameterTypes) {

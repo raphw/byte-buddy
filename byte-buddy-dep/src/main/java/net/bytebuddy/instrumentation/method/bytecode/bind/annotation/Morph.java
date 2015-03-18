@@ -169,8 +169,7 @@ public @interface Morph {
             MethodDescription methodDescription = methodCandidates.getOnly();
             if (!methodDescription.getReturnType().represents(Object.class)) {
                 throw new IllegalArgumentException(methodDescription + " does not return an Object-type");
-            } else if (methodDescription.getParameterTypes().size() != 1
-                    || !methodDescription.getParameterTypes().get(0).represents(Object[].class)) {
+            } else if (methodDescription.getParameters().size() != 1 || !methodDescription.getParameters().get(0).getTypeDescription().represents(Object[].class)) {
                 throw new IllegalArgumentException(methodDescription + " does not take a single argument of type Object[]");
             }
             return methodDescription;
@@ -703,9 +702,9 @@ public @interface Morph {
                                       Context instrumentationContext,
                                       MethodDescription instrumentedMethod) {
                         StackManipulation arrayReference = MethodVariableAccess.REFERENCE.loadFromIndex(1);
-                        StackManipulation[] parameterLoading = new StackManipulation[accessorMethod.getParameterTypes().size()];
+                        StackManipulation[] parameterLoading = new StackManipulation[accessorMethod.getParameters().size()];
                         int index = 0;
-                        for (TypeDescription parameterType : accessorMethod.getParameterTypes()) {
+                        for (TypeDescription parameterType : accessorMethod.getParameters().asTypeList()) {
                             parameterLoading[index] = new StackManipulation.Compound(arrayReference,
                                     IntegerConstant.forValue(index),
                                     ArrayAccess.REFERENCE.load(),

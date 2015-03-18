@@ -8,6 +8,7 @@ import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
+import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
@@ -72,7 +73,7 @@ public class TypeProxyCreationTest {
         fooMethods = methodLookupEngine.process(foo)
                 .getInvokableMethods()
                 .filter(isOverridable().and(not(isDefaultFinalizer())));
-        when(proxyMethod.getParameterTypes()).thenReturn(new TypeList.Explicit(Arrays.asList(foo, foo, foo)));
+        when(proxyMethod.getParameters()).thenReturn(ParameterList.Explicit.latent(proxyMethod, Arrays.asList(foo, foo, foo)));
         when(proxyMethod.getDeclaringType()).thenReturn(foo);
         when(proxyMethod.getInternalName()).thenReturn(FOO);
         when(proxyMethod.getDescriptor()).thenReturn(FOO);

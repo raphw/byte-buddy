@@ -6,6 +6,7 @@ import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
+import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
@@ -34,11 +35,15 @@ public class SubclassInstrumentationTargetTest extends AbstractInstrumentationTa
     @Mock
     private TypeDescription superType;
     @Mock
+    private ParameterList parameterList;
+
+    @Mock
     private TypeList parameterTypes;
 
     @Override
     @Before
     public void setUp() throws Exception {
+        when(parameterList.asTypeList()).thenReturn(parameterTypes);
         when(instrumentedType.getSupertype()).thenReturn(superType);
         when(superType.getDeclaredMethods()).thenReturn(new MethodList.Explicit(Arrays.asList(superMethodConstructor)));
         when(superType.getInternalName()).thenReturn(BAR);
@@ -47,9 +52,9 @@ public class SubclassInstrumentationTargetTest extends AbstractInstrumentationTa
         when(superMethod.getReturnType()).thenReturn(returnType);
         when(superMethod.getInternalName()).thenReturn(BAZ);
         when(superMethod.getDescriptor()).thenReturn(FOOBAR);
-        when(superMethod.getParameterTypes()).thenReturn(parameterTypes);
+        when(superMethod.getParameters()).thenReturn(parameterList);
         when(superMethodConstructor.isConstructor()).thenReturn(true);
-        when(superMethodConstructor.getParameterTypes()).thenReturn(parameterTypes);
+        when(superMethodConstructor.getParameters()).thenReturn(parameterList);
         when(superMethodConstructor.getReturnType()).thenReturn(returnType);
         when(superMethodConstructor.isSpecializableFor(superType)).thenReturn(true);
         when(superMethodConstructor.getInternalName()).thenReturn(QUXBAZ);

@@ -171,13 +171,13 @@ public @interface Field {
             MethodDescription getterMethod = onlyMethod(nonNull(getterType));
             if (!getterMethod.getReturnType().represents(Object.class)) {
                 throw new IllegalArgumentException(getterMethod + " must take a single Object-typed parameter");
-            } else if (getterMethod.getParameterTypes().size() != 0) {
+            } else if (getterMethod.getParameters().size() != 0) {
                 throw new IllegalArgumentException(getterMethod + " must not declare parameters");
             }
             MethodDescription setterMethod = onlyMethod(nonNull(setterType));
             if (!setterMethod.getReturnType().represents(void.class)) {
                 throw new IllegalArgumentException(setterMethod + " must return void");
-            } else if (setterMethod.getParameterTypes().size() != 1 || !setterMethod.getParameterTypes().get(0).represents(Object.class)) {
+            } else if (setterMethod.getParameters().size() != 1 || !setterMethod.getParameters().get(0).getTypeDescription().represents(Object.class)) {
                 throw new IllegalArgumentException(setterMethod + " must declare a single Object-typed parameters");
             }
             return new Binder(getterMethod, setterMethod);
@@ -605,7 +605,7 @@ public @interface Field {
                     public Size apply(MethodVisitor methodVisitor,
                                       Context instrumentationContext,
                                       MethodDescription instrumentedMethod) {
-                        TypeDescription parameterType = instrumentedMethod.getParameterTypes().get(0);
+                        TypeDescription parameterType = instrumentedMethod.getParameters().get(0).getTypeDescription();
                         MethodDescription setterMethod = methodAccessorFactory.registerSetterFor(accessedField);
                         StackManipulation.Size stackSize = new StackManipulation.Compound(
                                 accessedField.isStatic()
@@ -615,7 +615,7 @@ public @interface Field {
                                         FieldAccess.forField(typeDescription.getDeclaredFields()
                                                 .filter((named(AccessorProxy.FIELD_NAME))).getOnly()).getter()),
                                 MethodVariableAccess.forType(parameterType).loadFromIndex(1),
-                                assigner.assign(parameterType, setterMethod.getParameterTypes().get(0), true),
+                                assigner.assign(parameterType, setterMethod.getParameters().get(0).getTypeDescription(), true),
                                 MethodInvocation.invoke(setterMethod),
                                 MethodReturn.VOID
                         ).apply(methodVisitor, instrumentationContext);

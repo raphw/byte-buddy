@@ -45,7 +45,7 @@ public class SubclassInstrumentationTarget extends Instrumentation.Target.Abstra
                 : superType.getDeclaredMethods().filter(isConstructor());
         this.superConstructors = new HashMap<TypeList, MethodDescription>(superConstructors.size());
         for (MethodDescription superConstructor : superConstructors) {
-            this.superConstructors.put(superConstructor.getParameterTypes(), superConstructor);
+            this.superConstructors.put(superConstructor.getParameters().asTypeList(), superConstructor);
         }
         this.originTypeIdentifier = originTypeIdentifier;
     }
@@ -53,7 +53,7 @@ public class SubclassInstrumentationTarget extends Instrumentation.Target.Abstra
     @Override
     protected Instrumentation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription) {
         if (methodDescription.isConstructor()) {
-            methodDescription = this.superConstructors.get(methodDescription.getParameterTypes());
+            methodDescription = this.superConstructors.get(methodDescription.getParameters().asTypeList());
             if (methodDescription == null) {
                 return Instrumentation.SpecialMethodInvocation.Illegal.INSTANCE;
             }

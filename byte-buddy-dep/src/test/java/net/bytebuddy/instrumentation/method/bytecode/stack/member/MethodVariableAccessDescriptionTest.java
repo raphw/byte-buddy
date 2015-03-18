@@ -2,10 +2,10 @@ package net.bytebuddy.instrumentation.method.bytecode.stack.member;
 
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.MoreOpcodes;
 import org.junit.After;
@@ -33,10 +33,9 @@ public class MethodVariableAccessDescriptionTest {
     private MethodDescription methodDescription;
 
     @Mock
-    private TypeDescription declaringType, firstParameter, secondParameter;
+    private TypeDescription declaringType, firstParameterType, secondParameterType;
 
-    @Mock
-    private TypeList parameterTypes;
+    private ParameterList parameterList;
 
     @Mock
     private MethodVisitor methodVisitor;
@@ -46,15 +45,12 @@ public class MethodVariableAccessDescriptionTest {
 
     @Before
     public void setUp() throws Exception {
+        parameterList = ParameterList.Explicit.latent(methodDescription, Arrays.asList(firstParameterType, secondParameterType));
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
-        when(methodDescription.getParameterTypes()).thenReturn(parameterTypes);
-        when(parameterTypes.size()).thenReturn(PARAMETER_STACK_SIZE);
-        when(parameterTypes.get(0)).thenReturn(firstParameter);
-        when(parameterTypes.get(1)).thenReturn(secondParameter);
-        when(parameterTypes.iterator()).thenReturn(Arrays.asList(firstParameter, secondParameter).iterator());
+        when(methodDescription.getParameters()).thenReturn(parameterList);
         when(declaringType.getStackSize()).thenReturn(StackSize.SINGLE);
-        when(firstParameter.getStackSize()).thenReturn(StackSize.SINGLE);
-        when(secondParameter.getStackSize()).thenReturn(StackSize.SINGLE);
+        when(firstParameterType.getStackSize()).thenReturn(StackSize.SINGLE);
+        when(secondParameterType.getStackSize()).thenReturn(StackSize.SINGLE);
     }
 
     @After

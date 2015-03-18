@@ -148,7 +148,7 @@ public abstract class FieldAccessor implements Instrumentation {
                                                 Instrumentation.Context instrumentationContext,
                                                 FieldDescription fieldDescription,
                                                 MethodDescription methodDescription) {
-        StackManipulation stackManipulation = assigner.assign(methodDescription.getParameterTypes().get(0),
+        StackManipulation stackManipulation = assigner.assign(methodDescription.getParameters().get(0).getTypeDescription(),
                 fieldDescription.getFieldType(),
                 dynamicallyTyped);
         if (!stackManipulation.isValid()) {

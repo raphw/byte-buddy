@@ -230,7 +230,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         for (MethodDescription methodDescription : constructorStrategy.extractConstructors(instrumentedType)) {
             instrumentedType = instrumentedType.withMethod(methodDescription.getInternalName(),
                     methodDescription.getReturnType(),
-                    methodDescription.getParameterTypes(),
+                    methodDescription.getParameters().asTypeList(),
                     methodDescription.getExceptionTypes(),
                     methodDescription.getModifiers());
         }

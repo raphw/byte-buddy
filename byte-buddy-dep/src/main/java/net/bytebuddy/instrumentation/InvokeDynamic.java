@@ -3,6 +3,7 @@ package net.bytebuddy.instrumentation;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.method.bytecode.stack.Removal;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
@@ -830,8 +831,8 @@ public class InvokeDynamic implements Instrumentation {
                 @Override
                 public List<TypeDescription> getParameterTypes() {
                     return methodDescription.isStatic()
-                            ? methodDescription.getParameterTypes()
-                            : new TypeList.Explicit(join(methodDescription.getDeclaringType(), methodDescription.getParameterTypes()));
+                            ? methodDescription.getParameters().asTypeList()
+                            : new TypeList.Explicit(join(methodDescription.getDeclaringType(), methodDescription.getParameters().asTypeList()));
                 }
 
                 @Override
@@ -901,8 +902,8 @@ public class InvokeDynamic implements Instrumentation {
                                         boolean dynamicallyTyped) {
                     return new Resolved.Simple(MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
                             instrumentedMethod.isStatic()
-                                    ? instrumentedMethod.getParameterTypes()
-                                    : join(instrumentedMethod.getDeclaringType(), instrumentedMethod.getParameterTypes()));
+                                    ? instrumentedMethod.getParameters().asTypeList()
+                                    : join(instrumentedMethod.getDeclaringType(), instrumentedMethod.getParameters().asTypeList()));
                 }
 
                 @Override
@@ -926,7 +927,7 @@ public class InvokeDynamic implements Instrumentation {
                                         MethodDescription instrumentedMethod,
                                         Assigner assigner,
                                         boolean dynamicallyTyped) {
-                    return new Resolved.Simple(MethodVariableAccess.loadArguments(instrumentedMethod), instrumentedMethod.getParameterTypes());
+                    return new Resolved.Simple(MethodVariableAccess.loadArguments(instrumentedMethod), instrumentedMethod.getParameters().asTypeList());
                 }
 
                 @Override
@@ -1532,12 +1533,12 @@ public class InvokeDynamic implements Instrumentation {
                                         MethodDescription instrumentedMethod,
                                         Assigner assigner,
                                         boolean dynamicallyTyped) {
-                    TypeList parameterTypes = instrumentedMethod.getParameterTypes();
-                    if (index >= parameterTypes.size()) {
+                    ParameterList parameters = instrumentedMethod.getParameters();
+                    if (index >= parameters.size()) {
                         throw new IllegalStateException("No parameter " + index + " for " + instrumentedMethod);
                     }
-                    return new Resolved.Simple(MethodVariableAccess.forType(parameterTypes.get(index))
-                            .loadFromIndex(instrumentedMethod.getParameterOffset(index)), parameterTypes.get(index));
+                    return new Resolved.Simple(MethodVariableAccess.forType(parameters.get(index).getTypeDescription())
+                            .loadFromIndex(instrumentedMethod.getParameterOffset(index)), parameters.get(index).getTypeDescription());
                 }
 
                 @Override

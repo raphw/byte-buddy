@@ -1,8 +1,8 @@
 package net.bytebuddy.instrumentation.method.bytecode.stack.member;
 
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
@@ -23,7 +23,7 @@ public class MethodVariableAccessOtherTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(MethodVariableAccess.ArgumentLoadingStackManipulation.class).apply();
         MethodDescription methodDescription = mock(MethodDescription.class);
-        when(methodDescription.getParameterTypes()).thenReturn(new TypeList.Empty());
+        when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty());
         ObjectPropertyAssertion.of(MethodVariableAccess.TypeCastingHandler.ForBridgeTarget.class)
                 .apply(new MethodVariableAccess.TypeCastingHandler.ForBridgeTarget(methodDescription));
     }
