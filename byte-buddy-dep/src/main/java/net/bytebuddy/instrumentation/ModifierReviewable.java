@@ -10,6 +10,11 @@ import java.lang.reflect.Modifier;
 public interface ModifierReviewable {
 
     /**
+     * Representation of the default modifier.
+     */
+    static final int EMPTY_MASK = 0;
+
+    /**
      * Specifies if the modifier described by this object is {@code final}.
      *
      * @return {@code true} if the modifier described by this object is {@code final}.

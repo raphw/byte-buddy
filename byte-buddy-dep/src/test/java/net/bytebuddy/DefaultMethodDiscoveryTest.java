@@ -15,7 +15,7 @@ import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-public class Java8DefaultMethodDiscoveryTest {
+public class DefaultMethodDiscoveryTest {
 
     private static final String FOO = "foo", BAR = "bar";
 

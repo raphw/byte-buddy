@@ -16,6 +16,7 @@ public class TypePoolLazyObjectPropertiesTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.FieldToken.class).apply();
         ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.MethodToken.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.MethodToken.ParameterToken.class).apply();
         ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationToken.class).apply();
         ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationValue.Trivial.class).apply();
         ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationValue.ForAnnotation.class).apply();
@@ -41,13 +42,5 @@ public class TypePoolLazyObjectPropertiesTest {
     public void testDeclarationContextObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.DeclarationContext.DeclaredInType.class).apply();
         ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.DeclarationContext.DeclaredInMethod.class).apply();
-    }
-
-    private static @interface FirstSample {
-        String value();
-    }
-
-    private static @interface SecondSample {
-        String value();
     }
 }

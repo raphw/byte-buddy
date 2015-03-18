@@ -12,10 +12,7 @@ import org.objectweb.asm.Type;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Implementations of this interface describe a Java method, i.e. a method or a constructor. Implementations of this
@@ -49,15 +46,26 @@ public interface MethodDescription extends ByteCodeElement {
      * Returns a list of type descriptions of the method described by this instance.
      *
      * @return A list of type descriptions of the method described by this instance.
+     * @deprecated Use {@code getParameters} instead.
      */
+    @Deprecated
     TypeList getParameterTypes();
 
     /**
      * Returns the parameter annotations of the method described by this instance.
      *
      * @return The parameter annotations of the method described by this instance.
+     * @deprecated Use {@code getParameters} instead.
      */
+    @Deprecated
     List<AnnotationList> getParameterAnnotations();
+
+    /**
+     * Returns a list of this method's parameters.
+     *
+     * @return A list of this method's parameters.
+     */
+    ParameterList getParameters();
 
     /**
      * Returns a description of the exception types of the method described by this instance.
@@ -432,6 +440,21 @@ public interface MethodDescription extends ByteCodeElement {
         }
 
         @Override
+        public TypeList getParameterTypes() {
+            return getParameters().asTypeList();
+        }
+
+        @Override
+        public List<AnnotationList> getParameterAnnotations() {
+            ParameterList parameterList = getParameters();
+            List<AnnotationList> annotationLists = new ArrayList<AnnotationList>(parameterList.size());
+            for (ParameterDescription parameterDescription : parameterList) {
+                annotationLists.add(parameterDescription.getDeclaredAnnotations());
+            }
+            return annotationLists;
+        }
+
+        @Override
         public boolean equals(Object other) {
             return other == this || other instanceof MethodDescription
                     && getInternalName().equals(((MethodDescription) other).getInternalName())
@@ -517,13 +540,8 @@ public interface MethodDescription extends ByteCodeElement {
         }
 
         @Override
-        public TypeList getParameterTypes() {
-            return new TypeList.ForLoadedType(constructor.getParameterTypes());
-        }
-
-        @Override
-        public List<AnnotationList> getParameterAnnotations() {
-            return AnnotationList.ForLoadedAnnotation.asList(constructor.getParameterAnnotations());
+        public ParameterList getParameters() {
+            return ParameterList.ForLoadedExecutable.of(constructor);
         }
 
         @Override
@@ -617,13 +635,8 @@ public interface MethodDescription extends ByteCodeElement {
         }
 
         @Override
-        public TypeList getParameterTypes() {
-            return new TypeList.ForLoadedType(method.getParameterTypes());
-        }
-
-        @Override
-        public List<AnnotationList> getParameterAnnotations() {
-            return AnnotationList.ForLoadedAnnotation.asList(method.getParameterAnnotations());
+        public ParameterList getParameters() {
+            return ParameterList.ForLoadedExecutable.of(method);
         }
 
         @Override
@@ -785,13 +798,8 @@ public interface MethodDescription extends ByteCodeElement {
         }
 
         @Override
-        public TypeList getParameterTypes() {
-            return new TypeList.Explicit(parameterTypes);
-        }
-
-        @Override
-        public List<AnnotationList> getParameterAnnotations() {
-            return AnnotationList.Empty.asList(parameterTypes.size());
+        public ParameterList getParameters() {
+            return ParameterList.Explicit.latent(this, parameterTypes);
         }
 
         @Override

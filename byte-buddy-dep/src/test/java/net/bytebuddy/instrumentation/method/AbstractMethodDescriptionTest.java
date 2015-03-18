@@ -258,6 +258,11 @@ public abstract class AbstractMethodDescriptionTest {
     }
 
     @Test
+    public void testName() throws Exception {
+        describe(thirdMethod);
+    }
+
+    @Test
     public void testSynthetic() throws Exception {
         assertThat(describe(firstMethod).isSynthetic(), is(firstMethod.isSynthetic()));
         assertThat(describe(secondMethod).isSynthetic(), is(secondMethod.isSynthetic()));
@@ -380,20 +385,29 @@ public abstract class AbstractMethodDescriptionTest {
 
     @Test
     public void testAnnotations() throws Exception {
-        assertThat(describe(firstMethod).getDeclaredAnnotations(), is((AnnotationList) new AnnotationList.Empty()));
-        assertThat(describe(secondMethod).getDeclaredAnnotations(), is((AnnotationList) new AnnotationList.Empty()));
+        assertThat(describe(firstMethod).getDeclaredAnnotations(),
+                is((AnnotationList) new AnnotationList.Empty()));
+        assertThat(describe(secondMethod).getDeclaredAnnotations(),
+                is((AnnotationList) new AnnotationList.Empty()));
         assertThat(describe(thirdMethod).getDeclaredAnnotations(),
                 is((AnnotationList) new AnnotationList.ForLoadedAnnotation(thirdMethod.getDeclaredAnnotations())));
         assertThat(describe(firstConstructor).getDeclaredAnnotations(), is((AnnotationList) new AnnotationList.Empty()));
         assertThat(describe(secondConstructor).getDeclaredAnnotations(),
                 is((AnnotationList) new AnnotationList.ForLoadedAnnotation(secondConstructor.getDeclaredAnnotations())));
-        assertThat(describe(firstMethod).getParameterAnnotations(), is(AnnotationList.Empty.asList(0)));
-        assertThat(describe(secondMethod).getParameterAnnotations(), is(AnnotationList.Empty.asList(2)));
-        assertThat(describe(thirdMethod).getParameterAnnotations(),
-                is(AnnotationList.ForLoadedAnnotation.asList(thirdMethod.getParameterAnnotations())));
-        assertThat(describe(firstConstructor).getParameterAnnotations(), is(AnnotationList.Empty.asList(1)));
-        assertThat(describe(secondConstructor).getParameterAnnotations(),
-                is(AnnotationList.ForLoadedAnnotation.asList(secondConstructor.getParameterAnnotations())));
+        assertThat(describe(secondMethod).getParameters().get(0).getDeclaredAnnotations(),
+                is((AnnotationList) new AnnotationList.Empty()));
+        assertThat(describe(secondMethod).getParameters().get(1).getDeclaredAnnotations(),
+                is((AnnotationList) new AnnotationList.Empty()));
+        assertThat(describe(thirdMethod).getParameters().get(0).getDeclaredAnnotations(),
+                is((AnnotationList) new AnnotationList.ForLoadedAnnotation(thirdMethod.getParameterAnnotations()[0])));
+        assertThat(describe(thirdMethod).getParameters().get(1).getDeclaredAnnotations(),
+                is((AnnotationList) new AnnotationList.ForLoadedAnnotation(thirdMethod.getParameterAnnotations()[1])));
+        assertThat(describe(firstConstructor).getParameters().get(0).getDeclaredAnnotations(),
+                is((AnnotationList) new AnnotationList.Empty()));
+        assertThat(describe(secondConstructor).getParameters().get(0).getDeclaredAnnotations(),
+                is((AnnotationList) new AnnotationList.ForLoadedAnnotation(secondConstructor.getParameterAnnotations()[0])));
+        assertThat(describe(secondConstructor).getParameters().get(1).getDeclaredAnnotations(),
+                is((AnnotationList) new AnnotationList.ForLoadedAnnotation(secondConstructor.getParameterAnnotations()[1])));
     }
 
     @Test
@@ -451,7 +465,7 @@ public abstract class AbstractMethodDescriptionTest {
         protected abstract Object second(String first, long second) throws RuntimeException, IOException;
 
         @SampleAnnotation
-        public boolean[] third(@SampleAnnotation Object[] third, int[] forth) throws Throwable {
+        public boolean[] third(@SampleAnnotation final Object[] first, int[] second) throws Throwable {
             return null;
         }
     }

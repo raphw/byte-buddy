@@ -7,6 +7,7 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.RandomString;
 import org.junit.Test;
+import org.objectweb.asm.Type;
 
 import java.util.Arrays;
 
@@ -61,6 +62,7 @@ public class TypePoolDefaultComponentTypeLocatorTest {
                 .new TypeExtractor();
         ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.OnTypeCollector.class).apply(typeExtractor.new OnTypeCollector(FOO));
         ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.MethodExtractor.class).apply(typeExtractor.new MethodExtractor(0, FOO, "()" + BAR_DESCRIPTOR, BAZ, null));
+        ObjectPropertyAssertion.of(TypePool.Default.ParameterBag.class).apply(new TypePool.Default.ParameterBag(new Type[0]));
         ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.MethodExtractor.OnMethodCollector.class).apply(typeExtractor
                 .new MethodExtractor(0, FOO, "()" + BAR_DESCRIPTOR, BAZ, null).new OnMethodCollector(FOO));
         ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.MethodExtractor.OnMethodParameterCollector.class).apply(typeExtractor

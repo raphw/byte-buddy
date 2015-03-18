@@ -217,13 +217,8 @@ public interface MethodLookupEngine {
         }
 
         @Override
-        public TypeList getParameterTypes() {
-            return methodChain.get(MOST_SPECIFIC).getParameterTypes();
-        }
-
-        @Override
-        public List<AnnotationList> getParameterAnnotations() {
-            return methodChain.get(MOST_SPECIFIC).getParameterAnnotations();
+        public ParameterList getParameters() {
+            return methodChain.get(MOST_SPECIFIC).getParameters();
         }
 
         @Override
@@ -380,8 +375,8 @@ public interface MethodLookupEngine {
         }
 
         @Override
-        public TypeList getParameterTypes() {
-            return methodDescriptions.get(ANY).getParameterTypes();
+        public ParameterList getParameters() {
+            return ParameterList.Explicit.latent(this, methodDescriptions.get(ANY).getParameters().asTypeList());
         }
 
         @Override
@@ -407,11 +402,6 @@ public interface MethodLookupEngine {
         @Override
         public boolean represents(Constructor<?> constructor) {
             return false;
-        }
-
-        @Override
-        public List<AnnotationList> getParameterAnnotations() {
-            return AnnotationList.Empty.asList(methodDescriptions.get(ANY).getParameterTypes().size());
         }
 
         @Override

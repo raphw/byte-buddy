@@ -1,12 +1,16 @@
 package net.bytebuddy.pool;
 
 import net.bytebuddy.dynamic.ClassFileLocator;
+import net.bytebuddy.instrumentation.ModifierReviewable;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
+import net.bytebuddy.instrumentation.method.ParameterDescription;
+import net.bytebuddy.instrumentation.method.ParameterList;
+import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.PackageDescription;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
@@ -449,6 +453,11 @@ public interface TypePool {
     static class Default extends AbstractBase {
 
         /**
+         * Indicates that a visited method should be ignored.
+         */
+        private static final MethodVisitor IGNORE_METHOD = null;
+
+        /**
          * The ASM version that is applied when reading class files.
          */
         private static final int ASM_VERSION = Opcodes.ASM5;
@@ -745,6 +754,73 @@ public interface TypePool {
         }
 
         /**
+         * A bag for collecting parameter meta information that is stored as debug information for implemented
+         * methods.
+         */
+        protected static class ParameterBag {
+
+            /**
+             * An array of the method's parameter types.
+             */
+            private final Type[] parameterType;
+
+            /**
+             * A map containing the tokens that were collected until now.
+             */
+            private final Map<Integer, String> parameterRegistry;
+
+            /**
+             * Creates a new bag.
+             *
+             * @param parameterType An array of parameter types for the method on which this parameter bag
+             *                      is used.
+             */
+            protected ParameterBag(Type[] parameterType) {
+                this.parameterType = parameterType;
+                parameterRegistry = new HashMap<Integer, String>(parameterType.length);
+            }
+
+            /**
+             * Registeres a new parameter.
+             *
+             * @param offset The offset of the registered entry on the local variable array of the method.
+             * @param name   The name of the parameter.
+             */
+            protected void register(int offset, String name) {
+                parameterRegistry.put(offset, name);
+            }
+
+            /**
+             * Resolves the collected parameters as a list of parameter tokens.
+             *
+             * @param isStatic {@code true} if the analyzed method is static.
+             * @return A list of parameter tokens based on the collected information.
+             */
+            protected List<LazyTypeDescription.MethodToken.ParameterToken> resolve(boolean isStatic) {
+                List<LazyTypeDescription.MethodToken.ParameterToken> parameterTokens = new ArrayList<LazyTypeDescription.MethodToken.ParameterToken>(parameterType.length);
+                int offset = isStatic
+                        ? StackSize.ZERO.getSize()
+                        : StackSize.SINGLE.getSize();
+                for (Type aParameterType : parameterType) {
+                    String name = this.parameterRegistry.get(offset);
+                    parameterTokens.add(name == null
+                            ? new LazyTypeDescription.MethodToken.ParameterToken()
+                            : new LazyTypeDescription.MethodToken.ParameterToken(name));
+                    offset += aParameterType.getSize();
+                }
+                return parameterTokens;
+            }
+
+            @Override
+            public String toString() {
+                return "TypePool.Default.ParameterBag{" +
+                        "parameterType=" + Arrays.toString(parameterType) +
+                        ", parameterRegistry=" + parameterRegistry +
+                        '}';
+            }
+        }
+
+        /**
          * A type extractor reads a class file and collects data that is relevant to create a type description.
          */
         protected class TypeExtractor extends ClassVisitor {
@@ -871,10 +947,9 @@ public interface TypePool {
                                              String descriptor,
                                              String genericSignature,
                                              String[] exceptionName) {
-                if (internalName.equals(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME)) {
-                    return null;
-                }
-                return new MethodExtractor(modifiers, internalName, descriptor, genericSignature, exceptionName);
+                return internalName.equals(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME)
+                        ? IGNORE_METHOD
+                        : new MethodExtractor(modifiers, internalName, descriptor, genericSignature, exceptionName);
             }
 
             /**
@@ -1313,6 +1388,12 @@ public interface TypePool {
                  */
                 private final Map<Integer, List<LazyTypeDescription.AnnotationToken>> parameterAnnotationTokens;
 
+                private final List<LazyTypeDescription.MethodToken.ParameterToken> parameterTokens;
+
+                private final ParameterBag legacyParameterBag;
+
+                private Label firstLabel;
+
                 /**
                  * The default value of the found method or {@code null} if no such value exists.
                  */
@@ -1340,10 +1421,13 @@ public interface TypePool {
                     this.genericSignature = genericSignature;
                     this.exceptionName = exceptionName;
                     annotationTokens = new LinkedList<LazyTypeDescription.AnnotationToken>();
-                    parameterAnnotationTokens = new HashMap<Integer, List<LazyTypeDescription.AnnotationToken>>();
-                    for (int i = 0; i < Type.getMethodType(descriptor).getArgumentTypes().length; i++) {
+                    Type[] parameterTypes = Type.getMethodType(descriptor).getArgumentTypes();
+                    parameterAnnotationTokens = new HashMap<Integer, List<LazyTypeDescription.AnnotationToken>>(parameterTypes.length);
+                    for (int i = 0; i < parameterTypes.length; i++) {
                         parameterAnnotationTokens.put(i, new LinkedList<LazyTypeDescription.AnnotationToken>());
                     }
+                    parameterTokens = new ArrayList<LazyTypeDescription.MethodToken.ParameterToken>(parameterTypes.length);
+                    legacyParameterBag = new ParameterBag(parameterTypes);
                 }
 
                 @Override
@@ -1356,6 +1440,25 @@ public interface TypePool {
                 public AnnotationVisitor visitParameterAnnotation(int index, String descriptor, boolean visible) {
                     return new AnnotationExtractor(new OnMethodParameterCollector(descriptor, index),
                             new ComponentTypeLocator.ForAnnotationProperty(Default.this, descriptor));
+                }
+
+                @Override
+                public void visitLabel(Label label) {
+                    if (firstLabel == null) {
+                        firstLabel = label;
+                    }
+                }
+
+                @Override
+                public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
+                    if (start == firstLabel) {
+                        legacyParameterBag.register(index, name);
+                    }
+                }
+
+                @Override
+                public void visitParameter(String name, int modifiers) {
+                    parameterTokens.add(new LazyTypeDescription.MethodToken.ParameterToken(name, modifiers));
                 }
 
                 @Override
@@ -1382,6 +1485,9 @@ public interface TypePool {
                             exceptionName,
                             annotationTokens,
                             parameterAnnotationTokens,
+                            parameterTokens.isEmpty()
+                                    ? legacyParameterBag.resolve((modifiers & Opcodes.ACC_STATIC) != 0)
+                                    : parameterTokens,
                             defaultValue));
                 }
 
@@ -1396,6 +1502,9 @@ public interface TypePool {
                             ", exceptionName=" + Arrays.toString(exceptionName) +
                             ", annotationTokens=" + annotationTokens +
                             ", parameterAnnotationTokens=" + parameterAnnotationTokens +
+                            ", parameterTokens=" + parameterTokens +
+                            ", legacyParameterBag=" + legacyParameterBag +
+                            ", firstLabel=" + firstLabel +
                             ", defaultValue=" + defaultValue +
                             '}';
                 }
@@ -1673,7 +1782,7 @@ public interface TypePool {
             String packageName = getPackageName();
             return packageName == null
                     ? null
-                    : new LazyPackageDescription(packageName);
+                    : new LazyPackageDescription(typePool, packageName);
         }
 
         @Override
@@ -3435,6 +3544,8 @@ public interface TypePool {
              */
             private final Map<Integer, List<AnnotationToken>> parameterAnnotationTokens;
 
+            private final List<ParameterToken> parameterTokens;
+
             /**
              * The default value of this method or {@code null} if there is no such value.
              */
@@ -3461,6 +3572,7 @@ public interface TypePool {
                                   String[] exceptionName,
                                   List<AnnotationToken> annotationTokens,
                                   Map<Integer, List<AnnotationToken>> parameterAnnotationTokens,
+                                  List<ParameterToken> parameterTokens,
                                   AnnotationValue<?, ?> defaultValue) {
                 this.modifiers = modifiers;
                 this.name = name;
@@ -3469,6 +3581,7 @@ public interface TypePool {
                 this.exceptionName = exceptionName;
                 this.annotationTokens = annotationTokens;
                 this.parameterAnnotationTokens = parameterAnnotationTokens;
+                this.parameterTokens = parameterTokens;
                 this.defaultValue = defaultValue;
             }
 
@@ -3535,6 +3648,10 @@ public interface TypePool {
                 return parameterAnnotationTokens;
             }
 
+            protected List<ParameterToken> getParameterTokens() {
+                return parameterTokens;
+            }
+
             /**
              * Returns the default value of the represented method or {@code null} if no such values exists.
              *
@@ -3558,6 +3675,7 @@ public interface TypePool {
                         getExceptionName(),
                         getAnnotationTokens(),
                         getParameterAnnotationTokens(),
+                        getParameterTokens(),
                         getDefaultValue());
             }
 
@@ -3570,6 +3688,7 @@ public interface TypePool {
                         && annotationTokens.equals(that.annotationTokens)
                         && defaultValue.equals(that.defaultValue)
                         && descriptor.equals(that.descriptor)
+                        && parameterTokens.equals(that.parameterTokens)
                         && !(genericSignature != null ? !genericSignature.equals(that.genericSignature) : that.genericSignature != null)
                         && Arrays.equals(exceptionName, that.exceptionName)
                         && name.equals(that.name)
@@ -3585,6 +3704,7 @@ public interface TypePool {
                 result = 31 * result + Arrays.hashCode(exceptionName);
                 result = 31 * result + annotationTokens.hashCode();
                 result = 31 * result + parameterAnnotationTokens.hashCode();
+                result = 31 * result + parameterTokens.hashCode();
                 result = 31 * result + defaultValue.hashCode();
                 return result;
             }
@@ -3599,8 +3719,93 @@ public interface TypePool {
                         ", exceptionName=" + Arrays.toString(exceptionName) +
                         ", annotationTokens=" + annotationTokens +
                         ", parameterAnnotationTokens=" + parameterAnnotationTokens +
+                        ", parameterTokens=" + parameterTokens +
                         ", defaultValue=" + defaultValue +
                         '}';
+            }
+
+            /**
+             * A token representing a method's parameter.
+             */
+            protected static class ParameterToken {
+
+                /**
+                 * The name of the parameter or {@code null} if no explicit name for this parameter is known.
+                 */
+                private final String name;
+
+                /**
+                 * The modifiers of the parameter.
+                 */
+                private final int modifiers;
+
+                /**
+                 * Creates a parameter token for a parameter without an explicit name and without specific modifiers.
+                 */
+                protected ParameterToken() {
+                    this(null);
+                }
+
+                /**
+                 * Creates a parameter token for a parameter with an explicit name and without specific modifiers.
+                 *
+                 * @param name The name of the parameter.
+                 */
+                protected ParameterToken(String name) {
+                    this(name, ModifierReviewable.EMPTY_MASK);
+                }
+
+                /**
+                 * Creates a parameter token for a parameter with an explicit name and with specific modifiers.
+                 *
+                 * @param name      The name of the parameter.
+                 * @param modifiers The modifiers of the parameter.
+                 */
+                protected ParameterToken(String name, int modifiers) {
+                    this.name = name;
+                    this.modifiers = modifiers;
+                }
+
+                /**
+                 * Returns the name of the parameter or {@code null} if there is no such name.
+                 *
+                 * @return The name of the parameter or {@code null} if there is no such name.
+                 */
+                protected String getName() {
+                    return name;
+                }
+
+                /**
+                 * Returns the modifiers of the parameter.
+                 *
+                 * @return The modifiers of the parameter.
+                 */
+                protected int getModifiers() {
+                    return modifiers;
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    ParameterToken that = ((ParameterToken) other);
+                    return modifiers == that.modifiers && !(name != null ? !name.equals(that.name) : that.name != null);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = name != null ? name.hashCode() : 0;
+                    result = 31 * result + modifiers;
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "TypePool.LazyTypeDescription.MethodToken.ParameterToken{" +
+                            "name='" + name + '\'' +
+                            ", modifiers=" + modifiers +
+                            '}';
+                }
             }
         }
 
@@ -3725,6 +3930,57 @@ public interface TypePool {
                         throw new IllegalStateException(ForLoadedAnnotation.ERROR_MESSAGE, e);
                     }
                 }
+            }
+        }
+
+        /**
+         * An implementation of a {@link net.bytebuddy.instrumentation.type.PackageDescription} that only
+         * loads its annotations on requirement.
+         */
+        private static class LazyPackageDescription extends PackageDescription.AbstractPackageDescription {
+
+            /**
+             * The name of the {@code package-info} class that represents a compiled Java package.
+             */
+            private static final String PACKAGE_INFO = ".package-info";
+
+            /**
+             * The type pool to use for look-ups.
+             */
+            private final TypePool typePool;
+
+            /**
+             * The name of the package.
+             */
+            private final String name;
+
+            /**
+             * Creates a new lazy package description.
+             *
+             * @param typePool The type pool to use for look-ups.
+             * @param name     The name of the package.
+             */
+            private LazyPackageDescription(TypePool typePool, String name) {
+                this.typePool = typePool;
+                this.name = name;
+            }
+
+            @Override
+            public AnnotationList getDeclaredAnnotations() {
+                Resolution resolution = typePool.describe(name + PACKAGE_INFO);
+                return resolution.isResolved()
+                        ? resolution.resolve().getDeclaredAnnotations()
+                        : new AnnotationList.Empty();
+            }
+
+            @Override
+            public String getName() {
+                return name;
+            }
+
+            @Override
+            public boolean isSealed() {
+                return false;
             }
         }
 
@@ -3863,6 +4119,16 @@ public interface TypePool {
             private final List<List<AnnotationDescription>> declaredParameterAnnotations;
 
             /**
+             * An array of parameter names which may be {@code null} if no explicit name is known for a parameter.
+             */
+            private final String[] parameterNames;
+
+            /**
+             * An array of parameter modifiers.
+             */
+            private final int[] parameterModifiers;
+
+            /**
              * The default value of this method or {@code null} if no such value exists.
              */
             private final AnnotationValue<?, ?> defaultValue;
@@ -3881,6 +4147,9 @@ public interface TypePool {
              *                                  by this method.
              * @param parameterAnnotationTokens A nested list of annotation tokens representing annotations that are
              *                                  declared by the fields of this method.
+             * @param parameterTokens           A list of parameter tokens which might be empty or even out of sync
+             *                                  with the actual parameters if the debugging information found in a
+             *                                  class was corrupt.
              * @param defaultValue              The default value of this method or {@code null} if there is no
              *                                  such value.
              */
@@ -3891,6 +4160,7 @@ public interface TypePool {
                                           String[] exceptionInternalName,
                                           List<AnnotationToken> annotationTokens,
                                           Map<Integer, List<AnnotationToken>> parameterAnnotationTokens,
+                                          List<MethodToken.ParameterToken> parameterTokens,
                                           AnnotationValue<?, ?> defaultValue) {
                 this.modifiers = modifiers;
                 this.internalName = internalName;
@@ -3917,6 +4187,16 @@ public interface TypePool {
                     }
                     declaredParameterAnnotations.add(annotationDescriptions);
                 }
+                parameterNames = new String[parameterTypes.size()];
+                parameterModifiers = new int[parameterTypes.size()];
+                if (parameterTokens.size() == parameterTypes.size()) {
+                    int index = 0;
+                    for (MethodToken.ParameterToken parameterToken : parameterTokens) {
+                        parameterNames[index] = parameterToken.getName();
+                        parameterModifiers[index] = parameterToken.getModifiers();
+                        index++;
+                    }
+                }
                 this.defaultValue = defaultValue;
             }
 
@@ -3926,18 +4206,13 @@ public interface TypePool {
             }
 
             @Override
-            public TypeList getParameterTypes() {
-                return parameterTypes;
-            }
-
-            @Override
             public TypeList getExceptionTypes() {
                 return exceptionTypes;
             }
 
             @Override
-            public List<AnnotationList> getParameterAnnotations() {
-                return AnnotationList.Explicit.asList(declaredParameterAnnotations);
+            public ParameterList getParameters() {
+                return new LazyParameterList();
             }
 
             @Override
@@ -3971,49 +4246,88 @@ public interface TypePool {
             public String getGenericSignature() {
                 return genericSignature;
             }
-        }
-
-        /**
-         * An implementation of a {@link net.bytebuddy.instrumentation.type.PackageDescription} that only
-         * loads its annotations on requirement.
-         */
-        private class LazyPackageDescription extends PackageDescription.AbstractPackageDescription {
 
             /**
-             * The name of the {@code package-info} class that represents a compiled Java package.
+             * A lazy list of parameter descriptions for the enclosing method description.
              */
-            private static final String PACKAGE_INFO = ".package-info";
+            private class LazyParameterList extends FilterableList.AbstractBase<ParameterDescription, ParameterList> implements ParameterList {
+
+                @Override
+                protected ParameterList wrap(List<ParameterDescription> values) {
+                    return new Explicit(values);
+                }
+
+                @Override
+                public ParameterDescription get(int index) {
+                    return new LazyParameterDescription(index);
+                }
+
+                @Override
+                public int size() {
+                    return parameterTypes.size();
+                }
+
+                @Override
+                public TypeList asTypeList() {
+                    return parameterTypes;
+                }
+            }
 
             /**
-             * The name of the package.
+             * A lazy description of a parameters of the enclosing method.
              */
-            private final String name;
+            private class LazyParameterDescription extends ParameterDescription.AbstractParameterDescription {
 
-            /**
-             * Creates a new lazy package description.
-             *
-             * @param name The name of the package.
-             */
-            private LazyPackageDescription(String name) {
-                this.name = name;
-            }
+                /**
+                 * The index of the described parameter.
+                 */
+                private final int index;
 
-            @Override
-            public AnnotationList getDeclaredAnnotations() {
-                Resolution resolution = typePool.describe(name + PACKAGE_INFO);
-                return resolution.isResolved()
-                        ? resolution.resolve().getDeclaredAnnotations()
-                        : new AnnotationList.Empty();
-            }
+                /**
+                 * Creates a new description for a given parameter of the enclosing method.
+                 *
+                 * @param index The index of the described parameter.
+                 */
+                protected LazyParameterDescription(int index) {
+                    this.index = index;
+                }
 
-            @Override
-            public String getName() {
-                return name;
-            }
+                @Override
+                public TypeDescription getTypeDescription() {
+                    return parameterTypes.get(index);
+                }
 
-            @Override
-            public boolean isSealed() {
-                return false;
+                @Override
+                public MethodDescription getDeclaringMethod() {
+                    return LazyMethodDescription.this;
+                }
+
+                @Override
+                public int getIndex() {
+                    return index;
+                }
+
+                @Override
+                public boolean isNamed() {
+                    return parameterNames[index] != null;
+                }
+
+                @Override
+                public String getName() {
+                    return isNamed()
+                            ? parameterNames[index]
+                            : super.getName();
+                }
+
+                @Override
+                public int getModifiers() {
+                    return parameterModifiers[index];
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Explicit(declaredParameterAnnotations.get(index));
+                }
             }
         }
 
@@ -4063,7 +4377,8 @@ public interface TypePool {
             /**
              * Creates a new type list for a list of internal names.
              *
-             * @param internalName The internal names to represent by this type list.
+             * @param internalName The internal names to represent by this type list. This list must not
+             *                     contain primitive types.
              */
             protected LazyTypeList(String[] internalName) {
                 name = new String[internalName.length];

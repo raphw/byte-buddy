@@ -7,6 +7,8 @@ import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
+import net.bytebuddy.instrumentation.method.ParameterDescription;
+import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 
 import java.util.ArrayList;
@@ -461,6 +463,8 @@ public interface InstrumentedType extends TypeDescription {
              */
             private final List<AnnotationList> parameterAnnotations;
 
+            private final List<ParameterDescription> parameters;
+
             /**
              * The default value of this method or {@code null} if no such value exists.
              */
@@ -486,7 +490,9 @@ public interface InstrumentedType extends TypeDescription {
                 this.exceptionTypes = new ArrayList<TypeDescription>(exceptionTypes);
                 this.modifiers = modifiers;
                 declaredAnnotations = Collections.emptyList();
-                parameterAnnotations = Collections.emptyList();
+                parameterAnnotations = new ArrayList<AnnotationList>(parameterTypes.size());
+                Collections.fill(parameterAnnotations, new AnnotationList.Empty());
+                parameters = ParameterList.Explicit.latent(this, parameterTypes);
                 defaultValue = null;
             }
 
@@ -510,6 +516,10 @@ public interface InstrumentedType extends TypeDescription {
                 modifiers = methodDescription.getModifiers();
                 declaredAnnotations = methodDescription.getDeclaredAnnotations();
                 parameterAnnotations = methodDescription.getParameterAnnotations();
+                parameters = new ArrayList<ParameterDescription>(methodDescription.getParameters().size());
+                for (ParameterDescription parameterDescription : methodDescription.getParameters()) {
+                    parameters.add(new ParameterToken(typeName, parameterDescription));
+                }
                 defaultValue = methodDescription.getDefaultValue();
             }
 
@@ -519,18 +529,13 @@ public interface InstrumentedType extends TypeDescription {
             }
 
             @Override
-            public TypeList getParameterTypes() {
-                return new TypeList.Explicit(parameterTypes);
-            }
-
-            @Override
             public TypeList getExceptionTypes() {
                 return new TypeList.Explicit(exceptionTypes);
             }
 
             @Override
-            public List<AnnotationList> getParameterAnnotations() {
-                return parameterAnnotations;
+            public ParameterList getParameters() {
+                return new ParameterList.Explicit(parameters);
             }
 
             @Override
@@ -556,6 +561,90 @@ public interface InstrumentedType extends TypeDescription {
             @Override
             public Object getDefaultValue() {
                 return defaultValue;
+            }
+
+            /**
+             * An implementation of a method parameter for a method of an instrumented type.
+             */
+            protected class ParameterToken extends ParameterDescription.AbstractParameterDescription {
+
+                /**
+                 * The type of the parameter.
+                 */
+                private final TypeDescription parameterType;
+
+                /**
+                 * The index of the parameter.
+                 */
+                private final int index;
+
+                /**
+                 * The name of the parameter or {@code null} if no explicit name is known for this parameter.
+                 */
+                private final String name;
+
+                /**
+                 * The modifiers of this parameter.
+                 */
+                private final int modifiers;
+
+                /**
+                 * The annotations of this parameter.
+                 */
+                private final List<AnnotationDescription> parameterAnnotations;
+
+                /**
+                 * Creates a new parameter token based on an existing description of a parameter.
+                 *
+                 * @param typeName             The name of the type.
+                 * @param parameterDescription The parameter description to copy.
+                 */
+                protected ParameterToken(String typeName, ParameterDescription parameterDescription) {
+                    parameterType = withSubstitutedSelfReference(typeName, parameterDescription.getTypeDescription());
+                    index = parameterDescription.getIndex();
+                    name = parameterDescription.isNamed()
+                            ? parameterDescription.getName()
+                            : null;
+                    modifiers = parameterDescription.getModifiers();
+                    parameterAnnotations = Collections.emptyList();
+                }
+
+                @Override
+                public TypeDescription getTypeDescription() {
+                    return parameterType;
+                }
+
+                @Override
+                public MethodDescription getDeclaringMethod() {
+                    return MethodToken.this;
+                }
+
+                @Override
+                public int getIndex() {
+                    return index;
+                }
+
+                @Override
+                public boolean isNamed() {
+                    return name != null;
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Explicit(parameterAnnotations);
+                }
+
+                @Override
+                public int getModifiers() {
+                    return modifiers;
+                }
+
+                @Override
+                public String getName() {
+                    return name == null
+                            ? super.getName()
+                            : name;
+                }
             }
         }
     }
