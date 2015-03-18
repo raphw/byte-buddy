@@ -9,7 +9,6 @@ import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,8 +37,6 @@ public class RebaseInstrumentationTargetTest extends AbstractInstrumentationTarg
     @Mock
     private MethodDescription targetRebaseMethod, rebasedMethod, nonRebasedMethod, superMethod;
     @Mock
-    private TypeList parameterTypes;
-    @Mock
     private TypeDescription superType;
 
     @Override
@@ -54,7 +51,6 @@ public class RebaseInstrumentationTargetTest extends AbstractInstrumentationTarg
         when(rebasedMethod.getReturnType()).thenReturn(returnType);
         when(rebasedMethod.getInternalName()).thenReturn(BAZ);
         when(rebasedMethod.getDescriptor()).thenReturn(FOOBAR);
-        when(rebasedMethod.getParameterTypes()).thenReturn(parameterTypes);
         when(rebasedMethod.isSpecializableFor(instrumentedType)).thenReturn(true);
         when(rebasedResolution.getAdditionalArguments()).thenReturn(additionalArguments);
         when(additionalArguments.isValid()).thenReturn(true);
@@ -66,12 +62,10 @@ public class RebaseInstrumentationTargetTest extends AbstractInstrumentationTarg
         when(superMethod.getReturnType()).thenReturn(returnType);
         when(superMethod.getInternalName()).thenReturn(BAZ);
         when(superMethod.getDescriptor()).thenReturn(FOOBAR);
-        when(superMethod.getParameterTypes()).thenReturn(parameterTypes);
         when(nonRebasedMethod.getDeclaringType()).thenReturn(instrumentedType);
         when(nonRebasedMethod.getReturnType()).thenReturn(returnType);
         when(nonRebasedMethod.getInternalName()).thenReturn(BAZ);
         when(nonRebasedMethod.getDescriptor()).thenReturn(FOOBAR);
-        when(nonRebasedMethod.getParameterTypes()).thenReturn(parameterTypes);
         when(methodRebaseResolver.resolve(nonRebasedMethod)).thenReturn(nonRebasedResolution);
         when(nonRebasedResolution.isRebased()).thenReturn(false);
         when(nonRebasedResolution.getResolvedMethod()).thenReturn(nonRebasedMethod);

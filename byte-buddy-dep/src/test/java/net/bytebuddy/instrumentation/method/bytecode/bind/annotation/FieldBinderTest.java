@@ -7,7 +7,6 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -129,7 +128,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         when(annotation.value()).thenReturn(FOO);
         when(fieldDescription.getInternalName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(fieldType);
-        when(source.getParameterTypes()).thenReturn(new TypeList.Empty());
+        when(source.getParameters()).thenReturn(new ParameterList.Empty());
         when(source.getName()).thenReturn("getFoo");
         when(source.getInternalName()).thenReturn("getFoo");
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);

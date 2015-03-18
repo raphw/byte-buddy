@@ -2,10 +2,10 @@ package net.bytebuddy.instrumentation.method.bytecode.stack.member;
 
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -51,7 +51,7 @@ public class MethodInvocationDynamicTest {
     @Before
     public void setUp() throws Exception {
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
-        when(methodDescription.getParameterTypes()).thenReturn(new TypeList.Explicit(Arrays.asList(firstType, secondType)));
+        when(methodDescription.getParameters()).thenReturn(ParameterList.Explicit.latent(methodDescription, Arrays.asList(firstType, secondType)));
         when(firstType.getStackSize()).thenReturn(StackSize.ZERO);
         when(firstType.getDescriptor()).thenReturn(FOO);
         when(secondType.getDescriptor()).thenReturn(BAR);

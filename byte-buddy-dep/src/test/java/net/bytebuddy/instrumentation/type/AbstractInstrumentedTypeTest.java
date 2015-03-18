@@ -83,8 +83,8 @@ public abstract class AbstractInstrumentedTypeTest {
         assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
         MethodDescription methodDescription = instrumentedType.getDeclaredMethods().get(0);
         assertThat(methodDescription.getReturnType(), is(returnType));
-        assertThat(methodDescription.getParameterTypes().size(), is(1));
-        assertThat(methodDescription.getParameterTypes(), is(Arrays.asList(parameterType)));
+        assertThat(methodDescription.getParameters().size(), is(1));
+        assertThat(methodDescription.getParameters().asTypeList(), is(Arrays.asList(parameterType)));
         assertThat(methodDescription.getExceptionTypes().size(), is(1));
         assertThat(methodDescription.getExceptionTypes(), is(Arrays.asList(exceptionType)));
         assertThat(methodDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
@@ -103,8 +103,8 @@ public abstract class AbstractInstrumentedTypeTest {
         assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
         MethodDescription methodDescription = instrumentedType.getDeclaredMethods().get(0);
         assertThat(methodDescription.getReturnType(), is((TypeDescription) instrumentedType));
-        assertThat(methodDescription.getParameterTypes().size(), is(1));
-        assertThat(methodDescription.getParameterTypes(), is(Arrays.asList((TypeDescription) instrumentedType)));
+        assertThat(methodDescription.getParameters().size(), is(1));
+        assertThat(methodDescription.getParameters().asTypeList(), is(Arrays.asList((TypeDescription) instrumentedType)));
         assertThat(methodDescription.getExceptionTypes().size(), is(0));
         assertThat(methodDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(methodDescription.getName(), is(BAR));

@@ -49,7 +49,7 @@ public class MethodDescriptionLatentTest extends AbstractMethodDescriptionTest {
         MethodDescription typeInitializer = MethodDescription.Latent.typeInitializerOf(typeDescription);
         assertThat(typeInitializer.getDeclaringType(), is(typeDescription));
         assertThat(typeInitializer.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(void.class)));
-        assertThat(typeInitializer.getParameterTypes(), is((TypeList) new TypeList.Empty()));
+        assertThat(typeInitializer.getParameters(), is((ParameterList) new ParameterList.Empty()));
         assertThat(typeInitializer.getExceptionTypes(), is((TypeList) new TypeList.Empty()));
         assertThat(typeInitializer.getDeclaredAnnotations(), is((AnnotationList) new AnnotationList.Empty()));
         assertThat(typeInitializer.getModifiers(), is(MethodDescription.TYPE_INITIALIZER_MODIFIER));

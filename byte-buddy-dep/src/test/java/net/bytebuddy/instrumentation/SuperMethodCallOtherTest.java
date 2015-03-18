@@ -3,12 +3,12 @@ package net.bytebuddy.instrumentation;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
+import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.method.bytecode.stack.constant.TextConstant;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.JavaVersionRule;
@@ -23,7 +23,6 @@ import org.mockito.Mock;
 import org.objectweb.asm.MethodVisitor;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
@@ -70,9 +69,6 @@ public class SuperMethodCallOtherTest extends AbstractInstrumentationTest {
     @Mock
     private MethodList superTypeMethods;
 
-    @Mock
-    private TypeList methodParameters;
-
     private ClassLoader classLoader;
 
     @Before
@@ -104,8 +100,7 @@ public class SuperMethodCallOtherTest extends AbstractInstrumentationTest {
     public void testStaticMethod() throws Exception {
         when(typeDescription.getSupertype()).thenReturn(superType);
         when(methodDescription.isStatic()).thenReturn(true);
-        when(methodDescription.getParameterTypes()).thenReturn(methodParameters);
-        when(methodParameters.iterator()).thenReturn(Arrays.<TypeDescription>asList().iterator());
+        when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty());
         when(methodDescription.getReturnType()).thenReturn(returnType);
         when(returnType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(superType.getDeclaredMethods()).thenReturn(superTypeMethods);
@@ -119,8 +114,7 @@ public class SuperMethodCallOtherTest extends AbstractInstrumentationTest {
     @SuppressWarnings("unchecked")
     public void testNoSuper() throws Exception {
         when(typeDescription.getSupertype()).thenReturn(superType);
-        when(methodDescription.getParameterTypes()).thenReturn(methodParameters);
-        when(methodParameters.iterator()).thenReturn(Arrays.<TypeDescription>asList().iterator());
+        when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty());
         when(methodDescription.getReturnType()).thenReturn(returnType);
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
         when(declaringType.getStackSize()).thenReturn(StackSize.SINGLE);
