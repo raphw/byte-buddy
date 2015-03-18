@@ -12,7 +12,10 @@ import org.objectweb.asm.Type;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Implementations of this interface describe a Java method, i.e. a method or a constructor. Implementations of this
@@ -41,24 +44,6 @@ public interface MethodDescription extends ByteCodeElement {
      * @return A description of the return type of the method described by this instance.
      */
     TypeDescription getReturnType();
-
-    /**
-     * Returns a list of type descriptions of the method described by this instance.
-     *
-     * @return A list of type descriptions of the method described by this instance.
-     * @deprecated Use {@code getParameters} instead.
-     */
-    @Deprecated
-    TypeList getParameterTypes();
-
-    /**
-     * Returns the parameter annotations of the method described by this instance.
-     *
-     * @return The parameter annotations of the method described by this instance.
-     * @deprecated Use {@code getParameters} instead.
-     */
-    @Deprecated
-    List<AnnotationList> getParameterAnnotations();
 
     /**
      * Returns a list of this method's parameters.
@@ -244,7 +229,7 @@ public interface MethodDescription extends ByteCodeElement {
 
         @Override
         public int getStackSize() {
-            return getParameterTypes().getStackSize() + (isStatic() ? 0 : 1);
+            return getParameters().asTypeList().getStackSize() + (isStatic() ? 0 : 1);
         }
 
         @Override
@@ -285,7 +270,7 @@ public interface MethodDescription extends ByteCodeElement {
         @Override
         public String getDescriptor() {
             StringBuilder descriptor = new StringBuilder("(");
-            for (TypeDescription parameterType : getParameterTypes()) {
+            for (TypeDescription parameterType : getParameters().asTypeList()) {
                 descriptor.append(parameterType.getDescriptor());
             }
             return descriptor.append(")").append(getReturnType().getDescriptor()).toString();
@@ -321,7 +306,7 @@ public interface MethodDescription extends ByteCodeElement {
         public int getParameterOffset(int parameterIndex) {
             int offset = isStatic() ? 0 : 1;
             int currentIndex = 0;
-            for (TypeDescription parameterType : getParameterTypes()) {
+            for (TypeDescription parameterType : getParameters().asTypeList()) {
                 if (currentIndex == parameterIndex) {
                     return offset;
                 } else {
@@ -368,7 +353,7 @@ public interface MethodDescription extends ByteCodeElement {
                     || (isConstructor() && !JavaType.CALL_SITE.isAssignableFrom(getDeclaringType()))) {
                 return false;
             }
-            TypeList parameterTypes = getParameterTypes();
+            TypeList parameterTypes = getParameters().asTypeList();
             switch (parameterTypes.size()) {
                 case 0:
                     return false;
@@ -409,7 +394,7 @@ public interface MethodDescription extends ByteCodeElement {
                     throw new IllegalArgumentException("Not a bootstrap argument: " + argument);
                 }
             }
-            List<TypeDescription> parameterTypes = getParameterTypes();
+            List<TypeDescription> parameterTypes = getParameters().asTypeList();
             // The following assumes that the bootstrap method is a valid bootstrap method.
             if (parameterTypes.size() < 4) {
                 return arguments.size() == 0 || parameterTypes.get(parameterTypes.size() - 1).represents(Object[].class);
@@ -440,27 +425,12 @@ public interface MethodDescription extends ByteCodeElement {
         }
 
         @Override
-        public TypeList getParameterTypes() {
-            return getParameters().asTypeList();
-        }
-
-        @Override
-        public List<AnnotationList> getParameterAnnotations() {
-            ParameterList parameterList = getParameters();
-            List<AnnotationList> annotationLists = new ArrayList<AnnotationList>(parameterList.size());
-            for (ParameterDescription parameterDescription : parameterList) {
-                annotationLists.add(parameterDescription.getDeclaredAnnotations());
-            }
-            return annotationLists;
-        }
-
-        @Override
         public boolean equals(Object other) {
             return other == this || other instanceof MethodDescription
                     && getInternalName().equals(((MethodDescription) other).getInternalName())
                     && getDeclaringType().equals(((MethodDescription) other).getDeclaringType())
                     && getReturnType().equals(((MethodDescription) other).getReturnType())
-                    && getParameterTypes().equals(((MethodDescription) other).getParameterTypes());
+                    && getParameters().asTypeList().equals(((MethodDescription) other).getParameters().asTypeList());
         }
 
         @Override
@@ -468,7 +438,7 @@ public interface MethodDescription extends ByteCodeElement {
             int hashCode = getDeclaringType().hashCode();
             hashCode = 31 * hashCode + getInternalName().hashCode();
             hashCode = 31 * hashCode + getReturnType().hashCode();
-            return 31 * hashCode + getParameterTypes().hashCode();
+            return 31 * hashCode + getParameters().asTypeList().hashCode();
         }
 
         @Override
@@ -484,7 +454,7 @@ public interface MethodDescription extends ByteCodeElement {
             }
             stringBuilder.append(getName()).append("(");
             boolean first = true;
-            for (TypeDescription typeDescription : getParameterTypes()) {
+            for (TypeDescription typeDescription : getParameters().asTypeList()) {
                 if (!first) {
                     stringBuilder.append(",");
                 } else {
