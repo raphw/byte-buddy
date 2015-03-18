@@ -108,7 +108,7 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
     public InstrumentedType withField(String internalName,
                                       TypeDescription fieldType,
                                       int modifiers) {
-        FieldDescription additionalField = new FieldToken(internalName, fieldType, modifiers);
+        FieldDescription additionalField = new FieldDescription.Latent(internalName, this, fieldType, modifiers);
         if (fieldDescriptions.contains(additionalField)) {
             throw new IllegalArgumentException("Field " + additionalField + " is already defined on " + this);
         }
@@ -130,11 +130,12 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
                                        List<? extends TypeDescription> parameterTypes,
                                        List<? extends TypeDescription> exceptionTypes,
                                        int modifiers) {
-        MethodDescription additionalMethod = new MethodToken(internalName,
+        MethodDescription additionalMethod = new MethodDescription.Latent(internalName,
+                this,
                 returnType,
                 parameterTypes,
-                exceptionTypes,
-                modifiers);
+                modifiers,
+                exceptionTypes);
         if (methodDescriptions.contains(additionalMethod)) {
             throw new IllegalArgumentException("Method " + additionalMethod + " is already defined on " + this);
         }

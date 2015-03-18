@@ -368,20 +368,6 @@ public interface InstrumentedType extends TypeDescription {
             /**
              * Creates a new field for the enclosing instrumented type.
              *
-             * @param name      The internalName of the field.
-             * @param fieldType The type description of the field.
-             * @param modifiers The modifiers of the field.
-             */
-            public FieldToken(String name, TypeDescription fieldType, int modifiers) {
-                this.name = name;
-                this.fieldType = fieldType;
-                this.modifiers = modifiers;
-                declaredAnnotations = Collections.emptyList();
-            }
-
-            /**
-             * Creates a new field for the enclosing instrumented type.
-             *
              * @param typeName         The non-internal name of the enclosing instrumented type.
              * @param fieldDescription The field description to copy.
              */
@@ -462,29 +448,6 @@ public interface InstrumentedType extends TypeDescription {
              * The default value of this method or {@code null} if no such value exists.
              */
             private final Object defaultValue;
-
-            /**
-             * Creates a new method or constructor for the enclosing instrumented type.
-             *
-             * @param internalName   The internal internalName of the method or constructor.
-             * @param returnType     A description of the return type of this method.
-             * @param parameterTypes A list of descriptions of the parameter types of this method.
-             * @param exceptionTypes A list of descriptions of the exception types that are declared by this method.
-             * @param modifiers      The modifiers of this method.
-             */
-            public MethodToken(String internalName,
-                               TypeDescription returnType,
-                               List<? extends TypeDescription> parameterTypes,
-                               List<? extends TypeDescription> exceptionTypes,
-                               int modifiers) {
-                this.internalName = internalName;
-                this.returnType = returnType;
-                this.exceptionTypes = new ArrayList<TypeDescription>(exceptionTypes);
-                this.modifiers = modifiers;
-                declaredAnnotations = Collections.emptyList();
-                parameters = ParameterList.Explicit.latent(this, parameterTypes);
-                defaultValue = null;
-            }
 
             /**
              * Creates a new method or constructor for the enclosing instrumented type.
