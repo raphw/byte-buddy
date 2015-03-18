@@ -5,6 +5,7 @@ import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
+import net.bytebuddy.instrumentation.method.ParameterDescription;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
@@ -203,18 +204,16 @@ public @interface Super {
 
         @Override
         public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<Super> annotation,
-                                                               int targetParameterIndex,
                                                                MethodDescription source,
-                                                               MethodDescription target,
+                                                               ParameterDescription target,
                                                                Instrumentation.Target instrumentationTarget,
                                                                Assigner assigner) {
-            TypeDescription parameterType = target.getParameterTypes().get(targetParameterIndex);
-            if (source.isStatic() || !instrumentationTarget.getTypeDescription().isAssignableTo(parameterType)) {
+            if (source.isStatic() || !instrumentationTarget.getTypeDescription().isAssignableTo(target.getTypeDescription())) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             } else {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(annotation
                         .getValue(STRATEGY, AnnotationDescription.EnumerationValue.class).load(Instantiation.class)
-                        .proxyFor(parameterType, instrumentationTarget, annotation));
+                        .proxyFor(target.getTypeDescription(), instrumentationTarget, annotation));
             }
         }
     }

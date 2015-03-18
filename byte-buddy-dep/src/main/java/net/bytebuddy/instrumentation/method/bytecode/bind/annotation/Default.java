@@ -3,9 +3,9 @@ package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.ParameterDescription;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
-import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.auxiliary.TypeProxy;
 
 import java.lang.annotation.*;
@@ -47,18 +47,16 @@ public @interface Default {
 
         @Override
         public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<Default> annotation,
-                                                               int targetParameterIndex,
                                                                MethodDescription source,
-                                                               MethodDescription target,
+                                                               ParameterDescription target,
                                                                Instrumentation.Target instrumentationTarget,
                                                                Assigner assigner) {
-            TypeDescription parameterType = target.getParameterTypes().get(targetParameterIndex);
-            if (!parameterType.isInterface()) {
+            if (!target.getTypeDescription().isInterface()) {
                 throw new IllegalStateException(target + " uses the @Default annotation on a non-interface type");
-            } else if (source.isStatic() || !instrumentationTarget.getTypeDescription().getInterfaces().contains(parameterType)) {
+            } else if (source.isStatic() || !instrumentationTarget.getTypeDescription().getInterfaces().contains(target.getTypeDescription())) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             } else {
-                return new MethodDelegationBinder.ParameterBinding.Anonymous(new TypeProxy.ForDefaultMethod(parameterType,
+                return new MethodDelegationBinder.ParameterBinding.Anonymous(new TypeProxy.ForDefaultMethod(target.getTypeDescription(),
                         instrumentationTarget,
                         annotation.loadSilent().serializableProxy()));
             }

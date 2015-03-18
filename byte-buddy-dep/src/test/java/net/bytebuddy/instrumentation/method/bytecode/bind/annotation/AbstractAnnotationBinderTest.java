@@ -3,6 +3,8 @@ package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.ParameterDescription;
+import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import net.bytebuddy.instrumentation.type.TypeDescription;
@@ -32,7 +34,10 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
     protected T annotation;
 
     @Mock
-    protected MethodDescription source, target;
+    protected MethodDescription source;
+    @Mock
+    protected ParameterDescription target;
+
     @Mock
     protected Instrumentation.Target instrumentationTarget;
     @Mock
@@ -42,7 +47,10 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
     @Mock
     protected StackManipulation stackManipulation;
     @Mock
-    protected TypeList sourceTypeList, targetTypeList;
+    protected ParameterList sourceParameterList;
+
+    @Mock
+    protected TypeList sourceTypeList;
 
     protected AbstractAnnotationBinderTest(Class<T> annotationType) {
         this.annotationType = annotationType;
@@ -60,8 +68,8 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
         annotation = mock(annotationType);
         doReturn(annotationType).when(annotation).annotationType();
         annotationDescription = AnnotationDescription.ForLoadedAnnotation.of(annotation);
-        when(source.getParameterTypes()).thenReturn(sourceTypeList);
-        when(target.getParameterTypes()).thenReturn(targetTypeList);
+        when(source.getParameters()).thenReturn(sourceParameterList);
+        when(sourceParameterList.asTypeList()).thenReturn(sourceTypeList);
         when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean()))
                 .thenReturn(stackManipulation);
         when(instrumentationTarget.getTypeDescription()).thenReturn(instrumentedType);

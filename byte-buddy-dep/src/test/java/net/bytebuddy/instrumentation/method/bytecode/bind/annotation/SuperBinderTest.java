@@ -13,8 +13,6 @@ import static org.mockito.Mockito.when;
 
 public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
 
-    private static final int INDEX = 0;
-
     @Mock
     private TypeDescription targetType;
     @Mock
@@ -28,7 +26,7 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        when(targetTypeList.get(INDEX)).thenReturn(targetType);
+        when(target.getTypeDescription()).thenReturn(targetType);
         when(annotation.strategy()).thenReturn(instantiation);
         when(instantiation.proxyFor(targetType, instrumentationTarget, annotationDescription)).thenReturn(stackManipulation);
         when(annotation.constructorParameters()).thenReturn(new Class<?>[0]);
@@ -44,7 +42,7 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
         when(stackManipulation.isValid()).thenReturn(true);
         when(instrumentedType.isAssignableTo(targetType)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Super.Binder.INSTANCE
-                .bind(annotationDescription, INDEX, source, target, instrumentationTarget, assigner);
+                .bind(annotationDescription, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
         verify(instantiation).proxyFor(targetType, instrumentationTarget, annotationDescription);
     }
@@ -52,7 +50,7 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
     @Test
     public void testIllegalBinding() throws Exception {
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Super.Binder.INSTANCE
-                .bind(annotationDescription, INDEX, source, target, instrumentationTarget, assigner);
+                .bind(annotationDescription, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(false));
     }
 }

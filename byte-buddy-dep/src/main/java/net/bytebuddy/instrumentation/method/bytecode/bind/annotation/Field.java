@@ -11,6 +11,7 @@ import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
+import net.bytebuddy.instrumentation.method.ParameterDescription;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.method.bytecode.stack.Duplication;
@@ -211,16 +212,14 @@ public @interface Field {
 
         @Override
         public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<Field> annotation,
-                                                               int targetParameterIndex,
                                                                MethodDescription source,
-                                                               MethodDescription target,
+                                                               ParameterDescription target,
                                                                Instrumentation.Target instrumentationTarget,
                                                                Assigner assigner) {
-            TypeDescription parameterType = target.getParameterTypes().get(targetParameterIndex);
             AccessType accessType;
-            if (parameterType.equals(getterMethod.getDeclaringType())) {
+            if (target.getTypeDescription().equals(getterMethod.getDeclaringType())) {
                 accessType = AccessType.GETTER;
-            } else if (parameterType.equals(setterMethod.getDeclaringType())) {
+            } else if (target.getTypeDescription().equals(setterMethod.getDeclaringType())) {
                 accessType = AccessType.SETTER;
             } else {
                 throw new IllegalStateException(target + " uses a @Field annotation on an non-installed type");

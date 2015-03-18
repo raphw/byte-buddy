@@ -40,34 +40,34 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
 
     @Test(expected = IllegalStateException.class)
     public void testIllegalType() throws Exception {
-        when(targetTypeList.get(INDEX)).thenReturn(morphType);
+        when(target.getTypeDescription()).thenReturn(morphType);
         when(morphMethod.getDeclaringType()).thenReturn(mock(TypeDescription.class));
-        new Morph.Binder(morphMethod).bind(annotationDescription, 0, source, target, instrumentationTarget, assigner);
+        new Morph.Binder(morphMethod).bind(annotationDescription, source, target, instrumentationTarget, assigner);
     }
 
     @Test
     public void testSuperMethodCallInvalid() throws Exception {
-        when(targetTypeList.get(INDEX)).thenReturn(morphType);
+        when(target.getTypeDescription()).thenReturn(morphType);
         when(morphMethod.getDeclaringType()).thenReturn(morphType);
         doReturn(void.class).when(annotation).defaultTarget();
         when(instrumentationTarget.invokeSuper(source, Instrumentation.Target.MethodLookup.Default.EXACT))
                 .thenReturn(specialMethodInvocation);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = new Morph.Binder(morphMethod)
-                .bind(annotationDescription, 0, source, target, instrumentationTarget, assigner);
+                .bind(annotationDescription, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(false));
         verify(specialMethodInvocation).isValid();
     }
 
     @Test
     public void testSuperMethodCallValid() throws Exception {
-        when(targetTypeList.get(INDEX)).thenReturn(morphType);
+        when(target.getTypeDescription()).thenReturn(morphType);
         when(morphMethod.getDeclaringType()).thenReturn(morphType);
         doReturn(void.class).when(annotation).defaultTarget();
         when(instrumentationTarget.invokeSuper(source, Instrumentation.Target.MethodLookup.Default.EXACT))
                 .thenReturn(specialMethodInvocation);
         when(specialMethodInvocation.isValid()).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = new Morph.Binder(morphMethod)
-                .bind(annotationDescription, 0, source, target, instrumentationTarget, assigner);
+                .bind(annotationDescription, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
         verify(specialMethodInvocation).isValid();
     }
@@ -76,7 +76,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
     public void testDefaultMethodCallImplicitInvalid() throws Exception {
         when(source.getUniqueSignature()).thenReturn(FOO);
         when(instrumentedType.getInterfaces()).thenReturn(new TypeList.ForLoadedType(Foo.class));
-        when(targetTypeList.get(INDEX)).thenReturn(morphType);
+        when(target.getTypeDescription()).thenReturn(morphType);
         when(morphMethod.getDeclaringType()).thenReturn(morphType);
         when(annotation.defaultMethod()).thenReturn(true);
         doReturn(void.class).when(annotation).defaultTarget();
@@ -84,7 +84,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
         when(instrumentationTarget.invokeDefault(new TypeDescription.ForLoadedType(Foo.class), FOO))
                 .thenReturn(specialMethodInvocation);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = new Morph.Binder(morphMethod)
-                .bind(annotationDescription, 0, source, target, instrumentationTarget, assigner);
+                .bind(annotationDescription, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(false));
         verify(specialMethodInvocation).isValid();
     }
@@ -93,7 +93,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
     public void testDefaultMethodCallImplicitValid() throws Exception {
         when(source.getUniqueSignature()).thenReturn(FOO);
         when(instrumentedType.getInterfaces()).thenReturn(new TypeList.ForLoadedType(Foo.class));
-        when(targetTypeList.get(INDEX)).thenReturn(morphType);
+        when(target.getTypeDescription()).thenReturn(morphType);
         when(morphMethod.getDeclaringType()).thenReturn(morphType);
         when(annotation.defaultMethod()).thenReturn(true);
         doReturn(void.class).when(annotation).defaultTarget();
@@ -102,7 +102,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
                 .thenReturn(specialMethodInvocation);
         when(specialMethodInvocation.isValid()).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = new Morph.Binder(morphMethod)
-                .bind(annotationDescription, 0, source, target, instrumentationTarget, assigner);
+                .bind(annotationDescription, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
         verify(specialMethodInvocation).isValid();
     }
@@ -111,14 +111,14 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
     public void testDefaultMethodCallExplicitInvalid() throws Exception {
         when(source.getUniqueSignature()).thenReturn(FOO);
         when(instrumentedType.getInterfaces()).thenReturn(new TypeList.ForLoadedType(Foo.class));
-        when(targetTypeList.get(INDEX)).thenReturn(morphType);
+        when(target.getTypeDescription()).thenReturn(morphType);
         when(morphMethod.getDeclaringType()).thenReturn(morphType);
         when(annotation.defaultMethod()).thenReturn(true);
         doReturn(Foo.class).when(annotation).defaultTarget();
         when(instrumentationTarget.invokeDefault(new TypeDescription.ForLoadedType(Foo.class), FOO))
                 .thenReturn(specialMethodInvocation);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = new Morph.Binder(morphMethod)
-                .bind(annotationDescription, 0, source, target, instrumentationTarget, assigner);
+                .bind(annotationDescription, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(false));
         verify(specialMethodInvocation).isValid();
     }
@@ -127,7 +127,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
     public void testDefaultMethodCallExplicitValid() throws Exception {
         when(source.getUniqueSignature()).thenReturn(FOO);
         when(instrumentedType.getInterfaces()).thenReturn(new TypeList.ForLoadedType(Foo.class));
-        when(targetTypeList.get(INDEX)).thenReturn(morphType);
+        when(target.getTypeDescription()).thenReturn(morphType);
         when(morphMethod.getDeclaringType()).thenReturn(morphType);
         when(annotation.defaultMethod()).thenReturn(true);
         doReturn(Foo.class).when(annotation).defaultTarget();
@@ -135,7 +135,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
                 .thenReturn(specialMethodInvocation);
         when(specialMethodInvocation.isValid()).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = new Morph.Binder(morphMethod)
-                .bind(annotationDescription, 0, source, target, instrumentationTarget, assigner);
+                .bind(annotationDescription, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
         verify(specialMethodInvocation).isValid();
     }

@@ -13,8 +13,6 @@ import static org.mockito.Mockito.when;
 
 public class DefaultBinderTest extends AbstractAnnotationBinderTest<Default> {
 
-    private static final int INDEX = 0;
-
     @Mock
     private TypeDescription targetType;
 
@@ -29,7 +27,7 @@ public class DefaultBinderTest extends AbstractAnnotationBinderTest<Default> {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        when(targetTypeList.get(INDEX)).thenReturn(targetType);
+        when(target.getTypeDescription()).thenReturn(targetType);
         when(instrumentedType.getInterfaces()).thenReturn(interfaces);
     }
 
@@ -44,7 +42,7 @@ public class DefaultBinderTest extends AbstractAnnotationBinderTest<Default> {
         when(stackManipulation.isValid()).thenReturn(true);
         when(interfaces.contains(targetType)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Default.Binder.INSTANCE
-                .bind(annotationDescription, INDEX, source, target, instrumentationTarget, assigner);
+                .bind(annotationDescription, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
     }
 
@@ -52,12 +50,12 @@ public class DefaultBinderTest extends AbstractAnnotationBinderTest<Default> {
     public void testIllegalBinding() throws Exception {
         when(targetType.isInterface()).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Default.Binder.INSTANCE
-                .bind(annotationDescription, INDEX, source, target, instrumentationTarget, assigner);
+                .bind(annotationDescription, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(false));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testIllegalAnnotation() throws Exception {
-        Default.Binder.INSTANCE.bind(annotationDescription, INDEX, source, target, instrumentationTarget, assigner);
+        Default.Binder.INSTANCE.bind(annotationDescription, source, target, instrumentationTarget, assigner);
     }
 }

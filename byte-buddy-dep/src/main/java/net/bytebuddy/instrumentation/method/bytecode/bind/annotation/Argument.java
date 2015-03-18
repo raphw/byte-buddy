@@ -4,6 +4,7 @@ import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.ParameterDescription;
 import net.bytebuddy.instrumentation.method.bytecode.bind.ArgumentTypeResolver;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
@@ -146,23 +147,22 @@ public @interface Argument {
 
         @Override
         public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<Argument> annotation,
-                                                               int targetParameterIndex,
                                                                MethodDescription source,
-                                                               MethodDescription target,
+                                                               ParameterDescription target,
                                                                Instrumentation.Target instrumentationTarget,
                                                                Assigner assigner) {
             Argument argument = annotation.loadSilent();
             if (argument.value() < 0) {
                 throw new IllegalArgumentException(String.format("Argument annotation on %d's argument virtual " +
-                        "%s holds negative index", targetParameterIndex, target));
-            } else if (source.getParameterTypes().size() <= argument.value()) {
+                        "%s holds negative index", target.getIndex(), target));
+            } else if (source.getParameters().size() <= argument.value()) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }
-            return argument.bindingMechanic().makeBinding(source.getParameterTypes().get(argument.value()),
-                    target.getParameterTypes().get(targetParameterIndex),
+            return argument.bindingMechanic().makeBinding(source.getParameters().get(argument.value()).getTypeDescription(),
+                    target.getTypeDescription(),
                     argument.value(),
                     assigner,
-                    RuntimeType.Verifier.check(target, targetParameterIndex),
+                    RuntimeType.Verifier.check(target),
                     source.getParameterOffset(argument.value()));
         }
     }

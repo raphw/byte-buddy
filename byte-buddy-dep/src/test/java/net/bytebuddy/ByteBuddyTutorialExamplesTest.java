@@ -10,6 +10,7 @@ import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.instrumentation.*;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.ParameterDescription;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.*;
@@ -495,12 +496,11 @@ public class ByteBuddyTutorialExamplesTest {
 
         @Override
         public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<StringValue> annotation,
-                                                               int targetParameterIndex,
                                                                MethodDescription source,
-                                                               MethodDescription target,
+                                                               ParameterDescription target,
                                                                Instrumentation.Target instrumentationTarget,
                                                                Assigner assigner) {
-            if (!target.getParameterTypes().get(targetParameterIndex).represents(String.class)) {
+            if (!target.getTypeDescription().represents(String.class)) {
                 throw new IllegalStateException(target + " makes wrong use of StringValue");
             }
             StackManipulation constant = new TextConstant(annotation.loadSilent().value());

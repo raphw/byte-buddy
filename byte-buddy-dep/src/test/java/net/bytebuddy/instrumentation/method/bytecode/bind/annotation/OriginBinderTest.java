@@ -20,8 +20,6 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
 
     private static final String FOO = "foo";
 
-    private static final int INDEX = 0;
-
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
 
@@ -36,7 +34,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        when(targetTypeList.get(INDEX)).thenReturn(targetType);
+        when(target.getTypeDescription()).thenReturn(targetType);
     }
 
     @Override
@@ -49,7 +47,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
         when(targetType.getInternalName()).thenReturn(FOO);
         when(targetType.represents(Class.class)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
-                .bind(annotationDescription, INDEX, source, target, instrumentationTarget, assigner);
+                .bind(annotationDescription, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
         verify(instrumentationTarget).getOriginType();
     }
@@ -59,7 +57,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
         when(targetType.getInternalName()).thenReturn(FOO);
         when(targetType.represents(Method.class)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
-                .bind(annotationDescription, INDEX, source, target, instrumentationTarget, assigner);
+                .bind(annotationDescription, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
     }
 
@@ -68,7 +66,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
         when(targetType.getInternalName()).thenReturn(FOO);
         when(targetType.represents(String.class)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
-                .bind(annotationDescription, INDEX, source, target, instrumentationTarget, assigner);
+                .bind(annotationDescription, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
     }
 
@@ -76,10 +74,10 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     @JavaVersionRule.Enforce(7)
     public void testMethodHandleBinding() throws Exception {
         targetType = new TypeDescription.ForLoadedType(JavaType.METHOD_HANDLE.load());
-        when(targetTypeList.get(INDEX)).thenReturn(targetType);
+        when(target.getTypeDescription()).thenReturn(targetType);
         when(source.getDeclaringType()).thenReturn(mock(TypeDescription.class));
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
-                .bind(annotationDescription, INDEX, source, target, instrumentationTarget, assigner);
+                .bind(annotationDescription, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
     }
 
@@ -87,16 +85,16 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     @JavaVersionRule.Enforce(7)
     public void testMethodTypeBinding() throws Exception {
         targetType = new TypeDescription.ForLoadedType(JavaType.METHOD_TYPE.load());
-        when(targetTypeList.get(INDEX)).thenReturn(targetType);
+        when(target.getTypeDescription()).thenReturn(targetType);
         when(source.getDescriptor()).thenReturn(FOO);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
-                .bind(annotationDescription, INDEX, source, target, instrumentationTarget, assigner);
+                .bind(annotationDescription, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testIllegalBinding() throws Exception {
         when(targetType.getName()).thenReturn(FOO);
-        Origin.Binder.INSTANCE.bind(annotationDescription, INDEX, source, target, instrumentationTarget, assigner);
+        Origin.Binder.INSTANCE.bind(annotationDescription, source, target, instrumentationTarget, assigner);
     }
 }

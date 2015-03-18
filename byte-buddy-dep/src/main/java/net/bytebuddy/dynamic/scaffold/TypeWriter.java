@@ -75,6 +75,11 @@ public interface TypeWriter<T> {
         static class ForRedefinition implements Engine {
 
             /**
+             * Instructs the retention of a method in its original form if it is not redefined.
+             */
+            private static final MethodDescription RETAIN_METHOD = null;
+
+            /**
              * Representative of a {@link org.objectweb.asm.MethodVisitor} that is instructed to ignoring a result.
              */
             private static final MethodVisitor IGNORE_METHOD = null;
@@ -358,13 +363,9 @@ public interface TypeWriter<T> {
                                 injectedCode.getInjectorProxyMethod().getExceptionTypes().toInternalNames());
                     }
                     MethodDescription methodDescription = declarableMethods.remove(internalName + descriptor);
-                    return methodDescription == null
-                            // Ignored method or not existent for the instrumented type.
-                            ?
-                            super.visitMethod(modifiers, internalName, descriptor, genericSignature,
-                                    exceptionTypeInternalName)
-                            :
-                            redefine(methodDescription, (modifiers & Opcodes.ACC_ABSTRACT) != 0);
+                    return methodDescription == RETAIN_METHOD
+                            ? super.visitMethod(modifiers, internalName, descriptor, genericSignature, exceptionTypeInternalName)
+                            : redefine(methodDescription, (modifiers & Opcodes.ACC_ABSTRACT) != 0);
                 }
 
                 /**
@@ -393,12 +394,8 @@ public interface TypeWriter<T> {
                             methodDescription.getExceptionTypes().toInternalNames());
                     entry.getAttributeAppender().apply(methodVisitor, methodDescription);
                     return abstractOrigin
-                            ?
-                            new AttributeObtainingMethodVisitor(methodVisitor, entry.getByteCodeAppender(),
-                                    methodDescription)
-                            :
-                            new CodePreservingMethodVisitor(methodVisitor, entry.getByteCodeAppender(),
-                                    methodDescription);
+                            ? new AttributeObtainingMethodVisitor(methodVisitor, entry.getByteCodeAppender(), methodDescription)
+                            : new CodePreservingMethodVisitor(methodVisitor, entry.getByteCodeAppender(), methodDescription);
                 }
 
                 @Override

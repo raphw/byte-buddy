@@ -3,11 +3,11 @@ package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.ParameterDescription;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess;
-import net.bytebuddy.instrumentation.type.TypeDescription;
 
 import java.lang.annotation.*;
 
@@ -51,32 +51,27 @@ public @interface This {
 
         @Override
         public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<This> annotation,
-                                                               int targetParameterIndex,
                                                                MethodDescription source,
-                                                               MethodDescription target,
+                                                               ParameterDescription target,
                                                                Instrumentation.Target instrumentationTarget,
                                                                Assigner assigner) {
-            TypeDescription targetType = target.getParameterTypes().get(targetParameterIndex);
-            if (targetType.isPrimitive()) {
+            if (target.getTypeDescription().isPrimitive()) {
                 throw new IllegalStateException(String.format("The %d. argument virtual %s is a primitive type " +
-                        "and can never be bound to an instance", targetParameterIndex, target));
-            } else if (targetType.isArray()) {
+                        "and can never be bound to an instance", target.getIndex(), target));
+            } else if (target.getTypeDescription().isArray()) {
                 throw new IllegalStateException(String.format("The %d. argument virtual %s is an array type " +
-                        "and can never be bound to an instance", targetParameterIndex, target));
+                        "and can never be bound to an instance", target.getIndex(), target));
             } else if (source.isStatic()) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }
-            boolean runtimeType = RuntimeType.Verifier.check(target, targetParameterIndex);
-            StackManipulation thisAssignment = assigner.assign(instrumentationTarget.getTypeDescription(), targetType, runtimeType);
-            if (thisAssignment.isValid()) {
-                return new MethodDelegationBinder.ParameterBinding.Anonymous(
-                        new StackManipulation.Compound(
-                                MethodVariableAccess.REFERENCE.loadFromIndex(THIS_REFERENCE_INDEX),
-                                thisAssignment)
-                );
-            } else {
-                return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
-            }
+            StackManipulation thisAssignment = assigner.assign(instrumentationTarget.getTypeDescription(),
+                    target.getTypeDescription(),
+                    RuntimeType.Verifier.check(target));
+            return thisAssignment.isValid()
+                    ? new MethodDelegationBinder.ParameterBinding.Anonymous(new StackManipulation
+                    .Compound(MethodVariableAccess.REFERENCE.loadFromIndex(THIS_REFERENCE_INDEX), thisAssignment))
+                    : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
         }
     }
 }
+

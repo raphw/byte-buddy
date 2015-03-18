@@ -10,6 +10,7 @@ import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
+import net.bytebuddy.instrumentation.method.ParameterDescription;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.method.bytecode.stack.Duplication;
@@ -182,15 +183,13 @@ public @interface Morph {
 
         @Override
         public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<Morph> annotation,
-                                                               int targetParameterIndex,
                                                                MethodDescription source,
-                                                               MethodDescription target,
+                                                               ParameterDescription target,
                                                                Instrumentation.Target instrumentationTarget,
                                                                Assigner assigner) {
-            TypeDescription parameterType = target.getParameterTypes().get(targetParameterIndex);
-            if (!parameterType.equals(forwardingMethod.getDeclaringType())) {
+            if (!target.getTypeDescription().equals(forwardingMethod.getDeclaringType())) {
                 throw new IllegalStateException(String.format("The installed type %s for the @Morph annotation does not " +
-                        "equal the annotated parameter type on %s", parameterType, target));
+                        "equal the annotated parameter type on %s", target.getTypeDescription(), target));
             }
             Instrumentation.SpecialMethodInvocation specialMethodInvocation;
             TypeDescription typeDescription = annotation.getValue(DEFAULT_TARGET, TypeDescription.class);

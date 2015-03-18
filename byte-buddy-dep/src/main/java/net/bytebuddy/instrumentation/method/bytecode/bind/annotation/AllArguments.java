@@ -3,6 +3,7 @@ package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.ParameterDescription;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
@@ -112,20 +113,18 @@ public @interface AllArguments {
 
         @Override
         public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<AllArguments> annotation,
-                                                               int targetParameterIndex,
                                                                MethodDescription source,
-                                                               MethodDescription target,
+                                                               ParameterDescription target,
                                                                Instrumentation.Target instrumentationTarget,
                                                                Assigner assigner) {
-            TypeDescription targetType = target.getParameterTypes().get(targetParameterIndex);
-            if (!targetType.isArray()) {
+            if (!target.getTypeDescription().isArray()) {
                 throw new IllegalStateException("Expected an array type for all argument annotation on " + source);
             }
-            ArrayFactory arrayFactory = ArrayFactory.targeting(targetType.getComponentType());
-            List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(source.getParameterTypes().size());
+            ArrayFactory arrayFactory = ArrayFactory.targeting(target.getTypeDescription().getComponentType());
+            List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(source.getParameters().size());
             int offset = source.isStatic() ? 0 : 1;
-            boolean dynamicallyTyped = RuntimeType.Verifier.check(target, targetParameterIndex);
-            for (TypeDescription sourceParameter : source.getParameterTypes()) {
+            boolean dynamicallyTyped = RuntimeType.Verifier.check(target);
+            for (TypeDescription sourceParameter : source.getParameters().asTypeList()) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         MethodVariableAccess.forType(sourceParameter).loadFromIndex(offset),
                         assigner.assign(sourceParameter, arrayFactory.getComponentType(), dynamicallyTyped));

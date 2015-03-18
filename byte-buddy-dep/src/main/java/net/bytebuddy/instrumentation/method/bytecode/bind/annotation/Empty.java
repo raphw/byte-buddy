@@ -3,6 +3,7 @@ package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.ParameterDescription;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import net.bytebuddy.instrumentation.method.bytecode.stack.constant.DefaultValue;
@@ -35,13 +36,11 @@ public @interface Empty {
 
         @Override
         public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<Empty> annotation,
-                                                               int targetParameterIndex,
                                                                MethodDescription source,
-                                                               MethodDescription target,
+                                                               ParameterDescription target,
                                                                Instrumentation.Target instrumentationTarget,
                                                                Assigner assigner) {
-            return new MethodDelegationBinder.ParameterBinding.Anonymous(DefaultValue
-                    .of(target.getParameterTypes().get(targetParameterIndex)));
+            return new MethodDelegationBinder.ParameterBinding.Anonymous(DefaultValue.of(target.getTypeDescription()));
         }
     }
 }

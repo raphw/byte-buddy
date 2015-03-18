@@ -26,7 +26,7 @@ public class MethodParameterTypesMatcher<T extends MethodDescription> extends El
 
     @Override
     public boolean matches(T target) {
-        return parameterMatcher.matches(target.getParameterTypes());
+        return parameterMatcher.matches(target.getParameters().asTypeList());
     }
 
     @Override

@@ -36,7 +36,7 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        when(targetTypeList.get(0)).thenReturn(targetParameterType);
+        when(target.getTypeDescription()).thenReturn(targetParameterType);
         when(instrumentationTarget.invokeDefault(any(TypeDescription.class), any(String.class)))
                 .thenReturn(specialMethodInvocation);
     }
@@ -55,7 +55,7 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
         when(source.isSpecializableFor(interface1)).thenReturn(true);
         when(instrumentedType.getInterfaces()).thenReturn(new TypeList.Explicit(Arrays.asList(interface1, interface2)));
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = DefaultCall.Binder.INSTANCE
-                .bind(annotationDescription, 0, source, target, instrumentationTarget, assigner);
+                .bind(annotationDescription, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
         verify(instrumentationTarget).getTypeDescription();
         verify(instrumentationTarget).invokeDefault(interface1, FOO);
@@ -72,7 +72,7 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
         when(source.isSpecializableFor(interface2)).thenReturn(true);
         when(instrumentedType.getInterfaces()).thenReturn(new TypeList.Explicit(Arrays.asList(interface1, interface2)));
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = DefaultCall.Binder.INSTANCE
-                .bind(annotationDescription, 0, source, target, instrumentationTarget, assigner);
+                .bind(annotationDescription, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(false));
         verify(instrumentationTarget).getTypeDescription();
         verify(instrumentationTarget).invokeDefault(interface1, FOO);
@@ -86,7 +86,7 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
         doReturn(INTERFACE_TYPE).when(annotation).targetType();
         when(source.getUniqueSignature()).thenReturn(FOO);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = DefaultCall.Binder.INSTANCE
-                .bind(annotationDescription, 0, source, target, instrumentationTarget, assigner);
+                .bind(annotationDescription, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
         verify(instrumentationTarget).invokeDefault(new TypeDescription.ForLoadedType(INTERFACE_TYPE), FOO);
         verifyNoMoreInteractions(instrumentationTarget);
@@ -96,12 +96,12 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
     public void testNonInterfaceTarget() throws Exception {
         when(targetParameterType.represents(any(Class.class))).thenReturn(true);
         doReturn(NON_INTERFACE_TYPE).when(annotation).targetType();
-        DefaultCall.Binder.INSTANCE.bind(annotationDescription, 0, source, target, instrumentationTarget, assigner);
+        DefaultCall.Binder.INSTANCE.bind(annotationDescription, source, target, instrumentationTarget, assigner);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testIllegalAnnotatedValue() throws Exception {
-        DefaultCall.Binder.INSTANCE.bind(annotationDescription, 0, source, target, instrumentationTarget, assigner);
+        DefaultCall.Binder.INSTANCE.bind(annotationDescription, source, target, instrumentationTarget, assigner);
     }
 
     @Test

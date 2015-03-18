@@ -3,6 +3,7 @@ package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.ParameterDescription;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import net.bytebuddy.instrumentation.method.bytecode.stack.constant.*;
@@ -87,12 +88,11 @@ public @interface Origin {
 
         @Override
         public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<Origin> annotation,
-                                                               int targetParameterIndex,
                                                                MethodDescription source,
-                                                               MethodDescription target,
+                                                               ParameterDescription target,
                                                                Instrumentation.Target instrumentationTarget,
                                                                Assigner assigner) {
-            TypeDescription parameterType = target.getParameterTypes().get(targetParameterIndex);
+            TypeDescription parameterType = target.getTypeDescription();
             if (parameterType.represents(Class.class)) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(ClassConstant.of(instrumentationTarget.getOriginType()));
             } else if (parameterType.represents(Method.class)) {
@@ -106,7 +106,7 @@ public @interface Origin {
             } else if (JavaType.METHOD_TYPE.representedBy(parameterType)) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(new MethodTypeConstant(source));
             } else {
-                throw new IllegalStateException("The " + target + " method's " + targetParameterIndex +
+                throw new IllegalStateException("The " + target + " method's " + target.getIndex() +
                         " parameter is annotated with a Origin annotation with an argument not representing a Class" +
                         " Method, String, MethodType or MethodHandle type");
             }

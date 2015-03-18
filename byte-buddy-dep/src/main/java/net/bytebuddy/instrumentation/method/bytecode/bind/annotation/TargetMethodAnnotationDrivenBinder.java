@@ -3,6 +3,7 @@ package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.ParameterDescription;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.method.bytecode.stack.Removal;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
@@ -81,14 +82,11 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         }
         MethodBinding.Builder methodDelegationBindingBuilder = new MethodBinding.Builder(methodInvoker, target);
         Iterator<AnnotationDescription> defaults = defaultsProvider.makeIterator(instrumentationTarget, source, target);
-        for (int targetParameterIndex = 0;
-             targetParameterIndex < target.getParameterTypes().size();
-             targetParameterIndex++) {
+        for (ParameterDescription parameterDescription : target.getParameters()) {
             ParameterBinding<?> parameterBinding = delegationProcessor
-                    .handler(target.getParameterAnnotations().get(targetParameterIndex), defaults)
-                    .bind(targetParameterIndex,
-                            source,
-                            target,
+                    .handler(parameterDescription.getDeclaredAnnotations(), defaults)
+                    .bind(source,
+                            parameterDescription,
                             instrumentationTarget,
                             assigner);
             if (!parameterBinding.isValid() || !methodDelegationBindingBuilder.append(parameterBinding)) {
@@ -150,17 +148,16 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          * Creates a parameter binding for the given target parameter.
          *
          * @param annotation            The annotation that was cause for the delegation to this argument binder.
-         * @param targetParameterIndex  The index of the target method's parameter to be bound.
-         * @param source                The source method that is bound to the {@code target} method.
-         * @param target                Tge target method that is subject to be bound by the {@code source} method.
+         * @param source                The intercepted source method.
+         * @param target                Tge target parameter that is subject to be bound to
+         *                              intercepting the {@code source} method.
          * @param instrumentationTarget The target of the current instrumentation that is subject to this binding.
          * @param assigner              An assigner that can be used for applying the binding.
          * @return A parameter binding for the requested target method parameter.
          */
         ParameterBinding<?> bind(AnnotationDescription.Loadable<T> annotation,
-                                 int targetParameterIndex,
                                  MethodDescription source,
-                                 MethodDescription target,
+                                 ParameterDescription target,
                                  Instrumentation.Target instrumentationTarget,
                                  Assigner assigner);
     }
@@ -387,16 +384,14 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
             /**
              * Handles a parameter binding.
              *
-             * @param targetParameterIndex  The index of the target method's parameter to be bound.
-             * @param source                The source method that is bound to the {@code target} method.
-             * @param target                The target method that is subject to be bound by the {@code source} method.
+             * @param source                The intercepted source method.
+             * @param target                The target parameter that is subject to binding.
              * @param instrumentationTarget The target of the current instrumentation.
              * @param assigner              An assigner that can be used for applying the binding.
              * @return A parameter binding that reflects the given arguments.
              */
-            ParameterBinding<?> bind(int targetParameterIndex,
-                                     MethodDescription source,
-                                     MethodDescription target,
+            ParameterBinding<?> bind(MethodDescription source,
+                                     ParameterDescription target,
                                      Instrumentation.Target instrumentationTarget,
                                      Assigner assigner);
 
@@ -412,9 +407,8 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 INSTANCE;
 
                 @Override
-                public ParameterBinding<?> bind(int targetParameterIndex,
-                                                MethodDescription source,
-                                                MethodDescription target,
+                public ParameterBinding<?> bind(MethodDescription source,
+                                                ParameterDescription target,
                                                 Instrumentation.Target instrumentationTarget,
                                                 Assigner assigner) {
                     return ParameterBinding.Illegal.INSTANCE;
@@ -451,13 +445,11 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 }
 
                 @Override
-                public ParameterBinding<?> bind(int targetParameterIndex,
-                                                MethodDescription source,
-                                                MethodDescription target,
+                public ParameterBinding<?> bind(MethodDescription source,
+                                                ParameterDescription target,
                                                 Instrumentation.Target instrumentationTarget,
                                                 Assigner assigner) {
                     return parameterBinder.bind(annotation,
-                            targetParameterIndex,
                             source,
                             target,
                             instrumentationTarget,

@@ -1,6 +1,7 @@
 package net.bytebuddy.matcher;
 
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import org.junit.Before;
@@ -24,6 +25,9 @@ public class MethodParameterTypesMatcherTest extends AbstractElementMatcherTest<
     @Mock
     private TypeList typeList;
 
+    @Mock
+    private ParameterList parameterList;
+
     @SuppressWarnings("unchecked")
     public MethodParameterTypesMatcherTest() {
         super((Class<MethodParameterTypesMatcher<?>>) (Object) MethodParameterTypesMatcher.class, "parameters");
@@ -31,7 +35,8 @@ public class MethodParameterTypesMatcherTest extends AbstractElementMatcherTest<
 
     @Before
     public void setUp() throws Exception {
-        when(methodDescription.getParameterTypes()).thenReturn(typeList);
+        when(methodDescription.getParameters()).thenReturn(parameterList);
+        when(parameterList.asTypeList()).thenReturn(typeList);
     }
 
     @Test

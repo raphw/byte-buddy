@@ -4,6 +4,7 @@ import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
@@ -54,9 +55,8 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
 
     @Test(expected = IllegalStateException.class)
     public void testIllegalType() throws Exception {
-        when(targetTypeList.get(0)).thenReturn(mock(TypeDescription.class));
+        when(target.getTypeDescription()).thenReturn(mock(TypeDescription.class));
         new Field.Binder(getterMethod, setterMethod).bind(annotationDescription,
-                0,
                 source,
                 target,
                 instrumentationTarget,
@@ -65,18 +65,17 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
 
     @Test
     public void testGetterForImplicitNamedFieldInHierarchy() throws Exception {
-        when(targetTypeList.get(0)).thenReturn(getterType);
+        when(target.getTypeDescription()).thenReturn(getterType);
         doReturn(void.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(Field.BEAN_PROPERTY);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(fieldType);
-        when(source.getParameterTypes()).thenReturn(new TypeList.Empty());
+        when(source.getParameters()).thenReturn(new ParameterList.Empty());
         when(source.getName()).thenReturn("getFoo");
         when(source.getSourceCodeName()).thenReturn("getFoo");
         when(source.getInternalName()).thenReturn("getFoo");
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> binding = new Field.Binder(getterMethod, setterMethod).bind(annotationDescription,
-                0,
                 source,
                 target,
                 instrumentationTarget,
@@ -86,17 +85,16 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
 
     @Test
     public void testGetterForExplicitNamedFieldInHierarchy() throws Exception {
-        when(targetTypeList.get(0)).thenReturn(getterType);
+        when(target.getTypeDescription()).thenReturn(getterType);
         doReturn(void.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(FOO);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(fieldType);
-        when(source.getParameterTypes()).thenReturn(new TypeList.Empty());
+        when(source.getParameters()).thenReturn(new ParameterList.Empty());
         when(source.getName()).thenReturn("getFoo");
         when(source.getInternalName()).thenReturn("getFoo");
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> binding = new Field.Binder(getterMethod, setterMethod).bind(annotationDescription,
-                0,
                 source,
                 target,
                 instrumentationTarget,
@@ -106,18 +104,17 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
 
     @Test
     public void testGetterForImplicitNamedFieldInNamedType() throws Exception {
-        when(targetTypeList.get(0)).thenReturn(getterType);
+        when(target.getTypeDescription()).thenReturn(getterType);
         doReturn(Foo.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(Field.BEAN_PROPERTY);
         when(fieldDescription.getInternalName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(fieldType);
-        when(source.getParameterTypes()).thenReturn(new TypeList.Empty());
+        when(source.getParameters()).thenReturn(new ParameterList.Empty());
         when(source.getName()).thenReturn("getFoo");
         when(source.getSourceCodeName()).thenReturn("getFoo");
         when(source.getInternalName()).thenReturn("getFoo");
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> binding = new Field.Binder(getterMethod, setterMethod).bind(annotationDescription,
-                0,
                 source,
                 target,
                 instrumentationTarget,
@@ -127,7 +124,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
 
     @Test
     public void testGetterForExplicitNamedFieldInNamedType() throws Exception {
-        when(targetTypeList.get(0)).thenReturn(getterType);
+        when(target.getTypeDescription()).thenReturn(getterType);
         doReturn(Foo.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(FOO);
         when(fieldDescription.getInternalName()).thenReturn(FOO);
@@ -137,7 +134,6 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         when(source.getInternalName()).thenReturn("getFoo");
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> binding = new Field.Binder(getterMethod, setterMethod).bind(annotationDescription,
-                0,
                 source,
                 target,
                 instrumentationTarget,
@@ -147,17 +143,16 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
 
     @Test
     public void testSetterForImplicitNamedFieldInHierarchy() throws Exception {
-        when(targetTypeList.get(0)).thenReturn(setterType);
+        when(target.getTypeDescription()).thenReturn(setterType);
         doReturn(void.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(Field.BEAN_PROPERTY);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
-        when(source.getParameterTypes()).thenReturn(new TypeList.Explicit(Arrays.asList(fieldType)));
+        when(source.getParameters()).thenReturn(ParameterList.Explicit.latent(source, Arrays.asList(fieldType)));
         when(source.getSourceCodeName()).thenReturn("setFoo");
         when(source.getInternalName()).thenReturn("setFoo");
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> binding = new Field.Binder(getterMethod, setterMethod).bind(annotationDescription,
-                0,
                 source,
                 target,
                 instrumentationTarget,
@@ -167,17 +162,16 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
 
     @Test
     public void testSetterForExplicitNamedFieldInHierarchy() throws Exception {
-        when(targetTypeList.get(0)).thenReturn(setterType);
+        when(target.getTypeDescription()).thenReturn(setterType);
         doReturn(void.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(FOO);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
-        when(source.getParameterTypes()).thenReturn(new TypeList.Explicit(Arrays.asList(fieldType)));
+        when(source.getParameters()).thenReturn(ParameterList.Explicit.latent(source, Arrays.asList(fieldType)));
         when(source.getName()).thenReturn("setFoo");
         when(source.getInternalName()).thenReturn("setFoo");
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> binding = new Field.Binder(getterMethod, setterMethod).bind(annotationDescription,
-                0,
                 source,
                 target,
                 instrumentationTarget,
@@ -187,18 +181,17 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
 
     @Test
     public void testSetterForImplicitNamedFieldInNamedType() throws Exception {
-        when(targetTypeList.get(0)).thenReturn(setterType);
+        when(target.getTypeDescription()).thenReturn(setterType);
         doReturn(Foo.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(Field.BEAN_PROPERTY);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
-        when(source.getParameterTypes()).thenReturn(new TypeList.Explicit(Arrays.asList(fieldType)));
+        when(source.getParameters()).thenReturn(ParameterList.Explicit.latent(source, Arrays.asList(fieldType)));
         when(source.getName()).thenReturn("setFoo");
         when(source.getSourceCodeName()).thenReturn("setFoo");
         when(source.getInternalName()).thenReturn("setFoo");
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> binding = new Field.Binder(getterMethod, setterMethod).bind(annotationDescription,
-                0,
                 source,
                 target,
                 instrumentationTarget,
@@ -208,17 +201,16 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
 
     @Test
     public void testSetterForExplicitNamedFieldInNamedType() throws Exception {
-        when(targetTypeList.get(0)).thenReturn(setterType);
+        when(target.getTypeDescription()).thenReturn(setterType);
         doReturn(Foo.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(FOO);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
-        when(source.getParameterTypes()).thenReturn(new TypeList.Explicit(Arrays.asList(fieldType)));
+        when(source.getParameters()).thenReturn(ParameterList.Explicit.latent(source, Arrays.asList(fieldType)));
         when(source.getName()).thenReturn("setFoo");
         when(source.getInternalName()).thenReturn("setFoo");
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> binding = new Field.Binder(getterMethod, setterMethod).bind(annotationDescription,
-                0,
                 source,
                 target,
                 instrumentationTarget,

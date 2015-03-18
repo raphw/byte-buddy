@@ -1,6 +1,7 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.ParameterDescription;
 
 import java.lang.annotation.*;
 
@@ -48,14 +49,11 @@ public @interface RuntimeType {
         /**
          * Checks if a method parameter should be assigned by considering the run time type.
          *
-         * @param methodDescription The method of interest.
-         * @param parameterIndex    The index of the parameter of interest.
+         * @param parameterDescription The parameter description.
          * @return {@code true} if the runtime type should be considered for binding this parameter.
          */
-        public static boolean check(MethodDescription methodDescription, int parameterIndex) {
-            return methodDescription.getParameterAnnotations()
-                    .get(parameterIndex)
-                    .isAnnotationPresent(RuntimeType.class);
+        public static boolean check(ParameterDescription parameterDescription) {
+            return parameterDescription.getDeclaredAnnotations().isAnnotationPresent(RuntimeType.class);
         }
     }
 }
