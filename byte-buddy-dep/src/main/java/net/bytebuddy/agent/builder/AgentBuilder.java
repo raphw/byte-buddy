@@ -547,7 +547,7 @@ public interface AgentBuilder {
          * Invoked right before a successful transformation is applied.
          *
          * @param typeDescription The type that is being transformed.
-         * @param dynamicType The dynamic type that was created.
+         * @param dynamicType     The dynamic type that was created.
          */
         void onTransformation(TypeDescription typeDescription, DynamicType dynamicType);
 
@@ -681,18 +681,22 @@ public interface AgentBuilder {
          * This value is not a valid prefix.
          */
         protected static final String NO_NATIVE_PREFIX = "";
+
         /**
          * The name of the Byte Buddy agent class.
          */
         private static final String BYTE_BUDDY_AGENT_TYPE = "net.bytebuddy.agent.ByteBuddyAgent";
+
         /**
          * The name of the {@code ByteBuddyAgent} class's method for obtaining an instrumentation.
          */
         private static final String GET_INSTRUMENTATION_METHOD = "getInstrumentation";
+
         /**
          * Base for access to a reflective member to make the code more readable.
          */
         private static final Object STATIC_METHOD = null;
+
         /**
          * The value that is to be returned from a {@link java.lang.instrument.ClassFileTransformer} to indicate
          * that no class file transformation is to be applied.
@@ -1105,10 +1109,12 @@ public interface AgentBuilder {
                      * loader of these initializers is however irrelevant.
                      */
                     private static final ConcurrentMap<Nexus, Object> TYPE_INITIALIZERS = new ConcurrentHashMap<Nexus, Object>();
+
                     /**
                      * The name of a type for which a loaded type initializer is registered.
                      */
                     private final String name;
+
                     /**
                      * The class loader for which a loaded type initializer is registered.
                      */

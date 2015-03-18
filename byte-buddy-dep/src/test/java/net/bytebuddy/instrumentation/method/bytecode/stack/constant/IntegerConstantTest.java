@@ -24,11 +24,15 @@ import static org.mockito.Mockito.*;
 public class IntegerConstantTest {
 
     private final int value;
+
     private final PushType pushType;
+
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
 

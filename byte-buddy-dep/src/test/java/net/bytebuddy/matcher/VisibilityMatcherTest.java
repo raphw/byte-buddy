@@ -13,12 +13,13 @@ public class VisibilityMatcherTest extends AbstractElementMatcherTest<Visibility
 
     @Mock
     private TypeDescription typeDescription;
+
     @Mock
     private ByteCodeElement byteCodeElement;
 
     @SuppressWarnings("unchecked")
     public VisibilityMatcherTest() {
-        super((Class<? extends VisibilityMatcher<?>>) (Object) VisibilityMatcher.class, "isVisibleTo");
+        super((Class<? extends VisibilityMatcher<?>>) VisibilityMatcher.class, "isVisibleTo");
     }
 
     @Test

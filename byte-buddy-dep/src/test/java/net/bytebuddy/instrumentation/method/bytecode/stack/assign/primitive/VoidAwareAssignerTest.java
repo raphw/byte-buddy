@@ -24,10 +24,13 @@ public class VoidAwareAssignerTest {
 
     @Mock
     private TypeDescription sourceTypeDescription, targetTypeDescription;
+
     @Mock
     private Assigner chainedAssigner;
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
 

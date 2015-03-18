@@ -22,10 +22,13 @@ public class InstrumentationCompoundTest {
 
     @Mock
     private Instrumentation first, second;
+
     @Mock
     private InstrumentedType instrumentedType;
+
     @Mock
     private Instrumentation.Target instrumentationTarget;
+
     @Mock
     private ByteCodeAppender byteCodeAppender;
 

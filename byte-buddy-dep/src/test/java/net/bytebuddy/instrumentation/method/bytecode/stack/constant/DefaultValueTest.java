@@ -27,13 +27,18 @@ import static org.mockito.Mockito.*;
 public class DefaultValueTest {
 
     private final Class<?> type;
+
     private final int opcode;
+
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private TypeDescription typeDescription;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
 

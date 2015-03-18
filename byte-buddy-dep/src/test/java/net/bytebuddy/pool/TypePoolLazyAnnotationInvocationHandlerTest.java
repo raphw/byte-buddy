@@ -248,14 +248,17 @@ public class TypePoolLazyAnnotationInvocationHandlerTest {
     }
 
     public static @interface Foo {
+
         String foo();
     }
 
     public static @interface DefaultFoo {
+
         String foo() default FOO;
     }
 
     private static class FooWithException implements Foo {
+
         @Override
         public String foo() {
             throw new RuntimeException();
@@ -292,6 +295,7 @@ public class TypePoolLazyAnnotationInvocationHandlerTest {
     }
 
     private static class Other implements Annotation {
+
         @Override
         public Class<? extends Annotation> annotationType() {
             return Annotation.class;

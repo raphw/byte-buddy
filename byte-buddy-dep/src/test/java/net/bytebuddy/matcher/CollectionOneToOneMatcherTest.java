@@ -15,7 +15,9 @@ import static org.mockito.Mockito.*;
 public class CollectionOneToOneMatcherTest extends AbstractElementMatcherTest<CollectionOneToOneMatcher<?>> {
 
     private Iterable<Object> iterable;
+
     private Object first, second;
+
     @Mock
     private ElementMatcher<Object> firstMatcher, secondMatcher;
 

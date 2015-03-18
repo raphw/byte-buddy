@@ -22,9 +22,12 @@ public class MethodDelegationOriginTest extends AbstractInstrumentationTest {
     private static final String FOO = "foo", TYPE = "TYPE";
 
     private static final String ORIGIN_METHOD_HANDLE = "net.bytebuddy.test.precompiled.OriginMethodHandle";
+
     private static final String ORIGIN_METHOD_TYPE = "net.bytebuddy.test.precompiled.OriginMethodType";
+
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
+
     private ClassLoader classLoader;
 
     @Before

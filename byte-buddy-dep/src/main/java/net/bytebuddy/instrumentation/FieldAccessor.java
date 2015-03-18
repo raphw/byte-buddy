@@ -338,6 +338,7 @@ public abstract class FieldAccessor implements Instrumentation {
              * The target type for which a field should be accessed.
              */
             private final TypeDescription targetType;
+
             /**
              * The instrumented type onto which the field locator is to be applied.
              */

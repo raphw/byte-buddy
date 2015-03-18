@@ -17,12 +17,16 @@ public class InstrumentationForAbstractMethodTest {
 
     @Mock
     private InstrumentedType instrumentedType;
+
     @Mock
     private Instrumentation.Target instrumentationTarget;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private MethodDescription methodDescription;
 

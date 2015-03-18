@@ -780,6 +780,7 @@ public interface DynamicType {
                         return (long) value;
                     }
                 };
+
                 /**
                  * The minimum and maximum values for an {@code int} value for the represented primitive value.
                  */

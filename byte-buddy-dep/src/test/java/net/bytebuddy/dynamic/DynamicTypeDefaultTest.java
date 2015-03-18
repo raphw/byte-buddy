@@ -33,13 +33,18 @@ public class DynamicTypeDefaultTest {
     private static final String CLASS_FILE_EXTENSION = ".class";
 
     private static final String FOOBAR = "foo/bar", QUXBAZ = "qux/baz", BARBAZ = "bar/baz", FOO = "foo", BAR = "bar", TEMP = "tmp";
+
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
     private byte[] BINARY_FIRST = new byte[]{1, 2, 3}, BINARY_SECOND = new byte[]{4, 5, 6}, BINARY_THIRD = new byte[]{7, 8, 9};
+
     @Mock
     private LoadedTypeInitializer mainLoadedTypeInitializer, auxiliaryLoadedTypeInitializer;
+
     @Mock
     private DynamicType auxiliaryType;
+
     @Mock
     private TypeDescription typeDescription, auxiliaryTypeDescription;
 

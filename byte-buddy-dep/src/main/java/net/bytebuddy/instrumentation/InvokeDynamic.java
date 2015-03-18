@@ -40,22 +40,27 @@ public class InvokeDynamic implements Instrumentation {
      * The bootstrap method.
      */
     protected final MethodDescription bootstrapMethod;
+
     /**
      * The arguments that are provided to the bootstrap method.
      */
     protected final List<?> handleArguments;
+
     /**
      * The target provided that identifies the method to be bootstrapped.
      */
     protected final InvocationProvider invocationProvider;
+
     /**
      * A handler that handles the method return.
      */
     protected final TerminationHandler terminationHandler;
+
     /**
      * The assigner to be used.
      */
     protected final Assigner assigner;
+
     /**
      * {@code true} if the assigner should attempt dynamically-typed assignments.
      */
@@ -1020,6 +1025,7 @@ public class InvokeDynamic implements Instrumentation {
                  * The primitive type that can be stored on the constant pool.
                  */
                 private final TypeDescription primitiveType;
+
                 /**
                  * The wrapper type that is to be represented.
                  */

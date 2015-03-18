@@ -25,12 +25,17 @@ import static org.mockito.Mockito.*;
 public class MethodVariableAccessTest {
 
     private final TypeDescription typeDescription;
+
     private final int opcode;
+
     private final int size;
+
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
 

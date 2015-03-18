@@ -12,30 +12,37 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      * The class file version of Java 1.
      */
     public static final ClassFileVersion JAVA_V1 = new ClassFileVersion(Opcodes.V1_1);
+
     /**
      * The class file version of Java 2.
      */
     public static final ClassFileVersion JAVA_V2 = new ClassFileVersion(Opcodes.V1_2);
+
     /**
      * The class file version of Java 3.
      */
     public static final ClassFileVersion JAVA_V3 = new ClassFileVersion(Opcodes.V1_3);
+
     /**
      * The class file version of Java 4.
      */
     public static final ClassFileVersion JAVA_V4 = new ClassFileVersion(Opcodes.V1_4);
+
     /**
      * The class file version of Java 5.
      */
     public static final ClassFileVersion JAVA_V5 = new ClassFileVersion(Opcodes.V1_5);
+
     /**
      * The class file version of Java 6.
      */
     public static final ClassFileVersion JAVA_V6 = new ClassFileVersion(Opcodes.V1_6);
+
     /**
      * The class file version of Java 7.
      */
     public static final ClassFileVersion JAVA_V7 = new ClassFileVersion(Opcodes.V1_7);
+
     /**
      * The class file version of Java 8.
      */
@@ -45,6 +52,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      * The system property for this JVM's Java version.
      */
     private static final String JAVA_VERSION_PROPERTY = "java.version";
+
     /**
      * The version number that is represented by this class file version instance.
      */

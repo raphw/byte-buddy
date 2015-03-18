@@ -13,6 +13,7 @@ import static org.junit.Assert.assertNotEquals;
 public class FixedValueReferenceTest extends AbstractInstrumentationTest {
 
     private static final String BAR = "bar";
+
     private Bar bar;
 
     @Before

@@ -29,8 +29,10 @@ public class MethodTypeConstantTest {
 
     @Mock
     private MethodDescription methodDescription;
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
 

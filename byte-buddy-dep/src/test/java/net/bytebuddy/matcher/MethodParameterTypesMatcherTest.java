@@ -17,8 +17,10 @@ public class MethodParameterTypesMatcherTest extends AbstractElementMatcherTest<
 
     @Mock
     private ElementMatcher<? super List<? extends TypeDescription>> parameterMatcher;
+
     @Mock
     private MethodDescription methodDescription;
+
     @Mock
     private TypeList typeList;
 

@@ -30,21 +30,32 @@ import static org.mockito.Mockito.*;
 public class PrimitiveBoxingDelegateTest {
 
     private static final String VALUE_OF = "valueOf";
+
     private final Class<?> primitiveType;
+
     private final TypeDescription primitiveTypeDescription;
+
     private final TypeDescription referenceTypeDescription;
+
     private final String boxingMethodDescriptor;
+
     private final int sizeChange;
+
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
     @Mock
     private TypeDescription targetType;
+
     @Mock
     private Assigner chainedAssigner;
+
     @Mock
     private StackManipulation stackManipulation;
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
 

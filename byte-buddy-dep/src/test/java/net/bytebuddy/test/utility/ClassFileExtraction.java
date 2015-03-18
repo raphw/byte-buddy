@@ -13,6 +13,7 @@ import static org.hamcrest.core.Is.is;
 public class ClassFileExtraction {
 
     private static final int ASM_MANUAL = 0;
+
     private static final int CA = 0xCA, FE = 0xFE, BA = 0xBA, BE = 0xBE;
 
     public static byte[] extract(Class<?> type, ClassVisitorWrapper classVisitorWrapper) throws IOException {

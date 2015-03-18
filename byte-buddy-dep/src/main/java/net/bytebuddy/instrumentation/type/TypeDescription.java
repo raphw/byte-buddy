@@ -711,10 +711,12 @@ public interface TypeDescription extends ByteCodeElement {
          * The modifiers of any array type.
          */
         private static final int ARRAY_MODIFIERS = Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL | Opcodes.ACC_ABSTRACT;
+
         /**
          * The base component type which is itself not an array.
          */
         private final TypeDescription componentType;
+
         /**
          * The arity of this array.
          */

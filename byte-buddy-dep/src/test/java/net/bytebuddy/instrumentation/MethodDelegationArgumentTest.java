@@ -10,6 +10,7 @@ import static org.hamcrest.core.Is.is;
 public class MethodDelegationArgumentTest extends AbstractInstrumentationTest {
 
     private static final String FOO = "bar", QUX = "qux", BAZ = "baz";
+
     private static final int BAR = 42;
 
     @Test

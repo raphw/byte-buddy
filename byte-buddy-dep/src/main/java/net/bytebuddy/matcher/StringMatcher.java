@@ -10,6 +10,7 @@ public class StringMatcher extends ElementMatcher.Junction.AbstractBase<String> 
      * The text value to match against.
      */
     private final String value;
+
     /**
      * The mode to apply for matching the given value against the matcher's input.
      */

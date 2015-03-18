@@ -18,7 +18,9 @@ import static org.mockito.Mockito.*;
 public class FieldAccessorPreparationTest {
 
     private static final String FOO = "foo";
+
     private static final int NO_MODIFIERS = 0;
+
     private static final Class<?> TYPE = Void.class;
 
     @Rule

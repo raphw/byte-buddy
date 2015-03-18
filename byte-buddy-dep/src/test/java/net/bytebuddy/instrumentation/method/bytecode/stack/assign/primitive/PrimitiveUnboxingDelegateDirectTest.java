@@ -31,20 +31,30 @@ import static org.mockito.Mockito.*;
 public class PrimitiveUnboxingDelegateDirectTest {
 
     private final Class<?> primitiveType;
+
     private final Class<?> wrapperType;
+
     private final String unboxingMethodName;
+
     private final String unboxingMethodDescriptor;
+
     private final int sizeChange;
+
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
     @Mock
     private TypeDescription primitiveTypeDescription, wrapperTypeDescription;
+
     @Mock
     private Assigner chainedAssigner;
+
     @Mock
     private StackManipulation stackManipulation;
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
 

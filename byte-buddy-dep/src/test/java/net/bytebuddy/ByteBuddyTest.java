@@ -33,30 +33,43 @@ import static org.mockito.Mockito.*;
 public class ByteBuddyTest {
 
     private static final int MASK = Opcodes.ACC_PUBLIC;
+
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
     @Mock
     private TypeAttributeAppender typeAttributeAppender;
+
     @Mock
     private BridgeMethodResolver.Factory bridgeMethodResolverFactory;
+
     @Mock
     private ClassFileVersion classFileVersion;
+
     @Mock
     private ClassVisitorWrapper classVisitorWrapper;
+
     @Mock
     private FieldAttributeAppender.Factory fieldAttributeAppenderFactory;
+
     @Mock
     private MethodAttributeAppender.Factory methodAttributeAppenderFactory;
+
     @Mock
     private ElementMatcher<? super MethodDescription> methodMatcher;
+
     @Mock
     private TypeDescription typeDescription;
+
     @Mock
     private MethodLookupEngine.Factory methodLookupEngineFactory;
+
     @Mock
     private ModifierContributor.ForType modifierContributorForType;
+
     @Mock
     private NamingStrategy.Unbound namingStrategy;
+
     @Mock
     private Instrumentation instrumentation;
 

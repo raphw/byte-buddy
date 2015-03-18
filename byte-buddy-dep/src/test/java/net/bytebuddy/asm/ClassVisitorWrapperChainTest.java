@@ -19,6 +19,7 @@ public class ClassVisitorWrapperChainTest {
 
     @Mock
     private ClassVisitorWrapper first, prepend, append;
+
     @Mock
     private ClassVisitor classVisitor;
 

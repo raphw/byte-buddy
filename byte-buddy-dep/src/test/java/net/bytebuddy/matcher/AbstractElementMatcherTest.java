@@ -9,7 +9,9 @@ import org.junit.rules.TestRule;
 public abstract class AbstractElementMatcherTest<T extends ElementMatcher<?>> {
 
     private final Class<? extends T> type;
+
     private final String startsWith;
+
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
 

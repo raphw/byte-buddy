@@ -14,7 +14,9 @@ import java.io.Writer;
 public class DebuggingWrapper implements ClassVisitorWrapper {
 
     private final PrintWriter printWriter;
+
     private final Printer printer;
+
     public DebuggingWrapper(Writer writer, Printer printer) {
         printWriter = new PrintWriter(writer);
         this.printer = printer;

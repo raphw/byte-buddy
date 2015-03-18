@@ -33,12 +33,16 @@ public class MethodHandleConstantTest {
 
     @Mock
     private MethodDescription methodDescription;
+
     @Mock
     private FieldDescription fieldDescription;
+
     @Mock
     private TypeDescription typeDescription;
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
 

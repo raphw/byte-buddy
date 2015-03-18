@@ -24,14 +24,20 @@ import static org.mockito.Mockito.*;
 public class PrimitiveTypeAwareAssignerPrimitiveTest {
 
     private final Class<?> sourceType;
+
     private final Class<?> targetType;
+
     private final boolean assignable;
+
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
     @Mock
     private TypeDescription sourceTypeDescription, targetTypeDescription;
+
     @Mock
     private Assigner chainedAssigner;
+
     private Assigner primitiveAssigner;
 
     public PrimitiveTypeAwareAssignerPrimitiveTest(Class<?> sourceType,

@@ -25,11 +25,15 @@ import static org.mockito.Mockito.*;
 public class DoubleConstantOpcodeTest {
 
     private final double value;
+
     private final int opcode;
+
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
 

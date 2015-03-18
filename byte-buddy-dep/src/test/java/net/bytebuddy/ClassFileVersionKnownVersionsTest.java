@@ -15,6 +15,7 @@ import static org.hamcrest.core.Is.is;
 public class ClassFileVersionKnownVersionsTest {
 
     private final int javaVersion;
+
     private final int byteCodeVersion;
 
     public ClassFileVersionKnownVersionsTest(int javaVersion, int byteCodeVersion) {

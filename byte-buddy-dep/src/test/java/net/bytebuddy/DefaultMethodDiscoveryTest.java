@@ -22,14 +22,18 @@ public class DefaultMethodDiscoveryTest {
     private static final String DEFAULT_METHOD_INTERFACE = "net.bytebuddy.test.precompiled.SingleDefaultMethodInterface";
 
     private static final Object STATIC_FIELD = null;
+
     private static final String INTERFACE_STATIC_FIELD_NAME = "FOO";
 
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
 
     private ClassLoader classLoader;
+
     private Object interfaceMarker;
+
     private Class<?> interfaceType;
+
     private Method interfaceMethod;
 
     @Before

@@ -12,8 +12,10 @@ import static org.mockito.Mockito.*;
 public class NameMatcherTest extends AbstractElementMatcherTest<NameMatcher<?>> {
 
     private static final String FOO = "foo";
+
     @Mock
     private ByteCodeElement byteCodeElement;
+
     @Mock
     private ElementMatcher<String> nameMatcher;
 

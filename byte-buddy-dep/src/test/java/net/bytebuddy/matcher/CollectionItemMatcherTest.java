@@ -13,7 +13,9 @@ import static org.mockito.Mockito.*;
 public class CollectionItemMatcherTest extends AbstractElementMatcherTest<CollectionItemMatcher<?>> {
 
     private Iterable<Object> iterable;
+
     private Object first, second;
+
     @Mock
     private ElementMatcher<Object> elementMatcher;
 

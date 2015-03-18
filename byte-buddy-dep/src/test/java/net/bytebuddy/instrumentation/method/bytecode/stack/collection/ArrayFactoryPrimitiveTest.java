@@ -15,7 +15,9 @@ import static org.mockito.Mockito.verify;
 public class ArrayFactoryPrimitiveTest extends AbstractArrayFactoryTest {
 
     private final Class<?> primitiveType;
+
     private final int createOpcode;
+
     private final int storeOpcode;
 
     public ArrayFactoryPrimitiveTest(Class<?> primitiveType, int createOpcode, int storeOpcode) {

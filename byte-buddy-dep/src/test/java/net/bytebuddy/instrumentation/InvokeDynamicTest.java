@@ -23,23 +23,35 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class InvokeDynamicTest extends AbstractInstrumentationTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
+
     private static final boolean BOOLEAN = true;
+
     private static final byte BYTE = 42;
+
     private static final short SHORT = 42;
+
     private static final char CHARACTER = 42;
+
     private static final int INTEGER = 42;
+
     private static final long LONG = 42L;
+
     private static final float FLOAT = 42f;
+
     private static final double DOUBLE = 42d;
 
     private static final String STANDARD_ARGUMENT_BOOTSTRAP = "net.bytebuddy.test.precompiled.StandardArgumentBootstrap";
+
     private static final String PARAMETER_BOOTSTRAP = "net.bytebuddy.test.precompiled.ParameterBootstrap";
+
     private static final String ARGUMENT_BOOTSTRAP = "net.bytebuddy.test.precompiled.ArgumentBootstrap";
 
     private static final String BOOTSTRAP_EXPLICIT_ARGUMENTS = "bootstrapExplicitArguments";
+
     private static final String BOOTSTRAP_ARRAY_ARGUMENTS = "bootstrapArrayArguments";
 
     private static final String ARGUMENTS_FIELD_NAME = "arguments";
+
     private static final String BOOTSTRAP = "bootstrap";
 
     @Rule

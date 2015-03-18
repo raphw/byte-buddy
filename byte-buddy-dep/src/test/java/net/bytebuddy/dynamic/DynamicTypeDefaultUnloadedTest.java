@@ -31,12 +31,16 @@ public class DynamicTypeDefaultUnloadedTest {
 
     @Mock
     private LoadedTypeInitializer mainLoadedTypeInitializer, auxiliaryLoadedTypeInitializer;
+
     @Mock
     private DynamicType auxiliaryType;
+
     @Mock
     private ClassLoader classLoader;
+
     @Mock
     private ClassLoadingStrategy classLoadingStrategy;
+
     @Mock
     private TypeDescription typeDescription, auxiliaryTypeDescription;
 

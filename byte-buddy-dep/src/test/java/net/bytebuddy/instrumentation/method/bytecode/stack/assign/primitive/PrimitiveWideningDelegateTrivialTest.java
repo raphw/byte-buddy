@@ -25,13 +25,18 @@ import static org.mockito.Mockito.*;
 public class PrimitiveWideningDelegateTrivialTest {
 
     private final Class<?> sourceType;
+
     private final Class<?> targetType;
+
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
     @Mock
     private TypeDescription sourceTypeDescription, targetTypeDescription;
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
 

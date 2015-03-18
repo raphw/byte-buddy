@@ -36,7 +36,9 @@ import static org.mockito.Mockito.when;
 public class SuperMethodCallOtherTest extends AbstractInstrumentationTest {
 
     private static final String SINGLE_DEFAULT_METHOD = "net.bytebuddy.test.precompiled.SingleDefaultMethodInterface";
+
     private static final String SINGLE_DEFAULT_METHOD_CLASS = "net.bytebuddy.test.precompiled.SingleDefaultMethodClass";
+
     private static final String CONFLICTING_INTERFACE = "net.bytebuddy.test.precompiled.SingleDefaultMethodConflictingInterface";
 
     private static final String FOO = "foo";
@@ -49,18 +51,25 @@ public class SuperMethodCallOtherTest extends AbstractInstrumentationTest {
 
     @Mock
     private InstrumentedType instrumentedType;
+
     @Mock
     private TypeDescription typeDescription, superType, returnType, declaringType;
+
     @Mock
     private Instrumentation.Target instrumentationTarget;
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
+
     @Mock
     private MethodDescription methodDescription;
+
     @Mock
     private MethodList superTypeMethods;
+
     @Mock
     private TypeList methodParameters;
 

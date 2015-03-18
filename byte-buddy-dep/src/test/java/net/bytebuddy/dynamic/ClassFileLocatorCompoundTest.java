@@ -21,6 +21,7 @@ public class ClassFileLocatorCompoundTest {
 
     @Mock
     private ClassFileLocator classFileLocator, otherClassFileLocator;
+
     @Mock
     private ClassFileLocator.Resolution legal, illegal;
 

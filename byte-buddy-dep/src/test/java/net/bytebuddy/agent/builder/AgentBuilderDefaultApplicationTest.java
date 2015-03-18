@@ -94,6 +94,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Retention(RetentionPolicy.RUNTIME)
     private static @interface ShouldRebase {
+
     }
 
     private static class FooTransformer implements AgentBuilder.Transformer {

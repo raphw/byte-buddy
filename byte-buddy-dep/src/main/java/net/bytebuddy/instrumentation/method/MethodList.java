@@ -109,5 +109,6 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
      * An implementation of an empty method list.
      */
     static class Empty extends FilterableList.Empty<MethodDescription, MethodList> implements MethodList {
+
     }
 }

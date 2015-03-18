@@ -23,8 +23,10 @@ public class InstrumentationTargetMethodLookupDefaultTest {
 
     @Mock
     private MethodDescription methodDescription;
+
     @Mock
     private Map<String, MethodDescription> invokableMethods;
+
     @Mock
     private BridgeMethodResolver bridgeMethodResolver;
 

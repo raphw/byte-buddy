@@ -10,6 +10,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class MethodDelegationBindingPriorityTest extends AbstractInstrumentationTest {
 
     private static final String FOO = "FOO", BAR = "bar";
+
     private static final double PRIORITY = 10d;
 
     @Test

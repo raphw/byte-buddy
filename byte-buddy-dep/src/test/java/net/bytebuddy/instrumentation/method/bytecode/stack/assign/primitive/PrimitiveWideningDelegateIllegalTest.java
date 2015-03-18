@@ -24,11 +24,15 @@ import static org.mockito.Mockito.*;
 public class PrimitiveWideningDelegateIllegalTest {
 
     private final TypeDescription sourceTypeDescription;
+
     private final TypeDescription targetTypeDescription;
+
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
 

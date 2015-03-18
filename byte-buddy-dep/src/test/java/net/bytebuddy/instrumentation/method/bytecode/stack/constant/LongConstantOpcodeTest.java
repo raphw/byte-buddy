@@ -24,11 +24,15 @@ import static org.mockito.Mockito.*;
 public class LongConstantOpcodeTest {
 
     private final long value;
+
     private final int opcode;
+
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
 

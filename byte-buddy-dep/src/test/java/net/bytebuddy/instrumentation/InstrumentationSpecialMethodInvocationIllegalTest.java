@@ -19,6 +19,7 @@ public class InstrumentationSpecialMethodInvocationIllegalTest {
 
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
 

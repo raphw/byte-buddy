@@ -9,6 +9,7 @@ import static org.hamcrest.core.Is.is;
 public abstract class AbstractModifierContributorTest {
 
     protected final ModifierContributor modifierContributor;
+
     protected final int expectedModifier;
 
     public AbstractModifierContributorTest(ModifierContributor modifierContributor, int expectedModifier) {

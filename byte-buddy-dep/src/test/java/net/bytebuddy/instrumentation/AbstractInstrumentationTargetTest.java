@@ -37,14 +37,19 @@ public abstract class AbstractInstrumentationTargetTest {
 
     @Mock
     protected MethodLookupEngine.Finding finding;
+
     @Mock
     protected TypeDescription instrumentedType, methodType, returnType, defaultType;
+
     @Mock
     protected BridgeMethodResolver.Factory bridgeMethodResolverFactory;
+
     @Mock
     protected BridgeMethodResolver bridgeMethodResolver;
+
     @Mock
     protected Instrumentation.Target.MethodLookup methodLookup;
+
     @Mock
     protected MethodDescription invokableMethod, defaultMethod;
 

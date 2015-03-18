@@ -37,6 +37,7 @@ public class CallTraceable {
     protected static class MethodCall {
 
         public final String name;
+
         public final Object arguments[];
 
         public MethodCall(String name, Object... arguments) {

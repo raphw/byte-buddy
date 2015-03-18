@@ -19,8 +19,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class ClassLoadingStrategyDefaultProtectionDomainWrapperTest {
 
     private ClassLoader classLoader;
+
     private TypeDescription typeDescription;
+
     private Map<TypeDescription, byte[]> binaryRepresentations;
+
     private ProtectionDomain protectionDomain;
 
     @Before

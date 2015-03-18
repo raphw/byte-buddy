@@ -46,43 +46,62 @@ public class InstrumentationContextDefaultTest {
 
     @Mock
     private TypeDescription instrumentedType, firstDescription, secondDescription;
+
     @Mock
     private InstrumentedType.TypeInitializer typeInitializer;
+
     @Mock
     private ClassFileVersion classFileVersion;
+
     @Mock
     private ClassVisitor classVisitor;
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private FieldVisitor fieldVisitor;
+
     @Mock
     private TypeWriter.MethodPool methodPool;
+
     @Mock
     private TypeWriter.MethodPool.Entry entry;
+
     @Mock
     private Instrumentation.Context.ExtractableView.InjectedCode injectedCode;
+
     @Mock
     private AuxiliaryType auxiliaryType, otherAuxiliaryType;
+
     @Mock
     private DynamicType firstDynamicType, secondDynamicType;
+
     @Mock
     private TypeDescription firstFieldType, secondFieldType;
+
     @Mock
     private StackManipulation firstFieldValue, secondFieldValue, injectedCodeAppender, typeInitializerAppender;
+
     @Mock
     private MethodAttributeAppender attributeAppender;
+
     @Mock
     private ByteCodeAppender byteCodeAppender;
+
     @Mock
     private Instrumentation.SpecialMethodInvocation firstSpecialInvocation, secondSpecialInvocation;
+
     @Mock
     private MethodDescription firstSpecialMethod, secondSpecialMethod;
+
     @Mock
     private TypeDescription firstSpecialType, secondSpecialType, firstSpecialReturnType, secondSpecialReturnType,
             firstSpecialParameterType, secondSpecialParameterType, firstSpecialExceptionType, secondSpecialExceptionType;
+
     @Mock
     private FieldDescription firstField, secondField;
+
     @Mock
     private TypeDescription firstFieldDeclaringType, secondFieldDeclaringType;
 

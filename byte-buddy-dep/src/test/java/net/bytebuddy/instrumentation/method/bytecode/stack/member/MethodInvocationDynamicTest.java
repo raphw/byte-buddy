@@ -32,14 +32,19 @@ public class MethodInvocationDynamicTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
     @Mock
     private MethodDescription methodDescription;
+
     @Mock
     private TypeDescription returnType, declaringType, firstType, secondType;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private Object argument;
 

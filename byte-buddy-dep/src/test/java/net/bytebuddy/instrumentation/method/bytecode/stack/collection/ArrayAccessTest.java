@@ -24,11 +24,15 @@ import static org.mockito.Mockito.*;
 public class ArrayAccessTest {
 
     private final TypeDescription typeDescription;
+
     private final int loadOpcode, storeOpcode;
+
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
 

@@ -29,15 +29,25 @@ public class MethodCallTypeTest extends AbstractInstrumentationTest {
     private static final String FOO = "foo";
 
     private static final String STRING_VALUE = "foo";
+
     private static final boolean BOOLEAN_VALUE = true;
+
     private static final byte BYTE_VALUE = 42;
+
     private static final short SHORT_VALUE = 42;
+
     private static final char CHAR_VALUE = '@';
+
     private static final int INT_VALUE = 42;
+
     private static final long LONG_VALUE = 42L;
+
     private static final float FLOAT_VALUE = 42f;
+
     private static final double DOUBLE_VALUE = 42d;
+
     private static final Object NULL_CONSTANT = null;
+
     private static final Object REFERENCE_VALUE = new Object();
 
     private final Object value;
@@ -45,8 +55,10 @@ public class MethodCallTypeTest extends AbstractInstrumentationTest {
     private final boolean definesFieldReference;
 
     private final boolean definesFieldConstantPool;
+
     @Rule
     public TestRule methodRule = new MockitoRule(this);
+
     @Mock
     private Assigner nonAssigner;
 

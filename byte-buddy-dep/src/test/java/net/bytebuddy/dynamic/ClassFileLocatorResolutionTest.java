@@ -74,5 +74,6 @@ public class ClassFileLocatorResolutionTest {
     }
 
     private static class Foo {
+
     }
 }

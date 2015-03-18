@@ -18,29 +18,51 @@ import static org.junit.Assert.assertNotEquals;
 public class SuperMethodCallTest extends AbstractInstrumentationTest {
 
     private static final String OBJECT_METHOD = "reference";
+
     private static final String BOOLEAN_METHOD = "aBoolean";
+
     private static final String BYTE_METHOD = "aByte";
+
     private static final String SHORT_METHOD = "aShort";
+
     private static final String CHAR_METHOD = "aChar";
+
     private static final String INT_METHOD = "aInt";
+
     private static final String LONG_METHOD = "aLong";
+
     private static final String FLOAT_METHOD = "aFloat";
+
     private static final String DOUBLE_METHOD = "aDouble";
+
     private static final String VOID_METHOD = "aVoid";
+
     private static final String PARAMETERS_METHOD = "parameters";
 
     private static final String STRING_VALUE = "foo";
+
     private static final boolean BOOLEAN_VALUE = true;
+
     private static final byte BYTE_VALUE = 42;
+
     private static final short SHORT_VALUE = 42;
+
     private static final char CHAR_VALUE = '@';
+
     private static final int INT_VALUE = 42;
+
     private static final long LONG_VALUE = 42L;
+
     private static final float FLOAT_VALUE = 42f;
+
     private static final double DOUBLE_VALUE = 42d;
+
     private final Matcher<?> matcher;
+
     private final String methodName;
+
     private final Class<?>[] methodParameterTypes;
+
     private final Object[] methodArguments;
 
     public SuperMethodCallTest(Matcher<?> matcher,

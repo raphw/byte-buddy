@@ -25,17 +25,25 @@ import static org.mockito.Mockito.*;
 public class PrimitiveTypeAwareAssignerImplicitUnboxingTest {
 
     private final Class<?> sourceType;
+
     private final Class<?> wrapperType;
+
     private final Class<?> targetType;
+
     private final boolean assignable;
+
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
     @Mock
     private TypeDescription sourceTypeDescription, targetTypeDescription;
+
     @Mock
     private Assigner chainedAssigner;
+
     @Mock
     private StackManipulation chainedStackManipulation;
+
     private Assigner primitiveAssigner;
 
     public PrimitiveTypeAwareAssignerImplicitUnboxingTest(Class<?> sourceType,

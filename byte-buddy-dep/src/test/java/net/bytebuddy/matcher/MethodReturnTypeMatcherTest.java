@@ -14,14 +14,16 @@ public class MethodReturnTypeMatcherTest extends AbstractElementMatcherTest<Meth
 
     @Mock
     private ElementMatcher<? super TypeDescription> typeMatcher;
+
     @Mock
     private TypeDescription returnType;
+
     @Mock
     private MethodDescription methodDescription;
 
     @SuppressWarnings("unchecked")
     public MethodReturnTypeMatcherTest() {
-        super((Class<? extends MethodReturnTypeMatcher<?>>) (Object) MethodReturnTypeMatcher.class, "returns");
+        super((Class<? extends MethodReturnTypeMatcher<?>>) MethodReturnTypeMatcher.class, "returns");
     }
 
     @Before

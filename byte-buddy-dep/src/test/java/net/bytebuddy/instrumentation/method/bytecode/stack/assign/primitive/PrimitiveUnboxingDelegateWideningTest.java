@@ -28,20 +28,31 @@ import static org.mockito.Mockito.*;
 public class PrimitiveUnboxingDelegateWideningTest {
 
     private final Class<?> primitiveType;
+
     private final Class<?> referenceType;
+
     private final String unboxingMethodName;
+
     private final String unboxingMethodDescriptor;
+
     private final int wideningOpcode;
+
     private final int sizeChange;
+
     private final int interimMaximum;
+
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
     @Mock
     private TypeDescription referenceTypeDescription, primitiveTypeDescription;
+
     @Mock
     private Assigner chainedAssigner;
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
 

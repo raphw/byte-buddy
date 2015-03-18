@@ -77,6 +77,7 @@ public class TypePoolLazyAnnotationListTest {
 
     @Retention(RetentionPolicy.RUNTIME)
     private static @interface Foo {
+
     }
 
     @Inherited
@@ -88,5 +89,6 @@ public class TypePoolLazyAnnotationListTest {
     @Foo
     @Bar
     public static class Carrier {
+
     }
 }

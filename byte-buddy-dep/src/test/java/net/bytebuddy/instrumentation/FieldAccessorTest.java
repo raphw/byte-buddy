@@ -26,33 +26,57 @@ public class FieldAccessorTest<T extends CallTraceable,
         Y extends CallTraceable> extends AbstractInstrumentationTest {
 
     private static final String FOO = "foo";
+
     private static final String GET = "get", SET = "set";
+
     private static final Object STATIC_FIELD = null;
 
     private static final String STRING_VALUE = "qux";
+
     private static final boolean BOOLEAN_VALUE = true;
+
     private static final byte BYTE_VALUE = 42;
+
     private static final short SHORT_VALUE = 42;
+
     private static final char CHAR_VALUE = '@';
+
     private static final int INT_VALUE = 42;
+
     private static final long LONG_VALUE = 42L;
+
     private static final float FLOAT_VALUE = 42f;
+
     private static final double DOUBLE_VALUE = 42d;
 
     private static final String STRING_DEFAULT_VALUE = "baz";
+
     private static final boolean BOOLEAN_DEFAULT_VALUE = false;
+
     private static final byte BYTE_DEFAULT_VALUE = 0;
+
     private static final short SHORT_DEFAULT_VALUE = 0;
+
     private static final char CHAR_DEFAULT_VALUE = 0;
+
     private static final int INT_DEFAULT_VALUE = 0;
+
     private static final long LONG_DEFAULT_VALUE = 0L;
+
     private static final float FLOAT_DEFAULT_VALUE = 0f;
+
     private static final double DOUBLE_DEFAULT_VALUE = 0d;
+
     private final Object value;
+
     private final Class<T> instanceGetter;
+
     private final Class<S> instanceSetter;
+
     private final Class<U> staticGetter;
+
     private final Class<V> staticSetter;
+
     private final Class<?> propertyType;
 
     public FieldAccessorTest(Object value,

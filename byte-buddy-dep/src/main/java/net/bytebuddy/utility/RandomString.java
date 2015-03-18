@@ -38,6 +38,7 @@ public class RandomString {
      * A provider of random values.
      */
     private final Random random;
+
     /**
      * The length of the random strings that are created by this instance.
      */

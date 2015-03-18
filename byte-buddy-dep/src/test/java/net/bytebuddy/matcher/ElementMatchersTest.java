@@ -848,6 +848,7 @@ public class ElementMatchersTest {
     @Inherited
     @Retention(RetentionPolicy.RUNTIME)
     public static @interface OtherAnnotation {
+
     }
 
     private static class IsDeclaredBy {
@@ -1029,9 +1030,11 @@ public class ElementMatchersTest {
 
     @OtherAnnotation
     public static class Other {
+
     }
 
     public static class OtherInherited extends Other {
+
     }
 
     public static class IsSpecialization {

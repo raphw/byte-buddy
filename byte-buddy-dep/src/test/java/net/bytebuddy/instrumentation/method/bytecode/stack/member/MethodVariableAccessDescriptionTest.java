@@ -31,12 +31,16 @@ public class MethodVariableAccessDescriptionTest {
 
     @Mock
     private MethodDescription methodDescription;
+
     @Mock
     private TypeDescription declaringType, firstParameter, secondParameter;
+
     @Mock
     private TypeList parameterTypes;
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
 

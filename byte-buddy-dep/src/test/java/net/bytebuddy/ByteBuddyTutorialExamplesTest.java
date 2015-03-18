@@ -53,6 +53,7 @@ import static org.mockito.Mockito.mock;
 public class ByteBuddyTutorialExamplesTest {
 
     private static final String DEFAULT_METHOD_INTERFACE = "net.bytebuddy.test.precompiled.SingleDefaultMethodInterface";
+
     private static final String CONFLICTING_DEFAULT_METHOD_INTERFACE = "net.bytebuddy.test.precompiled.SingleDefaultMethodConflictingInterface";
 
     @Rule
@@ -538,11 +539,13 @@ public class ByteBuddyTutorialExamplesTest {
 
     @SuppressWarnings("unused")
     public static interface InstanceCreator {
+
         Object makeInstance();
     }
 
     @Retention(RetentionPolicy.RUNTIME)
     public static @interface RuntimeDefinition {
+
     }
 
     @Retention(RetentionPolicy.RUNTIME)
@@ -627,6 +630,7 @@ public class ByteBuddyTutorialExamplesTest {
 
     @SuppressWarnings("unused")
     public static class Source {
+
         public String hello(String name) {
             return null;
         }
@@ -634,6 +638,7 @@ public class ByteBuddyTutorialExamplesTest {
 
     @SuppressWarnings("unused")
     public static class Target {
+
         public static String hello(String name) {
             return "Hello " + name + "!";
         }
@@ -641,6 +646,7 @@ public class ByteBuddyTutorialExamplesTest {
 
     @SuppressWarnings("unused")
     public static class Target2 {
+
         public static String intercept(String name) {
             return "Hello " + name + "!";
         }
@@ -655,12 +661,14 @@ public class ByteBuddyTutorialExamplesTest {
     }
 
     public static class MemoryDatabase {
+
         public List<String> load(String info) {
             return Arrays.asList(info + ": foo", info + ": bar");
         }
     }
 
     public static class LoggerInterceptor {
+
         public static List<String> log(@SuperCall Callable<List<String>> zuper) throws Exception {
             println("Calling database");
             try {
@@ -673,6 +681,7 @@ public class ByteBuddyTutorialExamplesTest {
 
     @SuppressWarnings("unused")
     public static class ChangingLoggerInterceptor {
+
         public static List<String> log(@Super MemoryDatabase zuper, String info) {
             println("Calling database");
             try {
@@ -743,6 +752,7 @@ public class ByteBuddyTutorialExamplesTest {
     }
 
     private static class UnloadedBar {
+
     }
 
     public class ForwardingLoggerInterceptor {

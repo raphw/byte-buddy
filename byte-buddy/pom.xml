@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -76,7 +77,8 @@
                                         </relocation>
                                     </relocations>
                                     <transformers>
-                                        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                        <transformer
+                                                implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                             <manifestEntries>
                                                 <Bundle-SymbolicName>
                                                     ${project.groupId}.${project.artifactId}
@@ -106,7 +108,8 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <copy file="${project.basedir}/../byte-buddy-dep/target/byte-buddy-dep-${project.version}-javadoc.jar" tofile="${project.build.directory}/byte-buddy-${project.version}-javadoc.jar" />
+                                        <copy file="${project.basedir}/../byte-buddy-dep/target/byte-buddy-dep-${project.version}-javadoc.jar"
+                                              tofile="${project.build.directory}/byte-buddy-${project.version}-javadoc.jar"/>
                                     </target>
                                 </configuration>
                             </execution>

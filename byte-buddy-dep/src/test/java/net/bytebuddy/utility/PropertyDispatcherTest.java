@@ -14,9 +14,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class PropertyDispatcherTest {
 
     private static final String FOO = "foo";
+
     private final Object value, other;
+
     private final PropertyDispatcher expectedPropertyDispatcher;
+
     private final int expectedHashCode;
+
     private final String expectedToString;
 
     public PropertyDispatcherTest(Object value,

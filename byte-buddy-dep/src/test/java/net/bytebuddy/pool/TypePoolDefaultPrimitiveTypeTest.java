@@ -15,6 +15,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class TypePoolDefaultPrimitiveTypeTest {
 
     private final Class<?> primitiveType;
+
     private TypePool typePool;
 
     public TypePoolDefaultPrimitiveTypeTest(Class<?> primitiveType) {

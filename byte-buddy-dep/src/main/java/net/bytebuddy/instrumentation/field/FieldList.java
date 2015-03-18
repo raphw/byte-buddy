@@ -84,5 +84,6 @@ public interface FieldList extends FilterableList<FieldDescription, FieldList> {
      * An implementation of an empty field list.
      */
     static class Empty extends FilterableList.Empty<FieldDescription, FieldList> implements FieldList {
+
     }
 }

@@ -27,10 +27,13 @@ public abstract class AbstractArrayFactoryTest {
 
     @Mock
     private TypeDescription componentTypeDescription;
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private StackManipulation stackManipulation;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
 

@@ -25,8 +25,10 @@ public class ClassConstantReferenceTest {
 
     @Mock
     private TypeDescription typeDescription;
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
 

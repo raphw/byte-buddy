@@ -16,6 +16,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class ModifierReviewableTest {
 
     private final SimpleModifierReviewable simpleModifierReviewable;
+
     private final Method method;
 
     public ModifierReviewableTest(int modifiers, String methodName) throws Exception {

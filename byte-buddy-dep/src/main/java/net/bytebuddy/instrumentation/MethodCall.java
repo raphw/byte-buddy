@@ -43,26 +43,32 @@ public class MethodCall implements Instrumentation {
      * The method locator to use.
      */
     protected final MethodLocator methodLocator;
+
     /**
      * The target handler to use.
      */
     protected final TargetHandler targetHandler;
+
     /**
      * The argument loader to load arguments onto the operand stack in their application order.
      */
     protected final List<ArgumentLoader> argumentLoaders;
+
     /**
      * The method invoker to use.
      */
     protected final MethodInvoker methodInvoker;
+
     /**
      * The termination handler to use.
      */
     protected final TerminationHandler terminationHandler;
+
     /**
      * The assigner to use.
      */
     protected final Assigner assigner;
+
     /**
      * {@code true} if a return value of the called method should be attempted to be type-casted to the return
      * type of the instrumented method.

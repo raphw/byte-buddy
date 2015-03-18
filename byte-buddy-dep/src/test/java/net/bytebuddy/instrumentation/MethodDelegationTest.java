@@ -25,25 +25,43 @@ public class MethodDelegationTest<T extends CallTraceable>
     private static final String FOO = "foo", BAR = "bar", FIELD_NAME = "qux";
 
     private static final byte BYTE_MULTIPLICATOR = 3;
+
     private static final short SHORT_MULTIPLICATOR = 3;
+
     private static final char CHAR_MULTIPLICATOR = 3;
+
     private static final int INT_MULTIPLICATOR = 3;
+
     private static final long LONG_MULTIPLICATOR = 3L;
+
     private static final float FLOAT_MULTIPLICATOR = 3f;
+
     private static final double DOUBLE_MULTIPLICATOR = 3d;
 
     private static final boolean DEFAULT_BOOLEAN = false;
+
     private static final byte DEFAULT_BYTE = 1;
+
     private static final short DEFAULT_SHORT = 1;
+
     private static final char DEFAULT_CHAR = 1;
+
     private static final int DEFAULT_INT = 1;
+
     private static final long DEFAULT_LONG = 1L;
+
     private static final float DEFAULT_FLOAT = 1f;
+
     private static final double DEFAULT_DOUBLE = 1d;
+
     private final Class<T> sourceType;
+
     private final Class<?> targetType;
+
     private final Class<?>[] parameterTypes;
+
     private final Object[] arguments;
+
     private final Matcher<?> matcher;
 
     public MethodDelegationTest(Class<T> sourceType,

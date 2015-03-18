@@ -19,7 +19,9 @@ import static org.mockito.Mockito.*;
 public class ModifierMatcherTest extends AbstractElementMatcherTest<ModifierMatcher<?>> {
 
     private final ModifierMatcher.Mode mode;
+
     private final int modifiers;
+
     @Mock
     private ModifierReviewable modifierReviewable;
 

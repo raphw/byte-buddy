@@ -17,8 +17,11 @@ import static org.hamcrest.core.Is.is;
 public class ClassLoadingStrategyDefaultTest {
 
     private ClassLoader classLoader;
+
     private TypeDescription typeDescription;
+
     private Map<TypeDescription, byte[]> binaryRepresentations;
+
     private ProtectionDomain protectionDomain;
 
     @Before

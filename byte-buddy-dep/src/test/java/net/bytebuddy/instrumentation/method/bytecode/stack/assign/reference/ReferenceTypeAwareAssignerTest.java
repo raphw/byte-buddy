@@ -25,8 +25,10 @@ public class ReferenceTypeAwareAssignerTest {
 
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private TypeDescription sourceTypeDescription, targetTypeDescription;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
 

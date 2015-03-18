@@ -23,6 +23,7 @@ public class TextConstantTest {
 
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
 

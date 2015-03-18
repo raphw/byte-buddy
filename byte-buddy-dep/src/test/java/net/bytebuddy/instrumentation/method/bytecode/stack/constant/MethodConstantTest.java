@@ -34,14 +34,19 @@ public class MethodConstantTest {
 
     @Mock
     private MethodDescription methodDescription;
+
     @Mock
     private TypeDescription declaringType, parameterType, fieldType;
+
     @Mock
     private TypeList typeList;
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
+
     @Mock
     private FieldDescription fieldDescription;
 

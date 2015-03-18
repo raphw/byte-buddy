@@ -121,6 +121,7 @@ public class MethodDelegationSuperTest extends AbstractInstrumentationTest {
     }
 
     public static class SerializationCheck {
+
         public static String baz(@Super(serializableProxy = true) Foo foo) {
             assertThat(foo, instanceOf(Serializable.class));
             return foo.qux() + QUX;

@@ -69,5 +69,6 @@ public class TypePoolLazyTypeListTest {
     }
 
     public static abstract class Sample implements Serializable, Runnable {
+
     }
 }

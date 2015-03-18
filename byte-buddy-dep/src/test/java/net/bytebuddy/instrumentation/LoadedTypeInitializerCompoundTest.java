@@ -26,8 +26,10 @@ public class LoadedTypeInitializerCompoundTest {
 
     @Mock
     private LoadedTypeInitializer first, second;
+
     @Mock
     private InstrumentedType instrumentedType;
+
     @Mock
     private ByteCodeAppender byteCodeAppender;
 

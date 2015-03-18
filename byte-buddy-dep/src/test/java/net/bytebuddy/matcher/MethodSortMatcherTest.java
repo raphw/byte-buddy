@@ -23,8 +23,11 @@ import static org.mockito.Mockito.when;
 public class MethodSortMatcherTest extends AbstractElementMatcherTest<MethodSortMatcher<?>> {
 
     private static final String FOO = "foo";
+
     private final MethodSortMatcher.Sort sort;
+
     private final MockEngine mockEngine;
+
     @Mock
     private MethodDescription methodDescription;
 

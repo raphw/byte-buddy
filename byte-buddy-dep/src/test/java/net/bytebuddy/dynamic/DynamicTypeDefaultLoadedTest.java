@@ -30,6 +30,7 @@ public class DynamicTypeDefaultLoadedTest {
 
     @Mock
     private LoadedTypeInitializer mainLoadedTypeInitializer, auxiliaryLoadedTypeInitializer;
+
     @Mock
     private TypeDescription mainTypeDescription, auxiliaryTypeDescription;
 
