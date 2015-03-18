@@ -3,6 +3,7 @@ package net.bytebuddy.instrumentation.method.bytecode.stack.constant;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
@@ -39,6 +40,9 @@ public class MethodConstantTest {
     private TypeDescription declaringType, parameterType, fieldType;
 
     @Mock
+    private ParameterList parameterList;
+
+    @Mock
     private TypeList typeList;
 
     @Mock
@@ -54,7 +58,8 @@ public class MethodConstantTest {
     public void setUp() throws Exception {
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
         when(methodDescription.getInternalName()).thenReturn(FOO);
-        when(methodDescription.getParameterTypes()).thenReturn(typeList);
+        when(methodDescription.getParameters()).thenReturn(parameterList);
+        when(parameterList.asTypeList()).thenReturn(typeList);
         when(declaringType.getDescriptor()).thenReturn(BAR);
         when(typeList.iterator()).thenReturn(Arrays.asList(parameterType).iterator());
         when(parameterType.getDescriptor()).thenReturn(QUX);

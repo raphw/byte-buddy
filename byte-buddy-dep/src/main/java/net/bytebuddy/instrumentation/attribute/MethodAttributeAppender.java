@@ -4,6 +4,7 @@ import net.bytebuddy.instrumentation.attribute.annotation.AnnotationAppender;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.ParameterDescription;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 
@@ -66,11 +67,10 @@ public interface MethodAttributeAppender {
             for (AnnotationDescription annotation : methodDescription.getDeclaredAnnotations()) {
                 methodAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
             }
-            int i = 0;
-            for (AnnotationList annotations : methodDescription.getParameterAnnotations()) {
-                AnnotationAppender parameterAppender =
-                        new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethodParameter(methodVisitor, i++));
-                for (AnnotationDescription annotation : annotations) {
+            int index = 0;
+            for (ParameterDescription parameterDescription : methodDescription.getParameters()) {
+                AnnotationAppender parameterAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethodParameter(methodVisitor, index++));
+                for (AnnotationDescription annotation : parameterDescription.getDeclaredAnnotations()) {
                     parameterAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
                 }
             }
@@ -183,8 +183,7 @@ public interface MethodAttributeAppender {
 
         @Override
         public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
-            AnnotationAppender appender =
-                    new AnnotationAppender.Default(target.make(methodVisitor, methodDescription));
+            AnnotationAppender appender = new AnnotationAppender.Default(target.make(methodVisitor, methodDescription));
             for (AnnotationDescription annotation : this.annotations) {
                 appender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
             }
@@ -268,9 +267,8 @@ public interface MethodAttributeAppender {
 
                 @Override
                 public AnnotationAppender.Target make(MethodVisitor methodVisitor, MethodDescription methodDescription) {
-                    if (parameterIndex >= methodDescription.getParameterTypes().size()) {
-                        throw new IllegalArgumentException("Method " + methodDescription
-                                + " has less then " + parameterIndex + " parameters");
+                    if (parameterIndex >= methodDescription.getParameters().size()) {
+                        throw new IllegalArgumentException("Method " + methodDescription + " has less then " + parameterIndex + " parameters");
                     }
                     return new AnnotationAppender.Target.OnMethodParameter(methodVisitor, parameterIndex);
                 }
@@ -318,9 +316,8 @@ public interface MethodAttributeAppender {
 
         @Override
         public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
-            if (method.getParameterTypes().length > methodDescription.getParameterTypes().size()) {
-                throw new IllegalArgumentException("The constructor " + method + " has more parameters than the " +
-                        "instrumented method " + methodDescription);
+            if (method.getParameterTypes().length > methodDescription.getParameters().size()) {
+                throw new IllegalArgumentException("The constructor " + method + " has more parameters than the instrumented method " + methodDescription);
             }
             // Instead of implementing the appender we piggy-back on an existing implementation.
             ForInstrumentedMethod.INSTANCE.apply(methodVisitor, new MethodDescription.ForLoadedMethod(method));
@@ -372,9 +369,8 @@ public interface MethodAttributeAppender {
 
         @Override
         public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
-            if (constructor.getParameterTypes().length > methodDescription.getParameterTypes().size()) {
-                throw new IllegalArgumentException("The constructor " + constructor + " has more parameters than the " +
-                        "instrumented method " + methodDescription);
+            if (constructor.getParameterTypes().length > methodDescription.getParameters().size()) {
+                throw new IllegalArgumentException("The constructor " + constructor + " has more parameters than the instrumented method " + methodDescription);
             }
             ForInstrumentedMethod.INSTANCE.apply(methodVisitor, new MethodDescription.ForLoadedConstructor(constructor));
         }

@@ -4,8 +4,9 @@ import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.ParameterDescription;
+import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.After;
 import org.junit.Before;
@@ -14,7 +15,6 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
-import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.Iterator;
 
@@ -31,14 +31,18 @@ public class ArgumentNextUnboundAsDefaultBinderTest {
     private Instrumentation.Target instrumentationTarget;
     @Mock
     private MethodDescription source, target;
+
+    private ParameterList sourceParameters, targetParameters;
+
     @Mock
-    private TypeList typeList;
+    private ParameterDescription firstTargetParameter, secondTargetParameter;
 
     @Before
     public void setUp() throws Exception {
-        when(typeList.size()).thenReturn(2);
-        when(typeList.iterator()).thenReturn(Arrays.asList(mock(TypeDescription.class), mock(TypeDescription.class)).iterator());
-        when(source.getParameterTypes()).thenReturn(typeList);
+        sourceParameters = ParameterList.Explicit.latent(source, Arrays.asList(mock(TypeDescription.class), mock(TypeDescription.class)));
+        targetParameters = new ParameterList.Explicit(Arrays.asList(firstTargetParameter, secondTargetParameter));
+        when(source.getParameters()).thenReturn(sourceParameters);
+        when(target.getParameters()).thenReturn(targetParameters);
     }
 
     @After
@@ -48,8 +52,9 @@ public class ArgumentNextUnboundAsDefaultBinderTest {
 
     @Test
     public void testFullyUnannotated() throws Exception {
-        when(source.getParameterTypes()).thenReturn(typeList);
-        when(target.getParameterAnnotations()).thenReturn(AnnotationList.Empty.asList(0));
+        when(source.getParameters()).thenReturn(sourceParameters);
+        when(firstTargetParameter.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
+        when(secondTargetParameter.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         Iterator<AnnotationDescription> iterator = Argument.NextUnboundAsDefaultsProvider.INSTANCE
                 .makeIterator(instrumentationTarget, source, target);
         assertThat(iterator.hasNext(), is(true));
@@ -57,13 +62,13 @@ public class ArgumentNextUnboundAsDefaultBinderTest {
         assertThat(iterator.hasNext(), is(true));
         assertThat(iterator.next().prepare(Argument.class).load().value(), is(1));
         assertThat(iterator.hasNext(), is(false));
-        verify(source, atLeast(1)).getParameterTypes();
-        verify(target, atLeast(1)).getParameterAnnotations();
+        verify(source, atLeast(1)).getParameters();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testIteratorRemoval() throws Exception {
-        when(target.getParameterAnnotations()).thenReturn(AnnotationList.Empty.asList(0));
+        when(firstTargetParameter.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
+        when(secondTargetParameter.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         Iterator<AnnotationDescription> iterator = Argument.NextUnboundAsDefaultsProvider.INSTANCE
                 .makeIterator(instrumentationTarget, source, target);
         assertThat(iterator.hasNext(), is(true));
@@ -79,14 +84,14 @@ public class ArgumentNextUnboundAsDefaultBinderTest {
         Argument indexZeroArgument = mock(Argument.class);
         when(indexZeroArgument.value()).thenReturn(0);
         doReturn(Argument.class).when(indexZeroArgument).annotationType();
-        when(target.getParameterAnnotations()).thenReturn(AnnotationList.ForLoadedAnnotation.asList(new Annotation[][]{{indexZeroArgument}, {}}));
+        when(firstTargetParameter.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(indexZeroArgument));
+        when(secondTargetParameter.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         Iterator<AnnotationDescription> iterator = Argument.NextUnboundAsDefaultsProvider.INSTANCE
                 .makeIterator(instrumentationTarget, source, target);
         assertThat(iterator.hasNext(), is(true));
         assertThat(iterator.next().prepare(Argument.class).load().value(), is(1));
         assertThat(iterator.hasNext(), is(false));
-        verify(source, atLeast(1)).getParameterTypes();
-        verify(target, atLeast(1)).getParameterAnnotations();
+        verify(source, atLeast(1)).getParameters();
     }
 
     @Test
@@ -94,14 +99,14 @@ public class ArgumentNextUnboundAsDefaultBinderTest {
         Argument indexOneArgument = mock(Argument.class);
         when(indexOneArgument.value()).thenReturn(1);
         doReturn(Argument.class).when(indexOneArgument).annotationType();
-        when(target.getParameterAnnotations()).thenReturn(AnnotationList.ForLoadedAnnotation.asList(new Annotation[][]{{indexOneArgument}, {}}));
+        when(firstTargetParameter.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(indexOneArgument));
+        when(secondTargetParameter.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         Iterator<AnnotationDescription> iterator = Argument.NextUnboundAsDefaultsProvider.INSTANCE
                 .makeIterator(instrumentationTarget, source, target);
         assertThat(iterator.hasNext(), is(true));
         assertThat(iterator.next().prepare(Argument.class).load().value(), is(0));
         assertThat(iterator.hasNext(), is(false));
-        verify(source, atLeast(1)).getParameterTypes();
-        verify(target, atLeast(1)).getParameterAnnotations();
+        verify(source, atLeast(1)).getParameters();
     }
 
     @Test
@@ -112,12 +117,11 @@ public class ArgumentNextUnboundAsDefaultBinderTest {
         Argument indexOneArgument = mock(Argument.class);
         when(indexOneArgument.value()).thenReturn(1);
         doReturn(Argument.class).when(indexOneArgument).annotationType();
-        when(target.getParameterAnnotations()).thenReturn(AnnotationList.ForLoadedAnnotation
-                .asList(new Annotation[][]{{indexOneArgument}, {indexZeroArgument}}));
+        when(firstTargetParameter.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(indexOneArgument));
+        when(secondTargetParameter.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(indexZeroArgument));
         Iterator<AnnotationDescription> iterator = Argument.NextUnboundAsDefaultsProvider.INSTANCE
                 .makeIterator(instrumentationTarget, source, target);
         assertThat(iterator.hasNext(), is(false));
-        verify(source, atLeast(1)).getParameterTypes();
-        verify(target, atLeast(1)).getParameterAnnotations();
+        verify(source, atLeast(1)).getParameters();
     }
 }

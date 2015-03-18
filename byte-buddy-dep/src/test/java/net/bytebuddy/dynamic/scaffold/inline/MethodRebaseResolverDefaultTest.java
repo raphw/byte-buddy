@@ -2,9 +2,9 @@ package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -32,21 +32,26 @@ public class MethodRebaseResolverDefaultTest {
 
     @Mock
     private ElementMatcher<? super MethodDescription> methodMatcher;
+
     @Mock
     private TypeDescription instrumentedType, placeholderType, returnType;
+
     @Mock
     private MethodRebaseResolver.MethodNameTransformer methodNameTransformer, otherMethodNameTransformer;
+
     @Mock
     private MethodDescription methodDescription;
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
 
     @Before
     public void setUp() throws Exception {
         when(methodDescription.getDeclaringType()).thenReturn(instrumentedType);
-        when(methodDescription.getParameterTypes()).thenReturn(new TypeList.Empty());
+        when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty());
         when(methodDescription.getReturnType()).thenReturn(returnType);
         when(methodDescription.getInternalName()).thenReturn(FOO);
         when(methodNameTransformer.transform(FOO)).thenReturn(BAR);
@@ -60,7 +65,7 @@ public class MethodRebaseResolverDefaultTest {
         assertThat(resolution.getResolvedMethod().getInternalName(), is(BAR));
         assertThat(resolution.getResolvedMethod().getModifiers(), is(MethodRebaseResolver.REBASED_METHOD_MODIFIER));
         assertThat(resolution.getResolvedMethod().getDeclaringType(), is(instrumentedType));
-        assertThat(resolution.getResolvedMethod().getParameterTypes(), is((TypeList) new TypeList.Empty()));
+        assertThat(resolution.getResolvedMethod().getParameters(), is((ParameterList) new ParameterList.Empty()));
         assertThat(resolution.getResolvedMethod().getReturnType(), is(returnType));
         assertThat(resolution.getAdditionalArguments().isValid(), is(true));
         StackManipulation.Size size = resolution.getAdditionalArguments().apply(methodVisitor, instrumentationContext);
@@ -79,7 +84,7 @@ public class MethodRebaseResolverDefaultTest {
         assertThat(resolution.getResolvedMethod().getInternalName(), is(BAR));
         assertThat(resolution.getResolvedMethod().getModifiers(), is(MethodRebaseResolver.REBASED_METHOD_MODIFIER | Opcodes.ACC_STATIC));
         assertThat(resolution.getResolvedMethod().getDeclaringType(), is(instrumentedType));
-        assertThat(resolution.getResolvedMethod().getParameterTypes(), is((TypeList) new TypeList.Empty()));
+        assertThat(resolution.getResolvedMethod().getParameters(), is((ParameterList) new ParameterList.Empty()));
         assertThat(resolution.getResolvedMethod().getReturnType(), is(returnType));
         assertThat(resolution.getAdditionalArguments().isValid(), is(true));
         StackManipulation.Size size = resolution.getAdditionalArguments().apply(methodVisitor, instrumentationContext);
@@ -98,7 +103,7 @@ public class MethodRebaseResolverDefaultTest {
         assertThat(resolution.getResolvedMethod().getInternalName(), is(BAR));
         assertThat(resolution.getResolvedMethod().getModifiers(), is(MethodRebaseResolver.REBASED_METHOD_MODIFIER | Opcodes.ACC_NATIVE));
         assertThat(resolution.getResolvedMethod().getDeclaringType(), is(instrumentedType));
-        assertThat(resolution.getResolvedMethod().getParameterTypes(), is((TypeList) new TypeList.Empty()));
+        assertThat(resolution.getResolvedMethod().getParameters(), is((ParameterList) new ParameterList.Empty()));
         assertThat(resolution.getResolvedMethod().getReturnType(), is(returnType));
         assertThat(resolution.getAdditionalArguments().isValid(), is(true));
         StackManipulation.Size size = resolution.getAdditionalArguments().apply(methodVisitor, instrumentationContext);
@@ -118,7 +123,7 @@ public class MethodRebaseResolverDefaultTest {
         assertThat(resolution.getResolvedMethod().getInternalName(), is(BAR));
         assertThat(resolution.getResolvedMethod().getModifiers(), is(MethodRebaseResolver.REBASED_METHOD_MODIFIER | Opcodes.ACC_NATIVE | Opcodes.ACC_STATIC));
         assertThat(resolution.getResolvedMethod().getDeclaringType(), is(instrumentedType));
-        assertThat(resolution.getResolvedMethod().getParameterTypes(), is((TypeList) new TypeList.Empty()));
+        assertThat(resolution.getResolvedMethod().getParameters(), is((ParameterList) new ParameterList.Empty()));
         assertThat(resolution.getResolvedMethod().getReturnType(), is(returnType));
         assertThat(resolution.getAdditionalArguments().isValid(), is(true));
         StackManipulation.Size size = resolution.getAdditionalArguments().apply(methodVisitor, instrumentationContext);
@@ -137,7 +142,7 @@ public class MethodRebaseResolverDefaultTest {
         assertThat(resolution.getResolvedMethod().getInternalName(), is(FOO));
         assertThat(resolution.getResolvedMethod().getModifiers(), is(MethodRebaseResolver.REBASED_METHOD_MODIFIER));
         assertThat(resolution.getResolvedMethod().getDeclaringType(), is(instrumentedType));
-        assertThat(resolution.getResolvedMethod().getParameterTypes(), is((TypeList) new TypeList.Explicit(Arrays.asList(placeholderType))));
+        assertThat(resolution.getResolvedMethod().getParameters(), is(ParameterList.Explicit.latent(resolution.getResolvedMethod(), Arrays.asList(placeholderType))));
         assertThat(resolution.getResolvedMethod().getReturnType(), is(returnType));
         assertThat(resolution.getAdditionalArguments().isValid(), is(true));
         StackManipulation.Size size = resolution.getAdditionalArguments().apply(methodVisitor, instrumentationContext);

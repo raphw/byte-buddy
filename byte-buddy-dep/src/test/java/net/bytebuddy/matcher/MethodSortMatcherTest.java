@@ -2,8 +2,8 @@ package net.bytebuddy.matcher;
 
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
+import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -119,7 +119,7 @@ public class MethodSortMatcherTest extends AbstractElementMatcherTest<MethodSort
                 when(typeDescription.getDeclaredMethods()).thenReturn(methodList);
                 when(methodList.filter(any(ElementMatcher.class))).thenReturn(methodList);
                 when(methodList.size()).thenReturn(0);
-                when(mock.getParameterTypes()).thenReturn(new TypeList.Empty());
+                when(mock.getParameters()).thenReturn(new ParameterList.Empty());
                 when(mock.getReturnType()).thenReturn(Mockito.mock(TypeDescription.class));
                 when(mock.getSourceCodeName()).thenReturn(FOO);
             }

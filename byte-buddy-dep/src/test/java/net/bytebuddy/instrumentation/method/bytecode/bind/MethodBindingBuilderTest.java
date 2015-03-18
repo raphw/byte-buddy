@@ -2,11 +2,11 @@ package net.bytebuddy.instrumentation.method.bytecode.bind;
 
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.TargetMethodAnnotationDrivenBinder;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.After;
 import org.junit.Before;
@@ -32,7 +32,7 @@ public class MethodBindingBuilderTest {
     @Mock
     private MethodDescription methodDescription;
     @Mock
-    private TypeList methodParameterList;
+    private ParameterList methodParameterList;
     @Mock
     private TargetMethodAnnotationDrivenBinder.MethodInvoker methodInvoker;
     @Mock
@@ -44,7 +44,7 @@ public class MethodBindingBuilderTest {
 
     @Before
     public void setUp() throws Exception {
-        when(methodDescription.getParameterTypes()).thenReturn(methodParameterList);
+        when(methodDescription.getParameters()).thenReturn(methodParameterList);
         when(methodDescription.isStatic()).thenReturn(false);
         TypeDescription declaringType = mock(TypeDescription.class);
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);

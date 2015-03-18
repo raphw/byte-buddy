@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
@@ -44,7 +45,7 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
     public void setUp() throws Exception {
         when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
         when(methodDescription.getReturnType()).thenReturn(returnType);
-        when(methodDescription.getParameterTypes()).thenReturn(new TypeList.Explicit(Arrays.asList(parameterType)));
+        when(methodDescription.getParameters()).thenReturn(ParameterList.Explicit.latent(methodDescription, Arrays.asList(parameterType)));
         when(methodDescription.getInternalName()).thenReturn(FOO);
         when(methodDescription.getDescriptor()).thenReturn(BAZ);
         when(typeDescription.getInternalName()).thenReturn(BAR);
@@ -61,7 +62,7 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
         assertThat(resolution.getResolvedMethod().getInternalName(), is(QUX));
         assertThat(resolution.getResolvedMethod().getModifiers(), is(MethodRebaseResolver.REBASED_METHOD_MODIFIER));
         assertThat(resolution.getResolvedMethod().getReturnType(), is(returnType));
-        assertThat(resolution.getResolvedMethod().getParameterTypes(), is((TypeList) new TypeList.Explicit(Arrays.asList(parameterType))));
+        assertThat(resolution.getResolvedMethod().getParameters(), is(ParameterList.Explicit.latent(resolution.getResolvedMethod(), Arrays.asList(parameterType))));
         StackManipulation.Size size = resolution.getAdditionalArguments().apply(methodVisitor, instrumentationContext);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
@@ -74,7 +75,7 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
         ObjectPropertyAssertion.of(MethodRebaseResolver.Resolution.ForRebasedMethod.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription>() {
             @Override
             public void apply(MethodDescription mock) {
-                when(mock.getParameterTypes()).thenReturn(new TypeList.Empty());
+                when(mock.getParameters()).thenReturn(new ParameterList.Empty());
                 when(mock.getExceptionTypes()).thenReturn(new TypeList.Empty());
                 when(mock.getDeclaringType()).thenReturn(mock(TypeDescription.class));
                 when(mock.getReturnType()).thenReturn(mock(TypeDescription.class));

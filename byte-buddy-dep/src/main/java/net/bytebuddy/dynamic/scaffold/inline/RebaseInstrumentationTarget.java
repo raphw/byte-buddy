@@ -170,14 +170,14 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
             return isValid() == specialMethodInvocation.isValid()
                     && instrumentedType.equals(specialMethodInvocation.getTypeDescription())
                     && methodDescription.getInternalName().equals(specialMethodInvocation.getMethodDescription().getInternalName())
-                    && methodDescription.getParameterTypes().equals(specialMethodInvocation.getMethodDescription().getParameterTypes())
+                    && methodDescription.getParameters().asTypeList().equals(specialMethodInvocation.getMethodDescription().getParameters().asTypeList())
                     && methodDescription.getReturnType().equals(specialMethodInvocation.getMethodDescription().getReturnType());
         }
 
         @Override
         public int hashCode() {
             int result = methodDescription.getInternalName().hashCode();
-            result = 31 * result + methodDescription.getParameterTypes().hashCode();
+            result = 31 * result + methodDescription.getParameters().asTypeList().hashCode();
             result = 31 * result + methodDescription.getReturnType().hashCode();
             result = 31 * result + instrumentedType.hashCode();
             return result;

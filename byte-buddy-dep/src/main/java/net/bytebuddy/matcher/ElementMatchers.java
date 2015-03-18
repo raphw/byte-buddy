@@ -1048,7 +1048,7 @@ public final class ElementMatchers {
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isSpecializationOf(
             MethodDescription methodDescription) {
-        TypeList parameterTypes = methodDescription.getParameterTypes();
+        TypeList parameterTypes = methodDescription.getParameters().asTypeList();
         List<ElementMatcher<TypeDescription>> matchers = new ArrayList<ElementMatcher<TypeDescription>>(
                 parameterTypes.size());
         for (TypeDescription typeDescription : parameterTypes) {

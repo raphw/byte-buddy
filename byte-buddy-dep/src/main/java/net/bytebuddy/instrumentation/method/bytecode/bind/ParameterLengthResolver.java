@@ -17,8 +17,8 @@ public enum ParameterLengthResolver implements MethodDelegationBinder.AmbiguityR
     public Resolution resolve(MethodDescription source,
                               MethodDelegationBinder.MethodBinding left,
                               MethodDelegationBinder.MethodBinding right) {
-        int leftLength = left.getTarget().getParameterTypes().size();
-        int rightLength = right.getTarget().getParameterTypes().size();
+        int leftLength = left.getTarget().getParameters().size();
+        int rightLength = right.getTarget().getParameters().size();
         if (leftLength == rightLength) {
             return Resolution.AMBIGUOUS;
         } else if (leftLength < rightLength) {

@@ -1,6 +1,6 @@
 package net.bytebuddy.instrumentation.attribute;
 
-import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,9 +16,9 @@ public class MethodAttributeAppenderForAnnotationTest extends AbstractMethodAttr
 
     @Before
     public void setUp() throws Exception {
-        TypeList typeList = mock(TypeList.class);
-        when(typeList.size()).thenReturn(PARAMETER_INDEX + 1);
-        when(methodDescription.getParameterTypes()).thenReturn(typeList);
+        ParameterList parameterList = mock(ParameterList.class);
+        when(parameterList.size()).thenReturn(PARAMETER_INDEX + 1);
+        when(methodDescription.getParameters()).thenReturn(parameterList);
     }
 
     @Test
@@ -48,7 +48,7 @@ public class MethodAttributeAppenderForAnnotationTest extends AbstractMethodAttr
     public void testAnnotationAppenderForParameterNoRetention() throws Exception {
         new MethodAttributeAppender.ForAnnotation(PARAMETER_INDEX, new Qux.Instance()).apply(methodVisitor, methodDescription);
         verifyZeroInteractions(methodVisitor);
-        verify(methodDescription).getParameterTypes();
+        verify(methodDescription).getParameters();
         verifyNoMoreInteractions(methodDescription);
     }
 
@@ -57,7 +57,7 @@ public class MethodAttributeAppenderForAnnotationTest extends AbstractMethodAttr
         new MethodAttributeAppender.ForAnnotation(PARAMETER_INDEX, new Baz.Instance()).apply(methodVisitor, methodDescription);
         verify(methodVisitor).visitParameterAnnotation(PARAMETER_INDEX, Type.getDescriptor(Baz.class), true);
         verifyNoMoreInteractions(methodVisitor);
-        verify(methodDescription).getParameterTypes();
+        verify(methodDescription).getParameters();
         verifyNoMoreInteractions(methodDescription);
     }
 
@@ -66,7 +66,7 @@ public class MethodAttributeAppenderForAnnotationTest extends AbstractMethodAttr
         new MethodAttributeAppender.ForAnnotation(PARAMETER_INDEX, new QuxBaz.Instance()).apply(methodVisitor, methodDescription);
         verify(methodVisitor).visitParameterAnnotation(PARAMETER_INDEX, Type.getDescriptor(QuxBaz.class), false);
         verifyNoMoreInteractions(methodVisitor);
-        verify(methodDescription).getParameterTypes();
+        verify(methodDescription).getParameters();
         verifyNoMoreInteractions(methodDescription);
     }
 

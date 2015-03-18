@@ -2,6 +2,7 @@ package net.bytebuddy.instrumentation.method.bytecode.stack.member;
 
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
@@ -31,7 +32,7 @@ public class MethodInvocationOtherTest {
                 when(returnType.getStackSize()).thenReturn(StackSize.ZERO);
                 when(mock.getReturnType()).thenReturn(returnType);
                 when(mock.getInternalName()).thenReturn(FOO);
-                when(mock.getParameterTypes()).thenReturn(new TypeList.Empty());
+                when(mock.getParameters()).thenReturn(new ParameterList.Empty());
             }
         }).apply();
         ObjectPropertyAssertion.of(MethodInvocation.DynamicInvocation.class).apply();

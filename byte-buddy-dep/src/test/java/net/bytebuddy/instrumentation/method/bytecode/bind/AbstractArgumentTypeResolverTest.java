@@ -1,7 +1,8 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind;
 
+import net.bytebuddy.instrumentation.method.ParameterDescription;
+import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.instrumentation.type.TypeList;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Description;
@@ -22,9 +23,13 @@ import static org.mockito.Mockito.when;
 public class AbstractArgumentTypeResolverTest extends AbstractAmbiguityResolverTest {
 
     @Mock
-    protected TypeList sourceTypeList, leftTypeList, rightTypeList;
+    protected ParameterList sourceParameterList, leftParameterList, rightParameterList;
+
     @Mock
     protected TypeDescription sourceType;
+
+    @Mock
+    private ParameterDescription sourceParameter;
 
     protected static Matcher<? super ArgumentTypeResolver.ParameterIndexToken> describesArgument(int... index) {
         Matcher<? super ArgumentTypeResolver.ParameterIndexToken> token = CoreMatchers.anything();
@@ -38,10 +43,11 @@ public class AbstractArgumentTypeResolverTest extends AbstractAmbiguityResolverT
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        when(source.getParameterTypes()).thenReturn(sourceTypeList);
-        when(sourceTypeList.get(anyInt())).thenReturn(sourceType);
-        when(leftMethod.getParameterTypes()).thenReturn(leftTypeList);
-        when(rightMethod.getParameterTypes()).thenReturn(rightTypeList);
+        when(source.getParameters()).thenReturn(sourceParameterList);
+        when(sourceParameterList.get(anyInt())).thenReturn(sourceParameter);
+        when(sourceParameter.getTypeDescription()).thenReturn(sourceType);
+        when(leftMethod.getParameters()).thenReturn(leftParameterList);
+        when(rightMethod.getParameters()).thenReturn(rightParameterList);
     }
 
     private static class IndexTokenMatcher extends BaseMatcher<ArgumentTypeResolver.ParameterIndexToken> {

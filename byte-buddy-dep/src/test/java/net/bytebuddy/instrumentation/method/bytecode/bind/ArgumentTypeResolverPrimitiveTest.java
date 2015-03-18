@@ -1,5 +1,6 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind;
 
+import net.bytebuddy.instrumentation.method.ParameterDescription;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.junit.Before;
 import org.junit.Test;
@@ -111,20 +112,24 @@ public class ArgumentTypeResolverPrimitiveTest extends AbstractArgumentTypeResol
     private void testDominance(TypeDescription leftPrimitive,
                                TypeDescription rightPrimitive,
                                MethodDelegationBinder.AmbiguityResolver.Resolution expected) throws Exception {
-        when(sourceTypeList.size()).thenReturn(2);
+        when(sourceParameterList.size()).thenReturn(2);
         when(sourceType.isPrimitive()).thenReturn(true);
-        when(leftTypeList.get(0)).thenReturn(leftPrimitive);
+        ParameterDescription leftParameter = mock(ParameterDescription.class);
+        when(leftParameter.getTypeDescription()).thenReturn(leftPrimitive);
+        when(leftParameterList.get(0)).thenReturn(leftParameter);
         when(left.getTargetParameterIndex(any(ArgumentTypeResolver.ParameterIndexToken.class)))
                 .thenAnswer(new TokenAnswer(new int[][]{{0, 0}}));
-        when(rightTypeList.get(0)).thenReturn(rightPrimitive);
+        ParameterDescription rightParameter = mock(ParameterDescription.class);
+        when(rightParameter.getTypeDescription()).thenReturn(rightPrimitive);
+        when(rightParameterList.get(0)).thenReturn(rightParameter);
         when(right.getTargetParameterIndex(any(ArgumentTypeResolver.ParameterIndexToken.class)))
                 .thenAnswer(new TokenAnswer(new int[][]{{0, 0}}));
         MethodDelegationBinder.AmbiguityResolver.Resolution resolution =
                 ArgumentTypeResolver.INSTANCE.resolve(source, left, right);
         assertThat(resolution, is(expected));
-        verify(source, atLeast(1)).getParameterTypes();
-        verify(leftMethod, atLeast(1)).getParameterTypes();
-        verify(rightMethod, atLeast(1)).getParameterTypes();
+        verify(source, atLeast(1)).getParameters();
+        verify(leftMethod, atLeast(1)).getParameters();
+        verify(rightMethod, atLeast(1)).getParameters();
         verify(left, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(0)));
         verify(left, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(1)));
         verify(left, never()).getTargetParameterIndex(argThat(not(describesArgument(0, 1))));

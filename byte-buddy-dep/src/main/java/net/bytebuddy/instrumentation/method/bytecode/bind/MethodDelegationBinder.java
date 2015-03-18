@@ -374,8 +374,8 @@ public interface MethodDelegationBinder {
             public Builder(MethodInvoker methodInvoker, MethodDescription target) {
                 this.methodInvoker = methodInvoker;
                 this.target = target;
-                parameterStackManipulations = new ArrayList<StackManipulation>(target.getParameterTypes().size());
-                registeredTargetIndices = new LinkedHashMap<Object, Integer>(target.getParameterTypes().size());
+                parameterStackManipulations = new ArrayList<StackManipulation>(target.getParameters().size());
+                registeredTargetIndices = new LinkedHashMap<Object, Integer>(target.getParameters().size());
                 nextParameterIndex = 0;
             }
 
@@ -398,7 +398,7 @@ public interface MethodDelegationBinder {
              * @return A binding representing the parameter bindings collected by this builder.
              */
             public MethodBinding build(StackManipulation terminatingManipulation) {
-                if (target.getParameterTypes().size() != nextParameterIndex) {
+                if (target.getParameters().size() != nextParameterIndex) {
                     throw new IllegalStateException("The number of parameters bound does not equal the target's number of parameters");
                 }
                 return new Build(target,

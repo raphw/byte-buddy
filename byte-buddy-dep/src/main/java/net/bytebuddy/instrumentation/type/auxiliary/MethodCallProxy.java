@@ -7,9 +7,7 @@ import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.field.FieldList;
-import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.method.MethodList;
-import net.bytebuddy.instrumentation.method.MethodLookupEngine;
+import net.bytebuddy.instrumentation.method.*;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.method.bytecode.stack.Duplication;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
@@ -24,7 +22,6 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.modifier.Visibility;
 import org.objectweb.asm.MethodVisitor;
 
@@ -108,15 +105,14 @@ public class MethodCallProxy implements AuxiliaryType {
      * method, including a reference to the instance of the instrumented type that is invoked if applicable.
      */
     private static LinkedHashMap<String, TypeDescription> extractFields(MethodDescription methodDescription) {
-        TypeList parameterTypes = methodDescription.getParameterTypes();
-        LinkedHashMap<String, TypeDescription> typeDescriptions =
-                new LinkedHashMap<String, TypeDescription>((methodDescription.isStatic() ? 0 : 1) + parameterTypes.size());
+        ParameterList parameters = methodDescription.getParameters();
+        LinkedHashMap<String, TypeDescription> typeDescriptions = new LinkedHashMap<String, TypeDescription>((methodDescription.isStatic() ? 0 : 1) + parameters.size());
         int currentIndex = 0;
         if (!methodDescription.isStatic()) {
             typeDescriptions.put(fieldName(currentIndex++), methodDescription.getDeclaringType());
         }
-        for (TypeDescription parameterType : parameterTypes) {
-            typeDescriptions.put(fieldName(currentIndex++), parameterType);
+        for (ParameterDescription parameterDescription : parameters) {
+            typeDescriptions.put(fieldName(currentIndex++), parameterDescription.getTypeDescription());
         }
         return typeDescriptions;
     }

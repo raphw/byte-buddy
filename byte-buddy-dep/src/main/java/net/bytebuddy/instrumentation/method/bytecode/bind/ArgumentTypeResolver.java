@@ -1,6 +1,7 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind;
 
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 
 /**
@@ -47,8 +48,8 @@ public enum ArgumentTypeResolver implements MethodDelegationBinder.AmbiguityReso
                                                   MethodDelegationBinder.MethodBinding left,
                                                   int rightParameterIndex,
                                                   MethodDelegationBinder.MethodBinding right) {
-        TypeDescription leftParameterType = left.getTarget().getParameterTypes().get(leftParameterIndex);
-        TypeDescription rightParameterType = right.getTarget().getParameterTypes().get(rightParameterIndex);
+        TypeDescription leftParameterType = left.getTarget().getParameters().get(leftParameterIndex).getTypeDescription();
+        TypeDescription rightParameterType = right.getTarget().getParameters().get(rightParameterIndex).getTypeDescription();
         if (!leftParameterType.equals(rightParameterType)) {
             if (leftParameterType.isPrimitive() && rightParameterType.isPrimitive()) {
                 return PrimitiveTypePrecedence.forPrimitive(leftParameterType)
@@ -95,16 +96,15 @@ public enum ArgumentTypeResolver implements MethodDelegationBinder.AmbiguityReso
                               MethodDelegationBinder.MethodBinding left,
                               MethodDelegationBinder.MethodBinding right) {
         Resolution resolution = Resolution.UNKNOWN;
+        ParameterList sourceParameters = source.getParameters();
         int leftExtra = 0, rightExtra = 0;
-        for (int sourceParameterIndex = 0;
-             sourceParameterIndex < source.getParameterTypes().size();
-             sourceParameterIndex++) {
+        for (int sourceParameterIndex = 0; sourceParameterIndex < sourceParameters.size(); sourceParameterIndex++) {
             ParameterIndexToken parameterIndexToken = new ParameterIndexToken(sourceParameterIndex);
             Integer leftParameterIndex = left.getTargetParameterIndex(parameterIndexToken);
             Integer rightParameterIndex = right.getTargetParameterIndex(parameterIndexToken);
             if (leftParameterIndex != null && rightParameterIndex != null) {
                 resolution = resolution.merge(
-                        resolveRivalBinding(source.getParameterTypes().get(sourceParameterIndex),
+                        resolveRivalBinding(sourceParameters.get(sourceParameterIndex).getTypeDescription(),
                                 leftParameterIndex,
                                 left,
                                 rightParameterIndex,

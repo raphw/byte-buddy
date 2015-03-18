@@ -6,6 +6,7 @@ import net.bytebuddy.dynamic.scaffold.TypeWriter;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
@@ -143,7 +144,7 @@ public class InstrumentationContextDefaultTest {
         when(firstSpecialInvocation.getTypeDescription()).thenReturn(firstSpecialType);
         when(firstSpecialMethod.getReturnType()).thenReturn(firstSpecialReturnType);
         when(firstSpecialMethod.getInternalName()).thenReturn(FOO);
-        when(firstSpecialMethod.getParameterTypes()).thenReturn(new TypeList.Explicit(Arrays.asList(firstSpecialParameterType)));
+        when(firstSpecialMethod.getParameters()).thenReturn(ParameterList.Explicit.latent(firstSpecialMethod, Arrays.asList(firstSpecialParameterType)));
         when(firstSpecialMethod.getExceptionTypes()).thenReturn(firstSpecialExceptionTypes);
         when(firstSpecialParameterType.getDescriptor()).thenReturn(BAZ);
         when(firstSpecialReturnType.getDescriptor()).thenReturn(QUX);
@@ -156,7 +157,7 @@ public class InstrumentationContextDefaultTest {
         when(secondSpecialInvocation.getTypeDescription()).thenReturn(secondSpecialType);
         when(secondSpecialMethod.getInternalName()).thenReturn(BAR);
         when(secondSpecialMethod.getReturnType()).thenReturn(secondSpecialReturnType);
-        when(secondSpecialMethod.getParameterTypes()).thenReturn(new TypeList.Explicit(Arrays.asList(secondSpecialParameterType)));
+        when(secondSpecialMethod.getParameters()).thenReturn(ParameterList.Explicit.latent(secondSpecialMethod, Arrays.asList(secondSpecialParameterType)));
         when(secondSpecialMethod.getExceptionTypes()).thenReturn(secondSpecialExceptionTypes);
         when(secondSpecialParameterType.getDescriptor()).thenReturn(BAR);
         when(secondSpecialReturnType.getDescriptor()).thenReturn(FOO);
@@ -420,7 +421,7 @@ public class InstrumentationContextDefaultTest {
                 typeInitializer,
                 classFileVersion);
         MethodDescription firstMethodDescription = instrumentationContext.registerAccessorFor(firstSpecialInvocation);
-        assertThat(firstMethodDescription.getParameterTypes(), is((TypeList) new TypeList.Explicit(Arrays.asList(firstSpecialParameterType))));
+        assertThat(firstMethodDescription.getParameters(), is(ParameterList.Explicit.latent(firstMethodDescription, Arrays.asList(firstSpecialParameterType))));
         assertThat(firstMethodDescription.getReturnType(), is(firstSpecialReturnType));
         assertThat(firstMethodDescription.getInternalName(), startsWith(FOO));
         assertThat(firstMethodDescription.getModifiers(), is(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER));
@@ -428,7 +429,7 @@ public class InstrumentationContextDefaultTest {
         assertThat(instrumentationContext.registerAccessorFor(firstSpecialInvocation), is(firstMethodDescription));
         when(secondSpecialMethod.isStatic()).thenReturn(true);
         MethodDescription secondMethodDescription = instrumentationContext.registerAccessorFor(secondSpecialInvocation);
-        assertThat(secondMethodDescription.getParameterTypes(), is((TypeList) new TypeList.Explicit(Arrays.asList(secondSpecialParameterType))));
+        assertThat(secondMethodDescription.getParameters(), is(ParameterList.Explicit.latent(secondMethodDescription, Arrays.asList(secondSpecialParameterType))));
         assertThat(secondMethodDescription.getReturnType(), is(secondSpecialReturnType));
         assertThat(secondMethodDescription.getInternalName(), startsWith(BAR));
         assertThat(secondMethodDescription.getModifiers(), is(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC));
@@ -486,7 +487,7 @@ public class InstrumentationContextDefaultTest {
                 typeInitializer,
                 classFileVersion);
         MethodDescription firstFieldGetter = instrumentationContext.registerGetterFor(firstField);
-        assertThat(firstFieldGetter.getParameterTypes(), is((TypeList) new TypeList.Empty()));
+        assertThat(firstFieldGetter.getParameters(), is((ParameterList) new ParameterList.Empty()));
         assertThat(firstFieldGetter.getReturnType(), is(firstFieldType));
         assertThat(firstFieldGetter.getInternalName(), startsWith(FOO));
         assertThat(firstFieldGetter.getModifiers(), is(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER));
@@ -494,7 +495,7 @@ public class InstrumentationContextDefaultTest {
         assertThat(instrumentationContext.registerGetterFor(firstField), is(firstFieldGetter));
         when(secondField.isStatic()).thenReturn(true);
         MethodDescription secondFieldGetter = instrumentationContext.registerGetterFor(secondField);
-        assertThat(secondFieldGetter.getParameterTypes(), is((TypeList) new TypeList.Empty()));
+        assertThat(secondFieldGetter.getParameters(), is((ParameterList) new ParameterList.Empty()));
         assertThat(secondFieldGetter.getReturnType(), is(secondFieldType));
         assertThat(secondFieldGetter.getInternalName(), startsWith(BAR));
         assertThat(secondFieldGetter.getModifiers(), is(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC));
@@ -550,7 +551,7 @@ public class InstrumentationContextDefaultTest {
                 typeInitializer,
                 classFileVersion);
         MethodDescription firstFieldSetter = instrumentationContext.registerSetterFor(firstField);
-        assertThat(firstFieldSetter.getParameterTypes(), is((TypeList) new TypeList.Explicit(Arrays.asList(firstFieldType))));
+        assertThat(firstFieldSetter.getParameters(), is(ParameterList.Explicit.latent(firstFieldSetter, Arrays.asList(firstFieldType))));
         assertThat(firstFieldSetter.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(void.class)));
         assertThat(firstFieldSetter.getInternalName(), startsWith(FOO));
         assertThat(firstFieldSetter.getModifiers(), is(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER));
@@ -558,7 +559,7 @@ public class InstrumentationContextDefaultTest {
         assertThat(instrumentationContext.registerSetterFor(firstField), is(firstFieldSetter));
         when(secondField.isStatic()).thenReturn(true);
         MethodDescription secondFieldSetter = instrumentationContext.registerSetterFor(secondField);
-        assertThat(secondFieldSetter.getParameterTypes(), is((TypeList) new TypeList.Explicit(Arrays.asList(secondFieldType))));
+        assertThat(secondFieldSetter.getParameters(), is(ParameterList.Explicit.latent(secondFieldSetter, Arrays.asList(secondFieldType))));
         assertThat(secondFieldSetter.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(void.class)));
         assertThat(secondFieldSetter.getInternalName(), startsWith(BAR));
         assertThat(secondFieldSetter.getModifiers(), is(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC));

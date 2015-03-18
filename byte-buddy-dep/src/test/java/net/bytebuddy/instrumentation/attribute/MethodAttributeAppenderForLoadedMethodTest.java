@@ -1,7 +1,7 @@
 package net.bytebuddy.instrumentation.attribute;
 
+import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,9 +24,9 @@ public class MethodAttributeAppenderForLoadedMethodTest extends AbstractMethodAt
     @Before
     public void setUp() throws Exception {
         method = Foo.class.getDeclaredMethod(BAR, Object.class);
-        TypeList typeList = mock(TypeList.class);
-        when(methodDescription.getParameterTypes()).thenReturn(typeList);
-        when(typeList.size()).thenReturn(PARAMETER_INDEX + 1);
+        ParameterList parameters = mock(ParameterList.class);
+        when(methodDescription.getParameters()).thenReturn(parameters);
+        when(parameters.size()).thenReturn(PARAMETER_INDEX + 1);
     }
 
     @Test
@@ -37,7 +37,7 @@ public class MethodAttributeAppenderForLoadedMethodTest extends AbstractMethodAt
 
     @Test(expected = IllegalArgumentException.class)
     public void testIllegalApplicationThrowsException() throws Exception {
-        when(methodDescription.getParameterTypes()).thenReturn(new TypeList.Empty());
+        when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty());
         new MethodAttributeAppender.ForLoadedMethod(method).apply(methodVisitor, methodDescription);
     }
 
@@ -48,7 +48,7 @@ public class MethodAttributeAppenderForLoadedMethodTest extends AbstractMethodAt
         verify(methodVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
         verify(methodVisitor).visitParameterAnnotation(PARAMETER_INDEX, Type.getDescriptor(Baz.class), true);
         verifyNoMoreInteractions(methodVisitor);
-        verify(methodDescription).getParameterTypes();
+        verify(methodDescription).getParameters();
         verifyNoMoreInteractions(methodDescription);
     }
 

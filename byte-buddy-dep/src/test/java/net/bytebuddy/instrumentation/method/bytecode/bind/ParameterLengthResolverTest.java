@@ -1,6 +1,6 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind;
 
-import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.instrumentation.method.ParameterList;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -12,14 +12,14 @@ import static org.mockito.Mockito.when;
 public class ParameterLengthResolverTest extends AbstractAmbiguityResolverTest {
 
     @Mock
-    private TypeList leftList, rightList;
+    private ParameterList leftList, rightList;
 
     @Override
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        when(leftMethod.getParameterTypes()).thenReturn(leftList);
-        when(rightMethod.getParameterTypes()).thenReturn(rightList);
+        when(leftMethod.getParameters()).thenReturn(leftList);
+        when(rightMethod.getParameters()).thenReturn(rightList);
     }
 
     @Test

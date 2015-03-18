@@ -277,7 +277,7 @@ public interface MethodRebaseResolver {
                         methodNameTransformer.transform(methodDescription.getInternalName()),
                         methodDescription.getDeclaringType(),
                         methodDescription.getReturnType(),
-                        methodDescription.getParameterTypes(),
+                        methodDescription.getParameters().asTypeList(),
                         REBASED_METHOD_MODIFIER
                                 | (methodDescription.isStatic() ? Opcodes.ACC_STATIC : 0)
                                 | (methodDescription.isNative() ? Opcodes.ACC_NATIVE : 0),
@@ -337,7 +337,7 @@ public interface MethodRebaseResolver {
                 this.methodDescription = new MethodDescription.Latent(methodDescription.getInternalName(),
                         methodDescription.getDeclaringType(),
                         methodDescription.getReturnType(),
-                        join(methodDescription.getParameterTypes(), placeholderType),
+                        join(methodDescription.getParameters().asTypeList(), placeholderType),
                         REBASED_METHOD_MODIFIER,
                         methodDescription.getExceptionTypes());
             }

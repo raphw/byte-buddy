@@ -233,14 +233,14 @@ public interface Instrumentation {
                 return isValid() == specialMethodInvocation.isValid()
                         && typeDescription.equals(specialMethodInvocation.getTypeDescription())
                         && methodDescription.getInternalName().equals(specialMethodInvocation.getMethodDescription().getInternalName())
-                        && methodDescription.getParameterTypes().equals(specialMethodInvocation.getMethodDescription().getParameterTypes())
+                        && methodDescription.getParameters().asTypeList().equals(specialMethodInvocation.getMethodDescription().getParameters().asTypeList())
                         && methodDescription.getReturnType().equals(specialMethodInvocation.getMethodDescription().getReturnType());
             }
 
             @Override
             public int hashCode() {
                 int result = methodDescription.getInternalName().hashCode();
-                result = 31 * result + methodDescription.getParameterTypes().hashCode();
+                result = 31 * result + methodDescription.getParameters().asTypeList().hashCode();
                 result = 31 * result + methodDescription.getReturnType().hashCode();
                 result = 31 * result + typeDescription.hashCode();
                 return result;
@@ -727,7 +727,7 @@ public interface Instrumentation {
                     accessorMethod = new MethodDescription.Latent(name,
                             instrumentedType,
                             specialMethodInvocation.getMethodDescription().getReturnType(),
-                            specialMethodInvocation.getMethodDescription().getParameterTypes(),
+                            specialMethodInvocation.getMethodDescription().getParameters().asTypeList(),
                             ACCESSOR_METHOD_MODIFIER | (specialMethodInvocation.getMethodDescription().isStatic()
                                     ? Opcodes.ACC_STATIC
                                     : 0),

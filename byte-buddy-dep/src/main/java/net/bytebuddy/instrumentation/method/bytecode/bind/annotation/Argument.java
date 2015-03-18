@@ -2,7 +2,6 @@ package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
-import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.ParameterDescription;
 import net.bytebuddy.instrumentation.method.bytecode.bind.ArgumentTypeResolver;
@@ -192,12 +191,12 @@ public @interface Argument {
          * by the target method in increasing order.
          */
         private static Iterator<Integer> makeFreeIndexList(MethodDescription source, MethodDescription target) {
-            LinkedHashSet<Integer> results = new LinkedHashSet<Integer>(source.getParameterTypes().size());
-            for (int sourceIndex = 0; sourceIndex < source.getParameterTypes().size(); sourceIndex++) {
+            LinkedHashSet<Integer> results = new LinkedHashSet<Integer>(source.getParameters().size());
+            for (int sourceIndex = 0; sourceIndex < source.getParameters().size(); sourceIndex++) {
                 results.add(sourceIndex);
             }
-            for (AnnotationList parameterAnnotations : target.getParameterAnnotations()) {
-                AnnotationDescription.Loadable<Argument> annotation = parameterAnnotations.ofType(Argument.class);
+            for (ParameterDescription parameterDescription : target.getParameters()) {
+                AnnotationDescription.Loadable<Argument> annotation = parameterDescription.getDeclaredAnnotations().ofType(Argument.class);
                 if (annotation != null) {
                     results.remove(annotation.loadSilent().value());
                 }
