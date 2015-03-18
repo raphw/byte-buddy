@@ -44,6 +44,13 @@ public class MethodDescriptionLatentTest extends AbstractMethodDescriptionTest {
     }
 
     @Test
+    @Override
+    public void testParameterAnnotations() throws Exception {
+        assertThat(describe(Object.class.getDeclaredMethod("equals", Object.class)).getParameters().get(0).getDeclaredAnnotations(),
+                is((AnnotationList) new AnnotationList.Empty()));
+    }
+
+    @Test
     public void testTypeInitializer() throws Exception {
         TypeDescription typeDescription = mock(TypeDescription.class);
         MethodDescription typeInitializer = MethodDescription.Latent.typeInitializerOf(typeDescription);
@@ -53,5 +60,15 @@ public class MethodDescriptionLatentTest extends AbstractMethodDescriptionTest {
         assertThat(typeInitializer.getExceptionTypes(), is((TypeList) new TypeList.Empty()));
         assertThat(typeInitializer.getDeclaredAnnotations(), is((AnnotationList) new AnnotationList.Empty()));
         assertThat(typeInitializer.getModifiers(), is(MethodDescription.TYPE_INITIALIZER_MODIFIER));
+    }
+
+    @Override
+    public void testParameterNameAndModifiers() throws Exception {
+        assertThat(describe(Object.class.getDeclaredMethod("equals", Object.class)).getParameters().getOnly().getName(), is("arg0"));
+    }
+
+    @Override
+    protected boolean canReadDebugInformation() {
+        return false;
     }
 }

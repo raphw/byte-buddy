@@ -4,8 +4,12 @@ import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.test.packaging.VisibilityMethodTestHelper;
+import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 import org.mockito.asm.Type;
 
 import java.io.IOException;
@@ -21,8 +25,13 @@ import static org.mockito.Mockito.when;
 
 public abstract class AbstractMethodDescriptionTest {
 
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
+
     private Method firstMethod, secondMethod, thirdMethod;
     private Constructor<?> firstConstructor, secondConstructor;
+
+    private ClassLoader classLoader;
 
     private static int hashCode(Method method) {
         int hashCode = new TypeDescription.ForLoadedType(method.getDeclaringClass()).hashCode();
@@ -44,6 +53,7 @@ public abstract class AbstractMethodDescriptionTest {
 
     @Before
     public void setUp() throws Exception {
+        classLoader = new PrecompiledTypeClassLoader(getClass().getClassLoader());
         firstMethod = Sample.class.getDeclaredMethod("first");
         secondMethod = Sample.class.getDeclaredMethod("second", String.class, long.class);
         thirdMethod = Sample.class.getDeclaredMethod("third", Object[].class, int[].class);
@@ -253,9 +263,41 @@ public abstract class AbstractMethodDescriptionTest {
     }
 
     @Test
-    public void testName() throws Exception {
-        describe(thirdMethod);
+    @JavaVersionRule.Enforce(8)
+    public void testParameterNameAndModifiers() throws Exception {
+        Class<?> type = classLoader.loadClass("net.bytebuddy.test.precompiled.ParameterNames");
+        assertThat(describe(type.getDeclaredMethod("foo", String.class, long.class, int.class)).getParameters().get(0).isNamed(), is(true));
+        assertThat(describe(type.getDeclaredMethod("foo", String.class, long.class, int.class)).getParameters().get(1).isNamed(), is(true));
+        assertThat(describe(type.getDeclaredMethod("foo", String.class, long.class, int.class)).getParameters().get(2).isNamed(), is(true));
+        assertThat(describe(type.getDeclaredMethod("foo", String.class, long.class, int.class)).getParameters().get(0).getName(), is("first"));
+        assertThat(describe(type.getDeclaredMethod("foo", String.class, long.class, int.class)).getParameters().get(1).getName(), is("second"));
+        assertThat(describe(type.getDeclaredMethod("foo", String.class, long.class, int.class)).getParameters().get(2).getName(), is("third"));
+        assertThat(describe(type.getDeclaredMethod("bar", String.class, long.class, int.class)).getParameters().get(0).isNamed(), is(true));
+        assertThat(describe(type.getDeclaredMethod("bar", String.class, long.class, int.class)).getParameters().get(1).isNamed(), is(true));
+        assertThat(describe(type.getDeclaredMethod("bar", String.class, long.class, int.class)).getParameters().get(2).isNamed(), is(true));
+        assertThat(describe(type.getDeclaredMethod("bar", String.class, long.class, int.class)).getParameters().get(0).getName(), is("first"));
+        assertThat(describe(type.getDeclaredMethod("bar", String.class, long.class, int.class)).getParameters().get(1).getName(), is("second"));
+        assertThat(describe(type.getDeclaredMethod("bar", String.class, long.class, int.class)).getParameters().get(2).getName(), is("third"));
+        assertThat(describe(type.getDeclaredConstructor(String.class, int.class)).getParameters().get(0).isNamed(), is(true));
+        assertThat(describe(type.getDeclaredConstructor(String.class, int.class)).getParameters().get(1).isNamed(), is(true));
+        assertThat(describe(type.getDeclaredConstructor(String.class, int.class)).getParameters().get(0).getName(), is("first"));
+        assertThat(describe(type.getDeclaredConstructor(String.class, int.class)).getParameters().get(1).getName(), is("second"));
     }
+
+    @Test
+    public void testNoParameterNameAndModifiers() throws Exception {
+        assertThat(describe(secondMethod).getParameters().get(0).isNamed(), is(false));
+        assertThat(describe(secondMethod).getParameters().get(1).isNamed(), is(false));
+        assertThat(describe(secondMethod).getParameters().get(0).getName(), is("arg0"));
+        assertThat(describe(secondMethod).getParameters().get(1).getName(), is("arg1"));
+        assertThat(describe(secondMethod).getParameters().get(0).getModifiers(), is(0));
+        assertThat(describe(secondMethod).getParameters().get(1).getModifiers(), is(0));
+        assertThat(describe(firstConstructor).getParameters().get(0).isNamed(), is(canReadDebugInformation()));
+        assertThat(describe(firstConstructor).getParameters().get(0).getName(), is(canReadDebugInformation() ? "argument" : "arg0"));
+        assertThat(describe(firstConstructor).getParameters().get(0).getModifiers(), is(0));
+    }
+
+    protected abstract boolean canReadDebugInformation();
 
     @Test
     public void testSynthetic() throws Exception {
@@ -389,6 +431,10 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(firstConstructor).getDeclaredAnnotations(), is((AnnotationList) new AnnotationList.Empty()));
         assertThat(describe(secondConstructor).getDeclaredAnnotations(),
                 is((AnnotationList) new AnnotationList.ForLoadedAnnotation(secondConstructor.getDeclaredAnnotations())));
+    }
+
+    @Test
+    public void testParameterAnnotations() throws Exception {
         assertThat(describe(secondMethod).getParameters().get(0).getDeclaredAnnotations(),
                 is((AnnotationList) new AnnotationList.Empty()));
         assertThat(describe(secondMethod).getParameters().get(1).getDeclaredAnnotations(),
@@ -444,7 +490,7 @@ public abstract class AbstractMethodDescriptionTest {
 
     private static abstract class Sample {
 
-        Sample(Void argument) {
+        Sample(final Void argument) {
 
         }
 

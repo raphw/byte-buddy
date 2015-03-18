@@ -38,4 +38,9 @@ public class TypePoolDefaultMethodDescriptionTest extends AbstractMethodDescript
                 .resolve()
                 .getDeclaredMethods().filter(is(constructor)).getOnly();
     }
+
+    @Override
+    protected boolean canReadDebugInformation() {
+        return true;
+    }
 }

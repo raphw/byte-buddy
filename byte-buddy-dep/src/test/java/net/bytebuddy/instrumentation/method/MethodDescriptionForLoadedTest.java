@@ -25,4 +25,9 @@ public class MethodDescriptionForLoadedTest extends AbstractMethodDescriptionTes
         Method method = Object.class.getDeclaredMethod("toString");
         assertThat(new MethodDescription.ForLoadedMethod(method).getLoadedMethod(), sameInstance(method));
     }
+
+    @Override
+    protected boolean canReadDebugInformation() {
+        return false;
+    }
 }
