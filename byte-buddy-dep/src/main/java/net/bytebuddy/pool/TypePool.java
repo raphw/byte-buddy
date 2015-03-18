@@ -1388,10 +1388,22 @@ public interface TypePool {
                  */
                 private final Map<Integer, List<LazyTypeDescription.AnnotationToken>> parameterAnnotationTokens;
 
+                /**
+                 * A list of tokens representing meta information of a parameter as it is available for method's
+                 * that are compiled in the Java 8 version format.
+                 */
                 private final List<LazyTypeDescription.MethodToken.ParameterToken> parameterTokens;
 
+                /**
+                 * A bag of parameter meta information representing debugging information which allows to extract
+                 * a method's parameter names.
+                 */
                 private final ParameterBag legacyParameterBag;
 
+                /**
+                 * The first label that is found in the method's body, if any, denoting the start of the method.
+                 * This label can be used to identify names of local variables that describe the method's parameters.
+                 */
                 private Label firstLabel;
 
                 /**
@@ -3544,6 +3556,9 @@ public interface TypePool {
              */
             private final Map<Integer, List<AnnotationToken>> parameterAnnotationTokens;
 
+            /**
+             * A list of tokens describing meta data of the method's parameters.
+             */
             private final List<ParameterToken> parameterTokens;
 
             /**
@@ -3562,6 +3577,7 @@ public interface TypePool {
              *                                  or {@code null} if there are no such exceptions.
              * @param annotationTokens          A list of annotation tokens that are present on the represented method.
              * @param parameterAnnotationTokens A map of parameter indices to tokens that represent their annotations.
+             * @param parameterTokens           A list of tokens describing meta data of the method's parameters.
              * @param defaultValue              The default value of this method or {@code null} if there is no
              *                                  such value.
              */
@@ -3648,6 +3664,12 @@ public interface TypePool {
                 return parameterAnnotationTokens;
             }
 
+            /**
+             * Returns the parameter tokens for this type. These tokens might be out of sync with the method's
+             * parameters if the meta information attached to a method is not available or corrupt.
+             *
+             * @return A list of parameter tokens to the described method.
+             */
             protected List<ParameterToken> getParameterTokens() {
                 return parameterTokens;
             }

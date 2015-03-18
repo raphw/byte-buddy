@@ -439,11 +439,6 @@ public interface InstrumentedType extends TypeDescription {
             private final TypeDescription returnType;
 
             /**
-             * The parameter types of the represented method.
-             */
-            private final List<TypeDescription> parameterTypes;
-
-            /**
              * The exception types of the represented method.
              */
             private final List<TypeDescription> exceptionTypes;
@@ -459,10 +454,8 @@ public interface InstrumentedType extends TypeDescription {
             private final List<AnnotationDescription> declaredAnnotations;
 
             /**
-             * The declared annotations of this method's parameters.
+             * A list of descriptions of the method's parameters.
              */
-            private final List<AnnotationList> parameterAnnotations;
-
             private final List<ParameterDescription> parameters;
 
             /**
@@ -486,12 +479,9 @@ public interface InstrumentedType extends TypeDescription {
                                int modifiers) {
                 this.internalName = internalName;
                 this.returnType = returnType;
-                this.parameterTypes = new ArrayList<TypeDescription>(parameterTypes);
                 this.exceptionTypes = new ArrayList<TypeDescription>(exceptionTypes);
                 this.modifiers = modifiers;
                 declaredAnnotations = Collections.emptyList();
-                parameterAnnotations = new ArrayList<AnnotationList>(parameterTypes.size());
-                Collections.fill(parameterAnnotations, new AnnotationList.Empty());
                 parameters = ParameterList.Explicit.latent(this, parameterTypes);
                 defaultValue = null;
             }
@@ -505,17 +495,12 @@ public interface InstrumentedType extends TypeDescription {
             private MethodToken(String typeName, MethodDescription methodDescription) {
                 internalName = methodDescription.getInternalName();
                 returnType = withSubstitutedSelfReference(typeName, methodDescription.getReturnType());
-                parameterTypes = new ArrayList<TypeDescription>(methodDescription.getParameterTypes().size());
-                for (TypeDescription typeDescription : methodDescription.getParameterTypes()) {
-                    parameterTypes.add(withSubstitutedSelfReference(typeName, typeDescription));
-                }
                 exceptionTypes = new ArrayList<TypeDescription>(methodDescription.getExceptionTypes().size());
                 for (TypeDescription typeDescription : methodDescription.getExceptionTypes()) {
                     exceptionTypes.add(withSubstitutedSelfReference(typeName, typeDescription));
                 }
                 modifiers = methodDescription.getModifiers();
                 declaredAnnotations = methodDescription.getDeclaredAnnotations();
-                parameterAnnotations = methodDescription.getParameterAnnotations();
                 parameters = new ArrayList<ParameterDescription>(methodDescription.getParameters().size());
                 for (ParameterDescription parameterDescription : methodDescription.getParameters()) {
                     parameters.add(new ParameterToken(typeName, parameterDescription));

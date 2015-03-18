@@ -66,12 +66,24 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
             this.parameter = parameter;
         }
 
+        /**
+         * Creates a parameter list for a loaded method.
+         *
+         * @param method The method to represent.
+         * @return A list of parameters for this method.
+         */
         public static ParameterList of(Method method) {
             return GET_PARAMETERS.isInvokable()
                     ? new ForLoadedExecutable((Object[]) GET_PARAMETERS.invoke(method))
                     : new OfLegacyVmMethod(method);
         }
 
+        /**
+         * Creates a parameter list for a loaded constructor.
+         *
+         * @param constructor The constructor to represent.
+         * @return A list of parameters for this constructor.
+         */
         public static ParameterList of(Constructor<?> constructor) {
             return GET_PARAMETERS.isInvokable()
                     ? new ForLoadedExecutable((Object[]) GET_PARAMETERS.invoke(constructor))
