@@ -19,7 +19,7 @@ public class VisibilityMatcherTest extends AbstractElementMatcherTest<Visibility
 
     @SuppressWarnings("unchecked")
     public VisibilityMatcherTest() {
-        super((Class<? extends VisibilityMatcher<?>>) VisibilityMatcher.class, "isVisibleTo");
+        super((Class<? extends VisibilityMatcher<?>>) (Object) VisibilityMatcher.class, "isVisibleTo");
     }
 
     @Test

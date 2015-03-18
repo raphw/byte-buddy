@@ -23,7 +23,7 @@ public class MethodReturnTypeMatcherTest extends AbstractElementMatcherTest<Meth
 
     @SuppressWarnings("unchecked")
     public MethodReturnTypeMatcherTest() {
-        super((Class<? extends MethodReturnTypeMatcher<?>>) MethodReturnTypeMatcher.class, "returns");
+        super((Class<? extends MethodReturnTypeMatcher<?>>) (Object) MethodReturnTypeMatcher.class, "returns");
     }
 
     @Before
