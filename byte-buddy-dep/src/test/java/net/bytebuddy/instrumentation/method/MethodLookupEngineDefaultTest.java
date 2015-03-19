@@ -48,6 +48,7 @@ public class MethodLookupEngineDefaultTest {
     public MethodRule javaVersionRule = new JavaVersionRule();
 
     private MethodLookupEngine methodLookupEngine;
+
     private ClassLoader classLoader;
 
     private static ElementMatcher<? super MethodDescription> isVirtualTo(TypeDescription typeDescription) {

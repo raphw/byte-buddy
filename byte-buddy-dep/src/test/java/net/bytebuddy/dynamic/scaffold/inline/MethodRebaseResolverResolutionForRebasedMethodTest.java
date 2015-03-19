@@ -31,14 +31,19 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
 
     @Mock
     private MethodDescription methodDescription;
+
     @Mock
     private MethodRebaseResolver.MethodNameTransformer methodNameTransformer, otherMethodNameTransformer;
+
     @Mock
     private StackManipulation stackManipulation;
+
     @Mock
     private TypeDescription typeDescription, returnType, parameterType;
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
 

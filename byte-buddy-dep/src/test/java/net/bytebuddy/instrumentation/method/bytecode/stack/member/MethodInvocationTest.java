@@ -28,17 +28,25 @@ import static org.mockito.Mockito.*;
 public class MethodInvocationTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
+
     private static final int ARGUMENT_STACK_SIZE = 1;
+
     private final StackSize stackSize;
+
     private final int expectedSize;
+
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
     @Mock
     private MethodDescription methodDescription;
+
     @Mock
     private TypeDescription returnType, declaringType, otherType;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
+
     @Mock
     private MethodVisitor methodVisitor;
 

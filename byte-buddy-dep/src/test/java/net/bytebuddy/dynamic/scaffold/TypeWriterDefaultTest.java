@@ -31,14 +31,19 @@ public class TypeWriterDefaultTest {
 
     @Mock
     private TypeDescription instrumentedType, otherAuxiliaryDescription;
+
     @Mock
     private LoadedTypeInitializer loadedTypeInitializer;
+
     @Mock
     private InstrumentedType.TypeInitializer typeInitializer;
+
     @Mock
     private ClassFileVersion classFileVersion;
+
     @Mock
     private TypeWriter.Engine engine, otherEngine;
+
     @Mock
     private DynamicType firstAuxiliary, secondAuxiliary;
 

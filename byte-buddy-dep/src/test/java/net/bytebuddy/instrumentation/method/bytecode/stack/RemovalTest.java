@@ -25,13 +25,18 @@ import static org.mockito.Mockito.*;
 public class RemovalTest {
 
     private final StackSize stackSize;
+
     private final int opcode;
+
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
     @Mock
     private TypeDescription typeDescription;
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
 

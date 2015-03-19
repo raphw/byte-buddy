@@ -22,10 +22,13 @@ public class BindingPriorityResolverTest {
 
     @Mock
     private MethodDescription source, leftMethod, rightMethod;
+
     @Mock
     private MethodDelegationBinder.MethodBinding left, right;
+
     @Mock
     private AnnotationList leftAnnotations, rightAnnotations;
+
     @Mock
     private BindingPriority highPriority, lowPriority;
 

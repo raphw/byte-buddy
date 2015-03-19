@@ -15,6 +15,7 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
 
     @Mock
     private TypeDescription targetType;
+
     @Mock
     private Super.Instantiation instantiation;
 

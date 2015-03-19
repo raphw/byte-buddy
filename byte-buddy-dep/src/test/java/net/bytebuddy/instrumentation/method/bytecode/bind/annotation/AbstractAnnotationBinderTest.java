@@ -26,6 +26,7 @@ import static org.mockito.Mockito.*;
 public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
 
     private final Class<T> annotationType;
+
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
 
@@ -35,17 +36,22 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
 
     @Mock
     protected MethodDescription source;
+
     @Mock
     protected ParameterDescription target;
 
     @Mock
     protected Instrumentation.Target instrumentationTarget;
+
     @Mock
     protected TypeDescription instrumentedType;
+
     @Mock
     protected Assigner assigner;
+
     @Mock
     protected StackManipulation stackManipulation;
+
     @Mock
     protected ParameterList sourceParameterList;
 

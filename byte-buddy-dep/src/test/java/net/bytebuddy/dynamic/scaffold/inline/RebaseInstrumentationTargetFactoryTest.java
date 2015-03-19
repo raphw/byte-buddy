@@ -28,10 +28,13 @@ public class RebaseInstrumentationTargetFactoryTest {
 
     @Mock
     private BridgeMethodResolver.Factory bridgeMethodResolverFactory;
+
     @Mock
     private MethodRebaseResolver methodRebaseResolver;
+
     @Mock
     private MethodLookupEngine.Finding finding;
+
     @Mock
     private TypeDescription instrumentedType, superType;
 

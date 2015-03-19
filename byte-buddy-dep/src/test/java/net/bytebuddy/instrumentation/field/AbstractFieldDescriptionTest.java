@@ -168,6 +168,7 @@ public abstract class AbstractFieldDescriptionTest {
 
     @Retention(RetentionPolicy.RUNTIME)
     private @interface SampleAnnotation {
+
     }
 
     protected static class FirstSample {

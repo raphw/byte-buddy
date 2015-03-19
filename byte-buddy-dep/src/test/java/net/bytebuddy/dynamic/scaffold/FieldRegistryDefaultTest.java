@@ -25,14 +25,19 @@ public class FieldRegistryDefaultTest {
 
     @Mock
     private InstrumentedType instrumentedType;
+
     @Mock
     private FieldAttributeAppender.Factory distinctFactory;
+
     @Mock
     private FieldAttributeAppender distinct;
+
     @Mock
     private TypeWriter.FieldPool.Entry fallback;
+
     @Mock
     private FieldDescription knownField, unknownField;
+
     @Mock
     private FieldRegistry.LatentFieldMatcher latentFieldMatcher;
 

@@ -69,8 +69,10 @@ public class InlineDynamicTypeBuilderTest {
             preparingInstrumentation,
             typeInitializerInstrumentation,
             fieldCacheInstrumentation;
+
     @Mock
     private ByteCodeAppender byteCodeAppender, typeInitializerAppender, fieldCacheAppender;
+
     @Mock
     private LoadedTypeInitializer loadedTypeInitializer;
 
@@ -349,7 +351,7 @@ public class InlineDynamicTypeBuilderTest {
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ClassFileLocator.ForClassLoader.ofClassPath(),
                 new InlineDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation(new MethodRebaseResolver.MethodNameTransformer.Suffixing()))
-                .defineMethod(BAR, int.class, Arrays.<Class<?>>asList(long.class, Object.class), Visibility.PUBLIC)
+                .defineMethod(BAR, int.class, Arrays.asList(long.class, Object.class), Visibility.PUBLIC)
                 .intercept(simpleInstrumentation)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
@@ -399,7 +401,7 @@ public class InlineDynamicTypeBuilderTest {
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ClassFileLocator.ForClassLoader.ofClassPath(),
                 InlineDynamicTypeBuilder.TargetHandler.ForRedefinitionInstrumentation.INSTANCE)
-                .defineMethod(BAR, int.class, Arrays.<Class<?>>asList(long.class, Object.class), Visibility.PUBLIC)
+                .defineMethod(BAR, int.class, Arrays.asList(long.class, Object.class), Visibility.PUBLIC)
                 .intercept(simpleInstrumentation)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
@@ -445,7 +447,7 @@ public class InlineDynamicTypeBuilderTest {
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ClassFileLocator.ForClassLoader.ofClassPath(),
                 new InlineDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation(new MethodRebaseResolver.MethodNameTransformer.Suffixing()))
-                .defineMethod(BAR, int.class, Arrays.<Class<?>>asList(long.class, Object.class), Visibility.PUBLIC)
+                .defineMethod(BAR, int.class, Arrays.asList(long.class, Object.class), Visibility.PUBLIC)
                 .throwing(IOException.class)
                 .withoutCode()
                 .make()
@@ -496,7 +498,7 @@ public class InlineDynamicTypeBuilderTest {
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ClassFileLocator.ForClassLoader.ofClassPath(),
                 InlineDynamicTypeBuilder.TargetHandler.ForRedefinitionInstrumentation.INSTANCE)
-                .defineMethod(BAR, int.class, Arrays.<Class<?>>asList(long.class, Object.class), Visibility.PUBLIC)
+                .defineMethod(BAR, int.class, Arrays.asList(long.class, Object.class), Visibility.PUBLIC)
                 .throwing(IOException.class)
                 .withoutCode()
                 .make()

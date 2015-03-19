@@ -39,10 +39,12 @@ public abstract class AbstractTypeDescriptionTest {
             float.class,
             double.class,
             Object[].class);
+
     private final Class<?> constructorType;
 
     protected AbstractTypeDescriptionTest() {
         class ConstructorType {
+
         }
         constructorType = ConstructorType.class;
     }
@@ -328,6 +330,7 @@ public abstract class AbstractTypeDescriptionTest {
         Method method = AbstractTypeDescriptionTest.class.getDeclaredMethod("testDeclaredInMethod");
         Constructor<?> constructor = AbstractTypeDescriptionTest.class.getDeclaredConstructor();
         class MethodSample {
+
         }
         assertThat(describe(MethodSample.class).getEnclosingMethod().represents(method), is(true));
         assertThat(describe(constructorType).getEnclosingMethod().represents(constructor), is(true));
@@ -372,42 +375,53 @@ public abstract class AbstractTypeDescriptionTest {
     }
 
     protected static interface SampleInterface {
+
     }
 
     @Retention(RetentionPolicy.RUNTIME)
     private static @interface SampleAnnotation {
+
     }
 
     @Inherited
     @Retention(RetentionPolicy.RUNTIME)
     private static @interface OtherAnnotation {
+
         String value();
     }
 
     public static interface SampleTransitiveInterface extends SampleInterface {
+
     }
 
     static class SamplePackagePrivate {
+
     }
 
     public static class SampleInterfaceImplementation implements SampleInterface {
+
     }
 
     public static class SampleIndirectInterfaceImplementation extends SampleInterfaceImplementation {
+
     }
 
     public static class SampleTransitiveInterfaceImplementation implements SampleTransitiveInterface {
+
     }
 
     @SampleAnnotation
     @OtherAnnotation(FOO)
     public class SampleClass {
+
     }
 
     public class SampleClassInherited extends SampleClass {
+
     }
 
     @OtherAnnotation(BAR)
     public class SampleClassInheritedOverride extends SampleClass {
+
     }
 }

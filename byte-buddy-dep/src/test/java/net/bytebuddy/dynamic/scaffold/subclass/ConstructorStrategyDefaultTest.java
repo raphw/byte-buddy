@@ -24,12 +24,16 @@ public class ConstructorStrategyDefaultTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
     @Mock
     private MethodRegistry methodRegistry;
+
     @Mock
     private MethodAttributeAppender.Factory methodAttributeAppenderFactory;
+
     @Mock
     private InstrumentedType instrumentedType, superType;
+
     @Mock
     private MethodList methodList, filteredMethodList;
 

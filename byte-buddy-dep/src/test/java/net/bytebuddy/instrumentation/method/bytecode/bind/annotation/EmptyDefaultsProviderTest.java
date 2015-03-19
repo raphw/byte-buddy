@@ -22,6 +22,7 @@ public class EmptyDefaultsProviderTest {
 
     @Mock
     private Instrumentation.Target instrumentationTarget;
+
     @Mock
     private MethodDescription left, right;
 

@@ -17,17 +17,29 @@ import static org.hamcrest.core.Is.is;
 public class MethodCallProxySingleArgumentTest<T extends CallTraceable> extends AbstractMethodCallProxyTest {
 
     private static final String STRING_VALUE = "foo";
+
     private static final boolean BOOLEAN_VALUE = true;
+
     private static final byte BYTE_VALUE = 42;
+
     private static final short SHORT_VALUE = 42;
+
     private static final char CHAR_VALUE = '@';
+
     private static final int INT_VALUE = 42;
+
     private static final long LONG_VALUE = 42L;
+
     private static final float FLOAT_VALUE = 42f;
+
     private static final double DOUBLE_VALUE = 42d;
+
     private static final Object NULL_VALUE = null;
+
     private final Object value;
+
     private final Class<T> targetType;
+
     private final Class<?> valueType;
 
     public MethodCallProxySingleArgumentTest(Object value, Class<T> targetType, Class<?> valueType) {

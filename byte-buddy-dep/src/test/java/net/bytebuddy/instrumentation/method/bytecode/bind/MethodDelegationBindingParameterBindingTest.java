@@ -22,10 +22,13 @@ public class MethodDelegationBindingParameterBindingTest {
 
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
+
     @Mock
     private StackManipulation stackManipulation;
+
     @Mock
     private StackManipulation.Size size;
 

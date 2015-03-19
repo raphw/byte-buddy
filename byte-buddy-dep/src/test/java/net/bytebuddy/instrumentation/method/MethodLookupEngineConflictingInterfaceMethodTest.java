@@ -24,6 +24,7 @@ public class MethodLookupEngineConflictingInterfaceMethodTest {
 
     @Mock
     private TypeDescription typeDescription, firstType, secondType, thirdType;
+
     @Mock
     private MethodDescription first, second, third;
 

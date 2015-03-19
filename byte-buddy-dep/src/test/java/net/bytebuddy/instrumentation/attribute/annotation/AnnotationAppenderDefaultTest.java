@@ -31,7 +31,9 @@ public class AnnotationAppenderDefaultTest {
     private static final ProtectionDomain DEFAULT_PROTECTION_DOMAIN = null;
 
     private static final int ASM_MANUAL = 0;
+
     private static final String BAR = "net.bytebuddy.test.Bar";
+
     private static final String FOOBAR = "foobar";
 
     @Rule
@@ -228,9 +230,13 @@ public class AnnotationAppenderDefaultTest {
         static class Instance implements Baz {
 
             private final String value;
+
             private final int[] array;
+
             private final Foo annotation;
+
             private final Enum enumeration;
+
             private final Class<?> type;
 
             public Instance(String value, int[] array, Foo annotation, Enum enumeration, Class<?> type) {

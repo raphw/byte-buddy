@@ -51,14 +51,17 @@ public enum ArrayAccess {
      * Access for a reference-typed array.
      */
     REFERENCE(Opcodes.AALOAD, Opcodes.AASTORE, StackSize.SINGLE);
+
     /**
      * The opcode used for loading a value.
      */
     private final int loadOpcode;
+
     /**
      * The opcode used for storing a value.
      */
     private final int storeOpcode;
+
     /**
      * The size of the array's component value.
      */

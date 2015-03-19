@@ -20,10 +20,13 @@ public class AnnotationAppenderTargetTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private FieldVisitor fieldVisitor;
+
     @Mock
     private ClassVisitor classVisitor;
 

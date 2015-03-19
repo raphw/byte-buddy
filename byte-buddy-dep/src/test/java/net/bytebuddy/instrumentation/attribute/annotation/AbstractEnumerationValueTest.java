@@ -105,14 +105,17 @@ public abstract class AbstractEnumerationValueTest {
     }
 
     public static @interface Carrier {
+
         Sample value();
     }
 
     @Carrier(Sample.FIRST)
     private static class FirstCarrier {
+
     }
 
     @Carrier(Sample.SECOND)
     private static class SecondCarrier {
+
     }
 }

@@ -25,6 +25,7 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
 
     @Mock
     private TypeDescription targetParameterType, interface1, interface2;
+
     @Mock
     private Instrumentation.SpecialMethodInvocation specialMethodInvocation;
 

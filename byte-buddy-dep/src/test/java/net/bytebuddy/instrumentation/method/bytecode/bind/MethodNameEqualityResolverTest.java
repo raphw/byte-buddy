@@ -9,6 +9,7 @@ import static org.mockito.Mockito.*;
 public class MethodNameEqualityResolverTest extends AbstractAmbiguityResolverTest {
 
     private static final String FOO = "foo";
+
     private static final String BAR = "bar";
 
     @Test

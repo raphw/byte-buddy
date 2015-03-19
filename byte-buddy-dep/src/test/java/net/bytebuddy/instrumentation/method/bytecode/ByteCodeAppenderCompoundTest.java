@@ -25,10 +25,13 @@ public class ByteCodeAppenderCompoundTest {
 
     @Mock
     private ByteCodeAppender first, second;
+
     @Mock
     private MethodDescription methodDescription;
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
 

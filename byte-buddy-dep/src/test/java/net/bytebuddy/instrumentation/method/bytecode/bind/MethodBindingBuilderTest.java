@@ -25,20 +25,29 @@ import static org.mockito.Mockito.*;
 public class MethodBindingBuilderTest {
 
     private static final String FOO = "foo";
+
     private static final String BAR = "bar";
+
     private static final String BAZ = "baz";
+
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
     @Mock
     private MethodDescription methodDescription;
+
     @Mock
     private ParameterList methodParameterList;
+
     @Mock
     private TargetMethodAnnotationDrivenBinder.MethodInvoker methodInvoker;
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock(answer = Answers.RETURNS_MOCKS)
     private StackManipulation legalStackManipulation, illegalStackManipulation;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
 

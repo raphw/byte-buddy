@@ -15,6 +15,7 @@ public class MethodLookupEngineFindingDefaultTest {
 
     @Mock
     private TypeDescription typeDescription;
+
     @Mock
     private MethodList methodList, otherMethodList;
 

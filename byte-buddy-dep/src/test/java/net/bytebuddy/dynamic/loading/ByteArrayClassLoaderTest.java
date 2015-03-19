@@ -24,10 +24,15 @@ import static org.junit.Assert.assertNotEquals;
 public class ByteArrayClassLoaderTest {
 
     private static final ClassLoader BOOTSTRAP_CLASS_LOADER = null;
+
     private static final ProtectionDomain DEFAULT_PROTECTION_DOMAIN = null;
+
     private static final String BAR = "bar", CLASS_FILE = ".class";
+
     private final ByteArrayClassLoader.PersistenceHandler persistenceHandler;
+
     private final Matcher<InputStream> expectedResourceLookup;
+
     private ClassLoader classLoader;
 
     public ByteArrayClassLoaderTest(ByteArrayClassLoader.PersistenceHandler persistenceHandler,

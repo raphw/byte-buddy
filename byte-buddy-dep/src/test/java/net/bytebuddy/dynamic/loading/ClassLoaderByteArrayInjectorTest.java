@@ -39,6 +39,7 @@ public class ClassLoaderByteArrayInjectorTest {
     private TypeDescription typeDescription;
 
     private ClassLoader classLoader;
+
     private ClassLoaderByteArrayInjector classLoaderByteArrayInjector;
 
     @Before

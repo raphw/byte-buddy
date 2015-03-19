@@ -25,18 +25,22 @@ public class MethodDelegationBinderProcessorTest {
 
     @Mock
     private Instrumentation.Target instrumentationTarget;
+
     @Mock
     private MethodDescription source;
 
     @Mock
     private MethodDescription bindableTarget, unbindableTarget, dominantBindableTarget, invisibleTarget;
+
     @Mock
     private MethodDelegationBinder.MethodBinding boundDelegation, unboundDelegation, dominantBoundDelegation;
 
     @Mock
     private MethodDelegationBinder methodDelegationBinder;
+
     @Mock
     private MethodDelegationBinder.AmbiguityResolver ambiguityResolver;
+
     @Mock
     private TypeDescription instrumentedType;
 

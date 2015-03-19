@@ -69,7 +69,7 @@ public class AnnotationListForLoadedAnnotationTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testMulti() throws Exception {
-        Iterator<Annotation> annotations = Arrays.<Annotation>asList(foo, bar).iterator();
+        Iterator<Annotation> annotations = Arrays.asList(foo, bar).iterator();
         for (AnnotationList annotationList : AnnotationList.ForLoadedAnnotation.asList(new Annotation[][]{{foo}, {bar}})) {
             assertThat(annotationList.size(), is(1));
             assertThat(annotationList, hasItem(AnnotationDescription.ForLoadedAnnotation.of(annotations.next())));
@@ -83,6 +83,7 @@ public class AnnotationListForLoadedAnnotationTest {
     }
 
     private static @interface Foo {
+
     }
 
     @Inherited

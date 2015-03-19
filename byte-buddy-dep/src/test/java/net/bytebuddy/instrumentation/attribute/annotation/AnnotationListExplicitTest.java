@@ -24,6 +24,7 @@ public class AnnotationListExplicitTest {
 
     @Mock
     private AnnotationDescription foo, bar;
+
     @Mock
     private AnnotationDescription.Loadable<Foo> fooLoadable;
 
@@ -80,6 +81,7 @@ public class AnnotationListExplicitTest {
     }
 
     private static @interface Foo {
+
     }
 
     @Inherited

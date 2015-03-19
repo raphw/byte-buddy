@@ -37,36 +37,52 @@ public class MethodRegistryDefaultTest {
 
     @Mock
     private InstrumentedType basicInstrumentedType, extendedInstrumentedType;
+
     @Mock
     private Instrumentation.Target basicInstrumentationTarget, extendedInstrumentationTarget;
+
     @Mock
     private Instrumentation.Target.Factory instrumentationTargetFactory;
+
     @Mock
     private MethodList basicMethodList, extendedMethodList, croppedMethodList, singleSize, zeroSize;
+
     @Mock
     private MethodDescription unknownMethod, knownMethod, instrumentationAppendedMethod;
+
     @Mock
     private MethodRegistry.Compiled.Entry.Factory fallbackFactory;
+
     @Mock
     private MethodRegistry.Compiled.Entry fallback;
+
     @Mock
     private MethodRegistry.LatentMethodMatcher latentMatchesKnownMethod;
+
     @Mock
     private ElementMatcher<? super MethodDescription> matchesKnownMethod;
+
     @Mock
     private Instrumentation simpleInstrumentation, otherInstrumentation, extendingInstrumentation;
+
     @Mock
     private MethodAttributeAppender.Factory simpleAttributeAppenderFactory, otherAttributeAppenderFactory;
+
     @Mock
     private MethodAttributeAppender simpleAttributeAppender, otherAttributeAppender;
+
     @Mock
     private ByteCodeAppender simpleByteCodeAppender, otherByteCodeAppender;
+
     @Mock
     private MethodLookupEngine methodLookupEngine;
+
     @Mock
     private MethodLookupEngine.Finding basicFinding, extendedFinding;
+
     @Mock
     private LoadedTypeInitializer loadedTypeInitializer;
+
     @Mock
     private InstrumentedType.TypeInitializer typeInitializer;
 

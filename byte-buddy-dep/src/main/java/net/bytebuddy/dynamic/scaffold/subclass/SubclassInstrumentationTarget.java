@@ -23,6 +23,7 @@ public class SubclassInstrumentationTarget extends Instrumentation.Target.Abstra
      * sufficient for a constructor's unique identification.
      */
     protected final Map<TypeList, MethodDescription> superConstructors;
+
     /**
      * The origin type identifier to use.
      */

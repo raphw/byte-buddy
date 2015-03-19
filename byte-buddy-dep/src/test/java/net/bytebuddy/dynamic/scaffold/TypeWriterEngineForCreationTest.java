@@ -35,28 +35,40 @@ public class TypeWriterEngineForCreationTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
     @Mock
     private TypeDescription instrumentedType, superType;
+
     @Mock
     private ClassFileVersion classFileVersion;
+
     @Mock
     private ClassVisitorWrapper classVisitorWrapper;
+
     @Mock
     private TypeAttributeAppender typeAttributeAppender;
+
     @Mock
     private TypeWriter.FieldPool fieldPool;
+
     @Mock
     private TypeWriter.FieldPool.Entry firstFieldEntry, secondFieldEntry;
+
     @Mock
     private TypeWriter.MethodPool methodPool, otherMethodPool;
+
     @Mock
     private TypeWriter.MethodPool.Entry firstMethodEntry, secondMethodEntry;
+
     @Mock
     private MethodDescription firstMethod, secondMethod;
+
     @Mock
     private FieldDescription firstField, secondField;
+
     @Mock
     private Instrumentation.Context.ExtractableView instrumentationContext;
+
     @Mock
     private ClassVisitor classVisitor;
 

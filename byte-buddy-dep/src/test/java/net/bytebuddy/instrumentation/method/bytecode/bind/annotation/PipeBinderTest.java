@@ -19,8 +19,10 @@ import static org.mockito.Mockito.when;
 public class PipeBinderTest extends AbstractAnnotationBinderTest<Pipe> {
 
     private TargetMethodAnnotationDrivenBinder.ParameterBinder<Pipe> binder;
+
     @Mock
     private MethodDescription targetMethod;
+
     @Mock
     private TypeDescription targetMethodType;
 

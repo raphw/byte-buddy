@@ -16,6 +16,7 @@ public abstract class AbstractAttributeAppenderTest {
     protected static @interface Qux {
 
         static class Instance implements Qux {
+
             @Override
             public Class<? extends Annotation> annotationType() {
                 return Qux.class;
@@ -27,6 +28,7 @@ public abstract class AbstractAttributeAppenderTest {
     protected static @interface Baz {
 
         static class Instance implements Baz {
+
             @Override
             public Class<? extends Annotation> annotationType() {
                 return Baz.class;
@@ -38,6 +40,7 @@ public abstract class AbstractAttributeAppenderTest {
     protected static @interface QuxBaz {
 
         static class Instance implements QuxBaz {
+
             @Override
             public Class<? extends Annotation> annotationType() {
                 return QuxBaz.class;

@@ -57,23 +57,39 @@ import static org.mockito.Mockito.*;
 public class SubclassDynamicTypeBuilderTest {
 
     private static final String BOOLEAN_FIELD = "booleanField";
+
     private static final String BYTE_FIELD = "byteField";
+
     private static final String SHORT_FIELD = "shortField";
+
     private static final String CHARACTER_FIELD = "charField";
+
     private static final String INTEGER_FIELD = "intField";
+
     private static final String LONG_FIELD = "longField";
+
     private static final String LONG_FIELD_FROM_INT = "longFieldFromInt";
+
     private static final String FLOAT_FIELD = "floatField";
+
     private static final String DOUBLE_FIELD = "doubleField";
+
     private static final String STRING_FIELD = "stringField";
 
     private static final boolean BOOLEAN_VALUE = true;
+
     private static final byte BYTE_VALUE = 42;
+
     private static final short SHORT_VALUE = 42;
+
     private static final char CHARACTER_VALUE = '@';
+
     private static final int INTEGER_VALUE = 42;
+
     private static final long LONG_VALUE = 42L;
+
     private static final float FLOAT_VALUE = 42f;
+
     private static final double DOUBLE_VALUE = 42d;
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
@@ -86,8 +102,10 @@ public class SubclassDynamicTypeBuilderTest {
             preparingInstrumentation,
             typeInitializerInstrumentation,
             fieldCacheInstrumentation;
+
     @Mock
     private ByteCodeAppender byteCodeAppender, typeInitializerAppender, fieldCacheAppender;
+
     @Mock
     private LoadedTypeInitializer loadedTypeInitializer;
 
@@ -267,7 +285,7 @@ public class SubclassDynamicTypeBuilderTest {
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ConstructorStrategy.Default.IMITATE_SUPER_TYPE)
-                .defineMethod(BAR, int.class, Arrays.<Class<?>>asList(long.class, Object.class), Visibility.PUBLIC)
+                .defineMethod(BAR, int.class, Arrays.asList(long.class, Object.class), Visibility.PUBLIC)
                 .intercept(simpleInstrumentation)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
@@ -313,7 +331,7 @@ public class SubclassDynamicTypeBuilderTest {
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ConstructorStrategy.Default.IMITATE_SUPER_TYPE)
-                .defineMethod(BAR, int.class, Arrays.<Class<?>>asList(long.class, Object.class), Visibility.PUBLIC)
+                .defineMethod(BAR, int.class, Arrays.asList(long.class, Object.class), Visibility.PUBLIC)
                 .throwing(IOException.class)
                 .withoutCode()
                 .make()
@@ -395,7 +413,7 @@ public class SubclassDynamicTypeBuilderTest {
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ConstructorStrategy.Default.IMITATE_SUPER_TYPE)
-                .defineMethod(BAR, int.class, Arrays.<Class<?>>asList(long.class, Object.class), Visibility.PUBLIC)
+                .defineMethod(BAR, int.class, Arrays.asList(long.class, Object.class), Visibility.PUBLIC)
                 .intercept(preparingInstrumentation)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)

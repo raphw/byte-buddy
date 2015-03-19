@@ -9,6 +9,7 @@ public class AbstractMethodAttributeAppenderTest extends AbstractAttributeAppend
 
     @Mock(answer = Answers.RETURNS_MOCKS)
     protected MethodVisitor methodVisitor;
+
     @Mock
     protected MethodDescription methodDescription;
 }

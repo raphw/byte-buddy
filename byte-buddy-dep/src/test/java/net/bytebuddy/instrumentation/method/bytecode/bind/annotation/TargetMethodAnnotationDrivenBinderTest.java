@@ -18,22 +18,31 @@ public class TargetMethodAnnotationDrivenBinderTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
     @Mock
     private TargetMethodAnnotationDrivenBinder.ParameterBinder<?> firstParameterBinder, secondParameterBinder;
+
     @Mock
     private TargetMethodAnnotationDrivenBinder.DefaultsProvider defaultsProvider;
+
     @Mock
     private TargetMethodAnnotationDrivenBinder.TerminationHandler terminationHandler;
+
     @Mock
     private Assigner assigner;
+
     @Mock
     private StackManipulation assignmentBinding, methodInvocation, termination;
+
     @Mock
     private TargetMethodAnnotationDrivenBinder.MethodInvoker methodInvoker;
+
     @Mock
     private Instrumentation.Target instrumentationTarget;
+
     @Mock
     private MethodDescription source, target;
+
     @Mock
     private TypeDescription sourceTypeDescription, targetTypeDescription;
 
@@ -43,8 +52,10 @@ public class TargetMethodAnnotationDrivenBinderTest {
 //    private AnnotationDescription.ForLoadedAnnotation<SecondPseudoAnnotation> secondPseudoAnnotation;
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
+
     @Mock
     private AnnotationList annotationList;
 //

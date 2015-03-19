@@ -26,6 +26,7 @@ public class IgnoreForBindingVerifierTest {
 
     @Mock
     private MethodDescription methodDescription;
+
     @Mock
     private AnnotationList annotationList;
 

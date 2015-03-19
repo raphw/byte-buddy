@@ -24,8 +24,10 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
 
     @Mock
     private MethodDescription morphMethod;
+
     @Mock
     private TypeDescription morphType, defaultType;
+
     @Mock
     private Instrumentation.SpecialMethodInvocation specialMethodInvocation;
 
@@ -169,5 +171,6 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
     }
 
     private static interface Foo {
+
     }
 }

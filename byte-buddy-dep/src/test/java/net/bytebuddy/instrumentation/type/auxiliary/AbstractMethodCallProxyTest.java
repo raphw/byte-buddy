@@ -30,6 +30,7 @@ public class AbstractMethodCallProxyTest {
 
     @Mock
     private Instrumentation.SpecialMethodInvocation specialMethodInvocation;
+
     @Mock
     private AuxiliaryType.MethodAccessorFactory methodAccessorFactory;
 

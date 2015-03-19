@@ -30,12 +30,16 @@ public class RebaseInstrumentationTargetTest extends AbstractInstrumentationTarg
 
     @Mock
     private MethodRebaseResolver methodRebaseResolver;
+
     @Mock
     private MethodRebaseResolver.Resolution rebasedResolution, nonRebasedResolution;
+
     @Mock
     private StackManipulation additionalArguments;
+
     @Mock
     private MethodDescription targetRebaseMethod, rebasedMethod, nonRebasedMethod, superMethod;
+
     @Mock
     private TypeDescription superType;
 

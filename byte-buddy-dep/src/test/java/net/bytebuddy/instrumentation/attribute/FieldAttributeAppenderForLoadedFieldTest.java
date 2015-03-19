@@ -17,6 +17,7 @@ import static org.mockito.Mockito.*;
 public class FieldAttributeAppenderForLoadedFieldTest extends AbstractFieldAttributeAppenderTest {
 
     private static final String FOO = "foo", BAR = "bar";
+
     private Field field;
 
     @Before

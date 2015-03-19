@@ -9,6 +9,7 @@ public abstract class AbstractFieldAttributeAppenderTest extends AbstractAttribu
 
     @Mock(answer = Answers.RETURNS_MOCKS)
     protected FieldVisitor fieldVisitor;
+
     @Mock
     protected FieldDescription fieldDescription;
 }

@@ -28,18 +28,27 @@ import static org.mockito.Mockito.*;
 public class FieldAccessTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
+
     private final boolean isStatic;
+
     private final StackSize fieldSize;
+
     private final int getterChange, getterMaximum, getterOpcode;
+
     private final int putterChange, putterMaximum, putterOpcode;
+
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
     @Mock
     private FieldDescription fieldDescription;
+
     @Mock
     private TypeDescription declaringType, fieldType;
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
 

@@ -9,6 +9,7 @@ public abstract class AbstractTypeAttributeAppenderTest extends AbstractAttribut
 
     @Mock(answer = Answers.RETURNS_MOCKS)
     protected ClassVisitor classVisitor;
+
     @Mock
     protected TypeDescription typeDescription;
 }

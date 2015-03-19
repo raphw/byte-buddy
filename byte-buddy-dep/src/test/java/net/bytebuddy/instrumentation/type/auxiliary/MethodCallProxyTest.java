@@ -12,8 +12,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class MethodCallProxyTest extends AbstractMethodCallProxyTest {
 
     private static final long LONG_VALUE = 42L;
+
     private static final String String_VALUE = "BAR";
+
     private static final int INT_VALUE = 21;
+
     private static final boolean BOOLEAN_VALUE = true;
 
     @Test

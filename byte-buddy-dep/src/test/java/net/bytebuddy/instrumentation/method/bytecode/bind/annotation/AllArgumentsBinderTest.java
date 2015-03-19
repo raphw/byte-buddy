@@ -25,6 +25,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
 
     @Mock
     private TypeDescription firstSourceType, secondSourceType;
+
     @Mock
     private TypeDescription targetType, componentType;
 

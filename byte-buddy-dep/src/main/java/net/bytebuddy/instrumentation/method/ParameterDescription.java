@@ -89,7 +89,9 @@ public interface ParameterDescription extends AnnotatedElement, NamedElement, Mo
 
         @Override
         public boolean equals(Object other) {
-            if (!(other instanceof ParameterDescription)) {
+            if (this == other) {
+                return true;
+            } else if (!(other instanceof ParameterDescription)) {
                 return false;
             }
             ParameterDescription parameterDescription = (ParameterDescription) other;
@@ -408,10 +410,10 @@ public interface ParameterDescription extends AnnotatedElement, NamedElement, Mo
         /**
          * Creates a latent description of a parameter.
          *
-         * @param declaringMethod      The method that is declaring the parameter.
-         * @param parameterType        The type of the parameter.
-         * @param index                The index of the parameter.
-         * @param offset               The parameter's offset in the local method variables array.
+         * @param declaringMethod The method that is declaring the parameter.
+         * @param parameterType   The type of the parameter.
+         * @param index           The index of the parameter.
+         * @param offset          The parameter's offset in the local method variables array.
          */
         public Latent(MethodDescription declaringMethod,
                       TypeDescription parameterType,

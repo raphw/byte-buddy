@@ -28,8 +28,10 @@ public class SubclassInstrumentationTargetFactoryTest {
 
     @Mock
     private BridgeMethodResolver.Factory bridgeMethodResolverFactory;
+
     @Mock
     private MethodLookupEngine.Finding finding;
+
     @Mock
     private TypeDescription instrumentedType, superType;
 

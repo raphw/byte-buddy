@@ -22,6 +22,7 @@ public class MethodLookupEngineOverridenClassMethodTest {
 
     @Mock
     private TypeDescription firstType, secondType;
+
     @Mock
     private MethodDescription first, second;
 

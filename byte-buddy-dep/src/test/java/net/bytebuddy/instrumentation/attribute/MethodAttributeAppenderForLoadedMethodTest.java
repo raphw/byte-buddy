@@ -18,7 +18,9 @@ import static org.mockito.Mockito.*;
 public class MethodAttributeAppenderForLoadedMethodTest extends AbstractMethodAttributeAppenderTest {
 
     private static final String FOO = "foo", BAR = "bar";
+
     private static final int PARAMETER_INDEX = 0;
+
     private Method method;
 
     @Before

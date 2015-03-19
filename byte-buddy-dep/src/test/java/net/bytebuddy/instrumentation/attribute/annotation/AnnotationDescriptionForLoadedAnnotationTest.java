@@ -43,6 +43,7 @@ public class AnnotationDescriptionForLoadedAnnotationTest extends AbstractAnnota
 
     @Retention(RetentionPolicy.RUNTIME)
     private static @interface PrivateAnnotation {
+
         String value();
 
         static enum Defect implements PrivateAnnotation {
@@ -63,5 +64,6 @@ public class AnnotationDescriptionForLoadedAnnotationTest extends AbstractAnnota
 
     @PrivateAnnotation(FOO)
     private static class Carrier {
+
     }
 }

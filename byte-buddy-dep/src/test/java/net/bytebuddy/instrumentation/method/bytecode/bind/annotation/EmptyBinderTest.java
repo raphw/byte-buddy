@@ -21,9 +21,12 @@ import static org.mockito.Mockito.*;
 public class EmptyBinderTest extends AbstractAnnotationBinderTest<Empty> {
 
     private final TypeDescription typeDescription;
+
     private final int opcode;
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
 

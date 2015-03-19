@@ -15,6 +15,7 @@ public class ArgumentTypeResolverReferenceTest extends AbstractArgumentTypeResol
 
     @Mock
     private TypeDescription weakTargetType;
+
     @Mock
     private TypeDescription dominantTargetType;
 

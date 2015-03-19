@@ -22,9 +22,12 @@ import static org.mockito.Mockito.*;
 public class ArgumentTypeResolverPrimitiveTest extends AbstractArgumentTypeResolverTest {
 
     private final Class<?> firstType;
+
     private final Class<?> secondType;
+
     @Mock
     private TypeDescription firstPrimitive;
+
     @Mock
     private TypeDescription secondPrimitive;
 

@@ -17,6 +17,7 @@ public class SuperCallBinderTest extends AbstractAnnotationBinderTest<SuperCall>
 
     @Mock
     private TypeDescription targetParameterType;
+
     @Mock
     private Instrumentation.SpecialMethodInvocation specialMethodInvocation;
 

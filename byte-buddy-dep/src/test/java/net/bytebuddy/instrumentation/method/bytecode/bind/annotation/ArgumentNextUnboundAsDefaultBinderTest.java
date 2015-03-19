@@ -30,6 +30,7 @@ public class ArgumentNextUnboundAsDefaultBinderTest {
 
     @Mock
     private Instrumentation.Target instrumentationTarget;
+
     @Mock
     private MethodDescription source, target;
 

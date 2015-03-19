@@ -276,6 +276,51 @@ public abstract class AbstractMethodDescriptionTest {
 
     @Test
     @JavaVersionRule.Enforce(8)
+    public void testEqualsParameter() throws Exception {
+        ParameterDescription identical = describe(secondMethod).getParameters().get(0);
+        assertThat(identical, equalTo(identical));
+        assertThat(describe(secondMethod).getParameters().get(0), is(describe(secondMethod).getParameters().get(0)));
+        ParameterDescription equal = mock(ParameterDescription.class);
+        when(equal.getDeclaringMethod()).thenReturn(describe(secondMethod));
+        when(equal.getIndex()).thenReturn(0);
+        assertThat(describe(secondMethod).getParameters().get(0), equalTo(equal));
+        ParameterDescription notEqualMethod = mock(ParameterDescription.class);
+        when(equal.getDeclaringMethod()).thenReturn(mock(MethodDescription.class));
+        when(equal.getIndex()).thenReturn(0);
+        assertThat(describe(secondMethod).getParameters().get(0), not(equalTo(notEqualMethod)));
+        ParameterDescription notEqualMethodIndex = mock(ParameterDescription.class);
+        when(equal.getDeclaringMethod()).thenReturn(describe(secondMethod));
+        when(equal.getIndex()).thenReturn(1);
+        assertThat(describe(secondMethod).getParameters().get(0), not(equalTo(notEqualMethodIndex)));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    public void testHashCodeParameter() throws Exception {
+        assertThat(describe(secondMethod).getParameters().get(0).hashCode(), is(hashCode(secondMethod, 0)));
+        assertThat(describe(secondMethod).getParameters().get(1).hashCode(), is(hashCode(secondMethod, 1)));
+        assertThat(describe(firstConstructor).getParameters().get(0).hashCode(), is(hashCode(firstConstructor, 0)));
+    }
+
+    private int hashCode(Method method, int index) {
+        return hashCode(method) ^ index;
+    }
+
+    private int hashCode(Constructor<?> constructor, int index) {
+        return hashCode(constructor) ^ index;
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    public void testToStringParameter() throws Exception {
+        Class<?> executable = Class.forName("java.lang.reflect.Executable");
+        Method method = executable.getDeclaredMethod("getParameters");
+        assertThat(describe(secondMethod).getParameters().get(0).toString(), is(((Object[]) method.invoke(secondMethod))[0].toString()));
+        assertThat(describe(secondMethod).getParameters().get(1).toString(), is(((Object[]) method.invoke(secondMethod))[1].toString()));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
     public void testParameterNameAndModifiers() throws Exception {
         Class<?> type = classLoader.loadClass("net.bytebuddy.test.precompiled.ParameterNames");
         assertThat(describe(type.getDeclaredMethod("foo", String.class, long.class, int.class)).getParameters().get(0).isNamed(), is(true));

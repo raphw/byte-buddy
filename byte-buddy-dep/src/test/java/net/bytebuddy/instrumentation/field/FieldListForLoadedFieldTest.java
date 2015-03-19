@@ -10,6 +10,7 @@ import static org.hamcrest.core.Is.is;
 public class FieldListForLoadedFieldTest {
 
     private static final String FOO = "foo", BAR = "bar";
+
     private FieldList fieldList;
 
     @Before

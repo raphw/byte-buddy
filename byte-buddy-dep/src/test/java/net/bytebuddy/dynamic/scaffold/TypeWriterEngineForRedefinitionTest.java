@@ -45,42 +45,61 @@ public class TypeWriterEngineForRedefinitionTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
     @Mock
     private TypeDescription instrumentedType, superType;
+
     @Mock
     private ClassFileVersion classFileVersion;
+
     @Mock
     private ClassVisitorWrapper classVisitorWrapper;
+
     @Mock
     private TypeAttributeAppender typeAttributeAppender;
+
     @Mock
     private TypeWriter.FieldPool fieldPool;
+
     @Mock
     private TypeWriter.FieldPool.Entry firstFieldEntry, secondFieldEntry;
+
     @Mock
     private TypeWriter.MethodPool methodPool;
+
     @Mock
     private TypeWriter.MethodPool.Entry firstMethodEntry, secondMethodEntry, fooEntry, barEntry, constructorEntry;
+
     @Mock
     private MethodDescription firstMethod, secondMethod, barResolutionMethod;
+
     @Mock
     private FieldDescription firstField, secondField;
+
     @Mock
     private Instrumentation.Context.ExtractableView instrumentationContext;
+
     @Mock
     private ClassVisitor classVisitor;
+
     @Mock
     private MethodVisitor fooMethodVisitor, barMethodVisitor, quxMethodVisitor;
+
     @Mock
     private ClassFileLocator classFileLocator;
+
     @Mock
     private MethodRebaseResolver methodRebaseResolver, otherMethodRebaseResolver;
+
     @Mock
     private MethodAttributeAppender fooAttributeAppender, barAttributeAppender;
+
     @Mock
     private ByteCodeAppender fooByteCodeAppender, barByteCodeAppender;
+
     @Mock
     private MethodRebaseResolver.Resolution barResolution;
+
     @Mock
     private ClassFileLocator.Resolution resolution;
 

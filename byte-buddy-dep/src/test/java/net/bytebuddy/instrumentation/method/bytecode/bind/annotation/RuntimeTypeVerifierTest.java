@@ -26,6 +26,7 @@ public class RuntimeTypeVerifierTest {
 
     @Mock
     private MethodDescription methodDescription;
+
     @Mock
     private ParameterDescription parameterDescription;
 

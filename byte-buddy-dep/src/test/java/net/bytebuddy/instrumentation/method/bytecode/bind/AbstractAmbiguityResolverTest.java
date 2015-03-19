@@ -16,8 +16,10 @@ public abstract class AbstractAmbiguityResolverTest {
 
     @Mock
     protected MethodDescription source;
+
     @Mock
     protected MethodDescription leftMethod, rightMethod;
+
     @Mock
     protected MethodDelegationBinder.MethodBinding left, right;
 

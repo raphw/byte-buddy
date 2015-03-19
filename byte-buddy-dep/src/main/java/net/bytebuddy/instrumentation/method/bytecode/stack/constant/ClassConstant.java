@@ -72,6 +72,7 @@ public enum ClassConstant implements StackManipulation {
      * The descriptor of the {@link java.lang.Class} type.
      */
     private static final String CLASS_TYPE_INTERNAL_NAME = "Ljava/lang/Class;";
+
     /**
      * The internal name of the type owning the field.
      */

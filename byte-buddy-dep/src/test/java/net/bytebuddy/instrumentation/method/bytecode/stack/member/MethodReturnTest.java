@@ -26,14 +26,20 @@ import static org.mockito.Mockito.*;
 public class MethodReturnTest {
 
     private final Class<?> type;
+
     private final int opcode;
+
     private final int sizeChange;
+
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private TypeDescription typeDescription;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
 

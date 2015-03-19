@@ -28,8 +28,10 @@ public class BridgeMethodResolverSimpleTest {
 
     @Mock
     private BridgeMethodResolver.Simple.ConflictHandler conflictHandler;
+
     @Mock
     private BridgeMethodResolver.Simple.BridgeTarget bridgeTarget;
+
     @Mock
     private MethodDescription methodDescription;
 

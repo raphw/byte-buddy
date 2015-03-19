@@ -18,6 +18,7 @@ public class MethodHandleConstant implements StackManipulation {
      * The size of a {@code java.lang.invoke.MethodHandle} on the operand stack.
      */
     private static final Size SIZE = StackSize.SINGLE.toIncreasingSize();
+
     /**
      * The ASM handle for the creating the given method handle.
      */

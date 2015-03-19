@@ -9,6 +9,7 @@ public class MethodBindingAmbiguityResolutionTest {
 
     private static final MethodDelegationBinder.AmbiguityResolver.Resolution LEFT =
             MethodDelegationBinder.AmbiguityResolver.Resolution.LEFT;
+
     private static final MethodDelegationBinder.AmbiguityResolver.Resolution RIGHT =
             MethodDelegationBinder.AmbiguityResolver.Resolution.RIGHT;
 

@@ -32,12 +32,16 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
 
     @Mock
     private MethodDescription methodDescription;
+
     @Mock
     private StackManipulation stackManipulation;
+
     @Mock
     private TypeDescription typeDescription, returnType, parameterType, placeholderType, otherPlaceHolderType;
+
     @Mock
     private MethodVisitor methodVisitor;
+
     @Mock
     private Instrumentation.Context instrumentationContext;
 

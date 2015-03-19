@@ -32,8 +32,10 @@ public class SubclassInstrumentationTargetTest extends AbstractInstrumentationTa
 
     @Mock
     private MethodDescription superMethod, superMethodConstructor;
+
     @Mock
     private TypeDescription superType;
+
     @Mock
     private ParameterList parameterList;
 

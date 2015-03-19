@@ -14,6 +14,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class StackSizeTest {
 
     private final Class<?> type;
+
     private final StackSize stackSize;
 
     public StackSizeTest(Class<?> type, StackSize stackSize) {

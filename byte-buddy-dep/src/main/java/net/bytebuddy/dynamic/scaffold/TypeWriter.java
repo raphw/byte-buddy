@@ -85,6 +85,11 @@ public interface TypeWriter<T> {
             private static final MethodVisitor IGNORE_METHOD = null;
 
             /**
+             * Indicates that a class has no super type, namely the {@link java.lang.Object} type.
+             */
+            private static final TypeDescription NO_SUPER_TYPE = null;
+
+            /**
              * The instrumented type that is written.
              */
             private final TypeDescription instrumentedType;
@@ -330,7 +335,7 @@ public interface TypeWriter<T> {
                             instrumentedType.getActualModifiers((modifiers & Opcodes.ACC_SUPER) != 0),
                             instrumentedType.getInternalName(),
                             instrumentedType.getGenericSignature(),
-                            instrumentedType.getSupertype() == null ?
+                            instrumentedType.getSupertype() == NO_SUPER_TYPE ?
                                     null :
                                     instrumentedType.getSupertype().getInternalName(),
                             instrumentedType.getInterfaces().toInternalNames());
@@ -480,8 +485,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public String toString() {
-                        return "TypeWriter.Engine.ForRedefinition.RedefinitionClassVisitor.CodePreservingMethodVisitor{"
-                                +
+                        return "TypeWriter.Engine.ForRedefinition.RedefinitionClassVisitor.CodePreservingMethodVisitor{" +
                                 "actualMethodVisitor=" + actualMethodVisitor +
                                 ", byteCodeAppender=" + byteCodeAppender +
                                 ", methodDescription=" + methodDescription +
