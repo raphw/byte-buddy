@@ -2,6 +2,7 @@ package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.ParameterList;
+import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -34,6 +35,7 @@ public abstract class AbstractSpecialMethodInvocationTest {
 
     @Before
     public void setUp() throws Exception {
+        when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
         parameterTypes = new TypeList.Explicit(Arrays.asList(parameterType));
     }
 
@@ -53,7 +55,8 @@ public abstract class AbstractSpecialMethodInvocationTest {
         when(equal.getMethodDescription()).thenReturn(equalMethod);
         when(equalMethod.getInternalName()).thenReturn(FOO);
         when(equalMethod.getReturnType()).thenReturn(returnType);
-        when(equalMethod.getParameters()).thenReturn(ParameterList.Explicit.latent(equalMethod, parameterTypes));
+        ParameterList equalMethodParameters = ParameterList.Explicit.latent(equalMethod, parameterTypes);
+        when(equalMethod.getParameters()).thenReturn(equalMethodParameters);
         assertThat(make(FOO, returnType, parameterTypes, targetType), is(equal));
         Instrumentation.SpecialMethodInvocation equalButType = mock(Instrumentation.SpecialMethodInvocation.class);
         when(equalButType.getTypeDescription()).thenReturn(mock(TypeDescription.class));
@@ -65,7 +68,8 @@ public abstract class AbstractSpecialMethodInvocationTest {
         when(equalButName.getMethodDescription()).thenReturn(equalMethodButName);
         when(equalMethodButName.getInternalName()).thenReturn(BAR);
         when(equalMethodButName.getReturnType()).thenReturn(returnType);
-        when(equalMethodButName.getParameters()).thenReturn(ParameterList.Explicit.latent(equalMethodButName, parameterTypes));
+        ParameterList equalMethodButNameParameters = ParameterList.Explicit.latent(equalMethodButName, parameterTypes);
+        when(equalMethodButName.getParameters()).thenReturn(equalMethodButNameParameters);
         assertThat(make(FOO, returnType, parameterTypes, targetType), not(is(equalButName)));
         Instrumentation.SpecialMethodInvocation equalButReturn = mock(Instrumentation.SpecialMethodInvocation.class);
         when(equalButName.getTypeDescription()).thenReturn(targetType);
@@ -73,7 +77,8 @@ public abstract class AbstractSpecialMethodInvocationTest {
         when(equalButName.getMethodDescription()).thenReturn(equalMethodButReturn);
         when(equalMethodButReturn.getInternalName()).thenReturn(FOO);
         when(equalMethodButReturn.getReturnType()).thenReturn(mock(TypeDescription.class));
-        when(equalMethodButReturn.getParameters()).thenReturn(ParameterList.Explicit.latent(equalMethodButReturn, parameterTypes));
+        ParameterList equalMethodButReturnParameters = ParameterList.Explicit.latent(equalMethodButReturn, parameterTypes);
+        when(equalMethodButReturn.getParameters()).thenReturn(equalMethodButReturnParameters);
         assertThat(make(FOO, returnType, parameterTypes, targetType), not(is(equalButReturn)));
         Instrumentation.SpecialMethodInvocation equalButParameter = mock(Instrumentation.SpecialMethodInvocation.class);
         when(equalButParameter.getTypeDescription()).thenReturn(targetType);
@@ -81,7 +86,10 @@ public abstract class AbstractSpecialMethodInvocationTest {
         when(equalButParameter.getMethodDescription()).thenReturn(equalMethodButParameter);
         when(equalMethodButParameter.getInternalName()).thenReturn(FOO);
         when(equalMethodButParameter.getReturnType()).thenReturn(returnType);
-        when(equalMethodButParameter.getParameters()).thenReturn(ParameterList.Explicit.latent(equalMethodButParameter, Arrays.asList(mock(TypeDescription.class))));
+        TypeDescription parameterType = mock(TypeDescription.class);
+        when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
+        ParameterList equalMethodButParameterParameters = ParameterList.Explicit.latent(equalMethodButParameter, Arrays.asList(parameterType));
+        when(equalMethodButParameter.getParameters()).thenReturn(equalMethodButParameterParameters);
         assertThat(make(FOO, returnType, parameterTypes, targetType), not(is(equalButParameter)));
         assertThat(make(FOO, returnType, parameterTypes, targetType), not(is(new Object())));
         assertThat(make(FOO, returnType, parameterTypes, targetType), not(is((Object) null)));

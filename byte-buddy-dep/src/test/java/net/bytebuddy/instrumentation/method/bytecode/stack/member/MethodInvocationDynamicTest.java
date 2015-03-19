@@ -51,7 +51,6 @@ public class MethodInvocationDynamicTest {
     @Before
     public void setUp() throws Exception {
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
-        when(methodDescription.getParameters()).thenReturn(ParameterList.Explicit.latent(methodDescription, Arrays.asList(firstType, secondType)));
         when(firstType.getStackSize()).thenReturn(StackSize.ZERO);
         when(firstType.getDescriptor()).thenReturn(FOO);
         when(secondType.getDescriptor()).thenReturn(BAR);
@@ -61,6 +60,8 @@ public class MethodInvocationDynamicTest {
         when(methodDescription.getInternalName()).thenReturn(QUX);
         when(methodDescription.getDescriptor()).thenReturn(BAZ);
         when(declaringType.getInternalName()).thenReturn(BAR);
+        ParameterList parameterList = ParameterList.Explicit.latent(methodDescription, Arrays.asList(firstType, secondType));
+        when(methodDescription.getParameters()).thenReturn(parameterList);
     }
 
     @Test

@@ -80,7 +80,7 @@ public @interface Argument {
                                                                              int parameterOffset) {
                 return MethodDelegationBinder.ParameterBinding.Unique.of(
                         new StackManipulation.Compound(
-                                MethodVariableAccess.forType(sourceType).loadFromIndex(parameterOffset),
+                                MethodVariableAccess.forType(sourceType).loadOffset(parameterOffset),
                                 assigner.assign(sourceType, targetType, dynamicallyTyped)),
                         new ArgumentTypeResolver.ParameterIndexToken(sourceParameterIndex)
                 );
@@ -100,7 +100,7 @@ public @interface Argument {
                                                                              int parameterOffset) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(
                         new StackManipulation.Compound(
-                                MethodVariableAccess.forType(sourceType).loadFromIndex(parameterOffset),
+                                MethodVariableAccess.forType(sourceType).loadOffset(parameterOffset),
                                 assigner.assign(sourceType, targetType, dynamicallyTyped))
                 );
             }
@@ -162,7 +162,7 @@ public @interface Argument {
                     argument.value(),
                     assigner,
                     RuntimeType.Verifier.check(target),
-                    source.getParameterOffset(argument.value()));
+                    source.getParameters().get(argument.value()).getOffset());
         }
     }
 

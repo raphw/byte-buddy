@@ -121,14 +121,6 @@ public interface MethodDescription extends ByteCodeElement {
     int getStackSize();
 
     /**
-     * Returns the offset of the parameter at {@code parameterIndex} on the described method's local variable array.
-     *
-     * @param parameterIndex The parameter index of interest.
-     * @return The offset of this parameter.
-     */
-    int getParameterOffset(int parameterIndex);
-
-    /**
      * Checks if this method represents a Java 8+ default method.
      *
      * @return {@code true} if this method is a default method.
@@ -300,21 +292,6 @@ public interface MethodDescription extends ByteCodeElement {
         @Override
         public boolean isOverridable() {
             return !(isConstructor() || isFinal() || isPrivate() || isStatic());
-        }
-
-        @Override
-        public int getParameterOffset(int parameterIndex) {
-            int offset = isStatic() ? 0 : 1;
-            int currentIndex = 0;
-            for (TypeDescription parameterType : getParameters().asTypeList()) {
-                if (currentIndex == parameterIndex) {
-                    return offset;
-                } else {
-                    currentIndex++;
-                    offset += parameterType.getStackSize().getSize();
-                }
-            }
-            throw new IllegalArgumentException(this + " does not have a parameter of index " + parameterIndex);
         }
 
         @Override

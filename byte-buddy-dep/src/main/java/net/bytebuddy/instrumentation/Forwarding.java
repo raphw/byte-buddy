@@ -220,7 +220,7 @@ public class Forwarding implements Instrumentation {
 
             @Override
             public StackManipulation loadFieldOwner() {
-                return MethodVariableAccess.REFERENCE.loadFromIndex(0);
+                return MethodVariableAccess.REFERENCE.loadOffset(0);
             }
         }
 

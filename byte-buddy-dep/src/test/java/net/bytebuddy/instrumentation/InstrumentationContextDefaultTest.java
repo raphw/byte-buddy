@@ -144,28 +144,28 @@ public class InstrumentationContextDefaultTest {
         when(firstSpecialInvocation.getTypeDescription()).thenReturn(firstSpecialType);
         when(firstSpecialMethod.getReturnType()).thenReturn(firstSpecialReturnType);
         when(firstSpecialMethod.getInternalName()).thenReturn(FOO);
-        when(firstSpecialMethod.getParameters()).thenReturn(ParameterList.Explicit.latent(firstSpecialMethod, Arrays.asList(firstSpecialParameterType)));
         when(firstSpecialMethod.getExceptionTypes()).thenReturn(firstSpecialExceptionTypes);
         when(firstSpecialParameterType.getDescriptor()).thenReturn(BAZ);
         when(firstSpecialReturnType.getDescriptor()).thenReturn(QUX);
         when(firstSpecialExceptionType.getInternalName()).thenReturn(FOO);
         when(firstSpecialParameterType.getStackSize()).thenReturn(StackSize.ZERO);
         when(firstSpecialReturnType.getStackSize()).thenReturn(StackSize.ZERO);
-        when(firstSpecialInvocation.apply(any(MethodVisitor.class), any(Instrumentation.Context.class)))
-                .thenReturn(new StackManipulation.Size(0, 0));
+        when(firstSpecialInvocation.apply(any(MethodVisitor.class), any(Instrumentation.Context.class))).thenReturn(new StackManipulation.Size(0, 0));
+        ParameterList firstSpecialMethodParameters = ParameterList.Explicit.latent(firstSpecialMethod, Arrays.asList(firstSpecialParameterType));
+        when(firstSpecialMethod.getParameters()).thenReturn(firstSpecialMethodParameters);
         when(secondSpecialInvocation.getMethodDescription()).thenReturn(secondSpecialMethod);
         when(secondSpecialInvocation.getTypeDescription()).thenReturn(secondSpecialType);
         when(secondSpecialMethod.getInternalName()).thenReturn(BAR);
         when(secondSpecialMethod.getReturnType()).thenReturn(secondSpecialReturnType);
-        when(secondSpecialMethod.getParameters()).thenReturn(ParameterList.Explicit.latent(secondSpecialMethod, Arrays.asList(secondSpecialParameterType)));
         when(secondSpecialMethod.getExceptionTypes()).thenReturn(secondSpecialExceptionTypes);
         when(secondSpecialParameterType.getDescriptor()).thenReturn(BAR);
         when(secondSpecialReturnType.getDescriptor()).thenReturn(FOO);
         when(secondSpecialExceptionType.getInternalName()).thenReturn(BAZ);
         when(secondSpecialParameterType.getStackSize()).thenReturn(StackSize.ZERO);
         when(secondSpecialReturnType.getStackSize()).thenReturn(StackSize.ZERO);
-        when(secondSpecialInvocation.apply(any(MethodVisitor.class), any(Instrumentation.Context.class)))
-                .thenReturn(new StackManipulation.Size(0, 0));
+        when(secondSpecialInvocation.apply(any(MethodVisitor.class), any(Instrumentation.Context.class))).thenReturn(new StackManipulation.Size(0, 0));
+        ParameterList secondSpecialMethodParameters = ParameterList.Explicit.latent(secondSpecialMethod, Arrays.asList(secondSpecialParameterType));
+        when(secondSpecialMethod.getParameters()).thenReturn(secondSpecialMethodParameters);
         when(firstField.getFieldType()).thenReturn(firstFieldType);
         when(firstField.getName()).thenReturn(FOO);
         when(firstField.getInternalName()).thenReturn(FOO);

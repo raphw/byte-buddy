@@ -4,6 +4,7 @@ import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -45,7 +46,10 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
         when(methodDescription.isConstructor()).thenReturn(true);
         when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
         when(methodDescription.getReturnType()).thenReturn(returnType);
-        when(methodDescription.getParameters()).thenReturn(ParameterList.Explicit.latent(methodDescription, Arrays.asList(parameterType)));
+        when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
+        when(placeholderType.getStackSize()).thenReturn(StackSize.ZERO);
+        ParameterList parameterList = ParameterList.Explicit.latent(methodDescription, Arrays.asList(parameterType));
+        when(methodDescription.getParameters()).thenReturn(parameterList);
         when(methodDescription.getInternalName()).thenReturn(FOO);
         when(methodDescription.getDescriptor()).thenReturn(QUX);
         when(typeDescription.getInternalName()).thenReturn(BAR);
@@ -85,6 +89,7 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
             @Override
             public void apply(TypeDescription mock) {
                 when(mock.getDescriptor()).thenReturn(FOO + System.identityHashCode(mock));
+                when(mock.getStackSize()).thenReturn(StackSize.ZERO);
             }
         }).apply();
     }

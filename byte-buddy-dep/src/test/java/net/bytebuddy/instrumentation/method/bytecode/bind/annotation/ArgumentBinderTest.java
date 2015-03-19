@@ -4,6 +4,7 @@ import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.method.bytecode.bind.ArgumentTypeResolver;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
+import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -65,10 +66,14 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
         when(annotation.bindingMechanic()).thenReturn(bindingMechanic);
         List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(sourceIndex + 1);
         for (int i = 0; i < sourceIndex; i++) {
-            typeDescriptions.add(i, mock(TypeDescription.class));
+            TypeDescription typeDescription = mock(TypeDescription.class);
+            when(typeDescription.getStackSize()).thenReturn(StackSize.ZERO);
+            typeDescriptions.add(i, typeDescription);
         }
+        when(sourceType.getStackSize()).thenReturn(StackSize.ZERO);
         typeDescriptions.add(sourceIndex, sourceType);
-        when(source.getParameters()).thenReturn(ParameterList.Explicit.latent(source, typeDescriptions));
+        ParameterList parameterList = ParameterList.Explicit.latent(source, typeDescriptions);
+        when(source.getParameters()).thenReturn(parameterList);
         when(source.isStatic()).thenReturn(false);
         when(target.getTypeDescription()).thenReturn(targetType);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(annotations));

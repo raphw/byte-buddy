@@ -444,7 +444,7 @@ public @interface Pipe {
 
                     @Override
                     public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
-                        StackManipulation thisReference = MethodVariableAccess.forType(instrumentedMethod.getDeclaringType()).loadFromIndex(0);
+                        StackManipulation thisReference = MethodVariableAccess.forType(instrumentedMethod.getDeclaringType()).loadOffset(0);
                         FieldList fieldList = instrumentedType.getDeclaredFields();
                         StackManipulation[] fieldLoading = new StackManipulation[fieldList.size()];
                         int index = 0;
@@ -452,7 +452,7 @@ public @interface Pipe {
                             fieldLoading[index] = new StackManipulation.Compound(
                                     thisReference,
                                     MethodVariableAccess.forType(fieldDescription.getFieldType())
-                                            .loadFromIndex(instrumentedMethod.getParameterOffset(index)),
+                                            .loadOffset(instrumentedMethod.getParameters().get(index).getOffset()),
                                     FieldAccess.forField(fieldDescription).putter()
                             );
                             index++;
@@ -571,7 +571,7 @@ public @interface Pipe {
                     public Size apply(MethodVisitor methodVisitor,
                                       Context instrumentationContext,
                                       MethodDescription instrumentedMethod) {
-                        StackManipulation thisReference = MethodVariableAccess.forType(instrumentedType).loadFromIndex(0);
+                        StackManipulation thisReference = MethodVariableAccess.forType(instrumentedType).loadOffset(0);
                         FieldList fieldList = instrumentedType.getDeclaredFields();
                         StackManipulation[] fieldLoading = new StackManipulation[fieldList.size()];
                         int index = 0;
@@ -579,7 +579,7 @@ public @interface Pipe {
                             fieldLoading[index++] = new StackManipulation.Compound(thisReference, FieldAccess.forField(fieldDescription).getter());
                         }
                         StackManipulation.Size stackSize = new StackManipulation.Compound(
-                                MethodVariableAccess.REFERENCE.loadFromIndex(1),
+                                MethodVariableAccess.REFERENCE.loadOffset(1),
                                 assigner.assign(new TypeDescription.ForLoadedType(Object.class), redirectedMethod.getDeclaringType(), true),
                                 new StackManipulation.Compound(fieldLoading),
                                 MethodInvocation.invoke(redirectedMethod),

@@ -45,12 +45,12 @@ public class MethodVariableAccessDescriptionTest {
 
     @Before
     public void setUp() throws Exception {
-        parameterList = ParameterList.Explicit.latent(methodDescription, Arrays.asList(firstParameterType, secondParameterType));
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
-        when(methodDescription.getParameters()).thenReturn(parameterList);
         when(declaringType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(firstParameterType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(secondParameterType.getStackSize()).thenReturn(StackSize.SINGLE);
+        parameterList = ParameterList.Explicit.latent(methodDescription, Arrays.asList(firstParameterType, secondParameterType));
+        when(methodDescription.getParameters()).thenReturn(parameterList);
     }
 
     @After

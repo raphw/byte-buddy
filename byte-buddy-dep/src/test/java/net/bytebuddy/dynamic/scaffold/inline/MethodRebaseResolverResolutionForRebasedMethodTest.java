@@ -4,6 +4,7 @@ import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -45,13 +46,15 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
     public void setUp() throws Exception {
         when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
         when(methodDescription.getReturnType()).thenReturn(returnType);
-        when(methodDescription.getParameters()).thenReturn(ParameterList.Explicit.latent(methodDescription, Arrays.asList(parameterType)));
         when(methodDescription.getInternalName()).thenReturn(FOO);
         when(methodDescription.getDescriptor()).thenReturn(BAZ);
         when(typeDescription.getInternalName()).thenReturn(BAR);
         when(typeDescription.getDescriptor()).thenReturn(BAR);
         when(methodNameTransformer.transform(FOO)).thenReturn(QUX);
         when(otherMethodNameTransformer.transform(FOO)).thenReturn(FOO + BAR);
+        when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
+        ParameterList parameterList = ParameterList.Explicit.latent(methodDescription, Arrays.asList(parameterType));
+        when(methodDescription.getParameters()).thenReturn(parameterList);
     }
 
     @Test

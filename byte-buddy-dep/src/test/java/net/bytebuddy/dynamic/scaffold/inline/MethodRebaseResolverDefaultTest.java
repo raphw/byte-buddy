@@ -4,6 +4,7 @@ import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -55,6 +56,7 @@ public class MethodRebaseResolverDefaultTest {
         when(methodDescription.getReturnType()).thenReturn(returnType);
         when(methodDescription.getInternalName()).thenReturn(FOO);
         when(methodNameTransformer.transform(FOO)).thenReturn(BAR);
+        when(placeholderType.getStackSize()).thenReturn(StackSize.ZERO);
     }
 
     @Test

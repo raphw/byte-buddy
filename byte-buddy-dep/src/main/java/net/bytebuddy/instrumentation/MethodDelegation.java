@@ -853,7 +853,7 @@ public class MethodDelegation implements Instrumentation {
 
             @Override
             public StackManipulation getPreparingStackAssignment(TypeDescription instrumentedType) {
-                return new StackManipulation.Compound(MethodVariableAccess.forType(instrumentedType).loadFromIndex(0),
+                return new StackManipulation.Compound(MethodVariableAccess.forType(instrumentedType).loadOffset(0),
                         FieldAccess.forField(instrumentedType.getDeclaredFields()
                                 .filter((named(fieldName))).getOnly()).getter());
             }

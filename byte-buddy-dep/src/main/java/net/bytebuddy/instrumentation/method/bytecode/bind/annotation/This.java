@@ -69,7 +69,7 @@ public @interface This {
                     RuntimeType.Verifier.check(target));
             return thisAssignment.isValid()
                     ? new MethodDelegationBinder.ParameterBinding.Anonymous(new StackManipulation
-                    .Compound(MethodVariableAccess.REFERENCE.loadFromIndex(THIS_REFERENCE_INDEX), thisAssignment))
+                    .Compound(MethodVariableAccess.REFERENCE.loadOffset(THIS_REFERENCE_INDEX), thisAssignment))
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
         }
     }

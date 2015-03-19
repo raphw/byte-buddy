@@ -147,19 +147,19 @@ public enum MethodVariableAccess {
                                                    boolean includeThisReference) {
         int stackValues = (!includeThisReference || methodDescription.isStatic() ? 0 : 1) + methodDescription.getParameters().size();
         StackManipulation[] stackManipulation = new StackManipulation[stackValues];
-        int parameterIndex = 0, stackIndex;
+        int parameterIndex = 0, offset;
         if (!methodDescription.isStatic()) {
             if (includeThisReference) {
-                stackManipulation[parameterIndex++] = MethodVariableAccess.REFERENCE.loadFromIndex(0);
+                stackManipulation[parameterIndex++] = MethodVariableAccess.REFERENCE.loadOffset(0);
             }
-            stackIndex = StackSize.SINGLE.getSize();
+            offset = StackSize.SINGLE.getSize();
         } else {
-            stackIndex = StackSize.ZERO.getSize();
+            offset = StackSize.ZERO.getSize();
         }
         for (TypeDescription parameterType : methodDescription.getParameters().asTypeList()) {
             stackManipulation[parameterIndex++] = typeCastingHandler
-                    .wrapNext(forType(parameterType).loadFromIndex(stackIndex), parameterType);
-            stackIndex += parameterType.getStackSize().getSize();
+                    .wrapNext(forType(parameterType).loadOffset(offset), parameterType);
+            offset += parameterType.getStackSize().getSize();
         }
         return new StackManipulation.Compound(stackManipulation);
     }
@@ -173,7 +173,7 @@ public enum MethodVariableAccess {
      *                       count two slots.
      * @return A stack manipulation representing the method retrieval.
      */
-    public StackManipulation loadFromIndex(int variableOffset) {
+    public StackManipulation loadOffset(int variableOffset) {
         return new ArgumentLoadingStackManipulation(variableOffset);
     }
 

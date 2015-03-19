@@ -6,6 +6,7 @@ import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.ParameterDescription;
 import net.bytebuddy.instrumentation.method.ParameterList;
+import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.After;
@@ -32,6 +33,9 @@ public class ArgumentNextUnboundAsDefaultBinderTest {
     @Mock
     private MethodDescription source, target;
 
+    @Mock
+    private TypeDescription firstParameter, secondParameter;
+
     private ParameterList sourceParameters, targetParameters;
 
     @Mock
@@ -39,7 +43,9 @@ public class ArgumentNextUnboundAsDefaultBinderTest {
 
     @Before
     public void setUp() throws Exception {
-        sourceParameters = ParameterList.Explicit.latent(source, Arrays.asList(mock(TypeDescription.class), mock(TypeDescription.class)));
+        when(firstParameter.getStackSize()).thenReturn(StackSize.ZERO);
+        when(secondParameter.getStackSize()).thenReturn(StackSize.ZERO);
+        sourceParameters = ParameterList.Explicit.latent(source, Arrays.asList(firstParameter, secondParameter));
         targetParameters = new ParameterList.Explicit(Arrays.asList(firstTargetParameter, secondTargetParameter));
         when(source.getParameters()).thenReturn(sourceParameters);
         when(target.getParameters()).thenReturn(targetParameters);

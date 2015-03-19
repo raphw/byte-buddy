@@ -291,7 +291,7 @@ public @interface Field {
 
             @Override
             public ByteCodeAppender appender(Target instrumentationTarget) {
-                return new ByteCodeAppender.Simple(MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                return new ByteCodeAppender.Simple(MethodVariableAccess.REFERENCE.loadOffset(0),
                         MethodInvocation.invoke(objectTypeDefaultConstructor),
                         MethodReturn.VOID);
             }
@@ -464,7 +464,7 @@ public @interface Field {
                                 accessedField.isStatic()
                                         ? StackManipulation.LegalTrivial.INSTANCE
                                         : new StackManipulation.Compound(
-                                        MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                                        MethodVariableAccess.REFERENCE.loadOffset(0),
                                         FieldAccess.forField(typeDescription.getDeclaredFields()
                                                 .filter((named(AccessorProxy.FIELD_NAME))).getOnly()).getter()),
                                 MethodInvocation.invoke(getterMethod),
@@ -611,10 +611,10 @@ public @interface Field {
                                 accessedField.isStatic()
                                         ? StackManipulation.LegalTrivial.INSTANCE
                                         : new StackManipulation.Compound(
-                                        MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                                        MethodVariableAccess.REFERENCE.loadOffset(0),
                                         FieldAccess.forField(typeDescription.getDeclaredFields()
                                                 .filter((named(AccessorProxy.FIELD_NAME))).getOnly()).getter()),
-                                MethodVariableAccess.forType(parameterType).loadFromIndex(1),
+                                MethodVariableAccess.forType(parameterType).loadOffset(1),
                                 assigner.assign(parameterType, setterMethod.getParameters().get(0).getTypeDescription(), true),
                                 MethodInvocation.invoke(setterMethod),
                                 MethodReturn.VOID
@@ -737,7 +737,7 @@ public @interface Field {
                                   Context instrumentationContext,
                                   MethodDescription instrumentedMethod) {
                     StackManipulation.Size stackSize = new StackManipulation.Compound(
-                            MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                            MethodVariableAccess.REFERENCE.loadOffset(0),
                             MethodInvocation.invoke(StaticFieldConstructor.INSTANCE.objectTypeDefaultConstructor),
                             MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
                             FieldAccess.forField(fieldDescription).putter(),
@@ -1224,7 +1224,7 @@ public @interface Field {
                         Duplication.SINGLE,
                         accessedField.isStatic()
                                 ? LegalTrivial.INSTANCE
-                                : MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                                : MethodVariableAccess.REFERENCE.loadOffset(0),
                         MethodInvocation.invoke(auxiliaryType.getDeclaredMethods().filter(isConstructor()).getOnly())
                 ).apply(methodVisitor, instrumentationContext);
             }

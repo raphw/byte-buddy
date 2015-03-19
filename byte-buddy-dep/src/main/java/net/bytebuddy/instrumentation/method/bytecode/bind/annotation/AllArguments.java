@@ -126,7 +126,7 @@ public @interface AllArguments {
             boolean dynamicallyTyped = RuntimeType.Verifier.check(target);
             for (TypeDescription sourceParameter : source.getParameters().asTypeList()) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
-                        MethodVariableAccess.forType(sourceParameter).loadFromIndex(offset),
+                        MethodVariableAccess.forType(sourceParameter).loadOffset(offset),
                         assigner.assign(sourceParameter, arrayFactory.getComponentType(), dynamicallyTyped));
                 if (stackManipulation.isValid()) {
                     stackManipulations.add(stackManipulation);

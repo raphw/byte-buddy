@@ -1246,7 +1246,7 @@ public interface Instrumentation {
                     StackManipulation.Size stackSize = new StackManipulation.Compound(
                             fieldDescription.isStatic()
                                     ? StackManipulation.LegalTrivial.INSTANCE
-                                    : MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                                    : MethodVariableAccess.REFERENCE.loadOffset(0),
                             FieldAccess.forField(fieldDescription).getter(),
                             MethodReturn.returning(fieldDescription.getFieldType())
                     ).apply(methodVisitor, instrumentationContext);

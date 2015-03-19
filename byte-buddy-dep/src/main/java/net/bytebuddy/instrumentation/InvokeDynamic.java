@@ -1267,7 +1267,7 @@ public class InvokeDynamic implements Instrumentation {
                     } else if (!instrumentedType.isAssignableTo(typeDescription)) {
                         throw new IllegalStateException(instrumentedType + " is not assignable to " + instrumentedType);
                     }
-                    return new Resolved.Simple(MethodVariableAccess.REFERENCE.loadFromIndex(0), typeDescription);
+                    return new Resolved.Simple(MethodVariableAccess.REFERENCE.loadOffset(0), typeDescription);
                 }
 
                 @Override
@@ -1404,7 +1404,7 @@ public class InvokeDynamic implements Instrumentation {
                     if (instrumentedMethod.isStatic()) {
                         throw new IllegalStateException("Cannot access " + fieldName + " from " + instrumentedMethod);
                     }
-                    return new Resolved.Simple(new StackManipulation.Compound(MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                    return new Resolved.Simple(new StackManipulation.Compound(MethodVariableAccess.REFERENCE.loadOffset(0),
                             FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName)).getOnly()).getter())
                             , fieldType);
                 }
@@ -1480,7 +1480,7 @@ public class InvokeDynamic implements Instrumentation {
                     return new Resolved.Simple(new StackManipulation.Compound(
                             fieldDescription.isStatic()
                                     ? StackManipulation.LegalTrivial.INSTANCE
-                                    : MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                                    : MethodVariableAccess.REFERENCE.loadOffset(0),
                             FieldAccess.forField(fieldDescription).getter()
                     ), fieldDescription.getFieldType());
                 }
@@ -1538,7 +1538,7 @@ public class InvokeDynamic implements Instrumentation {
                         throw new IllegalStateException("No parameter " + index + " for " + instrumentedMethod);
                     }
                     return new Resolved.Simple(MethodVariableAccess.forType(parameters.get(index).getTypeDescription())
-                            .loadFromIndex(instrumentedMethod.getParameterOffset(index)), parameters.get(index).getTypeDescription());
+                            .loadOffset(instrumentedMethod.getParameters().get(index).getOffset()), parameters.get(index).getTypeDescription());
                 }
 
                 @Override

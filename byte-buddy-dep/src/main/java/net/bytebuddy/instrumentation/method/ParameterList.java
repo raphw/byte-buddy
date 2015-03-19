@@ -1,6 +1,6 @@
 package net.bytebuddy.instrumentation.method;
 
-import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
+import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.matcher.FilterableList;
@@ -250,12 +250,15 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
          */
         public static ParameterList latent(MethodDescription declaringMethod, List<? extends TypeDescription> parameterTypes) {
             List<ParameterDescription> parameterDescriptions = new ArrayList<ParameterDescription>(parameterTypes.size());
-            int index = 0;
+            int index = 0, offset = declaringMethod.isStatic()
+                    ? StackSize.ZERO.getSize()
+                    : StackSize.SINGLE.getSize();
             for (TypeDescription parameterType : parameterTypes) {
                 parameterDescriptions.add(new ParameterDescription.Latent(declaringMethod,
                         parameterType,
                         index++,
-                        Collections.<AnnotationDescription>emptyList()));
+                        offset));
+                offset += parameterType.getStackSize().getSize();
             }
             return new Explicit(parameterDescriptions);
         }

@@ -72,6 +72,7 @@ public abstract class AbstractInstrumentedTypeTest {
         TypeDescription exceptionType = mock(TypeDescription.class);
         when(returnType.getName()).thenReturn(FOO);
         when(parameterType.getName()).thenReturn(QUX);
+        when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
         when(exceptionType.getName()).thenReturn(BAZ);
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));

@@ -70,8 +70,7 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
         annotationDescription = AnnotationDescription.ForLoadedAnnotation.of(annotation);
         when(source.getParameters()).thenReturn(sourceParameterList);
         when(sourceParameterList.asTypeList()).thenReturn(sourceTypeList);
-        when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean()))
-                .thenReturn(stackManipulation);
+        when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean())).thenReturn(stackManipulation);
         when(instrumentationTarget.getTypeDescription()).thenReturn(instrumentedType);
         when(instrumentationTarget.getOriginType()).thenReturn(instrumentedType);
     }

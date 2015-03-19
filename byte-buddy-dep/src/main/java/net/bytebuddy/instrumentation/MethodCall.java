@@ -550,7 +550,7 @@ public class MethodCall implements Instrumentation {
                 return new StackManipulation.Compound(
                         methodDescription.isStatic()
                                 ? StackManipulation.LegalTrivial.INSTANCE
-                                : MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                                : MethodVariableAccess.REFERENCE.loadOffset(0),
                         methodDescription.isConstructor()
                                 ? Duplication.SINGLE
                                 : StackManipulation.LegalTrivial.INSTANCE
@@ -695,7 +695,7 @@ public class MethodCall implements Instrumentation {
                 return new StackManipulation.Compound(
                         methodDescription.isStatic()
                                 ? StackManipulation.LegalTrivial.INSTANCE
-                                : MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                                : MethodVariableAccess.REFERENCE.loadOffset(0),
                         FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName)).getOnly()).getter());
             }
 
@@ -806,7 +806,7 @@ public class MethodCall implements Instrumentation {
                     throw new IllegalStateException(interceptedMethod + " has no instance");
                 }
                 StackManipulation stackManipulation = new StackManipulation.Compound(
-                        MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                        MethodVariableAccess.REFERENCE.loadOffset(0),
                         assigner.assign(instrumentedType, targetType, dynamicallyTyped));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign " + instrumentedType + " to " + targetType);
@@ -850,7 +850,7 @@ public class MethodCall implements Instrumentation {
                 }
                 TypeDescription originType = interceptedMethod.getParameters().get(index).getTypeDescription();
                 StackManipulation stackManipulation = new StackManipulation.Compound(
-                        MethodVariableAccess.forType(originType).loadFromIndex(interceptedMethod.getParameterOffset(index)),
+                        MethodVariableAccess.forType(originType).loadOffset(interceptedMethod.getParameters().get(index).getOffset()),
                         assigner.assign(originType, targetType, dynamicallyTyped));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign " + originType + " to " + targetType
@@ -1034,7 +1034,7 @@ public class MethodCall implements Instrumentation {
                     throw new IllegalStateException("Cannot access instance field from static " + interceptedMethod);
                 }
                 StackManipulation stackManipulation = new StackManipulation.Compound(
-                        MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                        MethodVariableAccess.REFERENCE.loadOffset(0),
                         FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName)).getOnly()).getter(),
                         assigner.assign(fieldType, targetType, dynamicallyTyped));
                 if (!stackManipulation.isValid()) {
@@ -1116,7 +1116,7 @@ public class MethodCall implements Instrumentation {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         fieldDescription.isStatic()
                                 ? StackManipulation.LegalTrivial.INSTANCE
-                                : MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                                : MethodVariableAccess.REFERENCE.loadOffset(0),
                         FieldAccess.forField(fieldDescription).getter(),
                         assigner.assign(fieldDescription.getFieldType(), targetType, dynamicallyTyped)
                 );

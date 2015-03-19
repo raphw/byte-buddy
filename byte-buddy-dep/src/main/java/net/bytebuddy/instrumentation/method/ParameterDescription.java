@@ -3,16 +3,16 @@ package net.bytebuddy.instrumentation.method;
 import net.bytebuddy.instrumentation.ModifierReviewable;
 import net.bytebuddy.instrumentation.NamedElement;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotatedElement;
-import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
+import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.utility.JavaMethod;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.List;
 
 /**
  * Description of the parameter of a Java method or constructor.
@@ -54,6 +54,13 @@ public interface ParameterDescription extends AnnotatedElement, NamedElement, Mo
     boolean isNamed();
 
     /**
+     * Returns the offset to the parameter value within the local method variable.
+     *
+     * @return The offset of this parameter's value.
+     */
+    int getOffset();
+
+    /**
      * A base implementation of a method parameter description.
      */
     abstract static class AbstractParameterDescription extends AbstractModifierReviewable implements ParameterDescription {
@@ -66,6 +73,18 @@ public interface ParameterDescription extends AnnotatedElement, NamedElement, Mo
         @Override
         public int getModifiers() {
             return EMPTY_MASK;
+        }
+
+        @Override
+        public int getOffset() {
+            TypeList parameterType = getDeclaringMethod().getParameters().asTypeList();
+            int offset = getDeclaringMethod().isStatic()
+                    ? StackSize.ZERO.getSize()
+                    : StackSize.SINGLE.getSize();
+            for (int i = 0; i < getIndex(); i++) {
+                offset += parameterType.get(i).getStackSize().getSize();
+            }
+            return offset;
         }
 
         @Override
@@ -382,9 +401,9 @@ public interface ParameterDescription extends AnnotatedElement, NamedElement, Mo
         private final int index;
 
         /**
-         * The annotations of the parameter.
+         * The parameter's offset in the local method variables array.
          */
-        private final List<? extends AnnotationDescription> parameterAnnotations;
+        private final int offset;
 
         /**
          * Creates a latent description of a parameter.
@@ -392,16 +411,16 @@ public interface ParameterDescription extends AnnotatedElement, NamedElement, Mo
          * @param declaringMethod      The method that is declaring the parameter.
          * @param parameterType        The type of the parameter.
          * @param index                The index of the parameter.
-         * @param parameterAnnotations The annotations of the parameter.
+         * @param offset               The parameter's offset in the local method variables array.
          */
         public Latent(MethodDescription declaringMethod,
                       TypeDescription parameterType,
                       int index,
-                      List<? extends AnnotationDescription> parameterAnnotations) {
+                      int offset) {
             this.declaringMethod = declaringMethod;
             this.parameterType = parameterType;
             this.index = index;
-            this.parameterAnnotations = parameterAnnotations;
+            this.offset = offset;
         }
 
         @Override
@@ -420,13 +439,18 @@ public interface ParameterDescription extends AnnotatedElement, NamedElement, Mo
         }
 
         @Override
+        public int getOffset() {
+            return offset;
+        }
+
+        @Override
         public boolean isNamed() {
             return false;
         }
 
         @Override
         public AnnotationList getDeclaredAnnotations() {
-            return new AnnotationList.Explicit(parameterAnnotations);
+            return new AnnotationList.Empty();
         }
     }
 }

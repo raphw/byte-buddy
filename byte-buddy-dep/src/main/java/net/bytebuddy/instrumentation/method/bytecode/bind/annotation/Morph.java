@@ -428,7 +428,7 @@ public @interface Morph {
                         Duplication.SINGLE,
                         specialMethodInvocation.getMethodDescription().isStatic()
                                 ? LegalTrivial.INSTANCE
-                                : MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                                : MethodVariableAccess.REFERENCE.loadOffset(0),
                         MethodInvocation.invoke(forwardingType.getDeclaredMethods().filter(isConstructor()).getOnly())
                 ).apply(methodVisitor, instrumentationContext);
             }
@@ -501,7 +501,7 @@ public @interface Morph {
 
                 @Override
                 public ByteCodeAppender appender(Target instrumentationTarget) {
-                    return new ByteCodeAppender.Simple(MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                    return new ByteCodeAppender.Simple(MethodVariableAccess.REFERENCE.loadOffset(0),
                             MethodInvocation.invoke(objectTypeDefaultConstructor),
                             MethodReturn.VOID);
                 }
@@ -588,7 +588,7 @@ public @interface Morph {
                                       Context instrumentationContext,
                                       MethodDescription instrumentedMethod) {
                         StackManipulation.Size stackSize = new StackManipulation.Compound(
-                                MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                                MethodVariableAccess.REFERENCE.loadOffset(0),
                                 MethodInvocation.invoke(StaticFieldConstructor.INSTANCE.objectTypeDefaultConstructor),
                                 MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
                                 FieldAccess.forField(fieldDescription).putter(),
@@ -701,7 +701,7 @@ public @interface Morph {
                     public Size apply(MethodVisitor methodVisitor,
                                       Context instrumentationContext,
                                       MethodDescription instrumentedMethod) {
-                        StackManipulation arrayReference = MethodVariableAccess.REFERENCE.loadFromIndex(1);
+                        StackManipulation arrayReference = MethodVariableAccess.REFERENCE.loadOffset(1);
                         StackManipulation[] parameterLoading = new StackManipulation[accessorMethod.getParameters().size()];
                         int index = 0;
                         for (TypeDescription parameterType : accessorMethod.getParameters().asTypeList()) {
@@ -715,7 +715,7 @@ public @interface Morph {
                                 accessorMethod.isStatic()
                                         ? LegalTrivial.INSTANCE
                                         : new StackManipulation.Compound(
-                                        MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                                        MethodVariableAccess.REFERENCE.loadOffset(0),
                                         FieldAccess.forField(typeDescription.getDeclaredFields()
                                                 .filter((named(RedirectionProxy.FIELD_NAME)))
                                                 .getOnly()).getter()),

@@ -83,7 +83,7 @@ public class MethodVariableAccessShortcutTest {
 
     @Test
     public void testShortCutReference() throws Exception {
-        StackManipulation stackManipulation = MethodVariableAccess.forType(typeDescription).loadFromIndex(index);
+        StackManipulation stackManipulation = MethodVariableAccess.forType(typeDescription).loadOffset(index);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, instrumentationContext);
         assertThat(size.getSizeImpact(), is(this.size));

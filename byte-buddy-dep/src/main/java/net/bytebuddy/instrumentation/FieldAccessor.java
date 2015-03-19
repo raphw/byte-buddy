@@ -162,7 +162,7 @@ public abstract class FieldAccessor implements Instrumentation {
                 methodDescription,
                 new StackManipulation.Compound(
                         MethodVariableAccess.forType(fieldDescription.getFieldType())
-                                .loadFromIndex(methodDescription.getParameterOffset(0)),
+                                .loadOffset(methodDescription.getParameters().get(0).getOffset()),
                         stackManipulation,
                         FieldAccess.forField(fieldDescription).putter()
                 )
@@ -191,7 +191,7 @@ public abstract class FieldAccessor implements Instrumentation {
         StackManipulation.Size stackSize = new StackManipulation.Compound(
                 fieldDescription.isStatic()
                         ? StackManipulation.LegalTrivial.INSTANCE
-                        : MethodVariableAccess.REFERENCE.loadFromIndex(0),
+                        : MethodVariableAccess.REFERENCE.loadOffset(0),
                 fieldAccess,
                 MethodReturn.returning(methodDescription.getReturnType())
         ).apply(methodVisitor, instrumentationContext);

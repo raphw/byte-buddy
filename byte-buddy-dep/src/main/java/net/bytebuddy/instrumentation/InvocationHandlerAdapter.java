@@ -127,7 +127,7 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
         int currentIndex = 1;
         for (TypeDescription parameterType : parameterTypes) {
             instruction.add(new StackManipulation.Compound(
-                    MethodVariableAccess.forType(parameterType).loadFromIndex(currentIndex),
+                    MethodVariableAccess.forType(parameterType).loadOffset(currentIndex),
                     assigner.assign(parameterType, objectType, false)));
             currentIndex += parameterType.getStackSize().getSize();
         }
@@ -171,7 +171,7 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
                 preparingManipulation,
                 FieldAccess.forField(instrumentedType.getDeclaredFields()
                         .filter((named(fieldName))).getOnly()).getter(),
-                MethodVariableAccess.forType(objectType).loadFromIndex(0),
+                MethodVariableAccess.forType(objectType).loadOffset(0),
                 cacheMethods
                         ? MethodConstant.forMethod(instrumentedMethod).cached()
                         : MethodConstant.forMethod(instrumentedMethod),
@@ -433,7 +433,7 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
                         instrumentationContext,
                         instrumentedMethod,
                         instrumentedType,
-                        MethodVariableAccess.forType(instrumentedType).loadFromIndex(0));
+                        MethodVariableAccess.forType(instrumentedType).loadOffset(0));
             }
 
             @Override

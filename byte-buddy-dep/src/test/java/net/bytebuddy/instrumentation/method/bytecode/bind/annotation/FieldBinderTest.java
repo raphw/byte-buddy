@@ -6,6 +6,7 @@ import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
+import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -45,6 +46,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         when(setterMethod.getDeclaringType()).thenReturn(setterType);
         when(instrumentedType.getDeclaredFields()).thenReturn(new FieldList.Explicit(Arrays.asList(fieldDescription)));
         when(fieldDescription.getFieldType()).thenReturn(fieldType);
+        when(fieldType.getStackSize()).thenReturn(StackSize.ZERO);
     }
 
     @Override
@@ -147,7 +149,8 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         when(annotation.value()).thenReturn(Field.BEAN_PROPERTY);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
-        when(source.getParameters()).thenReturn(ParameterList.Explicit.latent(source, Arrays.asList(fieldType)));
+        ParameterList parameterList = ParameterList.Explicit.latent(source, Arrays.asList(fieldType));
+        when(source.getParameters()).thenReturn(parameterList);
         when(source.getSourceCodeName()).thenReturn("setFoo");
         when(source.getInternalName()).thenReturn("setFoo");
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
@@ -166,7 +169,8 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         when(annotation.value()).thenReturn(FOO);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
-        when(source.getParameters()).thenReturn(ParameterList.Explicit.latent(source, Arrays.asList(fieldType)));
+        ParameterList parameterList = ParameterList.Explicit.latent(source, Arrays.asList(fieldType));
+        when(source.getParameters()).thenReturn(parameterList);
         when(source.getName()).thenReturn("setFoo");
         when(source.getInternalName()).thenReturn("setFoo");
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
@@ -185,7 +189,8 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         when(annotation.value()).thenReturn(Field.BEAN_PROPERTY);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
-        when(source.getParameters()).thenReturn(ParameterList.Explicit.latent(source, Arrays.asList(fieldType)));
+        ParameterList parameterList = ParameterList.Explicit.latent(source, Arrays.asList(fieldType));
+        when(source.getParameters()).thenReturn(parameterList);
         when(source.getName()).thenReturn("setFoo");
         when(source.getSourceCodeName()).thenReturn("setFoo");
         when(source.getInternalName()).thenReturn("setFoo");
@@ -205,7 +210,8 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         when(annotation.value()).thenReturn(FOO);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
-        when(source.getParameters()).thenReturn(ParameterList.Explicit.latent(source, Arrays.asList(fieldType)));
+        ParameterList parameterList = ParameterList.Explicit.latent(source, Arrays.asList(fieldType));
+        when(source.getParameters()).thenReturn(parameterList);
         when(source.getName()).thenReturn("setFoo");
         when(source.getInternalName()).thenReturn("setFoo");
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
