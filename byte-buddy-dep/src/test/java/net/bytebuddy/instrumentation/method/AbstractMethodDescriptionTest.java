@@ -279,6 +279,8 @@ public abstract class AbstractMethodDescriptionTest {
     public void testEqualsParameter() throws Exception {
         ParameterDescription identical = describe(secondMethod).getParameters().get(0);
         assertThat(identical, equalTo(identical));
+        assertThat(identical, not(equalTo(new Object())));
+        assertThat(identical, not(equalTo(null)));
         assertThat(describe(secondMethod).getParameters().get(0), is(describe(secondMethod).getParameters().get(0)));
         ParameterDescription equal = mock(ParameterDescription.class);
         when(equal.getDeclaringMethod()).thenReturn(describe(secondMethod));
