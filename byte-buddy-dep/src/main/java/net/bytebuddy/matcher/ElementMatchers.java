@@ -8,6 +8,8 @@ import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
+import net.bytebuddy.instrumentation.method.ParameterDescription;
+import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 
@@ -117,8 +119,7 @@ public final class ElementMatchers {
      * @param <T>                   The type of the matched object.
      * @return An element matcher that exactly matches the given annotation.
      */
-    public static <T extends AnnotationDescription> ElementMatcher.Junction<T> is(
-            AnnotationDescription annotationDescription) {
+    public static <T extends AnnotationDescription> ElementMatcher.Junction<T> is(AnnotationDescription annotationDescription) {
         return new EqualityMatcher<T>(nonNull(annotationDescription));
     }
 
@@ -452,8 +453,7 @@ public final class ElementMatchers {
      * @param <T>     The type of the matched object.
      * @return A matcher for byte code elements being declared by a type matched by the given {@code matcher}.
      */
-    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isDeclaredBy(
-            ElementMatcher<? super TypeDescription> matcher) {
+    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isDeclaredBy(ElementMatcher<? super TypeDescription> matcher) {
         return new DeclaringTypeMatcher<T>(nonNull(matcher));
     }
 
@@ -489,8 +489,7 @@ public final class ElementMatchers {
      * @param <T>  The type of the matched object.
      * @return A matcher that validates that an annotated element is annotated with an annotation of {@code type}.
      */
-    public static <T extends AnnotatedElement> ElementMatcher.Junction<T> isAnnotatedWith(
-            Class<? extends Annotation> type) {
+    public static <T extends AnnotatedElement> ElementMatcher.Junction<T> isAnnotatedWith(Class<? extends Annotation> type) {
         return isAnnotatedWith(new TypeDescription.ForLoadedType(nonNull(type)));
     }
 
@@ -504,8 +503,7 @@ public final class ElementMatchers {
      * @param <T>             The type of the matched object.
      * @return A matcher that validates that an annotated element is annotated with an annotation of {@code typeDescription}.
      */
-    public static <T extends AnnotatedElement> ElementMatcher.Junction<T> isAnnotatedWith(
-            TypeDescription typeDescription) {
+    public static <T extends AnnotatedElement> ElementMatcher.Junction<T> isAnnotatedWith(TypeDescription typeDescription) {
         return isAnnotatedWith(is(isAnnotation(typeDescription)));
     }
 
@@ -520,8 +518,7 @@ public final class ElementMatchers {
      * @return A matcher that validates that an annotated element is annotated with an annotation of a type
      * that matches the given {@code matcher}.
      */
-    public static <T extends AnnotatedElement> ElementMatcher.Junction<T> isAnnotatedWith(
-            ElementMatcher<? super TypeDescription> matcher) {
+    public static <T extends AnnotatedElement> ElementMatcher.Junction<T> isAnnotatedWith(ElementMatcher<? super TypeDescription> matcher) {
         return declaresAnnotation(new AnnotationTypeMatcher<AnnotationDescription>(nonNull(matcher)));
     }
 
@@ -536,8 +533,7 @@ public final class ElementMatchers {
      * @return A matcher that validates that an annotated element is annotated with an annotation that matches
      * the given {@code matcher}.
      */
-    public static <T extends AnnotatedElement> ElementMatcher.Junction<T> declaresAnnotation(
-            ElementMatcher<? super AnnotationDescription> matcher) {
+    public static <T extends AnnotatedElement> ElementMatcher.Junction<T> declaresAnnotation(ElementMatcher<? super AnnotationDescription> matcher) {
         return new DeclaringAnnotationMatcher<T>(new CollectionItemMatcher<AnnotationDescription>(nonNull(matcher)));
     }
 
@@ -693,8 +689,7 @@ public final class ElementMatchers {
      * @param <T>     The type of the matched object.
      * @return An element matcher that matches a given return type against another {@code matcher}.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> returns(
-            ElementMatcher<? super TypeDescription> matcher) {
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> returns(ElementMatcher<? super TypeDescription> matcher) {
         return new MethodReturnTypeMatcher<T>(nonNull(matcher));
     }
 
@@ -721,8 +716,7 @@ public final class ElementMatchers {
      * @param <T>             The type of the matched object.
      * @return An element matcher that matches a method by its exact argument types.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(
-            TypeDescription... typeDescription) {
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(TypeDescription... typeDescription) {
         return takesArguments((Arrays.asList(typeDescription)));
     }
 
@@ -733,8 +727,7 @@ public final class ElementMatchers {
      * @param <T>              The type of the matched object.
      * @return An element matcher that matches a method by its exact argument types.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(
-            Iterable<? extends TypeDescription> typeDescriptions) {
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(Iterable<? extends TypeDescription> typeDescriptions) {
         List<ElementMatcher<? super TypeDescription>> typeMatchers = new LinkedList<ElementMatcher<? super TypeDescription>>();
         for (TypeDescription typeDescription : typeDescriptions) {
             typeMatchers.add(is(nonVoid(typeDescription)));
@@ -751,9 +744,8 @@ public final class ElementMatchers {
      * @return A matcher that matches a method description by applying another element matcher onto each
      * parameter's type.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(
-            ElementMatcher<? super Iterable<? extends TypeDescription>> matchers) {
-        return new MethodParameterTypesMatcher<T>(nonNull(matchers));
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(ElementMatcher<? super Iterable<? extends TypeDescription>> matchers) {
+        return new MethodParameterMatcher<T>(new MethodParameterTypeMatcher<ParameterList>(nonNull(matchers)));
     }
 
     /**
@@ -764,7 +756,31 @@ public final class ElementMatchers {
      * @return A matcher that matches a method description by the number of its parameters.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(int length) {
-        return new MethodParameterTypesMatcher<T>(new CollectionSizeMatcher<List<? extends TypeDescription>>(length));
+        return new MethodParameterMatcher<T>(new CollectionSizeMatcher<ParameterList>(length));
+    }
+
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} by validating that at least one
+     * parameter fullfils a given constraint.
+     *
+     * @param matcher The constraint to check the parameters against.
+     * @param <T>     The type of the matched object.
+     * @return A matcher that matches a method description's parameters against the given constraint.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> hasParameter(ElementMatcher<? super ParameterDescription> matcher) {
+        return hasParameters(new CollectionItemMatcher<ParameterDescription>(nonNull(matcher)));
+    }
+
+    /**
+     * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} by validating that its parameters
+     * fulfill a given constraint
+     *
+     * @param matcher The matcher to apply for validating the parameters.
+     * @param <T>     The type of the matched object.
+     * @return A matcher that matches a method description's parameters against the given constraint.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> hasParameters(ElementMatcher<? super Iterable<? extends ParameterDescription>> matcher) {
+        return new MethodParameterMatcher<T>(matcher);
     }
 
     /**
@@ -775,8 +791,7 @@ public final class ElementMatchers {
      * @param <T>           The type of the matched object.
      * @return A matcher that matches a method description by its declaration of throwing a checked exception.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> canThrow(
-            Class<? extends Throwable> exceptionType) {
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> canThrow(Class<? extends Throwable> exceptionType) {
         return canThrow(new TypeDescription.ForLoadedType(nonNull(exceptionType)));
     }
 
@@ -808,8 +823,7 @@ public final class ElementMatchers {
      * @param <T>              The type of the matched object.
      * @return A matcher that matches a method description by its declared exceptions.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> throwing(
-            ElementMatcher<? super List<? extends TypeDescription>> exceptionMatcher) {
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> throwing(ElementMatcher<? super List<? extends TypeDescription>> exceptionMatcher) {
         return new MethodExceptionTypeMatcher<T>(exceptionMatcher);
     }
 
@@ -986,8 +1000,7 @@ public final class ElementMatchers {
      * @param <T>     The type of the matched object.
      * @return A matcher that matches a setter method with an argument type that matches the supplied matcher.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> isSetter(
-            ElementMatcher<? super TypeDescription> matcher) {
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isSetter(ElementMatcher<? super TypeDescription> matcher) {
         return isSetter().and(takesArguments(
                 new CollectionOneToOneMatcher<TypeDescription>(Collections.singletonList(nonNull(matcher)))));
     }
@@ -1032,8 +1045,7 @@ public final class ElementMatchers {
      * @param <T>     The type of the matched object.
      * @return A matcher that matches a getter method with a return type that matches the supplied matcher.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter(
-            ElementMatcher<? super TypeDescription> matcher) {
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter(ElementMatcher<? super TypeDescription> matcher) {
         return isGetter().and(returns(nonNull(matcher)));
     }
 
@@ -1046,8 +1058,7 @@ public final class ElementMatchers {
      * @param <T>               The type of the matched object.
      * @return A matcher that matches a specialized version of the given method.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> isSpecializationOf(
-            MethodDescription methodDescription) {
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isSpecializationOf(MethodDescription methodDescription) {
         TypeList parameterTypes = methodDescription.getParameters().asTypeList();
         List<ElementMatcher<TypeDescription>> matchers = new ArrayList<ElementMatcher<TypeDescription>>(
                 parameterTypes.size());
@@ -1100,8 +1111,7 @@ public final class ElementMatchers {
      * @param <T>             The type of the matched object.
      * @return A matcher that matches any type description that represents a super type of the given type.
      */
-    public static <T extends TypeDescription> ElementMatcher.Junction<T> isSuperTypeOf(
-            TypeDescription typeDescription) {
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> isSuperTypeOf(TypeDescription typeDescription) {
         return new SuperTypeMatcher<T>(nonNull(typeDescription));
     }
 
@@ -1125,8 +1135,7 @@ public final class ElementMatchers {
      * @param <T>             The type of the matched object.
      * @return A matcher that matches any inherited annotation by their type.
      */
-    public static <T extends TypeDescription> ElementMatcher.Junction<T> inheritsAnnotation(
-            TypeDescription typeDescription) {
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> inheritsAnnotation(TypeDescription typeDescription) {
         return inheritsAnnotation(is(typeDescription));
     }
 
@@ -1138,8 +1147,7 @@ public final class ElementMatchers {
      * @param <T>     The type of the matched object.
      * @return A matcher that matches any inherited annotation by a given matcher.
      */
-    public static <T extends TypeDescription> ElementMatcher.Junction<T> inheritsAnnotation(
-            ElementMatcher<? super TypeDescription> matcher) {
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> inheritsAnnotation(ElementMatcher<? super TypeDescription> matcher) {
         return hasAnnotation(new AnnotationTypeMatcher<AnnotationDescription>(nonNull(matcher)));
     }
 
@@ -1151,8 +1159,7 @@ public final class ElementMatchers {
      * @param <T>     The type of the matched object.
      * @return A matcher that matches a list of inherited annotation by a given matcher.
      */
-    public static <T extends TypeDescription> ElementMatcher.Junction<T> hasAnnotation(
-            ElementMatcher<? super AnnotationDescription> matcher) {
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> hasAnnotation(ElementMatcher<? super AnnotationDescription> matcher) {
         return new InheritedAnnotationMatcher<T>(new CollectionItemMatcher<AnnotationDescription>(nonNull(matcher)));
     }
 
@@ -1163,8 +1170,7 @@ public final class ElementMatchers {
      * @param <T>          The type of the matched object.
      * @return A matcher that matches any type where another matcher is matched positively on at least on declared field.
      */
-    public static <T extends TypeDescription> ElementMatcher.Junction<T> declaresField(
-            ElementMatcher<? super FieldDescription> fieldMatcher) {
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> declaresField(ElementMatcher<? super FieldDescription> fieldMatcher) {
         return new DeclaringFieldMatcher<T>(new CollectionItemMatcher<FieldDescription>(nonNull(fieldMatcher)));
     }
 
@@ -1175,8 +1181,7 @@ public final class ElementMatchers {
      * @param <T>           The type of the matched object.
      * @return A matcher that matches any type where another matcher is matched positively on at least on declared methods.
      */
-    public static <T extends TypeDescription> ElementMatcher.Junction<T> declaresMethod(
-            ElementMatcher<? super MethodDescription> methodMatcher) {
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> declaresMethod(ElementMatcher<? super MethodDescription> methodMatcher) {
         return new DeclaringMethodMatcher<T>(new CollectionItemMatcher<MethodDescription>(nonNull(methodMatcher)));
     }
 

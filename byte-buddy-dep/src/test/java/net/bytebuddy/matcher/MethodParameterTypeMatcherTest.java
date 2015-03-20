@@ -1,6 +1,5 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
@@ -14,13 +13,10 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
-public class MethodParameterTypesMatcherTest extends AbstractElementMatcherTest<MethodParameterTypesMatcher<?>> {
+public class MethodParameterTypeMatcherTest extends AbstractElementMatcherTest<MethodParameterTypeMatcher<?>> {
 
     @Mock
     private ElementMatcher<? super List<? extends TypeDescription>> parameterMatcher;
-
-    @Mock
-    private MethodDescription methodDescription;
 
     @Mock
     private TypeList typeList;
@@ -29,20 +25,19 @@ public class MethodParameterTypesMatcherTest extends AbstractElementMatcherTest<
     private ParameterList parameterList;
 
     @SuppressWarnings("unchecked")
-    public MethodParameterTypesMatcherTest() {
-        super((Class<MethodParameterTypesMatcher<?>>) (Object) MethodParameterTypesMatcher.class, "parameters");
+    public MethodParameterTypeMatcherTest() {
+        super((Class<MethodParameterTypeMatcher<?>>) (Object) MethodParameterTypeMatcher.class, "types");
     }
 
     @Before
     public void setUp() throws Exception {
-        when(methodDescription.getParameters()).thenReturn(parameterList);
         when(parameterList.asTypeList()).thenReturn(typeList);
     }
 
     @Test
     public void testMatch() throws Exception {
         when(parameterMatcher.matches(typeList)).thenReturn(true);
-        assertThat(new MethodParameterTypesMatcher<MethodDescription>(parameterMatcher).matches(methodDescription), is(true));
+        assertThat(new MethodParameterTypeMatcher<ParameterList>(parameterMatcher).matches(parameterList), is(true));
         verify(parameterMatcher).matches(typeList);
         verifyNoMoreInteractions(parameterMatcher);
     }
@@ -50,7 +45,7 @@ public class MethodParameterTypesMatcherTest extends AbstractElementMatcherTest<
     @Test
     public void testNoMatch() throws Exception {
         when(parameterMatcher.matches(typeList)).thenReturn(false);
-        assertThat(new MethodParameterTypesMatcher<MethodDescription>(parameterMatcher).matches(methodDescription), is(false));
+        assertThat(new MethodParameterTypeMatcher<ParameterList>(parameterMatcher).matches(parameterList), is(false));
         verify(parameterMatcher).matches(typeList);
         verifyNoMoreInteractions(parameterMatcher);
     }

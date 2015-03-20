@@ -451,18 +451,10 @@ public class ElementMatchersTest {
 
     @Test
     public void testTakesArguments() throws Exception {
-        assertThat(ElementMatchers.takesArguments(Void.class).matches(
-                        new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(FOO, Void.class))),
-                is(true));
-        assertThat(ElementMatchers.takesArguments(Void.class, Object.class).matches(
-                        new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(FOO, Void.class))),
-                is(false));
-        assertThat(ElementMatchers.takesArguments(String.class, int.class).matches(
-                new MethodDescription.ForLoadedMethod(
-                        TakesArguments.class.getDeclaredMethod(BAR, String.class, int.class))), is(true));
-        assertThat(ElementMatchers.takesArguments(String.class, Integer.class).matches(
-                new MethodDescription.ForLoadedMethod(
-                        TakesArguments.class.getDeclaredMethod(BAR, String.class, int.class))), is(false));
+        assertThat(ElementMatchers.takesArguments(Void.class).matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(FOO, Void.class))), is(true));
+        assertThat(ElementMatchers.takesArguments(Void.class, Object.class).matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(FOO, Void.class))), is(false));
+        assertThat(ElementMatchers.takesArguments(String.class, int.class).matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(BAR, String.class, int.class))), is(true));
+        assertThat(ElementMatchers.takesArguments(String.class, Integer.class).matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(BAR, String.class, int.class))), is(false));
     }
 
     @Test
