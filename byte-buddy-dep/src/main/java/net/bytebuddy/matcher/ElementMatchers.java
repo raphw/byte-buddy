@@ -773,7 +773,7 @@ public final class ElementMatchers {
 
     /**
      * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} by validating that its parameters
-     * fulfill a given constraint
+     * fulfill a given constraint.
      *
      * @param matcher The matcher to apply for validating the parameters.
      * @param <T>     The type of the matched object.
