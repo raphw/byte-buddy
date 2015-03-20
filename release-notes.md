@@ -85,6 +85,13 @@ constructor interception where a hard-coded super method call is required by the
 - Fixed missing retention of method annotations of instrumented types.
 - Allowed dynamic lookup of methods for the `MethodCall` instrumentation.
 
+### 20. March 2015: Version 0.5.5
+
+- Retrofitted method parameters to be represented by `ParameterDescription`s and added possibility to extract names
+  and modifiers for these parameters, either by using the Java 8 API (if available) or by reading this information
+  from the underlying class file.
+- Fixed a `NullPointerException` being thrown due to accidental return of a `null` value from a method.
+
 ### Current snapshot
 
 No changes.
