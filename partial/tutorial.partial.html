@@ -2582,12 +2582,11 @@ enum StringValueBinder
 
   @Override
   public MethodDelegationBinder.ParameterBinding&lt;?&gt; bind(AnnotationDescription.Loaded&lt;StringValue&gt; annotation,
-                                                         int targetParameterIndex,
                                                          MethodDescription source,
-                                                         MethodDescription target,
+                                                         ParameterDescription target,
                                                          Instrumentation.Target instrumentationTarget,
                                                          Assigner assigner) {
-    if (!target.getParameterTypes().get(targetParameterIndex).represents(String.class)) {
+    if (!target.getTypeDescription().represents(String.class)) {
       throw new IllegalStateException(target + " makes illegal use of @StringValue");
     }
     StackManipulation constant = new TextConstant(annotation.loadSilent().value());
@@ -2597,8 +2596,8 @@ enum StringValueBinder
 </pre>
 
 <p>
-    Initially, the parameter binder makes sure that the <code>target</code> method's relevant parameter is actually
-    a <code>String</code> type. If this is not the case, we will throw an exception to inform the annotation's user
+    Initially, the parameter binder makes sure that the <code>target</code> parameter is actually a
+    <code>String</code> type. If this is not the case, we will throw an exception to inform the annotation's user
     of his illegal placing of this annotation. Otherwise, we simply create a <code>TextConstant</code> which represents
     the loading of a constant pool string onto the execution stack. This <code>StackManipulation</code> is then wrapped
     as an anonymous <code>ParameterBinding</code> which is finally returned from the method. Alternatively, you could
