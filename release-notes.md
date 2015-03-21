@@ -92,6 +92,10 @@ constructor interception where a hard-coded super method call is required by the
   from the underlying class file.
 - Fixed a `NullPointerException` being thrown due to accidental return of a `null` value from a method.
 
+### 21. March 2015
+
+- Added possibility to write parameter meta information to created classes if it is fully available for a method.
+
 ### Current snapshot
 
 No changes.
