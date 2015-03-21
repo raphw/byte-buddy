@@ -1,7 +1,6 @@
 package net.bytebuddy.pool;
 
 import net.bytebuddy.dynamic.ClassFileLocator;
-import net.bytebuddy.instrumentation.ModifierReviewable;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.field.FieldDescription;
@@ -3752,20 +3751,30 @@ public interface TypePool {
             protected static class ParameterToken {
 
                 /**
+                 * Donates an unknown name of a parameter.
+                 */
+                protected static final String NO_NAME = null;
+
+                /**
+                 * Donates an unknown modifier of a parameter.
+                 */
+                protected static final Integer NO_MODIFIERS = null;
+
+                /**
                  * The name of the parameter or {@code null} if no explicit name for this parameter is known.
                  */
                 private final String name;
 
                 /**
-                 * The modifiers of the parameter.
+                 * The modifiers of the parameter or {@code null} if no modifiers are known for this parameter.
                  */
-                private final int modifiers;
+                private final Integer modifiers;
 
                 /**
                  * Creates a parameter token for a parameter without an explicit name and without specific modifiers.
                  */
                 protected ParameterToken() {
-                    this(null);
+                    this(NO_NAME);
                 }
 
                 /**
@@ -3774,7 +3783,7 @@ public interface TypePool {
                  * @param name The name of the parameter.
                  */
                 protected ParameterToken(String name) {
-                    this(name, ModifierReviewable.EMPTY_MASK);
+                    this(name, NO_MODIFIERS);
                 }
 
                 /**
@@ -3783,7 +3792,7 @@ public interface TypePool {
                  * @param name      The name of the parameter.
                  * @param modifiers The modifiers of the parameter.
                  */
-                protected ParameterToken(String name, int modifiers) {
+                protected ParameterToken(String name, Integer modifiers) {
                     this.name = name;
                     this.modifiers = modifiers;
                 }
@@ -3798,11 +3807,11 @@ public interface TypePool {
                 }
 
                 /**
-                 * Returns the modifiers of the parameter.
+                 * Returns the modifiers of the parameter or {@code null} if no modifiers are known.
                  *
-                 * @return The modifiers of the parameter.
+                 * @return The modifiers of the parameter or {@code null} if no modifiers are known.
                  */
-                protected int getModifiers() {
+                protected Integer getModifiers() {
                     return modifiers;
                 }
 
@@ -3811,13 +3820,14 @@ public interface TypePool {
                     if (this == other) return true;
                     if (other == null || getClass() != other.getClass()) return false;
                     ParameterToken that = ((ParameterToken) other);
-                    return modifiers == that.modifiers && !(name != null ? !name.equals(that.name) : that.name != null);
+                    return !(modifiers != null ? !modifiers.equals(that.modifiers) : that.modifiers != null)
+                            && !(name != null ? !name.equals(that.name) : that.name != null);
                 }
 
                 @Override
                 public int hashCode() {
                     int result = name != null ? name.hashCode() : 0;
-                    result = 31 * result + modifiers;
+                    result = 31 * result + (modifiers != null ? modifiers.hashCode() : 0);
                     return result;
                 }
 
@@ -4146,9 +4156,9 @@ public interface TypePool {
             private final String[] parameterNames;
 
             /**
-             * An array of parameter modifiers.
+             * An array of parameter modifiers which may be {@code null} if no modifiers is known.
              */
-            private final int[] parameterModifiers;
+            private final Integer[] parameterModifiers;
 
             /**
              * The default value of this method or {@code null} if no such value exists.
@@ -4210,7 +4220,7 @@ public interface TypePool {
                     declaredParameterAnnotations.add(annotationDescriptions);
                 }
                 parameterNames = new String[parameterTypes.size()];
-                parameterModifiers = new int[parameterTypes.size()];
+                parameterModifiers = new Integer[parameterTypes.size()];
                 if (parameterTokens.size() == parameterTypes.size()) {
                     int index = 0;
                     for (MethodToken.ParameterToken parameterToken : parameterTokens) {
@@ -4285,6 +4295,16 @@ public interface TypePool {
                 }
 
                 @Override
+                public boolean hasExplicitMetaData() {
+                    for (int i = 0; i < size(); i++) {
+                        if (parameterNames[i] == null || parameterModifiers[i] == null) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+
+                @Override
                 public int size() {
                     return parameterTypes.size();
                 }
@@ -4335,6 +4355,11 @@ public interface TypePool {
                 }
 
                 @Override
+                public boolean hasModifiers() {
+                    return parameterModifiers[index] != null;
+                }
+
+                @Override
                 public String getName() {
                     return isNamed()
                             ? parameterNames[index]
@@ -4343,7 +4368,9 @@ public interface TypePool {
 
                 @Override
                 public int getModifiers() {
-                    return parameterModifiers[index];
+                    return hasModifiers()
+                            ? parameterModifiers[index]
+                            : super.getModifiers();
                 }
 
                 @Override

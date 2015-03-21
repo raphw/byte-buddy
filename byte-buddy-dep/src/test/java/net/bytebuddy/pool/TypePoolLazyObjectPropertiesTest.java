@@ -5,6 +5,8 @@ import org.junit.Test;
 import org.objectweb.asm.Type;
 
 import java.lang.annotation.Annotation;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Map;
 
 import static org.mockito.Mockito.mock;
@@ -16,7 +18,13 @@ public class TypePoolLazyObjectPropertiesTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.FieldToken.class).apply();
         ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.MethodToken.class).apply();
-        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.MethodToken.ParameterToken.class).apply();
+        final Iterator<Integer> iterator = Arrays.asList(1, 2).iterator();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.MethodToken.ParameterToken.class).create(new ObjectPropertyAssertion.Creator<Integer>() {
+            @Override
+            public Integer create() {
+                return iterator.next();
+            }
+        }).apply();
         ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationToken.class).apply();
         ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationValue.Trivial.class).apply();
         ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationValue.ForAnnotation.class).apply();

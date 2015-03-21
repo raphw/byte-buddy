@@ -1,6 +1,5 @@
 package net.bytebuddy.pool;
 
-import net.bytebuddy.instrumentation.ModifierReviewable;
 import org.junit.Test;
 import org.objectweb.asm.Type;
 
@@ -29,9 +28,9 @@ public class TypePoolParameterBagTest {
         assertThat(tokens.get(0).getName(), is(FOO));
         assertThat(tokens.get(1).getName(), is(BAR));
         assertThat(tokens.get(2).getName(), is(QUX));
-        assertThat(tokens.get(0).getModifiers(), is(ModifierReviewable.EMPTY_MASK));
-        assertThat(tokens.get(1).getModifiers(), is(ModifierReviewable.EMPTY_MASK));
-        assertThat(tokens.get(2).getModifiers(), is(ModifierReviewable.EMPTY_MASK));
+        assertThat(tokens.get(0).getModifiers(), nullValue(Integer.class));
+        assertThat(tokens.get(1).getModifiers(), nullValue(Integer.class));
+        assertThat(tokens.get(2).getModifiers(), nullValue(Integer.class));
     }
 
     @Test
@@ -49,9 +48,9 @@ public class TypePoolParameterBagTest {
         assertThat(tokens.get(0).getName(), is(FOO));
         assertThat(tokens.get(1).getName(), is(BAR));
         assertThat(tokens.get(2).getName(), is(QUX));
-        assertThat(tokens.get(0).getModifiers(), is(ModifierReviewable.EMPTY_MASK));
-        assertThat(tokens.get(1).getModifiers(), is(ModifierReviewable.EMPTY_MASK));
-        assertThat(tokens.get(2).getModifiers(), is(ModifierReviewable.EMPTY_MASK));
+        assertThat(tokens.get(0).getModifiers(), nullValue(Integer.class));
+        assertThat(tokens.get(1).getModifiers(), nullValue(Integer.class));
+        assertThat(tokens.get(2).getModifiers(), nullValue(Integer.class));
     }
 
     @Test
@@ -68,9 +67,9 @@ public class TypePoolParameterBagTest {
         assertThat(tokens.get(0).getName(), is(FOO));
         assertThat(tokens.get(1).getName(), nullValue(String.class));
         assertThat(tokens.get(2).getName(), is(QUX));
-        assertThat(tokens.get(0).getModifiers(), is(ModifierReviewable.EMPTY_MASK));
-        assertThat(tokens.get(1).getModifiers(), is(ModifierReviewable.EMPTY_MASK));
-        assertThat(tokens.get(2).getModifiers(), is(ModifierReviewable.EMPTY_MASK));
+        assertThat(tokens.get(0).getModifiers(), nullValue(Integer.class));
+        assertThat(tokens.get(1).getModifiers(), nullValue(Integer.class));
+        assertThat(tokens.get(2).getModifiers(), nullValue(Integer.class));
     }
 
     @Test
@@ -85,8 +84,8 @@ public class TypePoolParameterBagTest {
         assertThat(tokens.get(0).getName(), nullValue(String.class));
         assertThat(tokens.get(1).getName(), nullValue(String.class));
         assertThat(tokens.get(2).getName(), nullValue(String.class));
-        assertThat(tokens.get(0).getModifiers(), is(ModifierReviewable.EMPTY_MASK));
-        assertThat(tokens.get(1).getModifiers(), is(ModifierReviewable.EMPTY_MASK));
-        assertThat(tokens.get(2).getModifiers(), is(ModifierReviewable.EMPTY_MASK));
+        assertThat(tokens.get(0).getModifiers(), nullValue(Integer.class));
+        assertThat(tokens.get(1).getModifiers(), nullValue(Integer.class));
+        assertThat(tokens.get(2).getModifiers(), nullValue(Integer.class));
     }
 }

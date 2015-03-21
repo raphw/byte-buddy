@@ -65,10 +65,7 @@ public class InlineDynamicTypeBuilderTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private Instrumentation simpleInstrumentation,
-            preparingInstrumentation,
-            typeInitializerInstrumentation,
-            fieldCacheInstrumentation;
+    private Instrumentation simpleInstrumentation, preparingInstrumentation, typeInitializerInstrumentation, fieldCacheInstrumentation;
 
     @Mock
     private ByteCodeAppender byteCodeAppender, typeInitializerAppender, fieldCacheAppender;
@@ -101,14 +98,8 @@ public class InlineDynamicTypeBuilderTest {
             @Override
             public InstrumentedType answer(InvocationOnMock invocation) throws Throwable {
                 return ((InstrumentedType) invocation.getArguments()[0])
-                        .withField(BAZ,
-                                new TypeDescription.ForLoadedType(Object.class),
-                                0)
-                        .withMethod(QUX,
-                                new TypeDescription.ForLoadedType(int.class),
-                                Collections.<TypeDescription>emptyList(),
-                                Collections.<TypeDescription>emptyList(),
-                                0)
+                        .withField(BAZ, new TypeDescription.ForLoadedType(Object.class), 0)
+                        .withMethod(QUX, new TypeDescription.ForLoadedType(int.class), Collections.<TypeDescription>emptyList(), Collections.<TypeDescription>emptyList(), 0)
                         .withInitializer(loadedTypeInitializer);
             }
         });
@@ -128,10 +119,7 @@ public class InlineDynamicTypeBuilderTest {
                         MethodVisitor methodVisitor = (MethodVisitor) invocation.getArguments()[0];
                         MethodDescription methodDescription = (MethodDescription) invocation.getArguments()[2];
                         methodVisitor.visitInsn(Opcodes.ICONST_1);
-                        methodVisitor.visitFieldInsn(Opcodes.PUTSTATIC,
-                                Type.getInternalName(Foo.class),
-                                FOO,
-                                Type.getDescriptor(int.class));
+                        methodVisitor.visitFieldInsn(Opcodes.PUTSTATIC, Type.getInternalName(Foo.class), FOO, Type.getDescriptor(int.class));
                         methodVisitor.visitInsn(Opcodes.RETURN);
                         return new ByteCodeAppender.Size(1, methodDescription.getStackSize());
                     }

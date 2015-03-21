@@ -3,6 +3,8 @@ package net.bytebuddy.dynamic.scaffold;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.ParameterDescription;
+import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -14,6 +16,8 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
+
+import java.util.Arrays;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -50,6 +54,9 @@ public class TypeWriterMethodPoolEntryTest {
     @Mock
     private MethodDescription typeDescription;
 
+    @Mock
+    private ParameterDescription parameterDescription;
+
     @Before
     public void setUp() throws Exception {
         when(methodDescription.getInternalName()).thenReturn(FOO);
@@ -61,6 +68,9 @@ public class TypeWriterMethodPoolEntryTest {
         when(methodDescription.getAdjustedModifiers(any(Boolean.class))).thenReturn(MODIFIER);
         when(classVisitor.visitMethod(MODIFIER, FOO, BAR, QUX, new String[]{BAZ})).thenReturn(methodVisitor);
         when(first.apply(methodVisitor, instrumentationContext, methodDescription)).thenReturn(new ByteCodeAppender.Size(0, 0));
+        when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit(Arrays.asList(parameterDescription)));
+        when(parameterDescription.getModifiers()).thenReturn(MODIFIER);
+        when(parameterDescription.getName()).thenReturn(FOO);
     }
 
     @Test
@@ -88,6 +98,8 @@ public class TypeWriterMethodPoolEntryTest {
         verify(methodVisitor).visitEnd();
         verifyNoMoreInteractions(methodVisitor);
         verifyZeroInteractions(instrumentationContext);
+        verify(parameterDescription, never()).getName();
+        verify(parameterDescription, never()).getModifiers();
     }
 
     @Test
@@ -103,6 +115,32 @@ public class TypeWriterMethodPoolEntryTest {
         verify(methodVisitor).visitEnd();
         verifyNoMoreInteractions(methodVisitor);
         verifyZeroInteractions(instrumentationContext);
+        verify(parameterDescription, never()).getName();
+        verify(parameterDescription, never()).getModifiers();
+    }
+
+    @Test
+    public void testSimpleEntryWritesParameters() throws Exception {
+        when(first.appendsCode()).thenReturn(true);
+        when(parameterDescription.isNamed()).thenReturn(true);
+        when(parameterDescription.hasModifiers()).thenReturn(true);
+        new TypeWriter.MethodPool.Entry.Simple(first, methodAttributeAppender)
+                .apply(classVisitor, instrumentationContext, methodDescription);
+        verify(classVisitor).visitMethod(MODIFIER, FOO, BAR, QUX, new String[]{BAZ});
+        verify(methodAttributeAppender).apply(methodVisitor, methodDescription);
+        verify(first).appendsCode();
+        verify(first).apply(methodVisitor, instrumentationContext, methodDescription);
+        verifyNoMoreInteractions(first);
+        verifyNoMoreInteractions(methodAttributeAppender);
+        verifyNoMoreInteractions(classVisitor);
+        verify(methodVisitor).visitParameter(FOO, MODIFIER);
+        verify(methodVisitor).visitCode();
+        verify(methodVisitor).visitMaxs(0, 0);
+        verify(methodVisitor).visitEnd();
+        verifyNoMoreInteractions(methodVisitor);
+        verifyZeroInteractions(instrumentationContext);
+        verify(parameterDescription).getName();
+        verify(parameterDescription).getModifiers();
     }
 
     @Test

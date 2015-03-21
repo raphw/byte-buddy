@@ -12,6 +12,8 @@ import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.ParameterDescription;
+import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocation;
@@ -1078,11 +1080,16 @@ public interface TypeWriter<T> {
                                     methodDescription.getDescriptor(),
                                     methodDescription.getGenericSignature(),
                                     methodDescription.getExceptionTypes().toInternalNames());
+                    ParameterList parameterList = methodDescription.getParameters();
+                    if (parameterList.hasExplicitMetaData()) {
+                        for (ParameterDescription parameterDescription : parameterList) {
+                            methodVisitor.visitParameter(parameterDescription.getName(), parameterDescription.getModifiers());
+                        }
+                    }
                     methodAttributeAppender.apply(methodVisitor, methodDescription);
                     if (appendsCode) {
                         methodVisitor.visitCode();
-                        ByteCodeAppender.Size size = byteCodeAppender
-                                .apply(methodVisitor, instrumentationContext, methodDescription);
+                        ByteCodeAppender.Size size = byteCodeAppender.apply(methodVisitor, instrumentationContext, methodDescription);
                         methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
                     }
                     methodVisitor.visitEnd();

@@ -532,9 +532,9 @@ public interface InstrumentedType extends TypeDescription {
                 private final String name;
 
                 /**
-                 * The modifiers of this parameter.
+                 * The modifiers of this parameter or {@code null} if no such modifiers are known.
                  */
-                private final int modifiers;
+                private final Integer modifiers;
 
                 /**
                  * The annotations of this parameter.
@@ -553,7 +553,9 @@ public interface InstrumentedType extends TypeDescription {
                     name = parameterDescription.isNamed()
                             ? parameterDescription.getName()
                             : null;
-                    modifiers = parameterDescription.getModifiers();
+                    modifiers = parameterDescription.hasModifiers()
+                            ? getModifiers()
+                            : null;
                     parameterAnnotations = Collections.emptyList();
                 }
 
@@ -578,13 +580,20 @@ public interface InstrumentedType extends TypeDescription {
                 }
 
                 @Override
+                public boolean hasModifiers() {
+                    return modifiers != null;
+                }
+
+                @Override
                 public AnnotationList getDeclaredAnnotations() {
                     return new AnnotationList.Explicit(parameterAnnotations);
                 }
 
                 @Override
                 public int getModifiers() {
-                    return modifiers;
+                    return modifiers == null
+                            ? EMPTY_MASK
+                            : modifiers;
                 }
 
                 @Override

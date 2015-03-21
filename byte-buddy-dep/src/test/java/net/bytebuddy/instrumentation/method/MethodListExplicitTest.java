@@ -40,9 +40,9 @@ public class MethodListExplicitTest {
     @Test
     public void testMethodListFilter() throws Exception {
         @SuppressWarnings("unchecked")
-        ElementMatcher<? super MethodDescription> methodMatcher = mock(ElementMatcher.class);
-        when(methodMatcher.matches(firstMethodDescription)).thenReturn(true);
-        methodList = methodList.filter(methodMatcher);
+        ElementMatcher<? super MethodDescription> matcher = mock(ElementMatcher.class);
+        when(matcher.matches(firstMethodDescription)).thenReturn(true);
+        methodList = methodList.filter(matcher);
         assertThat(methodList.size(), is(1));
         assertThat(methodList.getOnly(), is(firstMethodDescription));
     }

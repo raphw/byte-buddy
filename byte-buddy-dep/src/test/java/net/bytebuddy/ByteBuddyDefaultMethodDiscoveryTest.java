@@ -15,7 +15,7 @@ import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-public class DefaultMethodDiscoveryTest {
+public class ByteBuddyDefaultMethodDiscoveryTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
@@ -30,23 +30,17 @@ public class DefaultMethodDiscoveryTest {
 
     private ClassLoader classLoader;
 
-    private Object interfaceMarker;
-
-    private Class<?> interfaceType;
-
-    private Method interfaceMethod;
-
     @Before
     public void setUp() throws Exception {
         classLoader = new PrecompiledTypeClassLoader(getClass().getClassLoader());
-        interfaceType = classLoader.loadClass(DEFAULT_METHOD_INTERFACE);
-        interfaceMarker = interfaceType.getDeclaredField(INTERFACE_STATIC_FIELD_NAME).get(STATIC_FIELD);
-        interfaceMethod = interfaceType.getDeclaredMethod(FOO);
     }
 
     @Test
     @JavaVersionRule.Enforce(8)
     public void testDefaultMethodNonOverridden() throws Exception {
+        Class<?> interfaceType = classLoader.loadClass(DEFAULT_METHOD_INTERFACE);
+        Object interfaceMarker = interfaceType.getDeclaredField(INTERFACE_STATIC_FIELD_NAME).get(STATIC_FIELD);
+        Method interfaceMethod = interfaceType.getDeclaredMethod(FOO);
         Class<?> dynamicType = new ByteBuddy()
                 .subclass(interfaceType)
                 .make()
@@ -60,6 +54,8 @@ public class DefaultMethodDiscoveryTest {
     @Test
     @JavaVersionRule.Enforce(8)
     public void testDefaultMethodOverridden() throws Exception {
+        Class<?> interfaceType = classLoader.loadClass(DEFAULT_METHOD_INTERFACE);
+        Method interfaceMethod = interfaceType.getDeclaredMethod(FOO);
         Class<?> dynamicType = new ByteBuddy()
                 .subclass(interfaceType)
                 .method(isDeclaredBy(interfaceType)).intercept(FixedValue.value(BAR))

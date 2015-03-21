@@ -26,10 +26,33 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
     TypeList asTypeList();
 
     /**
+     * Checks if all parameters in this list define both an explicit name and an explicit modifier.
+     *
+     * @return {@code true} if all parameters in this list define both an explicit name and an explicit modifier.
+     */
+    boolean hasExplicitMetaData();
+
+    /**
+     * An base implementation for a {@link net.bytebuddy.instrumentation.method.ParameterList}.
+     */
+    abstract static class AbstractBase extends FilterableList.AbstractBase<ParameterDescription, ParameterList> implements ParameterList {
+
+        @Override
+        public boolean hasExplicitMetaData() {
+            for (ParameterDescription parameterDescription : this) {
+                if (!parameterDescription.isNamed() || !parameterDescription.hasModifiers()) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
+    /**
      * Represents a list of parameters for an executable, i.e. a {@link java.lang.reflect.Method} or
      * {@link java.lang.reflect.Constructor}.
      */
-    static class ForLoadedExecutable extends AbstractBase<ParameterDescription, ParameterList> implements ParameterList {
+    static class ForLoadedExecutable extends AbstractBase {
 
         /**
          * Represents the {@code java.lang.reflect.Executable}'s {@code getParameters} method.
@@ -119,7 +142,7 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
          * Represents a list of method parameters on virtual machines where the {@code java.lang.reflect.Parameter}
          * type is not available.
          */
-        protected static class OfLegacyVmMethod extends FilterableList.AbstractBase<ParameterDescription, ParameterList> implements ParameterList {
+        protected static class OfLegacyVmMethod extends ParameterList.AbstractBase {
 
             /**
              * The represented method.
@@ -172,7 +195,7 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
          * Represents a list of constructor parameters on virtual machines where the {@code java.lang.reflect.Parameter}
          * type is not available.
          */
-        protected static class OfLegacyVmConstructor extends FilterableList.AbstractBase<ParameterDescription, ParameterList> implements ParameterList {
+        protected static class OfLegacyVmConstructor extends ParameterList.AbstractBase {
 
             /**
              * The represented constructor.
@@ -225,7 +248,7 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
     /**
      * A list of explicitly provided parameter descriptions.
      */
-    static class Explicit extends AbstractBase<ParameterDescription, ParameterList> implements ParameterList {
+    static class Explicit extends AbstractBase {
 
         /**
          * The list of parameter descriptions that are represented by this list.
@@ -292,6 +315,11 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
      * An empty list of parameters.
      */
     static class Empty extends FilterableList.Empty<ParameterDescription, ParameterList> implements ParameterList {
+
+        @Override
+        public boolean hasExplicitMetaData() {
+            return true;
+        }
 
         @Override
         public TypeList asTypeList() {

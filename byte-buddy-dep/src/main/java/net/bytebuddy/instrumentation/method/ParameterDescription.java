@@ -54,6 +54,14 @@ public interface ParameterDescription extends AnnotatedElement, NamedElement, Mo
     boolean isNamed();
 
     /**
+     * Checks if this parameter has an explicit modifier. A parameter without a modifier is simply treated as
+     * if it had a modifier of zero.
+     *
+     * @return {@code true} if this parameter defines explicit modifiers.
+     */
+    boolean hasModifiers();
+
+    /**
      * Returns the offset to the parameter value within the local method variable.
      *
      * @return The offset of this parameter's value.
@@ -247,6 +255,12 @@ public interface ParameterDescription extends AnnotatedElement, NamedElement, Mo
             return (Integer) GET_MODIFIERS.invoke(parameter);
         }
 
+        @Override
+        public boolean hasModifiers() {
+            // Rational: If a parameter is not named despite the information being attached, it is synthetic.
+            return isNamed() || getModifiers() != EMPTY_MASK;
+        }
+
         /**
          * Description of a loaded method's parameter on a virtual machine where {@code java.lang.reflect.Parameter}
          * is not available.
@@ -305,6 +319,11 @@ public interface ParameterDescription extends AnnotatedElement, NamedElement, Mo
 
             @Override
             public boolean isNamed() {
+                return false;
+            }
+
+            @Override
+            public boolean hasModifiers() {
                 return false;
             }
 
@@ -372,6 +391,11 @@ public interface ParameterDescription extends AnnotatedElement, NamedElement, Mo
 
             @Override
             public boolean isNamed() {
+                return false;
+            }
+
+            @Override
+            public boolean hasModifiers() {
                 return false;
             }
 
@@ -447,6 +471,11 @@ public interface ParameterDescription extends AnnotatedElement, NamedElement, Mo
 
         @Override
         public boolean isNamed() {
+            return false;
+        }
+
+        @Override
+        public boolean hasModifiers() {
             return false;
         }
 
