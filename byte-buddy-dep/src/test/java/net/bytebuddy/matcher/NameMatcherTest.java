@@ -1,6 +1,6 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.instrumentation.ByteCodeElement;
+import net.bytebuddy.instrumentation.NamedElement;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -14,7 +14,7 @@ public class NameMatcherTest extends AbstractElementMatcherTest<NameMatcher<?>> 
     private static final String FOO = "foo";
 
     @Mock
-    private ByteCodeElement byteCodeElement;
+    private NamedElement namedElement;
 
     @Mock
     private ElementMatcher<String> nameMatcher;
@@ -26,13 +26,13 @@ public class NameMatcherTest extends AbstractElementMatcherTest<NameMatcher<?>> 
 
     @Before
     public void setUp() throws Exception {
-        when(byteCodeElement.getSourceCodeName()).thenReturn(FOO);
+        when(namedElement.getSourceCodeName()).thenReturn(FOO);
     }
 
     @Test
     public void testMatch() throws Exception {
         when(nameMatcher.matches(FOO)).thenReturn(true);
-        assertThat(new NameMatcher<ByteCodeElement>(nameMatcher).matches(byteCodeElement), is(true));
+        assertThat(new NameMatcher<NamedElement>(nameMatcher).matches(namedElement), is(true));
         verify(nameMatcher).matches(FOO);
         verifyNoMoreInteractions(nameMatcher);
     }
@@ -40,7 +40,7 @@ public class NameMatcherTest extends AbstractElementMatcherTest<NameMatcher<?>> 
     @Test
     public void testNoMatch() throws Exception {
         when(nameMatcher.matches(FOO)).thenReturn(false);
-        assertThat(new NameMatcher<ByteCodeElement>(nameMatcher).matches(byteCodeElement), is(false));
+        assertThat(new NameMatcher<NamedElement>(nameMatcher).matches(namedElement), is(false));
         verify(nameMatcher).matches(FOO);
         verifyNoMoreInteractions(nameMatcher);
     }

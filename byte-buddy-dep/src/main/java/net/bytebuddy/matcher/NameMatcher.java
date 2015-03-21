@@ -1,6 +1,6 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.instrumentation.ByteCodeElement;
+import net.bytebuddy.instrumentation.NamedElement;
 
 /**
  * A method matcher that matches a byte code element's source code name:
@@ -14,7 +14,7 @@ import net.bytebuddy.instrumentation.ByteCodeElement;
  *
  * @param <T> The type of the matched entity.
  */
-public class NameMatcher<T extends ByteCodeElement> extends ElementMatcher.Junction.AbstractBase<T> {
+public class NameMatcher<T extends NamedElement> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
      * The matcher that is applied to a byte code element's source code name.

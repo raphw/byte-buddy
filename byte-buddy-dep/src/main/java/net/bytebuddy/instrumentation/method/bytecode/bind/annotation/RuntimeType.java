@@ -1,7 +1,6 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
-import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.method.ParameterDescription;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotatedElement;
 
 import java.lang.annotation.*;
 
@@ -37,23 +36,13 @@ public @interface RuntimeType {
         }
 
         /**
-         * Checks if method return values should be assigned by considering the run time type.
+         * Checks if an annotated element should be assigned a value by considering the runtime type.
          *
-         * @param methodDescription The method of interest.
-         * @return {@code true} if the runtime type should be considered for binding the method's return value.
+         * @param annotatedElement The annotated element of interest.
+         * @return {@code true} if the runtime type should be considered for binding the annotated element's value.
          */
-        public static boolean check(MethodDescription methodDescription) {
-            return methodDescription.getDeclaredAnnotations().isAnnotationPresent(RuntimeType.class);
-        }
-
-        /**
-         * Checks if a method parameter should be assigned by considering the run time type.
-         *
-         * @param parameterDescription The parameter description.
-         * @return {@code true} if the runtime type should be considered for binding this parameter.
-         */
-        public static boolean check(ParameterDescription parameterDescription) {
-            return parameterDescription.getDeclaredAnnotations().isAnnotationPresent(RuntimeType.class);
+        public static boolean check(AnnotatedElement annotatedElement) {
+            return annotatedElement.getDeclaredAnnotations().isAnnotationPresent(RuntimeType.class);
         }
     }
 }

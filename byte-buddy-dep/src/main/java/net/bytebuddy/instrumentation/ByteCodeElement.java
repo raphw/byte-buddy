@@ -10,26 +10,6 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 public interface ByteCodeElement extends NamedElement, ModifierReviewable, DeclaredInType, AnnotatedElement {
 
     /**
-     * Returns the internal internalName of this byte code element.
-     *
-     * @return The internal internalName of this byte code element as used within the Java class file format.
-     */
-    String getInternalName();
-
-    /**
-     * Returns the name of this byte code element as it is defined in Java source code. This means:
-     * <ul>
-     * <li>For type descriptions, the main distinction is the display of arrays whose actual names are blended
-     * with internal names when calling {@link net.bytebuddy.instrumentation.ByteCodeElement#getName()}.</li>
-     * <li>For method descriptions, representations of constructors and the type initializer, return the
-     * empty string.</li>
-     * </ul>
-     *
-     * @return The name of this type as represented in Java source code.
-     */
-    String getSourceCodeName();
-
-    /**
      * Returns the descriptor of this byte code element.
      *
      * @return The descriptor of this byte code element.

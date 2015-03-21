@@ -1,8 +1,7 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotatedElement;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
-import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.method.ParameterDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -25,10 +24,7 @@ public class RuntimeTypeVerifierTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private MethodDescription methodDescription;
-
-    @Mock
-    private ParameterDescription parameterDescription;
+    private AnnotatedElement annotatedElement;
 
     @Mock
     private RuntimeType runtimeType;
@@ -39,35 +35,19 @@ public class RuntimeTypeVerifierTest {
     }
 
     @Test
-    public void testCheckMethodValid() throws Exception {
-        when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(runtimeType));
-        assertThat(RuntimeType.Verifier.check(methodDescription), is(true));
-        verify(methodDescription).getDeclaredAnnotations();
-        verifyNoMoreInteractions(methodDescription);
+    public void testCheckElementValid() throws Exception {
+        when(annotatedElement.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(runtimeType));
+        assertThat(RuntimeType.Verifier.check(annotatedElement), is(true));
+        verify(annotatedElement).getDeclaredAnnotations();
+        verifyNoMoreInteractions(annotatedElement);
     }
 
     @Test
-    public void testCheckMethodInvalid() throws Exception {
-        when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation());
-        assertThat(RuntimeType.Verifier.check(methodDescription), is(false));
-        verify(methodDescription).getDeclaredAnnotations();
-        verifyNoMoreInteractions(methodDescription);
-    }
-
-    @Test
-    public void testCheckMethodParameterValid() throws Exception {
-        when(parameterDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(runtimeType));
-        assertThat(RuntimeType.Verifier.check(parameterDescription), is(true));
-        verify(parameterDescription).getDeclaredAnnotations();
-        verifyNoMoreInteractions(parameterDescription);
-    }
-
-    @Test
-    public void testCheckMethodParameterInvalid() throws Exception {
-        when(parameterDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation());
-        assertThat(RuntimeType.Verifier.check(parameterDescription), is(false));
-        verify(parameterDescription).getDeclaredAnnotations();
-        verifyNoMoreInteractions(parameterDescription);
+    public void testCheckElementInvalid() throws Exception {
+        when(annotatedElement.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation());
+        assertThat(RuntimeType.Verifier.check(annotatedElement), is(false));
+        verify(annotatedElement).getDeclaredAnnotations();
+        verifyNoMoreInteractions(annotatedElement);
     }
 
     @Test(expected = UnsupportedOperationException.class)

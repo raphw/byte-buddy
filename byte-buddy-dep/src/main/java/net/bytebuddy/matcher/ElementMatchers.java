@@ -2,6 +2,7 @@ package net.bytebuddy.matcher;
 
 import net.bytebuddy.instrumentation.ByteCodeElement;
 import net.bytebuddy.instrumentation.ModifierReviewable;
+import net.bytebuddy.instrumentation.NamedElement;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotatedElement;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
@@ -307,105 +308,105 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.ByteCodeElement} for its exact name.
+     * Matches a {@link net.bytebuddy.instrumentation.NamedElement} for its exact name.
      *
      * @param name The expected name.
      * @param <T>  The type of the matched object.
-     * @return An element matcher for a byte code element's exact name.
+     * @return An element matcher for a named element's exact name.
      */
-    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> named(String name) {
+    public static <T extends NamedElement> ElementMatcher.Junction<T> named(String name) {
         return new NameMatcher<T>(new StringMatcher(nonNull(name), StringMatcher.Mode.EQUALS_FULLY));
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.ByteCodeElement} for its name. The name's
+     * Matches a {@link net.bytebuddy.instrumentation.NamedElement} for its name. The name's
      * capitalization is ignored.
      *
      * @param name The expected name.
      * @param <T>  The type of the matched object.
-     * @return An element matcher for a byte code element's name.
+     * @return An element matcher for a named element's name.
      */
-    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> namedIgnoreCase(String name) {
+    public static <T extends NamedElement> ElementMatcher.Junction<T> namedIgnoreCase(String name) {
         return new NameMatcher<T>(new StringMatcher(nonNull(name), StringMatcher.Mode.EQUALS_FULLY_IGNORE_CASE));
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.ByteCodeElement} for its name's prefix.
+     * Matches a {@link net.bytebuddy.instrumentation.NamedElement} for its name's prefix.
      *
      * @param prefix The expected name's prefix.
      * @param <T>    The type of the matched object.
-     * @return An element matcher for a byte code element's name's prefix.
+     * @return An element matcher for a named element's name's prefix.
      */
-    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> nameStartsWith(String prefix) {
+    public static <T extends NamedElement> ElementMatcher.Junction<T> nameStartsWith(String prefix) {
         return new NameMatcher<T>(new StringMatcher(nonNull(prefix), StringMatcher.Mode.STARTS_WITH));
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.ByteCodeElement} for its name's prefix. The name's
+     * Matches a {@link net.bytebuddy.instrumentation.NamedElement} for its name's prefix. The name's
      * capitalization is ignored.
      *
      * @param prefix The expected name's prefix.
      * @param <T>    The type of the matched object.
-     * @return An element matcher for a byte code element's name's prefix.
+     * @return An element matcher for a named element's name's prefix.
      */
-    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> nameStartsWithIgnoreCase(String prefix) {
+    public static <T extends NamedElement> ElementMatcher.Junction<T> nameStartsWithIgnoreCase(String prefix) {
         return new NameMatcher<T>(new StringMatcher(nonNull(prefix), StringMatcher.Mode.STARTS_WITH_IGNORE_CASE));
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.ByteCodeElement} for its name's suffix.
+     * Matches a {@link net.bytebuddy.instrumentation.NamedElement} for its name's suffix.
      *
      * @param suffix The expected name's suffix.
      * @param <T>    The type of the matched object.
-     * @return An element matcher for a byte code element's name's suffix.
+     * @return An element matcher for a named element's name's suffix.
      */
-    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> nameEndsWith(String suffix) {
+    public static <T extends NamedElement> ElementMatcher.Junction<T> nameEndsWith(String suffix) {
         return new NameMatcher<T>(new StringMatcher(nonNull(suffix), StringMatcher.Mode.ENDS_WITH));
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.ByteCodeElement} for its name's suffix. The name's
+     * Matches a {@link net.bytebuddy.instrumentation.NamedElement} for its name's suffix. The name's
      * capitalization is ignored.
      *
      * @param suffix The expected name's suffix.
      * @param <T>    The type of the matched object.
-     * @return An element matcher for a byte code element's name's suffix.
+     * @return An element matcher for a named element's name's suffix.
      */
-    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> nameEndsWithIgnoreCase(String suffix) {
+    public static <T extends NamedElement> ElementMatcher.Junction<T> nameEndsWithIgnoreCase(String suffix) {
         return new NameMatcher<T>(new StringMatcher(nonNull(suffix), StringMatcher.Mode.ENDS_WITH_IGNORE_CASE));
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.ByteCodeElement} for an infix of its name.
+     * Matches a {@link net.bytebuddy.instrumentation.NamedElement} for an infix of its name.
      *
      * @param infix The expected infix of the name.
      * @param <T>   The type of the matched object.
-     * @return An element matcher for a byte code element's name's infix.
+     * @return An element matcher for a named element's name's infix.
      */
-    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> nameContains(String infix) {
+    public static <T extends NamedElement> ElementMatcher.Junction<T> nameContains(String infix) {
         return new NameMatcher<T>(new StringMatcher(nonNull(infix), StringMatcher.Mode.CONTAINS));
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.ByteCodeElement} for an infix of its name. The name's
+     * Matches a {@link net.bytebuddy.instrumentation.NamedElement} for an infix of its name. The name's
      * capitalization is ignored.
      *
      * @param infix The expected infix of the name.
      * @param <T>   The type of the matched object.
-     * @return An element matcher for a byte code element's name's infix.
+     * @return An element matcher for a named element's name's infix.
      */
-    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> nameContainsIgnoreCase(String infix) {
+    public static <T extends NamedElement> ElementMatcher.Junction<T> nameContainsIgnoreCase(String infix) {
         return new NameMatcher<T>(new StringMatcher(nonNull(infix), StringMatcher.Mode.CONTAINS_IGNORE_CASE));
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.ByteCodeElement} name against a regular expression.
+     * Matches a {@link net.bytebuddy.instrumentation.NamedElement} name against a regular expression.
      *
      * @param regex The regular expression to match the name against.
      * @param <T>   The type of the matched object.
-     * @return An element matcher for a byte code element's name's against the given regular expression.
+     * @return An element matcher for a named element's name's against the given regular expression.
      */
-    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> nameMatches(String regex) {
+    public static <T extends NamedElement> ElementMatcher.Junction<T> nameMatches(String regex) {
         return new NameMatcher<T>(new StringMatcher(nonNull(regex), StringMatcher.Mode.MATCHES));
     }
 

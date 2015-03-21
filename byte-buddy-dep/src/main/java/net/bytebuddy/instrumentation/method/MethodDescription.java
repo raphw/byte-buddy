@@ -251,12 +251,16 @@ public interface MethodDescription extends ByteCodeElement {
 
         @Override
         public String getName() {
-            return isMethod() ? getInternalName() : getDeclaringType().getName();
+            return isMethod()
+                    ? getInternalName()
+                    : getDeclaringType().getName();
         }
 
         @Override
         public String getSourceCodeName() {
-            return isMethod() ? getName() : "";
+            return isMethod()
+                    ? getName()
+                    : EMPTY_NAME;
         }
 
         @Override

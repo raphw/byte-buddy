@@ -22,6 +22,16 @@ public interface PackageDescription extends NamedElement, AnnotatedElement {
     public abstract static class AbstractPackageDescription implements PackageDescription {
 
         @Override
+        public String getInternalName() {
+            return getName().replace('.', '/');
+        }
+
+        @Override
+        public String getSourceCodeName() {
+            return getName();
+        }
+
+        @Override
         public int hashCode() {
             return getName().hashCode();
         }

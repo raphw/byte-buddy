@@ -79,6 +79,18 @@ public interface ParameterDescription extends AnnotatedElement, NamedElement, Mo
         }
 
         @Override
+        public String getInternalName() {
+            return getName();
+        }
+
+        @Override
+        public String getSourceCodeName() {
+            return isNamed()
+                    ? getName()
+                    : EMPTY_NAME;
+        }
+
+        @Override
         public int getModifiers() {
             return EMPTY_MASK;
         }
