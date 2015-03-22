@@ -591,16 +591,16 @@ public interface InstrumentedType extends TypeDescription {
 
                 @Override
                 public int getModifiers() {
-                    return modifiers == null
-                            ? EMPTY_MASK
-                            : modifiers;
+                    return hasModifiers()
+                            ? modifiers
+                            : super.getModifiers();
                 }
 
                 @Override
                 public String getName() {
-                    return name == null
-                            ? super.getName()
-                            : name;
+                    return isNamed()
+                            ? name
+                            : super.getName();
                 }
             }
         }
