@@ -480,7 +480,7 @@ public interface AgentBuilder {
 
                 @Override
                 public ClassFileLocator.Resolution locate(String typeName) throws IOException {
-                    return typeName.equals(typeName)
+                    return this.typeName.equals(typeName)
                             ? new ClassFileLocator.Resolution.Explicit(binaryRepresentation)
                             : classFileLocator.locate(typeName);
                 }
@@ -1412,7 +1412,9 @@ public interface AgentBuilder {
                                             methodNameTransformer), typeDescription)).make();
                             Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
                             if (loadedTypeInitializers.size() > 1) {
-                                ClassLoaderByteArrayInjector injector = new ClassLoaderByteArrayInjector(classLoader, protectionDomain);
+                                ClassLoaderByteArrayInjector injector = new ClassLoaderByteArrayInjector(classLoader == null
+                                        ? ClassLoader.getSystemClassLoader()
+                                        : classLoader, protectionDomain);
                                 for (Map.Entry<TypeDescription, byte[]> auxiliary : dynamicType.getRawAuxiliaryTypes().entrySet()) {
                                     Class<?> type = injector.inject(auxiliary.getKey().getName(), auxiliary.getValue());
                                     initializationStrategy.initialize(type, loadedTypeInitializers.get(auxiliary.getKey()));

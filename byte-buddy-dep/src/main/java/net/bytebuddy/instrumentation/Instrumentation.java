@@ -728,13 +728,21 @@ public interface Instrumentation {
                             instrumentedType,
                             specialMethodInvocation.getMethodDescription().getReturnType(),
                             specialMethodInvocation.getMethodDescription().getParameters().asTypeList(),
-                            ACCESSOR_METHOD_MODIFIER | (specialMethodInvocation.getMethodDescription().isStatic()
-                                    ? Opcodes.ACC_STATIC
-                                    : 0),
+                            resolveModifier(specialMethodInvocation.getMethodDescription().isStatic()),
                             specialMethodInvocation.getMethodDescription().getExceptionTypes());
                     registerAccessor(specialMethodInvocation, accessorMethod);
                 }
                 return accessorMethod;
+            }
+
+            /**
+             * Resolves the modifier for an accessor method.
+             *
+             * @param isStatic {@code true} if the accessor method is supposed to be static.
+             * @return The modifier for the method.
+             */
+            private int resolveModifier(boolean isStatic) {
+                return ACCESSOR_METHOD_MODIFIER | (isStatic ? Opcodes.ACC_STATIC : 0);
             }
 
             /**
@@ -760,9 +768,7 @@ public interface Instrumentation {
                             instrumentedType,
                             fieldDescription.getFieldType(),
                             Collections.<TypeDescription>emptyList(),
-                            ACCESSOR_METHOD_MODIFIER | (fieldDescription.isStatic()
-                                    ? Opcodes.ACC_STATIC
-                                    : 0),
+                            resolveModifier(fieldDescription.isStatic()),
                             Collections.<TypeDescription>emptyList());
                     registerGetter(fieldDescription, accessorMethod);
                 }
@@ -792,9 +798,7 @@ public interface Instrumentation {
                             instrumentedType,
                             new TypeDescription.ForLoadedType(void.class),
                             Collections.singletonList(fieldDescription.getFieldType()),
-                            ACCESSOR_METHOD_MODIFIER | (fieldDescription.isStatic()
-                                    ? Opcodes.ACC_STATIC
-                                    : 0),
+                            resolveModifier(fieldDescription.isStatic()),
                             Collections.<TypeDescription>emptyList());
                     registerSetter(fieldDescription, accessorMethod);
                 }
