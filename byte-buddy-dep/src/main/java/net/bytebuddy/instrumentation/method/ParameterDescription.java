@@ -269,7 +269,8 @@ public interface ParameterDescription extends AnnotatedElement, NamedElement, Mo
 
         @Override
         public boolean hasModifiers() {
-            // Rational: If a parameter is not named despite the information being attached, it is synthetic.
+            // Rational: If a parameter is not named despite the information being attached,
+            // it is synthetic, i.e. it has non-default modifiers.
             return isNamed() || getModifiers() != EMPTY_MASK;
         }
 

@@ -7,8 +7,9 @@ import java.io.InputStream;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
+import java.lang.reflect.Field;
 import java.security.ProtectionDomain;
-import java.util.Arrays;
+import java.util.*;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
@@ -246,22 +247,32 @@ public interface ClassFileLocator {
         private final Instrumentation instrumentation;
 
         /**
-         * The class loader which is expected to load a class of a given binary format.
+         * The delegate to load a class by its name.
          */
-        private final ClassLoader classLoader;
+        private final ClassLoadingDelegate classLoadingDelegate;
 
         /**
          * Creates an agent-based class file locator.
          *
-         * @param instrumentation The instrumentation to use for looking up a class file implementation.
-         * @param classLoader     The class loader that is expected to load the looked-up a class.
+         * @param instrumentation The instrumentation to be used.
+         * @param classLoader     The class loader to read a class from.
          */
         public AgentBased(Instrumentation instrumentation, ClassLoader classLoader) {
+            this(instrumentation, ClassLoadingDelegate.Default.of(classLoader));
+        }
+
+        /**
+         * Creates an agent-based class file locator.
+         *
+         * @param instrumentation      The instrumentation to be used.
+         * @param classLoadingDelegate The delegate responsible for class loading.
+         */
+        public AgentBased(Instrumentation instrumentation, ClassLoadingDelegate classLoadingDelegate) {
             if (!instrumentation.isRetransformClassesSupported()) {
                 throw new IllegalArgumentException(instrumentation + " does not support retransformation");
             }
             this.instrumentation = instrumentation;
-            this.classLoader = nonNull(classLoader);
+            this.classLoadingDelegate = nonNull(classLoadingDelegate);
         }
 
         /**
@@ -285,10 +296,10 @@ public interface ClassFileLocator {
         @Override
         public Resolution locate(String typeName) {
             try {
-                ExtractionClassFileTransformer classFileTransformer = new ExtractionClassFileTransformer(classLoader, typeName);
+                ExtractionClassFileTransformer classFileTransformer = new ExtractionClassFileTransformer(classLoadingDelegate.getClassLoader(), typeName);
                 try {
                     instrumentation.addTransformer(classFileTransformer, true);
-                    instrumentation.retransformClasses(classLoader.loadClass(typeName));
+                    instrumentation.retransformClasses(classLoadingDelegate.locate(typeName));
                     byte[] binaryRepresentation = classFileTransformer.getBinaryRepresentation();
                     return binaryRepresentation == null
                             ? Resolution.Illegal.INSTANCE
@@ -304,21 +315,367 @@ public interface ClassFileLocator {
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && classLoader.equals(((AgentBased) other).classLoader)
+                    && classLoadingDelegate.equals(((AgentBased) other).classLoadingDelegate)
                     && instrumentation.equals(((AgentBased) other).instrumentation);
         }
 
         @Override
         public int hashCode() {
-            return 31 * instrumentation.hashCode() + classLoader.hashCode();
+            return 31 * instrumentation.hashCode() + classLoadingDelegate.hashCode();
         }
 
         @Override
         public String toString() {
             return "ClassFileLocator.AgentBased{" +
                     "instrumentation=" + instrumentation +
-                    ", classLoader=" + classLoader +
+                    ", classLoadingDelegate=" + classLoadingDelegate +
                     '}';
+        }
+
+        /**
+         * A delegate that is queried for loading a class.
+         */
+        public static interface ClassLoadingDelegate {
+
+            /**
+             * Loads a class by its name.
+             *
+             * @param name The name of the type.
+             * @return The class with the given name.
+             * @throws ClassNotFoundException If a class cannot be found.
+             */
+            Class<?> locate(String name) throws ClassNotFoundException;
+
+            /**
+             * Returns the underlying class loader.
+             *
+             * @return The underlying class loader.
+             */
+            ClassLoader getClassLoader();
+
+            /**
+             * A default implementation of a class loading delegate.
+             */
+            static class Default implements ClassLoadingDelegate {
+
+                /**
+                 * The underlying class loader.
+                 */
+                protected final ClassLoader classLoader;
+
+                /**
+                 * Creates a default class loading delegate.
+                 *
+                 * @param classLoader The class loader to be queried.
+                 */
+                protected Default(ClassLoader classLoader) {
+                    this.classLoader = classLoader;
+                }
+
+                /**
+                 * Creates a class loading delegate for the given class loader.
+                 *
+                 * @param classLoader The class loader for which to create a delegate.
+                 * @return The class loading delegate for the provided class loader.
+                 */
+                public static ClassLoadingDelegate of(ClassLoader classLoader) {
+                    return ForDelegatingClassLoader.isDelegating(classLoader)
+                            ? new ForDelegatingClassLoader(classLoader)
+                            : new Default(classLoader);
+                }
+
+                @Override
+                public Class<?> locate(String name) throws ClassNotFoundException {
+                    return classLoader.loadClass(name);
+                }
+
+                @Override
+                public ClassLoader getClassLoader() {
+                    return classLoader;
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    Default aDefault = (Default) other;
+                    return !(classLoader != null ? !classLoader.equals(aDefault.classLoader) : aDefault.classLoader != null);
+                }
+
+                @Override
+                public int hashCode() {
+                    return classLoader != null ? classLoader.hashCode() : 0;
+                }
+
+                @Override
+                public String toString() {
+                    return "ClassFileLocator.AgentBased.ClassLoadingDelegate.Default{" +
+                            "classLoader=" + classLoader +
+                            '}';
+                }
+            }
+
+            /**
+             * A class loading delegate that accounts for a {@code sun.reflect.DelegatingClassLoader} which
+             * cannot load its own classes by name.
+             */
+            static class ForDelegatingClassLoader extends Default {
+
+                /**
+                 * The name of the delegating class loader.
+                 */
+                private static final String DELEGATING_CLASS_LOADER_NAME = "sun.reflect.DelegatingClassLoader";
+
+                /**
+                 * An index indicating the first element of a collection.
+                 */
+                private static final int ONLY = 0;
+
+                /**
+                 * The class loader's field that contains all loaded classes.
+                 */
+                private static final JavaField CLASSES_FIELD;
+
+                /**
+                 * Locates the {@link java.lang.ClassLoader}'s field that contains all loaded classes.
+                 */
+                static {
+                    JavaField classesField;
+                    try {
+                        Field field = ClassLoader.class.getDeclaredField("classes");
+                        field.setAccessible(true);
+                        classesField = new JavaField.ForResolvedField(field);
+                    } catch (Exception e) {
+                        classesField = new JavaField.ForNonResolvedField(e);
+                    }
+                    CLASSES_FIELD = classesField;
+                }
+
+                /**
+                 * Creates a class loading delegate for a delegating class loader.
+                 *
+                 * @param classLoader The delegating class loader.
+                 */
+                protected ForDelegatingClassLoader(ClassLoader classLoader) {
+                    super(classLoader);
+                }
+
+                /**
+                 * Checks if a class loader is a delegating class loader.
+                 *
+                 * @param classLoader The class loader to inspect.
+                 * @return {@code true} if the class loader is a delegating class loader.
+                 */
+                protected static boolean isDelegating(ClassLoader classLoader) {
+                    return classLoader != null && classLoader.getClass().getName().equals(DELEGATING_CLASS_LOADER_NAME);
+                }
+
+                @Override
+                @SuppressWarnings("unchecked")
+                public Class<?> locate(String name) throws ClassNotFoundException {
+                    Vector<Class<?>> classes;
+                    try {
+                        classes = (Vector<Class<?>>) CLASSES_FIELD.readValue(classLoader);
+                    } catch (Exception ignored) {
+                        return super.locate(name);
+                    }
+                    if (classes.size() != 1) {
+                        return super.locate(name);
+                    }
+                    Class<?> type = classes.get(ONLY);
+                    return type.getName().equals(name)
+                            ? type
+                            : super.locate(name);
+                }
+
+                @Override
+                public String toString() {
+                    return "ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader{" +
+                            "classLoader=" + classLoader +
+                            '}';
+                }
+
+                /**
+                 * Representation of a Java {@link java.lang.reflect.Field}.
+                 */
+                protected static interface JavaField {
+
+                    /**
+                     * Reads a value from the underlying field.
+                     *
+                     * @param instance The instance to read from.
+                     * @return The field's value.
+                     * @throws Exception If the field's value cannot be read.
+                     */
+                    Object readValue(Object instance) throws Exception;
+
+                    /**
+                     * Represents a field that could be located.
+                     */
+                    static class ForResolvedField implements JavaField {
+
+                        /**
+                         * The represented field.
+                         */
+                        private final Field field;
+
+                        /**
+                         * Creates a new resolved field.
+                         *
+                         * @param field the represented field.l
+                         */
+                        public ForResolvedField(Field field) {
+                            this.field = field;
+                        }
+
+                        @Override
+                        public Object readValue(Object instance) throws Exception {
+                            return field.get(instance);
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && field.equals(((ForResolvedField) other).field);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return field.hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.JavaField.ForResolvedField{" +
+                                    "field=" + field +
+                                    '}';
+                        }
+                    }
+
+                    /**
+                     * Represents a field that could not be located.
+                     */
+                    static class ForNonResolvedField implements JavaField {
+
+                        /**
+                         * The exception that occurred when attempting to locate the field.
+                         */
+                        private final Exception exception;
+
+                        /**
+                         * Creates a representation of a non-resolved field.
+                         *
+                         * @param exception The exception that occurred when attempting to locate the field.
+                         */
+                        public ForNonResolvedField(Exception exception) {
+                            this.exception = exception;
+                        }
+
+                        @Override
+                        public Object readValue(Object instance) throws Exception {
+                            throw exception;
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && exception.equals(((ForNonResolvedField) other).exception);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return exception.hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.JavaField.ForNonResolvedField{" +
+                                    "exception=" + exception +
+                                    '}';
+                        }
+                    }
+                }
+            }
+
+            /**
+             * A class loading delegate that allows the location of explicitly registered classes that cannot
+             * be located by a class loader directly. This allows for locating classes that are loaded by
+             * an anonymous class loader which does not register its classes in a system dictionary.
+             */
+            static class Explicit implements ClassLoadingDelegate {
+
+                /**
+                 * A class loading delegate that is queried for classes that are not registered explicitly.
+                 */
+                private final ClassLoadingDelegate fallbackDelegate;
+
+                /**
+                 * The map of registered classes mapped by their name.
+                 */
+                private final Map<String, Class<?>> types;
+
+                /**
+                 * Creates a new class loading delegate with a possibility of looking up explicitly
+                 * registered classes.
+                 *
+                 * @param classLoader The class loader to be used for looking up classes.
+                 * @param types       A collection of classes that cannot be looked up explicitly.
+                 */
+                public Explicit(ClassLoader classLoader, Collection<Class<?>> types) {
+                    this(new Default(classLoader), types);
+                }
+
+                /**
+                 * Creates a new class loading delegate with a possibility of looking up explicitly
+                 * registered classes.
+                 *
+                 * @param fallbackDelegate The class loading delegate to query for any class that is not
+                 *                         registered explicitly.
+                 * @param types            A collection of classes that cannot be looked up explicitly.
+                 */
+                public Explicit(ClassLoadingDelegate fallbackDelegate, Collection<Class<?>> types) {
+                    this.fallbackDelegate = fallbackDelegate;
+                    this.types = new HashMap<String, Class<?>>(types.size());
+                    for (Class<?> type : types) {
+                        this.types.put(type.getName(), type);
+                    }
+                }
+
+                @Override
+                public Class<?> locate(String name) throws ClassNotFoundException {
+                    Class<?> type = types.get(name);
+                    return type == null
+                            ? fallbackDelegate.locate(name)
+                            : type;
+                }
+
+                @Override
+                public ClassLoader getClassLoader() {
+                    return fallbackDelegate.getClassLoader();
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && fallbackDelegate.equals(((Explicit) other).fallbackDelegate)
+                            && types.equals(((Explicit) other).types);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = fallbackDelegate.hashCode();
+                    result = 31 * result + types.hashCode();
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "ClassFileLocator.AgentBased.ClassLoadingDelegate.Explicit{" +
+                            "fallbackDelegate=" + fallbackDelegate +
+                            ", types=" + types +
+                            '}';
+                }
+            }
         }
 
         /**
@@ -402,7 +759,10 @@ public interface ClassFileLocator {
                 return "ClassFileLocator.AgentBased.ExtractionClassFileTransformer{" +
                         "classLoader=" + classLoader +
                         ", typeName=" + typeName +
-                        ", binaryRepresentation=" + Arrays.toString(binaryRepresentation) +
+                        ", binaryRepresentation=" +
+                        (binaryRepresentation != null
+                                ? "<" + binaryRepresentation.length + " bytes>"
+                                : "null") +
                         '}';
             }
         }

@@ -182,8 +182,7 @@ public interface TypeWriter<T> {
                 try {
                     ClassFileLocator.Resolution resolution = classFileLocator.locate(targetType.getName());
                     if (!resolution.isResolved()) {
-                        throw new IllegalArgumentException("Cannot locate the class file for "
-                                + targetType + " using " + classFileLocator);
+                        throw new IllegalArgumentException("Cannot locate the class file for " + targetType + " using " + classFileLocator);
                     }
                     return doCreate(instrumentationContext, resolution.resolve());
                 } catch (IOException e) {
