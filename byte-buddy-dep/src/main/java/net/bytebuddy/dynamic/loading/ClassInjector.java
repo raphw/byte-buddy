@@ -18,6 +18,10 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 
+/**
+ * A class injector is capable of injecting classes into a {@link java.lang.ClassLoader} without
+ * requiring the class loader to being able to explicitly look up these classes.
+ */
 public interface ClassInjector {
 
     /**

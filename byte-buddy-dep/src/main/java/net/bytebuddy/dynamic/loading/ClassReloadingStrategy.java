@@ -383,6 +383,9 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
             }
         }
 
+        /**
+         * An enabled bootstrap class loader injection strategy.
+         */
         static class Enabled implements BootstrapInjection {
 
             /**
