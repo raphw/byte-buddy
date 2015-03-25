@@ -898,6 +898,19 @@ class ToStringAgent {
     powerful tool for easily implementing aspect-oriented programing.
 </p>
 
+<p>
+    Note that it is also possible to instrument classes that were loaded by the bootstrap class loader when using an
+    agent. However, this requires some preparation. First of all, the bootstrap class loader is represented by the
+    <code>null</code> value which makes it impossible to load a class in this class loader using reflection. This
+    is however sometimes necessary to load helper classes into the instrumented class's class loader to support the
+    class's implementation. In order to load classes into the bootstrap class loader, Byte Buddy can create jar files
+    and add these files to the bootstrap class loader's load path. To make this possible, it is however required to
+    save these classes to disk. A folder for these classes can be specified using the
+    <code>enableBootstrapInjection</code> command which also takes an instance of the instrumentation interface in
+    order to append the classes. Note that all user classes that are used by the instrumented class are also required
+    to be put on the bootstrap search path which is possible using the <code>Instrumentation</code> interface.
+</p>
+
 <h4>Loading classes in Android applications</h4>
 
 <p>
