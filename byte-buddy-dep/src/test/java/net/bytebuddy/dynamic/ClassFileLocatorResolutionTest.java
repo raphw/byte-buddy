@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.StreamDrainer;
 import org.hamcrest.MatcherAssert;

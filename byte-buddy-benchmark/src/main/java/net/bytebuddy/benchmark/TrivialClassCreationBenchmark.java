@@ -3,7 +3,7 @@ package net.bytebuddy.benchmark;
 import javassist.util.proxy.MethodFilter;
 import javassist.util.proxy.ProxyFactory;
 import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.dynamic.ClassLoadingStrategy;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.NoOp;
 import org.openjdk.jmh.annotations.*;

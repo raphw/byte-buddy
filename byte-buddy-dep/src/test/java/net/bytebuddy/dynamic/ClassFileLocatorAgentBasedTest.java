@@ -5,7 +5,6 @@ import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.test.utility.ToolsJarRule;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -29,20 +28,17 @@ public class ClassFileLocatorAgentBasedTest {
 
     public MethodRule javaVersionRule = new JavaVersionRule();
 
-    @Before
-    public void setUp() throws Exception {
-        assertThat(ByteBuddyAgent.installOnOpenJDK(), instanceOf(Instrumentation.class));
-    }
-
     @Test
     @ToolsJarRule.Enforce
     public void testStrategyCreation() throws Exception {
+        assertThat(ByteBuddyAgent.installOnOpenJDK(), instanceOf(Instrumentation.class));
         assertThat(ClassReloadingStrategy.fromInstalledAgent(), notNullValue());
     }
 
     @Test
     @ToolsJarRule.Enforce
     public void testExtraction() throws Exception {
+        assertThat(ByteBuddyAgent.installOnOpenJDK(), instanceOf(Instrumentation.class));
         ClassFileLocator classFileLocator = ClassFileLocator.AgentBased.fromInstalledAgent(getClass().getClassLoader());
         ClassFileLocator.Resolution resolution = classFileLocator.locate(Foo.class.getName());
         assertThat(resolution.isResolved(), is(true));
@@ -52,6 +48,7 @@ public class ClassFileLocatorAgentBasedTest {
     @Test
     @ToolsJarRule.Enforce
     public void testExtractionOfInflatedMethodAccessor() throws Exception {
+        assertThat(ByteBuddyAgent.installOnOpenJDK(), instanceOf(Instrumentation.class));
         Method bar = Foo.class.getDeclaredMethod("bar");
         for (int i = 0; i < 20; i++) {
             bar.invoke(new Foo());
@@ -112,6 +109,12 @@ public class ClassFileLocatorAgentBasedTest {
         }).apply();
         ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ExtractionClassFileTransformer.class)
                 .apply(new ClassFileLocator.AgentBased.ExtractionClassFileTransformer(mock(ClassLoader.class), "foo"));
+    }
+
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testNonCompatible() throws Exception {
+        new ClassFileLocator.AgentBased(mock(Instrumentation.class), getClass().getClassLoader());
     }
 
     private static class Foo {

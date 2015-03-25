@@ -1,7 +1,7 @@
 package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.dynamic.ClassLoadingStrategy;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.SuperCall;
 import org.junit.Test;
 

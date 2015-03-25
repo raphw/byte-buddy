@@ -1,4 +1,4 @@
-package net.bytebuddy.dynamic;
+package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.test.utility.ClassFileExtraction;

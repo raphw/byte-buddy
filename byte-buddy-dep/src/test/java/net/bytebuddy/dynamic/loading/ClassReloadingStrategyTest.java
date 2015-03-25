@@ -3,8 +3,8 @@ package net.bytebuddy.dynamic.loading;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.instrumentation.FixedValue;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.test.utility.ToolsJarRule;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -14,7 +14,7 @@ import java.lang.instrument.Instrumentation;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.*;
 
 public class ClassReloadingStrategyTest {
 
@@ -23,20 +23,17 @@ public class ClassReloadingStrategyTest {
     @Rule
     public MethodRule toolsJarRule = new ToolsJarRule();
 
-    @Before
-    public void setUp() throws Exception {
-        assertThat(ByteBuddyAgent.installOnOpenJDK(), instanceOf(Instrumentation.class));
-    }
-
     @Test
     @ToolsJarRule.Enforce
     public void testStrategyCreation() throws Exception {
+        assertThat(ByteBuddyAgent.installOnOpenJDK(), instanceOf(Instrumentation.class));
         assertThat(ClassReloadingStrategy.fromInstalledAgent(), notNullValue());
     }
 
     @Test
     @ToolsJarRule.Enforce
     public void testFromAgentClassReloadingStrategy() throws Exception {
+        assertThat(ByteBuddyAgent.installOnOpenJDK(), instanceOf(Instrumentation.class));
         Foo foo = new Foo();
         assertThat(foo.foo(), is(FOO));
         ClassReloadingStrategy classReloadingStrategy = ClassReloadingStrategy.fromInstalledAgent();
@@ -54,6 +51,7 @@ public class ClassReloadingStrategyTest {
     @Test
     @ToolsJarRule.Enforce
     public void testRedefinitionReloadingStrategy() throws Exception {
+        assertThat(ByteBuddyAgent.installOnOpenJDK(), instanceOf(Instrumentation.class));
         Instrumentation instrumentation = spy(ByteBuddyAgent.getInstrumentation());
         Foo foo = new Foo();
         assertThat(foo.foo(), is(FOO));
@@ -73,6 +71,7 @@ public class ClassReloadingStrategyTest {
     @Test
     @ToolsJarRule.Enforce
     public void testRetransformationReloadingStrategy() throws Exception {
+        assertThat(ByteBuddyAgent.installOnOpenJDK(), instanceOf(Instrumentation.class));
         Foo foo = new Foo();
         assertThat(foo.foo(), is(FOO));
         ClassReloadingStrategy classReloadingStrategy = new ClassReloadingStrategy(ByteBuddyAgent.getInstrumentation(),
@@ -86,6 +85,22 @@ public class ClassReloadingStrategyTest {
         assertThat(foo.foo(), is(BAR));
         classReloadingStrategy.reset(Foo.class);
         assertThat(foo.foo(), is(FOO));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testNonCompatible() throws Exception {
+        new ClassReloadingStrategy(mock(Instrumentation.class));
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(ClassReloadingStrategy.class).refine(new ObjectPropertyAssertion.Refinement<Instrumentation>() {
+            @Override
+            public void apply(Instrumentation mock) {
+                when(mock.isRedefineClassesSupported()).thenReturn(true);
+            }
+        }).apply();
+        ObjectPropertyAssertion.of(ClassReloadingStrategy.BootstrapInjection.Enabled.class).apply();
     }
 
     @SuppressWarnings("unused")

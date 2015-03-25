@@ -16,14 +16,11 @@ import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.*;
 
-public class ClassLoaderByteArrayInjectorTest {
+public class ClassInjectorUsingReflectionTest {
 
     private static final String FOO = "foo";
 
@@ -33,69 +30,56 @@ public class ClassLoaderByteArrayInjectorTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private ClassLoaderByteArrayInjector mockInjector;
+    private ClassInjector mockInjector;
 
     @Mock
     private TypeDescription typeDescription;
 
     private ClassLoader classLoader;
 
-    private ClassLoaderByteArrayInjector classLoaderByteArrayInjector;
+    private ClassInjector classInjector;
 
     @Before
     public void setUp() throws Exception {
         classLoader = new URLClassLoader(new URL[0], null /* null represents the bootstrap class loader */);
-        classLoaderByteArrayInjector = new ClassLoaderByteArrayInjector(classLoader);
+        classInjector = new ClassInjector.UsingReflection(classLoader);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testBootstrapClassLoader() throws Exception {
-        new ClassLoaderByteArrayInjector(null);
+        new ClassInjector.UsingReflection(null);
     }
 
     @Test
     public void testInjection() throws Exception {
-        classLoaderByteArrayInjector.inject(Foo.class.getName(), ClassFileExtraction.extract(Foo.class));
+        classInjector.inject(Collections.<TypeDescription, byte[]>singletonMap(new TypeDescription.ForLoadedType(Foo.class), ClassFileExtraction.extract(Foo.class)));
         assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
-    }
-
-    @Test
-    public void testInjectionApplication() throws Exception {
-        when(typeDescription.getName()).thenReturn(FOO);
-        doReturn(Object.class).when(mockInjector).inject(FOO, BYTE_ARRAY);
-        Map<TypeDescription, Class<?>> result = ClassLoaderByteArrayInjector.inject(mockInjector, Collections.singletonMap(typeDescription, BYTE_ARRAY));
-        assertThat(result.size(), is(1));
-        assertThat(result.entrySet().iterator().next().getKey(), is(typeDescription));
-        assertEquals(Object.class, result.entrySet().iterator().next().getValue());
-        verify(mockInjector).inject(FOO, BYTE_ARRAY);
-        verifyNoMoreInteractions(mockInjector);
     }
 
     @Test(expected = RuntimeException.class)
     public void testFaultyReflectionStoreClassMethod() throws Exception {
-        new ClassLoaderByteArrayInjector.ReflectionStore.Faulty(new Exception()).getFindLoadedClassMethod();
+        new ClassInjector.UsingReflection.ReflectionStore.Faulty(new Exception()).getFindLoadedClassMethod();
     }
 
     @Test(expected = RuntimeException.class)
     public void testFaultyReflectionStoreLoadByteArray() throws Exception {
-        new ClassLoaderByteArrayInjector.ReflectionStore.Faulty(new Exception()).getLoadByteArrayMethod();
+        new ClassInjector.UsingReflection.ReflectionStore.Faulty(new Exception()).getLoadByteArrayMethod();
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassLoaderByteArrayInjector.class)
-                .apply(new ClassLoaderByteArrayInjector(mock(ClassLoader.class)));
-        ObjectPropertyAssertion.of(ClassLoaderByteArrayInjector.ClassLoadingAction.class)
+        ObjectPropertyAssertion.of(ClassInjector.UsingReflection.class).apply();
+        ObjectPropertyAssertion.of(ClassInjector.UsingReflection.ClassLoadingAction.class)
                 .ignoreFields("accessControlContext")
                 .apply();
         final Iterator<Method> iterator = Arrays.asList(Object.class.getDeclaredMethods()).iterator();
-        ObjectPropertyAssertion.of(ClassLoaderByteArrayInjector.ReflectionStore.Resolved.class).create(new ObjectPropertyAssertion.Creator<Method>() {
+        ObjectPropertyAssertion.of(ClassInjector.UsingReflection.ReflectionStore.Resolved.class).create(new ObjectPropertyAssertion.Creator<Method>() {
             @Override
             public Method create() {
                 return iterator.next();
             }
         }).apply();
-        ObjectPropertyAssertion.of(ClassLoaderByteArrayInjector.ReflectionStore.Faulty.class).apply();
+        ObjectPropertyAssertion.of(ClassInjector.UsingReflection.ReflectionStore.Faulty.class).apply();
     }
 
     private static class Foo {

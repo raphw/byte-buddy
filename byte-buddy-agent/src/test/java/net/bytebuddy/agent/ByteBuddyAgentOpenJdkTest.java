@@ -13,7 +13,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class ByteBuddyAgentOpenJdkTest {
 
     @Rule
-    public MethodRule hotSpotRule = new ToolsJarRule();
+    public MethodRule toolsJarRule = new ToolsJarRule();
 
     @Test
     @ToolsJarRule.Enforce

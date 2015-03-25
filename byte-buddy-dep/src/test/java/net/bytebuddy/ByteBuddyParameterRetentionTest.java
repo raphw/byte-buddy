@@ -1,7 +1,7 @@
 package net.bytebuddy;
 
 import net.bytebuddy.dynamic.ClassFileLocator;
-import net.bytebuddy.dynamic.ClassLoadingStrategy;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.instrumentation.StubMethod;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.JavaVersionRule;

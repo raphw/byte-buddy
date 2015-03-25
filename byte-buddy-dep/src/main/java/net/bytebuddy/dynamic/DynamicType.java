@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.asm.ClassVisitorWrapper;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.dynamic.scaffold.FieldRegistry;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
@@ -2641,7 +2642,7 @@ public interface DynamicType {
          * @param classLoader          The class loader to use for this class loading.
          * @param classLoadingStrategy The class loader strategy which should be used for this class loading.
          * @return This dynamic type in its loaded state.
-         * @see net.bytebuddy.dynamic.ClassLoadingStrategy.Default
+         * @see net.bytebuddy.dynamic.loading.ClassLoadingStrategy.Default
          */
         Loaded<T> load(ClassLoader classLoader, ClassLoadingStrategy classLoadingStrategy);
     }
@@ -2768,8 +2769,7 @@ public interface DynamicType {
         @Override
         public Map<TypeDescription, File> saveIn(File folder) throws IOException {
             Map<TypeDescription, File> savedFiles = new HashMap<TypeDescription, File>();
-            File target = new File(folder,
-                    typeDescription.getName().replace('.', File.separatorChar) + CLASS_FILE_EXTENSION);
+            File target = new File(folder, typeDescription.getName().replace('.', File.separatorChar) + CLASS_FILE_EXTENSION);
             if (target.getParentFile() != null) {
                 target.getParentFile().mkdirs();
             }
@@ -2791,8 +2791,7 @@ public interface DynamicType {
             JarInputStream jarInputStream = new JarInputStream(new BufferedInputStream(new FileInputStream(sourceJar)));
             try {
                 targetJar.createNewFile();
-                JarOutputStream jarOutputStream = new JarOutputStream(
-                        new BufferedOutputStream(new FileOutputStream(targetJar)), jarInputStream.getManifest());
+                JarOutputStream jarOutputStream = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(targetJar)), jarInputStream.getManifest());
                 try {
                     Map<TypeDescription, byte[]> rawAuxiliaryTypes = getRawAuxiliaryTypes();
                     Map<String, byte[]> files = new HashMap<String, byte[]>(rawAuxiliaryTypes.size() + 1);

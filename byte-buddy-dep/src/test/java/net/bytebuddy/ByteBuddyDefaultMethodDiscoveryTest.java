@@ -1,6 +1,6 @@
 package net.bytebuddy;
 
-import net.bytebuddy.dynamic.ClassLoadingStrategy;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.instrumentation.FixedValue;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;

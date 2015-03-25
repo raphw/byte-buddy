@@ -5,7 +5,7 @@ import javassist.util.proxy.MethodHandler;
 import javassist.util.proxy.ProxyFactory;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.benchmark.specimen.ExampleClass;
-import net.bytebuddy.dynamic.ClassLoadingStrategy;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.instrumentation.MethodDelegation;
 import net.bytebuddy.instrumentation.SuperMethodCall;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.RuntimeType;

@@ -1,9 +1,9 @@
-package net.bytebuddy.dynamic;
+package net.bytebuddy.dynamic.loading;
 
-import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
-import net.bytebuddy.dynamic.loading.ClassLoaderByteArrayInjector;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 
+import java.io.File;
+import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
 import java.util.Map;
 
@@ -55,7 +55,7 @@ public interface ClassLoadingStrategy {
         },
 
         /**
-         * The strategy is identical to {@link net.bytebuddy.dynamic.ClassLoadingStrategy.Default#WRAPPER} but exposes
+         * The strategy is identical to {@link ClassLoadingStrategy.Default#WRAPPER} but exposes
          * the byte arrays that represent a class by {@link java.lang.ClassLoader#getResourceAsStream(String)}. For
          * this purpose, all class files are persisted as byte arrays withing the wrapping class loader.
          */
@@ -80,7 +80,7 @@ public interface ClassLoadingStrategy {
         /**
          * <p>
          * The child-first class loading strategy is a modified version of the
-         * {@link net.bytebuddy.dynamic.ClassLoadingStrategy.Default#WRAPPER} where the dynamic types are given
+         * {@link ClassLoadingStrategy.Default#WRAPPER} where the dynamic types are given
          * priority over any types of a parent class loader with the same name.
          * </p>
          * <p>
@@ -107,7 +107,7 @@ public interface ClassLoadingStrategy {
         },
 
         /**
-         * The strategy is identical to {@link net.bytebuddy.dynamic.ClassLoadingStrategy.Default#CHILD_FIRST} but
+         * The strategy is identical to {@link ClassLoadingStrategy.Default#CHILD_FIRST} but
          * exposes the byte arrays that represent a class by {@link java.lang.ClassLoader#getResourceAsStream(String)}.
          * For this purpose, all class files are persisted as byte arrays withing the wrapping class loader.
          */
@@ -135,13 +135,13 @@ public interface ClassLoadingStrategy {
          * creation of an additional class loader. The advantage of this strategy is that the loaded classes will have
          * package-private access to other classes within their package of the class loader into which they are
          * injected what is not permitted when the wrapper class loader is used. This strategy is implemented using a
-         * {@link net.bytebuddy.dynamic.loading.ClassLoaderByteArrayInjector}. Note that this strategy usually yields
+         * {@link net.bytebuddy.dynamic.loading.ClassInjector.UsingReflection}. Note that this strategy usually yields
          * a better runtime performance.
          */
         INJECTION {
             @Override
             public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
-                return ClassLoaderByteArrayInjector.inject(new ClassLoaderByteArrayInjector(classLoader), types);
+                return new ClassInjector.UsingReflection(classLoader).inject(types);
             }
 
             @Override
@@ -182,7 +182,7 @@ public interface ClassLoadingStrategy {
 
             @Override
             public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
-                return ClassLoaderByteArrayInjector.inject(new ClassLoaderByteArrayInjector(classLoader, protectionDomain), types);
+                return new ClassInjector.UsingReflection(classLoader, protectionDomain).inject(types);
             }
 
             @Override
@@ -273,7 +273,7 @@ public interface ClassLoadingStrategy {
     }
 
     /**
-     * A {@link net.bytebuddy.dynamic.ClassLoadingStrategy} that applies a default {@link java.security.ProtectionDomain}.
+     * A {@link ClassLoadingStrategy} that applies a default {@link java.security.ProtectionDomain}.
      */
     static interface WithDefaultProtectionDomain extends ClassLoadingStrategy {
 
@@ -284,5 +284,65 @@ public interface ClassLoadingStrategy {
          * @return This class loading strategy with an explicitly set {@link java.security.ProtectionDomain}.
          */
         ClassLoadingStrategy withProtectionDomain(ProtectionDomain protectionDomain);
+    }
+
+    /**
+     * A class loading strategy which allows class injection into the bootstrap class loader if
+     * appropriate.
+     */
+    public class ForBootstrapInjection implements ClassLoadingStrategy {
+
+        /**
+         * The instrumentation to use.
+         */
+        private final Instrumentation instrumentation;
+
+        /**
+         * The folder to save jar files in.
+         */
+        private final File folder;
+
+        /**
+         * Creates a new injector which is capable of injecting classes into the boostrap class loader.
+         *
+         * @param instrumentation The instrumentation to use.
+         * @param folder          The folder to save jar files in.
+         */
+        public ForBootstrapInjection(Instrumentation instrumentation, File folder) {
+            this.instrumentation = instrumentation;
+            this.folder = folder;
+        }
+
+        @Override
+        public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+            ClassInjector classInjector = classLoader == null
+                    ? new ClassInjector.UsingInstrumentation(folder, ClassInjector.UsingInstrumentation.Target.BOOTSTRAP, instrumentation)
+                    : new ClassInjector.UsingReflection(classLoader);
+            return classInjector.inject(types);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            ForBootstrapInjection that = (ForBootstrapInjection) other;
+            return folder.equals(that.folder)
+                    && instrumentation.equals(that.instrumentation);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = instrumentation.hashCode();
+            result = 31 * result + folder.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "ClassLoadingStrategy.ForBootstrapInjection{" +
+                    "instrumentation=" + instrumentation +
+                    ", folder=" + folder +
+                    '}';
+        }
     }
 }

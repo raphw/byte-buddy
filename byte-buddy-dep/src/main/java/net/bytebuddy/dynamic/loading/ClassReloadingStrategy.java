@@ -1,9 +1,9 @@
 package net.bytebuddy.dynamic.loading;
 
-import net.bytebuddy.dynamic.ClassLoadingStrategy;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.StreamDrainer;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.instrument.*;
@@ -24,25 +24,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * rebased class definition as by {@link net.bytebuddy.ByteBuddy#rebase(Class)} which copies the original method
  * implementations to additional methods. Furthermore, even the {@link net.bytebuddy.ByteBuddy#redefine(Class)}
  * adds a method if the original class contains an explicit <i>class initializer</i>. For these reasons, it is not
- * recommended to use this {@link net.bytebuddy.dynamic.ClassLoadingStrategy} with arbitrary classes.
+ * recommended to use this {@link ClassLoadingStrategy} with arbitrary classes.
  * </p>
  */
 public class ClassReloadingStrategy implements ClassLoadingStrategy {
-
-    /**
-     * The size of the buffer.
-     */
-    private static final int BUFFER_SIZE = 1024;
-
-    /**
-     * A convenience variable representing the end of a stream to make the code more readable.
-     */
-    private static final int END_OF_STREAM = -1;
-
-    /**
-     * A convenience variable representing the first index of an array to make the code more readable.
-     */
-    private static final int FIRST_INDEX = 0;
 
     /**
      * The name of the Byte Buddy agent class.
@@ -75,6 +60,11 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
     private final Engine engine;
 
     /**
+     * The strategy to apply for injecting classes into the bootstrap class loader.
+     */
+    private final BootstrapInjection bootstrapInjection;
+
+    /**
      * Creates a class reloading strategy for the given instrumentation. The given instrumentation must either
      * support {@link java.lang.instrument.Instrumentation#isRedefineClassesSupported()} or
      * {@link java.lang.instrument.Instrumentation#isRetransformClassesSupported()}. If both modes are supported,
@@ -91,6 +81,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
         } else {
             throw new IllegalArgumentException("Instrumentation does not support class redefinition: " + instrumentation);
         }
+        bootstrapInjection = BootstrapInjection.Disabled.INSTANCE;
     }
 
     /**
@@ -103,6 +94,20 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
     public ClassReloadingStrategy(Instrumentation instrumentation, Engine engine) {
         this.instrumentation = instrumentation;
         this.engine = engine;
+        bootstrapInjection = BootstrapInjection.Disabled.INSTANCE;
+    }
+
+    /**
+     * Creates a new class reloading strategy.
+     *
+     * @param instrumentation    The instrumentation to be used by this reloading strategy.
+     * @param engine             An engine which performs the actual redefinition of a {@link java.lang.Class}.
+     * @param bootstrapInjection The bootstrap class loader injection strategy to use.
+     */
+    protected ClassReloadingStrategy(Instrumentation instrumentation, Engine engine, BootstrapInjection bootstrapInjection) {
+        this.instrumentation = instrumentation;
+        this.engine = engine;
+        this.bootstrapInjection = bootstrapInjection;
     }
 
     /**
@@ -134,20 +139,23 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
     @Override
     public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
         Map<TypeDescription, Class<?>> loadedClasses = new HashMap<TypeDescription, Class<?>>(types.size());
-        ClassLoaderByteArrayInjector classLoaderByteArrayInjector = new ClassLoaderByteArrayInjector(classLoader);
+        Map<TypeDescription, byte[]> unloadedClasses = new HashMap<TypeDescription, byte[]>(types.size());
         Map<Class<?>, ClassDefinition> classDefinitions = new ConcurrentHashMap<Class<?>, ClassDefinition>(types.size());
         for (Map.Entry<TypeDescription, byte[]> entry : types.entrySet()) {
-            Class<?> type;
             try {
-                type = classLoader.loadClass(entry.getKey().getName());
+                Class<?> type = classLoader.loadClass(entry.getKey().getName());
                 classDefinitions.put(type, new ClassDefinition(type, entry.getValue()));
+                loadedClasses.put(entry.getKey(), type);
             } catch (ClassNotFoundException ignored) {
-                type = classLoaderByteArrayInjector.inject(entry.getKey().getName(), entry.getValue());
+                unloadedClasses.put(entry.getKey(), entry.getValue());
             }
-            loadedClasses.put(entry.getKey(), type);
         }
         try {
             engine.apply(instrumentation, classDefinitions);
+            ClassInjector classInjector = classLoader == null
+                    ? bootstrapInjection.make(instrumentation)
+                    : new ClassInjector.UsingReflection(classLoader);
+            loadedClasses.putAll(classInjector.inject(unloadedClasses));
         } catch (ClassNotFoundException e) {
             throw new IllegalArgumentException("Could not locate classes for redefinition", e);
         } catch (UnmodifiableClassException e) {
@@ -186,16 +194,27 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
         return this;
     }
 
+    /**
+     * Enables bootstrap injection for this class reloading strategy.
+     *
+     * @param folder The folder to save jar files in that are appended to the bootstrap class path.
+     * @return A class reloading strategy with bootstrap injection enabled.
+     */
+    public ClassReloadingStrategy enableBootstrapInjection(File folder) {
+        return new ClassReloadingStrategy(instrumentation, engine, new BootstrapInjection.Enabled(folder));
+    }
+
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
                 && engine == ((ClassReloadingStrategy) other).engine
-                && instrumentation.equals(((ClassReloadingStrategy) other).instrumentation);
+                && instrumentation.equals(((ClassReloadingStrategy) other).instrumentation)
+                && bootstrapInjection.equals(((ClassReloadingStrategy) other).bootstrapInjection);
     }
 
     @Override
     public int hashCode() {
-        return 31 * instrumentation.hashCode() + engine.hashCode();
+        return 31 * 31 * instrumentation.hashCode() + 31 * engine.hashCode() + bootstrapInjection.hashCode();
     }
 
     @Override
@@ -203,6 +222,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
         return "ClassReloadingStrategy{" +
                 "instrumentation=" + instrumentation +
                 ", engine=" + engine +
+                ", bootstrapInjection=" + bootstrapInjection +
                 '}';
     }
 
@@ -330,6 +350,76 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
             @Override
             public String toString() {
                 return "ClassReloadingStrategy.Engine.ClassRedefinitionTransformer{redefinedClasses=" + redefinedClasses + '}';
+            }
+        }
+    }
+
+    /**
+     * A strategy to apply for injecting classes into the bootstrap class loader.
+     */
+    protected static interface BootstrapInjection {
+
+        /**
+         * Creates a class injector to use.
+         *
+         * @param instrumentation The instrumentation of this instance.
+         * @return A class injector for the bootstrap class loader.
+         */
+        ClassInjector make(Instrumentation instrumentation);
+
+        /**
+         * A disabled bootstrap injection strategy.
+         */
+        static enum Disabled implements BootstrapInjection {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public ClassInjector make(Instrumentation instrumentation) {
+                throw new IllegalStateException("Bootstrap injection is not enabled");
+            }
+        }
+
+        static class Enabled implements BootstrapInjection {
+
+            /**
+             * The folder to save jar files in.
+             */
+            private final File folder;
+
+            /**
+             * Creates an enabled bootstrap class injection strategy.
+             *
+             * @param folder The folder to save jar files in.
+             */
+            protected Enabled(File folder) {
+                this.folder = folder;
+            }
+
+            @Override
+            public ClassInjector make(Instrumentation instrumentation) {
+                return new ClassInjector.UsingInstrumentation(folder, ClassInjector.UsingInstrumentation.Target.BOOTSTRAP, instrumentation);
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && folder.equals(((Enabled) other).folder);
+            }
+
+            @Override
+            public int hashCode() {
+                return folder.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "ClassReloadingStrategy.BootstrapInjection.Enabled{" +
+                        "folder=" + folder +
+                        '}';
             }
         }
     }

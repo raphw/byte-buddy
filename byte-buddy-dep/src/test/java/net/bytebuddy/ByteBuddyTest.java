@@ -1,7 +1,7 @@
 package net.bytebuddy;
 
 import net.bytebuddy.asm.ClassVisitorWrapper;
-import net.bytebuddy.dynamic.ClassLoadingStrategy;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.instrumentation.Instrumentation;

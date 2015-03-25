@@ -3,7 +3,7 @@ package net.bytebuddy.agent.builder;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.loading.ClassLoaderByteArrayInjector;
+import net.bytebuddy.dynamic.loading.ClassInjector;
 import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
 import net.bytebuddy.instrumentation.LoadedTypeInitializer;
 import net.bytebuddy.instrumentation.method.MethodDescription;
@@ -22,6 +22,7 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.StreamDrainer;
 import org.objectweb.asm.MethodVisitor;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
@@ -163,6 +164,16 @@ public interface AgentBuilder {
      * @return A new instance of this agent builder which does not apply self initialization.
      */
     AgentBuilder allowRetransformation();
+
+    /**
+     * Enables class injection of auxiliary classes into the bootstrap class loader.
+     *
+     * @param folder          The folder in which jar files of the injected classes are to be stored.
+     * @param instrumentation The instrumentation instance that is used for appending jar files to the
+     *                        bootstrap class path.
+     * @return An agent builder with bootstrap class loader class injection enabled.
+     */
+    AgentBuilder enableBootstrapInjection(File folder, Instrumentation instrumentation);
 
     /**
      * Creates a {@link java.lang.instrument.ClassFileTransformer} that implements the configuration of this
@@ -738,6 +749,11 @@ public interface AgentBuilder {
         private final boolean retransformation;
 
         /**
+         * The injection strategy for injecting classes into the bootstrap class loader.
+         */
+        private final BootstrapInjectionStrategy bootstrapInjectionStrategy;
+
+        /**
          * The list of transformation entries that are registered with this agent builder.
          */
         private final List<Transformation> entries;
@@ -762,26 +778,28 @@ public interface AgentBuilder {
                     NO_NATIVE_PREFIX,
                     false,
                     false,
+                    BootstrapInjectionStrategy.Disabled.INSTANCE,
                     Collections.<Transformation>emptyList());
         }
 
         /**
          * Creates a new default agent builder.
          *
-         * @param byteBuddy                 The Byte Buddy instance to be used.
-         * @param binaryLocator             The binary locator to use.
-         * @param listener                  The listener to notify on transformations.
-         * @param nativeMethodPrefix        The native method prefix to use which might also represent
-         *                                  {@link net.bytebuddy.agent.builder.AgentBuilder.Default#NO_NATIVE_PREFIX}
-         *                                  to indicate that no prefix should be added but rather a random suffix.
-         * @param disableSelfInitialization {@code true} if generated types should not create a callback inside their
-         *                                  type initializer in order to call their potential
-         *                                  {@link net.bytebuddy.instrumentation.LoadedTypeInitializer}.
-         * @param retransformation          {@code true} if the generated
-         *                                  {@link java.lang.instrument.ClassFileTransformer} should also apply
-         *                                  for retransformations.
-         * @param entries                   The list of transformation entries that are registered with this
-         *                                  agent builder.
+         * @param byteBuddy                  The Byte Buddy instance to be used.
+         * @param binaryLocator              The binary locator to use.
+         * @param listener                   The listener to notify on transformations.
+         * @param nativeMethodPrefix         The native method prefix to use which might also represent
+         *                                   {@link net.bytebuddy.agent.builder.AgentBuilder.Default#NO_NATIVE_PREFIX}
+         *                                   to indicate that no prefix should be added but rather a random suffix.
+         * @param disableSelfInitialization  {@code true} if generated types should not create a callback inside their
+         *                                   type initializer in order to call their potential
+         *                                   {@link net.bytebuddy.instrumentation.LoadedTypeInitializer}.
+         * @param retransformation           {@code true} if the generated
+         *                                   {@link java.lang.instrument.ClassFileTransformer} should also apply
+         *                                   for retransformations.
+         * @param bootstrapInjectionStrategy The injection strategy for injecting classes into the bootstrap class loader.
+         * @param entries                    The list of transformation entries that are registered with this
+         *                                   agent builder.
          */
         protected Default(ByteBuddy byteBuddy,
                           BinaryLocator binaryLocator,
@@ -789,6 +807,7 @@ public interface AgentBuilder {
                           String nativeMethodPrefix,
                           boolean disableSelfInitialization,
                           boolean retransformation,
+                          BootstrapInjectionStrategy bootstrapInjectionStrategy,
                           List<Transformation> entries) {
             this.byteBuddy = byteBuddy;
             this.binaryLocator = binaryLocator;
@@ -796,6 +815,7 @@ public interface AgentBuilder {
             this.nativeMethodPrefix = nativeMethodPrefix;
             this.disableSelfInitialization = disableSelfInitialization;
             this.retransformation = retransformation;
+            this.bootstrapInjectionStrategy = bootstrapInjectionStrategy;
             this.entries = entries;
         }
 
@@ -823,6 +843,7 @@ public interface AgentBuilder {
                     nativeMethodPrefix,
                     disableSelfInitialization,
                     retransformation,
+                    bootstrapInjectionStrategy,
                     entries);
         }
 
@@ -834,6 +855,7 @@ public interface AgentBuilder {
                     nativeMethodPrefix,
                     disableSelfInitialization,
                     retransformation,
+                    bootstrapInjectionStrategy,
                     entries);
         }
 
@@ -845,6 +867,7 @@ public interface AgentBuilder {
                     nativeMethodPrefix,
                     disableSelfInitialization,
                     retransformation,
+                    bootstrapInjectionStrategy,
                     entries);
         }
 
@@ -859,6 +882,7 @@ public interface AgentBuilder {
                     prefix,
                     disableSelfInitialization,
                     retransformation,
+                    bootstrapInjectionStrategy,
                     entries);
         }
 
@@ -870,6 +894,7 @@ public interface AgentBuilder {
                     nativeMethodPrefix,
                     disableSelfInitialization,
                     true,
+                    bootstrapInjectionStrategy,
                     entries);
         }
 
@@ -881,6 +906,19 @@ public interface AgentBuilder {
                     nativeMethodPrefix,
                     true,
                     retransformation,
+                    bootstrapInjectionStrategy,
+                    entries);
+        }
+
+        @Override
+        public AgentBuilder enableBootstrapInjection(File folder, Instrumentation instrumentation) {
+            return new Default(byteBuddy,
+                    binaryLocator,
+                    listener,
+                    nativeMethodPrefix,
+                    true,
+                    retransformation,
+                    new BootstrapInjectionStrategy.Enabled(nonNull(folder), nonNull(instrumentation)),
                     entries);
         }
 
@@ -922,6 +960,7 @@ public interface AgentBuilder {
                     && nativeMethodPrefix.equals(aDefault.nativeMethodPrefix)
                     && disableSelfInitialization == aDefault.disableSelfInitialization
                     && retransformation == aDefault.retransformation
+                    && bootstrapInjectionStrategy.equals(aDefault.bootstrapInjectionStrategy)
                     && entries.equals(aDefault.entries);
 
         }
@@ -934,6 +973,7 @@ public interface AgentBuilder {
             result = 31 * result + nativeMethodPrefix.hashCode();
             result = 31 * result + (disableSelfInitialization ? 1 : 0);
             result = 31 * result + (retransformation ? 1 : 0);
+            result = 31 * result + bootstrapInjectionStrategy.hashCode();
             result = 31 * result + entries.hashCode();
             return result;
         }
@@ -947,6 +987,7 @@ public interface AgentBuilder {
                     ", nativeMethodPrefix=" + nativeMethodPrefix +
                     ", disableSelfInitialization=" + disableSelfInitialization +
                     ", retransformation=" + retransformation +
+                    ", bootstrapInjectionStrategy=" + bootstrapInjectionStrategy +
                     ", entries=" + entries +
                     '}';
         }
@@ -1240,9 +1281,11 @@ public interface AgentBuilder {
                         private Accessor() {
                             try {
                                 ClassLoader classLoader = ClassLoader.getSystemClassLoader();
-                                ClassLoaderByteArrayInjector injector = new ClassLoaderByteArrayInjector(classLoader);
-                                Class<?> nexus = injector.inject(Nexus.class.getName(), new StreamDrainer().drain(classLoader
-                                        .getResourceAsStream(Nexus.class.getName().replace('.', '/') + ".class")));
+                                TypeDescription nexusType = new TypeDescription.ForLoadedType(Nexus.class);
+                                Class<?> nexus = new ClassInjector.UsingReflection(classLoader)
+                                        .inject(Collections.singletonMap(nexusType,
+                                                new StreamDrainer().drain(classLoader.getResourceAsStream(Nexus.class.getName().replace('.', '/') + ".class"))))
+                                        .get(nexusType);
                                 registration = nexus.getDeclaredMethod("register", String.class, ClassLoader.class, Object.class);
                                 systemClassLoader = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()
                                         .filter(named("getSystemClassLoader")).getOnly();
@@ -1298,6 +1341,91 @@ public interface AgentBuilder {
                             );
                         }
                     }
+                }
+            }
+        }
+
+        /**
+         * An injection strategy for injecting classes into the bootstrap class loader.
+         */
+        protected static interface BootstrapInjectionStrategy {
+
+            /**
+             * Creates an injector for the bootstrap class loader.
+             *
+             * @param protectionDomain The protection domain to be used.
+             * @return A class injector for the bootstrap class loader.
+             */
+            ClassInjector make(ProtectionDomain protectionDomain);
+
+            /**
+             * A disabled bootstrap injection strategy.
+             */
+            static enum Disabled implements BootstrapInjectionStrategy {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public ClassInjector make(ProtectionDomain protectionDomain) {
+                    throw new IllegalStateException("Injecting classes into the bootstrap class loader was not enabled");
+                }
+            }
+
+            /**
+             * An enabled bootstrap injection strategy.
+             */
+            static class Enabled implements BootstrapInjectionStrategy {
+
+                /**
+                 * The folder in which jar files are to be saved.
+                 */
+                private final File folder;
+
+                /**
+                 * The instrumentation to use for appending jar files.
+                 */
+                private final Instrumentation instrumentation;
+
+                /**
+                 * Creates a new enabled bootstrap class loader injection strategy.
+                 *
+                 * @param folder          The folder in which jar files are to be saved.
+                 * @param instrumentation The instrumentation to use for appending jar files.
+                 */
+                public Enabled(File folder, Instrumentation instrumentation) {
+                    this.folder = folder;
+                    this.instrumentation = instrumentation;
+                }
+
+                @Override
+                public ClassInjector make(ProtectionDomain protectionDomain) {
+                    return new ClassInjector.UsingInstrumentation(folder, ClassInjector.UsingInstrumentation.Target.BOOTSTRAP, instrumentation);
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    Enabled enabled = (Enabled) other;
+                    return folder.equals(enabled.folder) && instrumentation.equals(enabled.instrumentation);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = folder.hashCode();
+                    result = 31 * result + instrumentation.hashCode();
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.Default.BootstrapInjectionStrategy.Enabled{" +
+                            "folder=" + folder +
+                            ", instrumentation=" + instrumentation +
+                            '}';
                 }
             }
         }
@@ -1412,17 +1540,14 @@ public interface AgentBuilder {
                                             methodNameTransformer), typeDescription)).make();
                             Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
                             if (loadedTypeInitializers.size() > 1) {
-                                ClassLoaderByteArrayInjector injector = new ClassLoaderByteArrayInjector(classLoader == null
-                                        ? ClassLoader.getSystemClassLoader()
-                                        : classLoader, protectionDomain);
-                                for (Map.Entry<TypeDescription, byte[]> auxiliary : dynamicType.getRawAuxiliaryTypes().entrySet()) {
-                                    Class<?> type = injector.inject(auxiliary.getKey().getName(), auxiliary.getValue());
-                                    initializationStrategy.initialize(type, loadedTypeInitializers.get(auxiliary.getKey()));
+                                ClassInjector classInjector = classLoader == null
+                                        ? bootstrapInjectionStrategy.make(protectionDomain)
+                                        : new ClassInjector.UsingReflection(classLoader, protectionDomain);
+                                for (Map.Entry<TypeDescription, Class<?>> auxiliary : classInjector.inject(dynamicType.getRawAuxiliaryTypes()).entrySet()) {
+                                    initializationStrategy.initialize(auxiliary.getValue(), loadedTypeInitializers.get(auxiliary.getKey()));
                                 }
                             }
-                            initializationStrategy.register(binaryTypeName,
-                                    classLoader,
-                                    loadedTypeInitializers.get(dynamicType.getTypeDescription()));
+                            initializationStrategy.register(binaryTypeName, classLoader, loadedTypeInitializers.get(dynamicType.getTypeDescription()));
                             listener.onTransformation(typeDescription, dynamicType);
                             return dynamicType.getBytes();
                         }
@@ -1470,8 +1595,7 @@ public interface AgentBuilder {
              * @param rawMatcher  The supplied raw matcher.
              * @param transformer The supplied transformer.
              */
-            protected Matched(RawMatcher rawMatcher,
-                              Transformer transformer) {
+            protected Matched(RawMatcher rawMatcher, Transformer transformer) {
                 this.rawMatcher = rawMatcher;
                 this.transformer = transformer;
             }
@@ -1528,6 +1652,11 @@ public interface AgentBuilder {
             }
 
             @Override
+            public AgentBuilder enableBootstrapInjection(File folder, Instrumentation instrumentation) {
+                return materialize().enableBootstrapInjection(folder, instrumentation);
+            }
+
+            @Override
             public ClassFileTransformer makeRaw() {
                 return materialize().makeRaw();
             }
@@ -1554,6 +1683,7 @@ public interface AgentBuilder {
                         nativeMethodPrefix,
                         disableSelfInitialization,
                         retransformation,
+                        bootstrapInjectionStrategy,
                         join(new Transformation(rawMatcher, transformer), entries));
             }
 

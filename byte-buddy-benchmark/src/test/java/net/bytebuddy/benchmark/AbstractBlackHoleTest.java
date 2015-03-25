@@ -1,7 +1,7 @@
 package net.bytebuddy.benchmark;
 
 import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.dynamic.ClassLoadingStrategy;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.instrumentation.MethodDelegation;
 import net.bytebuddy.modifier.Visibility;
 import net.bytebuddy.utility.RandomString;

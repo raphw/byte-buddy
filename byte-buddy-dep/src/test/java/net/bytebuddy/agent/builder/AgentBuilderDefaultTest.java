@@ -202,6 +202,7 @@ public class AgentBuilderDefaultTest {
         ObjectPropertyAssertion.of(AgentBuilder.Default.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.Matched.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.Default.BootstrapInjectionStrategy.Enabled.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.class)
                 .apply(new AgentBuilder.Default().new ExecutingTransformer());
         ObjectPropertyAssertion.of(AgentBuilder.Default.InitializationStrategy.SelfInjection.class).apply();
