@@ -32,7 +32,7 @@ public @interface This {
      *
      * @see TargetMethodAnnotationDrivenBinder
      */
-    static enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<This> {
+    enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<This> {
 
         /**
          * The singleton instance.
@@ -71,6 +71,11 @@ public @interface This {
                     ? new MethodDelegationBinder.ParameterBinding.Anonymous(new StackManipulation
                     .Compound(MethodVariableAccess.REFERENCE.loadOffset(THIS_REFERENCE_INDEX), thisAssignment))
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
+        }
+
+        @Override
+        public String toString() {
+            return "This.Binder." + name();
         }
     }
 }

@@ -24,6 +24,8 @@ public class MethodInvocationOtherTest {
 
     @Test
     public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(MethodInvocation.class).apply();
+        ObjectPropertyAssertion.of(MethodInvocation.IllegalInvocation.class).apply();
         ObjectPropertyAssertion.of(MethodInvocation.Invocation.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription>() {
             @Override
             public void apply(MethodDescription mock) {

@@ -28,7 +28,7 @@ public enum SyntheticState implements ModifierContributor.ForType, ModifierContr
      *
      * @param mask The modifier mask of this instance.
      */
-    private SyntheticState(int mask) {
+    SyntheticState(int mask) {
         this.mask = mask;
     }
 
@@ -54,5 +54,10 @@ public enum SyntheticState implements ModifierContributor.ForType, ModifierContr
      */
     public boolean isSynthetic() {
         return this == SYNTHETIC;
+    }
+
+    @Override
+    public String toString() {
+        return "SyntheticState." + name();
     }
 }

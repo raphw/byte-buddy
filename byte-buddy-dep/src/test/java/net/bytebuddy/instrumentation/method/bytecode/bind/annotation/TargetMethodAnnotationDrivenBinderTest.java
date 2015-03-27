@@ -509,9 +509,16 @@ public class TargetMethodAnnotationDrivenBinderTest {
             public List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> create() {
                 TargetMethodAnnotationDrivenBinder.ParameterBinder<?> parameterBinder = mock(TargetMethodAnnotationDrivenBinder.ParameterBinder.class);
                 doReturn(Annotation.class).when(parameterBinder).getHandledType();
-                return Arrays.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>asList(parameterBinder);
+                return Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>singletonList(parameterBinder);
             }
         }).apply();
+        ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.DefaultsProvider.Empty.class).apply();
+        ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.DefaultsProvider.Empty.EmptyIterator.class).apply();
+        ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.TerminationHandler.Dropping.class).apply();
+        ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.class).apply();
+        ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.DelegationProcessor.class).apply();
+        ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.DelegationProcessor.Handler.Bound.class).apply();
+        ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.DelegationProcessor.Handler.Unbound.class).apply();
     }
 
     private @interface FirstPseudoAnnotation {

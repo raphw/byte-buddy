@@ -50,6 +50,7 @@ public class ClassConstantReferenceTest {
 
     @Test
     public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(ClassConstant.class).apply();
         ObjectPropertyAssertion.of(ClassConstant.ForReferenceType.class).apply();
     }
 }

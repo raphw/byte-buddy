@@ -55,5 +55,6 @@ public class InstrumentedTypeTypeInitializerTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(InstrumentedType.TypeInitializer.Simple.class).apply();
+        ObjectPropertyAssertion.of(InstrumentedType.TypeInitializer.None.class).apply();
     }
 }

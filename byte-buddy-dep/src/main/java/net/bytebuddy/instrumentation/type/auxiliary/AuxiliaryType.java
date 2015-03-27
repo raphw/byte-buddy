@@ -19,7 +19,7 @@ public interface AuxiliaryType {
     /**
      * The default type access of an auxiliary type. This array must not be mutated.
      */
-    static final ModifierContributor.ForType[] DEFAULT_TYPE_MODIFIER = {SyntheticState.SYNTHETIC};
+    ModifierContributor.ForType[] DEFAULT_TYPE_MODIFIER = {SyntheticState.SYNTHETIC};
 
     /**
      * Creates a new auxiliary type.
@@ -40,12 +40,12 @@ public interface AuxiliaryType {
      * call methods of a second type that are usually not accessible for the first type. This strategy is also adapted
      * by the Java compiler that creates accessor methods for example to implement inner classes.
      */
-    static interface MethodAccessorFactory {
+    interface MethodAccessorFactory {
 
         /**
          * The modifier for accessor methods. Accessor methods might additionally be {@code static}.
          */
-        static final int ACCESSOR_METHOD_MODIFIER = Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL;
+        int ACCESSOR_METHOD_MODIFIER = Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL;
 
         /**
          * Registers an accessor method for a
@@ -83,7 +83,7 @@ public interface AuxiliaryType {
         /**
          * A method accessor factory that forbids any accessor registration.
          */
-        static enum Illegal implements MethodAccessorFactory {
+        enum Illegal implements MethodAccessorFactory {
 
             /**
              * The singleton instance.
@@ -103,6 +103,11 @@ public interface AuxiliaryType {
             @Override
             public MethodDescription registerSetterFor(FieldDescription fieldDescription) {
                 throw new IllegalStateException("It is illegal to register a field setter for this type");
+            }
+
+            @Override
+            public String toString() {
+                return "AuxiliaryType.MethodAccessorFactory.Illegal." + name();
             }
         }
     }

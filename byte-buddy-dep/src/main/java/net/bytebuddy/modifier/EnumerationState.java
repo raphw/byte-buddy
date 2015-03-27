@@ -28,7 +28,7 @@ public enum EnumerationState implements ModifierContributor.ForType {
      *
      * @param mask The modifier mask of this instance.
      */
-    private EnumerationState(int mask) {
+    EnumerationState(int mask) {
         this.mask = mask;
     }
 
@@ -54,5 +54,10 @@ public enum EnumerationState implements ModifierContributor.ForType {
      */
     public boolean isEnumeration() {
         return this == ENUMERATION;
+    }
+
+    @Override
+    public String toString() {
+        return "EnumerationState." + name();
     }
 }

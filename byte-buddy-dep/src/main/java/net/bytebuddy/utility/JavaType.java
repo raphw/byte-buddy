@@ -59,7 +59,7 @@ public enum JavaType {
      *
      * @param typeName The fully-qualified name of the type.
      */
-    private JavaType(String typeName) {
+    JavaType(String typeName) {
         TypeLookup typeLookup;
         try {
             typeLookup = new TypeLookup.ForLoadedType(Class.forName(typeName));
@@ -116,10 +116,15 @@ public enum JavaType {
         return typeLookup.load();
     }
 
+    @Override
+    public String toString() {
+        return "JavaType." + name();
+    }
+
     /**
      * A handler for querying type information.
      */
-    protected static interface TypeLookup {
+    protected interface TypeLookup {
 
         /**
          * Checks if a type is assignable from this type.
@@ -147,7 +152,7 @@ public enum JavaType {
         /**
          * Represents information on a type that cannot be loaded.
          */
-        static class ForNamedType implements TypeLookup {
+        class ForNamedType implements TypeLookup {
 
             /**
              * The name of the type.
@@ -206,7 +211,7 @@ public enum JavaType {
         /**
          * Represents information on a loaded type.
          */
-        static class ForLoadedType implements TypeLookup {
+        class ForLoadedType implements TypeLookup {
 
             /**
              * The loaded type.

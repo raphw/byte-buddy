@@ -62,7 +62,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                                               TerminationHandler terminationHandler,
                                               Assigner assigner,
                                               MethodInvoker methodInvoker) {
-        delegationProcessor = new DelegationProcessor(parameterBinders);
+        delegationProcessor = DelegationProcessor.of(parameterBinders);
         this.defaultsProvider = defaultsProvider;
         this.terminationHandler = terminationHandler;
         this.assigner = assigner;
@@ -209,7 +209,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
             /**
              * A trivial iterator without any elements.
              */
-            private enum EmptyIterator implements Iterator<AnnotationDescription> {
+            protected enum EmptyIterator implements Iterator<AnnotationDescription> {
 
                 /**
                  * The singleton instance.
@@ -229,6 +229,11 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 @Override
                 public void remove() {
                     throw new NoSuchElementException();
+                }
+
+                @Override
+                public String toString() {
+                    return "TargetMethodAnnotationDrivenBinder.DefaultsProvider.Empty.EmptyIterator." + name();
                 }
             }
         }
@@ -266,6 +271,11 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                         source.getReturnType(),
                         RuntimeType.Verifier.check(target)), MethodReturn.returning(source.getReturnType()));
             }
+
+            @Override
+            public String toString() {
+                return "TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning." + name();
+            }
         }
 
         /**
@@ -282,6 +292,11 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
             public StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target) {
                 return Removal.pop(target.isConstructor() ? target.getDeclaringType() : target.getReturnType());
             }
+
+            @Override
+            public String toString() {
+                return "TargetMethodAnnotationDrivenBinder.TerminationHandler.Dropping." + name();
+            }
         }
     }
 
@@ -291,7 +306,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
      * for performing its actual logic. By outsourcing this logic to this helper class, a cleaner implementation
      * can be provided.
      */
-    private static class DelegationProcessor {
+    protected static class DelegationProcessor {
 
         /**
          * A map of registered annotation types to the binder that is responsible for binding a parameter
@@ -302,18 +317,27 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         /**
          * Creates a new delegation processor.
          *
+         * @param parameterBinders A mapping of parameter binders by their handling type.
+         */
+        protected DelegationProcessor(Map<TypeDescription, ParameterBinder<?>> parameterBinders) {
+            this.parameterBinders = parameterBinders;
+        }
+
+        /**
+         * Creates a new delegation processor.
+         *
          * @param parameterBinders A list of parameter binder delegates. Each such delegate is responsible for creating
          *                         a {@link net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.ParameterBinding}
          *                         for a specific annotation.
          */
-        private DelegationProcessor(List<ParameterBinder<?>> parameterBinders) {
+        protected static DelegationProcessor of(List<ParameterBinder<?>> parameterBinders) {
             Map<TypeDescription, ParameterBinder<?>> parameterBinderMap = new HashMap<TypeDescription, ParameterBinder<?>>();
             for (ParameterBinder<?> parameterBinder : parameterBinders) {
                 if (parameterBinderMap.put(new TypeDescription.ForLoadedType(parameterBinder.getHandledType()), parameterBinder) != null) {
                     throw new IllegalArgumentException("Attempt to bind two handlers to " + parameterBinder.getHandledType());
                 }
             }
-            this.parameterBinders = Collections.unmodifiableMap(parameterBinderMap);
+            return new DelegationProcessor(parameterBinderMap);
         }
 
         /**
@@ -384,7 +408,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         /**
          * A handler is responsible for processing a parameter's binding.
          */
-        private interface Handler {
+        protected interface Handler {
 
             /**
              * Handles a parameter binding.
@@ -417,6 +441,11 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                                                 Instrumentation.Target instrumentationTarget,
                                                 Assigner assigner) {
                     return ParameterBinding.Illegal.INSTANCE;
+                }
+
+                @Override
+                public String toString() {
+                    return "TargetMethodAnnotationDrivenBinder.DelegationProcessor.Handler.Unbound." + name();
                 }
             }
 
@@ -459,6 +488,20 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                             target,
                             instrumentationTarget,
                             assigner);
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && parameterBinder.equals(((Bound<?>) other).parameterBinder)
+                            && annotation.equals(((Bound<?>) other).annotation);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = parameterBinder.hashCode();
+                    result = 31 * result + annotation.hashCode();
+                    return result;
                 }
 
                 @Override

@@ -41,7 +41,7 @@ public enum FloatConstant implements StackManipulation {
      *
      * @param opcode The shortcut opcode for loading a {@code float} constant.
      */
-    private FloatConstant(int opcode) {
+    FloatConstant(int opcode) {
         this.opcode = opcode;
     }
 
@@ -74,6 +74,11 @@ public enum FloatConstant implements StackManipulation {
     public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
         methodVisitor.visitInsn(opcode);
         return SIZE;
+    }
+
+    @Override
+    public String toString() {
+        return "FloatConstant." + name();
     }
 
     /**

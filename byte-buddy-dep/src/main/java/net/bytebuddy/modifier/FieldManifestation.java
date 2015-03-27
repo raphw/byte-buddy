@@ -33,7 +33,7 @@ public enum FieldManifestation implements ModifierContributor.ForField {
      *
      * @param mask The modifier mask of this instance.
      */
-    private FieldManifestation(int mask) {
+    FieldManifestation(int mask) {
         this.mask = mask;
     }
 
@@ -67,5 +67,10 @@ public enum FieldManifestation implements ModifierContributor.ForField {
      */
     public boolean isPlain() {
         return !(isFinal() || isVolatile());
+    }
+
+    @Override
+    public String toString() {
+        return "FieldManifestation." + name();
     }
 }

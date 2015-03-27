@@ -58,7 +58,7 @@ public enum MethodReturn implements StackManipulation {
      * @param returnOpcode The opcode of this operation.
      * @param stackSize    The operand stack size change that is implied by this operation.
      */
-    private MethodReturn(int returnOpcode, StackSize stackSize) {
+    MethodReturn(int returnOpcode, StackSize stackSize) {
         this.returnOpcode = returnOpcode;
         size = stackSize.toDecreasingSize();
     }
@@ -96,5 +96,10 @@ public enum MethodReturn implements StackManipulation {
     public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
         methodVisitor.visitInsn(returnOpcode);
         return size;
+    }
+
+    @Override
+    public String toString() {
+        return "MethodReturn." + name();
     }
 }

@@ -34,6 +34,7 @@ public class TypePoolLazyObjectPropertiesTest {
                         when(mock.getClassName()).thenReturn("" + System.identityHashCode(mock));
                     }
                 }).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationValue.Loaded.State.class).apply();
     }
 
     @Test
@@ -50,5 +51,6 @@ public class TypePoolLazyObjectPropertiesTest {
     public void testDeclarationContextObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.DeclarationContext.DeclaredInType.class).apply();
         ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.DeclarationContext.DeclaredInMethod.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.DeclarationContext.SelfDeclared.class).apply();
     }
 }

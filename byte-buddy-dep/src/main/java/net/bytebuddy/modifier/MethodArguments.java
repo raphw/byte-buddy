@@ -28,7 +28,7 @@ public enum MethodArguments implements ModifierContributor.ForMethod {
      *
      * @param mask The mask of this instance.
      */
-    private MethodArguments(int mask) {
+    MethodArguments(int mask) {
         this.mask = mask;
     }
 
@@ -54,5 +54,10 @@ public enum MethodArguments implements ModifierContributor.ForMethod {
      */
     public boolean isVarargs() {
         return this == VARARGS;
+    }
+
+    @Override
+    public String toString() {
+        return "MethodArguments." + name();
     }
 }

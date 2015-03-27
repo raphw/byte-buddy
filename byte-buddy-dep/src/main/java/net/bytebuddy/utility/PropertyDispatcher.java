@@ -351,4 +351,9 @@ public enum PropertyDispatcher {
      * @return A shallow copy of an array or the input value if it does not represent an array.
      */
     public abstract <T> T conditionalClone(T value);
+
+    @Override
+    public String toString() {
+        return "PropertyDispatcher." + name();
+    }
 }

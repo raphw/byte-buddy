@@ -126,13 +126,13 @@ public class ArrayFactory implements CollectionFactory {
      * An array creator is responsible for providing correct byte code instructions for creating an array
      * and for storing values into it.
      */
-    protected static interface ArrayCreator extends StackManipulation {
+    protected interface ArrayCreator extends StackManipulation {
 
         /**
          * The creation of an array consumes one slot on the operand stack and adds a new value to it.
          * Therefore, the operand stack's size is not altered.
          */
-        static final StackManipulation.Size ARRAY_CREATION_SIZE_CHANGE = StackSize.ZERO.toDecreasingSize();
+        StackManipulation.Size ARRAY_CREATION_SIZE_CHANGE = StackSize.ZERO.toDecreasingSize();
 
         /**
          * The opcode instruction for storing a value of the component type inside an array.
@@ -144,7 +144,7 @@ public class ArrayFactory implements CollectionFactory {
         /**
          * An array creator implementation for primitive types.
          */
-        static enum ForPrimitiveType implements ArrayCreator {
+        enum ForPrimitiveType implements ArrayCreator {
 
             /**
              * An array creator for creating {@code boolean[]} arrays.
@@ -202,7 +202,7 @@ public class ArrayFactory implements CollectionFactory {
              * @param creationOpcode The opcode for creating an array of this type.
              * @param storageOpcode  The opcode for storing a value in an array of this type.
              */
-            private ForPrimitiveType(int creationOpcode, int storageOpcode) {
+            ForPrimitiveType(int creationOpcode, int storageOpcode) {
                 this.creationOpcode = creationOpcode;
                 this.storageOpcode = storageOpcode;
             }
@@ -222,12 +222,17 @@ public class ArrayFactory implements CollectionFactory {
             public int getStorageOpcode() {
                 return storageOpcode;
             }
+
+            @Override
+            public String toString() {
+                return "ArrayFactory.ArrayCreator.ForPrimitiveType." + name();
+            }
         }
 
         /**
          * An array creator implementation for reference types.
          */
-        static class ForReferenceType implements ArrayCreator {
+        class ForReferenceType implements ArrayCreator {
 
             /**
              * The internal name of this array's non-primitive component type.

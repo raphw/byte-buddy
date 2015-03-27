@@ -46,7 +46,7 @@ public enum Duplication implements StackManipulation {
      * @param stackSize The size representing the impact of applying the duplication onto the operand stack.
      * @param opcode    The opcode that represents the manipulation.
      */
-    private Duplication(StackSize stackSize, int opcode) {
+    Duplication(StackSize stackSize, int opcode) {
         size = stackSize.toIncreasingSize();
         this.opcode = opcode;
     }
@@ -79,5 +79,11 @@ public enum Duplication implements StackManipulation {
     public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
         methodVisitor.visitInsn(opcode);
         return size;
+    }
+
+
+    @Override
+    public String toString() {
+        return "Duplication." + name();
     }
 }

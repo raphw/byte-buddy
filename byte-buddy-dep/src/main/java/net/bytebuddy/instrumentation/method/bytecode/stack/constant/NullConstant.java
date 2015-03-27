@@ -14,12 +14,21 @@ public enum NullConstant implements StackManipulation {
     /**
      * The singleton instance.
      */
-    INSTANCE;
+    INSTANCE(StackSize.SINGLE);
 
     /**
      * The size impact of loading the {@code null} reference onto the operand stack.
      */
-    private static final Size SIZE = StackSize.SINGLE.toIncreasingSize();
+    private final Size size;
+
+    /**
+     * Creates a null constant.
+     *
+     * @param size The size of the constant on the operand stack.
+     */
+    NullConstant(StackSize size) {
+        this.size = size.toIncreasingSize();
+    }
 
     @Override
     public boolean isValid() {
@@ -29,6 +38,11 @@ public enum NullConstant implements StackManipulation {
     @Override
     public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
         methodVisitor.visitInsn(Opcodes.ACONST_NULL);
-        return SIZE;
+        return size;
+    }
+
+    @Override
+    public String toString() {
+        return "NullConstant." + name();
     }
 }

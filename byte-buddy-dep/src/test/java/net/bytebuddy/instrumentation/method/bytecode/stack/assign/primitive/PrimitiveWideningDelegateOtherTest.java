@@ -18,6 +18,7 @@ public class PrimitiveWideningDelegateOtherTest {
 
     @Test
     public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(PrimitiveWideningDelegate.class).apply();
         ObjectPropertyAssertion.of(PrimitiveWideningDelegate.WideningStackManipulation.class).apply();
     }
 }

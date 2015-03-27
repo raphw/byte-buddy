@@ -13,6 +13,7 @@ public class ArrayAccessOtherTest {
 
     @Test
     public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(ArrayAccess.class).apply();
         ObjectPropertyAssertion.of(ArrayAccess.Loader.class).apply();
         ObjectPropertyAssertion.of(ArrayAccess.Putter.class).apply();
     }

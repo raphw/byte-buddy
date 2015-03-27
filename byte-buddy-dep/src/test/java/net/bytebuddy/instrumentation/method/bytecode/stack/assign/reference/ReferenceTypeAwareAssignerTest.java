@@ -4,6 +4,7 @@ import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
@@ -109,5 +110,10 @@ public class ReferenceTypeAwareAssignerTest {
             when(targetTypeDescription.isAssignableTo(sourceTypeDescription)).thenReturn(true);
             when(sourceTypeDescription.isAssignableFrom(targetTypeDescription)).thenReturn(true);
         }
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(ReferenceTypeAwareAssigner.class).apply();
     }
 }

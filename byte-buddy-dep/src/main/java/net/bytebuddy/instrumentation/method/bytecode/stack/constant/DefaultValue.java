@@ -52,7 +52,7 @@ public enum DefaultValue implements StackManipulation {
      * @param stackManipulation The stack manipulation that represents the loading of a given default value onto the
      *                          operand stack.
      */
-    private DefaultValue(StackManipulation stackManipulation) {
+    DefaultValue(StackManipulation stackManipulation) {
         this.stackManipulation = stackManipulation;
     }
 
@@ -88,5 +88,10 @@ public enum DefaultValue implements StackManipulation {
     @Override
     public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
         return stackManipulation.apply(methodVisitor, instrumentationContext);
+    }
+
+    @Override
+    public String toString() {
+        return "DefaultValue." + name();
     }
 }

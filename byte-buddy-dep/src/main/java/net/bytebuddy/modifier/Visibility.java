@@ -40,7 +40,7 @@ public enum Visibility implements ModifierContributor.ForType,
      *
      * @param mask The modifier mask of this instance.
      */
-    private Visibility(int mask) {
+    Visibility(int mask) {
         this.mask = mask;
     }
 
@@ -83,5 +83,10 @@ public enum Visibility implements ModifierContributor.ForType,
      */
     public boolean isPrivate() {
         return (mask & Opcodes.ACC_PRIVATE) != 0;
+    }
+
+    @Override
+    public String toString() {
+        return "Visibility." + name();
     }
 }

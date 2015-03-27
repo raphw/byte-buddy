@@ -28,7 +28,7 @@ public enum SynchronizationState implements ModifierContributor.ForMethod {
      *
      * @param mask The modifier mask of this instance.
      */
-    private SynchronizationState(int mask) {
+    SynchronizationState(int mask) {
         this.mask = mask;
     }
 
@@ -54,5 +54,10 @@ public enum SynchronizationState implements ModifierContributor.ForMethod {
      */
     public boolean isSynchronized() {
         return this == SYNCHRONIZED;
+    }
+
+    @Override
+    public String toString() {
+        return "SynchronizationState." + name();
     }
 }

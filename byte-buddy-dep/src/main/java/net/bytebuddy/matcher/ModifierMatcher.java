@@ -48,7 +48,7 @@ public class ModifierMatcher<T extends ModifierReviewable> extends ElementMatche
     /**
      * Determines the type of modifier to be matched by a {@link net.bytebuddy.matcher.ModifierMatcher}.
      */
-    public static enum Mode {
+    public enum Mode {
 
         /**
          * Matches an element that is considered {@code public}.
@@ -121,7 +121,7 @@ public class ModifierMatcher<T extends ModifierReviewable> extends ElementMatche
          * @param modifiers   The mask of the modifier to match.
          * @param description The textual representation of this instance's matching mode.
          */
-        private Mode(int modifiers, String description) {
+        Mode(int modifiers, String description) {
             this.modifiers = modifiers;
             this.description = description;
         }
@@ -142,6 +142,11 @@ public class ModifierMatcher<T extends ModifierReviewable> extends ElementMatche
          */
         protected int getModifiers() {
             return modifiers;
+        }
+
+        @Override
+        public String toString() {
+            return "ModifierMatcher.Mode." + name();
         }
     }
 }

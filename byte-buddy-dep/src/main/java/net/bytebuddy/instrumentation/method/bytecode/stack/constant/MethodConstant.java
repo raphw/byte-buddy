@@ -136,7 +136,7 @@ public abstract class MethodConstant implements StackManipulation {
     /**
      * Represents a method constant that cannot be represented by Java's reflection API.
      */
-    private static enum CanCacheIllegal implements CanCache {
+    private enum CanCacheIllegal implements CanCache {
 
         /**
          * The singleton instance.
@@ -157,6 +157,11 @@ public abstract class MethodConstant implements StackManipulation {
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
             return Illegal.INSTANCE.apply(methodVisitor, instrumentationContext);
         }
+
+        @Override
+        public String toString() {
+            return "MethodConstant.CanCacheIllegal." + name();
+        }
     }
 
     /**
@@ -166,7 +171,7 @@ public abstract class MethodConstant implements StackManipulation {
      * defining this loading instruction as the retrieval of a field value that is initialized in the instrumented
      * type's type initializer.
      */
-    public static interface CanCache extends StackManipulation {
+    public interface CanCache extends StackManipulation {
 
         /**
          * Returns this method constant as a cached version.

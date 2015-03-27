@@ -81,10 +81,10 @@ public enum PrimitiveBoxingDelegate {
      * @param boxingMethodName       The name of the method for boxing a primitive value as its wrapper type.
      * @param boxingMethodDescriptor The descriptor of the method for boxing a primitive value as its wrapper type.
      */
-    private PrimitiveBoxingDelegate(Class<?> wrapperType,
-                                    StackSize sizeDifference,
-                                    String boxingMethodName,
-                                    String boxingMethodDescriptor) {
+    PrimitiveBoxingDelegate(Class<?> wrapperType,
+                            StackSize sizeDifference,
+                            String boxingMethodName,
+                            String boxingMethodDescriptor) {
         this.wrapperType = new TypeDescription.ForLoadedType(wrapperType);
         this.size = sizeDifference.toDecreasingSize();
         this.boxingMethodName = boxingMethodName;
@@ -130,6 +130,11 @@ public enum PrimitiveBoxingDelegate {
      */
     public StackManipulation assignBoxedTo(TypeDescription targetType, Assigner chainedAssigner, boolean dynamicallyTyped) {
         return new BoxingStackManipulation(chainedAssigner.assign(wrapperType, targetType, dynamicallyTyped));
+    }
+
+    @Override
+    public String toString() {
+        return "PrimitiveBoxingDelegate." + name();
     }
 
     /**

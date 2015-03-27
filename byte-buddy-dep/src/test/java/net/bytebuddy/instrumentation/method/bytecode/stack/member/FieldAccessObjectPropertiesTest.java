@@ -7,9 +7,9 @@ public class FieldAccessObjectPropertiesTest {
 
     @Test
     public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(FieldAccess.class).apply();
         ObjectPropertyAssertion.of(FieldAccess.AccessDispatcher.class).apply();
         ObjectPropertyAssertion.of(FieldAccess.AccessDispatcher.FieldGetInstruction.class).apply();
         ObjectPropertyAssertion.of(FieldAccess.AccessDispatcher.FieldPutInstruction.class).apply();
-
     }
 }

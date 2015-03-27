@@ -30,7 +30,7 @@ public enum StackSize {
      *
      * @param size The size of the stack this instance represents.
      */
-    private StackSize(int size) {
+    StackSize(int size) {
         this.size = size;
     }
 
@@ -120,5 +120,10 @@ public enum StackSize {
             default:
                 throw new AssertionError();
         }
+    }
+
+    @Override
+    public String toString() {
+        return "StackSize." + name();
     }
 }

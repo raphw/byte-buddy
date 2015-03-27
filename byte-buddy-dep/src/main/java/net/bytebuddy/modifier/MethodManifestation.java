@@ -55,7 +55,7 @@ public enum MethodManifestation implements ModifierContributor.ForMethod {
      *
      * @param mask The modifier mask of this instance.
      */
-    private MethodManifestation(int mask) {
+    MethodManifestation(int mask) {
         this.mask = mask;
     }
 
@@ -98,5 +98,10 @@ public enum MethodManifestation implements ModifierContributor.ForMethod {
      */
     public boolean isBridge() {
         return (mask & Opcodes.ACC_BRIDGE) != 0;
+    }
+
+    @Override
+    public String toString() {
+        return "MethodManifestation." + name();
     }
 }

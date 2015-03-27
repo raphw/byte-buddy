@@ -57,7 +57,7 @@ public enum MethodInvocation {
      * @param callOpcode The opcode for invoking a method.
      * @param handle     The handle being used for a dynamic method invocation.
      */
-    private MethodInvocation(int callOpcode, int handle) {
+    MethodInvocation(int callOpcode, int handle) {
         this.invocationOpcode = callOpcode;
         this.handle = handle;
     }
@@ -84,10 +84,15 @@ public enum MethodInvocation {
         }
     }
 
+    @Override
+    public String toString() {
+        return "MethodInvocation." + name();
+    }
+
     /**
      * An illegal implicit method invocation.
      */
-    protected static enum IllegalInvocation implements WithImplicitInvocationTargetType {
+    protected enum IllegalInvocation implements WithImplicitInvocationTargetType {
 
         /**
          * The singleton instance.
@@ -121,13 +126,18 @@ public enum MethodInvocation {
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
             return Illegal.INSTANCE.apply(methodVisitor, instrumentationContext);
         }
+
+        @Override
+        public String toString() {
+            return "MethodInvocation.IllegalInvocation." + name();
+        }
     }
 
     /**
      * Represents a method invocation where the invocation type (static, virtual, special, interface) is derived
      * from the given method's description.
      */
-    public static interface WithImplicitInvocationTargetType extends StackManipulation {
+    public interface WithImplicitInvocationTargetType extends StackManipulation {
 
         /**
          * Transforms this method invocation into a virtual (or interface) method invocation on the given type.

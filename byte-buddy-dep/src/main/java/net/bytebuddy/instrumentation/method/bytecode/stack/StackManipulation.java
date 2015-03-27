@@ -29,7 +29,7 @@ public interface StackManipulation {
     /**
      * Canonical representation of an illegal stack manipulation.
      */
-    static enum Illegal implements StackManipulation {
+    enum Illegal implements StackManipulation {
 
         /**
          * The singleton instance.
@@ -45,12 +45,17 @@ public interface StackManipulation {
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
             throw new IllegalStateException("An illegal stack manipulation must not be applied");
         }
+
+        @Override
+        public String toString() {
+            return "StackManipulation.Illegal." + name();
+        }
     }
 
     /**
      * Canonical representation of a legal stack manipulation which does not require any action.
      */
-    static enum LegalTrivial implements StackManipulation {
+    enum LegalTrivial implements StackManipulation {
 
         /**
          * The singleton instance.
@@ -66,13 +71,18 @@ public interface StackManipulation {
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
             return StackSize.ZERO.toIncreasingSize();
         }
+
+        @Override
+        public String toString() {
+            return "StackManipulation.LegalTrivial." + name();
+        }
     }
 
     /**
      * A description of the size change that is imposed by some
      * {@link net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation}.
      */
-    static class Size {
+    class Size {
 
         /**
          * The impact of any size operation onto the operand stack. This value can be negative if more values
@@ -161,7 +171,7 @@ public interface StackManipulation {
     /**
      * An immutable stack manipulation that aggregates a sequence of other stack manipulations.
      */
-    static class Compound implements StackManipulation {
+    class Compound implements StackManipulation {
 
         /**
          * The stack manipulations this compound operation represents in their application order.

@@ -64,7 +64,7 @@ public enum IntegerConstant implements StackManipulation {
      *
      * @param opcode The shortcut opcode for loading a common {@code int}-compatible JVM value onto the operand stack.
      */
-    private IntegerConstant(int opcode) {
+    IntegerConstant(int opcode) {
         this.opcode = opcode;
     }
 
@@ -122,6 +122,11 @@ public enum IntegerConstant implements StackManipulation {
     public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
         methodVisitor.visitInsn(opcode);
         return SIZE;
+    }
+
+    @Override
+    public String toString() {
+        return "IntegerConstant." + name();
     }
 
     /**

@@ -18,6 +18,8 @@ public class PrimitiveUnboxingDelegateOtherTest {
 
     @Test
     public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(PrimitiveUnboxingDelegate.class).apply();
         ObjectPropertyAssertion.of(PrimitiveUnboxingDelegate.ImplicitlyTypedUnboxingResponsible.class).apply();
+        ObjectPropertyAssertion.of(PrimitiveUnboxingDelegate.ExplicitlyTypedUnboxingResponsible.class).apply();
     }
 }

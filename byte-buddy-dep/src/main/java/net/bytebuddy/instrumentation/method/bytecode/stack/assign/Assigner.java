@@ -25,7 +25,7 @@ public interface Assigner {
     /**
      * An assigner that only allows to assign types if they are equal to another.
      */
-    static enum EqualTypesOnly implements Assigner {
+    enum EqualTypesOnly implements Assigner {
 
         /**
          * The singleton instance.
@@ -40,12 +40,17 @@ public interface Assigner {
                     ? StackManipulation.LegalTrivial.INSTANCE
                     : StackManipulation.Illegal.INSTANCE;
         }
+
+        @Override
+        public String toString() {
+            return "Assigner.EqualTypesOnly." + name();
+        }
     }
 
     /**
      * An assigner that does not allow any assignments.
      */
-    static enum Refusing implements Assigner {
+    enum Refusing implements Assigner {
 
         /**
          * The singleton instance.
@@ -57,6 +62,11 @@ public interface Assigner {
                                         TypeDescription targetType,
                                         boolean dynamicallyTyped) {
             return StackManipulation.Illegal.INSTANCE;
+        }
+
+        @Override
+        public String toString() {
+            return "Assigner.Refusing." + name();
         }
     }
 }

@@ -95,7 +95,7 @@ public interface InstrumentedType extends TypeDescription {
     /**
      * A type initializer is responsible for defining a type's static initialization block.
      */
-    static interface TypeInitializer {
+    interface TypeInitializer {
 
         /**
          * Indicates if this type initializer is defined.
@@ -123,7 +123,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * Canonical implementation of a non-defined type initializer.
          */
-        static enum None implements TypeInitializer {
+        enum None implements TypeInitializer {
 
             /**
              * The singleton instance.
@@ -144,13 +144,18 @@ public interface InstrumentedType extends TypeDescription {
             public StackManipulation getStackManipulation() {
                 throw new IllegalStateException("Cannot execute a non-defined type initializer");
             }
+
+            @Override
+            public String toString() {
+                return "InstrumentedType.TypeInitializer.None." + name();
+            }
         }
 
         /**
          * A simple, defined type initializer that executes a given
          * {@link net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation}.
          */
-        static class Simple implements TypeInitializer {
+        class Simple implements TypeInitializer {
 
             /**
              * The stack manipulation to apply within the type initializer.
@@ -204,7 +209,7 @@ public interface InstrumentedType extends TypeDescription {
     /**
      * An abstract base implementation of an instrumented type.
      */
-    abstract static class AbstractBase extends AbstractTypeDescription.OfSimpleType implements InstrumentedType {
+    abstract class AbstractBase extends AbstractTypeDescription.OfSimpleType implements InstrumentedType {
 
         /**
          * The loaded type initializer for this instrumented type.

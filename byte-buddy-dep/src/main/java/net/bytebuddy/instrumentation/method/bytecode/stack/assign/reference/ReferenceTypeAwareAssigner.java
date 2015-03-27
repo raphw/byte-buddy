@@ -33,4 +33,9 @@ public enum ReferenceTypeAwareAssigner implements Assigner {
             return StackManipulation.Illegal.INSTANCE;
         }
     }
+
+    @Override
+    public String toString() {
+        return "ReferenceTypeAwareAssigner." + name();
+    }
 }

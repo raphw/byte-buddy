@@ -55,6 +55,7 @@ public class TypePoolDefaultComponentTypeLocatorTest {
                 return "()L" + RandomString.make() + ";";
             }
         }).apply();
+        ObjectPropertyAssertion.of(TypePool.Default.ComponentTypeLocator.Illegal.class).apply();
         ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.OnTypeCollector.class).applyMutable();
         ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.MethodExtractor.class).create(new ObjectPropertyAssertion.Creator<String>() {
             @Override

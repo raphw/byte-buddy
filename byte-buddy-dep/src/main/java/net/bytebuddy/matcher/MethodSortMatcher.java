@@ -50,7 +50,7 @@ public class MethodSortMatcher<T extends MethodDescription> extends ElementMatch
     /**
      * Represents a specific characteristic of a method description.
      */
-    public static enum Sort {
+    public enum Sort {
 
         /**
          * Matches method descriptions that represent methods, not constructors or the type initializer.
@@ -127,7 +127,7 @@ public class MethodSortMatcher<T extends MethodDescription> extends ElementMatch
          *
          * @param description A textual representation of the method sort that is represented by this instance.
          */
-        private Sort(String description) {
+        Sort(String description) {
             this.description = description;
         }
 
@@ -146,6 +146,11 @@ public class MethodSortMatcher<T extends MethodDescription> extends ElementMatch
          */
         protected String getDescription() {
             return description;
+        }
+
+        @Override
+        public String toString() {
+            return "MethodSortMatcher.Sort." + name();
         }
     }
 }

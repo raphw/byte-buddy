@@ -74,7 +74,7 @@ public enum ArrayAccess {
      * @param storeOpcode The opcode used for storing a value.
      * @param stackSize   The size of the array's component value.
      */
-    private ArrayAccess(int loadOpcode, int storeOpcode, StackSize stackSize) {
+    ArrayAccess(int loadOpcode, int storeOpcode, StackSize stackSize) {
         this.loadOpcode = loadOpcode;
         this.storeOpcode = storeOpcode;
         this.stackSize = stackSize;
@@ -124,6 +124,11 @@ public enum ArrayAccess {
      */
     public StackManipulation store() {
         return new Putter();
+    }
+
+    @Override
+    public String toString() {
+        return "ArrayAccess." + name();
     }
 
     /**

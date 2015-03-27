@@ -52,7 +52,7 @@ public class StringMatcher extends ElementMatcher.Junction.AbstractBase<String> 
     /**
      * Defines the mode a {@link net.bytebuddy.matcher.StringMatcher} compares to strings with.
      */
-    public static enum Mode {
+    public enum Mode {
 
         /**
          * Checks if two strings equal and respects casing differences.
@@ -156,7 +156,7 @@ public class StringMatcher extends ElementMatcher.Junction.AbstractBase<String> 
          * @param description The description of this mode for providing meaningful {@link Object#toString()}
          *                    implementations.
          */
-        private Mode(String description) {
+        Mode(String description) {
             this.description = description;
         }
 
@@ -177,5 +177,10 @@ public class StringMatcher extends ElementMatcher.Junction.AbstractBase<String> 
          * @return {@code true} if the source matches the target.
          */
         protected abstract boolean matches(String expected, String actual);
+
+        @Override
+        public String toString() {
+            return "StringMatcher.Mode." + name();
+        }
     }
 }

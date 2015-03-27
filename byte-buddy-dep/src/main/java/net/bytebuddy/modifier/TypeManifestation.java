@@ -38,7 +38,7 @@ public enum TypeManifestation implements ModifierContributor.ForType {
      *
      * @param mask The modifier mask of this instance.
      */
-    private TypeManifestation(int mask) {
+    TypeManifestation(int mask) {
         this.mask = mask;
     }
 
@@ -72,5 +72,10 @@ public enum TypeManifestation implements ModifierContributor.ForType {
      */
     public boolean isInterface() {
         return (mask & Opcodes.ACC_INTERFACE) != 0;
+    }
+
+    @Override
+    public String toString() {
+        return "TypeManifestation." + name();
     }
 }

@@ -2,6 +2,7 @@ package net.bytebuddy.instrumentation.method.bytecode.stack;
 
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.test.utility.MockitoRule;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -37,5 +38,10 @@ public class ThrowTest {
     @Test
     public void testValidity() throws Exception {
         assertThat(Throw.INSTANCE.isValid(), is(true));
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(Throw.class).apply();
     }
 }

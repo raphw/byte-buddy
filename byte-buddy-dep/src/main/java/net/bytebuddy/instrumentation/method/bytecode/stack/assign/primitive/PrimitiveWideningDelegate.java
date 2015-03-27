@@ -169,14 +169,14 @@ public enum PrimitiveWideningDelegate {
      * @param toDoubleStackManipulation    A stack manipulation that widens the type that is represented by this
      *                                     instance to a {@code double}.
      */
-    private PrimitiveWideningDelegate(StackManipulation toBooleanStackManipulation,
-                                      StackManipulation toByteStackManipulation,
-                                      StackManipulation toShortStackManipulation,
-                                      StackManipulation toCharacterStackManipulation,
-                                      StackManipulation toIntegerStackManipulation,
-                                      StackManipulation toLongStackManipulation,
-                                      StackManipulation toFloatStackManipulation,
-                                      StackManipulation toDoubleStackManipulation) {
+    PrimitiveWideningDelegate(StackManipulation toBooleanStackManipulation,
+                              StackManipulation toByteStackManipulation,
+                              StackManipulation toShortStackManipulation,
+                              StackManipulation toCharacterStackManipulation,
+                              StackManipulation toIntegerStackManipulation,
+                              StackManipulation toLongStackManipulation,
+                              StackManipulation toFloatStackManipulation,
+                              StackManipulation toDoubleStackManipulation) {
         this.toBooleanStackManipulation = toBooleanStackManipulation;
         this.toByteStackManipulation = toByteStackManipulation;
         this.toShortStackManipulation = toShortStackManipulation;
@@ -241,6 +241,11 @@ public enum PrimitiveWideningDelegate {
         } else {
             throw new IllegalArgumentException("Not a primitive non-void type: " + typeDescription);
         }
+    }
+
+    @Override
+    public String toString() {
+        return "PrimitiveWideningDelegate." + name();
     }
 
     /**

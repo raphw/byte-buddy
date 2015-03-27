@@ -21,6 +21,7 @@ public class MethodVariableAccessOtherTest {
 
     @Test
     public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(MethodVariableAccess.class).apply();
         ObjectPropertyAssertion.of(MethodVariableAccess.ArgumentLoadingStackManipulation.class).apply();
         ObjectPropertyAssertion.of(MethodVariableAccess.TypeCastingHandler.ForBridgeTarget.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription>() {
             @Override
@@ -28,5 +29,6 @@ public class MethodVariableAccessOtherTest {
                 when(mock.getParameters()).thenReturn(new ParameterList.Empty());
             }
         }).applyMutable();
+        ObjectPropertyAssertion.of(MethodVariableAccess.TypeCastingHandler.NoOp.class).apply();
     }
 }

@@ -36,7 +36,7 @@ public enum DoubleConstant implements StackManipulation {
      *
      * @param opcode The shortcut opcode for loading a {@code double} constant.
      */
-    private DoubleConstant(int opcode) {
+    DoubleConstant(int opcode) {
         this.opcode = opcode;
     }
 
@@ -67,6 +67,11 @@ public enum DoubleConstant implements StackManipulation {
     public StackManipulation.Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
         methodVisitor.visitInsn(opcode);
         return SIZE;
+    }
+
+    @Override
+    public String toString() {
+        return "DoubleConstant." + name();
     }
 
     /**

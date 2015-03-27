@@ -65,7 +65,7 @@ public enum MethodVariableAccess {
      *                                 range index, such as {@code ALOAD_0}, {@code ILOAD_0} etc.
      * @param stackSize                The size of the JVM type.
      */
-    private MethodVariableAccess(int loadOpcode, int loadOpcodeShortcutOffset, StackSize stackSize) {
+    MethodVariableAccess(int loadOpcode, int loadOpcodeShortcutOffset, StackSize stackSize) {
         this.loadOpcode = loadOpcode;
         this.loadOpcodeShortcutOffset = loadOpcodeShortcutOffset;
         this.size = stackSize.toIncreasingSize();
@@ -177,11 +177,16 @@ public enum MethodVariableAccess {
         return new ArgumentLoadingStackManipulation(variableOffset);
     }
 
+    @Override
+    public String toString() {
+        return "MethodVariableAccess." + name();
+    }
+
     /**
      * A handler for optionally applying a type casting for each method parameter that is loaded onto the operand
      * stack.
      */
-    protected static interface TypeCastingHandler {
+    protected interface TypeCastingHandler {
 
         /**
          * Returns the given stack manipulation while possibly wrapping the operation by a type casting
@@ -199,7 +204,7 @@ public enum MethodVariableAccess {
          * {@link net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess.TypeCastingHandler}
          * that merely returns the given stack manipulation.
          */
-        static enum NoOp implements TypeCastingHandler {
+        enum NoOp implements TypeCastingHandler {
 
             /**
              * The singleton instance.
@@ -210,13 +215,18 @@ public enum MethodVariableAccess {
             public StackManipulation wrapNext(StackManipulation variableAccess, TypeDescription parameterType) {
                 return variableAccess;
             }
+
+            @Override
+            public String toString() {
+                return "MethodVariableAccess.TypeCastingHandler.NoOp." + name();
+            }
         }
 
         /**
          * A {@link net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariableAccess.TypeCastingHandler}
          * that casts all parameters that are loaded for a method to their target method's type.
          */
-        static class ForBridgeTarget implements TypeCastingHandler {
+        class ForBridgeTarget implements TypeCastingHandler {
 
             /**
              * An iterator over all parameter types of the target method.

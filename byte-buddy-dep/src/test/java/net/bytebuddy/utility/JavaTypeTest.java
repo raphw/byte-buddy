@@ -63,6 +63,7 @@ public class JavaTypeTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(JavaType.class).apply();
         ObjectPropertyAssertion.of(JavaType.TypeLookup.ForNamedType.class).apply();
         final Iterator<Class<?>> iterator = Arrays.asList(Object.class, String.class).iterator();
         ObjectPropertyAssertion.of(JavaType.TypeLookup.ForLoadedType.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {

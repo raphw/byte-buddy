@@ -16,6 +16,8 @@ public class TypeProxyObjectPropertiesTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypeProxy.class).apply();
+        ObjectPropertyAssertion.of(TypeProxy.AbstractMethodErrorThrow.class).apply();
+        ObjectPropertyAssertion.of(TypeProxy.SilentConstruction.class).apply();
         ObjectPropertyAssertion.of(TypeProxy.MethodCall.class).skipSynthetic().apply();
         ObjectPropertyAssertion.of(TypeProxy.MethodCall.Appender.class).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
             @Override
@@ -27,6 +29,7 @@ public class TypeProxyObjectPropertiesTest {
         }).skipSynthetic().apply();
         ObjectPropertyAssertion.of(TypeProxy.MethodCall.Appender.AccessorMethodInvocation.class).skipSynthetic().apply();
         ObjectPropertyAssertion.of(TypeProxy.SilentConstruction.Appender.class).skipSynthetic().apply();
+        ObjectPropertyAssertion.of(TypeProxy.InvocationFactory.Default.class).apply();
     }
 
     @Test

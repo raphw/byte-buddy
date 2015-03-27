@@ -28,7 +28,7 @@ public interface JavaMethod {
     /**
      * Represents a method that cannot be invoked.
      */
-    static enum ForUnavailableMethod implements JavaMethod {
+    enum ForUnavailableMethod implements JavaMethod {
 
         /**
          * The singleton instance.
@@ -44,12 +44,17 @@ public interface JavaMethod {
         public Object invoke(Object instance, Object... argument) {
             throw new IllegalStateException("Java language feature is not available for current virtual machine");
         }
+
+        @Override
+        public String toString() {
+            return "JavaMethod.ForUnavailableMethod." + name();
+        }
     }
 
     /**
      * Represents a method that can be invoked.
      */
-    static class ForLoadedMethod implements JavaMethod {
+    class ForLoadedMethod implements JavaMethod {
 
         /**
          * The method to invoke.

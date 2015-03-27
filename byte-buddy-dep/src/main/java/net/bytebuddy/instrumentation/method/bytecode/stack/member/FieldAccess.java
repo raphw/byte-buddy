@@ -46,7 +46,7 @@ public enum FieldAccess {
      * @param targetSizeChange The amount of operand slots this field access operation consumes when it is applied
      *                         before eventually adding new values onto the operand stack.
      */
-    private FieldAccess(int putterOpcode, int getterOpcode, StackSize targetSizeChange) {
+    FieldAccess(int putterOpcode, int getterOpcode, StackSize targetSizeChange) {
         this.putterOpcode = putterOpcode;
         this.getterOpcode = getterOpcode;
         this.targetSizeChange = targetSizeChange.getSize();
@@ -66,10 +66,15 @@ public enum FieldAccess {
         }
     }
 
+    @Override
+    public String toString() {
+        return "FieldAccess." + name();
+    }
+
     /**
      * Representation of a field access for which a getter and a putter can be created.
      */
-    public static interface Defined {
+    public interface Defined {
 
         /**
          * Creates a getter representation for a given field.

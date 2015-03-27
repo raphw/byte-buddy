@@ -154,7 +154,7 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
     /**
      * A stack manipulation that throws an abstract method error in case that a given super method cannot be invoked.
      */
-    protected static enum AbstractMethodErrorThrow implements StackManipulation {
+    protected enum AbstractMethodErrorThrow implements StackManipulation {
 
         /**
          * The singleton instance.
@@ -169,7 +169,7 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
         /**
          * Creates the singleton instance.
          */
-        private AbstractMethodErrorThrow() {
+        AbstractMethodErrorThrow() {
             TypeDescription abstractMethodError = new TypeDescription.ForLoadedType(AbstractMethodError.class);
             MethodDescription constructor = abstractMethodError.getDeclaredMethods()
                     .filter(isConstructor().and(takesArguments(0))).getOnly();
@@ -187,6 +187,11 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
         @Override
         public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
             return implementation.apply(methodVisitor, instrumentationContext);
+        }
+
+        @Override
+        public String toString() {
+            return "TypeProxy.AbstractMethodErrorThrow." + name();
         }
     }
 
@@ -210,6 +215,11 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
         @Override
         public ByteCodeAppender appender(Target instrumentationTarget) {
             return new Appender(instrumentationTarget.getTypeDescription());
+        }
+
+        @Override
+        public String toString() {
+            return "TypeProxy.SilentConstruction." + name();
         }
 
         /**
@@ -360,7 +370,7 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
      * Illegal {@link net.bytebuddy.instrumentation.Instrumentation.SpecialMethodInvocation} are implemented by
      * throwing an {@link java.lang.AbstractMethodError}.
      */
-    public static interface InvocationFactory {
+    public interface InvocationFactory {
 
         /**
          * Creates a special method invocation to implement for a given method.
@@ -379,7 +389,7 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
          * Default implementations of the
          * {@link net.bytebuddy.instrumentation.type.auxiliary.TypeProxy.InvocationFactory}.
          */
-        static enum Default implements InvocationFactory {
+        enum Default implements InvocationFactory {
 
             /**
              * Invokes the super method of the instrumented method.
@@ -404,6 +414,11 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
                                                                       MethodDescription instrumentedMethod) {
                     return instrumentationTarget.invokeDefault(proxiedType, instrumentedMethod.getUniqueSignature());
                 }
+            };
+
+            @Override
+            public String toString() {
+                return "TypeProxy.InvocationFactory.Default." + name();
             }
         }
     }

@@ -180,7 +180,7 @@ public class MethodCallProxy implements AuxiliaryType {
      * {@link net.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy}. This avoids a reflective lookup
      * of these methods what improves the runtime performance of this lookup.
      */
-    protected static enum ProxyMethodLookupEngine implements MethodLookupEngine, MethodLookupEngine.Factory {
+    protected enum ProxyMethodLookupEngine implements MethodLookupEngine, MethodLookupEngine.Factory {
 
         /**
          * The singleton instance.
@@ -195,7 +195,7 @@ public class MethodCallProxy implements AuxiliaryType {
         /**
          * Creates this singleton proxy method lookup engine.
          */
-        private ProxyMethodLookupEngine() {
+        ProxyMethodLookupEngine() {
             List<MethodDescription> methodDescriptions = new ArrayList<MethodDescription>(2);
             methodDescriptions.addAll(new MethodList.ForLoadedType(Runnable.class));
             methodDescriptions.addAll(new MethodList.ForLoadedType(Callable.class));
@@ -216,12 +216,17 @@ public class MethodCallProxy implements AuxiliaryType {
         public MethodLookupEngine make(boolean extractDefaultMethods) {
             return this;
         }
+
+        @Override
+        public String toString() {
+            return "MethodCallProxy.ProxyMethodLookupEngine." + name();
+        }
     }
 
     /**
      * An instrumentation for implementing a constructor of a {@link net.bytebuddy.instrumentation.type.auxiliary.MethodCallProxy}.
      */
-    protected static enum ConstructorCall implements Instrumentation {
+    protected enum ConstructorCall implements Instrumentation {
 
         /**
          * The singleton instance.
@@ -236,7 +241,7 @@ public class MethodCallProxy implements AuxiliaryType {
         /**
          * Creates the constructor call singleton.
          */
-        private ConstructorCall() {
+        ConstructorCall() {
             this.objectTypeDefaultConstructor = new TypeDescription.ForLoadedType(Object.class)
                     .getDeclaredMethods()
                     .filter(isConstructor())
@@ -251,6 +256,11 @@ public class MethodCallProxy implements AuxiliaryType {
         @Override
         public ByteCodeAppender appender(Target instrumentationTarget) {
             return new Appender(instrumentationTarget.getTypeDescription());
+        }
+
+        @Override
+        public String toString() {
+            return "MethodCallProxy.ConstructorCall." + name();
         }
 
         /**
@@ -340,7 +350,7 @@ public class MethodCallProxy implements AuxiliaryType {
          * @param accessorMethod The method that is accessed by the implemented method.
          * @param assigner       The assigner to be used for invoking the accessor method.
          */
-        private MethodCall(MethodDescription accessorMethod, Assigner assigner) {
+        protected MethodCall(MethodDescription accessorMethod, Assigner assigner) {
             this.accessorMethod = accessorMethod;
             this.assigner = assigner;
         }

@@ -46,4 +46,9 @@ public enum TrivialType implements AuxiliaryType, MethodLookupEngine.Factory, Me
                 new MethodList.Empty(),
                 Collections.<TypeDescription, Set<MethodDescription>>emptyMap());
     }
+
+    @Override
+    public String toString() {
+        return "TrivialType." + name();
+    }
 }

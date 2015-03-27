@@ -46,7 +46,7 @@ public enum Removal implements StackManipulation {
      * @param stackSize The size impact of the removal onto the operand stack.
      * @param opcode    The opcode to execute for the removal.
      */
-    private Removal(StackSize stackSize, int opcode) {
+    Removal(StackSize stackSize, int opcode) {
         size = stackSize.toDecreasingSize();
         this.opcode = opcode;
     }
@@ -79,6 +79,11 @@ public enum Removal implements StackManipulation {
     public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
         methodVisitor.visitInsn(opcode);
         return size;
+    }
+
+    @Override
+    public String toString() {
+        return "Removal." + name();
     }
 }
 

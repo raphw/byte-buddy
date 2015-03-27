@@ -3,6 +3,7 @@ package net.bytebuddy.instrumentation.type.auxiliary;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.test.utility.MockitoRule;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -32,5 +33,10 @@ public class AuxiliaryTypeMethodAccessorFactoryIllegalTest {
     @Test(expected = IllegalStateException.class)
     public void testSetterIsIllegal() throws Exception {
         AuxiliaryType.MethodAccessorFactory.Illegal.INSTANCE.registerGetterFor(fieldDescription);
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(AuxiliaryType.MethodAccessorFactory.Illegal.class).apply();
     }
 }

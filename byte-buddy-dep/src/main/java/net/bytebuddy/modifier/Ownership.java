@@ -29,7 +29,7 @@ public enum Ownership implements ModifierContributor.ForField, ModifierContribut
      *
      * @param mask The modifier mask of this instance.
      */
-    private Ownership(int mask) {
+    Ownership(int mask) {
         this.mask = mask;
     }
 
@@ -56,5 +56,10 @@ public enum Ownership implements ModifierContributor.ForField, ModifierContribut
      */
     public boolean isStatic() {
         return this == STATIC;
+    }
+
+    @Override
+    public String toString() {
+        return "Ownership." + name();
     }
 }

@@ -87,11 +87,11 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
      * @param unboxingMethodName       The name of the method for unboxing a wrapper value to its primitive value.
      * @param unboxingMethodDescriptor The descriptor of the method for unboxing a wrapper value to its primitive value.
      */
-    private PrimitiveUnboxingDelegate(Class<?> wrapperType,
-                                      Class<?> primitiveType,
-                                      StackSize sizeDifference,
-                                      String unboxingMethodName,
-                                      String unboxingMethodDescriptor) {
+    PrimitiveUnboxingDelegate(Class<?> wrapperType,
+                              Class<?> primitiveType,
+                              StackSize sizeDifference,
+                              String unboxingMethodName,
+                              String unboxingMethodDescriptor) {
         this.size = sizeDifference.toIncreasingSize();
         this.wrapperType = new TypeDescription.ForLoadedType(wrapperType);
         this.primitiveType = new TypeDescription.ForLoadedType(primitiveType);
@@ -180,10 +180,15 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
         return size;
     }
 
+    @Override
+    public String toString() {
+        return "PrimitiveUnboxingDelegate." + name();
+    }
+
     /**
      * An explicitly types unboxing responsible is applied for directly unboxing a wrapper type.
      */
-    protected static enum ExplicitlyTypedUnboxingResponsible implements UnboxingResponsible {
+    protected enum ExplicitlyTypedUnboxingResponsible implements UnboxingResponsible {
 
         /**
          * An unboxing responsible for unboxing a {@link java.lang.Boolean} type.
@@ -235,7 +240,7 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
          *
          * @param primitiveUnboxingDelegate The primitive unboxing delegate for handling the given wrapper type.
          */
-        private ExplicitlyTypedUnboxingResponsible(PrimitiveUnboxingDelegate primitiveUnboxingDelegate) {
+        ExplicitlyTypedUnboxingResponsible(PrimitiveUnboxingDelegate primitiveUnboxingDelegate) {
             this.primitiveUnboxingDelegate = primitiveUnboxingDelegate;
         }
 
@@ -245,12 +250,17 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
                     primitiveUnboxingDelegate,
                     PrimitiveWideningDelegate.forPrimitive(primitiveUnboxingDelegate.primitiveType).widenTo(targetType));
         }
+
+        @Override
+        public String toString() {
+            return "PrimitiveUnboxingDelegate.ExplicitlyTypedUnboxingResponsible." + name();
+        }
     }
 
     /**
      * Implementations represent an unboxing delegate that is able to perform the unboxing operation.
      */
-    public static interface UnboxingResponsible {
+    public interface UnboxingResponsible {
 
         /**
          * Attempts to unbox the represented type in order to assign the unboxed value to the given target type

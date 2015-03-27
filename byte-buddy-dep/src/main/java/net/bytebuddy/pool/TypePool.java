@@ -54,7 +54,7 @@ public interface TypePool {
     /**
      * A resolution of a {@link net.bytebuddy.pool.TypePool} which was queried for a description.
      */
-    static interface Resolution {
+    interface Resolution {
 
         /**
          * Determines if this resolution represents a {@link net.bytebuddy.instrumentation.type.TypeDescription}.
@@ -74,7 +74,7 @@ public interface TypePool {
         /**
          * A simple resolution that represents a given {@link net.bytebuddy.instrumentation.type.TypeDescription}.
          */
-        static class Simple implements Resolution {
+        class Simple implements Resolution {
 
             /**
              * The represented type description.
@@ -122,7 +122,7 @@ public interface TypePool {
         /**
          * A canonical representation of a non-successful resolution of a {@link net.bytebuddy.pool.TypePool}.
          */
-        static class Illegal implements Resolution {
+        class Illegal implements Resolution {
 
             /**
              * The name of the unresolved type.
@@ -171,7 +171,12 @@ public interface TypePool {
     /**
      * A cache provider for a {@link net.bytebuddy.pool.TypePool}.
      */
-    static interface CacheProvider {
+    interface CacheProvider {
+
+        /**
+         * The value that is returned on a cache-miss.
+         */
+        Resolution NOTHING = null;
 
         /**
          * Attempts to find a resolution in this cache.
@@ -200,7 +205,7 @@ public interface TypePool {
         /**
          * A non-operational cache that does not store any type descriptions.
          */
-        static enum NoOp implements CacheProvider {
+        enum NoOp implements CacheProvider {
 
             /**
              * The singleton instance.
@@ -209,7 +214,7 @@ public interface TypePool {
 
             @Override
             public Resolution find(String name) {
-                return null;
+                return NOTHING;
             }
 
             @Override
@@ -221,12 +226,17 @@ public interface TypePool {
             public void clear() {
                 /* do nothing */
             }
+
+            @Override
+            public String toString() {
+                return "TypePool.CacheProvider.NoOp." + name();
+            }
         }
 
         /**
          * A simple, thread-safe type cache based on a {@link java.util.concurrent.ConcurrentHashMap}.
          */
-        static class Simple implements CacheProvider {
+        class Simple implements CacheProvider {
 
             /**
              * A map containing all cached resolutions by their names.
@@ -248,7 +258,7 @@ public interface TypePool {
             @Override
             public Resolution register(String name, Resolution resolution) {
                 Resolution cached = cache.putIfAbsent(name, resolution);
-                return cached == null ? resolution : cached;
+                return cached == NOTHING ? resolution : cached;
             }
 
             @Override
@@ -267,7 +277,7 @@ public interface TypePool {
      * A base implementation of a {@link net.bytebuddy.pool.TypePool} that is managing a cache provider and
      * that handles the description of array and primitive types.
      */
-    abstract static class AbstractBase implements TypePool {
+    abstract class AbstractBase implements TypePool {
 
         /**
          * A map of primitive types by their name.
@@ -449,7 +459,7 @@ public interface TypePool {
      * Java byte code format into a {@link net.bytebuddy.instrumentation.type.TypeDescription}. The data lookup
      * is delegated to a {@link net.bytebuddy.dynamic.ClassFileLocator}.
      */
-    static class Default extends AbstractBase {
+    class Default extends AbstractBase {
 
         /**
          * Indicates that a visited method should be ignored.
@@ -540,7 +550,7 @@ public interface TypePool {
         /**
          * An annotation registrant implements a visitor pattern for reading an unknown amount of values of annotations.
          */
-        protected static interface AnnotationRegistrant {
+        protected interface AnnotationRegistrant {
 
             /**
              * Registers an annotation value.
@@ -559,7 +569,7 @@ public interface TypePool {
         /**
          * A component type locator allows for the lazy location of an array's component type.
          */
-        protected static interface ComponentTypeLocator {
+        protected interface ComponentTypeLocator {
 
             /**
              * Binds this component type to a given property name of an annotation.
@@ -573,7 +583,7 @@ public interface TypePool {
             /**
              * A component type locator which cannot legally resolve an array's component type.
              */
-            static enum Illegal implements ComponentTypeLocator {
+            enum Illegal implements ComponentTypeLocator {
 
                 /**
                  * The singleton instance.
@@ -584,13 +594,18 @@ public interface TypePool {
                 public LazyTypeDescription.AnnotationValue.ForComplexArray.ComponentTypeReference bind(String name) {
                     throw new IllegalStateException("Unexpected lookup of component type for " + name);
                 }
+
+                @Override
+                public String toString() {
+                    return "TypePool.Default.ComponentTypeLocator.Illegal." + name();
+                }
             }
 
             /**
              * A component type locator that lazily analyses an annotation for resolving an annotation property's
              * array value's component type.
              */
-            static class ForAnnotationProperty implements ComponentTypeLocator {
+            class ForAnnotationProperty implements ComponentTypeLocator {
 
                 /**
                  * The type pool to query for type descriptions.
@@ -705,7 +720,7 @@ public interface TypePool {
             /**
              * A component type locator that locates an array type by a method's return value from its method descriptor.
              */
-            static class ForArrayType implements ComponentTypeLocator, LazyTypeDescription.AnnotationValue.ForComplexArray.ComponentTypeReference {
+            class ForArrayType implements ComponentTypeLocator, LazyTypeDescription.AnnotationValue.ForComplexArray.ComponentTypeReference {
 
                 /**
                  * The resolved component type's binary name.
@@ -1626,7 +1641,7 @@ public interface TypePool {
      * {@link net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription}s by querying a type pool
      * at lookup time.
      */
-    static class LazyTypeDescription extends TypeDescription.AbstractTypeDescription.OfSimpleType {
+    class LazyTypeDescription extends TypeDescription.AbstractTypeDescription.OfSimpleType {
 
         /**
          * The type pool to be used for looking up linked types.
@@ -1827,7 +1842,7 @@ public interface TypePool {
          * A declaration context encapsulates information about whether a type was declared within another type
          * or within a method of another type.
          */
-        protected static interface DeclarationContext {
+        protected interface DeclarationContext {
 
             /**
              * Returns the enclosing method or {@code null} if no such method exists.
@@ -1871,7 +1886,7 @@ public interface TypePool {
             /**
              * Represents a self-declared type that is not defined within another type.
              */
-            static enum SelfDeclared implements DeclarationContext {
+            enum SelfDeclared implements DeclarationContext {
 
                 /**
                  * The singleton instance.
@@ -1903,13 +1918,17 @@ public interface TypePool {
                     return false;
                 }
 
+                @Override
+                public String toString() {
+                    return "TypePool.LazyTypeDescription.DeclarationContext.SelfDeclared." + name();
+                }
             }
 
             /**
              * A declaration context representing a type that is declared within another type but not within
              * a method.
              */
-            static class DeclaredInType implements DeclarationContext {
+            class DeclaredInType implements DeclarationContext {
 
                 /**
                  * The binary name of the referenced type.
@@ -1972,7 +1991,7 @@ public interface TypePool {
             /**
              * A declaration context representing a type that is declared within a method of another type.
              */
-            static class DeclaredInMethod implements DeclarationContext {
+            class DeclaredInMethod implements DeclarationContext {
 
                 /**
                  * The binary name of the declaring type.
@@ -2067,7 +2086,7 @@ public interface TypePool {
          * @param <T> The type of the unloaded value of this annotation.
          * @param <S> The type of the loaded value of this annotation.
          */
-        protected static interface AnnotationValue<T, S> {
+        protected interface AnnotationValue<T, S> {
 
             /**
              * Resolves the unloaded value of this annotation.
@@ -2107,7 +2126,7 @@ public interface TypePool {
              *
              * @param <U> The type of the loaded value of this annotation.
              */
-            static interface Loaded<U> {
+            interface Loaded<U> {
 
                 /**
                  * Returns the state of the represented loaded annotation value.
@@ -2128,7 +2147,7 @@ public interface TypePool {
                  * Represents the state of a
                  * {@link net.bytebuddy.pool.TypePool.LazyTypeDescription.AnnotationValue.Loaded} annotation property.
                  */
-                static enum State {
+                enum State {
 
                     /**
                      * A non-defined annotation value describes an annotation property which is missing such that
@@ -2166,6 +2185,11 @@ public interface TypePool {
                     public boolean isResolved() {
                         return this == RESOLVED;
                     }
+
+                    @Override
+                    public String toString() {
+                        return "TypePool.LazyTypeDescription.AnnotationValue.Loaded.State." + name();
+                    }
                 }
             }
 
@@ -2174,7 +2198,7 @@ public interface TypePool {
              *
              * @param <U> The type where primitive values are represented by their boxed type.
              */
-            static class Trivial<U> implements AnnotationValue<U, U> {
+            class Trivial<U> implements AnnotationValue<U, U> {
 
                 /**
                  * The represented value.
@@ -2287,7 +2311,7 @@ public interface TypePool {
             /**
              * Represents a nested annotation value.
              */
-            static class ForAnnotation implements AnnotationValue<AnnotationDescription, Annotation> {
+            class ForAnnotation implements AnnotationValue<AnnotationDescription, Annotation> {
 
                 /**
                  * The annotation token that represents the nested invocation.
@@ -2434,7 +2458,7 @@ public interface TypePool {
             /**
              * Represents an enumeration value of an annotation.
              */
-            static class ForEnumeration implements AnnotationValue<AnnotationDescription.EnumerationValue, Enum<?>> {
+            class ForEnumeration implements AnnotationValue<AnnotationDescription.EnumerationValue, Enum<?>> {
 
                 /**
                  * The descriptor of the enumeration type.
@@ -2666,7 +2690,7 @@ public interface TypePool {
             /**
              * Represents a type value of an annotation.
              */
-            static class ForType implements AnnotationValue<TypeDescription, Class<?>> {
+            class ForType implements AnnotationValue<TypeDescription, Class<?>> {
 
                 /**
                  * A convenience reference indicating that a loaded type should not be initialized.
@@ -2770,7 +2794,7 @@ public interface TypePool {
              * Represents an array that is referenced by an annotation which does not contain primitive values or
              * {@link java.lang.String} values.
              */
-            static class ForComplexArray implements AnnotationValue<Object[], Object[]> {
+            class ForComplexArray implements AnnotationValue<Object[], Object[]> {
 
                 /**
                  * A reference to the component type.
@@ -2851,7 +2875,7 @@ public interface TypePool {
                 /**
                  * A lazy representation of the component type of an array.
                  */
-                public static interface ComponentTypeReference {
+                public interface ComponentTypeReference {
 
                     /**
                      * Lazily returns the binary name of the array component type of an annotation value.

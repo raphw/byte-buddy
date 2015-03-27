@@ -83,7 +83,7 @@ public enum ClassConstant implements StackManipulation {
      *
      * @param type The primitive type to represent.
      */
-    private ClassConstant(Class<?> type) {
+    ClassConstant(Class<?> type) {
         fieldOwnerInternalName = Type.getInternalName(type);
     }
 
@@ -127,6 +127,11 @@ public enum ClassConstant implements StackManipulation {
     public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
         methodVisitor.visitFieldInsn(Opcodes.GETSTATIC, fieldOwnerInternalName, PRIMITIVE_TYPE_FIELD, CLASS_TYPE_INTERNAL_NAME);
         return SIZE;
+    }
+
+    @Override
+    public String toString() {
+        return "ClassConstant." + name();
     }
 
     /**

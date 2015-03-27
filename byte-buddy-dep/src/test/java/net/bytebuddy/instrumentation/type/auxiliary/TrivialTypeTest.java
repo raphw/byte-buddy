@@ -3,6 +3,7 @@ package net.bytebuddy.instrumentation.type.auxiliary;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.test.utility.MockitoRule;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -32,5 +33,10 @@ public class TrivialTypeTest {
         assertThat(dynamicType.getTypeDescription().getModifiers(), is(Opcodes.ACC_SYNTHETIC));
         assertThat(dynamicType.getRawAuxiliaryTypes().size(), is(0));
         assertThat(dynamicType.getLoadedTypeInitializers().get(dynamicType.getTypeDescription()).isAlive(), is(false));
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(TrivialType.class).apply();
     }
 }
